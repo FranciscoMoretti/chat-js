@@ -78,6 +78,14 @@ This helper is for logical-chat metadata. Conversation-specific operations that 
 
 History predicates combine with AND. Return `undefined` when your restriction does not apply. Filtering an already-fetched page breaks pagination.
 
+## Public reads
+
+`chat.publicReadFilter()` returns a Drizzle predicate over the core conversation table. Installed predicates combine with OR. With no contribution, the result is false. File and document readers combine this grant with ownership, bound state, and their resource-specific checks. This contribution never grants write or workspace access.
+
+[Sharing](../plugins/sharing) contributes the public visibility predicate. Its public transcript route belongs to the plugin and rechecks visibility after reading the native snapshot. Core retains the visibility column and resets it during deletion.
+
+Client actions receive the logical chat `id` and, when available, the exact `conversationId`. Use the latter for branch-specific sharing. Header menus omit it when there is no transcript to share. Plugin actions own their dialogs and preserve the menu while a dialog is open.
+
 ## Deletion
 
 | Callback | When it runs | Typical data |
@@ -97,7 +105,8 @@ Both callbacks run inside the core deletion transaction under its lifecycle lock
 | `uploads` | Attachment selection and upload behavior |
 | `chat.Sidebar` | Sidebar content |
 | `chat.SidebarHeader` | Fixed sidebar menu control with server-resolved `ownerId` |
-| `chat.Actions` | Menu actions receiving `{ chat: { id, title, state } }` |
+| `chat.Actions` | Menu actions receiving `{ chat: { id, title, state, conversationId? } }` |
+| `chat.HeaderActions` | Header controls receiving the same chat context |
 | `chat.Breadcrumb` | Context receiving `{ chatId }` |
 | `chat.MessageActions` | Assistant-message actions |
 | `chat.Suggestions` | Suggestions beneath the last editable message |

@@ -583,3 +583,29 @@ test.each(["desktop", "mobile"] as const)(
       .toBeVisible();
   }
 );
+
+test.each(["desktop", "mobile"] as const)(
+  "sharing dialog from the chat menu (%s)",
+  async (viewport) => {
+    await renderRoute(conversation, {
+      ...request,
+      viewports: [viewport],
+      trpc: {
+        ...invoicesTrpc,
+        "sharing.get": { id: invoicesConversation.id, visibility: "private" },
+        "sharing.setVisibility": { id: invoicesConversation.id },
+      },
+    });
+    if (viewport === "mobile") {
+      await page.viewport(390, 844);
+    }
+    await page
+      .getByRole("button", { name: `Chat menu: ${invoicesConversation.title}` })
+      .click();
+    await page.getByRole("menuitem", { name: "Share", exact: true }).click();
+    await expect.element(page.getByRole("dialog")).toBeVisible();
+    await expect
+      .element(page.getByRole("button", { name: "Share Chat", exact: true }))
+      .toBeEnabled();
+  }
+);

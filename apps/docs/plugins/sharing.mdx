@@ -1,0 +1,36 @@
+---
+title: Sharing
+description: Publish read-only conversations with revocable access
+---
+
+Use Sharing to let anyone with a link read a conversation. Workspace access and editing remain private to the owner.
+
+## Installation
+
+```bash
+bunx @chat-js/cli@latest add sharing
+```
+
+The CLI installs the `/share/[id]` page, sharing controls, and the `sharing` router. The plugin uses the existing conversation visibility column, so extraction does not require a migration.
+
+## Usage
+
+Open **Share** from the chat header, sidebar menu, or project chat menu. Choose **Share Chat**, then copy the link. Choose **Make Private** to revoke it.
+
+Sharing applies to the selected conversation branch. Other branches of the same logical chat stay private unless you share them separately. Only the owner can read or change sharing settings, and only bound conversations can be shared.
+
+Public readers can view the sanitized transcript and its accessible files and documents. They cannot edit documents, send messages, or access the workspace. Owners can save a copy through the existing core copy flow.
+
+Revocation is checked on each managed file or document read. Transcript and document reads recheck access before returning their results. Previously downloaded content cannot be recalled.
+
+## Options
+
+Sharing has no additional credentials or configuration. Its menu action and header button appear through `chat.Actions` and `chat.HeaderActions`. Projects renders those same contributions without importing Sharing.
+
+## Customization
+
+Edit `plugins/sharing/ui/` for the dialog and public page. `sharing.get` and `sharing.setVisibility` accept exact conversation IDs, not logical chat IDs. The plugin owns their queries and cache invalidation.
+
+`chat.publicReadFilter()` supplies the public visibility predicate. Core combines installed public-read predicates with OR, then applies its own bound-state and resource checks. Without a contribution, public access is denied. Omitting Sharing removes its route, router, and UI, and existing public flags no longer grant managed-file or document access. Reinstalling it honors those stored flags again.
+
+Core retains conversation visibility storage and the deletion fence, file and document authorization, sanitized message projection, and copy mechanics. These are shared with non-sharing operations. See the [Plugin API](../reference/plugin-api) for the contracts and [registry mirror workflow](../registry/mirror) for developing canonical source in this repository.

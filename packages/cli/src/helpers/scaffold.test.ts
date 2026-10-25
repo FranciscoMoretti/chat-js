@@ -342,6 +342,8 @@ describe("scaffoldFromTemplate", (): void => {
       "lib/eve/search-text.test.ts",
       "lib/eve/conversation-title.test.ts",
       "lib/db/ai-titles-plugin.test.ts",
+      "lib/db/sharing-plugin.test.ts",
+      "lib/eve/sharing-transcript.test.ts",
       "lib/eve/search-hook.test.ts",
       "lib/eve/search-backfill.test.ts",
       "scripts/repair-search-preview.sql",

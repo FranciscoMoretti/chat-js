@@ -1081,23 +1081,8 @@ const updateEveConversationMetadata = async (
   updates: Readonly<{
     title?: string;
     isPinned?: boolean;
-    visibility?: "private" | "public";
   }>
 ): Promise<Pick<ConversationRow, "id"> | undefined> => {
-  if (updates.visibility !== undefined) {
-    const [conversation] = await db
-      .update(eveConversation)
-      .set({ visibility: updates.visibility })
-      .where(
-        and(
-          eq(eveConversation.id, id),
-          eq(eveConversation.ownerId, ownerId),
-          visibleConversation
-        )
-      )
-      .returning({ id: eveConversation.id });
-    return conversation;
-  }
   let titleStatus: "manual" | undefined = undefined;
   if (isNonemptyString(updates.title)) {
     titleStatus = "manual";
@@ -1144,33 +1129,6 @@ const recordEveConversationActivity = async (
         lt(eveChat.updatedAt, at)
       )
     );
-};
-
-const getPublicEveConversation = async (
-  id: string
-): Promise<(ConversationRow & Pick<ChatRow, "title">) | undefined> => {
-  const [row] = await db
-    .select({ chat: { title: eveChat.title }, conversation: eveConversation })
-    .from(eveConversation)
-    .innerJoin(
-      eveChat,
-      and(
-        eq(eveChat.id, eveConversation.chatId),
-        eq(eveChat.ownerId, eveConversation.ownerId)
-      )
-    )
-    .where(
-      and(
-        eq(eveConversation.id, id),
-        eq(eveConversation.visibility, "public"),
-        eq(eveConversation.state, "bound")
-      )
-    )
-    .limit(SINGLE_MATCH_LIMIT);
-  if (hasQueryRow(row)) {
-    return { ...row.conversation, title: row.chat.title };
-  }
-  return undefined;
 };
 
 const listEveConversationBranches = async (
@@ -1296,7 +1254,6 @@ export {
   getEveChatPageConversation,
   getEveConversation,
   getEveCreation,
-  getPublicEveConversation,
   listEveConversationBranches,
   listEveConversations,
   listEveOwnerBindings,

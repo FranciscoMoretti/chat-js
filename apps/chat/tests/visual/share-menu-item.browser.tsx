@@ -8,7 +8,7 @@ import {
 import React, { act, createContext, useContext } from "react";
 import { expect, test, vi } from "vitest";
 import { mount, unmount } from "./primitive-mount";
-import { ShareMenuItem } from "@/components/upgrade-cta/share-menu-item";
+import { ShareMenuItem } from "@/plugins/sharing/ui/share-menu-item";
 import { page } from "vitest/browser";
 import { takeSnapshot } from "@uiverify/vitest";
 
@@ -73,9 +73,7 @@ test("share menu preserves anonymous selection and authenticated sharing", async
     await act(async () => {
       await authenticatedItem.click();
     });
-    expect(onShare).toHaveBeenCalledExactlyOnceWith(
-      expect.objectContaining({ type: "click" })
-    );
+    expect(onShare).toHaveBeenCalledExactlyOnceWith();
     expect(authenticatedOpenChange).toHaveBeenCalledWith(false);
     await act(async () => {
       await anonymousItem.click();

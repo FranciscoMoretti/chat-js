@@ -127,11 +127,11 @@ test("sharing exposes only a read-only transcript, enforces ownership and revoke
       path: "tests/eve-results/screenshots/eve-shared-transcript.png",
     });
     const forbidden = await publicPage.request.post(
-      `${base}/api/trpc/eve.setVisibility`,
+      `${base}/api/trpc/sharing.setVisibility`,
       { data: { json: { id: binding.id, visibility: "private" } } }
     );
     expect(forbidden.status()).toBe(401);
-    const foreign = await page.request.post("/api/trpc/eve.setVisibility", {
+    const foreign = await page.request.post("/api/trpc/sharing.setVisibility", {
       data: { json: { id: foreignChat, visibility: "public" } },
     });
     expect(foreign.status()).toBe(404);

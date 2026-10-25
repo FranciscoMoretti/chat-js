@@ -131,3 +131,33 @@ test("project the account cannot open", async () => {
   });
   await expect.element(page.getByText("Project unavailable")).toBeVisible();
 });
+
+test.each(["desktop", "mobile"] as const)(
+  "project chat shares through installed actions (%s)",
+  async (viewport) => {
+    await renderRoute(project, {
+      ...request,
+      viewports: [viewport],
+      trpc: {
+        ...request.trpc,
+        "sharing.get": (input: { id: string }) => {
+          expect(
+            launchChats.items.some((item) => item.conversationId === input.id)
+          ).toBe(true);
+          return { id: input.id, visibility: "public" };
+        },
+      },
+    });
+    if (viewport === "mobile") {
+      await page.viewport(390, 844);
+    }
+    await page
+      .getByRole("button", { name: "More", exact: true })
+      .last()
+      .click();
+    await page.getByRole("menuitem", { name: "Share", exact: true }).click();
+    await expect
+      .element(page.getByRole("button", { name: "Make Private", exact: true }))
+      .toBeEnabled();
+  }
+);

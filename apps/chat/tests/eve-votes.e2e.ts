@@ -1,3 +1,4 @@
+import { setSharing } from "../plugins/sharing/queries";
 import { eveVote } from "../plugins/feedback/feedback-schema";
 import { createEveTestSession } from "./eve-native-session.fixture";
 
@@ -10,7 +11,6 @@ import { completeEveConversationDeletion } from "../lib/db/eve-deletion";
 import {
   beginEveConversationDeletion,
   createEveConversation,
-  updateEveConversationMetadata,
 } from "../lib/db/eve-queries";
 import { getEveMessageVotes } from "../plugins/feedback/feedback-queries";
 import { eveConversation, user } from "../lib/db/schema";
@@ -83,7 +83,7 @@ test("native assistant feedback persists, replaces a vote and stays private when
   expect(await getEveMessageVotes(owner, row.id)).toEqual([
     { isUpvoted: false, messageId: input.messageId },
   ]);
-  await updateEveConversationMetadata(owner, row.id, { visibility: "public" });
+  await setSharing(owner, row.id, "public");
   expect(await getEveMessageVotes("stranger", row.id)).toEqual([]);
   native.attach.mockClear();
   expect(await voteEveMessage("stranger", input)).toBeNull();

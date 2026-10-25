@@ -146,7 +146,7 @@ test("creation and metadata lookups preserve no-match results", async () => {
   expect(missingUpdate).toBeUndefined();
   expect(
     await updateEveConversationMetadata("other", conversationId, {
-      visibility: "public",
+      title: "Unauthorized",
     })
   ).toBeUndefined();
   expect(

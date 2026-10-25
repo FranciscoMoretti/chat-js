@@ -12,12 +12,12 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
 } from "@/components/ui/breadcrumb";
-import { getPublicEveTranscript } from "@/lib/eve/public-conversation";
+import { getPublicEveTranscript } from "@/plugins/sharing/public-conversation";
 
-import { EveArtifactLayout } from "./eve-artifact-layout";
-import { EveSharedBadge } from "./eve-chat-header";
-import { EveCopyButton } from "./eve-copy-button";
-import { EveSharedMessages } from "./eve-shared-messages";
+import { EveArtifactLayout } from "@/components/eve/eve-artifact-layout";
+import { EveSharedBadge } from "./shared-badge";
+import { EveCopyButton } from "@/components/eve/eve-copy-button";
+import { EveSharedMessages } from "./transcript-messages";
 
 export const EveSharedPage = async ({
   id,

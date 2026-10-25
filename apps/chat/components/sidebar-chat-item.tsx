@@ -3,7 +3,7 @@ import { pluginRoute } from "@/lib/plugin-route";
 
 import React, { memo, useState } from "react";
 
-import type { JSX as ReactJSX, ReactNode } from "react";
+import type { JSX as ReactJSX } from "react";
 
 import { MoreHorizontal } from "lucide-react";
 import { toast } from "sonner";
@@ -18,8 +18,6 @@ import { ChatMenuItems } from "@/components/chat-menu-items";
 import { Input } from "@/components/ui/input";
 
 import { InternalLink } from "@/components/internal-link";
-
-import { ShareDialog } from "@/components/share-button";
 
 import {
   SidebarMenuAction,
@@ -36,8 +34,6 @@ const PureSidebarChatItem = ({
   onPin,
   setOpenMobile,
   prefetch = false,
-  showShare = true,
-  renderShareContent,
 }: {
   readonly chat: {
     readonly id: string;
@@ -52,17 +48,11 @@ const PureSidebarChatItem = ({
   readonly onPin: (chatId: string, isPinned: boolean) => void;
   readonly setOpenMobile: (open: boolean) => void;
   readonly prefetch?: boolean;
-  readonly showShare?: boolean;
-  readonly renderShareContent: (
-    chatId: string,
-    onClose: () => void
-  ) => Exclude<ReactNode, Promise<unknown>>;
 }): ReactJSX.Element => {
   const [, startEventAction] = React.useTransition();
   const chatHref = chat.href ?? `/chat/${chat.id}`;
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(chat.title);
-  const [shareDialogOpen, setShareDialogOpen] = useState(false);
 
   const handleRename = async (): Promise<void> => {
     if (editTitle.trim() === "" || editTitle === chat.title) {
@@ -152,24 +142,12 @@ const PureSidebarChatItem = ({
               setIsEditing(true);
               setEditTitle(chat.title);
             }}
-            onShare={() => {
-              setShareDialogOpen(true);
-            }}
             onTogglePin={() => {
               onPin(chat.id, !chat.isPinned);
             }}
-            showShare={showShare}
           />
         </DropdownMenuContent>
       </DropdownMenu>
-
-      {shareDialogOpen && (
-        <ShareDialog
-          onOpenChange={setShareDialogOpen}
-          open={shareDialogOpen}
-          renderContent={(onClose) => renderShareContent(chat.id, onClose)}
-        />
-      )}
     </SidebarMenuItem>
   );
 };
@@ -178,8 +156,6 @@ export const SidebarChatItem = memo(
   PureSidebarChatItem,
   (prevProps, nextProps) => {
     if (
-      prevProps.showShare !== nextProps.showShare ||
-      prevProps.renderShareContent !== nextProps.renderShareContent ||
       prevProps.onDelete !== nextProps.onDelete ||
       prevProps.pluginActions !== nextProps.pluginActions ||
       prevProps.onRename !== nextProps.onRename ||

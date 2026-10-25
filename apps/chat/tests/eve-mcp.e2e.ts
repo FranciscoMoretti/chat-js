@@ -347,7 +347,7 @@ test("native MCP executes and its saved result survives connector removal and re
       fullPage: true,
       path: "tests/eve-results/screenshots/eve-native-mcp.png",
     });
-    const shared = await page.request.post("/api/trpc/eve.setVisibility", {
+    const shared = await page.request.post("/api/trpc/sharing.setVisibility", {
       data: { json: { id: binding.id, visibility: "public" } },
     });
     expect(shared.ok(), await shared.text()).toBe(true);
@@ -384,7 +384,7 @@ test("native MCP executes and its saved result survives connector removal and re
       expect(calls).toBe(1);
     } finally {
       const privateAgain = await page.request.post(
-        "/api/trpc/eve.setVisibility",
+        "/api/trpc/sharing.setVisibility",
         {
           data: { json: { id: binding.id, visibility: "private" } },
         }

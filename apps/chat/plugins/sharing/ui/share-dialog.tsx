@@ -4,7 +4,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import type { JSX as ReactJSX } from "react";
 
-import { ShareButton, ShareDialogView } from "@/components/share-button";
+import {
+  ShareButton,
+  ShareDialogView,
+} from "@/plugins/sharing/ui/share-button";
 import { useTRPC } from "@/trpc/react";
 
 const EveShareDialogContent = ({
@@ -16,8 +19,8 @@ const EveShareDialogContent = ({
 }): ReactJSX.Element => {
   const trpc = useTRPC();
   const cache = useQueryClient();
-  const query = useQuery(trpc.eve.get.queryOptions({ id: chatId }));
-  const mutation = useMutation(trpc.eve.setVisibility.mutationOptions());
+  const query = useQuery(trpc.sharing.get.queryOptions({ id: chatId }));
+  const mutation = useMutation(trpc.sharing.setVisibility.mutationOptions());
   return (
     <>
       <ShareDialogView
@@ -28,7 +31,7 @@ const EveShareDialogContent = ({
         setVisibility={async (visibility) => {
           await mutation.mutateAsync({ id: chatId, visibility });
           await cache.invalidateQueries({
-            queryKey: trpc.eve.get.queryKey({ id: chatId }),
+            queryKey: trpc.sharing.get.queryKey({ id: chatId }),
           });
         }}
       />

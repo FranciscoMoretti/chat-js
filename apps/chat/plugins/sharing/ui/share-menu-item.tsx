@@ -55,7 +55,13 @@ export const ShareMenuItem = ({
   }
 
   return (
-    <DropdownMenuItem className="cursor-pointer" onClick={onShare}>
+    <DropdownMenuItem
+      className="cursor-pointer"
+      onSelect={(event) => {
+        event.preventDefault();
+        onShare();
+      }}
+    >
       <Share size={16} />
       <span>Share</span>
       {children}

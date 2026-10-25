@@ -22,6 +22,8 @@ export interface ChatCreatedContext {
 }
 
 export interface ChatServerIntegration {
+  /** Grants read access beyond ownership. Core always requires bound conversations. */
+  readonly publicReadFilter?: () => SQL;
   /** After a root creation response, outside its transaction. May repeat on recovery. */
   readonly afterCreate?: (context: ChatCreatedContext) => Promise<void>;
   /** Called only for a newly inserted logical chat, before its transaction commits. */
@@ -60,6 +62,7 @@ export interface ChatActionProps {
   readonly chat: {
     readonly id: string;
     readonly title: string;
+    readonly conversationId?: string | null;
     readonly state?: string;
   };
 }
@@ -79,6 +82,7 @@ export interface ChatSuggestionsProps {
   readonly onSelect: (suggestion: string) => void;
 }
 export interface ChatClientIntegration {
+  readonly HeaderActions?: ComponentType<ChatActionProps>;
   readonly Suggestions?: ComponentType<ChatSuggestionsProps>;
   readonly MessageActions?: ComponentType<ChatMessageActionProps>;
   readonly Sidebar?: ComponentType;

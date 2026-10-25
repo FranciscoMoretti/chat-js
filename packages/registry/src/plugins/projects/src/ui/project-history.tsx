@@ -1,12 +1,11 @@
 "use client";
 import React from "react";
 import { EveHistoryList } from "@/components/eve/eve-history-list";
-import { EveShareDialogContent } from "@/components/eve/eve-share-dialog";
 import { useEveDeletion } from "@/components/eve/eve-deletion-provider";
 import { useEveMetadataMutations } from "@/components/eve/use-eve-metadata-mutations";
 import { Separator } from "@/components/ui/separator";
 import { ProjectChatItem } from "./project-chat-item";
-import { ProjectChatActions } from "./chat-contributions";
+import { PluginChatActions } from "@/components/plugin-chat-ui";
 
 export const ProjectHistory = ({
   projectId,
@@ -40,16 +39,10 @@ export const ProjectHistory = ({
             onDelete={() => {
               openDeletion(item);
             }}
-            pluginActions={<ProjectChatActions chat={item} />}
+            pluginActions={<PluginChatActions chat={item} />}
             onRename={async (id, title) => {
               await rename.mutateAsync({ id, title });
             }}
-            renderShareContent={(_id, onClose) => (
-              <EveShareDialogContent
-                chatId={item.conversationId}
-                onClose={onClose}
-              />
-            )}
           />
         </li>
       )}

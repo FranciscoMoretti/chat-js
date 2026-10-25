@@ -22,7 +22,7 @@ import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/providers/session-provider";
 
-import { LoginPrompt } from "./upgrade-cta/login-prompt";
+import { LoginPrompt } from "@/components/upgrade-cta/login-prompt";
 
 type ShareStep = "info" | "shared";
 

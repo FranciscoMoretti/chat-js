@@ -136,7 +136,7 @@ vi.mock("@/plugins/projects/db/project-queries", () => ({
   getProjectById: () => Promise.resolve(route.server.project),
 }));
 
-vi.mock("@/lib/eve/public-conversation", () => ({
+vi.mock("@/plugins/sharing/public-conversation", () => ({
   getPublicEveTranscript: () => Promise.resolve(route.server.transcript),
 }));
 

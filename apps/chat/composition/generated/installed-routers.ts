@@ -4,6 +4,7 @@ import { followupSuggestions as plugin1 } from "@/plugins/followup-suggestions/s
 import { mcp as plugin2 } from "@/plugins/mcp/server-plugin";
 import { projects as plugin3 } from "@/plugins/projects/server-plugin";
 import { search as plugin4 } from "@/plugins/search/server-plugin";
+import { sharing as plugin5 } from "@/plugins/sharing/server-plugin";
 import type { InstalledRouters } from "@/lib/installation-contracts";
 export const installedRouters = {
   feedback: plugin0().routers.feedback,
@@ -11,4 +12,5 @@ export const installedRouters = {
   mcp: plugin2().routers.mcp,
   project: plugin3().routers.project,
   search: plugin4().routers.search,
+  sharing: plugin5().routers.sharing,
 } satisfies InstalledRouters;

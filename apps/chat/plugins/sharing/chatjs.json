@@ -1,0 +1,29 @@
+{
+  "contractVersion": 1,
+  "id": "sharing",
+  "kind": "plugin",
+  "files": [
+    "plugins/sharing/chat.ts",
+    "plugins/sharing/client-plugin.ts",
+    "plugins/sharing/public-conversation.ts",
+    "plugins/sharing/queries.ts",
+    "plugins/sharing/router.ts",
+    "plugins/sharing/server-plugin.ts",
+    "plugins/sharing/ui/chat-contributions.tsx",
+    "plugins/sharing/ui/share-button.tsx",
+    "plugins/sharing/ui/share-dialog.tsx",
+    "plugins/sharing/ui/share-menu-item.tsx",
+    "plugins/sharing/ui/shared-badge.tsx",
+    "plugins/sharing/ui/transcript-messages.tsx",
+    "plugins/sharing/ui/shared-page.tsx",
+    "app/(chat)/share/[id]/page.tsx"
+  ],
+  "chat": { "export": "sharingChat" },
+  "server": { "export": "sharing", "routers": ["sharing"] },
+  "client": {
+    "export": "sharingClient",
+    "composerControls": [],
+    "settingsItems": [],
+    "chat": true
+  }
+}

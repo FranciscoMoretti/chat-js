@@ -8,6 +8,7 @@ export const installedPlugins: ReadonlySet<string> = new Set([
   "mcp",
   "projects",
   "search",
+  "sharing",
   "vercel-analytics",
   "vercel-speed-insights",
 ]);

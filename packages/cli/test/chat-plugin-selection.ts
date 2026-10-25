@@ -11,6 +11,7 @@ const selections = [
   "followup-suggestions",
   "search",
   "ai-titles",
+  "sharing",
 ] as const;
 const pluginTables = [
   "Project",
@@ -26,6 +27,7 @@ const expectedTables: Record<(typeof selections)[number], readonly string[]> = {
   "followup-suggestions": ["EveFollowup"],
   search: ["EveSearchText"],
   "ai-titles": [],
+  sharing: [],
 };
 
 /** Reuse the packed CLI/registry fixture, keeping each app outside the workspace. */
@@ -57,6 +59,9 @@ export const testChatPluginSelections = (
       }
       // Checking the actual tree prevents a copied reference preset from masking
       // accidental imports of an omitted plugin during compilation.
+      expect(existsSync(path.join(cwd, "app/(chat)/share/[id]/page.tsx"))).toBe(
+        selection === "sharing"
+      );
       const pluginDirectory = path.join(cwd, "plugins");
       const installedPlugins = existsSync(pluginDirectory)
         ? await readdir(pluginDirectory)
@@ -112,6 +117,9 @@ process.env.OPENAI_API_KEY = "fixture-key";
       }
       if (selection === "ai-titles") {
         lifecycleMethod = "afterCreate";
+      }
+      if (selection === "sharing") {
+        lifecycleMethod = "publicReadFilter";
       }
       await writeFile(
         path.join(cwd, "plugin-lifecycle-probe.ts"),

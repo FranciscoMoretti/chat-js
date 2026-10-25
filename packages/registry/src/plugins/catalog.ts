@@ -1,3 +1,4 @@
+import { sharingItem } from "./sharing/manifest";
 import { aiTitlesItem } from "./ai-titles/manifest";
 import { searchItem } from "./search/manifest";
 import { followupSuggestionsItem } from "./followup-suggestions/manifest";
@@ -13,6 +14,7 @@ export const pluginItems = [
   followupSuggestionsItem,
   searchItem,
   aiTitlesItem,
+  sharingItem,
   mcpItem,
   attachmentUploadsItem,
   ...observabilityItems,

@@ -43,7 +43,6 @@ const UpdatingProject = (): React.JSX.Element => {
         onRename={vi
           .fn<(id: string, title: string) => Promise<void>>()
           .mockResolvedValue()}
-        renderShareContent={() => null}
       />
       <button
         type="button"

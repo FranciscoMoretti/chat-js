@@ -22,17 +22,11 @@ import { saveManualEveDocument } from "@/lib/eve/save-document";
 
 import { eveOwnedProcedure } from "@/trpc/eve-owned-procedure";
 
-import {
-  createTRPCRouter,
-  protectedProcedure,
-  publicProcedure,
-} from "@/trpc/init";
+import { createTRPCRouter, publicProcedure } from "@/trpc/init";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 const MAX_CONVERSATION_TITLE_LENGTH = 255;
 const MAX_MESSAGE_ID_LENGTH = 512;
-
-const eveProcedure = protectedProcedure;
 
 export const eveRouter = createTRPCRouter({
   messageDisplay: eveOwnedProcedure
@@ -250,28 +244,4 @@ export const eveRouter = createTRPCRouter({
       }
     }
   ),
-  setVisibility: eveProcedure
-    .input(
-      z.object({ id: z.uuid(), visibility: z.enum(["private", "public"]) })
-    )
-    .mutation(
-      async ({
-        ctx,
-        input,
-      }: {
-        readonly ctx: { readonly user: { readonly id: string } };
-        readonly input: ReadonlyNativeSurface<{
-          id: string;
-          visibility: "private" | "public";
-        }>;
-      }) => {
-        const row = await updateEveConversationMetadata(ctx.user.id, input.id, {
-          visibility: input.visibility,
-        });
-        if (row === undefined) {
-          throw new TRPCError({ code: "NOT_FOUND" });
-        }
-        return row;
-      }
-    ),
 });

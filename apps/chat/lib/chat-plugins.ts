@@ -1,4 +1,6 @@
 import { eveConversationTitleFallback } from "./eve/conversation-title";
+import type { SQL } from "drizzle-orm";
+import { or, sql } from "drizzle-orm";
 import { createModuleLogger } from "./logger";
 import { installedChatPlugins } from "@/composition/generated/installed-chat";
 import type { ChatLinks, ChatCreatedContext } from "./chat-plugin-contracts";
@@ -54,3 +56,8 @@ export const runChatAfterCreate = async (
     );
   }
 };
+
+/** No installed public-reader contribution means no public access. */
+export const publicChatReadFilter = (): SQL =>
+  or(...installedChatPlugins.map((plugin) => plugin.publicReadFilter?.())) ??
+  sql`false`;

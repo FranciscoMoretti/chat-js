@@ -71,3 +71,13 @@ export const PluginSidebarHeader = ({
     )}
   </>
 );
+
+export const PluginChatHeaderActions = ({
+  chat,
+}: ChatActionProps): React.JSX.Element => (
+  <>
+    {installedChatUi.map(({ id, chat: { HeaderActions } }) =>
+      HeaderActions ? <HeaderActions key={id} chat={chat} /> : null
+    )}
+  </>
+);
