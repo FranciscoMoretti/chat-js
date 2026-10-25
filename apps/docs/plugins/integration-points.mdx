@@ -54,6 +54,21 @@ On retry, core checks the existing creation's message, attachments, model, tool 
 
 Core retains the original pending request for recovery and dispatch validation. Current membership can change independently. Do not use current membership to reconstruct the original request or reattach membership during recovery.
 
+### Explicit chat mutations
+
+Import `updateOwnedChat` from `@/lib/db/update-owned-chat` when a plugin changes metadata on an existing chat. Core resolves the logical chat from a chat or legacy conversation ID, checks ownership and the presence of a bound session, and holds the same family lock used by deletion. An unavailable chat returns `null` without invoking your callback.
+
+```ts
+await updateOwnedChat({ ownerId, chatId }, async ({ tx, chatId }) => {
+  await tx.delete(membership).where(eq(membership.chatId, chatId));
+  return { chatId };
+});
+```
+
+Use the supplied transaction for plugin-owned validation and writes. Returning a result updates the core chat timestamp in that transaction. Return `null` before writing when plugin validation rejects the mutation. Throw on failures so the transaction rolls back. Do not dispatch native sessions or perform external side effects here.
+
+Projects uses this helper for assignment and removal. The plugin owns project validation and membership, while core owns lifecycle coordination. The helper is an ordinary server function, with no additional registration.
+
 ### History
 
 `chat.historyFilter(input, surface)` returns a Drizzle SQL predicate or `undefined`. Core combines every plugin predicate with its ownership, state, search, and cursor restrictions before ordering and limiting the result.

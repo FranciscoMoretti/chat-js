@@ -398,3 +398,101 @@ test("plugin history filtering preserves ownership and supplies project navigati
   });
   expect(forbidden.items).toEqual([]);
 });
+
+test("owned chat mutations resolve legacy IDs and exclude other owners or unavailable sessions", async () => {
+  const { updateOwnedChat } = await import("./update-owned-chat");
+  const { createEveConversation } = await import("./eve-queries");
+  const bound = await createEveConversation(
+    "owner",
+    crypto.randomUUID(),
+    "Mutation coordination",
+    (id) => `native-${id}`
+  );
+  const reservation = await getEveConversation("owner", bound.id);
+  if (!reservation) {
+    throw new Error("Expected a reserved conversation");
+  }
+  const mutate = vi
+    .fn<Parameters<typeof updateOwnedChat>[1]>()
+    .mockResolvedValue({ changed: true });
+  expect(
+    await updateOwnedChat({ ownerId: "other", chatId: bound.id }, mutate)
+  ).toBeNull();
+  expect(
+    await updateOwnedChat(
+      { ownerId: "owner", chatId: crypto.randomUUID() },
+      mutate
+    )
+  ).toBeNull();
+  expect(mutate).not.toHaveBeenCalled();
+  await postgres.query(
+    `UPDATE "EveChat" SET "updatedAt"='2000-01-01' WHERE id=$1`,
+    [reservation.chatId]
+  );
+  expect(
+    await updateOwnedChat({ ownerId: "owner", chatId: bound.id }, mutate)
+  ).toEqual({ changed: true });
+  expect(mutate).toHaveBeenCalledWith(
+    expect.objectContaining({ chatId: reservation.chatId })
+  );
+  const updated = await postgres.query<{ touched: boolean }>(
+    `SELECT "updatedAt" > '2000-01-01'::timestamp AS touched FROM "EveChat" WHERE id=$1`,
+    [reservation.chatId]
+  );
+  expect(updated.rows).toEqual([{ touched: true }]);
+  mutate.mockClear();
+  await postgres.query(
+    `UPDATE "EveConversation" SET state='deleting' WHERE id=$1`,
+    [bound.id]
+  );
+  expect(
+    await updateOwnedChat(
+      { ownerId: "owner", chatId: reservation.chatId },
+      mutate
+    )
+  ).toBeNull();
+  expect(mutate).not.toHaveBeenCalled();
+});
+
+test("a failed plugin mutation rolls back its writes and the core timestamp", async () => {
+  const { updateOwnedChat } = await import("./update-owned-chat");
+  const { createEveConversation } = await import("./eve-queries");
+  const { eveChatProject } =
+    await import("@/plugins/projects/db/project-schema");
+  const bound = await createEveConversation(
+    "owner",
+    crypto.randomUUID(),
+    "Rollback",
+    (id) => `native-${id}`
+  );
+  const reservation = await getEveConversation("owner", bound.id);
+  if (!reservation) {
+    throw new Error("Expected a reserved conversation");
+  }
+  const projectId = crypto.randomUUID();
+  await postgres.query(
+    `INSERT INTO "Project" (id,"userId",name) VALUES ($1,'owner','Rollback')`,
+    [projectId]
+  );
+  await postgres.query(
+    `UPDATE "EveChat" SET "updatedAt"='2000-01-01' WHERE id=$1`,
+    [reservation.chatId]
+  );
+  await expect(
+    updateOwnedChat(
+      { ownerId: "owner", chatId: reservation.chatId },
+      async ({ tx, chatId }) => {
+        await tx
+          .insert(eveChatProject)
+          .values({ chatId, ownerId: "owner", projectId });
+        throw new Error("Plugin write failed");
+      }
+    )
+  ).rejects.toThrow("Plugin write failed");
+  expect(await getEveConversationProject("owner", bound.id)).toBeNull();
+  const unchanged = await postgres.query<{ original: boolean }>(
+    `SELECT "updatedAt" = '2000-01-01'::timestamp AS original FROM "EveChat" WHERE id=$1`,
+    [reservation.chatId]
+  );
+  expect(unchanged.rows).toEqual([{ original: true }]);
+});

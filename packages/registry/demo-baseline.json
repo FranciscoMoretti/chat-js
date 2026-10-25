@@ -102,7 +102,7 @@
     "plugins/projects/client-plugin.ts": "1f174bde572d854e0e2c15d94416affc66fd944b16589af1da063bcb394dff48",
     "plugins/projects/conversation-hook.ts": "64a0e3f86debeb001e3af9c2a28e16cabfe8881c0405fafb9b6189ec20970b2f",
     "plugins/projects/creation.ts": "f2bb27077c68a54ac1e17960e773a9a1aebab9fefafcb721ac818749d145e888",
-    "plugins/projects/db/project-queries.ts": "9a871f583202cd14835be9fee44e029e08b1bc2f87a5dc388378a240b8577c70",
+    "plugins/projects/db/project-queries.ts": "5c0a8b51dae3aa93aa833e5a13c514a3b527cad0de8bd46f2cfc39d6a257ebb9",
     "plugins/projects/db/project-schema.ts": "e2e8d94b869ac04bfef30dadbf0f146f9d90331f0334f5ae1cfd224bbafc8b02",
     "plugins/projects/instructions-state.ts": "193d03bbc0d7901111c18459e93090cee88e112bd1d8afa100d3967aaf32c462",
     "plugins/projects/instructions.ts": "e6a58a8154769c5c6d60bdabf524853d7631166223ac7e45071f65567885ad2e",

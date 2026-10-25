@@ -2,13 +2,11 @@ import type { PgSelectBase, PgSelectWithout } from "drizzle-orm/pg-core";
 import type { GetSelectTableName } from "drizzle-orm/query-builders/select.types";
 import { and, desc, eq, or, sql } from "drizzle-orm";
 import { db } from "@/lib/db/client";
+import { updateOwnedChat } from "@/lib/db/update-owned-chat";
 import { eveChat, eveConversation } from "@/lib/db/schema";
 import { project, eveChatProject } from "./project-schema";
 
 const hasQueryRow: (row: unknown) => boolean = Boolean;
-type ProjectWriteTransaction = Readonly<
-  Pick<typeof db, "select" | "execute" | "insert" | "delete" | "update">
->;
 const createProject = ({
   id,
   userId,
@@ -98,63 +96,33 @@ const assignEveConversationProject = async (
   routeId: string,
   projectId: string | null
 ): Promise<{ conversationId: string; projectId: string | null } | null> =>
-  await db.transaction(async (tx: ProjectWriteTransaction) => {
-    await tx.execute(
-      sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
-    );
-    const [logicalChat] = await tx
-      .select({ id: eveChat.id })
-      .from(eveChat)
-      .where(
-        and(
-          eq(eveChat.ownerId, ownerId),
-          or(
-            eq(eveChat.id, routeId),
-            sql`exists (
-              select 1 from "EveConversation" route_member
-              where route_member."chatId" = ${eveChat.id}
-                and route_member."ownerId" = ${ownerId}
-                and route_member."id" = ${routeId}
-            )`
-          ),
-          sql`exists (
-            select 1 from "EveConversation" member
-            where member."chatId" = ${eveChat.id}
-              and member."ownerId" = ${ownerId}
-              and member."state" = 'bound'
-          )`
-        )
-      );
-    if (!hasQueryRow(logicalChat)) {
-      return null;
-    }
-    if (projectId === null) {
-      await tx
-        .delete(eveChatProject)
-        .where(eq(eveChatProject.chatId, logicalChat.id));
-    } else {
-      const [target] = await tx
-        .select({ id: project.id })
-        .from(project)
-        .where(and(eq(project.id, projectId), eq(project.userId, ownerId)))
-        .for("key share");
-      if (!hasQueryRow(target)) {
-        return null;
+  await updateOwnedChat(
+    { ownerId, chatId: routeId },
+    async ({ tx, chatId }) => {
+      if (projectId === null) {
+        await tx
+          .delete(eveChatProject)
+          .where(eq(eveChatProject.chatId, chatId));
+      } else {
+        const [target] = await tx
+          .select({ id: project.id })
+          .from(project)
+          .where(and(eq(project.id, projectId), eq(project.userId, ownerId)))
+          .for("key share");
+        if (!hasQueryRow(target)) {
+          return null;
+        }
+        await tx
+          .insert(eveChatProject)
+          .values({ chatId, ownerId, projectId })
+          .onConflictDoUpdate({
+            set: { projectId },
+            target: eveChatProject.chatId,
+          });
       }
-      await tx
-        .insert(eveChatProject)
-        .values({ chatId: logicalChat.id, ownerId, projectId })
-        .onConflictDoUpdate({
-          set: { projectId },
-          target: eveChatProject.chatId,
-        });
+      return { conversationId: routeId, projectId };
     }
-    await tx
-      .update(eveChat)
-      .set({ updatedAt: new Date() })
-      .where(eq(eveChat.id, logicalChat.id));
-    return { conversationId: routeId, projectId };
-  });
+  );
 const getEveConversationProject = async (
   ownerId: string,
   routeId: string
