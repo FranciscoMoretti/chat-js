@@ -1,7 +1,4 @@
-import type {
-  ChatServerIntegration,
-  ChatClientIntegration,
-} from "./chat-plugin-contracts";
+import type { ChatClientIntegration } from "./chat-plugin-contracts";
 import type { ComposerControl } from "@/components/composer/control";
 import type { SettingsItem } from "@/components/settings/settings-item";
 import type {
@@ -14,7 +11,6 @@ import type {
 /** Server contributions stay out of the client configuration graph. */
 interface ChatPlugin {
   readonly id: string;
-  readonly chat?: ChatServerIntegration;
   readonly routers?: InstalledRouters;
   readonly instrumentation?: InstrumentationRegistration;
 }

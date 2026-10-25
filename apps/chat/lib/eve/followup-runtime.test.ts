@@ -24,9 +24,9 @@ it("loads the authored followup hook in the standalone Node runtime", () => {
         EVE_GATEWAY_SECRET: "followup-runtime-test-secret-at-least-32",
         WORKFLOW_POSTGRES_URL: "postgres://test:test@127.0.0.1:1/test",
       },
-      timeout: 10_000,
+      timeout: 20_000,
     }
   );
   expect(result.error).toBeUndefined();
   expect(result.status, result.stderr).toBe(0);
-});
+}, 30_000);

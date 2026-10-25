@@ -3,7 +3,6 @@ import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "vitest/config";
 import registry from "../registry/visual/vitest.config";
-import { registeredProjectsPlugin } from "../registry/visual/registered-projects-plugin";
 import { uiverifyPlugin } from "@uiverify/vitest/plugin";
 
 const appIcon = fileURLToPath(
@@ -22,7 +21,6 @@ export default defineConfig({
     dedupe: [...(registry.resolve?.dedupe ?? []), "nuqs"],
   },
   plugins: [
-    registeredProjectsPlugin(),
     uiverifyPlugin({
       outDir: fileURLToPath(new URL("uiverify-archive", import.meta.url)),
     }),

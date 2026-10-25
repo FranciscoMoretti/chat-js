@@ -49,6 +49,8 @@ const REPOSITORY_ONLY_FILES = new Set([
   "lib/db/eve-search.test.ts",
   "lib/db/eve-followup.test.ts",
   "lib/eve/followup-runtime.test.ts",
+  "lib/eve/project-instructions.test.ts",
+  "lib/project-icons.test.ts",
   "lib/db/eve-subagents.test.ts",
   "lib/eve/core-tool-types.test.ts",
   "lib/eve/document-execution.test.ts",

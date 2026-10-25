@@ -338,12 +338,12 @@ const syncPlugins = async (
   );
   const layout = plugins.filter((plugin) => plugin.client?.layout);
   const uploads = plugins.filter((plugin) => plugin.client?.uploads);
-  const chat = plugins.filter((plugin) => plugin.server?.chat);
+  const chat = plugins.filter((plugin) => plugin.chat);
   const chatUi = plugins.filter((plugin) => plugin.client?.chat);
   const contents = [
     [
       "installed-chat",
-      `${imports(chat, "server")}\nimport type { ChatServerIntegration } from "@/lib/chat-plugin-contracts";\nexport const installedChatPlugins: readonly ChatServerIntegration[] = [${chat.map((_, index) => `plugin${index}().chat`).join(", ")}];`,
+      `${chat.map((plugin, index) => `import { ${plugin.chat?.export} as chat${index} } from "@/plugins/${plugin.id}/chat";`).join("\n")}\nimport type { ChatServerIntegration } from "@/lib/chat-plugin-contracts";\nexport const installedChatPlugins: readonly ChatServerIntegration[] = [${chat.map((_, index) => `chat${index}`).join(", ")}];`,
     ],
     [
       "installed-chat-ui",

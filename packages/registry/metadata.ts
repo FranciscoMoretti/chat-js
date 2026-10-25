@@ -150,12 +150,12 @@ const pluginDefinitionSchema = z.object({
   envRequirements: z.array(envRequirementSchema).optional(),
   requiresPlugins: z.array(pluginIdSchema).optional(),
   requiresStorage: z.literal(true).optional(),
+  chat: z.object({ export: identifier }).optional(),
   server: z
     .object({
       export: identifier,
       routers: z.array(identifier).default([]),
       instrumentation: z.literal(true).optional(),
-      chat: z.literal(true).optional(),
     })
     .optional(),
   client: z

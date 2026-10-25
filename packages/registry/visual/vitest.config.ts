@@ -4,7 +4,6 @@ import { defineConfig } from "vitest/config";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { playwright } from "@vitest/browser-playwright";
-import { registeredProjectsPlugin } from "./registered-projects-plugin";
 import { uiverifyPlugin } from "@uiverify/vitest/plugin";
 
 const appRequire = createRequire(
@@ -52,7 +51,7 @@ export default defineConfig({
     ],
   },
   oxc: { jsx: { runtime: "automatic" } },
-  plugins: [registeredProjectsPlugin(), uiverifyPlugin()],
+  plugins: [uiverifyPlugin()],
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("../../../apps/chat", import.meta.url)),

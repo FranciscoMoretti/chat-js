@@ -651,6 +651,13 @@ test("Projects installs independently and core composition has no project schema
     JSON.stringify(projectsItem.meta?.chatjs)
   );
   await syncPlugins(root, { expected: ["projects"] });
+  const lifecycle = await readFile(
+    path.join(root, "composition/generated/installed-chat.ts"),
+    "utf-8"
+  );
+  expect(lifecycle).toContain("@/plugins/projects/chat");
+  expect(lifecycle).not.toContain("server-plugin");
+  expect(lifecycle).not.toContain("routers");
   expect(
     await readFile(
       path.join(root, "composition/generated/installed-routers.ts"),

@@ -13,8 +13,11 @@ Keep server and browser import graphs separate:
 
 | Entry point | Contract | Contributions |
 | --- | --- | --- |
-| `server-plugin.ts` | `ChatPlugin` | tRPC routers, instrumentation, transactional chat integration |
+| `server-plugin.ts` | `ChatPlugin` | tRPC routers, instrumentation |
+| `chat.ts` | `ChatServerIntegration` | Transactional chat integration, safe for EVE and Next.js |
 | `client-plugin.ts` | `ChatClientPlugin` | Composer controls, settings, layout, uploads, chat UI |
+
+Keep `chat.ts` free of web routers and Next.js request helpers: native EVE loads this entrypoint too.
 
 Factories return concrete types with `satisfies`. Sync generates static imports and registrations from the descriptor without executing server factories during installation.
 
@@ -23,7 +26,6 @@ export const projects = () =>
   ({
     id: "projects",
     routers: { project: projectRouter },
-    chat: projectsChat,
   }) satisfies ChatPlugin;
 ```
 
@@ -96,7 +98,8 @@ Declare plugin schema paths in `databaseSchemas`. Drizzle composes installed sch
   "id": "projects",
   "kind": "plugin",
   "databaseSchemas": ["plugins/projects/db/project-schema.ts"],
-  "server": { "export": "projects", "routers": ["project"], "chat": true },
+  "server": { "export": "projects", "routers": ["project"] },
+  "chat": { "export": "projectsChat" },
   "client": { "export": "projectsClient", "chat": true }
 }
 ```

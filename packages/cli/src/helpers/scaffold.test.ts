@@ -338,6 +338,8 @@ describe("scaffoldFromTemplate", (): void => {
       "lib/db/eve-search.test.ts",
       "lib/db/eve-followup.test.ts",
       "lib/eve/followup-runtime.test.ts",
+      "lib/eve/project-instructions.test.ts",
+      "lib/project-icons.test.ts",
       "playwright.eve.config.ts",
       "playwright.guest.config.ts",
       "vitest.eve.config.ts",
