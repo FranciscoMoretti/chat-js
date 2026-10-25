@@ -26,11 +26,13 @@ const feedbackItem: RegistryItem = {
   name: "feedback",
   type: "registry:item",
   description: "Private feedback on assistant messages",
-  files: feedbackFiles.map((file) => ({
-    path: `src/plugins/feedback/src/${file.slice("plugins/feedback/".length)}`,
-    target: `~/${file}`,
-    type: "registry:file" as const,
-  })),
+  files: feedbackFiles.map(
+    (file): NonNullable<RegistryItem["files"]>[number] => ({
+      path: `src/plugins/feedback/src/${file.slice("plugins/feedback/".length)}`,
+      target: `~/${file}`,
+      type: "registry:file",
+    })
+  ),
   meta: { chatjs: feedbackDefinition },
 };
 export { feedbackItem, feedbackFiles, feedbackDefinition };
