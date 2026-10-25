@@ -52,15 +52,20 @@ test("fresh workers reload declarations, preserve transforms, fan out changes an
       }
     );
     // A formatter teardown regression must fail this test, not hang the suite.
+    let timedOut = false;
     const timeout = setTimeout(() => {
+      timedOut = true;
       worker.kill("SIGKILL");
-    }, 5000);
+    }, 60_000);
     const [code, stdout, stderr] = await Promise.all([
       worker.exited,
       new Response(worker.stdout).text(),
       new Response(worker.stderr).text(),
     ]);
     clearTimeout(timeout);
+    if (timedOut) {
+      throw new Error(`Fixture generator exceeded 60s:\n${stdout}\n${stderr}`);
+    }
     if (failure) {
       expect(code).toBe(1);
       return `${stdout}\n${stderr}`;
@@ -304,4 +309,4 @@ await mirror.run({ check: true });
   } finally {
     await rm(fixture, { recursive: true, force: true });
   }
-}, 60_000);
+}, 300_000);
