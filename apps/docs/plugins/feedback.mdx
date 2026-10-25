@@ -1,0 +1,24 @@
+---
+title: Feedback
+description: Install private assistant-message ratings without coupling them to chat metadata
+---
+
+Feedback adds upvote and downvote actions to assistant messages.
+
+```bash
+bunx chat-js add feedback
+```
+
+The plugin owns the `EveVote` schema, `feedback` tRPC router, transcript validation, and UI under `plugins/feedback/`. Review and apply the generated migration when installing into an app without the table. Existing reference-app data uses the same table and keys.
+
+## Authorization and identity
+
+A vote belongs to one exact conversation and native assistant-message ID. The plugin checks ownership and bound state, validates the message against an EVE snapshot, then rechecks ownership and state under the existing conversation-family lock before writing. Public shares have no feedback actions or access to private ratings.
+
+Voting does not update the chat timestamp or move it in history. It does not use `updateOwnedChat`.
+
+## Client and deletion integration
+
+The `MessageActions` slot receives `conversationId`, `messageId`, and `disabled`. All messages share a cached votes query per conversation. A successful mutation cancels stale reads before updating that cache.
+
+The `onDeleteConversations` callback removes votes for the exact deleted conversations inside the core deletion transaction. It runs even when another branch keeps the logical chat alive. Final-chat cleanup remains a separate callback. See [integration points](./integration-points).

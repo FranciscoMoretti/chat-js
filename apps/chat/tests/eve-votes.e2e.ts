@@ -1,3 +1,4 @@
+import { eveVote } from "../plugins/feedback/feedback-schema";
 import { createEveTestSession } from "./eve-native-session.fixture";
 
 import { eq } from "drizzle-orm";
@@ -11,10 +12,10 @@ import {
   createEveConversation,
   updateEveConversationMetadata,
 } from "../lib/db/eve-queries";
-import { getEveMessageVotes } from "../lib/db/queries";
-import { eveConversation, eveVote, user } from "../lib/db/schema";
+import { getEveMessageVotes } from "../plugins/feedback/feedback-queries";
+import { eveConversation, user } from "../lib/db/schema";
 import { env } from "../lib/env";
-import { voteEveMessage } from "../lib/eve/vote-message";
+import { voteEveMessage } from "../plugins/feedback/vote-message";
 import { assertEveTestDatabase } from "./eve-test-database";
 
 vi.mock("server-only", () => ({}));

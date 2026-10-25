@@ -23,7 +23,6 @@ import {
   eveNamedDocumentCheckpointEntry,
   eveSearchText,
   eveSubagentSession,
-  eveVote,
 } from "./schema";
 
 const SINGLE_MATCH_LIMIT = 1;
@@ -285,7 +284,15 @@ const completeEveConversationDeletion = async (
         family.flatMap((row) => (row.sessionId === null ? [] : [row.sessionId]))
       )
     );
-    await tx.delete(eveVote).where(inArray(eveVote.conversationId, ids));
+    for (const plugin of installedChatPlugins) {
+      // oxlint-disable-next-line no-await-in-loop -- Cleanup participates in the deletion transaction.
+      await plugin.onDeleteConversations?.(tx, {
+        conversationIds: ids,
+        sessionIds: family.flatMap((row) =>
+          row.sessionId === null ? [] : [row.sessionId]
+        ),
+      });
+    }
     await tx
       .update(eveConversation)
       .set({

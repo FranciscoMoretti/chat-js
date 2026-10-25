@@ -22,6 +22,7 @@ type InstallationSelection = z.infer<typeof installationSelectionSchema>;
 const demoInstallation = installationSelectionSchema.parse({
   plugins: [
     "projects",
+    "feedback",
     "mcp",
     "attachment-uploads",
     "vercel-analytics",

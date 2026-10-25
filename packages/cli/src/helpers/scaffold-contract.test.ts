@@ -19,6 +19,7 @@ const buildConfigFor = (gateway: Gateway): string =>
       attachments: true,
       documents: true,
       followupSuggestions: true,
+      feedback: false,
       mcp: true,
       projects: false,
       parallelResponses: true,

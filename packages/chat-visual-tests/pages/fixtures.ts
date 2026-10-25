@@ -280,7 +280,7 @@ export const invoicesTrpc = {
     titleStatus: "generated",
     visibility: "private",
   },
-  "eve.votes": [],
+  "feedback.votes": [],
 } satisfies Partial<Record<string, unknown>> & {
   "eve.branches": Outputs["eve"]["branches"];
   "eve.get": Outputs["eve"]["get"];

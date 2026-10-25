@@ -14,6 +14,7 @@ const unselectedFeatures = {
   attachments: false,
   documents: false,
   followupSuggestions: false,
+  feedback: false,
   mcp: false,
   projects: false,
   parallelResponses: false,

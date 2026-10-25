@@ -143,6 +143,7 @@ export default defineConfig({
           items: [
             "/plugins/overview",
             "/plugins/projects",
+            "/plugins/feedback",
             "/plugins/integration-points",
             "/plugins/mcp",
             "/plugins/attachments",

@@ -2,7 +2,7 @@ import React from "react";
 import { createRoot } from "react-dom/client";
 
 import { MessageActions } from "../components/ai-elements/message";
-import { MessageVoteActions } from "../components/message-vote-actions";
+import { MessageVoteActions } from "../plugins/feedback/message-vote-actions";
 
 const states: {
   label: string;

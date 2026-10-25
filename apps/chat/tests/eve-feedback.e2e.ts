@@ -1,3 +1,4 @@
+import { eveVote } from "../plugins/feedback/feedback-schema";
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 
@@ -7,15 +8,16 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 
 import { db } from "../lib/db/client";
-import { eveConversation, eveVote } from "../lib/db/schema";
+import { eveConversation } from "../lib/db/schema";
 import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
 
 const votesRoute = (url: Readonly<Pick<URL, "pathname">>): boolean =>
-  url.pathname.includes("eve.votes");
+  url.pathname.includes("feedback.votes");
 const mutationRoute = (url: Readonly<Pick<URL, "pathname">>): boolean =>
-  url.pathname.includes("eve.vote") && !url.pathname.includes("eve.votes");
+  url.pathname.includes("feedback.vote") &&
+  !url.pathname.includes("feedback.votes");
 
 test("assistant feedback survives reload, recovers from errors and stays out of public shares", async ({
   page,
@@ -65,8 +67,8 @@ test("assistant feedback survives reload, recovers from errors and stays out of 
     /* oxlint-enable eslint/no-await-in-loop */
     await page.route(
       (url: Readonly<Pick<URL, "pathname">>) =>
-        url.pathname.includes("eve.vote") &&
-        !url.pathname.includes("eve.votes"),
+        url.pathname.includes("feedback.vote") &&
+        !url.pathname.includes("feedback.votes"),
       async (route) => {
         await route.fulfill({
           body: "{}",
@@ -169,7 +171,7 @@ test("assistant feedback survives reload, recovers from errors and stays out of 
     const publicPage = await anonymous.newPage();
     const feedbackRequests: string[] = [];
     publicPage.on("request", (request: Readonly<Pick<Request, "url">>) => {
-      if (request.url().includes("eve.vote")) {
+      if (request.url().includes("feedback.vote")) {
         feedbackRequests.push(request.url());
       }
     });

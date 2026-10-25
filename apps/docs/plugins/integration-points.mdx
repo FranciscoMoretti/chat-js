@@ -107,3 +107,9 @@ Declare plugin schema paths in `databaseSchemas`. Drizzle composes installed sch
 The complete descriptor lists every installed file. Use distinctive filenames such as `project-schema.ts` to avoid registry import-rewriting ambiguity with host files.
 
 Generated modules register routers, database schemas, instrumentation, layout, uploads, and chat contributions. Edit factories and descriptors, then run sync. Verify installations both with and without the plugin. Core must not import optional plugin storage or implementation directly.
+
+## Per-conversation cleanup and message actions
+
+`chat.onDeleteConversations(tx, { conversationIds, sessionIds })` runs inside the existing deletion transaction, before the selected conversations are tombstoned. A failure rolls back the database cleanup. Use it for content belonging to those conversations or sessions, such as Feedback votes. `onDelete(tx, chatId)` still runs only when the final session of the logical chat is removed.
+
+The client `chat.MessageActions` placement receives `{ conversationId, messageId, disabled }`. Core renders it for editable assistant messages; each plugin owns its queries and mutations. Feedback uses a conversation-specific write with a lock and state recheck, because voting must not change the logical chat's update timestamp.

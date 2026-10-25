@@ -48,6 +48,7 @@ const REPOSITORY_ONLY_FILES = new Set([
   "lib/db/migrations/eve-runtime-migration.test.ts",
   "lib/db/eve-search.test.ts",
   "lib/db/eve-followup.test.ts",
+  "lib/db/feedback-plugin.test.ts",
   "lib/eve/followup-runtime.test.ts",
   "lib/eve/project-instructions.test.ts",
   "lib/project-icons.test.ts",

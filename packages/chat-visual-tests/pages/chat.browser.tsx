@@ -522,3 +522,18 @@ test("project assignment dialog from the chat menu", async () => {
     .element(page.getByRole("combobox", { name: "Project", exact: true }))
     .toHaveValue(launchProject.id);
 });
+
+test("conversation with saved private feedback", async () => {
+  await renderRoute(conversation, {
+    ...request,
+    trpc: {
+      ...invoicesTrpc,
+      "feedback.votes": [{ messageId: "msg-assistant-1", isUpvoted: true }],
+    },
+  });
+  await expect
+    .element(page.getByTestId("message-upvote"))
+    .toHaveAttribute("aria-pressed", "true");
+  await expect.element(page.getByTestId("message-upvote")).toBeDisabled();
+  await expect.element(page.getByTestId("message-downvote")).toBeEnabled();
+});

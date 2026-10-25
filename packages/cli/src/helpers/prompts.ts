@@ -52,6 +52,7 @@ const CORE_FEATURE_LABELS: Record<CoreFeatureKey, string> = {
   followupSuggestions: "Follow-up Suggestions",
   mcp: "MCP Tool Servers",
   projects: "Projects",
+  feedback: "Message feedback",
   parallelResponses: "Parallel Responses",
 };
 
@@ -312,6 +313,7 @@ const promptCoreFeatures = async (
     attachments: false,
     documents: true,
     followupSuggestions: false,
+    feedback: false,
     mcp: mcp ?? false,
     projects: projects ?? false,
     parallelResponses: FEATURES_DEFAULTS.parallelResponses,
@@ -354,6 +356,7 @@ const promptCoreFeatures = async (
     documents: selected.includes("documents"),
     mcp: mcp ?? selected.includes("mcp"),
     projects: projects ?? selected.includes("projects"),
+    feedback: selected.includes("feedback"),
     followupSuggestions: selected.includes("followupSuggestions"),
   };
 };

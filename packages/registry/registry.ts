@@ -1,3 +1,4 @@
+import { feedbackItem } from "./src/plugins/feedback/manifest";
 import { projectsItem } from "./src/plugins/projects/manifest";
 import { builtInSandboxes } from "./src/sandboxes/catalog";
 import { codeExecutionItem, codeExecutionRuntimeItem } from "./code-execution";
@@ -199,6 +200,7 @@ const registry = registrySchema.parse({
   homepage: "https://chatjs.dev",
   items: [
     projectsItem,
+    feedbackItem,
     mcpItem,
     attachmentUploadsItem,
     ...observabilityItems,

@@ -4,10 +4,10 @@ import React from "react";
 import type { JSX as ReactJSX } from "react";
 
 import { MessageAction } from "@/components/ai-elements/message";
-import { MessageVoteActions } from "@/components/message-vote-actions";
+import { MessageVoteActions } from "./message-vote-actions";
 import { useTRPC } from "@/trpc/react";
 
-export const EveFeedbackActions = ({
+export const FeedbackActions = ({
   conversationId,
   messageId,
   disabled,
@@ -20,10 +20,10 @@ export const EveFeedbackActions = ({
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   // All messages share one cached query and one request per conversation.
-  const options = trpc.eve.votes.queryOptions({ conversationId });
+  const options = trpc.feedback.votes.queryOptions({ conversationId });
   const votes = useQuery(options);
   const mutation = useMutation(
-    trpc.eve.vote.mutationOptions({
+    trpc.feedback.vote.mutationOptions({
       onMutate: async () => {
         // A background read started before this vote must not overwrite its result.
         await queryClient.cancelQueries({ queryKey: options.queryKey });

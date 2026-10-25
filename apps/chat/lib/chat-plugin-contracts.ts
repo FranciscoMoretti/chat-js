@@ -31,6 +31,14 @@ export interface ChatServerIntegration {
     ownerId: string,
     chatIds: readonly string[]
   ) => Promise<ReadonlyMap<string, ChatLinks>>;
+  /** Runs inside deletion's transaction before these conversations are tombstoned. */
+  readonly onDeleteConversations?: (
+    tx: Readonly<Pick<typeof db, "delete">>,
+    context: {
+      readonly conversationIds: readonly string[];
+      readonly sessionIds: readonly string[];
+    }
+  ) => Promise<void>;
   /** Called within deletion's existing transaction when the last session is removed. */
   readonly onDelete?: (
     tx: Readonly<Pick<typeof db, "delete">>,
@@ -45,7 +53,13 @@ export interface ChatActionProps {
     readonly state?: string;
   };
 }
+export interface ChatMessageActionProps {
+  readonly conversationId: string;
+  readonly messageId: string;
+  readonly disabled: boolean;
+}
 export interface ChatClientIntegration {
+  readonly MessageActions?: ComponentType<ChatMessageActionProps>;
   readonly Sidebar?: ComponentType;
   readonly Actions?: ComponentType<ChatActionProps>;
   readonly Breadcrumb?: ComponentType<{ readonly chatId: string }>;

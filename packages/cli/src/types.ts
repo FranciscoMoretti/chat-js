@@ -26,6 +26,7 @@ const CORE_FEATURE_KEYS = [
   "documents",
   "mcp",
   "projects",
+  "feedback",
   "followupSuggestions",
 ] as const;
 

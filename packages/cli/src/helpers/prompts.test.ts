@@ -36,6 +36,7 @@ it("returns complete selections from interactive prompts in catalog order", asyn
       attachments: false,
       documents: true,
       followupSuggestions: false,
+      feedback: false,
       mcp: true,
       projects: false,
       parallelResponses: true,

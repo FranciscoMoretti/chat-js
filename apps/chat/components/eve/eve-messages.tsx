@@ -30,7 +30,7 @@ import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 
 import { EveAttachment } from "./eve-attachment";
 import { EveDocumentTool } from "./eve-document-tool";
-import { EveFeedbackActions } from "./eve-feedback-actions";
+import { PluginMessageActions } from "@/components/plugin-chat-ui";
 import { EveMcpResult } from "./eve-mcp-result";
 import { EveToolResult } from "./eve-tool-result";
 
@@ -297,7 +297,7 @@ const AssistantFeedback = ({
 > & { readonly modelId: string | undefined }): ReactJSX.Element => (
   <>
     {hasText(conversationId) && (
-      <EveFeedbackActions
+      <PluginMessageActions
         conversationId={conversationId}
         disabled={disabled}
         messageId={message.id}

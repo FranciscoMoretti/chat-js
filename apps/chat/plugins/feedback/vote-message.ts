@@ -1,8 +1,10 @@
 import { Client, defaultMessageReducer } from "eve/client";
-import { assertEveConfigured } from "./server";
-import { getEveConnectionOptions } from "./connection-options";
-import { getEveConversation } from "@/lib/db/eve-queries";
-import { saveEveMessageVote } from "@/lib/db/queries";
+import { assertEveConfigured } from "@/lib/eve/server";
+import { getEveConnectionOptions } from "@/lib/eve/connection-options";
+import {
+  getFeedbackConversation,
+  saveEveMessageVote,
+} from "./feedback-queries";
 
 const VOTE_SNAPSHOT_TIMEOUT_MS = 15_000;
 
@@ -14,7 +16,10 @@ export const voteEveMessage = async (
     readonly type: "up" | "down";
   }
 ): Promise<Awaited<ReturnType<typeof saveEveMessageVote>>> => {
-  const conversation = await getEveConversation(ownerId, input.conversationId);
+  const conversation = await getFeedbackConversation(
+    ownerId,
+    input.conversationId
+  );
 
   if (
     !conversation ||
