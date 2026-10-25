@@ -1,3 +1,4 @@
+import { settleEveRootFallbackTitle } from "@/lib/db/eve-title";
 import { generateText } from "ai";
 
 import { getLanguageModel } from "@/lib/ai/providers";
@@ -6,7 +7,6 @@ import { config } from "@/lib/config";
 import {
   isEveRootTitlePending,
   replaceEveRootFallbackTitle,
-  settleEveRootFallbackTitle,
 } from "./title-queries";
 import { createModuleLogger } from "@/lib/logger";
 

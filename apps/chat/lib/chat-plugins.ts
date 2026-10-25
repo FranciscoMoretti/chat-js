@@ -1,3 +1,4 @@
+import { eveConversationTitleFallback } from "./eve/conversation-title";
 import { createModuleLogger } from "./logger";
 import { installedChatPlugins } from "@/composition/generated/installed-chat";
 import type { ChatLinks, ChatCreatedContext } from "./chat-plugin-contracts";
@@ -38,5 +39,18 @@ export const runChatAfterCreate = async (
         "Chat afterCreate contribution failed"
       );
     }
+  }
+  try {
+    const { settleEveRootFallbackTitle } = await import("./db/eve-title");
+    await settleEveRootFallbackTitle(
+      context.ownerId,
+      context.conversationId,
+      eveConversationTitleFallback(context.message)
+    );
+  } catch (error) {
+    log.warn(
+      { errorName: error instanceof Error ? error.name : typeof error },
+      "Chat fallback title settlement failed"
+    );
   }
 };

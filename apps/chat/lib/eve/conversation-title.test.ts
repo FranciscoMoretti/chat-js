@@ -26,6 +26,8 @@ vi.mock("@/lib/config", () => ({
 vi.mock("@/plugins/ai-titles/title-queries", () => ({
   isEveRootTitlePending: mocks.pending,
   replaceEveRootFallbackTitle: mocks.replace,
+}));
+vi.mock("@/lib/db/eve-title", () => ({
   settleEveRootFallbackTitle: mocks.settle,
 }));
 vi.mock("@/lib/logger", () => ({

@@ -4,11 +4,12 @@ import { runChatAfterCreate } from "./chat-plugins";
 
 const mocks = vi.hoisted(() => {
   const plugins: ChatServerIntegration[] = [];
-  return { plugins, warn: vi.fn() };
+  return { plugins, warn: vi.fn(), settle: vi.fn() };
 });
 vi.mock("@/composition/generated/installed-chat", () => ({
   installedChatPlugins: mocks.plugins,
 }));
+vi.mock("./db/eve-title", () => ({ settleEveRootFallbackTitle: mocks.settle }));
 vi.mock("./logger", () => ({
   createModuleLogger: () => ({ warn: mocks.warn }),
 }));
@@ -20,11 +21,17 @@ const context = {
 beforeEach(() => {
   mocks.plugins.splice(0);
   mocks.warn.mockReset();
+  mocks.settle.mockReset();
 });
 
 test("root creation enrichment is optional", async () => {
   await expect(runChatAfterCreate(context)).resolves.toBeUndefined();
   expect(mocks.warn).not.toHaveBeenCalled();
+  expect(mocks.settle).toHaveBeenCalledWith(
+    "owner",
+    "bound",
+    "Private message"
+  );
 });
 test("one failed contribution does not prevent the remaining contributions or expose the message", async () => {
   const next = vi.fn<() => Promise<void>>().mockResolvedValue();
@@ -38,6 +45,7 @@ test("one failed contribution does not prevent the remaining contributions or ex
   );
   await expect(runChatAfterCreate(context)).resolves.toBeUndefined();
   expect(next).toHaveBeenCalledWith(context);
+  expect(mocks.settle).toHaveBeenCalledAfter(next);
   expect(mocks.warn).toHaveBeenCalledWith(
     { errorName: "Error" },
     "Chat afterCreate contribution failed"

@@ -6,11 +6,13 @@ import { afterAll, beforeAll, expect, test, vi } from "vitest";
 const postgres = new PGlite();
 vi.mock("./client", () => ({ db: drizzle(postgres) }));
 vi.mock("@/lib/env", () => ({ env: {} }));
-const {
-  isEveRootTitlePending,
-  replaceEveRootFallbackTitle,
-  settleEveRootFallbackTitle,
-} = await import("@/plugins/ai-titles/title-queries");
+const { isEveRootTitlePending, replaceEveRootFallbackTitle } =
+  await import("@/plugins/ai-titles/title-queries");
+const { settleEveRootFallbackTitle } = await import("./eve-title");
+const { runChatAfterCreate } = await import("../chat-plugins");
+vi.mock("@/composition/generated/installed-chat", () => ({
+  installedChatPlugins: [],
+}));
 const chat = "00000000-0000-4000-8000-000000000001";
 const conversation = "00000000-0000-4000-8000-000000000002";
 beforeAll(async () => {
@@ -98,4 +100,31 @@ test("retired conversations cannot start or finish title enrichment", async () =
   expect(
     await settleEveRootFallbackTitle("owner", conversation, "Fallback")
   ).toBe(false);
+});
+
+test("without title enrichment, creation settles the fallback without changing recency", async () => {
+  await postgres.exec(
+    `UPDATE "EveChat" SET title='Fallback', "titleStatus"='pending'; UPDATE "EveConversation" SET state='bound'`
+  );
+  const before = await postgres.query('SELECT "updatedAt" FROM "EveChat"');
+  await runChatAfterCreate({
+    ownerId: "other",
+    conversationId: conversation,
+    message: "Fallback",
+  });
+  expect(await isEveRootTitlePending("owner", conversation, "Fallback")).toBe(
+    true
+  );
+  await runChatAfterCreate({
+    ownerId: "owner",
+    conversationId: conversation,
+    message: "Fallback",
+  });
+  const result = await postgres.query(
+    'SELECT title, "titleStatus" FROM "EveChat"'
+  );
+  expect(result.rows).toEqual([{ title: "Fallback", titleStatus: "fallback" }]);
+  expect(await postgres.query('SELECT "updatedAt" FROM "EveChat"')).toEqual(
+    before
+  );
 });
