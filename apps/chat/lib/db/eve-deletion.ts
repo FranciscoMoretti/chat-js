@@ -20,7 +20,6 @@ import {
   eveImportedDocumentCheckpointEntry,
   eveNamedDocumentCheckpoint,
   eveNamedDocumentCheckpointEntry,
-  eveSearchText,
   eveSubagentSession,
 } from "./schema";
 
@@ -271,9 +270,6 @@ const completeEveConversationDeletion = async (
     if (remaining.length > EMPTY_FAMILY_SIZE) {
       throw new Error("Application content cleanup is incomplete.");
     }
-    await tx
-      .delete(eveSearchText)
-      .where(inArray(eveSearchText.conversationId, ids));
     await tx
       .delete(eveSubagentSession)
       .where(inArray(eveSubagentSession.conversationId, ids));

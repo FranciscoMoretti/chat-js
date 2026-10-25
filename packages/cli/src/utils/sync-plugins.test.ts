@@ -1,3 +1,4 @@
+import { searchItem } from "../../../registry/src/plugins/search/manifest";
 import { projectsItem } from "../../../registry/src/plugins/projects/manifest";
 import { feedbackItem } from "../../../registry/src/plugins/feedback/manifest";
 import { followupSuggestionsItem } from "../../../registry/src/plugins/followup-suggestions/manifest";
@@ -625,6 +626,7 @@ for (const [contribution, ids] of [
 test.each([
   { item: projectsItem, router: "project", schema: "db/project-schema.ts" },
   { item: feedbackItem, router: "feedback", schema: "feedback-schema.ts" },
+  { item: searchItem, router: "search", schema: "search-schema.ts" },
   {
     item: followupSuggestionsItem,
     router: "followupSuggestions",

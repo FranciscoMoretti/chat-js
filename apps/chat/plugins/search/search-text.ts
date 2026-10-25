@@ -1,5 +1,5 @@
 import type { MessageStreamEvent } from "eve/client";
-import type { EveCopySeed } from "./copy-seed";
+import type { EveCopySeed } from "@/lib/eve/copy-seed";
 
 /** SDK fields this reader does not inspect remain optional and opaque. */
 type IgnoredSdkFields<Value> = Value extends object

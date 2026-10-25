@@ -1,13 +1,15 @@
 import { beforeEach, expect, it, vi } from "vitest";
-import type { indexEveSearchText } from "../db/eve-search";
+import type { indexEveSearchText } from "@/plugins/search/search-queries";
 
-import { backfillEveSearchConversation } from "./search-backfill";
+import { backfillEveSearchConversation } from "@/plugins/search/search-backfill";
 
 const mocks = vi.hoisted(() => ({
   index: vi.fn<typeof indexEveSearchText>(),
   snapshot: vi.fn(),
 }));
-vi.mock("../db/eve-search", () => ({ indexEveSearchText: mocks.index }));
+vi.mock("@/plugins/search/search-queries", () => ({
+  indexEveSearchText: mocks.index,
+}));
 vi.mock("./connection-options", () => ({
   getEveConnectionOptions: () => ({}),
 }));

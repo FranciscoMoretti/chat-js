@@ -1,7 +1,7 @@
 import { and, asc, eq, gt } from "drizzle-orm";
 
 import { assertEveConfigured } from "@/lib/eve/server";
-import { backfillEveSearchConversation } from "@/lib/eve/search-backfill";
+import { backfillEveSearchConversation } from "@/plugins/search/search-backfill";
 import { db } from "@/lib/db/client";
 import { eveConversation } from "@/lib/db/schema";
 

@@ -2,9 +2,11 @@
 import { feedbackChat as chat0 } from "@/plugins/feedback/chat";
 import { followupChat as chat1 } from "@/plugins/followup-suggestions/chat";
 import { projectsChat as chat2 } from "@/plugins/projects/chat";
+import { searchChat as chat3 } from "@/plugins/search/chat";
 import type { ChatServerIntegration } from "@/lib/chat-plugin-contracts";
 export const installedChatPlugins: readonly ChatServerIntegration[] = [
   chat0,
   chat1,
   chat2,
+  chat3,
 ];

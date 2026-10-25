@@ -17,6 +17,7 @@ import {
   invoicesShared,
   invoicesTranscripts,
   invoicesTrpc,
+  invoicesSearchTrpc,
   invoicesFollowupEvents,
   invoicesFollowupTrpc,
   launchProject,
@@ -555,3 +556,30 @@ test("conversation with persisted follow-up suggestions", async () => {
     .element(page.getByRole("group", { name: "Related questions" }))
     .toBeVisible();
 });
+
+test.each(["desktop", "mobile"] as const)(
+  "search plugin finds conversation text from the sidebar header (%s)",
+  async (viewport) => {
+    await renderRoute(conversation, {
+      ...request,
+      trpc: invoicesSearchTrpc,
+      viewports: [viewport],
+    });
+    if (viewport === "mobile") {
+      await page.viewport(390, 844);
+      await expect
+        .element(page.getByRole("button", { name: /Search chats/u }))
+        .not.toBeInTheDocument();
+      await userEvent.click(
+        page.getByRole("button", { name: "Toggle Sidebar", exact: true })
+      );
+    }
+    await userEvent.click(page.getByRole("button", { name: /Search chats/u }));
+    await userEvent.fill(page.getByRole("combobox"), "invoice");
+    await expect
+      .element(
+        page.getByText("Add an index to speed up your", { exact: false })
+      )
+      .toBeVisible();
+  }
+);

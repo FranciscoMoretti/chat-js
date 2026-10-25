@@ -502,3 +502,20 @@ export const invoicesFollowupTrpc = {
     ];
   },
 };
+
+export const invoicesSearchTrpc = {
+  ...invoicesTrpc,
+  "search.query": {
+    items: [
+      {
+        id: invoicesConversation.chatId,
+        conversationId: invoicesConversation.id,
+        title: "Speed up our invoice query",
+        excerpt: "Add an index to speed up your ⟦invoice⟧ query.",
+        updatedAt: "2026-10-18T10:00:00.000Z",
+        rank: 1,
+      },
+    ],
+    nextCursor: null,
+  },
+};

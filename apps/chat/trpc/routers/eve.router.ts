@@ -2,7 +2,6 @@ import {
   getEveSendReceipt,
   getEveMessageDisplayReceipts,
 } from "@/lib/db/eve-dispatch";
-import { MAX_SEARCH_QUERY_LENGTH } from "@/lib/eve/search-text";
 import { TRPCError } from "@trpc/server";
 import { headers } from "next/headers";
 import { z } from "zod";
@@ -14,7 +13,6 @@ import {
   listEveConversations,
   updateEveConversationMetadata,
 } from "@/lib/db/eve-queries";
-import { searchEveConversations } from "@/lib/db/eve-search";
 import { eveHistoryInput } from "@/lib/eve/history-input";
 import { eveManualDocumentInput } from "@/lib/eve/document-contracts";
 
@@ -33,7 +31,6 @@ import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 const MAX_CONVERSATION_TITLE_LENGTH = 255;
 const MAX_MESSAGE_ID_LENGTH = 512;
-const MAX_OWNER_SCOPE_LENGTH = 128;
 
 const eveProcedure = protectedProcedure;
 
@@ -253,41 +250,6 @@ export const eveRouter = createTRPCRouter({
       }
     }
   ),
-  search: eveOwnedProcedure
-    .input(
-      z.object({
-        cursor: z
-          .object({
-            id: z.uuid(),
-            rank: z.number().nonnegative(),
-            updatedAt: z.iso.datetime(),
-          })
-          .nullish(),
-        ownerScope: z.string().nonempty().max(MAX_OWNER_SCOPE_LENGTH),
-        search: z.string().trim().nonempty().max(MAX_SEARCH_QUERY_LENGTH),
-      })
-    )
-    .query(
-      async ({
-        ctx,
-        input,
-      }: {
-        readonly ctx: { readonly eveOwnerId: string };
-        readonly input: ReadonlyNativeSurface<{
-          ownerScope: string;
-          search: string;
-          cursor?:
-            | { id: string; rank: number; updatedAt: string }
-            | null
-            | undefined;
-        }>;
-      }) => {
-        if (input.ownerScope !== ctx.eveOwnerId) {
-          throw new TRPCError({ code: "FORBIDDEN" });
-        }
-        return await searchEveConversations(ctx.eveOwnerId, input);
-      }
-    ),
   setVisibility: eveProcedure
     .input(
       z.object({ id: z.uuid(), visibility: z.enum(["private", "public"]) })

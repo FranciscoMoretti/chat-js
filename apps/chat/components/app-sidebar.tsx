@@ -1,4 +1,7 @@
-import { PluginSidebar } from "@/components/plugin-chat-ui";
+import {
+  PluginSidebar,
+  PluginSidebarHeader,
+} from "@/components/plugin-chat-ui";
 import React, { Suspense } from "react";
 import { Cpu } from "lucide-react";
 
@@ -16,7 +19,6 @@ import {
   SidebarSeparator,
 } from "@/components/ui/sidebar";
 
-import { EveSearchChats } from "@/components/eve/eve-search-chats";
 import { InternalLink } from "@/components/internal-link";
 import { NewChatButton } from "@/components/new-chat-button";
 import type { JSX as ReactJSX } from "react";
@@ -31,10 +33,10 @@ import { headers } from "next/headers";
 
 import { resolveEvePrincipal } from "@/lib/eve/principal";
 
-const ScopedEveSearch = async (): Promise<ReactJSX.Element> => {
+const ScopedPluginSidebarHeader = async (): Promise<ReactJSX.Element> => {
   const principal = await resolveEvePrincipal(await headers());
   return (
-    <EveSearchChats
+    <PluginSidebarHeader
       key={principal?.ownerId ?? "anonymous"}
       ownerId={principal?.ownerId}
     />
@@ -64,11 +66,9 @@ export const AppSidebar = (): React.JSX.Element => (
         </div>
 
         <NewChatButton />
-        <SidebarMenuItem>
-          <Suspense fallback={<Skeleton className="h-8 w-full" />}>
-            <ScopedEveSearch />
-          </Suspense>
-        </SidebarMenuItem>
+        <Suspense fallback={<Skeleton className="h-8 w-full" />}>
+          <ScopedPluginSidebarHeader />
+        </Suspense>
         <SidebarMenuItem>
           <SidebarMenuButton asChild tooltip="Models">
             <InternalLink href="/settings/models">

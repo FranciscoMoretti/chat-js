@@ -19,6 +19,7 @@ const pages = [
     path: "/docs/reference/plugin-api",
   },
   { name: "suggestions-plugin", path: "/docs/plugins/followup-suggestions" },
+  { name: "search-plugin", path: "/docs/plugins/search" },
   { name: "feedback-plugin", path: "/docs/plugins/feedback" },
   { name: "projects-plugin", path: "/docs/plugins/projects" },
   { name: "threads", path: "/docs/threads" },

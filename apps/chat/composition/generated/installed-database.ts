@@ -4,4 +4,5 @@ export const installedDatabaseSchemas: string[] = [
   "./plugins/followup-suggestions/followup-schema.ts",
   "./plugins/mcp/db/mcp-schema.ts",
   "./plugins/projects/db/project-schema.ts",
+  "./plugins/search/search-schema.ts",
 ];

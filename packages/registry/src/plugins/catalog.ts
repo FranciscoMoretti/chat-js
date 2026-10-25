@@ -1,3 +1,4 @@
+import { searchItem } from "./search/manifest";
 import { followupSuggestionsItem } from "./followup-suggestions/manifest";
 import { feedbackItem } from "./feedback/manifest";
 import { projectsItem } from "./projects/manifest";
@@ -9,6 +10,7 @@ export const pluginItems = [
   projectsItem,
   feedbackItem,
   followupSuggestionsItem,
+  searchItem,
   mcpItem,
   attachmentUploadsItem,
   ...observabilityItems,

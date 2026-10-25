@@ -3,7 +3,7 @@ import { createRoot } from "react-dom/client";
 
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
-import { EveSearchResultsView } from "../components/eve/eve-search-results-view";
+import { EveSearchResultsView } from "@/plugins/search/search-results-view";
 
 const item = {
   conversationId: "branch",

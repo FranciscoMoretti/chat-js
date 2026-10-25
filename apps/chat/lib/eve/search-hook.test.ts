@@ -2,7 +2,7 @@ import type { HookContext, HookEvent } from "eve/hooks";
 import { beforeEach, expect, it, vi } from "vitest";
 
 import search from "../../agent/hooks/search";
-import type { EveSearchText } from "./search-text";
+import type { EveSearchText } from "@/plugins/search/search-text";
 
 const mocks = vi.hoisted(() => {
   const state: EveSearchText[] = [];
@@ -37,10 +37,12 @@ vi.mock("eve/context", () => ({
     };
   },
 }));
-vi.mock("./search-backfill", () => ({
+vi.mock("@/plugins/search/search-backfill", () => ({
   backfillEveSearchConversation: mocks.recover,
 }));
-vi.mock("../db/eve-search", () => ({ indexEveSearchText: mocks.index }));
+vi.mock("@/plugins/search/search-queries", () => ({
+  indexEveSearchText: mocks.index,
+}));
 vi.mock("./conversation-scope", () => ({
   resolveEveConversationScope: mocks.resolve,
 }));

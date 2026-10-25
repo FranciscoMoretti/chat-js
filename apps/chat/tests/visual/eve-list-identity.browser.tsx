@@ -6,7 +6,7 @@ import { createRoot } from "react-dom/client";
 import { expect, test, vi } from "vitest";
 
 import { EveMessages } from "@/components/eve/eve-messages";
-import { EveSearchResultsView } from "@/components/eve/eve-search-results-view";
+import { EveSearchResultsView } from "@/plugins/search/search-results-view";
 
 import "./sandbox.css";
 

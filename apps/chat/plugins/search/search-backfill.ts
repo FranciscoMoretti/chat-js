@@ -1,8 +1,8 @@
 import { Client } from "eve/client";
 
-import { indexEveSearchText } from "@/lib/db/eve-search";
+import { indexEveSearchText } from "@/plugins/search/search-queries";
 
-import { getEveConnectionOptions } from "./connection-options";
+import { getEveConnectionOptions } from "@/lib/eve/connection-options";
 import type { EveSearchText } from "./search-text";
 import { eveEventSearchText } from "./search-text";
 

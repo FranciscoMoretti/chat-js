@@ -3,10 +3,12 @@ import { feedback as plugin0 } from "@/plugins/feedback/server-plugin";
 import { followupSuggestions as plugin1 } from "@/plugins/followup-suggestions/server-plugin";
 import { mcp as plugin2 } from "@/plugins/mcp/server-plugin";
 import { projects as plugin3 } from "@/plugins/projects/server-plugin";
+import { search as plugin4 } from "@/plugins/search/server-plugin";
 import type { InstalledRouters } from "@/lib/installation-contracts";
 export const installedRouters = {
   feedback: plugin0().routers.feedback,
   followupSuggestions: plugin1().routers.followupSuggestions,
   mcp: plugin2().routers.mcp,
   project: plugin3().routers.project,
+  search: plugin4().routers.search,
 } satisfies InstalledRouters;

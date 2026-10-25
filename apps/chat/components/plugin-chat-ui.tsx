@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import { SidebarMenuItem } from "@/components/ui/sidebar";
 import { installedChatUi } from "@/composition/generated/installed-chat-ui";
 import type {
   ChatActionProps,
@@ -51,6 +52,22 @@ export const PluginSuggestions = (
   <>
     {installedChatUi.map(({ id, chat: { Suggestions } }) =>
       Suggestions ? <Suggestions key={id} {...props} /> : null
+    )}
+  </>
+);
+
+export const PluginSidebarHeader = ({
+  ownerId,
+}: {
+  readonly ownerId?: string;
+}): React.JSX.Element => (
+  <>
+    {installedChatUi.map(({ id, chat: { SidebarHeader } }) =>
+      SidebarHeader ? (
+        <SidebarMenuItem key={id}>
+          <SidebarHeader key={ownerId ?? "anonymous"} ownerId={ownerId} />
+        </SidebarMenuItem>
+      ) : null
     )}
   </>
 );

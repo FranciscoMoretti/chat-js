@@ -1,7 +1,6 @@
 import { expect, it } from "vitest";
 
 import { parseEveCopySeed, requireWorkspaceSeedPaths } from "./copy-seed";
-import { eveSeedSearchText } from "./search-text";
 
 it("validates detached shared history without losing settled tool output or model provenance", () => {
   const seed = parseEveCopySeed({
@@ -26,9 +25,6 @@ it("validates detached shared history without losing settled tool output or mode
   const detached = parseEveCopySeed({ ...seed, attachments: "channel" });
   expect(detached).toEqual({ ...seed, attachments: "channel" });
   expect(detached).not.toBe(seed);
-  expect(eveSeedSearchText(detached.messages)).toEqual([
-    { key: "seed:0", text: "Read my notes" },
-  ]);
 });
 
 it("rejects executable or incomplete copy data and invalid text tool results before acceptance", () => {

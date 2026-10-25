@@ -61,7 +61,7 @@ test("debounces requests, hides obsolete results, and navigates to the matching 
 }, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
   const searches: string[] = [];
   const delayed = Promise.withResolvers<boolean>();
-  await page.route("**/api/trpc/eve.search*", async (route: Route) => {
+  await page.route("**/api/trpc/search.query*", async (route: Route) => {
     const input = searchBatchSchema.parse(
       JSON.parse(
         new URL(route.request().url()).searchParams.get("input") ?? "{}"
@@ -134,13 +134,16 @@ test("does not publish a response for text superseded during the debounce window
   page.on(
     "console",
     (message: Readonly<Pick<ConsoleMessage, "type" | "text">>) => {
-      if (message.type() === "error" && message.text().includes("eve.search")) {
+      if (
+        message.type() === "error" &&
+        message.text().includes("search.query")
+      ) {
         searchErrors.push(message.text());
       }
     }
   );
   page.on("requestfailed", (request: Readonly<Pick<Request, "url">>) => {
-    if (request.url().includes("/api/trpc/eve.search")) {
+    if (request.url().includes("/api/trpc/search.query")) {
       const input = searchBatchSchema.parse(
         JSON.parse(new URL(request.url()).searchParams.get("input") ?? "{}")
       );
@@ -148,7 +151,7 @@ test("does not publish a response for text superseded during the debounce window
     }
   });
   const intermediate = Promise.withResolvers<boolean>();
-  await page.route("**/api/trpc/eve.search*", async (route: Route) => {
+  await page.route("**/api/trpc/search.query*", async (route: Route) => {
     const input = searchBatchSchema.parse(
       JSON.parse(
         new URL(route.request().url()).searchParams.get("input") ?? "{}"

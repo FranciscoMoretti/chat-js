@@ -19,7 +19,7 @@ import { SidebarMenuButton, useSidebar } from "@/components/ui/sidebar";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { useTRPC } from "@/trpc/react";
 
-import { EveSearchResultsView } from "./eve-search-results-view";
+import { EveSearchResultsView } from "./search-results-view";
 import { useDebouncedSearch } from "./use-debounced-search";
 
 const SearchResults = ({
@@ -53,7 +53,7 @@ const SearchResults = ({
     )
   );
   const results = useInfiniteQuery(
-    trpc.eve.search.infiniteQueryOptions(
+    trpc.search.query.infiniteQueryOptions(
       { ownerScope: ownerId, search },
       {
         enabled: Boolean(search) && search === query.trim(),
@@ -131,7 +131,7 @@ const SearchResults = ({
           // never publish while the user is already typing a different query.
           void queryClient.cancelQueries({
             exact: true,
-            queryKey: trpc.eve.search.infiniteQueryKey({
+            queryKey: trpc.search.query.infiniteQueryKey({
               ownerScope: ownerId,
               search,
             }),

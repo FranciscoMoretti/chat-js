@@ -2,6 +2,7 @@
 import { feedbackClient as plugin0 } from "@/plugins/feedback/client-plugin";
 import { followupSuggestionsClient as plugin1 } from "@/plugins/followup-suggestions/client-plugin";
 import { projectsClient as plugin2 } from "@/plugins/projects/client-plugin";
+import { searchClient as plugin3 } from "@/plugins/search/client-plugin";
 import type { ChatClientIntegration } from "@/lib/chat-plugin-contracts";
 export const installedChatUi: readonly {
   id: string;
@@ -10,4 +11,5 @@ export const installedChatUi: readonly {
   { id: "feedback", chat: plugin0().chat },
   { id: "followup-suggestions", chat: plugin1().chat },
   { id: "projects", chat: plugin2().chat },
+  { id: "search", chat: plugin3().chat },
 ];

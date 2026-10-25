@@ -6,6 +6,7 @@ export const installedPlugins: ReadonlySet<string> = new Set([
   "langfuse",
   "mcp",
   "projects",
+  "search",
   "vercel-analytics",
   "vercel-speed-insights",
 ]);

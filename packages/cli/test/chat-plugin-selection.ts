@@ -9,13 +9,21 @@ const selections = [
   "projects",
   "feedback",
   "followup-suggestions",
+  "search",
 ] as const;
-const pluginTables = ["Project", "EveChatProject", "EveVote", "EveFollowup"];
+const pluginTables = [
+  "Project",
+  "EveChatProject",
+  "EveVote",
+  "EveFollowup",
+  "EveSearchText",
+];
 const expectedTables: Record<(typeof selections)[number], readonly string[]> = {
   none: [],
   projects: ["Project", "EveChatProject"],
   feedback: ["EveVote"],
   "followup-suggestions": ["EveFollowup"],
+  search: ["EveSearchText"],
 };
 
 /** Reuse the packed CLI/registry fixture, keeping each app outside the workspace. */
@@ -135,7 +143,7 @@ for (const plugin of installedChatPlugins) {
         path.join(cwd, ".output/.eve/compile/compiled-agent-manifest.json"),
         "utf-8"
       );
-      for (const plugin of ["projects", "followup-suggestions"]) {
+      for (const plugin of ["projects", "followup-suggestions", "search"]) {
         expect(compiledManifest.includes(`"hooks/${plugin}.ts"`)).toBe(
           selection === plugin
         );

@@ -1,0 +1,56 @@
+---
+title: Search
+description: Find your chats by title and conversation text
+---
+
+Use Search to find conversations from the sidebar or with `Cmd+K` on macOS and `Ctrl+K` on other platforms. Your results include matching text from conversation branches and open the branch containing the match.
+
+## Installation
+
+### Add the plugin
+
+```bash
+bunx @chat-js/cli@latest add search
+```
+
+The CLI installs your search router, sidebar header control, EVE indexing hook, schema, and conversation cleanup callback. Deploy both your app and your EVE agent after installing the plugin.
+
+### Migrate the database
+
+```bash
+bun run db:generate
+# Review the generated SQL, then apply it to your database.
+bun run db:migrate
+```
+
+Your existing reference-app data keeps the same `EveSearchText` table and keys. See [plugin migrations](../core/plugins#database-migrations).
+
+### Index existing conversations
+
+New messages are indexed as you chat. To make older conversation text searchable, run the backfill from your app directory with your database and EVE environment configured:
+
+```bash
+bunx tsx plugins/search/backfill.ts
+```
+
+You can rerun the command safely. It reads durable EVE snapshots in batches, updates existing entries, and reports failures for you to retry. Chat titles are searchable without a backfill.
+
+## Usage
+
+Open **Search chats** to see recent conversations. Enter a query to search titles and message text. You can use quoted phrases, `OR`, and excluded terms such as `-draft`. Your final unquoted word supports prefix matching.
+
+You see one result per logical chat, with a highlighted excerpt when message text matches. Results are ranked and paginated. Your requests are scoped to your current owner identity, and deleting conversations disappear from results immediately.
+
+## Schema
+
+Your `EveSearchText` table stores rebuildable text chunks keyed by conversation and event identity. The plugin indexes visible user and assistant text, including restored history. EVE remains your transcript source of truth.
+
+Writes recheck ownership and lock the active conversation binding. The `onDeleteConversations` callback removes index rows inside the same transaction that completes conversation deletion, preserving surviving branches.
+
+Indexing failures do not fail your chat turn. The hook retains a bounded retry buffer and recovers overflow from durable snapshots. If retries keep failing, fix your database or EVE connection and rerun the backfill.
+
+## Customization
+
+Edit `plugins/search/` to customize your dialog, query behavior, indexing, or backfill. The installed `agent/hooks/search.ts` is a thin native EVE adapter.
+
+The `SidebarHeader` placement receives the server-resolved `ownerId`. The `search.query` procedure checks it against your authenticated principal. Your ordinary chat history stays in core and remains available without this plugin. See the [Plugin API](../reference/plugin-api).

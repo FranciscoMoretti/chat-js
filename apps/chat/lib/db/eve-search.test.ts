@@ -41,9 +41,9 @@ vi.mock(
 );
 vi.mock("@/lib/env", () => ({ env: {} }));
 
-const { eveEventSearchText } = await import("../eve/search-text");
+const { eveEventSearchText } = await import("@/plugins/search/search-text");
 const { indexEveSearchText, searchEveConversations } =
-  await import("./eve-search");
+  await import("@/plugins/search/search-queries");
 const { completeEveConversationDeletion } = await import("./eve-deletion");
 const chat = "00000000-0000-4000-8000-000000000001";
 const branch = "00000000-0000-4000-8000-000000000002";
@@ -317,6 +317,50 @@ it("hides deleting chats and permanently erases text without allowing a late bac
     [branch]
   );
   expect(count.rows[0].count).toBe(0);
+});
+
+it("plugin cleanup removes one branch's index and preserves surviving branches", async () => {
+  const familyId = crypto.randomUUID();
+  const deletedId = crypto.randomUUID();
+  const survivingId = crypto.randomUUID();
+  await postgres.query(
+    `insert into "EveChat" (id, "ownerId", title) values ($1, 'alice', 'Branch cleanup')`,
+    [familyId]
+  );
+  await postgres.query(
+    `insert into "EveWorkspace" (id, "ownerId") values ($1, 'alice')`,
+    [familyId]
+  );
+  for (const id of [deletedId, survivingId]) {
+    // oxlint-disable-next-line no-await-in-loop -- Seed each branch before its index write under the foreign key.
+    await postgres.query(
+      `insert into "EveConversation" ("workspaceId", id, "chatId", "ownerId", "firstMessage", "operationId", "sessionId", state) values ($1, $2::uuid, $1, 'alice', '', $2::uuid, $2::text, 'bound')`,
+      [familyId, id]
+    );
+    // oxlint-disable-next-line no-await-in-loop -- Seed each branch's rebuildable projection sequentially.
+    await indexEveSearchText("alice", id, [
+      { key: "same-event", text: "branchcleanupword" },
+    ]);
+  }
+  await postgres.query(
+    `update "EveConversation" set state='deleting' where id=$1`,
+    [deletedId]
+  );
+  await completeEveConversationDeletion("alice", deletedId);
+  await indexEveSearchText("alice", deletedId, [
+    { key: "late-event", text: "branchcleanupword" },
+  ]);
+  const rows = await postgres.query(
+    `select "conversationId" from "EveSearchText" where "conversationId" in ($1,$2)`,
+    [deletedId, survivingId]
+  );
+  expect(rows.rows).toEqual([{ conversationId: survivingId }]);
+  const results = await searchEveConversations("alice", {
+    search: "branchcleanupword",
+  });
+  expect(
+    results.items.map(({ id, conversationId }) => ({ id, conversationId }))
+  ).toEqual([{ id: familyId, conversationId: survivingId }]);
 });
 
 it("blocks deletion for retained document revisions only within the requested family", async () => {

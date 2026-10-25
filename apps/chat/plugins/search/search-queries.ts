@@ -3,12 +3,13 @@ import { isNonEmptyString } from "@/lib/is-non-empty-string";
 import { and, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 
-import type { EveSearchText } from "@/lib/eve/search-text";
-import { MAX_SEARCH_QUERY_LENGTH } from "@/lib/eve/search-text";
+import type { EveSearchText } from "@/plugins/search/search-text";
+import { MAX_SEARCH_QUERY_LENGTH } from "@/plugins/search/search-text";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
-import { db } from "./client";
-import { eveConversation, eveSearchText } from "./schema";
+import { db } from "@/lib/db/client";
+import { eveConversation } from "@/lib/db/schema";
+import { eveSearchText } from "./search-schema";
 
 const SEARCH_CHUNK_LENGTH = 8000;
 const SEARCH_WRITE_BATCH_SIZE = 100;
