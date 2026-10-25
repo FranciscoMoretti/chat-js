@@ -4,6 +4,7 @@ import {
   mkdir,
   mkdtemp,
   readFile,
+  readdir,
   rm,
   stat,
   symlink,
@@ -126,9 +127,47 @@ try {
 process.exit(0);
 `
     );
-    await symlink(
-      path.join(root, "node_modules"),
-      path.join(fixture, "node_modules")
+    // CI uses isolated workspace installs; the checkout's root node_modules
+    // alone does not necessarily contain workspace dependencies.
+    await mkdir(path.join(fixture, "node_modules/@chat-js"), {
+      recursive: true,
+    });
+    const dependencies = await readdir(path.join(root, "node_modules"));
+    await Promise.all(
+      dependencies
+        .filter((name) => name !== "@chat-js")
+        .map(async (name) => {
+          await symlink(
+            path.join(root, "node_modules", name),
+            path.join(fixture, "node_modules", name)
+          );
+        })
+    );
+    await Promise.all(
+      ["gateways", "sandboxes"].map(async (name) => {
+        await symlink(
+          path.join(fixture, "packages", name),
+          path.join(fixture, "node_modules/@chat-js", name)
+        );
+      })
+    );
+    await Promise.all(
+      ["registry", "cli", "gateways", "sandboxes"].map(async (name) => {
+        const modules = path.join("packages", name, "node_modules");
+        try {
+          await stat(path.join(root, modules));
+        } catch (error) {
+          if (
+            error instanceof Error &&
+            "code" in error &&
+            error.code === "ENOENT"
+          ) {
+            return;
+          }
+          throw error;
+        }
+        await symlink(path.join(root, modules), path.join(fixture, modules));
+      })
     );
     const invalidSource =
       "packages/registry/src/plugins/mcp/src/ui/connectors-settings.tsx";
