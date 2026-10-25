@@ -231,22 +231,10 @@ const assertUniqueContributions = (
     "video",
   ]);
   const settings = new Set(["general", "models"]);
-  const creationFields = new Set([
-    "operationId",
-    "modelId",
-    "modelIds",
-    "message",
-    "selectedTool",
-    "fork",
-    "forkKind",
-  ]);
-  const historyFields = new Set(["cursor", "ownerScope", "search", "surface"]);
   let uploads = false;
   for (const plugin of plugins) {
     for (const [keys, seen, label] of [
       [plugin.server?.routers ?? [], routers, "router"],
-      [plugin.shared?.creationFields ?? [], creationFields, "creation field"],
-      [plugin.shared?.historyFields ?? [], historyFields, "history field"],
       [plugin.client?.composerControls ?? [], controls, "composer control"],
       [plugin.client?.settingsItems ?? [], settings, "settings item"],
     ] as const) {
@@ -354,6 +342,12 @@ const syncPlugins = async (
   const shared = plugins.filter((plugin) => plugin.shared);
   const chat = plugins.filter((plugin) => plugin.server?.chat);
   const chatUi = plugins.filter((plugin) => plugin.client?.chat);
+  let creationFields = "{}";
+  let historyFields = "{}";
+  for (const [index] of shared.entries()) {
+    creationFields = `mergePluginFields("creation", ${creationFields}, shared${index}.creationFields)`;
+    historyFields = `mergePluginFields("history", ${historyFields}, shared${index}.historyFields)`;
+  }
   const contents = [
     [
       "installed-chat",
@@ -365,13 +359,7 @@ const syncPlugins = async (
     ],
     [
       "installed-shared",
-      `${imports(shared, "shared")}\nimport type { ChatSharedPlugin } from "@/lib/chat-plugin-contracts";\nexport const installedSharedPlugins: readonly ChatSharedPlugin[] = [${shared.map((_, index) => `plugin${index}()`).join(", ")}];\nexport const installedCreationFields = { ${shared
-        .filter((plugin) => (plugin.shared?.creationFields.length ?? 0) > 0)
-        .map((plugin) => `...plugin${shared.indexOf(plugin)}().creationFields`)
-        .join(", ")} };\nexport const installedHistoryFields = { ${shared
-        .filter((plugin) => (plugin.shared?.historyFields.length ?? 0) > 0)
-        .map((plugin) => `...plugin${shared.indexOf(plugin)}().historyFields`)
-        .join(", ")} };`,
+      `${imports(shared, "shared")}\nimport type { ChatSharedPlugin } from "@/lib/chat-plugin-contracts";\n${shared.length > 0 ? 'import { mergePluginFields } from "@/lib/plugin-fields";' : ""}\n${shared.map((_, index) => `const shared${index} = plugin${index}() satisfies ChatSharedPlugin;`).join("\n")}\nexport const installedSharedPlugins: readonly ChatSharedPlugin[] = [${shared.map((_, index) => `shared${index}`).join(", ")}];\nexport const installedCreationFields = ${creationFields};\nexport const installedHistoryFields = ${historyFields};`,
     ],
     [
       "installed",

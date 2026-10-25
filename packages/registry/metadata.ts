@@ -153,8 +153,6 @@ const pluginDefinitionSchema = z.object({
   shared: z
     .object({
       export: identifier,
-      creationFields: z.array(identifier).default([]),
-      historyFields: z.array(identifier).default([]),
     })
     .optional(),
   server: z

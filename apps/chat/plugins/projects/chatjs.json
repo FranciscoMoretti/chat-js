@@ -38,11 +38,7 @@
     "app/(chat)/project/[projectId]/page.tsx"
   ],
   "databaseSchemas": ["plugins/projects/db/project-schema.ts"],
-  "shared": {
-    "export": "projectsShared",
-    "creationFields": ["projectId"],
-    "historyFields": ["projectId"]
-  },
+  "shared": { "export": "projectsShared" },
   "server": { "export": "projects", "routers": ["project"], "chat": true },
   "client": {
     "export": "projectsClient",

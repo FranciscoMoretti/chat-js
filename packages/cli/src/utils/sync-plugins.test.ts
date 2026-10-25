@@ -620,7 +620,7 @@ for (const [contribution, ids] of [
 }
 
 test("Projects installs independently and core composition has no project schema or runtime imports", async () => {
-  const { projectsItem, projectsDefinition } =
+  const { projectsItem } =
     await import("../../../registry/src/plugins/projects/manifest");
   const root = await fixture();
   await initializePluginUi(root);
@@ -667,19 +667,11 @@ test("Projects installs independently and core composition has no project schema
       path.join(root, "composition/generated/installed-shared.ts"),
       "utf-8"
     )
-  ).toContain("...plugin0().creationFields");
+  ).toContain('mergePluginFields("creation", {}, shared0.creationFields)');
   expect(
     await readFile(
       path.join(root, "composition/generated/installed-database.ts"),
       "utf-8"
     )
   ).toContain("plugins/projects/db/project-schema.ts");
-  await writeFile(
-    path.join(root, "plugins/projects/chatjs.json"),
-    JSON.stringify({
-      ...projectsDefinition,
-      shared: { ...projectsDefinition.shared, creationFields: ["operationId"] },
-    })
-  );
-  await rejects(syncPlugins(root), /reserved plugin creation field/u);
 });

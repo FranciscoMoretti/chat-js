@@ -100,7 +100,7 @@ Composer and settings ordering remain in the app-owned `composer-controls.ts` an
 | `creationScope(input)` | Return the original browser draft scope, or `undefined` |
 | `parseRoute(pathname)` | Recognize a plugin route and return its chat ID, context ID, and parent link |
 
-Declare field names in the descriptor as well as exporting their schemas. Field names cannot collide with core fields or another plugin's fields. Core creation fields include `operationId`, `message`, `modelId`, `modelIds`, `selectedTool`, `fork`, and `forkKind`.
+Export both `creationFields` and `historyFields` from a shared factory, using `{}` when unused. These schemas are the source of truth. Generated composition initializes each pure factory once and rejects collisions with core fields or another plugin's fields before accepting requests. Core creation fields include `operationId`, `message`, `modelId`, `modelIds`, `selectedTool`, `fork`, and `forkKind`.
 
 A creation scope contains a stable `key`, the plugin creation `input`, and a user-visible `label`. Core uses that key to retain and recover the browser's original pending request. Projects keeps `project:<id>` so existing saved drafts retain their storage location. Only one plugin may supply a scope for a request.
 
@@ -127,9 +127,7 @@ Projects declares its integration points as follows:
   "kind": "plugin",
   "databaseSchemas": ["plugins/projects/db/project-schema.ts"],
   "shared": {
-    "export": "projectsShared",
-    "creationFields": ["projectId"],
-    "historyFields": ["projectId"]
+    "export": "projectsShared"
   },
   "server": { "export": "projects", "routers": ["project"], "chat": true },
   "client": { "export": "projectsClient", "chat": true }
@@ -150,3 +148,9 @@ The complete descriptor also lists every installed file. `chat-js sync` reads de
 | `installed-shared.ts` | Creation validation, draft recovery, history inputs, and route parsing |
 
 Do not edit generated files. Edit the factory or descriptor, then run sync. Verify both installation selections: a core app without your plugin and an app with it installed.
+
+## Composition limits
+
+Multiple plugins can contribute independent input fields and UI. A request has at most one primary draft scope, and a chat has at most one navigation owner. Conflicting scopes or links throw. A plugin can add metadata without owning either.
+
+History predicates combine with AND, so each predicate is an additional restriction. A contextual filter should return `undefined` when it does not apply to the requested surface. These contracts do not implement nested contexts, navigation priorities, or alternative history unions.

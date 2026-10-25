@@ -19,8 +19,8 @@ export interface PluginChatRoute {
 /** Pure contracts may be imported by both servers and browsers. */
 export interface ChatSharedPlugin {
   readonly id: string;
-  readonly creationFields?: z.ZodRawShape;
-  readonly historyFields?: z.ZodRawShape;
+  readonly creationFields: z.ZodRawShape;
+  readonly historyFields: z.ZodRawShape;
   readonly validateCreation?: (
     input: Readonly<Record<string, unknown>>
   ) => boolean;

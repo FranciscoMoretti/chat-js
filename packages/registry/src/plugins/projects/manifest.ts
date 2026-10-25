@@ -50,8 +50,6 @@ const projectsDefinition = pluginDefinitionSchema.parse({
   databaseSchemas: ["plugins/projects/db/project-schema.ts"],
   shared: {
     export: "projectsShared",
-    creationFields: ["projectId"],
-    historyFields: ["projectId"],
   },
   server: { export: "projects", routers: ["project"], chat: true },
   client: { export: "projectsClient", chat: true },
