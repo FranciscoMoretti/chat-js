@@ -5,7 +5,10 @@ import { Toaster, toast } from "sonner";
 import { expect, test, vi } from "vitest";
 import { page } from "vitest/browser";
 
-import { ShareDialog, ShareDialogView } from "@/components/share-button";
+import {
+  ShareDialog,
+  ShareDialogView,
+} from "@/plugins/sharing/ui/share-button";
 
 import "./sandbox.css";
 

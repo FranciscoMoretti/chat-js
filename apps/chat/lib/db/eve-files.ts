@@ -1,3 +1,4 @@
+import { publicChatReadFilter } from "@/lib/chat-plugins";
 import { and, eq, inArray, sql } from "drizzle-orm";
 
 import { isFileStorageKey } from "@/lib/file-url";
@@ -66,7 +67,7 @@ const canReadEveFile = async (
       and(
         eq(eveFileReference.key, key),
         eq(eveConversation.state, "bound"),
-        sql`(${eveConversation.ownerId} = ${ownerId ?? null} or ${eveConversation.visibility} = 'public')`
+        sql`(${eveConversation.ownerId} = ${ownerId ?? null} or ${publicChatReadFilter()})`
       )
     )
     .limit(SINGLE_ROW_LIMIT);

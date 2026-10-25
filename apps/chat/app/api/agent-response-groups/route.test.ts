@@ -16,7 +16,7 @@ const mocks = vi.hoisted(() => ({
   after: vi.fn<(callback: () => void | Promise<void>) => void>(),
   create: vi.fn(),
   get: vi.fn(),
-  persistTitle: vi.fn(),
+  afterCreate: vi.fn(),
   principal: vi.fn(),
 }));
 vi.mock("next/server", () => ({ after: mocks.after }));
@@ -30,8 +30,8 @@ vi.mock("@/lib/env", () => ({ env: { APP_URL: "http://localhost:3790" } }));
 vi.mock("@/lib/eve/response-group", () => ({
   createEveResponseGroup: mocks.create,
 }));
-vi.mock("@/lib/eve/conversation-title", () => ({
-  persistGeneratedEveConversationTitle: mocks.persistTitle,
+vi.mock("@/lib/chat-plugins", () => ({
+  runChatAfterCreate: mocks.afterCreate,
 }));
 vi.mock("@/lib/db/eve-response-groups", () => ({
   getEveResponseGroup: mocks.get,
@@ -109,7 +109,7 @@ test("guest comparisons cannot dispatch without successful batch admission", asy
   expect(mocks.get).toHaveBeenCalledWith("guest", input.operationId);
 });
 
-test("schedules one title generation for an initial comparison chat", async () => {
+test("schedules one plugin work for an initial comparison chat", async () => {
   mocks.create.mockResolvedValue({
     candidates: [
       {
@@ -136,7 +136,7 @@ test("schedules one title generation for an initial comparison chat", async () =
   expect(mocks.after).toHaveBeenCalledOnce();
   const [[afterResponseCallback]] = mocks.after.mock.calls;
   await afterResponseCallback();
-  expect(mocks.persistTitle).toHaveBeenCalledWith({
+  expect(mocks.afterCreate).toHaveBeenCalledWith({
     conversationId: "00000000-0000-4000-8000-000000000002",
     message: "Compare",
     ownerId: "owner",

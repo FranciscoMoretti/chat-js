@@ -1,3 +1,4 @@
+import { publicChatReadFilter } from "@/lib/chat-plugins";
 import { eveDeletionScope } from "./eve-deletion-scope";
 import { unretainedEveDocumentRevisionIds } from "./eve-document-retention";
 import { isNonEmptyString } from "@/lib/is-non-empty-string";
@@ -535,14 +536,12 @@ const getAccessibleEveDocument = async (
     .where(
       and(
         eq(eveConversation.id, conversationId),
-        eq(eveConversation.state, "bound")
+        eq(eveConversation.state, "bound"),
+        sql`(${eveConversation.ownerId} = ${viewerId ?? null} or ${publicChatReadFilter()})`
       )
     );
   const conversation = conversationRows.at(FIRST_ROW_INDEX);
-  if (
-    !conversation ||
-    (conversation.ownerId !== viewerId && conversation.visibility !== "public")
-  ) {
+  if (!conversation) {
     return undefined;
   }
   const history = await getEveDocumentHistory(
@@ -570,14 +569,12 @@ const getAccessibleEveDocument = async (
     .where(
       and(
         eq(eveConversation.id, conversationId),
-        eq(eveConversation.state, "bound")
+        eq(eveConversation.state, "bound"),
+        sql`(${eveConversation.ownerId} = ${viewerId ?? null} or ${publicChatReadFilter()})`
       )
     );
   const current = currentRows.at(FIRST_ROW_INDEX);
-  if (
-    !current ||
-    (current.ownerId !== viewerId && current.visibility !== "public")
-  ) {
+  if (!current) {
     return undefined;
   }
   return {

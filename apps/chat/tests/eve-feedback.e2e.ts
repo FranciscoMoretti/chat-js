@@ -164,7 +164,7 @@ test("assistant feedback survives reload, recovers from errors and stays out of 
       releaseStaleRead.resolve();
     }
 
-    const shared = await page.request.post("/api/trpc/eve.setVisibility", {
+    const shared = await page.request.post("/api/trpc/sharing.setVisibility", {
       data: { json: { id: binding.id, visibility: "public" } },
     });
     expect(shared.ok(), await shared.text()).toBe(true);

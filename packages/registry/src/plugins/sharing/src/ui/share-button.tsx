@@ -1,0 +1,317 @@
+"use client";
+
+import { Copy, GlobeIcon, Loader2, LockIcon, Share } from "lucide-react";
+import React, { useState } from "react";
+import { toast } from "sonner";
+
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
+import { cn } from "@/lib/utils";
+import { useSession } from "@/providers/session-provider";
+
+import { LoginPrompt } from "@/components/upgrade-cta/login-prompt";
+
+type ShareStep = "info" | "shared";
+
+const ShareDialogView = ({
+  chatId,
+  isPublic,
+  isPending,
+  onClose,
+  setVisibility,
+}: {
+  readonly chatId: string;
+  readonly isPublic: boolean;
+  readonly isPending: boolean;
+  readonly onClose: () => void;
+  readonly setVisibility: (visibility: "private" | "public") => Promise<void>;
+}): React.JSX.Element => {
+  const [, startEventAction] = React.useTransition();
+  const [step, setStep] = useState<ShareStep>("info");
+  const handleShare = async (): Promise<void> => {
+    try {
+      await setVisibility("public");
+      setStep("shared");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Unable to share chat."
+      );
+    }
+  };
+  const handleUnshare = async (): Promise<void> => {
+    try {
+      await setVisibility("private");
+      onClose();
+      setStep("info");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Unable to make chat private."
+      );
+    }
+  };
+  const handleCopyLink = async (): Promise<void> => {
+    const shareUrl = `${globalThis.location.origin}/share/${chatId}`;
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      toast.success("Share link copied to clipboard");
+    } catch {
+      toast.error("Unable to copy share link.");
+    }
+  };
+  return (
+    <>
+      {step === "info" && (
+        <>
+          <DialogHeader>
+            <DialogTitle>Share chat</DialogTitle>
+            <DialogDescription>
+              {isPublic
+                ? "This chat is currently public. Anyone with the link can view it."
+                : "Make this chat public so you can share it with others."}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-4">
+            <div className="bg-muted/20 flex items-center gap-3 rounded-lg border p-3">
+              {isPublic ? (
+                <>
+                  <div className="text-green-600">
+                    <GlobeIcon size={20} />
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-sm font-medium">Public</div>
+                    <div className="text-muted-foreground text-xs">
+                      Anyone with the link can access this chat
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="text-muted-foreground">
+                    <LockIcon size={20} />
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-sm font-medium">Private</div>
+                    <div className="text-muted-foreground text-xs">
+                      Only you can access this chat
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+            <div className="flex gap-2">
+              {isPublic ? (
+                <>
+                  <Button
+                    className="flex-1"
+                    disabled={isPending}
+
+                    onClick={() => {
+                      startEventAction(handleUnshare);
+                    }}
+                    variant="outline"
+                  >
+                    {isPending ? (
+                      <>
+                        <Loader2 className="animate-spin" size={16} />
+                        <span className="ml-2">Making Private...</span>
+                      </>
+                    ) : (
+                      <>
+                        <LockIcon size={16} />
+                        <span className="ml-2">Make Private</span>
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    className="flex-1"
+                    disabled={isPending}
+                    onClick={() => {
+                      setStep("shared");
+                    }}
+                  >
+                    <GlobeIcon size={16} />
+                    <span className="ml-2">Get Link</span>
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  className="w-full"
+                  disabled={isPending}
+
+                  onClick={() => {
+                    startEventAction(handleShare);
+                  }}
+                >
+                  {isPending ? (
+                    <>
+                      <Loader2 className="animate-spin" size={16} />
+                      <span className="ml-2">Sharing...</span>
+                    </>
+                  ) : (
+                    <>
+                      <GlobeIcon size={16} />
+                      <span className="ml-2">Share Chat</span>
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
+          </div>
+        </>
+      )}
+
+      {step === "shared" && (
+        <>
+          <DialogHeader>
+            <DialogTitle>Share chat</DialogTitle>
+            <DialogDescription>
+              Copy the link below to share this chat with others.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex items-center space-x-2">
+            <div className="grid flex-1 gap-2">
+              <label className="sr-only" htmlFor="link">
+                Link
+              </label>
+              <input
+                className="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex h-10 w-full rounded-md border px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
+                defaultValue={`${globalThis.location.origin}/share/${chatId}`}
+                id="link"
+                readOnly
+              />
+            </div>
+            <Button
+              className="px-3"
+
+              onClick={() => {
+                startEventAction(handleCopyLink);
+              }}
+              size="sm"
+              type="submit"
+            >
+              <Copy size={16} />
+              <span className="sr-only">Copy</span>
+            </Button>
+          </div>
+          <div className="flex items-center justify-between pt-2">
+            <Button
+              onClick={() => {
+                setStep("info");
+              }}
+              size="sm"
+              variant="ghost"
+            >
+              ← Back
+            </Button>
+            <Button
+              disabled={isPending}
+
+              onClick={() => {
+                startEventAction(handleUnshare);
+              }}
+              size="sm"
+              variant="outline"
+            >
+              {isPending ? (
+                <>
+                  <Loader2 className="animate-spin" size={16} />
+                  <span className="ml-2">Making Private...</span>
+                </>
+              ) : (
+                <>
+                  <LockIcon size={16} />
+                  <span className="ml-2">Make Private</span>
+                </>
+              )}
+            </Button>
+          </div>
+        </>
+      )}
+    </>
+  );
+};
+
+// Extracted dialog component that can be controlled externally
+const ShareDialog = ({
+  open,
+  onOpenChange,
+  children,
+  renderContent,
+}: {
+  readonly open: boolean;
+  readonly onOpenChange: (open: boolean) => void;
+  readonly children?: ReadonlyReactNode;
+  readonly renderContent: (onClose: () => void) => React.ReactNode;
+}): React.JSX.Element => {
+  const handleDialogOpenChange = (isOpen: boolean): void => {
+    onOpenChange(isOpen);
+  };
+
+  return (
+    <Dialog onOpenChange={handleDialogOpenChange} open={open}>
+      {children}
+      <DialogContent className="sm:max-w-md">
+        {open &&
+          renderContent(() => {
+            onOpenChange(false);
+          })}
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+const ShareButton = ({
+  className,
+  renderContent,
+}: {
+  readonly renderContent: (onClose: () => void) => React.ReactNode;
+} & React.ComponentProps<typeof Button>): React.JSX.Element => {
+  const [open, setOpen] = useState(false);
+  const { data: session } = useSession();
+  const isAuthenticated = Boolean(session?.user);
+
+  const triggerButton = (
+    <Button className={cn("", className)} size="sm" variant="outline">
+      <Share size={16} />
+      <span className="sr-only">Share chat</span>
+    </Button>
+  );
+
+  if (!isAuthenticated) {
+    return (
+      <Popover>
+        <PopoverTrigger asChild>{triggerButton}</PopoverTrigger>
+        <PopoverContent align="start" className="w-80 p-0">
+          <LoginPrompt
+            description="Control who can see your conversations and share them with others."
+            title="Sign in to share your chat"
+          />
+        </PopoverContent>
+      </Popover>
+    );
+  }
+
+  return (
+    <ShareDialog
+      onOpenChange={setOpen}
+      open={open}
+      renderContent={renderContent}
+    >
+      <DialogTrigger asChild>{triggerButton}</DialogTrigger>
+    </ShareDialog>
+  );
+};
+export { ShareButton, ShareDialog, ShareDialogView };

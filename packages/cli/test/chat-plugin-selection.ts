@@ -11,6 +11,8 @@ const selections = [
   "followup-suggestions",
   "search",
   "model-preferences",
+  "ai-titles",
+  "sharing",
 ] as const;
 const pluginTables = [
   "Project",
@@ -27,6 +29,8 @@ const expectedTables: Record<(typeof selections)[number], readonly string[]> = {
   "followup-suggestions": ["EveFollowup"],
   search: ["EveSearchText"],
   "model-preferences": ["UserModelPreference"],
+  "ai-titles": [],
+  sharing: [],
 };
 
 /** Reuse the packed CLI/registry fixture, keeping each app outside the workspace. */
@@ -58,6 +62,9 @@ export const testChatPluginSelections = (
       }
       // Checking the actual tree prevents a copied reference preset from masking
       // accidental imports of an omitted plugin during compilation.
+      expect(existsSync(path.join(cwd, "app/(chat)/share/[id]/page.tsx"))).toBe(
+        selection === "sharing"
+      );
       const pluginDirectory = path.join(cwd, "plugins");
       const installedPlugins = existsSync(pluginDirectory)
         ? await readdir(pluginDirectory)
@@ -107,6 +114,16 @@ process.env.EVE_INTERNAL_ORIGIN = "http://127.0.0.1:1";
 process.env.OPENAI_API_KEY = "fixture-key";
 `
       );
+      let lifecycleMethod = "onDeleteConversations";
+      if (selection === "projects") {
+        lifecycleMethod = "onCreate";
+      }
+      if (selection === "ai-titles") {
+        lifecycleMethod = "afterCreate";
+      }
+      if (selection === "sharing") {
+        lifecycleMethod = "publicReadFilter";
+      }
       await writeFile(
         path.join(cwd, "plugin-lifecycle-probe.ts"),
         `
@@ -116,7 +133,7 @@ import { chatLinks } from "./lib/chat-plugins";
 assert.equal(installedChatPlugins.length, ${selection === "none" || selection === "model-preferences" ? 0 : 1});
 assert.deepEqual(await chatLinks("fixture-owner", []), new Map());
 for (const plugin of installedChatPlugins) {
-  assert.equal(typeof plugin.${selection === "projects" ? "onCreate" : "onDeleteConversations"}, "function");
+  assert.equal(typeof plugin.${lifecycleMethod}, "function");
 }
 `
       );

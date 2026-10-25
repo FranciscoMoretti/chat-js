@@ -1081,23 +1081,8 @@ const updateEveConversationMetadata = async (
   updates: Readonly<{
     title?: string;
     isPinned?: boolean;
-    visibility?: "private" | "public";
   }>
 ): Promise<Pick<ConversationRow, "id"> | undefined> => {
-  if (updates.visibility !== undefined) {
-    const [conversation] = await db
-      .update(eveConversation)
-      .set({ visibility: updates.visibility })
-      .where(
-        and(
-          eq(eveConversation.id, id),
-          eq(eveConversation.ownerId, ownerId),
-          visibleConversation
-        )
-      )
-      .returning({ id: eveConversation.id });
-    return conversation;
-  }
   let titleStatus: "manual" | undefined = undefined;
   if (isNonemptyString(updates.title)) {
     titleStatus = "manual";
@@ -1125,79 +1110,6 @@ const updateEveConversationMetadata = async (
   return row;
 };
 
-const isEveRootTitlePending = async (
-  ownerId: string,
-  conversationId: string,
-  fallbackTitle: string
-): Promise<boolean> => {
-  const [row] = await db
-    .select({ id: eveChat.id })
-    .from(eveConversation)
-    .innerJoin(
-      eveChat,
-      and(
-        eq(eveChat.id, eveConversation.chatId),
-        eq(eveChat.ownerId, eveConversation.ownerId)
-      )
-    )
-    .where(
-      and(
-        eq(eveConversation.id, conversationId),
-        eq(eveConversation.ownerId, ownerId),
-        eq(eveChat.title, fallbackTitle),
-        eq(eveChat.titleStatus, "pending")
-      )
-    )
-    .limit(SINGLE_MATCH_LIMIT);
-  return Boolean(row);
-};
-
-const replaceEveRootFallbackTitle = async (
-  ownerId: string,
-  conversationId: string,
-  fallbackTitle: string,
-  generatedTitle: string
-): Promise<boolean> => {
-  const [row] = await db
-    .update(eveChat)
-    .set({ title: generatedTitle, titleStatus: "generated" })
-    .from(eveConversation)
-    .where(
-      and(
-        eq(eveConversation.id, conversationId),
-        eq(eveConversation.ownerId, ownerId),
-        eq(eveChat.id, eveConversation.chatId),
-        eq(eveChat.ownerId, ownerId),
-        eq(eveChat.title, fallbackTitle),
-        eq(eveChat.titleStatus, "pending")
-      )
-    )
-    .returning({ id: eveChat.id });
-  return Boolean(row);
-};
-
-const settleEveRootFallbackTitle = async (
-  ownerId: string,
-  conversationId: string,
-  fallbackTitle: string
-): Promise<boolean> => {
-  const [row] = await db
-    .update(eveChat)
-    .set({ titleStatus: "fallback" })
-    .from(eveConversation)
-    .where(
-      and(
-        eq(eveConversation.id, conversationId),
-        eq(eveConversation.ownerId, ownerId),
-        eq(eveChat.id, eveConversation.chatId),
-        eq(eveChat.ownerId, ownerId),
-        eq(eveChat.title, fallbackTitle),
-        eq(eveChat.titleStatus, "pending")
-      )
-    )
-    .returning({ id: eveChat.id });
-  return Boolean(row);
-};
 const recordEveConversationActivity = async (
   ownerId: string,
   sessionId: string,
@@ -1217,33 +1129,6 @@ const recordEveConversationActivity = async (
         lt(eveChat.updatedAt, at)
       )
     );
-};
-
-const getPublicEveConversation = async (
-  id: string
-): Promise<(ConversationRow & Pick<ChatRow, "title">) | undefined> => {
-  const [row] = await db
-    .select({ chat: { title: eveChat.title }, conversation: eveConversation })
-    .from(eveConversation)
-    .innerJoin(
-      eveChat,
-      and(
-        eq(eveChat.id, eveConversation.chatId),
-        eq(eveChat.ownerId, eveConversation.ownerId)
-      )
-    )
-    .where(
-      and(
-        eq(eveConversation.id, id),
-        eq(eveConversation.visibility, "public"),
-        eq(eveConversation.state, "bound")
-      )
-    )
-    .limit(SINGLE_MATCH_LIMIT);
-  if (hasQueryRow(row)) {
-    return { ...row.conversation, title: row.chat.title };
-  }
-  return undefined;
 };
 
 const listEveConversationBranches = async (
@@ -1369,8 +1254,6 @@ export {
   getEveChatPageConversation,
   getEveConversation,
   getEveCreation,
-  getPublicEveConversation,
-  isEveRootTitlePending,
   listEveConversationBranches,
   listEveConversations,
   listEveOwnerBindings,
@@ -1378,8 +1261,6 @@ export {
   ownsEveSession,
   readEveSessionMapping,
   recordEveConversationActivity,
-  replaceEveRootFallbackTitle,
-  settleEveRootFallbackTitle,
   updateEveConversationMetadata,
 };
 export { CreationConflictError } from "./creation-conflict-error";

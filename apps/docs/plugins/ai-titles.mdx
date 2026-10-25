@@ -1,0 +1,40 @@
+---
+title: AI Titles
+description: Automatically name new chats while preserving manual titles
+---
+
+Use AI Titles to generate a concise name from your first message after a new chat is created. Your chat starts with a message-derived fallback title while generation runs.
+
+## Installation
+
+```bash
+bunx @chat-js/cli@latest add ai-titles
+```
+
+The CLI registers the plugin's `afterCreate` callback. You do not need a new database table or migration.
+
+## Usage
+
+Start a chat normally. The plugin generates its title after the creation response, outside the creation transaction. Parallel responses share one logical chat and use a bound candidate for title generation. Forks keep their existing naming behavior.
+
+If generation fails or returns an empty title, your fallback stays. If you rename the chat while generation is running, your manual title wins. Recovery requests may invoke the callback again, but settled titles are not replaced.
+
+## Options
+
+Choose your title model through the existing gateway workflow setting in `chat.config.ts`:
+
+```ts
+ai: {
+  workflows: {
+    title: "openai/gpt-5-nano",
+  },
+},
+```
+
+Use a model ID supported by your installed gateway. Your gateway supplies the default when you omit this setting.
+
+## Customization
+
+Edit `plugins/ai-titles/generate-title.ts` to change the prompt, normalization, or timeout. The default timeout is 15 seconds, with no model retries. `title-queries.ts` rechecks ownership, bound state, the fallback value, and title status before updating the logical chat. Generating a title does not change chat recency.
+
+Core owns fallback titles, manual rename, and title status. Without this plugin, your chats retain their fallback titles until you rename them. The callback is best-effort work after a response, not a durable job queue. See the [Plugin API](../reference/plugin-api).

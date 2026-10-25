@@ -13,7 +13,7 @@ const mocks = vi.hoisted(() => ({
   admit: vi.fn(),
   after: vi.fn<(callback: () => void | Promise<void>) => void>(),
   create: vi.fn(),
-  persistTitle: vi.fn(),
+  afterCreate: vi.fn(),
   principal: vi.fn(),
   settle: vi.fn(),
 }));
@@ -31,8 +31,8 @@ vi.mock("@/lib/eve/guest-admission", () => ({
 vi.mock("@/lib/eve/create-conversation-operation", () => ({
   createEveConversationOperation: mocks.create,
 }));
-vi.mock("@/lib/eve/conversation-title", () => ({
-  persistGeneratedEveConversationTitle: mocks.persistTitle,
+vi.mock("@/lib/chat-plugins", () => ({
+  runChatAfterCreate: mocks.afterCreate,
 }));
 
 const input = {
@@ -108,7 +108,7 @@ test("preserves authoritative deletion when its committed quota cannot be refund
   });
 });
 
-test("defers root title generation until after the creation response", async () => {
+test("defers root plugin work until after the creation response", async () => {
   mocks.create.mockResolvedValue(
     Response.json({
       id: "00000000-0000-4000-8000-000000000002",
@@ -119,11 +119,11 @@ test("defers root title generation until after the creation response", async () 
   const response = await POST(request());
 
   expect(response.status).toBe(HTTP_STATUS.ok);
-  expect(mocks.persistTitle).not.toHaveBeenCalled();
+  expect(mocks.afterCreate).not.toHaveBeenCalled();
   expect(mocks.after).toHaveBeenCalledOnce();
   const [[afterResponseCallback]] = mocks.after.mock.calls;
   await afterResponseCallback();
-  expect(mocks.persistTitle).toHaveBeenCalledWith({
+  expect(mocks.afterCreate).toHaveBeenCalledWith({
     conversationId: "00000000-0000-4000-8000-000000000002",
     message: "hello",
     ownerId: "guest",

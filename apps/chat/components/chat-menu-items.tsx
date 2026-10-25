@@ -5,16 +5,12 @@ import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 
 import React from "react";
 
-import { ShareMenuItem } from "@/components/upgrade-cta/share-menu-item";
-
 interface ChatMenuItemsProps {
   readonly isPinned: boolean;
   readonly onDelete?: () => void;
   readonly pluginActions?: React.ReactNode;
   readonly onRename: () => void;
-  readonly onShare?: () => void;
   readonly onTogglePin: () => void;
-  readonly showShare?: boolean;
 }
 
 export const ChatMenuItems = ({
@@ -23,8 +19,6 @@ export const ChatMenuItems = ({
   onTogglePin,
   onDelete,
   pluginActions,
-  onShare,
-  showShare = true,
 }: ChatMenuItemsProps): React.JSX.Element => (
   <>
     <DropdownMenuItem className="cursor-pointer" onClick={onRename}>
@@ -38,8 +32,6 @@ export const ChatMenuItems = ({
     </DropdownMenuItem>
 
     {pluginActions}
-
-    {showShare && onShare && <ShareMenuItem onShare={onShare} />}
 
     {onDelete && (
       <DropdownMenuItem

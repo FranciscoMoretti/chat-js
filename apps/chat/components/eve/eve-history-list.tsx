@@ -27,7 +27,6 @@ import { parseChatIdFromPathname } from "@/providers/parse-chat-id-from-pathname
 import { useTRPC } from "@/trpc/react";
 
 import { useEveDeletion } from "./eve-deletion-provider";
-import { EveShareDialogContent } from "./eve-share-dialog";
 import { useEveMetadataMutations } from "./use-eve-metadata-mutations";
 
 const titlePollIntervalMs = 1000;
@@ -247,15 +246,6 @@ export const EveHistoryList = ({
                         onRename={async (id, title) => {
                           await rename.mutateAsync({ id, title });
                         }}
-                        renderShareContent={(
-                          _chatId,
-                          onClose
-                        ): React.JSX.Element => (
-                          <EveShareDialogContent
-                            chatId={item.conversationId}
-                            onClose={onClose}
-                          />
-                        )}
                         setOpenMobile={setOpenMobile}
                       />
                     );

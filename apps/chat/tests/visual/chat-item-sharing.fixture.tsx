@@ -1,4 +1,5 @@
 import { takeSnapshot } from "@uiverify/vitest";
+import { SharingActions } from "@/plugins/sharing/ui/chat-contributions";
 import React, { act } from "react";
 import { expect, vi } from "vitest";
 import { page } from "vitest/browser";
@@ -19,18 +20,24 @@ vi.mock("@/providers/session-provider", () => ({
   }),
 }));
 
-const renderShareContent = (
-  chatId: string,
-  onClose: () => void
-): React.JSX.Element => (
-  <>
-    <DialogTitle>Share conversation</DialogTitle>
-    <DialogDescription>Share settings for {chatId}</DialogDescription>
-    <button onClick={onClose} type="button">
-      Close sharing
-    </button>
-  </>
-);
+vi.mock("@/plugins/sharing/ui/share-dialog", () => ({
+  EveShareButton: () => null,
+  EveShareDialogContent: ({
+    chatId,
+    onClose,
+  }: {
+    chatId: string;
+    onClose: () => void;
+  }) => (
+    <>
+      <DialogTitle>Share conversation</DialogTitle>
+      <DialogDescription>Share settings for {chatId}</DialogDescription>
+      <button onClick={onClose} type="button">
+        Close sharing
+      </button>
+    </>
+  ),
+}));
 
 const checkChatItemSharing = async (
   chatId: "project-chat" | "sidebar-chat"
@@ -48,7 +55,16 @@ const checkChatItemSharing = async (
           onRename={vi
             .fn<(id: string, title: string) => Promise<void>>()
             .mockResolvedValue()}
-          renderShareContent={renderShareContent}
+          pluginActions={
+            <SharingActions
+              chat={{
+                id: chatId,
+                title: "Notes",
+                conversationId: chatId,
+                state: "bound",
+              }}
+            />
+          }
         />
       </section>
       <section>
@@ -63,7 +79,16 @@ const checkChatItemSharing = async (
             isActive
             onPin={vi.fn<(id: string, pinned: boolean) => void>()}
             onRename={vi.fn<(id: string, title: string) => void>()}
-            renderShareContent={renderShareContent}
+            pluginActions={
+              <SharingActions
+                chat={{
+                  id: chatId,
+                  title: "Notes",
+                  conversationId: chatId,
+                  state: "bound",
+                }}
+              />
+            }
             setOpenMobile={vi.fn<(open: boolean) => void>()}
           />
         </SidebarMenu>

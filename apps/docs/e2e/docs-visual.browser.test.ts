@@ -19,6 +19,8 @@ const pages = [
     path: "/docs/reference/plugin-api",
   },
   { name: "suggestions-plugin", path: "/docs/plugins/followup-suggestions" },
+  { name: "ai-titles-plugin", path: "/docs/plugins/ai-titles" },
+  { name: "sharing-plugin", path: "/docs/plugins/sharing" },
   { name: "search-plugin", path: "/docs/plugins/search" },
   { name: "feedback-plugin", path: "/docs/plugins/feedback" },
   { name: "projects-plugin", path: "/docs/plugins/projects" },

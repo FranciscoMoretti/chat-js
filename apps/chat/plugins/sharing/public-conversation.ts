@@ -1,9 +1,9 @@
 import { getEveMessageDisplayReceipts } from "@/lib/db/eve-dispatch";
 import { Client } from "eve/client";
-import { assertEveConfigured } from "./server";
-import { getEveConnectionOptions } from "./connection-options";
-import { getPublicEveConversation } from "@/lib/db/eve-queries";
-import { sharedEveMessages } from "./shared-messages";
+import { assertEveConfigured } from "@/lib/eve/server";
+import { getEveConnectionOptions } from "@/lib/eve/connection-options";
+import { getPublicEveConversation } from "./queries";
+import { sharedEveMessages } from "@/lib/eve/shared-messages";
 
 const PUBLIC_TRANSCRIPT_SNAPSHOT_TIMEOUT_MS = 15_000;
 const PUBLIC_TRANSCRIPT_TITLE_PREVIEW_MAX_LENGTH = 100;

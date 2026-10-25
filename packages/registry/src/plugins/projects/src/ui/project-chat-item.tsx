@@ -6,13 +6,11 @@ import { formatDistance } from "date-fns";
 import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 
 import React, { useState, useSyncExternalStore } from "react";
-import type { JSX as ReactJSX, ReactNode } from "react";
+import type { JSX as ReactJSX } from "react";
 
 import { Button } from "@/components/ui/button";
 import { ChatRenameDialog } from "@/components/chat-rename-dialog";
 import { InternalLink } from "@/components/internal-link";
-
-import { ShareDialog } from "@/components/share-button";
 
 import {
   DropdownMenu,
@@ -22,8 +20,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-
-import { ShareMenuItem } from "@/components/upgrade-cta/share-menu-item";
 
 // Share a sampled clock across rows and keep the hydration snapshot deterministic.
 let currentTime: number | null = null;
@@ -60,7 +56,6 @@ export const ProjectChatItem = ({
   onDelete,
   onRename,
   pluginActions,
-  renderShareContent,
 }: {
   readonly chat: {
     readonly id: string;
@@ -70,14 +65,9 @@ export const ProjectChatItem = ({
   };
   readonly onDelete?: (chatId: string) => void;
   readonly pluginActions?: React.ReactNode;
-  readonly renderShareContent: (
-    chatId: string,
-    onClose: () => void
-  ) => Exclude<ReactNode, Promise<unknown>>;
   readonly onRename: (chatId: string, title: string) => Promise<void>;
 }): ReactJSX.Element => {
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
-  const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const referenceTime = useSyncExternalStore(
     subscribeToTime,
     getCurrentTime,
@@ -144,12 +134,6 @@ export const ProjectChatItem = ({
 
                 {pluginActions}
 
-                <ShareMenuItem
-                  onShare={() => {
-                    setShareDialogOpen(true);
-                  }}
-                />
-
                 {onDelete && (
                   <DropdownMenuItem
                     className="text-destructive focus:bg-destructive/15 focus:text-destructive cursor-pointer"
@@ -166,13 +150,6 @@ export const ProjectChatItem = ({
           </div>
         </div>
       </div>
-      {shareDialogOpen && (
-        <ShareDialog
-          onOpenChange={setShareDialogOpen}
-          open={shareDialogOpen}
-          renderContent={(onClose) => renderShareContent(chat.id, onClose)}
-        />
-      )}
 
       {renameDialogOpen && (
         <ChatRenameDialog

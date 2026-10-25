@@ -1,3 +1,7 @@
+import {
+  getPublicEveConversation,
+  setSharing,
+} from "@/plugins/sharing/queries";
 import { createEveTestSession } from "./eve-native-session.fixture";
 import { cleanupWorkspaceIfUnused } from "../lib/eve/persistent-sandbox-store";
 import { reconcileEveWorkspaceTurn } from "../lib/eve/reconcile-workspace-turn";
@@ -27,7 +31,6 @@ import {
   getDeletingEveConversationForSession,
   getEveConversation,
   getEveCreation,
-  getPublicEveConversation,
   listEveConversationBranches,
   listEveConversations,
   listEveOwnerBindings,
@@ -450,7 +453,6 @@ test.each(["deleting", "deleted"] as const)(
     expect(
       await updateEveConversationMetadata(owner, bound.id, {
         title: "resurrected",
-        visibility: "public",
       })
     ).toBeUndefined();
     await recordEveConversationActivity(
@@ -495,7 +497,7 @@ test("deletion fences the entire owned family and is retryable", async () => {
     createEveTestSession,
     { fork: { conversationId: root.id } }
   );
-  await updateEveConversationMetadata(owner, root.id, { visibility: "public" });
+  await setSharing(owner, root.id, "public");
   expect(await beginEveConversationDeletion("other", root.id)).toBeNull();
   expect(await getPublicEveConversation(root.id)).toBeDefined();
   const rootCreation = await getEveConversation(owner, root.id);
@@ -613,8 +615,8 @@ test("final application deletion erases family content, preserves accounting and
   await updateEveConversationMetadata(owner, root.id, {
     isPinned: true,
     title: "Private title",
-    visibility: "public",
   });
+  await setSharing(owner, root.id, "public");
   await db.insert(eveUsage).values({
     chargedCents: 1,
     costUsd: "0.01",

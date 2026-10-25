@@ -44,6 +44,12 @@ The full original request is retained for dispatch and recovery. Its browser sto
 
 These are explicit core contracts. There is no registry of arbitrary creation fields or schema-merging protocol.
 
+## After creation
+
+Use `chat.afterCreate({ ownerId, conversationId, message })` for optional work after a successful root creation response. It runs outside the creation transaction through Next.js `after`, using a bound conversation from the initial chat or response group. Forks do not invoke it.
+
+Recovery requests may invoke the callback again. Make your contribution idempotent and recheck ownership and state before writing. Core catches each contribution's failure so later contributions still run. This callback does not guarantee durable execution. [AI Titles](../plugins/ai-titles) uses it for guarded title enrichment.
+
 ## Explicit chat mutations
 
 Use `updateOwnedChat` from `@/lib/db/update-owned-chat` for existing-chat metadata changes. Core resolves a logical chat or legacy conversation ID, verifies ownership and a bound session, and holds the family lock used by deletion. Unavailable chats return `null` before the callback runs.
@@ -72,6 +78,14 @@ This helper is for logical-chat metadata. Conversation-specific operations that 
 
 History predicates combine with AND. Return `undefined` when your restriction does not apply. Filtering an already-fetched page breaks pagination.
 
+## Public reads
+
+`chat.publicReadFilter()` returns a Drizzle predicate over the core conversation table. Installed predicates combine with OR. With no contribution, the result is false. File and document readers combine this grant with ownership, bound state, and their resource-specific checks. This contribution never grants write or workspace access.
+
+[Sharing](../plugins/sharing) contributes the public visibility predicate. Its public transcript route belongs to the plugin and rechecks visibility after reading the native snapshot. Core retains the visibility column and resets it during deletion.
+
+Client actions receive the logical chat `id` and, when available, the exact `conversationId`. Use the latter for branch-specific sharing. Header menus omit it when there is no transcript to share. Plugin actions own their dialogs and preserve the menu while a dialog is open.
+
 ## Deletion
 
 | Callback | When it runs | Typical data |
@@ -92,7 +106,8 @@ Both callbacks run inside the core deletion transaction under its lifecycle lock
 | `useModelVisibility` | Hook returning enabled model IDs from core defaults |
 | `chat.Sidebar` | Sidebar content |
 | `chat.SidebarHeader` | Fixed sidebar menu control with server-resolved `ownerId` |
-| `chat.Actions` | Menu actions receiving `{ chat: { id, title, state } }` |
+| `chat.Actions` | Menu actions receiving `{ chat: { id, title, state, conversationId? } }` |
+| `chat.HeaderActions` | Header controls receiving the same chat context |
 | `chat.Breadcrumb` | Context receiving `{ chatId }` |
 | `chat.MessageActions` | Assistant-message actions |
 | `chat.Suggestions` | Suggestions beneath the last editable message |

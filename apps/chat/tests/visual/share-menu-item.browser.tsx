@@ -8,7 +8,7 @@ import {
 import React, { act, createContext, useContext } from "react";
 import { expect, test, vi } from "vitest";
 import { mount, unmount } from "./primitive-mount";
-import { ShareMenuItem } from "@/components/upgrade-cta/share-menu-item";
+import { ShareMenuItem } from "@/plugins/sharing/ui/share-menu-item";
 import { page } from "vitest/browser";
 import { takeSnapshot } from "@uiverify/vitest";
 
@@ -61,7 +61,6 @@ test("share menu preserves anonymous selection and authenticated sharing", async
     await expect.element(anonymousItem).toBeVisible();
     await expect.element(authenticatedItem).toBeVisible();
     anonymousOpenChange.mockClear();
-    authenticatedOpenChange.mockClear();
     await act(async () => {
       await anonymousItem.click();
       await expect
@@ -70,20 +69,6 @@ test("share menu preserves anonymous selection and authenticated sharing", async
     });
     expect(anonymousOpenChange).not.toHaveBeenCalledWith(false);
     expect(onShare).not.toHaveBeenCalled();
-    await act(async () => {
-      await authenticatedItem.click();
-    });
-    expect(onShare).toHaveBeenCalledExactlyOnceWith(
-      expect.objectContaining({ type: "click" })
-    );
-    expect(authenticatedOpenChange).toHaveBeenCalledWith(false);
-    await act(async () => {
-      await anonymousItem.click();
-      await expect
-        .element(page.getByText("Sign in to share your chats"))
-        .toBeVisible();
-    });
-    expect(onShare).toHaveBeenCalledOnce();
     await act(async () => {
       await Promise.all(
         document
@@ -99,6 +84,34 @@ test("share menu preserves anonymous selection and authenticated sharing", async
       await takeSnapshot("share-menu-session-branches");
       await page.screenshot({ path: "share-menu-session-branches.png" });
     });
+  } finally {
+    await unmount(fixture);
+  }
+});
+
+test("authenticated sharing keeps its menu mounted for the dialog", async () => {
+  const onOpenChange = vi.fn<(open: boolean) => void>();
+  const onShare = vi.fn<() => void>();
+  const fixture = await mount(
+    <SessionContext.Provider value={authenticatedSession}>
+      <DropdownMenu defaultOpen onOpenChange={onOpenChange}>
+        <DropdownMenuTrigger>Authenticated menu</DropdownMenuTrigger>
+        <DropdownMenuContent>
+          <ShareMenuItem onShare={onShare} />
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </SessionContext.Provider>
+  );
+  try {
+    const item = page.getByRole("menuitem", { name: "Share", exact: true });
+    await expect.element(item).toBeVisible();
+    onOpenChange.mockClear();
+    await act(async () => {
+      await item.click();
+    });
+    expect(onShare).toHaveBeenCalledExactlyOnceWith();
+    expect(onOpenChange).not.toHaveBeenCalledWith(false);
+    await expect.element(item).toBeVisible();
   } finally {
     await unmount(fixture);
   }

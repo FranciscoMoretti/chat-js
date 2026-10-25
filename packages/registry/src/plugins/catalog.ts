@@ -1,4 +1,6 @@
 import { modelPreferencesItem } from "./model-preferences/manifest";
+import { sharingItem } from "./sharing/manifest";
+import { aiTitlesItem } from "./ai-titles/manifest";
 import { searchItem } from "./search/manifest";
 import { followupSuggestionsItem } from "./followup-suggestions/manifest";
 import { feedbackItem } from "./feedback/manifest";
@@ -13,6 +15,8 @@ export const pluginItems = [
   followupSuggestionsItem,
   searchItem,
   modelPreferencesItem,
+  aiTitlesItem,
+  sharingItem,
   mcpItem,
   attachmentUploadsItem,
   ...observabilityItems,

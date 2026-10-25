@@ -5,6 +5,7 @@ import { mcp as plugin2 } from "@/plugins/mcp/server-plugin";
 import { modelPreferences as plugin3 } from "@/plugins/model-preferences/server-plugin";
 import { projects as plugin4 } from "@/plugins/projects/server-plugin";
 import { search as plugin5 } from "@/plugins/search/server-plugin";
+import { sharing as plugin6 } from "@/plugins/sharing/server-plugin";
 import type { InstalledRouters } from "@/lib/installation-contracts";
 export const installedRouters = {
   feedback: plugin0().routers.feedback,
@@ -13,4 +14,5 @@ export const installedRouters = {
   modelPreferences: plugin3().routers.modelPreferences,
   project: plugin4().routers.project,
   search: plugin5().routers.search,
+  sharing: plugin6().routers.sharing,
 } satisfies InstalledRouters;

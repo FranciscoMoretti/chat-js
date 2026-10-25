@@ -1,5 +1,9 @@
+import { eveConversationTitleFallback } from "./eve/conversation-title";
+import type { SQL } from "drizzle-orm";
+import { or, sql } from "drizzle-orm";
+import { createModuleLogger } from "./logger";
 import { installedChatPlugins } from "@/composition/generated/installed-chat";
-import type { ChatLinks } from "./chat-plugin-contracts";
+import type { ChatLinks, ChatCreatedContext } from "./chat-plugin-contracts";
 
 export const chatLinks = async (
   ownerId: string,
@@ -21,3 +25,39 @@ export const chatLinks = async (
   }
   return links;
 };
+
+const log = createModuleLogger("chat.after-create");
+
+export const runChatAfterCreate = async (
+  context: ChatCreatedContext
+): Promise<void> => {
+  for (const contribution of installedChatPlugins) {
+    try {
+      // oxlint-disable-next-line no-await-in-loop -- Optional work runs in installation order after the response.
+      await contribution.afterCreate?.(context);
+    } catch (error) {
+      log.warn(
+        { errorName: error instanceof Error ? error.name : typeof error },
+        "Chat afterCreate contribution failed"
+      );
+    }
+  }
+  try {
+    const { settleEveRootFallbackTitle } = await import("./db/eve-title");
+    await settleEveRootFallbackTitle(
+      context.ownerId,
+      context.conversationId,
+      eveConversationTitleFallback(context.message)
+    );
+  } catch (error) {
+    log.warn(
+      { errorName: error instanceof Error ? error.name : typeof error },
+      "Chat fallback title settlement failed"
+    );
+  }
+};
+
+/** No installed public-reader contribution means no public access. */
+export const publicChatReadFilter = (): SQL =>
+  or(...installedChatPlugins.map((plugin) => plugin.publicReadFilter?.())) ??
+  sql`false`;

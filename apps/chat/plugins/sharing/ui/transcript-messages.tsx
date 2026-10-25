@@ -9,7 +9,7 @@ import {
 import type { ReadonlyEveMessage } from "@/lib/eve/readonly-message-types";
 import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 
-import { EveMessages } from "./eve-messages";
+import { EveMessages } from "@/components/eve/eve-messages";
 
 export const EveSharedMessages = ({
   messages,

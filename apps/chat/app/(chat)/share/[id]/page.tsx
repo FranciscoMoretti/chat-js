@@ -1,7 +1,7 @@
 import React, { Suspense } from "react";
 
 import { ChatLoadingShell } from "@/components/chat-loading-shell";
-import { EveSharedPage } from "@/components/eve/eve-shared-page";
+import { EveSharedPage } from "@/plugins/sharing/ui/shared-page";
 
 const SharedChatPageContent = async ({
   params,
