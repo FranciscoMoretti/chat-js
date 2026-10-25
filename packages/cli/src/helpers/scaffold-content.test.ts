@@ -33,7 +33,11 @@ test.each([
     name: "ChatJS",
   },
   {
-    excluded: ["release/app.zip", "branding.json"],
+    excluded: [
+      "release/app.zip",
+      "out/ChatJS.app/Contents/Resources/app.asar",
+      "branding.json",
+    ],
     filter: shouldCopyElectronFile,
     name: "Electron",
   },

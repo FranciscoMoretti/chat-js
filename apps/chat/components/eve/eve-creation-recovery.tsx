@@ -151,7 +151,11 @@ export const EveCreationRecovery = ({
           );
           globalThis.location.assign(`/chat/${id}`);
         } catch (error) {
-          if (error instanceof CreationRejectedError && context !== undefined) {
+          if (
+            error instanceof CreationRejectedError &&
+            error.code === "project_not_found" &&
+            context !== undefined
+          ) {
             setRejected(true);
           }
           setFailure(

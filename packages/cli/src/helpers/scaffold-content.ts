@@ -145,7 +145,12 @@ const shouldCopyElectronFile = (relativePath: string): boolean =>
   shouldCopyAppFile(relativePath) &&
   !relativePath
     .split(path.sep)
-    .some((segment) => segment === "release" || segment === "branding.json");
+    .some(
+      (segment) =>
+        segment === "release" ||
+        segment === "out" ||
+        segment === "branding.json"
+    );
 
 // Remove the reference-app project while retaining the starter behavior suites.
 const REFERENCE_VISUAL_PROJECT =

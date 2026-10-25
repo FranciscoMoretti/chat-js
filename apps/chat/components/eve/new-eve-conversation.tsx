@@ -221,6 +221,7 @@ export const NewEveConversation = ({
         } catch (error) {
           if (
             error instanceof CreationRejectedError &&
+            error.code === "project_not_found" &&
             scope?.context !== undefined
           ) {
             setContextRejected(true);
