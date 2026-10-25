@@ -10,6 +10,7 @@ const selections = [
   "feedback",
   "followup-suggestions",
   "search",
+  "ai-titles",
 ] as const;
 const pluginTables = [
   "Project",
@@ -24,6 +25,7 @@ const expectedTables: Record<(typeof selections)[number], readonly string[]> = {
   feedback: ["EveVote"],
   "followup-suggestions": ["EveFollowup"],
   search: ["EveSearchText"],
+  "ai-titles": [],
 };
 
 /** Reuse the packed CLI/registry fixture, keeping each app outside the workspace. */
@@ -104,6 +106,13 @@ process.env.EVE_INTERNAL_ORIGIN = "http://127.0.0.1:1";
 process.env.OPENAI_API_KEY = "fixture-key";
 `
       );
+      let lifecycleMethod = "onDeleteConversations";
+      if (selection === "projects") {
+        lifecycleMethod = "onCreate";
+      }
+      if (selection === "ai-titles") {
+        lifecycleMethod = "afterCreate";
+      }
       await writeFile(
         path.join(cwd, "plugin-lifecycle-probe.ts"),
         `
@@ -113,7 +122,7 @@ import { chatLinks } from "./lib/chat-plugins";
 assert.equal(installedChatPlugins.length, ${selection === "none" ? 0 : 1});
 assert.deepEqual(await chatLinks("fixture-owner", []), new Map());
 for (const plugin of installedChatPlugins) {
-  assert.equal(typeof plugin.${selection === "projects" ? "onCreate" : "onDeleteConversations"}, "function");
+  assert.equal(typeof plugin.${lifecycleMethod}, "function");
 }
 `
       );

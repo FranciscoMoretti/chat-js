@@ -6,7 +6,7 @@ import {
   conversationBinding,
   createConversationInput,
 } from "@/lib/eve/contracts";
-import { persistGeneratedEveConversationTitle } from "@/lib/eve/conversation-title";
+import { runChatAfterCreate } from "@/lib/chat-plugins";
 import { createEveConversationOperation } from "@/lib/eve/create-conversation-operation";
 import {
   admitGuestCreation,
@@ -83,7 +83,7 @@ export const POST = async (
     );
     if (binding.success) {
       after(async () => {
-        await persistGeneratedEveConversationTitle({
+        await runChatAfterCreate({
           conversationId: binding.data.id,
           message: input.data.message,
           ownerId: principal.ownerId,

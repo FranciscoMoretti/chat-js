@@ -1,5 +1,6 @@
+import { createModuleLogger } from "./logger";
 import { installedChatPlugins } from "@/composition/generated/installed-chat";
-import type { ChatLinks } from "./chat-plugin-contracts";
+import type { ChatLinks, ChatCreatedContext } from "./chat-plugin-contracts";
 
 export const chatLinks = async (
   ownerId: string,
@@ -20,4 +21,22 @@ export const chatLinks = async (
     }
   }
   return links;
+};
+
+const log = createModuleLogger("chat.after-create");
+
+export const runChatAfterCreate = async (
+  context: ChatCreatedContext
+): Promise<void> => {
+  for (const contribution of installedChatPlugins) {
+    try {
+      // oxlint-disable-next-line no-await-in-loop -- Optional work runs in installation order after the response.
+      await contribution.afterCreate?.(context);
+    } catch (error) {
+      log.warn(
+        { errorName: error instanceof Error ? error.name : typeof error },
+        "Chat afterCreate contribution failed"
+      );
+    }
+  }
 };

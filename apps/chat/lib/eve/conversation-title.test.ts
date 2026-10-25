@@ -1,10 +1,12 @@
 import { beforeEach, expect, it, vi } from "vitest";
 
 import {
-  EVE_TITLE_MAX_LENGTH,
-  eveConversationTitleFallback,
   generateEveConversationTitleResult,
   persistGeneratedEveConversationTitle,
+} from "@/plugins/ai-titles/generate-title";
+import {
+  EVE_TITLE_MAX_LENGTH,
+  eveConversationTitleFallback,
 } from "./conversation-title";
 
 const mocks = vi.hoisted(() => ({
@@ -21,7 +23,7 @@ vi.mock("@/lib/ai/telemetry", () => ({ chatTelemetry: "telemetry" }));
 vi.mock("@/lib/config", () => ({
   config: { ai: { workflows: { title: "openai/gpt-5-nano" } } },
 }));
-vi.mock("@/lib/db/eve-queries", () => ({
+vi.mock("@/plugins/ai-titles/title-queries", () => ({
   isEveRootTitlePending: mocks.pending,
   replaceEveRootFallbackTitle: mocks.replace,
   settleEveRootFallbackTitle: mocks.settle,

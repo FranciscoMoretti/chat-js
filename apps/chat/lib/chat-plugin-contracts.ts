@@ -1,3 +1,4 @@
+import type { ReadonlyEveMessageInput } from "./eve/readonly-message-types";
 import type { MessageStreamEvent } from "eve/client";
 import type { ComponentType } from "react";
 import type { SQL } from "drizzle-orm";
@@ -14,7 +15,15 @@ export interface ChatLinks {
   readonly parentHref: string;
 }
 
+export interface ChatCreatedContext {
+  readonly ownerId: string;
+  readonly conversationId: string;
+  readonly message: ReadonlyEveMessageInput;
+}
+
 export interface ChatServerIntegration {
+  /** After a root creation response, outside its transaction. May repeat on recovery. */
+  readonly afterCreate?: (context: ChatCreatedContext) => Promise<void>;
   /** Called only for a newly inserted logical chat, before its transaction commits. */
   readonly onCreate?: (context: {
     readonly tx: Readonly<Pick<typeof db, "select" | "insert">>;

@@ -1,7 +1,7 @@
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { after } from "next/server";
 import { env } from "@/lib/env";
-import { persistGeneratedEveConversationTitle } from "@/lib/eve/conversation-title";
+import { runChatAfterCreate } from "@/lib/chat-plugins";
 import { admitGuestResponseGroup } from "@/lib/eve/guest-group-admission";
 import { resolveEvePrincipal } from "@/lib/eve/principal";
 import { sameOrigin } from "@/lib/eve/request-policy";
@@ -9,9 +9,9 @@ import { createEveResponseGroup } from "@/lib/eve/response-group";
 import { eveResponseGroupInput } from "@/lib/eve/response-group-input";
 import { eveResponseGroupResult } from "@/lib/eve/response-group-contracts";
 
-// Initial comparison candidates share a logical chat. Schedule its title from
+// Initial comparison candidates share a logical chat. Schedule optional work from
 // the bound primary candidate while retaining deferred message/owner reads.
-const scheduleResponseGroupTitle = (
+const scheduleResponseGroupContributions = (
   result: ReadonlyNativeSurface<
     ReturnType<typeof eveResponseGroupResult.parse>
   >,
@@ -31,7 +31,7 @@ const scheduleResponseGroupTitle = (
     );
     if (source?.state === "bound") {
       after(async () => {
-        await persistGeneratedEveConversationTitle({
+        await runChatAfterCreate({
           conversationId: source.conversationId,
           message: input.data.message,
           ownerId: principal.ownerId,
@@ -71,7 +71,7 @@ export const POST = async (
     const result = eveResponseGroupResult.parse(
       await createEveResponseGroup(principal.ownerId, input.data, admission)
     );
-    scheduleResponseGroupTitle(result, input, principal);
+    scheduleResponseGroupContributions(result, input, principal);
     return Response.json(result);
   } catch {
     return Response.json(

@@ -48,6 +48,8 @@ const REPOSITORY_ONLY_FILES = new Set([
   "lib/db/migrations/eve-runtime-migration.test.ts",
   "lib/db/eve-search.test.ts",
   "lib/eve/search-text.test.ts",
+  "lib/eve/conversation-title.test.ts",
+  "lib/db/ai-titles-plugin.test.ts",
   "lib/eve/search-hook.test.ts",
   "lib/eve/search-backfill.test.ts",
   "scripts/repair-search-preview.sql",

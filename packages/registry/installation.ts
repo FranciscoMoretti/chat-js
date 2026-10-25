@@ -25,6 +25,7 @@ const demoInstallation = installationSelectionSchema.parse({
     "feedback",
     "followup-suggestions",
     "search",
+    "ai-titles",
     "mcp",
     "attachment-uploads",
     "vercel-analytics",

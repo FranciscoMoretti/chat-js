@@ -44,6 +44,12 @@ The full original request is retained for dispatch and recovery. Its browser sto
 
 These are explicit core contracts. There is no registry of arbitrary creation fields or schema-merging protocol.
 
+## After creation
+
+Use `chat.afterCreate({ ownerId, conversationId, message })` for optional work after a successful root creation response. It runs outside the creation transaction through Next.js `after`, using a bound conversation from the initial chat or response group. Forks do not invoke it.
+
+Recovery requests may invoke the callback again. Make your contribution idempotent and recheck ownership and state before writing. Core catches each contribution's failure so later contributions still run. This callback does not guarantee durable execution. [AI Titles](../plugins/ai-titles) uses it for guarded title enrichment.
+
 ## Explicit chat mutations
 
 Use `updateOwnedChat` from `@/lib/db/update-owned-chat` for existing-chat metadata changes. Core resolves a logical chat or legacy conversation ID, verifies ownership and a bound session, and holds the family lock used by deletion. Unavailable chats return `null` before the callback runs.
