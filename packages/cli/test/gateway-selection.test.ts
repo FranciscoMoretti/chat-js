@@ -28,6 +28,7 @@ import {
   verifyNativeToolRuntime,
 } from "./native-tool-fixture";
 import { run } from "./run-command";
+import { testChatPluginSelections } from "./chat-plugin-selection";
 
 const originalRegistryUrl = process.env.CHATJS_REGISTRY_URL;
 const root = await mkdtemp(
@@ -1665,3 +1666,5 @@ it(
   },
   DAYTONA_INSTALL_TEST_TIMEOUT_MS
 );
+
+testChatPluginSelections(root, cliEntry);
