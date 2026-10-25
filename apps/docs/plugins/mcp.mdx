@@ -3,7 +3,7 @@ title: MCP
 description: Connect Model Context Protocol servers to extend AI capabilities
 ---
 
-[Model Context Protocol (MCP)](https://modelcontextprotocol.io) lets you connect external tool servers to your AI. The ChatJS plugin provides connector settings, OAuth authorization, and tool discovery.
+[Model Context Protocol (MCP)](https://modelcontextprotocol.io) lets you connect external tool servers to your AI. The ChatJS plugin provides connector settings, OAuth authorization, and discovery of tools, resources, and prompts.
 
 ## Installation
 
@@ -82,9 +82,11 @@ Some MCP servers require OAuth authorization. If a server supports dynamic clien
 When you connect an MCP server:
 
 1. The connector establishes a connection to the server at the URL you provided
-2. The connector discovers tools exposed by the server
+2. The connector discovers the tools, resources, and prompts exposed by the server
 3. During chat, the AI can call any of these tools as needed
 4. The server processes the request and returns the result
+
+Open a connector’s details in Settings → Connectors to inspect its Tools, Resources, and Prompts lists. You can see resource and prompt names there. During chat, the model calls discovered tools. Resource and prompt listings describe server capabilities but do not automatically insert their contents into your conversation.
 
 Sensitive data (server URLs, OAuth tokens, credentials) is encrypted using your `MCP_ENCRYPTION_KEY` before being stored in the database.
 

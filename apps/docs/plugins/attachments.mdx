@@ -11,11 +11,11 @@ Attachments adds a file picker, mobile camera capture, and paste/drop handling t
 
 Run this command inside your ChatJS app:
 
+Before adding this plugin, configure a durable Files SDK storage provider in your app. Choose one during app creation, or follow [File storage](../storage) to configure an existing app. Set the provider’s generated environment variables. For Vercel Blob, set `BLOB_READ_WRITE_TOKEN`. Installation stops if you have no durable provider configured.
+
 ```bash
 bunx chat-js add attachment-uploads
 ```
-
-A durable Files SDK storage provider is required. Choose one during installation and configure its generated environment variables. Vercel Blob uses `BLOB_READ_WRITE_TOKEN`. See [File storage](../storage) for other providers.
 
 The plugin adds the upload endpoint and composer controls. It adds no database tables and has no `features.attachments` enable flag.
 
