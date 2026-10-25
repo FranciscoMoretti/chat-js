@@ -4,10 +4,11 @@
     "types": ["node", "bun"]
   },
   "include": [
-    "demo-sync.ts",
+    "demo-*.ts",
+    "registry-mirror/**/*.ts",
     "ownership.ts",
     "../test/demo-check.test.ts",
-    "../src/demo-sync.test.ts",
+    "../src/registry-mirror.test.ts",
     "../src/demo-turbo.test.ts"
   ],
   "exclude": ["node_modules", "dist"]

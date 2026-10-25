@@ -73,7 +73,7 @@ The CLI walks you through gateway, features, and auth choices, generates `chat.c
 
 ## Development
 
-- `bun dev`: run chat app with debugging overlays disabled
+- `bun dev`: mirror canonical registry sources into the reference app, watch for edits, and run the chat app
 - `bun dev:query`: run chat with React Query Devtools
 - `bun dev:scan`: run chat with React Scan
 - `bun dev:debug`: run chat with both tools
@@ -85,6 +85,8 @@ The CLI walks you through gateway, features, and auth choices, generates `chat.c
 - `bun test:types`: type-check the workspaces
 
 Ultracite supplies the Oxlint and Oxfmt presets. All files receive the full presets. Necessary exceptions are documented at the affected source lines rather than disabled through file-wide baselines. Oxfmt skips build output and the five generated registration indexes whose exact content hashes are verified by `chat-js sync`.
+
+Plugin implementations belong in `packages/registry/src/plugins/<id>/src`; framework adapters live beside them in `adapters/`. Save those files while root `bun dev` runs to update the reference app automatically. The selection comes only from `demoInstallation` in `packages/registry/installation.ts`. See [registry-mirror development](packages/registry/DEVELOPMENT.md) for generated-file ownership, file declarations, and the runner comparison.
 
 Stop the dev server before switching debug commands, then reload the page. Both integrations remain available without reinstalling anything; React Scan loads from its existing CDN script. These flags only enable tools in development.
 

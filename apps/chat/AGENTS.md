@@ -9,7 +9,7 @@ These instructions apply to this application directory.
 - EVE is the only chat runtime. Browser commands enter through `app/api/eve/[...path]/route.ts`; agent hooks and tools live in `agent/`.
 - Keep core tables in `lib/db/schema.ts`; installable plugins own their schema and query modules. Declare plugin schemas in their manifests so `composition/generated/installed-database.ts` composes the installed selection.
 - Core routers compose in `trpc/routers/_app.ts`. Plugins declare routers in their descriptor and server factory; sync generates their registration.
-- Edit plugin implementations in `packages/registry/src/plugins/<id>/src`, then regenerate the installed reference copies with `bun demo:sync`. Keep framework entrypoints thin.
+- Edit plugin implementations in `packages/registry/src/plugins/<id>/src`, run root `bun dev`, and save to update the installed reference copies automatically. Installed registry files in this reference app are disposable registry-mirror output; local edits are overwritten. Use `bun demo:sync` for one-shot regeneration and `bun demo:check` for verification. Keep framework entrypoints thin.
 
 ## Commands
 

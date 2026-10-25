@@ -1,9 +1,5 @@
-import {
-  baselinePath,
-  demoRoot,
-  generateDemo,
-  syncDemo,
-} from "../scripts/demo-sync";
+import { generateDemo } from "../scripts/demo-generator";
+import { createDemoMirror } from "../scripts/demo-mirror";
 import { expect, test } from "bun:test";
 
 const GENERATION_TIMEOUT_MS = 60_000;
@@ -78,7 +74,6 @@ const verifyExcludedFiles = (
 ): void => {
   for (const file of [
     "test-json.ts",
-    "demo-sync-test-support.ts",
     "plugins/test-runtime.ts",
     "composer-controls.ts",
     "settings-items.ts",
@@ -92,18 +87,13 @@ const verifyExcludedFiles = (
 test(
   "demo stays aligned with full canonical installation source",
   async () => {
-    const expected = await generateDemo();
+    const { files: expected } = await generateDemo();
     const source = Object.fromEntries(expected);
     verifyGatewayAndTool(source);
     verifyPlugins(source);
     verifyEnvironmentBoundaries(source);
     verifyExcludedFiles(source);
-    await syncDemo({
-      baseline: baselinePath,
-      check: true,
-      expected,
-      root: demoRoot,
-    });
+    await createDemoMirror().run({ check: true });
   },
   GENERATION_TIMEOUT_MS
 );

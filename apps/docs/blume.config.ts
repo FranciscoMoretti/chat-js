@@ -114,6 +114,7 @@ export default defineConfig({
             "/registry",
             "/registry/namespaces",
             "/registry/authoring",
+            "/registry/mirror",
             "/registry/testing",
           ],
           label: "Registry",

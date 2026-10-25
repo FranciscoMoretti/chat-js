@@ -1,0 +1,48 @@
+---
+title: Registry Mirror
+description: Preview canonical registry changes in the ChatJS reference app
+---
+
+Use `registry-mirror` when developing registry items in the ChatJS repository. It copies the selected registry source into `apps/chat` and keeps the running reference app up to date.
+
+This workflow applies to the repository's reference app. If you installed ChatJS into your own app, you own and edit your installed source.
+
+## Edit and preview
+
+With the repository dependencies and reference-app environment configured, run from the repository root:
+
+```bash
+bun dev
+```
+
+The app starts after the initial mirror succeeds. Edit canonical source and save to update the preview:
+
+| Change | Edit here |
+| --- | --- |
+| Plugin implementation | `packages/registry/src/plugins/<id>/src/` |
+| Plugin framework adapters | `packages/registry/src/plugins/<id>/adapters/` |
+| Tools and providers | Their files under `packages/registry/src/` |
+| Installed selection | `demoInstallation` in `packages/registry/installation.ts` |
+
+Declare added files, renamed targets and removals in the item's manifest or registry declaration. The mirror uses the real installer transforms and formatting.
+
+## Generated-file ownership
+
+Installed registry files in `apps/chat` are disposable output. The next mirror run overwrites local edits, restores missing files and removes obsolete generated files. Make lasting changes in canonical source.
+
+The path-only manifest at `packages/registry/mirror-manifest.json` records which files the mirror may clean up. App-owned configuration, credentials, dependency manifests, UI ordering and custom extensions remain yours to edit. Commit updated generated files and the manifest together.
+
+## Regenerate and check
+
+For a single run without starting the app:
+
+```bash
+bun demo:sync
+bun demo:check
+```
+
+The check reports drift without changing output. When preparing a scaffold update, also run `bun template:sync` and `bun template:check`.
+
+If generation fails, existing output stays in place. The initial app launch waits, or an already running preview is marked stale. Fix the source and save to retry. File publication is not atomic across the whole installation.
+
+For module internals, shutdown behavior and runner comparisons, see `packages/registry/DEVELOPMENT.md` in the repository. Use [Building and Testing](./testing) to verify an item before distribution.

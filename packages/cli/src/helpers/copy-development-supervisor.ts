@@ -9,6 +9,7 @@ export const copyDevelopmentSupervisor = async (
   await Promise.all(
     [
       "dev-supervisor.ts",
+      "dev-process-tree.ts",
       "dev-health.ts",
       "dev-recovery.ts",
       "persistent-sandbox-cleanup.ts",

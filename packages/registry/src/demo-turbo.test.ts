@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { afterAll, expect, test } from "bun:test";
 import {
   findTask,
@@ -34,7 +35,7 @@ const copyFixtureFiles = async (directory: string): Promise<void> => {
       "packages/registry",
       "packages/gateways",
     ].map((workspace) => `${workspace}/package.json`),
-    "packages/registry/demo-baseline.json",
+    "packages/registry/mirror-manifest.json",
   ];
   await Promise.all(
     files.map(async (file) => {
@@ -47,19 +48,22 @@ const copyFixtureFiles = async (directory: string): Promise<void> => {
       );
     })
   );
-  // Every baseline-owned copy must participate, including generated indexes.
-  const baseline = parseJsonObject(
+  // Every manifest-owned copy must participate, including generated indexes.
+  const manifest = parseJsonObject(
     await readFile(
-      path.join(repoRoot, "packages/registry/demo-baseline.json"),
+      path.join(repoRoot, "packages/registry/mirror-manifest.json"),
       "utf-8"
     )
   );
   await Promise.all(
-    Object.keys(jsonObject(baseline.files)).map(async (file) => {
-      const target = path.join(directory, "apps/chat", file);
-      await mkdir(path.dirname(target), { recursive: true });
-      await writeFile(target, "// fixture owned copy\n");
-    })
+    z
+      .array(z.string())
+      .parse(manifest.files)
+      .map(async (file) => {
+        const target = path.join(directory, "apps/chat", file);
+        await mkdir(path.dirname(target), { recursive: true });
+        await writeFile(target, "// fixture owned copy\n");
+      })
   );
 };
 const gitIn = async (
@@ -128,17 +132,20 @@ afterAll(async () => {
 });
 test("demo check hashes every owned copy and never restores app files; sync is uncached", async () => {
   const task = await registryTask("demo:check");
-  const baseline = parseJsonObject(
+  const manifest = parseJsonObject(
     await readFile(
-      path.join(repoRoot, "packages/registry/demo-baseline.json"),
+      path.join(repoRoot, "packages/registry/mirror-manifest.json"),
       "utf-8"
     )
   );
   expect(
-    Object.keys(jsonObject(baseline.files)).filter(
-      (file) =>
-        !Object.hasOwn(jsonObject(task.inputs), `../../apps/chat/${file}`)
-    )
+    z
+      .array(z.string())
+      .parse(manifest.files)
+      .filter(
+        (file) =>
+          !Object.hasOwn(jsonObject(task.inputs), `../../apps/chat/${file}`)
+      )
   ).toEqual([]);
   expect(task.dependencies).toEqual([]);
   expect(jsonObject(task.resolvedTaskDefinition).cache).toBe(true);
@@ -153,7 +160,7 @@ test.each([
   ["packages/registry/registry.ts", true],
   ["packages/registry/metadata.ts", true],
   ["packages/registry/installation.ts", true],
-  ["packages/registry/demo-baseline.json", true],
+  ["packages/registry/mirror-manifest.json", true],
   ["packages/registry/scripts/demo-sync.ts", true],
   ["packages/cli/src/registry/shadcn.ts", true],
   ["packages/cli/src/utils/installation-plan.ts", true],

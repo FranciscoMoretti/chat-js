@@ -95,3 +95,6 @@ apps/chat/tests/visual/**/__screenshots__/
 
 apps/chat/guest/.eve/
 apps/chat/guest/.output/
+
+# Checkout-local registry-mirror coordination locks
+packages/registry/mirror-manifest.json*.lock

@@ -9,7 +9,7 @@
   ],
   "scripts": {
     "worktree-env": "bun .agents/skills/worktree-ports/scripts/worktree-env.ts",
-    "dev": "dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env chat -- turbo run dev --filter=@chatjs/chat",
+    "dev": "dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env chat -- bun packages/registry/scripts/demo-dev.ts",
     "dev:query": "NEXT_PUBLIC_REACT_QUERY_DEVTOOLS=1 bun run dev",
     "dev:scan": "NEXT_PUBLIC_REACT_SCAN=1 bun run dev",
     "dev:debug": "NEXT_PUBLIC_REACT_QUERY_DEVTOOLS=1 NEXT_PUBLIC_REACT_SCAN=1 bun run dev",
