@@ -3,7 +3,7 @@ import { createRoot } from "react-dom/client";
 
 import { EveMessages } from "../components/eve/eve-messages";
 
-import { FollowUpSuggestionsView } from "../components/followup-suggestions-view";
+import { FollowUpSuggestionsView } from "../plugins/followup-suggestions/followup-suggestions-view";
 
 const suggestions = [
   "Can you give an example?",
@@ -30,8 +30,12 @@ const Fixture = (): React.JSX.Element => {
           respond={() => {
             /* No input requests in this display fixture. */
           }}
-          onSuggestion={setSelected}
-          suggestions={suggestions}
+          suggestions={
+            <FollowUpSuggestionsView
+              onSelect={setSelected}
+              suggestions={suggestions}
+            />
+          }
         />
       </section>
       <section aria-label="Pending request">

@@ -82,6 +82,7 @@ test("offline baseline omits uninstalled schemas and adding MCP extends the same
   expect(baseline).not.toContain('CREATE TABLE "Project"');
   expect(baseline).not.toContain("EveChatProject");
   expect(baseline).not.toContain("EveVote");
+  expect(baseline).not.toContain("EveFollowup");
   expect(
     initialFiles.filter((file): boolean => file.endsWith(".sql"))
   ).toHaveLength(1);

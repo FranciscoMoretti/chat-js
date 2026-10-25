@@ -537,3 +537,38 @@ test("conversation with saved private feedback", async () => {
   await expect.element(page.getByTestId("message-upvote")).toBeDisabled();
   await expect.element(page.getByTestId("message-downvote")).toBeEnabled();
 });
+
+test("conversation with persisted follow-up suggestions", async () => {
+  const { sessionId } = invoicesConversation;
+  if (sessionId === null) {
+    throw new Error("Missing fixture session");
+  }
+  await renderRoute(conversation, {
+    ...request,
+    events: {
+      [sessionId]: [
+        {
+          type: "turn.completed",
+          data: { turnId: "turn_0", sequence: 2 },
+          meta: { id: "completed-invoices", at: "2026-10-18T10:00:00Z" },
+        },
+      ],
+    },
+    trpc: {
+      ...invoicesTrpc,
+      "followupSuggestions.get": [
+        "How do I measure the improvement?",
+        "What about partial indexes?",
+        "Does column order matter?",
+      ],
+    },
+  });
+  await expect
+    .element(
+      page.getByRole("button", { name: "How do I measure the improvement?" })
+    )
+    .toBeVisible();
+  await expect
+    .element(page.getByRole("group", { name: "Related questions" }))
+    .toBeVisible();
+});

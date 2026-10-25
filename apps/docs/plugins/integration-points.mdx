@@ -68,19 +68,21 @@ History predicates combine with AND. Return `undefined` when your restriction do
 
 `chat.onDelete(tx, chatId)` removes plugin-owned logical-chat membership when the final session is deleted. Core controls the lifecycle lock and transaction. Removing a project detaches its chats without deleting their sessions.
 
-This final-chat callback does not describe individual conversation deletion. Plugins storing conversation or native-session records must use a cleanup contract carrying those exact identities when that capability is installed.
+This final-chat callback does not describe individual conversation deletion. Plugins storing conversation or native-session records use `onDeleteConversations`, described below.
 
 ## Client placements
 
-| Contribution       | Purpose                                                 |
-| ------------------ | ------------------------------------------------------- |
-| `composerControls` | Composer controls with stable IDs                       |
-| `settingsItems`    | Settings navigation                                     |
-| `layout`           | A no-prop layout component                              |
-| `uploads`          | Attachment selection and upload behavior                |
-| `chat.Sidebar`     | Sidebar content                                         |
-| `chat.Actions`     | Menu actions receiving `{ chat: { id, title, state } }` |
-| `chat.Breadcrumb`  | Context receiving `{ chatId }`                          |
+| Contribution | Purpose |
+| --- | --- |
+| `composerControls` | Composer controls with stable IDs |
+| `settingsItems` | Settings navigation |
+| `layout` | A no-prop layout component |
+| `uploads` | Attachment selection and upload behavior |
+| `chat.Sidebar` | Sidebar content |
+| `chat.Actions` | Menu actions receiving `{ chat: { id, title, state } }` |
+| `chat.Breadcrumb` | Context receiving `{ chatId }` |
+| `chat.MessageActions` | Assistant-message actions |
+| `chat.Suggestions` | Suggestions beneath the last editable message |
 
 Plugin components own fetching, mutations, cache invalidation, loading, errors, and dialogs. Core renders normal React components. Composer and settings order remain app-owned arrays. Only one plugin supplies uploads.
 
@@ -113,3 +115,9 @@ Generated modules register routers, database schemas, instrumentation, layout, u
 `chat.onDeleteConversations(tx, { conversationIds, sessionIds })` runs inside the existing deletion transaction, before the selected conversations are tombstoned. A failure rolls back the database cleanup. Use it for content belonging to those conversations or sessions, such as Feedback votes. `onDelete(tx, chatId)` still runs only when the final session of the logical chat is removed.
 
 The client `chat.MessageActions` placement receives `{ conversationId, messageId, disabled }`. Core renders it for editable assistant messages; each plugin owns its queries and mutations. Feedback uses a conversation-specific write with a lock and state recheck, because voting must not change the logical chat's update timestamp.
+
+## Suggestions after an answer
+
+`chat.Suggestions` receives `conversationId`, native `events`, `lastMessage: { role, metadata: { turnId } }`, `disabled`, and `onSelect`. It renders beneath the last editable message when transcript actions are available. The plugin owns completion matching, storage reads, and polling. The callback returns the selected text to core's existing send/compare flow.
+
+Follow-up Suggestions uses native EVE hooks for generation and the per-conversation cleanup callback for session-owned records. Its claim-before-generation rule and core usage accounting survive extraction; no new event bus or generic mutation wrapper is involved.

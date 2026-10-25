@@ -441,6 +441,7 @@ const promptCreateSetup = async (
         ...(coreFeatures.mcp ? ["mcp"] : []),
         ...(coreFeatures.projects ? ["projects"] : []),
         ...(coreFeatures.feedback ? ["feedback"] : []),
+        ...(coreFeatures.followupSuggestions ? ["followup-suggestions"] : []),
         ...(coreFeatures.attachments ? ["attachment-uploads"] : []),
       ],
       gateway: gatewaySelection.source,

@@ -1,3 +1,4 @@
+import type { MessageStreamEvent } from "eve/client";
 import type { ComponentType } from "react";
 import type { SQL } from "drizzle-orm";
 import type { db } from "./db/client";
@@ -58,7 +59,18 @@ export interface ChatMessageActionProps {
   readonly messageId: string;
   readonly disabled: boolean;
 }
+export interface ChatSuggestionsProps {
+  readonly conversationId: string;
+  readonly events: readonly MessageStreamEvent[];
+  readonly lastMessage?: {
+    readonly role: string;
+    readonly metadata?: { readonly turnId?: string };
+  };
+  readonly disabled: boolean;
+  readonly onSelect: (suggestion: string) => void;
+}
 export interface ChatClientIntegration {
+  readonly Suggestions?: ComponentType<ChatSuggestionsProps>;
   readonly MessageActions?: ComponentType<ChatMessageActionProps>;
   readonly Sidebar?: ComponentType;
   readonly Actions?: ComponentType<ChatActionProps>;

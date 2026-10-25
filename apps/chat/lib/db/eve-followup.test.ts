@@ -8,8 +8,14 @@ const postgres = new PGlite();
 vi.mock("server-only", () => ({}));
 vi.mock("./client", () => ({ db: drizzle(postgres) }));
 vi.mock("../env", () => ({ env: {} }));
+vi.mock("@/lib/eve/persistent-sandbox-store", () => ({
+  checkDeletedWorkspaceMemberships: vi
+    .fn<() => Promise<void>>()
+    .mockResolvedValue(),
+}));
+const { completeEveConversationDeletion } = await import("./eve-deletion");
 const { claimEveFollowup, finishEveFollowup, getEveFollowup } =
-  await import("./queries");
+  await import("@/plugins/followup-suggestions/followup-queries");
 const chatId = "00000000-0000-4000-8000-000000000001";
 const branchId = "00000000-0000-4000-8000-000000000002";
 beforeAll(async () => {
@@ -102,6 +108,22 @@ it("does not collide when another branch reuses a turn number", async () => {
     "Why?",
     "How?",
   ]);
+});
+it("cleans only deleted-session suggestions when the logical chat survives", async () => {
+  await postgres.exec(
+    `UPDATE "EveConversation" SET state='deleting' WHERE id='${branchId}'`
+  );
+  await completeEveConversationDeletion("owner", branchId);
+  expect(await getEveFollowup("owner", chatId, "branch-completion")).toBeNull();
+  expect(await getEveFollowup("owner", chatId, "completion")).toEqual([
+    "Next?",
+    "Why?",
+    "How?",
+  ]);
+  await finishEveFollowup("owner", chatId, "branch-completion", [
+    "Late result",
+  ]);
+  expect(await getEveFollowup("owner", chatId, "branch-completion")).toBeNull();
 });
 it("fences new claims and reads after deletion begins", async () => {
   await postgres.exec(

@@ -1,12 +1,12 @@
-import { claimEveFollowup, finishEveFollowup } from "@/lib/db/queries";
+import { claimEveFollowup, finishEveFollowup } from "./followup-queries";
 import { Output, generateText } from "ai";
 import type { FollowupContext } from "./followup-context";
 import { config } from "@/lib/config";
 import { createModuleLogger } from "@/lib/logger";
-import { eveFollowupSuggestions } from "./followup-suggestions";
-import { accountEveModel } from "./model-accounting";
-import type { ModelCallScope } from "./model-ledger";
-import { resolveEveModel } from "./model-selection";
+import { eveFollowupSuggestions } from "./suggestion-output";
+import { accountEveModel } from "@/lib/eve/model-accounting";
+import type { ModelCallScope } from "@/lib/eve/model-ledger";
+import { resolveEveModel } from "@/lib/eve/model-selection";
 
 const FOLLOWUP_TIMEOUT_MS = 15_000;
 const log = createModuleLogger("eve.followup-suggestions");

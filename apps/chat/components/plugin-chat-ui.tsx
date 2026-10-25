@@ -3,6 +3,7 @@ import React from "react";
 import { installedChatUi } from "@/composition/generated/installed-chat-ui";
 import type {
   ChatActionProps,
+  ChatSuggestionsProps,
   ChatMessageActionProps,
 } from "@/lib/chat-plugin-contracts";
 
@@ -40,6 +41,16 @@ export const PluginMessageActions = (
   <>
     {installedChatUi.map(({ id, chat: { MessageActions } }) =>
       MessageActions ? <MessageActions key={id} {...props} /> : null
+    )}
+  </>
+);
+
+export const PluginSuggestions = (
+  props: ChatSuggestionsProps
+): React.JSX.Element => (
+  <>
+    {installedChatUi.map(({ id, chat: { Suggestions } }) =>
+      Suggestions ? <Suggestions key={id} {...props} /> : null
     )}
   </>
 );

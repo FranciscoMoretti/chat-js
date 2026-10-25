@@ -14,7 +14,7 @@ const mocks = vi.hoisted(() => {
     state,
   };
 });
-vi.mock("@/lib/eve/generate-followup-suggestions", () => ({
+vi.mock("@/plugins/followup-suggestions/generate-suggestions", () => ({
   generateEveFollowupSuggestions: mocks.followups,
 }));
 vi.mock("eve/context", () => ({

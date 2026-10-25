@@ -1,5 +1,5 @@
 import { beforeEach, expect, it, vi } from "vitest";
-import { generateEveFollowupSuggestions } from "./generate-followup-suggestions";
+import { generateEveFollowupSuggestions } from "@/plugins/followup-suggestions/generate-suggestions";
 
 const mocks = vi.hoisted(() => ({
   feature: { default: "mock", enabled: true },
@@ -10,7 +10,7 @@ const mocks = vi.hoisted(() => ({
   claim: vi.fn(),
   finishSuggestions: vi.fn(),
 }));
-vi.mock("../db/queries", () => ({
+vi.mock("@/plugins/followup-suggestions/followup-queries", () => ({
   claimEveFollowup: mocks.claim,
   finishEveFollowup: mocks.finishSuggestions,
 }));

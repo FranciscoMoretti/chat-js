@@ -1,3 +1,4 @@
+import { followupSuggestionsItem } from "./src/plugins/followup-suggestions/manifest";
 import { feedbackItem } from "./src/plugins/feedback/manifest";
 import { projectsItem } from "./src/plugins/projects/manifest";
 import { builtInSandboxes } from "./src/sandboxes/catalog";
@@ -201,6 +202,7 @@ const registry = registrySchema.parse({
   items: [
     projectsItem,
     feedbackItem,
+    followupSuggestionsItem,
     mcpItem,
     attachmentUploadsItem,
     ...observabilityItems,

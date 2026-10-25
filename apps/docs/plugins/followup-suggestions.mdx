@@ -1,0 +1,28 @@
+---
+title: Follow-up Suggestions
+description: Optional next-question generation with durable completion identity and bounded polling
+---
+
+Follow-up Suggestions adds related questions beneath a completed assistant answer.
+
+```bash
+bunx chat-js add followup-suggestions
+```
+
+Review and apply the generated migration, then enable `ai.tools.followupSuggestions.enabled` in `chat.config.ts`. Its existing `default` setting chooses the model. Installation controls whether the implementation is present; the config switch controls generation and display.
+
+## Runtime and storage
+
+The plugin owns its EVE hook, current-exchange collection, output schema, generation, `EveFollowup` table, queries, and UI. A thin adapter in `agent/hooks/followup-suggestions.ts` registers the native hook.
+
+The hook excludes guest and background sessions. Before calling a model it atomically claims the completed turn. Replayed callbacks and interrupted claims never regenerate paid output. Generation uses core model resolution and usage accounting, disables hidden retries, and has a timeout. Failure leaves the completed answer usable.
+
+The stored result retains its native session, turn, and completion-event identity. Branches in the same owned logical chat may read inherited results by exact completion event. A new, failed, or cancelled turn does not reuse an earlier turn's suggestions.
+
+## Client and cleanup
+
+Core's `Suggestions` slot passes the conversation ID, native events, the last message's role and turn ID, disabled state, and a selection callback. The plugin resolves the completion event and owns its query and bounded polling. Core no longer imports the suggestion hook or polls for this feature.
+
+The plugin uses `onDeleteConversations` to delete results belonging to removed native sessions in the existing deletion transaction. It does not wait for final logical-chat deletion. A late generation result cannot recreate a deleted claim.
+
+Existing reference-app tables and migrations are unchanged by the extraction. See [integration points](./integration-points).

@@ -2,7 +2,7 @@
 
 import { useEveDeliveryReceipt } from "./use-eve-delivery-receipt";
 
-import { useEveFollowups } from "./use-eve-followups";
+import { PluginSuggestions } from "@/components/plugin-chat-ui";
 
 import { withTaskCleanup } from "@/components/task-cleanup";
 
@@ -532,7 +532,7 @@ const EveConversation = ({
     snapshot,
     conversationId
   );
-  const suggestions = useEveFollowups(conversationId, agent.events, messages);
+  const lastMessage = messages.at(-1);
   const editingMessageId =
     fork.editingMessageId ??
     messages.find(
@@ -726,7 +726,6 @@ const EveConversation = ({
                   <EveInitialMessage message={initialMessage} />
                 )}
               <EveMessages
-                suggestions={suggestions}
                 actionsDisabled={actionLocks.transcript}
                 conversationId={conversationId}
                 disabled={busy || commandPending}
@@ -820,24 +819,32 @@ const EveConversation = ({
                   void fork.begin(message, { events: agent.events, response });
                 }}
 
-                onSuggestion={(suggestion) => {
-                  void run(async () => {
-                    await (modelIds.length > 1
-                      ? fork.compare(
-                          draftMessage(suggestion, []),
-                          modelIds,
-                          composerDraft.selectedTool ?? undefined,
-                          false
-                        )
-                      : submitMessage(
-                          suggestion,
-                          [],
-                          modelIds[0],
-                          false,
-                          composerDraft.selectedTool ?? undefined
-                        ));
-                  });
-                }}
+                suggestions={
+                  <PluginSuggestions
+                    conversationId={conversationId}
+                    events={agent.events}
+                    lastMessage={lastMessage}
+                    disabled={actionLocks.transcript}
+                    onSelect={(suggestion) => {
+                      void run(async () => {
+                        await (modelIds.length > 1
+                          ? fork.compare(
+                              draftMessage(suggestion, []),
+                              modelIds,
+                              composerDraft.selectedTool ?? undefined,
+                              false
+                            )
+                          : submitMessage(
+                              suggestion,
+                              [],
+                              modelIds[0],
+                              false,
+                              composerDraft.selectedTool ?? undefined
+                            ));
+                      });
+                    }}
+                  />
+                }
 
                 respond={(response) => {
                   startEventAction(async () => {

@@ -15,7 +15,6 @@ import {
   updateEveConversationMetadata,
 } from "@/lib/db/eve-queries";
 import { searchEveConversations } from "@/lib/db/eve-search";
-import { getEveFollowup } from "@/lib/db/queries";
 import { eveHistoryInput } from "@/lib/eve/history-input";
 import { eveManualDocumentInput } from "@/lib/eve/document-contracts";
 
@@ -55,30 +54,6 @@ export const eveRouter = createTRPCRouter({
           ctx.eveOwnerId,
           input.sessionId,
           input.operationId
-        )
-    ),
-  followup: eveOwnedProcedure
-    .input(
-      z.object({
-        conversationId: z.uuid(),
-        eventId: z.string().min(1).max(512),
-      })
-    )
-    .query(
-      async ({
-        ctx,
-        input,
-      }: {
-        readonly ctx: { readonly eveOwnerId: string };
-        readonly input: {
-          readonly conversationId: string;
-          readonly eventId: string;
-        };
-      }) =>
-        await getEveFollowup(
-          ctx.eveOwnerId,
-          input.conversationId,
-          input.eventId
         )
     ),
   branches: eveOwnedProcedure

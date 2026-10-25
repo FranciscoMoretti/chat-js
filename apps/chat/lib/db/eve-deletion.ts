@@ -9,7 +9,6 @@ import { db } from "./client";
 import { tombstoneEveResponseGroups } from "./eve-response-groups";
 import {
   eveChat,
-  eveFollowup,
   eveCodeSandbox,
   eveConversation,
   eveDocumentCheckpoint,
@@ -278,12 +277,6 @@ const completeEveConversationDeletion = async (
     await tx
       .delete(eveSubagentSession)
       .where(inArray(eveSubagentSession.conversationId, ids));
-    await tx.delete(eveFollowup).where(
-      inArray(
-        eveFollowup.sessionId,
-        family.flatMap((row) => (row.sessionId === null ? [] : [row.sessionId]))
-      )
-    );
     for (const plugin of installedChatPlugins) {
       // oxlint-disable-next-line no-await-in-loop -- Cleanup participates in the deletion transaction.
       await plugin.onDeleteConversations?.(tx, {

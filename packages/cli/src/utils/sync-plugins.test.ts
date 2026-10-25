@@ -1,3 +1,6 @@
+import { projectsItem } from "../../../registry/src/plugins/projects/manifest";
+import { feedbackItem } from "../../../registry/src/plugins/feedback/manifest";
+import { followupSuggestionsItem } from "../../../registry/src/plugins/followup-suggestions/manifest";
 import { rejects } from "node:assert/strict";
 import { afterEach, expect, test } from "bun:test";
 import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
@@ -619,55 +622,64 @@ for (const [contribution, ids] of [
   }
 }
 
-test("Projects installs independently and core composition has no project schema or runtime imports", async () => {
-  const { projectsItem } =
-    await import("../../../registry/src/plugins/projects/manifest");
-  const root = await fixture();
-  await initializePluginUi(root);
-  const uninstalled = await Promise.all(
-    ["installed-chat", "installed-chat-ui", "installed-database"].map(
-      async (name) =>
-        await readFile(
-          path.join(root, `composition/generated/${name}.ts`),
-          "utf-8"
-        )
-    )
-  );
-  for (const source of uninstalled) {
-    expect(source).not.toContain("plugins/projects");
+test.each([
+  { item: projectsItem, router: "project", schema: "db/project-schema.ts" },
+  { item: feedbackItem, router: "feedback", schema: "feedback-schema.ts" },
+  {
+    item: followupSuggestionsItem,
+    router: "followupSuggestions",
+    schema: "followup-schema.ts",
+  },
+])(
+  "optional plugin $router installs independently of the other chat plugins",
+  async ({ item, router, schema }) => {
+    const root = await fixture();
+    await initializePluginUi(root);
+    const uninstalled = await Promise.all(
+      ["installed-chat", "installed-chat-ui", "installed-database"].map(
+        async (name) =>
+          await readFile(
+            path.join(root, `composition/generated/${name}.ts`),
+            "utf-8"
+          )
+      )
+    );
+    for (const source of uninstalled) {
+      expect(source).not.toContain("plugins/");
+    }
+    await Promise.all(
+      (item.files ?? []).map(async (file) => {
+        const target = path.join(root, file.target?.replace(/^~\//u, "") ?? "");
+        await mkdir(path.dirname(target), { recursive: true });
+        await cp(
+          path.resolve(import.meta.dir, "../../../registry", file.path),
+          target
+        );
+      })
+    );
+    await writeFile(
+      path.join(root, `plugins/${item.name}/chatjs.json`),
+      JSON.stringify(item.meta?.chatjs)
+    );
+    await syncPlugins(root, { expected: [item.name] });
+    const lifecycle = await readFile(
+      path.join(root, "composition/generated/installed-chat.ts"),
+      "utf-8"
+    );
+    expect(lifecycle).toContain(`@/plugins/${item.name}/chat`);
+    expect(lifecycle).not.toContain("server-plugin");
+    expect(lifecycle).not.toContain("routers");
+    expect(
+      await readFile(
+        path.join(root, "composition/generated/installed-routers.ts"),
+        "utf-8"
+      )
+    ).toContain(`${router}: plugin0().routers.${router}`);
+    expect(
+      await readFile(
+        path.join(root, "composition/generated/installed-database.ts"),
+        "utf-8"
+      )
+    ).toContain(`plugins/${item.name}/${schema}`);
   }
-  await Promise.all(
-    (projectsItem.files ?? []).map(async (file) => {
-      const target = path.join(root, file.target?.replace(/^~\//u, "") ?? "");
-      await mkdir(path.dirname(target), { recursive: true });
-      await cp(
-        path.resolve(import.meta.dir, "../../../registry", file.path),
-        target
-      );
-    })
-  );
-  await writeFile(
-    path.join(root, "plugins/projects/chatjs.json"),
-    JSON.stringify(projectsItem.meta?.chatjs)
-  );
-  await syncPlugins(root, { expected: ["projects"] });
-  const lifecycle = await readFile(
-    path.join(root, "composition/generated/installed-chat.ts"),
-    "utf-8"
-  );
-  expect(lifecycle).toContain("@/plugins/projects/chat");
-  expect(lifecycle).not.toContain("server-plugin");
-  expect(lifecycle).not.toContain("routers");
-  expect(
-    await readFile(
-      path.join(root, "composition/generated/installed-routers.ts"),
-      "utf-8"
-    )
-  ).toContain("project: plugin0().routers.project");
-  expect(
-    await readFile(
-      path.join(root, "composition/generated/installed-database.ts"),
-      "utf-8"
-    )
-  ).toContain("plugins/projects/db/project-schema.ts");
-});
+);

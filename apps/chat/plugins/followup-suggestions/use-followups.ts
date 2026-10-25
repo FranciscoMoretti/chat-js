@@ -2,8 +2,8 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useTRPC } from "@/trpc/react";
-import type { ReadonlyEveMessage } from "@/lib/eve/readonly-message-types";
-import { followupCompletion } from "@/lib/eve/followup-completion";
+import type { ChatSuggestionsProps } from "@/lib/chat-plugin-contracts";
+import { followupCompletion } from "./followup-completion";
 import { config } from "@/lib/config";
 
 const EMPTY_SUGGESTIONS: readonly string[] = [];
@@ -13,16 +13,15 @@ const MAX_POLLS = 20;
 export const useEveFollowups = (
   conversationId: string,
   events: Parameters<typeof followupCompletion>[0],
-  messages: readonly ReadonlyEveMessage[]
+  message: ChatSuggestionsProps["lastMessage"]
 ): readonly string[] => {
   const trpc = useTRPC();
-  const message = messages.at(-1);
   const eventId =
     message?.role === "assistant"
       ? followupCompletion(events, message.metadata?.turnId)
       : undefined;
   const query = useQuery({
-    ...trpc.eve.followup.queryOptions({
+    ...trpc.followupSuggestions.get.queryOptions({
       conversationId,
       eventId: eventId ?? "",
     }),
@@ -36,7 +35,7 @@ export const useEveFollowups = (
         ? POLL_INTERVAL_MS
         : false,
   });
-  return eventId === undefined
+  return !config.ai.tools.followupSuggestions.enabled || eventId === undefined
     ? EMPTY_SUGGESTIONS
     : (query.data ?? EMPTY_SUGGESTIONS);
 };

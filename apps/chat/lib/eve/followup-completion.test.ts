@@ -1,5 +1,5 @@
 import { expect, it } from "vitest";
-import { followupCompletion } from "./followup-completion";
+import { followupCompletion } from "@/plugins/followup-suggestions/followup-completion";
 
 it("uses the durable completion identity for replay", () => {
   const completed = {

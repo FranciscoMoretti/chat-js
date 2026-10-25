@@ -7,6 +7,7 @@ const pages = [
     name: "plugin-integration-points",
     path: "/docs/plugins/integration-points",
   },
+  { name: "suggestions-plugin", path: "/docs/plugins/followup-suggestions" },
   { name: "feedback-plugin", path: "/docs/plugins/feedback" },
   { name: "projects-plugin", path: "/docs/plugins/projects" },
   { name: "threads", path: "/docs/threads" },

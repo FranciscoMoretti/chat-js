@@ -3,7 +3,7 @@ import type { ModelCallScope } from "./model-ledger";
 import { MockLanguageModelV4 } from "ai/test";
 import { beforeEach, expect, it, vi } from "vitest";
 
-import { generateEveFollowupSuggestions } from "./generate-followup-suggestions";
+import { generateEveFollowupSuggestions } from "@/plugins/followup-suggestions/generate-suggestions";
 
 const model = new MockLanguageModelV4({
   doGenerate: vi.fn().mockResolvedValue({
@@ -28,7 +28,7 @@ const mocks = vi.hoisted(() => ({
   claim: vi.fn(),
   finishSuggestions: vi.fn(),
 }));
-vi.mock("../db/queries", () => ({
+vi.mock("@/plugins/followup-suggestions/followup-queries", () => ({
   claimEveFollowup: mocks.claim,
   finishEveFollowup: mocks.finishSuggestions,
 }));

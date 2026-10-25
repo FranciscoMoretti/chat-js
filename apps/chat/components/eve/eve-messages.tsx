@@ -10,7 +10,6 @@ import { toast } from "sonner";
 import { Message, MessageContent } from "@/components/ai-elements/message";
 import { Response } from "@/components/ai-elements/response";
 import { ToolInput } from "@/components/ai-elements/tool";
-import { FollowUpSuggestionsView } from "@/components/followup-suggestions-view";
 import { MessageActionsView } from "@/components/message-actions-view";
 import { ReasoningPart } from "@/components/part/message-reasoning";
 import { RetryButtonView } from "@/components/retry-button-view";
@@ -20,7 +19,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { UserMessageView } from "@/components/user-message-view";
 import { parseToolId } from "@/lib/ai/mcp-name-id";
 import { getEveInstalledToolRenderer } from "@/lib/ai/tool-renderer-registry";
-import { config } from "@/lib/config";
 import { eveDocumentOperations } from "@/lib/eve/document-contracts";
 import type {
   ReadonlyEveMessage,
@@ -240,8 +238,7 @@ interface EveMessagesProps {
   readonly isReadonly: boolean;
   readonly actionsDisabled?: boolean;
   readonly onEdit?: (message: ReadonlyEveMessage) => void;
-  readonly suggestions?: readonly string[];
-  readonly onSuggestion?: (suggestion: string) => void;
+  readonly suggestions?: ReadonlyReactNode;
   readonly onRegenerate?: (
     message: ReadonlyEveMessage,
     response: ReadonlyEveMessage
@@ -413,8 +410,6 @@ const EveMessageActions = ({
   );
 };
 
-const EMPTY_SUGGESTIONS: readonly string[] = [];
-
 const responseDisabled = (
   readonly: boolean,
   busy: boolean,
@@ -434,8 +429,7 @@ const EveMessageRow = ({
   respond,
   onEdit,
   onRegenerate,
-  onSuggestion,
-  suggestions = EMPTY_SUGGESTIONS,
+  suggestions,
   editor,
   renderVersions,
   renderResponses,
@@ -530,16 +524,7 @@ const EveMessageRow = ({
             />
           ))}
         {actions}
-        {isLast &&
-          !isReadonly &&
-          !actionsDisabled &&
-          onSuggestion &&
-          config.ai.tools.followupSuggestions.enabled && (
-            <FollowUpSuggestionsView
-              onSelect={onSuggestion}
-              suggestions={suggestions}
-            />
-          )}
+        {isLast && !isReadonly && !actionsDisabled && suggestions}
       </MessageContent>
     </Message>
   );
