@@ -1,3 +1,4 @@
+import { projectSelectionAvailable } from "./project-creation";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { eveMessageInput } from "./message-input";
 import { frontendToolsSchema } from "@/lib/ai/types";
@@ -37,15 +38,13 @@ type CreateConversationInput = z.output<typeof createConversationBase>;
 
 const createConversationInput = createConversationBase
   .refine(
+    (input) => projectSelectionAvailable(input.projectId),
+    "Projects plugin is not installed."
+  )
+  .refine(
     (input: ReadonlyNativeSurface<CreateConversationInput>) =>
-      !(
-        typeof input.fork === "object" &&
-        typeof input.projectId === "string" &&
-        input.projectId.length >= MIN_IDENTIFIER_LENGTH
-      ),
-    {
-      message: "Forks inherit their source conversation project.",
-    }
+      !(input.fork !== undefined && input.projectId !== undefined),
+    { message: "Forks inherit their source project." }
   )
   .refine(
     (input: ReadonlyNativeSurface<CreateConversationInput>) =>

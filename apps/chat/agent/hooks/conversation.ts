@@ -2,8 +2,6 @@ import { isGuestSession } from "../../lib/eve/session-identity";
 import type { HookContext } from "eve/hooks";
 import { defineHook } from "eve/hooks";
 
-import { getEveConversationProject } from "../../lib/db/eve-queries";
-import { projectInstructions } from "../../lib/eve/project-instructions";
 import { resolveEveConversationScope } from "../../lib/eve/conversation-scope";
 
 const conversationScopeTimeoutMilliseconds = 10_000;
@@ -21,8 +19,7 @@ export default defineHook({
       if (isGuestSession(context.session)) {
         return;
       }
-      projectInstructions.update(() => ({ content: null }));
-      const scope = await resolveEveConversationScope(
+      await resolveEveConversationScope(
         context.session.auth.initiator?.principalId,
         context.session.parent?.rootSessionId ?? context.session.id,
         AbortSignal.timeout(conversationScopeTimeoutMilliseconds),
@@ -32,13 +29,6 @@ export default defineHook({
           ? undefined
           : context.session.auth.initiator?.attributes.chatjsReservationId
       );
-      const project = await getEveConversationProject(
-        scope.ownerId,
-        scope.conversationId
-      );
-      projectInstructions.update(() => ({
-        content: project?.instructions ?? null,
-      }));
     },
   },
 });

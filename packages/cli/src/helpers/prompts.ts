@@ -51,6 +51,7 @@ const CORE_FEATURE_LABELS: Record<CoreFeatureKey, string> = {
   documents: "Documents",
   followupSuggestions: "Follow-up Suggestions",
   mcp: "MCP Tool Servers",
+  projects: "Projects",
   parallelResponses: "Parallel Responses",
 };
 
@@ -304,13 +305,15 @@ const promptStorage = async (
 
 const promptCoreFeatures = async (
   skipPrompt: boolean,
-  mcp?: boolean
+  mcp?: boolean,
+  projects?: boolean
 ): Promise<Record<CoreFeatureKey, boolean>> => {
   const CORE_FEATURE_DEFAULTS: Record<CoreFeatureKey, boolean> = {
     attachments: false,
     documents: true,
     followupSuggestions: false,
     mcp: mcp ?? false,
+    projects: projects ?? false,
     parallelResponses: FEATURES_DEFAULTS.parallelResponses,
   };
 
@@ -319,7 +322,9 @@ const promptCoreFeatures = async (
   }
 
   const availableFeatures = CORE_FEATURE_KEYS.filter(
-    (key) => key !== "mcp" || mcp === globalThis.undefined
+    (key) =>
+      (key !== "mcp" || mcp === globalThis.undefined) &&
+      (key !== "projects" || projects === globalThis.undefined)
   );
   const selected = await multiselect({
     initialValues: availableFeatures.filter(
@@ -348,6 +353,7 @@ const promptCoreFeatures = async (
     parallelResponses: selected.includes("parallelResponses"),
     documents: selected.includes("documents"),
     mcp: mcp ?? selected.includes("mcp"),
+    projects: projects ?? selected.includes("projects"),
     followupSuggestions: selected.includes("followupSuggestions"),
   };
 };

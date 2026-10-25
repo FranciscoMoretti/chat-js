@@ -72,7 +72,7 @@ test("project instructions apply from the first native turn, refresh, and clear 
       "PROJECT_BETA_9263",
       { timeout: 90_000 }
     );
-    const detached = await page.request.post("/api/trpc/eve.assignProject", {
+    const detached = await page.request.post("/api/trpc/project.assign", {
       data: { json: { conversationId: id, projectId: null } },
     });
     expect(detached.ok(), await detached.text()).toBe(true);

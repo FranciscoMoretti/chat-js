@@ -1,4 +1,5 @@
 "use client";
+import { pluginRoute } from "@/lib/plugin-route";
 
 import React, { memo, useState } from "react";
 
@@ -30,7 +31,7 @@ const PureSidebarChatItem = ({
   chat,
   isActive,
   onDelete,
-  onMoveProject,
+  pluginActions,
   onRename,
   onPin,
   setOpenMobile,
@@ -42,11 +43,11 @@ const PureSidebarChatItem = ({
     readonly id: string;
     readonly title: string;
     readonly isPinned: boolean;
-    readonly projectId: string | null;
+    readonly href?: string;
   };
   readonly isActive: boolean;
   readonly onDelete?: (chatId: string) => void;
-  readonly onMoveProject?: () => void;
+  readonly pluginActions?: React.ReactNode;
   readonly onRename: (chatId: string, title: string) => void | Promise<void>;
   readonly onPin: (chatId: string, isPinned: boolean) => void;
   readonly setOpenMobile: (open: boolean) => void;
@@ -58,11 +59,7 @@ const PureSidebarChatItem = ({
   ) => Exclude<ReactNode, Promise<unknown>>;
 }): ReactJSX.Element => {
   const [, startEventAction] = React.useTransition();
-  const { projectId } = chat;
-  const chatHref: `/project/${string}/chat/${string}` | `/chat/${string}` =
-    projectId !== null && projectId !== ""
-      ? `/project/${chat.projectId}/chat/${chat.id}`
-      : `/chat/${chat.id}`;
+  const chatHref = chat.href ?? `/chat/${chat.id}`;
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(chat.title);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
@@ -118,7 +115,7 @@ const PureSidebarChatItem = ({
       ) : (
         <SidebarMenuButton asChild isActive={isActive}>
           <InternalLink
-            href={chatHref}
+            href={pluginRoute(chatHref)}
             onNavigate={() => {
               setOpenMobile(false);
             }}
@@ -150,7 +147,7 @@ const PureSidebarChatItem = ({
                   }
                 : undefined
             }
-            onMoveProject={onMoveProject}
+            pluginActions={pluginActions}
             onRename={() => {
               setIsEditing(true);
               setEditTitle(chat.title);
@@ -184,10 +181,10 @@ export const SidebarChatItem = memo(
       prevProps.showShare !== nextProps.showShare ||
       prevProps.renderShareContent !== nextProps.renderShareContent ||
       prevProps.onDelete !== nextProps.onDelete ||
-      prevProps.onMoveProject !== nextProps.onMoveProject ||
+      prevProps.pluginActions !== nextProps.pluginActions ||
       prevProps.onRename !== nextProps.onRename ||
       prevProps.onPin !== nextProps.onPin ||
-      prevProps.chat.projectId !== nextProps.chat.projectId
+      prevProps.chat.href !== nextProps.chat.href
     ) {
       return false;
     }

@@ -6,7 +6,7 @@ import type {
   getEveChatPageConversation,
   listEveConversations,
 } from "@/lib/db/eve-queries";
-import type { getProjectById } from "@/lib/db/queries";
+import type { getProjectById } from "@/plugins/projects/db/project-queries";
 import type { getPublicEveTranscript } from "@/lib/eve/public-conversation";
 
 /** What the route files' server reads return for this request. */

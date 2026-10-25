@@ -13,7 +13,7 @@ In this repository, keep a plugin's installation manifest in `packages/registry/
 
 ## Runtime contributions
 
-A server factory returns an object satisfying `ChatPlugin` from `@/lib/plugin-contracts`. It can contribute typed tRPC `routers` and an `instrumentation` registration. A client factory satisfies `ChatClientPlugin` and can contribute `composerControls`, `settingsItems`, a `layout` component, and an `uploads` integration. Use `satisfies` to retain the specific router and contribution types.
+A server factory returns an object satisfying `ChatPlugin` from `@/lib/plugin-contracts`. It can contribute typed tRPC `routers` and an `instrumentation` registration. A client factory satisfies `ChatClientPlugin` and can contribute `composerControls`, `settingsItems`, a `layout` component, an `uploads` integration, and `chat` UI contributions. Core keeps explicit optional fields such as `projectId`; plugins own their validation against storage and lifecycle behavior. Server `chat` contributions participate in transactional creation, history, navigation, and deletion. See [Plugin integration points](./integration-points) for signatures and lifecycle guarantees. Use `satisfies` to retain the specific router and contribution types.
 
 The built-in MCP factories are `mcp()` and `mcpClient()`. Its server entrypoint registers the `mcp` router. Its client entrypoint supplies the connector control and settings item. Keep credentials, database imports, and server implementations outside the client factory's import graph.
 

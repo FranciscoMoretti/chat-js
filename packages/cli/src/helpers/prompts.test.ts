@@ -37,6 +37,7 @@ it("returns complete selections from interactive prompts in catalog order", asyn
       documents: true,
       followupSuggestions: false,
       mcp: true,
+      projects: false,
       parallelResponses: true,
     });
     expect(Object.keys(plugins)).toEqual([...CORE_FEATURE_KEYS]);

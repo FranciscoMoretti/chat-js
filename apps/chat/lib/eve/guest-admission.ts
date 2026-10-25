@@ -110,7 +110,7 @@ const validateGuestCreation = async (
   }
 ): Promise<string | Response> => {
   if (
-    (typeof input.projectId === "string" && input.projectId !== "") ||
+    input.projectId !== undefined ||
     !input.modelIds.every((modelId) =>
       ANONYMOUS_LIMITS.AVAILABLE_MODELS.some((model) => model === modelId)
     ) ||
@@ -122,7 +122,7 @@ const validateGuestCreation = async (
     return Response.json(
       {
         creationRejected: true,
-        error: "Sign in to use this model, tool or project.",
+        error: "Sign in to use this model, tool or plugin.",
       },
       { status: 403 }
     );

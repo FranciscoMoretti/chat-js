@@ -19,7 +19,7 @@ import selectionHook from "../../agent/hooks/tool-selection";
 import { frontendToolsSchema } from "../ai/types";
 import { eveCreationContentHash } from "./creation-content-hash";
 import {
-  moveRejectedProjectCreation,
+  moveRejectedContextCreation,
   prepareSelectedCreation,
   readCreationRequest,
 } from "./pending-create";
@@ -168,15 +168,20 @@ it.each([["model-a"], ["model-a", "model-b"]])(
       },
     };
     const projectId = crypto.randomUUID();
+    const context = {
+      key: `project:${projectId}`,
+      label: "project",
+    };
     const original = prepareSelectedCreation(
       storage,
       "owner",
       "hello",
       modelIds,
-      { projectId },
-      "webSearch"
+      { context },
+      "webSearch",
+      { projectId }
     );
-    expect(readCreationRequest(storage, "owner", { projectId })).toEqual(
+    expect(readCreationRequest(storage, "owner", { context })).toEqual(
       original
     );
     expect(
@@ -185,14 +190,14 @@ it.each([["model-a"], ["model-a", "model-b"]])(
         "owner",
         "changed",
         modelIds,
-        { projectId },
+        { context },
         "deepResearch"
       )
     ).toEqual(original);
-    const moved = moveRejectedProjectCreation(
+    const moved = moveRejectedContextCreation(
       storage,
       "owner",
-      projectId,
+      context,
       original.operationId
     );
     expect(moved.selectedTool).toBe("webSearch");

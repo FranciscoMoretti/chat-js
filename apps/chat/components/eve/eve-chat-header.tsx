@@ -1,6 +1,8 @@
 "use client";
-
-import { hasText } from "@/components/text-value";
+import {
+  PluginChatBreadcrumb,
+  PluginChatActions,
+} from "@/components/plugin-chat-ui";
 
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDown, Share } from "lucide-react";
@@ -10,15 +12,11 @@ import { toast } from "sonner";
 
 import { ChatHeaderView } from "@/components/chat-header-view";
 import { ChatMenuItems } from "@/components/chat-menu-items";
-import { InternalLink } from "@/components/internal-link";
-import { ProjectIcon } from "@/components/project-icon";
 import { ShareDialog } from "@/components/share-button";
 import {
   Breadcrumb,
   BreadcrumbItem,
-  BreadcrumbLink,
   BreadcrumbList,
-  BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import {
   DropdownMenu,
@@ -31,8 +29,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { PROJECT_COLORS, PROJECT_ICONS } from "@/lib/project-icons";
-import { useSession } from "@/providers/session-provider";
 import { useTRPC } from "@/trpc/react";
 
 import { useEveDeletion } from "./eve-deletion-provider";
@@ -58,15 +54,6 @@ const EveSharedBadge = (): React.JSX.Element => (
   </Tooltip>
 );
 
-const projectAppearance = (
-  project: { readonly icon: string; readonly iconColor: string } | undefined
-) => ({
-  color:
-    PROJECT_COLORS.find((value) => value.name === project?.iconColor)?.name ??
-    "gray",
-  icon: PROJECT_ICONS.find((value) => value === project?.icon) ?? "folder",
-});
-
 const EveChatHeader = ({
   chatId,
   conversationId,
@@ -79,15 +66,7 @@ const EveChatHeader = ({
   readonly hasMessages: boolean;
 }): ReactJSX.Element => {
   const trpc = useTRPC();
-  const { data: session } = useSession();
   const identity = useQuery(trpc.eve.get.queryOptions({ id: chatId }));
-  const projectId = identity.data?.projectId;
-  const project = useQuery(
-    trpc.project.getById.queryOptions(
-      { id: projectId ?? "" },
-      { enabled: Boolean(hasText(projectId) && session?.user) }
-    )
-  );
   const { rename, pin } = useEveMetadataMutations();
   const openDeletion = useEveDeletion();
   const [draft, setDraft] = useState<string>();
@@ -110,7 +89,6 @@ const EveChatHeader = ({
       );
     }
   };
-  const { icon, color } = projectAppearance(project.data);
   return (
     <>
       <ChatHeaderView
@@ -125,22 +103,7 @@ const EveChatHeader = ({
         breadcrumb={
           <Breadcrumb className="ml-2 min-w-0">
             <BreadcrumbList className="flex-nowrap">
-              {hasText(projectId) && session?.user && (
-                <>
-                  <BreadcrumbItem>
-                    <BreadcrumbLink asChild>
-                      <InternalLink
-                        aria-label={project.data?.name ?? "Project"}
-                        title={project.data?.name ?? "Project"}
-                        href={`/project/${projectId}`}
-                      >
-                        <ProjectIcon icon={icon} color={color} size={16} />
-                      </InternalLink>
-                    </BreadcrumbLink>
-                  </BreadcrumbItem>
-                  <BreadcrumbSeparator />
-                </>
-              )}
+              <PluginChatBreadcrumb chatId={chatId} />
               <BreadcrumbItem className="min-w-0">
                 {draft === undefined ? (
                   <DropdownMenu>
@@ -159,6 +122,11 @@ const EveChatHeader = ({
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <ChatMenuItems
+                        pluginActions={
+                          <PluginChatActions
+                            chat={{ id: chatId, title, state: "bound" }}
+                          />
+                        }
                         isPinned={identity.data?.isPinned ?? false}
                         onRename={() => {
                           setDraft(title);
@@ -173,7 +141,7 @@ const EveChatHeader = ({
                           openDeletion({
                             id: conversationId,
                             scope: "conversation",
-                            projectId: projectId ?? null,
+                            parentHref: identity.data?.parentHref,
                             state: "bound",
                             title,
                           });

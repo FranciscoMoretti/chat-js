@@ -15,11 +15,7 @@ import {
   updateEveConversationMetadata,
 } from "@/lib/db/eve-queries";
 import { searchEveConversations } from "@/lib/db/eve-search";
-import {
-  assignEveConversationProject,
-  getEveMessageVotes,
-  getEveFollowup,
-} from "@/lib/db/queries";
+import { getEveMessageVotes, getEveFollowup } from "@/lib/db/queries";
 import { eveHistoryInput } from "@/lib/eve/history-input";
 import { eveManualDocumentInput } from "@/lib/eve/document-contracts";
 
@@ -106,35 +102,6 @@ export const eveRouter = createTRPCRouter({
           input.conversationId,
           input.eventId
         )
-    ),
-  assignProject: eveProcedure
-    .input(
-      z.object({ conversationId: z.uuid(), projectId: z.uuid().nullable() })
-    )
-    .mutation(
-      async ({
-        ctx,
-        input,
-      }: {
-        readonly ctx: { readonly user: { readonly id: string } };
-        readonly input: ReadonlyNativeSurface<{
-          conversationId: string;
-          projectId: string | null;
-        }>;
-      }) => {
-        const assigned = await assignEveConversationProject(
-          ctx.user.id,
-          input.conversationId,
-          input.projectId
-        );
-        if (!assigned) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: "Conversation or project not found.",
-          });
-        }
-        return assigned;
-      }
     ),
   branches: eveOwnedProcedure
     .input(z.object({ id: z.uuid() }))
@@ -223,7 +190,7 @@ export const eveRouter = createTRPCRouter({
           | null
           | undefined;
         ownerScope?: string | undefined;
-        projectId?: string | null | undefined;
+        surface?: "sidebar" | "all" | undefined;
       }>;
     }) => {
       const { ownerScope } = input;

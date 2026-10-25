@@ -115,7 +115,7 @@ test("logical header metadata is optimistic, rolls back, and preserves project a
     })
     .parse(await created.json());
   const projectAssignmentResponse = await page.request.post(
-    "/api/trpc/eve.assignProject",
+    "/api/trpc/project.assign",
     {
       data: { json: { conversationId: id, projectId: project.id } },
     }

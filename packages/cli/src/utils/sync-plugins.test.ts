@@ -545,7 +545,7 @@ test("third-party plugins contribute without CLI changes or executing their serv
   );
 });
 
-for (const key of ["eve", "settings", "project", "credits"]) {
+for (const key of ["eve", "settings", "credits"]) {
   test(`plugin router ${key} cannot replace a core router or partially edit UI`, async () => {
     const root = await fixture();
     await initializePluginUi(root);
@@ -618,3 +618,49 @@ for (const [contribution, ids] of [
     });
   }
 }
+
+test("Projects installs independently and core composition has no project schema or runtime imports", async () => {
+  const { projectsItem } =
+    await import("../../../registry/src/plugins/projects/manifest");
+  const root = await fixture();
+  await initializePluginUi(root);
+  const uninstalled = await Promise.all(
+    ["installed-chat", "installed-chat-ui", "installed-database"].map(
+      async (name) =>
+        await readFile(
+          path.join(root, `composition/generated/${name}.ts`),
+          "utf-8"
+        )
+    )
+  );
+  for (const source of uninstalled) {
+    expect(source).not.toContain("plugins/projects");
+  }
+  await Promise.all(
+    (projectsItem.files ?? []).map(async (file) => {
+      const target = path.join(root, file.target?.replace(/^~\//u, "") ?? "");
+      await mkdir(path.dirname(target), { recursive: true });
+      await cp(
+        path.resolve(import.meta.dir, "../../../registry", file.path),
+        target
+      );
+    })
+  );
+  await writeFile(
+    path.join(root, "plugins/projects/chatjs.json"),
+    JSON.stringify(projectsItem.meta?.chatjs)
+  );
+  await syncPlugins(root, { expected: ["projects"] });
+  expect(
+    await readFile(
+      path.join(root, "composition/generated/installed-routers.ts"),
+      "utf-8"
+    )
+  ).toContain("project: plugin0().routers.project");
+  expect(
+    await readFile(
+      path.join(root, "composition/generated/installed-database.ts"),
+      "utf-8"
+    )
+  ).toContain("plugins/projects/db/project-schema.ts");
+});

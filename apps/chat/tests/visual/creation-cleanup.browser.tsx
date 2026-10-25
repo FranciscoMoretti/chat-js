@@ -136,7 +136,7 @@ test("creation cleanup warning survives the recovery handoff without resending a
   const fixture = await mount(
     <NewEveConversation
       ownerId="test-owner"
-      projectId="11111111-1111-4111-8111-111111111111"
+      creationInput={{ projectId: "11111111-1111-4111-8111-111111111111" }}
     />
   );
   try {

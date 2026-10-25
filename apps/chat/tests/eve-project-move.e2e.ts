@@ -98,7 +98,7 @@ test("moves native conversations from sidebar and project rows with recoverable 
     ).toBeEnabled();
     await dialog.getByRole("combobox").selectOption(projectId);
     await page.route(
-      (url) => url.pathname.includes("eve.assignProject"),
+      (url) => url.pathname.includes("project.assign"),
       async (route) => {
         await route.fulfill({
           body: "{}",
@@ -120,7 +120,7 @@ test("moves native conversations from sidebar and project rows with recoverable 
     });
     const moveGate: PromiseWithResolvers<void> = Promise.withResolvers();
     await page.route(
-      (url) => url.pathname.includes("eve.assignProject"),
+      (url) => url.pathname.includes("project.assign"),
       async (route) => {
         await moveGate.promise;
         await route.continue();

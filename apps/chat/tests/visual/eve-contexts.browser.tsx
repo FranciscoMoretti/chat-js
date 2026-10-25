@@ -18,7 +18,7 @@ beforeEach((): void => {
 });
 for (const scene of [
   { name: "welcome", projectId: "" },
-  { name: "project", projectId: "fixture-project" },
+  { name: "project", projectId: "00000000-0000-4000-8000-000000000001" },
 ]) {
   test(`native new conversation ${scene.name}`, async () => {
     await commands.modelAssets();
@@ -26,7 +26,9 @@ for (const scene of [
       <div className="mx-auto flex min-h-0 w-full flex-col p-2 md:max-w-3xl">
         <NewEveConversation
           ownerId="fixture-user"
-          projectId={scene.projectId}
+          creationInput={
+            scene.projectId ? { projectId: scene.projectId } : undefined
+          }
         />
       </div>
     );

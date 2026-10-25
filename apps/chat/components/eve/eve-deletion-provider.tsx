@@ -1,4 +1,5 @@
 "use client";
+import { pluginRoute } from "@/lib/plugin-route";
 
 import { withTaskCleanup } from "@/components/task-cleanup";
 
@@ -21,7 +22,7 @@ interface Conversation {
   readonly title: string;
   readonly state: string;
   readonly scope?: "conversation" | "group";
-  readonly projectId?: string | null;
+  readonly parentHref?: string;
 }
 
 const DeletionContext = createContext<
@@ -59,7 +60,7 @@ const EveDeletionProvider = ({
       async () => {
         if (
           hasText(route.id) &&
-          (route.type === "chat" || route.type === "projectChat")
+          (route.type === "chat" || route.type === "pluginChat")
         ) {
           const response = await fetch(`/api/agent-conversations/${route.id}`, {
             signal: AbortSignal.timeout(10_000),
@@ -72,13 +73,8 @@ const EveDeletionProvider = ({
             "rootId" in status &&
             status.rootId === rootId
           ) {
-            const projectId =
-              conversation?.projectId ??
-              (route.source === "project" ? route.projectId : undefined);
             router.replace(
-              typeof projectId === "string" && projectId !== ""
-                ? `/project/${projectId}`
-                : "/"
+              pluginRoute(conversation?.parentHref ?? route.parentHref)
             );
           }
         }

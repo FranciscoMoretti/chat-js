@@ -199,12 +199,29 @@ const pluginRegistrationTargets = [
   "installed-layout",
   "installed-instrumentation",
   "installed-database",
+  "installed-chat",
+  "installed-chat-ui",
 ].map((name) => `composition/generated/${name}.ts`);
+
+const assertPluginDependencies = (
+  plugins: readonly PluginDefinition[]
+): void => {
+  const ids = new Set(plugins.map((plugin) => plugin.id));
+  for (const plugin of plugins) {
+    for (const dependency of plugin.requiresPlugins ?? []) {
+      if (!ids.has(dependency)) {
+        throw new Error(
+          `${plugin.id} requires installed plugin: ${dependency}`
+        );
+      }
+    }
+  }
+};
 
 const assertUniqueContributions = (
   plugins: readonly PluginDefinition[]
 ): void => {
-  const routers = new Set(["credits", "eve", "project", "settings"]);
+  const routers = new Set(["credits", "eve", "settings"]);
   const controls = new Set([
     "canvas",
     "web-search",
@@ -234,16 +251,7 @@ const assertUniqueContributions = (
       uploads = true;
     }
   }
-  const ids = new Set(plugins.map((plugin) => plugin.id));
-  for (const plugin of plugins) {
-    for (const dependency of plugin.requiresPlugins ?? []) {
-      if (!ids.has(dependency)) {
-        throw new Error(
-          `${plugin.id} requires installed plugin: ${dependency}`
-        );
-      }
-    }
-  }
+  assertPluginDependencies(plugins);
 };
 
 const imports = (
@@ -330,7 +338,17 @@ const syncPlugins = async (
   );
   const layout = plugins.filter((plugin) => plugin.client?.layout);
   const uploads = plugins.filter((plugin) => plugin.client?.uploads);
+  const chat = plugins.filter((plugin) => plugin.server?.chat);
+  const chatUi = plugins.filter((plugin) => plugin.client?.chat);
   const contents = [
+    [
+      "installed-chat",
+      `${imports(chat, "server")}\nimport type { ChatServerIntegration } from "@/lib/chat-plugin-contracts";\nexport const installedChatPlugins: readonly ChatServerIntegration[] = [${chat.map((_, index) => `plugin${index}().chat`).join(", ")}];`,
+    ],
+    [
+      "installed-chat-ui",
+      `${imports(chatUi, "client")}\nimport type { ChatClientIntegration } from "@/lib/chat-plugin-contracts";\nexport const installedChatUi: readonly { id: string; chat: ChatClientIntegration }[] = [${chatUi.map((plugin, index) => `{ id: "${plugin.id}", chat: plugin${index}().chat }`).join(", ")}];`,
+    ],
     [
       "installed",
       `export const installedPlugins: ReadonlySet<string> = new Set(${plugins.length > 0 ? JSON.stringify(plugins.map((plugin) => plugin.id)) : ""});`,

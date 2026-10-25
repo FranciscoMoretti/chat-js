@@ -1,3 +1,5 @@
+import type { ChatCreationScope } from "@/lib/chat-plugin-contracts";
+import { projectCreationScope } from "./project-creation";
 import { isNonEmptyString } from "@/lib/is-non-empty-string";
 
 import type { EveForkInput, EveForkKind } from "./contracts";
@@ -18,16 +20,16 @@ const creationRequest = z.union([
 type StorageAccess = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
 type CreationScope =
-  | { conversationId: string; projectId?: never }
-  | { projectId: string; conversationId?: never };
+  | { conversationId: string; context?: never }
+  | { context: ChatCreationScope; conversationId?: never };
 
 const keyFor = (ownerId: string, scope?: Readonly<CreationScope>): string => {
   let suffix = "";
 
   if (scope && isNonEmptyString(scope.conversationId)) {
     suffix = `:fork:${scope.conversationId}`;
-  } else if (scope && isNonEmptyString(scope.projectId)) {
-    suffix = `:project:${scope.projectId}`;
+  } else if (scope?.context) {
+    suffix = `:${scope.context.key}`;
   }
   return `chatjs.eve.pending:${ownerId}${suffix}`;
 };
@@ -65,7 +67,8 @@ const prepareResponseGroupCreation = (
       forkKind?: Extract<EveForkKind, "comparison" | "edit">;
     }
   >,
-  selectedTool?: UiToolName
+  selectedTool?: UiToolName,
+  creationInput: Readonly<{ projectId?: string }> = {}
 ): z.output<typeof eveResponseGroupInput> => {
   const saved = readCreationRequest(storage, ownerId, context);
   if (saved) {
@@ -82,7 +85,7 @@ const prepareResponseGroupCreation = (
     message,
     modelIds,
     operationId: crypto.randomUUID(),
-    projectId: context?.projectId,
+    projectId: creationInput.projectId,
     selectedTool,
   });
   storage.setItem(keyFor(ownerId, context), JSON.stringify(request));
@@ -114,7 +117,8 @@ const prepareCreation = (
       forkKind?: EveForkKind;
     }
   >,
-  selectedTool?: UiToolName
+  selectedTool?: UiToolName,
+  creationInput: Readonly<{ projectId?: string }> = {}
 ): z.output<typeof createConversationInput> => {
   const key = keyFor(ownerId, context);
   const stored = readCreation(storage, ownerId, context);
@@ -127,7 +131,7 @@ const prepareCreation = (
     message: draft,
     modelId,
     operationId: crypto.randomUUID(),
-    projectId: context?.projectId,
+    projectId: creationInput.projectId,
     selectedTool,
   });
   if (!pending.success) {
@@ -143,7 +147,8 @@ const prepareSelectedCreation = (
   draft: ReadonlyEveMessageInput,
   modelIds: readonly string[],
   scope?: Readonly<CreationScope>,
-  selectedTool?: UiToolName
+  selectedTool?: UiToolName,
+  creationInput: Readonly<{ projectId?: string }> = {}
 ): z.output<typeof creationRequest> => {
   const saved = readCreationRequest(storage, ownerId, scope);
   if (saved) {
@@ -157,7 +162,8 @@ const prepareSelectedCreation = (
       draft,
       modelIds,
       scope,
-      selectedTool
+      selectedTool,
+      creationInput
     );
   }
   return prepareCreation(
@@ -166,7 +172,8 @@ const prepareSelectedCreation = (
     draft,
     modelIds[FIRST_MODEL_INDEX],
     scope,
-    selectedTool
+    selectedTool,
+    creationInput
   );
 };
 
@@ -182,19 +189,22 @@ const finishCreation = (
  * Moves a definitively rejected project request into New Chat under a fresh operation.
  * @param {StorageAccess} storage Browser storage holding the original project draft and any New Chat draft.
  * @param {string} ownerId Owner whose pending draft namespace must be preserved.
- * @param {string} projectId Project scope containing the rejected request.
+ * @param {string} context Original plugin scope containing the rejected request.
  * @param {string} operationId Original operation checked before moving or deleting its stored draft.
  * @returns {z.output<typeof creationRequest>} A fresh request with the original message/model selection; changed or conflicting drafts throw.
  */
-const moveRejectedProjectCreation = (
+const moveRejectedContextCreation = (
   storage: StorageAccess,
   ownerId: string,
-  projectId: string,
+  context: ChatCreationScope,
   operationId: string
 ): z.output<typeof creationRequest> => {
-  const scope = { projectId };
+  const scope = { context };
   const pending = readCreationRequest(storage, ownerId, scope);
-  if (pending?.operationId !== operationId || pending.projectId !== projectId) {
+  if (
+    pending?.operationId !== operationId ||
+    projectCreationScope(pending)?.key !== context.key
+  ) {
     throw new Error("The saved request changed. Reload before continuing.");
   }
   if (readCreationRequest(storage, ownerId)) {
@@ -226,7 +236,7 @@ const moveRejectedProjectCreation = (
 export {
   hasPendingCreation,
   finishCreation,
-  moveRejectedProjectCreation,
+  moveRejectedContextCreation,
   prepareCreation,
   prepareResponseGroupCreation,
   prepareSelectedCreation,

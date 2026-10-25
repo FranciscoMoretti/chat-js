@@ -98,12 +98,12 @@ export const createEveResponseGroup = async (
         ) {
           const rejection: {
             error: string;
-            code?: "project_not_found";
+            code?: string;
           } = {
             error: failure.data.error,
-            ...(failure.data.code === "project_not_found"
-              ? { code: "project_not_found" }
-              : {}),
+            ...(failure.data.code === undefined
+              ? {}
+              : { code: failure.data.code }),
           };
           await recordEveResponseGroupRejection(
             ownerId,

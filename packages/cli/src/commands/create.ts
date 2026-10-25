@@ -140,6 +140,7 @@ const createOptionsSchema = z.object({
   gateway: z.string().optional(),
   imageGenerationTool: z.string().optional(),
   mcp: z.boolean().optional(),
+  projects: z.boolean().optional(),
   observability: z
     .string()
     .refine(
@@ -363,7 +364,11 @@ const promptCreateSetup = async (
 ): Promise<CreateSetup> => {
   const gatewaySource = options.gateway ?? (await promptGateway(options.yes));
   const gatewaySelection = await resolveGateway(gatewaySource, targetDir);
-  const coreFeatures = await promptCoreFeatures(options.yes, options.mcp);
+  const coreFeatures = await promptCoreFeatures(
+    options.yes,
+    options.mcp,
+    options.projects
+  );
   if (options.attachments !== undefined) {
     coreFeatures.attachments = options.attachments;
   }
@@ -434,6 +439,7 @@ const promptCreateSetup = async (
       plugins: [
         ...observability,
         ...(coreFeatures.mcp ? ["mcp"] : []),
+        ...(coreFeatures.projects ? ["projects"] : []),
         ...(coreFeatures.attachments ? ["attachment-uploads"] : []),
       ],
       gateway: gatewaySelection.source,
@@ -727,6 +733,11 @@ export const create = new Command()
   )
   .option("--documents", "install text, code and sheet documents")
   .option("--no-documents", "omit document tools from the new app")
+  .option(
+    "--projects",
+    "install Projects pages, chat organization, and shared instructions"
+  )
+  .option("--no-projects", "omit Projects from the new app")
   .option("--mcp", "install MCP connectors, pages and OAuth callback")
   .option("--no-mcp", "omit MCP from the new app")
   .option("--electron", "include the Electron desktop app")

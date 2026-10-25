@@ -3,6 +3,7 @@ import { page } from "vitest/browser";
 
 import ChatLayout from "@/app/(chat)/layout";
 import ProjectPage from "@/app/(chat)/project/[projectId]/page";
+import { prepareCreation } from "@/lib/eve/pending-create";
 
 import {
   chatsIn,
@@ -11,6 +12,7 @@ import {
   launchProject,
   signedIn,
   signedInTrpc,
+  session,
 } from "./fixtures";
 import { renderRoute } from "./render";
 import { TrpcFixtureError, route } from "./route";
@@ -66,6 +68,23 @@ test("project before its first chat", async () => {
     .toBeVisible();
   await expect
     .element(page.getByText("No chats in this project"))
+    .toBeVisible();
+});
+
+test("project restores its pending payload using a storage-only scope", async () => {
+  prepareCreation(
+    sessionStorage,
+    session.user.id,
+    "Keep this launch plan",
+    undefined,
+    { context: { key: `project:${launchProject.id}`, label: "project" } },
+    undefined,
+    { projectId: launchProject.id }
+  );
+  await renderRoute(project, request);
+  await expect.element(page.getByText("Keep this launch plan")).toBeVisible();
+  await expect
+    .element(page.getByRole("button", { name: "Retry creation" }))
     .toBeVisible();
 });
 

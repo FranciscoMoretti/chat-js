@@ -11,7 +11,6 @@ import type { DraftAttachment } from "@/lib/eve/draft";
 type InstalledRouters = Record<string, AnyTRPCRouter> & {
   credits?: never;
   eve?: never;
-  project?: never;
   settings?: never;
 };
 

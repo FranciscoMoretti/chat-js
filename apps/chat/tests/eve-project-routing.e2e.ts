@@ -1,10 +1,11 @@
+import { project } from "@/plugins/projects/db/project-schema";
 import { expect, test } from "@playwright/test";
 import type { TestInfo } from "@playwright/test";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 
 import { db } from "../lib/db/client";
-import { eveChat, eveConversation, project } from "../lib/db/schema";
+import { eveChat, eveConversation } from "../lib/db/schema";
 import { insertEveConversationFixtures } from "./eve-conversation-fixture";
 import { assertEveTestDatabase } from "./eve-test-database";
 
@@ -43,12 +44,12 @@ test("assigned Eve conversations resolve through project URLs and remain accessi
     });
     expect(created.ok(), await created.text()).toBe(true);
     const binding = z.object({ id: z.uuid() }).parse(await created.json());
-    const assignment = await page.request.post("/api/trpc/eve.assignProject", {
+    const assignment = await page.request.post("/api/trpc/project.assign", {
       data: { json: { conversationId: binding.id, projectId } },
     });
     expect(assignment.ok(), await assignment.text()).toBe(true);
     const forbidden = await anonymous.request.post(
-      `${new URL(page.url()).origin}/api/trpc/eve.assignProject`,
+      `${new URL(page.url()).origin}/api/trpc/project.assign`,
       { data: { json: { conversationId: binding.id, projectId: null } } }
     );
     expect(forbidden.status()).toBe(401);
