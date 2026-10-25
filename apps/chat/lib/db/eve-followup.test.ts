@@ -110,6 +110,16 @@ it("does not collide when another branch reuses a turn number", async () => {
   ]);
 });
 it("cleans only deleted-session suggestions when the logical chat survives", async () => {
+  await claimEveFollowup("owner", "root", "turn", "completion");
+  await finishEveFollowup("owner", chatId, "completion", [
+    "Next?",
+    "Why?",
+    "How?",
+  ]);
+  await claimEveFollowup("owner", "branch", "turn", "branch-completion");
+  await finishEveFollowup("owner", chatId, "branch-completion", [
+    "Branch next?",
+  ]);
   await postgres.exec(
     `UPDATE "EveConversation" SET state='deleting' WHERE id='${branchId}'`
   );

@@ -482,9 +482,23 @@ export const invoicesFollowupEvents: typeof route.events = {
 };
 export const invoicesFollowupTrpc = {
   ...invoicesTrpc,
-  "followupSuggestions.get": [
-    "How do I measure the improvement?",
-    "What about partial indexes?",
-    "Does column order matter?",
-  ],
+  "followupSuggestions.get": (input: {
+    conversationId: string;
+    eventId: string;
+  }) => {
+    if (
+      input.conversationId !== invoicesConversation.id ||
+      input.eventId !== "completed-invoices"
+    ) {
+      throw new TrpcFixtureError(
+        "BAD_REQUEST",
+        "Unexpected follow-up completion identity"
+      );
+    }
+    return [
+      "How do I measure the improvement?",
+      "What about partial indexes?",
+      "Does column order matter?",
+    ];
+  },
 };
