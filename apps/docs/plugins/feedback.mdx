@@ -1,24 +1,44 @@
 ---
 title: Feedback
-description: Install private assistant-message ratings without coupling them to chat metadata
+description: Collect private ratings on assistant messages
 ---
 
-Use Feedback to add private upvote and downvote actions to your assistant messages.
+Use Feedback to add private upvote and downvote actions to your assistant messages. Only you can access ratings on your conversations, and public shares do not expose them.
+
+## Installation
+
+### Add the plugin
 
 ```bash
 bunx chat-js add feedback
 ```
 
-You can customize the `EveVote` schema, `feedback` tRPC router, transcript validation, and UI under `plugins/feedback/`. Review and apply the generated migration when installing into an app without the table. Existing reference-app data uses the same table and keys.
+When you install the plugin, the CLI registers the `feedback` router, message actions, and conversation cleanup callback.
 
-## Authorization and identity
+### Migrate the database
 
-Your vote belongs to one exact conversation and native assistant-message ID. The plugin checks ownership and bound state, validates the message against an EVE snapshot, then rechecks ownership and state under the existing conversation-family lock before writing. Public shares have no feedback actions or access to private ratings.
+```bash
+bun run db:generate
+# Review the generated SQL, then apply it to your database.
+bun run db:migrate
+```
 
-When you vote, you do not update the chat timestamp or move it in history. It does not use `updateOwnedChat`.
+Your existing reference-app data keeps the same table and keys. See [plugin migrations](../core/plugins#database-migrations).
 
-## Client and deletion integration
+## Usage
 
-When you customize message actions, the `MessageActions` slot receives `conversationId`, `messageId`, and `disabled`. All messages share a cached votes query per conversation. A successful mutation cancels stale reads before updating that cache.
+Use the rating actions below an assistant message in your own conversation. Voting does not move the chat in history or change its update timestamp. Each rating refers to the exact conversation and assistant message, so different branches keep their own feedback.
 
-When you delete a conversation, the `onDeleteConversations` callback removes votes for the exact deleted conversations inside the core deletion transaction. It runs even when another branch keeps the logical chat alive. Final-chat cleanup remains a separate callback. See [integration points](./integration-points).
+Your message actions share one cached ratings query per conversation. A successful vote cancels stale reads before updating the cache.
+
+## Schema
+
+You store ratings in the plugin-owned `EveVote` table, keyed by conversation and native assistant-message ID. When you delete a conversation, you remove only its votes, even when other branches keep the logical chat alive.
+
+Before saving your rating, the plugin validates the message against an EVE snapshot and rechecks ownership and bound state under the conversation-family lock.
+
+## Customization
+
+Edit `plugins/feedback/` to change the rating UI, queries, or validation. The `MessageActions` placement receives `conversationId`, `messageId`, and `disabled`.
+
+When you delete conversations, cleanup uses `onDeleteConversations` inside the core deletion transaction. Feedback does not use `updateOwnedChat`, because voting must not update chat recency. See the [Plugin API](../reference/plugin-api).

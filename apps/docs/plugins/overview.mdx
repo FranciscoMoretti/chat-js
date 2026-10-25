@@ -1,25 +1,33 @@
 ---
-title: Plugins
-description: Install optional application capabilities with explicit server and client contributions
+title: Plugin catalog
+description: Browse plugins for chat, integrations, analytics, and tracing
 ---
 
-Plugins add application capabilities and own their implementation, credentials, and optional database tables. Install one with `chat-js add <id>` or select it during creation. Installed source determines availability.
+Choose a plugin to see its installation steps, usage, configuration, and storage requirements. New to plugins? Start with [Using plugins](../core/plugins).
 
-| Plugin | Contribution |
+## Chat
+
+| Plugin | What it adds |
 | --- | --- |
-| [Follow-up Suggestions](./followup-suggestions) | Durable next-question generation and display |
-| [Feedback](./feedback) | Private assistant-message ratings |
-| [Projects](./projects) | Chat organization, project pages, and shared instructions |
-| [MCP](./mcp) | Connector settings, OAuth, dynamic tools, and composer control |
-| [Attachment uploads](./attachments) | File picker, camera, paste/drop, and upload endpoint |
-| `vercel-analytics` | Vercel Analytics layout component |
-| `vercel-speed-insights` | Vercel Speed Insights layout component |
-| `langfuse` | Server instrumentation and tracing credentials |
+| [Projects](./projects) | Organize conversations and share instructions across related chats |
+| [Feedback](./feedback) | Collect private ratings on assistant messages |
+| [Follow-up Suggestions](./followup-suggestions) | Generate related questions after an answer |
+| [Attachments](./attachments) | Upload images and PDFs from the composer |
 
-Plugins live in `plugins/<id>/`. Server contributions come from `server-plugin.ts`; browser contributions come from `client-plugin.ts`. `chat-js sync` reads each `chatjs.json` descriptor and generates typed registrations under `composition/generated/`. It does not execute plugin entrypoints during installation.
+## Integrations
 
-Keep preferences in `chat.config.ts`, composer ordering in `composer-controls.ts`, and navigation ordering in `settings-items.ts`. Sync preserves those editable lists. Tools retain their own contracts under `tools/chatjs/`; gateways, storage, and sandboxes retain their provider selection rules.
+| Plugin       | What it adds                                             |
+| ------------ | -------------------------------------------------------- |
+| [MCP](./mcp) | Connect external tools with connector settings and OAuth |
 
-To build a plugin for your own registry, follow [Authoring plugins](./authoring).
+## Observability
 
-For the technical contracts, see [Plugin integration points](./integration-points).
+| Plugin | What it adds |
+| --- | --- |
+| [Vercel Analytics](./vercel-analytics) | Mount the Vercel Analytics client in your app layout |
+| [Vercel Speed Insights](./vercel-speed-insights) | Mount the Vercel Speed Insights client in your app layout |
+| [Langfuse](./langfuse) | Register server-side OpenTelemetry trace export |
+
+## Build your own
+
+Follow [Create a plugin](../cookbook/create-plugin) for an authoring walkthrough and the [Plugin API](../reference/plugin-api) for contribution contracts.

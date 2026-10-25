@@ -2,10 +2,21 @@ import { expect, test } from "vitest";
 import { takeSnapshot } from "@uiverify/vitest";
 
 const pages = [
+  { name: "plugin-concept", path: "/docs/core/plugins" },
+  { name: "plugin-authoring", path: "/docs/cookbook/create-plugin" },
+  { name: "mcp-plugin", path: "/docs/plugins/mcp" },
+  { name: "attachments-plugin", path: "/docs/plugins/attachments" },
+  { name: "analytics-plugin", path: "/docs/plugins/vercel-analytics" },
+  {
+    name: "speed-insights-plugin",
+    path: "/docs/plugins/vercel-speed-insights",
+  },
+  { name: "langfuse-plugin", path: "/docs/plugins/langfuse" },
+  { name: "followup-recipe", path: "/docs/cookbook/follow-up-questions" },
   { name: "plugins", path: "/docs/plugins/overview" },
   {
-    name: "plugin-integration-points",
-    path: "/docs/plugins/integration-points",
+    name: "plugin-api",
+    path: "/docs/reference/plugin-api",
   },
   { name: "suggestions-plugin", path: "/docs/plugins/followup-suggestions" },
   { name: "feedback-plugin", path: "/docs/plugins/feedback" },

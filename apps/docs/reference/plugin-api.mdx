@@ -1,11 +1,11 @@
 ---
-title: Plugin integration points
+title: Plugin API
 description: Typed server and client contracts for optional ChatJS capabilities
 ---
 
 Plugins own optional behavior, storage, and UI. Core owns authentication, chat identity, lifecycle coordination, dispatch, and recovery. Core can name a capability such as Projects and declare its optional input fields without importing its implementation.
 
-Start with [Authoring plugins](./authoring) for installation and packaging. Installed source lives in `plugins/<id>/`, with thin framework adapters under `app/` and `agent/`.
+Start with [Create a plugin](../cookbook/create-plugin) for installation and packaging. Installed source lives in `plugins/<id>/`, with thin framework adapters under `app/` and `agent/`.
 
 ## Entry points
 
@@ -22,6 +22,9 @@ Keep `chat.ts` free of web routers and Next.js request helpers: native EVE loads
 Factories return concrete types with `satisfies`. Sync generates static imports and registrations from the descriptor without executing server factories during installation.
 
 ```ts
+import type { ChatPlugin } from "@/lib/plugin-contracts";
+import { projectRouter } from "@/plugins/projects/router";
+
 export const projects = () =>
   ({
     id: "projects",
@@ -46,6 +49,11 @@ These are explicit core contracts. There is no registry of arbitrary creation fi
 Use `updateOwnedChat` from `@/lib/db/update-owned-chat` for existing-chat metadata changes. Core resolves a logical chat or legacy conversation ID, verifies ownership and a bound session, and holds the family lock used by deletion. Unavailable chats return `null` before the callback runs.
 
 ```ts
+import { eq } from "drizzle-orm";
+import { updateOwnedChat } from "@/lib/db/update-owned-chat";
+import { eveChatProject as membership } from "@/plugins/projects/db/project-schema";
+
+// ownerId and chatId come from the authorized procedure.
 await updateOwnedChat({ ownerId, chatId }, async ({ tx, chatId }) => {
   await tx.delete(membership).where(eq(membership.chatId, chatId));
   return { chatId };
@@ -66,9 +74,12 @@ History predicates combine with AND. Return `undefined` when your restriction do
 
 ## Deletion
 
-`chat.onDelete(tx, chatId)` removes plugin-owned logical-chat membership when the final session is deleted. Core controls the lifecycle lock and transaction. Removing a project detaches its chats without deleting their sessions.
+| Callback | When it runs | Typical data |
+| --- | --- | --- |
+| `onDeleteConversations(tx, { conversationIds, sessionIds })` | Before selected conversations are tombstoned | Feedback votes and session-owned suggestions |
+| `onDelete(tx, chatId)` | When the final session of a logical chat is deleted | Project membership |
 
-This final-chat callback does not describe individual conversation deletion. Plugins storing conversation or native-session records use `onDeleteConversations`, described below.
+Both callbacks run inside the core deletion transaction under its lifecycle lock. A failure rolls back database cleanup. Use the supplied transaction. Removing a project detaches its chats without deleting their sessions.
 
 ## Client placements
 
@@ -85,6 +96,16 @@ This final-chat callback does not describe individual conversation deletion. Plu
 | `chat.Suggestions` | Suggestions beneath the last editable message |
 
 Plugin components own fetching, mutations, cache invalidation, loading, errors, and dialogs. Core renders normal React components. Composer and settings order remain app-owned arrays. Only one plugin supplies uploads.
+
+### Message actions
+
+The client `chat.MessageActions` placement receives `{ conversationId, messageId, disabled }`. Core renders it for editable assistant messages; each plugin owns its queries and mutations. Feedback uses a conversation-specific write with a lock and state recheck, because voting must not change the logical chat's update timestamp.
+
+### Suggestions
+
+When you add `chat.Suggestions`, it receives `conversationId`, native `events`, `lastMessage: { role, metadata: { turnId } }`, `disabled`, and `onSelect`. It renders beneath the last editable message when transcript actions are available. The plugin owns completion matching, storage reads, and polling. The callback returns the selected text to core's existing send/compare flow.
+
+Follow-up Suggestions uses native EVE hooks for generation and the per-conversation cleanup callback for session-owned records. Its claim-before-generation rule and core usage accounting survive extraction; no new event bus or generic mutation wrapper is involved.
 
 ## Native hooks and instructions
 
@@ -109,15 +130,3 @@ Declare plugin schema paths in `databaseSchemas`. Drizzle composes installed sch
 The complete descriptor lists every installed file. Use distinctive filenames such as `project-schema.ts` to avoid registry import-rewriting ambiguity with host files.
 
 Generated modules register routers, database schemas, instrumentation, layout, uploads, and chat contributions. Edit factories and descriptors, then run sync. Verify installations both with and without the plugin. Core must not import optional plugin storage or implementation directly.
-
-## Per-conversation cleanup and message actions
-
-`chat.onDeleteConversations(tx, { conversationIds, sessionIds })` runs inside the existing deletion transaction, before the selected conversations are tombstoned. A failure rolls back the database cleanup. Use it for content belonging to those conversations or sessions, such as Feedback votes. `onDelete(tx, chatId)` still runs only when the final session of the logical chat is removed.
-
-The client `chat.MessageActions` placement receives `{ conversationId, messageId, disabled }`. Core renders it for editable assistant messages; each plugin owns its queries and mutations. Feedback uses a conversation-specific write with a lock and state recheck, because voting must not change the logical chat's update timestamp.
-
-## Suggestions after an answer
-
-When you add `chat.Suggestions`, it receives `conversationId`, native `events`, `lastMessage: { role, metadata: { turnId } }`, `disabled`, and `onSelect`. It renders beneath the last editable message when transcript actions are available. The plugin owns completion matching, storage reads, and polling. The callback returns the selected text to core's existing send/compare flow.
-
-With Follow-up Suggestions, you use native EVE hooks for generation and the per-conversation cleanup callback for session-owned records. Its claim-before-generation rule and core usage accounting survive extraction; no new event bus or generic mutation wrapper is involved.

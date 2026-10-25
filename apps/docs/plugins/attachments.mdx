@@ -1,9 +1,27 @@
 ---
-title: "Attachments"
-description: "Upload images and PDFs to conversations"
+title: Attachments
+description: Upload images and PDFs from the chat composer
 ---
 
-ChatJS supports file attachments in conversations. Files are uploaded through the configured [file storage provider](../storage) and processed by AI models that support multimodal input.
+Attachments adds a file picker, mobile camera capture, and paste/drop handling to the composer. Uploaded files use your configured [file storage provider](../storage).
+
+## Installation
+
+### Add the plugin
+
+Run this command inside your ChatJS app:
+
+```bash
+bunx chat-js add attachment-uploads
+```
+
+A durable Files SDK storage provider is required. Choose one during installation and configure its generated environment variables. Vercel Blob uses `BLOB_READ_WRITE_TOKEN`. See [File storage](../storage) for other providers.
+
+The plugin adds the upload endpoint and composer controls. It adds no database tables and has no `features.attachments` enable flag.
+
+## Usage
+
+Sign in and choose **Attach files** from the composer menu. On mobile, **Take photo** opens the camera. You can also paste or drop supported files into the composer.
 
 <Frame>
   <img
@@ -12,49 +30,23 @@ ChatJS supports file attachments in conversations. Files are uploaded through th
   />
 </Frame>
 
-<Callout type="note">
-  Install `attachment-uploads` to enable new user uploads. A durable Files SDK
-  provider is required. Omit this plugin when creating an app without uploads.
-</Callout>
-
-## Supported File Types
+### Supported file types
 
 | Type   | Extensions              | Processing          |
 | ------ | ----------------------- | ------------------- |
-| Images | `.png`, `.jpg`, `.jpeg` | Direct vision input |
-| PDFs   | `.pdf`                  | Text extraction     |
+| Images | `.png`, `.jpg`, `.jpeg` | Model image input   |
+| PDFs   | `.pdf`                  | Document processing |
 
-## How It Works
+Choose a model that supports the attached file types. The composer blocks sending an image or PDF when the selected model does not support that input.
 
-1. User attaches file in chat input
-2. File uploads through the configured Files SDK provider
-3. A provider-agnostic ChatJS URL is included in the message
-4. Model processes based on type
+## Options
 
-## Configuration
+Set limits and accepted types under `attachments` in `chat.config.ts`:
 
-### Install Uploads
-
-Run this command inside a ChatJS app:
-
-```bash
-chat-js add attachment-uploads
-```
-
-Installed source determines upload availability. There is no `features.attachments` flag. When uploads are omitted, picker/camera controls, file paste/drop handlers and the upload endpoint are absent. Historical attachments and tool-produced files remain available in core. Automatic plugin removal and legacy app migration are not supported.
-
-### File Storage
-
-Choose a durable provider during installation and configure the environment variables generated for that provider. Vercel Blob uses `BLOB_READ_WRITE_TOKEN`, while other providers have their own credential modes. See [File storage](../storage) for setup and migration guidance.
-
-### Attachment Settings
-
-File attachment settings are configured in `chat.config.ts` under the `attachments` key:
-
-```typescript
+```ts
 attachments: {
-  maxBytes: 1024 * 1024,  // 1MB max after compression
-  maxDimension: 2048,     // Max image width/height
+  maxBytes: 1024 * 1024,
+  maxDimension: 2048,
   acceptedTypes: {
     "image/png": [".png"],
     "image/jpeg": [".jpg", ".jpeg"],
@@ -63,21 +55,10 @@ attachments: {
 },
 ```
 
-## Mobile Behavior
+`maxBytes` limits the uploaded size after compression. `maxDimension` limits image width and height.
 
-The composer menu offers **Attach files** for the file picker and, on mobile, **Take photo** for the camera. Both require sign-in.
+## Storage and customization
 
-## Model Support
+Files are uploaded through the configured provider and represented by provider-independent ChatJS URLs. Historical attachments and tool-produced files remain available in core when new uploads are omitted.
 
-Not all models support attachments. Check `model.input` for capability:
-
-```typescript
-if (model.input?.image) {
-  // Model supports image inputs
-}
-if (model.input?.pdf) {
-  // Model supports PDF inputs
-}
-```
-
-Select a model that supports the attached file types. The composer blocks sending when the selected model does not support an attached image or PDF.
+Edit `plugins/attachment-uploads/` to customize upload behavior. Only one installed plugin can provide the uploads contribution. See the [Plugin API](../reference/plugin-api#client-placements).

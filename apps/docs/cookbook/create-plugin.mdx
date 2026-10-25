@@ -1,23 +1,27 @@
 ---
-title: Authoring plugins
-description: Publish plugins with separate server and client contributions
+title: Create a plugin
+description: Package source and register server, browser, and native contributions
 ---
 
 Publish a standard shadcn registry item with `meta.chatjs.kind: "plugin"`. Plugin IDs use lowercase letters, digits, and hyphens, beginning with a letter. External plugins use the same metadata and sync path as the built-ins.
 
-## Source and installation
+## Prerequisites
+
+Use a working ChatJS app and a shadcn registry. Read [Using plugins](../core/plugins) before packaging a new capability.
+
+## 1. Organize the source
 
 In this repository, keep a plugin's installation manifest in `packages/registry/src/plugins/<id>/manifest.ts`, its implementation in `src/`, and its framework entrypoints in `adapters/`. Map implementation files into `~/plugins/<id>/`. Map thin Next and EVE entrypoints into their required `app/` and `agent/` locations. List every distributed file explicitly. Tests and authoring metadata stay in the repository.
 
 `server-plugin.ts` and `client-plugin.ts` use distinct names to avoid shadcn import resolution collisions with host modules such as `lib/db/client.ts` and `trpc/server.ts`.
 
-## Runtime contributions
+## 2. Define the contributions
 
-A server factory returns an object satisfying `ChatPlugin` from `@/lib/plugin-contracts`. It can contribute typed tRPC `routers` and an `instrumentation` registration. A client factory satisfies `ChatClientPlugin` and can contribute `composerControls`, `settingsItems`, a `layout` component, an `uploads` integration, and `chat` UI contributions. Core keeps explicit optional fields such as `projectId`; plugins own their validation against storage and lifecycle behavior. A separate runtime-safe `chat.ts` entrypoint provides contributions that participate in transactional creation, history, navigation, and deletion. See [Plugin integration points](./integration-points) for signatures and lifecycle guarantees. Use `satisfies` to retain the specific router and contribution types.
+A server factory returns an object satisfying `ChatPlugin` from `@/lib/plugin-contracts`. It can contribute typed tRPC `routers` and an `instrumentation` registration. A client factory satisfies `ChatClientPlugin` and can contribute `composerControls`, `settingsItems`, a `layout` component, an `uploads` integration, and `chat` UI contributions. Core keeps explicit optional fields such as `projectId`; plugins own their validation against storage and lifecycle behavior. A separate runtime-safe `chat.ts` entrypoint provides contributions that participate in transactional creation, history, navigation, and deletion. See [Plugin integration points](../reference/plugin-api) for signatures and lifecycle guarantees. Use `satisfies` to retain the specific router and contribution types.
 
 The built-in MCP factories are `mcp()` and `mcpClient()`. Its server entrypoint registers the `mcp` router. Its client entrypoint supplies the connector control and settings item. Keep credentials, database imports, and server implementations outside the client factory's import graph.
 
-## Installation descriptor
+## 3. Declare the installation
 
 For example, MCP declares these contributions in `chatjs.json`:
 
@@ -41,7 +45,7 @@ Use `registryDependencies` to install another item and `requiresPlugins` to requ
 
 Database schema paths must belong to `plugins/<id>/`. Sync composes them for Drizzle through `composition/generated/installed-database.ts`. Adding or syncing a plugin preserves migration history and does not apply SQL. Environment readers belong to the plugin and remain separate from client-visible configuration.
 
-## Composition and verification
+## 4. Install and verify
 
 Run `chat-js sync` after a direct shadcn installation. Sync discovers plugin directories, validates descriptors and required source, checks contribution collisions, and then generates registrations. It reads metadata without importing server factories or requiring their runtime credentials.
 

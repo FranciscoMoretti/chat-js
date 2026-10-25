@@ -1,0 +1,42 @@
+---
+title: Langfuse
+description: Export server traces through Langfuse instrumentation
+---
+
+Langfuse registers an OpenTelemetry trace exporter for the app's Node.js runtime.
+
+## Installation
+
+### Add the plugin
+
+```bash
+bunx chat-js add langfuse
+```
+
+The CLI installs the instrumentation source and generates its registration. This plugin adds no database tables or client UI.
+
+### Configure credentials
+
+Set your Langfuse project keys in the app environment:
+
+```bash
+LANGFUSE_PUBLIC_KEY=your_public_key
+LANGFUSE_SECRET_KEY=your_secret_key
+```
+
+## Usage
+
+Restart the app after configuring credentials. The plugin registers the exporter when instrumentation starts in the Node.js runtime and uses the application prefix as the service name. It skips registration in the Playwright test environment.
+
+## Options
+
+| Environment variable | Required | Purpose |
+| --- | --- | --- |
+| `LANGFUSE_PUBLIC_KEY` | Yes | Project public key |
+| `LANGFUSE_SECRET_KEY` | Yes | Project secret key |
+| `LANGFUSE_BASE_URL` | No | Override the exporter's service URL |
+| `LANGFUSE_DEBUG` | No | Set to `true` to enable exporter debugging |
+
+## Customization
+
+Edit `plugins/langfuse/instrumentation.ts` to change exporter registration and `credentials.ts` to change environment handling. The server factory declares the instrumentation contribution. See the [Plugin API](../reference/plugin-api).

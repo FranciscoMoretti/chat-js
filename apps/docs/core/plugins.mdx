@@ -1,0 +1,57 @@
+---
+title: Plugins
+description: Install and configure optional ChatJS capabilities
+---
+
+Plugins add capabilities such as project organization, message feedback, connectors, and analytics. Each plugin installs source into your app and registers its server, browser, or native EVE contributions. Browse the [plugin catalog](../plugins/overview) to choose what you need.
+
+## Using a plugin
+
+Run the install command from your ChatJS app:
+
+```bash
+bunx chat-js add projects
+```
+
+The CLI copies the plugin source, installs its dependencies, and generates the registrations. You do not manually add server and client factories to configuration arrays. Some plugins also add thin Next.js routes or EVE hooks.
+
+You can select plugins during `chat-js create`. Each plugin's guide lists its setup requirements and configuration.
+
+### Database migrations
+
+For a plugin that declares database tables, generate and review a migration after installation:
+
+```bash
+bun run db:generate
+# Review the generated SQL before applying it to your database.
+bun run db:migrate
+```
+
+New apps receive an initial migration for their selected plugins. Adding or syncing a plugin preserves that history and does not apply SQL. Removing source does not automatically remove stored data. Automatic plugin removal and upgrades from older ChatJS templates are not supported.
+
+### Configuration
+
+Installed source determines which capabilities are available. Keep runtime preferences in `chat.config.ts` and credentials in the environment variables listed by the plugin. For example, Follow-up Suggestions also needs its `enabled` option set to `true`.
+
+The CLI updates `composer-controls.ts` and `settings-items.ts` when a plugin contributes controls or settings. You can edit those lists to change their order.
+
+## How plugins fit into your app
+
+| File or directory | What you use it for |
+| --- | --- |
+| `plugins/<id>/` | Read and customize the installed implementation |
+| `plugins/<id>/chatjs.json` | Declare installed files and contributions |
+| `app/` and `agent/` adapters | Register routes, hooks, and instructions in their framework locations |
+| `composition/generated/` | Inspect generated registrations without editing them |
+
+Plugins can provide web server contributions, browser UI, and chat lifecycle callbacks. These use separate entrypoints so browser bundles do not load credentials and native EVE does not load Next.js request helpers. See the [Plugin API](../reference/plugin-api) for the contracts.
+
+After a direct shadcn installation or changes to a descriptor, regenerate composition:
+
+```bash
+bunx chat-js sync
+```
+
+## Creating a plugin
+
+Built-in and external plugins use the same installation format. Follow [Create a plugin](../cookbook/create-plugin) to package your source, declare contributions, and verify installation. Tools, gateways, storage, and sandboxes have their own contracts. Use the [registry guide](../registry) to choose the right extension type.

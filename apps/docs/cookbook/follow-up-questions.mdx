@@ -1,35 +1,31 @@
 ---
 title: Follow-up Questions
-description: Generate contextual suggestions through an EVE turn-completion hook
+description: Customize generation and display through the Follow-up Suggestions plugin
 ---
 
-ChatJS can add three to five follow-up suggestions after an EVE response completes. Suggestions are annotations on the native assistant message, so they stay out of later model context and survive transcript recovery.
+Use the [Follow-up Suggestions plugin](../plugins/followup-suggestions) to add three to five related questions after a completed answer. This recipe shows where to customize its generation and rendering.
 
-## Configure the model
+## Prerequisites
 
-Enable the feature and select a fast model in `chat.config.ts`:
+Install the plugin, apply its database migration, and enable `ai.tools.followupSuggestions.enabled` in `chat.config.ts`. Select a model available through your gateway with the `default` option.
 
-```ts
-ai: {
-  tools: {
-    followupSuggestions: {
-      enabled: true,
-      default: "google/gemini-2.5-flash-lite",
-    },
-  },
-}
-```
+## Customize generation
 
-## Runtime flow
+1. `agent/hooks/followup-suggestions.ts` registers the plugin's native EVE hook.
+2. `plugins/followup-suggestions/followup-hook.ts` collects the current exchange and claims the completed turn before making a model call.
+3. `plugins/followup-suggestions/generate-suggestions.ts` generates the questions using the configured model and core usage accounting.
+4. `plugins/followup-suggestions/followup-queries.ts` stores the result in `EveFollowup` with its session, turn, and completion-event identity.
 
-1. `agent/hooks/followup-suggestions.ts` collects the latest user and assistant content for the native turn.
-2. `lib/eve/generate-followup-suggestions.ts` makes the auxiliary model call after the answer has completed.
-3. The hook stores valid suggestions in the EVE message annotation `followup-suggestions`.
-4. `components/eve/eve-messages.tsx` reads that annotation and renders the suggestions below the assistant message.
+Edit the generation prompt to change the style of questions. Keep the durable claim before the paid call, preserve completion identity, and retain model usage accounting. The output schema in `suggestion-output.ts` accepts three to five nonempty suggestions of at most 80 characters each.
 
-The auxiliary generation never hides a completed answer. It records its model usage with the EVE turn so billing can reconcile it with the rest of the conversation.
+## Customize display
 
-## Related
+`plugins/followup-suggestions/use-followups.ts` matches the completed answer and reads stored results with bounded polling. Suggestions are persisted separately from the native transcript and are displayed after generation finishes.
 
-- [Follow-up Suggestions](/features/follow-up-suggestions) for product behavior
-- [Native EVE Conversations](/cookbook/next-chat-transition) for the runtime boundary
+Edit `followup-suggestions-view.tsx` to change their presentation. The plugin's `Suggestions` contribution passes selected text to core's existing send/compare flow. Generated questions become conversation input only when selected.
+
+## Preserve cleanup
+
+The plugin's `chat.ts` removes results for deleted native sessions inside the existing deletion transaction. Keep this callback when changing storage so deleting one branch preserves surviving results and late generation cannot recreate a deleted claim.
+
+See the [Plugin API](../reference/plugin-api) for the lifecycle and UI contracts.

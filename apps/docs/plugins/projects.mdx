@@ -1,26 +1,68 @@
 ---
 title: Projects
-description: Organize chats into projects with shared instructions and optional installation
+description: Organize conversations and share instructions across related chats
 ---
 
-Projects adds project pages, sidebar navigation, chat assignment, and shared instructions. Install it with:
+Projects adds named workspaces with icons, colors, shared instructions, and a list of related chats.
+
+## Installation
+
+### Add the plugin
+
+Run this command in your ChatJS app:
 
 ```bash
 bunx chat-js add projects
 ```
 
-Review and apply the generated database migration before using the plugin. Projects owns the `Project` and `EveChatProject` tables. Removing a project detaches its chats without deleting their sessions.
+The CLI registers the server router, sidebar UI, project routes, and native EVE hooks.
 
-## Chat behavior
+### Migrate the database
 
-Creating a chat inside a project validates ownership and attaches membership in the chat-creation transaction. Forks and multiple model responses share their logical chat's membership.
+```bash
+bun run db:generate
+# Review the generated SQL, then apply it to your database.
+bun run db:migrate
+```
 
-A retry finishes the existing creation. Changing the project on a retry does not move the chat. Use **Move to project** to change an existing assignment.
+See [plugin migrations](../core/plugins#database-migrations) for how this fits into your app's migration history.
 
-Project instructions are loaded for the authorized chat before a turn starts. A failed instruction lookup stops the turn rather than silently omitting those instructions.
+## Usage
 
-## Implementation
+### Create a project
 
-Installed implementation lives under `plugins/projects/`. Thin route adapters live under `app/(chat)/project/`, with EVE adapters under `agent/hooks/` and `agent/instructions/`.
+1. Click **New project** in the sidebar.
+2. Enter a name and optionally choose an icon and color.
+3. Click **Create**, then open the project to start a chat.
 
-The plugin contributes the `project` tRPC router, transactional membership hooks, history filtering, navigation links, sidebar content, chat actions, and breadcrumbs. See [Plugin integration points](./integration-points) for the technical contracts.
+### Set instructions
+
+Open the project, click **Instructions**, enter your instructions, and save. They apply to new turns in that project. Existing chat history remains unchanged. If instruction lookup fails, the turn stops rather than continuing without your instructions.
+
+### Move and manage chats
+
+Use **Move to project** to change an existing chat's assignment. Forks and multiple model responses share their logical chat's project. Retrying an interrupted creation completes the original request and does not move the chat.
+
+Use the project's menu to edit its name, icon, or color, or to delete it. Deleting a project keeps its chats and removes their project association.
+
+## Routes
+
+| Route | Purpose |
+| --- | --- |
+| `/project/:projectId` | Project home, new-chat composer, and chat history |
+| `/project/:projectId/chat/:chatId` | A chat in the project |
+
+## Schema
+
+| Table            | Purpose                                           |
+| ---------------- | ------------------------------------------------- |
+| `Project`        | Project owner, name, appearance, and instructions |
+| `EveChatProject` | Membership between a logical chat and its project |
+
+Creation validates ownership and inserts membership in the same transaction as the chat reservation. Existing table names and data are preserved when extracting this capability from the reference app.
+
+## Customization
+
+Edit `plugins/projects/` for the implementation. Route adapters live in `app/(chat)/project/`, with native adapters in `agent/hooks/` and `agent/instructions/`.
+
+The plugin contributes the `project` tRPC router, history filtering, navigation links, sidebar content, chat actions, and breadcrumbs. See the [Plugin API](../reference/plugin-api) for lifecycle and UI contracts.

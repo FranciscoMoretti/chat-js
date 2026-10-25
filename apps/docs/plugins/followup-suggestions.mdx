@@ -1,28 +1,59 @@
 ---
 title: Follow-up Suggestions
-description: Optional next-question generation with durable completion identity and bounded polling
+description: Suggest related questions after an assistant answer
 ---
 
-Use Follow-up Suggestions to show related questions beneath your completed assistant answers.
+Use Follow-up Suggestions to generate three to five related questions after your completed answers. When you select a suggestion, you send it through the existing chat or comparison flow.
+
+## Installation
+
+### Add the plugin
 
 ```bash
 bunx chat-js add followup-suggestions
 ```
 
-Review and apply the generated migration, then enable `ai.tools.followupSuggestions.enabled` in `chat.config.ts`. Its existing `default` setting chooses the model. Installation controls whether the implementation is present; the config switch controls generation and display.
+When you install the plugin, the CLI registers the native EVE hook, server router, suggestions UI, and session cleanup callback.
 
-## Runtime and storage
+### Migrate the database
 
-You can customize the plugin’s EVE hook, current-exchange collection, output schema, generation, `EveFollowup` table, queries, and UI. A thin adapter in `agent/hooks/followup-suggestions.ts` registers the native hook.
+```bash
+bun run db:generate
+# Review the generated SQL, then apply it to your database.
+bun run db:migrate
+```
 
-You generate suggestions only for signed-in foreground sessions. Before calling a model it atomically claims the completed turn. Replayed callbacks and interrupted claims never regenerate paid output. Generation uses core model resolution and usage accounting, disables hidden retries, and has a timeout. Failure leaves the completed answer usable.
+See [plugin migrations](../core/plugins#database-migrations).
 
-Your stored result retains its native session, turn, and completion-event identity. Branches in the same owned logical chat may read inherited results by exact completion event. A new, failed, or cancelled turn does not reuse an earlier turn's suggestions.
+### Enable generation
 
-## Client and cleanup
+Set `ai.tools.followupSuggestions.enabled` to `true` in `chat.config.ts`. Installation makes the implementation available. The option controls generation and display.
 
-When you render suggestions, core’s `Suggestions` slot passes the conversation ID, native events, the last message's role and turn ID, disabled state, and a selection callback. The plugin resolves the completion event and owns its query and bounded polling. Core no longer imports the suggestion hook or polls for this feature.
+## Usage
 
-When you delete a conversation, the plugin uses `onDeleteConversations` to delete results belonging to removed native sessions in the existing deletion transaction. It does not wait for final logical-chat deletion. A late generation result cannot recreate a deleted claim.
+You see suggestions below the last editable assistant message after generation finishes. They use your configured model provider and incur an auxiliary model call. Generation failures leave the completed answer usable.
 
-Your existing reference-app tables and migrations are unchanged by the extraction. See [integration points](./integration-points).
+Guest and background sessions do not generate suggestions. A new, failed, or cancelled turn does not reuse an earlier turn's suggestions. Suggested text becomes a user message only when selected.
+
+## Options
+
+Configure these fields under `ai.tools.followupSuggestions` in `chat.config.ts`:
+
+| Option | Default | Purpose |
+| --- | --- | --- |
+| `enabled` | `false` | Enable generation and display |
+| `default` | The configured fast model role | Choose the model for suggestion generation |
+
+Choose a model available through your gateway. The plugin uses core model resolution and usage accounting.
+
+## Schema
+
+You store results in the plugin-owned `EveFollowup` table. Each result retains its native session, turn, and completion-event identity. Branches within the same owned logical chat can read inherited results by exact completion event.
+
+A durable claim is written before the model call. Replayed callbacks and interrupted claims do not regenerate paid output. Deleting a native session removes its records transactionally, and late generation cannot recreate a deleted claim.
+
+## Customization
+
+Edit `plugins/followup-suggestions/` for generation, queries, bounded polling, and rendering. The thin adapter in `agent/hooks/followup-suggestions.ts` registers the native hook.
+
+When you render suggestions, the `Suggestions` placement receives the conversation ID, native events, last-message identity, disabled state, and selection callback. See the [Plugin API](../reference/plugin-api) and [Follow-up Questions recipe](../cookbook/follow-up-questions).
