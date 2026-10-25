@@ -12,7 +12,6 @@ import { Table, TableBody } from "@/components/ui/table";
 import type { AppModelId } from "@/lib/ai/app-model-id";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
-import { getDefaultEnabledModels } from "@/lib/ai/app-models";
 import { useChatModels } from "@/providers/chat-models-provider";
 import { ModelRow } from "./model-row";
 
@@ -30,13 +29,13 @@ export const ModelsTable = ({
   const { allModels, models: enabledModels } = useChatModels();
 
   const { data: preferences, isLoading: prefsLoading } = useQuery(
-    trpc.settings.getModelPreferences.queryOptions()
+    trpc.modelPreferences.getModelPreferences.queryOptions()
   );
 
-  const queryKey = trpc.settings.getModelPreferences.queryKey();
+  const queryKey = trpc.modelPreferences.getModelPreferences.queryKey();
 
   const { mutate: setModelEnabled } = useMutation(
-    trpc.settings.setModelEnabled.mutationOptions({
+    trpc.modelPreferences.setModelEnabled.mutationOptions({
       onError: (
         _err: unknown,
         _newData: unknown,
@@ -80,17 +79,10 @@ export const ModelsTable = ({
     })
   );
 
-  const enabledModelsSet = useMemo(() => {
-    const enabled: Set<string> = getDefaultEnabledModels(allModels);
-    for (const pref of preferences ?? []) {
-      if (pref.enabled) {
-        enabled.add(pref.modelId);
-      } else {
-        enabled.delete(pref.modelId);
-      }
-    }
-    return enabled;
-  }, [allModels, preferences]);
+  const enabledModelsSet = useMemo(
+    () => new Set(enabledModels.map((model) => model.id)),
+    [enabledModels]
+  );
 
   // Keep existing rows in place when preferences change, including during saves.
   const [modelOrder, setModelOrder] = useState<readonly AppModelId[]>(() => {

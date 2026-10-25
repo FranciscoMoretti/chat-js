@@ -82,7 +82,7 @@ Model visibility is determined through a pipeline:
 
 1. **Remove** disabled models (`ai.disabledModels`)
 2. **Apply defaults** (`ai.curatedDefaults` plus any new API models not in `models.generated.ts`)
-3. **Apply user overrides** from saved preferences
+3. **Apply user overrides** when the [Model Preferences plugin](../plugins/model-preferences) is installed
 
 ### Anonymous Users
 
@@ -91,4 +91,4 @@ Model visibility is determined through a pipeline:
 
 ## User Settings
 
-Users configure their model preferences at `/settings/models`. This page lets users toggle individual models on or off.
+Install [Model Preferences](../plugins/model-preferences) to let users toggle individual models at `/settings/models`. Without the plugin, your picker uses the configured defaults and newly discovered API models. Model discovery, capability checks, and anonymous restrictions remain in core.

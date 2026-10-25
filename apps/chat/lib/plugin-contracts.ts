@@ -3,6 +3,7 @@ import type { ComposerControl } from "@/components/composer/control";
 import type { SettingsItem } from "@/components/settings/settings-item";
 import type {
   AttachmentUploadIntegration,
+  ModelVisibility,
   InstalledLayoutComponent,
   InstalledRouters,
   InstrumentationRegistration,
@@ -23,5 +24,6 @@ interface ChatClientPlugin {
   readonly settingsItems?: readonly SettingsItem[];
   readonly layout?: InstalledLayoutComponent;
   readonly uploads?: AttachmentUploadIntegration;
+  readonly useModelVisibility?: ModelVisibility;
 }
 export type { ChatPlugin, ChatClientPlugin };

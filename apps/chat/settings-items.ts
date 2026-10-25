@@ -1,11 +1,12 @@
 // Initial navigation order. Reorder or extend this array; chat-js sync preserves it.
-import { Cpu, Settings } from "lucide-react";
+import { Settings } from "lucide-react";
 
 import type { SettingsItem } from "@/components/settings/settings-item";
+import { modelPreferencesClient } from "@/plugins/model-preferences/client-plugin";
 import { mcpClient } from "@/plugins/mcp/client-plugin";
 
 export const settingsItems: SettingsItem[] = [
   { href: "/settings", icon: Settings, id: "general", label: "General" },
-  { href: "/settings/models", icon: Cpu, id: "models", label: "Models" },
+  ...modelPreferencesClient().settingsItems,
   ...mcpClient().settingsItems,
 ];

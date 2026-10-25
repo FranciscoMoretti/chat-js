@@ -11,8 +11,12 @@ import type { DraftAttachment } from "@/lib/eve/draft";
 type InstalledRouters = Record<string, AnyTRPCRouter> & {
   credits?: never;
   eve?: never;
-  settings?: never;
 };
+
+/** Installed once; only filters the picker. Core retains catalog and eligibility. */
+type ModelVisibility = (
+  defaultEnabledIds: ReadonlySet<string>
+) => ReadonlySet<string>;
 
 /** D owns picker/camera/paste/drop behavior; core owns persisted attachments. */
 interface AttachmentUploadInput {
@@ -43,6 +47,7 @@ type InstrumentationRegistration = (context: {
   readonly runtime: string | undefined;
 }) => void | Promise<void>;
 export type {
+  ModelVisibility,
   AttachmentUploadBehavior,
   AttachmentUploadInput,
   AttachmentUploadIntegration,

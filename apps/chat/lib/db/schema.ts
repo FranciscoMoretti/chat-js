@@ -68,28 +68,6 @@ const userCredit = pgTable("UserCredit", {
 
 type UserCredit = InferSelectModel<typeof userCredit>;
 
-const userModelPreference = pgTable(
-  "UserModelPreference",
-  {
-    createdAt: timestamp("createdAt").notNull().defaultNow(),
-    enabled: boolean("enabled").notNull(),
-    modelId: varchar("modelId", { length: 256 }).notNull(),
-    updatedAt: timestamp("updatedAt")
-      .notNull()
-      .defaultNow()
-      .$onUpdate(() => new Date()),
-    userId: text("userId")
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
-  },
-  (columns) => [
-    index("UserModelPreference_user_id_idx").on(columns.userId),
-    primaryKey({ columns: [columns.userId, columns.modelId] }),
-  ]
-);
-
-type UserModelPreference = InferSelectModel<typeof userModelPreference>;
-
 // Disposable runtime policy records never create an application account.
 const guestRuntimeSession = pgTable(
   "GuestRuntimeSession",
@@ -1002,13 +980,6 @@ export {
   session,
   user,
   userCredit,
-  userModelPreference,
   verification,
 };
-export type {
-  EveChat,
-  EveDocumentRevision,
-  User,
-  UserCredit,
-  UserModelPreference,
-};
+export type { EveChat, EveDocumentRevision, User, UserCredit };

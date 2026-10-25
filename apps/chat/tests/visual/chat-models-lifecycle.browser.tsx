@@ -3,14 +3,30 @@ import {
   useChatModels,
 } from "@/providers/chat-models-provider";
 import { createDomHarness } from "@/components/test-dom-harness";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { AppModelDefinition } from "@/lib/ai/app-models";
 import React, { act } from "react";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { config } from "@/lib/config";
 
+const preferenceState = vi.hoisted(() => {
+  const state: {
+    authenticated: boolean;
+    preferences: { modelId: string; enabled: boolean }[] | undefined;
+    queryEnabled: boolean;
+  } = { authenticated: false, preferences: undefined, queryEnabled: false };
+  return state;
+});
+beforeEach(() => {
+  preferenceState.authenticated = false;
+  preferenceState.preferences = undefined;
+  preferenceState.queryEnabled = false;
+});
 vi.mock("@tanstack/react-query", () => ({
-  useQuery: (): { data: undefined } => ({ data: undefined }),
+  useQuery: (options: { readonly enabled: boolean }) => {
+    preferenceState.queryEnabled = options.enabled;
+    return { data: preferenceState.preferences };
+  },
 }));
 
 vi.mock("@/lib/ai/app-models", () => ({
@@ -20,16 +36,18 @@ vi.mock("@/lib/ai/app-models", () => ({
 }));
 
 vi.mock("@/providers/session-provider", () => ({
-  useSession: (): { data: null } => ({ data: null }),
+  useSession: () => ({
+    data: preferenceState.authenticated ? { user: { id: "fixture" } } : null,
+  }),
 }));
 
 vi.mock("@/trpc/react", () => ({
   useTRPC: (): {
-    settings: {
+    modelPreferences: {
       getModelPreferences: { queryOptions: () => Record<string, never> };
     };
   } => ({
-    settings: {
+    modelPreferences: {
       getModelPreferences: {
         queryOptions: (): Record<string, never> => ({}),
       },
@@ -181,4 +199,56 @@ describe("ChatModelsProvider", () => {
       });
     }
   });
+});
+
+it("preferences filter visibility without changing the catalog, and cached preferences do not affect guests", () => {
+  preferenceState.authenticated = true;
+  preferenceState.preferences = [
+    { modelId: config.ai.workflows.chat, enabled: false },
+    { modelId: "unavailable-model", enabled: true },
+  ];
+  const values: ReadonlyNativeSurface<ReturnType<typeof useChatModels>>[] = [];
+  const probe = (
+    <ChatModelsProvider models={updatedModels}>
+      <ContextProbe
+        onValue={(value) => {
+          values.push(value);
+        }}
+      />
+    </ChatModelsProvider>
+  );
+  let renderer: ReturnType<typeof createDomHarness> | undefined;
+  act(() => {
+    renderer = createDomHarness(probe);
+  });
+  const rendered = renderer;
+  if (!rendered) {
+    throw new Error("Expected provider harness");
+  }
+  try {
+    expect(preferenceState.queryEnabled).toBe(true);
+    expect(values.at(-1)?.models).toEqual([]);
+    expect(values.at(-1)?.allModels).toBe(updatedModels);
+    expect(values.at(-1)?.getModelById(config.ai.workflows.chat)).toBe(
+      updatedModels[0]
+    );
+    preferenceState.authenticated = false;
+    act(() => {
+      rendered.update(
+        <ChatModelsProvider models={updatedModels}>
+          <ContextProbe
+            onValue={(value) => {
+              values.push(value);
+            }}
+          />
+        </ChatModelsProvider>
+      );
+    });
+    expect(preferenceState.queryEnabled).toBe(false);
+    expect(values.at(-1)?.models).toEqual(updatedModels);
+  } finally {
+    act(() => {
+      rendered.unmount();
+    });
+  }
 });

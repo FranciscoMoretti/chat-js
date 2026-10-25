@@ -1,2 +1,4 @@
 @import "../../app/globals.css";
 @source "../../components";
+
+@source "../../plugins";

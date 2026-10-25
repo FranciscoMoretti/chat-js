@@ -5,6 +5,7 @@ export const installedPlugins: ReadonlySet<string> = new Set([
   "followup-suggestions",
   "langfuse",
   "mcp",
+  "model-preferences",
   "projects",
   "search",
   "vercel-analytics",

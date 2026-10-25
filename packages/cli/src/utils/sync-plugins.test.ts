@@ -1,3 +1,4 @@
+import { modelPreferencesItem } from "../../../registry/src/plugins/model-preferences/manifest";
 import { searchItem } from "../../../registry/src/plugins/search/manifest";
 import { projectsItem } from "../../../registry/src/plugins/projects/manifest";
 import { feedbackItem } from "../../../registry/src/plugins/feedback/manifest";
@@ -549,7 +550,7 @@ test("third-party plugins contribute without CLI changes or executing their serv
   );
 });
 
-for (const key of ["eve", "settings", "credits"]) {
+for (const key of ["eve", "credits"]) {
   test(`plugin router ${key} cannot replace a core router or partially edit UI`, async () => {
     const root = await fixture();
     await initializePluginUi(root);
@@ -588,7 +589,7 @@ for (const [contribution, ids] of [
     "composerControls",
     ["canvas", "web-search", "deep-research", "image", "video"],
   ],
-  ["settingsItems", ["general", "models"]],
+  ["settingsItems", ["general"]],
 ] as const) {
   for (const id of ids) {
     test(`plugin ${contribution} cannot claim core id ${id}`, async () => {
@@ -624,6 +625,11 @@ for (const [contribution, ids] of [
 }
 
 test.each([
+  {
+    item: modelPreferencesItem,
+    router: "modelPreferences",
+    schema: "model-preferences-schema.ts",
+  },
   { item: projectsItem, router: "project", schema: "db/project-schema.ts" },
   { item: feedbackItem, router: "feedback", schema: "feedback-schema.ts" },
   { item: searchItem, router: "search", schema: "search-schema.ts" },
@@ -668,7 +674,17 @@ test.each([
       path.join(root, "composition/generated/installed-chat.ts"),
       "utf-8"
     );
-    expect(lifecycle).toContain(`@/plugins/${item.name}/chat`);
+    if (item.name === "model-preferences") {
+      expect(lifecycle).not.toContain("@/plugins/");
+      const visibility = await readFile(
+        path.join(root, "composition/generated/installed-model-visibility.ts"),
+        "utf-8"
+      );
+      expect(visibility).toContain("plugin0().useModelVisibility");
+      expect(visibility).toContain("@/plugins/model-preferences/client-plugin");
+    } else {
+      expect(lifecycle).toContain(`@/plugins/${item.name}/chat`);
+    }
     expect(lifecycle).not.toContain("server-plugin");
     expect(lifecycle).not.toContain("routers");
     expect(
@@ -685,3 +701,35 @@ test.each([
     ).toContain(`plugins/${item.name}/${schema}`);
   }
 );
+
+test("absent model visibility preserves defaults; conflicting providers fail before writing", async () => {
+  const root = await fixture();
+  await initializePluginUi(root);
+  const target = path.join(
+    root,
+    "composition/generated/installed-model-visibility.ts"
+  );
+  const before = await readFile(target, "utf-8");
+  expect(before).toContain("(defaultEnabledIds) => defaultEnabledIds");
+  expect(before).not.toContain("@/plugins/");
+  await Promise.all(
+    ["first", "second"].map(async (id) => {
+      await mkdir(path.join(root, "plugins", id), { recursive: true });
+      await writeFile(path.join(root, "plugins", id, "client-plugin.ts"), "");
+      await writeFile(
+        path.join(root, "plugins", id, "chatjs.json"),
+        JSON.stringify({
+          contractVersion: 1,
+          id,
+          kind: "plugin",
+          client: { export: "clientPlugin", modelVisibility: true },
+        })
+      );
+    })
+  );
+  await rejects(
+    syncPlugins(root),
+    /Only one plugin may supply model visibility/u
+  );
+  expect(await readFile(target, "utf-8")).toBe(before);
+});

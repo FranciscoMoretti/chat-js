@@ -14,7 +14,10 @@ import { useTRPC } from "@/trpc/react";
 
 import { ModelsTable } from "./models-table";
 
-import { SettingsPageContent, SettingsPageScrollArea } from "./settings-page";
+import {
+  SettingsPageContent,
+  SettingsPageScrollArea,
+} from "@/components/settings/settings-page";
 
 export const ModelsSettings = (): ReactJSX.Element => {
   const trpc = useTRPC();
@@ -39,7 +42,7 @@ export const ModelsSettings = (): ReactJSX.Element => {
         <Button
           onClick={() => {
             void queryClient.invalidateQueries({
-              queryKey: trpc.settings.getModelPreferences.queryKey(),
+              queryKey: trpc.modelPreferences.getModelPreferences.queryKey(),
             });
           }}
           size="icon"

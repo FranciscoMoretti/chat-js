@@ -3,6 +3,7 @@ export const installedDatabaseSchemas: string[] = [
   "./plugins/feedback/feedback-schema.ts",
   "./plugins/followup-suggestions/followup-schema.ts",
   "./plugins/mcp/db/mcp-schema.ts",
+  "./plugins/model-preferences/model-preferences-schema.ts",
   "./plugins/projects/db/project-schema.ts",
   "./plugins/search/search-schema.ts",
 ];

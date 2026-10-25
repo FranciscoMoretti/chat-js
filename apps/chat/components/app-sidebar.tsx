@@ -2,6 +2,7 @@ import {
   PluginSidebar,
   PluginSidebarHeader,
 } from "@/components/plugin-chat-ui";
+import { settingsItems } from "@/settings-items";
 import React, { Suspense } from "react";
 import { Cpu } from "lucide-react";
 
@@ -32,6 +33,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { headers } from "next/headers";
 
 import { resolveEvePrincipal } from "@/lib/eve/principal";
+
+const modelSettingsItem = settingsItems.find((item) => item.id === "models");
 
 const ScopedPluginSidebarHeader = async (): Promise<ReactJSX.Element> => {
   const principal = await resolveEvePrincipal(await headers());
@@ -75,16 +78,18 @@ export const AppSidebar = (): React.JSX.Element => (
         >
           <ScopedPluginSidebarHeader />
         </Suspense>
-        <SidebarMenuItem>
-          <SidebarMenuButton asChild tooltip="Models">
-            <InternalLink href="/settings/models">
-              <Cpu className="size-4" />
-              <span className="group-data-[collapsible=icon]:hidden">
-                Models
-              </span>
-            </InternalLink>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
+        {modelSettingsItem && (modelSettingsItem.isVisible?.() ?? true) && (
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild tooltip="Models">
+              <InternalLink href={modelSettingsItem.href}>
+                <Cpu className="size-4" />
+                <span className="group-data-[collapsible=icon]:hidden">
+                  Models
+                </span>
+              </InternalLink>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        )}
       </SidebarMenu>
     </SidebarHeader>
     <SidebarSeparator />

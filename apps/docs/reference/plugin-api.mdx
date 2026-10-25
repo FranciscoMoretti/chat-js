@@ -15,7 +15,7 @@ Keep server and browser import graphs separate:
 | --- | --- | --- |
 | `server-plugin.ts` | `ChatPlugin` | tRPC routers, instrumentation |
 | `chat.ts` | `ChatServerIntegration` | Transactional chat integration, safe for EVE and Next.js |
-| `client-plugin.ts` | `ChatClientPlugin` | Composer controls, settings, layout, uploads, chat UI |
+| `client-plugin.ts` | `ChatClientPlugin` | Composer controls, settings, layout, uploads, model visibility, chat UI |
 
 Keep `chat.ts` free of web routers and Next.js request helpers: native EVE loads this entrypoint too.
 
@@ -89,6 +89,7 @@ Both callbacks run inside the core deletion transaction under its lifecycle lock
 | `settingsItems` | Settings navigation |
 | `layout` | A no-prop layout component |
 | `uploads` | Attachment selection and upload behavior |
+| `useModelVisibility` | Hook returning enabled model IDs from core defaults |
 | `chat.Sidebar` | Sidebar content |
 | `chat.SidebarHeader` | Fixed sidebar menu control with server-resolved `ownerId` |
 | `chat.Actions` | Menu actions receiving `{ chat: { id, title, state } }` |
@@ -96,7 +97,13 @@ Both callbacks run inside the core deletion transaction under its lifecycle lock
 | `chat.MessageActions` | Assistant-message actions |
 | `chat.Suggestions` | Suggestions beneath the last editable message |
 
-Plugin components own fetching, mutations, cache invalidation, loading, errors, and dialogs. Core renders normal React components. Composer and settings order remain app-owned arrays. Only one plugin supplies uploads.
+Plugin components own fetching, mutations, cache invalidation, loading, errors, and dialogs. Core renders normal React components. Composer and settings order remain app-owned arrays. Only one plugin supplies uploads. A settings item with ID `models` also supplies the Models shortcut in the sidebar and the Add Models link in the picker. Removing that item hides both shortcuts.
+
+### Model visibility
+
+Declare `client.modelVisibility: true` in your descriptor and return `useModelVisibility` from your client factory. Sync installs one hook with the type `(defaultEnabledIds: ReadonlySet<string>) => ReadonlySet<string>`. Core calls it unconditionally from the model provider. Only one plugin can supply this contribution, so two providers fail installation before registrations change.
+
+Your hook owns fetching and applying user preferences. Return a stable set when its inputs are unchanged. Core filters its available catalog against the returned IDs, so an unknown ID cannot add a model. With no provider installed, the generated hook returns core defaults unchanged and performs no preference request. This contribution changes picker visibility, not authorization, capability checks, or anonymous model restrictions.
 
 ### Message actions
 

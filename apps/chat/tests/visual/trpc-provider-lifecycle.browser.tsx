@@ -30,7 +30,7 @@ const Probe = ({
   const queryClient = useQueryClient();
   const trpc = useTRPC();
   const { data } = useQuery({
-    ...trpc.settings.getModelPreferences.queryOptions(),
+    ...trpc.modelPreferences.getModelPreferences.queryOptions(),
     enabled: false,
   });
   useEffect(() => {
@@ -82,7 +82,7 @@ test("provider hydration and client recreation retain cached data and in-flight 
     expect(owner("Primary").client).toBe(original.client);
 
     const pending = original.queryClient.query(
-      original.trpc.settings.getModelPreferences.queryOptions()
+      original.trpc.modelPreferences.getModelPreferences.queryOptions()
     );
     await expect.poll(() => fetch.mock.calls.length).toBe(1);
     await renderRoot(root, tree("recreated"));
@@ -103,7 +103,7 @@ test("provider hydration and client recreation retain cached data and in-flight 
     expect(fetch).toHaveBeenCalledTimes(1);
     expect(
       recreated.queryClient.getQueryData(
-        recreated.trpc.settings.getModelPreferences.queryKey()
+        recreated.trpc.modelPreferences.getModelPreferences.queryKey()
       )
     ).toEqual(preferences);
     await takeSnapshot("trpc-provider-recreated-client");
@@ -115,7 +115,7 @@ test("provider hydration and client recreation retain cached data and in-flight 
     );
     await act(async () => {
       await recreated.queryClient.query({
-        ...recreated.trpc.settings.getModelPreferences.queryOptions(),
+        ...recreated.trpc.modelPreferences.getModelPreferences.queryOptions(),
         staleTime: 0,
       });
     });

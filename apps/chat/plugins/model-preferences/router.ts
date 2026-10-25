@@ -3,12 +3,12 @@ import { z } from "zod";
 import {
   getUserModelPreferences,
   upsertUserModelPreference,
-} from "@/lib/db/queries";
+} from "./model-preferences-queries";
 
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
-export const settingsRouter = createTRPCRouter({
+export const modelPreferencesRouter = createTRPCRouter({
   getModelPreferences: protectedProcedure.query(
     async ({
       ctx,

@@ -3,7 +3,6 @@ import { createCallerFactory, createTRPCRouter } from "@/trpc/init";
 
 import { creditsRouter } from "./credits.router";
 import { eveRouter } from "./eve.router";
-import { settingsRouter } from "./settings.router";
 
 /**
  * This is the primary router for your server.
@@ -15,7 +14,6 @@ const appRouter = createTRPCRouter({
   credits: creditsRouter,
   eve: eveRouter,
   ...installedRouters,
-  settings: settingsRouter,
 });
 
 // Export the type definition for the API.

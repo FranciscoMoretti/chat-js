@@ -172,7 +172,7 @@ const createRequestResponders = (
 ): ReadonlyMap<string, (op: FixtureOperation, observer: Observer) => void> =>
   new Map([
     [
-      "settings.getModelPreferences",
+      "modelPreferences.getModelPreferences",
       (_op: FixtureOperation, observer: Observer): void => {
         respondPreferences(observer);
       },

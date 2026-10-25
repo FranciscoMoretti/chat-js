@@ -196,6 +196,7 @@ const pluginRegistrationTargets = [
   "installed",
   "installed-routers",
   "installed-uploads",
+  "installed-model-visibility",
   "installed-layout",
   "installed-instrumentation",
   "installed-database",
@@ -221,7 +222,7 @@ const assertPluginDependencies = (
 const assertUniqueContributions = (
   plugins: readonly PluginDefinition[]
 ): void => {
-  const routers = new Set(["credits", "eve", "settings"]);
+  const routers = new Set(["credits", "eve"]);
   const controls = new Set([
     "canvas",
     "web-search",
@@ -229,8 +230,9 @@ const assertUniqueContributions = (
     "image",
     "video",
   ]);
-  const settings = new Set(["general", "models"]);
+  const settings = new Set(["general"]);
   let uploads = false;
+  let modelVisibility = false;
   for (const plugin of plugins) {
     for (const [keys, seen, label] of [
       [plugin.server?.routers ?? [], routers, "router"],
@@ -243,6 +245,12 @@ const assertUniqueContributions = (
         }
         seen.add(key);
       }
+    }
+    if (plugin.client?.modelVisibility) {
+      if (modelVisibility) {
+        throw new Error("Only one plugin may supply model visibility.");
+      }
+      modelVisibility = true;
     }
     if (plugin.client?.uploads) {
       if (uploads) {
@@ -338,9 +346,16 @@ const syncPlugins = async (
   );
   const layout = plugins.filter((plugin) => plugin.client?.layout);
   const uploads = plugins.filter((plugin) => plugin.client?.uploads);
+  const modelVisibility = plugins.filter(
+    (plugin) => plugin.client?.modelVisibility
+  );
   const chat = plugins.filter((plugin) => plugin.chat);
   const chatUi = plugins.filter((plugin) => plugin.client?.chat);
   const contents = [
+    [
+      "installed-model-visibility",
+      `${imports(modelVisibility, "client")}\nimport type { ModelVisibility } from "@/lib/installation-contracts";\nexport const useModelVisibility: ModelVisibility = ${modelVisibility.length > 0 ? "plugin0().useModelVisibility" : "(defaultEnabledIds) => defaultEnabledIds"};`,
+    ],
     [
       "installed-chat",
       `${chat.map((plugin, index) => `import { ${plugin.chat?.export} as chat${index} } from "@/plugins/${plugin.id}/chat";`).join("\n")}\nimport type { ChatServerIntegration } from "@/lib/chat-plugin-contracts";\nexport const installedChatPlugins: readonly ChatServerIntegration[] = [${chat.map((_, index) => `chat${index}`).join(", ")}];`,

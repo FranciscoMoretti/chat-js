@@ -166,6 +166,7 @@ const pluginDefinitionSchema = z.object({
       chat: z.literal(true).optional(),
       layout: z.literal(true).optional(),
       uploads: z.literal(true).optional(),
+      modelVisibility: z.literal(true).optional(),
     })
     .optional(),
 });

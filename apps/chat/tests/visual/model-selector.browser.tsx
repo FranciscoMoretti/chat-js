@@ -150,7 +150,7 @@ const createPreferencesClient = (): {
               observer: Readonly<OperationResultObserver<AppRouter, unknown>>
             ): void => {
               requests.push(op.path);
-              if (op.path !== "settings.getModelPreferences") {
+              if (op.path !== "modelPreferences.getModelPreferences") {
                 observer.error(
                   TRPCClientError.from(
                     new Error(`Unhandled fixture procedure ${op.path}`)
@@ -228,7 +228,7 @@ for (const scenario of scenarios) {
       await expect
         .poll(() => page.getByTestId("selection").element().textContent)
         .toBe(scenario.expectedSelection);
-      expect(requests).toContain("settings.getModelPreferences");
+      expect(requests).toContain("modelPreferences.getModelPreferences");
       await takeSnapshot(`model-native-${scenario.name}-after`);
     } finally {
       await unmount(fixture);

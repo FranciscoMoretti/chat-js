@@ -17,9 +17,8 @@ import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 import { ChatModelsProvider } from "@/providers/chat-models-provider";
 import { DefaultModelProvider } from "@/providers/default-model-provider";
 import { SessionProvider, SessionSeed } from "@/providers/session-provider";
-import { preloadQuery } from "@/trpc/preload-query";
 import { TRPCReactProvider } from "@/trpc/react";
-import { HydrateClient, getQueryClient, trpc } from "@/trpc/server";
+import { HydrateClient } from "@/trpc/server";
 
 import { auth } from "@/lib/auth";
 
@@ -75,18 +74,6 @@ const ChatLayoutDynamic = async ({
     chatModels,
     isAnonymous
   );
-
-  if ((session?.user?.id ?? "") !== "") {
-    const queryClient = getQueryClient();
-    // "Lazy prefetch": don't await; pending queries are dehydrated + streamed.
-
-    // Preloading must swallow preload errors while pending queries are dehydrated and streamed.
-    void preloadQuery(
-      queryClient.query(trpc.settings.getModelPreferences.queryOptions())
-    );
-
-    // Preloading must swallow preload errors while pending queries are dehydrated and streamed.
-  }
 
   return (
     <HydrateClient>

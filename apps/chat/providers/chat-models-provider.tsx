@@ -4,10 +4,8 @@ import React, { createContext, useCallback, useContext, useMemo } from "react";
 import type { AppModelDefinition } from "@/lib/ai/app-models";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
-import { useQuery } from "@tanstack/react-query";
+import { useModelVisibility } from "@/composition/generated/installed-model-visibility";
 import { getDefaultEnabledModels } from "@/lib/ai/app-models";
-import { useSession } from "@/providers/session-provider";
-import { useTRPC } from "@/trpc/react";
 
 interface ChatModelsContextType {
   readonly allModels: readonly ReadonlyNativeSurface<AppModelDefinition>[];
@@ -28,15 +26,6 @@ const ChatModelsProvider = ({
   readonly children: ReadonlyReactNode;
   readonly models: readonly ReadonlyNativeSurface<AppModelDefinition>[];
 }): React.JSX.Element => {
-  const trpc = useTRPC();
-  const { data: session } = useSession();
-  const isAuthenticated = Boolean(session?.user);
-
-  const { data: preferences } = useQuery({
-    ...trpc.settings.getModelPreferences.queryOptions(),
-    enabled: isAuthenticated,
-  });
-
   const allModelsMap = useMemo(() => {
     const map = new Map<string, ReadonlyNativeSurface<AppModelDefinition>>();
     for (const model of models) {
@@ -45,17 +34,11 @@ const ChatModelsProvider = ({
     return map;
   }, [models]);
 
-  const enabledModelsSet = useMemo(() => {
-    const enabled = getDefaultEnabledModels(models);
-    for (const pref of preferences ?? []) {
-      if (pref.enabled) {
-        enabled.add(pref.modelId);
-      } else {
-        enabled.delete(pref.modelId);
-      }
-    }
-    return enabled;
-  }, [models, preferences]);
+  const defaultEnabledIds = useMemo(
+    () => getDefaultEnabledModels(models),
+    [models]
+  );
+  const enabledModelsSet = useModelVisibility(defaultEnabledIds);
 
   const filteredModels = useMemo(
     () =>

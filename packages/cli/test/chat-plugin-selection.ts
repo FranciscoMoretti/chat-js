@@ -10,6 +10,7 @@ const selections = [
   "feedback",
   "followup-suggestions",
   "search",
+  "model-preferences",
 ] as const;
 const pluginTables = [
   "Project",
@@ -17,6 +18,7 @@ const pluginTables = [
   "EveVote",
   "EveFollowup",
   "EveSearchText",
+  "UserModelPreference",
 ];
 const expectedTables: Record<(typeof selections)[number], readonly string[]> = {
   none: [],
@@ -24,6 +26,7 @@ const expectedTables: Record<(typeof selections)[number], readonly string[]> = {
   feedback: ["EveVote"],
   "followup-suggestions": ["EveFollowup"],
   search: ["EveSearchText"],
+  "model-preferences": ["UserModelPreference"],
 };
 
 /** Reuse the packed CLI/registry fixture, keeping each app outside the workspace. */
@@ -110,7 +113,7 @@ process.env.OPENAI_API_KEY = "fixture-key";
 import assert from "node:assert/strict";
 import { installedChatPlugins } from "./composition/generated/installed-chat";
 import { chatLinks } from "./lib/chat-plugins";
-assert.equal(installedChatPlugins.length, ${selection === "none" ? 0 : 1});
+assert.equal(installedChatPlugins.length, ${selection === "none" || selection === "model-preferences" ? 0 : 1});
 assert.deepEqual(await chatLinks("fixture-owner", []), new Map());
 for (const plugin of installedChatPlugins) {
   assert.equal(typeof plugin.${selection === "projects" ? "onCreate" : "onDeleteConversations"}, "function");

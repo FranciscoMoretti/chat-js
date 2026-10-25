@@ -144,6 +144,7 @@ export default defineConfig({
             "/plugins/projects",
             "/plugins/feedback",
             "/plugins/search",
+            "/plugins/model-preferences",
             "/plugins/followup-suggestions",
             "/plugins/mcp",
             "/plugins/attachments",

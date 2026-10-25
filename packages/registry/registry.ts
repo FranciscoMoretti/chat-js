@@ -1,3 +1,4 @@
+import { modelPreferencesItem } from "./src/plugins/model-preferences/manifest";
 import { searchItem } from "./src/plugins/search/manifest";
 import { followupSuggestionsItem } from "./src/plugins/followup-suggestions/manifest";
 import { feedbackItem } from "./src/plugins/feedback/manifest";
@@ -205,6 +206,7 @@ const registry = registrySchema.parse({
     feedbackItem,
     followupSuggestionsItem,
     searchItem,
+    modelPreferencesItem,
     mcpItem,
     attachmentUploadsItem,
     ...observabilityItems,

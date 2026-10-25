@@ -1,0 +1,48 @@
+---
+title: Model Preferences
+description: Let each user choose which models appear in the model picker
+---
+
+Model Preferences adds a **Models** settings page where you can search your available models and choose which ones appear in your picker. Your choices persist across sessions.
+
+## Installation
+
+### Add the plugin
+
+```bash
+bunx @chat-js/cli@latest add model-preferences
+```
+
+The CLI installs the settings page, navigation item and shortcuts, authenticated router, schema, and model visibility hook. No extra credentials or EVE hooks are required.
+
+### Migrate the database
+
+```bash
+bun run db:generate
+# Review the generated SQL before applying it.
+bun run db:migrate
+```
+
+Existing reference-app installations keep their `UserModelPreference` table, keys, indexes, and saved choices. Moving schema ownership alone does not require a database change. Fresh installations create the table through the plugin schema. See [plugin migrations](../core/plugins#database-migrations).
+
+## Usage
+
+Open **Settings → Models**. Search by model name, provider, or ID and toggle models on or off. Your picker updates optimistically. If saving fails, the settings page restores the previous preferences and displays an error.
+
+Core supplies the default enabled IDs. Your saved choices override those defaults for signed-in sessions. Anonymous sessions do not request or apply saved preferences. The picker uses defaults while preferences load or when no cached preferences are available after a failed request. The settings route preloads its own query. Ordinary chat routes load preferences from the client hook.
+
+Hiding a model changes its visibility in the picker. It does not revoke permission to use that model, change the selected default model, or remove the model from your catalog. Your core capability checks and anonymous model restrictions still apply.
+
+## Configuration
+
+You do not need a plugin-specific configuration block. Configure your catalog and defaults in `chat.config.ts`, including `ai.curatedDefaults` and `ai.disabledModels`. See [Multi-Model Support](../core/multi-model).
+
+## Schema
+
+`UserModelPreference` stores an enabled flag per user and model ID, plus creation and update timestamps. Its composite primary key prevents duplicate preferences, and deleting the user cascades to their preferences. Both router procedures use the authenticated user ID rather than accepting an owner from the client.
+
+## Customization
+
+Edit `plugins/model-preferences/` to change the settings UI, queries, or preference policy. The installed `app/(chat)/settings/models/page.tsx` is a thin route adapter. The plugin contributes the `modelPreferences` router and the `models` settings item.
+
+The [model visibility integration](../reference/plugin-api#model-visibility) keeps persistence out of the core model provider. Your plugin returns IDs, and core filters its available catalog against them. Without this plugin, core uses its default list and makes no preference request.

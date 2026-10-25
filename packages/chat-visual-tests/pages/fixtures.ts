@@ -154,7 +154,7 @@ export const signedInTrpc = {
   "mcp.listConnected": [],
   "project.list": projects,
   "project.forChat": null,
-  "settings.getModelPreferences": [],
+  "modelPreferences.getModelPreferences": [],
 };
 
 const invoicesChatId = history.items[1]?.id ?? "";

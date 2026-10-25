@@ -1,5 +1,6 @@
 "use client";
 
+import { settingsItems } from "@/settings-items";
 import type { AppModelDefinition, AppModelId } from "@/lib/ai/app-models";
 import {
   CheckIcon,
@@ -287,6 +288,28 @@ const PureCommandItem = ({
 
 const CommandItem = memo(PureCommandItem);
 
+const ModelSettingsLink = (): ReactJSX.Element | null => {
+  const item = settingsItems.find((entry) => entry.id === "models");
+  if (!item || !(item.isVisible?.() ?? true)) {
+    return null;
+  }
+  return (
+    <div className="border-t p-2">
+      <Button
+        asChild
+        className="w-full justify-between"
+        size="sm"
+        variant="ghost"
+      >
+        <InternalLink aria-label="Add Models" href={item.href}>
+          Add Models
+          <ChevronRightIcon className="h-4 w-4" />
+        </InternalLink>
+      </Button>
+    </div>
+  );
+};
+
 const PureModelSelector = ({
   allowMultiple = true,
   selectedModelId,
@@ -509,7 +532,7 @@ const PureModelSelector = ({
       dispatchSelection(id);
       setOpen(false);
     },
-    [dispatchSelection]
+    [dispatchSelection, setOpen]
   );
 
   const toggleMultiModel = useCallback(
@@ -794,21 +817,7 @@ const PureModelSelector = ({
                 )}
               </CommandGroup>
             </CommandList>
-            {!isAnonymous && (
-              <div className="border-t p-2">
-                <Button
-                  asChild
-                  className="w-full justify-between"
-                  size="sm"
-                  variant="ghost"
-                >
-                  <InternalLink aria-label="Add Models" href="/settings/models">
-                    Add Models
-                    <ChevronRightIcon className="h-4 w-4" />
-                  </InternalLink>
-                </Button>
-              </div>
-            )}
+            {!isAnonymous && <ModelSettingsLink />}
           </Command>
         )}
       </PopoverContent>

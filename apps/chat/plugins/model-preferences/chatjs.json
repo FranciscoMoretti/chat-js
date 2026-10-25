@@ -1,0 +1,27 @@
+{
+  "contractVersion": 1,
+  "id": "model-preferences",
+  "kind": "plugin",
+  "files": [
+    "plugins/model-preferences/apply-model-preferences.ts",
+    "plugins/model-preferences/client-plugin.ts",
+    "plugins/model-preferences/model-preferences-queries.ts",
+    "plugins/model-preferences/model-preferences-schema.ts",
+    "plugins/model-preferences/model-row.tsx",
+    "plugins/model-preferences/models-page.tsx",
+    "plugins/model-preferences/models-settings.tsx",
+    "plugins/model-preferences/models-table.tsx",
+    "plugins/model-preferences/router.ts",
+    "plugins/model-preferences/server-plugin.ts",
+    "plugins/model-preferences/use-model-preferences.ts",
+    "app/(chat)/settings/models/page.tsx"
+  ],
+  "databaseSchemas": ["plugins/model-preferences/model-preferences-schema.ts"],
+  "server": { "export": "modelPreferences", "routers": ["modelPreferences"] },
+  "client": {
+    "export": "modelPreferencesClient",
+    "composerControls": [],
+    "settingsItems": ["models"],
+    "modelVisibility": true
+  }
+}
