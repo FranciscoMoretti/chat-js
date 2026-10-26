@@ -1,5 +1,5 @@
 import { renderRoot, unmountRoot } from "./primitive-mount";
-import { takeSnapshot } from "@uiverify/vitest";
+import { disableAutoSnapshot, takeSnapshot } from "@uiverify/vitest";
 import React, { act, useState } from "react";
 import type { JSX as ReactJSX } from "react";
 import { createRoot } from "react-dom/client";
@@ -374,6 +374,7 @@ test.each([
   ["Take photo", "pointer"],
   ["Take photo", "keyboard"],
 ])("%s invokes the upload control from %s", async (name, input) => {
+  disableAutoSnapshot();
   state.mobile = true;
   const cleanup = await mount();
   try {

@@ -205,7 +205,11 @@ const renderPage = async (
             : "Connect to Model Context Protocol servers to extend AI capabilities with external tools."}
         </p>
       </SettingsPageHeader>
-      <Toaster position="top-center" theme="dark" />
+      <Toaster
+        duration={Number.POSITIVE_INFINITY}
+        position="top-center"
+        theme="dark"
+      />
       {content}
     </SettingsPage>
   );

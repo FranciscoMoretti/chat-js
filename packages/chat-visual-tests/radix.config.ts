@@ -47,6 +47,14 @@ export default defineConfig({
   define: {
     ...reference.define,
     "process.env.CHATJS_NATIVE_UI_BASE": JSON.stringify(uiBase),
+    "process.env.CHATJS_NATIVE_UI_DIRECTION": JSON.stringify(
+      typeof nativeConfig === "object" &&
+        nativeConfig !== null &&
+        "rtl" in nativeConfig &&
+        nativeConfig.rtl === true
+        ? "rtl"
+        : "ltr"
+    ),
   },
   cacheDir: path.join(root, "node_modules/.vite/chat-radix"),
   resolve: {

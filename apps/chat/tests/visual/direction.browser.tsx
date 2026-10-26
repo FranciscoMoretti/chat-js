@@ -1,5 +1,5 @@
 import { act } from "react";
-import { takeSnapshot } from "@uiverify/vitest";
+import { disableAutoSnapshot, takeSnapshot } from "@uiverify/vitest";
 import { expect, test } from "vitest";
 import { page, userEvent } from "vitest/browser";
 import { DirectionProvider } from "@/components/ui/direction";
@@ -57,9 +57,16 @@ for (const direction of ["ltr", "rtl"] as const) {
         .element(page.getByRole("menuitem", { name: "Nested action" }))
         .toBeVisible();
       const nativeBase = process.env.CHATJS_NATIVE_UI_BASE;
-      await takeSnapshot(
-        `direction-${direction}-submenu${nativeBase === undefined ? "" : `-${nativeBase}-generated-rtl`}`
-      );
+      const nativeDirection = process.env.CHATJS_NATIVE_UI_DIRECTION ?? "ltr";
+      if (nativeDirection === "ltr" && direction === "rtl") {
+        // The reference primitives were generated for LTR. Native RTL geometry
+        // is captured separately from apps initialized with shadcn --rtl.
+        disableAutoSnapshot();
+      } else {
+        await takeSnapshot(
+          `direction-${direction}-submenu${nativeBase === undefined ? "" : `-${nativeBase}-generated-${nativeDirection}`}`
+        );
+      }
       await act(async () => {
         await userEvent.keyboard(
           direction === "rtl" ? "{ArrowRight}" : "{ArrowLeft}"
