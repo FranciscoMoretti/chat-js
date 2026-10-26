@@ -2,7 +2,7 @@ import { ThumbsDown, ThumbsUp } from "lucide-react";
 import React from "react";
 import { toast } from "sonner";
 
-import { MessageAction } from "@/components/ai-elements/message";
+import { MessageAction } from "@/components/message-action";
 
 export const MessageVoteActions = ({
   vote,

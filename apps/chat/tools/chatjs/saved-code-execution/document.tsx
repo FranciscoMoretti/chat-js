@@ -49,25 +49,27 @@ export const EveDocumentRun = ({
     >
       {canRun && !resultOnly && (
         <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              className="hover:bg-accent h-fit px-2 py-1.5 [&_svg]:size-[18px]"
-              disabled={disabled}
+          <TooltipTrigger
+            render={
+              <Button
+                className="hover:bg-accent h-fit px-2 py-1.5 [&_svg]:size-[18px]"
+                disabled={disabled}
 
-              onClick={() => {
-                startEventAction(async () => {
-                  await onAction({
-                    message: `Run the saved code using runCodeDocument with documentId "${documentId}" and revisionId "${revisionId}". Execute exactly this revision once. Do not edit the document or substitute codeExecution. Report the result briefly.`,
-                    modelId: config.ai.tools.code.edits,
+                onClick={() => {
+                  startEventAction(async () => {
+                    await onAction({
+                      message: `Run the saved code using runCodeDocument with documentId "${documentId}" and revisionId "${revisionId}". Execute exactly this revision once. Do not edit the document or substitute codeExecution. Report the result briefly.`,
+                      modelId: config.ai.tools.code.edits,
+                    });
                   });
-                });
-              }}
-              size="sm"
-              variant="outline"
-            >
-              <Play size={18} /> Run
-            </Button>
-          </TooltipTrigger>
+                }}
+                size="sm"
+                variant="outline"
+              >
+                <Play size={18} /> Run
+              </Button>
+            }
+          />
           <TooltipContent>Execute code</TooltipContent>
         </Tooltip>
       )}

@@ -21,21 +21,25 @@ export const NewChatButton = (): ReactJSX.Element => {
   );
 
   return (
-    <SidebarMenuButton asChild className="mt-4" tooltip="New Chat">
-      <InternalLink
-        className="flex w-full items-center gap-2"
-        href="/"
-        onNavigate={() => {
-          setOpenMobile(false);
-          globalThis.dispatchEvent(new Event("chatjs:new-chat"));
-        }}
-      >
-        <Plus aria-label="New Chat" size={16} />
-        <span>New Chat</span>
-        <span className="text-muted-foreground ml-auto text-xs">
-          {shortcutText}
-        </span>
-      </InternalLink>
-    </SidebarMenuButton>
+    <SidebarMenuButton
+      className="mt-4"
+      tooltip="New Chat"
+      render={
+        <InternalLink
+          className="flex w-full items-center gap-2"
+          href="/"
+          onNavigate={() => {
+            setOpenMobile(false);
+            globalThis.dispatchEvent(new Event("chatjs:new-chat"));
+          }}
+        >
+          <Plus aria-label="New Chat" size={16} />
+          <span>New Chat</span>
+          <span className="text-muted-foreground ml-auto text-xs">
+            {shortcutText}
+          </span>
+        </InternalLink>
+      }
+    />
   );
 };

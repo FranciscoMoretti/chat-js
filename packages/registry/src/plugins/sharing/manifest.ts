@@ -18,7 +18,8 @@ const sharingFiles = [
   "app/(chat)/share/[id]/page.tsx",
 ];
 const sharingDefinition = pluginDefinitionSchema.parse({
-  contractVersion: 1,
+  contractVersion: 2,
+  uiBase: "base",
   id: "sharing",
   kind: "plugin",
   files: sharingFiles,

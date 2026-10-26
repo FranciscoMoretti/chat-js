@@ -10,6 +10,7 @@ import { db } from "../lib/db/client";
 import { completeEveFilePurge } from "../lib/db/eve-file-purge";
 import { prepareEveOrphanedFilePurge } from "../lib/db/eve-orphaned-files";
 import {
+  eveChat,
   eveConversation,
   eveFileReference,
   eveStoredFile,
@@ -20,12 +21,25 @@ import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
 const redAnswer = /red/iu;
-const blobUrl = /^blob:/u;
 const chatUrl = /\/chat\/[a-f0-9-]+$/u;
 const redPng = Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAAb0lEQVR4nO3PAQkAAAyEwO9feoshgnABdLep8QUNyPEFDcjxBQ3I8QUNyPEFDcjxBQ3I8QUNyPEFDcjxBQ3I8QUNyPEFDcjxBQ3I8QUNyPEFDcjxBQ3I8QUNyPEFDcjxBQ3I8QUNyPEFDcjxBQ3IPanc8OLDQitxAAAAAElFTkSuQmCC",
   "base64"
 );
+
+// The standalone cleanup process must close its PostgreSQL pool before exiting.
+const deleteUploadedFiles = (urls: readonly string[]): void => {
+  execFileSync(
+    "bun",
+    [
+      "--no-env-file",
+      "-e",
+      'import { db } from "./lib/db/client"; import { deleteFilesByUrls } from "./lib/file-storage"; try { await deleteFilesByUrls(JSON.parse(process.argv[1])); } finally { await db.$client.end({ timeout: 5 }); }',
+      JSON.stringify(urls),
+    ],
+    { timeout: 60_000 }
+  );
+};
 
 test("ChatJS upload remains durable through creation retries and message editing", async ({
   page,
@@ -86,7 +100,9 @@ test("ChatJS upload remains durable through creation retries and message editing
     await expect(page.getByText("Ready", { exact: true })).toBeVisible({
       timeout: 90_000,
     });
-    await expect(page.locator(".is-assistant")).toContainText(redAnswer);
+    await expect(page.locator('[data-role="assistant"]')).toContainText(
+      redAnswer
+    );
     await expect(
       page
         .getByRole("log")
@@ -105,8 +121,16 @@ test("ChatJS upload remains durable through creation retries and message editing
     const opened = page.waitForEvent("popup");
     await page.getByTitle("Open", { exact: true }).click();
     const preview = await opened;
-    await expect(preview).toHaveURL(blobUrl);
     await expect(preview.locator("img")).toBeVisible();
+    await expect
+      .poll(
+        async () =>
+          await preview.locator("img").evaluate((image: HTMLImageElement) => ({
+            width: image.naturalWidth,
+            height: image.naturalHeight,
+          }))
+      )
+      .toEqual({ width: 64, height: 64 });
     await preview.close();
     await mkdir("tests/eve-results/screenshots", { recursive: true });
     await page.getByTestId("attachments").screenshot({
@@ -238,29 +262,27 @@ test("ChatJS upload remains durable through creation retries and message editing
     expect(await retainedFile.body()).toEqual(redPng);
     z.object({ id: z.uuid() }).parse(forkResponse.body);
     await expect(page).toHaveURL(sourceChatUrl);
-    await expect(page.locator(".is-user")).toContainText(
+    await expect(page.locator('[data-role="user"]')).toContainText(
       "Look at the attached square again"
     );
     await expect(page.getByText("Ready", { exact: true })).toBeVisible({
       timeout: 90_000,
     });
-    await expect(page.locator(".is-assistant")).toContainText(redAnswer);
+    await expect(page.locator('[data-role="assistant"]')).toContainText(
+      redAnswer
+    );
     await page.reload();
     await expect(
       page
         .getByRole("log")
         .getByRole("button", { exact: true, name: "eve-square.png" })
     ).toBeVisible();
-    await expect(page.locator(".is-user")).toContainText(
+    await expect(page.locator('[data-role="user"]')).toContainText(
       "Look at the attached square again"
     );
   } finally {
     // Note: `files-sdk` is ESM-only; run application cleanup with the project's Bun runtime.
-    execFileSync("bun", [
-      "-e",
-      'import { deleteFilesByUrls } from "./lib/file-storage"; await deleteFilesByUrls(JSON.parse(process.argv[1]));',
-      JSON.stringify([...new Set(cleanupUrls)]),
-    ]);
+    deleteUploadedFiles([...new Set(cleanupUrls)]);
   }
 });
 
@@ -349,7 +371,9 @@ test("composer uploads and clears attachments, then reload confirms an in-flight
     await expect(page.getByText("Ready", { exact: true })).toBeVisible({
       timeout: 90_000,
     });
-    await expect(page.locator(".is-assistant")).toContainText(redAnswer);
+    await expect(page.locator('[data-role="assistant"]')).toContainText(
+      redAnswer
+    );
     await attach();
     await page
       .getByRole("textbox", { exact: true, name: "Message" })
@@ -365,20 +389,20 @@ test("composer uploads and clears attachments, then reload confirms an in-flight
       page.getByRole("textbox", { exact: true, name: "Message" })
     ).toHaveText("");
     await expect(page.getByTestId("attachments-preview")).toHaveCount(0);
-    const conversationId = new URL(page.url()).pathname.split("/").at(-1);
-    if (
-      conversationId === undefined ||
-      conversationId === null ||
-      conversationId === ""
-    ) {
-      throw new Error("Missing conversation ID.");
+    const chatId = new URL(page.url()).pathname.split("/").at(-1);
+    if (chatId === undefined || chatId === null || chatId === "") {
+      throw new Error("Missing chat ID.");
     }
     await expect
       .poll(async () => {
         const rows = await db
           .select({ key: eveFileReference.key })
           .from(eveFileReference)
-          .where(eq(eveFileReference.conversationId, conversationId));
+          .innerJoin(
+            eveChat,
+            eq(eveChat.activeConversationId, eveFileReference.conversationId)
+          )
+          .where(eq(eveChat.id, chatId));
         return rows
           .map((row) => row.key)
           .toSorted(
@@ -417,15 +441,11 @@ test("composer uploads and clears attachments, then reload confirms an in-flight
       page.getByRole("textbox", { exact: true, name: "Message" })
     ).toHaveText("");
   } finally {
-    execFileSync("bun", [
-      "-e",
-      'import { deleteFilesByUrls } from "./lib/file-storage"; await deleteFilesByUrls(JSON.parse(process.argv[1]));',
-      JSON.stringify(urls),
-    ]);
+    deleteUploadedFiles(urls);
   }
 });
 
-test("an uncertain creation retains the same visible attachment and immutable request after reload", async ({
+test("an uncertain creation retains its attachment summary and immutable request after reload", async ({
   page,
 }) => {
   await page.route("https://unpkg.com/react-scan/**", async (route) => {
@@ -467,45 +487,43 @@ test("an uncertain creation retains the same visible attachment and immutable re
   await expect(
     page.getByRole("alert").filter({ hasText: "Failed to fetch" })
   ).toBeVisible();
-  await expect(page.getByTestId("multimodal-input")).toHaveAttribute(
-    "contenteditable",
-    "false"
-  );
+  const recovery = page.getByRole("region", { name: "Conversation recovery" });
   await expect(
-    page
-      .getByRole("group", { exact: true, name: "Message composer" })
-      .getByLabel("Attach files", { exact: true })
-  ).toBeDisabled();
-  await expect(
-    page.getByTestId("attachments-preview").getByLabel("Remove attachment")
-  ).toHaveCount(0);
-  await expect(
-    page
-      .getByTestId("attachments-preview")
-      .getByRole("img", { exact: true, name: "eve-square.png" })
+    recovery.getByText("eve-square.png", { exact: true })
   ).toBeVisible();
+  await expect(
+    page.getByRole("group", { name: "Message composer", exact: true })
+  ).toHaveCount(0);
+  expect(requests).toHaveLength(1);
+  expect(JSON.parse(requests[0])).toMatchObject({
+    message: [
+      {
+        type: "file",
+        data: "/api/files/abcdefghijklmnopqrstuvwx.png",
+        filename: "eve-square.png",
+        mediaType: "image/png",
+      },
+    ],
+  });
   await page.reload();
   await expect(
-    page
-      .getByTestId("attachments-preview")
-      .getByRole("img", { exact: true, name: "eve-square.png" })
+    recovery.getByText("eve-square.png", { exact: true })
   ).toBeVisible();
-  await expect(page.getByTestId("multimodal-input")).toHaveAttribute(
-    "contenteditable",
-    "false"
-  );
-  await page.getByRole("button", { exact: true, name: "Send" }).click();
+  await expect(
+    page.getByRole("group", { name: "Message composer", exact: true })
+  ).toHaveCount(0);
+  await recovery
+    .getByRole("button", { exact: true, name: "Retry creation" })
+    .click();
   await expect(
     page.getByRole("alert").filter({ hasText: "Failed to fetch" })
   ).toBeVisible();
   expect(requests).toHaveLength(2);
   expect(requests[1]).toBe(requests[0]);
-  await page
-    .getByRole("group", { exact: true, name: "Message composer" })
-    .screenshot({
-      animations: "disabled",
-      path: "tests/eve-results/screenshots/eve-composer-retained.png",
-    });
+  await recovery.screenshot({
+    animations: "disabled",
+    path: "tests/eve-results/screenshots/eve-composer-retained.png",
+  });
 });
 
 test("uploaded attachment has durable authenticated ownership", async ({
@@ -588,11 +606,7 @@ test("uploaded attachment has durable authenticated ownership", async ({
       await db.delete(user).where(eq(user.id, stranger));
     }
   } finally {
-    execFileSync("bun", [
-      "-e",
-      'import { deleteFilesByUrls } from "./lib/file-storage"; await deleteFilesByUrls([process.argv[1]]);',
-      file.url,
-    ]);
+    deleteUploadedFiles([file.url]);
     await db.delete(eveStoredFile).where(eq(eveStoredFile.key, key));
   }
 });
@@ -634,12 +648,7 @@ test("a fenced orphan URL stops serving bytes before physical removal", async ({
     });
     expect(redirectedFileResponse.status()).toBe(404);
   } finally {
-    execFileSync("bun", [
-      "--no-env-file",
-      "-e",
-      'import { deleteFilesByUrls } from "./lib/file-storage"; await deleteFilesByUrls(JSON.parse(process.argv[1]));',
-      JSON.stringify([url]),
-    ]);
+    deleteUploadedFiles([url]);
     await db.delete(eveStoredFile).where(eq(eveStoredFile.key, key));
   }
 });

@@ -1,5 +1,4 @@
 {
-  "contractVersion": 1,
   "id": "sharing",
   "kind": "plugin",
   "files": [
@@ -25,5 +24,7 @@
     "composerControls": [],
     "settingsItems": [],
     "chat": true
-  }
+  },
+  "contractVersion": 2,
+  "uiBase": "base"
 }

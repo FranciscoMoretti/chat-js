@@ -65,6 +65,7 @@ const toolDefinitionBase = z.object({
   kind: z.literal("tool"),
   requiresGateway: z.array(z.enum(["image", "video"])).optional(),
   requiresStorage: z.literal(true).optional(),
+  requiresPersistentSandbox: z.literal(true).optional(),
   requiresSandbox: z.literal(true).optional(),
   requiresTools: z.array(identifier).default([]),
   slot: z
@@ -82,8 +83,19 @@ const toolDefinitionBase = z.object({
 // A single native EVE authoring contract. The version validates the descriptor format.
 const toolDefinitionSchema = toolDefinitionBase
   .extend({
-    contractVersion: z.literal(CONTRACT_VERSION),
+    contractVersion: z.union([z.literal(CONTRACT_VERSION), z.literal(2)]),
+    uiBase: z.enum(["base", "radix"]).optional(),
   })
+  .refine(
+    (item) =>
+      item.contractVersion === 2
+        ? item.uiBase !== undefined
+        : item.uiBase === undefined,
+    {
+      message:
+        "UI-specific tools require contractVersion 2 and an explicit uiBase",
+    }
+  )
   .refine(
     (item: Readonly<{ codeExecutorExport?: string; slot?: string }>) =>
       !(
@@ -138,8 +150,7 @@ type StorageDefinition = z.infer<typeof storageDefinitionSchema>;
 // Plugin IDs are open to external registries; contributions use the same contract.
 const pluginIdSchema = z.string().regex(/^[a-z][a-z0-9-]*$/u);
 const pluginModuleSchema = z.string().regex(/^[a-zA-Z0-9_-]+\.(?:ts|js|mjs)$/u);
-const pluginDefinitionSchema = z.object({
-  contractVersion: z.literal(CONTRACT_VERSION),
+const pluginDefinitionBase = z.object({
   id: pluginIdSchema,
   kind: z.literal("plugin"),
   files: z.array(z.string().min(1)).default([]),
@@ -150,6 +161,7 @@ const pluginDefinitionSchema = z.object({
   envRequirements: z.array(envRequirementSchema).optional(),
   requiresPlugins: z.array(pluginIdSchema).optional(),
   requiresStorage: z.literal(true).optional(),
+  requiresPersistentSandbox: z.literal(true).optional(),
   chat: z.object({ export: identifier }).optional(),
   billing: z.object({ export: identifier }).optional(),
   server: z
@@ -172,6 +184,19 @@ const pluginDefinitionSchema = z.object({
     })
     .optional(),
 });
+
+// Version 2 explicitly identifies the native UI host. A CLI that only supports
+// Base rejects Radix descriptors before installing source; v1 stays readable.
+const pluginDefinitionSchema = z.discriminatedUnion("contractVersion", [
+  pluginDefinitionBase.extend({
+    contractVersion: z.literal(1),
+    uiBase: z.never().optional(),
+  }),
+  pluginDefinitionBase.extend({
+    contractVersion: z.literal(2),
+    uiBase: z.enum(["base", "radix"]),
+  }),
+]);
 
 type PluginDefinition = z.infer<typeof pluginDefinitionSchema>;
 export {

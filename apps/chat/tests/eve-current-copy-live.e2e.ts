@@ -41,7 +41,10 @@ test("copies completed history and current document revisions into independent c
   const source = conversationBinding.parse(await created.json());
   await page.goto(`/chat/${source.id}`);
   await expect(
-    page.getByRole("log").locator(".is-assistant").filter({ hasText: token })
+    page
+      .getByRole("log")
+      .locator('[data-role="assistant"]')
+      .filter({ hasText: token })
   ).toBeVisible({ timeout: 60_000 });
   await expect(page.getByText("Ready", { exact: true })).toBeVisible();
   const [binding] = await db
@@ -101,7 +104,10 @@ test("copies completed history and current document revisions into independent c
     expect(revision?.id).toBe(later.id);
     await page.goto(`/chat/${candidate.conversationId}`);
     await expect(
-      page.getByRole("log").locator(".is-assistant").filter({ hasText: token })
+      page
+        .getByRole("log")
+        .locator('[data-role="assistant"]')
+        .filter({ hasText: token })
     ).toHaveCount(2, { timeout: 60_000 });
     await expect(page.getByText("Ready", { exact: true })).toBeVisible();
   }

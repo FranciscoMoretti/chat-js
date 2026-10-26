@@ -11,6 +11,7 @@ import { ProjectDetailsDialog } from "@/plugins/projects/ui/project-details-dial
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -62,38 +63,46 @@ export const SidebarProjectItem = ({
   };
   return (
     <SidebarMenuItem>
-      <SidebarMenuButton asChild className="cursor-pointer" isActive={isActive}>
-        <InternalLink
-          href={projectHref}
-          onNavigate={() => {
-            setOpenMobile(false);
-          }}
-          prefetch={false}
-        >
-          <ProjectIcon color={color} icon={icon} size={16} />
-          <span>{project.name}</span>
-        </InternalLink>
-      </SidebarMenuButton>
+      <SidebarMenuButton
+        className="cursor-pointer"
+        isActive={isActive}
+        render={
+          <InternalLink
+            href={projectHref}
+            onNavigate={() => {
+              setOpenMobile(false);
+            }}
+            prefetch={false}
+          >
+            <ProjectIcon color={color} icon={icon} size={16} />
+            <span>{project.name}</span>
+          </InternalLink>
+        }
+      />
 
       <DropdownMenu modal>
-        <DropdownMenuTrigger asChild>
-          <SidebarMenuAction
-            className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground mr-0.5"
-            showOnHover={!isActive}
-          >
-            <MoreHorizontal size={16} />
-            <span className="sr-only">More</span>
-          </SidebarMenuAction>
+        <DropdownMenuTrigger
+          render={
+            <SidebarMenuAction
+              className="data-open:bg-sidebar-accent data-open:text-sidebar-accent-foreground mr-0.5"
+              showOnHover={!isActive}
+            />
+          }
+        >
+          <MoreHorizontal size={16} />
+          <span className="sr-only">More</span>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" side="bottom">
-          <ProjectMenuItems
-            onDelete={() => {
-              setShowDeleteDialog(true);
-            }}
-            onRename={() => {
-              setShowEditDialog(true);
-            }}
-          />
+          <DropdownMenuGroup>
+            <ProjectMenuItems
+              onDelete={() => {
+                setShowDeleteDialog(true);
+              }}
+              onRename={() => {
+                setShowEditDialog(true);
+              }}
+            />
+          </DropdownMenuGroup>
         </DropdownMenuContent>
       </DropdownMenu>
 

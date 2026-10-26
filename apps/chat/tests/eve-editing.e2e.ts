@@ -48,7 +48,10 @@ test("edit recovery and regeneration replace the selected turn", async ({
         name: "Edit message",
       })
       .click();
-    const userMessage = page.getByRole("log").locator(".is-user").first();
+    const userMessage = page
+      .getByRole("log")
+      .locator('[data-role="user"]')
+      .first();
     const editor = userMessage.getByRole("group", {
       name: "Message composer",
     });
@@ -102,11 +105,15 @@ test("edit recovery and regeneration replace the selected turn", async ({
       timeout: 90_000,
     });
     await expect(
-      page.getByRole("log").locator(".is-user").last()
+      page.getByRole("log").locator('[data-role="user"]').last()
     ).toContainText("cobalt");
-    await expect(page.getByRole("log").locator(".is-assistant")).toHaveCount(1);
+    await expect(
+      page.getByRole("log").locator('[data-role="assistant"]')
+    ).toHaveCount(1);
     await expect(page.getByRole("log")).not.toContainText("amber");
-    await expect(page.getByRole("log").locator(".is-user")).toHaveCount(1);
+    await expect(
+      page.getByRole("log").locator('[data-role="user"]')
+    ).toHaveCount(1);
     await page.getByRole("log").screenshot({
       animations: "disabled",
       path: testInfo.outputPath("edited-messages.png"),
@@ -157,12 +164,14 @@ test("edit recovery and regeneration replace the selected turn", async ({
       timeout: 90_000,
     });
     await expect(
-      page.getByRole("log").locator(".is-user").last()
+      page.getByRole("log").locator('[data-role="user"]').last()
     ).toContainText("cobalt");
-    await expect(page.getByRole("log").locator(".is-assistant")).toHaveCount(1);
+    await expect(
+      page.getByRole("log").locator('[data-role="assistant"]')
+    ).toHaveCount(1);
     await page
       .getByRole("log")
-      .locator(".is-user")
+      .locator('[data-role="user"]')
       .first()
       .screenshot({
         animations: "disabled",
@@ -170,13 +179,13 @@ test("edit recovery and regeneration replace the selected turn", async ({
       });
     await page
       .getByRole("log")
-      .locator(".is-user")
+      .locator('[data-role="user"]')
       .first()
       .getByRole("button", { name: "Previous version", exact: true })
       .click();
     await expect(page).toHaveURL(new RegExp(`/chat/${source.id}$`, "u"));
     await expect(
-      page.getByRole("log").locator(".is-user").last()
+      page.getByRole("log").locator('[data-role="user"]').last()
     ).toContainText("amber");
     await expect(page.getByRole("log")).not.toContainText("cobalt");
     await page

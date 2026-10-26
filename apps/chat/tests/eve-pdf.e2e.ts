@@ -58,9 +58,12 @@ test("a PDF uploaded through the composer reaches the model and opens after relo
       });
     await page.getByRole("button", { exact: true, name: "Send" }).click();
     await expect(page).toHaveURL(chatUrl, { timeout: 35_000 });
-    await expect(page.locator(".is-assistant")).toContainText("CEDAR-4827", {
-      timeout: 90_000,
-    });
+    await expect(page.locator('[data-role="assistant"]')).toContainText(
+      "CEDAR-4827",
+      {
+        timeout: 90_000,
+      }
+    );
     await expect(page.getByText("Ready", { exact: true })).toBeVisible();
     const sourceUrl = page.url();
     const composer = page.getByRole("group", {
@@ -71,7 +74,7 @@ test("a PDF uploaded through the composer reaches the model and opens after relo
       .getByRole("textbox", { exact: true, name: "Message" })
       .fill("Repeat the document code.");
     await composer.getByRole("button", { exact: true, name: "Send" }).click();
-    await expect(page.locator(".is-assistant")).toHaveCount(2, {
+    await expect(page.locator('[data-role="assistant"]')).toHaveCount(2, {
       timeout: 90_000,
     });
     await expect(page.getByText("Ready", { exact: true })).toBeVisible({
@@ -95,10 +98,10 @@ test("a PDF uploaded through the composer reaches the model and opens after relo
     await expect(page.getByText("Ready", { exact: true })).toBeVisible({
       timeout: 90_000,
     });
-    await expect(page.locator(".is-assistant").last()).toContainText(
+    await expect(page.locator('[data-role="assistant"]').last()).toContainText(
       "CEDAR-4827"
     );
-    await expect(page.locator(".is-user").last()).toContainText(
+    await expect(page.locator('[data-role="user"]').last()).toContainText(
       "Read the earlier attached PDF"
     );
     await page.reload();
@@ -112,10 +115,10 @@ test("a PDF uploaded through the composer reaches the model and opens after relo
     await expect(preview).toHaveURL(blobUrl);
     await preview.close();
     await page.goto(sourceUrl);
-    await expect(page.locator(".is-user").last()).toContainText(
+    await expect(page.locator('[data-role="user"]').last()).toContainText(
       "Repeat the document code."
     );
-    await expect(page.locator(".is-user")).toHaveCount(2);
+    await expect(page.locator('[data-role="user"]')).toHaveCount(2);
   } finally {
     execFileSync("bun", [
       "-e",

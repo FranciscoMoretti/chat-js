@@ -1,3 +1,4 @@
+import { MessageScrollerProvider } from "@/components/ui/message-scroller";
 import React, { useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 
@@ -7,7 +8,6 @@ import { ControlledChatComposer } from "../components/controlled-chat-composer";
 import { EveMessages } from "../components/eve/eve-messages";
 import { MessageSiblingsView } from "../components/message-siblings-view";
 import { ResponseChoiceCards } from "../components/response-choice-cards";
-import { LegacyUserMessageReference } from "./eve-message-presentation.legacy";
 
 const messages: readonly ReadonlyEveMessage[] = [
   {
@@ -154,83 +154,42 @@ const Transcript = ({
       data-testid={isReadonly ? "readonly-transcript" : "editable-transcript"}
     >
       <h2 className="mb-2 text-lg font-medium">{title}</h2>
-      <EveMessages
-        actionsDisabled={loading}
-        disabled={loading}
-        editor={edit}
-        isReadonly={isReadonly}
-        messages={messages}
-        modelForMessage={(message: {
-          readonly metadata?:
-            | { readonly modelId?: string | undefined }
-            | undefined;
-        }) => message.metadata?.modelId}
-        onEdit={(message: { readonly id: string }) => {
-          setEditingId(message.id);
-          onLog(`edit:${message.id}`);
-        }}
-        onRegenerate={(
-          user: { readonly id: string },
-          response: { readonly id: string }
-        ) => {
-          onLog(`retry:${user.id}->${response.id}`);
-        }}
-        renderResponses={(message: { readonly id: string }) => {
-          if (message.id === "user-1") {
-            return inlineResponseCards;
-          }
-          return null;
-        }}
-        renderVersions={(message) => (
-          <VersionControls message={message} onLog={onLog} />
-        )}
-        respond={() => {
-          onLog("respond");
-        }}
-      />
-    </section>
-  );
-};
-
-const LegacyReference = ({
-  isReadonly,
-  loading,
-  title,
-}: {
-  readonly isReadonly: boolean;
-  readonly loading: boolean;
-  readonly title: string;
-}): React.JSX.Element => {
-  const [versionIndex, setVersionIndex] = useState(1);
-  let testId = "legacy-reference";
-  if (isReadonly) {
-    testId = "legacy-readonly";
-  } else if (loading) {
-    testId = "legacy-pending";
-  }
-  return (
-    <section aria-label={title} className="space-y-2" data-testid={testId}>
-      <h2 className="text-lg font-medium">{title}</h2>
-      <LegacyUserMessageReference
-        editor={<Editor />}
-        isLoading={loading}
-        isReadonly={isReadonly}
-        messageId="legacy-user-1"
-        responses={inlineResponseCards}
-        siblings={
-          <MessageSiblingsView
-            count={3}
-            index={versionIndex}
-            onNext={() => {
-              setVersionIndex((index) => Math.min(index + 1, 2));
-            }}
-            onPrevious={() => {
-              setVersionIndex((index) => Math.max(index - 1, 0));
-            }}
-          />
-        }
-        text="First user message"
-      />
+      <MessageScrollerProvider>
+        <EveMessages
+          actionsDisabled={loading}
+          disabled={loading}
+          editor={edit}
+          isReadonly={isReadonly}
+          messages={messages}
+          modelForMessage={(message: {
+            readonly metadata?:
+              | { readonly modelId?: string | undefined }
+              | undefined;
+          }) => message.metadata?.modelId}
+          onEdit={(message: { readonly id: string }) => {
+            setEditingId(message.id);
+            onLog(`edit:${message.id}`);
+          }}
+          onRegenerate={(
+            user: { readonly id: string },
+            response: { readonly id: string }
+          ) => {
+            onLog(`retry:${user.id}->${response.id}`);
+          }}
+          renderResponses={(message: { readonly id: string }) => {
+            if (message.id === "user-1") {
+              return inlineResponseCards;
+            }
+            return null;
+          }}
+          renderVersions={(message) => (
+            <VersionControls message={message} onLog={onLog} />
+          )}
+          respond={() => {
+            onLog("respond");
+          }}
+        />
+      </MessageScrollerProvider>
     </section>
   );
 };
@@ -250,21 +209,11 @@ const Fixture = (): React.JSX.Element => {
         onLog={append}
         title="Restored EVE — ready"
       />
-      <LegacyReference
-        isReadonly={false}
-        loading={false}
-        title="Original main — ready"
-      />
       <Transcript
         isReadonly
         loading={false}
         onLog={append}
         title="Restored EVE — readonly"
-      />
-      <LegacyReference
-        isReadonly
-        loading={false}
-        title="Original main — readonly"
       />
       <Transcript
         isReadonly={false}

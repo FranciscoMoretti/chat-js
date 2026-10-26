@@ -45,8 +45,8 @@ export const ProjectChatActions = ({
   return (
     <>
       <DropdownMenuItem
-        onSelect={(event) => {
-          event.preventDefault();
+        closeOnClick={false}
+        onClick={() => {
           setOpen(true);
         }}
       >
@@ -84,19 +84,21 @@ export const ProjectBreadcrumb = ({
   return (
     <>
       <BreadcrumbItem>
-        <BreadcrumbLink asChild>
-          <InternalLink
-            aria-label={project.name}
-            title={project.name}
-            href={`/project/${project.id}`}
-          >
-            <ProjectIcon
-              icon={getProjectIconName(project.icon)}
-              color={getProjectColorName(project.iconColor)}
-              size={16}
-            />
-          </InternalLink>
-        </BreadcrumbLink>
+        <BreadcrumbLink
+          render={
+            <InternalLink
+              aria-label={project.name}
+              title={project.name}
+              href={`/project/${project.id}`}
+            >
+              <ProjectIcon
+                icon={getProjectIconName(project.icon)}
+                color={getProjectColorName(project.iconColor)}
+                size={16}
+              />
+            </InternalLink>
+          }
+        />
       </BreadcrumbItem>
       <BreadcrumbSeparator />
     </>

@@ -1,7 +1,7 @@
 import { planSandboxInstallation } from "../helpers/sandbox-installation";
 import { rejects } from "node:assert/strict";
 import { afterEach, expect, test } from "bun:test";
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, writeFile, readFile } from "node:fs/promises";
 import path from "node:path";
 import { tmpdir } from "node:os";
 import { builtInSandboxes } from "../../../registry/src/sandboxes/catalog";
@@ -23,7 +23,7 @@ const fixture = async () => {
   const server = Bun.serve({
     hostname: "127.0.0.1",
     port: 0,
-    fetch(request) {
+    async fetch(request) {
       const name = new URL(request.url).pathname.slice(1).replace(".json", "");
       const dependentItem = {
         name: "dependent",
@@ -38,10 +38,52 @@ const fixture = async () => {
           },
         },
       };
-      const items = [dependentItem, codeExecutionItem, ...builtInSandboxes];
+      const items = [
+        dependentItem,
+        codeExecutionItem,
+        ...builtInSandboxes,
+        {
+          name: "attachment-uploads",
+          type: "registry:item",
+          meta: {
+            chatjs: {
+              kind: "plugin",
+              contractVersion: 1,
+              id: "attachment-uploads",
+              requiresStorage: true,
+            },
+          },
+        },
+        {
+          name: "storage",
+          type: "registry:item",
+          meta: {
+            chatjs: {
+              kind: "storage",
+              contractVersion: 1,
+              id: "s3",
+              configKeys: [],
+            },
+          },
+        },
+      ];
       const item = items.find((candidate) => candidate.name === name);
+      const sandbox = builtInSandboxes.find(
+        (candidate) => candidate.name === name
+      );
+      const files = sandbox
+        ? await Promise.all(
+            sandbox.files.map(async (file) => ({
+              ...file,
+              content: await readFile(
+                new URL(`../../../registry/${file.path}`, import.meta.url),
+                "utf-8"
+              ),
+            }))
+          )
+        : [];
       return item
-        ? Response.json({ ...item, registryDependencies: [] })
+        ? Response.json({ ...item, files, registryDependencies: [] })
         : new Response("not found", { status: 404 });
     },
   });
@@ -203,6 +245,75 @@ test("create permits no sandbox when the resolved graph has no consumer", async 
     );
     expect(requirements).toEqual([false]);
     expect(selected.sandbox).toBeUndefined();
+  } finally {
+    await f.server.stop(true);
+  }
+});
+
+test("uploads require a persistent provider through create planning and installed-plugin replacement", async () => {
+  const f = await fixture();
+  try {
+    const selection = {
+      plugins: [f.address("attachment-uploads")],
+      tools: [f.address("code-execution")],
+      storage: { source: f.address("storage"), options: {} },
+    };
+    await rejects(
+      planInstallation(f.root, selection, { fresh: true }),
+      /persistent sandbox/u
+    );
+    await rejects(
+      planInstallation(
+        f.root,
+        { ...selection, sandbox: f.address("daytona-sandbox") },
+        { fresh: true }
+      ),
+      /persistent sandbox/u
+    );
+    const selected = await planSandboxInstallation(
+      f.root,
+      selection,
+      { fresh: true },
+      async (required, persistent) => {
+        expect(required).toBe(true);
+        expect(persistent).toBe(true);
+        return await Promise.resolve(f.address("vercel-sandbox"));
+      }
+    );
+    expect(selected.sandbox?.definition.id).toBe("vercel");
+    await mkdir(path.join(f.root, "plugins/attachment-uploads"), {
+      recursive: true,
+    });
+    await writeFile(
+      path.join(f.root, "plugins/attachment-uploads/chatjs.json"),
+      JSON.stringify({
+        kind: "plugin",
+        contractVersion: 1,
+        id: "attachment-uploads",
+        files: [],
+      })
+    );
+    await mkdir(path.join(f.root, "lib/sandbox"), { recursive: true });
+    await writeFile(
+      path.join(f.root, "lib/sandbox/options.ts"),
+      'export const sandboxId = "vercel";'
+    );
+    await writeFile(
+      path.join(f.root, "lib/sandbox/provider.ts"),
+      "export const supportsPersistentSandbox = true;"
+    );
+    await writeFile(
+      path.join(f.root, "lib/storage-options.ts"),
+      'export const storageId = "s3";'
+    );
+    await rejects(
+      planInstallation(
+        f.root,
+        { plugins: [], tools: [], sandbox: f.address("daytona-sandbox") },
+        { replace: true }
+      ),
+      /persistent sandbox/u
+    );
   } finally {
     await f.server.stop(true);
   }

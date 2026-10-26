@@ -74,12 +74,11 @@ const literalValue = (input: ReadonlyNative<ts.Expression>): unknown => {
   );
 };
 
-const readProviderLiteral = async (
-  cwd: string,
+const parseProviderLiteral = (
+  source: string,
   file: string,
   name: string
-): Promise<unknown> => {
-  const source = await readFile(path.join(cwd, file), "utf-8");
+): unknown => {
   const parsed = ts.createSourceFile(
     file,
     source,
@@ -103,6 +102,17 @@ const readProviderLiteral = async (
   }
   return literalValue(declaration.initializer);
 };
+const readProviderLiteral = async (
+  cwd: string,
+  file: string,
+  name: string
+): Promise<unknown> =>
+  parseProviderLiteral(
+    await readFile(path.join(cwd, file), "utf-8"),
+    file,
+    name
+  );
+
 // Object properties apply in order. A later spread or computed key can override
 // a named property; only a subsequent explicit assignment makes it safe again.
 const activeProperty = (
@@ -298,4 +308,9 @@ const gatewayConfigEdit = async (
     source.slice(gateway.initializer.end)
   );
 };
-export { gatewayConfigEdit, readProviderId, readProviderLiteral };
+export {
+  gatewayConfigEdit,
+  readProviderId,
+  readProviderLiteral,
+  parseProviderLiteral,
+};

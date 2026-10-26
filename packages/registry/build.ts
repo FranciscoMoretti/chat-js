@@ -1,8 +1,10 @@
-import { mkdir, rm, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { format } from "oxfmt";
 import path from "node:path";
 import { registry } from "./registry";
 import { spawn } from "bun";
+import { registryItemSchema, registrySchema } from "shadcn/schema";
+import { registryItemForUi } from "./ui-registry";
 
 const JSON_INDENTATION = 2;
 const FORMATTED_LINE_WIDTH = 80;
@@ -63,3 +65,39 @@ const process = spawn(
 if ((await process.exited) !== SUCCESS_EXIT_CODE) {
   throw new Error("shadcn registry build failed");
 }
+
+// Keep the published root namespace compatible with existing Base installs.
+// Each native namespace is complete; @chatjs dependencies resolve through the
+// consumer's selected namespace, retaining the same item IDs and target paths.
+const output = path.join(cwd, "dist/r");
+const outputFiles = await readdir(output);
+const builtFiles = outputFiles.filter((file) => file.endsWith(".json"));
+await Promise.all(
+  (["base", "radix"] as const).map(async (base) => {
+    const destination = path.join(output, base);
+    await mkdir(destination, { recursive: true });
+    await Promise.all(
+      builtFiles.map(async (file) => {
+        const content = await readFile(path.join(output, file), "utf-8");
+        if (base === "base") {
+          await writeFile(path.join(destination, file), content);
+          return;
+        }
+        const data: unknown = JSON.parse(content);
+        const transformed =
+          file === "registry.json"
+            ? {
+                ...registrySchema.parse(data),
+                items: registrySchema
+                  .parse(data)
+                  .items.map((item) => registryItemForUi(item, base)),
+              }
+            : registryItemForUi(registryItemSchema.parse(data), base);
+        await writeFile(
+          path.join(destination, file),
+          `${JSON.stringify(transformed, null, JSON_INDENTATION)}\n`
+        );
+      })
+    );
+  })
+);

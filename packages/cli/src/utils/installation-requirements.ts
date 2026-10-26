@@ -2,7 +2,11 @@ import { z } from "zod";
 
 import { preflight } from "./preflight";
 
-import { readProviderId, readProviderLiteral } from "./provider-config";
+import {
+  readProviderId,
+  readProviderLiteral,
+  parseProviderLiteral,
+} from "./provider-config";
 
 type MediaKind = "image" | "video";
 interface MediaGateway {
@@ -14,6 +18,7 @@ interface MediaGateway {
 interface StorageConsumer {
   readonly id: string;
   readonly requiresStorage?: true;
+  readonly requiresPersistentSandbox?: true;
 }
 interface MediaConsumer extends StorageConsumer {
   readonly requiresGateway?: readonly MediaKind[];
@@ -100,13 +105,49 @@ const validateMedia = (
 };
 
 class SandboxRequiredError extends Error {
-  constructor() {
+  readonly persistent: boolean;
+  constructor(persistent = false) {
     super(
-      "This tool requires sandbox infrastructure. Select --sandbox-provider vercel or daytona."
+      persistent
+        ? "Attachment uploads require a persistent sandbox. Select --sandbox-provider vercel or a compatible external provider."
+        : "This tool requires sandbox infrastructure. Select --sandbox-provider vercel or daytona."
     );
     this.name = "SandboxRequiredError";
+    this.persistent = persistent;
   }
 }
+
+const validatePersistentSandbox = async (
+  cwd: string,
+  selected: string | undefined,
+  providerSource: string | undefined
+): Promise<void> => {
+  const sandbox = selected ?? (await readProviderId(cwd, "sandbox"));
+  if (typeof sandbox !== "string" || sandbox === "") {
+    throw new SandboxRequiredError(true);
+  }
+  const file = "lib/sandbox/provider.ts";
+  let persistent: unknown;
+  if (selected === undefined) {
+    await preflight(cwd, [file]);
+    persistent = await readProviderLiteral(
+      cwd,
+      file,
+      "supportsPersistentSandbox"
+    );
+  } else {
+    persistent = parseProviderLiteral(
+      providerSource ?? "",
+      file,
+      "supportsPersistentSandbox"
+    );
+  }
+  if (persistent !== true) {
+    throw new Error(
+      `${sandbox} does not support a persistent sandbox required by uploads. Select --sandbox-provider vercel or a compatible external provider.`
+    );
+  }
+};
 
 const validateProviderRequirements = async (
   cwd: string,
@@ -114,20 +155,34 @@ const validateProviderRequirements = async (
     readonly gateway?: MediaGateway;
     readonly storage?: string;
     readonly sandbox?: string;
+    readonly sandboxProviderSource?: string;
     readonly tools: readonly MediaConsumer[];
     readonly plugins: readonly StorageConsumer[];
   }
 ): Promise<void> => {
+  const fileConsumers = [...target.tools, ...target.plugins].filter((item) =>
+    requiresStorage(item)
+  );
+  await validateStorage(cwd, fileConsumers, target.storage);
+  if (
+    [...target.tools, ...target.plugins].some(
+      (item) =>
+        item.requiresPersistentSandbox === true ||
+        item.id === "attachment-uploads"
+    )
+  ) {
+    await validatePersistentSandbox(
+      cwd,
+      target.sandbox,
+      target.sandboxProviderSource
+    );
+  }
   if (target.tools.some((tool) => tool.requiresSandbox)) {
     const sandbox = target.sandbox ?? (await readProviderId(cwd, "sandbox"));
     if (typeof sandbox !== "string" || sandbox === "") {
       throw new SandboxRequiredError();
     }
   }
-  const fileConsumers = [...target.tools, ...target.plugins].filter((item) =>
-    requiresStorage(item)
-  );
-  await validateStorage(cwd, fileConsumers, target.storage);
   const mediaConsumers = target.tools.filter(
     (item) => requiredMedia(item).length > noConsumers
   );

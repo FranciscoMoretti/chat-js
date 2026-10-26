@@ -67,6 +67,7 @@ export const planInstallation = async (
   const plugins = new Map<string, PluginDefinition>();
   const providers = new Map<string, string>();
   let gateway: GatewayDefinition | undefined;
+  let sandboxProviderSource: string | undefined;
   const selectProvider = (definition: {
     readonly kind: string;
     readonly id: string;
@@ -130,6 +131,9 @@ export const planInstallation = async (
       }
       case "sandbox": {
         selectProvider(sandboxDefinitionSchema.parse(metadata));
+        sandboxProviderSource = item.files?.find(
+          (file) => file.target === "~/lib/sandbox/provider.ts"
+        )?.content;
         break;
       }
       case "storage": {
@@ -282,6 +286,7 @@ export const planInstallation = async (
     gateway,
     storage: providers.get("storage"),
     sandbox: providers.get("sandbox"),
+    sandboxProviderSource,
     tools: target(),
   });
   return {

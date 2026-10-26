@@ -107,10 +107,13 @@ test("shared workspace forks retain immutable image/PDF originals and independen
     return sharedEveMessages(snapshot.events);
   };
   await page.goto(`/chat/${source.id}`);
-  await expect(page.locator(".is-assistant")).toContainText("CEDAR-4827", {
-    timeout: 120_000,
-  });
-  await expect(page.locator(".is-assistant")).toContainText(/red/iu);
+  await expect(page.locator('[data-role="assistant"]')).toContainText(
+    "CEDAR-4827",
+    {
+      timeout: 120_000,
+    }
+  );
+  await expect(page.locator('[data-role="assistant"]')).toContainText(/red/iu);
   await expect(page.getByText("Ready", { exact: true })).toBeVisible();
   const sourceHistory = await messages(source.sessionId);
   const firstUser = sourceHistory.find((message) => message.role === "user");
@@ -202,16 +205,18 @@ test("shared workspace forks retain immutable image/PDF originals and independen
       "Read the original attached image and PDF again. Return the dominant color and verification code only, without tools."
     );
   await composer.getByRole("button", { name: "Send", exact: true }).click();
-  await expect(page.locator(".is-assistant")).toHaveCount(2, {
+  await expect(page.locator('[data-role="assistant"]')).toHaveCount(2, {
     timeout: 90_000,
   });
   await expect(page.getByText("Ready", { exact: true })).toBeVisible({
     timeout: 90_000,
   });
-  await expect(page.locator(".is-assistant").last()).toContainText(
+  await expect(page.locator('[data-role="assistant"]').last()).toContainText(
     "CEDAR-4827"
   );
-  await expect(page.locator(".is-assistant").last()).toContainText(/red/iu);
+  await expect(page.locator('[data-role="assistant"]').last()).toContainText(
+    /red/iu
+  );
   expect(
     await sourceSandbox.readTextFile({ path: originalImage.paths[0] })
   ).toBe("physical working copy changed");
@@ -292,13 +297,13 @@ test("shared workspace forks retain immutable image/PDF originals and independen
       "Read the original attachments once more. Return the image color and PDF code. Do not call tools."
     );
   await composer.getByRole("button", { name: "Send", exact: true }).click();
-  await expect(page.locator(".is-assistant")).toHaveCount(3, {
+  await expect(page.locator('[data-role="assistant"]')).toHaveCount(3, {
     timeout: 90_000,
   });
   await expect(page.getByText("Ready", { exact: true })).toBeVisible({
     timeout: 90_000,
   });
-  await expect(page.locator(".is-assistant").last()).toContainText(
+  await expect(page.locator('[data-role="assistant"]').last()).toContainText(
     "CEDAR-4827"
   );
   expect(
@@ -400,7 +405,7 @@ test("existing shared workspace survives supervisor restart and rejects overlapp
   await expect(page.getByText("Ready", { exact: true })).toBeVisible({
     timeout: 30_000,
   });
-  const assistants = page.locator(".is-assistant");
+  const assistants = page.locator('[data-role="assistant"]');
   const previousCount = await assistants.count();
   const composer = page.getByRole("group", {
     name: "Message composer",

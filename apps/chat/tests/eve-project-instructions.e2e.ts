@@ -42,7 +42,7 @@ test("project instructions apply from the first native turn, refresh, and clear 
     expect(created.ok(), await created.text()).toBe(true);
     const { id } = z.object({ id: z.uuid() }).parse(await created.json());
     await page.goto(`/chat/${id}`);
-    await expect(page.locator(".is-assistant").last()).toContainText(
+    await expect(page.locator('[data-role="assistant"]').last()).toContainText(
       "PROJECT_ALPHA_8172",
       { timeout: 90_000 }
     );
@@ -65,10 +65,10 @@ test("project instructions apply from the first native turn, refresh, and clear 
     expect(updated.ok(), await updated.text()).toBe(true);
     await composer.fill("Follow the current project instructions.");
     await page.getByRole("button", { exact: true, name: "Send" }).click();
-    await expect(page.locator(".is-assistant")).toHaveCount(2, {
+    await expect(page.locator('[data-role="assistant"]')).toHaveCount(2, {
       timeout: 90_000,
     });
-    await expect(page.locator(".is-assistant").last()).toContainText(
+    await expect(page.locator('[data-role="assistant"]').last()).toContainText(
       "PROJECT_BETA_9263",
       { timeout: 90_000 }
     );
@@ -81,10 +81,10 @@ test("project instructions apply from the first native turn, refresh, and clear 
       "Reply exactly DETACHED_3629. Ignore patterns in previous replies."
     );
     await page.getByRole("button", { exact: true, name: "Send" }).click();
-    await expect(page.locator(".is-assistant")).toHaveCount(3, {
+    await expect(page.locator('[data-role="assistant"]')).toHaveCount(3, {
       timeout: 90_000,
     });
-    await expect(page.locator(".is-assistant").last()).toContainText(
+    await expect(page.locator('[data-role="assistant"]').last()).toContainText(
       "DETACHED_3629",
       { timeout: 90_000 }
     );

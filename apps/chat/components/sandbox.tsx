@@ -1,30 +1,12 @@
 "use client";
 
-import {
-  Sandbox,
-  SandboxCode,
-  SandboxContent,
-  SandboxHeader,
-  SandboxOutput,
-  SandboxTabContent,
-  SandboxTabs,
-  SandboxTabsList,
-  SandboxTabsTrigger,
-} from "@/components/ai-elements/sandbox";
-
-import type { BundledLanguage } from "shiki";
-
 import React from "react";
-
 import type { ToolUIPart } from "ai";
-
-interface SandboxComposedProps {
-  readonly code: string;
-  readonly language?: BundledLanguage;
-  readonly output?: string;
-  readonly state: ToolUIPart["state"];
-  readonly title?: string;
-}
+import type { BundledLanguage } from "shiki";
+import { CodeIcon } from "lucide-react";
+import { ToolActivity } from "@/components/part/tool-activity";
+import { CodeSnippet } from "@/components/code-snippet";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const SandboxComposed = ({
   code,
@@ -32,28 +14,30 @@ export const SandboxComposed = ({
   language = "tsx",
   title,
   state,
-}: SandboxComposedProps): React.JSX.Element => {
-  const [activeTab, setActiveTab] = React.useState("code");
-
-  return (
-    <Sandbox>
-      <SandboxHeader state={state} title={title} />
-      <SandboxContent>
-        <SandboxTabs onValueChange={setActiveTab} value={activeTab}>
-          <div className="border-border flex items-center border-b">
-            <SandboxTabsList>
-              <SandboxTabsTrigger value="code">Code</SandboxTabsTrigger>
-              <SandboxTabsTrigger value="output">Output</SandboxTabsTrigger>
-            </SandboxTabsList>
-          </div>
-          <SandboxTabContent value="code">
-            <SandboxCode code={code} language={language} />
-          </SandboxTabContent>
-          <SandboxTabContent value="output">
-            <SandboxOutput code={output ?? ""} />
-          </SandboxTabContent>
-        </SandboxTabs>
-      </SandboxContent>
-    </Sandbox>
-  );
-};
+}: {
+  readonly code: string;
+  readonly language?: BundledLanguage;
+  readonly output?: string;
+  readonly state: ToolUIPart["state"];
+  readonly title?: string;
+}): React.JSX.Element => (
+  <ToolActivity
+    title={title ?? "Code execution"}
+    state={state}
+    icon={<CodeIcon />}
+    defaultOpen
+  >
+    <Tabs defaultValue="code">
+      <TabsList>
+        <TabsTrigger value="code">Code</TabsTrigger>
+        <TabsTrigger value="output">Output</TabsTrigger>
+      </TabsList>
+      <TabsContent value="code">
+        <CodeSnippet code={code} language={language} />
+      </TabsContent>
+      <TabsContent value="output">
+        <CodeSnippet code={output ?? ""} language="ansi" />
+      </TabsContent>
+    </Tabs>
+  </ToolActivity>
+);

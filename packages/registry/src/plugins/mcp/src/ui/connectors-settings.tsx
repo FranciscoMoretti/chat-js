@@ -21,10 +21,11 @@ import { McpConnectDialog } from "@/plugins/mcp/ui/mcp-connect-dialog";
 import { McpCreateDialog } from "@/plugins/mcp/ui/mcp-create-dialog";
 import { SettingsPageContent } from "@/components/settings/settings-page";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
@@ -137,70 +138,74 @@ const CustomConnectorRow = ({
         ) : null}
 
         {showDetailsButton ? (
-          <Button
-            asChild
-            disabled={isTestingConnection}
-            size="sm"
-            variant="outline"
+          <InternalLink
+            href={href}
+            className={buttonVariants({ size: "sm", variant: "outline" })}
+            aria-disabled={isTestingConnection}
+            tabIndex={isTestingConnection ? -1 : undefined}
+            onClick={(event) => {
+              if (isTestingConnection) {
+                event.preventDefault();
+              }
+            }}
           >
-            <InternalLink href={href}>
-              {isTestingConnection ? (
-                <span className="inline-flex items-center gap-2">
-                  <Loader2 className="size-4 animate-spin" />
-                  Loading
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-2">
-                  {actionLabel}
-                </span>
-              )}
-            </InternalLink>
-          </Button>
+            {isTestingConnection ? (
+              <span className="inline-flex items-center gap-2">
+                <Loader2 className="size-4 animate-spin" />
+                Loading
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-2">
+                {actionLabel}
+              </span>
+            )}
+          </InternalLink>
         ) : null}
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              aria-label="More connector actions"
-              size="icon"
-              variant="ghost"
-            >
-              <MoreHorizontal className="size-4" />
-            </Button>
+          <DropdownMenuTrigger
+            render={
+              <Button
+                aria-label="More connector actions"
+                size="icon"
+                variant="ghost"
+              />
+            }
+          >
+            <MoreHorizontal className="size-4" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            {authStatus?.isAuthenticated === true ? (
-              <>
-                <DropdownMenuItem
-                  disabled={isDisconnecting}
-                  onClick={onDisconnect}
-                >
-                  Disconnect
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-              </>
-            ) : null}
-            {needsOAuth ? (
-              <>
-                <DropdownMenuItem
-                  onClick={(
-                    event: Readonly<Pick<Event, "preventDefault">>
-                  ): void => {
-                    event.preventDefault();
-                    onConnect();
-                  }}
-                >
-                  Connect
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-              </>
-            ) : null}
-            <DropdownMenuItem
-              className="text-destructive focus:text-destructive"
-              onClick={onUninstall}
-            >
-              <Trash2 className="size-4" />
-              Uninstall
-            </DropdownMenuItem>
+            <DropdownMenuGroup>
+              {authStatus?.isAuthenticated === true ? (
+                <>
+                  <DropdownMenuItem
+                    disabled={isDisconnecting}
+                    onClick={onDisconnect}
+                  >
+                    Disconnect
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                </>
+              ) : null}
+              {needsOAuth ? (
+                <>
+                  <DropdownMenuItem
+                    onClick={(
+                      event: Readonly<Pick<Event, "preventDefault">>
+                    ): void => {
+                      event.preventDefault();
+                      onConnect();
+                    }}
+                  >
+                    Connect
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                </>
+              ) : null}
+              <DropdownMenuItem variant="destructive" onClick={onUninstall}>
+                <Trash2 className="size-4" />
+                Uninstall
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
@@ -227,9 +232,12 @@ const BuiltInConnectorRow = ({
         type={connector.type}
         url={connector.url}
       />
-      <Button asChild size="sm" variant="outline">
-        <InternalLink href={href}>View</InternalLink>
-      </Button>
+      <InternalLink
+        href={href}
+        className={buttonVariants({ size: "sm", variant: "outline" })}
+      >
+        View
+      </InternalLink>
     </div>
   );
 };

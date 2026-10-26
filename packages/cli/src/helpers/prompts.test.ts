@@ -1,8 +1,10 @@
+import { rejects } from "node:assert/strict";
 import { expect, it, spyOn } from "bun:test";
 import * as clack from "@clack/prompts";
 
 import {
   promptAssistantTools,
+  promptSandbox,
   promptAuth,
   promptCoreFeatures,
   promptDocumentTypes,
@@ -138,3 +140,16 @@ it.each([true, false])(
     expect(plugins.mcp).toBe(mcp);
   }
 );
+
+it("only offers compatible built-in sandboxes for uploads and requires an explicit noninteractive choice", async () => {
+  const select = spyOn(clack, "select").mockResolvedValue("vercel");
+  try {
+    expect(await promptSandbox(false, true, true)).toBe("vercel");
+    expect(
+      select.mock.calls[0]?.[0].options.map((option) => option.value)
+    ).toEqual(["vercel"]);
+    await rejects(promptSandbox(true, true, true), /persistent sandbox/u);
+  } finally {
+    select.mockRestore();
+  }
+});

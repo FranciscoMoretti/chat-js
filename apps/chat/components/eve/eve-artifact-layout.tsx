@@ -656,7 +656,7 @@ const Layout = ({
   const visible = hasText(conversationId) && artifact.isVisible;
   return (
     <ChatLayout isSecondaryPanelVisible={visible}>
-      <ChatLayoutMain defaultSize={visible ? 65 : 100}>
+      <ChatLayoutMain defaultSize={visible ? "65%" : "100%"}>
         {children}
       </ChatLayoutMain>
       <ChatLayoutHandle />

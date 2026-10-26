@@ -3,7 +3,7 @@ import { RefreshCw } from "lucide-react";
 import React from "react";
 import type { JSX as ReactJSX } from "react";
 
-import { MessageAction } from "@/components/ai-elements/message";
+import { MessageAction } from "@/components/message-action";
 import { MessageVoteActions } from "./message-vote-actions";
 import { useTRPC } from "@/trpc/react";
 

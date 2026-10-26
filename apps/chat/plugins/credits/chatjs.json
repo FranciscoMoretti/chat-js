@@ -1,5 +1,4 @@
 {
-  "contractVersion": 1,
   "id": "credits",
   "kind": "plugin",
   "files": [
@@ -20,5 +19,7 @@
     "composerControls": [],
     "settingsItems": [],
     "accountSummary": true
-  }
+  },
+  "contractVersion": 2,
+  "uiBase": "base"
 }

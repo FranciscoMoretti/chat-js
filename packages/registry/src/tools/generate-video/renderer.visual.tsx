@@ -1,7 +1,8 @@
 import React from "react";
 import { expect, test } from "vitest";
 
-import { assetDataUri, captureChatStory, flush } from "../_shared/visual";
+import { captureChatStory, flush } from "../_shared/visual";
+import { assetDataUri } from "../_shared/visual-fonts";
 import { GenerateVideoRenderer } from "./renderer";
 
 const prompt = "A calm blue sky";

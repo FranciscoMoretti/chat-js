@@ -16,5 +16,6 @@
       "toolExport": "editSheetDocument"
     }
   ],
-  "contractVersion": 1
+  "contractVersion": 2,
+  "uiBase": "base"
 }

@@ -7,7 +7,13 @@ export default defineConfig({
   // Reformatting their bodies invalidates the guard against overwriting user edits.
   ignorePatterns: [
     ...(ultracite.ignorePatterns ?? []),
+    // shadcn-installed Code Block dependencies; keep upstream source unchanged.
+    "apps/chat/hooks/use-highlighted-code.ts",
+    "apps/chat/lib/highlighter.tsx",
     "examples/**",
+    "apps/site/components/create-preview/ui/**",
+    // Vendored MIT shadcn Create source; preserve upstream formatting and patterns.
+    "apps/site/vendor/shadcn-create/**",
     "**/composition/generated/*.ts",
     "**/components/{ai-elements,ui}/**",
     "!**/components/{ai-elements,ui}/**/",

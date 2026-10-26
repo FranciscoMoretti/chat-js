@@ -71,7 +71,7 @@ test("sharing exposes only a read-only transcript, enforces ownership and revoke
       publicPage.getByRole("heading", { exact: true, name: "404" })
     ).toBeVisible();
     await page.goto(`/chat/${binding.id}`);
-    await expect(page.locator(".is-assistant")).toContainText(
+    await expect(page.locator('[data-role="assistant"]')).toContainText(
       "share-fixture-ok",
       { timeout: 90_000 }
     );

@@ -4,8 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ChevronDown } from "lucide-react";
 import React, { useEffect, useState } from "react";
-import type { ControllerRenderProps } from "react-hook-form";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -25,17 +24,16 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -198,9 +196,9 @@ export const McpCreateDialog = ({
           </DialogDescription>
         </DialogHeader>
 
-        <Form {...form}>
+        <FieldGroup>
           <form
-            className="space-y-4"
+            className="flex flex-col gap-4"
 
             onSubmit={(event: ReadonlyFormEvent) => {
               startEventAction(async () => {
@@ -216,152 +214,149 @@ export const McpCreateDialog = ({
               });
             }}
           >
-            <FormField
+            <Controller
               control={form.control}
               name="name"
-              render={({
-                field,
-              }: {
-                readonly field: Readonly<
-                  ControllerRenderProps<McpConnectorFormValues, "name">
-                >;
-              }) => (
-                <FormItem>
-                  <FormLabel>Name</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      maxLength={MCP_NAME_MAX_LENGTH}
-                      placeholder="Name"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor={field.name}>Name</FieldLabel>
+
+                  <Input
+                    id={field.name}
+                    aria-invalid={fieldState.invalid}
+                    {...field}
+                    maxLength={MCP_NAME_MAX_LENGTH}
+                    placeholder="Name"
+                  />
+
+                  <FieldError errors={[fieldState.error]} />
+                </Field>
               )}
             />
 
-            <FormField
+            <Controller
               control={form.control}
               name="url"
-              render={({
-                field,
-              }: {
-                readonly field: Readonly<
-                  ControllerRenderProps<McpConnectorFormValues, "url">
-                >;
-              }) => (
-                <FormItem>
-                  <FormLabel>URL</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      placeholder="Remote MCP server URL"
-                      type="url"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor={field.name}>URL</FieldLabel>
+
+                  <Input
+                    id={field.name}
+                    aria-invalid={fieldState.invalid}
+                    {...field}
+                    placeholder="Remote MCP server URL"
+                    type="url"
+                  />
+
+                  <FieldError errors={[fieldState.error]} />
+                </Field>
               )}
             />
 
             <Collapsible onOpenChange={setAdvancedOpen} open={advancedOpen}>
-              <CollapsibleTrigger asChild>
-                <Button
-                  className="text-muted-foreground hover:text-foreground h-auto p-0 hover:bg-transparent"
-                  size="sm"
-                  type="button"
-                  variant="ghost"
-                >
-                  <ChevronDown
-                    className={`mr-1.5 size-4 transition-transform ${advancedOpen ? "" : "-rotate-90"}`}
-                  />
-                  Advanced settings
-                </Button>
-              </CollapsibleTrigger>
+              <CollapsibleTrigger
+                render={
+                  <Button
+                    className="text-muted-foreground hover:text-foreground h-auto p-0 hover:bg-transparent"
+                    size="sm"
+                    type="button"
+                    variant="ghost"
+                  >
+                    <ChevronDown
+                      className={`mr-1.5 size-4 transition-transform ${advancedOpen ? "" : "-rotate-90"}`}
+                    />
+                    Advanced settings
+                  </Button>
+                }
+              />
               <CollapsibleContent className="space-y-4 pt-2">
-                <FormField
+                <Controller
                   control={form.control}
                   name="type"
-                  render={({
-                    field,
-                  }: {
-                    readonly field: Readonly<
-                      ControllerRenderProps<McpConnectorFormValues, "type">
-                    >;
-                  }) => (
-                    <FormItem>
-                      <FormLabel>Transport Type</FormLabel>
-                      <FormControl>
-                        <Select
-                          defaultValue={field.value}
-                          onValueChange={(value): void => {
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor={field.name}>
+                        Transport Type
+                      </FieldLabel>
+
+                      <Select
+                        items={{
+                          http: "HTTP (Streamable)",
+                          sse: "SSE (Server-Sent Events)",
+                        }}
+                        onValueChange={(value): void => {
+                          if (value !== null) {
                             field.onChange(value);
+                          }
+                        }}
+                        value={field.value}
+                      >
+                        <SelectTrigger
+                          id={field.name}
+                          aria-invalid={fieldState.invalid}
+                          onBlur={() => {
+                            field.onBlur();
                           }}
-                          value={field.value}
+                          ref={field.ref}
                         >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectGroup>
                             <SelectItem value="http">
                               HTTP (Streamable)
                             </SelectItem>
                             <SelectItem value="sse">
                               SSE (Server-Sent Events)
                             </SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+
+                      <FieldError errors={[fieldState.error]} />
+                    </Field>
                   )}
                 />
-                <FormField
+                <Controller
                   control={form.control}
                   name="oauthClientId"
-                  render={({
-                    field,
-                  }: {
-                    readonly field: Readonly<
-                      ControllerRenderProps<
-                        McpConnectorFormValues,
-                        "oauthClientId"
-                      >
-                    >;
-                  }) => (
-                    <FormItem>
-                      <FormLabel>OAuth Client ID (optional)</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="Enter client ID" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor={field.name}>
+                        OAuth Client ID (optional)
+                      </FieldLabel>
+
+                      <Input
+                        id={field.name}
+                        aria-invalid={fieldState.invalid}
+                        {...field}
+                        placeholder="Enter client ID"
+                      />
+
+                      <FieldError errors={[fieldState.error]} />
+                    </Field>
                   )}
                 />
-                <FormField
+                <Controller
                   control={form.control}
                   name="oauthClientSecret"
-                  render={({
-                    field,
-                  }: {
-                    readonly field: Readonly<
-                      ControllerRenderProps<
-                        McpConnectorFormValues,
-                        "oauthClientSecret"
-                      >
-                    >;
-                  }) => (
-                    <FormItem>
-                      <FormLabel>OAuth Client Secret (optional)</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          placeholder="Enter client secret"
-                          type="password"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor={field.name}>
+                        OAuth Client Secret (optional)
+                      </FieldLabel>
+
+                      <Input
+                        id={field.name}
+                        aria-invalid={fieldState.invalid}
+                        {...field}
+                        placeholder="Enter client secret"
+                        type="password"
+                      />
+
+                      <FieldError errors={[fieldState.error]} />
+                    </Field>
                   )}
                 />
               </CollapsibleContent>
@@ -388,7 +383,7 @@ export const McpCreateDialog = ({
               </Button>
             </DialogFooter>
           </form>
-        </Form>
+        </FieldGroup>
       </DialogContent>
     </Dialog>
   );

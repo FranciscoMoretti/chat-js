@@ -1,4 +1,4 @@
-import { PROVIDER_NAMES, getProvider } from "files-sdk/providers";
+import { builtInStorageProviders } from "./providers";
 import { getStorageEnvironmentRequirements } from "./environment";
 import { readFileSync } from "node:fs";
 import { storageDefinitionSchema } from "../../metadata";
@@ -24,18 +24,12 @@ const getOptionalEnvironmentKeys = (
   return variables.map(({ key }: Readonly<{ key: string }>) => key) ?? [];
 };
 
-const unsupported = new Set(["box", "bun-s3", "convex", "fs", "s3-fetch"]);
 type StorageEnvironmentRequirementReader = Readonly<{
   description: string;
   options: readonly (readonly Readonly<{ key: string }>[])[];
 }>;
-export const builtInStorage = PROVIDER_NAMES.filter(
-  (id) => !unsupported.has(id)
-).map((id) => {
-  const provider = getProvider(id);
-  if (!provider) {
-    throw new Error(`Missing Files SDK provider: ${id}`);
-  }
+export const builtInStorage = builtInStorageProviders.map((provider) => {
+  const id = provider.slug;
   return {
     dependencies: [
       `files-sdk@${sdkPackage.version}`,
@@ -57,7 +51,8 @@ export const builtInStorage = PROVIDER_NAMES.filter(
     ],
     meta: {
       chatjs: storageDefinitionSchema.parse({
-        configKeys: provider.env.config ?? [],
+        // Memory accepts an optional initial seed; it needs no adapter options.
+        configKeys: id === "memory" ? [] : (provider.env.config ?? []),
         contractVersion: 1,
         envRequirements: getStorageEnvironmentRequirements(id).map(
           (requirement: StorageEnvironmentRequirementReader) => ({

@@ -184,3 +184,42 @@ test("connector that no longer exists", async () => {
   await details("f6c8b0d2-7a9c-4eb5-9f6b-8d0e2f4a6b7c");
   await expect.element(page.getByText("Connector not found")).toBeVisible();
 });
+
+test("connector advanced settings preserve transport labels and validation", async () => {
+  await renderRoute(settings(<ConnectorsPage />), {
+    ...request("/settings/connectors"),
+    search: "dialog=config",
+  });
+  await page.getByRole("button", { name: "Advanced settings" }).click();
+  const transport = page.getByRole("combobox", { name: "Transport Type" });
+  await expect.element(transport).toHaveTextContent("HTTP (Streamable)");
+  await transport.click();
+  await page.getByRole("option", { name: "SSE (Server-Sent Events)" }).click();
+  await expect.element(transport).toHaveTextContent("SSE (Server-Sent Events)");
+  await page.getByRole("button", { name: "Add", exact: true }).click();
+  await expect
+    .element(page.getByRole("textbox", { name: "Name", exact: true }))
+    .toHaveAttribute("aria-invalid", "true");
+  await expect
+    .element(page.getByText("Name is required", { exact: true }))
+    .toBeVisible();
+  await page
+    .getByRole("textbox", { name: "Name", exact: true })
+    .fill("My connector");
+  await page
+    .getByRole("textbox", { name: "URL", exact: true })
+    .fill("https://connector.example/mcp");
+  await transport.click();
+  await expect
+    .element(page.getByRole("option", { name: "SSE (Server-Sent Events)" }))
+    .toHaveFocus();
+  await userEvent.keyboard("{ArrowUp}");
+  await expect
+    .element(page.getByRole("option", { name: "HTTP (Streamable)" }))
+    .toHaveFocus();
+  await userEvent.keyboard("{Enter}");
+  await expect.element(transport).toHaveTextContent("HTTP (Streamable)");
+  await page
+    .elementLocator(document.body)
+    .screenshot({ path: "__screenshots__/native-connector-fields.png" });
+});

@@ -55,7 +55,7 @@ test("assigned Eve conversations resolve through project URLs and remain accessi
     expect(forbidden.status()).toBe(401);
     await page.goto(`/project/${projectId}/chat/${binding.id}`);
     await expect(page).toHaveURL(new RegExp(`/chat/${binding.id}$`, "u"));
-    await expect(page.locator(".is-assistant")).toContainText(
+    await expect(page.locator('[data-role="assistant"]')).toContainText(
       "project-route-fixture-ok",
       { timeout: 90_000 }
     );
@@ -102,7 +102,7 @@ test("assigned Eve conversations resolve through project URLs and remain accessi
     });
     expect(removed.ok(), await removed.text()).toBe(true);
     await page.goto(`/chat/${binding.id}`);
-    await expect(page.locator(".is-assistant")).toContainText(
+    await expect(page.locator('[data-role="assistant"]')).toContainText(
       "project-route-fixture-ok"
     );
     const [chat] = await db

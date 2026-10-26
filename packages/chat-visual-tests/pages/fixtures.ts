@@ -4,7 +4,7 @@ import type { EveMessage } from "eve/client";
 import type { Session } from "@/lib/auth";
 import type { AppRouter } from "@/trpc/routers/_app";
 
-import { assetDataUri } from "../../registry/src/tools/_shared/visual";
+import { assetDataUri } from "../../registry/src/tools/_shared/visual-fonts";
 import { TrpcFixtureError } from "./route";
 import type { ServerData, route } from "./route";
 

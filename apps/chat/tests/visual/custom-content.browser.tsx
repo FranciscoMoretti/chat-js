@@ -1,21 +1,16 @@
 import { takeSnapshot } from "@uiverify/vitest";
 import React from "react";
-import { expect, test, vi } from "vitest";
+import { expect, test } from "vitest";
 import { page } from "vitest/browser";
-import { CodeBlock } from "@/components/ai-elements/code-block";
+import {
+  CodeBlock,
+  CodeBlockContent,
+  CodeBlockFooter,
+} from "@/components/ui/code-block";
 import { Context, ContextInputUsage } from "@/components/ai-elements/context";
-import { ConversationEmptyState } from "@/components/ai-elements/conversation";
-import { MessageAttachments } from "@/components/ai-elements/message";
 import { mount, unmount } from "@/tests/visual/primitive-mount";
 import "./sandbox.css";
 
-// Syntax highlighting is unrelated to optional toolbar chrome.
-vi.mock("shiki", () => ({
-  codeToTokens: vi.fn().mockResolvedValue({
-    tokens: [[{ content: "const ready = true;", offset: 0 }]],
-  }),
-  getTokenStyleObject: () => ({}),
-}));
 const emptyText = "";
 
 test("optional content preserves raw zero and default usage without empty chrome", async () => {
@@ -33,24 +28,17 @@ test("optional content preserves raw zero and default usage without empty chrome
     >
       <section data-case="zero-code">
         <h2>Zero toolbar child</h2>
-        <CodeBlock code="const ready = true;" language="javascript">
-          {0}
+        <CodeBlock>
+          <CodeBlockContent>const ready = true;</CodeBlockContent>
+          <CodeBlockFooter>{0}</CodeBlockFooter>
         </CodeBlock>
       </section>
       <section data-case="empty-code">
         <h2>Empty toolbar child</h2>
-        <CodeBlock code="const empty = true;" language="javascript">
+        <CodeBlock>
+          <CodeBlockContent>const empty = true;</CodeBlockContent>
           {emptyText}
         </CodeBlock>
-      </section>
-      <ConversationEmptyState title="Zero icon" icon={0} />
-      <ConversationEmptyState title="Custom icon" icon={<span>Star</span>} />
-      <section data-case="attachments">
-        <MessageAttachments>{0}</MessageAttachments>
-        <MessageAttachments>{emptyText}</MessageAttachments>
-        <MessageAttachments>
-          <span>Attachment present</span>
-        </MessageAttachments>
       </section>
       <Context
         usedTokens={120}
@@ -72,9 +60,6 @@ test("optional content preserves raw zero and default usage without empty chrome
   expect(
     container.querySelector('[data-case="zero-code"]')?.textContent
   ).toContain("0");
-  expect(
-    container.querySelector('[data-case="attachments"]')?.children
-  ).toHaveLength(1);
   expect(container.querySelector('[data-case="usage"]')?.textContent).toContain(
     "Input"
   );

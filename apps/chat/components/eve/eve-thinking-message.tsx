@@ -2,6 +2,7 @@ import type { EveMessage } from "eve/client";
 import React from "react";
 import type { JSX as ReactJSX } from "react";
 
+import { MessageScrollerItem } from "@/components/ui/message-scroller";
 import { ThinkingMessage } from "@/components/thinking-message";
 import type { ReadonlyEveMessagePart } from "@/lib/eve/readonly-message-types";
 
@@ -31,7 +32,11 @@ export const EveThinkingMessage = ({
       return part.type !== "step-start";
     });
   if (status === "submitted" || !hasContent) {
-    return <ThinkingMessage />;
+    return (
+      <MessageScrollerItem messageId="thinking">
+        <ThinkingMessage />
+      </MessageScrollerItem>
+    );
   }
   return null;
 };

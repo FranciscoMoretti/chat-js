@@ -7,6 +7,9 @@ export default defineConfig({
   // Reformatting their bodies invalidates the guard against overwriting user edits.
   ignorePatterns: [
     ...(ultracite.ignorePatterns ?? []),
+    // shadcn-installed Code Block dependencies; keep upstream source unchanged.
+    "hooks/use-highlighted-code.ts",
+    "lib/highlighter.tsx",
     "**/components/{ai-elements,ui}/**",
     "!**/components/{ai-elements,ui}/**/",
     "!**/components/{ai-elements,ui}/extra/**",

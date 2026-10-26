@@ -1,32 +1,20 @@
 "use client";
 
-import {
-  Download,
-  ExternalLink,
-  FileTextIcon,
-  ImageOffIcon,
-  Loader2Icon,
-  PaperclipIcon,
-  XIcon,
-} from "lucide-react";
-import Image from "next/image";
+import { Download, ExternalLink } from "lucide-react";
 import React from "react";
 import type { JSX as ReactJSX } from "react";
 import { toast } from "sonner";
 
 import {
-  PromptInputHoverCard,
-  PromptInputHoverCardContent,
-} from "@/components/ai-elements/prompt-input";
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
+import { AttachmentTrigger } from "@/components/ui/attachment";
 
 import { AttachmentCard } from "@/components/attachment-card";
 import { Button } from "@/components/ui/button";
-import { HoverCardTrigger } from "@/components/ui/hover-card";
 import { cn } from "@/lib/utils";
-
-import { getFileImageProps } from "@/lib/file-url";
-
-import { useImageLoadError } from "@/hooks/use-image-load-error";
 
 const HTTP_NOT_FOUND = 404;
 
@@ -37,113 +25,6 @@ interface AttachmentViewData {
   readonly name: string;
   readonly url: string;
 }
-
-const AttachmentIcon = ({
-  isImage,
-  isPdf,
-  url,
-  name,
-}: {
-  readonly isImage: boolean;
-  readonly isPdf: boolean;
-  readonly url: string;
-  readonly name: string;
-}): React.JSX.Element => {
-  const { handleImageError, imageUnavailable } = useImageLoadError(url);
-  if (isImage) {
-    if (imageUnavailable) {
-      return (
-        <>
-          <ImageOffIcon className="text-muted-foreground size-3" />
-          <span className="sr-only">Preview unavailable</span>
-        </>
-      );
-    }
-    const imageProps = getFileImageProps(url);
-    return (
-      <Image
-        alt={name || "attachment"}
-        className="size-5 object-cover"
-        height={20}
-        onError={handleImageError}
-        src={imageProps.src}
-        unoptimized={imageProps.unoptimized}
-        width={20}
-      />
-    );
-  }
-
-  if (isPdf) {
-    return <FileTextIcon className="size-3 text-red-500" />;
-  }
-
-  return <PaperclipIcon className="text-muted-foreground size-3" />;
-};
-
-const AttachmentPill = ({
-  attachment,
-  isUploading,
-  onRemove,
-}: {
-  readonly attachment: AttachmentViewData;
-  readonly isUploading: boolean;
-  readonly onRemove?: () => void;
-}): ReactJSX.Element => {
-  const { name, url, contentType } = attachment;
-  const isImage = Boolean(contentType?.startsWith("image/") && url);
-  const isPdf = contentType === "application/pdf";
-  const attachmentLabel = name || (isImage ? "Image" : "Attachment");
-
-  return (
-    <div
-      className={cn(
-        "group border-border hover:bg-accent hover:text-accent-foreground relative flex h-8 cursor-default items-center gap-1.5 rounded-md border px-1.5 text-sm font-medium transition-all select-none",
-        isUploading && "opacity-60"
-      )}
-      data-testid="input-attachment-preview"
-    >
-      <div className="relative size-5 shrink-0">
-        <div
-          className={cn(
-            "bg-background absolute inset-0 flex size-5 items-center justify-center overflow-hidden rounded transition-opacity",
-            onRemove && !isUploading && "group-hover:opacity-0"
-          )}
-        >
-          {isUploading ? (
-            <Loader2Icon
-              className="text-muted-foreground size-3 animate-spin"
-              data-testid="input-attachment-loader"
-            />
-          ) : (
-            <AttachmentIcon
-              isImage={isImage}
-              isPdf={isPdf}
-              name={name}
-              url={url}
-            />
-          )}
-        </div>
-        {onRemove && !isUploading && (
-          <Button
-            aria-label="Remove attachment"
-            className="absolute inset-0 size-5 cursor-pointer rounded p-0 opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100 [&>svg]:size-2.5"
-            onClick={(event: { readonly stopPropagation: () => void }) => {
-              event.stopPropagation();
-              onRemove();
-            }}
-            type="button"
-            variant="ghost"
-          >
-            <XIcon />
-            <span className="sr-only">Remove</span>
-          </Button>
-        )}
-      </div>
-
-      <span className="max-w-24 flex-1 truncate">{attachmentLabel}</span>
-    </div>
-  );
-};
 
 const AttachmentItem = ({
   attachment,
@@ -163,44 +44,36 @@ const AttachmentItem = ({
   const isImage = Boolean(contentType?.startsWith("image/") && url);
   const attachmentLabel = name || (isImage ? "Image" : "Attachment");
 
-  const preview =
-    variant === "pill" ? (
-      <AttachmentPill
-        attachment={attachment}
-        isUploading={isUploading}
-        onRemove={onRemove}
-      />
-    ) : (
-      <AttachmentCard
-        attachment={attachment}
-        isUploading={isUploading}
-        onRemove={onRemove}
-      />
-    );
-
-  // For uploading items or items without URL, just return the preview
+  const card = (trigger?: React.ReactNode): ReactJSX.Element => (
+    <AttachmentCard
+      attachment={attachment}
+      isUploading={isUploading}
+      onRemove={onRemove}
+      variant={variant}
+    >
+      {trigger}
+    </AttachmentCard>
+  );
   if (isUploading || !url) {
-    return preview;
+    return card();
   }
-
   return (
-    <PromptInputHoverCard>
-      <HoverCardTrigger asChild>
-        <button
-          aria-label={attachmentLabel}
-          className="inline-block cursor-default text-left"
-          onClick={(event: { readonly stopPropagation: () => void }) => {
-            event.stopPropagation();
-            if (isImage && onImageClick) {
-              onImageClick(url, name);
-            }
-          }}
-          type="button"
-        >
-          {preview}
-        </button>
-      </HoverCardTrigger>
-      <PromptInputHoverCardContent className="w-auto p-2">
+    <HoverCard>
+      {card(
+        <HoverCardTrigger
+          render={
+            <AttachmentTrigger
+              aria-label={attachmentLabel}
+              onClick={() => {
+                if (isImage && onImageClick) {
+                  onImageClick(url, name);
+                }
+              }}
+            />
+          }
+        />
+      )}
+      <HoverCardContent className="w-auto p-2">
         <div className="flex items-center gap-2.5">
           <h4 className="min-w-0 flex-1 truncate px-0.5 text-sm leading-none font-semibold">
             {attachmentLabel}
@@ -210,7 +83,7 @@ const AttachmentItem = ({
               className="size-7"
               onClick={(event: { readonly stopPropagation: () => void }) => {
                 event.stopPropagation();
-                window.open(url, "_blank");
+                window.open(url, "_blank", "noopener");
               }}
               size="icon"
               title="Open"
@@ -232,7 +105,7 @@ const AttachmentItem = ({
                       return;
                     }
                     if (!response.ok) {
-                      window.open(url, "_blank");
+                      window.open(url, "_blank", "noopener");
                       return;
                     }
                     const blob = await response.blob();
@@ -244,7 +117,7 @@ const AttachmentItem = ({
                     URL.revokeObjectURL(blobUrl);
                   } catch {
                     // Fallback: open in new tab if fetch fails
-                    window.open(url, "_blank");
+                    window.open(url, "_blank", "noopener");
                   }
                 });
               }}
@@ -256,8 +129,8 @@ const AttachmentItem = ({
             </Button>
           </div>
         </div>
-      </PromptInputHoverCardContent>
-    </PromptInputHoverCard>
+      </HoverCardContent>
+    </HoverCard>
   );
 };
 

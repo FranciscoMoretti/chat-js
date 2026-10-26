@@ -1,6 +1,7 @@
 import { hasText } from "@/components/text-value";
-import { File, Loader2, Pencil } from "lucide-react";
+import { File, Pencil } from "lucide-react";
 import React, { memo } from "react";
+import { Trace, TraceLine, TraceIcon, TraceTitle } from "@/components/ui/trace";
 import type { ArtifactKind } from "@/lib/artifacts/artifact-kind";
 
 import type { JSX as ReactJSX } from "react";
@@ -81,40 +82,33 @@ const PureDocumentToolResult = ({
   const conversationId = useDocumentConversation();
 
   return (
-    <button
-      className="bg-background flex w-fit cursor-pointer flex-row items-center gap-3 rounded-xl border px-3 py-2"
-      disabled={disabled}
-      onClick={() => {
-        setArtifact({
-          content: "",
-          conversationId,
-          documentId: result.id,
-          followLive,
-          isVisible: true,
-          kind: result.kind,
-          messageId,
-          revisionId: followLive ? undefined : result.revisionId,
-          status: "idle",
-          title: result.title,
-        });
-      }}
-      type="button"
-    >
-      <div className="text-muted-foreground">
-        {((): ReactJSX.Element | null => {
-          if (type === "create" || type === "read") {
-            return <File size={16} />;
-          }
-          if (type === "update") {
-            return <Pencil size={16} />;
-          }
-          return null;
-        })()}
-      </div>
-      <div className="text-left">
-        {`${getActionText(type, "past")} "${result.title}"`}
-      </div>
-    </button>
+    <Trace>
+      <button
+        className="disabled:pointer-events-none disabled:opacity-50"
+        aria-label={`${getActionText(type, "past")} "${result.title}"`}
+        disabled={disabled}
+        onClick={() => {
+          setArtifact({
+            content: "",
+            conversationId,
+            documentId: result.id,
+            followLive,
+            isVisible: true,
+            kind: result.kind,
+            messageId,
+            revisionId: followLive ? undefined : result.revisionId,
+            status: "idle",
+            title: result.title,
+          });
+        }}
+        type="button"
+      >
+        <TraceLine>
+          <TraceIcon>{type === "update" ? <Pencil /> : <File />}</TraceIcon>
+          <TraceTitle>{`${getActionText(type, "past")} "${result.title}"`}</TraceTitle>
+        </TraceLine>
+      </button>
+    </Trace>
   );
 };
 
@@ -134,40 +128,25 @@ const PureDocumentToolCall = ({
   const { setArtifact } = useArtifact();
 
   return (
-    <button
-      className="cursor pointer flex w-fit flex-row items-start justify-between gap-3 rounded-xl border px-3 py-2"
-      onClick={() => {
-        setArtifact((currentArtifact) => ({
-          ...currentArtifact,
-          isVisible: true,
-        }));
-      }}
-      type="button"
-    >
-      <div className="flex flex-row items-start gap-3">
-        <div className="text-muted-foreground mt-1">
-          {((): ReactJSX.Element | null => {
-            if (type === "create" || type === "read") {
-              return <File size={16} />;
-            }
-            if (type === "update") {
-              return <Pencil size={16} />;
-            }
-            return null;
-          })()}
-        </div>
-
-        <div className="text-left">
-          {`${getActionText(type, "present")} ${hasText(args.title) ? `"${args.title}"` : ""}`}
-        </div>
-      </div>
-
-      <div className="mt-1 animate-spin">
-        <Loader2 size={16} />
-      </div>
-    </button>
+    <Trace>
+      <button
+        aria-label={`${getActionText(type, "present")} ${args.title ?? "document"}`}
+        onClick={() => {
+          setArtifact((currentArtifact) => ({
+            ...currentArtifact,
+            isVisible: true,
+          }));
+        }}
+        type="button"
+      >
+        <TraceLine status="running">
+          <TraceIcon>{type === "update" ? <Pencil /> : <File />}</TraceIcon>
+          <TraceTitle>{`${getActionText(type, "present")} ${hasText(args.title) ? `"${args.title}"` : ""}`}</TraceTitle>
+        </TraceLine>
+      </button>
+    </Trace>
   );
 };
 
-const DocumentToolCall = memo(PureDocumentToolCall, () => true);
+const DocumentToolCall = memo(PureDocumentToolCall);
 export { DocumentToolCall, DocumentToolResult, hasProp, isArtifactToolResult };

@@ -51,10 +51,9 @@ test("anonymous chat stays disposable and disappears on reload", async ({
   expect(response.status()).toBe(200);
   expect(response.headers()["set-cookie"]).toBeUndefined();
   const binding = bindingSchema.parse(await response.json());
-  await expect(page.getByRole("log").locator(".is-assistant")).toContainText(
-    "temporary chat works",
-    { timeout: 90_000 }
-  );
+  await expect(
+    page.getByRole("log").locator('[data-role="assistant"]')
+  ).toContainText("temporary chat works", { timeout: 90_000 });
   await expect(page).toHaveURL(/\/$/u);
   await page.screenshot({
     animations: "disabled",

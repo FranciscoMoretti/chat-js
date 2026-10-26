@@ -20,7 +20,7 @@ const server = Bun.serve({
     if (path === "/sandboxes.tgz") {
       return new Response(Bun.file(sandboxArchive));
     }
-    if (!/^\/[a-z0-9-]+\.json$/u.test(path)) {
+    if (!/^\/(?:base\/|radix\/)?[a-z0-9-]+\.json$/u.test(path)) {
       return new Response("Not found", { status: 404 });
     }
     const file = Bun.file(

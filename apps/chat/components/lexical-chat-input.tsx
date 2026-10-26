@@ -251,6 +251,7 @@ const LexicalChatInput = ({
                 "editor-input",
                 className
               )}
+              data-slot="input-group-control"
               data-testid={testId}
               onKeyDown={onKeyDown}
               onPaste={onPaste}

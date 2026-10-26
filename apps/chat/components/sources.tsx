@@ -1,3 +1,6 @@
+"use client";
+
+import { Button } from "@/components/ui/button";
 import { ArrowRight, FileText } from "lucide-react";
 import {
   Dialog,
@@ -10,15 +13,17 @@ import {
 import {
   Drawer,
   DrawerContent,
+  DrawerClose,
+  DrawerFooter,
   DrawerHeader,
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
 
-import React, { useId } from "react";
+import React from "react";
 import { Favicon } from "./favicon";
 
-import { FaviconGroup } from "./favicon-group";
+import { Trace, TraceIcon, TraceLine, TraceTitle } from "@/components/ui/trace";
 
 import type { SearchResultItem } from "@/tools/platform/research-updates-schema";
 
@@ -58,12 +63,26 @@ const SourcesList = ({
   </div>
 );
 
+const SourcesLabel = ({
+  count,
+}: {
+  readonly count: number;
+}): React.JSX.Element => (
+  <TraceLine>
+    <TraceIcon>
+      <FileText />
+    </TraceIcon>
+    <TraceTitle>{count} Sources</TraceTitle>
+    <TraceIcon>
+      <ArrowRight />
+    </TraceIcon>
+  </TraceLine>
+);
+
 const AllSourcesView = ({
   sources,
-  id,
 }: {
   readonly sources: readonly Readonly<SearchResultItem>[] | undefined;
-  readonly id?: string;
 }): React.JSX.Element => {
   const isDesktop = useMediaQuery("(min-width: 768px)");
   const title = "All Sources";
@@ -71,11 +90,11 @@ const AllSourcesView = ({
   if (isDesktop) {
     return (
       <Dialog>
-        <DialogTrigger asChild>
-          <button className="hidden" id={id} type="button">
-            Show All
-          </button>
-        </DialogTrigger>
+        <Trace>
+          <DialogTrigger aria-label="Show all sources">
+            <SourcesLabel count={sources?.length ?? 0} />
+          </DialogTrigger>
+        </Trace>
         <DialogContent
           className={cn("max-h-[80vh] overflow-y-auto", "max-w-4xl")}
         >
@@ -93,11 +112,11 @@ const AllSourcesView = ({
 
   return (
     <Drawer>
-      <DrawerTrigger asChild>
-        <button className="hidden" id={id} type="button">
-          Show All
-        </button>
-      </DrawerTrigger>
+      <Trace>
+        <DrawerTrigger aria-label="Show all sources">
+          <SourcesLabel count={sources?.length ?? 0} />
+        </DrawerTrigger>
+      </Trace>
       <DrawerContent className="h-[85vh]">
         <DrawerHeader>
           <DrawerTitle className="flex items-center gap-2">
@@ -108,55 +127,17 @@ const AllSourcesView = ({
         <div className="overflow-y-auto p-4">
           <SourcesList sources={sources} />
         </div>
+        <DrawerFooter>
+          <DrawerClose render={<Button variant="outline" />}>Close</DrawerClose>
+        </DrawerFooter>
       </DrawerContent>
     </Drawer>
   );
 };
 
-const ShowSourcesButton = ({
-  sources,
-  dialogId,
-}: {
-  readonly sources: readonly Readonly<SearchResultItem>[];
-  readonly dialogId: string;
-}): React.JSX.Element => (
-  <button
-    aria-label="Show all sources"
-    className="group border-border hover:bg-accent flex items-center justify-center gap-2 rounded-lg border p-2.5 transition-colors"
-    onClick={() => document.querySelector<HTMLElement>(`#${dialogId}`)?.click()}
-    type="button"
-  >
-    <FaviconGroup
-      className="mr-1.5"
-      maxVisible={3}
-      sources={sources.map((source) => ({
-        title: source.title,
-        url: source.url,
-      }))}
-    />
-    <span className="text-muted-foreground group-hover:text-foreground text-xs">
-      {sources.length} Sources
-    </span>
-    <ArrowRight className="text-muted-foreground group-hover:text-foreground h-3.5 w-3.5 transition-colors" />
-  </button>
-);
-
 export const Sources = ({
   sources,
 }: {
   readonly sources: readonly Readonly<SearchResultItem>[];
-}): React.JSX.Element | null => {
-  const sourcesDialogId = useId();
-  if (sources.length === 0) {
-    return null;
-  }
-
-  return (
-    <div className="space-y-3">
-      <ShowSourcesButton dialogId={sourcesDialogId} sources={sources} />
-      <div className="hidden">
-        <AllSourcesView id={sourcesDialogId} sources={sources} />
-      </div>
-    </div>
-  );
-};
+}): React.JSX.Element | null =>
+  sources.length === 0 ? null : <AllSourcesView sources={sources} />;

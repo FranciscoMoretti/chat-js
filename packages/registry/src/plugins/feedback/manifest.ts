@@ -13,7 +13,8 @@ const feedbackFiles = [
   "plugins/feedback/vote-message.ts",
 ];
 const feedbackDefinition = pluginDefinitionSchema.parse({
-  contractVersion: 1,
+  contractVersion: 2,
+  uiBase: "base",
   id: "feedback",
   kind: "plugin",
   files: feedbackFiles,

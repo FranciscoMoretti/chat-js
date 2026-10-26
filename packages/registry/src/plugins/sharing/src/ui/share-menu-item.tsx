@@ -22,12 +22,6 @@ interface ShareMenuItemProps {
   readonly onShare: () => void;
 }
 
-const preventEventDefault = (event: {
-  readonly preventDefault: () => void;
-}): void => {
-  event.preventDefault();
-};
-
 export const ShareMenuItem = ({
   onShare,
   children,
@@ -38,15 +32,17 @@ export const ShareMenuItem = ({
   if (!isAuthenticated) {
     return (
       <Popover>
-        <PopoverTrigger asChild>
-          <DropdownMenuItem
-            className="cursor-pointer opacity-50"
-            onSelect={preventEventDefault}
-          >
-            <Share size={16} />
-            <span>Share</span>
-          </DropdownMenuItem>
-        </PopoverTrigger>
+        <PopoverTrigger
+          render={
+            <DropdownMenuItem
+              className="cursor-pointer opacity-50"
+              closeOnClick={false}
+            >
+              <Share size={16} />
+              <span>Share</span>
+            </DropdownMenuItem>
+          }
+        />
         <PopoverContent className="w-auto p-2">
           <p className="text-sm">Sign in to share your chats</p>
         </PopoverContent>
@@ -57,8 +53,8 @@ export const ShareMenuItem = ({
   return (
     <DropdownMenuItem
       className="cursor-pointer"
-      onSelect={(event) => {
-        event.preventDefault();
+      closeOnClick={false}
+      onClick={() => {
         onShare();
       }}
     >

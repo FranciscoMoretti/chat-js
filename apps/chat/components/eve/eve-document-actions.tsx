@@ -65,67 +65,75 @@ export const EveDocumentActions = ({
       {run}
       {kind === "text" && (
         <Tooltip>
-          <TooltipTrigger asChild>
-            <div>
-              <Toggle
-                aria-label="View changes"
-                className="h-fit p-2 [&_svg]:size-[18px]"
-                disabled={disabled || !canCompare}
-                pressed={comparing}
-                onPressedChange={onCompare}
-              >
-                <History size={18} />
-              </Toggle>
-            </div>
-          </TooltipTrigger>
+          <TooltipTrigger
+            render={
+              <div>
+                <Toggle
+                  aria-label="View changes"
+                  className="h-fit p-2 [&_svg]:size-[18px]"
+                  disabled={disabled || !canCompare}
+                  pressed={comparing}
+                  onPressedChange={onCompare}
+                >
+                  <History size={18} />
+                </Toggle>
+              </div>
+            }
+          />
           <TooltipContent>View changes</TooltipContent>
         </Tooltip>
       )}
       <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            aria-label="View Previous version"
-            className={buttonClass}
-            variant="outline"
-            disabled={disabled || previousDisabled}
-            onClick={onPrevious}
-          >
-            <Undo2 size={18} />
-          </Button>
-        </TooltipTrigger>
+        <TooltipTrigger
+          render={
+            <Button
+              aria-label="View Previous version"
+              className={buttonClass}
+              variant="outline"
+              disabled={disabled || previousDisabled}
+              onClick={onPrevious}
+            >
+              <Undo2 size={18} />
+            </Button>
+          }
+        />
         <TooltipContent>View Previous version</TooltipContent>
       </Tooltip>
       <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            aria-label="View Next version"
-            className={buttonClass}
-            variant="outline"
-            disabled={disabled || nextDisabled}
-            onClick={onNext}
-          >
-            <Redo2 size={18} />
-          </Button>
-        </TooltipTrigger>
+        <TooltipTrigger
+          render={
+            <Button
+              aria-label="View Next version"
+              className={buttonClass}
+              variant="outline"
+              disabled={disabled || nextDisabled}
+              onClick={onNext}
+            >
+              <Redo2 size={18} />
+            </Button>
+          }
+        />
         <TooltipContent>View Next version</TooltipContent>
       </Tooltip>
       <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            aria-label={copyLabel}
-            className={
-              kind === "sheet" ? "hover:bg-accent h-fit p-2" : buttonClass
-            }
-            variant="outline"
-            disabled={disabled}
+        <TooltipTrigger
+          render={
+            <Button
+              aria-label={copyLabel}
+              className={
+                kind === "sheet" ? "hover:bg-accent h-fit p-2" : buttonClass
+              }
+              variant="outline"
+              disabled={disabled}
 
-            onClick={(): void => {
-              void copy();
-            }}
-          >
-            <Copy size={kind === "sheet" ? 16 : 18} />
-          </Button>
-        </TooltipTrigger>
+              onClick={(): void => {
+                void copy();
+              }}
+            >
+              <Copy size={kind === "sheet" ? 16 : 18} />
+            </Button>
+          }
+        />
         <TooltipContent>{copyLabel}</TooltipContent>
       </Tooltip>
     </div>

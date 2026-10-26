@@ -43,7 +43,8 @@ const mcpFiles = [
 ];
 
 const mcpDefinition = pluginDefinitionSchema.parse({
-  contractVersion: 1,
+  contractVersion: 2,
+  uiBase: "base",
   databaseSchemas: ["plugins/mcp/db/mcp-schema.ts"],
   environmentValidation: "mcp-env.ts",
   envRequirements: [{ options: [["MCP_ENCRYPTION_KEY"]] }],

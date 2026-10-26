@@ -14,3 +14,11 @@ for (const item of builtInStorage) {
     });
   }
 }
+
+// Optional seed data must not become a required --storage-config argument.
+test("memory storage needs no adapter configuration", () => {
+  expect(
+    builtInStorage.find((item) => item.name === "memory-storage")?.meta.chatjs
+      .configKeys
+  ).toEqual([]);
+});

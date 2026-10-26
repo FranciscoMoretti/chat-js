@@ -41,7 +41,7 @@ test("moves native conversations from sidebar and project rows with recoverable 
     expect(created.ok(), await created.text()).toBe(true);
     const { id } = z.object({ id: z.uuid() }).parse(await created.json());
     await page.goto(`/chat/${id}`);
-    await expect(page.locator(".is-assistant")).toContainText(
+    await expect(page.locator('[data-role="assistant"]')).toContainText(
       "move-fixture-ok",
       { timeout: 90_000 }
     );
@@ -161,7 +161,7 @@ test("moves native conversations from sidebar and project rows with recoverable 
     await expect(dialog).not.toBeVisible();
     await expect(projectRow).toHaveCount(0);
     await page.goto(`/chat/${id}`);
-    await expect(page.locator(".is-assistant")).toContainText(
+    await expect(page.locator('[data-role="assistant"]')).toContainText(
       "move-fixture-ok"
     );
   } finally {

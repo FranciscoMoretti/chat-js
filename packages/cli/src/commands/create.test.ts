@@ -1,4 +1,5 @@
 import { afterEach, expect, it } from "bun:test";
+import { existsSync } from "node:fs";
 import { mkdir, readFile, rm } from "node:fs/promises";
 import { create } from "./create";
 import path from "node:path";
@@ -103,3 +104,55 @@ it("rejects retired installer flags explicitly", () => {
     "unknown option"
   );
 });
+
+it.each([
+  {
+    args: ["--", "--base", "aria"],
+    message: "supports Base UI and Radix",
+  },
+  {
+    args: ["--", "--cwd=elsewhere"],
+    message: "ChatJS owns the target directory",
+  },
+  {
+    args: [
+      "--from-git",
+      "https://example.invalid/repo",
+      "--",
+      "--preset",
+      "rhea",
+    ],
+    message: "--from-git preserves",
+  },
+])(
+  "rejects unsafe preset creation before network or filesystem work: $message",
+  async ({ args, message }) => {
+    const destination = makeTempDir("native-preflight");
+    const child = Bun.spawn(
+      [
+        process.execPath,
+        path.join(import.meta.dir, "../index.ts"),
+        "create",
+        destination,
+        "--yes",
+        ...args,
+      ],
+      {
+        stdout: "pipe",
+        stderr: "pipe",
+        env: {
+          ...process.env,
+          CHATJS_REGISTRY_URL: "https://example.invalid/r/{name}.json",
+        },
+      }
+    );
+    const [exitCode, stdout, stderr] = await Promise.all([
+      child.exited,
+      new Response(child.stdout).text(),
+      new Response(child.stderr).text(),
+    ]);
+    expect(exitCode).toBe(1);
+    expect(stdout + stderr).toContain(message);
+    expect(existsSync(destination)).toBe(false);
+  }
+);

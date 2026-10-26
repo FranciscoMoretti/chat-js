@@ -1,6 +1,6 @@
 "use client";
 
-import { PromptInputHeader } from "@/components/ai-elements/prompt-input";
+import { InputGroupAddon } from "@/components/ui/input-group";
 
 import { AttachmentList } from "@/components/attachment-list";
 
@@ -27,7 +27,10 @@ export const ContextBar = ({
   }
 
   return (
-    <PromptInputHeader className={cn("bg-muted w-full border-b", className)}>
+    <InputGroupAddon
+      align="block-start"
+      className={cn("flex-wrap border-b", className)}
+    >
       {(attachments.length > 0 || uploadQueue.length > 0) && (
         <AttachmentList
           attachments={attachments}
@@ -36,6 +39,6 @@ export const ContextBar = ({
           uploadQueue={uploadQueue}
         />
       )}
-    </PromptInputHeader>
+    </InputGroupAddon>
   );
 };

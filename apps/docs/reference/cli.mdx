@@ -46,11 +46,12 @@ npx @chat-js/cli@latest [directory] [options]
 | `-y, --yes` | `false` | Skip prompts and use the scaffold defaults. |
 | `--electron` / `--no-electron` | Prompted | Include or exclude the Electron desktop app. |
 | `--mcp` / `--no-mcp` | Off | Install or omit MCP. |
-| `--attachments` / `--no-attachments` | Off | Install or omit user uploads. |
+| `--attachments` / `--no-attachments` | Off | Install or omit user uploads. Requires durable storage and a persistent sandbox. |
 | `--observability <items>` | None | Comma-separated `vercel-analytics`, `vercel-speed-insights`, `langfuse`. |
 | `--gateway <name-or-address>` | Vercel | Select a built-in or external registry gateway. |
 | `--from-git <url>` | Built-in scaffold | Clone from a Git repository instead of the built-in scaffold. |
 | `--storage-provider <provider>` | Prompted when needed | Select a Files SDK provider such as `vercel-blob`, `s3`, `r2`, or `gcs`. |
+| `--sandbox-provider <item>` | None | Select sandbox infrastructure. Uploads require `vercel` or a compatible persistent provider. |
 | `--storage-config <json>` | — | Supply non-secret Files SDK adapter options as JSON. |
 
 New apps use the invoking package manager, with Bun as the fallback. The CLI records its version in `package.json`, and shadcn installs dependencies immediately. The former `--no-install`, `--package-manager`, and `--registry` flags are removed.
@@ -76,6 +77,7 @@ Install registry tools, optional features or providers into an existing ChatJS p
 | `-o, --overwrite` | `false` | Authorize overwriting modified or untracked source. |
 | `--gateway <item>` | Not applicable | Install an AI gateway. |
 | `--storage-provider <item>` | Not applicable | Install file storage. |
+| `--sandbox-provider <item>` | Not applicable | Install a sandbox provider. Uploads require persistent-file support. |
 | `--storage-config <json>` | Not applicable | Non-secret storage options. |
 | `-c, --cwd <cwd>` | Current directory | Run against another ChatJS project. |
 

@@ -11,8 +11,12 @@ export const planSandboxInstallation = async (
   cwd: string,
   selection: ReadonlyInput<Selection>,
   options: ReadonlyInput<PlanOptions>,
-  chooseSandbox: (required: boolean) => Promise<string | undefined>
+  chooseSandbox: (
+    required: boolean,
+    persistent: boolean
+  ) => Promise<string | undefined>
 ) => {
+  let persistent = false;
   let initialPlan: Awaited<ReturnType<typeof planInstallation>> | undefined;
   try {
     initialPlan = await planInstallation(cwd, selection, options);
@@ -20,8 +24,9 @@ export const planSandboxInstallation = async (
     if (!(error instanceof SandboxRequiredError)) {
       throw error;
     }
+    ({ persistent } = error);
   }
-  const source = await chooseSandbox(initialPlan === undefined);
+  const source = await chooseSandbox(initialPlan === undefined, persistent);
   const sandbox =
     typeof source === "string" && source !== ""
       ? await resolveSandbox(source, cwd)

@@ -278,7 +278,11 @@ const ShareButton = ({
   renderContent,
 }: {
   readonly renderContent: (onClose: () => void) => React.ReactNode;
-} & React.ComponentProps<typeof Button>): React.JSX.Element => {
+  readonly className?: string;
+} & Omit<
+  React.ComponentProps<typeof Button>,
+  "className"
+>): React.JSX.Element => {
   const [open, setOpen] = useState(false);
   const { data: session } = useSession();
   const isAuthenticated = Boolean(session?.user);
@@ -293,7 +297,7 @@ const ShareButton = ({
   if (!isAuthenticated) {
     return (
       <Popover>
-        <PopoverTrigger asChild>{triggerButton}</PopoverTrigger>
+        <PopoverTrigger render={triggerButton} />
         <PopoverContent align="start" className="w-80 p-0">
           <LoginPrompt
             description="Control who can see your conversations and share them with others."
@@ -310,7 +314,7 @@ const ShareButton = ({
       open={open}
       renderContent={renderContent}
     >
-      <DialogTrigger asChild>{triggerButton}</DialogTrigger>
+      <DialogTrigger render={triggerButton} />
     </ShareDialog>
   );
 };

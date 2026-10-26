@@ -4,7 +4,7 @@ import React from "react";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import dynamic from "next/dynamic";
-import { getLanguageFromFileName } from "@/lib/utils";
+import { getLanguageFromFileName } from "@/lib/file-language";
 
 const CodeEditor = dynamic(
   async () => {

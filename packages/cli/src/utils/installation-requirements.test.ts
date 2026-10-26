@@ -210,3 +210,50 @@ test("add validates installed provider literals without executing user source", 
     }
   );
 });
+
+test("uploads reject absent and nonpersistent sandboxes, accept compatible external providers", async () => {
+  const cwd = await mkdtemp(path.join(tmpdir(), "chatjs-upload-sandbox-"));
+  roots.push(cwd);
+  const target = {
+    plugins: [{ id: "attachment-uploads" }],
+    storage: "s3",
+    tools: [],
+  };
+  await rejects(
+    validateProviderRequirements(cwd, target),
+    /persistent sandbox/u
+  );
+  await rejects(
+    validateProviderRequirements(cwd, {
+      ...target,
+      sandbox: "daytona",
+      sandboxProviderSource: "export const supportsPersistentSandbox = false;",
+    }),
+    /persistent sandbox/u
+  );
+  await validateProviderRequirements(cwd, {
+    ...target,
+    sandbox: "external",
+    sandboxProviderSource:
+      'throw new Error("must not execute"); export const supportsPersistentSandbox = true;',
+  });
+  await mkdir(path.join(cwd, "lib/sandbox"), { recursive: true });
+  await writeFile(
+    path.join(cwd, "lib/sandbox/options.ts"),
+    'export const sandboxId = "external";'
+  );
+  await writeFile(
+    path.join(cwd, "lib/sandbox/provider.ts"),
+    "export const supportsPersistentSandbox = true;"
+  );
+  await validateProviderRequirements(cwd, target);
+  // A replacement must satisfy existing uploads even when the old provider does.
+  await rejects(
+    validateProviderRequirements(cwd, {
+      ...target,
+      sandbox: "daytona",
+      sandboxProviderSource: "export const supportsPersistentSandbox = false;",
+    }),
+    /persistent sandbox/u
+  );
+});

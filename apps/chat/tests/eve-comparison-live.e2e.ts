@@ -143,7 +143,7 @@ test("two cheap native responses bind, render, and preserve an unsent draft whil
     await expect(
       page.getByText("Ready", { exact: true }).filter({ visible: true })
     ).toBeVisible();
-    const userRow = page.getByRole("log").locator(".is-user");
+    const userRow = page.getByRole("log").locator('[data-role="user"]');
     await expect(
       userRow.getByRole("button", {
         exact: true,

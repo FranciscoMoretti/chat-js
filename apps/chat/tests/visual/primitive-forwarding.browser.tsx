@@ -1,4 +1,4 @@
-import { Content as DropdownPrimitiveContent } from "@radix-ui/react-dropdown-menu";
+import { Menu as MenuPrimitive } from "@base-ui/react/menu";
 import { takeSnapshot } from "@uiverify/vitest";
 import React, { act, createRef } from "react";
 import { expect, test } from "vitest";
@@ -32,7 +32,7 @@ import {
 } from "@/components/ui/hover-card";
 import {
   Popover,
-  PopoverAnchor,
+  PopoverTrigger,
   PopoverContent,
 } from "@/components/ui/popover";
 import {
@@ -72,39 +72,43 @@ test("menu portal groups and submenu preserve callbacks and refs", async () => {
           opened.push(value);
         }}
       >
-        <DropdownMenuTrigger asChild ref={menuRef}>
-          <Button>Wrapper menu</Button>
+        <DropdownMenuTrigger render={<Button />} ref={menuRef}>
+          Wrapper menu
         </DropdownMenuTrigger>
         <DropdownMenuPortal container={portal}>
-          <DropdownPrimitiveContent aria-label="Forwarded menu">
-            <DropdownMenuGroup>
-              <DropdownMenuRadioGroup
-                value="first"
-                onValueChange={(value) => {
-                  selected.push(value);
-                }}
-              >
-                <DropdownMenuRadioItem value="first">
-                  First choice
-                </DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="second">
-                  Second choice
-                </DropdownMenuRadioItem>
-              </DropdownMenuRadioGroup>
-              <DropdownMenuSub>
-                <DropdownMenuSubTrigger>Nested choices</DropdownMenuSubTrigger>
-                <DropdownMenuSubContent>
-                  <DropdownMenuItem
-                    onSelect={() => {
-                      selected.push("nested");
-                    }}
-                  >
-                    Nested choice
-                  </DropdownMenuItem>
-                </DropdownMenuSubContent>
-              </DropdownMenuSub>
-            </DropdownMenuGroup>
-          </DropdownPrimitiveContent>
+          <MenuPrimitive.Positioner>
+            <MenuPrimitive.Popup aria-label="Forwarded menu">
+              <DropdownMenuGroup>
+                <DropdownMenuRadioGroup
+                  value="first"
+                  onValueChange={(value: string) => {
+                    selected.push(value);
+                  }}
+                >
+                  <DropdownMenuRadioItem closeOnClick value="first">
+                    First choice
+                  </DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem closeOnClick value="second">
+                    Second choice
+                  </DropdownMenuRadioItem>
+                </DropdownMenuRadioGroup>
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>
+                    Nested choices
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        selected.push("nested");
+                      }}
+                    >
+                      Nested choice
+                    </DropdownMenuItem>
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
+              </DropdownMenuGroup>
+            </MenuPrimitive.Popup>
+          </MenuPrimitive.Positioner>
         </DropdownMenuPortal>
       </DropdownMenu>
     </>
@@ -161,14 +165,10 @@ test("close callbacks hover content and separate popover anchor are forwarded", 
           dialogEvents.push(open);
         }}
       >
-        <DialogTrigger asChild>
-          <Button>Callback dialog</Button>
-        </DialogTrigger>
+        <DialogTrigger render={<Button />}>Callback dialog</DialogTrigger>
         <DialogContent aria-describedby={undefined}>
           <DialogTitle>Callback dialog content</DialogTitle>
-          <DialogClose asChild>
-            <Button>Wrapper dialog close</Button>
-          </DialogClose>
+          <DialogClose render={<Button />}>Wrapper dialog close</DialogClose>
         </DialogContent>
       </Dialog>
       <Sheet
@@ -176,31 +176,25 @@ test("close callbacks hover content and separate popover anchor are forwarded", 
           sheetEvents.push(open);
         }}
       >
-        <SheetTrigger asChild>
-          <Button>Callback sheet</Button>
-        </SheetTrigger>
+        <SheetTrigger render={<Button />}>Callback sheet</SheetTrigger>
         <SheetContent aria-describedby={undefined}>
           <SheetTitle>Callback sheet content</SheetTitle>
-          <SheetClose asChild>
-            <Button>Wrapper sheet close</Button>
-          </SheetClose>
+          <SheetClose render={<Button />}>Wrapper sheet close</SheetClose>
         </SheetContent>
       </Sheet>
       <HoverCard open>
-        <HoverCardTrigger asChild>
-          <Button>Hover anchor</Button>
-        </HoverCardTrigger>
+        <HoverCardTrigger render={<Button>Hover anchor</Button>} />
         <HoverCardContent>Forwarded hover content</HoverCardContent>
       </HoverCard>
       <Popover open>
-        <PopoverAnchor asChild>
+        <PopoverTrigger nativeButton={false} render={<span />}>
           <span
             className="mt-24 ml-64 block w-40"
             data-testid="separate-anchor"
           >
             Separate anchor
           </span>
-        </PopoverAnchor>
+        </PopoverTrigger>
         <PopoverContent>Separately anchored content</PopoverContent>
       </Popover>
     </>

@@ -107,73 +107,75 @@ export const SidebarUserNav = (): ReactJSX.Element => {
     <SidebarMenu>
       <SidebarMenuItem>
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <SidebarMenuButton
-              className={cn(
-                "data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground mx-auto",
-                isDesktopCollapsed &&
-                  "flex flex-col items-center justify-center"
-              )}
-              size="lg"
-            >
-              <Avatar
+          <DropdownMenuTrigger
+            render={
+              <SidebarMenuButton
                 className={cn(
-                  "size-8 rounded-lg",
-                  isDesktopCollapsed && "size-6"
+                  "data-open:bg-sidebar-accent data-open:text-sidebar-accent-foreground mx-auto",
+                  isDesktopCollapsed &&
+                    "flex flex-col items-center justify-center"
                 )}
-              >
-                <AvatarImage alt={displayName} src={avatarImageSrc} />
-                <AvatarFallback className="rounded-lg">
-                  {userInitials}
-                </AvatarFallback>
-              </Avatar>
-              <div
-                className={cn(
-                  "grid flex-1 text-left text-sm leading-tight",
-                  isDesktopCollapsed && "hidden"
-                )}
-              >
-                <span className="truncate font-medium">
-                  {user.name || user.email}
-                </span>
-                {installedAccountSummaries.map(({ id, Component }) => (
-                  <Component key={id} />
-                ))}
-              </div>
-              <ChevronsUpDown
-                className={cn("ml-auto size-4", isDesktopCollapsed && "hidden")}
+                size="lg"
               />
-            </SidebarMenuButton>
+            }
+          >
+            <Avatar
+              className={cn(
+                "size-8 rounded-lg",
+                isDesktopCollapsed && "size-6"
+              )}
+            >
+              <AvatarImage alt={displayName} src={avatarImageSrc} />
+              <AvatarFallback className="rounded-lg">
+                {userInitials}
+              </AvatarFallback>
+            </Avatar>
+            <div
+              className={cn(
+                "grid flex-1 text-left text-sm leading-tight",
+                isDesktopCollapsed && "hidden"
+              )}
+            >
+              <span className="truncate font-medium">
+                {user.name || user.email}
+              </span>
+              {installedAccountSummaries.map(({ id, Component }) => (
+                <Component key={id} />
+              ))}
+            </div>
+            <ChevronsUpDown
+              className={cn("ml-auto size-4", isDesktopCollapsed && "hidden")}
+            />
           </DropdownMenuTrigger>
           <DropdownMenuContent
             align="end"
-            className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
+            className="w-[var(--anchor-width)] min-w-56 rounded-lg"
             side={isMobile ? "bottom" : "right"}
             sideOffset={4}
           >
-            <DropdownMenuLabel className="p-0 font-normal">
-              <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage alt={displayName} src={avatarImageSrc} />
-                  <AvatarFallback className="rounded-lg">
-                    {userInitials}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">
-                    {user.name || user.email}
-                  </span>
-                  <span className="truncate text-xs">{user.email}</span>
+            <DropdownMenuGroup>
+              <DropdownMenuLabel className="p-0 font-normal">
+                <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+                  <Avatar className="h-8 w-8 rounded-lg">
+                    <AvatarImage alt={displayName} src={avatarImageSrc} />
+                    <AvatarFallback className="rounded-lg">
+                      {userInitials}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="grid flex-1 text-left text-sm leading-tight">
+                    <span className="truncate font-semibold">
+                      {user.name || user.email}
+                    </span>
+                    <span className="truncate text-xs">{user.email}</span>
+                  </div>
                 </div>
-              </div>
-            </DropdownMenuLabel>
+              </DropdownMenuLabel>
+            </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem asChild>
-                <InternalLink href="/settings">
-                  <Settings className="mr-2 size-4" />
-                  Settings
-                </InternalLink>
+              <DropdownMenuItem render={<InternalLink href="/settings" />}>
+                <Settings className="mr-2 size-4" />
+                Settings
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => {
@@ -189,59 +191,61 @@ export const SidebarUserNav = (): ReactJSX.Element => {
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => {
-                startEventAction(async () => {
-                  if (
-                    isElectronRenderer() &&
-                    typeof window.signOut === "function"
-                  ) {
-                    const nativeSignOut = window.signOut.bind(window);
-                    await signOutAndNavigate({
-                      navigate: () => {
-                        globalThis.location.href = "/";
-                      },
-                      onFailure: () => {
-                        toast.error("Unable to sign out. Try again.");
-                      },
-                      onSyncFailure: (error) => {
-                        console.error(
-                          "Failed to refresh the signed-out Electron session",
-                          error
-                        );
-                      },
-                      signOut: nativeSignOut,
-                      syncSession: async () => {
-                        await window.electronAPI?.syncAuthSession?.();
-                      },
-                    });
-                  } else {
-                    await signOutAndNavigate({
-                      navigate: () => {
-                        globalThis.location.href = "/";
-                      },
-                      onFailure: () => {
-                        toast.error("Unable to sign out. Try again.");
-                      },
-                      onSyncFailure: (error) => {
-                        console.error(
-                          "Failed to refresh the signed-out session",
-                          error
-                        );
-                      },
-                      signOut: async () => {
-                        await authClient.signOut({
-                          fetchOptions: { throw: true },
-                        });
-                      },
-                    });
-                  }
-                });
-              }}
-            >
-              <LogOut className="mr-2 size-4" />
-              Log out
-            </DropdownMenuItem>
+            <DropdownMenuGroup>
+              <DropdownMenuItem
+                onClick={() => {
+                  startEventAction(async () => {
+                    if (
+                      isElectronRenderer() &&
+                      typeof window.signOut === "function"
+                    ) {
+                      const nativeSignOut = window.signOut.bind(window);
+                      await signOutAndNavigate({
+                        navigate: () => {
+                          globalThis.location.href = "/";
+                        },
+                        onFailure: () => {
+                          toast.error("Unable to sign out. Try again.");
+                        },
+                        onSyncFailure: (error) => {
+                          console.error(
+                            "Failed to refresh the signed-out Electron session",
+                            error
+                          );
+                        },
+                        signOut: nativeSignOut,
+                        syncSession: async () => {
+                          await window.electronAPI?.syncAuthSession?.();
+                        },
+                      });
+                    } else {
+                      await signOutAndNavigate({
+                        navigate: () => {
+                          globalThis.location.href = "/";
+                        },
+                        onFailure: () => {
+                          toast.error("Unable to sign out. Try again.");
+                        },
+                        onSyncFailure: (error) => {
+                          console.error(
+                            "Failed to refresh the signed-out session",
+                            error
+                          );
+                        },
+                        signOut: async () => {
+                          await authClient.signOut({
+                            fetchOptions: { throw: true },
+                          });
+                        },
+                      });
+                    }
+                  });
+                }}
+              >
+                <LogOut className="mr-2 size-4" />
+                Log out
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>

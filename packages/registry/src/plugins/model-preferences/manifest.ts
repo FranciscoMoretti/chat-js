@@ -16,7 +16,8 @@ const modelPreferencesFiles = [
   "app/(chat)/settings/models/page.tsx",
 ];
 const modelPreferencesDefinition = pluginDefinitionSchema.parse({
-  contractVersion: 1,
+  contractVersion: 2,
+  uiBase: "base",
   id: "model-preferences",
   kind: "plugin",
   files: modelPreferencesFiles,

@@ -31,8 +31,10 @@ Configure namespaces in `components.json`. The former `--registry` flag is remov
 Install optional implementations together or independently:
 
 ```bash
-npx @chat-js/cli@latest add attachment-uploads mcp vercel-analytics vercel-speed-insights langfuse --yes
+npx @chat-js/cli@latest add attachment-uploads mcp vercel-analytics vercel-speed-insights langfuse --sandbox-provider vercel --storage-provider vercel-blob --yes
 ```
+
+Uploads require durable storage and a sandbox with persistent-file support. Existing compatible providers satisfy these requirements. The CLI rejects replacing that sandbox with an incompatible provider while uploads remain installed.
 
 New contributions append to `composer-controls.ts` and `settings-items.ts`. Your existing entries and their order remain intact. Ordinary `sync` preserves those arrays. If you use a computed array, add the contribution manually and run `sync`.
 

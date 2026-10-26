@@ -324,6 +324,9 @@ test("one ordered menu selects and clears tools, attaches files, and toggles con
       .element(page.getByRole("menuitemcheckbox", { name: /Web Search/u }))
       .toBeChecked();
     await takeSnapshot("composer-selected-tool");
+    await page.screenshot({
+      path: "__screenshots__/composer-selected-tool.png",
+    });
     await act(async () => {
       await page.getByRole("menuitemcheckbox", { name: /Web Search/u }).click();
     });
@@ -359,6 +362,50 @@ test("one ordered menu selects and clears tools, attaches files, and toggles con
     });
     expect(state.toggle).toHaveBeenCalledWith({ enabled: false, id: "docs" });
     await takeSnapshot("composer-connectors");
+    await page.screenshot({ path: "__screenshots__/composer-connectors.png" });
+  } finally {
+    await cleanup();
+  }
+});
+
+test.each([
+  ["Attach files", "pointer"],
+  ["Attach files", "keyboard"],
+  ["Take photo", "pointer"],
+  ["Take photo", "keyboard"],
+])("%s invokes the upload control from %s", async (name, input) => {
+  state.mobile = true;
+  const cleanup = await mount();
+  try {
+    await act(async () => {
+      await page.getByRole("button", { name: "Composer options" }).click();
+    });
+    const item = page.getByRole("menuitem", { exact: true, name });
+    await expect.element(item).toBeVisible();
+    await act(async () => {
+      if (input === "pointer") {
+        await item.click();
+      } else {
+        const element = item.element();
+        if (!(element instanceof HTMLElement)) {
+          throw new Error("Expected upload menu item");
+        }
+        element.focus();
+        await userEvent.keyboard("{Enter}");
+      }
+    });
+    await expect.element(page.getByRole("menu")).not.toBeInTheDocument();
+    expect(state.attach).toHaveBeenCalledOnce();
+    if (name === "Take photo") {
+      expect(state.attach).toHaveBeenLastCalledWith(
+        "image/jpeg,image/png",
+        "environment"
+      );
+    } else {
+      expect(state.attach).toHaveBeenLastCalledWith(
+        "application/pdf,image/jpeg,image/png"
+      );
+    }
   } finally {
     await cleanup();
   }

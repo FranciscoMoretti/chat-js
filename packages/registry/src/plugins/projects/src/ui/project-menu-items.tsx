@@ -19,10 +19,7 @@ export const ProjectMenuItems = ({
       <Pencil size={16} />
       <span>Rename</span>
     </DropdownMenuItem>
-    <DropdownMenuItem
-      className="text-destructive focus:bg-destructive/15 focus:text-destructive cursor-pointer"
-      onSelect={onDelete}
-    >
+    <DropdownMenuItem variant="destructive" onClick={onDelete}>
       <Trash2 size={16} />
       <span>Delete</span>
     </DropdownMenuItem>

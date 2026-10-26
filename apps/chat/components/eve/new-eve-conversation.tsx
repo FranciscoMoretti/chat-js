@@ -17,9 +17,12 @@ import { createClientSnapshot } from "@/components/client-snapshot";
 import type { JSX as ReactJSX, SetStateAction } from "react";
 
 import {
-  Conversation,
-  ConversationContent,
-} from "@/components/ai-elements/conversation";
+  MessageScroller,
+  MessageScrollerProvider,
+  MessageScrollerViewport,
+  MessageScrollerContent,
+  MessageScrollerButton,
+} from "@/components/ui/message-scroller";
 import { ChatWelcomeView } from "@/components/chat/chat-welcome-view";
 import { ThinkingMessage } from "@/components/thinking-message";
 import type { SelectedModelValue, UiToolName } from "@/lib/ai/types";
@@ -326,19 +329,26 @@ export const NewEveConversation = ({
   if (busy) {
     return (
       <div className="flex min-h-0 flex-1 flex-col">
-        <Conversation>
-          <ConversationContent className="mx-auto w-full max-w-3xl">
-            {optimisticComparison ? (
-              <EveOptimisticResponseGroup operation={optimisticComparison} />
-            ) : (
-              <EveInitialMessage
-                message={draftMessage(draft, files.attachments)}
-              />
-            )}
-            {!optimisticComparison && <ThinkingMessage />}
-            <output className="sr-only">Sending…</output>
-          </ConversationContent>
-        </Conversation>
+        <MessageScrollerProvider autoScroll>
+          <MessageScroller className="flex-1">
+            <MessageScrollerViewport>
+              <MessageScrollerContent className="mx-auto w-full max-w-3xl p-4">
+                {optimisticComparison ? (
+                  <EveOptimisticResponseGroup
+                    operation={optimisticComparison}
+                  />
+                ) : (
+                  <EveInitialMessage
+                    message={draftMessage(draft, files.attachments)}
+                  />
+                )}
+                {!optimisticComparison && <ThinkingMessage />}
+                <output className="sr-only">Sending…</output>
+              </MessageScrollerContent>
+            </MessageScrollerViewport>
+            <MessageScrollerButton />
+          </MessageScroller>
+        </MessageScrollerProvider>
         <div className="mx-auto w-full max-w-3xl p-4">{composer}</div>
       </div>
     );

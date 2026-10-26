@@ -1,6 +1,5 @@
 import React, { act } from "react";
 import { expect, test, vi } from "vitest";
-import { PromptInputButton } from "@/components/ai-elements/prompt-input";
 import { Shimmer } from "@/components/ai-elements/shimmer";
 import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
 import { createDomHarness } from "@/components/test-dom-harness";
@@ -39,50 +38,6 @@ test("polymorphic shimmer stops the previous element animation and binds its rep
       fixture?.unmount();
     });
     motion.animate.mockClear();
-  }
-});
-
-test("button sizing counts opaque empty slots and nested arrays without flattening fragments", () => {
-  let fixture: ReturnType<typeof createDomHarness> | undefined;
-  act(() => {
-    fixture = createDomHarness(
-      <>
-        <PromptInputButton aria-label="Empty slot">
-          {null}
-          <span>Send</span>
-        </PromptInputButton>
-        <PromptInputButton aria-label="Nested array">
-          {[[<span key="send">Send</span>, false]]}
-        </PromptInputButton>
-        <PromptInputButton aria-label="Fragment">
-          <>
-            <span>A</span>
-            <span>B</span>
-          </>
-        </PromptInputButton>
-      </>
-    );
-  });
-  try {
-    expect(
-      fixture?.container.querySelector<HTMLButtonElement>(
-        'button[aria-label="Empty slot"]'
-      )?.dataset.size
-    ).toBe("sm");
-    expect(
-      fixture?.container.querySelector<HTMLButtonElement>(
-        'button[aria-label="Nested array"]'
-      )?.dataset.size
-    ).toBe("sm");
-    expect(
-      fixture?.container.querySelector<HTMLButtonElement>(
-        'button[aria-label="Fragment"]'
-      )?.dataset.size
-    ).toBe("icon-sm");
-  } finally {
-    act(() => {
-      fixture?.unmount();
-    });
   }
 });
 

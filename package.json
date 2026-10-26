@@ -53,6 +53,7 @@
     "dev:electron": "dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env electron -- turbo run electron:dev --filter=@chat-js/electron",
     "build:electron": "turbo run electron:build --filter=@chat-js/electron",
     "dist:electron": "turbo run electron:make --filter=@chat-js/electron",
+    "test:visual:create": "dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env site -- bun apps/site/tests/create.visual.ts && dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env site -- bun apps/site/tests/create-preview-actions.visual.ts && dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env site -- bun apps/site/tests/create-lifecycle.visual.ts && dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env site -- bun apps/site/tests/create-inflight.visual.ts",
     "test:visual:site": "dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env site -- bun apps/site/tests/thread-playground.visual.ts",
     "lint:fix": "bun lint:prepare && ultracite fix .",
     "lint:prepare": "turbo run build --filter=@chat-js/gateways --filter=@chat-js/sandboxes --filter=@chat-js/thread && bun run --cwd apps/chat next typegen . && bun run --cwd apps/site next typegen .",
@@ -65,13 +66,15 @@
     "setup": "dotenv -e .env.worktree.local -e .env.local -- bun run --cwd apps/chat setup",
     "eve:setup": "dotenv -e .env.worktree.local -e .env.local -- bun run --cwd apps/chat eve:setup",
     "eve:check": "dotenv -e .env.worktree.local -e .env.local -- bun run --cwd apps/chat eve:check",
-    "test:tools:live": "dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env chat -- bun --filter=@chatjs/chat run test:tools:live"
+    "test:tools:live": "dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env chat -- bun --filter=@chatjs/chat run test:tools:live",
+    "test:visual:create:activity": "bun -e 'import { rmSync } from \"node:fs\"; rmSync(\"apps/site/uiverify-archive\", { recursive: true, force: true });' && dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env site -- playwright test --config apps/site/tests/create.playwright.config.mts && bun -e 'import { finalizeArchive } from \"@uiverify/playwright\"; finalizeArchive(\"apps/site/uiverify-archive\");'"
   },
   "devDependencies": {
     "@changesets/changelog-github": "^0.5.2",
     "@changesets/cli": "^2.29.8",
     "@types/bun": "^1.3.12",
     "@types/node": "22.8.6",
+    "@uiverify/playwright": "1.4.0",
     "@uiverify/vitest": "^1.5.0",
     "@vitest/browser-playwright": "^4.1.11",
     "dotenv-cli": "^8.0.0",

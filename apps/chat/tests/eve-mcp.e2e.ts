@@ -324,7 +324,7 @@ test("native MCP executes and its saved result survives connector removal and re
       page.getByRole("button", { exact: true, name: "read_token Completed" })
     ).toBeVisible();
     await expect(
-      page.locator(".is-assistant p").filter({ hasText: token })
+      page.locator('[data-role="assistant"] p').filter({ hasText: token })
     ).toBeVisible();
     expect(calls).toBe(1);
     await page
@@ -477,12 +477,12 @@ test("stopping a pending MCP call closes its transport and permits another messa
     await composer.fill(`Do not call tools. Reply exactly ${token}.`);
     await composer.press("Enter");
     await expect(
-      page.locator(".is-assistant p").filter({ hasText: token })
+      page.locator('[data-role="assistant"] p').filter({ hasText: token })
     ).toBeVisible({ timeout: 60_000 });
     await expect(page.getByText("Ready", { exact: true })).toBeVisible();
     await page.reload();
     await expect(
-      page.locator(".is-assistant p").filter({ hasText: token })
+      page.locator('[data-role="assistant"] p').filter({ hasText: token })
     ).toBeVisible();
     expect(calls).toBe(1);
   } finally {

@@ -4,6 +4,7 @@ import { hasText } from "@/components/text-value";
 
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { SearchIcon } from "lucide-react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState, useSyncExternalStore } from "react";
 import type { JSX as ReactJSX } from "react";
@@ -13,7 +14,9 @@ import {
   DialogContent,
   DialogDescription,
   DialogHeader,
+  DialogOverlay,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { SidebarMenuButton, useSidebar } from "@/components/ui/sidebar";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
@@ -184,7 +187,7 @@ export const EveSearchChats = ({
   );
   const [open, setOpen] = useState(false);
   const router = useRouter();
-  const { setOpenMobile } = useSidebar();
+  const { isMobile, openMobile, setOpenMobile } = useSidebar();
   useEffect(() => {
     const down = (
       event: Readonly<
@@ -202,51 +205,49 @@ export const EveSearchChats = ({
     };
   }, []);
   return (
-    <>
-      <SidebarMenuButton
-        tooltip="Search chats"
-        onClick={() => {
-          setOpen(true);
-        }}
-      >
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger render={<SidebarMenuButton tooltip="Search chats" />}>
         <SearchIcon className="size-4" />
         <span>Search chats</span>
         <span className="text-muted-foreground ml-auto text-xs">
           {shortcut}
         </span>
-      </SidebarMenuButton>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent
-          className="overflow-hidden p-0"
-          showCloseButton={!hasText(ownerId)}
-        >
-          <DialogHeader className="sr-only">
-            <DialogTitle>Search chats</DialogTitle>
-            <DialogDescription>
-              Search your conversation history.
-            </DialogDescription>
-          </DialogHeader>
-          {open && !hasText(ownerId) && (
-            <p className="text-muted-foreground p-4 text-sm">
-              Start a chat to see your conversation history.
-            </p>
-          )}
-          {open && hasText(ownerId) && (
-            <SearchResults
-              key={ownerId}
-              ownerId={ownerId}
-              onClose={() => {
-                setOpen(false);
-              }}
-              onSelect={(id) => {
-                setOpen(false);
-                setOpenMobile(false);
-                router.push(`/chat/${id}`);
-              }}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
-    </>
+      </DialogTrigger>
+      {/* Base UI omits nested backdrops. Search must also cover its parent sheet. */}
+      {open &&
+        isMobile &&
+        openMobile &&
+        createPortal(<DialogOverlay forceRender />, document.body)}
+      <DialogContent
+        className="overflow-hidden p-0 max-md:z-[51]"
+        showCloseButton={!hasText(ownerId)}
+      >
+        <DialogHeader className="sr-only">
+          <DialogTitle>Search chats</DialogTitle>
+          <DialogDescription>
+            Search your conversation history.
+          </DialogDescription>
+        </DialogHeader>
+        {open && !hasText(ownerId) && (
+          <p className="text-muted-foreground p-4 text-sm">
+            Start a chat to see your conversation history.
+          </p>
+        )}
+        {open && hasText(ownerId) && (
+          <SearchResults
+            key={ownerId}
+            ownerId={ownerId}
+            onClose={() => {
+              setOpen(false);
+            }}
+            onSelect={(id) => {
+              setOpen(false);
+              setOpenMobile(false);
+              router.push(`/chat/${id}`);
+            }}
+          />
+        )}
+      </DialogContent>
+    </Dialog>
   );
 };

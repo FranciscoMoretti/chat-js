@@ -2,10 +2,14 @@
 
 import React from "react";
 
-import { Message, MessageContent } from "@/components/ai-elements/message";
+import {
+  Message,
+  MessageContent,
+  MessageFooter,
+} from "@/components/ui/message";
+import { Bubble, BubbleContent } from "@/components/ui/bubble";
 import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 import { hasCustomContent } from "@/components/custom-content";
-import { cn } from "@/lib/utils";
 
 /**
  * Inline editing and message chrome for EVE messages.
@@ -40,69 +44,55 @@ export const UserMessageView = ({
   readonly messageId?: string;
 }): React.JSX.Element => (
   <Message
-    className={cn(
-      hasCustomContent(editor) ? "max-w-full [&>div]:max-w-full" : undefined,
-      "py-1"
-    )}
-    data-message-id={messageId}
-    from="user"
+    align="end"
+    className="py-1"
+    data-eve-message-id={messageId}
+    data-role="user"
   >
-    <div
-      className={cn(
-        "flex w-full flex-col gap-2",
-        !hasCustomContent(editor) && "items-end"
-      )}
-    >
+    <MessageContent>
       {!hasCustomContent(editor) && responses}
-      {!hasCustomContent(editor) &&
-        (onEdit ? (
-          <button
-            aria-disabled={editDisabled}
-            className="block cursor-pointer text-left transition-opacity select-text hover:opacity-80"
+      {!hasCustomContent(editor) && hasCustomContent(attachments) && (
+        <div className="max-w-full self-end">{attachments}</div>
+      )}
+      {!hasCustomContent(editor) && text && (
+        <Bubble align="end" variant="muted">
+          <BubbleContent
             data-testid="message-content"
-            onClick={(
-              event: Readonly<{
-                currentTarget: Readonly<Pick<HTMLButtonElement, "contains">>;
-              }>
-            ) => {
-              if (editDisabled) {
-                return;
-              }
-              const selection = globalThis.getSelection();
-              if (
-                selection !== null &&
-                selection.toString() !== "" &&
-                event.currentTarget.contains(selection.anchorNode)
-              ) {
-                return;
-              }
-              onEdit();
-            }}
-            type="button"
+            render={
+              onEdit ? (
+                <button
+                  aria-disabled={editDisabled}
+                  aria-label={text}
+                  className="cursor-pointer select-text"
+                  onClick={(event) => {
+                    if (editDisabled) {
+                      return;
+                    }
+                    const selection = globalThis.getSelection();
+                    if (
+                      selection !== null &&
+                      selection.toString() !== "" &&
+                      event.currentTarget.contains(selection.anchorNode)
+                    ) {
+                      return;
+                    }
+                    onEdit();
+                  }}
+                  type="button"
+                />
+              ) : undefined
+            }
           >
-            <MessageContent
-              className="group-[.is-user]:bg-card text-left group-[.is-user]:max-w-none"
-              data-testid="message-content"
-            >
-              {attachments}
-              <pre className="font-sans whitespace-pre-wrap">{text}</pre>
-            </MessageContent>
-          </button>
-        ) : (
-          <MessageContent
-            className="group-[.is-user]:bg-card text-left"
-            data-testid="message-content"
-          >
-            {attachments}
             <pre className="font-sans whitespace-pre-wrap">{text}</pre>
-          </MessageContent>
-        ))}
+          </BubbleContent>
+        </Bubble>
+      )}
       {hasCustomContent(editor) ? (
-        <div className="flex flex-row items-start gap-2">{editor}</div>
+        <div className="w-full">{editor}</div>
       ) : (
         editor
       )}
-      <div className="self-end">{actions}</div>
-    </div>
+      <MessageFooter>{actions}</MessageFooter>
+    </MessageContent>
   </Message>
 );

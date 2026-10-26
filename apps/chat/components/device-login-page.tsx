@@ -7,7 +7,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 
 import Link from "next/link";
 
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 
 import {
   Card,
@@ -68,9 +68,15 @@ const DeviceAuthScreen = ({
           {!isLoading && (
             <CardContent className="text-center">
               <div className="mb-4">
-                <Button asChild className="w-full" variant="outline">
-                  <Link href="/">Continue on web</Link>
-                </Button>
+                <Link
+                  className={buttonVariants({
+                    className: "w-full",
+                    variant: "outline",
+                  })}
+                  href="/"
+                >
+                  Continue on web
+                </Link>
               </div>
               <p className="text-muted-foreground/60 text-xs">
                 Didn&apos;t open?{" "}

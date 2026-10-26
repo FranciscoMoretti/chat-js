@@ -18,7 +18,8 @@ const searchFiles = [
   "agent/hooks/search.ts",
 ];
 const searchDefinition = pluginDefinitionSchema.parse({
-  contractVersion: 1,
+  contractVersion: 2,
+  uiBase: "base",
   id: "search",
   kind: "plugin",
   files: searchFiles,

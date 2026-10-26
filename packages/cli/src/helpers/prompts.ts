@@ -589,22 +589,27 @@ const promptCodeExecutionTool = async (_skipPrompt: boolean): Promise<string> =>
   await Promise.resolve("code-execution");
 const promptSandbox = async (
   skipPrompt: boolean,
-  required: boolean
+  required: boolean,
+  persistent = false
 ): Promise<string | undefined> => {
   if (skipPrompt) {
     if (required) {
       throw new Error(
-        "Code execution requires --sandbox-provider vercel or daytona."
+        persistent
+          ? "Attachment uploads require a persistent sandbox. Pass --sandbox-provider vercel or a compatible external provider."
+          : "Code execution requires --sandbox-provider vercel or daytona."
       );
     }
     return undefined;
   }
   const choice = await select({
-    message: "Which sandbox provider should the app use?",
+    message: persistent
+      ? "Uploads require persistent files. Which sandbox provider should the app use?"
+      : "Which sandbox provider should the app use?",
     options: [
       ...(required ? [] : [{ label: "None", value: "none" }]),
       { label: "Vercel Sandbox", value: "vercel" },
-      { label: "Daytona", value: "daytona" },
+      ...(persistent ? [] : [{ label: "Daytona", value: "daytona" }]),
     ],
   });
   handleCancel(choice);

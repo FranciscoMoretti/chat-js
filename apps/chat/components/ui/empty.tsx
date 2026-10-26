@@ -1,112 +1,103 @@
-import type {
-  ComponentProps as ReactComponentProps,
-  JSX as ReactJSX,
-} from "react";
-import type { VariantProps } from "class-variance-authority";
-import { cn } from "@/lib/utils";
-import { cva } from "class-variance-authority";
+import { cva, type VariantProps } from "class-variance-authority"
+import { cn } from "cn"
 
-const Empty = ({
-  className,
-  ...props
-}: ReactComponentProps<"div">): ReactJSX.Element => (
-  <div
-    className={cn(
-      "flex min-w-0 flex-1 flex-col items-center justify-center gap-6 rounded-lg border-dashed p-6 text-center text-balance md:p-12",
-      className
-    )}
-    data-slot="empty"
-    {...props}
-  />
-);
+function Empty({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="empty"
+      className={cn(
+        "flex w-full min-w-0 flex-1 flex-col items-center justify-center gap-4 rounded-3xl border-dashed p-12 text-center text-balance",
+        className
+      )}
+      {...props}
+    />
+  )
+}
 
-const EmptyHeader = ({
-  className,
-  ...props
-}: ReactComponentProps<"div">): ReactJSX.Element => (
-  <div
-    className={cn(
-      "flex max-w-sm flex-col items-center gap-2 text-center",
-      className
-    )}
-    data-slot="empty-header"
-    {...props}
-  />
-);
+function EmptyHeader({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="empty-header"
+      className={cn("flex max-w-sm flex-col items-center gap-2", className)}
+      {...props}
+    />
+  )
+}
 
 const emptyMediaVariants = cva(
   "mb-2 flex shrink-0 items-center justify-center [&_svg]:pointer-events-none [&_svg]:shrink-0",
   {
-    defaultVariants: {
-      variant: "default",
-    },
     variants: {
       variant: {
         default: "bg-transparent",
-        icon: "bg-muted text-foreground flex size-10 shrink-0 items-center justify-center rounded-lg [&_svg:not([class*='size-'])]:size-6",
+        icon: "flex size-10 shrink-0 items-center justify-center rounded-xl bg-muted text-foreground [&_svg:not([class*='size-'])]:size-5",
       },
     },
+    defaultVariants: {
+      variant: "default",
+    },
   }
-);
+)
 
-const EmptyMedia = ({
+function EmptyMedia({
   className,
   variant = "default",
   ...props
-}: ReactComponentProps<"div"> &
-  VariantProps<typeof emptyMediaVariants>): ReactJSX.Element => (
-  <div
-    className={cn(emptyMediaVariants({ className, variant }))}
-    data-slot="empty-icon"
-    data-variant={variant}
-    {...props}
-  />
-);
+}: React.ComponentProps<"div"> & VariantProps<typeof emptyMediaVariants>) {
+  return (
+    <div
+      data-slot="empty-icon"
+      data-variant={variant}
+      className={cn(emptyMediaVariants({ variant, className }))}
+      {...props}
+    />
+  )
+}
 
-const EmptyTitle = ({
-  className,
-  ...props
-}: ReactComponentProps<"div">): ReactJSX.Element => (
-  <div
-    className={cn("text-lg font-medium tracking-tight", className)}
-    data-slot="empty-title"
-    {...props}
-  />
-);
+function EmptyTitle({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="empty-title"
+      className={cn(
+        "text-lg font-medium tracking-tight",
+        className
+      )}
+      {...props}
+    />
+  )
+}
 
-const EmptyDescription = ({
-  className,
-  ...props
-}: ReactComponentProps<"p">): ReactJSX.Element => (
-  <div
-    className={cn(
-      "text-muted-foreground [&>a:hover]:text-primary text-sm/relaxed [&>a]:underline [&>a]:underline-offset-4",
-      className
-    )}
-    data-slot="empty-description"
-    {...props}
-  />
-);
+function EmptyDescription({ className, ...props }: React.ComponentProps<"p">) {
+  return (
+    <div
+      data-slot="empty-description"
+      className={cn(
+        "text-sm/relaxed text-muted-foreground [&>a]:underline [&>a]:underline-offset-4 [&>a:hover]:text-primary",
+        className
+      )}
+      {...props}
+    />
+  )
+}
 
-const EmptyContent = ({
-  className,
-  ...props
-}: ReactComponentProps<"div">): ReactJSX.Element => (
-  <div
-    className={cn(
-      "flex w-full max-w-sm min-w-0 flex-col items-center gap-4 text-sm text-balance",
-      className
-    )}
-    data-slot="empty-content"
-    {...props}
-  />
-);
+function EmptyContent({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="empty-content"
+      className={cn(
+        "flex w-full max-w-sm min-w-0 flex-col items-center gap-4 text-sm text-balance",
+        className
+      )}
+      {...props}
+    />
+  )
+}
 
 export {
   Empty,
-  EmptyContent,
-  EmptyDescription,
   EmptyHeader,
-  EmptyMedia,
   EmptyTitle,
-};
+  EmptyDescription,
+  EmptyContent,
+  EmptyMedia,
+}

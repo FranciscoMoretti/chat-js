@@ -19,7 +19,8 @@ const followupSuggestionsFiles = [
   "agent/hooks/followup-suggestions.ts",
 ];
 const followupSuggestionsDefinition = pluginDefinitionSchema.parse({
-  contractVersion: 1,
+  contractVersion: 2,
+  uiBase: "base",
   id: "followup-suggestions",
   kind: "plugin",
   files: followupSuggestionsFiles,

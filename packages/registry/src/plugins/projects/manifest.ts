@@ -42,7 +42,8 @@ const projectsFiles = [
   ...adapterFiles,
 ];
 const projectsDefinition = pluginDefinitionSchema.parse({
-  contractVersion: 1,
+  contractVersion: 2,
+  uiBase: "base",
   id: "projects",
   kind: "plugin",
   files: projectsFiles,

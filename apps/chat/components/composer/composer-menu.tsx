@@ -40,17 +40,19 @@ export const ComposerMenu = (
   }
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          aria-label="Composer options"
-          className="h-8 gap-2 px-2 @[500px]:h-10"
-          disabled={props.disabled}
-          size="sm"
-          variant="ghost"
-        >
-          <Plus className="size-4" />
-          Add
-        </Button>
+      <DropdownMenuTrigger
+        render={
+          <Button
+            aria-label="Composer options"
+            className="h-8 gap-2 px-2 @[500px]:h-10"
+            disabled={props.disabled}
+            size="sm"
+            variant="ghost"
+          />
+        }
+      >
+        <Plus className="size-4" />
+        Add
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-56">
         <DropdownMenuGroup>
@@ -69,7 +71,7 @@ export const ComposerMenu = (
               {controls.length > 0 && <DropdownMenuSeparator />}
               <DropdownMenuItem
                 disabled={props.disabled}
-                onSelect={() => {
+                onClick={() => {
                   props.onToolChange(null);
                 }}
               >

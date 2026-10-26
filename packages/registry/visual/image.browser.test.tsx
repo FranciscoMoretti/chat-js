@@ -3,7 +3,7 @@ import React, { act } from "react";
 import { expect, test, vi } from "vitest";
 import { page } from "vitest/browser";
 import { Favicon } from "@/components/favicon";
-import { MessageAttachment } from "@/components/ai-elements/message";
+import { AttachmentCard } from "@/components/attachment-card";
 import { GenerateImageRenderer } from "../src/tools/generate-image/renderer";
 import { ImageModal } from "@/components/image-modal";
 import { createRoot } from "react-dom/client";
@@ -69,19 +69,19 @@ test("image tool loading, success, and unavailable states", async () => {
           toolCallId: "missing",
         }}
       />
-      <MessageAttachment
-        data={{
-          filename: "Data attachment",
-          mediaType: "image/png",
-          type: "file",
+      <AttachmentCard
+        isUploading={false}
+        attachment={{
+          name: "Data attachment",
+          contentType: "image/png",
           url: imageUrl,
         }}
       />
-      <MessageAttachment
-        data={{
-          filename: "Blob attachment",
-          mediaType: "image/png",
-          type: "file",
+      <AttachmentCard
+        isUploading={false}
+        attachment={{
+          name: "Blob attachment",
+          contentType: "image/png",
           url: blobUrl,
         }}
       />
@@ -192,9 +192,7 @@ test("image modal empty source and close transition stay console-error free", as
     await waitForAnimations();
     await renderModal(false, "");
     expect(
-      document.querySelector(
-        '[data-slot="dialog-content"][data-state="closed"]'
-      )
+      document.querySelector('[data-slot="dialog-content"][data-closed]')
     ).not.toBeNull();
     expect(consoleError).not.toHaveBeenCalled();
     await waitForAnimations();

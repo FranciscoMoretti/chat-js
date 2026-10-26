@@ -1,5 +1,4 @@
 {
-  "contractVersion": 1,
   "id": "mcp",
   "kind": "plugin",
   "files": [
@@ -48,5 +47,7 @@
     "export": "mcpClient",
     "composerControls": ["mcp"],
     "settingsItems": ["mcp"]
-  }
+  },
+  "contractVersion": 2,
+  "uiBase": "base"
 }

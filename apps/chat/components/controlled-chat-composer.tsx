@@ -2,12 +2,9 @@
 
 import type { ComponentProps, JSX as ReactJSX } from "react";
 
-import {
-  PromptInput,
-  PromptInputFooter,
-  PromptInputSubmit,
-  PromptInputTools,
-} from "@/components/ai-elements/prompt-input";
+import { PromptForm } from "@/components/composer/prompt-form";
+import { InputGroupButton } from "@/components/ui/input-group";
+import { ArrowUpIcon, Loader2Icon, SquareIcon } from "lucide-react";
 
 import type { ChatStatus } from "ai";
 
@@ -20,20 +17,38 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 const MAX_DRAFT_LENGTH = 16_000;
 
-const ChatComposerFooter = ({
-  tools,
-  actions,
+const ComposerAction = ({
+  status,
+  onStop,
+  stopDisabled,
+  canSend,
 }: {
-  readonly tools?: ReadonlyReactNode;
-  readonly actions: ReadonlyReactNode;
-}): React.JSX.Element => (
-  <PromptInputFooter className="flex w-full min-w-0 flex-row items-center justify-between gap-1 border-t px-1 py-1 group-has-[>input]/input-group:pb-1 @[500px]:gap-2 [.border-t]:pt-1">
-    <PromptInputTools className="flex min-w-0 items-center gap-1 @[500px]:gap-2">
-      {tools}
-    </PromptInputTools>
-    <div className="flex items-center gap-1">{actions}</div>
-  </PromptInputFooter>
-);
+  readonly status: ChatStatus;
+  readonly onStop?: () => void;
+  readonly stopDisabled: boolean;
+  readonly canSend: boolean;
+}): React.JSX.Element => {
+  const stopping =
+    (status === "submitted" || status === "streaming") && Boolean(onStop);
+  let icon = <ArrowUpIcon />;
+  if (status === "submitted") {
+    icon = <Loader2Icon className="animate-spin" />;
+  } else if (stopping) {
+    icon = <SquareIcon />;
+  }
+  return (
+    <InputGroupButton
+      aria-label={stopping ? "Stop" : "Send"}
+      size="icon-sm"
+      variant={stopping ? "outline" : "default"}
+      type={stopping ? "button" : "submit"}
+      disabled={stopping ? stopDisabled : !canSend}
+      onClick={stopping ? onStop : undefined}
+    >
+      {icon}
+    </InputGroupButton>
+  );
+};
 
 /**
  * A controlled composer for runtimes that own their own submission lifecycle.
@@ -84,8 +99,11 @@ export const ControlledChatComposer = ({
 }): ReactJSX.Element => {
   const isMobile = useIsMobile();
   const busy = status === "submitted" || status === "streaming";
+  const editorReadOnly = readOnly || (busy && !onStop);
   const canSend =
     !disabled &&
+    !editorReadOnly &&
+    !busy &&
     (Boolean(draft.trim()) || hasAttachments) &&
     draft.length <= MAX_DRAFT_LENGTH;
   const submit = (): void => {
@@ -94,15 +112,30 @@ export const ControlledChatComposer = ({
     }
   };
   return (
-    <PromptInput
-      className="@container relative transition-colors"
-      inputGroupClassName="bg-muted dark:bg-muted"
-      onSubmit={(event: { readonly preventDefault: () => void }) => {
+    <PromptForm
+      editable={!disabled && !editorReadOnly}
+      onSubmit={(event) => {
         event.preventDefault();
         submit();
       }}
+      attachments={attachments}
+      tools={tools}
+      actions={
+        <ComposerAction
+          status={status}
+          onStop={onStop}
+          stopDisabled={stopDisabled}
+          canSend={canSend}
+        />
+      }
+      message={
+        draft.length > MAX_DRAFT_LENGTH ? (
+          <p className="text-destructive px-3 text-sm" role="alert">
+            Messages must be at most 16,000 characters.
+          </p>
+        ) : undefined
+      }
     >
-      {attachments}
       <LexicalChatInput
         aria-label="Message"
         autoFocus={autoFocus}
@@ -130,32 +163,8 @@ export const ControlledChatComposer = ({
             ? "Send a message... (Ctrl+Enter to send)"
             : "Send a message..."
         }
-        readOnly={readOnly || (busy && !onStop)}
+        readOnly={editorReadOnly}
       />
-      <ChatComposerFooter
-        actions={
-          <PromptInputSubmit
-            aria-label={busy && onStop ? "Stop" : "Send"}
-            className="size-8 shrink-0 @[500px]:size-10"
-            disabled={busy && onStop ? stopDisabled : !canSend}
-            onClick={(event: { readonly preventDefault: () => void }) => {
-              event.preventDefault();
-              if (busy && onStop) {
-                onStop();
-              } else {
-                submit();
-              }
-            }}
-            status={status}
-          />
-        }
-        tools={tools}
-      />
-      {draft.length > MAX_DRAFT_LENGTH && (
-        <p className="text-destructive px-3 text-sm" role="alert">
-          Messages must be at most 16,000 characters.
-        </p>
-      )}
-    </PromptInput>
+    </PromptForm>
   );
 };

@@ -1,5 +1,4 @@
 {
-  "contractVersion": 1,
   "id": "model-preferences",
   "kind": "plugin",
   "files": [
@@ -23,5 +22,7 @@
     "composerControls": [],
     "settingsItems": ["models"],
     "modelVisibility": true
-  }
+  },
+  "contractVersion": 2,
+  "uiBase": "base"
 }

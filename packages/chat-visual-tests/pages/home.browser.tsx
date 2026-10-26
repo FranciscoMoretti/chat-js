@@ -24,6 +24,25 @@ test("home for a guest with a fixed inexpensive model", async () => {
   await expect
     .element(page.getByRole("button", { name: "Sign in" }).first())
     .toBeVisible();
+  await page.viewport(390, 844);
+  const header = document.querySelector("header");
+  if (!header) {
+    throw new Error("Home header is missing");
+  }
+  await expect
+    .element(
+      page
+        .elementLocator(header)
+        .getByRole("button", { name: "Sign in", exact: true })
+    )
+    .toBeVisible();
+  // Return to the first capture viewport and wait for the async sidebar header.
+  // Its skeleton has the same geometry as Search, so layout stability alone
+  // can capture a blank icon before Suspense resolves on the desktop remount.
+  await page.viewport(1440, 900);
+  await expect
+    .element(page.getByRole("button", { name: /Search chats/u }))
+    .toBeVisible();
 });
 
 test("home signed in lists projects and chat history", async () => {
@@ -37,6 +56,12 @@ test("home signed in lists projects and chat history", async () => {
     .toBeVisible();
   await expect.element(page.getByText("Maya Chen")).toBeVisible();
   await expect.element(page.getByText("8.42", { exact: true })).toBeVisible();
+  await expect
+    .element(page.getByRole("textbox", { name: "Message" }))
+    .toHaveAttribute("data-slot", "input-group-control");
+  await expect
+    .element(page.getByRole("button", { name: "Send", exact: true }))
+    .toBeDisabled();
 });
 
 test("home for a new account with no chats or projects", async () => {
@@ -86,6 +111,9 @@ test("home signed in with the sidebar collapsed", async () => {
       document.querySelector('[data-state="collapsed"][data-side="left"]')
     )
     .not.toBeNull();
+  await expect
+    .element(page.getByRole("link", { name: "Models", exact: true }))
+    .toBeVisible();
 });
 
 test("home shows an unavailable balance instead of a false zero", async () => {
@@ -104,4 +132,16 @@ test("home shows an unavailable balance instead of a false zero", async () => {
   await expect
     .element(page.getByText("0.00", { exact: true }))
     .not.toBeInTheDocument();
+});
+
+test("signed-in composer options expose uploads with the native menu", async () => {
+  await renderRoute(home, signedIn);
+  await expect
+    .element(page.getByText("How can I help you today?"))
+    .toBeVisible();
+  await page.getByRole("button", { name: "Composer options" }).click();
+  await expect
+    .element(page.getByRole("menuitem", { name: "Attach files" }))
+    .toBeVisible();
+  await page.screenshot({ path: "__screenshots__/home-upload-menu.png" });
 });

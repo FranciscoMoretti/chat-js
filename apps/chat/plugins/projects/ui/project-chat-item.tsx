@@ -15,6 +15,7 @@ import { InternalLink } from "@/components/internal-link";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -109,42 +110,46 @@ export const ProjectChatItem = ({
           </div>
           <div className="z-20">
             <DropdownMenu modal>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  className="h-7 w-7 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100"
-                  size="icon"
-                  type="button"
-                  variant="ghost"
-                >
-                  <MoreHorizontal size={16} />
-                  <span className="sr-only">More</span>
-                </Button>
+              <DropdownMenuTrigger
+                render={
+                  <Button
+                    className="h-7 w-7 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100"
+                    size="icon"
+                    type="button"
+                    variant="ghost"
+                  />
+                }
+              >
+                <MoreHorizontal size={16} />
+                <span className="sr-only">More</span>
               </DropdownMenuTrigger>
 
               <DropdownMenuContent align="end" side="bottom">
-                <DropdownMenuItem
-                  className="cursor-pointer"
-                  onClick={() => {
-                    setRenameDialogOpen(true);
-                  }}
-                >
-                  <Pencil size={16} />
-                  <span>Rename</span>
-                </DropdownMenuItem>
-
-                {pluginActions}
-
-                {onDelete && (
+                <DropdownMenuGroup>
                   <DropdownMenuItem
-                    className="text-destructive focus:bg-destructive/15 focus:text-destructive cursor-pointer"
-                    onSelect={() => {
-                      onDelete(chat.id);
+                    className="cursor-pointer"
+                    onClick={() => {
+                      setRenameDialogOpen(true);
                     }}
                   >
-                    <Trash2 size={16} />
-                    <span>Delete</span>
+                    <Pencil size={16} />
+                    <span>Rename</span>
                   </DropdownMenuItem>
-                )}
+
+                  {pluginActions}
+
+                  {onDelete && (
+                    <DropdownMenuItem
+                      variant="destructive"
+                      onClick={() => {
+                        onDelete(chat.id);
+                      }}
+                    >
+                      <Trash2 size={16} />
+                      <span>Delete</span>
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuGroup>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

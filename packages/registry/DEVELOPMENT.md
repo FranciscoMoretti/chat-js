@@ -16,6 +16,14 @@ Installed registry files in **our reference app** are disposable generated outpu
 
 The ChatJS adapter derives current output ownership from the resolved installation plan, plus composition-generator and provider-configuration outputs. The mirror rejects unauthorized current outputs, path traversal and symlinked destinations before publishing. Treat the manifest as ownership configuration: adding a path authorizes its later deletion. It is not an inventory of every app file.
 
+## Native UI variants
+
+Canonical feature source uses the reference app's Base UI primitives. `bun run build` first runs the native shadcn registry builder, then emits complete `dist/r/base/` and `dist/r/radix/` namespaces. The original `dist/r/<name>.json` remains Base-compatible, and the Base namespace is a byte-for-byte copy. Each namespace includes its own `registry.json` catalog and every provider, plugin, and tool.
+
+Radix output uses `transformUiSource` to convert native composition props in shipped source. Its version 2 metadata and installed `chatjs.json` descriptors identify `uiBase: "radix"`. Item IDs, destination paths, and `@chatjs/` dependencies stay unchanged; dependencies resolve through the consuming app's selected namespace. The installer checks the descriptor against the app's native library before writing source. Version 1 descriptors retain their existing meaning.
+
+Keep Base-specific composition inside the transform's supported native component APIs. Add a transform regression test when introducing a new API difference, then verify a generated Radix app as well as the reference Base app. Do not install runtime compatibility wrappers or transform consumer customizations during add/sync.
+
 ## Three responsibilities
 
 1. **ChatJS adapter** (`scripts/demo-mirror.ts`, `demo-generator.ts`, `demo-worker.ts`) reads the real preset and uses the CLI planner, shadcn transforms and formatter in a temporary installation. Fresh subprocesses reload imported configuration. It returns the complete desired files without publishing into the app.

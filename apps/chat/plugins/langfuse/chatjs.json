@@ -1,5 +1,4 @@
 {
-  "contractVersion": 1,
   "id": "langfuse",
   "kind": "plugin",
   "files": [
@@ -10,5 +9,6 @@
   "envRequirements": [
     { "options": [["LANGFUSE_PUBLIC_KEY", "LANGFUSE_SECRET_KEY"]] }
   ],
-  "server": { "export": "langfuse", "routers": [], "instrumentation": true }
+  "server": { "export": "langfuse", "routers": [], "instrumentation": true },
+  "contractVersion": 1
 }

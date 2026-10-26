@@ -41,7 +41,7 @@ test("native follow-ups survive reload, submit normally and preserve unsent comp
   await expect(
     page
       .getByRole("log")
-      .locator(".is-assistant")
+      .locator('[data-role="assistant"]')
       .first()
       .locator(":scope > div")
       .first()
@@ -60,10 +60,12 @@ test("native follow-ups survive reload, submit normally and preserve unsent comp
   }
   await nextQuestion.click();
   await expect(composer).toHaveText("Keep this unsent draft.");
-  await expect(page.getByRole("log").locator(".is-user").last()).toContainText(
-    submittedText
-  );
-  await expect(page.getByRole("log").locator(".is-assistant")).toHaveCount(2);
+  await expect(
+    page.getByRole("log").locator('[data-role="user"]').last()
+  ).toContainText(submittedText);
+  await expect(
+    page.getByRole("log").locator('[data-role="assistant"]')
+  ).toHaveCount(2);
   await expect(page.getByText("Ready", { exact: true })).toBeVisible({
     timeout: 60_000,
   });
@@ -107,7 +109,9 @@ test("native follow-ups survive reload, submit normally and preserve unsent comp
   await expect(composer).toHaveText(retainedQuestion);
   await expect(page.getByText("Ready", { exact: true })).toBeVisible();
   await expect(related).toBeVisible();
-  await expect(page.getByRole("log").locator(".is-assistant")).toHaveCount(2);
+  await expect(
+    page.getByRole("log").locator('[data-role="assistant"]')
+  ).toHaveCount(2);
   await page.screenshot({
     animations: "disabled",
     path: testInfo.outputPath("followups-integrated.png"),

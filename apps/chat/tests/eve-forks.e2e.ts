@@ -64,14 +64,13 @@ test("fork API preserves native history in ChatJS and rejects changed retries an
       .fill("Reply with original-second-response. Do not call tools.");
     await page.getByRole("button", { exact: true, name: "Send" }).click();
     await expect(
-      page.getByRole("log").locator(".is-user").last()
+      page.getByRole("log").locator('[data-role="user"]').last()
     ).toContainText("Reply with original-second-response. Do not call tools.");
-    await expect(page.getByRole("log").locator(".is-assistant")).toHaveCount(
-      2,
-      {
-        timeout: 90_000,
-      }
-    );
+    await expect(
+      page.getByRole("log").locator('[data-role="assistant"]')
+    ).toHaveCount(2, {
+      timeout: 90_000,
+    });
     await expect(page.getByText("Ready", { exact: true })).toBeVisible();
 
     const operation = {
@@ -89,24 +88,27 @@ test("fork API preserves native history in ChatJS and rejects changed retries an
     const branch = conversationBinding.parse(await forked.json());
     expect(branch.sessionId).not.toBe(source.sessionId);
     await page.goto(`/chat/${branch.id}`);
-    await expect(page.getByRole("log").locator(".is-assistant")).toHaveCount(
-      3,
-      {
-        timeout: 90_000,
-      }
-    );
     await expect(
-      page.getByRole("log").locator(".is-assistant").last()
+      page.getByRole("log").locator('[data-role="assistant"]')
+    ).toHaveCount(3, {
+      timeout: 90_000,
+    });
+    await expect(
+      page.getByRole("log").locator('[data-role="assistant"]').last()
     ).toContainText("CEDAR-PINE", { timeout: 90_000 });
     await expect(page.getByText("Ready", { exact: true })).toBeVisible();
-    await expect(page.getByRole("log").locator(".is-user")).toHaveCount(3);
+    await expect(
+      page.getByRole("log").locator('[data-role="user"]')
+    ).toHaveCount(3);
     await expect(page.getByRole("log")).toContainText(
       "original-second-response"
     );
     await page.reload();
-    await expect(page.getByRole("log").locator(".is-user")).toHaveCount(3);
     await expect(
-      page.getByRole("log").locator(".is-assistant").last()
+      page.getByRole("log").locator('[data-role="user"]')
+    ).toHaveCount(3);
+    await expect(
+      page.getByRole("log").locator('[data-role="assistant"]').last()
     ).toContainText("CEDAR-PINE");
     const replay = await page.request.post("/api/agent-conversations", {
       data: operation,

@@ -7,5 +7,6 @@
   "tools": [
     { "rendererExport": "SavedCodeRenderer", "toolExport": "runCodeDocument" }
   ],
-  "contractVersion": 1
+  "contractVersion": 2,
+  "uiBase": "base"
 }

@@ -25,7 +25,9 @@ test("existing primitives preserve anchored overlay states", async () => {
     await act(async () => {
       await page.getByRole("button", { name: "Hover tooltip" }).hover();
     });
-    await expect.element(page.getByRole("tooltip")).toBeVisible();
+    await expect
+      .element(page.getByText("Tooltip content", { exact: true }))
+      .toBeVisible();
     await takeSnapshot("primitives-tooltip");
   } finally {
     await unmount(fixture);
@@ -68,49 +70,31 @@ test("layout primitives preserve alert dialog and sheet portals", async () => {
   }
 });
 
-const readProgressTransforms = (
-  container: Readonly<Pick<HTMLElement, "querySelectorAll">>
-): readonly string[] => {
-  const transforms: string[] = [];
-  for (const indicator of container.querySelectorAll<HTMLElement>(
-    '[data-testid="progress-states"] [data-slot="progress-indicator"]'
-  )) {
-    transforms.push(indicator.style.transform);
-  }
-  return transforms;
-};
-
-test("progress states preserve numeric fallbacks and updates", async () => {
+test("progress exposes indeterminate and changing completion values", async () => {
   const fixture = await mount(
     <UiPrimitivesVisualFixture includeProgress progressValue={25} />
   );
   try {
-    expect(readProgressTransforms(fixture.container)).toEqual([
-      "translateX(-100%)",
-      "translateX(-100%)",
-      "translateX(-100%)",
-      "translateX(-100%)",
-      "translateX(0%)",
-      "translateX(-110%)",
-      "",
-      "translateX(-75%)",
-    ]);
+    await expect
+      .element(page.getByRole("progressbar", { name: "Indeterminate" }))
+      .not.toHaveAttribute("aria-valuenow");
+    await expect
+      .element(page.getByRole("progressbar", { name: "Zero" }))
+      .toHaveAttribute("aria-valuenow", "0");
+    await expect
+      .element(page.getByRole("progressbar", { name: "Complete" }))
+      .toHaveAttribute("aria-valuenow", "100");
+    await expect
+      .element(page.getByRole("progressbar", { name: "Updating" }))
+      .toHaveAttribute("aria-valuenow", "25");
     await takeSnapshot("primitives-progress-initial");
-
     await renderRoot(
       fixture.root,
       <UiPrimitivesVisualFixture includeProgress progressValue={75} />
     );
-    expect(readProgressTransforms(fixture.container)).toEqual([
-      "translateX(-100%)",
-      "translateX(-100%)",
-      "translateX(-100%)",
-      "translateX(-100%)",
-      "translateX(0%)",
-      "translateX(-110%)",
-      "",
-      "translateX(-25%)",
-    ]);
+    await expect
+      .element(page.getByRole("progressbar", { name: "Updating" }))
+      .toHaveAttribute("aria-valuenow", "75");
     await takeSnapshot("primitives-progress-updated");
   } finally {
     await unmount(fixture);

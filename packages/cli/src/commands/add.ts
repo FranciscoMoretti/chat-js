@@ -1,3 +1,5 @@
+import { assertUiCompatibility } from "#cli/utils/ui-compatibility";
+import { readInstalledPlugins } from "#cli/utils/installed-plugins";
 import {
   configureSandboxProvider,
   sandboxProviderTargets,
@@ -21,7 +23,7 @@ import { planInstallation } from "#cli/utils/installation-plan";
 import { resolveGateway } from "#cli/registry/gateways";
 import { resolveStorage } from "#cli/registry/storage";
 import { runCommand } from "#cli/utils/run-command";
-import { syncTools } from "#cli/utils/sync-tools";
+import { readInstalledTools, syncTools } from "#cli/utils/sync-tools";
 
 type ReadonlyNative<Value> = Value extends (
   ...args: readonly never[]
@@ -254,6 +256,10 @@ export const add = new Command("add")
       try {
         const cwd = path.resolve(options.cwd);
         await access(path.join(cwd, "chat.config.ts"));
+        await assertUiCompatibility(cwd, [
+          ...(await readInstalledPlugins(cwd)),
+          ...(await readInstalledTools(cwd)),
+        ]);
         const setup = await prepareAdd(cwd, items, options);
         const {
           plan,

@@ -137,7 +137,7 @@ Routes requests through a LiteLLM proxy for centralized model access, key manage
 
 ## Features
 
-Tool flags live under `ai.tools` in `chat.config.ts`. Attachment uploads are installed with `chat-js add attachment-uploads`. Each enabled capability has an associated environment variable requirement validated at build time.
+Tool flags live under `ai.tools` in `chat.config.ts`. Attachment uploads require durable storage and a persistent sandbox, for example `chat-js add attachment-uploads --storage-provider vercel-blob --sandbox-provider vercel`. Configure both providers’ credentials. Each enabled capability has an associated environment variable requirement validated at build time.
 
 ### Web Search
 
@@ -218,7 +218,7 @@ Provider credentials belong in environment variables or the provider SDK's crede
 
 ### Code Execution Sandbox
 
-Enable secure Python and JavaScript execution using [Vercel Sandbox](https://vercel.com/docs/sandbox).
+Enable secure Python and JavaScript execution using [Vercel Sandbox](https://vercel.com/docs/sandbox). Its persistent-file support is also required by attachment uploads, even when the code-execution tool is omitted. Use `bun dev:supervise` for local conversations that stage attachments.
 
 ```typescript title="chat.config.ts"
 ai: {
@@ -340,9 +340,9 @@ All variables in one place:
 | `FIRECRAWL_API_KEY` | Feature | If `ai.tools.webSearch.enabled` or `ai.tools.urlRetrieval.enabled` |
 | `EXA_API_KEY` | Optional | Recognized by env schema but not required by current validation |
 | `MCP_ENCRYPTION_KEY` | Feature | When MCP is installed |
-| `VERCEL_TEAM_ID` | Feature | If `ai.tools.codeExecution.enabled` on non-Vercel hosting |
-| `VERCEL_PROJECT_ID` | Feature | If `ai.tools.codeExecution.enabled` on non-Vercel hosting |
-| `VERCEL_TOKEN` | Feature | If `ai.tools.codeExecution.enabled` on non-Vercel hosting |
+| `VERCEL_TEAM_ID` | Feature | When Vercel Sandbox is installed without OIDC auth |
+| `VERCEL_PROJECT_ID` | Feature | When Vercel Sandbox is installed without OIDC auth |
+| `VERCEL_TOKEN` | Feature | When Vercel Sandbox is installed without OIDC auth |
 | `VERCEL_SANDBOX_IMAGE_PYTHON` | Feature | Optional Python sandbox image override |
 | `VERCEL_SANDBOX_IMAGE_JAVASCRIPT` | Feature | Optional JavaScript sandbox image override |
 | `EVE_GATEWAY_SECRET` | Required | Private ChatJS-to-EVE credential |

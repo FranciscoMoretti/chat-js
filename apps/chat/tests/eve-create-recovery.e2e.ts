@@ -251,7 +251,7 @@ test("an unresolved project conversation recovers after its project is deleted",
     path: testInfo.outputPath("recovery-pending-mobile.png"),
   });
   retryGate.resolve();
-  await expect(page.locator(".is-assistant")).toContainText(
+  await expect(page.locator('[data-role="assistant"]')).toContainText(
     "project-recovery-ok",
     { timeout: 90_000 }
   );
@@ -262,8 +262,8 @@ test("an unresolved project conversation recovers after its project is deleted",
     await page.evaluate((key) => sessionStorage.getItem(key), storageKey)
   ).toBeNull();
   await page.reload();
-  await expect(page.locator(".is-user")).toHaveCount(1);
-  await expect(page.locator(".is-assistant")).toContainText(
+  await expect(page.locator('[data-role="user"]')).toHaveCount(1);
+  await expect(page.locator('[data-role="assistant"]')).toContainText(
     "project-recovery-ok"
   );
 });

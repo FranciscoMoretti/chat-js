@@ -80,14 +80,17 @@ export const AppSidebar = (): React.JSX.Element => (
         </Suspense>
         {modelSettingsItem && (modelSettingsItem.isVisible?.() ?? true) && (
           <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Models">
-              <InternalLink href={modelSettingsItem.href}>
-                <Cpu className="size-4" />
-                <span className="group-data-[collapsible=icon]:hidden">
-                  Models
-                </span>
-              </InternalLink>
-            </SidebarMenuButton>
+            <SidebarMenuButton
+              tooltip="Models"
+              render={
+                <InternalLink aria-label="Models" href={modelSettingsItem.href}>
+                  <Cpu className="size-4" />
+                  <span className="group-data-[collapsible=icon]:hidden">
+                    Models
+                  </span>
+                </InternalLink>
+              }
+            />
           </SidebarMenuItem>
         )}
       </SidebarMenu>

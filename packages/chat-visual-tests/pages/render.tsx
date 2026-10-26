@@ -1,3 +1,4 @@
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { disableAutoSnapshot, takeSnapshot } from "@uiverify/vitest";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { Suspense } from "react";
@@ -35,7 +36,9 @@ const tree = (ui: ReactNode, theme: (typeof THEMES)[number]) => (
       forcedTheme={theme}
     >
       <Toaster position="top-center" />
-      <Suspense>{ui}</Suspense>
+      <TooltipProvider>
+        <Suspense>{ui}</Suspense>
+      </TooltipProvider>
     </ThemeProvider>
   </NuqsTestingAdapter>
 );

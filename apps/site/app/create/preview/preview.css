@@ -1,0 +1,47 @@
+@import "tailwindcss";
+@import "shadcn/tailwind.css";
+@custom-variant dark (&:is(.dark *));
+@source "../../../../chat/components/composer/prompt-form.tsx";
+@source "../../../../chat/components/part/tool-activity.tsx";
+@source "../../../../chat/components/part/tool-data.tsx";
+
+@layer base {
+  * {
+    border-color: var(--border);
+    outline-color: color-mix(in oklab, var(--ring) 50%, transparent);
+  }
+}
+
+@theme inline {
+  --font-heading: var(--font-heading);
+  --radius-xs: calc(var(--radius) * 0.4);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+}
+
+.create-chat-preview {
+  font-family: var(--font-sans);
+}
+
+html:has(.create-chat-preview),
+body:has(.create-chat-preview) {
+  height: 100%;
+  overflow: hidden;
+}

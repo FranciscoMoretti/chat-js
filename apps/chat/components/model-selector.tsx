@@ -22,7 +22,7 @@ import { InternalLink } from "@/components/internal-link";
 
 import { Badge } from "@/components/ui/badge";
 
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 
 import {
@@ -37,6 +37,7 @@ import {
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -76,26 +77,6 @@ const stopEventPropagation = (event: {
   readonly stopPropagation: () => void;
 }): void => {
   event.stopPropagation();
-};
-
-const preventEventDefault = (event: {
-  readonly preventDefault: () => void;
-}): void => {
-  event.preventDefault();
-};
-
-const handleInteractOutside = (event: {
-  readonly target: unknown;
-  readonly preventDefault: () => void;
-}): void => {
-  // Radix dispatches the outside event on its original target. Elements, including SVGs, expose closest(); other EventTargets do not.
-  // Keep nested portal interactions from closing the model picker.
-  if (
-    event.target instanceof Element &&
-    event.target.closest("[data-radix-popper-content-wrapper]")
-  ) {
-    event.preventDefault();
-  }
 };
 
 type FeatureFilter = Record<string, boolean>;
@@ -217,6 +198,7 @@ const PureCommandItem = ({
 
   return (
     <UICommandItem
+      aria-label={model.reasoning ? `${model.name} (reasoning)` : model.name}
       className={cn(
         "flex h-9 w-full cursor-pointer items-center justify-between px-3 py-1.5 transition-all",
         isSelected && "border-l-primary bg-primary/10 border-l-2",
@@ -227,7 +209,13 @@ const PureCommandItem = ({
     >
       <div className="flex min-w-0 flex-1 items-center gap-2.5">
         {showSelectionControl && (
-          <Checkbox checked={isSelected} className="pointer-events-none" />
+          <Checkbox
+            aria-hidden
+            tabIndex={-1}
+            readOnly
+            checked={isSelected}
+            className="pointer-events-none"
+          />
         )}
         <div className="shrink-0">
           <ModelSelectorLogo modelId={model.id} />
@@ -249,35 +237,38 @@ const PureCommandItem = ({
         {isSelected && onCountChange && count !== undefined && (
           <DropdownMenu>
             <DropdownMenuTrigger
-              asChild
+              render={
+                <button
+                  aria-label={`${count}×`}
+                  className="bg-primary/15 text-foreground hover:bg-primary/25 flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-xs font-semibold tabular-nums"
+                  type="button"
+                />
+              }
               onClick={stopEventPropagation}
               onMouseDown={stopEventPropagation}
             >
-              <button
-                className="bg-primary/15 text-foreground hover:bg-primary/25 flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-xs font-semibold tabular-nums"
-                type="button"
-              >
-                {count}×
-                <ChevronDownIcon className="h-2.5 w-2.5" />
-              </button>
+              {count}×
+              <ChevronDownIcon className="h-2.5 w-2.5" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" onKeyDown={stopEventPropagation}>
-              {[1, 2, 3, 4].map((modelCount): React.JSX.Element => (
-                <DropdownMenuItem
-                  key={modelCount}
-                  onClick={(event: {
-                    readonly stopPropagation: () => void;
-                  }) => {
-                    event.stopPropagation();
-                    onCountChange(model.id, modelCount - count);
-                  }}
-                >
-                  {modelCount}x
-                  {modelCount === count && (
-                    <CheckIcon className="ml-auto h-3 w-3" />
-                  )}
-                </DropdownMenuItem>
-              ))}
+              <DropdownMenuGroup>
+                {[1, 2, 3, 4].map((modelCount): React.JSX.Element => (
+                  <DropdownMenuItem
+                    key={modelCount}
+                    onClick={(event: {
+                      readonly stopPropagation: () => void;
+                    }) => {
+                      event.stopPropagation();
+                      onCountChange(model.id, modelCount - count);
+                    }}
+                  >
+                    {modelCount}x
+                    {modelCount === count && (
+                      <CheckIcon className="ml-auto h-3 w-3" />
+                    )}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuGroup>
             </DropdownMenuContent>
           </DropdownMenu>
         )}
@@ -295,17 +286,18 @@ const ModelSettingsLink = (): ReactJSX.Element | null => {
   }
   return (
     <div className="border-t p-2">
-      <Button
-        asChild
-        className="w-full justify-between"
-        size="sm"
-        variant="ghost"
+      <InternalLink
+        aria-label="Add Models"
+        href={item.href}
+        className={buttonVariants({
+          className: "w-full justify-between",
+          size: "sm",
+          variant: "ghost",
+        })}
       >
-        <InternalLink aria-label="Add Models" href={item.href}>
-          Add Models
-          <ChevronRightIcon className="h-4 w-4" />
-        </InternalLink>
-      </Button>
+        Add Models
+        <ChevronRightIcon className="h-4 w-4" />
+      </InternalLink>
     </div>
   );
 };
@@ -615,76 +607,78 @@ const PureModelSelector = ({
 
   return (
     <Popover onOpenChange={setOpen} open={open}>
-      <PopoverTrigger asChild>
-        <Button
-          aria-expanded={open}
-          className={cn("flex w-fit justify-between gap-2 md:px-2", className)}
-          data-testid="model-selector"
-          variant="ghost"
-        >
-          <div className="flex items-center gap-2">
-            {selectedItem && (
-              <div className="shrink-0">
-                <ModelSelectorLogo modelId={selectedItem.model.id} />
-              </div>
-            )}
-            <p className="inline-flex items-center gap-1.5 truncate">
-              {triggerLabel}
-              {selectedItem?.model.reasoning === true && reasoningConfig && (
-                <span
-                  className="inline-flex shrink-0 items-center gap-1"
-                  title={reasoningConfig.description}
-                >
-                  <reasoningConfig.icon className="text-muted-foreground h-3 w-3" />
-                </span>
-              )}
-            </p>
-          </div>
-          <ChevronUpIcon
+      <PopoverTrigger
+        render={
+          <Button
+            aria-expanded={open}
             className={cn(
-              "h-4 w-4 shrink-0 opacity-50 transition-transform",
-              open && "rotate-180"
+              "flex w-fit justify-between gap-2 md:px-2",
+              className
             )}
-          />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent
-        align="start"
-        className="w-[350px] p-0"
-        onFocusOutside={preventEventDefault}
-
-        onInteractOutside={handleInteractOutside}
-      >
+            data-testid="model-selector"
+            variant="ghost"
+          >
+            <div className="flex items-center gap-2">
+              {selectedItem && (
+                <div className="shrink-0">
+                  <ModelSelectorLogo modelId={selectedItem.model.id} />
+                </div>
+              )}
+              <p className="inline-flex items-center gap-1.5 truncate">
+                {triggerLabel}
+                {selectedItem?.model.reasoning === true && reasoningConfig && (
+                  <span
+                    className="inline-flex shrink-0 items-center gap-1"
+                    title={reasoningConfig.description}
+                  >
+                    <reasoningConfig.icon className="text-muted-foreground h-3 w-3" />
+                  </span>
+                )}
+              </p>
+            </div>
+            <ChevronUpIcon
+              className={cn(
+                "h-4 w-4 shrink-0 opacity-50 transition-transform",
+                open && "rotate-180"
+              )}
+            />
+          </Button>
+        }
+      />
+      <PopoverContent align="start" className="w-[350px] p-0">
         {open && (
           <Command>
             <div className="flex items-center border-b">
               <CommandInput
                 className="px-3"
-                containerClassName="w-full border-0 h-11"
                 onClick={stopEventPropagation}
+                aria-label="Search models"
                 placeholder="Search models..."
               />
               <Popover onOpenChange={setFilterOpen} open={filterOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    className={cn(
-                      "relative mr-3 h-8 w-8 p-0",
-                      activeFilterCount > 0 && "text-primary"
-                    )}
-                    size="sm"
-                    variant="ghost"
-                  >
-                    <FilterIcon className="h-4 w-4" />
-                    {activeFilterCount > 0 && (
-                      <Badge
-                        className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center p-0 text-xs"
-                        variant="secondary"
-                      >
-                        {activeFilterCount}
-                      </Badge>
-                    )}
-                  </Button>
-                </PopoverTrigger>
+                <PopoverTrigger
+                  render={
+                    <Button
+                      aria-label="Filter models"
+                      className={cn(
+                        "relative mr-3 h-8 w-8 p-0",
+                        activeFilterCount > 0 && "text-primary"
+                      )}
+                      size="sm"
+                      variant="ghost"
+                    >
+                      <FilterIcon className="h-4 w-4" />
+                      {activeFilterCount > 0 && (
+                        <Badge
+                          className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center p-0 text-xs"
+                          variant="secondary"
+                        >
+                          {activeFilterCount}
+                        </Badge>
+                      )}
+                    </Button>
+                  }
+                />
                 <PopoverContent align="end" className="p-0">
                   <div className="p-4">
                     <div className="mb-3 flex h-7 items-center justify-between">
@@ -728,11 +722,13 @@ const PureModelSelector = ({
                               <Checkbox
                                 checked={featureFilters[feature.key]}
                                 id={feature.key}
-                                onCheckedChange={(checked) => {
+                                onCheckedChange={(
+                                  checked: boolean | "indeterminate"
+                                ) => {
                                   setFeatureFilters(
                                     (prev: Readonly<FeatureFilter>) => ({
                                       ...prev,
-                                      [feature.key]: Boolean(checked),
+                                      [feature.key]: checked === true,
                                     })
                                   );
                                 }}

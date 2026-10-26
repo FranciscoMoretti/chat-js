@@ -15,9 +15,7 @@ const SLIDER_DEFAULT_RANGE = [SLIDER_START, SLIDER_END];
 
 export const ControlDefaultsVisualFixture = (): React.JSX.Element => {
   const slottedLink = (
-    <BreadcrumbLink asChild>
-      <a href="#slotted-link">Slotted link</a>
-    </BreadcrumbLink>
+    <BreadcrumbLink  render={<a href="#slotted-link">Slotted link</a>} />
   );
 
   return (
@@ -28,7 +26,7 @@ export const ControlDefaultsVisualFixture = (): React.JSX.Element => {
         {slottedLink}
       </div>
       <Slider aria-label="Default range" defaultValue={SLIDER_DEFAULT_RANGE} />
-      <ResizablePanelGroup direction="horizontal">
+      <ResizablePanelGroup orientation="horizontal">
         <ResizablePanel>First panel</ResizablePanel>
         <ResizableHandle withHandle />
         <ResizablePanel>Second panel</ResizablePanel>

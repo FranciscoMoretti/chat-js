@@ -1,83 +1,65 @@
-"use client";
+"use client"
 
-import type {
-  ComponentProps as ReactComponentProps,
-  JSX as ReactJSX,
-} from "react";
-import {
-  Arrow as TooltipPrimitiveArrow,
-  Content as TooltipPrimitiveContent,
-  Portal as TooltipPrimitivePortal,
-  Provider as TooltipPrimitiveProvider,
-  Root as TooltipPrimitiveRoot,
-  Trigger as TooltipPrimitiveTrigger,
-} from "@radix-ui/react-tooltip";
-import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
-import { cn } from "@/lib/utils";
+import { Tooltip as TooltipPrimitive } from "@base-ui/react/tooltip"
+import { cn } from "cn"
 
-const DEFAULT_TOOLTIP_DELAY_DURATION = 0;
-const DEFAULT_SIDE_OFFSET = 0;
-
-const TooltipProvider = ({
-  delayDuration = DEFAULT_TOOLTIP_DELAY_DURATION,
+function TooltipProvider({
+  delay = 0,
   ...props
-}: Readonly<
-  Omit<ReactComponentProps<typeof TooltipPrimitiveProvider>, "children">
-> & { readonly children: ReadonlyReactNode }): ReactJSX.Element => (
-  <TooltipPrimitiveProvider
-    data-slot="tooltip-provider"
-    delayDuration={delayDuration}
-    {...props}
-  />
-);
-
-const Tooltip = (
-  props: Readonly<
-    Omit<ReactComponentProps<typeof TooltipPrimitiveRoot>, "children">
-  > & { readonly children?: ReadonlyReactNode }
-): ReactJSX.Element => (
-  <TooltipProvider>
-    <TooltipPrimitiveRoot data-slot="tooltip" {...props} />
-  </TooltipProvider>
-);
-
-const TooltipTrigger = (
-  props: ReactComponentProps<typeof TooltipPrimitiveTrigger>
-): ReactJSX.Element => (
-  <TooltipPrimitiveTrigger data-slot="tooltip-trigger" {...props} />
-);
-
-const TooltipContent = ({
-  className,
-  sideOffset = DEFAULT_SIDE_OFFSET,
-  children,
-  variant = "primary",
-  ...props
-}: ReactComponentProps<typeof TooltipPrimitiveContent> & {
-  readonly variant?: "base" | "primary";
-}): ReactJSX.Element => (
-  <TooltipPrimitivePortal>
-    <TooltipPrimitiveContent
-      className={cn(
-        "fade-in-0 zoom-in-95 data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 animate-in data-[state=closed]:animate-out z-50 w-fit origin-(--radix-tooltip-content-transform-origin) rounded-md px-3 py-1.5 text-xs text-balance",
-        variant === "primary" && "bg-primary text-primary-foreground",
-        variant === "base" && "bg-popover text-popover-foreground",
-        className
-      )}
-      data-slot="tooltip-content"
-      sideOffset={sideOffset}
+}: TooltipPrimitive.Provider.Props) {
+  return (
+    <TooltipPrimitive.Provider
+      data-slot="tooltip-provider"
+      delay={delay}
       {...props}
-    >
-      {children}
-      <TooltipPrimitiveArrow
-        className={cn(
-          "z-50 size-2.5 translate-y-[calc(-50%_-_2px)] rotate-45 rounded-[2px]",
-          variant === "primary" && "bg-primary fill-primary",
-          variant === "base" && "bg-popover fill-popover"
-        )}
-      />
-    </TooltipPrimitiveContent>
-  </TooltipPrimitivePortal>
-);
+    />
+  )
+}
 
-export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger };
+function Tooltip({ ...props }: TooltipPrimitive.Root.Props) {
+  return <TooltipPrimitive.Root data-slot="tooltip" {...props} />
+}
+
+function TooltipTrigger({ ...props }: TooltipPrimitive.Trigger.Props) {
+  return <TooltipPrimitive.Trigger data-slot="tooltip-trigger" {...props} />
+}
+
+function TooltipContent({
+  className,
+  side = "top",
+  sideOffset = 4,
+  align = "center",
+  alignOffset = 0,
+  children,
+  ...props
+}: TooltipPrimitive.Popup.Props &
+  Pick<
+    TooltipPrimitive.Positioner.Props,
+    "align" | "alignOffset" | "side" | "sideOffset"
+  >) {
+  return (
+    <TooltipPrimitive.Portal>
+      <TooltipPrimitive.Positioner
+        align={align}
+        alignOffset={alignOffset}
+        side={side}
+        sideOffset={sideOffset}
+        className="isolate z-50"
+      >
+        <TooltipPrimitive.Popup
+          data-slot="tooltip-content"
+          className={cn(
+            "z-50 inline-flex w-fit max-w-xs origin-(--transform-origin) items-center gap-1.5 rounded-xl bg-foreground px-3 py-1.5 text-xs text-background has-data-[slot=kbd]:pr-1.5 data-[side=bottom]:slide-in-from-top-2 data-[side=inline-end]:slide-in-from-left-2 data-[side=inline-start]:slide-in-from-right-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 **:data-[slot=kbd]:relative **:data-[slot=kbd]:isolate **:data-[slot=kbd]:z-50 **:data-[slot=kbd]:rounded-lg data-[state=delayed-open]:animate-in data-[state=delayed-open]:fade-in-0 data-[state=delayed-open]:zoom-in-95 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+            className
+          )}
+          {...props}
+        >
+          {children}
+          <TooltipPrimitive.Arrow className="z-50 size-2.5 translate-y-[calc(-50%-2px)] rotate-45 rounded-[2px] bg-foreground fill-foreground data-[side=bottom]:top-1 data-[side=inline-end]:top-1/2! data-[side=inline-end]:-left-1 data-[side=inline-end]:translate-x-[1.5px] data-[side=inline-end]:-translate-y-1/2 data-[side=inline-start]:top-1/2! data-[side=inline-start]:-right-1 data-[side=inline-start]:translate-x-[-1.5px] data-[side=inline-start]:-translate-y-1/2 data-[side=left]:top-1/2! data-[side=left]:-right-1 data-[side=left]:translate-x-[-1.5px] data-[side=left]:-translate-y-1/2 data-[side=right]:top-1/2! data-[side=right]:-left-1 data-[side=right]:translate-x-[1.5px] data-[side=right]:-translate-y-1/2 data-[side=top]:-bottom-2.5" />
+        </TooltipPrimitive.Popup>
+      </TooltipPrimitive.Positioner>
+    </TooltipPrimitive.Portal>
+  )
+}
+
+export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider }

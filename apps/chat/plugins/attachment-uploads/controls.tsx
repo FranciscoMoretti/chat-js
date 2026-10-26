@@ -33,7 +33,7 @@ const AttachFilesControl = ({
   return (
     <DropdownMenuItem
       disabled={disabled}
-      onSelect={(): void => {
+      onClick={(): void => {
         if (!session?.user) {
           toast(loginPrompt);
           return;
@@ -59,7 +59,7 @@ const TakePhotoControl = ({
   return (
     <DropdownMenuItem
       disabled={disabled}
-      onSelect={(): void => {
+      onClick={(): void => {
         if (!session?.user) {
           toast(loginPrompt);
           return;

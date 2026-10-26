@@ -10,9 +10,10 @@ assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
 
 const prompt = (word: string): string =>
   `Reply with exactly ${word}. Do not use tools.`;
-const users = (page: Page) => page.getByRole("log").locator(".is-user");
+const users = (page: Page) =>
+  page.getByRole("log").locator('[data-role="user"]');
 const assistants = (page: Page) =>
-  page.getByRole("log").locator(".is-assistant");
+  page.getByRole("log").locator('[data-role="assistant"]');
 const ready = async (page: Page): Promise<void> => {
   await expect(page.getByText("Ready", { exact: true })).toBeVisible({
     timeout: 60_000,

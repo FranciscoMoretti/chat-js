@@ -6,6 +6,7 @@ import { createRoot } from "react-dom/client";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 import { ControlledChatComposer } from "../components/controlled-chat-composer";
+import { MessageScrollerProvider } from "../components/ui/message-scroller";
 import { EveThinkingMessage } from "../components/eve/eve-thinking-message";
 
 const states: {
@@ -62,10 +63,12 @@ const Fixture = (): React.JSX.Element => {
         }: ReadonlyNativeSurface<(typeof states)[number]>) => (
           <section aria-label={name} key={name}>
             <h2>{name}</h2>
-            <EveThinkingMessage
-              status={name === "Resuming" ? "resuming" : (status ?? "ready")}
-              messages={parts ? [{ id: name, parts, role: "assistant" }] : []}
-            />
+            <MessageScrollerProvider>
+              <EveThinkingMessage
+                status={name === "Resuming" ? "resuming" : (status ?? "ready")}
+                messages={parts ? [{ id: name, parts, role: "assistant" }] : []}
+              />
+            </MessageScrollerProvider>
             <ControlledChatComposer
               disabled={status !== "ready"}
               draft=""

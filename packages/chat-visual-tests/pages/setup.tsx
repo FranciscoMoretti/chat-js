@@ -1,3 +1,4 @@
+import { ensureFonts } from "../../registry/src/tools/_shared/visual-fonts";
 import type { EveMessage, MessageStreamEvent } from "eve/client";
 import { MotionGlobalConfig } from "motion/react";
 import type { AnchorHTMLAttributes } from "react";
@@ -9,10 +10,7 @@ import type * as QueryClientModule from "@/trpc/query-client";
 
 // The registry's visual harness: the app's globals.css with Tailwind scanning the
 // app tree, the Geist faces next/font would load, and the motion freeze.
-import {
-  ensureFonts,
-  FREEZE_MOTION_CSS,
-} from "../../registry/src/tools/_shared/visual";
+import { FREEZE_MOTION_CSS } from "../../registry/src/tools/_shared/visual";
 import { chatsIn } from "./fixtures";
 import { captureVariants } from "./render";
 import { TrpcFixtureError, route } from "./route";

@@ -145,8 +145,12 @@ test("Canvas selection survives native history and edits while later turns reset
   await expect(
     composer.getByRole("textbox", { exact: true, name: "Message" })
   ).toHaveText("");
-  await expect(page.getByRole("log").locator(".is-user")).toHaveCount(2);
-  await expect(page.getByRole("log").locator(".is-assistant")).toHaveCount(2);
+  await expect(page.getByRole("log").locator('[data-role="user"]')).toHaveCount(
+    2
+  );
+  await expect(
+    page.getByRole("log").locator('[data-role="assistant"]')
+  ).toHaveCount(2);
   await expect(page.getByText("Ready", { exact: true })).toBeVisible({
     timeout: 90_000,
   });

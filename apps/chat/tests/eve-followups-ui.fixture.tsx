@@ -1,3 +1,4 @@
+import { MessageScrollerProvider } from "@/components/ui/message-scroller";
 import React, { useState } from "react";
 import { createRoot } from "react-dom/client";
 
@@ -15,28 +16,30 @@ const Fixture = (): React.JSX.Element => {
   return (
     <main className="mx-auto max-w-3xl space-y-6 p-4">
       <section aria-label="Completed answer">
-        <EveMessages
-          messages={[
-            {
-              id: "completion:assistant",
-              role: "assistant",
-              parts: [
-                { type: "text", text: "A completed assistant response." },
-              ],
-            },
-          ]}
-          isReadonly={false}
-          disabled={false}
-          respond={() => {
-            /* No input requests in this display fixture. */
-          }}
-          suggestions={
-            <FollowUpSuggestionsView
-              onSelect={setSelected}
-              suggestions={suggestions}
-            />
-          }
-        />
+        <MessageScrollerProvider>
+          <EveMessages
+            messages={[
+              {
+                id: "completion:assistant",
+                role: "assistant",
+                parts: [
+                  { type: "text", text: "A completed assistant response." },
+                ],
+              },
+            ]}
+            isReadonly={false}
+            disabled={false}
+            respond={() => {
+              /* No input requests in this display fixture. */
+            }}
+            suggestions={
+              <FollowUpSuggestionsView
+                onSelect={setSelected}
+                suggestions={suggestions}
+              />
+            }
+          />
+        </MessageScrollerProvider>
       </section>
       <section aria-label="Pending request">
         <p>A pending request disables suggestions.</p>

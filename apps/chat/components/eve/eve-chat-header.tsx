@@ -21,6 +21,7 @@ import {
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
@@ -79,53 +80,57 @@ const EveChatHeader = ({
             <BreadcrumbItem className="min-w-0">
               {draft === undefined ? (
                 <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button
-                      aria-label={`Chat menu: ${title}`}
-                      className="group text-foreground hover:bg-muted focus-visible:ring-ring flex min-w-0 items-center gap-1.5 rounded-md border border-transparent bg-transparent px-2 py-1 text-sm font-medium transition focus-visible:ring-1 focus-visible:outline-none"
-                      type="button"
-                    >
-                      <span className="truncate">{title}</span>
-                      <ChevronDown
-                        aria-hidden
-                        className="text-muted-foreground size-4 shrink-0"
+                  <DropdownMenuTrigger
+                    render={
+                      <button
+                        aria-label={`Chat menu: ${title}`}
+                        className="group text-foreground hover:bg-muted focus-visible:ring-ring flex min-w-0 items-center gap-1.5 rounded-md border border-transparent bg-transparent px-2 py-1 text-sm font-medium transition focus-visible:ring-1 focus-visible:outline-none"
+                        type="button"
                       />
-                    </button>
+                    }
+                  >
+                    <span className="truncate">{title}</span>
+                    <ChevronDown
+                      aria-hidden
+                      className="text-muted-foreground size-4 shrink-0"
+                    />
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <ChatMenuItems
-                      pluginActions={
-                        <PluginChatActions
-                          chat={{
+                    <DropdownMenuGroup>
+                      <ChatMenuItems
+                        pluginActions={
+                          <PluginChatActions
+                            chat={{
+                              id: chatId,
+                              title,
+                              conversationId: hasMessages
+                                ? conversationId
+                                : undefined,
+                              state: "bound",
+                            }}
+                          />
+                        }
+                        isPinned={identity.data?.isPinned ?? false}
+                        onRename={() => {
+                          setDraft(title);
+                        }}
+                        onTogglePin={() => {
+                          pin.mutate({
                             id: chatId,
-                            title,
-                            conversationId: hasMessages
-                              ? conversationId
-                              : undefined,
+                            isPinned: !(identity.data?.isPinned === true),
+                          });
+                        }}
+                        onDelete={() => {
+                          openDeletion({
+                            id: conversationId,
+                            scope: "conversation",
+                            parentHref: identity.data?.parentHref,
                             state: "bound",
-                          }}
-                        />
-                      }
-                      isPinned={identity.data?.isPinned ?? false}
-                      onRename={() => {
-                        setDraft(title);
-                      }}
-                      onTogglePin={() => {
-                        pin.mutate({
-                          id: chatId,
-                          isPinned: !(identity.data?.isPinned === true),
-                        });
-                      }}
-                      onDelete={() => {
-                        openDeletion({
-                          id: conversationId,
-                          scope: "conversation",
-                          parentHref: identity.data?.parentHref,
-                          state: "bound",
-                          title,
-                        });
-                      }}
-                    />
+                            title,
+                          });
+                        }}
+                      />
+                    </DropdownMenuGroup>
                   </DropdownMenuContent>
                 </DropdownMenu>
               ) : (

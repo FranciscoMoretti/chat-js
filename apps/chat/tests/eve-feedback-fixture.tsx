@@ -1,7 +1,6 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
 
-import { MessageActions } from "../components/ai-elements/message";
 import { MessageVoteActions } from "../plugins/feedback/message-vote-actions";
 
 const states: {
@@ -32,7 +31,7 @@ createRoot(root).render(
       ) => (
         <section className="space-y-2" key={state.label}>
           <h2>{state.label}</h2>
-          <MessageActions>
+          <div className="flex items-center gap-1">
             <MessageVoteActions
               disabled={state.disabled}
               onVote={async () => {
@@ -40,7 +39,7 @@ createRoot(root).render(
               }}
               vote={state.vote}
             />
-          </MessageActions>
+          </div>
         </section>
       )
     )}

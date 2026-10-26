@@ -455,6 +455,9 @@ export { sandboxId, sandboxEnvRequirements };
     manifest.dependencies,
     "Template package.json dependencies"
   );
+  // The selected gateway registry item installs its runtime contract. Native
+  // shadcn init runs first, so the scaffold must contain no workspace locator.
+  delete dependencies["@chat-js/gateways"];
   delete dependencies["@ai-sdk/gateway"];
   delete dependencies["@vercel/blob"];
   delete dependencies["@tavily/core"];

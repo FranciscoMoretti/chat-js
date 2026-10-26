@@ -56,7 +56,7 @@ const Context = ({
   usage,
   modelId,
   ...props
-}: ReadonlyNativeSurface<ContextProps>): ReactJSX.Element => {
+}: ContextProps): ReactJSX.Element => {
   const contextValue = useMemo(
     () => ({ maxTokens, modelId, usage, usedTokens }),
     [maxTokens, modelId, usage, usedTokens]
@@ -64,7 +64,7 @@ const Context = ({
 
   return (
     <ContextContext.Provider value={contextValue}>
-      <HoverCard closeDelay={0} openDelay={0} {...props} />
+      <HoverCard {...props} />
     </ContextContext.Provider>
   );
 };
@@ -123,20 +123,15 @@ const ContextTrigger = ({
   }).format(usedPercent);
 
   return (
-    <HoverCardTrigger asChild>
-      {children ?? (
+    <HoverCardTrigger delay={0} closeDelay={0} render={
         <Button type="button" variant="ghost" {...props}>
-          <span className="text-muted-foreground font-medium">
-            {renderedPercent}
-          </span>
-          <ContextIcon />
+          {children ?? <><span className="text-muted-foreground font-medium">{renderedPercent}</span><ContextIcon /></>}
         </Button>
-      )}
-    </HoverCardTrigger>
+    } />
   );
 };
 
-type ContextContentProps = ComponentProps<typeof HoverCardContent>;
+type ContextContentProps = (Omit<ComponentProps<typeof HoverCardContent>, "className"> & { className?: string });
 
 const ContextContent = ({
   className,

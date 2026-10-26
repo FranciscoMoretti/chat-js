@@ -43,7 +43,7 @@ const ArtifactHeader = ({
   />
 );
 
-type ArtifactCloseProps = ComponentProps<typeof Button>;
+type ArtifactCloseProps = (Omit<ComponentProps<typeof Button>, "className"> & { className?: string });
 
 const ArtifactClose = ({
   className,
@@ -97,7 +97,7 @@ const ArtifactActions = ({
   <div className={cn("flex items-center gap-1", className)} {...props} />
 );
 
-type ArtifactActionProps = ComponentProps<typeof Button> & {
+type ArtifactActionProps = (Omit<ComponentProps<typeof Button>, "className"> & { className?: string }) & {
   tooltip?: string;
   label?: string;
   icon?: LucideIcon;
@@ -138,7 +138,7 @@ const ArtifactAction = ({
     return (
       <TooltipProvider>
         <Tooltip>
-          <TooltipTrigger asChild>{button}</TooltipTrigger>
+          <TooltipTrigger  render={button} />
           <TooltipContent>
             <p>{tooltip}</p>
           </TooltipContent>

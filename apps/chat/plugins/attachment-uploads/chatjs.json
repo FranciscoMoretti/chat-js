@@ -1,5 +1,4 @@
 {
-  "contractVersion": 1,
   "id": "attachment-uploads",
   "kind": "plugin",
   "files": [
@@ -12,10 +11,13 @@
     "plugins/attachment-uploads/client-plugin.ts"
   ],
   "requiresStorage": true,
+  "requiresPersistentSandbox": true,
   "client": {
     "export": "attachmentUploadsClient",
     "composerControls": ["attach-files", "take-photo"],
     "settingsItems": [],
     "uploads": true
-  }
+  },
+  "contractVersion": 2,
+  "uiBase": "base"
 }

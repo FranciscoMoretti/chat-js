@@ -106,23 +106,25 @@ export const EveDocumentAssistantActions = ({
     >
       {busy && onStop ? (
         <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              aria-label="Stop generation"
-              className="h-auto w-auto rounded-full p-3"
-              variant="ghost"
+          <TooltipTrigger
+            render={
+              <Button
+                aria-label="Stop generation"
+                className="h-auto w-auto rounded-full p-3"
+                variant="ghost"
 
-              onClick={() => {
-                startEventAction(async () => {
-                  if (typeof onStop === "function") {
-                    await onStop();
-                  }
-                });
-              }}
-            >
-              <Square size={16} />
-            </Button>
-          </TooltipTrigger>
+                onClick={() => {
+                  startEventAction(async () => {
+                    if (typeof onStop === "function") {
+                      await onStop();
+                    }
+                  });
+                }}
+              >
+                <Square size={16} />
+              </Button>
+            }
+          />
           <TooltipContent side="left">Stop generation</TooltipContent>
         </Tooltip>
       ) : (
@@ -130,22 +132,24 @@ export const EveDocumentAssistantActions = ({
           const Icon = helperIcon(action.label);
           return (
             <Tooltip key={action.label}>
-              <TooltipTrigger asChild>
-                <Button
-                  disabled={disabled || !onAction}
-                  variant="ghost"
-                  className="h-auto w-auto rounded-full p-3"
-                  aria-label={action.label}
+              <TooltipTrigger
+                render={
+                  <Button
+                    disabled={disabled || !onAction}
+                    variant="ghost"
+                    className="h-auto w-auto rounded-full p-3"
+                    aria-label={action.label}
 
-                  onClick={() => {
-                    void onAction?.(
-                      documentAssistantRequest(action, documentId, revisionId)
-                    );
-                  }}
-                >
-                  <Icon size={16} />
-                </Button>
-              </TooltipTrigger>
+                    onClick={() => {
+                      void onAction?.(
+                        documentAssistantRequest(action, documentId, revisionId)
+                      );
+                    }}
+                  >
+                    <Icon size={16} />
+                  </Button>
+                }
+              />
               <TooltipContent side="left">{action.label}</TooltipContent>
             </Tooltip>
           );

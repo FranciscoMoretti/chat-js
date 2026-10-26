@@ -24,22 +24,25 @@ export const SidebarToggle = ({
 
   return (
     <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          {...props}
-          className={className}
-          onClick={(event) => {
-            onClick?.(event);
-            if (!event.defaultPrevented) {
-              toggleSidebar();
-            }
-          }}
-          size="icon"
-          variant="ghost"
-        >
-          <PanelLeft size={16} />
-        </Button>
-      </TooltipTrigger>
+      <TooltipTrigger
+        render={
+          <Button
+            aria-label="Toggle sidebar"
+            {...props}
+            className={className}
+            onClick={(event) => {
+              onClick?.(event);
+              if (!event.defaultPrevented) {
+                toggleSidebar();
+              }
+            }}
+            size="icon"
+            variant="ghost"
+          >
+            <PanelLeft size={16} />
+          </Button>
+        }
+      />
       <TooltipContent align="start">Toggle Sidebar</TooltipContent>
     </Tooltip>
   );

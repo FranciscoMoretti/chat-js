@@ -2,24 +2,17 @@
 
 import { hasText } from "@/components/text-value";
 
-import type { EveMessageInputRequest, InputResponse } from "eve/client";
-import React, { useState } from "react";
+import type { InputResponse } from "eve/client";
+import React from "react";
 import type { JSX as ReactJSX, ReactNode } from "react";
 import { toast } from "sonner";
 
-import { Message, MessageContent } from "@/components/ai-elements/message";
-import { Response } from "@/components/ai-elements/response";
-import { ToolInput } from "@/components/ai-elements/tool";
+import { Message, MessageContent } from "@/components/ui/message";
+import { MessageScrollerItem } from "@/components/ui/message-scroller";
 import { MessageActionsView } from "@/components/message-actions-view";
-import { ReasoningPart } from "@/components/part/message-reasoning";
 import { RetryButtonView } from "@/components/retry-button-view";
 import { Tag } from "@/components/tag";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { UserMessageView } from "@/components/user-message-view";
-import { parseToolId } from "@/lib/ai/mcp-name-id";
-import { getEveInstalledToolRenderer } from "@/lib/ai/tool-renderer-registry";
-import { eveDocumentOperations } from "@/lib/eve/document-contracts";
 import type {
   ReadonlyEveMessage,
   ReadonlyEveMessagePart,
@@ -27,86 +20,9 @@ import type {
 import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 
 import { EveAttachment } from "./eve-attachment";
-import { EveDocumentTool } from "./eve-document-tool";
+import { eveDocumentOperations } from "@/lib/eve/document-contracts";
+import { EveMessagePart } from "./eve-message-part";
 import { PluginMessageActions } from "@/components/plugin-chat-ui";
-import { EveMcpResult } from "./eve-mcp-result";
-import { EveToolResult } from "./eve-tool-result";
-
-const PendingInput = ({
-  request,
-  disabled,
-  respond,
-}: {
-  readonly request: EveMessageInputRequest;
-  readonly disabled: boolean;
-  readonly respond: (response: InputResponse) => void;
-}): ReactJSX.Element => {
-  const [text, setText] = useState("");
-  return (
-    <div className="space-y-3">
-      <p>{request.prompt}</p>
-      <div className="flex flex-wrap gap-2">
-        {request.options?.map((option): React.JSX.Element => (
-          <Button
-            disabled={disabled}
-            key={option.id}
-            onClick={() => {
-              respond({ optionId: option.id, requestId: request.requestId });
-            }}
-            type="button"
-            variant={option.style === "danger" ? "outline" : "default"}
-          >
-            {option.label}
-          </Button>
-        ))}
-      </div>
-      {request.allowFreeform === true && (
-        <form
-          className="space-y-2"
-          onSubmit={(event: { readonly preventDefault: () => void }) => {
-            event.preventDefault();
-            if (text.trim()) {
-              respond({ requestId: request.requestId, text: text.trim() });
-            }
-          }}
-        >
-          <Textarea
-            aria-label="Your answer"
-            disabled={disabled}
-            maxLength={16_000}
-            onChange={(event: {
-              readonly target: { readonly value: string };
-            }) => {
-              setText(event.target.value);
-            }}
-            value={text}
-          />
-          <Button disabled={disabled || !text.trim()} type="submit">
-            Submit answer
-          </Button>
-        </form>
-      )}
-    </div>
-  );
-};
-
-const toolStatus = (
-  part: Extract<ReadonlyEveMessagePart, { type: "dynamic-tool" }>
-): string => {
-  if (part.state === "approval-requested") {
-    return "Waiting for input.";
-  }
-  if (part.state === "output-denied") {
-    return "Request declined.";
-  }
-  if (part.state === "output-error") {
-    return part.errorText;
-  }
-  if (part.state === "output-available") {
-    return "Tool completed.";
-  }
-  return "Working…";
-};
 
 const messagePartIdentity = (part: ReadonlyEveMessagePart): string => {
   switch (part.type) {
@@ -134,101 +50,6 @@ const messagePartIdentity = (part: ReadonlyEveMessagePart): string => {
       return unreachable;
     }
   }
-};
-
-// This renderer handles all streamed EVE part variants and their recovery states.
-
-const Part = ({
-  messageId,
-  isReadonly,
-  part,
-  respond,
-  inputDisabled,
-  previewDocument = false,
-}: {
-  readonly previewDocument?: boolean;
-  readonly messageId: string;
-  readonly isReadonly: boolean;
-  readonly part: ReadonlyEveMessagePart;
-  readonly inputDisabled: boolean;
-  readonly respond: (response: InputResponse) => void;
-}): React.JSX.Element | null => {
-  if (part.type === "text") {
-    return <Response>{part.text}</Response>;
-  }
-  if (part.type === "file") {
-    return <EveAttachment part={part} />;
-  }
-  if (part.type === "reasoning") {
-    return (
-      <ReasoningPart
-        content={part.text}
-        isLoading={part.state === "streaming"}
-      />
-    );
-  }
-  if (part.type === "step-start") {
-    return null;
-  }
-  if (part.type !== "dynamic-tool") {
-    return <p>Unsupported content in this conversation.</p>;
-  }
-  if (
-    getEveInstalledToolRenderer(`tool-${part.toolName}`) &&
-    part.state !== "approval-requested" &&
-    part.state !== "approval-responded"
-  ) {
-    return (
-      <EveToolResult
-        isReadonly={isReadonly}
-        messageId={messageId}
-        part={part}
-      />
-    );
-  }
-
-  if (
-    Object.hasOwn(eveDocumentOperations, part.toolName) ||
-    part.toolName === "readDocument"
-  ) {
-    return (
-      <EveDocumentTool
-        preview={previewDocument}
-        isReadonly={isReadonly}
-        messageId={messageId}
-        part={part}
-      />
-    );
-  }
-  if (
-    parseToolId(part.toolName) &&
-    part.state !== "approval-requested" &&
-    part.state !== "approval-responded"
-  ) {
-    return <EveMcpResult part={part} />;
-  }
-  const request = part.toolMetadata?.eve?.inputRequest;
-  return (
-    <section
-      aria-label="Tool result"
-      className="space-y-3 rounded-lg border p-4"
-    >
-      <p className="font-medium">{part.toolName}</p>
-      {part.input !== undefined && (
-        <ToolInput className="p-0" input={part.input} />
-      )}
-      {part.state === "approval-requested" && request ? (
-        <PendingInput
-          disabled={inputDisabled}
-          key={request.requestId}
-          request={request}
-          respond={respond}
-        />
-      ) : (
-        <p className="text-muted-foreground text-sm">{toolStatus(part)}</p>
-      )}
-    </section>
-  );
 };
 
 interface EveMessagesProps {
@@ -497,16 +318,17 @@ const EveMessageRow = ({
   }
   return (
     <Message
-      className="w-full max-w-full items-start py-1"
-      data-message-id={message.id}
-      from={message.role}
+      className="py-1"
+      data-eve-message-id={message.id}
+      data-role={message.role}
+      align="start"
     >
-      <MessageContent className="w-full px-0 py-0 text-left">
+      <MessageContent>
         <span className="sr-only">Assistant</span>
         {message.parts
           .filter((part: ReadonlyEveMessagePart) => part.type !== "step-start")
           .map((part): React.JSX.Element => (
-            <Part
+            <EveMessagePart
               inputDisabled={responseDisabled(
                 isReadonly,
                 disabled,
@@ -558,15 +380,20 @@ export const EveMessages = ({
     }
   }
   return messages.map((message, index) => (
-    <EveMessageRow
-      {...props}
+    <MessageScrollerItem
       key={messageKey?.(message) ?? message.id}
-      message={message}
-      userMessage={precedingUsers[index]}
-      isLast={message.id === messages.at(-1)?.id}
-      latestDocumentCallId={latestDocumentCallId}
-      disabled={disabled}
-      actionsDisabled={actionsDisabled}
-    />
+      messageId={messageKey?.(message) ?? message.id}
+      scrollAnchor={message.role === "user"}
+    >
+      <EveMessageRow
+        {...props}
+        message={message}
+        userMessage={precedingUsers[index]}
+        isLast={message.id === messages.at(-1)?.id}
+        latestDocumentCallId={latestDocumentCallId}
+        disabled={disabled}
+        actionsDisabled={actionsDisabled}
+      />
+    </MessageScrollerItem>
   ));
 };

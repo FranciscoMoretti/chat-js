@@ -1,5 +1,4 @@
 {
-  "contractVersion": 1,
   "id": "followup-suggestions",
   "kind": "plugin",
   "files": [
@@ -30,5 +29,7 @@
     "composerControls": [],
     "settingsItems": [],
     "chat": true
-  }
+  },
+  "contractVersion": 2,
+  "uiBase": "base"
 }

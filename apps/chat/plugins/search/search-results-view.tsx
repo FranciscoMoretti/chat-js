@@ -88,7 +88,6 @@ export const EveSearchResultsView = ({
         <CommandInput
           ref={inputRef}
           aria-label="Search conversations"
-          containerClassName="min-w-0 flex-1"
           className="min-w-0"
           placeholder="Search titles and messages…"
           value={query}

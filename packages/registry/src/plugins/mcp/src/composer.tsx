@@ -12,7 +12,6 @@ import {
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuPortal,
   DropdownMenuSeparator,
   DropdownMenuSub,
   DropdownMenuSubContent,
@@ -102,49 +101,50 @@ const ConnectorsControl = ({
         <Plug />
         Connectors
       </DropdownMenuSubTrigger>
-      <DropdownMenuPortal>
-        <DropdownMenuSubContent className="w-56">
-          <DropdownMenuGroup>
-            {typeof status === "string" && status !== "" ? (
-              <DropdownMenuLabel>{status}</DropdownMenuLabel>
-            ) : (
-              connectors?.map(
-                (connector: {
-                  readonly id: string;
-                  readonly enabled: boolean;
-                  readonly userId: string | null;
-                  readonly name: string;
-                }) => (
-                  <DropdownMenuCheckboxItem
-                    key={connector.id}
-                    checked={connector.enabled}
-                    disabled={disabled === true || connector.userId === null}
-                    onSelect={(
-                      event: Readonly<Pick<Event, "preventDefault">>
-                    ): void => {
-                      event.preventDefault();
-                    }}
-                    onCheckedChange={(enabled): void => {
-                      toggleEnabled({ enabled, id: connector.id });
-                    }}
-                  >
-                    <span className="truncate">{connector.name}</span>
-                  </DropdownMenuCheckboxItem>
-                )
+      <DropdownMenuSubContent className="w-56">
+        <DropdownMenuGroup>
+          {typeof status === "string" && status !== "" ? (
+            <DropdownMenuLabel>{status}</DropdownMenuLabel>
+          ) : (
+            connectors?.map(
+              (connector: {
+                readonly id: string;
+                readonly enabled: boolean;
+                readonly userId: string | null;
+                readonly name: string;
+              }) => (
+                <DropdownMenuCheckboxItem
+                  key={connector.id}
+                  checked={connector.enabled}
+                  disabled={disabled === true || connector.userId === null}
+                  closeOnClick={false}
+                  onCheckedChange={(
+                    enabled: boolean | "indeterminate"
+                  ): void => {
+                    toggleEnabled({
+                      enabled: enabled === true,
+                      id: connector.id,
+                    });
+                  }}
+                >
+                  <span className="truncate">{connector.name}</span>
+                </DropdownMenuCheckboxItem>
               )
-            )}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
+            )
+          )}
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            render={
               <InternalLink
                 href={isAuthenticated ? "/settings/connectors" : "/login"}
-              >
-                <Settings />
-                {isAuthenticated ? "Manage connectors" : "Sign in"}
-              </InternalLink>
-            </DropdownMenuItem>
-          </DropdownMenuGroup>
-        </DropdownMenuSubContent>
-      </DropdownMenuPortal>
+              />
+            }
+          >
+            <Settings />
+            {isAuthenticated ? "Manage connectors" : "Sign in"}
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
+      </DropdownMenuSubContent>
     </DropdownMenuSub>
   );
 };

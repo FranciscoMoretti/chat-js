@@ -1,3 +1,4 @@
+import { MessageScrollerProvider } from "@/components/ui/message-scroller";
 import React, { act } from "react";
 import { expect, test, vi } from "vitest";
 import { page } from "vitest/browser";
@@ -54,18 +55,22 @@ test("message actions retain their user boundary and readonly behavior", async (
     .fn<(message: ReadonlyEveMessage) => string>()
     .mockReturnValue("fixture-model");
   const render = (isReadonly: boolean) => (
-    <EveMessages
-      disabled={false}
-      isReadonly={isReadonly}
-      messages={messages}
-      respond={respond}
-      onEdit={edit}
-      onRegenerate={regenerate}
-      modelForMessage={modelForMessage}
-      renderVersions={(message, user) => (
-        <span data-testid={`versions-${message.id}`}>{user?.id ?? "none"}</span>
-      )}
-    />
+    <MessageScrollerProvider>
+      <EveMessages
+        disabled={false}
+        isReadonly={isReadonly}
+        messages={messages}
+        respond={respond}
+        onEdit={edit}
+        onRegenerate={regenerate}
+        modelForMessage={modelForMessage}
+        renderVersions={(message, user) => (
+          <span data-testid={`versions-${message.id}`}>
+            {user?.id ?? "none"}
+          </span>
+        )}
+      />
+    </MessageScrollerProvider>
   );
   const fixture = await mount(render(false));
   fixture.container.style.cssText = "width:800px;padding:24px";
@@ -102,6 +107,11 @@ test("message actions retain their user boundary and readonly behavior", async (
         .click();
     });
     expect(edit).toHaveBeenCalledExactlyOnceWith(messages[2]);
+    await page.getByText("First answer", { exact: true }).hover();
+    // Base UI removes the role before its exit animation unmounts the portal.
+    await expect
+      .poll(() => document.querySelector('[data-slot="tooltip-content"]'))
+      .toBeNull();
     await takeSnapshot("eve-message-action-boundaries");
     await page.elementLocator(fixture.container).screenshot();
     await renderRoot(fixture.root, render(true));

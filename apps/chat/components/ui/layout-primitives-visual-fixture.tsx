@@ -82,9 +82,7 @@ export const LayoutPrimitivesVisualFixture = (): React.JSX.Element => (
 
     <section className="flex flex-wrap gap-3">
       <AlertDialog>
-        <AlertDialogTrigger asChild>
-          <Button>Open alert</Button>
-        </AlertDialogTrigger>
+        <AlertDialogTrigger  render={<Button>Open alert</Button>} />
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete project?</AlertDialogTitle>
@@ -99,9 +97,7 @@ export const LayoutPrimitivesVisualFixture = (): React.JSX.Element => (
         </AlertDialogContent>
       </AlertDialog>
       <Dialog>
-        <DialogTrigger asChild>
-          <Button variant="outline">Open dialog</Button>
-        </DialogTrigger>
+        <DialogTrigger render={<Button variant="outline" />}>Open dialog</DialogTrigger>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Project settings</DialogTitle>
@@ -110,9 +106,7 @@ export const LayoutPrimitivesVisualFixture = (): React.JSX.Element => (
         </DialogContent>
       </Dialog>
       <Sheet>
-        <SheetTrigger asChild>
-          <Button variant="secondary">Open sheet</Button>
-        </SheetTrigger>
+        <SheetTrigger render={<Button variant="secondary" />}>Open sheet</SheetTrigger>
         <SheetContent>
           <SheetHeader>
             <SheetTitle>Inspector</SheetTitle>

@@ -48,19 +48,21 @@ export const ProjectIconPicker = ({
 
   return (
     <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          className={cn("size-9 p-0", className)}
-          type="button"
-          variant="outline"
-        >
-          {icon ? (
-            <ProjectIcon color={displayColor} icon={icon} size={18} />
-          ) : (
-            <Smile className="text-muted-foreground size-[18px]" />
-          )}
-        </Button>
-      </PopoverTrigger>
+      <PopoverTrigger
+        render={
+          <Button
+            className={cn("size-9 p-0", className)}
+            type="button"
+            variant="outline"
+          >
+            {icon ? (
+              <ProjectIcon color={displayColor} icon={icon} size={18} />
+            ) : (
+              <Smile className="text-muted-foreground size-[18px]" />
+            )}
+          </Button>
+        }
+      />
       <PopoverContent align="start" className="w-auto p-3">
         {/* Color row */}
         <div className="mb-3 flex gap-1.5">

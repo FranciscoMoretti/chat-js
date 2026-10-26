@@ -1,3 +1,4 @@
+import { MessageScrollerProvider } from "@/components/ui/message-scroller";
 import { renderRoot } from "./primitive-mount";
 import { takeSnapshot } from "@uiverify/vitest";
 import type { EveMessage } from "eve/client";
@@ -154,15 +155,29 @@ test("EVE messages render streamed content and file parts", async () => {
   try {
     act(() => {
       root.render(
-        <EveMessages
-          disabled={false}
-          isReadonly
-          messages={messages}
-          respond={noop}
-        />
+        <MessageScrollerProvider>
+          <EveMessages
+            disabled={false}
+            isReadonly
+            messages={messages}
+            respond={noop}
+          />
+        </MessageScrollerProvider>
       );
     });
     expect(container.querySelector('[data-testid="attachments"]')).toBeTruthy();
+    const user = container.querySelector('[data-role="user"]');
+    const attachment = user?.querySelector('[data-slot="attachment"]');
+    const bubble = user?.querySelector('[data-slot="bubble"]');
+    if (!attachment || !bubble) {
+      throw new Error("Missing user attachment or bubble");
+    }
+    expect(
+      Math.abs(
+        attachment.getBoundingClientRect().right -
+          bubble.getBoundingClientRect().right
+      )
+    ).toBeLessThan(2);
     expect(container.textContent).toContain("Revenue grew this quarter.");
     expect(container.querySelectorAll('[data-testid="response"]')).toHaveLength(
       responseCountBeforeStream
@@ -177,12 +192,14 @@ test("EVE messages render streamed content and file parts", async () => {
 
     await renderRoot(
       root,
-      <EveMessages
-        disabled={false}
-        isReadonly
-        messages={streamedMessages}
-        respond={noop}
-      />
+      <MessageScrollerProvider>
+        <EveMessages
+          disabled={false}
+          isReadonly
+          messages={streamedMessages}
+          respond={noop}
+        />
+      </MessageScrollerProvider>
     );
     expect(container.contains(streamedResponse)).toBe(true);
     expect(container.querySelectorAll('[data-testid="response"]')).toHaveLength(

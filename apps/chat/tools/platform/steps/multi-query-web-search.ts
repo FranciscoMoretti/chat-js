@@ -1,7 +1,7 @@
 import type { ToolProgressWriter } from "@/lib/ai/tool-context";
 import type { SearchResultItem } from "../research-updates-schema";
 import { deduplicateByDomainAndUrl } from "./search-utils";
-import { generateUUID } from "@/lib/utils";
+import { generateUUID } from "@/lib/id";
 
 interface SearchQuery {
   readonly maxResults: number;

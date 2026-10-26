@@ -43,11 +43,68 @@ const request = {
 test("conversation", async () => {
   await renderRoute(conversation, request);
   await expect
+    .poll(() =>
+      document.querySelector('[data-slot="message-scroller-viewport"]')
+    )
+    .not.toBeNull();
+  await expect
     .element(page.getByText("invoices_account_status_due_idx"))
     .toBeVisible();
   await expect
     .element(page.getByRole("textbox", { name: "Message" }))
     .toBeVisible();
+});
+
+test("mobile conversation can reveal the transcript below the composer", async () => {
+  // The conversation capture already covers both mobile themes.
+  await renderRoute(conversation, { ...request, viewports: [] });
+  await expect
+    .element(page.getByText("invoices_account_status_due_idx"))
+    .toBeVisible();
+  await page.viewport(390, 844);
+  const viewport = document.querySelector<HTMLElement>(
+    '[data-slot="message-scroller-viewport"]'
+  );
+  if (!viewport) {
+    throw new Error("Missing transcript viewport");
+  }
+  await expect
+    .poll(() => viewport.scrollHeight > viewport.clientHeight)
+    .toBe(true);
+  await expect
+    .poll(
+      () =>
+        viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight <
+          8 ||
+        document.querySelector<HTMLElement>(
+          '[data-slot="message-scroller-button"]'
+        )?.dataset.active === "true"
+    )
+    .toBe(true);
+  viewport.dispatchEvent(
+    new WheelEvent("wheel", { deltaY: -1000, bubbles: true })
+  );
+  viewport.scrollTo({ top: 0, behavior: "instant" });
+  viewport.dispatchEvent(new Event("scroll"));
+  await expect
+    .poll(
+      () =>
+        document.querySelector<HTMLElement>(
+          '[data-slot="message-scroller-button"]'
+        )?.dataset.active
+    )
+    .toBe("true");
+  await expect
+    .element(page.getByRole("button", { name: "Scroll to end", exact: true }))
+    .toBeVisible();
+  await page
+    .getByRole("button", { name: "Scroll to end", exact: true })
+    .click();
+  await expect
+    .poll(
+      () => viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight
+    )
+    .toBeLessThan(2);
 });
 
 test("display receipts settle with a fresh native agent wrapper", async () => {
@@ -269,6 +326,59 @@ test("shared conversation, signed in", async () => {
   await expect
     .element(page.getByRole("region", { name: "Save shared conversation" }))
     .toBeVisible();
+
+  // A shared transcript has a footer after the last message. Resizing to mobile
+  // must keep its save action reachable through the native end-scroll control.
+  await page.viewport(390, 844);
+  const viewport = document.querySelector<HTMLElement>(
+    '[data-slot="message-scroller-viewport"]'
+  );
+  if (!viewport) {
+    throw new Error("Missing shared transcript viewport");
+  }
+  await expect
+    .poll(() => viewport.scrollHeight > viewport.clientHeight)
+    .toBe(true);
+  await expect
+    .poll(
+      () =>
+        viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight <
+          8 ||
+        document.querySelector<HTMLElement>(
+          '[data-slot="message-scroller-button"]'
+        )?.dataset.active === "true"
+    )
+    .toBe(true);
+  viewport.dispatchEvent(
+    new WheelEvent("wheel", { deltaY: -1000, bubbles: true })
+  );
+  viewport.scrollTo({ top: 0, behavior: "instant" });
+  viewport.dispatchEvent(new Event("scroll"));
+  await expect
+    .poll(
+      () =>
+        document.querySelector<HTMLElement>(
+          '[data-slot="message-scroller-button"]'
+        )?.dataset.active
+    )
+    .toBe("true");
+  await page
+    .getByRole("button", { name: "Scroll to end", exact: true })
+    .click();
+  await expect
+    .poll(
+      () => viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight
+    )
+    .toBeLessThan(2);
+  const save = page.getByRole("button", { name: "Save to your chats" });
+  await expect.element(save).toBeVisible();
+  await expect
+    .poll(() => {
+      const action = save.element().getBoundingClientRect();
+      const bounds = viewport.getBoundingClientRect();
+      return action.top >= bounds.top && action.bottom <= bounds.bottom;
+    })
+    .toBe(true);
 });
 
 test("owner can answer approval while the native turn stays open", async () => {
@@ -283,7 +393,7 @@ test("owner can answer approval while the native turn stays open", async () => {
           parts: [
             {
               type: "dynamic-tool",
-              toolName: "deleteDocument",
+              toolName: "createTextDocument",
               toolCallId: "delete-call",
               state: "approval-requested",
               approval: { id: "delete-request" },
@@ -295,7 +405,7 @@ test("owner can answer approval while the native turn stays open", async () => {
                   inputRequest: {
                     requestId: "delete-request",
                     kind: "tool-approval",
-                    prompt: "Approve Delete document?",
+                    prompt: "Approve Create document?",
                     allowFreeform: false,
                     display: "confirmation",
                     options: [
@@ -582,6 +692,57 @@ test.each(["desktop", "mobile"] as const)(
         page.getByText("Add an index to speed up your", { exact: false })
       )
       .toBeVisible();
+    await userEvent.click(page.getByRole("button", { name: "Close search" }));
+    await expect
+      .element(page.getByRole("button", { name: /Search chats/u }))
+      .toHaveFocus();
+    await userEvent.click(page.getByRole("button", { name: /Search chats/u }));
+    await userEvent.fill(page.getByRole("combobox"), "invoice");
+    await expect
+      .element(
+        page.getByText("Add an index to speed up your", { exact: false })
+      )
+      .toBeVisible();
+    if (viewport === "mobile") {
+      await userEvent.keyboard("{Escape}");
+      await expect
+        .element(page.getByRole("button", { name: /Search chats/u }))
+        .toHaveFocus();
+      await userEvent.click(
+        page.getByRole("button", { name: /Search chats/u })
+      );
+      await userEvent.fill(page.getByRole("combobox"), "invoice");
+      await expect
+        .element(
+          page.getByText("Add an index to speed up your", { exact: false })
+        )
+        .toBeVisible();
+      // A nested dialog needs a backdrop above the sheet, not only behind it.
+      await expect
+        .poll(() => {
+          const backdrop = document.querySelector(
+            '[data-slot="dialog-overlay"]'
+          );
+          const bounds = backdrop?.getBoundingClientRect();
+          return (
+            bounds && {
+              left: bounds.left,
+              top: bounds.top,
+              width: bounds.width,
+              height: bounds.height,
+            }
+          );
+        })
+        .toEqual({
+          left: 0,
+          top: 0,
+          width: window.innerWidth,
+          height: window.innerHeight,
+        });
+    }
+    await page.screenshot({
+      path: `__screenshots__/search-sidebar-${viewport}.png`,
+    });
   }
 );
 
@@ -618,6 +779,7 @@ test("completed, failed and cancelled turns refresh the displayed credit balance
   if (sessionId === null) {
     throw new Error("The fixture needs a session.");
   }
+  await expect.poll(() => route.agentEventHandlers.has(sessionId)).toBe(true);
   const onEvent = route.agentEventHandlers.get(sessionId);
   const event = invoicesFollowupEvents[sessionId]?.find(
     (candidate) => candidate.type === "turn.completed"
@@ -650,4 +812,88 @@ test("completed, failed and cancelled turns refresh the displayed credit balance
   await expect
     .element(page.getByText("8.42", { exact: true }))
     .not.toBeInTheDocument();
+});
+
+test("nested model filters keep the picker open and keyboard selection works", async () => {
+  await renderRoute(conversation, request);
+  await page.getByTestId("model-selector").click();
+  await page.getByRole("button", { name: "Filter models" }).click();
+  await page.getByRole("checkbox").first().click();
+  await expect
+    .element(page.getByText("Clear filters", { exact: true }))
+    .toBeVisible();
+  await expect.element(page.getByPlaceholder("Search models...")).toBeVisible();
+  await userEvent.keyboard("{Escape}");
+  await expect
+    .element(page.getByText("Filter by Tools", { exact: true }))
+    .not.toBeInTheDocument();
+  await expect.element(page.getByPlaceholder("Search models...")).toBeVisible();
+  await page.getByRole("button", { name: "Filter models" }).click();
+  await page.getByRole("button", { name: "Clear filters" }).click();
+  await userEvent.keyboard("{Escape}");
+  await page.getByPlaceholder("Search models...").fill("GPT-5 mini");
+  await userEvent.keyboard("{ArrowDown}{Enter}");
+  await expect
+    .element(page.getByPlaceholder("Search models..."))
+    .not.toBeInTheDocument();
+  await expect
+    .element(page.getByTestId("model-selector"))
+    .toHaveTextContent("GPT-5 mini");
+  await page.getByTestId("model-selector").click();
+  await page
+    .elementLocator(document.body)
+    .screenshot({ path: "__screenshots__/native-model-picker.png" });
+});
+
+test("message activity renders reasoning, tool errors and falsy results in the chat route", async () => {
+  await renderRoute(conversation, {
+    ...request,
+    transcripts: {
+      [invoicesConversation.sessionId ?? ""]: [
+        {
+          id: "activity-message",
+          role: "assistant",
+          parts: [
+            {
+              type: "reasoning",
+              text: "Checking the inventory before answering.",
+              state: "done",
+            },
+            {
+              type: "dynamic-tool",
+              toolCallId: "inventory",
+              toolName: "Inventory lookup",
+              state: "output-available",
+              input: { sku: "sample" },
+              output: 0,
+            },
+            {
+              type: "dynamic-tool",
+              toolCallId: "offline",
+              toolName: "Warehouse lookup",
+              state: "output-error",
+              input: {},
+              errorText: "Warehouse unavailable. Try again.",
+            },
+            {
+              type: "text",
+              text: "There are no items available in this warehouse.",
+            },
+          ],
+        },
+      ],
+    },
+  });
+  await expect
+    .element(
+      page.getByRole("alert").filter({ hasText: "Warehouse unavailable" })
+    )
+    .toBeVisible();
+  await expect
+    .element(page.getByTestId("message-reasoning-toggle"))
+    .toHaveAttribute("aria-expanded", "false");
+  await page.getByTestId("message-reasoning-toggle").click();
+  await expect
+    .element(page.getByTestId("message-reasoning"))
+    .toHaveTextContent("Checking the inventory before answering.");
 });

@@ -247,7 +247,7 @@ test("project UI edits instructions, creates a native conversation and lists it 
     await page.getByRole("button", { exact: true, name: "Send" }).click();
     await expect(page).toHaveURL(conversationUrl);
     conversationId = page.url().split("/").at(-1);
-    await expect(page.locator(".is-assistant")).toContainText(
+    await expect(page.locator('[data-role="assistant"]')).toContainText(
       "PROJECT_UI_7238",
       { timeout: 90_000 }
     );
@@ -328,7 +328,7 @@ test("project UI edits instructions, creates a native conversation and lists it 
     const surviving = page.locator(`a[href="/chat/${conversationId}"]`);
     await expect(surviving).toHaveAttribute("href", `/chat/${conversationId}`);
     await surviving.click();
-    await expect(page.locator(".is-assistant")).toContainText(
+    await expect(page.locator('[data-role="assistant"]')).toContainText(
       "PROJECT_UI_7238"
     );
   } catch (error) {

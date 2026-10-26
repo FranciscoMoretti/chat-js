@@ -1,5 +1,4 @@
 {
-  "contractVersion": 1,
   "id": "vercel-speed-insights",
   "kind": "plugin",
   "files": [
@@ -11,5 +10,6 @@
     "composerControls": [],
     "settingsItems": [],
     "layout": true
-  }
+  },
+  "contractVersion": 1
 }

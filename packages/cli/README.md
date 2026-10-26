@@ -32,7 +32,54 @@ Run `bun --filter @chat-js/cli test:gateways` from the repository root to verify
 
 ## Installation and migration
 
-The CLI uses unmodified shadcn 4.21.0 for registry resolution and installation. New apps use the invoking package manager, with Bun as the fallback. Existing apps use their standard package metadata and lockfiles. Dependencies install immediately. `--no-install`, `--package-manager`, and `--registry` are removed. Configure registry namespaces in `components.json` instead:
+The `0.9.0-beta.1` release candidate supports Base UI and Radix with matching registry `0.2.0-beta.1`. Use a local build until these candidates are published, then invoke `npx @chat-js/cli@0.9.0-beta.1` for the examples below. The earlier beta.0 releases support Base UI only. Stable `latest` is unchanged.
+
+Pass native shadcn visual options after `--`:
+
+```sh
+chat-js create my-chat --yes --gateway openrouter --attachments --sandbox-provider vercel --storage-provider s3 --storage-config '{"bucket":"uploads"}' -- --preset b27I2r8C --base base --no-rtl --pointer
+```
+
+ChatJS invokes native `init` before selected registry source is installed and reinstalls the scaffold's native primitives to match the preset. Native spelling, ordering, values, and errors are preserved; ChatJS has no theme schema or preset decoder. Without native arguments, creation retains the maintained Base UI/Rhea scaffold. Pass `--base radix` to generate native Radix primitives and matching application compositions; pass `--base base` for Base UI. React Aria is rejected before scaffolding. Directory, template, monorepo, and initialization lifecycle flags belong to ChatJS and cannot be forwarded; `--from-git` never applies native initialization arguments.
+
+Uploads require durable storage and a sandbox that supports persistent files. Pass `--sandbox-provider vercel` or a compatible external registry provider when enabling `--attachments`. The built-in Daytona adapter currently supports code execution only. Create's web configurator includes Vercel Sandbox when uploads are selected. Configure the generated sandbox credentials and use `bun dev:supervise` for local attachment conversations. The CLI validates the selected or installed provider's literal `supportsPersistentSandbox = true` declaration without executing its source, including when replacing providers in an app that already has uploads.
+
+For a fresh Radix app with a native preset:
+
+```sh
+chat-js create my-chat --yes -- --preset b27I2r8C --base radix
+```
+
+The reference app remains Base UI. Fresh generation adapts application composition to the selected library and installs the native shadcn component source for that library. It does not install a permanent compatibility layer between Base UI and Radix.
+
+For an existing app, use shadcn directly to change only theme or font without replacing component implementations:
+
+```sh
+bunx shadcn@4.22.1 apply <preset> --only theme
+bunx shadcn@4.22.1 apply <preset> --only font
+```
+
+To change component shape or icon library as well, native shadcn must regenerate the installed primitives. Commit your app first, inspect native `add --diff` output for components you customized, then apply your chosen preset with native `init --preset <preset> --base <existing-base> --force --reinstall`, substituting the app's existing `base` or `radix` library. This replaces native component source. Keep application behavior in compositions outside `components/ui` so later native updates stay small.
+
+Existing ChatJS applications need a source migration; upgrading the CLI does not rewrite an app's conversation or composer. Use the current scaffold as the reference:
+
+| Previous composition | Current source |
+| --- | --- |
+| Message/conversation wrappers | `components/ui/message`, `bubble`, `message-scroller`, `attachment` |
+| Prompt-input facade | `components/composer/prompt-form` with native InputGroup; preserve the app's editor and submission handlers |
+| Tool/reasoning wrappers | Native Trace with `components/part/tool-activity`, `tool-data`, and `message-reasoning` |
+| Code-block facade | Native CodeBlock plus `components/code-snippet`, `hooks/use-highlighted-code`, and `lib/highlighter` |
+| Sandbox facade | `components/sandbox`, composing native Trace, Tabs and CodeBlock |
+
+Migrate callers together with primitives. Base UI menu actions use `onClick` and custom triggers use `render`; Radix uses `onSelect` and `asChild`. Passing Radix `onSelect` to a Base UI menu may compile without running the action. Use each library's native composition and ordinary links styled with `buttonVariants` for navigation. Preserve EVE message IDs, scroll anchoring, draft/IME behavior, approval dispatch before specialized renderers, and document revision actions. Verify these flows in your app before removing the old wrappers. Markdown still uses Streamdown; tool-specific renderers remain installed source.
+
+This CLI candidate pins new apps to `@chat-js/registry@0.2.0-beta.1`. Matching registry builds preserve the root Base namespace and add complete `/base/{name}.json` and `/radix/{name}.json` namespaces. Fresh Radix generation selects `/radix/`; item IDs and installation targets remain the same. Subsequent `add` and `sync` retain the configured namespace and check the host's native `base-*` or `radix-*` style before writing source or registrations.
+
+UI-specific plugins and tools declare descriptor `contractVersion: 2` with matching `uiBase: "base"` or `uiBase: "radix"`. A mismatch stops installation; v2 descriptor versions do not prescribe npm major versions. Legacy v1 descriptors remain supported. Existing applications are not automatically migrated between libraries: changing `components.json` or a registry URL alone is insufficient. Keep the compatible registry namespace until migrating primitives and callers together. Publish the matching registry candidate before the CLI candidate, both under `beta`. This does not move stable `latest` or replace earlier published versions.
+
+Run `bun --cwd packages/cli test:native-create` to generate a real standalone preset app with uploads, OpenRouter, S3 and Vercel Sandbox, verify native preset resolution and add/sync preservation, then typecheck the result. Set `CHATJS_KEEP_NATIVE_FIXTURE=1` to retain the generated app and logs. This check needs network access but no gateway or storage credentials.
+
+The CLI uses unmodified shadcn 4.22.1 for registry resolution and installation. New apps use the invoking package manager, with Bun as the fallback. Existing apps use their standard package metadata and lockfiles. Dependencies install immediately. `--no-install`, `--package-manager`, and `--registry` are removed. Configure registry namespaces in `components.json` instead:
 
 ```json
 { "registries": { "@acme": "https://example.com/r/{name}.json" } }

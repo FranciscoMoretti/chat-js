@@ -13,10 +13,13 @@ import React, { useState } from "react";
 import type { JSX as ReactJSX, ReactNode } from "react";
 
 import {
-  Conversation,
-  ConversationContent,
-  ConversationScrollButton,
-} from "@/components/ai-elements/conversation";
+  MessageScroller,
+  MessageScrollerButton,
+  MessageScrollerContent,
+  MessageScrollerItem,
+  MessageScrollerProvider,
+  MessageScrollerViewport,
+} from "@/components/ui/message-scroller";
 import { AttachmentList } from "@/components/attachment-list";
 import { Button } from "@/components/ui/button";
 import type { SelectedModelValue, UiToolName } from "@/lib/ai/types";
@@ -718,152 +721,172 @@ const EveConversation = ({
       <section className="flex h-full min-h-0 flex-col">
         {header}
         <div className="flex min-h-0 flex-1 flex-col">
-          <Conversation>
-            <ConversationContent className="mx-auto w-full max-w-3xl">
-              {initialMessage !== undefined &&
-                initialMessage !== "" &&
-                messages.length === 0 && (
-                  <EveInitialMessage message={initialMessage} />
-                )}
-              <EveMessages
-                actionsDisabled={actionLocks.transcript}
-                conversationId={conversationId}
-                disabled={busy || commandPending}
-                inputDisabled={isInputResponseDisabled(
-                  agent.status,
-                  commandPending
-                )}
-                isReadonly={false}
-                messages={messages}
+          <MessageScrollerProvider autoScroll key={conversationId}>
+            <MessageScroller className="flex-1">
+              <MessageScrollerViewport preserveScrollOnPrepend>
+                <MessageScrollerContent className="mx-auto w-full max-w-3xl p-4">
+                  {initialMessage !== undefined &&
+                    initialMessage !== "" &&
+                    messages.length === 0 && (
+                      <MessageScrollerItem
+                        messageId="initial-message"
+                        scrollAnchor
+                      >
+                        <EveInitialMessage message={initialMessage} />
+                      </MessageScrollerItem>
+                    )}
+                  <EveMessages
+                    actionsDisabled={actionLocks.transcript}
+                    conversationId={conversationId}
+                    disabled={busy || commandPending}
+                    inputDisabled={isInputResponseDisabled(
+                      agent.status,
+                      commandPending
+                    )}
+                    isReadonly={false}
+                    messages={messages}
 
-                editor={
-                  hasText(editingMessageId)
-                    ? {
-                        content: (
-                          <EveConversationEditor
-                            fork={fork}
-                            busy={busy}
-                            commandPending={commandPending}
-                            hasApproval={hasApproval}
-                            pendingMessage={pendingMessage}
-                            onSubmit={() => {
-                              const completion = handleEditSubmit();
-                              startEventAction(async () => {
-                                await completion;
-                              });
-                            }}
-                          />
-                        ),
-                        disabled: fork.busy || Boolean(fork.pending),
-                        messageId: editingMessageId,
-                        onCancel: fork.cancelEdit,
+                    editor={
+                      hasText(editingMessageId)
+                        ? {
+                            content: (
+                              <EveConversationEditor
+                                fork={fork}
+                                busy={busy}
+                                commandPending={commandPending}
+                                hasApproval={hasApproval}
+                                pendingMessage={pendingMessage}
+                                onSubmit={() => {
+                                  const completion = handleEditSubmit();
+                                  startEventAction(async () => {
+                                    await completion;
+                                  });
+                                }}
+                              />
+                            ),
+                            disabled: fork.busy || Boolean(fork.pending),
+                            messageId: editingMessageId,
+                            onCancel: fork.cancelEdit,
+                          }
+                        : undefined
+                    }
+                    modelForMessage={modelForMessage}
+                    renderVersions={(message): React.JSX.Element => (
+                      <EveLogicalVersions
+                        conversationId={conversationId}
+                        messageId={message.id}
+                        disabled={actionLocks.navigation}
+                      />
+                    )}
+                    renderResponses={(message): React.JSX.Element => (
+                      <EveLogicalResponses
+                        conversationId={conversationId}
+                        messageId={message.id}
+                        disabled={actionLocks.navigation}
+                      />
+                    )}
+                    messageKey={(message) =>
+                      controller.logicalId(conversationId, message.id) ??
+                      `${sessionId}:${message.id}`
+                    }
+
+                    onEdit={(message) => {
+                      const following = messages.slice(
+                        messages.indexOf(message) + 1
+                      );
+                      const nextUser = following.findIndex(
+                        (candidate) => candidate.role === "user"
+                      );
+                      const response = following
+                        .slice(0, nextUser === -1 ? following.length : nextUser)
+                        .find((candidate) => candidate.role === "assistant");
+                      const logicalId = controller.logicalId(
+                        conversationId,
+                        message.id
+                      );
+                      const group = hasText(logicalId)
+                        ? logicalResponseSlots(snapshot, logicalId)
+                        : undefined;
+                      const groupModels: Record<string, number> = {};
+                      for (const slot of group?.slots ?? []) {
+                        groupModels[slot.modelId] =
+                          (groupModels[slot.modelId] ?? 0) + 1;
                       }
-                    : undefined
-                }
-                modelForMessage={modelForMessage}
-                renderVersions={(message): React.JSX.Element => (
-                  <EveLogicalVersions
-                    conversationId={conversationId}
-                    messageId={message.id}
-                    disabled={actionLocks.navigation}
-                  />
-                )}
-                renderResponses={(message): React.JSX.Element => (
-                  <EveLogicalResponses
-                    conversationId={conversationId}
-                    messageId={message.id}
-                    disabled={actionLocks.navigation}
-                  />
-                )}
-                messageKey={(message) =>
-                  controller.logicalId(conversationId, message.id) ??
-                  `${sessionId}:${message.id}`
-                }
+                      const completion = fork.begin(message, undefined, {
+                        events: agent.events,
+                        modelSelection: group ? groupModels : undefined,
+                        response:
+                          response && hasText(modelForMessage(response))
+                            ? response
+                            : undefined,
+                      });
+                      startEventAction(async () => {
+                        await completion;
+                      });
+                    }}
 
-                onEdit={(message) => {
-                  const following = messages.slice(
-                    messages.indexOf(message) + 1
-                  );
-                  const nextUser = following.findIndex(
-                    (candidate) => candidate.role === "user"
-                  );
-                  const response = following
-                    .slice(0, nextUser === -1 ? following.length : nextUser)
-                    .find((candidate) => candidate.role === "assistant");
-                  const logicalId = controller.logicalId(
-                    conversationId,
-                    message.id
-                  );
-                  const group = hasText(logicalId)
-                    ? logicalResponseSlots(snapshot, logicalId)
-                    : undefined;
-                  const groupModels: Record<string, number> = {};
-                  for (const slot of group?.slots ?? []) {
-                    groupModels[slot.modelId] =
-                      (groupModels[slot.modelId] ?? 0) + 1;
-                  }
-                  const completion = fork.begin(message, undefined, {
-                    events: agent.events,
-                    modelSelection: group ? groupModels : undefined,
-                    response:
-                      response && hasText(modelForMessage(response))
-                        ? response
-                        : undefined,
-                  });
-                  startEventAction(async () => {
-                    await completion;
-                  });
-                }}
+                    onRegenerate={(message, response) => {
+                      void fork.begin(message, {
+                        events: agent.events,
+                        response,
+                      });
+                    }}
 
-                onRegenerate={(message, response) => {
-                  void fork.begin(message, { events: agent.events, response });
-                }}
+                    suggestions={
+                      <PluginSuggestions
+                        conversationId={conversationId}
+                        events={agent.events}
+                        lastMessage={lastMessage}
+                        disabled={actionLocks.transcript}
+                        onSelect={(suggestion) => {
+                          void run(async () => {
+                            await (modelIds.length > 1
+                              ? fork.compare(
+                                  draftMessage(suggestion, []),
+                                  modelIds,
+                                  composerDraft.selectedTool ?? undefined,
+                                  false
+                                )
+                              : submitMessage(
+                                  suggestion,
+                                  [],
+                                  modelIds[0],
+                                  false,
+                                  composerDraft.selectedTool ?? undefined
+                                ));
+                          });
+                        }}
+                      />
+                    }
 
-                suggestions={
-                  <PluginSuggestions
-                    conversationId={conversationId}
-                    events={agent.events}
-                    lastMessage={lastMessage}
-                    disabled={actionLocks.transcript}
-                    onSelect={(suggestion) => {
-                      void run(async () => {
-                        await (modelIds.length > 1
-                          ? fork.compare(
-                              draftMessage(suggestion, []),
-                              modelIds,
-                              composerDraft.selectedTool ?? undefined,
-                              false
-                            )
-                          : submitMessage(
-                              suggestion,
-                              [],
-                              modelIds[0],
-                              false,
-                              composerDraft.selectedTool ?? undefined
-                            ));
+                    respond={(response) => {
+                      startEventAction(async () => {
+                        await run(async () => {
+                          await send(async () => {
+                            await agent.respond([response]);
+                          });
+                        });
                       });
                     }}
                   />
-                }
-
-                respond={(response) => {
-                  startEventAction(async () => {
-                    await run(async () => {
-                      await send(async () => {
-                        await agent.respond([response]);
-                      });
-                    });
-                  });
-                }}
-              />
-              <EveThinkingMessage messages={messages} status={agent.status} />
-              {comparison &&
-                shouldAppendEveOptimisticResponseGroup(comparison) && (
-                  <EveOptimisticResponseGroup operation={comparison} />
-                )}
-            </ConversationContent>
-            <ConversationScrollButton />
-          </Conversation>
+                  <EveThinkingMessage
+                    messages={messages}
+                    status={agent.status}
+                  />
+                  {comparison &&
+                    shouldAppendEveOptimisticResponseGroup(comparison) && (
+                      <MessageScrollerItem
+                        messageId={`comparison:${comparison.operationId}`}
+                        scrollAnchor
+                      >
+                        <EveOptimisticResponseGroup operation={comparison} />
+                      </MessageScrollerItem>
+                    )}
+                </MessageScrollerContent>
+              </MessageScrollerViewport>
+              <MessageScrollerButton />
+            </MessageScroller>
+          </MessageScrollerProvider>
           <div className="mx-auto w-full max-w-3xl space-y-3 p-4">
             <EveForkRecovery
               fork={fork}

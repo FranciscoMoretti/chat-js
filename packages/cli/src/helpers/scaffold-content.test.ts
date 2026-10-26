@@ -11,6 +11,7 @@ test.each([
   {
     excluded: [
       "evals/my-eval.eval.ts",
+      "components/ui/control-defaults-visual-fixture.tsx",
       "tests/visual/eve-tool-results.browser.tsx",
       "tests/visual/sandbox.css",
       "tests/visual/pages/chat.browser.tsx",

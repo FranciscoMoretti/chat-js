@@ -37,7 +37,7 @@ const fixture = async (): Promise<string> => {
   const root = await mkdtemp(path.join(tmpdir(), "chatjs-plugin-"));
   roots.push(root);
   await Promise.all(
-    ["composer-controls.ts", "settings-items.ts"].map(
+    ["composer-controls.ts", "settings-items.ts", "components.json"].map(
       async (file): Promise<void> => {
         await cp(path.join(demo, file), path.join(root, file));
       }

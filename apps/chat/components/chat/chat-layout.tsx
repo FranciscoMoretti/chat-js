@@ -12,10 +12,10 @@ import { cn } from "@/lib/utils";
 
 import { useSidebar } from "@/components/ui/sidebar";
 
-const MAIN_PANEL_DEFAULT_PERCENT = 65;
-const MAIN_PANEL_MIN_PERCENT = 40;
-const SECONDARY_PANEL_DEFAULT_PERCENT = 35;
-const SECONDARY_PANEL_MIN_PERCENT = 25;
+const MAIN_PANEL_DEFAULT_PERCENT = "65%";
+const MAIN_PANEL_MIN_PERCENT = "40%";
+const SECONDARY_PANEL_DEFAULT_PERCENT = "35%";
+const SECONDARY_PANEL_MIN_PERCENT = "25%";
 
 interface ChatLayoutContextValue {
   isSecondaryPanelVisible: boolean;
@@ -33,7 +33,7 @@ const useChatLayoutContext = (): ChatLayoutContextValue => {
 
 type ChatLayoutProps = Omit<
   ComponentProps<typeof ResizablePanelGroup>,
-  "direction"
+  "orientation"
 > & {
   isSecondaryPanelVisible?: boolean;
 };
@@ -56,9 +56,12 @@ const ChatLayout = ({
         className={cn(
           "bg-background @container flex h-dvh max-h-dvh w-full max-w-screen min-w-0 flex-col md:max-w-[calc(100vw-var(--sidebar-width))]",
           sidebarState === "collapsed" && "md:max-w-screen",
+          // Panel v4 puts className on its inner wrapper; hide the outer flex item.
+          isSecondaryPanelVisible &&
+            "max-md:[&>[data-chat-layout-main]]:hidden!",
           className
         )}
-        direction="horizontal"
+        orientation="horizontal"
         {...props}
       >
         {children}
@@ -74,18 +77,15 @@ const ChatLayoutMain = ({
   defaultSize = MAIN_PANEL_DEFAULT_PERCENT,
   minSize = MAIN_PANEL_MIN_PERCENT,
   ...props
-}: ChatLayoutMainProps): React.JSX.Element => {
-  const { isSecondaryPanelVisible } = useChatLayoutContext();
-
-  return (
-    <ResizablePanel
-      className={cn(isSecondaryPanelVisible && "hidden md:block", className)}
-      defaultSize={defaultSize}
-      minSize={minSize}
-      {...props}
-    />
-  );
-};
+}: ChatLayoutMainProps): React.JSX.Element => (
+  <ResizablePanel
+    data-chat-layout-main=""
+    className={className}
+    defaultSize={defaultSize}
+    minSize={minSize}
+    {...props}
+  />
+);
 
 type ChatLayoutSecondaryProps = ComponentProps<typeof ResizablePanel>;
 

@@ -9,6 +9,9 @@ export default defineConfig({
   // Oxlint does not inherit ignorePatterns from extended configs.
   ignorePatterns: [
     ...(core.ignorePatterns ?? []),
+    // shadcn-installed Code Block dependencies; keep upstream source unchanged.
+    "hooks/use-highlighted-code.ts",
+    "lib/highlighter.tsx",
     // Library-installed components and generator-owned registrations.
     "**/components/{ai-elements,ui}/**",
     "!**/components/{ai-elements,ui}/**/",

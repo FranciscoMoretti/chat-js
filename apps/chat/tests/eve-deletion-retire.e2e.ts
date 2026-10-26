@@ -77,7 +77,7 @@ test("internal retirement settles usage after access revocation and is retryable
   }
   expect(identity.chatId).not.toBe(binding.id);
   await page.goto(`/chat/${binding.id}`);
-  await expect(page.locator(".is-assistant")).toContainText(
+  await expect(page.locator('[data-role="assistant"]')).toContainText(
     "retire-fixture-ok",
     { timeout: 90_000 }
   );
@@ -265,7 +265,7 @@ test("sidebar deletion retires a fresh conversation and reports its durable tomb
   }
   expect(identity.chatId).not.toBe(binding.id);
   await page.goto(`/chat/${binding.id}`);
-  await expect(page.locator(".is-assistant")).toBeVisible({
+  await expect(page.locator('[data-role="assistant"]')).toBeVisible({
     timeout: 90_000,
   });
   await expect(page.getByText("Ready", { exact: true })).toBeVisible();

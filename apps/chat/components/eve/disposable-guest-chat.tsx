@@ -8,10 +8,12 @@ import type { JSX as ReactJSX } from "react";
 import { z } from "zod";
 
 import {
-  Conversation,
-  ConversationContent,
-  ConversationScrollButton,
-} from "@/components/ai-elements/conversation";
+  MessageScroller,
+  MessageScrollerProvider,
+  MessageScrollerViewport,
+  MessageScrollerContent,
+  MessageScrollerButton,
+} from "@/components/ui/message-scroller";
 import { ChatHeaderView } from "@/components/chat-header-view";
 import { ChatLayout, ChatLayoutMain } from "@/components/chat/chat-layout";
 import { ChatWelcomeView } from "@/components/chat/chat-welcome-view";
@@ -90,25 +92,29 @@ const GuestConversationView = ({
   const [selectedTool, setSelectedTool] = useState<UiToolName | null>(null);
   return (
     <>
-      <Conversation className="min-h-0 flex-1">
-        <ConversationContent className="mx-auto w-full max-w-3xl">
-          <EveMessages
-            messages={messages}
-            isReadonly={false}
-            disabled={busy}
-            respond={() => {
-              // Guest sessions do not expose tool input requests.
-            }}
-            modelForMessage={() => modelId}
-          />
-          {busy && (
-            <output className="text-muted-foreground text-sm">
-              Responding…
-            </output>
-          )}
-        </ConversationContent>
-        <ConversationScrollButton />
-      </Conversation>
+      <MessageScrollerProvider autoScroll>
+        <MessageScroller className="min-h-0 flex-1">
+          <MessageScrollerViewport>
+            <MessageScrollerContent className="mx-auto w-full max-w-3xl p-4">
+              <EveMessages
+                messages={messages}
+                isReadonly={false}
+                disabled={busy}
+                respond={() => {
+                  // Guest sessions do not expose tool input requests.
+                }}
+                modelForMessage={() => modelId}
+              />
+              {busy && (
+                <output className="text-muted-foreground text-sm">
+                  Responding…
+                </output>
+              )}
+            </MessageScrollerContent>
+          </MessageScrollerViewport>
+          <MessageScrollerButton />
+        </MessageScroller>
+      </MessageScrollerProvider>
       <div className="mx-auto w-full max-w-3xl p-4">
         {hasText(failure) && (
           <p role="alert" className="text-destructive mb-3 text-sm">
@@ -337,7 +343,7 @@ const DisposableGuestChat = (): ReactJSX.Element => {
   }, [binding]);
   return (
     <ChatLayout isSecondaryPanelVisible={false}>
-      <ChatLayoutMain defaultSize={100}>
+      <ChatLayoutMain defaultSize="100%">
         <section className="flex h-full min-h-0 flex-col">
           <ChatHeaderView breadcrumb={null} className="h-(--header-height)" />
           {binding ? (

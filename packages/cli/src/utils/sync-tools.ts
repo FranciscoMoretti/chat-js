@@ -1,3 +1,4 @@
+import { assertUiCompatibility } from "./ui-compatibility";
 import { assertCurrentInstallationLayout } from "./installation-layout";
 import { planToolConfig } from "./tool-config";
 import fs, { mkdir, readdir, writeFile } from "node:fs/promises";
@@ -522,6 +523,7 @@ const syncTools = async (
   } = {}
 ): Promise<ToolDefinition[]> => {
   const definitions = await readInstalledTools(cwd);
+  await assertUiCompatibility(cwd, definitions);
   validateExpected(definitions, options.expected ?? []);
   await validateToolInstallation(cwd, definitions);
   const configSource = await planToolConfig(cwd, definitions);

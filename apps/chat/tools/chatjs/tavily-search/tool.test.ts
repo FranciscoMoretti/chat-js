@@ -11,7 +11,7 @@ vi.mock("@tavily/core", (): { tavily: () => { search: typeof search } } => ({
 beforeEach(() => vi.stubEnv("TAVILY_API_KEY", "test-key"));
 afterEach(() => vi.unstubAllEnvs());
 
-vi.mock("@/lib/utils", () => ({ generateUUID: (): string => "search-update" }));
+vi.mock("@/lib/id", () => ({ generateUUID: (): string => "search-update" }));
 
 const collect = async <SearchValue>(
   value:

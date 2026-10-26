@@ -1,3 +1,4 @@
+import { assertUiCompatibility } from "./ui-compatibility";
 import { pluginRegistrationTargets } from "./sync-plugins";
 import { createHash, randomUUID } from "node:crypto";
 import { mkdir, rename, rm, writeFile } from "node:fs/promises";
@@ -149,6 +150,7 @@ const installPlan = async (
   },
   register: () => Promise<void>
 ): Promise<void> => {
+  await assertUiCompatibility(cwd, [...plan.plugins, ...plan.expected]);
   const targets = [...sourceTargets(plan), ...(options.managedTargets ?? [])];
   const retired = await Promise.all(
     plan.replacements.map(

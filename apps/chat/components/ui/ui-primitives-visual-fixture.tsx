@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   ButtonGroup,
   ButtonGroupSeparator,
@@ -45,9 +45,7 @@ export const UiPrimitivesVisualFixture = ({
         <Button variant="destructive">Destructive</Button>
         <Button variant="outline">Outline</Button>
         <Button variant="ghost">Ghost</Button>
-        <Button asChild variant="link">
-          <a href="#as-child">As child</a>
-        </Button>
+        <a className={buttonVariants({ variant: "link" })} href="#as-child">As child</a>
       </div>
     </section>
 
@@ -82,16 +80,8 @@ export const UiPrimitivesVisualFixture = ({
         <h2>Progress states</h2>
         <div className="grid grid-cols-2 gap-6">
           <div className="space-y-2">
-            <p>Missing value</p>
-            <Progress aria-label="Missing value" />
-          </div>
-          <div className="space-y-2">
-            <p>Null value</p>
-            <Progress aria-label="Null value" value={null} />
-          </div>
-          <div className="space-y-2">
-            <p>NaN value</p>
-            <Progress aria-label="NaN value" value={Number.NaN} />
+            <p>Indeterminate</p>
+            <Progress aria-label="Indeterminate" value={null} />
           </div>
           <div className="space-y-2">
             <p>Zero</p>
@@ -102,16 +92,8 @@ export const UiPrimitivesVisualFixture = ({
             <Progress aria-label="Complete" value={100} />
           </div>
           <div className="space-y-2">
-            <p>Negative</p>
-            <Progress aria-label="Negative" value={-10} />
-          </div>
-          <div className="space-y-2">
-            <p>Above full scale</p>
-            <Progress aria-label="Above full scale" value={150} />
-          </div>
-          <div className="space-y-2">
             <p>Updating</p>
-            <Progress aria-label="Updating" value={progressValue} />
+            <Progress aria-label="Updating" value={progressValue ?? null} />
           </div>
         </div>
       </section>
@@ -123,15 +105,11 @@ export const UiPrimitivesVisualFixture = ({
       <span>Vertical</span>
       <Separator className="!h-8 shrink-0" orientation="vertical" />
       <Popover>
-        <PopoverTrigger asChild>
-          <Button>Open popover</Button>
-        </PopoverTrigger>
+        <PopoverTrigger  render={<Button>Open popover</Button>} />
         <PopoverContent>Popover content</PopoverContent>
       </Popover>
       <Tooltip>
-        <TooltipTrigger asChild>
-          <Button>Hover tooltip</Button>
-        </TooltipTrigger>
+        <TooltipTrigger  render={<Button>Hover tooltip</Button>} />
         <TooltipContent>Tooltip content</TooltipContent>
       </Tooltip>
     </section>

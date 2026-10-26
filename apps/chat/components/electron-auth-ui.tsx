@@ -19,7 +19,7 @@ import config from "@/chat.config";
 
 import authClient from "@/lib/auth-client";
 
-import { Button } from "./ui/button";
+import { Button, buttonVariants } from "./ui/button";
 
 import { useRouter } from "next/navigation";
 
@@ -139,9 +139,12 @@ const ElectronTransferUser = ({
         )}
       </Button>
 
-      <Button asChild className="w-full" variant="ghost">
-        <a href={useAnotherAccountHref}>Use another account</a>
-      </Button>
+      <a
+        className={buttonVariants({ className: "w-full", variant: "ghost" })}
+        href={useAnotherAccountHref}
+      >
+        Use another account
+      </a>
     </div>
   );
 };

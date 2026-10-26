@@ -94,7 +94,7 @@ test("the single-model picker dispatches and retains the selected native model",
 
     await expect(page).toHaveURL(new RegExp(`/chat/${conversationId}$`, "u"));
     await expect(
-      page.getByRole("log").locator(".is-assistant").last()
+      page.getByRole("log").locator('[data-role="assistant"]').last()
     ).toContainText(marker, { timeout: 90_000 });
     await expect(page.getByText("Ready", { exact: true })).toBeVisible();
     const client = new Client(getEveConnectionOptions(user.id));
@@ -111,7 +111,7 @@ test("the single-model picker dispatches and retains the selected native model",
     await page.reload();
     await expect(picker).toContainText(modelName);
     await expect(
-      page.getByRole("log").locator(".is-assistant").last()
+      page.getByRole("log").locator('[data-role="assistant"]').last()
     ).toContainText(marker);
   } finally {
     testInfo.setTimeout(testInfo.timeout + 60_000);

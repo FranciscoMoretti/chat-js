@@ -6,7 +6,7 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import React from "react";
 import { cn } from "@/lib/utils";
 
-type SuggestionsProps = ComponentProps<typeof ScrollArea>;
+type SuggestionsProps = (Omit<ComponentProps<typeof ScrollArea>, "className"> & { className?: string });
 
 const Suggestions = ({
   className,
@@ -21,7 +21,7 @@ const Suggestions = ({
   </ScrollArea>
 );
 
-type SuggestionProps = Omit<ComponentProps<typeof Button>, "onClick"> & {
+type SuggestionProps = Omit<(Omit<ComponentProps<typeof Button>, "className"> & { className?: string }), "onClick"> & {
   suggestion: string;
   onClick?: (suggestion: string) => void;
 };

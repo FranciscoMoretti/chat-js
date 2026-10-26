@@ -47,11 +47,10 @@ const ToolControl = ({
   const unsupported = !model || model.toolCall === false;
   return (
     <DropdownMenuCheckboxItem
+      closeOnClick
       checked={checked}
-      className="pr-8 pl-2 [&>span:first-child]:right-2 [&>span:first-child]:left-auto"
-
       disabled={disabled === true || (!checked && unsupported)}
-      onSelect={() => {
+      onClick={() => {
         if (checked) {
           onToolChange(null);
           return;

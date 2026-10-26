@@ -1,3 +1,4 @@
+import { assertUiCompatibility } from "./ui-compatibility";
 import { assertCurrentInstallationLayout } from "./installation-layout";
 import { mkdir, readFile, writeFile, rm } from "node:fs/promises";
 import path from "node:path";
@@ -320,6 +321,7 @@ const syncPlugins = async (
     "settings-items.ts",
   ]);
   const plugins = await readInstalledPlugins(cwd);
+  await assertUiCompatibility(cwd, plugins);
   for (const id of options.expected ?? []) {
     if (!plugins.some((plugin) => plugin.id === id)) {
       throw new Error(`Missing plugin descriptor: plugins/${id}/chatjs.json`);

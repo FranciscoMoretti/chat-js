@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
@@ -103,49 +104,56 @@ const PureSidebarChatItem = ({
           />
         </div>
       ) : (
-        <SidebarMenuButton asChild isActive={isActive}>
-          <InternalLink
-            href={pluginRoute(chatHref)}
-            onNavigate={() => {
-              setOpenMobile(false);
-            }}
-            prefetch={prefetch}
-          >
-            <span>{chat.title}</span>
-          </InternalLink>
-        </SidebarMenuButton>
+        <SidebarMenuButton
+          isActive={isActive}
+          render={
+            <InternalLink
+              href={pluginRoute(chatHref)}
+              onNavigate={() => {
+                setOpenMobile(false);
+              }}
+              prefetch={prefetch}
+            >
+              <span>{chat.title}</span>
+            </InternalLink>
+          }
+        />
       )}
 
       <DropdownMenu modal>
-        <DropdownMenuTrigger asChild>
-          <SidebarMenuAction
-            className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground mr-0.5"
-            showOnHover={!isActive}
-          >
-            <MoreHorizontal size={16} />
-            <span className="sr-only">More</span>
-          </SidebarMenuAction>
+        <DropdownMenuTrigger
+          render={
+            <SidebarMenuAction
+              className="data-open:bg-sidebar-accent data-open:text-sidebar-accent-foreground mr-0.5"
+              showOnHover={!isActive}
+            />
+          }
+        >
+          <MoreHorizontal size={16} />
+          <span className="sr-only">More</span>
         </DropdownMenuTrigger>
 
         <DropdownMenuContent align="end" side="bottom">
-          <ChatMenuItems
-            isPinned={chat.isPinned}
-            onDelete={
-              onDelete
-                ? (): void => {
-                    onDelete(chat.id);
-                  }
-                : undefined
-            }
-            pluginActions={pluginActions}
-            onRename={() => {
-              setIsEditing(true);
-              setEditTitle(chat.title);
-            }}
-            onTogglePin={() => {
-              onPin(chat.id, !chat.isPinned);
-            }}
-          />
+          <DropdownMenuGroup>
+            <ChatMenuItems
+              isPinned={chat.isPinned}
+              onDelete={
+                onDelete
+                  ? (): void => {
+                      onDelete(chat.id);
+                    }
+                  : undefined
+              }
+              pluginActions={pluginActions}
+              onRename={() => {
+                setIsEditing(true);
+                setEditTitle(chat.title);
+              }}
+              onTogglePin={() => {
+                onPin(chat.id, !chat.isPinned);
+              }}
+            />
+          </DropdownMenuGroup>
         </DropdownMenuContent>
       </DropdownMenu>
     </SidebarMenuItem>

@@ -1,23 +1,19 @@
 import { renderRoot, unmountRoot } from "./primitive-mount";
 import { takeSnapshot } from "@uiverify/vitest";
-import React, { act } from "react";
+import React, { act, useId } from "react";
 import { createRoot } from "react-dom/client";
-import type { ControllerRenderProps } from "react-hook-form";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { expect, test, vi } from "vitest";
 import { page } from "vitest/browser";
 
-import { ToolOutput } from "@/components/ai-elements/tool";
+import { ToolOutput } from "@/components/part/tool-data";
 import { SidebarProjectItem } from "@/plugins/projects/ui/sidebar-project-item";
 import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldLabel,
+} from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { SidebarMenu, SidebarProvider } from "@/components/ui/sidebar";
 import type { Project } from "@/plugins/projects/db/project-schema";
@@ -47,27 +43,27 @@ const FixtureForm = ({
       ? { name: { message: "Name is required", type: "required" } }
       : {},
   });
+  const id = useId();
   return (
-    <Form {...form}>
-      <FormField
-        control={form.control}
-        name="name"
-        render={({
-          field,
-        }: Readonly<{
-          field: Readonly<ControllerRenderProps<{ name: string }, "name">>;
-        }>) => (
-          <FormItem>
-            <FormLabel>Name</FormLabel>
-            <FormControl>
-              <Input {...field} />
-            </FormControl>
-            <FormDescription>Project display name</FormDescription>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-    </Form>
+    <Controller
+      control={form.control}
+      name="name"
+      render={({ field, fieldState }) => (
+        <Field data-invalid={fieldState.invalid}>
+          <FieldLabel htmlFor={id}>Name</FieldLabel>
+          <Input
+            {...field}
+            id={id}
+            aria-invalid={fieldState.invalid}
+            aria-describedby={`${id}-description ${id}-error`}
+          />
+          <FieldDescription id={`${id}-description`}>
+            Project display name
+          </FieldDescription>
+          <FieldError id={`${id}-error`} errors={[fieldState.error]} />
+        </Field>
+      )}
+    />
   );
 };
 
@@ -139,7 +135,7 @@ test("form contexts, output narrowing, project fallback, and Lexical diff preser
   for (const label of container.querySelectorAll("label")) {
     expect(label.control?.getAttribute("name")).toBe("name");
     expect(label.control?.getAttribute("aria-describedby")).toContain(
-      `${label.htmlFor.replace("-form-item", "")}-form-item-description`
+      `${label.htmlFor}-description`
     );
   }
   await takeSnapshot("assertion-contract-visible-states");

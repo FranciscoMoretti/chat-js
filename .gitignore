@@ -98,3 +98,5 @@ apps/chat/guest/.output/
 
 # Checkout-local registry-mirror coordination locks
 packages/registry/mirror-manifest.json*.lock
+
+packages/chat-visual-tests/.vitest-attachments/

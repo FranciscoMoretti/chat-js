@@ -18,7 +18,7 @@ import { InternalLink } from "@/components/internal-link";
 import { ConnectorHeader } from "@/plugins/mcp/ui/connector-header";
 import { McpConnectDialog } from "@/plugins/mcp/ui/mcp-connect-dialog";
 import { SettingsPageContent } from "@/components/settings/settings-page";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -456,12 +456,17 @@ export const McpDetailsPage = ({
   if (!connector) {
     return (
       <SettingsPageContent className="gap-4">
-        <Button asChild className="w-fit" size="sm" variant="ghost">
-          <InternalLink href="/settings/connectors">
-            <ChevronLeft className="size-4" />
-            Back
-          </InternalLink>
-        </Button>
+        <InternalLink
+          href="/settings/connectors"
+          className={buttonVariants({
+            className: "w-fit",
+            size: "sm",
+            variant: "ghost",
+          })}
+        >
+          <ChevronLeft className="size-4" />
+          Back
+        </InternalLink>
         <div className="flex flex-col items-center justify-center py-12 text-center">
           <AlertCircle className="text-destructive size-6" />
           <p className="mt-2 text-sm font-medium">Connector not found</p>
@@ -478,12 +483,17 @@ export const McpDetailsPage = ({
 
   return (
     <SettingsPageContent className="gap-4">
-      <Button asChild className="w-fit" size="sm" variant="ghost">
-        <InternalLink href="/settings/connectors">
-          <ChevronLeft className="size-4" />
-          Back
-        </InternalLink>
-      </Button>
+      <InternalLink
+        href="/settings/connectors"
+        className={buttonVariants({
+          className: "w-fit",
+          size: "sm",
+          variant: "ghost",
+        })}
+      >
+        <ChevronLeft className="size-4" />
+        Back
+      </InternalLink>
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <ConnectorHeader

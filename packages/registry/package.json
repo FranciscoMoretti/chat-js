@@ -1,6 +1,6 @@
 {
   "name": "@chat-js/registry",
-  "version": "0.1.2",
+  "version": "0.2.0-beta.1",
   "private": false,
   "description": "ChatJS tool and gateway registry items",
   "keywords": [
@@ -27,7 +27,8 @@
     "./r/*": "./dist/r/*.json"
   },
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "tag": "beta"
   },
   "scripts": {
     "build": "bun scripts/generate-composer-icons.ts && bun build.ts",

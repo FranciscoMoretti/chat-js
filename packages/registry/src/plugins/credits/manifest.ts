@@ -12,7 +12,8 @@ const creditsFiles = [
   "plugins/credits/use-credits.ts",
 ];
 const creditsDefinition = pluginDefinitionSchema.parse({
-  contractVersion: 1,
+  contractVersion: 2,
+  uiBase: "base",
   id: "credits",
   kind: "plugin",
   files: creditsFiles,

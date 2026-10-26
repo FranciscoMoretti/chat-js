@@ -3,9 +3,12 @@
 import React from "react";
 
 import {
-  Conversation,
-  ConversationContent,
-} from "@/components/ai-elements/conversation";
+  MessageScroller,
+  MessageScrollerProvider,
+  MessageScrollerViewport,
+  MessageScrollerContent,
+  MessageScrollerButton,
+} from "@/components/ui/message-scroller";
 import type { ReadonlyEveMessage } from "@/lib/eve/readonly-message-types";
 import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 
@@ -18,17 +21,22 @@ export const EveSharedMessages = ({
   readonly messages: readonly ReadonlyEveMessage[];
   readonly children?: ReadonlyReactNode;
 }): React.JSX.Element => (
-  <Conversation>
-    <ConversationContent className="mx-auto w-full max-w-3xl">
-      <EveMessages
-        disabled
-        isReadonly
-        messages={messages}
-        respond={() => {
-          // Shared transcripts have no interactive input response.
-        }}
-      />
-      {children}
-    </ConversationContent>
-  </Conversation>
+  <MessageScrollerProvider autoScroll>
+    <MessageScroller className="flex-1">
+      <MessageScrollerViewport>
+        <MessageScrollerContent className="mx-auto w-full max-w-3xl p-4">
+          <EveMessages
+            disabled
+            isReadonly
+            messages={messages}
+            respond={() => {
+              // Shared transcripts have no interactive input response.
+            }}
+          />
+          {children}
+        </MessageScrollerContent>
+      </MessageScrollerViewport>
+      <MessageScrollerButton />
+    </MessageScroller>
+  </MessageScrollerProvider>
 );

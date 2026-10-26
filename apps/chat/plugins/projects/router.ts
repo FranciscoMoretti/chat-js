@@ -15,7 +15,7 @@ import {
   updateProject,
 } from "@/plugins/projects/db/project-queries";
 
-import { generateUUID } from "@/lib/utils";
+import { generateUUID } from "@/lib/id";
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 

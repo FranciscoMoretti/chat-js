@@ -29,20 +29,23 @@ const PureHeaderActions = (): ReactJSX.Element => {
     <div className="flex items-center gap-2">
       {!user && (
         <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              className="h-8 px-3"
-              onClick={() => {
-                router.push("/login");
-                router.refresh();
-              }}
-              size="sm"
-              variant="outline"
-            >
-              <LogIn className="mr-2 h-4 w-4" />
-              <span className="hidden sm:inline">Sign in</span>
-            </Button>
-          </TooltipTrigger>
+          <TooltipTrigger
+            render={
+              <Button
+                aria-label="Sign in"
+                className="h-8 px-3"
+                onClick={() => {
+                  router.push("/login");
+                  router.refresh();
+                }}
+                size="sm"
+                variant="outline"
+              >
+                <LogIn className="mr-2 h-4 w-4" />
+                <span className="hidden sm:inline">Sign in</span>
+              </Button>
+            }
+          />
           <TooltipContent>Sign in to your account</TooltipContent>
         </Tooltip>
       )}

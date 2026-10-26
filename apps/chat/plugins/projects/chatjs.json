@@ -1,5 +1,4 @@
 {
-  "contractVersion": 1,
   "id": "projects",
   "kind": "plugin",
   "files": [
@@ -44,5 +43,7 @@
     "composerControls": [],
     "settingsItems": [],
     "chat": true
-  }
+  },
+  "contractVersion": 2,
+  "uiBase": "base"
 }

@@ -1,3 +1,4 @@
+import { initializeShadcn } from "#cli/helpers/initialize-shadcn";
 import { generateBaseline } from "#cli/utils/generate-baseline";
 import { planSandboxInstallation } from "#cli/helpers/sandbox-installation";
 import { configureSandboxProvider } from "#cli/helpers/sandbox-provider";
@@ -41,6 +42,10 @@ import { collectEnvChecklist } from "#cli/helpers/env-checklist";
 import { configureGatewayProvider } from "#cli/helpers/gateway-provider";
 import { configureStorageProvider } from "#cli/helpers/storage-provider";
 import { ensureTargetEmpty } from "#cli/helpers/ensure-target";
+import {
+  assertCreateShadcnReady,
+  createShadcnArguments,
+} from "#cli/helpers/create-shadcn-arguments";
 import { handleError } from "#cli/utils/handle-error";
 import { highlighter } from "#cli/utils/highlighter";
 import { launcherPackageManager } from "#cli/utils/get-package-manager";
@@ -48,7 +53,7 @@ import { logger } from "#cli/utils/logger";
 import { observabilityItems } from "../../../registry/src/plugins/observability";
 import { parseJsonObject } from "#cli/helpers/json-object";
 import path from "node:path";
-import type { planInstallation } from "#cli/utils/installation-plan";
+import { planInstallation } from "#cli/utils/installation-plan";
 import { resolveGateway } from "#cli/registry/gateways";
 import { resolveStorage } from "#cli/registry/storage";
 import { runCommand } from "#cli/utils/run-command";
@@ -452,8 +457,9 @@ const promptCreateSetup = async (
       tools: toolSources,
     },
     { documents: options.documents, fresh: true },
-    async (required) =>
-      options.sandboxProvider ?? (await promptSandbox(options.yes, required))
+    async (required, persistent) =>
+      options.sandboxProvider ??
+      (await promptSandbox(options.yes, required, persistent))
   );
 
   return {
@@ -659,7 +665,8 @@ const printNextSteps = (
 };
 
 const createProject = async (
-  options: Readonly<CreateOptions>
+  options: Readonly<CreateOptions>,
+  shadcnArgs: readonly string[]
 ): Promise<void> => {
   const packageManager = launcherPackageManager();
   if (!options.yes) {
@@ -689,6 +696,13 @@ const createProject = async (
   const setup = await promptCreateSetup(options, project.targetDir);
   logger.break();
   await scaffoldProject(project, packageManager, setup.withElectron);
+  await initializeShadcn(project.targetDir, shadcnArgs);
+  // Native init determines the actual library. Resolve again through the final
+  // namespace so descriptors and source match it, including indirect items.
+  setup.plan = await planInstallation(project.targetDir, setup.plan.selection, {
+    documents: options.documents,
+    fresh: true,
+  });
   await writeConfiguration(project, setup);
   const installedTools = await installRegistryItems(
     packageManager,
@@ -719,6 +733,10 @@ export const create = new Command()
   )
   .description("scaffold a new ChatJS chat application")
   .argument("[directory]", "target directory for the project")
+  .argument(
+    "[shadcn-options...]",
+    "reserved native shadcn options after -- (requires completed UI migration)"
+  )
   .option(
     "--gateway <gateway>",
     "gateway name, registry item URL, or local JSON path"
@@ -762,13 +780,16 @@ export const create = new Command()
   )
   .action(
     async (
-      directory: unknown,
-      opts: Readonly<Record<string, unknown>>
+      _directory: unknown,
+      _shadcnOptions: unknown,
+      opts: Readonly<Record<string, unknown>>,
+      command: Readonly<Command>
     ): Promise<void> => {
       try {
-        await createProject(
-          createOptionsSchema.parse({ target: directory, ...opts })
-        );
+        const { target, shadcnArgs } = createShadcnArguments(command);
+        const options = createOptionsSchema.parse({ target, ...opts });
+        assertCreateShadcnReady(shadcnArgs, options.fromGit);
+        await createProject(options, shadcnArgs);
       } catch (error) {
         handleError(error);
       }
