@@ -1,15 +1,26 @@
-# W9 beta.1 release verification
+# W9 release verification
 
-Status, 26 October 2026: both matching beta packages are publicly verified, and clean Base/Radix consumers pass live runtime QA. Final CI screenshot review, production promotion, and PR landing remain pending.
+Status, 26 October 2026: beta.1 packages are publicly verified and clean Base/Radix consumers pass live runtime QA. Full cumulative visual review found a clipped mobile model switch, corrected in source and verified before preparing beta.2. Final beta.2 publication, CI, production promotion, and PR landing remain pending.
 
 The five approved release steps are review/land, prepare matching betas, publish and test public consumers, deploy the matched Create flow, and establish reviewed visual baselines. Automatic migration of existing apps and OpenRouter/S3/OAuth certification remain separate work.
 
 ## Publication and safeguards
 
+The following beta.1 archives are published. Matching CLI `0.9.0-beta.2` and registry `0.2.0-beta.2` have been prepared and audited for the subsequent model-row correction; publication awaits npm security-key authentication. Do not treat beta.1 as containing that fix.
+
 | Package | Public beta | Stable latest (unchanged) | Audited archive SHA256 |
 | --- | --- | --- | --- |
 | `@chat-js/cli` | `0.9.0-beta.1` | `0.8.0` | `9f45a32cb3ff7e7ddcff2606326befbdc73fc2136f26f076a9ec527909088f8c` |
 | `@chat-js/registry` | `0.2.0-beta.1` | `0.1.2` | `4124cf280db6a6c42411b8328d0ee7b4173f8ce8d40974a31498f7925c26784e` |
+
+Audited beta.2 archive hashes:
+
+| Package | SHA256 |
+| --- | --- |
+| `@chat-js/cli@0.9.0-beta.2` | `5172bab6e574f72c7f27e5db4b4d5b8a374250893fba485189f5ae30968c5ae6` |
+| `@chat-js/registry@0.2.0-beta.2` | `0fe374e499aaa17ce044af85e303e4a4c630acdb7572b7de6b9ba3f8daf51048` |
+
+The beta.2 audit covers 1,275 files and an empty-cache exact-tarball consumer. Registry changes are limited to the model-preferences descriptor in root/Base/Radix namespaces and release metadata. CLI changes carry that fix, the matching registry pin, and exclusion of maintainer-only visual CSS; seven focused tests and standalone CLI types pass. Both namespace sources contain the verified row fix.
 
 Public archive integrity and tags were verified at 21:54 UTC. Publication used the exact audited archives with explicit `--tag beta`; no major or stable release was authorized. The audit covered 1,276 files, including nested vendor archives, accidental secrets/environment files, public dependency resolution, native shadcn/TypeScript runtime loading, and matching registry contracts.
 
@@ -38,6 +49,7 @@ PR [899](https://github.com/FranciscoMoretti/chat-js/pull/899) integrates main a
 - Delayed Radix/RTL → Base/LTR iframe replacement exposed independent query subscriptions resolving different direction values. Commit `e852e4e83` makes ChatPreview consume the existing native provider state. It adds no preset codec or configuration schema. The regression fails before/passes after; 15 delayed transitions and the full Create interaction suite pass.
 - Visual harnesses now wait for settled native submenu animation, research row opacity, and Sonner mounted state. Blank upload captures were removed while interaction assertions remain. Native generated RTL has separate Base/Radix capture identities.
 - Playwright fixtures now exercise native input/textarea/button contracts and hydrate toggles before capturing. Reviewed platform screenshots replace legacy theme expectations; screenshot assertions remain enforced.
+- Native table cells prevented long model names from wrapping, which clipped the full model-list switches on mobile. Commit `6519ac785` overrides wrapping only in the registry-owned model-row composition. The new geometry assertion fails before and passes after; three model-settings tests and 12 fleet renders pass. Mobile dark/light switches are fully visible; nine captures are unchanged, three reviewed differences are intended. Build `01a17a67-8135-7532-993d-c7eac6f91ba0` records the fix.
 - Registry build determinism tests recursively enumerate files because native namespaces introduce subdirectories. Two builds and a complete generated gateway case pass after the fix.
 
 Full repository lint and workspace types pass after the combined code/test fixes. Registry full checking previously passed 199 browser tests across 69 files; installation validation passed 28 tests and 2,076 assertions. Final CI results are recorded below when complete.
@@ -52,7 +64,7 @@ Create has its own CI workflow and project credential. It runs browser interacti
 | Create | 11 new captures | `01a17a2f-3698-7c5c-a00a-be4c5c041991`: all 11 unchanged after acceptance |
 | Registry/components | 27 new, 158 changed, 11 removed, 74 unchanged | `01a17a2e-c886-7095-aec2-ae015da822e8`: 254 current renders, zero failures |
 
-The app workflow targets ChatJS App. The older ChatJS project separately reports 37 unchanged captures; that legacy project does not establish coverage of the current 274 app captures. The final three app residuals are one pixel of model-picker antialiasing and transient sidebar scrollbar visibility in two settings-loading captures, with content and dimensions unchanged. Cumulative app visual review remains in progress.
+The app workflow targets ChatJS App. The older ChatJS project separately reports 37 unchanged captures; that legacy project does not establish coverage of the current 274 app captures. The final three app residuals are one pixel of model-picker antialiasing and transient sidebar scrollbar visibility in two settings-loading captures, with content and dimensions unchanged. All 263 added/changed app captures have been compared with exact main build `01a17785-71de-7e85-9ee8-a5ba952121bc`. Two mobile model-list images exposed the same clipping regression, fixed above. Transcript scroll offsets and a transient sidebar skeleton were independently investigated: native end scrolling reaches mobile follow-ups and the shared Save control without overlap, and the sidebar resolves its history. Initial-mobile mount and desktop-to-mobile measurements confirm native scroll state settles from top 0 / end delta 136 to top 136 / end delta 0 without interaction. Commit `060ef70e0` waits for that natural end state and resolved sidebar Suspense before capture; intentional loading fixtures opt out. All 76 app browser tests and full lint/types pass with this harness correction.
 
 The registry cumulative API retains five accepted branch-only IDs no longer emitted (four blank upload captures and canonical RTL). It reports 259 present baseline IDs; the current archive contains 254. All 185 cumulative new/changed entries were reviewed. Eleven removals relative to main map to renamed or assertion-only native code/progress/reasoning tests, replaced custom clipboard APIs, and three unused PromptInput components. No product screen coverage was removed.
 
@@ -70,9 +82,12 @@ Production remains unchanged pending final checks. The previous deployment is `h
 
 ## Remaining release gates and separate follow-ups
 
-- Review remaining Linux Playwright snapshots from CI; complete all required checks without bypass.
+- Publish and verify beta.2 under `beta`, retaining stable tags.
+- Complete all required checks without bypass. All Linux Playwright screenshots have been reviewed and updated from actual CI captures; the final rerun is pending.
 - Promote the reviewed Create deployment and run the full suite against the public production URL.
 - Land PR 899 and verify release/deployment outcomes and unchanged stable tags.
+
+Local Chrome model-settings QA also records a `Date.now()` prerender warning in `HydrateClient`; the relevant server/page code and Next version are unchanged from main. The models page renders and controls remain usable. This warning is a separate framework/data-hydration investigation.
 
 A CI-only sidebar hydration mismatch traces to session-seeding code inherited unchanged from main. It did not reproduce in nine focused local cases or four concurrent search tests. Keep it as a separate investigation rather than claiming it fixed by this UI migration.
 
