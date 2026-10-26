@@ -50,6 +50,21 @@ test("model settings list every available model", async () => {
     .not.toBeInTheDocument();
   await expect.element(page.getByText(/^[1-9]\d* models$/u)).toBeVisible();
   await expect.element(page.getByText("GPT-5 mini").first()).toBeVisible();
+  await page.viewport(390, 844);
+  await expect
+    .poll(() => {
+      const toggle = page.getByRole("switch").first().element();
+      const viewport = toggle.closest('[data-slot="scroll-area-viewport"]');
+      if (!(viewport instanceof HTMLElement)) {
+        throw new Error(
+          "Model preferences must remain inside their scroll area"
+        );
+      }
+      const control = toggle.getBoundingClientRect();
+      const bounds = viewport.getBoundingClientRect();
+      return control.left >= bounds.left && control.right <= bounds.right;
+    })
+    .toBe(true);
 });
 
 test("model settings filtered by a search", async () => {

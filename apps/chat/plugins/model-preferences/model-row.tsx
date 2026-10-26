@@ -25,7 +25,7 @@ const ModelRowComponent = ({
 
   return (
     <TableRow>
-      <TableCell className="w-full py-2.5 pl-0">
+      <TableCell className="w-full py-2.5 pl-0 whitespace-normal">
         <div className="flex items-center gap-2.5">
           <ModelSelectorLogo modelId={model.id} />
           <span className="text-sm font-medium">{model.name}</span>
