@@ -56,7 +56,10 @@ for (const direction of ["ltr", "rtl"] as const) {
       await expect
         .element(page.getByRole("menuitem", { name: "Nested action" }))
         .toBeVisible();
-      await takeSnapshot(`direction-${direction}-submenu`);
+      const nativeBase = process.env.CHATJS_NATIVE_UI_BASE;
+      await takeSnapshot(
+        `direction-${direction}-submenu${nativeBase === undefined ? "" : `-${nativeBase}-generated-rtl`}`
+      );
       await act(async () => {
         await userEvent.keyboard(
           direction === "rtl" ? "{ArrowRight}" : "{ArrowLeft}"

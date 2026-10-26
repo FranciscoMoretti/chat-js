@@ -44,6 +44,10 @@ const referenceAliases: AliasOptions = reference.resolve?.alias ?? {};
 // Radix primitives. Compositions use the exact generator, not a runtime adapter.
 export default defineConfig({
   ...reference,
+  define: {
+    ...reference.define,
+    "process.env.CHATJS_NATIVE_UI_BASE": JSON.stringify(uiBase),
+  },
   cacheDir: path.join(root, "node_modules/.vite/chat-radix"),
   resolve: {
     ...reference.resolve,
