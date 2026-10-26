@@ -1,8 +1,8 @@
-import path from "node:path";
 import { cpus, platform, arch } from "node:os";
 import ts from "typescript";
 import { combinationCases } from "./installation-cases";
 import {
+  validationDependencyFixtures,
   prepareValidationCore,
   renderValidationProject,
 } from "./validation-project";
@@ -28,7 +28,6 @@ const cases = [
   interaction,
   { name: "full feature preset", selection: demoInstallation },
 ];
-const fixture = path.resolve(import.meta.dir, "../../../apps/chat");
 const started = performance.now();
 const core = await prepareValidationCore();
 const preparationMs = performance.now() - started;
@@ -45,7 +44,7 @@ for (let round = 0; round < 3; round += 1) {
     // oxlint-disable-next-line no-await-in-loop -- Profile serially so other scenarios do not distort timings.
     const project = await renderValidationProject(core, scenario.selection);
     const rendered = performance.now();
-    const check = typecheckProject(project.files, fixture);
+    const check = typecheckProject(project.files, validationDependencyFixtures);
     const checked = performance.now();
     if (check.diagnostics.length > 0) {
       throw new Error(JSON.stringify(check.diagnostics));

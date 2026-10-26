@@ -1,8 +1,8 @@
-import { Glob } from "bun";
 import path from "node:path";
 import ts from "typescript";
 import { DependencyFiles } from "./dependency-files";
 import { virtualProjectRoot } from "./project-files";
+import { readVirtualDirectory } from "./typescript-files";
 
 interface ProjectDiagnostic {
   readonly code: number;
@@ -11,14 +11,6 @@ interface ProjectDiagnostic {
   readonly character?: number;
   readonly message: string;
 }
-
-const directoryPattern = (pattern: string): string =>
-  /[*?]/u.test(pattern) || path.posix.extname(pattern) !== ""
-    ? pattern
-    : `${pattern}/**/*`;
-
-const matches = (file: string, patterns: readonly string[]): boolean =>
-  patterns.some((pattern) => new Glob(directoryPattern(pattern)).match(file));
 
 const diagnosticSignature = (
   diagnostic: Readonly<ts.Diagnostic>,
@@ -42,7 +34,7 @@ const diagnosticSignature = (
 
 const typecheckProject = (
   files: ReadonlyMap<string, Uint8Array>,
-  fixtureDirectory: string
+  fixtureDirectory: string | readonly string[]
 ): {
   diagnostics: ProjectDiagnostic[];
   rootFiles: string[];
@@ -84,24 +76,7 @@ const typecheckProject = (
     text.get(file) ?? dependencies.readFile(file);
   const fileExists = (file: string): boolean =>
     text.has(file) || dependencies.fileExists(file);
-  const readDirectory: NonNullable<ts.CompilerHost["readDirectory"]> = (
-    directory,
-    extensions,
-    excludes,
-    includes,
-    depth
-  ) =>
-    [...text.keys()].filter((file) => {
-      const relative = path.posix.relative(directory, file);
-      return (
-        !relative.startsWith("../") &&
-        (depth === undefined || relative.split("/").length <= depth + 1) &&
-        (extensions === undefined ||
-          extensions.some((extension) => file.endsWith(extension))) &&
-        matches(relative, includes ?? ["**/*"]) &&
-        !matches(relative, excludes ?? [])
-      );
-    });
+  const readDirectory = readVirtualDirectory(text.keys(), root);
   const configPath = `${root}/tsconfig.json`;
   const config = ts.readConfigFile(configPath, readFile);
   const parsed = ts.parseJsonConfigFileContent(

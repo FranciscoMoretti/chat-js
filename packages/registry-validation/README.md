@@ -2,7 +2,7 @@
 
 Private Bun workspace package for reusable registry verification. It has no ChatJS application, CLI, manifest or fixture imports.
 
-- `typecheckProject(files, dependencyFixture)` checks a binary file snapshot with isolated declared dependencies. The fixture supplies installed packages and must match the engine's TypeScript version.
+- `typecheckProject(files, dependencyFixture)` checks a binary file snapshot with isolated declared dependencies. The fixture supplies installed packages and must match the engine's TypeScript version. Pass an ordered list of fixture directories when packages live in separate workspace installations. Only consumer-declared packages are exposed; transitive dependencies resolve from their owning installation.
 - `auditDependencies(owner, originalSources, contract?)` returns per-owner missing-source and undeclared-package diagnostics. The caller supplies any inherited packages and local import prefixes.
 - `compareProjects(expected, actual, options?)` returns inventory/content differences. Exact bytes are the default. Caller normalization can return comparable structured values and is applied to both sides.
 - `readProjectFiles(directory, include?)` reads regular files into a project-relative byte map, rejecting symlinks.

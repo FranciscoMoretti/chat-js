@@ -3,6 +3,9 @@ import { afterAll, beforeAll, expect, test } from "bun:test";
 import { createDependencyFixture } from "./fixture";
 import path from "node:path";
 import ts from "typescript";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { virtualProjectRoot } from "../src/project-files";
 import { typecheckProject } from "../src/index";
 
 const fixture = { directory: "", dispose: async () => {} };
@@ -39,6 +42,136 @@ const project = (
       ...sources,
     }).map(([file, source]) => [file, new TextEncoder().encode(source)])
   );
+
+test(
+  "explicit dependency fixtures support isolated workspace installs without exposing undeclared packages",
+  async () => {
+    const extra = await mkdtemp(path.join(tmpdir(), "registry-sdk-fixture-"));
+    try {
+      const directory = path.join(extra, "node_modules/alternate-sdk");
+      await mkdir(directory, { recursive: true });
+      await writeFile(
+        path.join(directory, "package.json"),
+        JSON.stringify({
+          name: "alternate-sdk",
+          version: "1.0.0",
+          types: "index.d.ts",
+          peerDependencies: { zod: zodPackage.version },
+        })
+      );
+      await writeFile(
+        path.join(directory, "index.d.ts"),
+        'import { z } from "zod"; export declare const schema: z.ZodString;'
+      );
+      const sources = {
+        "src/index.ts":
+          'import { schema } from "alternate-sdk"; const value: string = schema.parse("ok"); export { value };',
+      };
+      const declared = project(sources, {
+        "alternate-sdk": "1.0.0",
+        zod: zodPackage.version,
+      });
+      expect(
+        typecheckProject(declared, fixture.directory).diagnostics.map(
+          (d) => d.code
+        )
+      ).toEqual([2307]);
+      expect(
+        typecheckProject(declared, [fixture.directory, extra]).diagnostics
+      ).toEqual([]);
+      expect(
+        typecheckProject(project(sources), [
+          fixture.directory,
+          extra,
+        ]).diagnostics.map((d) => d.code)
+      ).toEqual([2307]);
+      expect(() =>
+        typecheckProject(project(sources, { "alternate-sdk": "2.0.0" }), [
+          fixture.directory,
+          extra,
+        ])
+      ).toThrow("expected 2.0.0");
+    } finally {
+      await rm(extra, { recursive: true, force: true });
+    }
+  },
+  timeoutMs
+);
+
+const fileSelectionConfig = (
+  root: string,
+  pattern: "nested exclusion" | "relative include" | "absolute include"
+) => ({
+  compilerOptions: {
+    strict: true,
+    module: "preserve",
+    target: "esnext",
+    types: [],
+  },
+  include: [
+    {
+      "nested exclusion": "src/**/*",
+      "relative include": "./src/**/*",
+      "absolute include": `${root}/src/**/*`,
+    }[pattern],
+  ],
+  exclude: ["src/generated/*"],
+});
+
+for (const pattern of [
+  "nested exclusion",
+  "relative include",
+  "absolute include",
+] as const) {
+  test(
+    `root file selection matches TypeScript: ${pattern}`,
+    async () => {
+      const directory = await mkdtemp(
+        path.join(tmpdir(), "registry-config-parity-")
+      );
+      const sources = {
+        "src/index.ts": "export const valid = true;",
+        "src/generated/nested/broken.ts":
+          'export const invalid: number = "wrong";',
+        "src/other.dotted/valid.ts": "export {};",
+      };
+      try {
+        await Promise.all(
+          Object.entries(sources).map(async ([file, content]) => {
+            await mkdir(path.dirname(path.join(directory, file)), {
+              recursive: true,
+            });
+            await writeFile(path.join(directory, file), content);
+          })
+        );
+        const expected = ts.parseJsonConfigFileContent(
+          fileSelectionConfig(directory, pattern),
+          ts.sys,
+          directory
+        );
+        expect(expected.errors).toEqual([]);
+        const checked = typecheckProject(
+          project({
+            ...sources,
+            "tsconfig.json": JSON.stringify(
+              fileSelectionConfig(virtualProjectRoot, pattern)
+            ),
+          }),
+          fixture.directory
+        );
+        expect(checked.rootFiles.toSorted()).toEqual(
+          expected.fileNames
+            .map((file) => path.relative(directory, file))
+            .toSorted()
+        );
+        expect(checked.diagnostics).toEqual([]);
+      } finally {
+        await rm(directory, { recursive: true, force: true });
+      }
+    },
+    timeoutMs
+  );
+}
 
 test(
   "checks cross-file semantics and included files outside the entrypoint",

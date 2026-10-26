@@ -22,8 +22,12 @@ const packageSchema = z.looseObject({
   optionalDependencies: dependencyMap.optional(),
 });
 
-interface MountedPackage {
+interface PackageLocation {
   readonly directory: string;
+  readonly boundary: string;
+}
+
+interface MountedPackage extends PackageLocation {
   readonly manifest: z.infer<typeof packageSchema>;
   readonly virtual: string;
   readonly names: Set<string>;
@@ -77,16 +81,24 @@ class DependencyFiles {
   private readonly rootDependencies: Record<string, string>;
   readonly versions = new Map<string, string>();
 
-  private readonly fixtureDirectory: string;
-  private readonly boundary: string;
+  private readonly fixtures: readonly PackageLocation[];
 
   constructor(
     manifestSource: string,
-    fixtureDirectory: string,
+    fixtureDirectories: string | readonly string[],
     files: ReadonlyMap<string, Uint8Array>
   ) {
-    this.fixtureDirectory = realpathSync(fixtureDirectory);
-    this.boundary = fixtureBoundary(this.fixtureDirectory);
+    this.fixtures = (
+      typeof fixtureDirectories === "string"
+        ? [fixtureDirectories]
+        : fixtureDirectories
+    ).map((source) => {
+      const directory = realpathSync(source);
+      return { directory, boundary: fixtureBoundary(directory) };
+    });
+    if (this.fixtures.length === 0) {
+      throw new Error("At least one dependency fixture is required.");
+    }
     const manifest = packageSchema.parse(JSON.parse(manifestSource));
     this.rootDependencies = {
       ...manifest.dependencies,
@@ -105,11 +117,31 @@ class DependencyFiles {
     }
   }
 
+  private locate(
+    name: string,
+    owner?: MountedPackage
+  ): PackageLocation | undefined {
+    // Prefer a package's installed dependency tree. Only consumer-declared
+    // dependencies may fall back to the explicitly supplied fixture roots.
+    const sources = owner
+      ? [
+          owner,
+          ...(this.rootDependencies[name] === undefined ? [] : this.fixtures),
+        ]
+      : this.fixtures;
+    for (const source of sources) {
+      const directory = findPackage(name, source.directory, source.boundary);
+      if (directory !== undefined) {
+        return { directory, boundary: source.boundary };
+      }
+    }
+    return undefined;
+  }
+
   private mount(
     name: string,
     range: string,
-    from: string,
-    checkVersion = true
+    owner?: MountedPackage
   ): MountedPackage | undefined {
     const alias = range.startsWith("npm:")
       ? range.slice("npm:".length)
@@ -123,10 +155,11 @@ class DependencyFiles {
       alias !== undefined && aliasSeparator > 0
         ? alias.slice(aliasSeparator + 1)
         : range;
-    const directory = findPackage(name, from, this.boundary);
-    if (directory === undefined) {
+    const resolved = this.locate(name, owner);
+    if (resolved === undefined) {
       return undefined;
     }
+    const { directory } = resolved;
     const previous = this.physical.get(directory);
     const manifest =
       previous?.manifest ??
@@ -143,7 +176,7 @@ class DependencyFiles {
     // that package managers may not enforce). Root archives supply their packed
     // identity/version; artifact contents remain covered by real-install parity.
     if (
-      checkVersion &&
+      owner === undefined &&
       !expectedRange.startsWith("file:") &&
       !expectedRange.startsWith("workspace:") &&
       !/^https?:/u.test(expectedRange) &&
@@ -159,6 +192,7 @@ class DependencyFiles {
     }
     const mounted = {
       directory,
+      boundary: resolved.boundary,
       manifest,
       virtual: `${dependencyRoot}/${this.packages.size}`,
       names: new Set([name, manifest.name]),
@@ -221,12 +255,7 @@ class DependencyFiles {
     const key = `${base}${marker}${name}`;
     let target = this.aliases.get(key);
     if (target === undefined) {
-      const mounted = this.mount(
-        name,
-        declared,
-        owner?.directory ?? this.fixtureDirectory,
-        owner === undefined
-      );
+      const mounted = this.mount(name, declared, owner);
       if (!mounted) {
         return undefined;
       }
@@ -327,8 +356,7 @@ class DependencyFiles {
   compilerLibrary(): string {
     const compiler = this.mount(
       "typescript",
-      this.rootDependencies.typescript ?? "*",
-      this.fixtureDirectory
+      this.rootDependencies.typescript ?? "*"
     );
     if (!compiler) {
       throw new Error("The dependency fixture must contain TypeScript.");

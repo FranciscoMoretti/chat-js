@@ -14,6 +14,13 @@ import { gatewayDefinitionSchema } from "@chat-js/gateways/definition";
 import type { InstallationSelection } from "../installation";
 import { generateInstallation } from "./installation-generator";
 
+// Explicit fixture roots support both hoisted and isolated workspace installs.
+// The virtual consumer manifest still controls which dependencies are visible.
+export const validationDependencyFixtures = [
+  path.resolve(import.meta.dir, "../../../apps/chat"),
+  path.resolve(import.meta.dir, ".."),
+];
+
 /** Prepare the real CLI core once, independently of the combination matrix. */
 export const prepareValidationCore = async (): Promise<
   Map<string, Uint8Array>

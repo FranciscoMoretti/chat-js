@@ -4,19 +4,18 @@ import {
 } from "../scripts/installation-cases";
 import { dependencyName } from "@chat-js/registry-validation/ownership";
 import { beforeAll, expect, test } from "bun:test";
-import path from "node:path";
 import { registry } from "../registry";
 import { pluginDefinitionSchema } from "../metadata";
 import { itemClaims } from "../src/installation-ownership";
 import { targetPath } from "../src/file-ownership";
 import {
+  validationDependencyFixtures,
   prepareValidationCore,
   renderValidationProject,
 } from "../scripts/validation-project";
 import { typecheckProject } from "@chat-js/registry-validation";
 import { GATEWAYS } from "../../cli/src/types";
 
-const fixture = path.resolve(import.meta.dir, "../../../apps/chat");
 const plugins = registry.items.flatMap((item) => {
   const parsed = pluginDefinitionSchema.safeParse(item.meta?.chatjs);
   return parsed.success ? [parsed.data] : [];
@@ -37,7 +36,9 @@ for (const gateway of GATEWAYS) {
     expect(
       [...files.keys()].filter((file) => file.startsWith("plugins/"))
     ).toEqual([]);
-    expect(typecheckProject(files, fixture).diagnostics).toEqual([]);
+    expect(
+      typecheckProject(files, validationDependencyFixtures).diagnostics
+    ).toEqual([]);
   }, 60_000);
 }
 
@@ -74,13 +75,16 @@ for (const plugin of plugins) {
         }
       }
     }
-    expect(typecheckProject(output.files, fixture).diagnostics).toEqual([]);
+    expect(
+      typecheckProject(output.files, validationDependencyFixtures).diagnostics
+    ).toEqual([]);
     if (plugin.id === "search") {
       output.files.delete("plugins/search/server-plugin.ts");
       expect(
-        typecheckProject(output.files, fixture).diagnostics.some(
-          (diagnostic) => diagnostic.code === 2307
-        )
+        typecheckProject(
+          output.files,
+          validationDependencyFixtures
+        ).diagnostics.some((diagnostic) => diagnostic.code === 2307)
       ).toBe(true);
     }
   }, 60_000);
@@ -98,13 +102,18 @@ test("tool composition retains registry dependencies and cannot borrow undeclare
       .find((item) => item.name === "word-count")
       ?.dependencies?.map(dependencyName)
   ).toContain("zod");
-  expect(typecheckProject(output.files, fixture).diagnostics).toEqual([]);
+  expect(
+    typecheckProject(output.files, validationDependencyFixtures).diagnostics
+  ).toEqual([]);
   output.files.set(
     "undeclared.ts",
     new TextEncoder().encode('export { tavily } from "@tavily/core";')
   );
   expect(
-    typecheckProject(output.files, fixture).diagnostics.some(
+    typecheckProject(
+      output.files,
+      validationDependencyFixtures
+    ).diagnostics.some(
       (diagnostic) =>
         diagnostic.code === 2307 && diagnostic.file === "undeclared.ts"
     )
@@ -117,6 +126,8 @@ for (const scenario of combinationCases) {
       prepared.core,
       scenario.selection
     );
-    expect(typecheckProject(output.files, fixture).diagnostics).toEqual([]);
+    expect(
+      typecheckProject(output.files, validationDependencyFixtures).diagnostics
+    ).toEqual([]);
   }, 60_000);
 }
