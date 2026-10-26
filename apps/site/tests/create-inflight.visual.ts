@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { mkdir } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
 import { expect } from "playwright/test";
 
@@ -58,6 +60,67 @@ try {
   assert.deepEqual(errors, []);
   console.log(
     "Preset selected during scene navigation reaches the hydrated preview."
+  );
+
+  // Changing the base replaces the iframe. Direction selected while that new
+  // document is loading must reach both the URL and the rendered composition.
+  await page.goto(`${origin}/create?base=radix&rtl=true&uploads=true`, {
+    waitUntil: "domcontentloaded",
+  });
+  await expect(frame.getByTestId("chat-preview")).toBeVisible();
+  await expect(frame.locator("html")).toHaveAttribute("dir", "rtl");
+  const remount = Promise.withResolvers<null>();
+  const requested = Promise.withResolvers<null>();
+  await page.route(
+    "**/create/preview?**",
+    async (route) => {
+      requested.resolve(null);
+      await remount.promise;
+      await route.continue();
+    },
+    { times: 1 }
+  );
+  await page
+    .getByRole("button", { name: "Get Code", exact: true })
+    .first()
+    .click();
+  await page.getByRole("radio", { name: "Base UI", exact: true }).click();
+  await requested.promise;
+  await page
+    .getByRole("switch", { name: "Right-to-left", exact: true })
+    .click();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog")).toBeHidden();
+  await expect
+    .poll(() => new URL(page.url()).searchParams.get("rtl"))
+    .toBeNull();
+  remount.resolve(null);
+  await expect(frame.getByTestId("chat-preview")).toHaveAttribute(
+    "data-base",
+    "base"
+  );
+  await expect(frame.locator("html")).toHaveAttribute("dir", "ltr");
+  await expect(
+    frame.getByRole("button", { name: "Attach sample file" })
+  ).toBeVisible();
+  await expect(page.getByRole("button", { name: "Retry preview" })).toHaveCount(
+    0
+  );
+  await expect(page.getByText("Loading preview…", { exact: true })).toHaveCount(
+    0
+  );
+  const output = fileURLToPath(
+    new URL("../uiverify-screenshots/", import.meta.url)
+  );
+  await mkdir(output, { recursive: true });
+  await page.screenshot({
+    path: `${output}create-inflight-base-ltr.png`,
+    animations: "disabled",
+    style: "nextjs-portal { visibility: hidden !important; }",
+  });
+  assert.deepEqual(errors, []);
+  console.log(
+    "Base and direction selected during iframe replacement reach the rendered preview."
   );
 } finally {
   await browser.close();

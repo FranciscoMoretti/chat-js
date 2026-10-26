@@ -3,21 +3,21 @@
 import { useEffect, useState } from "react";
 import { decodePreset, DEFAULT_PRESET_CONFIG } from "shadcn/preset";
 import { useTheme } from "next-themes";
-import { useDesignSystemSearchParams } from "@/vendor/shadcn-create/lib/search-params";
-import { usePresetCode } from "@/vendor/shadcn-create/hooks/use-design-system";
+import { getPresetCode } from "@/vendor/shadcn-create/lib/preset-code";
 import { installationSelectionSchema } from "../../../../packages/registry/installation";
 import { PromptForm } from "../../../chat/components/composer/prompt-form";
 import { ToolActivity } from "../../../chat/components/part/tool-activity";
 import { ToolOutput } from "../../../chat/components/part/tool-data";
 import { startingInstallation } from "../create-model";
 import { IconLibraryContext, PreviewIcon } from "./icons";
+import { usePreviewDesignSystem } from "./design-system-context";
 import { native } from "./ui/native";
 import { native as nativeRadix } from "./ui/native-radix";
 import "../../app/create/preview/preview.css";
 
 export const ChatPreview = () => {
-  const [params, setParams] = useDesignSystemSearchParams();
-  const code = usePresetCode();
+  const [params, setParams] = usePreviewDesignSystem();
+  const code = getPresetCode(params);
   const preset = decodePreset(code) ?? DEFAULT_PRESET_CONFIG;
   const { resolvedTheme, setTheme } = useTheme();
   const mode = resolvedTheme === "dark" ? "dark" : "light";

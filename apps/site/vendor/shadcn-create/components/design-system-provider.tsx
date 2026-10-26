@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { PreviewDesignSystemContext } from "@/components/create-preview/design-system-context"
 
 import {
   buildRegistryTheme,
@@ -319,5 +320,9 @@ export function DesignSystemProvider({
     return null
   }
 
-  return <>{children}</>
+  return (
+    <PreviewDesignSystemContext value={[searchParams, setSearchParams]}>
+      {children}
+    </PreviewDesignSystemContext>
+  )
 }
