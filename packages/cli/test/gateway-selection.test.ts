@@ -1399,6 +1399,8 @@ for (const installAtCreation of [false, true]) {
       ...(installAtCreation
         ? [
             "--attachments",
+            "--sandbox-provider",
+            "vercel",
             "--observability",
             "vercel-analytics,vercel-speed-insights,langfuse",
           ]
