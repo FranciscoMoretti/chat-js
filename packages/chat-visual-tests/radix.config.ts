@@ -66,7 +66,7 @@ export default defineConfig({
       transform(source, id) {
         if (
           id.endsWith("packages/registry/src/tools/_shared/visual.css") ||
-          id.endsWith("apps/chat/app/globals.css")
+          id.endsWith("apps/chat/tests/visual/sandbox.css")
         ) {
           return `${source}\n@source ${JSON.stringify(path.join(app, "components"))};\n`;
         }
