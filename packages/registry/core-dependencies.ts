@@ -82,6 +82,7 @@ export const coreDependencyNames: readonly string[] = [
   "react-hook-form",
   "react-resizable-panels",
   "server-only",
+  "shadcn",
   "shiki",
   "sonner",
   "streamdown",

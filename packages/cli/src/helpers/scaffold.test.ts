@@ -17,6 +17,7 @@ import {
   scaffoldFromTemplate,
 } from "./scaffold";
 import { buildConfigTs } from "./config-builder";
+import { initializeShadcn } from "./initialize-shadcn";
 import { createRequire } from "node:module";
 import { parseJsonObject, requireJsonObject } from "./json-object";
 import { parsePackageJson } from "./package-manifest";
@@ -233,6 +234,34 @@ describe("buildConfigTs", (): void => {
 });
 
 describe("scaffoldFromTemplate", (): void => {
+  it("retains stylesheet dependencies when creating without native theme options", async (): Promise<void> => {
+    const destination = makeTempDir("default-stylesheets");
+    await scaffoldFromTemplate(destination);
+    await initializeShadcn(destination, []);
+
+    const stylesheet = await readFile(
+      pathModule.join(destination, "app/globals.css"),
+      "utf-8"
+    );
+    const manifest = parsePackageJson(
+      await readFile(pathModule.join(destination, "package.json"), "utf-8")
+    );
+    expect(stylesheet).toContain('@import "shadcn/tailwind.css"');
+    for (const [, specifier] of stylesheet.matchAll(
+      /@import "(?<specifier>[^"]+)"/gu
+    )) {
+      if (specifier.startsWith(".")) {
+        continue;
+      }
+      const packageName = specifier.startsWith("@")
+        ? specifier.split("/").slice(0, 2).join("/")
+        : specifier.split("/")[0];
+      expect(
+        manifest.dependencies?.[packageName] ??
+          manifest.devDependencies?.[packageName]
+      ).toBeString();
+    }
+  });
   it("scaffolds without a sandbox SDK or persistent capability", async (): Promise<void> => {
     const destination = makeTempDir("no-sandbox");
     await scaffoldFromTemplate(destination);
