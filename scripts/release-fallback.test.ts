@@ -78,7 +78,7 @@ node() {
   if [ "$1" = "-p" ]; then
     case "$2" in
       *.name) echo '@chat-js/thread' ;;
-      *.version) echo '0.1.0' ;;
+      *.version) if [ -f prerelease ]; then echo '0.2.0-beta.1'; else echo '0.1.0'; fi ;;
       *) return 1 ;;
     esac
   else
@@ -236,3 +236,11 @@ for (const lookupFails of [false, true]) {
     }
   );
 }
+
+test("stable fallback refuses a prerelease before any registry or publication calls", async () => {
+  await withReleaseDirectory(async (directory) => {
+    await Bun.write(path.join(directory, "prerelease"), "");
+    expect(await runFallback(directory)).not.toBe(SUCCESS_EXIT_CODE);
+    expect(await Bun.file(path.join(directory, "calls")).exists()).toBe(false);
+  });
+});
