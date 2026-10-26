@@ -151,6 +151,21 @@ test("research task progress renders its update states together", async () => {
     await expect
       .poll(() => container.textContent)
       .toContain("Research complete");
+    await expect
+      .poll(
+        () =>
+          container.querySelectorAll(
+            '[aria-label="Completed research"] .group > div[style*="opacity: 1"]'
+          ).length
+      )
+      .toBe(updates.length);
+    await expect
+      .poll(() =>
+        [
+          ...container.querySelectorAll<HTMLElement>('div[style*="opacity"]'),
+        ].every((element) => getComputedStyle(element).opacity === "1")
+      )
+      .toBe(true);
     await takeSnapshot("research-progress-active-and-complete");
   } finally {
     await unmountRoot(root);

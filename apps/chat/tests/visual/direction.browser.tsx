@@ -56,6 +56,11 @@ for (const direction of ["ltr", "rtl"] as const) {
       await expect
         .element(page.getByRole("menuitem", { name: "Nested action" }))
         .toBeVisible();
+      await Promise.all(
+        document
+          .getAnimations()
+          .map(async (animation) => await animation.finished)
+      );
       const nativeBase = process.env.CHATJS_NATIVE_UI_BASE;
       const nativeDirection = process.env.CHATJS_NATIVE_UI_DIRECTION ?? "ltr";
       if (nativeDirection === "ltr" && direction === "rtl") {
