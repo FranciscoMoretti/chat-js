@@ -4,14 +4,7 @@ import { rejects } from "node:assert/strict";
 import { parsePackageJson } from "../src/helpers/package-manifest";
 import { requireJsonObject } from "../src/helpers/json-object";
 import { afterAll, beforeAll, expect, it } from "bun:test";
-import {
-  mkdir,
-  mkdtemp,
-  readFile,
-  readdir,
-  rm,
-  writeFile,
-} from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import nodePath from "node:path";
 import { fileURLToPath } from "node:url";
@@ -386,7 +379,10 @@ beforeAll(async () => {
     "build",
   ]);
   const output = nodePath.join(cliDirectory, "../registry/dist/r");
-  const outputNames = await readdir(output);
+  const registryFiles = new Bun.Glob("**/*");
+  const outputNames = [
+    ...registryFiles.scanSync({ cwd: output, onlyFiles: true }),
+  ];
   const names = outputNames.toSorted();
   const first = await Promise.all(
     names.map(
@@ -398,7 +394,9 @@ beforeAll(async () => {
     "run",
     "build",
   ]);
-  const rebuiltOutputNames = await readdir(output);
+  const rebuiltOutputNames = [
+    ...registryFiles.scanSync({ cwd: output, onlyFiles: true }),
+  ];
   expect(rebuiltOutputNames.toSorted()).toEqual(names);
   expect(
     await Promise.all(
