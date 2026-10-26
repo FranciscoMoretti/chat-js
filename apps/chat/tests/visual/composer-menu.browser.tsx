@@ -298,19 +298,21 @@ test("one ordered menu selects and clears tools, attaches files, and toggles con
     await act(async () => {
       await page.getByRole("button", { name: "Composer options" }).click();
     });
-    expect(
-      [...document.querySelectorAll('[role^="menuitem"]')].map(
-        (item: { readonly textContent: string }) => item.textContent
+    await expect
+      .poll(() =>
+        [...document.querySelectorAll('[role^="menuitem"]')].map(
+          (item: { readonly textContent: string }) => item.textContent
+        )
       )
-    ).toEqual([
-      "Attach files",
-      "Canvas",
-      "Web Search",
-      "Deep Research",
-      "Create an image",
-      "Create a video",
-      "Connectors",
-    ]);
+      .toEqual([
+        "Attach files",
+        "Canvas",
+        "Web Search",
+        "Deep Research",
+        "Create an image",
+        "Create a video",
+        "Connectors",
+      ]);
     await act(async () => {
       await page.getByRole("menuitemcheckbox", { name: /Web Search/u }).click();
     });
@@ -481,18 +483,20 @@ test("custom ordering and omitted MCP need no placeholder", async () => {
     await act(async () => {
       await page.getByRole("button", { name: "Composer options" }).click();
     });
-    expect(
-      [...document.querySelectorAll('[role^="menuitem"]')].map(
-        (item: { readonly textContent: string }) => item.textContent
+    await expect
+      .poll(() =>
+        [...document.querySelectorAll('[role^="menuitem"]')].map(
+          (item: { readonly textContent: string }) => item.textContent
+        )
       )
-    ).toEqual([
-      "Create a video",
-      "Create an image",
-      "Deep Research",
-      "Web Search",
-      "Canvas",
-      "Attach files",
-    ]);
+      .toEqual([
+        "Create a video",
+        "Create an image",
+        "Deep Research",
+        "Web Search",
+        "Canvas",
+        "Attach files",
+      ]);
     await takeSnapshot("composer-custom-order-without-mcp");
     await act(async () => {
       await userEvent.keyboard("{Escape}");
