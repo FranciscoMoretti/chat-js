@@ -121,37 +121,10 @@ const settled = async (
         window.innerWidth === width
     )
     .toBe(true);
-  if (!allowPendingSidebar) {
-    // Async server components can keep an identical-size fallback after queries
-    // finish. Wait for their content too, including after a mobile sidebar remount.
-    await expect
-      .poll(
-        () =>
-          document.querySelector(
-            '[data-slot="sidebar"] [data-slot="skeleton"]'
-          ) === null
-      )
-      .toBe(true);
-  }
   await expect
     .poll(() =>
       [...route.queryClients].every(
         (client) => client.isFetching() === 0 && client.isMutating() === 0
-      )
-    )
-    .toBe(true);
-  // Native MessageScroller defaults to the end, but its resize/anchor work can
-  // start after an otherwise stable layout. Assert the final state instead of
-  // capturing the transient top position or forcing the component to scroll.
-  await expect
-    .poll(() =>
-      [
-        ...document.querySelectorAll<HTMLElement>(
-          '[data-slot="message-scroller-viewport"]'
-        ),
-      ].every(
-        (viewport) =>
-          viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight < 2
       )
     )
     .toBe(true);
@@ -160,8 +133,27 @@ const settled = async (
   await expect
     .poll(
       () => {
+        // Check readiness on every stable-layout sample: a viewport change can
+        // mount the sidebar fallback after an earlier one-shot check passed.
+        const sidebarReady =
+          allowPendingSidebar ||
+          document.querySelector(
+            '[data-slot="sidebar"] [data-slot="skeleton"]'
+          ) === null;
+        const transcriptReady = [
+          ...document.querySelectorAll<HTMLElement>(
+            '[data-slot="message-scroller-viewport"]'
+          ),
+        ].every(
+          (viewport) =>
+            viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight <
+            2
+        );
         const current = layout();
-        unchanged = current === previous ? unchanged + 1 : 0;
+        unchanged =
+          sidebarReady && transcriptReady && current === previous
+            ? unchanged + 1
+            : 0;
         previous = current;
         return unchanged;
       },
