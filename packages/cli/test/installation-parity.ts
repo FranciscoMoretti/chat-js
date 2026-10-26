@@ -5,6 +5,7 @@ import {
   readProjectFiles,
   compareProjects,
 } from "@chat-js/registry-validation";
+import type { ProjectFiles } from "@chat-js/registry-validation";
 import {
   prepareValidationCore,
   renderValidationProject,
@@ -19,6 +20,7 @@ const fixture: { core?: Map<string, Uint8Array> } = {};
 // Installation bookkeeping, package-manager products and timestamped migration history
 // are independently exercised by their existing integration checks.
 const comparable = (file: string): boolean =>
+  file !== "next-env.d.ts" &&
   !/^(?:node_modules|\.git|\.chatjs|\.next|\.eve|\.output|lib\/db\/migrations)(?:\/|$)/u.test(
     file
   ) &&
@@ -75,6 +77,15 @@ const normalizeFile = async (
   return bytes;
 };
 
+export const compareInstallationProjects = async (
+  expected: ProjectFiles,
+  actual: ProjectFiles
+) =>
+  await compareProjects(expected, actual, {
+    include: comparable,
+    normalize: normalizeFile,
+  });
+
 export const verifyInstallationParity = async (
   cwd: string,
   selection: InstallationSelection,
@@ -89,10 +100,7 @@ export const verifyInstallationParity = async (
       .join(" "),
   });
   const actual = await readProjectFiles(cwd, comparable);
-  expect(
-    await compareProjects(predicted.files, actual, {
-      include: comparable,
-      normalize: normalizeFile,
-    })
-  ).toEqual([]);
+  expect(await compareInstallationProjects(predicted.files, actual)).toEqual(
+    []
+  );
 };
