@@ -25,6 +25,7 @@
     "react-dom": "19.2.3",
     "sonner": "^2.0.7",
     "superjson": "^2.2.2",
-    "typescript": "6.0.2"
+    "typescript": "6.0.2",
+    "vite": "8.1.4"
   }
 }

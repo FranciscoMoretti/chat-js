@@ -1,4 +1,4 @@
-import { defineConfig } from "@playwright/test";
+import { defineConfig } from "playwright/test";
 import { fileURLToPath } from "node:url";
 
 process.env.UIVERIFY_ARCHIVE_DIR = fileURLToPath(

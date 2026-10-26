@@ -14,6 +14,12 @@ import { ReasoningPart } from "@/components/part/message-reasoning";
 import { mount, unmount } from "@/tests/visual/primitive-mount";
 import "./sandbox.css";
 
+declare module "vitest/browser" {
+  interface BrowserCommands {
+    faviconAssets: () => Promise<void>;
+  }
+}
+
 const setArtifact = vi.fn();
 vi.mock("@/hooks/use-artifact", () => ({
   useArtifact: () => ({ setArtifact }),
