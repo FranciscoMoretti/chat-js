@@ -1,4 +1,4 @@
-import { readdirSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { uiverifyPlugin } from "@uiverify/vitest/plugin";
@@ -14,6 +14,17 @@ if (app === undefined || !path.isAbsolute(app)) {
     "CHATJS_RADIX_APP must identify a generated Radix app by absolute path."
   );
 }
+const nativeConfig: unknown = JSON.parse(
+  readFileSync(path.join(app, "components.json"), "utf-8")
+);
+const uiBase =
+  typeof nativeConfig === "object" &&
+  nativeConfig !== null &&
+  "style" in nativeConfig &&
+  typeof nativeConfig.style === "string" &&
+  nativeConfig.style.startsWith("base-")
+    ? "base"
+    : "radix";
 const interactionMode = process.env.CHATJS_RADIX_INTERACTIONS === "1";
 const reference = interactionMode ? interactions : pages;
 const root = fileURLToPath(new URL("../../", import.meta.url));
@@ -36,6 +47,8 @@ export default defineConfig({
   cacheDir: path.join(root, "node_modules/.vite/chat-radix"),
   resolve: {
     ...reference.resolve,
+    // Generated sources and the shared test harness must use one native context.
+    dedupe: ["@base-ui/react", ...(reference.resolve?.dedupe ?? [])],
     alias: [
       ...nativeAliases,
       ...(isAliasList(referenceAliases)
@@ -51,7 +64,10 @@ export default defineConfig({
       name: "chatjs-native-radix-fixture",
       enforce: "pre",
       transform(source, id) {
-        if (id.endsWith("packages/registry/src/tools/_shared/visual.css")) {
+        if (
+          id.endsWith("packages/registry/src/tools/_shared/visual.css") ||
+          id.endsWith("apps/chat/app/globals.css")
+        ) {
           return `${source}\n@source ${JSON.stringify(path.join(app, "components"))};\n`;
         }
         if (
@@ -59,20 +75,22 @@ export default defineConfig({
           (id.startsWith(path.join(root, "apps/chat")) ||
             id.startsWith(path.join(root, "packages/registry/src")))
         ) {
-          return transformUiSource(source, id, "radix");
+          return transformUiSource(source, id, uiBase);
         }
         return null;
       },
     },
     uiverifyPlugin({
-      outDir: fileURLToPath(
-        new URL(
-          interactionMode
-            ? "uiverify-radix-interactions"
-            : "uiverify-radix-archive",
-          import.meta.url
-        )
-      ),
+      outDir:
+        process.env.UIVERIFY_ARCHIVE_DIR ??
+        fileURLToPath(
+          new URL(
+            interactionMode
+              ? "uiverify-radix-interactions"
+              : "uiverify-radix-archive",
+            import.meta.url
+          )
+        ),
     }),
   ],
   test: {

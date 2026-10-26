@@ -2,6 +2,7 @@ import {
   PluginSidebar,
   PluginSidebarHeader,
 } from "@/components/plugin-chat-ui";
+import components from "@/components.json";
 import { settingsItems } from "@/settings-items";
 import React, { Suspense } from "react";
 import { Cpu } from "lucide-react";
@@ -59,7 +60,9 @@ const HistorySkeleton = (): React.JSX.Element => (
 
 export const AppSidebar = (): React.JSX.Element => (
   <Sidebar
-    className="grid max-h-dvh grid-rows-[auto_1fr_auto] group-data-[side=left]:border-r-0"
+    className="grid max-h-dvh grid-rows-[auto_1fr_auto] border-x-0"
+    side={components.rtl ? "right" : "left"}
+    dir={components.rtl ? "rtl" : "ltr"}
     collapsible="icon"
   >
     <SidebarHeader className="shrink-0">

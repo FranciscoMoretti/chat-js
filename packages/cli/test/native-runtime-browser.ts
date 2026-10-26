@@ -104,6 +104,9 @@ export const checkNativeRuntime = async (options: RuntimeOptions) => {
       "dir",
       rtl ? "rtl" : "ltr"
     );
+    await expect(
+      page.locator('[data-slot="sidebar-container"]')
+    ).toHaveAttribute("data-side", rtl ? "right" : "left");
     const composer = page.getByTestId("multimodal-input");
     await expect(composer).toBeVisible();
     await expect(composer).toHaveAttribute("contenteditable", "true");

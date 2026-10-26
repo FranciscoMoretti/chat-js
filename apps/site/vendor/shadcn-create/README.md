@@ -26,4 +26,6 @@ ChatJS adaptations:
 
 Keep modifications small and record future deviations here. Vendor source retains upstream formatting; authored integration modules follow repository lint rules. Unit tests cover the imported codec/query seams, and the Create browser test covers interactions and visual states.
 
-The native preview generator accepts `base` (default) or `radix`: `bun apps/site/scripts/generate-create-preview.ts radix`. Radix components live alongside Base in `components/create-preview/ui/radix-<style>`, with separate `provenance-radix.json` hashes. Source adaptations are import destinations and the upstream menu transform only; preview composition uses native `render` or `asChild` triggers for the selected library.
+The native preview generator accepts `base` (default) or `radix`: `bun apps/site/scripts/generate-create-preview.ts radix`. Radix components live alongside Base in `components/create-preview/ui/radix-<style>`, with separate `provenance-radix.json` hashes. Source adaptations are import destinations and upstream menu/direction transforms; preview composition uses native `render` or `asChild` triggers for the selected library.
+
+The generated preview primitives use native `transformDirection` so logical spacing, directional icons and submenu placement work in either reading direction. Preview and generated app roots provide the selected library’s native DirectionProvider; generated app direction comes from `components.json.rtl`.

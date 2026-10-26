@@ -1,5 +1,5 @@
 // Regenerate native source: bun apps/site/scripts/generate-create-preview.ts
-// Only import destinations are adapted. shadcn owns every component and menu transform.
+// Import destinations are adapted; shadcn owns component, menu and direction transforms.
 import sitePackage from "../package.json";
 import { mkdir, writeFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 import { PRESET_MENU_COLORS, PRESET_STYLES } from "shadcn/preset";
 import { getRegistryItems } from "shadcn/registry";
 import { configSchema } from "shadcn/schema";
-import { transformMenu } from "shadcn/utils";
+import { transformDirection, transformMenu } from "shadcn/utils";
 import { Project } from "ts-morph";
 
 const destination = fileURLToPath(
@@ -95,6 +95,7 @@ const styles = await Promise.all(
               });
               content = sourceFile.getFullText();
             }
+            content = await transformDirection(content, true);
             const filename = path.join(
               destination,
               directory,

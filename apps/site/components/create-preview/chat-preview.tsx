@@ -166,7 +166,7 @@ export const ChatPreview = () => {
         data-icons={preset.iconLibrary}
         data-mode={mode}
       >
-        <aside className="bg-sidebar text-sidebar-foreground border-sidebar-border hidden w-52 shrink-0 flex-col gap-5 border-r p-4 min-[760px]:flex">
+        <aside className="bg-sidebar text-sidebar-foreground border-sidebar-border hidden w-52 shrink-0 flex-col gap-5 border-e p-4 min-[760px]:flex">
           <div className="flex items-center gap-2 px-2 py-2 font-semibold">
             <PreviewIcon name="chat" />
             ChatJS
