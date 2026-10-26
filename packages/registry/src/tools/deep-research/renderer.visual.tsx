@@ -108,6 +108,24 @@ const pinStepColumns = async (section: HTMLElement) => {
       column.style.height = `${heights[index]}px`;
     }
   });
+  const sources =
+    section.querySelectorAll<HTMLAnchorElement>('a[target="_blank"]');
+  expect(sources).toHaveLength(3);
+  for (const source of sources) {
+    const badge = source.querySelector('[data-slot="badge"]');
+    const favicon = badge?.querySelector("img");
+    const domain = badge?.querySelector("span");
+    if (!(badge && favicon && domain)) {
+      throw new Error("Research source badge must show its favicon and domain");
+    }
+    const bounds = badge.getBoundingClientRect();
+    for (const element of [favicon, domain]) {
+      const contentBounds = element.getBoundingClientRect();
+      expect(contentBounds.left).toBeGreaterThanOrEqual(bounds.left);
+      expect(contentBounds.right).toBeLessThanOrEqual(bounds.right);
+      expect(element.scrollWidth).toBeLessThanOrEqual(element.clientWidth);
+    }
+  }
 };
 
 test("deep-research renders every state in the chat", async () => {

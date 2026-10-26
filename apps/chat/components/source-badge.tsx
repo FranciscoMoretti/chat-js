@@ -23,12 +23,14 @@ export const WebSourceBadge = ({
       render={
         <a href={result.url} rel="noopener noreferrer" target="_blank">
           <Badge
-            className="max-w-[200px] gap-1 truncate text-xs"
+            className="max-w-[200px] justify-start gap-1 text-xs"
             variant="secondary"
           >
-            <Favicon className="size-3" url={getFaviconUrl(result)} />
-            <span className="italic">{getDomainFromUrl(result.url)}</span>
-            <span className="text-xs">{result.title}</span>
+            <Favicon className="size-3 shrink-0" url={getFaviconUrl(result)} />
+            <span className="shrink-0 italic">
+              {getDomainFromUrl(result.url)}
+            </span>
+            <span className="min-w-0 truncate text-xs">{result.title}</span>
           </Badge>
         </a>
       }
