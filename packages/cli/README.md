@@ -32,7 +32,7 @@ Run `bun --filter @chat-js/cli test:gateways` from the repository root to verify
 
 ## Installation and migration
 
-The `0.9.0-beta.1` release candidate supports Base UI and Radix with matching registry `0.2.0-beta.1`. Use a local build until these candidates are published, then invoke `npx @chat-js/cli@0.9.0-beta.1` for the examples below. The earlier beta.0 releases support Base UI only. Stable `latest` is unchanged.
+The `0.9.0-beta.2` release candidate supports Base UI and Radix with matching registry `0.2.0-beta.2`. Use a local build until these candidates are published, then invoke `npx @chat-js/cli@0.9.0-beta.2` for the examples below. The earlier beta.0 releases support Base UI only. Stable `latest` is unchanged.
 
 Pass native shadcn visual options after `--`:
 
@@ -73,7 +73,7 @@ Existing ChatJS applications need a source migration; upgrading the CLI does not
 
 Migrate callers together with primitives. Base UI menu actions use `onClick` and custom triggers use `render`; Radix uses `onSelect` and `asChild`. Passing Radix `onSelect` to a Base UI menu may compile without running the action. Use each library's native composition and ordinary links styled with `buttonVariants` for navigation. Preserve EVE message IDs, scroll anchoring, draft/IME behavior, approval dispatch before specialized renderers, and document revision actions. Verify these flows in your app before removing the old wrappers. Markdown still uses Streamdown; tool-specific renderers remain installed source.
 
-This CLI candidate pins new apps to `@chat-js/registry@0.2.0-beta.1`. Matching registry builds preserve the root Base namespace and add complete `/base/{name}.json` and `/radix/{name}.json` namespaces. Fresh Radix generation selects `/radix/`; item IDs and installation targets remain the same. Subsequent `add` and `sync` retain the configured namespace and check the host's native `base-*` or `radix-*` style before writing source or registrations.
+This CLI candidate pins new apps to `@chat-js/registry@0.2.0-beta.2`. Matching registry builds preserve the root Base namespace and add complete `/base/{name}.json` and `/radix/{name}.json` namespaces. Fresh Radix generation selects `/radix/`; item IDs and installation targets remain the same. Subsequent `add` and `sync` retain the configured namespace and check the host's native `base-*` or `radix-*` style before writing source or registrations.
 
 UI-specific plugins and tools declare descriptor `contractVersion: 2` with matching `uiBase: "base"` or `uiBase: "radix"`. A mismatch stops installation; v2 descriptor versions do not prescribe npm major versions. Legacy v1 descriptors remain supported. Existing applications are not automatically migrated between libraries: changing `components.json` or a registry URL alone is insufficient. Keep the compatible registry namespace until migrating primitives and callers together. Publish the matching registry candidate before the CLI candidate, both under `beta`. This does not move stable `latest` or replace earlier published versions.
 

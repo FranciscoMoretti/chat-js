@@ -1,5 +1,14 @@
 # @chat-js/cli
 
+## 0.9.0-beta.2
+
+### Beta Changes
+
+- Exclude maintainer-only visual fixture stylesheets from generated apps.
+- Pin new apps to registry `0.2.0-beta.2` and include its model-settings layout fix in the scaffold.
+- Keep long mobile model descriptions wrapped so the enable switches remain visible and usable with both Base UI and Radix.
+- Publish under `beta`; stable `latest` remains unchanged.
+
 ## 0.9.0-beta.1
 
 ### Beta Changes

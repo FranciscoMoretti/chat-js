@@ -1,5 +1,13 @@
 # @chat-js/registry
 
+## 0.2.0-beta.2
+
+### Beta Changes
+
+- Allow model descriptions to wrap in settings rows, keeping enable switches inside narrow mobile viewports for both Base UI and Radix.
+- Preserve existing registry contracts and namespaces. Gateway and sandbox packages remain at `0.2.0`.
+- Publish under `beta`; stable `latest` remains unchanged.
+
 ## 0.2.0-beta.1
 
 ### Beta Changes

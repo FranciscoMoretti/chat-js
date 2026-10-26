@@ -14,6 +14,7 @@ test.each([
       "components/ui/control-defaults-visual-fixture.tsx",
       "tests/visual/eve-tool-results.browser.tsx",
       "tests/visual/sandbox.css",
+      "tests/layout-primitives.visual.css",
       "tests/visual/pages/chat.browser.tsx",
       "lib/db/eve-subagents.test.ts",
       "lib/db/eve-guest-rate.test.ts",
