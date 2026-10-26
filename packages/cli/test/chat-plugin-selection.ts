@@ -1,3 +1,7 @@
+import { verifyInstallationParity } from "./installation-parity";
+import { generateInstallation } from "../../registry/scripts/installation-generator";
+import { pluginRegistrationTargets } from "../src/utils/sync-plugins";
+import { pluginDefinitionSchema } from "../../registry/metadata";
 import { expect, it } from "bun:test";
 import { existsSync } from "node:fs";
 import { readdir, readFile, writeFile } from "node:fs/promises";
@@ -60,6 +64,16 @@ export const testChatPluginSelections = (
         "--no-documents",
         "--no-attachments",
       ]);
+      const pluginUi = {
+        "composer-controls.ts": await readFile(
+          path.join(cwd, "composer-controls.ts"),
+          "utf-8"
+        ),
+        "settings-items.ts": await readFile(
+          path.join(cwd, "settings-items.ts"),
+          "utf-8"
+        ),
+      };
       if (selection !== "none") {
         await run(cwd, ["node", cliEntry, "add", selection, "--yes"]);
       }
@@ -74,6 +88,47 @@ export const testChatPluginSelections = (
         : [];
       expect(installedPlugins.toSorted()).toEqual(
         selection === "none" ? [] : [selection]
+      );
+      const predicted = await generateInstallation(
+        {
+          gateway: "openai",
+          storage: { source: "memory", options: {} },
+          tools: [],
+          plugins: selection === "none" ? [] : [selection],
+        },
+        { pluginUi }
+      );
+      // Compare the shared renderer with independently packaged registry installation.
+      // Targets come from manifests and the real registration generator, not a test inventory.
+      const targets = new Set([
+        ...pluginRegistrationTargets,
+        ...Object.keys(pluginUi),
+        ...predicted.items
+          .filter(
+            (item) =>
+              pluginDefinitionSchema.safeParse(item.meta?.chatjs).success
+          )
+          .flatMap((item) =>
+            (item.files ?? []).map((file) => file.target?.slice(2) ?? "")
+          ),
+      ]);
+      for (const file of targets) {
+        const expected = predicted.files.get(file);
+        if (expected === undefined) {
+          throw new Error(`Missing predicted output: ${file}`);
+        }
+        // oxlint-disable-next-line no-await-in-loop -- Report byte parity at the exact declared installation target.
+        expect(await readFile(path.join(cwd, file), "utf-8")).toBe(expected);
+      }
+      await verifyInstallationParity(
+        cwd,
+        {
+          gateway: "openai",
+          storage: { source: "memory", options: {} },
+          tools: [],
+          plugins: selection === "none" ? [] : [selection],
+        },
+        name
       );
       await run(cwd, ["bun", "run", "test:types"]);
 

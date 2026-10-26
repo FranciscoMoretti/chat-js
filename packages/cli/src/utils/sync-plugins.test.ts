@@ -232,7 +232,14 @@ test("MCP installation contributes its schema without modifying core tables", as
     type: "registry:file",
   });
   const server = Bun.serve({
-    fetch: () => Response.json({ ...mcpItem, files }),
+    // This fixture checks source/schema composition; packaged integration tests install dependencies.
+    fetch: () =>
+      Response.json({
+        ...mcpItem,
+        files,
+        dependencies: [],
+        devDependencies: [],
+      }),
     hostname: "127.0.0.1",
     port: 0,
   });

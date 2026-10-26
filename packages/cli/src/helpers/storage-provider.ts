@@ -28,6 +28,8 @@ const parseStorageOptions = (value: string): Record<string, unknown> => {
   }
 };
 
+const storageConfigurationTargets = ["lib/storage-options.ts", ".env.example"];
+
 /**
  * Configure the installed source without evaluating it or editing dependencies.
  * @param {string} destination Project root receiving storage-options.ts and its env block.
@@ -37,7 +39,7 @@ const configureStorageProvider = async (
   destination: string,
   selection: ReadonlyInput<StorageSelection>
 ): Promise<void> => {
-  await preflight(destination, ["lib/storage-options.ts", ".env.example"]);
+  await preflight(destination, storageConfigurationTargets);
   const { definition, options } = selection;
   await writeFile(
     path.join(destination, "lib/storage-options.ts"),
@@ -58,6 +60,7 @@ export const storageEnvRequirements: EnvRequirement[] = ${serializedConfigValue(
 };
 export {
   configureStorageProvider,
+  storageConfigurationTargets,
   INSTALLABLE_STORAGE_PROVIDERS,
   parseStorageOptions,
 };

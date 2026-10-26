@@ -60,6 +60,22 @@ const mcpDefinition = pluginDefinitionSchema.parse({
 });
 
 const mcpItem: RegistryItem = {
+  dependencies: [
+    "@ai-sdk/mcp",
+    "@hookform/resolvers",
+    "@modelcontextprotocol/sdk",
+    "@tanstack/react-query",
+    "@trpc/server",
+    "ajv",
+    "drizzle-orm",
+    "guarded-fetch",
+    "lucide-react",
+    "nuqs",
+    "postgres",
+    "react-hook-form",
+    "sonner",
+    "superjson",
+  ],
   description: "MCP connectors, management pages, OAuth and composer control",
   files: mcpFiles.map((file) => ({
     path: file.startsWith("plugins/mcp/")

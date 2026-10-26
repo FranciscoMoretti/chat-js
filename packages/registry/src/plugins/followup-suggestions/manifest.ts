@@ -33,6 +33,7 @@ const followupSuggestionsDefinition = pluginDefinitionSchema.parse({
   client: { export: "followupSuggestionsClient", chat: true },
 });
 const followupSuggestionsItem: RegistryItem = {
+  dependencies: ["@tanstack/react-query", "drizzle-orm", "lucide-react"],
   name: "followup-suggestions",
   type: "registry:item",
   description: "Durable follow-up suggestions for completed answers",

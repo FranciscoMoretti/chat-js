@@ -24,6 +24,13 @@ const feedbackDefinition = pluginDefinitionSchema.parse({
   client: { export: "feedbackClient", chat: true },
 });
 const feedbackItem: RegistryItem = {
+  dependencies: [
+    "@tanstack/react-query",
+    "@trpc/server",
+    "drizzle-orm",
+    "lucide-react",
+    "sonner",
+  ],
   name: "feedback",
   type: "registry:item",
   description: "Private feedback on assistant messages",

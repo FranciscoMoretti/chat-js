@@ -55,6 +55,11 @@ test("independent provider sections retain shared credentials and preserve unmar
     ]);
     await updateEnvironmentExample(cwd, "gateway-provider", ["OPENAI_API_KEY"]);
     const result = await readFile(file, "utf-8");
+    await updateEnvironmentExample(cwd, "storage-provider", [
+      "BLOB_STORE_ID",
+      "VERCEL_OIDC_TOKEN",
+    ]);
+    expect(await readFile(file, "utf-8")).toBe(result);
     expect(result).toContain("VERCEL_OIDC_TOKEN=");
     expect(result).not.toContain("AI_GATEWAY_API_KEY=");
     expect(result).toStartWith("OPENAI_API_KEY=legacy-example\n");

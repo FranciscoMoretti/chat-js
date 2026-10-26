@@ -32,6 +32,12 @@ const modelPreferencesDefinition = pluginDefinitionSchema.parse({
 const modelPreferencesItem: RegistryItem = {
   name: "model-preferences",
   type: "registry:item",
+  dependencies: [
+    "@tanstack/react-query",
+    "drizzle-orm",
+    "lucide-react",
+    "sonner",
+  ],
   description: "Per-user model visibility and model settings",
   files: modelPreferencesFiles.map((file) => ({
     path: file.startsWith("plugins/model-preferences/")

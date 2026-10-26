@@ -1,0 +1,25 @@
+{
+  "name": "@chat-js/registry-validation",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Isolated TypeScript, dependency ownership, parity and source-only shadcn staging for registry projects",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./ownership": "./src/ownership.ts",
+    "./shadcn": "./src/shadcn.ts"
+  },
+  "scripts": {
+    "test:unit": "bun test test",
+    "test:types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "shadcn": "4.21.0",
+    "typescript": "6.0.2",
+    "zod": "4.5.4"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.12",
+    "@types/node": "22.8.6"
+  }
+}

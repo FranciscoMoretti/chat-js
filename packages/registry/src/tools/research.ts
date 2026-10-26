@@ -35,6 +35,7 @@ const researchAgentDirectories = [
 ];
 
 const researchItem: RegistryItem = {
+  dependencies: ["lucide-react", "motion"],
   description:
     "Native EVE research workflow, subagents, prompts, and progress UI",
   files: [

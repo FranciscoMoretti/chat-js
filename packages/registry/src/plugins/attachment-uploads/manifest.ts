@@ -1,3 +1,4 @@
+import registryPackage from "../../../package.json";
 import type { RegistryItem } from "shadcn/schema";
 
 import { pluginDefinitionSchema } from "../../../metadata";
@@ -14,7 +15,12 @@ const attachmentUploadFiles = [
 ];
 
 const attachmentUploadsItem: RegistryItem = {
-  dependencies: ["browser-image-compression", "react-dropzone"],
+  dependencies: [
+    "lucide-react",
+    "sonner",
+    `browser-image-compression@${registryPackage.devDependencies["browser-image-compression"]}`,
+    `react-dropzone@${registryPackage.devDependencies["react-dropzone"]}`,
+  ],
   description:
     "User attachment picker, camera, paste/drop, preprocessing and upload endpoint",
   files: attachmentUploadFiles.map((file) => ({

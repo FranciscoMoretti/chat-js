@@ -1,3 +1,7 @@
+import { selectCoreDependencies } from "../../../registry/core-dependencies";
+import { registry } from "../../../registry/registry";
+import { itemClaims } from "../../../registry/src/installation-ownership";
+import { targetPath } from "../../../registry/src/file-ownership";
 import { copyDevelopmentSupervisor } from "./copy-development-supervisor";
 import {
   access,
@@ -24,7 +28,6 @@ import {
   parsePackageJson,
 } from "./package-manifest";
 import type { PackageManager } from "#cli/types";
-import { pluginItems } from "../../../registry/src/plugins/catalog";
 import { existsSync } from "node:fs";
 import { initializePluginUi } from "#cli/utils/sync-plugins";
 import pathModule from "node:path";
@@ -401,6 +404,21 @@ const scaffoldFromTemplate = async (
       })
     : copyChatTemplateFromRepoSource(destination));
 
+  // The registry owns its declared files, including adapters outside plugin folders.
+  // Remove the reference installation before generating fresh provider defaults.
+  const registryTargets = [
+    ...new Set(
+      registry.items
+        .flatMap(itemClaims)
+        .map((claim) => targetPath(claim.target))
+    ),
+  ];
+  await Promise.all(
+    registryTargets.map(async (file) => {
+      await rm(pathModule.join(destination, file), { force: true });
+    })
+  );
+
   // Packing with npm omits nested .gitignore files, so materialize the app's rules.
   await writeFile(
     pathModule.join(destination, ".gitignore"),
@@ -418,17 +436,6 @@ const scaffoldFromTemplate = async (
     packageJsonPath,
     `${JSON.stringify(packageJson, null, JSON_INDENTATION_SPACES)}\n`
   );
-  // This is a new scaffold, so remove the reference app's selection before install.
-  await rm(pathModule.join(destination, "lib/ai/gateway.ts"));
-  await rm(pathModule.join(destination, "lib/sandbox/adapter.ts"), {
-    force: true,
-  });
-  await rm(pathModule.join(destination, "lib/sandbox/persistent.ts"), {
-    force: true,
-  });
-  await rm(pathModule.join(destination, "lib/sandbox/vercel-sandbox-env.ts"), {
-    force: true,
-  });
   await writeFile(
     pathModule.join(destination, "lib/sandbox/provider.ts"),
     `import type { SandboxProvider } from "@chat-js/sandboxes/provider";
@@ -451,40 +458,18 @@ export { sandboxId, sandboxEnvRequirements };
     await readFile(packageJsonPath, "utf-8"),
     "Template package.json"
   );
-  const dependencies = requireJsonObject(
-    manifest.dependencies,
-    "Template package.json dependencies"
+  const consumerManifest = parsePackageJson(JSON.stringify(manifest));
+  const dependencies = selectCoreDependencies(
+    consumerManifest.dependencies ?? {}
   );
-  // The selected gateway registry item installs its runtime contract. Native
-  // shadcn init runs first, so the scaffold must contain no workspace locator.
+  // The chosen gateway installs its runtime contract after native init. Keep
+  // the fresh scaffold free of workspace locators before that handoff.
   delete dependencies["@chat-js/gateways"];
-  delete dependencies["@ai-sdk/gateway"];
-  delete dependencies["@vercel/blob"];
-  delete dependencies["@tavily/core"];
-  delete dependencies["@mendable/firecrawl-js"];
-  await rm(pathModule.join(destination, "tools/chatjs/generate-video"), {
-    force: true,
-    recursive: true,
-  });
-  await rm(pathModule.join(destination, "tools/chatjs/generate-image"), {
-    force: true,
-    recursive: true,
-  });
-  await rm(pathModule.join(destination, "tools/chatjs/retrieve-url"), {
-    force: true,
-    recursive: true,
-  });
-  delete dependencies["@vercel/sandbox"];
-  delete dependencies["browser-image-compression"];
-  delete dependencies["react-dropzone"];
-  await rm(pathModule.join(destination, "tools/chatjs/tavily-search"), {
-    force: true,
-    recursive: true,
-  });
-  await rm(pathModule.join(destination, "tools/chatjs/search.ts"), {
-    force: true,
-  });
-  await rm(pathModule.join(destination, "lib/storage-provider.ts"));
+  manifest.dependencies = dependencies;
+  manifest.devDependencies = selectCoreDependencies(
+    consumerManifest.devDependencies ?? {}
+  );
+
   await writeFile(
     packageJsonPath,
     `${JSON.stringify(manifest, null, JSON_INDENTATION_SPACES)}\n`
@@ -505,19 +490,8 @@ export { sandboxId, sandboxEnvRequirements };
     componentsPath,
     `${JSON.stringify(components, null, JSON_INDENTATION_SPACES)}\n`
   );
-  const optionalFiles = pluginItems.flatMap((item) => [
-    ...(item.files ?? []).map(
-      (file) => file.target?.replace(/^~\//u, "") ?? ""
-    ),
-    `plugins/${item.name}/chatjs.json`,
-  ]);
-  await Promise.all(
-    optionalFiles.map(async (file): Promise<void> => {
-      await rm(pathModule.join(destination, file), { force: true });
-    })
-  );
   const directories = new Set<string>();
-  for (const file of optionalFiles) {
+  for (const file of registryTargets) {
     let directory = pathModule.dirname(file);
     while (directory !== ".") {
       directories.add(directory);

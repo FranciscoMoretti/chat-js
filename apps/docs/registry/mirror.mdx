@@ -46,3 +46,5 @@ The check reports drift without changing output. When preparing a scaffold updat
 If generation fails, existing output stays in place. The initial app launch waits, or an already running preview is marked stale. Fix the source and save to retry. File publication is not atomic across the whole installation.
 
 For module internals, shutdown behavior and runner comparisons, see `packages/registry/DEVELOPMENT.md` in the repository. Use [Building and Testing](./testing) to verify an item before distribution.
+
+The mirror and [Registry Validation](./validation) reuse the same ChatJS assembly module. The mirror publishes the demo snapshot while validation checks a consumer snapshot. Neither maintains a separate list of plugin files.

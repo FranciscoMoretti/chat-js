@@ -1,3 +1,4 @@
+import { testFullInstallation } from "./full-installation";
 import sandboxPackage from "@chat-js/sandboxes/package.json";
 import { rejects } from "node:assert/strict";
 import { parsePackageJson } from "../src/helpers/package-manifest";
@@ -1668,3 +1669,5 @@ it(
 );
 
 testChatPluginSelections(root, cliEntry);
+
+testFullInstallation(root, cliEntry);

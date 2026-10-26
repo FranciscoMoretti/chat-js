@@ -34,6 +34,7 @@ const pages = [
   { name: "namespaces", path: "/docs/registry/namespaces" },
   { name: "publishing", path: "/docs/registry/authoring" },
   { name: "registry-mirror", path: "/docs/registry/mirror" },
+  { name: "registry-validation", path: "/docs/registry/validation" },
   { name: "registry-testing", path: "/docs/registry/testing" },
   { name: "word-count", path: "/docs/tools/word-count" },
   { name: "get-weather", path: "/docs/tools/get-weather" },
