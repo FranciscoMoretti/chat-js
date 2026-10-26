@@ -20,7 +20,7 @@ test.each(["desktop", "mobile"] as const)(
       <ChatLayout>
         <HomePage />
       </ChatLayout>,
-      { ...signedIn, viewports: [viewport] }
+      { ...signedIn, viewports: [viewport], allowPendingSidebar: true }
     );
     await expect
       .element(page.getByRole("link", { name: "Models" }))

@@ -24,7 +24,12 @@ const THEMES = ["light", "dark"] as const;
 type Viewport = keyof typeof VIEWPORTS;
 
 let mounted:
-  | { root: Root; ui: ReactNode; viewports: readonly Viewport[] }
+  | {
+      root: Root;
+      ui: ReactNode;
+      viewports: readonly Viewport[];
+      allowPendingSidebar: boolean;
+    }
   | undefined;
 
 const tree = (ui: ReactNode, theme: (typeof THEMES)[number]) => (
@@ -48,10 +53,13 @@ export const renderRoute = async (
   ui: ReactNode,
   {
     viewports = ["desktop", "mobile"],
+    allowPendingSidebar = false,
     ...request
   }: Partial<Omit<typeof route, "queryClients">> & {
     /** Limit to the viewports where this state looks different from its neighbours. */
     viewports?: readonly Viewport[];
+    /** Only loading-state fixtures intentionally retain the sidebar Suspense fallback. */
+    allowPendingSidebar?: boolean;
   } = {}
 ) => {
   disableAutoSnapshot();
@@ -76,7 +84,7 @@ export const renderRoute = async (
   const container = document.createElement("div");
   document.body.append(container);
   const root = createRoot(container);
-  mounted = { root, ui, viewports };
+  mounted = { root, ui, viewports, allowPendingSidebar };
   onTestFinished(() => {
     mounted = undefined;
     root.unmount();
@@ -100,7 +108,11 @@ const layout = () =>
 
 // The sidebar's credits and projects load independently of what a test asserts on,
 // and the conversation's stick-to-bottom scroll keeps moving after its content shows.
-const settled = async (theme: (typeof THEMES)[number], width: number) => {
+const settled = async (
+  theme: (typeof THEMES)[number],
+  width: number,
+  allowPendingSidebar: boolean
+) => {
   // The theme class and the resize land after render() and page.viewport() return.
   await expect
     .poll(
@@ -109,10 +121,37 @@ const settled = async (theme: (typeof THEMES)[number], width: number) => {
         window.innerWidth === width
     )
     .toBe(true);
+  if (!allowPendingSidebar) {
+    // Async server components can keep an identical-size fallback after queries
+    // finish. Wait for their content too, including after a mobile sidebar remount.
+    await expect
+      .poll(
+        () =>
+          document.querySelector(
+            '[data-slot="sidebar"] [data-slot="skeleton"]'
+          ) === null
+      )
+      .toBe(true);
+  }
   await expect
     .poll(() =>
       [...route.queryClients].every(
         (client) => client.isFetching() === 0 && client.isMutating() === 0
+      )
+    )
+    .toBe(true);
+  // Native MessageScroller defaults to the end, but its resize/anchor work can
+  // start after an otherwise stable layout. Assert the final state instead of
+  // capturing the transient top position or forcing the component to scroll.
+  await expect
+    .poll(() =>
+      [
+        ...document.querySelectorAll<HTMLElement>(
+          '[data-slot="message-scroller-viewport"]'
+        ),
+      ].every(
+        (viewport) =>
+          viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight < 2
       )
     )
     .toBe(true);
@@ -136,14 +175,14 @@ export const captureVariants = async () => {
   if (!mounted) {
     return;
   }
-  const { root, ui, viewports } = mounted;
+  const { root, ui, viewports, allowPendingSidebar } = mounted;
   /* oxlint-disable eslint/no-await-in-loop -- Each variant resizes and renders the same page; settle and capture it before the next variant changes that shared state. */
   for (const viewport of viewports) {
     const size = VIEWPORTS[viewport];
     await page.viewport(size.width, size.height);
     for (const theme of THEMES) {
       root.render(tree(ui, theme));
-      await settled(theme, size.width);
+      await settled(theme, size.width, allowPendingSidebar);
       await takeSnapshot(`${viewport}-${theme}`);
     }
   }
