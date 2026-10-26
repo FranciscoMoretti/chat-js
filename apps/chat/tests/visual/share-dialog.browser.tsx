@@ -97,6 +97,15 @@ test("share link confirms a completed copy and reports clipboard rejection", asy
     }
     // Keep the captured fixture independent of Vitest's ephemeral server port.
     link.value = "https://chat.example.test/share/clipboard-fixture";
+    await expect
+      .poll(
+        () =>
+          page
+            .getByText("Unable to copy share link.")
+            .element()
+            .closest<HTMLElement>("[data-sonner-toast]")?.dataset.mounted
+      )
+      .toBe("true");
     await takeSnapshot("share-dialog-clipboard-failure");
   } finally {
     await flushReact(() => {
