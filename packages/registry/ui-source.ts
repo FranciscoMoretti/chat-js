@@ -1,7 +1,10 @@
 import ts from "typescript";
 
 const nativeUiImport = /(?:^|\/)components\/ui\/(?<component>[^/]+)$/u;
-const radixAttributeNames = new Map([["Checkbox.readOnly", "aria-readonly"]]);
+const radixAttributeNames = new Map([
+  ["Checkbox.readOnly", "aria-readonly"],
+  ["DirectionProvider.direction", "dir"],
+]);
 const isFalseAttribute = (attribute: ts.JsxAttribute): boolean =>
   attribute.initializer !== undefined &&
   ts.isJsxExpression(attribute.initializer) &&

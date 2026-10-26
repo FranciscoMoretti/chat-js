@@ -98,6 +98,14 @@
     "rhea/message-scroller": "105672edb7029e01550a6976ea7ffd488f7d621bf124ba4d2c90794088df983e",
     "rhea/collapsible": "ead4349ff7b01d696ef89294a81d18ee1d3f732321398896462c834ab9b9e065",
     "rhea/trace": "5ba2b3d4e33cb9d14dc4a2921626a067bf5119ce8ca44cbec2b8820019a7aaca",
-    "rhea/code-block": "35ba12fcca82df9a77e105d743a35dc254a68ae9ca90c8a6e4dda616663ebe6a"
+    "rhea/code-block": "35ba12fcca82df9a77e105d743a35dc254a68ae9ca90c8a6e4dda616663ebe6a",
+    "nova/direction": "661ff5b9c0dc26edde1226bfedc0ab50976d84f8bae42ca83a38dc3b478fd4d4",
+    "vega/direction": "661ff5b9c0dc26edde1226bfedc0ab50976d84f8bae42ca83a38dc3b478fd4d4",
+    "maia/direction": "661ff5b9c0dc26edde1226bfedc0ab50976d84f8bae42ca83a38dc3b478fd4d4",
+    "lyra/direction": "661ff5b9c0dc26edde1226bfedc0ab50976d84f8bae42ca83a38dc3b478fd4d4",
+    "mira/direction": "661ff5b9c0dc26edde1226bfedc0ab50976d84f8bae42ca83a38dc3b478fd4d4",
+    "luma/direction": "661ff5b9c0dc26edde1226bfedc0ab50976d84f8bae42ca83a38dc3b478fd4d4",
+    "sera/direction": "661ff5b9c0dc26edde1226bfedc0ab50976d84f8bae42ca83a38dc3b478fd4d4",
+    "rhea/direction": "661ff5b9c0dc26edde1226bfedc0ab50976d84f8bae42ca83a38dc3b478fd4d4"
   }
 }

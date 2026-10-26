@@ -79,6 +79,7 @@ export default defineConfig({
     ...reference.test,
     include: interactionMode
       ? [
+          "../../apps/chat/tests/visual/direction.browser.tsx",
           "../../apps/chat/tests/visual/composer-interactions.browser.tsx",
           "../../apps/chat/tests/visual/composer-menu.browser.tsx",
           "../../apps/chat/tests/visual/conversation-native.browser.tsx",

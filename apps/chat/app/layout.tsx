@@ -5,6 +5,8 @@ import Script from "next/script";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 
 import "./globals.css";
+import components from "@/components.json";
+import { DirectionProvider } from "@/components/ui/direction";
 import React from "react";
 import { Toaster } from "sonner";
 
@@ -74,6 +76,7 @@ const RootLayout = ({
     // visual flicker before hydration. Hence the `suppressHydrationWarning`
     // prop is necessary to avoid the React hydration mismatch warning.
     // https://github.com/pacocoursey/next-themes?tab=readme-ov-file#with-app
+    dir={components.rtl ? "rtl" : "ltr"}
     lang="en"
     suppressHydrationWarning
   >
@@ -96,19 +99,21 @@ const RootLayout = ({
         src="https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js"
         strategy="afterInteractive"
       />
-      <NuqsAdapter>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          disableTransitionOnChange
-          enableSystem
-        >
-          <TooltipProvider>
-            <Toaster position="top-center" />
-            {children}
-          </TooltipProvider>
-        </ThemeProvider>
-      </NuqsAdapter>
+      <DirectionProvider direction={components.rtl ? "rtl" : "ltr"}>
+        <NuqsAdapter>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            disableTransitionOnChange
+            enableSystem
+          >
+            <TooltipProvider>
+              <Toaster position="top-center" />
+              {children}
+            </TooltipProvider>
+          </ThemeProvider>
+        </NuqsAdapter>
+      </DirectionProvider>
       {installedLayoutComponents.map(
         ({
           id,

@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import path from "node:path";
+import { readFile } from "node:fs/promises";
 import { chromium } from "playwright";
 import type { Request } from "playwright";
 import { expect as baseExpect } from "playwright/test";
@@ -39,7 +40,20 @@ const readTheme = (element: Element) => {
   };
 };
 
+const readNativeRtl = async (app: string): Promise<boolean> => {
+  const nativeConfig: unknown = JSON.parse(
+    await readFile(path.join(app, "components.json"), "utf-8")
+  );
+  return (
+    typeof nativeConfig === "object" &&
+    nativeConfig !== null &&
+    "rtl" in nativeConfig &&
+    nativeConfig.rtl === true
+  );
+};
+
 export const checkNativeRuntime = async (options: RuntimeOptions) => {
+  const rtl = await readNativeRtl(options.app);
   const browser = await chromium.launch();
   const errors: string[] = [];
   const screenshots: string[] = [];
@@ -86,6 +100,10 @@ export const checkNativeRuntime = async (options: RuntimeOptions) => {
     await page.goto(`${options.baseUrl}/api/dev-login`, {
       waitUntil: "domcontentloaded",
     });
+    await expect(page.locator("html")).toHaveAttribute(
+      "dir",
+      rtl ? "rtl" : "ltr"
+    );
     const composer = page.getByTestId("multimodal-input");
     await expect(composer).toBeVisible();
     await expect(composer).toHaveAttribute("contenteditable", "true");
@@ -278,6 +296,7 @@ export const checkNativeRuntime = async (options: RuntimeOptions) => {
       const url = new URL(options.createUrl);
       url.searchParams.set("preset", options.preset);
       url.searchParams.set("base", options.uiBase);
+      url.searchParams.set("rtl", String(rtl));
       url.searchParams.set("pointer", "true");
       url.searchParams.set(
         "gateway",
@@ -318,7 +337,7 @@ export const checkNativeRuntime = async (options: RuntimeOptions) => {
       assert.ok(command !== null && command !== "");
       assert.ok(
         command.endsWith(
-          ` -- --preset ${options.preset} --base ${options.uiBase} --no-rtl --pointer`
+          ` -- --preset ${options.preset} --base ${options.uiBase} ${rtl ? "--rtl" : "--no-rtl"} --pointer`
         ),
         "Website must emit exactly the native flags exercised by generation"
       );

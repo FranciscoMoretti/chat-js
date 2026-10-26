@@ -23,6 +23,7 @@ const styles = await Promise.all(
     const imports: string[] = [];
     const directory = base === "base" ? style : `radix-${style}`;
     const names = [
+      "direction",
       "button",
       "input",
       "textarea",
@@ -110,6 +111,7 @@ const styles = await Promise.all(
       })
     );
     imports.push(
+      `import { DirectionProvider as ${style}DirectionProvider } from "./${directory}/direction";`,
       `import { Button as ${style}Button } from "./${directory}/button";`,
       `import * as ${style}InputGroup from "./${directory}/input-group";`,
       `import * as ${style}Message from "./${directory}/message";`,
@@ -128,7 +130,7 @@ const styles = await Promise.all(
     return {
       imports,
       hashes,
-      entry: `${style}: { Button: ${style}Button, ...${style}InputGroup, ...${style}Message, ...${style}Bubble, ...${style}Attachment, ...${style}Scroller, ...${style}Trace, ...${style}CodeBlock, menus: { ${menus.join(", ")} } }`,
+      entry: `${style}: { DirectionProvider: ${style}DirectionProvider, Button: ${style}Button, ...${style}InputGroup, ...${style}Message, ...${style}Bubble, ...${style}Attachment, ...${style}Scroller, ...${style}Trace, ...${style}CodeBlock, menus: { ${menus.join(", ")} } }`,
     };
   })
 );

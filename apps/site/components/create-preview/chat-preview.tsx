@@ -35,6 +35,7 @@ export const ChatPreview = () => {
 
   const uploads = installation.plugins.includes("attachment-uploads");
   const radix = params.base === "radix";
+  const direction = params.rtl ? "rtl" : "ltr";
   const ui = radix ? nativeRadix[preset.style] : native[preset.style];
   const menu = ui.menus[preset.menuColor];
   const BaseDropdownMenuTrigger =
@@ -130,8 +131,8 @@ export const ChatPreview = () => {
   }, [setTheme]);
 
   useEffect(() => {
-    document.documentElement.dir = params.rtl ? "rtl" : "ltr";
-  }, [params.rtl]);
+    document.documentElement.dir = direction;
+  }, [direction]);
 
   const selectScene = (item: string) => {
     if (window.parent !== window) {
@@ -154,7 +155,7 @@ export const ChatPreview = () => {
     setAttached(false);
   };
 
-  return (
+  const content = (
     <IconLibraryContext value={preset.iconLibrary}>
       <div
         className="create-chat-preview bg-background text-foreground flex h-dvh min-h-0 w-full text-sm"
@@ -640,5 +641,14 @@ export const ChatPreview = () => {
         </main>
       </div>
     </IconLibraryContext>
+  );
+  const BaseDirectionProvider = native[preset.style].DirectionProvider;
+  const RadixDirectionProvider = nativeRadix[preset.style].DirectionProvider;
+  return radix ? (
+    <RadixDirectionProvider dir={direction}>{content}</RadixDirectionProvider>
+  ) : (
+    <BaseDirectionProvider direction={direction}>
+      {content}
+    </BaseDirectionProvider>
   );
 };

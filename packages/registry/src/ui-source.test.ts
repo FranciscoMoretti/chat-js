@@ -108,3 +108,12 @@ const select = <Select items={{a: "A"}} value={value}>{options}</Select>;`;
     transformUiSource(output, "components/ai-elements/context.tsx", "radix")
   ).toBe(output);
 });
+
+test("native direction context follows the library API", () => {
+  const source = `import { DirectionProvider } from "@/components/ui/direction";
+const app = <DirectionProvider direction={rtl ? "rtl" : "ltr"}>{children}</DirectionProvider>;`;
+  expect(transformUiSource(source, "app/layout.tsx", "radix")).toContain(
+    'dir={rtl ? "rtl" : "ltr"}'
+  );
+  expect(transformUiSource(source, "app/layout.tsx", "base")).toBe(source);
+});

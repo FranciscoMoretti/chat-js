@@ -10,6 +10,9 @@ shadcn_cli="$(cd "$cli_root" && node --input-type=module -e 'import { createRequ
 fixture_root="$(mktemp -d /tmp/chatjs-native-create-XXXXXX)"
 export CHATJS_NATIVE_FIXTURE="$fixture_root"
 export CHATJS_NATIVE_PRESET="${1:-b27I2r8C}"
+export CHATJS_NATIVE_RTL="${CHATJS_NATIVE_RTL:-0}"
+direction=(--no-rtl)
+if [ "$CHATJS_NATIVE_RTL" = 1 ]; then direction=(--rtl); fi
 export CHATJS_NATIVE_BASE="${CHATJS_NATIVE_BASE:-base}"
 export CHATJS_NATIVE_SCENARIO="${CHATJS_NATIVE_SCENARIO:-uploads}"
 case "$CHATJS_NATIVE_SCENARIO" in
@@ -49,7 +52,7 @@ CHATJS_REGISTRY_URL="$(cat "$fixture_root/address")"
 export CHATJS_REGISTRY_URL
 export npm_config_user_agent="bun/$(bun --version)"
 
-node "$cli_root/dist/index.js" create "$fixture_root/app" --yes "${installation[@]}" --no-electron -- --preset "$CHATJS_NATIVE_PRESET" --base "$CHATJS_NATIVE_BASE" --no-rtl --pointer > "$fixture_root/create.log" 2>&1
+node "$cli_root/dist/index.js" create "$fixture_root/app" --yes "${installation[@]}" --no-electron -- --preset "$CHATJS_NATIVE_PRESET" --base "$CHATJS_NATIVE_BASE" "${direction[@]}" --pointer > "$fixture_root/create.log" 2>&1
 cd "$fixture_root/app"
 node "$shadcn_cli" --version > "$fixture_root/shadcn-version.txt"
 node "$shadcn_cli" preset resolve --json > "$fixture_root/preset.json"
@@ -62,7 +65,7 @@ assert.deepEqual(preset.fallbacks, []);
 const config = await Bun.file("components.json").json();
 assert.equal(config.style, `${process.env.CHATJS_NATIVE_BASE}-${preset.values.style}`);
 assert.equal(config.iconLibrary, preset.values.iconLibrary);
-assert.equal(config.rtl, false);
+assert.equal(config.rtl, process.env.CHATJS_NATIVE_RTL === "1");
 assert.equal(config.registries["@chatjs"], process.env.CHATJS_NATIVE_BASE === "radix" ? process.env.CHATJS_REGISTRY_URL.replace("/{name}.json", "/radix/{name}.json") : process.env.CHATJS_REGISTRY_URL);
 if (process.env.CHATJS_NATIVE_SCENARIO === "uploads") {
 const uploads = await Bun.file("plugins/attachment-uploads/chatjs.json").json();

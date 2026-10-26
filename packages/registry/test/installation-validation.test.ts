@@ -49,6 +49,13 @@ for (const plugin of plugins) {
       gateway: "openai",
       tools: [],
       plugins: selected,
+      sandbox: selected.some(
+        (id) =>
+          plugins.find((candidate) => candidate.id === id)
+            ?.requiresPersistentSandbox
+      )
+        ? "vercel"
+        : undefined,
       storage: {
         source: selected.some(
           (id) =>
