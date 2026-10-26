@@ -1,0 +1,4 @@
+/* Development activity is unrelated to the component under test. */
+nextjs-portal {
+  display: none !important;
+}
