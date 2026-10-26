@@ -80,6 +80,33 @@ test.each(["browser", "electron-sign-out"])(
       }
       expect(globalThis.location.href).toBe(origin);
       if (mode === "browser") {
+        await expect.element(page.getByRole("menu")).not.toBeInTheDocument();
+        await expect
+          .poll(
+            () =>
+              page
+                .getByText("Unable to sign out. Try again.")
+                .element()
+                .closest<HTMLElement>("[data-sonner-toast]")?.dataset.mounted
+          )
+          .toBe("true");
+        await expect
+          .poll(() => {
+            const toastElement = page
+              .getByText("Unable to sign out. Try again.")
+              .element()
+              .closest<HTMLElement>("[data-sonner-toast]");
+            if (!toastElement) {
+              return false;
+            }
+            const bounds = toastElement.getBoundingClientRect();
+            return (
+              getComputedStyle(toastElement).opacity === "1" &&
+              bounds.top >= 0 &&
+              bounds.bottom <= globalThis.innerHeight
+            );
+          })
+          .toBe(true);
         await takeSnapshot("sidebar-sign-out-failure");
       }
     } finally {

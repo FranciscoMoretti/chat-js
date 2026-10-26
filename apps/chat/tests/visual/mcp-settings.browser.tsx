@@ -557,6 +557,15 @@ test("custom connector submission reports RHF rejection and retains entered fiel
       .element(page.getByLabelText("Name", { exact: true }))
       .toHaveValue("Server");
     expect(mocks.handleClose).not.toHaveBeenCalled();
+    await expect
+      .poll(
+        () =>
+          page
+            .getByText("Connector submission failed", { exact: true })
+            .element()
+            .closest<HTMLElement>("[data-sonner-toast]")?.dataset.mounted
+      )
+      .toBe("true");
     await takeSnapshot("mcp-create-submission-failure");
   } finally {
     await cleanup();
