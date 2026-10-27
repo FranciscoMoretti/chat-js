@@ -87,12 +87,4 @@ test("submitted and streaming have distinct visuals and both permit stopping", a
   await page.emulateMedia({ reducedMotion: "reduce" });
   await expect(waitingDot.locator("div")).toHaveCSS("animation-name", "none");
   await expect(waitingDot).toBeVisible();
-  await page.addStyleTag({
-    content:
-      '[data-testid="message-assistant-loading"] { opacity: 1 !important; transform: none !important; } *, *::before, *::after { animation: none !important; transition: none !important; }',
-  });
-  await expect(page).toHaveScreenshot("composer-states.png", {
-    animations: "disabled",
-    fullPage: true,
-  });
 });

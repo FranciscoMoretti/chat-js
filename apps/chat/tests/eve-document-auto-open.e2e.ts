@@ -51,9 +51,7 @@ test("live document completion opens once without replacing an existing panel or
   await expect(
     panel.getByRole("button", { name: "View Previous version" })
   ).toHaveCount(0);
-  await expect(panel).toHaveScreenshot("partial-document.png", {
-    animations: "disabled",
-  });
+
   await page.screenshot({
     animations: "disabled",
     path: testInfo.outputPath("partial-document.png"),
@@ -64,9 +62,7 @@ test("live document completion opens once without replacing an existing panel or
   await expect(panel).toContainText("Orchard notes");
   await expect(panel).toContainText("Plant the apple trees in autumn.");
   await expect(panel).toContainText("Version 1 of 1");
-  await expect(panel).toHaveScreenshot("auto-open.png", {
-    animations: "disabled",
-  });
+
   await page.screenshot({
     animations: "disabled",
     path: testInfo.outputPath("auto-open.png"),

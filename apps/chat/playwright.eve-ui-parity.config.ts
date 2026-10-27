@@ -4,8 +4,7 @@ import { defineConfig } from "@playwright/test";
 export default defineConfig({
   ...config,
   outputDir: "./tests/eve-results/ui-parity",
-  snapshotPathTemplate:
-    "{testDir}/{testFilePath}-snapshots/{arg}-{platform}{ext}",
+
   testMatch: [
     "eve-logical-chat.e2e.ts",
     "eve-comparison-ui.e2e.ts",

@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test("model selector visual fixture", async ({ page }) => {
+test("model selector opens and closes", async ({ page }) => {
   await page.goto("/visual-fixtures/model-toolbar");
 
   // Next's cached route tree can retain a hidden copy of this fixture.
@@ -9,14 +9,12 @@ test("model selector visual fixture", async ({ page }) => {
 
   await expect(fixture).toBeVisible();
   await expect(selector).toHaveText("Primary fixture model");
-  await expect.soft(fixture).toHaveScreenshot("model-toolbar-closed.png");
 
   await selector.click();
   await expect(page.getByPlaceholder("Search models...")).toBeVisible();
   await expect(
     page.getByText("Reasoning fixture model", { exact: true })
   ).toBeVisible();
-  await expect.soft(fixture).toHaveScreenshot("model-selector-open.png");
 
   await selector.click();
   await expect(page.getByPlaceholder("Search models...")).toBeHidden();

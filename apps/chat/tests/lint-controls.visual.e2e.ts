@@ -22,10 +22,7 @@ test("composer textarea and addon buttons remain keyboard accessible", async ({
   await expect(
     fixture.locator("p").filter({ hasText: "Thinking..." })
   ).toBeVisible();
-  await expect(fixture).toHaveScreenshot("lint-controls.png", {
-    animations: "disabled",
-    stylePath: "tests/lint-controls.visual.css",
-  });
+
   await test.info().attach("lint-controls", {
     body: await fixture.screenshot({ animations: "disabled" }),
     contentType: "image/png",

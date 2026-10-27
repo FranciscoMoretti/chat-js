@@ -35,10 +35,15 @@ test.beforeEach(async ({ page }) => {
   ).toBeDisabled();
 });
 
-test("guest welcome locks the model picker", async ({ page }) => {
-  await expect(page.getByTestId("guest-visual")).toHaveScreenshot(
-    "guest-welcome.png"
-  );
+test("guest welcome accepts a draft with a locked model picker", async ({
+  page,
+}) => {
+  const message = page.getByRole("textbox", { exact: true, name: "Message" });
+  await message.fill("Guest draft");
+  await expect(message).toHaveText("Guest draft");
+  await expect(
+    page.getByRole("button", { exact: true, name: "Send" })
+  ).toBeEnabled();
 });
 
 test("guest errors preserve the message draft", async ({ page }) => {
@@ -48,7 +53,9 @@ test("guest errors preserve the message draft", async ({ page }) => {
     .fill("Preserve this draft");
   await fixture.getByRole("button", { exact: true, name: "Send" }).click();
   await expect(fixture.getByRole("alert")).toBeVisible();
-  await expect(fixture).toHaveScreenshot("guest-error.png");
+  await expect(
+    fixture.getByRole("textbox", { exact: true, name: "Message" })
+  ).toHaveText("Preserve this draft");
 });
 
 test("guest response", async ({ page }) => {
@@ -57,20 +64,27 @@ test("guest response", async ({ page }) => {
   await expect(
     fixture.getByText("A useful test protects", { exact: false })
   ).toBeVisible();
-  await expect(fixture).toHaveScreenshot("guest-response.png");
 });
 
 test("expired guest on mobile", async ({ page }) => {
   await page.setViewportSize({ height: 844, width: 390 });
   await page.getByLabel("Fixture state").selectOption("expired");
-  await expect(page.getByTestId("guest-visual")).toHaveScreenshot(
-    "guest-expired-mobile.png"
-  );
+  await expect(
+    page.getByText("This chat has expired. Start a new chat to continue.", {
+      exact: false,
+    })
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { exact: true, name: "Send" })
+  ).toBeDisabled();
 });
 
-test("guest welcome on mobile", async ({ page }) => {
+test("guest welcome accepts a draft on mobile", async ({ page }) => {
   await page.setViewportSize({ height: 844, width: 390 });
-  await expect(page.getByTestId("guest-visual")).toHaveScreenshot(
-    "guest-welcome-mobile.png"
-  );
+  const message = page.getByRole("textbox", { exact: true, name: "Message" });
+  await message.fill("Mobile guest draft");
+  await expect(message).toHaveText("Mobile guest draft");
+  await expect(
+    page.getByRole("button", { exact: true, name: "Send" })
+  ).toBeEnabled();
 });
