@@ -98,6 +98,7 @@ const mount = async (
     return (
       <SelectionBoundary>
         <ModelSelector
+          allowMultiple
           onModelSelectionChangeAction={changeSelection}
           selectedModelId={primary}
           selectedModelSelection={value}

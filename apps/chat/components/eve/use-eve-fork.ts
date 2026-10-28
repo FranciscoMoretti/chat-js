@@ -21,6 +21,7 @@ import type { EveForkInput } from "@/lib/eve/contracts";
 import { CreationRejectedError } from "@/lib/eve/create-conversation";
 import type { DraftAttachment } from "@/lib/eve/draft";
 import { draftMessage, restoreDraft } from "@/lib/eve/draft";
+import { eveMessageTitle } from "@/lib/eve/message-input";
 import type { EveMessageInput } from "@/lib/eve/message-input";
 import { eveMessageTool } from "@/lib/eve/message-tool-selection";
 import {
@@ -464,6 +465,15 @@ export const useEveFork = (
       value: modelSelectionValue ?? selectedModel,
     },
     pending,
+    recovery: pending
+      ? {
+          message: eveMessageTitle(pending.message),
+          label:
+            "modelIds" in pending
+              ? "Recover parallel responses"
+              : "Recover version",
+        }
+      : undefined,
     rejected,
     retry: async () => {
       await run(async () => {

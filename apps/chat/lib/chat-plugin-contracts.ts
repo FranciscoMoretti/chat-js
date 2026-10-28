@@ -66,7 +66,7 @@ export interface ChatActionProps {
     readonly state?: string;
   };
 }
-export interface ChatMessageActionProps {
+export interface ChatMessageProps {
   readonly conversationId: string;
   readonly messageId: string;
   readonly disabled: boolean;
@@ -84,7 +84,9 @@ export interface ChatSuggestionsProps {
 export interface ChatClientIntegration {
   readonly HeaderActions?: ComponentType<ChatActionProps>;
   readonly Suggestions?: ComponentType<ChatSuggestionsProps>;
-  readonly MessageActions?: ComponentType<ChatMessageActionProps>;
+  /** Response content associated with a user message. Return null when inapplicable. */
+  readonly MessageResponses?: ComponentType<ChatMessageProps>;
+  readonly MessageActions?: ComponentType<ChatMessageProps>;
   readonly Sidebar?: ComponentType;
   /** Fixed sidebar menu, scoped to the request principal. */
   readonly SidebarHeader?: ComponentType<{ readonly ownerId?: string }>;

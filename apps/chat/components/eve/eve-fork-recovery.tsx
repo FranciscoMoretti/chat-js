@@ -4,36 +4,30 @@ import React from "react";
 import type { JSX as ReactJSX } from "react";
 
 import { Button } from "@/components/ui/button";
-import { eveMessageTitle } from "@/lib/eve/message-input";
-
-import type { useEveFork } from "./use-eve-fork";
 
 /** Only exceptional recovery needs extra chrome; successful forks stay in the transcript. */
 export const EveForkRecovery = ({
   fork,
   showError = true,
 }: {
-  readonly fork: Readonly<
-    Pick<
-      ReturnType<typeof useEveFork>,
-      "retry" | "pending" | "rejected" | "busy" | "error"
-    >
-  > & {
-    readonly family: Readonly<
-      Pick<ReturnType<typeof useEveFork>["family"], "isError" | "refetch">
-    >;
+  readonly fork: {
+    readonly retry: () => Promise<void>;
+    readonly recovery?: { readonly message: string; readonly label: string };
+    readonly rejected: boolean;
+    readonly busy: boolean;
+    readonly error: string;
+    readonly family: {
+      readonly isError: boolean;
+      readonly refetch: () => Promise<unknown>;
+    };
   };
   readonly showError?: boolean;
 }): ReactJSX.Element => {
   const [, startEventAction] = React.useTransition();
   const handleRetry = fork.retry;
-  let recoveryLabel = "Recover version";
-  if (fork.pending && "modelIds" in fork.pending) {
-    recoveryLabel = "Recover comparison";
-  }
-  if (fork.rejected) {
-    recoveryLabel = "Clear rejected request";
-  }
+  const recoveryLabel = fork.rejected
+    ? "Clear rejected request"
+    : fork.recovery?.label;
   let recoveryStatus =
     "Response creation is unconfirmed. Recover the saved request before sending again.";
   if (fork.rejected) {
@@ -56,15 +50,13 @@ export const EveForkRecovery = ({
         </p>
       )}
       {fork.busy && <output className="sr-only">Creating response…</output>}
-      {!fork.busy && ((showError && fork.error) || fork.pending) && (
+      {!fork.busy && ((showError && fork.error) || fork.recovery) && (
         <section aria-label="Version recovery" className="space-y-2 text-sm">
           {showError && fork.error && <p role="alert">{fork.error}</p>}
-          {fork.pending && (
+          {fork.recovery && (
             <>
               <p>{recoveryStatus}</p>
-              <p className="whitespace-pre-wrap">
-                {eveMessageTitle(fork.pending.message)}
-              </p>
+              <p className="whitespace-pre-wrap">{fork.recovery.message}</p>
               <Button
                 disabled={fork.busy}
 

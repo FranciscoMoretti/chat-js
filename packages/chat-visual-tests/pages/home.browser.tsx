@@ -149,3 +149,12 @@ test("signed-in composer options expose uploads with the native menu", async () 
     .toBeVisible();
   await page.screenshot({ path: "__screenshots__/home-upload-menu.png" });
 });
+
+test("account composer supplies parallel model selection", async () => {
+  await renderRoute(home, signedIn);
+  await page.getByTestId("model-selector").click();
+  await page.getByRole("switch", { name: "Use Multiple Models" }).click();
+  await expect
+    .element(page.getByRole("button", { name: "1×", exact: true }))
+    .toBeVisible();
+});

@@ -5,7 +5,7 @@ import { installedChatUi } from "@/composition/generated/installed-chat-ui";
 import type {
   ChatActionProps,
   ChatSuggestionsProps,
-  ChatMessageActionProps,
+  ChatMessageProps,
 } from "@/lib/chat-plugin-contracts";
 
 export const PluginSidebar = (): React.JSX.Element => (
@@ -37,7 +37,7 @@ export const PluginChatBreadcrumb = ({
 );
 
 export const PluginMessageActions = (
-  props: ChatMessageActionProps
+  props: ChatMessageProps
 ): React.JSX.Element => (
   <>
     {installedChatUi.map(({ id, chat: { MessageActions } }) =>

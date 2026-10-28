@@ -2,6 +2,8 @@
 
 import { useEveDeliveryReceipt } from "./use-eve-delivery-receipt";
 
+import { ParallelResponseModelPicker } from "@/components/parallel-responses/model-picker";
+import { PluginMessageResponses } from "@/components/plugin-message-responses";
 import { PluginSuggestions } from "@/components/plugin-chat-ui";
 
 import { withTaskCleanup } from "@/components/task-cleanup";
@@ -48,10 +50,7 @@ import { EveComposer } from "./eve-composer";
 import { EveForkRecovery } from "./eve-fork-recovery";
 import { EveInitialMessage } from "./eve-initial-message";
 import { useLogicalChat } from "./eve-logical-context";
-import {
-  EveLogicalResponses,
-  EveLogicalVersions,
-} from "./eve-logical-navigation";
+import { EveLogicalVersions } from "./eve-logical-navigation";
 import { EveMessages } from "./eve-messages";
 import {
   EveOptimisticResponseGroup,
@@ -130,6 +129,13 @@ const useConversationInput = (
     },
   };
 };
+
+const composerModelIds = (
+  selected: readonly string[],
+  retained: readonly string[] | undefined,
+  pending: { readonly modelId?: string } | null
+): readonly string[] =>
+  retained ?? (hasText(pending?.modelId) ? [pending.modelId] : selected);
 
 const retainedToolSelection = (
   comparison: { selectedTool?: UiToolName } | undefined,
@@ -257,7 +263,10 @@ const EveConversationEditor = ({
           selectedTool: fork.selectedTool,
           onToolChange: handleEditToolChange,
         }}
-        modelSelection={fork.modelSelection}
+        modelIds={expandSelectedModelValue(fork.modelSelection.value)}
+        modelPicker={
+          <ParallelResponseModelPicker modelSelection={fork.modelSelection} />
+        }
         onDraftChange={handleEditDraft}
         onSubmit={onSubmit}
       />
@@ -454,13 +463,23 @@ const EveConversationComposer = ({
             composerDraft.selectedTool
           ),
         }}
-        modelSelection={modelSelection}
+        modelIds={composerModelIds(
+          input.modelIds,
+          comparison?.modelIds,
+          pendingMessage
+        )}
+        modelPicker={
+          <ParallelResponseModelPicker
+            disabled={Boolean(pendingMessage)}
+            modelSelection={modelSelection}
+            retainedModelId={pendingMessage?.modelId}
+            retainedModelIds={comparison?.modelIds}
+          />
+        }
         onDraftChange={handleDraftChange}
         onStop={onStop}
         onSubmit={onSubmit}
         readOnly={Boolean(comparison)}
-        retainedModelId={pendingMessage?.modelId}
-        retainedModelIds={comparison?.modelIds}
         stopDisabled={cancelPending || status === "resuming"}
       />
       {hasText(displayedError) &&
@@ -783,7 +802,7 @@ const EveConversation = ({
                       />
                     )}
                     renderResponses={(message): React.JSX.Element => (
-                      <EveLogicalResponses
+                      <PluginMessageResponses
                         conversationId={conversationId}
                         messageId={message.id}
                         disabled={actionLocks.navigation}

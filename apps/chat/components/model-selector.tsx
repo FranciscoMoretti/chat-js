@@ -61,7 +61,6 @@ import {
   isSelectedModelCounts,
 } from "@/lib/ai/types";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-import { config } from "@/lib/config";
 
 import { getEnabledFeatures } from "@/lib/features-config";
 
@@ -301,7 +300,7 @@ const ModelSettingsLink = (): ReactJSX.Element | null => {
 };
 
 const PureModelSelector = ({
-  allowMultiple = true,
+  allowMultiple = false,
   selectedModelId,
   selectedModelSelection,
   className,
@@ -743,23 +742,21 @@ const PureModelSelector = ({
                 </PopoverContent>
               </Popover>
             </div>
-            {allowMultiple &&
-              !isAnonymous &&
-              config.features.parallelResponses && (
-                <div className="flex items-center justify-between border-b px-3 py-2">
-                  <Label
-                    className="cursor-pointer text-sm"
-                    htmlFor="use-multiple-models"
-                  >
-                    Use Multiple Models
-                  </Label>
-                  <Switch
-                    checked={useMultipleModels}
-                    id="use-multiple-models"
-                    onCheckedChange={handleMultipleModelsToggle}
-                  />
-                </div>
-              )}
+            {allowMultiple && !isAnonymous && (
+              <div className="flex items-center justify-between border-b px-3 py-2">
+                <Label
+                  className="cursor-pointer text-sm"
+                  htmlFor="use-multiple-models"
+                >
+                  Use Multiple Models
+                </Label>
+                <Switch
+                  checked={useMultipleModels}
+                  id="use-multiple-models"
+                  onCheckedChange={handleMultipleModelsToggle}
+                />
+              </div>
+            )}
             {hasDisabledModels && (
               <div className="p-3">
                 <LoginCtaBanner
