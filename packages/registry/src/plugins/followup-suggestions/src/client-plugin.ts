@@ -1,9 +1,9 @@
 "use client";
-import { definePlugin } from "@/lib/ui-slots";
+import { definePlugin, slot } from "@/lib/ui-slots";
 import { ChatSuggestions } from "@/components/chat-slots";
 import { FollowupSuggestions } from "./suggestions";
 
 export const followupSuggestionsClient = definePlugin({
   id: "followup-suggestions",
-  contributions: [ChatSuggestions.contribute(FollowupSuggestions)],
+  slots: [slot(ChatSuggestions, FollowupSuggestions)],
 });

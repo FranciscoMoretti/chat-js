@@ -1,5 +1,5 @@
 "use client";
-import { definePlugin } from "@/lib/ui-slots";
+import { definePlugin, slot } from "@/lib/ui-slots";
 import {
   SidebarSections,
   ChatActions,
@@ -13,9 +13,9 @@ import {
 
 export const projectsClient = definePlugin({
   id: "projects",
-  contributions: [
-    SidebarSections.contribute(ProjectsSidebar),
-    ChatActions.contribute(ProjectChatActions),
-    ChatBreadcrumbs.contribute(ProjectBreadcrumb),
+  slots: [
+    slot(SidebarSections, ProjectsSidebar),
+    slot(ChatActions, ProjectChatActions),
+    slot(ChatBreadcrumbs, ProjectBreadcrumb),
   ],
 });

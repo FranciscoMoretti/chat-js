@@ -15,30 +15,30 @@ In this repository, keep a plugin's installation manifest in `packages/registry/
 
 `server-plugin.ts` and `client-plugin.ts` use distinct names to avoid shadcn import resolution collisions with host modules such as `lib/db/client.ts` and `trpc/server.ts`.
 
-## 2. Define the contributions
+## 2. Define the integrations
 
 A server factory returns an object satisfying `ChatPlugin` from `@/lib/plugin-contracts`. It can contribute typed tRPC `routers` and an `instrumentation` registration. Keep the inferred router types with `satisfies`.
 
-A client entry exports a module-scope `definePlugin` declaration. Contribute components through typed slot references:
+A client entry exports a module-scope `definePlugin` declaration. Bind components to typed slots:
 
 ```tsx
 "use client";
 
 import { ComposerExtensions, SettingsLinks } from "@/components/chat-slots";
-import { definePlugin } from "@/lib/ui-slots";
+import { definePlugin, slot } from "@/lib/ui-slots";
 import { ConnectorsControl } from "./composer";
 import { ConnectorsSettingsLink } from "./settings";
 
 export const mcpClient = definePlugin({
   id: "mcp",
-  contributions: [
-    ComposerExtensions.contribute(ConnectorsControl),
-    SettingsLinks.contribute(ConnectorsSettingsLink),
+  slots: [
+    slot(ComposerExtensions, ConnectorsControl),
+    slot(SettingsLinks, ConnectorsSettingsLink),
   ],
 });
 ```
 
-The built-in MCP server factory is `mcp()`. Its client declaration is `mcpClient`, without a factory call. Keep credentials, database imports, and server implementations outside its import graph. Edit the contributed components directly, or register normal React wrappers. Dynamic imports and Suspense can defer expensive components.
+The built-in MCP server factory is `mcp()`. Its client declaration is `mcpClient`, without a factory call. Keep credentials, database imports, and server implementations outside its import graph. Edit the bound components directly, or register normal React wrappers. Dynamic imports and Suspense can defer expensive components.
 
 Core keeps explicit optional fields such as `projectId`. Plugins validate them against their own storage and lifecycle behavior. A separate runtime-safe `chat.ts` entrypoint participates in transactional creation, history, navigation, and deletion. See [Plugin integration points](../reference/plugin-api) for signatures and lifecycle guarantees.
 

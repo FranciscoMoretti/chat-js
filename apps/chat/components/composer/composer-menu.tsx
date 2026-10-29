@@ -29,8 +29,8 @@ export const ComposerMenu = (
   props: ComposerControlProps
 ): ReactJSX.Element | null => {
   const mobile = useIsMobile();
-  const hasAttachments = ComposerAttachments.useHasContributions();
-  const hasExtensions = ComposerExtensions.useHasContributions();
+  const hasAttachments = ComposerAttachments.useHasContent();
+  const hasExtensions = ComposerExtensions.useHasContent();
   const controls = composerControls.filter(
     ({
       Component,

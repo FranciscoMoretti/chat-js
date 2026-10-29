@@ -2,7 +2,7 @@ import { disableAutoSnapshot } from "@uiverify/vitest";
 import { act, lazy, Suspense, useState } from "react";
 import { expect, test } from "vitest";
 import { page } from "vitest/browser";
-import { definePlugin, defineSlot, Plugins } from "@/lib/ui-slots";
+import { definePlugin, defineSlot, Plugins, slot } from "@/lib/ui-slots";
 import { mount, renderRoot, unmount } from "./primitive-mount";
 
 const Actions = defineSlot<{ readonly label: string }>();
@@ -22,13 +22,11 @@ const Counter = ({ label }: { readonly label: string }) => {
 };
 const counter = definePlugin({
   id: "counter",
-  contributions: [Actions.contribute(Counter)],
+  slots: [slot(Actions, Counter)],
 });
 const extra = definePlugin({
   id: "extra",
-  contributions: [
-    Actions.contribute(({ label }) => <span>Extra {label}</span>),
-  ],
+  slots: [slot(Actions, ({ label }) => <span>Extra {label}</span>)],
 });
 
 const tree = (reverse: boolean) => (
@@ -88,7 +86,7 @@ test("lazy contributions load on render, can be wrapped, and disappear while pen
   );
   const plugin = definePlugin({
     id: "lazy",
-    contributions: [Actions.contribute(Wrapped)],
+    slots: [slot(Actions, Wrapped)],
   });
   const fixture = await mount(
     <Plugins plugins={[plugin]}>

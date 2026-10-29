@@ -924,7 +924,7 @@ test("a plugin with layout and chat UI participates in both scopes", async () =>
   await mkdir(path.join(root, "plugins/mixed"), { recursive: true });
   await writeFile(
     path.join(root, "plugins/mixed/client-plugin.ts"),
-    "export const mixed = { id: 'mixed', contributions: [] }; "
+    "export const mixed = { id: 'mixed', slots: [] }; "
   );
   await writeFile(
     path.join(root, "plugins/mixed/chatjs.json"),

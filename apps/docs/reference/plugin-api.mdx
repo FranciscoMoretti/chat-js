@@ -22,7 +22,7 @@ Keep server and browser import graphs separate:
 | `auth-server.ts` | `AuthenticationIntegration` | Better Auth plugins, trusted origins, auth route matching |
 | `navigation.ts` | `() => boolean` | Whether core handles modified links as app navigation |
 | `auth-form.tsx`, `sign-out.ts` | `AuthenticationUi` | Authentication form wrapper and sign-out handler, imported independently |
-| `client-plugin.ts` | `definePlugin` | Typed UI contributions, uploads, model visibility |
+| `client-plugin.ts` | `definePlugin` | Typed UI slots, uploads, model visibility |
 
 Keep `chat.ts` and `billing.ts` free of web routers and Next.js request helpers: native EVE loads this entrypoint too.
 
@@ -114,22 +114,22 @@ The [Credits plugin](../plugins/credits) uses this contract. Native EVE imports 
 
 ## Client slots
 
-Declare a client plugin once at module scope. Import typed slot components from `@/components/chat-slots`, and `definePlugin` from `@/lib/ui-slots`:
+Declare a client plugin once at module scope. Import typed slot components from `@/components/chat-slots`, and `definePlugin` and `slot` from `@/lib/ui-slots`:
 
 ```tsx
 "use client";
 
 import { ChatActions } from "@/components/chat-slots";
-import { definePlugin } from "@/lib/ui-slots";
+import { definePlugin, slot } from "@/lib/ui-slots";
 import { ProjectChatActions } from "./ui/chat-contributions";
 
 export const projectsClient = definePlugin({
   id: "projects",
-  contributions: [ChatActions.contribute(ProjectChatActions)],
+  slots: [slot(ChatActions, ProjectChatActions)],
 });
 ```
 
-The slot reference carries its prop type. A contribution with incompatible props fails type checking. The application renders `<ChatActions chat={chat} />` where those actions belong. Generated client lists contain references to installed declarations, without invoking factories or patching application JSX.
+`slot(SlotComponent, PluginComponent)` creates a binding without changing the slot or rendering the component. The slot reference carries its prop type. A component with incompatible props fails type checking. The application renders `<ChatActions chat={chat} />` where those actions belong. Generated client lists contain references to installed declarations, without invoking factories or patching application JSX.
 
 | Slot | Purpose |
 | --- | --- |
@@ -145,17 +145,17 @@ The slot reference carries its prop type. A contribution with incompatible props
 | `ChatBreadcrumbs` | Context receiving `{ chatId }` |
 | `MessageActions` | Assistant-message actions |
 | `ChatSuggestions` | Suggestions beneath the last editable message |
-| `LayoutEffects` | No-prop global layout contributions, from `@/components/layout-slots` |
+| `LayoutEffects` | No-prop global layout components, from `@/components/layout-slots` |
 
-Plugin components own fetching, mutations, loading, errors, dialogs, and appropriate menu or sidebar markup. Edit the installed component or contribute an ordinary wrapper component to add providers, styling, or behavior. Put app-specific JSX beside slots in the layout. No string-based override record is required.
+Plugin components own fetching, mutations, loading, errors, dialogs, and appropriate menu or sidebar markup. Edit the installed component or bind an ordinary wrapper component to add providers, styling, or behavior. Put app-specific JSX beside slots in the layout. No string-based override record is required.
 
-`ChatPlugins` scopes installed chat contributions to the chat layout. `LayoutPlugins` renders a separate list for global layout behavior. A nested `Plugins` provider replaces the installed UI set for its descendants. Slots without contributions render nothing. Duplicate plugin IDs throw. Keep declarations and wrappers at module scope to preserve component identity.
+`ChatPlugins` scopes installed chat components to the chat layout. `LayoutPlugins` renders a separate list for global layout behavior. A nested `Plugins` provider replaces the installed UI set for its descendants. Slots without bound components render nothing. Duplicate plugin IDs throw. Keep declarations and wrappers at module scope to preserve component identity.
 
 Lazy components work with `React.lazy` and normal Suspense boundaries. The declaration is imported eagerly, but a dynamic component loader runs when that component renders. Keep expensive dialog content behind its trigger. Client declarations must not import server implementations. Server-rendered children can pass through a client provider, but the slot registry itself is a client API.
 
-The descriptor's client fields still declare installation capabilities. `client.layout: true` selects the global list. Other client declarations enter the chat list. A declaration with both layout and chat UI capabilities enters both lists, so use lazy imports for its expensive chat components. Upload handling and model visibility retain their dedicated generated hooks. Runtime disable switches are not required.
+The descriptor's client fields still declare installation capabilities. `client.layout: true` selects the global list. Other client declarations enter the chat list. A declaration with both layout and chat UI capabilities enters both lists, so keep its imports appropriate for both scopes. Upload handling and model visibility retain their dedicated generated hooks. Runtime disable switches are not required.
 
-For account summaries, declare `client.accountSummary: true` and contribute to `AccountSummary`. Set query `meta: { refreshOnTurnEnd: true }` to refresh when a turn completes, fails, or is cancelled. With no contribution, the sidebar renders only the user name.
+For account summaries, declare `client.accountSummary: true` and bind a component to `AccountSummary`. Set query `meta: { refreshOnTurnEnd: true }` to refresh when a turn completes, fails, or is cancelled. With no bound component, the sidebar renders only the user name.
 
 ### Model visibility
 
