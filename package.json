@@ -83,7 +83,7 @@
     "oxlint-tsgolint": "7.0.2004",
     "playwright": "^1.59.1",
     "postgres": "3.4.9",
-    "turbo": "2.10.12",
+    "turbo": "2.11.7",
     "typescript": "6.0.2",
     "uiverify": "^1.7.0",
     "ultracite": "8.0.0",

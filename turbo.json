@@ -75,9 +75,11 @@
       "outputs": ["playwright-report/**", "test-results/**"]
     },
     "test:unit": {
+      "tags": ["ci"],
       "dependsOn": ["^test:unit"]
     },
     "test:types": {
+      "tags": ["ci"],
       "dependsOn": ["^test:types"]
     },
     "docs:links": {
@@ -136,6 +138,7 @@
       "outputs": ["dist/**", "templates/**"]
     },
     "@chat-js/cli#test:unit": {
+      "tags": ["ci"],
       "dependsOn": ["build"],
       "outputs": ["templates/**"],
       "inputs": [
@@ -171,6 +174,7 @@
       ]
     },
     "@chat-js/registry#test:unit": {
+      "tags": ["ci"],
       "dependsOn": ["^test:unit", "demo:check"],
       "inputs": [
         "$TURBO_DEFAULT$",
@@ -182,6 +186,7 @@
       ]
     },
     "@chat-js/registry#test:types": {
+      "tags": ["ci"],
       "dependsOn": ["^test:types"],
       "inputs": [
         "$TURBO_DEFAULT$",
@@ -199,6 +204,7 @@
       ]
     },
     "@chat-js/cli#test:types": {
+      "tags": ["ci"],
       "dependsOn": ["^test:types"],
       "inputs": [
         "$TURBO_DEFAULT$",
@@ -220,6 +226,7 @@
       ]
     },
     "@chat-js/thread#test:types": {
+      "tags": ["ci"],
       "dependsOn": ["^test:types"],
       "outputs": ["dist/**"]
     },
@@ -251,10 +258,12 @@
       "outputs": []
     },
     "@chat-js/sandboxes#test:types": {
+      "tags": ["ci"],
       "dependsOn": ["^test:types"],
       "outputs": ["dist/**"]
     },
     "@chat-js/gateways#test:types": {
+      "tags": ["ci"],
       "dependsOn": ["^test:types"],
       "outputs": ["dist/**"]
     }
