@@ -114,71 +114,33 @@ const install = async (root: string): Promise<void> => {
     JSON.stringify(mcpItem.meta?.chatjs)
   );
 };
-test("new core UI has no MCP imports; installing MCP registers its router and preserves editable order on sync", async (): Promise<void> => {
+test("plugin sync generates UI registrations without editing application composition", async () => {
   const root = await fixture();
   await initializePluginUi(root);
-  await Promise.all(
-    [
-      "composer-controls.ts",
-      "settings-items.ts",
-      "composition/generated/installed-routers.ts",
-    ].map(async (file) => {
-      expect(await readFile(path.join(root, file), "utf-8")).not.toContain(
-        "@/plugins/mcp"
-      );
-    })
-  );
-  expect(
-    await readFile(
-      path.join(root, "composition/generated/installed-routers.ts"),
-      "utf-8"
-    )
-  ).not.toContain("mcpRouter");
-  // Simulate a user's array with a trailing comment and no trailing comma.
-  const composer =
-    '"use client";\nimport { SearchControl } from "@/components/composer/tool-controls";\nexport const composerControls = [{ Component: SearchControl, id: "search" } // my first control\n];\n';
+  const composer = "export const composerControls = getUserControls();\n";
+  const settings = "export const settingsItems = getUserSettings();\n";
   await writeFile(path.join(root, "composer-controls.ts"), composer);
-  const customizedSettings =
-    'import { Settings } from "lucide-react";\nexport const settingsItems = [{ id: "custom-first", label: "Custom", href: "/settings/custom", icon: Settings }, { id: "custom-second", label: "Other", href: "/settings/other", icon: Settings }];\n';
-  await writeFile(path.join(root, "settings-items.ts"), customizedSettings);
+  await writeFile(path.join(root, "settings-items.ts"), settings);
   await install(root);
-  await syncPlugins(root, { addUi: true, expected: ["mcp"] });
-  const result = await readFile(
-    path.join(root, "composer-controls.ts"),
-    "utf-8"
-  );
-  expect(result.startsWith('"use client";')).toBe(true);
-  expect(result.indexOf('id: "search"')).toBeLessThan(
-    result.indexOf("...mcpClient().composerControls")
-  );
-  expect(result).toContain("// my first control");
-  const output = ts.transpileModule(result, { reportDiagnostics: true });
-  expect(output.diagnostics).toHaveLength(0);
+  await syncPlugins(root, { expected: ["mcp"] });
   expect(
     await readFile(
-      path.join(root, "composition/generated/installed-routers.ts"),
+      path.join(root, "composition/generated/installed-composer-controls.ts"),
       "utf-8"
     )
-  ).toContain("mcp: plugin0().routers.mcp");
+  ).toContain("@/plugins/mcp/client-plugin");
+  expect(
+    await readFile(
+      path.join(root, "composition/generated/installed-settings-items.ts"),
+      "utf-8"
+    )
+  ).toContain("@/plugins/mcp/client-plugin");
   await syncPlugins(root);
-  await syncPlugins(root, { addUi: true });
   expect(await readFile(path.join(root, "composer-controls.ts"), "utf-8")).toBe(
-    result
+    composer
   );
-  const settings = await readFile(
-    path.join(root, "settings-items.ts"),
-    "utf-8"
-  );
-  expect(settings).toContain('id: "custom-first"');
-  expect(settings).toContain('id: "custom-second"');
-  expect(settings.indexOf('id: "custom-first"')).toBeLessThan(
-    settings.indexOf('id: "custom-second"')
-  );
-  expect(settings.indexOf('id: "custom-second"')).toBeLessThan(
-    settings.indexOf("...mcpClient().settingsItems,")
-  );
-  expect(settings.match(/\.\.\.mcpClient\(\)\.settingsItems,/gu)).toHaveLength(
-    1
+  expect(await readFile(path.join(root, "settings-items.ts"), "utf-8")).toBe(
+    settings
   );
 });
 
@@ -255,7 +217,7 @@ test("MCP installation contributes its schema without modifying core tables", as
       tools: [`http://127.0.0.1:${server.port}/mcp.json`],
     });
     await installPlan(root, plan, {}, async (): Promise<void> => {
-      await syncPlugins(root, { addUi: true, expected: ["mcp"] });
+      await syncPlugins(root, { expected: ["mcp"] });
     });
     const installed = await Promise.all(
       mcpFiles.map(
@@ -282,91 +244,6 @@ test("MCP installation contributes its schema without modifying core tables", as
   }
 }, 30_000);
 
-for (const [importText, entry] of [
-  ['import { mcpClient } from "@/plugins/mcp/client-plugin";', "mcpClient"],
-  [
-    'import { mcpClient as MyConnectors } from "@/plugins/mcp/client-plugin";',
-    "MyConnectors",
-  ],
-  [
-    'import * as connectors from "@/plugins/mcp/client-plugin";',
-    "connectors.mcpClient",
-  ],
-] as const) {
-  test(`restores a removed UI entry using ${entry} without duplicate imports`, async (): Promise<void> => {
-    const root = await fixture();
-    await initializePluginUi(root);
-    await install(root);
-    await writeFile(
-      path.join(root, "composer-controls.ts"),
-      `${importText}\nexport const composerControls = [];\n`
-    );
-    await syncPlugins(root, { addUi: true });
-    const content = await readFile(
-      path.join(root, "composer-controls.ts"),
-      "utf-8"
-    );
-    expect(content).toContain(`...${entry}().composerControls`);
-    expect(content.match(/@\/plugins\/mcp\/client/gu)).toHaveLength(1);
-    await syncPlugins(root, { addUi: true });
-    expect(
-      await readFile(path.join(root, "composer-controls.ts"), "utf-8")
-    ).toBe(content);
-  });
-}
-
-test("preserves an existing contribution with a custom import", async (): Promise<void> => {
-  const root = await fixture();
-  await initializePluginUi(root);
-  await install(root);
-  const content =
-    'import { Custom } from "./custom";\nexport const composerControls = [{ id: "mcp", Component: Custom }];\n';
-  await writeFile(path.join(root, "composer-controls.ts"), content);
-  await syncPlugins(root, { addUi: true });
-  expect(await readFile(path.join(root, "composer-controls.ts"), "utf-8")).toBe(
-    content
-  );
-});
-for (const file of ["composer-controls.ts", "settings-items.ts"]) {
-  test(`an unsupported ${file} leaves both UI files and registrations unchanged`, async (): Promise<void> => {
-    const root = await fixture();
-    await initializePluginUi(root);
-    await install(root);
-    const name =
-      file === "composer-controls.ts" ? "composerControls" : "settingsItems";
-    await writeFile(
-      path.join(root, file),
-      `export const ${name} = makeItems();\n`
-    );
-    const paths = [
-      "composer-controls.ts",
-      "settings-items.ts",
-      "composition/generated/installed.ts",
-      "composition/generated/installed-routers.ts",
-    ];
-    const before = await Promise.all(
-      paths.map(
-        async (entry): Promise<string> =>
-          await readFile(path.join(root, entry), "utf-8")
-      )
-    );
-    await rejects(syncPlugins(root, { addUi: true }), (reason: unknown) => {
-      expect(() => {
-        throw reason;
-      }).toThrow("retry chat-js add");
-      return true;
-    });
-    expect(
-      await Promise.all(
-        paths.map(
-          async (entry): Promise<string> =>
-            await readFile(path.join(root, entry), "utf-8")
-        )
-      )
-    ).toEqual(before);
-  });
-}
-
 test("missing descriptors report partial MCP source and how to recover", async (): Promise<void> => {
   const root = await fixture();
   await initializePluginUi(root);
@@ -389,30 +266,6 @@ test("empty plugin registration uses a zero-argument Set constructor", async ():
     )
   ).toContain("new Set()");
 });
-test("adds the requested binding when the module already has another named import", async (): Promise<void> => {
-  const root = await fixture();
-  await initializePluginUi(root);
-  await install(root);
-  await writeFile(
-    path.join(root, "composer-controls.ts"),
-    'import { other } from "@/plugins/mcp/client-plugin";\nexport const composerControls = [];\n'
-  );
-  await writeFile(
-    path.join(root, "settings-items.ts"),
-    'import { mcpClient as connectors } from "@/plugins/mcp/client-plugin";\nexport const settingsItems = [];\n'
-  );
-  await syncPlugins(root, { addUi: true });
-  const composer = await readFile(
-    path.join(root, "composer-controls.ts"),
-    "utf-8"
-  );
-  expect(composer).toMatch(/other,\s+mcpClient/u);
-  expect(composer.match(/@\/plugins\/mcp\/client/gu)).toHaveLength(1);
-  expect(
-    await readFile(path.join(root, "settings-items.ts"), "utf-8")
-  ).toContain("...connectors().settingsItems,");
-});
-
 test("core scaffold omits uploads; shadcn add registers uploads alongside MCP and sync preserves user order", async (): Promise<void> => {
   const { attachmentUploadsItem, attachmentUploadFiles } =
     await import("../../../registry/src/plugins/attachment-uploads/manifest");
@@ -477,15 +330,14 @@ test("core scaffold omits uploads; shadcn add registers uploads alongside MCP an
     );
     await install(root);
     await syncPlugins(root, {
-      addUi: true,
       expected: ["mcp", "attachment-uploads"],
     });
     const composer = await readFile(
-      path.join(root, "composer-controls.ts"),
+      path.join(root, "composition/generated/installed-composer-controls.ts"),
       "utf-8"
     );
-    expect(composer).toContain("...attachmentUploadsClient().composerControls");
-    expect(composer).toContain("mcpClient");
+    expect(composer).toContain("@/plugins/attachment-uploads/client-plugin");
+    expect(composer).toContain("@/plugins/mcp/client-plugin");
     expect(
       await readFile(
         path.join(root, "composition/generated/installed.ts"),
@@ -498,33 +350,6 @@ test("core scaffold omits uploads; shadcn add registers uploads alongside MCP an
         "utf-8"
       )
     ).toContain("@/plugins/attachment-uploads/client-plugin");
-    const reordered = composer.replace(
-      "...attachmentUploadsClient().composerControls",
-      "...attachmentUploadsClient().composerControls /* user placement */"
-    );
-    await writeFile(path.join(root, "composer-controls.ts"), reordered);
-    await syncPlugins(root, { addUi: true });
-    expect(
-      await readFile(path.join(root, "composer-controls.ts"), "utf-8")
-    ).toBe(reordered);
-    for (const controls of [
-      '{ Component: AttachFilesControl, id: "attach-files" }, { Component: TakePhotoControl, id: "take-photo" }',
-      '{ Component: AttachFilesControl, id: "attach-files" }',
-      '{ Component: TakePhotoControl, id: "take-photo" }',
-    ]) {
-      const customControls = composer.replace(
-        "...attachmentUploadsClient().composerControls",
-        controls
-      );
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Each case replaces composer-controls.ts in the same fixture; finish the prior sync/read before writing the next subset.
-      await writeFile(path.join(root, "composer-controls.ts"), customControls);
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Sync the subset just written before checking its source or replacing it with the next case.
-      await syncPlugins(root, { addUi: true, expected: ["mcp"] });
-      expect(
-        // oxlint-disable-next-line eslint/no-await-in-loop -- Read this subset's synced source before the next iteration overwrites the shared composer file.
-        await readFile(path.join(root, "composer-controls.ts"), "utf-8")
-      ).toBe(customControls);
-    }
     await rm(path.join(root, "app/(chat)/api/files/upload/route.ts"));
     await rejects(
       syncPlugins(root, { expected: ["attachment-uploads"] }),
@@ -539,29 +364,6 @@ test("core scaffold omits uploads; shadcn add registers uploads alongside MCP an
     await server.stop(true);
   }
 }, 30_000);
-
-test("unrelated additions preserve computed plugin UI; requesting MCP still requires manual composition", async (): Promise<void> => {
-  const root = await fixture();
-  await initializePluginUi(root);
-  await install(root);
-  const composer = "export const composerControls = getUserControls();\n";
-  const settings = "export const settingsItems = getUserSettings();\n";
-  await writeFile(path.join(root, "composer-controls.ts"), composer);
-  await writeFile(path.join(root, "settings-items.ts"), settings);
-  await syncPlugins(root, { addUi: [] });
-  expect(await readFile(path.join(root, "composer-controls.ts"), "utf-8")).toBe(
-    composer
-  );
-  expect(await readFile(path.join(root, "settings-items.ts"), "utf-8")).toBe(
-    settings
-  );
-  await rejects(syncPlugins(root, { addUi: ["mcp"] }), (reason: unknown) => {
-    expect(() => {
-      throw reason;
-    }).toThrow("manually");
-    return true;
-  });
-});
 
 test("third-party plugins contribute without CLI changes or executing their server entrypoint", async () => {
   const root = await fixture();
@@ -592,7 +394,7 @@ test("third-party plugins contribute without CLI changes or executing their serv
     path.join(directory, "client-plugin.ts"),
     "export const teamNotesClient = () => ({ id: 'team-notes', composerControls: [], settingsItems: [] });"
   );
-  await syncPlugins(root, { addUi: true, expected: ["team-notes"] });
+  await syncPlugins(root, { expected: ["team-notes"] });
   const routers = await readFile(
     path.join(root, "composition/generated/installed-routers.ts"),
     "utf-8"
@@ -600,15 +402,18 @@ test("third-party plugins contribute without CLI changes or executing their serv
   expect(routers).toContain('from "@/plugins/team-notes/server-plugin"');
   expect(routers).toContain("notes: plugin0().routers.notes");
   const composer = await readFile(
-    path.join(root, "composer-controls.ts"),
+    path.join(root, "composition/generated/installed-composer-controls.ts"),
     "utf-8"
   );
-  expect(composer).toContain("...teamNotesClient().composerControls");
+  expect(composer).toContain("teamNotesClient");
   expect(composer).not.toContain("/server");
-  await syncPlugins(root, { addUi: true });
-  expect(await readFile(path.join(root, "composer-controls.ts"), "utf-8")).toBe(
-    composer
-  );
+  await syncPlugins(root, {});
+  expect(
+    await readFile(
+      path.join(root, "composition/generated/installed-composer-controls.ts"),
+      "utf-8"
+    )
+  ).toBe(composer);
 });
 
 for (const key of ["eve"]) {
@@ -630,7 +435,7 @@ for (const key of ["eve"]) {
         server: { export: "conflict", routers: [key] },
       })
     );
-    expect(syncPlugins(root, { addUi: true })).rejects.toThrow(
+    expect(syncPlugins(root, {})).rejects.toThrow(
       "Duplicate or reserved plugin router"
     );
     expect(
@@ -671,10 +476,7 @@ for (const [contribution, ids] of [
           client: { export: "conflictClient", [contribution]: [id] },
         })
       );
-      await rejects(
-        syncPlugins(root, { addUi: true }),
-        /Duplicate or reserved plugin/u
-      );
+      await rejects(syncPlugins(root, {}), /Duplicate or reserved plugin/u);
       expect(
         await readFile(
           path.join(root, "composition/generated/installed.ts"),

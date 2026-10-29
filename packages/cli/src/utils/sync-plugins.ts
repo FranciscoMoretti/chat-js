@@ -1,198 +1,14 @@
 import { assertUiCompatibility } from "./ui-compatibility";
 import { writeGeneratedFiles } from "./write-generated-files";
 import { assertCurrentInstallationLayout } from "./installation-layout";
-import { readFile, writeFile, rm } from "node:fs/promises";
+import { rm } from "node:fs/promises";
 import path from "node:path";
-import ts from "typescript";
 import type { PluginDefinition } from "../../../registry/metadata";
 import { readInstalledPlugins } from "./installed-plugins";
 import { planDatabaseSchemas } from "./sync-database";
 import { generatedRegistrationSource } from "./generated-registration-source";
-import { preflight } from "./preflight";
 import { initializeObservability } from "./sync-observability";
 import { pluginItems } from "../../../registry/src/plugins/catalog";
-
-type ReadonlyNative<Value> = Value extends (
-  ...args: readonly never[]
-) => unknown
-  ? Value
-  : Value extends object
-    ? { readonly [Key in keyof Value]: ReadonlyNative<Value[Key]> }
-    : Value;
-
-interface ContributionBinding {
-  binding: string;
-  bindings: ts.NamedImportBindings | undefined;
-  specifier: ts.ImportSpecifier | undefined;
-}
-
-const contributionBinding = (
-  parsed: ReadonlyNative<ts.SourceFile>,
-  marker: string,
-  symbol: string
-): ContributionBinding => {
-  const imports = parsed.statements.filter(ts.isImportDeclaration);
-  const imported = imports.find(
-    (node: ReadonlyNative<ts.ImportDeclaration>): boolean =>
-      ts.isStringLiteral(node.moduleSpecifier) &&
-      node.moduleSpecifier.text === marker &&
-      (!node.importClause || !ts.isTypeOnlyImportDeclaration(node.importClause))
-  );
-  const importClause = imported && imported.importClause;
-  const bindings = importClause && importClause.namedBindings;
-  const namedBindings =
-    bindings && ts.isNamedImports(bindings) ? bindings.elements : [];
-  const specifier = namedBindings.find(
-    (item: ReadonlyNative<ts.ImportSpecifier>): boolean =>
-      !item.isTypeOnly && (item.propertyName ?? item.name).text === symbol
-  );
-  if (bindings && ts.isNamespaceImport(bindings)) {
-    return { binding: `${bindings.name.text}.${symbol}`, bindings, specifier };
-  }
-  return {
-    binding: (specifier && specifier.name.text) ?? symbol,
-    bindings,
-    specifier,
-  };
-};
-interface PlannedContribution {
-  content: string;
-  file: string;
-}
-interface SourceEdit {
-  readonly start: number;
-  readonly text: string;
-}
-const LAST_ELEMENT = -1;
-const CLOSING_DELIMITER_WIDTH = 1;
-const SOURCE_START = 0;
-
-// Plan both application-owned UI edits before writing any registrations.
-const planContribution = async (
-  file: string,
-  name: string,
-  symbol: string,
-  marker: string,
-  id: string | readonly string[],
-  entry: (binding: string) => string,
-  sourceOverride?: string
-): Promise<PlannedContribution> => {
-  const source = sourceOverride ?? (await readFile(file, "utf-8"));
-  const parsed = ts.createSourceFile(
-    file,
-    source,
-    ts.ScriptTarget.Latest,
-    true
-  );
-  const declaration = parsed.statements
-    .filter(ts.isVariableStatement)
-    .flatMap(
-      (statement: ReadonlyNative<ts.VariableStatement>) =>
-        statement.declarationList.declarations
-    )
-    .find(
-      (item: ReadonlyNative<ts.VariableDeclaration>): boolean =>
-        item.name.getText(parsed) === name
-    );
-  if (
-    !declaration ||
-    !declaration.initializer ||
-    !ts.isArrayLiteralExpression(declaration.initializer)
-  ) {
-    throw new Error(
-      `Add the plugin contribution to ${file} manually: ${name} is no longer a literal array. Then run chat-js sync. To retry automatic UI integration, restore a literal array and retry chat-js add.`
-    );
-  }
-  const array = declaration.initializer;
-  const contributionIds = typeof id === "string" ? [id] : id;
-  const { binding, bindings, specifier } = contributionBinding(
-    parsed,
-    marker,
-    symbol
-  );
-  // The array determines presence; an unused import is not a contribution.
-  if (
-    array.elements.some(
-      (item: ReadonlyNative<ts.Expression>): boolean =>
-        item.getText(parsed) === binding ||
-        (ts.isSpreadElement(item) &&
-          item.expression.getText(parsed) === `${binding}().${name}`) ||
-        (ts.isObjectLiteralExpression(item) &&
-          item.properties.some(
-            (prop: ReadonlyNative<ts.ObjectLiteralElementLike>): boolean =>
-              ts.isPropertyAssignment(prop) &&
-              ((prop.name
-                .getText(parsed)
-                .replaceAll('"', "")
-                .replaceAll("'", "") === "id" &&
-                ts.isStringLiteral(prop.initializer) &&
-                contributionIds.includes(prop.initializer.text)) ||
-                (prop.name.getText(parsed) === "Component" &&
-                  prop.initializer.getText(parsed) === binding))
-          ))
-    )
-  ) {
-    return { content: source, file };
-  }
-  const edits: SourceEdit[] = [];
-  if (!specifier && !(bindings && ts.isNamespaceImport(bindings))) {
-    // Avoid overwriting a user binding with the same name from another module.
-    const identifiers = new Set<string>();
-    const collect = (node: ReadonlyNative<ts.Node>): void => {
-      if (ts.isIdentifier(node)) {
-        identifiers.add(node.text);
-      }
-      ts.forEachChild(node, collect);
-    };
-    collect(parsed);
-    if (identifiers.has(symbol)) {
-      throw new Error(
-        `Cannot import ${symbol} in ${file}: that name is already used. Add the plugin contribution manually and run chat-js sync.`
-      );
-    }
-    if (bindings && ts.isNamedImports(bindings)) {
-      const last = bindings.elements.at(LAST_ELEMENT);
-      if (last && !bindings.elements.hasTrailingComma) {
-        edits.push({ start: last.end, text: "," });
-      }
-      edits.push({
-        start: bindings.end - CLOSING_DELIMITER_WIDTH,
-        text: ` ${symbol} `,
-      });
-    } else {
-      const lastImport = parsed.statements.findLast(
-        (node: ReadonlyNative<ts.Statement>): boolean =>
-          ts.isImportDeclaration(node) ||
-          (ts.isExpressionStatement(node) &&
-            ts.isStringLiteral(node.expression))
-      );
-      const importEnd = (lastImport && lastImport.end) ?? SOURCE_START;
-      edits.push({
-        start: importEnd,
-        text: `\nimport { ${symbol} } from "${marker}";\n`,
-      });
-    }
-  }
-  edits.push({
-    start: array.end - CLOSING_DELIMITER_WIDTH,
-    text: `\n  ${entry(binding)},\n`,
-  });
-  const last = array.elements.at(LAST_ELEMENT);
-  if (last && !array.elements.hasTrailingComma) {
-    edits.push({ start: last.end, text: "," });
-  }
-  let content = source;
-  for (const edit of edits.toSorted(
-    (leftEdit: SourceEdit, rightEdit: SourceEdit): number =>
-      rightEdit.start - leftEdit.start
-  )) {
-    content =
-      content.slice(SOURCE_START, edit.start) +
-      edit.text +
-      content.slice(edit.start);
-  }
-  return { content, file };
-};
 
 const assertPluginDependencies = (
   plugins: readonly PluginDefinition[]
@@ -342,7 +158,33 @@ const renderPluginRegistrations = (
   const authentication = plugins.find((plugin) => plugin.authentication);
   const authUi = plugins.find((plugin) => plugin.authenticationUi);
   const navigation = plugins.filter((plugin) => plugin.navigation);
+  const uiList = (
+    key: "composerControls" | "settingsItems",
+    type: string,
+    module: string
+  ) => {
+    const selected = plugins.filter(
+      (plugin) => (plugin.client?.[key].length ?? 0) > 0
+    );
+    return `${imports(selected, "client")}\nimport type { ${type} } from "${module}";\nexport const ${key}: readonly ${type}[] = [${selected.map((_, index) => `...(plugin${index}().${key} ?? [])`).join(", ")}];`;
+  };
   const contents = [
+    [
+      "installed-composer-controls",
+      uiList(
+        "composerControls",
+        "ComposerControl",
+        "@/components/composer/control"
+      ),
+    ],
+    [
+      "installed-settings-items",
+      uiList(
+        "settingsItems",
+        "SettingsItem",
+        "@/components/settings/settings-item"
+      ),
+    ],
     [
       "installed-signed-out",
       `${signedOut ? `import { ${signedOut.signedOut?.export} as pluginScreen } from "@/plugins/${signedOut.id}/signed-out";` : ""}
@@ -436,155 +278,38 @@ export const handleModifiedNavigation: () => boolean = ${navigation.length > 0 ?
 };
 const pluginRegistrationTargets = [...renderPluginRegistrations([], "").keys()];
 
+const planPluginRegistrations = async (
+  cwd: string,
+  plugins: readonly PluginDefinition[],
+  retainedSchemas?: Readonly<Record<string, readonly string[]>>
+): Promise<Map<string, string>> => {
+  await assertCurrentInstallationLayout(cwd);
+  await assertUiCompatibility(cwd, plugins);
+  assertUniqueContributions(plugins);
+  const databaseSchemas = await planDatabaseSchemas(
+    cwd,
+    plugins.map((plugin) => plugin.id),
+    retainedSchemas
+  );
+  return renderPluginRegistrations(plugins, databaseSchemas);
+};
+
 const syncPlugins = async (
   cwd: string,
-  options: Readonly<{
-    addUi?: boolean | readonly string[];
-    expected?: readonly string[];
-  }> = {}
+  options: Readonly<{ expected?: readonly string[] }> = {}
 ): Promise<void> => {
   await assertCurrentInstallationLayout(cwd);
-  await preflight(cwd, [
-    ...pluginRegistrationTargets,
-    "composer-controls.ts",
-    "settings-items.ts",
-  ]);
   const plugins = await readInstalledPlugins(cwd);
-  await assertUiCompatibility(cwd, plugins);
   for (const id of options.expected ?? []) {
     if (!plugins.some((plugin) => plugin.id === id)) {
       throw new Error(`Missing plugin descriptor: plugins/${id}/chatjs.json`);
     }
   }
-  assertUniqueContributions(plugins);
-  const databaseSchemas = await planDatabaseSchemas(
-    cwd,
-    plugins.map((plugin) => plugin.id)
-  );
-  const ui: PlannedContribution[] = [];
-  for (const plugin of plugins) {
-    if (
-      !plugin.client ||
-      !(
-        options.addUi === true ||
-        (Array.isArray(options.addUi) && options.addUi.includes(plugin.id))
-      )
-    ) {
-      continue;
-    }
-    for (const [name, file, ids] of [
-      [
-        "composerControls",
-        "composer-controls.ts",
-        plugin.client.composerControls,
-      ],
-      ["settingsItems", "settings-items.ts", plugin.client.settingsItems],
-    ] as const) {
-      if (ids.length === 0) {
-        continue;
-      }
-      const target = path.join(cwd, file);
-      const previous = ui.find((edit) => edit.file === target);
-      // oxlint-disable-next-line no-await-in-loop -- Each plugin extends the previous planned edit of this application-owned array.
-      const edit = await planContribution(
-        target,
-        name,
-        plugin.client.export,
-        `@/plugins/${plugin.id}/client-plugin`,
-        ids,
-        (binding) => `...${binding}().${name}`,
-        previous?.content
-      );
-      if (previous) {
-        previous.content = edit.content;
-      } else {
-        ui.push(edit);
-      }
-    }
-  }
-  await writeGeneratedFiles(
-    cwd,
-    renderPluginRegistrations(plugins, databaseSchemas)
-  );
-  await Promise.all(
-    ui.map(async ({ file, content }) => {
-      await writeFile(file, content);
-    })
-  );
+  await writeGeneratedFiles(cwd, await planPluginRegistrations(cwd, plugins));
 };
 
-// Only creation resets demo contributions. Add/sync preserve app-owned order.
+// Creation removes reference plugins; app-owned composition never needs source edits.
 const initializePluginUi = async (cwd: string): Promise<void> => {
-  for (const [file, name] of [
-    ["composer-controls.ts", "composerControls"],
-    ["settings-items.ts", "settingsItems"],
-  ]) {
-    const location = path.join(cwd, file);
-    // oxlint-disable-next-line no-await-in-loop -- Each application-owned file is planned and written independently.
-    const source = await readFile(location, "utf-8");
-    const parsed = ts.createSourceFile(
-      file,
-      source,
-      ts.ScriptTarget.Latest,
-      true
-    );
-    const bindings = new Set<string>();
-    const edits: { start: number; end: number; text: string }[] = [];
-    for (const node of parsed.statements) {
-      if (
-        ts.isImportDeclaration(node) &&
-        ts.isStringLiteral(node.moduleSpecifier) &&
-        node.moduleSpecifier.text.startsWith("@/plugins/")
-      ) {
-        const named = node.importClause?.namedBindings;
-        if (named && ts.isNamedImports(named)) {
-          for (const specifier of named.elements) {
-            bindings.add(specifier.name.text);
-          }
-        }
-        if (named && ts.isNamespaceImport(named)) {
-          bindings.add(named.name.text);
-        }
-        edits.push({ start: node.getFullStart(), end: node.end, text: "" });
-      }
-    }
-    const usesPlugin = (node: ts.Node): boolean => {
-      if (ts.isIdentifier(node) && bindings.has(node.text)) {
-        return true;
-      }
-      return ts.forEachChild(node, usesPlugin) === true;
-    };
-    for (const node of parsed.statements) {
-      if (!ts.isVariableStatement(node)) {
-        continue;
-      }
-      for (const declaration of node.declarationList.declarations) {
-        if (
-          declaration.name.getText(parsed) !== name ||
-          !declaration.initializer ||
-          !ts.isArrayLiteralExpression(declaration.initializer)
-        ) {
-          continue;
-        }
-        const array = declaration.initializer;
-        edits.push({
-          start: array.getStart(parsed),
-          end: array.end,
-          text: `[\n${array.elements
-            .filter((entry) => !usesPlugin(entry))
-            .map((entry) => `${entry.getText(parsed)},`)
-            .join("\n")}\n]`,
-        });
-      }
-    }
-    let content = source;
-    for (const edit of edits.toSorted((a, b) => b.start - a.start)) {
-      content =
-        content.slice(0, edit.start) + edit.text + content.slice(edit.end);
-    }
-    // oxlint-disable-next-line no-await-in-loop -- Finish this file before resetting the next creation-only composition file.
-    await writeFile(location, content);
-  }
   await initializeObservability(cwd);
   // The reference preset's plugin sources, including adapters, are explicit.
   await Promise.all(
@@ -600,4 +325,9 @@ const initializePluginUi = async (cwd: string): Promise<void> => {
   await syncPlugins(cwd);
 };
 
-export { initializePluginUi, pluginRegistrationTargets, syncPlugins };
+export {
+  initializePluginUi,
+  planPluginRegistrations,
+  pluginRegistrationTargets,
+  syncPlugins,
+};

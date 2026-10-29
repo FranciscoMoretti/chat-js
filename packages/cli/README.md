@@ -101,10 +101,26 @@ Older apps using `features/` descriptors or generated/custom registrations under
 
 Selecting MCP during app creation installs its tRPC router, connector settings pages, OAuth callback, and agent integration. Skipping MCP leaves those source files and database schemas out of the fresh scaffold. Historical message rendering remains available. The MCP registry item builds from canonical source in `packages/registry/src/plugins/mcp`. The demo contains installed copies. Use `--mcp` or `--no-mcp` to select MCP during creation.
 
-Use `chat-js add mcp` to install MCP later. Installed registrations determine availability. Set `MCP_ENCRYPTION_KEY` whenever MCP is installed, including before any connectors are added. Missing credentials produce an explicit setup error. For a direct shadcn installation, run `chat-js sync` to register the server plugin and add the MCP entries to the UI arrays yourself.
+Use `chat-js add mcp` to install MCP later. Installed registrations determine availability. Set `MCP_ENCRYPTION_KEY` whenever MCP is installed, including before any connectors are added. Missing credentials produce an explicit setup error. For a direct shadcn installation, run `chat-js sync` to register its server and UI contributions.
 
-`composer-controls.ts` contains the initial order of attachments, tool choices, and connectors in the single composer menu. The model picker stays visible beside it. `settings-items.ts` controls settings navigation. Both arrays belong to the application: reorder or extend them freely. `chat-js sync` preserves them; `chat-js add mcp` appends missing MCP contributions without reordering existing entries. If a customized array can no longer be extended automatically, the CLI reports the manual integration needed.
+`composer-controls.ts` and `settings-items.ts` compose generated plugin contributions with app-owned entries using `composeContributions(installed, custom, placement)`. Customize `order` and `hidden` using contribution IDs. A custom entry with an installed ID replaces its default. Unknown IDs are ignored when their plugin is absent. New plugin contributions appear automatically, after explicitly ordered entries. Neither `add` nor `sync` rewrites these files.
+
+Chat slots use `composition/custom/chat-ui.ts`: `chatUiPlacement` configures each slot using plugin IDs, and `customChatUi` supplies local chat integrations. The existing slots are `Sidebar`, `SidebarHeader`, `Breadcrumb`, `Actions`, `HeaderActions`, `MessageActions`, and `Suggestions`. Hiding UI does not disable the plugin or change authorization.
+
+When updating an older app with direct plugin imports in its composer/settings arrays, adopt the generated composition imports from the current scaffold once. The CLI preserves existing customization and does not migrate arbitrary source expressions.
 
 `composition/generated/installed-routers.ts` and `composition/generated/installed.ts` are generated from installed plugin descriptors. Keep application-specific routers in the main tRPC composition. Bundle and dependency optimization are separate from this source-installation boundary.
 
-Automatic MCP removal is not supported. To remove MCP manually, remove its entries and imports from `composer-controls.ts` and `settings-items.ts`, remove the installed MCP source and `plugins/mcp/chatjs.json`, then run `chat-js sync`. Sync preserves application-owned UI files.
+## Removing plugins
+
+```sh
+chat-js remove projects sharing --dry-run
+chat-js remove projects sharing
+chat-js remove projects --backup
+```
+
+Removal plans the complete change before writing: plugin source, Next/EVE adapters, and generated registrations. Required plugins and dangling static imports from app-owned source block removal. Modified or untracked source requires `--backup`, which retains removed files as `.bak` files under `.chatjs/removed-plugins/<id>/`. `--yes` skips the prompt but never bypasses source protection. Reinstall using `chat-js add`, then restore selected customizations from the backup.
+
+Database schema files and their plugin-local dependencies stay at their original paths. `.chatjs/retained-plugin-schemas.json` keeps them in Drizzle's schema inputs after runtime registration is removed. Removing plugin code does not delete database data or generate a destructive migration. Review any later schema retirement separately. Shared UI primitives, package dependencies, environment values, and migration history are retained.
+
+Source installed directly through shadcn has no ChatJS source receipt, so removal requires `--backup`. Import checks cover relative and `@/` static imports, re-exports and literal dynamic imports. Review integrations using computed imports or other custom aliases yourself.

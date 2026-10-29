@@ -10,7 +10,8 @@ import { scaffoldFromTemplate } from "#cli/helpers/scaffold";
 
 import { installItems } from "#cli/registry/shadcn";
 
-import { installPlan, recordInstalledSource } from "./install-plan";
+import { installPlan } from "./install-plan";
+import { recordInstalledSource } from "./source-receipt";
 
 import { planInstallation } from "./installation-plan";
 

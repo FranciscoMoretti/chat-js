@@ -1,14 +1,11 @@
+import { recordInstalledSource } from "#cli/utils/source-receipt";
 import { scaffoldNativeProject } from "#cli/helpers/native-scaffold";
 import { createStagedProject } from "#cli/helpers/staged-project";
 import { generateBaseline } from "#cli/utils/generate-baseline";
 import { planSandboxInstallation } from "#cli/helpers/sandbox-installation";
 import { configureSandboxProvider } from "#cli/helpers/sandbox-provider";
 import type { resolveSandbox } from "#cli/registry/sandboxes";
-import {
-  installPlan,
-  plannedSourceTargets,
-  recordInstalledSource,
-} from "#cli/utils/install-plan";
+import { installPlan, plannedSourceTargets } from "#cli/utils/install-plan";
 import { intro, outro } from "@clack/prompts";
 import { itemAddress, listTools, readItem } from "#cli/registry/shadcn";
 import {
@@ -563,7 +560,6 @@ const installRegistryItems = async (
           expected: plan.expected,
         });
         await syncPlugins(project.targetDir, {
-          addUi: true,
           expected: plan.plugins.map((plugin) => plugin.id),
         });
       }

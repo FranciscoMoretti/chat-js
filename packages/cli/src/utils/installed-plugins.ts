@@ -5,6 +5,7 @@ import {
   pluginIdSchema,
 } from "../../../registry/metadata";
 import type { PluginDefinition } from "../../../registry/metadata";
+import { readRetainedSchemas } from "./retained-plugin-schemas";
 import { preflight } from "./preflight";
 
 const readInstalledPlugins = async (
@@ -21,7 +22,8 @@ const readInstalledPlugins = async (
     }
     throw error;
   });
-  return await Promise.all(
+  const retained = await readRetainedSchemas(cwd);
+  const plugins = await Promise.all(
     entries
       .filter((entry) => entry.isDirectory() || entry.isSymbolicLink())
       .filter((entry) => !replacing.has(entry.name))
@@ -39,12 +41,18 @@ const readInstalledPlugins = async (
             "code" in error &&
             error.code === "ENOENT"
           ) {
+            if (Object.hasOwn(retained, id)) {
+              return null;
+            }
             throw new Error(
               `${id} is missing its descriptor: ${descriptor}. Run chat-js add ${id} to complete installation.`
             );
           }
           throw error;
         });
+        if (content === null) {
+          return null;
+        }
         const definition = pluginDefinitionSchema.parse(JSON.parse(content));
         if (definition.id !== id) {
           throw new Error(
@@ -100,5 +108,6 @@ const readInstalledPlugins = async (
         return definition;
       })
   );
+  return plugins.filter((plugin) => plugin !== null);
 };
 export { readInstalledPlugins };

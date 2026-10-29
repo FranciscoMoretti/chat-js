@@ -4,6 +4,7 @@ import { add } from "./commands/add";
 import { config } from "./commands/config";
 import { create } from "./commands/create";
 import packageJson from "../package.json";
+import { remove } from "./commands/remove";
 import { sync } from "./commands/sync";
 
 const SUCCESS_EXIT_CODE = 0;
@@ -19,6 +20,7 @@ const program = new Command()
 program.addCommand(create, { isDefault: true });
 program.addCommand(add);
 program.addCommand(sync);
+program.addCommand(remove);
 program.addCommand(config);
 
 program.parse();

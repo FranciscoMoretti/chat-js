@@ -108,8 +108,7 @@ const resolveProviders = async (
 const configureInstallation = async (
   directory: string,
   providers: Awaited<ReturnType<typeof resolveProviders>>,
-  plan: Awaited<ReturnType<typeof planInstallation>>,
-  addUi: boolean
+  plan: Awaited<ReturnType<typeof planInstallation>>
 ): Promise<void> => {
   if (providers.sandbox) {
     await configureSandboxProvider(directory, providers.sandbox);
@@ -120,7 +119,6 @@ const configureInstallation = async (
   // The mirror preserves app-owned order; consumer validation supplies its core UI.
   await syncPlugins(directory, {
     expected: plan.plugins.map((plugin) => plugin.id),
-    addUi,
   });
   await updateEnvironmentExample(
     directory,
@@ -228,12 +226,7 @@ const generateInstallation = async (
       const beforeConfigure = performance.now();
       const providers = await resolveProviders(selection, directory);
       if (!incrementalItem) {
-        await configureInstallation(
-          directory,
-          providers,
-          plan,
-          options.pluginUi !== undefined
-        );
+        await configureInstallation(directory, providers, plan);
       }
       timings.configureMs = performance.now() - beforeConfigure;
       const seedFiles = options.pluginUi ?? {};
