@@ -1,5 +1,9 @@
-import type { ChatClientPlugin } from "@/lib/plugin-contracts";
+"use client";
+import { definePlugin } from "@/lib/ui-slots";
+import { LayoutEffects } from "@/components/layout-slots";
 import { Component } from "./component";
 
-export const vercelAnalyticsClient = () =>
-  ({ id: "vercel-analytics", layout: Component }) satisfies ChatClientPlugin;
+export const vercelAnalyticsClient = definePlugin({
+  id: "vercel-analytics",
+  contributions: [LayoutEffects.contribute(Component)],
+});

@@ -4,6 +4,7 @@ import { pluginDefinitionSchema } from "../../../metadata";
 const modelPreferencesFiles = [
   "plugins/model-preferences/apply-model-preferences.ts",
   "plugins/model-preferences/client-plugin.ts",
+  "plugins/model-preferences/settings-link.tsx",
   "plugins/model-preferences/model-preferences-queries.ts",
   "plugins/model-preferences/model-preferences-schema.ts",
   "plugins/model-preferences/model-row.tsx",

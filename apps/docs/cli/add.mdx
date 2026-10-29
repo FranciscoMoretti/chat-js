@@ -1,6 +1,6 @@
 ---
 title: add
-description: Install registry tools, features and providers
+description: Install registry tools, plugins and providers
 ---
 
 ```bash
@@ -36,9 +36,9 @@ npx @chat-js/cli@latest add attachment-uploads mcp vercel-analytics vercel-speed
 
 Uploads require durable storage and a sandbox with persistent-file support. Existing compatible providers satisfy these requirements. The CLI rejects replacing that sandbox with an incompatible provider while uploads remain installed.
 
-New contributions append to `composer-controls.ts` and `settings-items.ts`. Your existing entries and their order remain intact. Ordinary `sync` preserves those arrays. If you use a computed array, add the contribution manually and run `sync`.
+UI plugins export typed contributions with `definePlugin`. The CLI updates generated installed-plugin lists and preserves your component edits and app layout JSX. Move slot components or wrap contributed components to customize placement and behavior.
 
-After direct shadcn source installation, use `add` for automatic composition, or register the editable UI contributions yourself and run `sync`:
+After direct shadcn source installation, regenerate registrations with `sync`:
 
 ```bash
 npx @chat-js/cli@latest sync --cwd apps/chat
@@ -53,11 +53,11 @@ npx @chat-js/cli@latest add firecrawl-search --replace --yes
 npx @chat-js/cli@latest add --storage-provider s3 --storage-config '{"bucket":"uploads","region":"eu-west-1"}' --replace --yes
 ```
 
-`--yes` skips confirmation. It does not authorize replacement or overwriting edited files. ChatJS records installed-source hashes in `.chatjs/installed-source.json`. Changed or untracked source is protected until you review it and explicitly pass `--overwrite`. This includes source installed with native shadcn, which has no ChatJS baseline. Keep the baseline in version control. Unrelated tools and features remain installed, and previous tool-provider source is retired only after registration succeeds.
+`--yes` skips confirmation. It does not authorize replacement or overwriting edited files. ChatJS records installed-source hashes in `.chatjs/installed-source.json`. Changed or untracked source is protected until you review it and explicitly pass `--overwrite`. This includes source installed with native shadcn, which has no ChatJS baseline. Keep the baseline in version control. Unrelated tools and plugins remain installed, and previous tool-provider source is retired only after registration succeeds.
 
 Gateway replacement updates the gateway discriminator and provider configuration while preserving your model IDs and runtime settings. Review those model IDs for the new gateway and run `bun run setup` and `bun run fetch:models`.
 
-If source installation or registration fails, the command exits unsuccessfully. Previous tool-provider source is restored, but newly installed source or packages may remain. Review the partial installation and retry the same `add` command with `--overwrite`, or integrate the source manually and run `sync`. This CLI supports creation and add, including explicit exclusive replacement. It does not manage removal or upgrades.
+If source installation or registration fails, the command exits unsuccessfully. Previous tool-provider source is restored, but newly installed source or packages may remain. Review the partial installation and retry the same `add` command with `--overwrite`, or integrate the source manually and run `sync`. This CLI supports creation, add, explicit exclusive replacement, and plugin removal with `chat-js remove`. It does not automatically upgrade older app templates.
 
 - [Tool Registry](../tools/overview) explains customizations.
 - [Tools](../tools/authoring) explains authoring.

@@ -3,12 +3,11 @@
 import { Checkbox } from "@/components/ui/checkbox";
 import { ModelSelectionIndicator } from "@/components/model-selection-indicator";
 import { PopoverButton } from "@/components/popover-button";
-import { settingsItems } from "@/settings-items";
+import { ModelSettingsLink } from "@/components/chat-slots";
 import type { AppModelDefinition, AppModelId } from "@/lib/ai/app-models";
 import {
   CheckIcon,
   ChevronDownIcon,
-  ChevronRightIcon,
   ChevronUpIcon,
   FilterIcon,
 } from "lucide-react";
@@ -21,11 +20,9 @@ import React, {
   useTransition,
 } from "react";
 
-import { InternalLink } from "@/components/internal-link";
-
 import { Badge } from "@/components/ui/badge";
 
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 
 import {
   Command,
@@ -264,29 +261,6 @@ const PureCommandItem = ({
 };
 
 const CommandItem = memo(PureCommandItem);
-
-const ModelSettingsLink = (): ReactJSX.Element | null => {
-  const item = settingsItems.find((entry) => entry.id === "models");
-  if (!item || !(item.isVisible?.() ?? true)) {
-    return null;
-  }
-  return (
-    <div className="border-t p-2">
-      <InternalLink
-        aria-label="Add Models"
-        href={item.href}
-        className={buttonVariants({
-          className: "w-full justify-between",
-          size: "sm",
-          variant: "ghost",
-        })}
-      >
-        Add Models
-        <ChevronRightIcon className="h-4 w-4" />
-      </InternalLink>
-    </div>
-  );
-};
 
 const PureModelSelector = ({
   allowMultiple = true,
@@ -784,7 +758,7 @@ const PureModelSelector = ({
                 )}
               </CommandGroup>
             </CommandList>
-            {!isAnonymous && <ModelSettingsLink />}
+            {!isAnonymous && <ModelSettingsLink surface="picker" />}
           </Command>
         )}
       </PopoverContent>

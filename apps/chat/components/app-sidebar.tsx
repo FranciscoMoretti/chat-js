@@ -1,12 +1,10 @@
-import { SidebarLink } from "@/components/navigation-links";
 import {
-  PluginSidebar,
-  PluginSidebarHeader,
-} from "@/components/plugin-chat-ui";
+  SidebarSections,
+  ModelSettingsLink,
+  SidebarHeaderItems,
+} from "@/components/chat-slots";
 import components from "@/components.json";
-import { settingsItems } from "@/settings-items";
 import React, { Suspense } from "react";
-import { Cpu } from "lucide-react";
 
 import { EveHistory } from "@/components/eve/eve-history";
 
@@ -35,12 +33,10 @@ import { headers } from "next/headers";
 
 import { resolveEvePrincipal } from "@/lib/eve/principal";
 
-const modelSettingsItem = settingsItems.find((item) => item.id === "models");
-
-const ScopedPluginSidebarHeader = async (): Promise<ReactJSX.Element> => {
+const ScopedSidebarHeaderItems = async (): Promise<ReactJSX.Element> => {
   const principal = await resolveEvePrincipal(await headers());
   return (
-    <PluginSidebarHeader
+    <SidebarHeaderItems
       key={principal?.ownerId ?? "anonymous"}
       ownerId={principal?.ownerId}
     />
@@ -84,27 +80,14 @@ export const AppSidebar = (): React.JSX.Element => (
             </SidebarMenuItem>
           }
         >
-          <ScopedPluginSidebarHeader />
+          <ScopedSidebarHeaderItems />
         </Suspense>
-        {modelSettingsItem && (modelSettingsItem.isVisible?.() ?? true) && (
-          <SidebarMenuItem>
-            <SidebarLink
-              tooltip="Models"
-              aria-label="Models"
-              href={modelSettingsItem.href}
-            >
-              <Cpu className="size-4" />
-              <span className="group-data-[collapsible=icon]:hidden">
-                Models
-              </span>
-            </SidebarLink>
-          </SidebarMenuItem>
-        )}
+        <ModelSettingsLink surface="sidebar" />
       </SidebarMenu>
     }
   >
     <Suspense fallback={<HistorySkeleton />}>
-      <PluginSidebar />
+      <SidebarSections />
       <EveHistory />
     </Suspense>
   </ChatSidebarView>

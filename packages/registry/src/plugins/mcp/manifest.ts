@@ -23,7 +23,7 @@ const mcpFiles = [
   "plugins/mcp/db/mcp-schema.ts",
   "plugins/mcp/db/encrypted-text.ts",
   "plugins/mcp/mcp-env.ts",
-  "plugins/mcp/settings.ts",
+  "plugins/mcp/settings.tsx",
   "plugins/mcp/setup.ts",
   "plugins/mcp/oauth/cache.ts",
   "plugins/mcp/oauth/mcp-client-manager.ts",

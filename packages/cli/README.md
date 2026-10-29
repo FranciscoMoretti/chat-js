@@ -103,11 +103,11 @@ Selecting MCP during app creation installs its tRPC router, connector settings p
 
 Use `chat-js add mcp` to install MCP later. Installed registrations determine availability. Set `MCP_ENCRYPTION_KEY` whenever MCP is installed, including before any connectors are added. Missing credentials produce an explicit setup error. For a direct shadcn installation, run `chat-js sync` to register its server and UI contributions.
 
-`composer-controls.ts` and `settings-items.ts` compose generated plugin contributions with app-owned entries using `composeContributions(installed, custom, placement)`. Customize `order` and `hidden` using contribution IDs. A custom entry with an installed ID replaces its default. Unknown IDs are ignored when their plugin is absent. New plugin contributions appear automatically, after explicitly ordered entries. Neither `add` nor `sync` rewrites these files.
+Plugins export module-scope `definePlugin` declarations with typed slot contributions. Generated chat and layout lists reference those declarations. App-owned JSX places `SidebarSections`, `ChatActions`, `MessageActions`, settings links, account summaries, and other slots. `ComposerAttachments` and `ComposerExtensions` surround the app-owned tool controls in `composer-controls.ts`. Neither `add` nor `sync` rewrites this JSX or the plugin's component declarations.
 
-Chat slots use `composition/custom/chat-ui.ts`: `chatUiPlacement` configures each slot using plugin IDs, and `customChatUi` supplies local chat integrations. The existing slots are `Sidebar`, `SidebarHeader`, `Breadcrumb`, `Actions`, `HeaderActions`, `MessageActions`, and `Suggestions`. Hiding UI does not disable the plugin or change authorization.
+Edit installed components directly or contribute normal React wrappers. Keep declarations at module scope, and use ordinary dynamic imports and Suspense for expensive UI. Plugin removal updates the generated list, so slots without contributions render nothing. UI placement does not change authorization.
 
-When updating an older app with direct plugin imports in its composer/settings arrays, adopt the generated composition imports from the current scaffold once. The CLI preserves existing customization and does not migrate arbitrary source expressions.
+Older apps need to adopt the current provider and slot composition explicitly. The CLI preserves existing customization and does not migrate arbitrary source expressions.
 
 `composition/generated/installed-routers.ts` and `composition/generated/installed.ts` are generated from installed plugin descriptors. Keep application-specific routers in the main tRPC composition. Bundle and dependency optimization are separate from this source-installation boundary.
 

@@ -13,7 +13,6 @@ import { toast } from "sonner";
 import { config } from "@/lib/config";
 import { useSession } from "@/providers/session-provider";
 
-import { AttachFilesControl, TakePhotoControl } from "./controls";
 import { uploadAttachment } from "./upload";
 import { processFilesForUpload } from "./upload-prep";
 
@@ -183,9 +182,5 @@ const useUploads = ({
 };
 
 export const attachmentUploads = {
-  controls: [
-    { Component: AttachFilesControl, id: "attach-files" },
-    { Component: TakePhotoControl, id: "take-photo" },
-  ],
   useUploads,
 } satisfies AttachmentUploadIntegration;

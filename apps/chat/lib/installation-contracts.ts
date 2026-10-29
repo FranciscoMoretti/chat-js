@@ -1,8 +1,5 @@
-import type { ComponentType, HTMLAttributes, ReactNode } from "react";
-import type {
-  ComposerControl,
-  ComposerControlProps,
-} from "@/components/composer/control";
+import type { HTMLAttributes, ReactNode } from "react";
+import type { ComposerControlProps } from "@/components/composer/control";
 
 import type { AnyTRPCRouter } from "@trpc/server";
 import type { DraftAttachment } from "@/lib/eve/draft";
@@ -34,11 +31,7 @@ interface AttachmentUploadBehavior {
 
 interface AttachmentUploadIntegration {
   useUploads: (input: AttachmentUploadInput) => AttachmentUploadBehavior;
-  controls: readonly ComposerControl[];
 }
-
-/** E supplies no-prop leaf components; app layout determines placement. */
-type InstalledLayoutComponent = ComponentType;
 
 /** E supplies optional registrations; core lifecycle runs independently. */
 type InstrumentationRegistration = (context: {
@@ -50,7 +43,6 @@ export type {
   AttachmentUploadBehavior,
   AttachmentUploadInput,
   AttachmentUploadIntegration,
-  InstalledLayoutComponent,
   InstalledRouters,
   InstrumentationRegistration,
 };

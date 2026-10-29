@@ -1,5 +1,5 @@
 "use client";
-import { PluginChatActions } from "@/components/plugin-chat-ui";
+import { ChatActions } from "@/components/chat-slots";
 import type { EveHistoryInput } from "@/lib/eve/history-input";
 
 import {
@@ -239,7 +239,7 @@ export const EveHistoryList = ({
                         onDelete={() => {
                           openDeletion(item);
                         }}
-                        pluginActions={<PluginChatActions chat={item} />}
+                        pluginActions={<ChatActions chat={item} />}
                         onPin={(id, isPinned) => {
                           pin.mutate({ id, isPinned });
                         }}

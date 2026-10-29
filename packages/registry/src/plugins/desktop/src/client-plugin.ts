@@ -1,8 +1,9 @@
-import type { ChatClientPlugin } from "@/lib/plugin-contracts";
+"use client";
+import { definePlugin } from "@/lib/ui-slots";
+import { LayoutEffects } from "@/components/layout-slots";
 import { ElectronAuthHandler } from "./auth-handler";
 
-export const desktopClient = () =>
-  ({
-    id: "desktop",
-    layout: ElectronAuthHandler,
-  }) satisfies ChatClientPlugin;
+export const desktopClient = definePlugin({
+  id: "desktop",
+  contributions: [LayoutEffects.contribute(ElectronAuthHandler)],
+});

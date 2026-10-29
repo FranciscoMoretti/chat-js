@@ -2,7 +2,7 @@
 
 import { useEveDeliveryReceipt } from "./use-eve-delivery-receipt";
 
-import { PluginSuggestions } from "@/components/plugin-chat-ui";
+import { ChatSuggestions } from "@/components/chat-slots";
 
 import { withTaskCleanup } from "@/components/task-cleanup";
 
@@ -837,7 +837,7 @@ const EveConversation = ({
                     }}
 
                     suggestions={
-                      <PluginSuggestions
+                      <ChatSuggestions
                         conversationId={conversationId}
                         events={agent.events}
                         lastMessage={lastMessage}

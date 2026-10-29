@@ -143,7 +143,7 @@ test("MCP removal retains transitive schema helpers and disconnects composer/set
   expect(result.preserved).toContain("plugins/mcp/mcp-env.ts");
   await syncPlugins(root);
   expect(await readInstalledPlugins(root)).toEqual([]);
-  for (const name of ["composer-controls", "settings-items", "routers"]) {
+  for (const name of ["chat-ui", "routers"]) {
     expect(
       // oxlint-disable-next-line no-await-in-loop -- Read each independently generated integration point.
       await readFile(

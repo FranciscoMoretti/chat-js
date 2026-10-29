@@ -13,7 +13,7 @@ Run the install command from your ChatJS app:
 bunx @chat-js/cli@latest add projects
 ```
 
-The CLI copies the plugin source, installs its dependencies, and generates the registrations. You do not manually add server and client factories to configuration arrays. Some plugins also add thin Next.js routes or EVE hooks.
+The CLI copies the plugin source, installs its dependencies, and generates the registrations. You do not manually add server factories and client declarations to configuration arrays. Some plugins also add thin Next.js routes or EVE hooks.
 
 You can select plugins during `chat-js create`. Each plugin's guide lists its setup requirements and configuration.
 
@@ -27,13 +27,13 @@ bun run db:generate
 bun run db:migrate
 ```
 
-New apps receive an initial migration for their selected plugins. Adding or syncing a plugin preserves that history and does not apply SQL. Removing source does not automatically remove stored data. Automatic plugin removal and upgrades from older ChatJS templates are not supported.
+New apps receive an initial migration for their selected plugins. Adding or syncing a plugin preserves that history and does not apply SQL. Removing source does not automatically remove stored data. Use `chat-js remove <id>` to disconnect installed plugins. Customized files require an explicit backup choice, and schema source is retained for migration generation. Automatic upgrades from older ChatJS templates are not supported.
 
 ### Configuration
 
 Installed source determines which capabilities are available. Keep runtime preferences in `chat.config.ts` and credentials in the environment variables listed by the plugin. For example, Follow-up Suggestions also needs its `enabled` option set to `true`.
 
-The CLI updates `composer-controls.ts` and `settings-items.ts` when a plugin contributes controls or settings. You can edit those lists to change their order.
+The CLI updates generated plugin lists. Edit the installed plugin components directly, or wrap them in ordinary React components. Typed slots in the app layout determine where contributions appear. `composer-controls.ts` contains app-owned tool controls, while attachment and connector slots sit beside them in the composer JSX.
 
 ## How plugins fit into your app
 

@@ -22,7 +22,7 @@ Keep server and browser import graphs separate:
 | `auth-server.ts` | `AuthenticationIntegration` | Better Auth plugins, trusted origins, auth route matching |
 | `navigation.ts` | `() => boolean` | Whether core handles modified links as app navigation |
 | `auth-form.tsx`, `sign-out.ts` | `AuthenticationUi` | Authentication form wrapper and sign-out handler, imported independently |
-| `client-plugin.ts` | `ChatClientPlugin` | Composer controls, settings, layout, uploads, model visibility, chat UI, account summary |
+| `client-plugin.ts` | `definePlugin` | Typed UI contributions, uploads, model visibility |
 
 Keep `chat.ts` and `billing.ts` free of web routers and Next.js request helpers: native EVE loads this entrypoint too.
 
@@ -112,41 +112,64 @@ Core owns durable usage evidence, per-turn rounding, `chargedCents`, and reconci
 
 The [Credits plugin](../plugins/credits) uses this contract. Native EVE imports the billing entry directly; keep routers and Next.js request helpers in the server entry. Billing installation does not backfill old usage automatically; newly reconciled receipts can still settle an existing turn's unpaid total.
 
-## Client placements
+## Client slots
 
-| Contribution | Purpose |
+Declare a client plugin once at module scope. Import typed slot components from `@/components/chat-slots`, and `definePlugin` from `@/lib/ui-slots`:
+
+```tsx
+"use client";
+
+import { ChatActions } from "@/components/chat-slots";
+import { definePlugin } from "@/lib/ui-slots";
+import { ProjectChatActions } from "./ui/chat-contributions";
+
+export const projectsClient = definePlugin({
+  id: "projects",
+  contributions: [ChatActions.contribute(ProjectChatActions)],
+});
+```
+
+The slot reference carries its prop type. A contribution with incompatible props fails type checking. The application renders `<ChatActions chat={chat} />` where those actions belong. Generated client lists contain references to installed declarations, without invoking factories or patching application JSX.
+
+| Slot | Purpose |
 | --- | --- |
-| `composerControls` | Composer controls with stable IDs |
-| `settingsItems` | Settings navigation |
-| `accountSummary` | A no-prop component beneath the signed-in user name in the sidebar |
-| `layout` | A no-prop layout component |
-| `uploads` | Attachment selection and upload behavior |
-| `useModelVisibility` | Hook returning enabled model IDs from core defaults |
-| `chat.Sidebar` | Sidebar content |
-| `chat.SidebarHeader` | Fixed sidebar menu control with server-resolved `ownerId` |
-| `chat.Actions` | Menu actions receiving `{ chat: { id, title, state, conversationId? } }` |
-| `chat.HeaderActions` | Header controls receiving the same chat context |
-| `chat.Breadcrumb` | Context receiving `{ chatId }` |
-| `chat.MessageActions` | Assistant-message actions |
-| `chat.Suggestions` | Suggestions beneath the last editable message |
+| `ComposerAttachments` | Attachment controls before app-owned tool controls |
+| `ComposerExtensions` | Additional composer controls after tool controls |
+| `SettingsLinks` | Additional settings navigation links |
+| `ModelSettingsLink` | Model settings shortcuts with `surface: "sidebar"`, `"settings"`, or `"picker"` |
+| `AccountSummary` | Content beneath the signed-in user name |
+| `SidebarSections` | Sidebar content |
+| `SidebarHeaderItems` | Fixed sidebar menu items with server-resolved `ownerId` |
+| `ChatActions` | Menu actions receiving `{ chat: { id, title, state, conversationId? } }` |
+| `ChatHeaderActions` | Header controls receiving the same chat context |
+| `ChatBreadcrumbs` | Context receiving `{ chatId }` |
+| `MessageActions` | Assistant-message actions |
+| `ChatSuggestions` | Suggestions beneath the last editable message |
+| `LayoutEffects` | No-prop global layout contributions, from `@/components/layout-slots` |
 
-Plugin components own fetching, mutations, cache invalidation, loading, errors, and dialogs. Core renders normal React components. Composer and settings order remain app-owned arrays. Only one plugin supplies uploads. A settings item with ID `models` also supplies the Models shortcut in the sidebar and the Add Models link in the picker. Removing that item hides both shortcuts.
+Plugin components own fetching, mutations, loading, errors, dialogs, and appropriate menu or sidebar markup. Edit the installed component or contribute an ordinary wrapper component to add providers, styling, or behavior. Put app-specific JSX beside slots in the layout. No string-based override record is required.
 
-Declare `client.accountSummary: true` to register a component beneath the signed-in user name. Each summary owns its queries. Set query `meta: { refreshOnTurnEnd: true }` to refresh it when a turn completes, fails, or is cancelled. With no contributions, the sidebar renders only the user name.
+`ChatPlugins` scopes installed chat contributions to the chat layout. `LayoutPlugins` renders a separate list for global layout behavior. A nested `Plugins` provider replaces the installed UI set for its descendants. Slots without contributions render nothing. Duplicate plugin IDs throw. Keep declarations and wrappers at module scope to preserve component identity.
+
+Lazy components work with `React.lazy` and normal Suspense boundaries. The declaration is imported eagerly, but a dynamic component loader runs when that component renders. Keep expensive dialog content behind its trigger. Client declarations must not import server implementations. Server-rendered children can pass through a client provider, but the slot registry itself is a client API.
+
+The descriptor's client fields still declare installation capabilities. `client.layout: true` selects the global list. Other client declarations enter the chat list. A declaration with both layout and chat UI capabilities enters both lists, so use lazy imports for its expensive chat components. Upload handling and model visibility retain their dedicated generated hooks. Runtime disable switches are not required.
+
+For account summaries, declare `client.accountSummary: true` and contribute to `AccountSummary`. Set query `meta: { refreshOnTurnEnd: true }` to refresh when a turn completes, fails, or is cancelled. With no contribution, the sidebar renders only the user name.
 
 ### Model visibility
 
-Declare `client.modelVisibility: true` in your descriptor and return `useModelVisibility` from your client factory. Sync installs one hook with the type `(defaultEnabledIds: ReadonlySet<string>) => ReadonlySet<string>`. Core calls it unconditionally from the model provider. Only one plugin can supply this contribution, so two providers fail installation before registrations change.
+Declare `client.modelVisibility: true` in your descriptor and include `useModelVisibility` in your client declaration. Sync installs one hook with the type `(defaultEnabledIds: ReadonlySet<string>) => ReadonlySet<string>`. Core calls it unconditionally from the model provider. Only one plugin can supply this contribution, so two providers fail installation before registrations change.
 
 Your hook owns fetching and applying user preferences. Return a stable set when its inputs are unchanged. Core filters its available catalog against the returned IDs, so an unknown ID cannot add a model. With no provider installed, the generated hook returns core defaults unchanged and performs no preference request. This contribution changes picker visibility, not authorization, capability checks, or guest session policy.
 
 ### Message actions
 
-The client `chat.MessageActions` placement receives `{ conversationId, messageId, disabled }`. Core renders it for editable assistant messages; each plugin owns its queries and mutations. Feedback uses a conversation-specific write with a lock and state recheck, because voting must not change the logical chat's update timestamp.
+The `MessageActions` slot receives `{ conversationId, messageId, disabled }`. Core renders it for editable assistant messages; each plugin owns its queries and mutations. Feedback uses a conversation-specific write with a lock and state recheck, because voting must not change the logical chat's update timestamp.
 
 ### Suggestions
 
-When you add `chat.Suggestions`, it receives `conversationId`, native `events`, `lastMessage?: { role, metadata?: { turnId?: string } }`, `disabled`, and `onSelect`. It renders beneath the last editable message when transcript actions are available. Handle a missing `lastMessage`, `metadata`, or `turnId` without assuming completion identity. Your plugin owns completion matching, storage reads, and polling. The callback returns the selected text to core's existing send/compare flow.
+When you contribute to `ChatSuggestions`, it receives `conversationId`, native `events`, `lastMessage?: { role, metadata?: { turnId?: string } }`, `disabled`, and `onSelect`. It renders beneath the last editable message when transcript actions are available. Handle a missing `lastMessage`, `metadata`, or `turnId` without assuming completion identity. Your plugin owns completion matching, storage reads, and polling. The callback returns the selected text to core's existing send/compare flow.
 
 Follow-up Suggestions uses native EVE hooks for generation and the per-conversation cleanup callback for session-owned records. Its claim-before-generation rule and core usage accounting survive extraction; no new event bus or generic mutation wrapper is involved.
 
@@ -156,7 +179,7 @@ Declare `authentication: { export: "desktopAuth" }` for an `AuthenticationIntegr
 
 Declare `authenticationUi: { form: "DesktopAuthForm", signOut: "signOutDesktop" }` in the descriptor. Export the form from `auth-form.tsx` and the handler from `sign-out.ts`. Sync imports them independently, so signing out does not load the login form or layout. The form receives `mode: "login" | "register"` and the normal web form as `children`. Render the children when your integration does not apply. The asynchronous sign-out handler returns `true` after handling sign-out, `false` to use core web sign-out, and rejects on failure. Core clears cached account data and navigates only after success.
 
-Declare `navigation: { export: "desktopNavigation" }` for a function exported from `navigation.ts`. Return `true` when core should handle modified internal links as normal app navigation. With no contribution, core preserves browser modifier behavior. Keep this entry independent of auth UI and client factories to avoid an import cycle through the shared link component.
+Declare `navigation: { export: "desktopNavigation" }` for a function exported from `navigation.ts`. Return `true` when core should handle modified internal links as normal app navigation. With no contribution, core preserves browser modifier behavior. Keep this entry independent of auth UI and client declarations to avoid an import cycle through the shared link component.
 
 Each of these slots accepts one provider. Without contributions, generated registrations add no auth plugins or origins, recognize no extra auth routes, render the web form unchanged, and defer to web sign-out. [Desktop](../plugins/desktop) also uses the existing layout contribution for renderer session synchronization. It introduces no plugin database schema.
 
@@ -182,7 +205,7 @@ Declare plugin schema paths in `databaseSchemas`. Drizzle composes installed sch
 
 The complete descriptor lists every installed file. Use distinctive filenames such as `project-schema.ts` to avoid registry import-rewriting ambiguity with host files.
 
-Generated modules register routers, database schemas, instrumentation, layout, uploads, account summaries, billing, and chat contributions. Edit factories and descriptors, then run sync. Verify installations both with and without the plugin. Core must not import optional plugin storage or implementation directly.
+Generated modules register routers, database schemas, instrumentation, layout, uploads, account summaries, billing, and chat contributions. Edit plugin declarations and descriptors, then run sync. Verify installations both with and without the plugin. Core must not import optional plugin storage or implementation directly.
 
 ## Signed-out chat
 

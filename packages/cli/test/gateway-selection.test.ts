@@ -1467,7 +1467,7 @@ for (const installAtCreation of [false, true]) {
       "utf-8"
     );
     const settings = await readFile(
-      nodePath.join(cwd, "settings-items.ts"),
+      nodePath.join(cwd, "components/settings/settings-nav.tsx"),
       "utf-8"
     );
     await run(cwd, ["node", cliEntry, "sync"]);
@@ -1475,7 +1475,10 @@ for (const installAtCreation of [false, true]) {
       await readFile(nodePath.join(cwd, "composer-controls.ts"), "utf-8")
     ).toBe(composer);
     expect(
-      await readFile(nodePath.join(cwd, "settings-items.ts"), "utf-8")
+      await readFile(
+        nodePath.join(cwd, "components/settings/settings-nav.tsx"),
+        "utf-8"
+      )
     ).toBe(settings);
     await run(cwd, ["bun", "run", "test:types"]);
     await writeFile(
@@ -1554,20 +1557,27 @@ requireCredentials("mcp", descriptor.envRequirements, {NODE_ENV: "test", MCP_ENC
     const computedComposer = composer
       .replace(/[=]\s*\[/u, "= Array.from([")
       .replace(/\];\s*$/u, "]);\n");
-    const computedSettings = settings
-      .replace(/[=]\s*\[/u, "= Array.from([")
-      .replace(/\];\s*$/u, "]);\n");
+    const computedSettings = settings.replace(
+      "<nav",
+      '<nav aria-label="Application settings"'
+    );
     await writeFile(
       nodePath.join(cwd, "composer-controls.ts"),
       computedComposer
     );
-    await writeFile(nodePath.join(cwd, "settings-items.ts"), computedSettings);
+    await writeFile(
+      nodePath.join(cwd, "components/settings/settings-nav.tsx"),
+      computedSettings
+    );
     await run(cwd, ["node", cliEntry, "add", "word-count", "--yes"]);
     expect(
       await readFile(nodePath.join(cwd, "composer-controls.ts"), "utf-8")
     ).toBe(computedComposer);
     expect(
-      await readFile(nodePath.join(cwd, "settings-items.ts"), "utf-8")
+      await readFile(
+        nodePath.join(cwd, "components/settings/settings-nav.tsx"),
+        "utf-8"
+      )
     ).toBe(computedSettings);
   }, 180_000);
 }

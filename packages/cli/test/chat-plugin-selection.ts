@@ -71,16 +71,7 @@ export const testChatPluginSelections = (
         "--no-documents",
         "--no-attachments",
       ]);
-      const pluginUi = {
-        "composer-controls.ts": await readFile(
-          path.join(cwd, "composer-controls.ts"),
-          "utf-8"
-        ),
-        "settings-items.ts": await readFile(
-          path.join(cwd, "settings-items.ts"),
-          "utf-8"
-        ),
-      };
+
       if (selection !== "none") {
         await run(cwd, ["node", cliEntry, "add", selection, "--yes"]);
       }
@@ -111,20 +102,16 @@ export const testChatPluginSelections = (
       expect(installedPlugins.toSorted()).toEqual(
         selection === "none" ? [] : [selection]
       );
-      const predicted = await generateInstallation(
-        {
-          gateway: "openai",
-          storage: { source: "memory", options: {} },
-          tools: [],
-          plugins: selection === "none" ? [] : [selection],
-        },
-        { pluginUi }
-      );
+      const predicted = await generateInstallation({
+        gateway: "openai",
+        storage: { source: "memory", options: {} },
+        tools: [],
+        plugins: selection === "none" ? [] : [selection],
+      });
       // Compare the shared renderer with independently packaged registry installation.
       // Targets come from manifests and the real registration generator, not a test inventory.
       const targets = new Set([
         ...pluginRegistrationTargets,
-        ...Object.keys(pluginUi),
         ...predicted.items
           .filter(
             (item) =>

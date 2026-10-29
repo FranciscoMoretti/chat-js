@@ -76,7 +76,6 @@ const verifyExcludedFiles = (
     "test-json.ts",
     "plugins/test-runtime.ts",
     "composer-controls.ts",
-    "settings-items.ts",
     "composition/custom/custom-tools.ts",
     "composition/custom/custom-ui.ts",
   ]) {

@@ -1,10 +1,10 @@
 "use client";
 
 import {
-  PluginChatBreadcrumb,
-  PluginChatActions,
-  PluginChatHeaderActions,
-} from "@/components/plugin-chat-ui";
+  ChatBreadcrumbs,
+  ChatActions,
+  ChatHeaderActions,
+} from "@/components/chat-slots";
 
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDown } from "lucide-react";
@@ -69,7 +69,7 @@ const EveChatHeader = ({
     <ChatHeaderView
       actions={
         hasMessages && (
-          <PluginChatHeaderActions
+          <ChatHeaderActions
             chat={{ id: chatId, title, conversationId, state: "bound" }}
           />
         )
@@ -77,7 +77,7 @@ const EveChatHeader = ({
       breadcrumb={
         <Breadcrumb className="ml-2 min-w-0">
           <BreadcrumbList className="flex-nowrap">
-            <PluginChatBreadcrumb chatId={chatId} />
+            <ChatBreadcrumbs chatId={chatId} />
             <BreadcrumbItem className="min-w-0">
               {draft === undefined ? (
                 <DropdownMenu>
@@ -96,7 +96,7 @@ const EveChatHeader = ({
                     <DropdownMenuGroup>
                       <ChatMenuItems
                         pluginActions={
-                          <PluginChatActions
+                          <ChatActions
                             chat={{
                               id: chatId,
                               title,

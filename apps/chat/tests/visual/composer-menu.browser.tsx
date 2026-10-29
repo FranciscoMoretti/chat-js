@@ -1,3 +1,7 @@
+import { Plugins } from "@/lib/ui-slots";
+import { attachmentUploadsClient } from "@/plugins/attachment-uploads/client-plugin";
+import { mcpClient } from "@/plugins/mcp/client-plugin";
+import { modelPreferencesClient } from "@/plugins/model-preferences/client-plugin";
 import { renderRoot, unmountRoot } from "./primitive-mount";
 import { disableAutoSnapshot, takeSnapshot } from "@uiverify/vitest";
 import React, { act, useState } from "react";
@@ -27,6 +31,7 @@ const state = vi.hoisted(() => ({
   connectors: [{ enabled: true, id: "docs", name: "Documentation" }],
   error: false,
   featuresEnabled: true,
+  connectorsInstalled: true,
   globalConnector: false,
   handleSubmit: vi.fn<() => void>(),
   history: new Array<DraftAttachment>(),
@@ -53,7 +58,6 @@ vi.mock("@/composition/generated/installed-uploads", async () => {
   };
   return {
     attachmentUploads: {
-      controls: attachmentUploads.controls,
       useUploads: useFixtureUploads,
     },
   };
@@ -267,7 +271,19 @@ const mount = async (
     );
   };
 
-  await renderRoot(root, <Fixture />);
+  const plugins = state.featuresEnabled
+    ? [
+        ...(state.uploadsInstalled ? [attachmentUploadsClient] : []),
+        ...(state.connectorsInstalled ? [mcpClient] : []),
+        modelPreferencesClient,
+      ]
+    : [];
+  await renderRoot(
+    root,
+    <Plugins plugins={plugins}>
+      <Fixture />
+    </Plugins>
+  );
   return async (): Promise<void> => {
     await unmountRoot(root);
     container.remove();
@@ -288,6 +304,7 @@ afterEach(() => {
   state.pending = false;
   state.error = false;
   state.featuresEnabled = true;
+  state.connectorsInstalled = true;
   state.globalConnector = false;
   state.connectors = [{ enabled: true, id: "docs", name: "Documentation" }];
   vi.clearAllMocks();
@@ -491,6 +508,7 @@ test("mobile camera and guest controls respect the same order; disabled composer
 });
 
 test("custom ordering and omitted MCP need no placeholder", async () => {
+  state.connectorsInstalled = false;
   composerControls.splice(
     0,
     composerControls.length,
@@ -510,12 +528,12 @@ test("custom ordering and omitted MCP need no placeholder", async () => {
         )
       )
       .toEqual([
+        "Attach files",
         "Create a video",
         "Create an image",
         "Deep Research",
         "Web Search",
         "Canvas",
-        "Attach files",
       ]);
     await takeSnapshot("composer-custom-order-without-mcp");
     await act(async () => {

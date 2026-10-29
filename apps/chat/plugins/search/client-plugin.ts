@@ -1,8 +1,9 @@
-import type { ChatClientPlugin } from "@/lib/plugin-contracts";
-import { EveSearchChats } from "./search-chats";
+"use client";
+import { definePlugin } from "@/lib/ui-slots";
+import { SidebarHeaderItems } from "@/components/chat-slots";
+import { SearchSidebarItem } from "./sidebar-item";
 
-export const searchClient = () =>
-  ({
-    id: "search",
-    chat: { SidebarHeader: EveSearchChats },
-  }) satisfies ChatClientPlugin;
+export const searchClient = definePlugin({
+  id: "search",
+  contributions: [SidebarHeaderItems.contribute(SearchSidebarItem)],
+});

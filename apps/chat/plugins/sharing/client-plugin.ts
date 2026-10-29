@@ -1,8 +1,12 @@
-import type { ChatClientPlugin } from "@/lib/plugin-contracts";
+"use client";
+import { definePlugin } from "@/lib/ui-slots";
+import { ChatActions, ChatHeaderActions } from "@/components/chat-slots";
 import { SharingActions, SharingHeaderActions } from "./ui/chat-contributions";
 
-export const sharingClient = () =>
-  ({
-    id: "sharing",
-    chat: { Actions: SharingActions, HeaderActions: SharingHeaderActions },
-  }) satisfies ChatClientPlugin;
+export const sharingClient = definePlugin({
+  id: "sharing",
+  contributions: [
+    ChatActions.contribute(SharingActions),
+    ChatHeaderActions.contribute(SharingHeaderActions),
+  ],
+});

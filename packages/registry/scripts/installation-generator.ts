@@ -36,7 +36,6 @@ import { incrementalPluginFiles } from "./demo-incremental";
 const bootstrapPaths = [
   "components.json",
   "composer-controls.ts",
-  "settings-items.ts",
   "package.json",
   "tsconfig.json",
   "app/globals.css",
@@ -134,9 +133,6 @@ const generateInstallation = async (
     projectFiles?: ReadonlyMap<string, Uint8Array>;
     changes?: readonly string[];
     previous?: Readonly<Record<string, string>>;
-    pluginUi?: Readonly<
-      Record<"composer-controls.ts" | "settings-items.ts", string>
-    >;
   }> = {}
 ): Promise<{
   files: Map<string, string>;
@@ -185,9 +181,6 @@ const generateInstallation = async (
     ],
     ["app/globals.css", encoder.encode('@import "tailwindcss";')],
     ...(options.projectFiles ?? []),
-    ...Object.entries(options.pluginUi ?? {}).map(
-      ([file, source]) => [file, encoder.encode(source)] as const
-    ),
   ]);
   const staged = await withRegistryProject(
     {
@@ -229,13 +222,9 @@ const generateInstallation = async (
         await configureInstallation(directory, providers, plan);
       }
       timings.configureMs = performance.now() - beforeConfigure;
-      const seedFiles = options.pluginUi ?? {};
       const excluded = new Set(bootstrapPaths);
       if (options.projectFiles) {
         excluded.delete(".env.example");
-      }
-      for (const file of Object.keys(seedFiles)) {
-        excluded.delete(file);
       }
       const ownedPaths = [
         ...plan.items.flatMap((item) =>
@@ -248,7 +237,6 @@ const generateInstallation = async (
             return file.target.slice(2);
           })
         ),
-        ...Object.keys(seedFiles),
         ...toolRegistrationTargets,
         ...pluginRegistrationTargets,
         ...gatewayConfigurationTargets,

@@ -41,7 +41,7 @@ const fixture = async (): Promise<string> => {
   const root = await mkdtemp(path.join(tmpdir(), "chatjs-plugin-"));
   roots.push(root);
   await Promise.all(
-    ["composer-controls.ts", "settings-items.ts", "components.json"].map(
+    ["composer-controls.ts", "components.json"].map(
       async (file): Promise<void> => {
         await cp(path.join(demo, file), path.join(root, file));
       }
@@ -118,20 +118,21 @@ test("plugin sync generates UI registrations without editing application composi
   const root = await fixture();
   await initializePluginUi(root);
   const composer = "export const composerControls = getUserControls();\n";
-  const settings = "export const settingsItems = getUserSettings();\n";
+  const settings =
+    "export const SettingsLayout = () => <nav>Application settings</nav>;\n";
   await writeFile(path.join(root, "composer-controls.ts"), composer);
-  await writeFile(path.join(root, "settings-items.ts"), settings);
+  await writeFile(path.join(root, "settings-layout.tsx"), settings);
   await install(root);
   await syncPlugins(root, { expected: ["mcp"] });
   expect(
     await readFile(
-      path.join(root, "composition/generated/installed-composer-controls.ts"),
+      path.join(root, "composition/generated/installed-chat-ui.ts"),
       "utf-8"
     )
   ).toContain("@/plugins/mcp/client-plugin");
   expect(
     await readFile(
-      path.join(root, "composition/generated/installed-settings-items.ts"),
+      path.join(root, "composition/generated/installed-chat-ui.ts"),
       "utf-8"
     )
   ).toContain("@/plugins/mcp/client-plugin");
@@ -139,7 +140,7 @@ test("plugin sync generates UI registrations without editing application composi
   expect(await readFile(path.join(root, "composer-controls.ts"), "utf-8")).toBe(
     composer
   );
-  expect(await readFile(path.join(root, "settings-items.ts"), "utf-8")).toBe(
+  expect(await readFile(path.join(root, "settings-layout.tsx"), "utf-8")).toBe(
     settings
   );
 });
@@ -333,7 +334,7 @@ test("core scaffold omits uploads; shadcn add registers uploads alongside MCP an
       expected: ["mcp", "attachment-uploads"],
     });
     const composer = await readFile(
-      path.join(root, "composition/generated/installed-composer-controls.ts"),
+      path.join(root, "composition/generated/installed-chat-ui.ts"),
       "utf-8"
     );
     expect(composer).toContain("@/plugins/attachment-uploads/client-plugin");
@@ -402,7 +403,7 @@ test("third-party plugins contribute without CLI changes or executing their serv
   expect(routers).toContain('from "@/plugins/team-notes/server-plugin"');
   expect(routers).toContain("notes: plugin0().routers.notes");
   const composer = await readFile(
-    path.join(root, "composition/generated/installed-composer-controls.ts"),
+    path.join(root, "composition/generated/installed-chat-ui.ts"),
     "utf-8"
   );
   expect(composer).toContain("teamNotesClient");
@@ -410,7 +411,7 @@ test("third-party plugins contribute without CLI changes or executing their serv
   await syncPlugins(root, {});
   expect(
     await readFile(
-      path.join(root, "composition/generated/installed-composer-controls.ts"),
+      path.join(root, "composition/generated/installed-chat-ui.ts"),
       "utf-8"
     )
   ).toBe(composer);
@@ -543,7 +544,7 @@ test.each([
         path.join(root, "composition/generated/installed-model-visibility.ts"),
         "utf-8"
       );
-      expect(visibility).toContain("plugin0().useModelVisibility");
+      expect(visibility).toContain("plugin0.useModelVisibility");
       expect(visibility).toContain("@/plugins/model-preferences/client-plugin");
     } else {
       expect(lifecycle).toContain(`@/plugins/${item.name}/chat`);
@@ -622,8 +623,8 @@ test("credits registers native billing and account UI; removing it restores opti
     );
   expect(await registration("billing")).toContain("@/plugins/credits/billing");
   expect(await registration("billing")).not.toContain("server-plugin");
-  expect(await registration("account-ui")).toContain(
-    "plugin0().accountSummary"
+  expect(await registration("chat-ui")).toContain(
+    "@/plugins/credits/client-plugin"
   );
   expect(await registration("database")).toContain(
     "plugins/credits/credits-schema"
@@ -635,7 +636,7 @@ test("credits registers native billing and account UI; removing it restores opti
   await syncPlugins(root);
   expect(await registration("billing")).toContain("Promise.resolve(true)");
   expect(await registration("billing")).not.toContain("@/plugins/");
-  expect(await registration("account-ui")).not.toContain("@/plugins/");
+  expect(await registration("chat-ui")).not.toContain("@/plugins/");
 });
 
 test.each(["usageBilling", "canSpend", "UsageBilling"])(
@@ -675,50 +676,19 @@ test.each(["usageBilling", "canSpend", "UsageBilling"])(
   }
 );
 
-test.each([true, false])(
-  "account summary registration validates optional factory contributions (provided=%s)",
-  async (provided) => {
-    const root = await fixture();
-    const directory = path.join(root, "plugins/custom-summary");
-    await mkdir(directory, { recursive: true });
-    await mkdir(path.join(root, "lib"), { recursive: true });
-    await writeFile(
-      path.join(root, "lib/react.ts"),
-      "export type ComponentType = () => unknown;"
-    );
-    await writeFile(
-      path.join(directory, "client-plugin.ts"),
-      `import type { ComponentType } from "react";
-interface ChatClientPlugin { readonly accountSummary?: ComponentType }
-export const customClient = (): ChatClientPlugin => (${provided ? "{ accountSummary: () => null }" : "{}"});`
-    );
-    await writeFile(
-      path.join(directory, "chatjs.json"),
-      JSON.stringify({
-        contractVersion: 1,
-        kind: "plugin",
-        id: "custom-summary",
-        files: ["plugins/custom-summary/client-plugin.ts"],
-        client: { export: "customClient", accountSummary: true },
-      })
-    );
-    await syncPlugins(root);
-    expect(registrationDiagnostics(root, "account-ui")).toEqual([]);
-    const result = await runRegistration(
-      root,
-      "account-ui",
-      "assert.equal(registration.installedAccountSummaries[0].Component(), null);"
-    );
-    if (provided) {
-      expect(result.exitCode).toBe(0);
-    } else {
-      expect(result.exitCode).not.toBe(0);
-      expect(result.stderr).toContain(
-        'Plugin "custom-summary" declares accountSummary but does not provide it.'
-      );
-    }
-  }
-);
+test("UI registration preserves module-scope plugin declarations without invoking factories", async () => {
+  const root = await fixture();
+  await initializePluginUi(root);
+  await install(root);
+  await syncPlugins(root);
+  const source = await readFile(
+    path.join(root, "composition/generated/installed-chat-ui.ts"),
+    "utf-8"
+  );
+  expect(source).toContain("[plugin0]");
+  expect(source).not.toContain("plugin0()");
+  expect(source).not.toContain("server-plugin");
+});
 
 test("two billing contributors fail before any registration is written", async () => {
   const root = await fixture();
@@ -947,4 +917,36 @@ test("sign-out defaults to web and stays independent of auth forms and layout", 
       "assert.equal(await registration.signOutWithPlugin(), true);"
     )
   ).toEqual({ exitCode: 0, stderr: "" });
+});
+
+test("a plugin with layout and chat UI participates in both scopes", async () => {
+  const root = await fixture();
+  await mkdir(path.join(root, "plugins/mixed"), { recursive: true });
+  await writeFile(
+    path.join(root, "plugins/mixed/client-plugin.ts"),
+    "export const mixed = { id: 'mixed', contributions: [] }; "
+  );
+  await writeFile(
+    path.join(root, "plugins/mixed/chatjs.json"),
+    JSON.stringify({
+      contractVersion: 2,
+      uiBase: "base",
+      id: "mixed",
+      kind: "plugin",
+      client: { export: "mixed", layout: true, chat: true },
+    })
+  );
+  await syncPlugins(root);
+  const sources = await Promise.all(
+    ["chat-ui", "layout"].map(
+      async (scope) =>
+        await readFile(
+          path.join(root, `composition/generated/installed-${scope}.ts`),
+          "utf-8"
+        )
+    )
+  );
+  for (const source of sources) {
+    expect(source).toContain("@/plugins/mixed/client-plugin");
+  }
 });

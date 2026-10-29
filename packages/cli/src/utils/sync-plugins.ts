@@ -119,21 +119,6 @@ export const usageBilling: UsageBilling | undefined = ${billing ? "pluginBilling
 export const canSpend: UsageBilling["canSpend"] = ${billing ? "pluginBilling.canSpend.bind(pluginBilling)" : "() => Promise.resolve(true)"};`;
 };
 
-const accountSummaryRegistration = (
-  plugins: readonly PluginDefinition[]
-): string => `${imports(plugins, "client")}
-import type { ComponentType } from "react";
-${plugins
-  .map(
-    (
-      plugin,
-      index
-    ) => `const accountSummary${index} = plugin${index}().accountSummary;
-if (!accountSummary${index}) throw new Error('Plugin "${plugin.id}" declares accountSummary but does not provide it.');`
-  )
-  .join("\n")}
-export const installedAccountSummaries: readonly { id: string; Component: ComponentType }[] = [${plugins.map((plugin, index) => `{ id: "${plugin.id}", Component: accountSummary${index} }`).join(", ")}];`;
-
 const renderPluginRegistrations = (
   plugins: readonly PluginDefinition[],
   databaseSchemas: string
@@ -149,42 +134,23 @@ const renderPluginRegistrations = (
   const modelVisibility = plugins.filter(
     (plugin) => plugin.client?.modelVisibility
   );
-  const accountUi = plugins.filter((plugin) => plugin.client?.accountSummary);
   const chat = plugins.filter((plugin) => plugin.chat);
-  const chatUi = plugins.filter((plugin) => plugin.client?.chat);
+  const chatUi = plugins.filter(
+    ({ client }) =>
+      client !== undefined &&
+      (client.layout !== true ||
+        client.chat === true ||
+        client.accountSummary === true ||
+        client.composerControls.length > 0 ||
+        client.settingsItems.length > 0)
+  );
   const signedOut = plugins.find((plugin) => plugin.signedOut);
   const profiles = plugins.filter((plugin) => plugin.sessionProfile);
   const cleanup = plugins.filter((plugin) => plugin.cleanup);
   const authentication = plugins.find((plugin) => plugin.authentication);
   const authUi = plugins.find((plugin) => plugin.authenticationUi);
   const navigation = plugins.filter((plugin) => plugin.navigation);
-  const uiList = (
-    key: "composerControls" | "settingsItems",
-    type: string,
-    module: string
-  ) => {
-    const selected = plugins.filter(
-      (plugin) => (plugin.client?.[key].length ?? 0) > 0
-    );
-    return `${imports(selected, "client")}\nimport type { ${type} } from "${module}";\nexport const ${key}: readonly ${type}[] = [${selected.map((_, index) => `...(plugin${index}().${key} ?? [])`).join(", ")}];`;
-  };
   const contents = [
-    [
-      "installed-composer-controls",
-      uiList(
-        "composerControls",
-        "ComposerControl",
-        "@/components/composer/control"
-      ),
-    ],
-    [
-      "installed-settings-items",
-      uiList(
-        "settingsItems",
-        "SettingsItem",
-        "@/components/settings/settings-item"
-      ),
-    ],
     [
       "installed-signed-out",
       `${signedOut ? `import { ${signedOut.signedOut?.export} as pluginScreen } from "@/plugins/${signedOut.id}/signed-out";` : ""}
@@ -229,10 +195,9 @@ export const signOutWithPlugin: AuthenticationUi["signOut"] = ${authUi ? "plugin
 export const handleModifiedNavigation: () => boolean = ${navigation.length > 0 ? "navigate" : "() => false"};`,
     ],
     ["installed-billing", billingRegistration(plugins)],
-    ["installed-account-ui", accountSummaryRegistration(accountUi)],
     [
       "installed-model-visibility",
-      `${imports(modelVisibility, "client")}\nimport type { ModelVisibility } from "@/lib/installation-contracts";\nexport const useModelVisibility: ModelVisibility = ${modelVisibility.length > 0 ? "plugin0().useModelVisibility" : "(defaultEnabledIds) => defaultEnabledIds"};`,
+      `${imports(modelVisibility, "client")}\nimport type { ModelVisibility } from "@/lib/installation-contracts";\nexport const useModelVisibility: ModelVisibility = ${modelVisibility.length > 0 ? "plugin0.useModelVisibility" : "(defaultEnabledIds) => defaultEnabledIds"};`,
     ],
     [
       "installed-chat",
@@ -240,7 +205,7 @@ export const handleModifiedNavigation: () => boolean = ${navigation.length > 0 ?
     ],
     [
       "installed-chat-ui",
-      `${imports(chatUi, "client")}\nimport type { ChatClientIntegration } from "@/lib/chat-plugin-contracts";\nexport const installedChatUi: readonly { id: string; chat: ChatClientIntegration }[] = [${chatUi.map((plugin, index) => `{ id: "${plugin.id}", chat: plugin${index}().chat }`).join(", ")}];`,
+      `"use client";\n${imports(chatUi, "client")}\nimport type { UiPlugin } from "@/lib/ui-slots";\nexport const installedChatPlugins: readonly UiPlugin[] = [${chatUi.map((_, index) => `plugin${index}`).join(", ")}];`,
     ],
     [
       "installed",
@@ -256,11 +221,11 @@ export const handleModifiedNavigation: () => boolean = ${navigation.length > 0 ?
     ],
     [
       "installed-layout",
-      `${imports(layout, "client")}\nimport type { InstalledLayoutComponent } from "@/lib/installation-contracts";\nexport const installedLayoutComponents: readonly { id: string; Component: InstalledLayoutComponent }[] = [${layout.map((plugin, index) => `{ id: "${plugin.id}", Component: plugin${index}().layout }`).join(", ")}];`,
+      `"use client";\n${imports(layout, "client")}\nimport type { UiPlugin } from "@/lib/ui-slots";\nexport const installedLayoutPlugins: readonly UiPlugin[] = [${layout.map((_, index) => `plugin${index}`).join(", ")}];`,
     ],
     [
       "installed-uploads",
-      `${imports(uploads, "client")}\nimport type { AttachmentUploadIntegration } from "@/lib/installation-contracts";\nexport const attachmentUploads: AttachmentUploadIntegration = ${uploads.length > 0 ? "plugin0().uploads" : "{ controls: [], useUploads: () => ({ uploadQueue: [] }) }"};`,
+      `${imports(uploads, "client")}\nimport type { AttachmentUploadIntegration } from "@/lib/installation-contracts";\nexport const attachmentUploads: AttachmentUploadIntegration = ${uploads.length > 0 ? "plugin0.uploads" : "{ useUploads: () => ({ uploadQueue: [] }) }"};`,
     ],
   ] as const;
   return new Map([
