@@ -244,8 +244,8 @@ process.env.OPENAI_API_KEY = "fixture-key";
         path.join(cwd, "plugin-lifecycle-probe.ts"),
         `
 import assert from "node:assert/strict";
-import { installedChatPlugins } from "./composition/generated/installed-chat";
-import { chatLinks } from "./lib/chat-plugins";
+import { installedChat } from "./composition/generated/installed-chat";
+import { chat } from "./integrations/chat";
 import { installedSessionProfiles } from "./composition/generated/installed-session-profiles";
 import { installedCleanupTasks } from "./composition/generated/installed-cleanup";
 import { requireSessionProfile } from "./lib/eve/session-profile";
@@ -257,12 +257,12 @@ assert.throws(() => requireAccountSession({ auth: { initiator: { authenticator: 
 for (const profile of installedSessionProfiles) {
   assert.equal(await profile.authenticate(new Request("http://localhost/eve/v1/session")), null);
 }
-import { usageBilling, canSpend } from "./composition/generated/installed-billing";
-assert.equal(usageBilling !== undefined, ${selection === "credits"});
-${selection === "none" ? 'assert.equal(await canSpend("fixture-owner"), true);' : ""}
-assert.equal(installedChatPlugins.length, ${["none", "desktop", "credits", "model-preferences", "guest-chat"].includes(selection) ? 0 : 1});
-assert.deepEqual(await chatLinks("fixture-owner", []), new Map());
-for (const plugin of installedChatPlugins) {
+import { billing } from "./integrations/billing";
+assert.equal(billing.debit !== undefined, ${selection === "credits"});
+${selection === "none" ? 'assert.equal(await billing.canSpend("fixture-owner"), true);' : ""}
+assert.equal(installedChat.length, ${["none", "desktop", "credits", "model-preferences", "guest-chat"].includes(selection) ? 0 : 1});
+assert.deepEqual(await chat.links("fixture-owner", []), new Map());
+for (const plugin of installedChat) {
   assert.equal(typeof plugin.${lifecycleMethod}, "function");
 }
 `

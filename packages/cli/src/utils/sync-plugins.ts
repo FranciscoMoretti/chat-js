@@ -115,8 +115,7 @@ const billingRegistration = (plugins: readonly PluginDefinition[]): string => {
   const billing = plugin?.billing;
   return `${billing ? `import { ${billing.export} as pluginBilling } from "@/plugins/${plugin?.id}/billing";` : ""}
 import type { UsageBilling } from "@/lib/usage-billing-contracts";
-export const usageBilling: UsageBilling | undefined = ${billing ? "pluginBilling" : "undefined"};
-export const canSpend: UsageBilling["canSpend"] = ${billing ? "pluginBilling.canSpend.bind(pluginBilling)" : "() => Promise.resolve(true)"};`;
+export const installedBilling: readonly UsageBilling[] = [${billing ? "pluginBilling" : ""}];`;
 };
 
 const renderPluginRegistrations = (
@@ -201,7 +200,7 @@ export const handleModifiedNavigation: () => boolean = ${navigation.length > 0 ?
     ],
     [
       "installed-chat",
-      `${chat.map((plugin, index) => `import { ${plugin.chat?.export} as chat${index} } from "@/plugins/${plugin.id}/chat";`).join("\n")}\nimport type { ChatServerIntegration } from "@/lib/chat-plugin-contracts";\nexport const installedChatPlugins: readonly ChatServerIntegration[] = [${chat.map((_, index) => `chat${index}`).join(", ")}];`,
+      `${chat.map((plugin, index) => `import { ${plugin.chat?.export} as chat${index} } from "@/plugins/${plugin.id}/chat";`).join("\n")}\nimport type { ChatServerIntegration } from "@/lib/chat-plugin-contracts";\nexport const installedChat: readonly ChatServerIntegration[] = [${chat.map((_, index) => `chat${index}`).join(", ")}];`,
     ],
     [
       "installed-chat-ui",

@@ -6,7 +6,7 @@ import { projectsChat as chat3 } from "@/plugins/projects/chat";
 import { searchChat as chat4 } from "@/plugins/search/chat";
 import { sharingChat as chat5 } from "@/plugins/sharing/chat";
 import type { ChatServerIntegration } from "@/lib/chat-plugin-contracts";
-export const installedChatPlugins: readonly ChatServerIntegration[] = [
+export const installedChat: readonly ChatServerIntegration[] = [
   chat0,
   chat1,
   chat2,

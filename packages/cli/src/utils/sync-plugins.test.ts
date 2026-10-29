@@ -634,7 +634,9 @@ test("credits registers native billing and account UI; removing it restores opti
   );
   await rm(path.join(root, "plugins/credits"), { recursive: true });
   await syncPlugins(root);
-  expect(await registration("billing")).toContain("Promise.resolve(true)");
+  expect(await registration("billing")).toContain(
+    "installedBilling: readonly UsageBilling[] = []"
+  );
   expect(await registration("billing")).not.toContain("@/plugins/");
   expect(await registration("chat-ui")).not.toContain("@/plugins/");
 });
@@ -670,7 +672,7 @@ test.each(["usageBilling", "canSpend", "UsageBilling"])(
       await runRegistration(
         root,
         "billing",
-        'assert.equal(await registration.canSpend("allowed"), true);\nassert.equal(await registration.canSpend("denied"), false);'
+        'assert.equal(await registration.installedBilling[0].canSpend("allowed"), true);\nassert.equal(await registration.installedBilling[0].canSpend("denied"), false);'
       )
     ).toEqual({ exitCode: 0, stderr: "" });
   }

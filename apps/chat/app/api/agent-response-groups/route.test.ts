@@ -26,7 +26,7 @@ vi.mock("@/lib/env", () => ({ env: { APP_URL: "http://localhost:3790" } }));
 vi.mock("@/lib/eve/response-group", () => ({
   createEveResponseGroup: mocks.create,
 }));
-vi.mock("@/lib/chat-plugins", () => ({
+vi.mock("@/lib/chat-after-create", () => ({
   runChatAfterCreate: mocks.afterCreate,
 }));
 vi.mock("@/lib/db/eve-response-groups", () => ({

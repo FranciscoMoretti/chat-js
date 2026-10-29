@@ -1,0 +1,125 @@
+---
+title: Customize plugin integrations
+description: Edit chat lifecycle and billing behavior while keeping plugins installable later
+---
+
+ChatJS separates installed registrations from application behavior. For chat lifecycle and billing, you own `integrations/chat.ts` and `integrations/billing.ts`. Adding, removing, or syncing plugins updates their generated inputs without rewriting these modules.
+
+Start with a scaffold that includes these integration modules. An existing app using the older generated exports needs to adopt the modules and update its consumers explicitly. Sync does not migrate arbitrary application code.
+
+## Ownership
+
+| Location | Owner | What belongs here |
+| --- | --- | --- |
+| `plugins/<id>/chat.ts`, `plugins/<id>/billing.ts` | Installed plugin source, editable in your app | Plugin implementations |
+| `composition/generated/installed-chat.ts`, `composition/generated/installed-billing.ts` | Installer | Static imports and typed adapter lists |
+| `integrations/chat.ts`, `integrations/billing.ts` | Your app | Selection, ordering, wrappers, and local adapters |
+| `lib/compose-chat.ts`, `lib/compose-billing.ts` | Your app | Shared composition rules and defaults |
+| Routes, queries, and native runtime callers | Your app | Calls to the composed integration |
+
+Keep local application modules outside `plugins/<id>/` when they should survive removal of that plugin. Generated lists do not contain callbacks, default policies, or application behavior.
+
+## Chat lifecycle
+
+The default composition is:
+
+```ts
+// integrations/chat.ts
+import { installedChat } from "@/composition/generated/installed-chat";
+import { composeChat } from "@/lib/compose-chat";
+
+export const chat = composeChat(installedChat);
+```
+
+Callers import `chat` from `@/integrations/chat`. They do not enumerate installed plugins themselves. The composed interface exposes `onCreate`, `afterCreate`, `historyFilter`, `publicReadFilter`, `links`, `onDeleteConversations`, and `onDelete`.
+
+To add app-owned behavior, put another adapter beside the installed list. For example, this adds a post-creation log:
+
+```ts
+// integrations/chat.ts
+import { installedChat } from "@/composition/generated/installed-chat";
+import type { ChatServerIntegration } from "@/lib/chat-plugin-contracts";
+import { composeChat } from "@/lib/compose-chat";
+import { createModuleLogger } from "@/lib/logger";
+
+const log = createModuleLogger("app.chat");
+const creationLog = {
+  afterCreate: ({ conversationId }) => {
+    log.info({ conversationId }, "Chat created");
+    return Promise.resolve();
+  },
+} satisfies ChatServerIntegration;
+
+export const chat = composeChat([...installedChat, creationLog]);
+```
+
+Installing a plugin later changes `installedChat`. Your local adapter remains in the composition. Put it before the spread when it should run first. Post-creation callbacks may repeat on recovery, so use an idempotent implementation when performing writes.
+
+### Composition rules
+
+| Operation | Rule |
+| --- | --- |
+| `onCreate`, `onDeleteConversations`, `onDelete` | Run sequentially in declared order using the caller's transaction. An error stops later adapters and propagates to the caller. |
+| `afterCreate` | Run sequentially. Log each failure without exposing callback payloads and continue to later adapters. |
+| `historyFilter` | Combine defined restrictions with AND. An empty list adds no restriction. |
+| `publicReadFilter` | Combine defined grants with OR. An empty list returns false. |
+| `links` | Merge results in declared order. Two adapters claiming the same chat cause an error. |
+
+Core still owns authorization, transaction creation, lifecycle locks, pagination, and fallback title settlement. Composition does not open another transaction or turn post-creation work into a durable job. Public-read grants do not grant write access.
+
+Use the supplied transaction for creation and deletion writes. Keep network calls outside those transactions. See [Plugin API](../reference/plugin-api) for each callback's timing and data contract.
+
+## Billing
+
+The default composition is:
+
+```ts
+// integrations/billing.ts
+import { installedBilling } from "@/composition/generated/installed-billing";
+import { composeBilling } from "@/lib/compose-billing";
+
+export const billing = composeBilling(installedBilling);
+```
+
+`billing.canSpend(ownerId)` checks admission. `billing.debit` is either the selected adapter's transactional debit function or `undefined`.
+
+- With no billing adapter, admission is allowed and debit is absent. Usage evidence is still recorded, but receipts are not marked charged.
+- With one adapter, calls preserve its method receiver and propagate its results and failures.
+- With multiple adapters, composition throws. Installation also rejects conflicting billing plugins before rewriting registrations.
+
+Do not replace an absent debit with a no-op function. A successful debit allows core to advance the receipt's charged amount.
+
+### Add an application spending rule
+
+Wrap the composed policy in this same file. This example restricts paid turns to an application-owned allowlist while retaining the installed adapter's balance check and debit behavior:
+
+```ts
+// integrations/billing.ts
+import { installedBilling } from "@/composition/generated/installed-billing";
+import { composeBilling } from "@/lib/compose-billing";
+
+const selected = composeBilling(installedBilling);
+const permittedOwners = new Set(["your-owner-id"]);
+
+export const billing = {
+  ...selected,
+  canSpend: async (ownerId: string) =>
+    permittedOwners.has(ownerId) && (await selected.canSpend(ownerId)),
+};
+```
+
+The wrapper continues to apply if you later install or remove the billing plugin. Replace the allowlist with your own policy when appropriate. Admission does not reserve money. Core retains usage deduplication, rounding, owner locks, and transactional settlement.
+
+To supply an entirely app-owned billing adapter, pass it to `composeBilling` instead of `installedBilling`. That is an explicit selection: future installed adapters are not used by that composition.
+
+## Installation and removal
+
+For these integrations, sync only writes the two adapter lists. It does not rewrite `integrations/` or the composition helpers. Runtime callers keep importing the same app-owned modules as the installed selection changes.
+
+Prefer importing the generated lists when your composition should follow installation automatically. If you directly import a plugin implementation to wrap it, your app now depends on that plugin. Removal detects supported static imports and requires you to resolve that dependency first. See [Create a plugin](./create-plugin) for packaging and installation metadata.
+
+Keep both integration modules safe for Next.js server code and native EVE. Do not import React, route handlers, or Next.js request helpers into them. Browser UI retains its separate [typed slot interface](../reference/plugin-api#client-slots).
+
+## Current scope
+
+This composition model currently covers chat lifecycle and billing. Authentication, uploads, model visibility, routers, schemas, and cleanup retain their existing contracts. They have not been migrated to this pattern yet.

@@ -11,11 +11,14 @@ const policy = vi.hoisted((): { current: UsageBilling | undefined } => ({
 }));
 vi.mock("./client", () => ({ db: drizzle(postgres) }));
 vi.mock("../env", () => ({ env: {} }));
-vi.mock("@/composition/generated/installed-billing", () => ({
-  get usageBilling() {
-    return policy.current;
-  },
-}));
+vi.mock("@/integrations/billing", async () => {
+  const { composeBilling } = await import("../compose-billing");
+  return {
+    get billing() {
+      return composeBilling(policy.current ? [policy.current] : []);
+    },
+  };
+});
 const { creditsBilling } = await import("@/plugins/credits/billing");
 const { recordEveUsage } = await import("./eve-billing");
 const rows = async (query: string): Promise<unknown[]> => {

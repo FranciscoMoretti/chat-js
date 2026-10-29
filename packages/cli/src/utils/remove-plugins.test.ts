@@ -15,6 +15,7 @@ import path from "node:path";
 import { projectsItem } from "../../../registry/src/plugins/projects/manifest";
 import { sharingItem } from "../../../registry/src/plugins/sharing/manifest";
 import { mcpItem } from "../../../registry/src/plugins/mcp/manifest";
+import { creditsItem } from "../../../registry/src/plugins/credits/manifest";
 import { readInstalledPlugins } from "./installed-plugins";
 import { recordInstalledSource } from "./source-receipt";
 import { removePlugins } from "./remove-plugins";
@@ -69,6 +70,53 @@ const install = async (root: string, item: typeof projectsItem) => {
   await recordInstalledSource(root, [...targets, descriptor]);
   await syncPlugins(root);
 };
+
+test("later installation, removal and sync preserve app-owned chat and billing composition", async () => {
+  const root = await fixture();
+  await mkdir(path.join(root, "integrations"));
+  const chatSource = `import { installedChat } from "@/composition/generated/installed-chat";
+import { composeChat } from "@/lib/compose-chat";
+export const chat = composeChat([...installedChat, { historyFilter: () => undefined }]);
+`;
+  const billingSource = `import { installedBilling } from "@/composition/generated/installed-billing";
+import { composeBilling } from "@/lib/compose-billing";
+const selected = composeBilling(installedBilling);
+export const billing = { ...selected, canSpend: (ownerId: string) => selected.canSpend(ownerId) };
+`;
+  await writeFile(path.join(root, "integrations/chat.ts"), chatSource);
+  await writeFile(path.join(root, "integrations/billing.ts"), billingSource);
+  await install(root, projectsItem);
+  await install(root, creditsItem);
+  await install(root, sharingItem);
+  await removePlugins(root, ["projects", "credits"]);
+  await syncPlugins(root);
+  expect(await readFile(path.join(root, "integrations/chat.ts"), "utf-8")).toBe(
+    chatSource
+  );
+  expect(
+    await readFile(path.join(root, "integrations/billing.ts"), "utf-8")
+  ).toBe(billingSource);
+  const chat = await readFile(
+    path.join(root, "composition/generated/installed-chat.ts"),
+    "utf-8"
+  );
+  expect(chat).toContain("@/plugins/sharing/chat");
+  expect(chat).not.toContain("@/plugins/projects/chat");
+  expect(
+    await readFile(
+      path.join(root, "composition/generated/installed-billing.ts"),
+      "utf-8"
+    )
+  ).toContain("installedBilling: readonly UsageBilling[] = []");
+  await install(root, projectsItem);
+  await install(root, creditsItem);
+  expect(await readFile(path.join(root, "integrations/chat.ts"), "utf-8")).toBe(
+    chatSource
+  );
+  expect(
+    await readFile(path.join(root, "integrations/billing.ts"), "utf-8")
+  ).toBe(billingSource);
+});
 
 test("Projects and Sharing can be removed and reinstalled without editing app composition or dropping schema inputs", async () => {
   const root = await fixture();

@@ -202,6 +202,7 @@ export default defineConfig({
           items: [
             "/cookbook",
             "/cookbook/create-plugin",
+            "/cookbook/customize-integrations",
             "/cookbook/resumable-streams",
             "/cookbook/stop-resumable-streams",
             "/cookbook/tool-part",

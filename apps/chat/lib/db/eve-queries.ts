@@ -3,8 +3,7 @@ import {
   projectSelectionAvailable,
 } from "@/lib/eve/project-creation";
 import { CreationRejectedError } from "@/lib/creation-rejected-error";
-import { installedChatPlugins } from "@/composition/generated/installed-chat";
-import { chatLinks } from "@/lib/chat-plugins";
+import { chat } from "@/integrations/chat";
 import { reserveConversationWorkspace } from "./eve-workspaces";
 import { eveDeletionScope } from "./eve-deletion-scope";
 import { markEveCreationFailure } from "./eve-creation-failure";
@@ -233,16 +232,14 @@ const listEveConversations = async (
             and member."ownerId" = ${ownerId}
             and member."state" in ('creating', 'bound', 'uncertain', 'deleting')
         )`,
-        ...installedChatPlugins.map((plugin) =>
-          plugin.historyFilter?.(input ?? {}, surface)
-        ),
+        chat.historyFilter(input ?? {}, surface),
         search ? ilike(title, `%${escapedSearch}%`) : undefined,
         beforeCursor
       )
     )
     .orderBy(desc(eveChat.isPinned), desc(eveChat.updatedAt), desc(eveChat.id))
     .limit(CHAT_PAGE_SIZE + NEXT_PAGE_LOOKAHEAD);
-  const links = await chatLinks(
+  const links = await chat.links(
     ownerId,
     rows.map((row) => row.id)
   );
@@ -399,7 +396,7 @@ const getEveChatIdentity = async (
   if (identity === undefined) {
     return undefined;
   }
-  const links = await chatLinks(ownerId, [identity.chatId]);
+  const links = await chat.links(ownerId, [identity.chatId]);
   return {
     ...identity,
     ...(links.get(identity.chatId) ?? {
@@ -584,15 +581,12 @@ const reserveEveConversation = async (
           "projects_unavailable"
         );
       }
-      for (const plugin of installedChatPlugins) {
-        // oxlint-disable-next-line no-await-in-loop -- Contributions participate in this transaction in deterministic order.
-        await plugin.onCreate?.({
-          tx,
-          chatId,
-          ownerId: value.ownerId,
-          projectId,
-        });
-      }
+      await chat.onCreate({
+        tx,
+        chatId,
+        ownerId: value.ownerId,
+        projectId,
+      });
     }
     return rows;
   });

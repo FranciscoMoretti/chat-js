@@ -1,7 +1,7 @@
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { after } from "next/server";
 import { env } from "@/lib/env";
-import { runChatAfterCreate } from "@/lib/chat-plugins";
+import { runChatAfterCreate } from "@/lib/chat-after-create";
 import { resolveEvePrincipal } from "@/lib/eve/principal";
 import { sameOrigin } from "@/lib/eve/request-policy";
 import { createEveResponseGroup } from "@/lib/eve/response-group";

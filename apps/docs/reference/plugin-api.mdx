@@ -5,7 +5,7 @@ description: Typed server and client contracts for optional ChatJS capabilities
 
 Plugins own optional behavior, storage, and UI. Core owns authentication, chat identity, lifecycle coordination, dispatch, and recovery. Core can name a capability such as Projects and declare its optional input fields without importing its implementation.
 
-Start with [Create a plugin](../cookbook/create-plugin) for installation and packaging. Installed source lives in `plugins/<id>/`, with thin framework adapters under `app/` and `agent/`.
+Start with [Create a plugin](../cookbook/create-plugin) for installation and packaging. Use [Customize plugin integrations](../cookbook/customize-integrations) to add app-owned chat and billing behavior that survives later installation. Installed source lives in `plugins/<id>/`, with thin framework adapters under `app/` and `agent/`.
 
 ## Entry points
 
@@ -104,7 +104,7 @@ Both callbacks run inside the core deletion transaction under its lifecycle lock
 
 ## Usage billing
 
-Declare `billing: { export: "creditsBilling" }` in the descriptor and export a `UsageBilling` object from `billing.ts`. Sync allows at most one billing contributor. The generated `installed-billing.ts` provides `canSpend(ownerId)` and an optional `usageBilling` object; without a contribution, admission resolves to `true` and core skips monetary debits.
+Declare `billing: { export: "creditsBilling" }` in the descriptor and export a `UsageBilling` object from `billing.ts`. Sync allows at most one billing contributor. The generated `installed-billing.ts` contains only the typed `installedBilling` adapter list. App-owned `integrations/billing.ts` selects the policy with `composeBilling`. Callers use `billing.canSpend(ownerId)` and the optional `billing.debit`. Without an adapter, admission resolves to `true`, debit is absent, and core leaves receipts uncharged.
 
 `canSpend(ownerId)` checks admission; it does not reserve funds. `debit(tx, { ownerId, cents })` applies a positive whole-cent debit using the supplied transaction. Core has already locked the registered owner, deduplicated evidence, and calculated the unpaid rounded turn total. A failure rolls back the receipt, debit, and settlement marker together. Do not open another transaction or call external services from `debit`.
 

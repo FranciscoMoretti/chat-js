@@ -1,13 +1,13 @@
 import { beforeEach, expect, test, vi } from "vitest";
 import type { ChatServerIntegration } from "./chat-plugin-contracts";
-import { runChatAfterCreate } from "./chat-plugins";
+import { runChatAfterCreate } from "./chat-after-create";
 
 const mocks = vi.hoisted(() => {
   const plugins: ChatServerIntegration[] = [];
   return { plugins, warn: vi.fn(), settle: vi.fn() };
 });
 vi.mock("@/composition/generated/installed-chat", () => ({
-  installedChatPlugins: mocks.plugins,
+  installedChat: mocks.plugins,
 }));
 vi.mock("./db/eve-title", () => ({ settleEveRootFallbackTitle: mocks.settle }));
 vi.mock("./logger", () => ({

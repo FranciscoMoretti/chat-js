@@ -13,7 +13,7 @@ const installed = vi.hoisted(() => {
   return { plugins };
 });
 vi.mock("@/composition/generated/installed-chat", () => ({
-  installedChatPlugins: installed.plugins,
+  installedChat: installed.plugins,
 }));
 const { getSharing, setSharing, getPublicEveConversation } =
   await import("@/plugins/sharing/queries");
