@@ -1,6 +1,6 @@
 "use client";
 import { BreadcrumbNavigationLink } from "@/components/navigation-links";
-import React, { lazy, Suspense, useState } from "react";
+import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { FolderInput } from "lucide-react";
 import { useSession } from "@/providers/session-provider";
@@ -21,10 +21,7 @@ import { SidebarProjects } from "./sidebar-projects";
 import { ProjectIcon } from "./project-icon";
 import { getProjectColorName, getProjectIconName } from "../project-icons";
 
-const EveMoveProjectDialog = lazy(async () => {
-  const dialog = await import("./eve-move-project-dialog");
-  return { default: dialog.EveMoveProjectDialog };
-});
+import { EveMoveProjectDialog } from "./eve-move-project-dialog";
 
 export const ProjectsSidebar = (): React.JSX.Element | null => {
   const { data: session } = useSession();
@@ -57,14 +54,12 @@ export const ProjectChatActions = ({
         <span>Move to project</span>
       </MoveMenuItem>
       {open && (
-        <Suspense fallback={null}>
-          <EveMoveProjectDialog
-            conversation={chat}
-            onClose={() => {
-              setOpen(false);
-            }}
-          />
-        </Suspense>
+        <EveMoveProjectDialog
+          conversation={chat}
+          onClose={() => {
+            setOpen(false);
+          }}
+        />
       )}
     </>
   );
