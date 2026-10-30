@@ -91,6 +91,21 @@ chat-js add word-count --overwrite
 chat-js sync
 ```
 
+### Manual connection when automatic registration conflicts
+
+Normal `add` maintains generated registrations in `chatjs/generated`; app-owned integration files consume those registrations and remain editable. If a legacy layout, edited index, or conflicting provider prevents automatic connection, export the source instead:
+
+```sh
+chat-js add projects --files-only
+chat-js add @acme/my-tool --files-only
+```
+
+`--files-only` writes a unique bundle in the operating system's temporary directory and prints its path. It does not install packages, change application files, write receipts, or register plugins. The bundle includes dependency source, a `manifest.json` mapping files to intended destinations and integration metadata, full upstream registry items, and a manual connection guide. Conflicting items remain separate so both implementations can be reviewed. Omit `--replace`, `--overwrite`, and `--storage-config` in this mode.
+
+This is raw registry source, not a shadcn-transformed installation: review aliases, package dependencies, styling and library adaptations before copying selected files. Keep existing `components/ui` primitives when they already meet the dependency. Connect behavior and components in app-owned composition. Review native routes, EVE hooks and database schemas separately because their placement can activate behavior. Keep descriptors out of auto-discovered `plugins/` and `tools/chatjs/` directories unless enrolling the item in `sync`; do not copy the bundle wholesale into your app. Manual copies are app-owned and are not enrolled in `status` or `remove`. Move the bundle to a durable location if you need to retain it beyond temporary-directory cleanup.
+
+After resolving the conflict, managed installation remains available by rerunning the original selection without `--files-only`. Existing source protections still apply.
+
 Tools install under `tools/chatjs`; `paths.tools` is no longer configuration. Generated server/client indexes in `chatjs/generated/` merge user-owned `custom-tools.ts` and `custom-ui.ts` from `composition/custom/`. Tool source remains yours to edit. Each tool registration can include `composer: { icon, name, shortName }` in its `chatjs.json` descriptor, where `icon` names a Lucide React icon export (including aliases). Sync validates it against the bundled Lucide catalog and rejects unknown names before changing generated files. Installed tools without optional display metadata use their tool name and a generic icon. Sync generates `chatjs/generated/composer-tools.ts` from installed descriptors; the menu and active-tool pill share this metadata independently of application-owned menu ordering. Removing a tool and syncing removes its metadata. A restored selection for an absent tool stays clearable and blocks sending until cleared or replaced. Missing descriptors and manually edited generated indexes cause an actionable error.
 
 `create --from-git` preserves the cloned repository's configuration, dependencies, and installed source. It does not contact the registry or apply plugin-selection flags. Follow the cloned repository's setup instructions; use `chat-js add` for subsequent tool installations. Fresh scaffolds assemble the selected plugins. Direct shadcn installations require `chat-js sync` afterward.
