@@ -9,6 +9,7 @@ import { afterEach, expect, test } from "bun:test";
 import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 
 import path from "node:path";
+import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 
 import ts from "typescript";
@@ -30,6 +31,11 @@ import {
 
 const roots: string[] = [];
 const demo = path.resolve(import.meta.dir, "../../../../apps/chat");
+const reactTypes = path.dirname(
+  createRequire(path.join(demo, "package.json")).resolve(
+    "@types/react/package.json"
+  )
+);
 afterEach(async (): Promise<void> => {
   await Promise.all(
     roots.splice(0).map(async (root): Promise<void> => {
@@ -59,13 +65,8 @@ const registrationDiagnostics = (root: string, name: string): string[] => {
       noEmit: true,
       paths: {
         "@/*": [`${root}/*`],
-        react: [path.resolve(demo, "../../node_modules/@types/react")],
-        "react/jsx-runtime": [
-          path.resolve(
-            demo,
-            "../../node_modules/@types/react/jsx-runtime.d.ts"
-          ),
-        ],
+        react: [reactTypes],
+        "react/jsx-runtime": [path.join(reactTypes, "jsx-runtime.d.ts")],
       },
       skipLibCheck: true,
       strict: true,
