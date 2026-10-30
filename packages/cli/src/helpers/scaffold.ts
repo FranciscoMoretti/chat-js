@@ -355,15 +355,6 @@ const normalizeElectronFiles = async (
     ],
   ]);
 
-  await replaceInFile(pathModule.join(destination, "README.md"), [
-    ["bun install", `${packageManager} install`],
-    ["bun run dev", runScript(packageManager, "dev")],
-    ["bun run generate-icons", runScript(packageManager, "generate-icons")],
-    ["bun run make:mac", runScript(packageManager, "make:mac")],
-    ["bun run make:win", runScript(packageManager, "make:win")],
-    ["bun run make:linux", runScript(packageManager, "make:linux")],
-  ]);
-
   if (packageManager === "pnpm") {
     await writePnpmWorkspaceConfig(destination, { blockExoticSubdeps: false });
   }

@@ -69,6 +69,11 @@ test.each([
       "nested/uiverify-archive/resources/asset.png",
       ".vercel/project.json",
       "guest/.vercel/output/config.json",
+      "README.md",
+      "nested/readme.md",
+      "nested/README",
+      "chatjs/README.md",
+      "lib/db/migrations/README.md",
       ...excluded,
     ];
     const retainedFiles = [
@@ -76,7 +81,6 @@ test.each([
       "nested/.env.example",
       "app/page.tsx",
       "lib/eve/message-delivery.test.ts",
-      "chatjs/README.md",
       "chatjs/generated/tools.ts",
     ];
     try {

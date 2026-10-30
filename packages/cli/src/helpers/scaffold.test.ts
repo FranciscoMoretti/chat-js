@@ -1197,11 +1197,8 @@ describe("scaffoldElectron", (): void => {
     }
     expect(packageJson.overrides?.["@better-auth/core"]).toBe("1.6.2");
     expect(
-      await readFile(
-        pathModule.join(projectDir, "electron", "README.md"),
-        "utf-8"
-      )
-    ).not.toContain("bun ");
+      existsSync(pathModule.join(projectDir, "electron", "README.md"))
+    ).toBe(false);
   });
   it("allows Electron install/build scripts for pnpm scaffolds", async (): Promise<void> => {
     process.env.npm_config_user_agent = "pnpm/10.33.1";

@@ -154,6 +154,7 @@ const EXCLUDED_SEGMENTS = new Set([
   "build",
 ]);
 const EXCLUDED_FILES = new Set([".DS_Store", "bun.lock", "bun.lockb"]);
+const README_FILE = /^readme(?:\..+)?$/iu;
 
 const shouldCopyAppFile = (relativePath: string): boolean => {
   const segments = relativePath.split(path.sep);
@@ -161,6 +162,7 @@ const shouldCopyAppFile = (relativePath: string): boolean => {
     (segment): boolean =>
       EXCLUDED_SEGMENTS.has(segment) ||
       EXCLUDED_FILES.has(segment) ||
+      README_FILE.test(segment) ||
       segment.endsWith(".tsbuildinfo") ||
       (segment.startsWith(".env") && segment !== ".env.example")
   );
@@ -171,8 +173,7 @@ const shouldCopyChatAppFile = (relativePath: string): boolean =>
   !(
     relativePath.startsWith(`chatjs${path.sep}`) &&
     relativePath !== `chatjs${path.sep}generated` &&
-    !relativePath.startsWith(`chatjs${path.sep}generated${path.sep}`) &&
-    relativePath !== `chatjs${path.sep}README.md`
+    !relativePath.startsWith(`chatjs${path.sep}generated${path.sep}`)
   ) &&
   !relativePath.endsWith("-visual-fixture.tsx") &&
   !relativePath.endsWith(".visual.css") &&
