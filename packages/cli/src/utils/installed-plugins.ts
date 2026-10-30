@@ -6,12 +6,34 @@ import {
 } from "../../../registry/metadata";
 import type { PluginDefinition } from "../../../registry/metadata";
 import { readRetainedSchemas } from "./retained-plugin-schemas";
+import { assertCurrentInstallationLayout } from "./installation-layout";
 import { preflight } from "./preflight";
 
-const readInstalledPlugins = async (
+const pluginSourceFiles = (definition: PluginDefinition): string[] => [
+  ...new Set([
+    ...definition.files,
+    ...(definition.server ? [`plugins/${definition.id}/server-plugin.ts`] : []),
+    ...(definition.chat ? [`plugins/${definition.id}/chat.ts`] : []),
+    ...(definition.billing ? [`plugins/${definition.id}/billing.ts`] : []),
+    ...(definition.signedOut
+      ? [`plugins/${definition.id}/signed-out.tsx`]
+      : []),
+    ...(definition.sessionProfile
+      ? [`plugins/${definition.id}/session-profile.ts`]
+      : []),
+    ...(definition.cleanup ? [`plugins/${definition.id}/cleanup.ts`] : []),
+    ...(definition.client ? [`plugins/${definition.id}/client-plugin.ts`] : []),
+    ...(definition.environmentValidation === undefined
+      ? []
+      : [`plugins/${definition.id}/${definition.environmentValidation}`]),
+  ]),
+];
+
+const readPluginDescriptors = async (
   cwd: string,
   replacing: ReadonlySet<string> = new Set()
 ): Promise<PluginDefinition[]> => {
+  await assertCurrentInstallationLayout(cwd);
   // Validate the parent before readdir can traverse it.
   await preflight(cwd, ["plugins/.descriptor-check"]);
   const entries = await readdir(path.join(cwd, "plugins"), {
@@ -59,23 +81,7 @@ const readInstalledPlugins = async (
             `Plugin descriptor id must match its directory: ${id}`
           );
         }
-        const files = [
-          ...new Set([
-            ...definition.files,
-            ...(definition.server ? [`plugins/${id}/server-plugin.ts`] : []),
-            ...(definition.chat ? [`plugins/${id}/chat.ts`] : []),
-            ...(definition.billing ? [`plugins/${id}/billing.ts`] : []),
-            ...(definition.signedOut ? [`plugins/${id}/signed-out.tsx`] : []),
-            ...(definition.sessionProfile
-              ? [`plugins/${id}/session-profile.ts`]
-              : []),
-            ...(definition.cleanup ? [`plugins/${id}/cleanup.ts`] : []),
-            ...(definition.client ? [`plugins/${id}/client-plugin.ts`] : []),
-            ...(definition.environmentValidation === undefined
-              ? []
-              : [`plugins/${id}/${definition.environmentValidation}`]),
-          ]),
-        ];
+        const files = pluginSourceFiles(definition);
         // Explicit framework adapters may live outside the plugin directory.
         for (const file of files) {
           if (
@@ -87,27 +93,37 @@ const readInstalledPlugins = async (
           }
         }
         await preflight(cwd, files);
-        await Promise.all(
-          files.map(async (file) => {
-            await readFile(path.join(cwd, file), "utf-8").catch(
-              (error: unknown) => {
-                if (
-                  error instanceof Error &&
-                  "code" in error &&
-                  error.code === "ENOENT"
-                ) {
-                  throw new Error(
-                    `${id} installation is incomplete. Missing: ${file}. Run chat-js add ${id}.`
-                  );
-                }
-                throw error;
-              }
-            );
-          })
-        );
         return definition;
       })
   );
   return plugins.filter((plugin) => plugin !== null);
 };
-export { readInstalledPlugins };
+const readInstalledPlugins = async (
+  cwd: string,
+  replacing: ReadonlySet<string> = new Set()
+): Promise<PluginDefinition[]> => {
+  const plugins = await readPluginDescriptors(cwd, replacing);
+  await Promise.all(
+    plugins.flatMap((plugin) =>
+      pluginSourceFiles(plugin).map(async (file) => {
+        try {
+          await readFile(path.join(cwd, file));
+        } catch (error) {
+          if (
+            error instanceof Error &&
+            "code" in error &&
+            error.code === "ENOENT"
+          ) {
+            throw new Error(
+              `${plugin.id} installation is incomplete. Missing: ${file}. Run chat-js add ${plugin.id}.`,
+              { cause: error }
+            );
+          }
+          throw error;
+        }
+      })
+    )
+  );
+  return plugins;
+};
+export { readInstalledPlugins, readPluginDescriptors, pluginSourceFiles };

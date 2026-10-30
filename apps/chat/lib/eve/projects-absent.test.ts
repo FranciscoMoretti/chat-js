@@ -1,6 +1,6 @@
 import { expect, test, vi } from "vitest";
 
-vi.mock("@/composition/generated/installed", () => ({
+vi.mock("@/chatjs/generated/installed", () => ({
   installedPlugins: new Set(),
 }));
 const { createConversationInput } = await import("./contracts");

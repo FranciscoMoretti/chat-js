@@ -35,18 +35,18 @@ const verifyPlugins = (expected: Readonly<Record<string, string>>): void => {
     "langfuse",
   ]) {
     expect(Object.hasOwn(expected, `plugins/${id}/chatjs.json`)).toBe(true);
-    expect(required(expected, "composition/generated/installed.ts")).toContain(
+    expect(required(expected, "chatjs/generated/installed.ts")).toContain(
       `"${id}"`
     );
   }
+  expect(required(expected, "chatjs/generated/installed-uploads.ts")).toContain(
+    "@/plugins/attachment-uploads/client-plugin"
+  );
+  expect(required(expected, "chatjs/generated/installed-layout.ts")).toContain(
+    "@/plugins/vercel-speed-insights/client-plugin"
+  );
   expect(
-    required(expected, "composition/generated/installed-uploads.ts")
-  ).toContain("@/plugins/attachment-uploads/client-plugin");
-  expect(
-    required(expected, "composition/generated/installed-layout.ts")
-  ).toContain("@/plugins/vercel-speed-insights/client-plugin");
-  expect(
-    required(expected, "composition/generated/installed-instrumentation.ts")
+    required(expected, "chatjs/generated/installed-instrumentation.ts")
   ).toContain("@/plugins/langfuse/server-plugin");
 };
 

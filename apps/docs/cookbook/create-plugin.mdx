@@ -64,7 +64,7 @@ The full manifest also declares `files`, `databaseSchemas`, `envRequirements`, a
 
 Use `registryDependencies` to install another item and `requiresPlugins` to require its plugin ID in the installed selection. Declare `requiresStorage: true` for plugins requiring durable file storage.
 
-Database schema paths must belong to `plugins/<id>/`. Sync composes them for Drizzle through `composition/generated/installed-database.ts`. Adding or syncing a plugin preserves migration history and does not apply SQL. Environment readers belong to the plugin and remain separate from client-visible configuration.
+Database schema paths must belong to `plugins/<id>/`. Sync composes them for Drizzle through `chatjs/generated/installed-database.ts`. Adding or syncing a plugin preserves migration history and does not apply SQL. Environment readers belong to the plugin and remain separate from client-visible configuration.
 
 ## 4. Install and verify
 

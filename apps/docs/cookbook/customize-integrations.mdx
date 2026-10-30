@@ -9,10 +9,12 @@ Start with a scaffold that includes these integration modules. An existing app u
 
 ## Ownership
 
+Run `chat-js status` to inspect the ownership and local-edit state of installed plugin files. See [status](../cli/status) for the file tree, source states, and migration from older layouts. The scaffold includes the same ownership guidance in `chatjs/README.md`.
+
 | Location | Owner | What belongs here |
 | --- | --- | --- |
 | `plugins/<id>/chat.ts`, `plugins/<id>/billing.ts` | Installed plugin source, editable in your app | Plugin implementations |
-| `composition/generated/installed-chat.ts`, `composition/generated/installed-billing.ts` | Installer | Static imports and typed adapter lists |
+| `chatjs/generated/installed-chat.ts`, `chatjs/generated/installed-billing.ts` | Installer | Static imports and typed adapter lists |
 | `integrations/chat.ts`, `integrations/billing.ts` | Your app | Selection, ordering, wrappers, and local adapters |
 | `lib/compose-chat.ts`, `lib/compose-billing.ts` | Your app | Shared composition rules and defaults |
 | Routes, queries, and native runtime callers | Your app | Calls to the composed integration |
@@ -25,7 +27,7 @@ The default composition is:
 
 ```ts
 // integrations/chat.ts
-import { installedChat } from "@/composition/generated/installed-chat";
+import { installedChat } from "@/chatjs/generated/installed-chat";
 import { composeChat } from "@/lib/compose-chat";
 
 export const chat = composeChat(installedChat);
@@ -37,7 +39,7 @@ To add app-owned behavior, put another adapter beside the installed list. For ex
 
 ```ts
 // integrations/chat.ts
-import { installedChat } from "@/composition/generated/installed-chat";
+import { installedChat } from "@/chatjs/generated/installed-chat";
 import type { ChatServerIntegration } from "@/lib/chat-plugin-contracts";
 import { composeChat } from "@/lib/compose-chat";
 import { createModuleLogger } from "@/lib/logger";
@@ -75,7 +77,7 @@ The default composition is:
 
 ```ts
 // integrations/billing.ts
-import { installedBilling } from "@/composition/generated/installed-billing";
+import { installedBilling } from "@/chatjs/generated/installed-billing";
 import { composeBilling } from "@/lib/compose-billing";
 
 export const billing = composeBilling(installedBilling);
@@ -95,7 +97,7 @@ Wrap the composed policy in this same file. This example restricts paid turns to
 
 ```ts
 // integrations/billing.ts
-import { installedBilling } from "@/composition/generated/installed-billing";
+import { installedBilling } from "@/chatjs/generated/installed-billing";
 import { composeBilling } from "@/lib/compose-billing";
 
 const selected = composeBilling(installedBilling);

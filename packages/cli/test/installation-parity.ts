@@ -26,6 +26,7 @@ const fixture: { core?: Map<string, Uint8Array> } = {};
 // are independently exercised by their existing integration checks.
 const comparable = (file: string): boolean =>
   file !== "next-env.d.ts" &&
+  !(file.startsWith("chatjs/") && !file.startsWith("chatjs/generated/")) &&
   // Companion contents/build are exercised by the packed desktop fixture.
   !file.startsWith("electron/") &&
   !/^(?:node_modules|\.git|\.chatjs|\.next|\.eve|\.output|lib\/db\/migrations)(?:\/|$)/u.test(
@@ -89,7 +90,7 @@ const normalizeFile = async (
   }
   if (
     /\.(?:[cm]?[jt]sx?|json|css)$/u.test(file) &&
-    !file.startsWith("composition/generated/")
+    !file.startsWith("chatjs/generated/")
   ) {
     const result = await format(file, source, formatConfig);
     if (result.errors.length > 0) {

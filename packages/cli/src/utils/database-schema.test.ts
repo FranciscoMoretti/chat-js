@@ -32,7 +32,7 @@ const fixture = async (): Promise<string> => {
   const root = await mkdtemp(path.join(tmpdir(), "chatjs-database-"));
   roots.push(root);
   await mkdir(path.join(root, "plugins/mcp"), { recursive: true });
-  await mkdir(path.join(root, "composition/generated"), { recursive: true });
+  await mkdir(path.join(root, "chatjs/generated"), { recursive: true });
   return root;
 };
 
@@ -64,7 +64,7 @@ test("offline baseline omits uninstalled schemas and adding MCP extends the same
     })
   );
   await writeFile(
-    path.join(root, "composition/generated/installed-database.ts"),
+    path.join(root, "chatjs/generated/installed-database.ts"),
     await planDatabaseSchemas(root, [])
   );
   await generateBaseline(root, "bun");
@@ -101,7 +101,7 @@ test("offline baseline omits uninstalled schemas and adding MCP extends the same
     JSON.stringify(mcpDefinition)
   );
   await writeFile(
-    path.join(root, "composition/generated/installed-database.ts"),
+    path.join(root, "chatjs/generated/installed-database.ts"),
     await planDatabaseSchemas(root, ["mcp"])
   );
   await runCommand("bun", ["run", "db:generate", "--name=add_mcp"], root);
@@ -131,7 +131,7 @@ test("offline baseline omits uninstalled schemas and adding MCP extends the same
     JSON.stringify(projectsDefinition)
   );
   await writeFile(
-    path.join(root, "composition/generated/installed-database.ts"),
+    path.join(root, "chatjs/generated/installed-database.ts"),
     await planDatabaseSchemas(root, ["mcp", "projects"])
   );
   await runCommand("bun", ["run", "db:generate", "--name=add_projects"], root);

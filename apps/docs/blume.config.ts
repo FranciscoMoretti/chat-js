@@ -181,7 +181,13 @@ export default defineConfig({
           label: "Platforms",
         },
         {
-          items: ["/cli", "/cli/create", "/cli/add", "/cli/config"],
+          items: [
+            "/cli",
+            "/cli/create",
+            "/cli/add",
+            "/cli/config",
+            "/cli/status",
+          ],
           label: "CLI",
         },
         {

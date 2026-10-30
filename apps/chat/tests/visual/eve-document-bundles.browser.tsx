@@ -6,8 +6,8 @@ import { expect, test, vi } from "vitest";
 import { page } from "vitest/browser";
 
 import { DocumentBody } from "@/components/eve/eve-document-body";
-import { documentUi } from "@/composition/generated/document-ui";
-import { installedToolNames } from "@/composition/generated/installed-tools";
+import { documentUi } from "@/chatjs/generated/document-ui";
+import { installedToolNames } from "@/chatjs/generated/installed-tools";
 import { EveDocumentRun } from "@/tools/chatjs/saved-code-execution/document";
 import type { DocumentAssistantRequest } from "@/lib/eve/document-contracts";
 

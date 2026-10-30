@@ -4,7 +4,7 @@ import { optionalFile } from "./installation-files";
 import { preflight } from "./preflight";
 import { pluginIdSchema } from "../../../registry/metadata";
 
-export const retainedSchemasFile = ".chatjs/retained-plugin-schemas.json";
+export const retainedSchemasFile = "chatjs/retained-plugin-schemas.json";
 const schema = z.record(z.string(), z.array(z.string()));
 
 /** Retained schema inputs are not runtime plugin registrations. */

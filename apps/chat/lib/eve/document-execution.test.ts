@@ -11,7 +11,7 @@ const mocks = vi.hoisted(() => ({
   resolve: vi.fn(),
 }));
 
-vi.mock("@/composition/generated/installed-tools", () => ({
+vi.mock("@/chatjs/generated/installed-tools", () => ({
   installedDocumentKinds: { has: (): boolean => mocks.code },
   installedToolNames: {
     has: (name: string): boolean =>
@@ -23,7 +23,7 @@ vi.mock("../db/eve-documents", () => ({ getEveDocumentRevision: mocks.read }));
 vi.mock("./conversation-scope", () => ({
   resolveEveConversationScope: mocks.resolve,
 }));
-vi.mock("../../composition/generated/code-executor", () => ({
+vi.mock("../../chatjs/generated/code-executor", () => ({
   codeExecutor: mocks.execute,
 }));
 

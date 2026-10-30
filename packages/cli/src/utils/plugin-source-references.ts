@@ -14,6 +14,8 @@ const ignored = new Set([
   ".turbo",
   "dist",
 ]);
+const installationBackup =
+  /^chatjs\/(?:removed-plugins|replaced-[^/]+)(?:\/|$)/u;
 const sourceExtension = /\.[cm]?[jt]sx?$/u;
 
 export const sourceImports = (file: string, source: string): string[] =>
@@ -87,14 +89,15 @@ export const schemaSourceClosure = async (
   return kept;
 };
 
-/** Reject dangling user imports instead of rewriting arbitrary application code. */
-export const assertNoRemovedImports = async (
+/** Find supported static references without changing source. */
+export const findSourceReferences = async (
   cwd: string,
-  removed: ReadonlySet<string>,
-  generated: ReadonlySet<string>
-): Promise<void> => {
-  const stems = new Set(
-    [...removed].map((file) => file.replace(sourceExtension, ""))
+  targets: ReadonlySet<string>,
+  excluded: ReadonlySet<string> = new Set()
+): Promise<{ file: string; target: string }[]> => {
+  const references: { file: string; target: string }[] = [];
+  const stems = new Map(
+    [...targets].map((file) => [file.replace(sourceExtension, ""), file])
   );
   const visit = async (directory: string): Promise<void> => {
     for (const entry of await readdir(path.join(cwd, directory), {
@@ -104,7 +107,7 @@ export const assertNoRemovedImports = async (
         continue;
       }
       const file = path.posix.join(directory, entry.name);
-      if (removed.has(file) || generated.has(file)) {
+      if (excluded.has(file) || installationBackup.test(file)) {
         continue;
       }
       if (entry.isSymbolicLink()) {
@@ -116,21 +119,38 @@ export const assertNoRemovedImports = async (
       } else if (sourceExtension.test(file)) {
         // oxlint-disable-next-line no-await-in-loop -- Read one source at a time to bound memory.
         const source = await readFile(path.join(cwd, file), "utf-8");
-        const dangling = sourceImports(file, source).find((imported) => {
+        for (const imported of sourceImports(file, source)) {
           const stem = imported.replace(sourceExtension, "");
-          return (
-            removed.has(imported) ||
-            stems.has(stem) ||
-            stems.has(`${stem}/index`)
-          );
-        });
-        if (dangling !== undefined) {
-          throw new Error(
-            `${file} imports removed source ${dangling}. Update this app-owned integration before removing the plugin.`
-          );
+          const target = targets.has(imported)
+            ? imported
+            : (stems.get(stem) ?? stems.get(`${stem}/index`));
+          if (target !== undefined) {
+            references.push({ file, target });
+          }
         }
       }
     }
   };
   await visit("");
+  return references.toSorted(
+    (a, b) => a.file.localeCompare(b.file) || a.target.localeCompare(b.target)
+  );
+};
+
+/** Reject dangling user imports instead of rewriting arbitrary application code. */
+export const assertNoRemovedImports = async (
+  cwd: string,
+  removed: ReadonlySet<string>,
+  generated: ReadonlySet<string>
+): Promise<void> => {
+  const [dangling] = await findSourceReferences(
+    cwd,
+    removed,
+    new Set([...removed, ...generated])
+  );
+  if (dangling !== undefined) {
+    throw new Error(
+      `${dangling.file} imports removed source ${dangling.target}. Update this app-owned integration before removing the plugin.`
+    );
+  }
 };

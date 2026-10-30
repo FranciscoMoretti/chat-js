@@ -42,7 +42,7 @@ import { AccountSummary } from "@/components/chat-slots";
 import authClient from "@/lib/auth-client";
 
 import { cn } from "@/lib/utils";
-import { signOutWithPlugin } from "@/composition/generated/installed-sign-out";
+import { signOutWithPlugin } from "@/chatjs/generated/installed-sign-out";
 
 import { signOutAndNavigate } from "@/lib/sign-out";
 

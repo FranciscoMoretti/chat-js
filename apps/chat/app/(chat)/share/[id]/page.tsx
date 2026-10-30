@@ -1,3 +1,4 @@
+// ChatJS plugin: sharing. Editable source; ownership: plugins/sharing/chatjs.json.
 import React, { Suspense } from "react";
 
 import { ChatLoadingShell } from "@/components/chat-loading-shell";

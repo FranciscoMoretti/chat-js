@@ -71,14 +71,32 @@ const install = async (root: string, item: typeof projectsItem) => {
   await syncPlugins(root);
 };
 
+test("removal checks generated files it will not regenerate and ignores inactive source backups", async () => {
+  const root = await fixture();
+  await install(root, projectsItem);
+  const source = 'export { projectsChat } from "@/plugins/projects/chat";\n';
+  const generated = path.join(root, "chatjs/generated/tools.ts");
+  await writeFile(generated, source);
+  await rejects(
+    removePlugins(root, ["projects"], { dryRun: true }),
+    /generated\/tools.ts imports removed source/u
+  );
+  await rm(generated);
+  const backup = path.join(root, "chatjs/removed-plugins/prior/source.ts");
+  await mkdir(path.dirname(backup), { recursive: true });
+  await writeFile(backup, source);
+  const plan = await removePlugins(root, ["projects"], { dryRun: true });
+  expect(plan.files).toContain("plugins/projects/chat.ts");
+});
+
 test("later installation, removal and sync preserve app-owned chat and billing composition", async () => {
   const root = await fixture();
   await mkdir(path.join(root, "integrations"));
-  const chatSource = `import { installedChat } from "@/composition/generated/installed-chat";
+  const chatSource = `import { installedChat } from "@/chatjs/generated/installed-chat";
 import { composeChat } from "@/lib/compose-chat";
 export const chat = composeChat([...installedChat, { historyFilter: () => undefined }]);
 `;
-  const billingSource = `import { installedBilling } from "@/composition/generated/installed-billing";
+  const billingSource = `import { installedBilling } from "@/chatjs/generated/installed-billing";
 import { composeBilling } from "@/lib/compose-billing";
 const selected = composeBilling(installedBilling);
 export const billing = { ...selected, canSpend: (ownerId: string) => selected.canSpend(ownerId) };
@@ -97,14 +115,14 @@ export const billing = { ...selected, canSpend: (ownerId: string) => selected.ca
     await readFile(path.join(root, "integrations/billing.ts"), "utf-8")
   ).toBe(billingSource);
   const chat = await readFile(
-    path.join(root, "composition/generated/installed-chat.ts"),
+    path.join(root, "chatjs/generated/installed-chat.ts"),
     "utf-8"
   );
   expect(chat).toContain("@/plugins/sharing/chat");
   expect(chat).not.toContain("@/plugins/projects/chat");
   expect(
     await readFile(
-      path.join(root, "composition/generated/installed-billing.ts"),
+      path.join(root, "chatjs/generated/installed-billing.ts"),
       "utf-8"
     )
   ).toContain("installedBilling: readonly UsageBilling[] = []");
@@ -130,7 +148,7 @@ test("Projects and Sharing can be removed and reinstalled without editing app co
   const file = "plugins/projects/ui/chat-contributions.tsx";
   await writeFile(path.join(root, file), customized);
   const before = await readFile(
-    path.join(root, "composition/generated/installed-chat-ui.ts"),
+    path.join(root, "chatjs/generated/installed-chat-ui.ts"),
     "utf-8"
   );
   const plan = await removePlugins(root, ["projects"], { dryRun: true });
@@ -138,7 +156,7 @@ test("Projects and Sharing can be removed and reinstalled without editing app co
   expect(plan.preserved).toEqual(["plugins/projects/db/project-schema.ts"]);
   expect(
     await readFile(
-      path.join(root, "composition/generated/installed-chat-ui.ts"),
+      path.join(root, "chatjs/generated/installed-chat-ui.ts"),
       "utf-8"
     )
   ).toBe(before);
@@ -160,13 +178,13 @@ test("Projects and Sharing can be removed and reinstalled without editing app co
   await syncPlugins(root);
   expect(
     await readFile(
-      path.join(root, "composition/generated/installed-database.ts"),
+      path.join(root, "chatjs/generated/installed-database.ts"),
       "utf-8"
     )
   ).toContain("plugins/projects/db/project-schema.ts");
   expect(
     await readFile(
-      path.join(root, "composition/generated/installed-chat-ui.ts"),
+      path.join(root, "chatjs/generated/installed-chat-ui.ts"),
       "utf-8"
     )
   ).not.toContain("plugins/projects");
@@ -195,7 +213,7 @@ test("MCP removal retains transitive schema helpers and disconnects composer/set
     expect(
       // oxlint-disable-next-line no-await-in-loop -- Read each independently generated integration point.
       await readFile(
-        path.join(root, `composition/generated/installed-${name}.ts`),
+        path.join(root, `chatjs/generated/installed-${name}.ts`),
         "utf-8"
       )
     ).not.toContain("plugins/mcp");
@@ -249,7 +267,7 @@ test("symlinked source and unsafe ownership never reach deletion", async () => {
 test("registration write failure restores moved source and previous registrations", async () => {
   const root = await fixture();
   await install(root, sharingItem);
-  const target = path.join(root, "composition/generated/installed-chat-ui.ts");
+  const target = path.join(root, "chatjs/generated/installed-chat-ui.ts");
   const before = await readFile(target, "utf-8");
   await chmod(target, 0o444);
   try {

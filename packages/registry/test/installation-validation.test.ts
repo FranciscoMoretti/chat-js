@@ -173,7 +173,7 @@ test("plugin removal and reinstall preserve a type-correct app with retained sch
     ).toEqual([]);
     expect(
       new TextDecoder().decode(
-        removed.get("composition/generated/installed-database.ts")
+        removed.get("chatjs/generated/installed-database.ts")
       )
     ).toContain("project-schema.ts");
     const pluginSources = new Map(

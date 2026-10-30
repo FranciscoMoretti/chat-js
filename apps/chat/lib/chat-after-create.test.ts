@@ -6,7 +6,7 @@ const mocks = vi.hoisted(() => {
   const plugins: ChatServerIntegration[] = [];
   return { plugins, warn: vi.fn(), settle: vi.fn() };
 });
-vi.mock("@/composition/generated/installed-chat", () => ({
+vi.mock("@/chatjs/generated/installed-chat", () => ({
   installedChat: mocks.plugins,
 }));
 vi.mock("./db/eve-title", () => ({ settleEveRootFallbackTitle: mocks.settle }));

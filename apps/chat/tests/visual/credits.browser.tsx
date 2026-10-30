@@ -18,10 +18,10 @@ vi.mock("@/plugins/credits/use-credits", () => ({
   useGetCredits: () => useContext(Balance),
 }));
 vi.mock("@/lib/auth-client", () => ({ default: {} }));
-vi.mock("@/composition/generated/installed-sign-out", () => ({
+vi.mock("@/chatjs/generated/installed-sign-out", () => ({
   signOutWithPlugin: async (): Promise<boolean> => await Promise.resolve(false),
 }));
-vi.mock("@/composition/generated/installed-navigation", () => ({
+vi.mock("@/chatjs/generated/installed-navigation", () => ({
   handleModifiedNavigation: () => false,
 }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({}) }));

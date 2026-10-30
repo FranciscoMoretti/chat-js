@@ -574,7 +574,7 @@ const installRegistryItems = async (
         "--write",
         ".",
         "package.json",
-        ".chatjs/installed-dependencies.json",
+        "chatjs/installed-dependencies.json",
       ],
       project.targetDir
     );

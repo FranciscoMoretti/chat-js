@@ -1,5 +1,5 @@
 import { config } from "@/lib/config";
-import { installedInstrumentation } from "@/composition/generated/installed-instrumentation";
+import { installedInstrumentation } from "@/chatjs/generated/installed-instrumentation";
 
 export const register = async (): Promise<void> => {
   // Start every installed registration even if another one fails (e.g. a missing exporter credential).

@@ -13,7 +13,7 @@ import { expect, it, vi } from "vitest";
 import type {
   installedDocumentKinds,
   installedToolNames,
-} from "@/composition/generated/installed-tools";
+} from "@/chatjs/generated/installed-tools";
 
 import selectionHook from "../../agent/hooks/tool-selection";
 import { frontendToolsSchema } from "../ai/types";
@@ -31,7 +31,7 @@ import {
 } from "./turn-tools";
 
 const mocks = vi.hoisted(() => ({ kinds: new Set<string>() }));
-vi.mock("@/composition/generated/installed-tools", async (importOriginal) => {
+vi.mock("@/chatjs/generated/installed-tools", async (importOriginal) => {
   const actual = await importOriginal<{
     installedDocumentKinds: typeof installedDocumentKinds;
     installedToolNames: typeof installedToolNames;

@@ -13,7 +13,7 @@ const mocks = vi.hoisted(() => ({
   remove: vi.fn(),
   resolve: vi.fn(),
 }));
-vi.mock("@/composition/generated/installed-tools", () => ({
+vi.mock("@/chatjs/generated/installed-tools", () => ({
   installedDocumentKinds: mocks.kinds,
 }));
 vi.mock("../db/eve-documents", () => ({

@@ -53,7 +53,7 @@ npx @chat-js/cli@latest add firecrawl-search --replace --yes
 npx @chat-js/cli@latest add --storage-provider s3 --storage-config '{"bucket":"uploads","region":"eu-west-1"}' --replace --yes
 ```
 
-`--yes` skips confirmation. It does not authorize replacement or overwriting edited files. ChatJS records installed-source hashes in `.chatjs/installed-source.json`. Changed or untracked source is protected until you review it and explicitly pass `--overwrite`. This includes source installed with native shadcn, which has no ChatJS baseline. Keep the baseline in version control. Unrelated tools and plugins remain installed, and previous tool-provider source is retired only after registration succeeds.
+`--yes` skips confirmation. It does not authorize replacement or overwriting edited files. ChatJS records installed-source hashes in `chatjs/installed-source.json`. Changed or untracked source is protected until you review it and explicitly pass `--overwrite`. This includes source installed with native shadcn, which has no ChatJS baseline. Keep the baseline in version control. Unrelated tools and plugins remain installed, and previous tool-provider source is retired only after registration succeeds.
 
 Gateway replacement updates the gateway discriminator and provider configuration while preserving your model IDs and runtime settings. Review those model IDs for the new gateway and run `bun run setup` and `bun run fetch:models`.
 

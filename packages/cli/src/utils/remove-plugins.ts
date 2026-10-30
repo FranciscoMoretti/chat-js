@@ -122,7 +122,7 @@ export const removePlugins = async (
       `Modified or untracked plugin source:\n${plan.modified.join("\n")}\nReview with --dry-run, then use --backup to preserve these files outside active source. Nothing was removed.`
     );
   }
-  const backup = `.chatjs/removed-plugins/${randomUUID()}`;
+  const backup = `chatjs/removed-plugins/${randomUUID()}`;
   const updates = [...plan.registrations.keys()];
   await preflight(cwd, [
     ...updates,

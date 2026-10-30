@@ -15,7 +15,7 @@ type ReadonlyNative<Value> = Value extends (
 
 const RECEIPT_INDENTATION_SPACES = 2;
 const SOURCE_READ_CONCURRENCY = 4;
-const receiptFile = ".chatjs/installed-source.json";
+const receiptFile = "chatjs/installed-source.json";
 const receiptSchema = z.record(z.string(), z.string());
 const hash = (content: ReadonlyNative<Buffer>): string =>
   createHash("sha256").update(content).digest("hex");
@@ -78,7 +78,7 @@ const recordInstalledSource = async (
       receipt[target] = digest;
     }
   }
-  await mkdir(path.join(cwd, ".chatjs"), { recursive: true });
+  await mkdir(path.join(cwd, "chatjs"), { recursive: true });
   await writeFile(
     path.join(cwd, receiptFile),
     `${JSON.stringify(receipt, null, RECEIPT_INDENTATION_SPACES)}\n`

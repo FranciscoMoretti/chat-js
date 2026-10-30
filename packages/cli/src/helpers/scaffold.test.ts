@@ -687,13 +687,13 @@ describe("scaffoldFromTemplate", (): void => {
     ).toBe(false);
     expect(
       await readFile(
-        pathModule.join(destination, "composition", "generated", "tools.ts"),
+        pathModule.join(destination, "chatjs", "generated", "tools.ts"),
         "utf-8"
       )
     ).not.toContain("getWeather");
     expect(
       await readFile(
-        pathModule.join(destination, "composition", "generated", "ui.ts"),
+        pathModule.join(destination, "chatjs", "generated", "ui.ts"),
         "utf-8"
       )
     ).not.toContain("GetWeatherRenderer");

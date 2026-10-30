@@ -25,7 +25,7 @@ const mocks = vi.hoisted(() => {
     tools,
   };
 });
-vi.mock("@/composition/generated/installed-tools", () => ({
+vi.mock("@/chatjs/generated/installed-tools", () => ({
   installedDocumentKinds: {
     has: (kind: string): boolean => kind === "text" && mocks.text,
     get size() {
@@ -37,7 +37,7 @@ vi.mock("@/composition/generated/installed-tools", () => ({
   },
   installedToolNames: { has: (): boolean => mocks.research },
 }));
-vi.mock("../../composition/generated/providers", () => ({
+vi.mock("../../chatjs/generated/providers", () => ({
   providers: mocks.tools,
 }));
 beforeEach(() => {

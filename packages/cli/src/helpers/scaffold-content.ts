@@ -167,6 +167,12 @@ const shouldCopyAppFile = (relativePath: string): boolean => {
 
 const shouldCopyChatAppFile = (relativePath: string): boolean =>
   shouldCopyAppFile(relativePath) &&
+  !(
+    relativePath.startsWith(`chatjs${path.sep}`) &&
+    relativePath !== `chatjs${path.sep}generated` &&
+    !relativePath.startsWith(`chatjs${path.sep}generated${path.sep}`) &&
+    relativePath !== `chatjs${path.sep}README.md`
+  ) &&
   !relativePath.endsWith("-visual-fixture.tsx") &&
   !relativePath.endsWith(".visual.css") &&
   !isRepositoryOnlyFile(relativePath);

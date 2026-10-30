@@ -42,7 +42,7 @@ Deletion removes the document from the current conversation. Existing history sn
 | `tools/chatjs/<id>/tool.ts` | Editable server implementation |
 | `tools/chatjs/<id>/renderer.tsx` | Editable client renderer |
 | `tools/chatjs/<id>/chatjs.json` | Installed registration and environment descriptor |
-| `composition/generated/tools.ts`, `ui.ts` | Generated registrations |
+| `chatjs/generated/tools.ts`, `ui.ts` | Generated registrations |
 | `composition/custom/custom-tools.ts`, `custom-ui.ts` | Your custom registrations |
 
 Keep manual registrations in the custom modules. Sync rejects duplicate installed descriptor keys and edited generated indexes. Generated indexes detect collisions with custom registrations when loaded. Sync also refuses to remove a previously registered tool just because its descriptor disappeared. Restore the descriptor before syncing.

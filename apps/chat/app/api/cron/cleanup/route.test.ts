@@ -40,7 +40,7 @@ vi.mock("@/lib/eve/cleanup-orphaned-files", () => ({
   cleanupEveOrphanedFiles: mocks.cleanupEve,
 }));
 
-vi.mock("@/composition/generated/installed-cleanup", () => ({
+vi.mock("@/chatjs/generated/installed-cleanup", () => ({
   installedCleanupTasks: [{ id: "example", run: mocks.cleanupRuntimeGuests }],
 }));
 

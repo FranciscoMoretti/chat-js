@@ -1,7 +1,7 @@
 import { isAccountSession } from "@/lib/eve/session-identity";
 import type { ToolContext } from "eve/tools";
 
-import { installedDocumentKinds } from "@/composition/generated/installed-tools";
+import { installedDocumentKinds } from "@/chatjs/generated/installed-tools";
 
 const EMPTY_DOCUMENT_KIND_COUNT = 0;
 

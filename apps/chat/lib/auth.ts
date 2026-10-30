@@ -10,7 +10,7 @@ import { nextCookies } from "better-auth/next-js";
 import { config } from "./config";
 import { db } from "./db/client";
 import { schema } from "./db/schema";
-import { installedAuth } from "@/composition/generated/installed-auth";
+import { installedAuth } from "@/chatjs/generated/installed-auth";
 import { getBaseUrl } from "./url";
 
 let baseUrl = env.APP_URL;

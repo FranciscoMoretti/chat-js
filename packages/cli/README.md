@@ -91,11 +91,11 @@ chat-js add word-count --overwrite
 chat-js sync
 ```
 
-Tools install under `tools/chatjs`; `paths.tools` is no longer configuration. Generated server/client indexes in `composition/generated/` merge user-owned `custom-tools.ts` and `custom-ui.ts` from `composition/custom/`. Tool source remains yours to edit. Each tool registration can include `composer: { icon, name, shortName }` in its `chatjs.json` descriptor, where `icon` names a Lucide React icon export (including aliases). Sync validates it against the bundled Lucide catalog and rejects unknown names before changing generated files. Installed tools without optional display metadata use their tool name and a generic icon. Sync generates `composition/generated/composer-tools.ts` from installed descriptors; the menu and active-tool pill share this metadata independently of application-owned menu ordering. Removing a tool and syncing removes its metadata. A restored selection for an absent tool stays clearable and blocks sending until cleared or replaced. Missing descriptors and manually edited generated indexes cause an actionable error.
+Tools install under `tools/chatjs`; `paths.tools` is no longer configuration. Generated server/client indexes in `chatjs/generated/` merge user-owned `custom-tools.ts` and `custom-ui.ts` from `composition/custom/`. Tool source remains yours to edit. Each tool registration can include `composer: { icon, name, shortName }` in its `chatjs.json` descriptor, where `icon` names a Lucide React icon export (including aliases). Sync validates it against the bundled Lucide catalog and rejects unknown names before changing generated files. Installed tools without optional display metadata use their tool name and a generic icon. Sync generates `chatjs/generated/composer-tools.ts` from installed descriptors; the menu and active-tool pill share this metadata independently of application-owned menu ordering. Removing a tool and syncing removes its metadata. A restored selection for an absent tool stays clearable and blocks sending until cleared or replaced. Missing descriptors and manually edited generated indexes cause an actionable error.
 
 `create --from-git` preserves the cloned repository's configuration, dependencies, and installed source. It does not contact the registry or apply plugin-selection flags. Follow the cloned repository's setup instructions; use `chat-js add` for subsequent tool installations. Fresh scaffolds assemble the selected plugins. Direct shadcn installations require `chat-js sync` afterward.
 
-Older apps using `features/` descriptors or generated/custom registrations under `tools/chatjs/` must migrate before running `add` or `sync`. The CLI detects this layout and stops before writing. Use the current template to move implementation/descriptors into `plugins/<id>`, generated registrations into `composition/generated`, and custom registrations into `composition/custom`. Update imports and adopt the plugin descriptor plus server/client factory contract, then remove the old registration files.
+Older apps using `features/` descriptors or generated/custom registrations under `tools/chatjs/` must migrate before running `add` or `sync`. The CLI detects this layout and stops before writing. Use the current template to move implementation/descriptors into `plugins/<id>`, generated registrations into `chatjs/generated`, and custom registrations into `composition/custom`. Update imports and adopt the plugin descriptor plus server/client factory contract, then remove the old registration files.
 
 ## MCP and composer controls
 
@@ -109,7 +109,7 @@ Edit installed components directly or contribute normal React wrappers. Keep dec
 
 Older apps need to adopt the current provider and slot composition explicitly. The CLI preserves existing customization and does not migrate arbitrary source expressions.
 
-`composition/generated/installed-routers.ts` and `composition/generated/installed.ts` are generated from installed plugin descriptors. Keep application-specific routers in the main tRPC composition. Bundle and dependency optimization are separate from this source-installation boundary.
+`chatjs/generated/installed-routers.ts` and `chatjs/generated/installed.ts` are generated from installed plugin descriptors. Keep application-specific routers in the main tRPC composition. Bundle and dependency optimization are separate from this source-installation boundary.
 
 ## Removing plugins
 
@@ -119,8 +119,8 @@ chat-js remove projects sharing
 chat-js remove projects --backup
 ```
 
-Removal plans the complete change before writing: plugin source, Next/EVE adapters, and generated registrations. Required plugins and dangling static imports from app-owned source block removal. Modified or untracked source requires `--backup`, which retains removed files as `.bak` files under `.chatjs/removed-plugins/<id>/`. `--yes` skips the prompt but never bypasses source protection. Reinstall using `chat-js add`, then restore selected customizations from the backup.
+Removal plans the complete change before writing: plugin source, Next/EVE adapters, and generated registrations. Required plugins and dangling static imports from app-owned source block removal. Modified or untracked source requires `--backup`, which retains removed files as `.bak` files under `chatjs/removed-plugins/<id>/`. `--yes` skips the prompt but never bypasses source protection. Reinstall using `chat-js add`, then restore selected customizations from the backup.
 
-Database schema files and their plugin-local dependencies stay at their original paths. `.chatjs/retained-plugin-schemas.json` keeps them in Drizzle's schema inputs after runtime registration is removed. Removing plugin code does not delete database data or generate a destructive migration. Review any later schema retirement separately. Shared UI primitives, package dependencies, environment values, and migration history are retained.
+Database schema files and their plugin-local dependencies stay at their original paths. `chatjs/retained-plugin-schemas.json` keeps them in Drizzle's schema inputs after runtime registration is removed. Removing plugin code does not delete database data or generate a destructive migration. Review any later schema retirement separately. Shared UI primitives, package dependencies, environment values, and migration history are retained.
 
 Source installed directly through shadcn has no ChatJS source receipt, so removal requires `--backup`. Import checks cover relative and `@/` static imports, re-exports and literal dynamic imports. Review integrations using computed imports or other custom aliases yourself.

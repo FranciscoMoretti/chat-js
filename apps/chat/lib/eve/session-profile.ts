@@ -1,4 +1,4 @@
-import { installedSessionProfiles } from "@/composition/generated/installed-session-profiles";
+import { installedSessionProfiles } from "@/chatjs/generated/installed-session-profiles";
 import type { SessionProfile } from "@/lib/session-profile-contracts";
 
 /** Resolve only persisted initiator identity; unknown or removed profiles fail closed. */

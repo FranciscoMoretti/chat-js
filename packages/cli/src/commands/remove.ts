@@ -13,7 +13,7 @@ export const remove = new Command("remove")
   .option("--dry-run", "show removal and retained files without writing", false)
   .option(
     "--backup",
-    "preserve removed source, including customizations, under .chatjs",
+    "preserve removed source, including customizations, under chatjs/removed-plugins",
     false
   )
   .option(

@@ -95,7 +95,7 @@ const installPlan = async (
   const rollbackTargets = [
     "package.json",
     ".env.example",
-    ".chatjs/installed-dependencies.json",
+    "chatjs/installed-dependencies.json",
     "bun.lock",
     "bun.lockb",
     "package-lock.json",
@@ -170,14 +170,14 @@ const installPlan = async (
   }
   const updateDependencies = await prepareDependencyUpdate(cwd, plan);
   const staged: { readonly from: string; readonly to: string }[] = [];
-  await mkdir(path.join(cwd, ".chatjs"), { recursive: true });
+  await mkdir(path.join(cwd, "chatjs"), { recursive: true });
   try {
     await installItems(plan.sources, cwd, overwrite);
     for (const { previous } of plan.replacements) {
       const from = path.join(cwd, "tools/chatjs", previous.id);
       const to = path.join(
         cwd,
-        ".chatjs",
+        "chatjs",
         `replaced-${previous.id}-${randomUUID()}`
       );
       // oxlint-disable-next-line no-await-in-loop -- Record each completed rename before starting the next; rollback restores exactly staged providers and must not race an outstanding rename after failure.
@@ -222,7 +222,7 @@ const installPlan = async (
       }
     );
     throw new Error(
-      `Installation did not complete. ${restorationErrors.length > NO_RESTORATION_ERRORS ? `Source restoration also failed: ${restorationErrors.join("; ")}. Preserve .chatjs/replaced-* backups and restore source manually;` : "Previous provider source is preserved;"} newly installed source/dependencies may remain. Fix the reported problem and retry the same add command with --overwrite after reviewing partial source, or run chat-js sync after manual source integration. ${error instanceof Error ? error.message : String(error)}`,
+      `Installation did not complete. ${restorationErrors.length > NO_RESTORATION_ERRORS ? `Source restoration also failed: ${restorationErrors.join("; ")}. Preserve chatjs/replaced-* backups and restore source manually;` : "Previous provider source is preserved;"} newly installed source/dependencies may remain. Fix the reported problem and retry the same add command with --overwrite after reviewing partial source, or run chat-js sync after manual source integration. ${error instanceof Error ? error.message : String(error)}`,
       { cause: error }
     );
   }

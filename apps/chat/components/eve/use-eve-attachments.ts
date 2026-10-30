@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
 
-import { attachmentUploads } from "@/composition/generated/installed-uploads";
+import { attachmentUploads } from "@/chatjs/generated/installed-uploads";
 import type { DraftAttachment } from "@/lib/eve/draft";
 
 export const useEveAttachments = (state?: {

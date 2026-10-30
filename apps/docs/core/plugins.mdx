@@ -42,7 +42,7 @@ The CLI updates generated plugin lists. Edit the installed plugin components dir
 | `plugins/<id>/` | Read and customize the installed implementation |
 | `plugins/<id>/chatjs.json` | Declare installed files and contributions |
 | `app/` and `agent/` adapters | Register routes, hooks, and instructions in their framework locations |
-| `composition/generated/` | Inspect generated registrations without editing them |
+| `chatjs/generated/` | Inspect generated registrations without editing them |
 
 Plugins can provide web server contributions, browser UI, and chat lifecycle callbacks. These use separate entrypoints so browser bundles do not load credentials and native EVE does not load Next.js request helpers. See the [Plugin API](../reference/plugin-api) for the contracts.
 

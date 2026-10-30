@@ -44,13 +44,13 @@ Session identity (`lib/eve/session-identity.ts`) is a core contract. MCP and res
 
 ## Plugin database schemas
 
-A plugin may declare `databaseSchemas` in its `chatjs.json`, using app-relative TypeScript paths beneath `plugins/<id>/`. Sync validates the selected descriptors and files, then generates `composition/generated/installed-database.ts`. Drizzle consumes that list alongside `lib/db/schema.ts`. This is composition metadata, not a barrel that core runtime modules import. MCP contributes `plugins/mcp/db/mcp-schema.ts` and consumes the core user table for its foreign key.
+A plugin may declare `databaseSchemas` in its `chatjs.json`, using app-relative TypeScript paths beneath `plugins/<id>/`. Sync validates the selected descriptors and files, then generates `chatjs/generated/installed-database.ts`. Drizzle consumes that list alongside `lib/db/schema.ts`. This is composition metadata, not a barrel that core runtime modules import. MCP contributes `plugins/mcp/db/mcp-schema.ts` and consumes the core user table for its foreign key.
 
 Fresh scaffolds exclude the demo's historical migrations. After installing dependencies, create runs the offline `db:generate` script to generate the selected schema's initial migration. Only create generates a baseline, and it refuses a nonempty migration directory. Add and sync preserve the app's migration history. Schema generation and applying migrations remain separate actions. ChatJS supports new installations, without migration support for older template versions.
 
 ## Tool configuration
 
-Tools can declare `config: { key }` and export `configSchema` from their own `configuration-schema.ts`. Sync generates `composition/generated/installed-config.ts` from installed descriptors, rejecting duplicate or reserved keys. The core composes those schemas under `ai.tools`, deriving both input and output types. The editable interface remains `chat.config.ts`. Unknown tool keys are rejected at the type and runtime boundaries.
+Tools can declare `config: { key }` and export `configSchema` from their own `configuration-schema.ts`. Sync generates `chatjs/generated/installed-config.ts` from installed descriptors, rejecting duplicate or reserved keys. The core composes those schemas under `ai.tools`, deriving both input and output types. The editable interface remains `chat.config.ts`. Unknown tool keys are rejected at the type and runtime boundaries.
 
 Gateways supply `roles.smart`, `roles.balanced`, `roles.fast`, and optional `roles.image`/`roles.video`. Tool schemas own their defaults and choose from these roles through the pure `lib/config-models.ts` core contract. They must not import runtime configuration or credentials. Document assistant actions similarly belong to document bundles and enter core through a generated registration. Follow-up suggestions and attachment limits remain core because core runtime code consumes them independently of installable tools.
 
@@ -60,7 +60,7 @@ Plugins replace the former installable feature category. Their open ID contract 
 
 MCP and attachment uploads keep manifests beside `src/` and `adapters/`. All plugin runtime source installs under `plugins/<id>/`; Next and EVE adapters retain explicit ownership despite their framework-required locations. Plugin entrypoints use `server-plugin.ts` and `client-plugin.ts` to avoid basename collisions with host modules during shadcn installation.
 
-Generated tool and plugin registrations live under `composition/generated/`. Editable custom tool and renderer registrations live under `composition/custom/`. `composer-controls.ts`, app layout JSX, and `chat.config.ts` remain app-owned. Adding a plugin with existing contribution kinds requires no CLI whitelist change. New contribution kinds require an explicit host contract and generator support.
+Generated tool and plugin registrations live under `chatjs/generated/`. Editable custom tool and renderer registrations live under `composition/custom/`. `composer-controls.ts`, app layout JSX, and `chat.config.ts` remain app-owned. Adding a plugin with existing contribution kinds requires no CLI whitelist change. New contribution kinds require an explicit host contract and generator support.
 
 UI contributions use `definePlugin` and typed slot references from `lib/ui-slots.tsx` and `components/chat-slots.tsx`. The generated chat and layout lists import module-scope plugin declarations. App-owned layouts place slot components beside ordinary JSX. Composer attachment and extension slots surround app-owned tool controls. Plugin components and wrappers remain editable source, with normal dynamic imports and Suspense for deferred UI. Installation and synchronization do not patch these files. Global layout plugins use their own list so authentication routes do not import chat plugins.
 

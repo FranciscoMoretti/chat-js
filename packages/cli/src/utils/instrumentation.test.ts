@@ -39,7 +39,7 @@ for (const runtime of ["nodejs", "edge"]) {
         exports,
         process: { env: { NEXT_RUNTIME: runtime } },
         require: (name: string) => {
-          if (name === "@/composition/generated/installed-instrumentation") {
+          if (name === "@/chatjs/generated/installed-instrumentation") {
             return { installedInstrumentation: registrations };
           }
           if (name === "@/lib/config") {

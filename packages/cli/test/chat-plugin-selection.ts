@@ -184,7 +184,7 @@ export const testChatPluginSelections = (
         ).toBe(true);
         expect(
           await readFile(
-            path.join(created, "composition/generated/installed-auth.ts"),
+            path.join(created, "chatjs/generated/installed-auth.ts"),
             "utf-8"
           )
         ).toContain("@/plugins/desktop/auth-server");
@@ -244,10 +244,10 @@ process.env.OPENAI_API_KEY = "fixture-key";
         path.join(cwd, "plugin-lifecycle-probe.ts"),
         `
 import assert from "node:assert/strict";
-import { installedChat } from "./composition/generated/installed-chat";
+import { installedChat } from "./chatjs/generated/installed-chat";
 import { chat } from "./integrations/chat";
-import { installedSessionProfiles } from "./composition/generated/installed-session-profiles";
-import { installedCleanupTasks } from "./composition/generated/installed-cleanup";
+import { installedSessionProfiles } from "./chatjs/generated/installed-session-profiles";
+import { installedCleanupTasks } from "./chatjs/generated/installed-cleanup";
 import { requireSessionProfile } from "./lib/eve/session-profile";
 import { requireAccountSession } from "./lib/eve/session-identity";
 assert.equal(installedSessionProfiles.length, ${selection === "guest-chat" ? 1 : 0});

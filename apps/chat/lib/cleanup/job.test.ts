@@ -8,7 +8,7 @@ const tasks = vi.hoisted(() => ({
 vi.mock("@/lib/eve/cleanup-orphaned-files", () => ({
   cleanupEveOrphanedFiles: tasks.attachments,
 }));
-vi.mock("@/composition/generated/installed-cleanup", () => ({
+vi.mock("@/chatjs/generated/installed-cleanup", () => ({
   installedCleanupTasks: [{ id: "example", run: tasks.runtime }],
 }));
 beforeEach(() => {

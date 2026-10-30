@@ -334,7 +334,7 @@ export const add = new Command("add")
                   "oxfmt",
                   "--write",
                   "package.json",
-                  ".chatjs/installed-dependencies.json",
+                  "chatjs/installed-dependencies.json",
                   ...(selectedSandbox ? ["lib/sandbox/options.ts"] : []),
                 ],
                 cwd

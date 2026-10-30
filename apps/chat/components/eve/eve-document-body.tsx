@@ -3,7 +3,7 @@
 import React from "react";
 
 import type { DocumentBodyProps } from "@/lib/eve/document-ui";
-import { documentUi } from "@/composition/generated/document-ui";
+import { documentUi } from "@/chatjs/generated/document-ui";
 
 export const DocumentBody = ({
   kind,

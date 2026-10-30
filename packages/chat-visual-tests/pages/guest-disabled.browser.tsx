@@ -5,7 +5,7 @@ import { EveChatPage } from "@/components/eve/eve-chat-page";
 import { route } from "./route";
 import { renderRoute } from "./render";
 
-vi.mock("@/composition/generated/installed-signed-out", () => ({
+vi.mock("@/chatjs/generated/installed-signed-out", () => ({
   SignedOutScreen: undefined,
 }));
 
