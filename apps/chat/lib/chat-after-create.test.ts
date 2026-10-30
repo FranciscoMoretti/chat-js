@@ -1,5 +1,6 @@
 import { beforeEach, expect, test, vi } from "vitest";
 import type { ChatServerIntegration } from "./chat-plugin-contracts";
+import { chat } from "@/integrations/chat";
 import { runChatAfterCreate } from "./chat-after-create";
 
 const mocks = vi.hoisted(() => {
@@ -50,4 +51,24 @@ test("one failed contribution does not prevent the remaining contributions or ex
     { errorName: "Error" },
     "Chat afterCreate contribution failed"
   );
+});
+
+test("app-owned afterCreate failure still settles the fallback without exposing the message", async () => {
+  const afterCreate = vi
+    .spyOn(chat, "afterCreate")
+    .mockRejectedValueOnce(new Error(context.message));
+  try {
+    await expect(runChatAfterCreate(context)).resolves.toBeUndefined();
+    expect(mocks.settle).toHaveBeenCalledWith(
+      "owner",
+      "bound",
+      "Private message"
+    );
+    expect(mocks.warn).toHaveBeenCalledWith(
+      { errorName: "Error" },
+      "Chat afterCreate failed"
+    );
+  } finally {
+    afterCreate.mockRestore();
+  }
 });

@@ -54,9 +54,19 @@ const registrationDiagnostics = (root: string, name: string): string[] => {
     rootNames: [path.join(root, `chatjs/generated/installed-${name}.ts`)],
     options: {
       module: ts.ModuleKind.ESNext,
+      jsx: ts.JsxEmit.ReactJSX,
       moduleResolution: ts.ModuleResolutionKind.Bundler,
       noEmit: true,
-      paths: { "@/*": [`${root}/*`], react: [`${root}/lib/react.ts`] },
+      paths: {
+        "@/*": [`${root}/*`],
+        react: [path.resolve(demo, "../../node_modules/@types/react")],
+        "react/jsx-runtime": [
+          path.resolve(
+            demo,
+            "../../node_modules/@types/react/jsx-runtime.d.ts"
+          ),
+        ],
+      },
       skipLibCheck: true,
       strict: true,
       target: ts.ScriptTarget.ESNext,
@@ -385,7 +395,7 @@ test("third-party plugins contribute without CLI changes or executing their serv
   );
   await writeFile(
     path.join(directory, "client-plugin.ts"),
-    "export const teamNotesClient = () => ({ id: 'team-notes', composerControls: [], settingsItems: [] });"
+    'import { definePlugin } from "@/lib/ui-slots"; export const teamNotesClient = definePlugin({ id: "team-notes", slots: [] });'
   );
   await syncPlugins(root, { expected: ["team-notes"] });
   const routers = await readFile(
@@ -398,6 +408,12 @@ test("third-party plugins contribute without CLI changes or executing their serv
     path.join(root, "chatjs/generated/installed-chat-ui.ts"),
     "utf-8"
   );
+  await mkdir(path.join(root, "lib"), { recursive: true });
+  await cp(
+    path.join(demo, "lib/ui-slots.tsx"),
+    path.join(root, "lib/ui-slots.tsx")
+  );
+  expect(registrationDiagnostics(root, "chat-ui")).toEqual([]);
   expect(composer).toContain("teamNotesClient");
   expect(composer).not.toContain("/server");
   await syncPlugins(root, {});

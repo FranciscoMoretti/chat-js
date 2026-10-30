@@ -8,7 +8,14 @@ const log = createModuleLogger("chat.after-create");
 export const runChatAfterCreate = async (
   context: ChatCreatedContext
 ): Promise<void> => {
-  await chat.afterCreate(context);
+  try {
+    await chat.afterCreate(context);
+  } catch (error) {
+    log.warn(
+      { errorName: error instanceof Error ? error.name : typeof error },
+      "Chat afterCreate failed"
+    );
+  }
   try {
     const { settleEveRootFallbackTitle } = await import("./db/eve-title");
     await settleEveRootFallbackTitle(

@@ -119,7 +119,7 @@ chat-js remove projects sharing
 chat-js remove projects --backup
 ```
 
-Removal plans the complete change before writing: plugin source, Next/EVE adapters, and generated registrations. Required plugins and dangling static imports from app-owned source block removal. Modified or untracked source requires `--backup`, which retains removed files as `.bak` files under `chatjs/removed-plugins/<id>/`. `--yes` skips the prompt but never bypasses source protection. Reinstall using `chat-js add`, then restore selected customizations from the backup.
+Removal plans the complete change before writing: plugin source, Next/EVE adapters, and generated registrations. Required plugins and dangling static imports from app-owned source block removal. Modified or untracked source requires `--backup`, which retains removed files as `.bak` files at their original relative paths under `chatjs/removed-plugins/<run-id>/`. The command prints this path. `--yes` skips the prompt but never bypasses source protection. Reinstall using `chat-js add`, then restore selected customizations from the backup.
 
 Database schema files and their plugin-local dependencies stay at their original paths. `chatjs/retained-plugin-schemas.json` keeps them in Drizzle's schema inputs after runtime registration is removed. Removing plugin code does not delete database data or generate a destructive migration. Review any later schema retirement separately. Shared UI primitives, package dependencies, environment values, and migration history are retained.
 
