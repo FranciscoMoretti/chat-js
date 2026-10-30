@@ -21,7 +21,7 @@ const definitions = await vi.hoisted(async () => {
     }),
   };
 });
-vi.mock("../../chatjs/generated/tools", () => ({ tools: definitions }));
+vi.mock("../../integrations/tools", () => ({ tools: definitions }));
 
 vi.mock("./turn-tools", () => ({
   filterEveTools: <Tools>(tools: Tools): Tools => tools,

@@ -4,7 +4,7 @@ import { EveToolResult } from "@/components/eve/eve-tool-result";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
 import type { ZodType } from "zod";
-import type { ui as chatjsUi } from "@/chatjs/generated/ui";
+import type { ui as chatjsUi } from "@/integrations/tool-ui";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
@@ -15,7 +15,7 @@ vi.mock(
   })
 );
 
-vi.mock("@/chatjs/generated/ui", async (importOriginal) => {
+vi.mock("@/integrations/tool-ui", async (importOriginal) => {
   const { z: zod } = await import("zod");
   const { createElement: reactCreateElement } = await import("react");
   const { defineToolRenderer } = await import("@/lib/ai/define-tool-renderer");

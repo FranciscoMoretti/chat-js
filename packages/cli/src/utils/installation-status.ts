@@ -126,7 +126,6 @@ export const installationStatus = async (cwd: string) => {
     generated: generated.toSorted(),
     appOwnedIntegrations: [
       ...(await optionalDirectoryFiles(cwd, "integrations")),
-      ...(await optionalDirectoryFiles(cwd, "composition/custom")),
     ].toSorted(),
     limitations: [
       "Source states compare against the last recorded installation, not the latest registry release.",
@@ -144,7 +143,6 @@ export const formatInstallationStatus = (
     "ChatJS file ownership",
     "  chatjs/                 CLI-managed wiring, receipts, and backups",
     "  integrations/           App-owned; add/remove/sync leave it alone",
-    "  composition/custom/     App-owned tool composition",
     "  plugins/<id>/           Editable installed source; tracked for safe replacement/removal",
     "",
   ];

@@ -14,7 +14,7 @@ const mocks = vi.hoisted(() => ({
     toolInstalled: true,
   },
 }));
-vi.mock("../../chatjs/generated/code-executor", () => ({
+vi.mock("../../integrations/code-executor", () => ({
   get codeExecutor(): typeof mocks.execute | undefined {
     if (mocks.settings.installed) {
       return mocks.execute;
@@ -23,7 +23,7 @@ vi.mock("../../chatjs/generated/code-executor", () => ({
   },
 }));
 
-vi.mock("@/chatjs/generated/installed-tools", () => ({
+vi.mock("@/integrations/tool-catalog", () => ({
   installedDocumentKinds: {
     has: (): boolean => mocks.settings.documentInstalled,
   },

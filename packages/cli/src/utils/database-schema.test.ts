@@ -39,6 +39,11 @@ const fixture = async (): Promise<string> => {
 test("offline baseline omits uninstalled schemas and adding MCP extends the same history", async (): Promise<void> => {
   const root = await fixture();
   await mkdir(path.join(root, "lib/db"), { recursive: true });
+  await mkdir(path.join(root, "integrations"));
+  await cp(
+    path.join(demo, "integrations/database.ts"),
+    path.join(root, "integrations/database.ts")
+  );
   await cp(
     path.join(demo, "lib/db/schema.ts"),
     path.join(root, "lib/db/schema.ts")

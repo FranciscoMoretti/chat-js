@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Toggle } from "@/components/ui/toggle";
 import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
-import { documentUi } from "@/chatjs/generated/document-ui";
+import { documents } from "@/integrations/document-ui";
 
 export const EveDocumentActions = ({
   kind,
@@ -37,7 +37,7 @@ export const EveDocumentActions = ({
 }): React.JSX.Element => {
   const copy = async (): Promise<void> => {
     try {
-      const copied = documentUi[kind]?.copyContent?.(content) ?? content;
+      const copied = documents[kind]?.copyContent?.(content) ?? content;
       await navigator.clipboard.writeText(copied);
       toast.success(
         kind === "sheet" ? "Copied csv to clipboard!" : "Copied to clipboard!"

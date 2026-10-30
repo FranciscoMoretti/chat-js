@@ -10,7 +10,7 @@ import React from "react";
 
 import type { Route } from "next";
 
-import { handleModifiedNavigation } from "@/chatjs/generated/installed-navigation";
+import { handleModifiedNavigation } from "@/integrations/navigation";
 
 import { useRouter } from "next/navigation";
 

@@ -34,7 +34,7 @@ import type { McpConnector } from "@/plugins/mcp/db/mcp-schema";
 import type { McpConnectorsDialog } from "@/plugins/mcp/search/mcp-search-params";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { Separator } from "@/components/ui/separator";
-import { installedPlugins } from "@/chatjs/generated/installed";
+import { installedPlugins } from "@/integrations/plugin-catalog";
 import { mcpConnectorsSettingsSearchParams } from "@/plugins/mcp/search/mcp-search-params";
 import { useTRPC } from "@/trpc/react";
 

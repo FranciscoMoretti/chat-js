@@ -83,7 +83,8 @@ const registrationDiagnostics = (root: string, name: string): string[] => {
 const runRegistration = async (
   root: string,
   name: string,
-  assertions: string
+  assertions: string,
+  integration = false
 ): Promise<{ exitCode: number; stderr: string }> => {
   const tsconfig = path.join(root, "tsconfig.json");
   await writeFile(
@@ -91,7 +92,14 @@ const runRegistration = async (
     JSON.stringify({ compilerOptions: { paths: { "@/*": [`${root}/*`] } } })
   );
   const build = await Bun.build({
-    entrypoints: [path.join(root, `chatjs/generated/installed-${name}.ts`)],
+    entrypoints: [
+      path.join(
+        root,
+        integration
+          ? `integrations/${name}.ts`
+          : `chatjs/generated/installed-${name}.ts`
+      ),
+    ],
     target: "bun",
     tsconfig,
   });
@@ -583,7 +591,9 @@ test("absent model visibility preserves defaults; conflicting providers fail bef
     "chatjs/generated/installed-model-visibility.ts"
   );
   const before = await readFile(target, "utf-8");
-  expect(before).toContain("(defaultEnabledIds) => defaultEnabledIds");
+  expect(before).toContain(
+    "installedModelVisibility: readonly ModelVisibility[] = []"
+  );
   expect(before).not.toContain("@/plugins/");
   await Promise.all(
     ["first", "second"].map(async (id) => {
@@ -880,12 +890,23 @@ test.each([
 
 test("sign-out defaults to web and stays independent of auth forms and layout", async () => {
   const root = await fixture();
+  await mkdir(path.join(root, "integrations"));
+  await mkdir(path.join(root, "lib"));
+  await cp(
+    path.join(demo, "integrations/sign-out.ts"),
+    path.join(root, "integrations/sign-out.ts")
+  );
+  await cp(
+    path.join(demo, "lib/select-integration.ts"),
+    path.join(root, "lib/select-integration.ts")
+  );
   await initializePluginUi(root);
   expect(
     await runRegistration(
       root,
       "sign-out",
-      "assert.equal(await registration.signOutWithPlugin(), false);"
+      "assert.equal(await registration.signOutWithPlugin(), false);",
+      true
     )
   ).toEqual({ exitCode: 0, stderr: "" });
   const directory = path.join(root, "plugins", "auth-fixture");
@@ -925,7 +946,8 @@ test("sign-out defaults to web and stays independent of auth forms and layout", 
     await runRegistration(
       root,
       "sign-out",
-      "assert.equal(await registration.signOutWithPlugin(), true);"
+      "assert.equal(await registration.signOutWithPlugin(), true);",
+      true
     )
   ).toEqual({ exitCode: 0, stderr: "" });
 });

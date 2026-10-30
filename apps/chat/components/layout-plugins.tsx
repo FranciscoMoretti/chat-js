@@ -1,10 +1,10 @@
 "use client";
 import { Plugins } from "@/lib/ui-slots";
 import { LayoutEffects } from "@/components/layout-slots";
-import { installedLayoutPlugins } from "@/chatjs/generated/installed-layout";
+import { layoutPlugins } from "@/integrations/layout";
 
 export const LayoutPlugins = () => (
-  <Plugins plugins={installedLayoutPlugins}>
+  <Plugins plugins={layoutPlugins}>
     <LayoutEffects />
   </Plugins>
 );

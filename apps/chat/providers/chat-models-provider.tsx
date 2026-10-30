@@ -4,7 +4,7 @@ import React, { createContext, useCallback, useContext, useMemo } from "react";
 import type { AppModelDefinition } from "@/lib/ai/app-models";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
-import { useModelVisibility } from "@/chatjs/generated/installed-model-visibility";
+import { useModelVisibility } from "@/integrations/model-visibility";
 import { getDefaultEnabledModels } from "@/lib/ai/app-models";
 
 interface ChatModelsContextType {

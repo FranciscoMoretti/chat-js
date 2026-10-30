@@ -11,7 +11,7 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 
 import "./sandbox.css";
 
-vi.mock("@/chatjs/generated/installed-sign-out", () => ({
+vi.mock("@/integrations/sign-out", () => ({
   signOutWithPlugin: signOutDesktop,
 }));
 const auth = vi.hoisted(() => ({ electron: false, signOut: vi.fn() }));

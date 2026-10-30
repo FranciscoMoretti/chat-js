@@ -154,7 +154,7 @@ const renderPluginRegistrations = (
       "installed-signed-out",
       `${signedOut ? `import { ${signedOut.signedOut?.export} as pluginScreen } from "@/plugins/${signedOut.id}/signed-out";` : ""}
 import type { ComponentType } from "react";
-export const SignedOutScreen: ComponentType | undefined = ${signedOut ? "pluginScreen" : "undefined"};`,
+export const installedSignedOutScreens: readonly ComponentType[] = [${signedOut ? "pluginScreen" : ""}];`,
     ],
     [
       "installed-session-profiles",
@@ -174,29 +174,29 @@ export const installedCleanupTasks: readonly CleanupTask[] = [${cleanup.map((_, 
       "installed-auth",
       `${authentication ? `import { ${authentication.authentication?.export} as pluginAuth } from "@/plugins/${authentication.id}/auth-server";` : ""}
 import type { AuthenticationIntegration } from "@/lib/authentication-contracts";
-export const installedAuth: AuthenticationIntegration = ${authentication ? "pluginAuth" : "{ plugins: [], trustedOrigins: [], isAuthRoute: () => false }"};`,
+export const installedAuth: readonly AuthenticationIntegration[] = [${authentication ? "pluginAuth" : ""}];`,
     ],
     [
       "installed-auth-ui",
       `${authUi ? `import { ${authUi.authenticationUi?.form} as pluginForm } from "@/plugins/${authUi.id}/auth-form";` : ""}
 import type { AuthenticationUi } from "@/lib/authentication-contracts";
-export const AuthenticationForm: AuthenticationUi["Form"] = ${authUi ? "pluginForm" : "({ children }) => children"};`,
+export const installedAuthenticationForms: readonly AuthenticationUi["Form"][] = [${authUi ? "pluginForm" : ""}];`,
     ],
     [
       "installed-sign-out",
       `${authUi ? `import { ${authUi.authenticationUi?.signOut} as pluginSignOut } from "@/plugins/${authUi.id}/sign-out";` : ""}
 import type { AuthenticationUi } from "@/lib/authentication-contracts";
-export const signOutWithPlugin: AuthenticationUi["signOut"] = ${authUi ? "pluginSignOut" : "() => Promise.resolve(false)"};`,
+export const installedSignOutHandlers: readonly AuthenticationUi["signOut"][] = [${authUi ? "pluginSignOut" : ""}];`,
     ],
     [
       "installed-navigation",
       `${navigation.map((plugin) => `import { ${plugin.navigation?.export} as navigate } from "@/plugins/${plugin.id}/navigation";`).join("\n")}
-export const handleModifiedNavigation: () => boolean = ${navigation.length > 0 ? "navigate" : "() => false"};`,
+export const installedNavigationHandlers: readonly (() => boolean)[] = [${navigation.length > 0 ? "navigate" : ""}];`,
     ],
     ["installed-billing", billingRegistration(plugins)],
     [
       "installed-model-visibility",
-      `${imports(modelVisibility, "client")}\nimport type { ModelVisibility } from "@/lib/installation-contracts";\nexport const useModelVisibility: ModelVisibility = ${modelVisibility.length > 0 ? "plugin0.useModelVisibility" : "(defaultEnabledIds) => defaultEnabledIds"};`,
+      `${imports(modelVisibility, "client")}\nimport type { ModelVisibility } from "@/lib/installation-contracts";\nexport const installedModelVisibility: readonly ModelVisibility[] = [${modelVisibility.length > 0 ? "plugin0.useModelVisibility" : ""}];`,
     ],
     [
       "installed-chat",
@@ -224,7 +224,7 @@ export const handleModifiedNavigation: () => boolean = ${navigation.length > 0 ?
     ],
     [
       "installed-uploads",
-      `${imports(uploads, "client")}\nimport type { AttachmentUploadIntegration } from "@/lib/installation-contracts";\nexport const attachmentUploads: AttachmentUploadIntegration = ${uploads.length > 0 ? "plugin0.uploads" : "{ useUploads: () => ({ uploadQueue: [] }) }"};`,
+      `${imports(uploads, "client")}\nimport type { AttachmentUploadIntegration } from "@/lib/installation-contracts";\nexport const installedUploads: readonly AttachmentUploadIntegration[] = [${uploads.length > 0 ? "plugin0.uploads" : ""}];`,
     ],
   ] as const;
   return new Map([
