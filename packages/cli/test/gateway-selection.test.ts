@@ -914,7 +914,7 @@ for (const gateway of [...GATEWAYS, "acme"]) {
       await writeFile(
         nodePath.join(cwd, "verify-execution.ts"),
         `import assert from "node:assert/strict";
-import {tools} from "./chatjs/generated/tools";
+import {tools} from "./integrations/tools";
 import type { ToolContext } from "eve/tools";
 const unavailable = () => { throw new Error("Unexpected resource access"); };
 const context: ToolContext = { callId: "fixture", toolName: "fixture", messages: [], abortSignal: new AbortController().signal, session: { id: "fixture", auth: { current: null, initiator: null }, turn: { id: "turn", sequence: 0 } }, getSandbox: unavailable, getToken: unavailable, requireAuth: unavailable };
@@ -1178,7 +1178,7 @@ assert.equal(aiConfigSchema.safeParse({ ...ai, tools: { ...ai.tools, video: { de
           nodePath.join(cwd, "agent/subagents/researcher/tools/webSearch.ts"),
           "utf-8"
         )
-      ).toContain("Object.entries(providers)");
+      ).toContain("Object.entries(toolProviders)");
       const searchSource = nodePath.join(
         cwd,
         "tools/chatjs/tavily-search/tool.ts"

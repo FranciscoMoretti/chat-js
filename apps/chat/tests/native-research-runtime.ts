@@ -244,7 +244,7 @@ export default defineAgent({ defaultTools: false, modelContextWindowTokens: 1280
 }`)
   );
   await write(
-    "chatjs/generated/providers.ts",
+    "integrations/tool-providers.ts",
     `
 import { defineTool } from "eve/tools";
 import { z } from "zod";
@@ -255,7 +255,7 @@ const webSearch = defineTool({ description: "Fixture search", inputSchema: z.obj
    return { kind: "chatjs.tool-result", version: 1, status: "success", output: { result: input.query }, usage: { costUsd: 0.02 }, updates: [{ type: "web", toolCallId: ctx.callId, title: "Search complete", status: "completed", queries: [input.query], results: [{ title: "Evidence", url: "https://example.com", content: input.query, source: "web" }] }] };
  },
 });
-export const providers = { webSearch };`
+export const toolProviders = { webSearch };`
   );
   await write(
     "lib/config.ts",
