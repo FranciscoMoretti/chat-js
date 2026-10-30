@@ -41,7 +41,7 @@ export const ComposerMenu = (
     }) => Component.isAvailable?.(mobile) ?? true
   );
   const hasControls = controls.length > 0 || hasAttachments || hasExtensions;
-  if (!hasControls && !props.selectedTool) {
+  if (!hasControls && props.selectedTool === null) {
     return null;
   }
   return (
@@ -70,7 +70,7 @@ export const ComposerMenu = (
             )
           )}
           <ComposerExtensions {...props} />
-          {props.selectedTool && (
+          {props.selectedTool !== null && (
             <>
               {hasControls && <DropdownMenuSeparator />}
               <DropdownMenuItem

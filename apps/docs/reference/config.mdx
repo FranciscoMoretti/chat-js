@@ -25,7 +25,8 @@ Use `config` from `@/lib/config` for runtime access. See [Configuration](../core
 | `tools/chatjs/*/chatjs.json` | Installed tool requirements, registration names, exclusive provider slots and document kinds |
 | `tools/chatjs/*/configuration-schema.ts` | Tool-owned validation and defaults |
 | `chatjs/generated/installed-config.ts` | Generated composition of installed tool schemas |
-| `chatjs/generated/document-actions.ts` | Generated composition of document assistant actions |
+| `chatjs/generated/documents.ts`, `document-ui.ts` | Separate shared document definitions and browser views, including assistant actions |
+| `chatjs/generated/tool-definitions.ts` | Browser-safe tool schemas and display metadata |
 | `chatjs/generated/providers.ts` | Shared search, retrieval, media and code-execution provider registrations |
 | `integrations/tools.ts`, `integrations/tool-ui.ts` | User-authored tool and renderer registrations |
 | `plugins/*/chatjs.json`, generated plugin registrations | Installed uploads, MCP and telemetry contributions |

@@ -1,5 +1,7 @@
 "use client";
 
+import { isDocumentResult } from "@/lib/eve/document-contracts";
+
 import { hasText } from "@/components/text-value";
 
 import type { InputResponse } from "eve/client";
@@ -21,7 +23,7 @@ import type {
 import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 
 import { EveAttachment } from "./eve-attachment";
-import { eveDocumentOperations } from "@/lib/eve/document-contracts";
+import { documentDefinitions } from "@/integrations/documents";
 import { EveMessagePart } from "./eve-message-part";
 import { MessageActions } from "@/components/chat-slots";
 
@@ -365,8 +367,9 @@ export const EveMessages = ({
     .filter((part: ReadonlyEveMessagePart) => part.type === "dynamic-tool")
     .findLast(
       (part) =>
-        Object.hasOwn(eveDocumentOperations, part.toolName) ||
-        part.toolName === "readDocument"
+        documentDefinitions.operations.has(part.toolName) ||
+        part.toolName === "readDocument" ||
+        (part.state === "output-available" && isDocumentResult(part.output))
     )?.toolCallId;
   const precedingUsers: (ReadonlyEveMessage | undefined)[] = [];
   let precedingUser: ReadonlyEveMessage | undefined;

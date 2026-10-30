@@ -48,7 +48,7 @@ export const EveDocumentAssistantActions = ({
   busy = false,
   onStop,
 }: {
-  readonly kind: "text" | "code" | "sheet";
+  readonly kind: string;
   readonly documentId: string;
   readonly revisionId: string;
   readonly disabled: boolean;

@@ -191,3 +191,59 @@ test("an incomplete export drains writes and removes its partial bundle", async 
   ).toEqual([]);
   expect(await readdir(root)).toEqual(["incomplete.json"]);
 });
+
+test("add dry-run reports activation without changing the app or installing dependencies", async () => {
+  const root = await fixture();
+  await writeFile(path.join(root, "chat.config.ts"), "export default {};\n");
+  const item = path.join(root, "example.json");
+  await writeFile(
+    item,
+    JSON.stringify({
+      name: "example",
+      type: "registry:item",
+      meta: {
+        chatjs: {
+          contractVersion: 1,
+          kind: "plugin",
+          id: "example",
+          chat: { export: "example" },
+        },
+      },
+      dependencies: ["never-install-this-fixture"],
+      files: [
+        {
+          path: "route.ts",
+          target: "~/app/api/example/route.ts",
+          type: "registry:file",
+          content: "export const GET = () => new Response('fixture');",
+        },
+      ],
+    })
+  );
+  const before = await readdir(root, { recursive: true });
+  const child = Bun.spawn(
+    [
+      "bun",
+      path.resolve(import.meta.dir, "../index.ts"),
+      "add",
+      item,
+      "--cwd",
+      root,
+      "--dry-run",
+    ],
+    { stdout: "pipe", stderr: "pipe" }
+  );
+  const [stdout, stderr, code] = await Promise.all([
+    new Response(child.stdout).text(),
+    new Response(child.stderr).text(),
+    child.exited,
+  ]);
+  expect(code, stdout + stderr).toBe(0);
+  expect(stdout).toContain("integrations/chat.ts");
+  expect(stdout).toContain("Next.js route");
+  expect(stdout).toContain("app/api/example/route.ts");
+  expect(await readdir(root, { recursive: true })).toEqual(before);
+  expect(await readFile(path.join(root, "chat.config.ts"), "utf-8")).toBe(
+    "export default {};\n"
+  );
+}, 30_000);

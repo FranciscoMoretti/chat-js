@@ -1,3 +1,7 @@
+import {
+  installationActivation,
+  formatActivation,
+} from "./installation-activation";
 import path from "node:path";
 import { directoryFiles } from "./installation-files";
 import { pluginSourceFiles, readPluginDescriptors } from "./installed-plugins";
@@ -80,6 +84,7 @@ export const installationStatus = async (cwd: string) => {
   const items = owners.map(({ plugin, files, preserved, removalIssue }) => ({
     id: plugin.id,
     descriptor: `plugins/${plugin.id}/chatjs.json`,
+    activation: installationActivation(plugin, files),
     removalIssue,
     requires: plugin.requiresPlugins ?? [],
     requiredBy: plugins
@@ -130,6 +135,7 @@ export const installationStatus = async (cwd: string) => {
     limitations: [
       "Source states compare against the last recorded installation, not the latest registry release.",
       "Removal references cover relative and @/ static imports, re-exports, and literal dynamic imports; computed imports and custom aliases need review.",
+      "Native entries are path-convention matches; exports and framework configuration determine activation. Schema registration does not apply migrations.",
       "Tools, gateways, storage, and sandbox implementations are not included in the plugin inventory.",
     ],
   };
@@ -153,7 +159,8 @@ export const formatInstallationStatus = (
     );
     lines.push(
       `${plugin.id}: ${counts.join(", ")}`,
-      `  Descriptor: ${plugin.descriptor}`
+      `  Descriptor: ${plugin.descriptor}`,
+      formatActivation(plugin.activation)
     );
     for (const file of plugin.files) {
       if (

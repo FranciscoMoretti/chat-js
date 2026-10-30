@@ -1,5 +1,7 @@
 "use client";
 
+import { documentDefinitions } from "@/integrations/documents";
+
 import { hasText } from "@/components/text-value";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -145,6 +147,26 @@ const documentContentState = ({
   };
 };
 
+const documentSubtitle = (
+  previewing: boolean,
+  editing: ReturnType<typeof useDocumentDraft>,
+  createdAt: Date | undefined
+): string => {
+  if (previewing) {
+    return "Writing document…";
+  }
+  if (editing.draft || editing.saving) {
+    return "Saving changes...";
+  }
+  if (createdAt) {
+    return `Updated ${formatDistanceToNow(new Date(createdAt), { addSuffix: true })}`;
+  }
+  return "Loading document…";
+};
+
+const isInstalledDocument = (kind: string | undefined): boolean =>
+  kind !== undefined && documentDefinitions.kinds.has(kind);
+
 const useDocumentPanel = ({
   conversationId,
   readOnly,
@@ -192,7 +214,10 @@ const useDocumentPanel = ({
   );
   const previewing =
     artifact.status === "streaming" && artifact.followLive !== false;
-  const owned = !readOnly && document.data?.canEdit;
+  const owned =
+    !readOnly &&
+    document.data?.canEdit === true &&
+    isInstalledDocument(revision?.kind);
   const onSaved = useCallback(async () => {
     // Hydrate the destination query before switching the view: an empty latest query would unmount the focused editor.
 
@@ -220,7 +245,7 @@ const useDocumentPanel = ({
   const editing = useDocumentDraft({
     conversationId,
     documentId: artifact.documentId,
-    enabled: owned === true && !document.isError,
+    enabled: owned && !document.isError,
     onRestore: setSelectedRevisionId,
     onSaved,
     revision,
@@ -250,16 +275,7 @@ const useDocumentPanel = ({
   const previousRevisionId = history[index - 1]?.id;
   const canCompare = Boolean(previousRevisionId && !editing.draft);
   const comparing = showChanges && canCompare;
-  let subtitle = "Loading document…";
-  if (revision?.createdAt) {
-    subtitle = `Updated ${formatDistanceToNow(new Date(revision.createdAt), { addSuffix: true })}`;
-  }
-  if (editing.draft || editing.saving) {
-    subtitle = "Saving changes...";
-  }
-  if (previewing) {
-    subtitle = "Writing document…";
-  }
+  const subtitle = documentSubtitle(previewing, editing, revision?.createdAt);
   return {
     conversationId,
     readOnly,
@@ -364,7 +380,7 @@ const DocumentPanelHeader = ({ model }: PanelModelProps): ReactJSX.Element => {
                 kind={revision.kind}
                 messages={messages}
                 disabled={actionsDisabled}
-                onAction={owned === true ? onDocumentAction : undefined}
+                onAction={owned ? onDocumentAction : undefined}
                 buttonOnly
               />
             )
@@ -408,7 +424,7 @@ const DocumentAssistantControls = ({
             onStop={onStop}
           />
         )}
-      {owned === true &&
+      {owned &&
         index === history.length - 1 &&
         (onDocumentAction !== undefined || onStop !== undefined) &&
         revision && (
@@ -521,13 +537,13 @@ const DocumentPanelFooter = ({
           documentId={artifact.documentId}
           kind={revision.kind}
           messages={messages}
-          onAction={owned === true ? onDocumentAction : undefined}
+          onAction={owned ? onDocumentAction : undefined}
           revisionId={revision.id}
           title={revision.title}
           resultOnly
         />
       )}
-      {owned === true && index !== -1 && index < history.length - 1 && (
+      {owned && index !== -1 && index < history.length - 1 && (
         <div className="bg-background flex flex-col justify-between gap-4 border-t p-4 lg:flex-row">
           <div>
             <div>You are viewing a previous version</div>
@@ -571,11 +587,11 @@ const EveArtifactPanel = (
       {...artifactRegionProps}
     >
       <DocumentPanelHeader model={model} />
-      {owned === true && <DocumentSaveStatus editing={editing} />}
+      {owned && <DocumentSaveStatus editing={editing} />}
       <span className="sr-only">
         Version {index + 1} of {history.length}
       </span>
-      {owned === true && !editing.draft && !editing.saving && (
+      {owned && !editing.draft && !editing.saving && (
         <span className="sr-only">All changes saved</span>
       )}
       <DocumentPanelContent model={model} />

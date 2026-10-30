@@ -1,5 +1,6 @@
 import { isFileStorageKey } from "@/lib/file-url";
 import { z } from "zod";
+import { artifactKind } from "@/lib/artifacts/artifact-kind";
 
 interface DocumentAssistantRequest {
   readonly message: string;
@@ -48,19 +49,10 @@ const eveManualDocumentInput = eveDocumentEditInput.extend({
   operationId: z.uuid(),
 });
 
-const eveDocumentOperations = {
-  createCodeDocument: { edit: false, kind: "code" },
-  createSheetDocument: { edit: false, kind: "sheet" },
-  createTextDocument: { edit: false, kind: "text" },
-  editCodeDocument: { edit: true, kind: "code" },
-  editSheetDocument: { edit: true, kind: "sheet" },
-  editTextDocument: { edit: true, kind: "text" },
-} as const;
-
 const eveDocumentResult = z.object({
   date: z.string(),
   documentId: z.uuid(),
-  kind: z.enum(["text", "code", "sheet"]),
+  kind: artifactKind,
   revisionId: z.uuid(),
   status: z.literal("success"),
   title: z.string(),
@@ -78,7 +70,6 @@ export {
   documentFileIds,
   eveDocumentCreateInput,
   eveDocumentEditInput,
-  eveDocumentOperations,
   eveDocumentReadInput,
   eveDocumentReadResult,
   eveDocumentResult,
@@ -93,3 +84,8 @@ interface DocumentAssistantAction {
   modelId: string;
 }
 export type { DocumentAssistantAction };
+
+/** Persisted document receipts remain recognizable after their editor is removed. */
+export const isDocumentResult = (value: unknown): boolean =>
+  eveDocumentWriteResult.safeParse(value).success ||
+  eveDocumentReadResult.safeParse(value).success;

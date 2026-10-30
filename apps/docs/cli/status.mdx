@@ -48,6 +48,8 @@ Untracked does not mean safe to replace. Status never establishes a new baseline
 
 By default, output includes state counts, changed/missing/untracked files, and plugin-owned files outside the plugin directory. `--files` also lists unchanged plugin files. `--json` includes the full inventory, generated paths, app-owned integration paths, retained plugin directories, declared dependencies, shared files, and supported source references that affect removal.
 
+Each plugin also reports its declared app-owned integration modules, known Next.js/EVE entry paths, and other framework source. The JSON field is `activation`. This inventory matches path conventions without evaluating exports or applying migrations. `remove --dry-run` shows the same wiring for the plugins it would retire.
+
 If a schema is missing or its retained dependencies cannot be resolved, status reports that removal needs review. It does not claim that the rest of the plugin is safe to remove.
 
 ## Before changing the installed selection

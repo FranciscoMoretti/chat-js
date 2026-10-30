@@ -112,7 +112,7 @@ const readToolDefinition = async (
     ...definition.tools
       .filter((tool) => tool.workflow)
       .map((tool): string => `agent/tools/${tool.toolExport}.ts`),
-    ...(definition.documentKind ||
+    ...(definition.documentKind !== undefined ||
     (typeof definition.documentRunExport === "string" &&
       definition.documentRunExport !== "")
       ? [`${directory}/${entryName}/document.tsx`]
@@ -134,7 +134,7 @@ const readToolDefinition = async (
             pathModule.join(cwd, "agent/tools", `${tool.toolExport}.ts`)
           )
       ),
-    ...(definition.documentKind ||
+    ...(definition.documentKind !== undefined ||
     (typeof definition.documentRunExport === "string" &&
       definition.documentRunExport !== "")
       ? [
@@ -405,24 +405,49 @@ const renderToolRegistrations = (
     ["chatjs/generated/installed-config.ts", generatedSource(configSource)],
   ]);
   const documents = definitions.filter(
-    (item: ReadonlyInput<ToolDefinition>) => item.documentKind
+    (item: ReadonlyInput<ToolDefinition>) => item.documentKind !== undefined
   );
-  const documentActions = documents.filter((item) => item.documentActions);
   const registrations = registrationsFor(definitions);
   const keys = registrations.map((item: ReadonlyInput<Registration>): string =>
     registrationKey(item)
   );
   const { providerBody, toolBody, uiBody } = sourceFor(registrations);
+  const sharedDefinitions = definitions.flatMap((item) =>
+    item.tools.flatMap((tool) =>
+      tool.definitionExport === undefined
+        ? []
+        : [
+            {
+              id: item.id,
+              export: tool.definitionExport,
+              name: item.slot ?? tool.toolExport,
+            },
+          ]
+    )
+  );
+  files.set(
+    "chatjs/generated/tool-definitions.ts",
+    generatedSource(
+      `${sharedDefinitions.map((item, index) => `import { ${item.export} as definition${index} } from "@/tools/chatjs/${item.id}/definition";`).join("\n")}\nexport const installedToolDefinitions = [${sharedDefinitions.map((item, index) => `definition${index} satisfies { readonly name: ${JSON.stringify(item.name)} }`).join(", ")}];\n`
+    )
+  );
+
+  files.set(
+    "chatjs/generated/documents.ts",
+    generatedSource(
+      `${documents.map((item, index) => `import { documentDefinition as document${index} } from "@/tools/chatjs/${item.id}/definition";`).join("\n")}\nexport const installedDocuments = [${documents.map((item, index) => `document${index} satisfies { readonly kind: ${JSON.stringify(item.documentKind)} }`).join(", ")}];\n`
+    )
+  );
   files.set(
     "chatjs/generated/document-ui.ts",
     generatedSource(
-      `"use client";\n\nimport type { DocumentUiRegistry } from "@/lib/eve/document-ui";\n\n${documents.map((item: ReadonlyInput<ToolDefinition>, index): string => `import { documentUi as document${index} } from "@/tools/chatjs/${item.id}/document";`).join("\n")}\n\nexport const documentUi: DocumentUiRegistry = {\n${documents.map((item: ReadonlyInput<ToolDefinition>, index): string => `  ${item.documentKind}: document${index},`).join("\n")}\n};\n`
+      `"use client";\n${documents.map((item, index) => `import { documentUi as document${index} } from "@/tools/chatjs/${item.id}/document";`).join("\n")}\nexport const documentUi = [${documents.map((_, index) => `document${index}`).join(", ")}];\n`
     )
   );
   files.set(
     "chatjs/generated/installed-tools.ts",
     generatedSource(
-      `export const installedWorkflowToolNames: ReadonlySet<string> = new Set(${JSON.stringify(registrations.filter((item) => item.workflow).map((item) => item.key))});\nexport const installedToolNames: ReadonlySet<string> = new Set(${JSON.stringify(keys)});\nexport const installedDocumentKinds: ReadonlySet<string> = new Set([\n${documents.map((item: ReadonlyInput<ToolDefinition>): string => `  ${JSON.stringify(item.documentKind)},`).join("\n")}\n]);\n`
+      `export const installedSelectableToolNames: ReadonlySet<string> = new Set(${JSON.stringify(registrations.filter((item) => item.composer).map((item) => item.key))});\nexport const installedWorkflowToolNames: ReadonlySet<string> = new Set(${JSON.stringify(registrations.filter((item) => item.workflow).map((item) => item.key))});\nexport const installedToolNames: ReadonlySet<string> = new Set(${JSON.stringify(keys)});\n`
     )
   );
   const composerTools = registrations
@@ -499,20 +524,6 @@ const renderToolRegistrations = (
       `import type { ToolAvailability } from "@/lib/eve/tool-availability";\n${availability.map((item: ReadonlyInput<ToolDefinition>, registrationIndex): string => `import { ${item.availabilityExport} as available${registrationIndex} } from "@/tools/chatjs/${item.id}/availability";`).join("\n")}\n\nexport const toolAvailability: Record<string, ToolAvailability> = {\n${availability.flatMap((item: ReadonlyInput<ToolDefinition>, registrationIndex) => item.tools.map((tool): string => `  ${item.slot ?? tool.toolExport}: available${registrationIndex},`)).join("\n")}\n};\n`
     )
   );
-  files.set(
-    "chatjs/generated/document-actions.ts",
-    generatedSource(
-      `import type { DocumentAssistantAction } from "@/lib/eve/document-contracts";
-${documentActions.map((item, index) => `import { documentAssistantActions as actions${index} } from "@/tools/chatjs/${item.id}/assistant-actions";`).join("\n")}
-
-export const installedDocumentActions: Partial<
-  Record<"text" | "code" | "sheet", () => DocumentAssistantAction[]>
-> = {
-${documentActions.map((item, index) => `  ${item.documentKind}: actions${index},`).join("\n")}
-};
-`
-    )
-  );
   files.set("chatjs/generated/tools.ts", generatedSource(toolBody));
   files.set("chatjs/generated/ui.ts", generatedSource(uiBody));
   return files;
@@ -579,7 +590,9 @@ const validateToolInstallation = (
   definitions: readonly ReadonlyInput<ToolDefinition>[]
 ): void => {
   validateSelections(definitions);
-  const documents = definitions.filter((item) => item.documentKind);
+  const documents = definitions.filter(
+    (item) => item.documentKind !== undefined
+  );
   if (
     new Set(documents.map((item) => item.documentKind)).size !==
     documents.length
@@ -606,12 +619,24 @@ const syncTools = async (
   validateExpected(definitions, options.expected ?? []);
   validateToolInstallation(definitions);
   const configSource = await planToolConfig(cwd, definitions);
-  const actionFiles = definitions
-    .filter((item) => item.documentActions)
-    .map((item) => `tools/chatjs/${item.id}/assistant-actions.ts`);
-  await preflight(cwd, actionFiles);
+  const documentFiles = definitions.flatMap((item) =>
+    item.documentKind === undefined
+      ? []
+      : [
+          `tools/chatjs/${item.id}/definition.ts`,
+          `tools/chatjs/${item.id}/document.tsx`,
+        ]
+  );
+  documentFiles.push(
+    ...definitions
+      .filter((item) =>
+        item.tools.some((tool) => tool.definitionExport !== undefined)
+      )
+      .map((item) => `tools/chatjs/${item.id}/definition.ts`)
+  );
+  await preflight(cwd, documentFiles);
   await Promise.all(
-    actionFiles.map(async (file): Promise<void> => {
+    documentFiles.map(async (file): Promise<void> => {
       await fs.readFile(pathModule.join(cwd, file), "utf-8");
     })
   );

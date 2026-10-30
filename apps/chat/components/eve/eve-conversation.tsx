@@ -620,7 +620,8 @@ const EveConversation = ({
             ...(hasText(pending.modelId)
               ? { "x-chatjs-selected-model": pending.modelId }
               : {}),
-            ...(pending.selectedTool
+            ...(pending.selectedTool !== undefined &&
+            pending.selectedTool !== null
               ? { "x-chatjs-selected-tool": pending.selectedTool }
               : {}),
           },

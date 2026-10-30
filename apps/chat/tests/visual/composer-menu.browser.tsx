@@ -54,7 +54,7 @@ vi.mock("@/integrations/uploads", async () => {
     if (state.uploadsInstalled) {
       return behavior;
     }
-    return { uploadQueue: [] };
+    return { ...behavior, enabled: false, uploadQueue: [] };
   };
   return {
     attachmentUploads: {

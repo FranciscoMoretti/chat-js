@@ -1,11 +1,11 @@
 import { z } from "zod";
 
 import type { UiToolName } from "@/lib/ai/types";
-import { frontendToolsSchema } from "@/lib/ai/types";
+import { toolNameSchema } from "@/lib/ai/types";
 
 import type { ReadonlyEveMessageMetadata } from "./readonly-message-types";
 
-const selection = z.object({ selectedTool: frontendToolsSchema.nullable() });
+const selection = z.object({ selectedTool: toolNameSchema.nullable() });
 
 /**
  * Only app-owned, display-safe metadata belongs in shared messages and copies.

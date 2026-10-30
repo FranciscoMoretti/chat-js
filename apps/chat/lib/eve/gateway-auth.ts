@@ -95,7 +95,7 @@ const readGatewayAttributes = async (
     return null;
   }
   const attributes: Record<string, string> = {};
-  if (selectedTool.data) {
+  if (selectedTool.data !== undefined) {
     attributes.selectedTool = selectedTool.data;
   }
   if (isNonEmptyString(modelId)) {

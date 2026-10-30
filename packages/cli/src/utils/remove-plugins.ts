@@ -1,3 +1,4 @@
+import { installationActivation } from "./installation-activation";
 import { randomUUID } from "node:crypto";
 import { mkdir, rename, rm, rmdir, writeFile } from "node:fs/promises";
 import path from "node:path";
@@ -99,6 +100,10 @@ export const planPluginRemoval = async (
   );
   return {
     ids: [...selected],
+    activation: retiring.map((plugin) => ({
+      id: plugin.id,
+      ...installationActivation(plugin, plugin.files),
+    })),
     files,
     modified: modified.toSorted(),
     preserved: [...preserved].toSorted(),

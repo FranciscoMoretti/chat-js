@@ -1,6 +1,10 @@
+import type { DocumentDefinition } from "./document-definition";
+import type {
+  DocumentAssistantAction,
+  DocumentAssistantRequest,
+} from "./document-contracts";
 import type { ComponentType } from "react";
 
-import type { DocumentAssistantRequest } from "./document-contracts";
 import type { ReadonlyEveMessagePart } from "@/lib/eve/readonly-message-types";
 
 interface DocumentBodyProps {
@@ -24,13 +28,18 @@ interface DocumentBodyProps {
 }
 
 interface DocumentUi {
+  readonly definition: DocumentDefinition;
+  readonly assistantActions?: () => DocumentAssistantAction[];
+  readonly supportsComparison?: boolean;
+  readonly copyLabel?: string;
+  readonly copySuccessMessage?: string;
+  readonly copyIconSize?: number;
+  readonly copyButtonClassName?: string;
   readonly Body: ComponentType<DocumentBodyProps>;
   readonly copyContent?: (content: string) => string;
 }
 
-type DocumentUiRegistry = Partial<
-  Record<"text" | "code" | "sheet", DocumentUi>
->;
+type DocumentUiRegistry = Partial<Record<string, DocumentUi>>;
 
 interface DocumentRunProps {
   readonly buttonOnly?: boolean;
@@ -38,7 +47,7 @@ interface DocumentRunProps {
   readonly documentId: string;
   readonly revisionId: string;
   readonly title: string;
-  readonly kind: "text" | "code" | "sheet";
+  readonly kind: string;
   readonly messages: readonly {
     readonly id: string;
     readonly role: "assistant" | "user";
