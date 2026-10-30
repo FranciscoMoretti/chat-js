@@ -76,7 +76,6 @@ test.each([
       "nested/.env.example",
       "app/page.tsx",
       "lib/eve/message-delivery.test.ts",
-      "chatjs/README.md",
       "chatjs/generated/tools.ts",
     ];
     try {

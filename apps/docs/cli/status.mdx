@@ -18,15 +18,13 @@ This command is available in the CLI source accompanying this change. Use your m
 
 ```text
 chatjs/
-  README.md                    Installation ownership guide
   generated/                   CLI-generated imports and registrations
   installed-source.json        Installed file hashes
   installed-dependencies.json  Package ownership receipt
   retained-plugin-schemas.json Schema inputs preserved after removal
   removed-plugins/             Backups requested during removal
 
-integrations/                  App-owned chat and billing composition
-composition/custom/            App-owned tool composition
+integrations/                  App-owned domain composition
 plugins/<id>/                  Editable installed plugin source
   chatjs.json                  Installation descriptor and owned file list
 ```
@@ -67,6 +65,6 @@ See [Customize plugin integrations](../cookbook/customize-integrations) for app-
 
 New scaffolds use `chatjs/generated/` and store installation receipts in `chatjs/`. Older apps using `composition/generated/` or `.chatjs/` must migrate explicitly before add, sync, remove, or status. These commands stop before changing files when they detect the old layout.
 
-Move generated registrations to `chatjs/generated/`, update their imports and tooling paths, and move the contents of `.chatjs/` into `chatjs/` without overwriting existing files. Preserve source/dependency receipts, retained-schema records, and backups. Keep `composition/custom/` and your app-owned integration files intact. Remove the empty old directories after migration, then run sync and your app checks.
+Move generated registrations to `chatjs/generated/`, update their imports and tooling paths, and move the contents of `.chatjs/` into `chatjs/` without overwriting existing files. Preserve source/dependency receipts, retained-schema records, and backups. Move local registrations from `composition/custom/` into `integrations/tools.ts` and `integrations/tool-ui.ts`. Adopt the current generated-input exports and update runtime consumers to import app-owned integration modules. Preserve existing integration customizations. Remove the empty old directories after migration, then run sync and your app checks.
 
 Do not delete receipts to bypass the layout check. If both layouts already exist, reconcile their records deliberately rather than overwriting either set. This change does not provide automatic migration of arbitrary developer-modified application code.

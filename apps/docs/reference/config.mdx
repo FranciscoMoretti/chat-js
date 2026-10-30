@@ -27,10 +27,10 @@ Use `config` from `@/lib/config` for runtime access. See [Configuration](../core
 | `chatjs/generated/installed-config.ts` | Generated composition of installed tool schemas |
 | `chatjs/generated/document-actions.ts` | Generated composition of document assistant actions |
 | `chatjs/generated/providers.ts` | Shared search, retrieval, media and code-execution provider registrations |
-| `composition/custom/custom-tools.ts`, `custom-ui.ts` | User-authored tool and renderer registrations |
-| `plugins/*/chatjs.json`, generated feature registrations | Installed uploads, MCP and telemetry contributions |
+| `integrations/tools.ts`, `integrations/tool-ui.ts` | User-authored tool and renderer registrations |
+| `plugins/*/chatjs.json`, generated plugin registrations | Installed uploads, MCP and telemetry contributions |
 
-Tools can declare `requiresTools`, `requiresGateway` (`image` or `video`) and `requiresStorage`. Features can declare `requiresPlugins` and `requiresStorage`. Provider slots and document kinds are exclusive. The planner validates the complete resulting installation, including existing tools during replacement. Declared external capabilities still need adapter and lifecycle tests.
+Tools can declare `requiresTools`, `requiresGateway` (`image` or `video`) and `requiresStorage`. Plugins can declare `requiresPlugins` and `requiresStorage`. Provider slots and document kinds are exclusive. The planner validates the complete resulting installation, including existing tools during replacement. Declared external capabilities still need adapter and lifecycle tests.
 
 ## AI policy
 

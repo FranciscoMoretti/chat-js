@@ -1,4 +1,4 @@
-import { installedToolConfig } from "@/chatjs/generated/installed-config";
+import { toolConfig } from "@/integrations/tool-configuration";
 import { languageModelSchema, modelRoles } from "./config-models";
 import type {
   GatewayModelIdMap,
@@ -29,7 +29,7 @@ const aiToolsSchema = z
         enabled: z.boolean().default(false),
       })
       .prefault({}),
-    ...installedToolConfig,
+    ...toolConfig,
   })
   .prefault({});
 

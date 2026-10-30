@@ -11,7 +11,7 @@ import { getEveChatPageConversation } from "@/lib/db/eve-queries";
 import type { CreationScope } from "@/lib/eve/pending-create";
 import { resolveEvePrincipal } from "@/lib/eve/principal";
 
-import { SignedOutScreen } from "@/chatjs/generated/installed-signed-out";
+import { SignedOutScreen } from "@/integrations/signed-out";
 import { EveArtifactLayout } from "./eve-artifact-layout";
 import { EveCopyButton } from "./eve-copy-button";
 import { EveCreationRecovery } from "./eve-creation-recovery";

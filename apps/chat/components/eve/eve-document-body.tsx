@@ -3,7 +3,7 @@
 import React from "react";
 
 import type { DocumentBodyProps } from "@/lib/eve/document-ui";
-import { documentUi } from "@/chatjs/generated/document-ui";
+import { documents } from "@/integrations/document-ui";
 
 export const DocumentBody = ({
   kind,
@@ -11,7 +11,7 @@ export const DocumentBody = ({
 }: DocumentBodyProps & {
   readonly kind: "text" | "code" | "sheet";
 }): React.JSX.Element => {
-  const Body = documentUi[kind]?.Body;
+  const Body = documents[kind]?.Body;
   if (Body) {
     return <Body {...props} />;
   }

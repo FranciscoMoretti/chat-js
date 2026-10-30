@@ -4,7 +4,7 @@ import type { UiToolName } from "@/lib/ai/types";
 import {
   installedDocumentKinds,
   installedToolNames,
-} from "@/chatjs/generated/installed-tools";
+} from "@/integrations/tool-catalog";
 
 import { eveDocumentOperations } from "./document-contracts";
 import { selectedEveTools } from "./selected-tools";

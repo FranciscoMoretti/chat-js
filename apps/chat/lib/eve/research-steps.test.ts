@@ -23,13 +23,13 @@ vi.mock("./turn-tools", () => ({
   eveTurnTool: { get: mocks.selected },
 }));
 
-vi.mock("@/chatjs/generated/installed-tools", () => ({
+vi.mock("@/integrations/tool-catalog", () => ({
   installedDocumentKinds: { has: (): boolean => mocks.text },
   installedToolNames: { has: (): boolean => mocks.research },
 }));
 
-vi.mock("../../chatjs/generated/providers", () => ({
-  providers: mocks.tools,
+vi.mock("../../integrations/tool-providers", () => ({
+  toolProviders: mocks.tools,
 }));
 vi.mock("@/tools/chatjs/deep-research/configuration", () => ({
   getDeepResearchConfig: () => ({}),

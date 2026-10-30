@@ -10,7 +10,7 @@ import { requireMcpCredentials } from "@/plugins/mcp/setup";
 import { MCPClient } from "@/plugins/mcp/oauth/mcp-client";
 import { createModuleLogger } from "@/lib/logger";
 import { createToolId } from "@/lib/ai/mcp-name-id";
-import { installedPlugins } from "@/chatjs/generated/installed";
+import { installedPlugins } from "@/integrations/plugin-catalog";
 import {
   getMcpConnectorById,
   getMcpConnectorsByUserId,

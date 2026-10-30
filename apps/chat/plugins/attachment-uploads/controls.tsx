@@ -6,7 +6,7 @@ import { toast } from "sonner";
 
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { LoginPrompt } from "@/components/upgrade-cta/login-prompt";
-import { installedPlugins } from "@/chatjs/generated/installed";
+import { installedPlugins } from "@/integrations/plugin-catalog";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { config } from "@/lib/config";
 import { useSession } from "@/providers/session-provider";

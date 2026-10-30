@@ -3,9 +3,9 @@ import { eveTurnAccount, eveTurnTool } from "@/lib/eve/turn-tools";
 import {
   installedDocumentKinds,
   installedToolNames,
-} from "@/chatjs/generated/installed-tools";
+} from "@/integrations/tool-catalog";
 import type { ToolContext } from "eve/tools";
-import { providers } from "@/chatjs/generated/providers";
+import { toolProviders } from "@/integrations/tool-providers";
 
 export const researchAvailable = (
   session: Pick<ToolContext["session"], "auth" | "parent">
@@ -18,6 +18,6 @@ export const researchAvailable = (
     (!selected || selected === "deepResearch") &&
     installedToolNames.has("deepResearch") &&
     installedDocumentKinds.has("text") &&
-    Object.hasOwn(providers, "webSearch")
+    Object.hasOwn(toolProviders, "webSearch")
   );
 };

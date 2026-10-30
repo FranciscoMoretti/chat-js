@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { installedPlugins } from "@/chatjs/generated/installed";
+import { installedPlugins } from "@/integrations/plugin-catalog";
 import type { ChatCreationScope } from "@/lib/chat-plugin-contracts";
 
 export const projectCreationInput = z.object({

@@ -6,6 +6,7 @@ import {
   mkdir,
   mkdtemp,
   readFile,
+  readdir,
   rm,
   symlink,
   writeFile,
@@ -89,9 +90,23 @@ test("removal checks generated files it will not regenerate and ignores inactive
   expect(plan.files).toContain("plugins/projects/chat.ts");
 });
 
-test("later installation, removal and sync preserve app-owned chat and billing composition", async () => {
+test("later installation, removal and sync preserve every app-owned integration", async () => {
   const root = await fixture();
   await mkdir(path.join(root, "integrations"));
+  const integrationDirectory = path.resolve(
+    import.meta.dir,
+    "../../../../apps/chat/integrations"
+  );
+  const integrationFiles = await readdir(integrationDirectory);
+  const sources = new Map(
+    await Promise.all(
+      integrationFiles.map(async (file) => {
+        const source = `${await readFile(path.join(integrationDirectory, file), "utf-8")}\n// Application customization retained by installation.\n`;
+        await writeFile(path.join(root, "integrations", file), source);
+        return [file, source] as const;
+      })
+    )
+  );
   const chatSource = `import { installedChat } from "@/chatjs/generated/installed-chat";
 import { composeChat } from "@/lib/compose-chat";
 export const chat = composeChat([...installedChat, { historyFilter: () => undefined }]);
@@ -114,6 +129,15 @@ export const billing = { ...selected, canSpend: (ownerId: string) => selected.ca
   expect(
     await readFile(path.join(root, "integrations/billing.ts"), "utf-8")
   ).toBe(billingSource);
+  await Promise.all(
+    [...sources]
+      .filter(([file]) => file !== "chat.ts" && file !== "billing.ts")
+      .map(async ([file, source]) => {
+        expect(
+          await readFile(path.join(root, "integrations", file), "utf-8")
+        ).toBe(source);
+      })
+  );
   const chat = await readFile(
     path.join(root, "chatjs/generated/installed-chat.ts"),
     "utf-8"

@@ -18,7 +18,7 @@ The npm package publishes `dist/r/`. Release candidate `0.2.0-beta.2` provides t
 
 Each tool item installs `tool.ts`, `renderer.tsx`, and `chatjs.json` under `~/tools/chatjs/<id>/`. All tools use native EVE definitions and a single contractVersion 1 descriptor with kind `tool`, id, named tool/renderer exports, optional plugin slot, and environment requirements. The version validates the format and never selects an execution adapter. The build derives it from the same typed metadata used in the catalog.
 
-`chat-js add` delegates installation to shadcn, then generates typed server and client indexes. Direct `shadcn add` installs are supported by running `chat-js sync` afterward. Custom registrations belong in `custom-tools.ts` and `custom-ui.ts`. Third-party items use the same shape and standard namespaces in `components.json`.
+`chat-js add` delegates installation to shadcn, then generates typed server and client indexes. Direct `shadcn add` installs are supported by running `chat-js sync` afterward. Custom registrations belong in `integrations/tools.ts` and `integrations/tool-ui.ts`. Third-party items use the same shape and standard namespaces in `components.json`.
 
 See [gateway authoring](./src/gateways/README.md) for adapter-specific metadata.
 
@@ -28,7 +28,7 @@ Source folders group items by category. Each gateway has a `gateway.ts`; each to
 
 `meta.chatjs.kind` identifies a gateway or tool independently of its public name. Registry namespace aliases such as `@chatjs` identify a configured registry source. Public item names remain `vercel-gateway`, `word-count`, and the other existing names. Source folders do not determine registry addresses or installation targets.
 
-The selected gateway installs into the app's `lib/ai/gateway.ts` slot. Tools install under `tools/chatjs/<id>/` with generated registrations and separate custom modules. Third-party destination namespacing is not inferred from registry aliases and is not added by this source reorganization.
+The selected gateway installs into the app's `lib/ai/gateway.ts` slot. Tools install under `tools/chatjs/<id>/` with generated installation inputs and app-owned integration modules. Third-party destination namespacing is not inferred from registry aliases and is not added by this source reorganization.
 
 `packages/gateways` owns shared runtime contracts. `packages/cli` owns installation and configuration. `apps/chat` is the reference consumer and app template source. New categories such as layouts and caches should introduce source folders and contracts when their first implementation is added, rather than empty scaffolding.
 
@@ -60,7 +60,7 @@ Plugins replace the former installable feature category. Their open ID contract 
 
 MCP and attachment uploads keep manifests beside `src/` and `adapters/`. All plugin runtime source installs under `plugins/<id>/`; Next and EVE adapters retain explicit ownership despite their framework-required locations. Plugin entrypoints use `server-plugin.ts` and `client-plugin.ts` to avoid basename collisions with host modules during shadcn installation.
 
-Generated tool and plugin registrations live under `chatjs/generated/`. Editable custom tool and renderer registrations live under `composition/custom/`. `composer-controls.ts`, app layout JSX, and `chat.config.ts` remain app-owned. Adding a plugin with existing contribution kinds requires no CLI whitelist change. New contribution kinds require an explicit host contract and generator support.
+Generated tool and plugin registrations live under `chatjs/generated/`. App-owned tool and renderer composition lives in `integrations/tools.ts` and `integrations/tool-ui.ts`. `composer-controls.ts`, app layout JSX, and `chat.config.ts` remain app-owned. Adding a plugin with existing contribution kinds requires no CLI whitelist change. New contribution kinds require an explicit host contract and generator support.
 
 UI contributions use `definePlugin` and typed slot references from `lib/ui-slots.tsx` and `components/chat-slots.tsx`. The generated chat and layout lists import module-scope plugin declarations. App-owned layouts place slot components beside ordinary JSX. Composer attachment and extension slots surround app-owned tool controls. Plugin components and wrappers remain editable source, with normal dynamic imports and Suspense for deferred UI. Installation and synchronization do not patch these files. Global layout plugins use their own list so authentication routes do not import chat plugins.
 

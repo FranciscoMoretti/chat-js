@@ -1,5 +1,5 @@
 import type { generatedForGateway, models } from "@/lib/ai/models.generated";
-import type { Gateway } from "@/lib/ai/gateway";
+import type { createGateway } from "@/integrations/gateway";
 import type { GatewayProvider as GatewayProviderBase } from "@chat-js/gateways/gateway-provider";
 import type {
   ConfigMediaModelId,
@@ -7,7 +7,7 @@ import type {
 } from "@chat-js/gateways/provider-types";
 import type { gatewayType } from "@/lib/ai/gateway-model-defaults";
 
-type InstalledGateway = InstanceType<typeof Gateway>;
+type InstalledGateway = ReturnType<typeof createGateway>;
 
 type GatewayType = typeof gatewayType;
 

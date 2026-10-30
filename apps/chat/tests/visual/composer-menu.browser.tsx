@@ -21,7 +21,7 @@ import type { UiToolName } from "@/lib/ai/types";
 import type { DraftAttachment } from "@/lib/eve/draft";
 import type { AttachmentUploadInput } from "@/lib/installation-contracts";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-import type { composerTools } from "@/chatjs/generated/composer-tools";
+import type { composerTools } from "@/integrations/composer-tools";
 
 import "./sandbox.css";
 
@@ -46,7 +46,7 @@ const state = vi.hoisted(() => ({
   uploadsInstalled: true,
 }));
 
-vi.mock("@/chatjs/generated/installed-uploads", async () => {
+vi.mock("@/integrations/uploads", async () => {
   const { attachmentUploads } =
     await import("@/plugins/attachment-uploads/integration");
   const useFixtureUploads = (files: AttachmentUploadInput) => {
@@ -105,7 +105,7 @@ vi.mock("@/lib/config", () => ({
   },
 }));
 
-vi.mock("@/chatjs/generated/installed", () => ({
+vi.mock("@/integrations/plugin-catalog", () => ({
   installedPlugins: {
     has: (id: string) =>
       state.featuresEnabled &&
@@ -113,7 +113,7 @@ vi.mock("@/chatjs/generated/installed", () => ({
   },
 }));
 
-vi.mock("@/chatjs/generated/installed-tools", () => ({
+vi.mock("@/integrations/tool-catalog", () => ({
   installedToolNames: {
     has: (name: string) =>
       state.featuresEnabled &&
@@ -171,7 +171,7 @@ vi.mock("@/components/internal-link", () => ({
   ),
 }));
 
-vi.mock("@/chatjs/generated/composer-tools", async (importOriginal) => {
+vi.mock("@/integrations/composer-tools", async (importOriginal) => {
   const actual = await importOriginal<{
     composerTools: typeof composerTools;
   }>();

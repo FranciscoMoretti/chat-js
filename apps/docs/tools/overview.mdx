@@ -3,7 +3,7 @@ title: Tools Overview
 description: Install and distribute typed ChatJS tools with shadcn registries
 ---
 
-The ChatJS registry distributes editable source code using shadcn. A tool includes server logic, dependencies, and a declarative registration descriptor. Tools can include their own client renderer. Built-in search and code-execution items include renderers for their own output. Installed tools become part of your app's typed tool system. All installed and custom tools use native EVE definitions. Installed registry items use a `contractVersion: 1` descriptor. Custom tools are registered directly in `custom-tools.ts` without a descriptor.
+The ChatJS registry distributes editable source code using shadcn. A tool includes server logic, dependencies, and a declarative registration descriptor. Tools can include their own client renderer. Built-in search and code-execution items include renderers for their own output. Installed tools become part of your app's typed tool system. All installed and custom tools use native EVE definitions. Installed registry items use a `contractVersion: 1` descriptor. Custom tools are registered directly in `integrations/tools.ts` without a descriptor.
 
 ```bash
 npx @chat-js/cli@latest add word-count
@@ -43,9 +43,9 @@ Deletion removes the document from the current conversation. Existing history sn
 | `tools/chatjs/<id>/renderer.tsx` | Editable client renderer |
 | `tools/chatjs/<id>/chatjs.json` | Installed registration and environment descriptor |
 | `chatjs/generated/tools.ts`, `ui.ts` | Generated registrations |
-| `composition/custom/custom-tools.ts`, `custom-ui.ts` | Your custom registrations |
+| `integrations/tools.ts`, `integrations/tool-ui.ts` | Your custom registrations |
 
-Keep manual registrations in the custom modules. Sync rejects duplicate installed descriptor keys and edited generated indexes. Generated indexes detect collisions with custom registrations when loaded. Sync also refuses to remove a previously registered tool just because its descriptor disappeared. Restore the descriptor before syncing.
+Keep manual registrations in the app-owned integration modules. Sync rejects duplicate installed descriptor keys and edited generated indexes. App composition permits explicit replacements; its workflow guard rejects dynamic tools that shadow native workflow names. Add app-owned tool names to the client-safe `integrations/tool-catalog.ts` when they should appear in tool selection. Sync also refuses to remove a previously registered tool just because its descriptor disappeared. Restore the descriptor before syncing.
 
 Registry items specify explicit file targets. This integration uses `tools/chatjs`. The former `paths.tools` configuration and marker-based injection are removed. Built-in product tools remain in `tools/platform`.
 

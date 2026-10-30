@@ -6,7 +6,7 @@ import { route } from "./route";
 import { renderRoute } from "./render";
 
 vi.mock("@/chatjs/generated/installed-signed-out", () => ({
-  SignedOutScreen: undefined,
+  installedSignedOutScreens: [],
 }));
 
 test("without Guest Chat signed-out chat redirects to login", async () => {

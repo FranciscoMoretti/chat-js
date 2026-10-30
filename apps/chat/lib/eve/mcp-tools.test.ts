@@ -26,7 +26,7 @@ vi.mock("@/plugins/mcp/setup", () => ({
   requireMcpCredentials: mocks.requireCredentials,
 }));
 
-vi.mock("@/chatjs/generated/installed", () => ({
+vi.mock("@/integrations/plugin-catalog", () => ({
   installedPlugins: { has: (): boolean => mocks.enabled.enabled },
 }));
 

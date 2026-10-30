@@ -9,7 +9,7 @@ import {
   storageKeyForFile,
 } from "./db/file-storage-keys";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-import { createStorageAdapter } from "./storage-provider";
+import { createStorageAdapter } from "@/integrations/storage";
 import { storageOptions } from "./storage-options";
 
 const PATH_SEPARATOR = /[\\/]/u;

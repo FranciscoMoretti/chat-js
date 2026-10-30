@@ -3,7 +3,7 @@ import { Hint } from "@/components/hint";
 import {
   installedDocumentKinds,
   installedToolNames,
-} from "@/chatjs/generated/installed-tools";
+} from "@/integrations/tool-catalog";
 import { Button } from "@/components/ui/button";
 import type { DocumentRunProps } from "@/lib/eve/document-ui";
 import { EveDocumentRunResult } from "./result";

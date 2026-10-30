@@ -180,6 +180,8 @@ const config = defineConfig({
 
 Before each build, the Electron prebuild step writes a `branding.json` file from those values and the plugin's `protocol.ts`. The native runtime imports this generated configuration instead of web-app modules. Rebuild after changing these settings.
 
+Use `electron/forge.config.ts` for packaging-specific settings. Keep the app identity and URL in `chat.config.ts` so protocol registration, authentication callbacks, and packaged builds use the same values.
+
 ## Building for Distribution
 
 Build desktop installers from the `electron/` directory:
