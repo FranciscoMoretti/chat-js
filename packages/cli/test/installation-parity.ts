@@ -26,7 +26,11 @@ const fixture: { core?: Map<string, Uint8Array> } = {};
 // are independently exercised by their existing integration checks.
 const comparable = (file: string): boolean =>
   file !== "next-env.d.ts" &&
-  !(file.startsWith("chatjs/") && !file.startsWith("chatjs/generated/")) &&
+  !(
+    file.startsWith("chatjs/") &&
+    file !== "chatjs/generated" &&
+    !file.startsWith("chatjs/generated/")
+  ) &&
   // Companion contents/build are exercised by the packed desktop fixture.
   !file.startsWith("electron/") &&
   !/^(?:node_modules|\.git|\.chatjs|\.next|\.eve|\.output|lib\/db\/migrations)(?:\/|$)/u.test(
@@ -37,6 +41,11 @@ const comparable = (file: string): boolean =>
   ) &&
   !file.endsWith(".tsbuildinfo");
 
+export const readInstallationProject = async (
+  directory: string
+): Promise<Map<string, Uint8Array>> =>
+  await readProjectFiles(directory, comparable);
+
 // Predict compositions on an independently initialized native shell, just as
 // create does. Keep whole-tree comparison: copying the actual app's native files
 // or excluding all UI files would hide accidental overwrites during add/sync.
@@ -44,7 +53,7 @@ const prepareNativeCore = async (): Promise<Map<string, Uint8Array>> => {
   const directory = await mkdtemp(path.join(tmpdir(), "chatjs-native-parity-"));
   try {
     await scaffoldNativeProject(directory, "bun", []);
-    return await readProjectFiles(directory, comparable);
+    return await readInstallationProject(directory);
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
@@ -141,7 +150,7 @@ export const verifyInstallationParity = async (
       new TextEncoder().encode(JSON.stringify(config))
     );
   }
-  const actual = await readProjectFiles(cwd, comparable);
+  const actual = await readInstallationProject(cwd);
   expect(await compareInstallationProjects(predicted.files, actual)).toEqual(
     []
   );
