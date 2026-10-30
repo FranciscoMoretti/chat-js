@@ -10,6 +10,7 @@ import { loadEveModelDefinition } from "../eve/model-selection";
 const getLanguageModel = async (
   modelId: AppModelId
 ): Promise<LanguageModelV4> => {
+  // This provider is also loaded by authored EVE modules outside Next.js.
   const model = await loadEveModelDefinition(modelId);
   const languageProvider = getActiveGateway().createLanguageModel(
     model.apiModelId
