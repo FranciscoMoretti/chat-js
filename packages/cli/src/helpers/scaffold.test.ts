@@ -324,6 +324,7 @@ describe("scaffoldFromTemplate", (): void => {
       "tests/eve-message-presentation.fixture.tsx",
       "tests/fixtures/eve-oauth-mcp-server.ts",
       "lib/eve/tool-selection.test.ts",
+      "lib/eve/model-runtime.test.ts",
       "lib/eve/local-sandbox-inventory.test.ts",
       "lib/eve/purge-local-sandbox.test.ts",
       "lib/eve/verify-local-coverage.test.ts",

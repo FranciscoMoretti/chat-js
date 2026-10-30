@@ -28,6 +28,7 @@ test.each([
       "app/api/mcp/oauth/callback/route.test.ts",
       "lib/eve/research-availability.test.ts",
       "lib/eve/tool-usage.test.ts",
+      "lib/eve/model-runtime.test.ts",
       "tests/native-research-runtime.ts",
       "tests/fixtures/eve-oauth-mcp-server.ts",
       "tests/fixtures/eve-oauth-mcp-server.test.ts",
