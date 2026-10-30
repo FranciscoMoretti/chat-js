@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { auth } from "@/lib/auth";
-import { installedAuth } from "@/composition/generated/installed-auth";
+import { installedAuth } from "@/chatjs/generated/installed-auth";
 import { isPlaywrightTestEnvironment } from "@/lib/constants";
 
 const EVE_CHAT_PAGE = /^\/chat\/[^/]+$/u;

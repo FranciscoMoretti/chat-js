@@ -10,6 +10,11 @@ import { tmpdir } from "node:os";
 test.each([
   {
     excluded: [
+      "chatjs/installed-source.json",
+      "chatjs/installed-dependencies.json",
+      "chatjs/retained-plugin-schemas.json",
+      "chatjs/removed-plugins/prior/source.ts.bak",
+      "chatjs/replaced-prior/config.ts",
       "evals/my-eval.eval.ts",
       "components/ui/control-defaults-visual-fixture.tsx",
       "tests/visual/eve-tool-results.browser.tsx",
@@ -23,6 +28,7 @@ test.each([
       "app/api/mcp/oauth/callback/route.test.ts",
       "lib/eve/research-availability.test.ts",
       "lib/eve/tool-usage.test.ts",
+      "lib/eve/model-runtime.test.ts",
       "tests/native-research-runtime.ts",
       "tests/fixtures/eve-oauth-mcp-server.ts",
       "tests/fixtures/eve-oauth-mcp-server.test.ts",
@@ -70,6 +76,8 @@ test.each([
       "nested/.env.example",
       "app/page.tsx",
       "lib/eve/message-delivery.test.ts",
+      "chatjs/README.md",
+      "chatjs/generated/tools.ts",
     ];
     try {
       await Promise.all(

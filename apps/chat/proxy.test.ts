@@ -5,7 +5,7 @@ import { proxy } from "./proxy";
 
 const mocks = vi.hoisted(() => ({ session: vi.fn(), isAuthRoute: vi.fn() }));
 vi.mock("@/lib/auth", () => ({ auth: { api: { getSession: mocks.session } } }));
-vi.mock("@/composition/generated/installed-auth", () => ({
+vi.mock("@/chatjs/generated/installed-auth", () => ({
   installedAuth: { isAuthRoute: mocks.isAuthRoute },
 }));
 vi.mock("@/lib/constants", () => ({ isPlaywrightTestEnvironment: false }));

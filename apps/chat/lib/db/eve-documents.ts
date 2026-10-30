@@ -1,4 +1,4 @@
-import { publicChatReadFilter } from "@/lib/chat-plugins";
+import { chat } from "@/integrations/chat";
 import { eveDeletionScope } from "./eve-deletion-scope";
 import { unretainedEveDocumentRevisionIds } from "./eve-document-retention";
 import { isNonEmptyString } from "@/lib/is-non-empty-string";
@@ -537,7 +537,7 @@ const getAccessibleEveDocument = async (
       and(
         eq(eveConversation.id, conversationId),
         eq(eveConversation.state, "bound"),
-        sql`(${eveConversation.ownerId} = ${viewerId ?? null} or ${publicChatReadFilter()})`
+        sql`(${eveConversation.ownerId} = ${viewerId ?? null} or ${chat.publicReadFilter()})`
       )
     );
   const conversation = conversationRows.at(FIRST_ROW_INDEX);
@@ -570,7 +570,7 @@ const getAccessibleEveDocument = async (
       and(
         eq(eveConversation.id, conversationId),
         eq(eveConversation.state, "bound"),
-        sql`(${eveConversation.ownerId} = ${viewerId ?? null} or ${publicChatReadFilter()})`
+        sql`(${eveConversation.ownerId} = ${viewerId ?? null} or ${chat.publicReadFilter()})`
       )
     );
   const current = currentRows.at(FIRST_ROW_INDEX);

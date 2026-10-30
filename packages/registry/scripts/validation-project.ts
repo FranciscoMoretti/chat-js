@@ -46,19 +46,8 @@ export const renderValidationProject = async (
   selection: InstallationSelection,
   identity = defaultIdentity
 ) => {
-  const coreSource = (file: string): string => {
-    const source = core.get(file);
-    if (!source) {
-      throw new Error(`Missing core source: ${file}`);
-    }
-    return new TextDecoder().decode(source);
-  };
   const installation = await generateInstallation(selection, {
     projectFiles: core,
-    pluginUi: {
-      "composer-controls.ts": coreSource("composer-controls.ts"),
-      "settings-items.ts": coreSource("settings-items.ts"),
-    },
   });
   const files = new Map(core);
   const put = (file: string, source: string): void => {

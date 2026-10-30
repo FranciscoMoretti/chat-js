@@ -2,7 +2,7 @@ import { defineState } from "eve/context";
 import { defineDynamic } from "eve/tools";
 
 import { isAccountSession } from "@/lib/eve/session-identity";
-import { providers } from "@/composition/generated/providers";
+import { providers } from "@/chatjs/generated/providers";
 
 const MAX_RESEARCH_SEARCH_ROUNDS = 19;
 const INITIAL_SEARCH_ROUND = 0;

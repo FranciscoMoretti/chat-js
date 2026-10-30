@@ -37,12 +37,12 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { installedAccountSummaries } from "@/composition/generated/installed-account-ui";
+import { AccountSummary } from "@/components/chat-slots";
 
 import authClient from "@/lib/auth-client";
 
 import { cn } from "@/lib/utils";
-import { signOutWithPlugin } from "@/composition/generated/installed-sign-out";
+import { signOutWithPlugin } from "@/chatjs/generated/installed-sign-out";
 
 import { signOutAndNavigate } from "@/lib/sign-out";
 
@@ -129,9 +129,7 @@ export const SidebarUserNav = (): ReactJSX.Element => {
               <span className="truncate font-medium">
                 {user.name || user.email}
               </span>
-              {installedAccountSummaries.map(({ id, Component }) => (
-                <Component key={id} />
-              ))}
+              <AccountSummary />
             </div>
             <ChevronsUpDown
               className={cn("ml-auto size-4", isDesktopCollapsed && "hidden")}

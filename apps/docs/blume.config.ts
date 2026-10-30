@@ -181,7 +181,13 @@ export default defineConfig({
           label: "Platforms",
         },
         {
-          items: ["/cli", "/cli/create", "/cli/add", "/cli/config"],
+          items: [
+            "/cli",
+            "/cli/create",
+            "/cli/add",
+            "/cli/config",
+            "/cli/status",
+          ],
           label: "CLI",
         },
         {
@@ -202,6 +208,7 @@ export default defineConfig({
           items: [
             "/cookbook",
             "/cookbook/create-plugin",
+            "/cookbook/customize-integrations",
             "/cookbook/resumable-streams",
             "/cookbook/stop-resumable-streams",
             "/cookbook/tool-part",

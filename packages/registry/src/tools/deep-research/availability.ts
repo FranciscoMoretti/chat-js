@@ -3,9 +3,9 @@ import { eveTurnAccount, eveTurnTool } from "@/lib/eve/turn-tools";
 import {
   installedDocumentKinds,
   installedToolNames,
-} from "@/composition/generated/installed-tools";
+} from "@/chatjs/generated/installed-tools";
 import type { ToolContext } from "eve/tools";
-import { providers } from "@/composition/generated/providers";
+import { providers } from "@/chatjs/generated/providers";
 
 export const researchAvailable = (
   session: Pick<ToolContext["session"], "auth" | "parent">

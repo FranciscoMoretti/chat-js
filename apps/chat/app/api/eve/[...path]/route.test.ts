@@ -36,8 +36,8 @@ vi.mock("@/lib/db/eve-dispatch", () => ({
   },
   EveDispatchUnknownError: class extends Error {},
 }));
-vi.mock("@/composition/generated/installed-billing", () => ({
-  canSpend: mocks.canSpend,
+vi.mock("@/integrations/billing", () => ({
+  billing: { canSpend: mocks.canSpend, debit: undefined },
 }));
 vi.mock("@/lib/db/eve-files", () => ({
   referenceEveFiles: mocks.referenceFiles,

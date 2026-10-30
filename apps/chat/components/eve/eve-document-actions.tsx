@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Toggle } from "@/components/ui/toggle";
 import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
-import { documentUi } from "@/composition/generated/document-ui";
+import { documentUi } from "@/chatjs/generated/document-ui";
 
 export const EveDocumentActions = ({
   kind,

@@ -42,8 +42,8 @@ vi.mock("@/lib/db/eve-queries", () => ({
   getEveConversation: mocks.source,
   getEveCreation: mocks.creation,
 }));
-vi.mock("@/composition/generated/installed-billing", () => ({
-  canSpend: mocks.canSpend,
+vi.mock("@/integrations/billing", () => ({
+  billing: { canSpend: mocks.canSpend, debit: undefined },
 }));
 vi.mock("@/lib/db/eve-files", () => ({ assertEveFilesOwned: vi.fn() }));
 vi.mock("./model-selection", () => ({ loadEveModelDefinition: vi.fn() }));

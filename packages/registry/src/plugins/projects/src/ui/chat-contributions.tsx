@@ -17,9 +17,11 @@ import {
 } from "@/components/ui/sidebar";
 import type { ChatActionProps } from "@/lib/chat-plugin-contracts";
 import { SidebarProjects } from "./sidebar-projects";
-import { EveMoveProjectDialog } from "./eve-move-project-dialog";
+
 import { ProjectIcon } from "./project-icon";
 import { getProjectColorName, getProjectIconName } from "../project-icons";
+
+import { EveMoveProjectDialog } from "./eve-move-project-dialog";
 
 export const ProjectsSidebar = (): React.JSX.Element | null => {
   const { data: session } = useSession();

@@ -1,16 +1,21 @@
-import type { ChatClientPlugin } from "@/lib/plugin-contracts";
+"use client";
+import { definePlugin, slot } from "@/lib/ui-slots";
+import {
+  SidebarSections,
+  ChatActions,
+  ChatBreadcrumbs,
+} from "@/components/chat-slots";
 import {
   ProjectsSidebar,
   ProjectChatActions,
   ProjectBreadcrumb,
 } from "./ui/chat-contributions";
 
-export const projectsClient = () =>
-  ({
-    id: "projects",
-    chat: {
-      Sidebar: ProjectsSidebar,
-      Actions: ProjectChatActions,
-      Breadcrumb: ProjectBreadcrumb,
-    },
-  }) satisfies ChatClientPlugin;
+export const projectsClient = definePlugin({
+  id: "projects",
+  slots: [
+    slot(SidebarSections, ProjectsSidebar),
+    slot(ChatActions, ProjectChatActions),
+    slot(ChatBreadcrumbs, ProjectBreadcrumb),
+  ],
+});

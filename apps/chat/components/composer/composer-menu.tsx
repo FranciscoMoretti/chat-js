@@ -15,6 +15,10 @@ import { Plus } from "lucide-react";
 import React from "react";
 
 import type { JSX as ReactJSX } from "react";
+import {
+  ComposerAttachments,
+  ComposerExtensions,
+} from "@/components/chat-slots";
 import { composerControls } from "@/composer-controls";
 
 import { getToolDisplay } from "./tool-display";
@@ -25,6 +29,8 @@ export const ComposerMenu = (
   props: ComposerControlProps
 ): ReactJSX.Element | null => {
   const mobile = useIsMobile();
+  const hasAttachments = ComposerAttachments.useHasContent();
+  const hasExtensions = ComposerExtensions.useHasContent();
   const controls = composerControls.filter(
     ({
       Component,
@@ -34,7 +40,8 @@ export const ComposerMenu = (
       >;
     }) => Component.isAvailable?.(mobile) ?? true
   );
-  if (controls.length === 0 && !props.selectedTool) {
+  const hasControls = controls.length > 0 || hasAttachments || hasExtensions;
+  if (!hasControls && !props.selectedTool) {
     return null;
   }
   return (
@@ -51,6 +58,7 @@ export const ComposerMenu = (
       </MenuButton>
       <DropdownMenuContent align="start" className="w-56">
         <DropdownMenuGroup>
+          <ComposerAttachments {...props} />
           {controls.map(
             ({
               id,
@@ -61,9 +69,10 @@ export const ComposerMenu = (
               <Component key={id} {...props} />
             )
           )}
+          <ComposerExtensions {...props} />
           {props.selectedTool && (
             <>
-              {controls.length > 0 && <DropdownMenuSeparator />}
+              {hasControls && <DropdownMenuSeparator />}
               <DropdownMenuItem
                 disabled={props.disabled}
                 onClick={() => {

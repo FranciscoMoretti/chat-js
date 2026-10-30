@@ -1,6 +1,6 @@
 "use client";
 import { useSearchParams } from "next/navigation";
-import { AuthenticationForm } from "@/composition/generated/installed-auth-ui";
+import { AuthenticationForm } from "@/chatjs/generated/installed-auth-ui";
 import { AuthFormView } from "./auth-form-view";
 import { SocialAuthProviders } from "./auth-providers";
 

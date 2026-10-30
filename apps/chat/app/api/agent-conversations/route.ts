@@ -5,7 +5,7 @@ import {
   conversationBinding,
   createConversationInput,
 } from "@/lib/eve/contracts";
-import { runChatAfterCreate } from "@/lib/chat-plugins";
+import { runChatAfterCreate } from "@/lib/chat-after-create";
 import { createEveConversationOperation } from "@/lib/eve/create-conversation-operation";
 import { resolveEvePrincipal } from "@/lib/eve/principal";
 import { sameOrigin } from "@/lib/eve/request-policy";

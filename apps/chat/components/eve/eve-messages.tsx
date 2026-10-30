@@ -23,7 +23,7 @@ import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 import { EveAttachment } from "./eve-attachment";
 import { eveDocumentOperations } from "@/lib/eve/document-contracts";
 import { EveMessagePart } from "./eve-message-part";
-import { PluginMessageActions } from "@/components/plugin-chat-ui";
+import { MessageActions } from "@/components/chat-slots";
 
 const messagePartIdentity = (part: ReadonlyEveMessagePart): string => {
   switch (part.type) {
@@ -116,7 +116,7 @@ const AssistantFeedback = ({
 > & { readonly modelId: string | undefined }): ReactJSX.Element => (
   <>
     {hasText(conversationId) && (
-      <PluginMessageActions
+      <MessageActions
         conversationId={conversationId}
         disabled={disabled}
         messageId={message.id}

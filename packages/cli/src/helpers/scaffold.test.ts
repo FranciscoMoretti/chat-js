@@ -324,6 +324,7 @@ describe("scaffoldFromTemplate", (): void => {
       "tests/eve-message-presentation.fixture.tsx",
       "tests/fixtures/eve-oauth-mcp-server.ts",
       "lib/eve/tool-selection.test.ts",
+      "lib/eve/model-runtime.test.ts",
       "lib/eve/local-sandbox-inventory.test.ts",
       "lib/eve/purge-local-sandbox.test.ts",
       "lib/eve/verify-local-coverage.test.ts",
@@ -687,13 +688,13 @@ describe("scaffoldFromTemplate", (): void => {
     ).toBe(false);
     expect(
       await readFile(
-        pathModule.join(destination, "composition", "generated", "tools.ts"),
+        pathModule.join(destination, "chatjs", "generated", "tools.ts"),
         "utf-8"
       )
     ).not.toContain("getWeather");
     expect(
       await readFile(
-        pathModule.join(destination, "composition", "generated", "ui.ts"),
+        pathModule.join(destination, "chatjs", "generated", "ui.ts"),
         "utf-8"
       )
     ).not.toContain("GetWeatherRenderer");

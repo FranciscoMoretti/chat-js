@@ -1,3 +1,7 @@
+import { Plugins } from "@/lib/ui-slots";
+import { attachmentUploadsClient } from "@/plugins/attachment-uploads/client-plugin";
+import { mcpClient } from "@/plugins/mcp/client-plugin";
+import { modelPreferencesClient } from "@/plugins/model-preferences/client-plugin";
 import { renderRoot, unmountRoot } from "./primitive-mount";
 import { disableAutoSnapshot, takeSnapshot } from "@uiverify/vitest";
 import React, { act, useState } from "react";
@@ -17,7 +21,7 @@ import type { UiToolName } from "@/lib/ai/types";
 import type { DraftAttachment } from "@/lib/eve/draft";
 import type { AttachmentUploadInput } from "@/lib/installation-contracts";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-import type { composerTools } from "@/composition/generated/composer-tools";
+import type { composerTools } from "@/chatjs/generated/composer-tools";
 
 import "./sandbox.css";
 
@@ -27,6 +31,7 @@ const state = vi.hoisted(() => ({
   connectors: [{ enabled: true, id: "docs", name: "Documentation" }],
   error: false,
   featuresEnabled: true,
+  connectorsInstalled: true,
   globalConnector: false,
   handleSubmit: vi.fn<() => void>(),
   history: new Array<DraftAttachment>(),
@@ -41,7 +46,7 @@ const state = vi.hoisted(() => ({
   uploadsInstalled: true,
 }));
 
-vi.mock("@/composition/generated/installed-uploads", async () => {
+vi.mock("@/chatjs/generated/installed-uploads", async () => {
   const { attachmentUploads } =
     await import("@/plugins/attachment-uploads/integration");
   const useFixtureUploads = (files: AttachmentUploadInput) => {
@@ -53,7 +58,6 @@ vi.mock("@/composition/generated/installed-uploads", async () => {
   };
   return {
     attachmentUploads: {
-      controls: attachmentUploads.controls,
       useUploads: useFixtureUploads,
     },
   };
@@ -101,7 +105,7 @@ vi.mock("@/lib/config", () => ({
   },
 }));
 
-vi.mock("@/composition/generated/installed", () => ({
+vi.mock("@/chatjs/generated/installed", () => ({
   installedPlugins: {
     has: (id: string) =>
       state.featuresEnabled &&
@@ -109,7 +113,7 @@ vi.mock("@/composition/generated/installed", () => ({
   },
 }));
 
-vi.mock("@/composition/generated/installed-tools", () => ({
+vi.mock("@/chatjs/generated/installed-tools", () => ({
   installedToolNames: {
     has: (name: string) =>
       state.featuresEnabled &&
@@ -167,7 +171,7 @@ vi.mock("@/components/internal-link", () => ({
   ),
 }));
 
-vi.mock("@/composition/generated/composer-tools", async (importOriginal) => {
+vi.mock("@/chatjs/generated/composer-tools", async (importOriginal) => {
   const actual = await importOriginal<{
     composerTools: typeof composerTools;
   }>();
@@ -267,7 +271,19 @@ const mount = async (
     );
   };
 
-  await renderRoot(root, <Fixture />);
+  const plugins = state.featuresEnabled
+    ? [
+        ...(state.uploadsInstalled ? [attachmentUploadsClient] : []),
+        ...(state.connectorsInstalled ? [mcpClient] : []),
+        modelPreferencesClient,
+      ]
+    : [];
+  await renderRoot(
+    root,
+    <Plugins plugins={plugins}>
+      <Fixture />
+    </Plugins>
+  );
   return async (): Promise<void> => {
     await unmountRoot(root);
     container.remove();
@@ -288,6 +304,7 @@ afterEach(() => {
   state.pending = false;
   state.error = false;
   state.featuresEnabled = true;
+  state.connectorsInstalled = true;
   state.globalConnector = false;
   state.connectors = [{ enabled: true, id: "docs", name: "Documentation" }];
   vi.clearAllMocks();
@@ -491,6 +508,7 @@ test("mobile camera and guest controls respect the same order; disabled composer
 });
 
 test("custom ordering and omitted MCP need no placeholder", async () => {
+  state.connectorsInstalled = false;
   composerControls.splice(
     0,
     composerControls.length,
@@ -510,12 +528,12 @@ test("custom ordering and omitted MCP need no placeholder", async () => {
         )
       )
       .toEqual([
+        "Attach files",
         "Create a video",
         "Create an image",
         "Deep Research",
         "Web Search",
         "Canvas",
-        "Attach files",
       ]);
     await takeSnapshot("composer-custom-order-without-mcp");
     await act(async () => {

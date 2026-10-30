@@ -2,8 +2,8 @@ import type {
   DocumentAssistantAction,
   DocumentAssistantRequest,
 } from "./document-contracts";
-import { installedDocumentKinds } from "@/composition/generated/installed-tools";
-import { installedDocumentActions } from "@/composition/generated/document-actions";
+import { installedDocumentKinds } from "@/chatjs/generated/installed-tools";
+import { installedDocumentActions } from "@/chatjs/generated/document-actions";
 
 const documentAssistantActions = (
   kind: "text" | "code" | "sheet"

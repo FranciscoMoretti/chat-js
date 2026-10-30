@@ -1,10 +1,15 @@
 import { assertUiCompatibility } from "./ui-compatibility";
 import { pluginRegistrationTargets } from "./sync-plugins";
-import { createHash, randomUUID } from "node:crypto";
+import { randomUUID } from "node:crypto";
 import { mkdir, rename, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 
-import { z } from "zod";
+import {
+  hash,
+  readReceipt,
+  sourceHashes,
+  recordInstalledSource,
+} from "./source-receipt";
 
 import { installItems } from "#cli/registry/shadcn";
 
@@ -30,23 +35,6 @@ const REGISTRY_ROOT_PREFIX = "~/";
 const NO_INFERRED_DESTINATIONS = 0;
 const NO_REPLACEMENTS = 0;
 const NO_RESTORATION_ERRORS = 0;
-const RECEIPT_INDENTATION_SPACES = 2;
-const SOURCE_READ_CONCURRENCY = 4;
-const receiptFile = ".chatjs/installed-source.json";
-const receiptSchema = z.record(z.string(), z.string());
-const hash = (content: ReadonlyNative<Buffer>): string =>
-  createHash("sha256").update(content).digest("hex");
-
-const readReceipt = async (
-  cwd: string
-): Promise<z.infer<typeof receiptSchema>> => {
-  await preflight(cwd, [receiptFile]);
-  const source = await optionalFile(path.join(cwd, receiptFile));
-  if (source) {
-    return receiptSchema.parse(JSON.parse(source.toString()));
-  }
-  return {};
-};
 const sourceTargets = (plan: ReadonlyNative<Plan>): string[] => [
   ...new Set(
     plan.items.flatMap((item: ReadonlyNative<Plan["items"][number]>) =>
@@ -66,60 +54,6 @@ const sourceTargets = (plan: ReadonlyNative<Plan>): string[] => [
   ),
 ];
 
-const sourceHashes = async (
-  cwd: string,
-  targets: readonly string[],
-  validate?: (target: string, digest: string | null) => void
-): Promise<(readonly [string, string | null])[]> => {
-  const hashes: (readonly [string, string | null])[] = [];
-  for (
-    let offset = 0;
-    offset < targets.length;
-    offset += SOURCE_READ_CONCURRENCY
-  ) {
-    // oxlint-disable-next-line no-await-in-loop -- Bound live file buffers to four; drain each batch before reporting its first source-order read error.
-    const batch = await Promise.allSettled(
-      targets
-        .slice(offset, offset + SOURCE_READ_CONCURRENCY)
-        .map(async (target) => {
-          const content = await optionalFile(path.join(cwd, target));
-          const digest = content ? hash(content) : null;
-          validate?.(target, digest);
-          return [target, digest] as const;
-        })
-    );
-    for (const result of batch) {
-      if (result.status === "rejected") {
-        throw result.reason;
-      }
-      hashes.push(result.value);
-    }
-  }
-  return hashes;
-};
-
-/**
- * Capture only source we actually installed. Never bless a skipped user file.
- * @param {string} cwd Project containing the receipt and installed source files.
- * @param {readonly string[]} targets Ordered installed paths to hash without modifying the caller list.
- */
-const recordInstalledSource = async (
-  cwd: string,
-  targets: readonly string[]
-): Promise<void> => {
-  const receipt = await readReceipt(cwd);
-  await preflight(cwd, targets);
-  for (const [target, digest] of await sourceHashes(cwd, targets)) {
-    if (digest !== null) {
-      receipt[target] = digest;
-    }
-  }
-  await mkdir(path.join(cwd, ".chatjs"), { recursive: true });
-  await writeFile(
-    path.join(cwd, receiptFile),
-    `${JSON.stringify(receipt, null, RECEIPT_INDENTATION_SPACES)}\n`
-  );
-};
 const plannedSourceTargets = sourceTargets;
 
 const hasProviderKind = (
@@ -161,7 +95,7 @@ const installPlan = async (
   const rollbackTargets = [
     "package.json",
     ".env.example",
-    ".chatjs/installed-dependencies.json",
+    "chatjs/installed-dependencies.json",
     "bun.lock",
     "bun.lockb",
     "package-lock.json",
@@ -236,14 +170,14 @@ const installPlan = async (
   }
   const updateDependencies = await prepareDependencyUpdate(cwd, plan);
   const staged: { readonly from: string; readonly to: string }[] = [];
-  await mkdir(path.join(cwd, ".chatjs"), { recursive: true });
+  await mkdir(path.join(cwd, "chatjs"), { recursive: true });
   try {
     await installItems(plan.sources, cwd, overwrite);
     for (const { previous } of plan.replacements) {
       const from = path.join(cwd, "tools/chatjs", previous.id);
       const to = path.join(
         cwd,
-        ".chatjs",
+        "chatjs",
         `replaced-${previous.id}-${randomUUID()}`
       );
       // oxlint-disable-next-line no-await-in-loop -- Record each completed rename before starting the next; rollback restores exactly staged providers and must not race an outstanding rename after failure.
@@ -288,7 +222,7 @@ const installPlan = async (
       }
     );
     throw new Error(
-      `Installation did not complete. ${restorationErrors.length > NO_RESTORATION_ERRORS ? `Source restoration also failed: ${restorationErrors.join("; ")}. Preserve .chatjs/replaced-* backups and restore source manually;` : "Previous provider source is preserved;"} newly installed source/dependencies may remain. Fix the reported problem and retry the same add command with --overwrite after reviewing partial source, or run chat-js sync after manual source integration. ${error instanceof Error ? error.message : String(error)}`,
+      `Installation did not complete. ${restorationErrors.length > NO_RESTORATION_ERRORS ? `Source restoration also failed: ${restorationErrors.join("; ")}. Preserve chatjs/replaced-* backups and restore source manually;` : "Previous provider source is preserved;"} newly installed source/dependencies may remain. Fix the reported problem and retry the same add command with --overwrite after reviewing partial source, or run chat-js sync after manual source integration. ${error instanceof Error ? error.message : String(error)}`,
       { cause: error }
     );
   }
@@ -320,4 +254,4 @@ const installPlan = async (
     })
   );
 };
-export { installPlan, plannedSourceTargets, recordInstalledSource };
+export { installPlan, plannedSourceTargets };

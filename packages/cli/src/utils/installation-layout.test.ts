@@ -26,6 +26,8 @@ test("fresh installation planning does not require the destination to exist", as
 });
 
 for (const marker of [
+  "composition/generated/tools.ts",
+  ".chatjs/installed-source.json",
   "tools/chatjs/tools.ts",
   "tools/chatjs/custom-tools.ts",
   "tools/chatjs/custom-ui.ts",
@@ -45,10 +47,9 @@ for (const marker of [
       await rejects(syncTools(root), /Legacy ChatJS installation layout/u);
       await rejects(syncPlugins(root), /Legacy ChatJS installation layout/u);
       expect(await readFile(file, "utf-8")).toBe("user-owned legacy source");
-      await rejects(
-        readFile(path.join(root, "composition/generated/tools.ts")),
-        { code: "ENOENT" }
-      );
+      await rejects(readFile(path.join(root, "chatjs/generated/tools.ts")), {
+        code: "ENOENT",
+      });
     } finally {
       await rm(root, { recursive: true, force: true });
     }

@@ -1,4 +1,4 @@
-import { installedRouters } from "@/composition/generated/installed-routers";
+import { installedRouters } from "@/chatjs/generated/installed-routers";
 import { createCallerFactory, createTRPCRouter } from "@/trpc/init";
 
 import { eveRouter } from "./eve.router";

@@ -1,6 +1,6 @@
 import { takeSnapshot } from "@uiverify/vitest";
 import { act, createContext, useContext } from "react";
-import type { ComponentType } from "react";
+import { Plugins } from "@/lib/ui-slots";
 import { createRoot } from "react-dom/client";
 import { expect, test, vi } from "vitest";
 import { page } from "vitest/browser";
@@ -10,26 +10,18 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { creditsClient } from "@/plugins/credits/client-plugin";
 import "./sandbox.css";
 
-const installation = vi.hoisted(
-  (): { summaries: { id: string; Component: ComponentType }[] } => ({
-    summaries: [],
-  })
-);
 const Balance = createContext<{
   balanceCents: number | undefined;
   isError: boolean;
 }>({ balanceCents: undefined, isError: false });
-vi.mock("@/composition/generated/installed-account-ui", () => ({
-  installedAccountSummaries: installation.summaries,
-}));
 vi.mock("@/plugins/credits/use-credits", () => ({
   useGetCredits: () => useContext(Balance),
 }));
 vi.mock("@/lib/auth-client", () => ({ default: {} }));
-vi.mock("@/composition/generated/installed-sign-out", () => ({
+vi.mock("@/chatjs/generated/installed-sign-out", () => ({
   signOutWithPlugin: async (): Promise<boolean> => await Promise.resolve(false),
 }));
-vi.mock("@/composition/generated/installed-navigation", () => ({
+vi.mock("@/chatjs/generated/installed-navigation", () => ({
   handleModifiedNavigation: () => false,
 }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({}) }));
@@ -57,13 +49,6 @@ const states = [
 test.each([true, false])(
   "account menu with credits installed: %s",
   async (enabled) => {
-    installation.summaries.splice(0);
-    if (enabled) {
-      installation.summaries.push({
-        id: "credits",
-        Component: creditsClient().accountSummary,
-      });
-    }
     const container = document.createElement("div");
     document.body.append(container);
     const root = createRoot(container);
@@ -76,11 +61,13 @@ test.each([true, false])(
               ({ label, ...balance }) => (
                 <section key={label} className="w-64">
                   <h2>{enabled ? label : "Credits not installed"}</h2>
-                  <Balance value={balance}>
-                    <SidebarProvider className="min-h-0">
-                      <SidebarUserNav />
-                    </SidebarProvider>
-                  </Balance>
+                  <Plugins plugins={enabled ? [creditsClient] : []}>
+                    <Balance value={balance}>
+                      <SidebarProvider className="min-h-0">
+                        <SidebarUserNav />
+                      </SidebarProvider>
+                    </Balance>
+                  </Plugins>
                 </section>
               )
             )}

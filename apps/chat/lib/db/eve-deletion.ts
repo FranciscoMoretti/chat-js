@@ -1,4 +1,4 @@
-import { installedChatPlugins } from "@/composition/generated/installed-chat";
+import { chat } from "@/integrations/chat";
 import { checkDeletedWorkspaceMemberships } from "@/lib/eve/persistent-sandbox-store";
 import { eveDeletionScope } from "./eve-deletion-scope";
 import { unretainedEveDocumentRevisionIds } from "./eve-document-retention";
@@ -273,15 +273,12 @@ const completeEveConversationDeletion = async (
     await tx
       .delete(eveSubagentSession)
       .where(inArray(eveSubagentSession.conversationId, ids));
-    for (const plugin of installedChatPlugins) {
-      // oxlint-disable-next-line no-await-in-loop -- Cleanup participates in the deletion transaction.
-      await plugin.onDeleteConversations?.(tx, {
-        conversationIds: ids,
-        sessionIds: family.flatMap((row) =>
-          row.sessionId === null ? [] : [row.sessionId]
-        ),
-      });
-    }
+    await chat.onDeleteConversations(tx, {
+      conversationIds: ids,
+      sessionIds: family.flatMap((row) =>
+        row.sessionId === null ? [] : [row.sessionId]
+      ),
+    });
     await tx
       .update(eveConversation)
       .set({
@@ -319,10 +316,7 @@ const completeEveConversationDeletion = async (
           )
         );
     } else {
-      for (const plugin of installedChatPlugins) {
-        // oxlint-disable-next-line no-await-in-loop -- Keep plugin cleanup inside the family transaction.
-        await plugin.onDelete?.(tx, identity.chatId);
-      }
+      await chat.onDelete(tx, identity.chatId);
       await tx
         .update(eveChat)
         .set({

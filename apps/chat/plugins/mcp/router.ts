@@ -18,7 +18,7 @@ import {
   removeMcpClient,
 } from "@/plugins/mcp/oauth/mcp-client-manager";
 import { createModuleLogger } from "@/lib/logger";
-import { installedPlugins } from "@/composition/generated/installed";
+import { installedPlugins } from "@/chatjs/generated/installed";
 import {
   createMcpConnector,
   deleteMcpConnector,

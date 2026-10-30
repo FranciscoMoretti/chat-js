@@ -3,7 +3,7 @@ import { beforeEach, expect, it, vi } from "vitest";
 import { documentAssistantActions } from "./document-assistant-actions";
 
 const kinds = vi.hoisted(() => new Set(["code", "sheet", "text"]));
-vi.mock("@/composition/generated/installed-tools", () => ({
+vi.mock("@/chatjs/generated/installed-tools", () => ({
   installedDocumentKinds: kinds,
 }));
 vi.mock("../config", () => ({

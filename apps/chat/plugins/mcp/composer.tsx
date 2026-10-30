@@ -17,7 +17,7 @@ import {
   DropdownMenuSubTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-import { installedPlugins } from "@/composition/generated/installed";
+import { installedPlugins } from "@/chatjs/generated/installed";
 import { useSession } from "@/providers/session-provider";
 import { useTRPC } from "@/trpc/react";
 

@@ -85,7 +85,7 @@ defineConfig({ ai: { gateway: gatewayType, tools: { followupSuggestions: {}, res
     path.join(root, "tools/chatjs/custom-research/configuration-schema.ts")
   );
   await writeFile(
-    path.join(root, "composition/generated/installed-config.ts"),
+    path.join(root, "chatjs/generated/installed-config.ts"),
     await planToolConfig(root, [definition])
   );
   await writeFile(

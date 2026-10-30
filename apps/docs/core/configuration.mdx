@@ -43,7 +43,7 @@ const config = {
 export default config;
 ```
 
-You keep one editable `chat.config.ts`. Each installed tool supplies its schema and defaults through the generated `composition/generated/installed-config.ts`. Its options appear in the inferred input type only while it is installed. Remove its overrides when removing a tool.
+You keep one editable `chat.config.ts`. Each installed tool supplies its schema and defaults through the generated `chatjs/generated/installed-config.ts`. Its options appear in the inferred input type only while it is installed. Remove its overrides when removing a tool.
 
 Model settings do not install their tools. Follow-up suggestions retain an `enabled` runtime setting. Search, retrieval, code execution, image/video generation and deep research do not have `enabled` configuration fields.
 

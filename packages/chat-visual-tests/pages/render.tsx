@@ -1,3 +1,4 @@
+import { ChatPlugins } from "@/providers/chat-plugins";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { disableAutoSnapshot, takeSnapshot } from "@uiverify/vitest";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
@@ -42,7 +43,9 @@ const tree = (ui: ReactNode, theme: (typeof THEMES)[number]) => (
     >
       <Toaster position="top-center" />
       <TooltipProvider>
-        <Suspense>{ui}</Suspense>
+        <ChatPlugins>
+          <Suspense>{ui}</Suspense>
+        </ChatPlugins>
       </TooltipProvider>
     </ThemeProvider>
   </NuqsTestingAdapter>

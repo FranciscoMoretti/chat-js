@@ -1,4 +1,4 @@
-import { installedCleanupTasks } from "@/composition/generated/installed-cleanup";
+import { installedCleanupTasks } from "@/chatjs/generated/installed-cleanup";
 import { cleanupEveOrphanedFiles } from "@/lib/eve/cleanup-orphaned-files";
 import type { CleanupResult, CleanupTask } from "./contracts";
 

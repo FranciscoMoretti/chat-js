@@ -334,7 +334,7 @@ export const add = new Command("add")
                   "oxfmt",
                   "--write",
                   "package.json",
-                  ".chatjs/installed-dependencies.json",
+                  "chatjs/installed-dependencies.json",
                   ...(selectedSandbox ? ["lib/sandbox/options.ts"] : []),
                 ],
                 cwd
@@ -371,7 +371,6 @@ export const add = new Command("add")
             }
             await syncTools(cwd, { expected: plan.expected });
             await syncPlugins(cwd, {
-              addUi: plan.plugins.map((plugin: PluginInput) => plugin.id),
               expected: plan.plugins.map((plugin) => plugin.id),
             });
           }

@@ -12,7 +12,7 @@ import { Toaster } from "sonner";
 
 import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { installedLayoutComponents } from "@/composition/generated/installed-layout";
+import { LayoutPlugins } from "@/components/layout-plugins";
 import { config } from "@/lib/config";
 import { cn } from "@/lib/utils";
 import { env } from "@/lib/env";
@@ -112,19 +112,7 @@ const RootLayout = ({
           </ThemeProvider>
         </NuqsAdapter>
       </UiDirection>
-      {installedLayoutComponents.map(
-        ({
-          id,
-          Component,
-        }: {
-          readonly id: string;
-          readonly Component: React.JSXElementConstructor<
-            Readonly<React.Attributes>
-          >;
-        }) => (
-          <Component key={id} />
-        )
-      )}
+      <LayoutPlugins />
     </body>
   </html>
 );

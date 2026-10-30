@@ -28,6 +28,8 @@ export const assertCurrentInstallationLayout = async (
     throw error;
   });
   const markers = [
+    "composition/generated",
+    ".chatjs",
     "tools/chatjs/tools.ts",
     "tools/chatjs/ui.ts",
     "tools/chatjs/custom-tools.ts",
@@ -45,7 +47,7 @@ export const assertCurrentInstallationLayout = async (
   const legacy = found.filter((marker) => marker !== null);
   if (legacy.length > 0) {
     throw new Error(
-      `Legacy ChatJS installation layout detected: ${legacy.join(", ")}. Before add or sync, migrate generated registrations to composition/generated, custom registrations to composition/custom, and feature implementations/descriptors to plugins/<id>. Update app imports and plugin descriptors/factories to the current template contract, then remove the old registration files. Existing files were not changed.`
+      `Legacy ChatJS installation layout detected: ${legacy.join(", ")}. Before add, sync, or remove, move generated registrations to chatjs/generated and installation metadata/backups from .chatjs to chatjs without overwriting existing files. Keep app-owned registrations in composition/custom and integrations, and plugin implementations/descriptors in plugins/<id>. Update app imports and plugin descriptors/factories to the current template contract, then remove the old registration files. Existing files were not changed.`
     );
   }
 };

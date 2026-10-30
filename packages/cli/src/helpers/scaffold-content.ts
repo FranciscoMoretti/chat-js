@@ -63,6 +63,7 @@ const REPOSITORY_ONLY_FILES = new Set([
   "lib/db/eve-search.test.ts",
   "lib/eve/search-text.test.ts",
   "lib/eve/conversation-title.test.ts",
+  "lib/eve/model-runtime.test.ts",
   "lib/db/ai-titles-plugin.test.ts",
   "lib/db/sharing-plugin.test.ts",
   "lib/eve/sharing-transcript.test.ts",
@@ -167,6 +168,12 @@ const shouldCopyAppFile = (relativePath: string): boolean => {
 
 const shouldCopyChatAppFile = (relativePath: string): boolean =>
   shouldCopyAppFile(relativePath) &&
+  !(
+    relativePath.startsWith(`chatjs${path.sep}`) &&
+    relativePath !== `chatjs${path.sep}generated` &&
+    !relativePath.startsWith(`chatjs${path.sep}generated${path.sep}`) &&
+    relativePath !== `chatjs${path.sep}README.md`
+  ) &&
   !relativePath.endsWith("-visual-fixture.tsx") &&
   !relativePath.endsWith(".visual.css") &&
   !isRepositoryOnlyFile(relativePath);

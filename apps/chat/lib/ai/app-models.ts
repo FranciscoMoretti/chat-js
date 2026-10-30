@@ -104,19 +104,6 @@ const fetchChatModels = cache(
   ["chat-models"],
   { revalidate: 3600, tags: ["ai-gateway-models"] }
 );
-const getAppModelDefinition = async (
-  modelId: AppModelId
-): Promise<AppModelDefinition> => {
-  const models = await fetchAllAppModels();
-  const model = models.find(
-    (candidateModel: { readonly id: AppModelId }) =>
-      candidateModel.id === modelId
-  );
-  if (!model) {
-    throw new Error(`Model ${modelId} not found`);
-  }
-  return model;
-};
 /**
  * Whether the generated catalog belongs to the selected gateway.
  * @param {string} gateway - Gateway identity from application configuration.
@@ -161,6 +148,6 @@ const getDefaultEnabledModels = (
 
   return enabled;
 };
-export { fetchChatModels, getAppModelDefinition, getDefaultEnabledModels };
+export { fetchChatModels, getDefaultEnabledModels };
 export type { AppModelDefinition };
 export type { AppModelId } from "./app-model-id";
