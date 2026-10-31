@@ -1463,7 +1463,7 @@ for (const installAtCreation of [false, true]) {
     await writeFile(
       nodePath.join(cwd, "mcp-setup-probe.ts"),
       `import assert from "node:assert/strict";
-import descriptor from "./plugins/mcp/chatjs.json";
+import descriptor from "./chatjs/plugins/mcp/chatjs.json";
 import { requireCredentials } from "./lib/required-credentials";
 assert.throws(() => requireCredentials("mcp", descriptor.envRequirements, {NODE_ENV: "test"}), /Missing credentials for mcp: MCP_ENCRYPTION_KEY/);
 requireCredentials("mcp", descriptor.envRequirements, {NODE_ENV: "test", MCP_ENCRYPTION_KEY: "test"});
