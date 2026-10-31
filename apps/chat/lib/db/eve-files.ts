@@ -1,4 +1,4 @@
-import { chat } from "@/integrations/chat";
+import { chat } from "@/integrations/chat/server";
 import { and, eq, inArray, sql } from "drizzle-orm";
 
 import { isFileStorageKey } from "@/lib/file-url";

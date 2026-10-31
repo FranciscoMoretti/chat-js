@@ -1,4 +1,4 @@
-import { userCredit } from "@/plugins/credits/credits-schema";
+import { userCredit } from "@/chatjs/plugins/credits/credits-schema";
 import { execFileSync } from "node:child_process";
 
 import { expect, test } from "@playwright/test";

@@ -12,20 +12,30 @@ import { preflight } from "./preflight";
 const pluginSourceFiles = (definition: PluginDefinition): string[] => [
   ...new Set([
     ...definition.files,
-    ...(definition.server ? [`plugins/${definition.id}/server-plugin.ts`] : []),
-    ...(definition.chat ? [`plugins/${definition.id}/chat.ts`] : []),
-    ...(definition.billing ? [`plugins/${definition.id}/billing.ts`] : []),
+    ...(definition.server
+      ? [`chatjs/plugins/${definition.id}/server-plugin.ts`]
+      : []),
+    ...(definition.chat ? [`chatjs/plugins/${definition.id}/chat.ts`] : []),
+    ...(definition.billing
+      ? [`chatjs/plugins/${definition.id}/billing.ts`]
+      : []),
     ...(definition.signedOut
-      ? [`plugins/${definition.id}/signed-out.tsx`]
+      ? [`chatjs/plugins/${definition.id}/signed-out.tsx`]
       : []),
     ...(definition.sessionProfile
-      ? [`plugins/${definition.id}/session-profile.ts`]
+      ? [`chatjs/plugins/${definition.id}/session-profile.ts`]
       : []),
-    ...(definition.cleanup ? [`plugins/${definition.id}/cleanup.ts`] : []),
-    ...(definition.client ? [`plugins/${definition.id}/client-plugin.ts`] : []),
+    ...(definition.cleanup
+      ? [`chatjs/plugins/${definition.id}/cleanup.ts`]
+      : []),
+    ...(definition.client
+      ? [`chatjs/plugins/${definition.id}/client-plugin.ts`]
+      : []),
     ...(definition.environmentValidation === undefined
       ? []
-      : [`plugins/${definition.id}/${definition.environmentValidation}`]),
+      : [
+          `chatjs/plugins/${definition.id}/${definition.environmentValidation}`,
+        ]),
   ]),
 ];
 
@@ -35,8 +45,8 @@ const readPluginDescriptors = async (
 ): Promise<PluginDefinition[]> => {
   await assertCurrentInstallationLayout(cwd);
   // Validate the parent before readdir can traverse it.
-  await preflight(cwd, ["plugins/.descriptor-check"]);
-  const entries = await readdir(path.join(cwd, "plugins"), {
+  await preflight(cwd, ["chatjs/plugins/.descriptor-check"]);
+  const entries = await readdir(path.join(cwd, "chatjs/plugins"), {
     withFileTypes: true,
   }).catch((error: unknown) => {
     if (error instanceof Error && "code" in error && error.code === "ENOENT") {
@@ -52,7 +62,7 @@ const readPluginDescriptors = async (
       .toSorted((a, b) => a.name.localeCompare(b.name))
       .map(async (entry) => {
         const id = pluginIdSchema.parse(entry.name);
-        const descriptor = `plugins/${id}/chatjs.json`;
+        const descriptor = `chatjs/plugins/${id}/chatjs.json`;
         await preflight(cwd, [descriptor]);
         const content = await readFile(
           path.join(cwd, descriptor),
@@ -85,7 +95,7 @@ const readPluginDescriptors = async (
         // Explicit framework adapters may live outside the plugin directory.
         for (const file of files) {
           if (
-            !file.startsWith(`plugins/${id}/`) &&
+            !file.startsWith(`chatjs/plugins/${id}/`) &&
             !file.startsWith("app/") &&
             !file.startsWith("agent/")
           ) {

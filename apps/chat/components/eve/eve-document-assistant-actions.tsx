@@ -17,7 +17,7 @@ import {
   documentAssistantActions,
   documentAssistantRequest,
 } from "@/lib/eve/document-assistant-actions";
-import type { DocumentAssistantRequest } from "@/lib/eve/document-contracts";
+import type { DocumentAssistantRequest } from "@/chatjs/core/documents/contracts";
 
 const helperIcon = (label: string) => {
   switch (label) {

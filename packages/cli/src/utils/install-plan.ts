@@ -89,7 +89,7 @@ const installPlan = async (
   const retired = await Promise.all(
     plan.replacements.map(
       async ({ previous }): Promise<string[]> =>
-        await directoryFiles(cwd, `tools/chatjs/${previous.id}`)
+        await directoryFiles(cwd, `chatjs/tools/${previous.id}`)
     )
   );
   const rollbackTargets = [
@@ -174,7 +174,7 @@ const installPlan = async (
   try {
     await installItems(plan.sources, cwd, overwrite);
     for (const { previous } of plan.replacements) {
-      const from = path.join(cwd, "tools/chatjs", previous.id);
+      const from = path.join(cwd, "chatjs/tools", previous.id);
       const to = path.join(
         cwd,
         "chatjs",
@@ -251,7 +251,8 @@ const installPlan = async (
         options.fresh === true ||
         replacingShared
       );
-    })
+    }),
+    plan.replacements.map(({ previous }) => `chatjs/tools/${previous.id}`)
   );
 };
 export { installPlan, plannedSourceTargets };

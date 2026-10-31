@@ -72,7 +72,7 @@ test("native registry variants preserve item identity, dependencies, and descrip
     const file = {
       path: `dist/source/${item.name}.json`,
       type: "registry:file" as const,
-      target: `~/plugins/${item.name}/chatjs.json`,
+      target: `~/chatjs/plugins/${item.name}/chatjs.json`,
       content: `${JSON.stringify(metadata, null, 2)}\n`,
     };
     const withDescriptor = { ...item, files: [...(item.files ?? []), file] };

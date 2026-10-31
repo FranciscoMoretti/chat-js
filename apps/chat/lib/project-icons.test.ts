@@ -3,7 +3,7 @@ import {
   PROJECT_ICONS,
   getProjectColorName,
   getProjectIconName,
-} from "@/plugins/projects/project-icons";
+} from "@/chatjs/plugins/projects/project-icons";
 
 import { expect, test } from "vitest";
 

@@ -5,7 +5,7 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import {
   prepareResearch,
   saveResearchReport,
-} from "@/tools/chatjs/deep-research/steps";
+} from "@/chatjs/tools/deep-research/steps";
 
 import { testToolContext } from "../../tests/helpers/eve-tool-context";
 
@@ -23,15 +23,15 @@ vi.mock("./turn-tools", () => ({
   eveTurnTool: { get: mocks.selected },
 }));
 
-vi.mock("@/integrations/tool-catalog", () => ({
+vi.mock("@/integrations/tools/catalog", () => ({
   installedDocumentKinds: { has: (): boolean => mocks.text },
   installedToolNames: { has: (): boolean => mocks.research },
 }));
 
-vi.mock("../../integrations/tool-providers", () => ({
+vi.mock("../../integrations/tools/providers", () => ({
   toolProviders: mocks.tools,
 }));
-vi.mock("@/tools/chatjs/deep-research/configuration", () => ({
+vi.mock("@/chatjs/tools/deep-research/configuration", () => ({
   getDeepResearchConfig: () => ({}),
 }));
 vi.mock("./connection-options", () => ({

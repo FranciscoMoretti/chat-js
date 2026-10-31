@@ -1,11 +1,14 @@
-import { toolConfig } from "@/integrations/tool-configuration";
+import { toolConfig } from "@/integrations/tools/configuration";
 import { languageModelSchema, modelRoles } from "./config-models";
 import type {
   GatewayModelIdMap,
   GatewayType,
 } from "@/lib/ai/gateways/registry";
 
-import { gatewayModelDefaults, gatewayType } from "./ai/gateway-model-defaults";
+import {
+  gatewayModelDefaults,
+  gatewayType,
+} from "@/chatjs/providers/gateway-defaults";
 import { isNonEmptyString } from "./is-non-empty-string";
 
 import { z } from "zod";

@@ -7,7 +7,7 @@ const postgres = new PGlite();
 vi.mock("./client", () => ({ db: drizzle(postgres) }));
 vi.mock("@/lib/env", () => ({ env: {} }));
 const { isEveRootTitlePending, replaceEveRootFallbackTitle } =
-  await import("@/plugins/ai-titles/title-queries");
+  await import("@/chatjs/plugins/ai-titles/title-queries");
 const { settleEveRootFallbackTitle } = await import("./eve-title");
 const { runChatAfterCreate } = await import("../chat-after-create");
 vi.mock("@/chatjs/generated/installed-chat", () => ({

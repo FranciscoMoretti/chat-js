@@ -1,7 +1,7 @@
-import { chat } from "@/integrations/chat";
+import { chat } from "@/integrations/chat/server";
 import { eveConversationTitleFallback } from "./eve/conversation-title";
 import { createModuleLogger } from "./logger";
-import type { ChatCreatedContext } from "./chat-plugin-contracts";
+import type { ChatCreatedContext } from "@/chatjs/core/chat/contracts";
 
 const log = createModuleLogger("chat.after-create");
 

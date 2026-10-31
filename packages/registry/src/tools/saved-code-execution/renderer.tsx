@@ -1,10 +1,10 @@
 "use client";
 import { documentExecutionInput, eveCodeExecutionResult } from "./schemas";
-import { CodeExecutionChart } from "@/tools/chatjs/_shared/code-execution/code-execution-chart";
+import { CodeExecutionChart } from "@/chatjs/tools/_shared/code-execution/code-execution-chart";
 import React from "react";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import type { z as Zod } from "zod";
-import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
+import { defineToolRenderer } from "@/chatjs/core/tools/define-renderer";
 
 type SavedCodeInput = Zod.output<typeof documentExecutionInput>;
 type SavedCodeOutput = Zod.output<typeof eveCodeExecutionResult> &

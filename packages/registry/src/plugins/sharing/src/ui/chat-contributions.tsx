@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import type { ChatActionProps } from "@/lib/chat-plugin-contracts";
+import type { ChatActionProps } from "@/chatjs/core/chat/contracts";
 import { EveShareButton, EveShareDialogContent } from "./share-dialog";
 import { ShareDialog } from "./share-button";
 import { ShareMenuItem } from "./share-menu-item";

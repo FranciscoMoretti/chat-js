@@ -5,9 +5,9 @@ import { format, isWithinInterval } from "date-fns";
 import type { weatherInput, weatherResult } from "./schemas";
 import React from "react";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
+import type { ToolRendererProps } from "@/chatjs/core/tools/define-renderer";
 import { cn } from "@/lib/utils";
-import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
+import { defineToolRenderer } from "@/chatjs/core/tools/define-renderer";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { z } from "zod";
 

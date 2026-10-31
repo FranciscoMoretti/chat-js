@@ -40,7 +40,7 @@ vi.mock("@/lib/eve/resolve-creation-request", () => ({
   resolveCreationRequest: mocks.resolveCreationRequest,
 }));
 
-vi.mock("@/integrations/uploads", () => ({
+vi.mock("@/integrations/chat/uploads", () => ({
   attachmentUploads: {
     controls: [],
     useUploads: () => ({

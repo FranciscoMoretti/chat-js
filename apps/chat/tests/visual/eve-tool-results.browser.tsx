@@ -8,16 +8,16 @@ import { page } from "vitest/browser";
 import { EveToolResult } from "@/components/eve/eve-tool-result";
 import { createToolError, createToolResult } from "@/lib/eve/tool-result";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-import { EveDocumentRunResult } from "@/tools/chatjs/saved-code-execution/result";
+import { EveDocumentRunResult } from "@/chatjs/tools/saved-code-execution/result";
 
 import { chartsFinished } from "../../../../packages/registry/src/tools/_shared/charts-finished";
 
 import "./sandbox.css";
 
 vi.mock(
-  "@/tools/chatjs/_shared/code-execution/interactive-charts",
+  "@/chatjs/tools/_shared/code-execution/interactive-charts",
   async () =>
-    await import("../../tools/chatjs/_shared/code-execution/interactive-chart-impl")
+    await import("../../chatjs/tools/_shared/code-execution/interactive-chart-impl")
 );
 
 // Report documents are outside this error-receipt fixture.

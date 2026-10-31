@@ -1,4 +1,4 @@
 "use client";
-import { defineSlot } from "@/lib/ui-slots";
+import { defineSlot } from "@/chatjs/core/ui/slots";
 
 export const LayoutEffects = defineSlot();

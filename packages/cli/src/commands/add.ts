@@ -446,16 +446,20 @@ export const add = new Command("add")
                   "--write",
                   "package.json",
                   "chatjs/installed-dependencies.json",
-                  ...(selectedSandbox ? ["lib/sandbox/options.ts"] : []),
+                  ...(selectedSandbox
+                    ? ["chatjs/providers/sandbox/options.ts"]
+                    : []),
                 ],
                 cwd
               );
             },
             managedTargets: [
-              ...(selectedGateway ? ["lib/ai/gateway-model-defaults.ts"] : []),
+              ...(selectedGateway
+                ? ["chatjs/providers/gateway-defaults.ts"]
+                : []),
               ...sandboxProviderTargets(selectedSandbox),
               ...(selectedStorage && !keepStorageOptions
-                ? ["lib/storage-options.ts"]
+                ? ["chatjs/providers/storage-options.ts"]
                 : []),
             ],
             overwrite: options.overwrite,

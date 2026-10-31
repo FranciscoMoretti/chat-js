@@ -1,6 +1,6 @@
 "use client";
 
-import { isDocumentResult } from "@/lib/eve/document-contracts";
+import { isDocumentResult } from "@/chatjs/core/documents/contracts";
 
 import { hasText } from "@/components/text-value";
 
@@ -23,7 +23,7 @@ import type {
 import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 
 import { EveAttachment } from "./eve-attachment";
-import { documentDefinitions } from "@/integrations/documents";
+import { documentDefinitions } from "@/integrations/documents/definitions";
 import { EveMessagePart } from "./eve-message-part";
 import { MessageActions } from "@/components/chat-slots";
 

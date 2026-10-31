@@ -239,7 +239,9 @@ describe("scaffoldFromTemplate", (): void => {
         supportsPersistentSandbox: z.boolean(),
       })
       .parse(
-        await import(pathModule.join(destination, "lib/sandbox/provider.ts"))
+        await import(
+          pathModule.join(destination, "chatjs/providers/sandbox/provider.ts")
+        )
       );
     expect(provider.createSandboxProvider).toBeUndefined();
     expect(provider.supportsPersistentSandbox).toBe(false);
@@ -254,11 +256,16 @@ describe("scaffoldFromTemplate", (): void => {
     expect(manifest.dependencies["@daytona/sdk"]).toBeUndefined();
     expect(
       existsSync(
-        pathModule.join(destination, "lib/sandbox/vercel-sandbox-env.ts")
+        pathModule.join(
+          destination,
+          "chatjs/providers/sandbox/vercel-sandbox-env.ts"
+        )
       )
     ).toBe(false);
     expect(
-      existsSync(pathModule.join(destination, "lib/sandbox/persistent.ts"))
+      existsSync(
+        pathModule.join(destination, "chatjs/providers/sandbox/persistent.ts")
+      )
     ).toBe(false);
     expect(
       await readFile(pathModule.join(destination, "agent/sandbox.ts"), "utf-8")
@@ -460,7 +467,7 @@ describe("scaffoldFromTemplate", (): void => {
     expect(dependencies["@aws-sdk/client-s3"]).toBeUndefined();
     expect(
       await Bun.file(
-        pathModule.join(destination, "lib/storage-provider.ts")
+        pathModule.join(destination, "chatjs/providers/storage.ts")
       ).exists()
     ).toBe(false);
   });
@@ -684,7 +691,7 @@ describe("scaffoldFromTemplate", (): void => {
       ).toBe(false);
     }
     expect(
-      existsSync(pathModule.join(destination, "tools", "chatjs", "get-weather"))
+      existsSync(pathModule.join(destination, "chatjs", "tools", "get-weather"))
     ).toBe(false);
     expect(
       await readFile(
@@ -901,7 +908,7 @@ describe("scaffoldElectron", (): void => {
         organization: { name: "Test", contact: { privacyEmail: "test@example.com" } },
       };`
       );
-      await mkdir(pathModule.join(projectDir, "plugins/desktop"), {
+      await mkdir(pathModule.join(projectDir, "chatjs/plugins/desktop"), {
         recursive: true,
       });
       await cp(
@@ -909,7 +916,7 @@ describe("scaffoldElectron", (): void => {
           getCliPackageRoot(),
           "../registry/src/plugins/desktop/src/protocol.ts"
         ),
-        pathModule.join(projectDir, "plugins/desktop/protocol.ts")
+        pathModule.join(projectDir, "chatjs/plugins/desktop/protocol.ts")
       );
       const result = Bun.spawnSync(["npm", "run", "prebuild"], {
         cwd: electronDir,

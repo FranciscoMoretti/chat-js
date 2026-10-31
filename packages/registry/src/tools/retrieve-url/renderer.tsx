@@ -4,8 +4,8 @@ import { retrievedInput, retrievedResult } from "./schemas";
 import React from "react";
 import ReactMarkdown from "react-markdown";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
-import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
+import type { ToolRendererProps } from "@/chatjs/core/tools/define-renderer";
+import { defineToolRenderer } from "@/chatjs/core/tools/define-renderer";
 
 type RetrieveUrlRendererTool = ToolRendererProps<
   typeof retrievedInput,

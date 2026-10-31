@@ -27,12 +27,22 @@ description: "How ChatJS is organized"
 │   ├── models/            # Model types and utilities
 │   └── artifacts/         # Client helpers for document artifacts
 │
-├── plugins/<id>/           # Plugin implementation, UI, schema, and entrypoints
-├── tools/chatjs/<id>/       # Installed tools and renderers
-├── chatjs/                 # CLI-managed installation files
-│   ├── generated/          # Generated wiring; do not edit
+├── chatjs/
+│   ├── core/               # Installed source: helpers and contracts
+│   ├── providers/          # Installed source: providers and configuration
+│   ├── plugins/<id>/       # Installed source: plugin implementations
+│   ├── tools/<id>/         # Installed source: tools and renderers
+│   ├── generated/          # Generated wiring; change its inputs
 │   └── installed-source.json # Recorded installed-file hashes
-├── integrations/           # App-owned domain composition
+├── integrations/           # Application composition, preserved by installation
+│   ├── auth/
+│   ├── chat/
+│   ├── tools/
+│   ├── documents/
+│   ├── providers/
+│   ├── billing.ts
+│   ├── database.ts
+│   └── …
 ├── agent/                  # EVE agent channels, hooks, and tools
 ├── trpc/                   # tRPC routers and procedures
 ├── hooks/                  # React hooks
@@ -40,7 +50,9 @@ description: "How ChatJS is organized"
 └── scripts/                # Build and dev scripts
 ```
 
-App-owned files are freely editable and preserved by add/remove/sync. Installed plugin source is editable too, but local changes are protected during replacement and removal. Some framework files under `app/` and `agent/` belong to plugins: their comments identify the owner, and `plugins/<id>/chatjs.json` records the complete file list.
+Files have four lifecycle kinds: **application**, **installed source**, **generated**, and **installation record**. Scaffolded application code becomes yours, and add/remove/sync preserve its composition. Installed source can also be edited, with local changes tracked for replacement/removal. Generated files are rebuilt from inputs, while installation records are maintained by the CLI.
+
+Some native files under `app/` and `agent/` belong to installed plugins or tools. Their short `ChatJS source` headers identify the exception. Plugin descriptors declare their external paths, and source receipts track files written by the CLI. Headers are explanatory, not an additional installation manifest.
 
 Run [`chat-js status`](./cli/status) to inspect source states, framework-file ownership, and removal dependencies. Keep installation receipts in version control. See [Customize plugin integrations](./cookbook/customize-integrations) for app-owned wrappers and local behavior.
 
@@ -48,10 +60,10 @@ Run [`chat-js status`](./cli/status) to inspect source states, framework-file ow
 
 | File | Purpose |
 | --- | --- |
-| `chat.config.ts` | Central configuration (features, models, branding) |
+| `chat.config.ts` | Central configuration (models, branding, tool options) |
 | `lib/config.ts` | Parsed config export with defaults |
 | `lib/env.ts` | Environment variable validation (t3-env) |
-| `lib/storage-provider.ts` | Selected Files SDK adapter and non-secret options |
+| `chatjs/providers/storage.ts` | Selected Files SDK adapter |
 | `lib/file-storage.ts` | Provider-agnostic file operations |
 | `lib/auth.ts` | Better Auth server configuration |
 | `lib/auth-client.ts` | Better Auth client configuration |
@@ -116,7 +128,7 @@ lib/ai/
 └── prompts.ts         # Shared prompts
 ```
 
-EVE agent instructions, hooks, and tool integration live in `agent/`. Installed tools live in `tools/chatjs/`, with application support in `tools/platform/`.
+EVE agent instructions, hooks, and tool integration live in `agent/`. Installed tools live in `chatjs/tools/`, with application support in `tools/platform/`.
 
 ### Data Layer
 
@@ -131,7 +143,7 @@ lib/
 └── artifacts/         # Client artifact metadata helpers
 ```
 
-Credit balances live in `plugins/credits/`. Core usage evidence and reconciliation stay in `lib/db/eve-billing.ts` and `lib/eve/`.
+Credit balances live in `chatjs/plugins/credits/`. Core usage evidence and reconciliation stay in `lib/db/eve-billing.ts` and `lib/eve/`.
 
 ## Configuration Flow
 

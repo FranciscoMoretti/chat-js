@@ -2,7 +2,7 @@ import { HydrationBoundary, dehydrate } from "@tanstack/react-query";
 import { connection } from "next/server";
 import React, { Suspense } from "react";
 
-import { McpDetailsPage } from "@/plugins/mcp/ui/mcp-details-page";
+import { McpDetailsPage } from "@/chatjs/plugins/mcp/ui/mcp-details-page";
 import {
   SettingsPage,
   SettingsPageHeader,

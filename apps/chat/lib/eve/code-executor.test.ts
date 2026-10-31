@@ -18,7 +18,7 @@ beforeEach(() => {
 });
 
 it("the selected typed executor returns exactly one completed usage receipt", async () => {
-  const { executeCode } = await import("@/tools/chatjs/code-execution/tool");
+  const { executeCode } = await import("@/chatjs/tools/code-execution/tool");
   mocks.execute.mockResolvedValue({ chart: "", message: "42" });
   const result = await executeCode(
     { code: "return 42", language: "javascript", title: "Answer" },
@@ -30,7 +30,7 @@ it("the selected typed executor returns exactly one completed usage receipt", as
   });
 });
 it("failed cleanup or invalid output does not receive a completed execution charge", async () => {
-  const { executeCode } = await import("@/tools/chatjs/code-execution/tool");
+  const { executeCode } = await import("@/chatjs/tools/code-execution/tool");
   mocks.execute.mockRejectedValueOnce(new Error("cleanup failed"));
   const input = {
     code: "source",

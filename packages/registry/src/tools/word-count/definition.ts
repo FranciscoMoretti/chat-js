@@ -1,4 +1,4 @@
-import type { ToolDefinition } from "@/lib/ai/tool-definition";
+import type { ToolDefinition } from "@/chatjs/core/tools/tool-definition";
 import { wordCountInput, wordCountResult } from "./schemas";
 
 export const toolDefinition = {

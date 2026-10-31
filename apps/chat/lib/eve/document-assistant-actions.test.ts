@@ -5,7 +5,7 @@ import {
 } from "./document-assistant-actions";
 
 const kinds = vi.hoisted(() => new Set(["diagram"]));
-vi.mock("@/integrations/document-ui", () => ({
+vi.mock("@/integrations/documents/ui", () => ({
   documents: {
     diagram: {
       assistantActions: () => [
@@ -18,7 +18,7 @@ vi.mock("@/integrations/document-ui", () => ({
     },
   },
 }));
-vi.mock("@/integrations/tool-catalog", () => ({
+vi.mock("@/integrations/tools/catalog", () => ({
   installedDocumentKinds: kinds,
 }));
 beforeEach(() => {

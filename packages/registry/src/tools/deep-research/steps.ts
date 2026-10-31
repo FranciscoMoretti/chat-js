@@ -1,6 +1,6 @@
 import { Client } from "eve/client";
 import type { WorkflowToolContext } from "eve/tools";
-import { eveDocumentWriteResult } from "@/lib/eve/document-contracts";
+import { eveDocumentWriteResult } from "@/chatjs/core/documents/contracts";
 import { executeEveDocumentTool } from "@/lib/eve/document-tools";
 import { getEveConnectionOptions } from "@/lib/eve/connection-options";
 import { researchAvailable } from "./availability";

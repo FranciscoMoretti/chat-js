@@ -12,15 +12,15 @@ Install the plugin, apply its database migration, and enable `ai.tools.followupS
 ## Customize generation
 
 1. `agent/hooks/followup-suggestions.ts` registers the plugin's native EVE hook.
-2. `plugins/followup-suggestions/followup-hook.ts` collects the current exchange and claims the completed turn before making a model call.
-3. `plugins/followup-suggestions/generate-suggestions.ts` generates the questions using the configured model and core usage accounting.
-4. `plugins/followup-suggestions/followup-queries.ts` stores the result in `EveFollowup` with its session, turn, and completion-event identity.
+2. `chatjs/plugins/followup-suggestions/followup-hook.ts` collects the current exchange and claims the completed turn before making a model call.
+3. `chatjs/plugins/followup-suggestions/generate-suggestions.ts` generates the questions using the configured model and core usage accounting.
+4. `chatjs/plugins/followup-suggestions/followup-queries.ts` stores the result in `EveFollowup` with its session, turn, and completion-event identity.
 
 Edit the generation prompt to change the style of questions. Keep the durable claim before the paid call, preserve completion identity, and retain model usage accounting. The output schema in `suggestion-output.ts` accepts three to five nonempty suggestions of at most 80 characters each.
 
 ## Customize display
 
-`plugins/followup-suggestions/use-followups.ts` matches the completed answer and reads stored results with bounded polling. Suggestions are persisted separately from the native transcript and are displayed after generation finishes.
+`chatjs/plugins/followup-suggestions/use-followups.ts` matches the completed answer and reads stored results with bounded polling. Suggestions are persisted separately from the native transcript and are displayed after generation finishes.
 
 Edit `followup-suggestions-view.tsx` to change their presentation. The plugin's `Suggestions` contribution passes selected text to core's existing send/compare flow. Generated questions become conversation input only when selected.
 

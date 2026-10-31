@@ -1,6 +1,6 @@
 import { beforeEach, expect, test, vi } from "vitest";
-import type { ChatServerIntegration } from "./chat-plugin-contracts";
-import { chat } from "@/integrations/chat";
+import type { ChatServerIntegration } from "@/chatjs/core/chat/contracts";
+import { chat } from "@/integrations/chat/server";
 import { runChatAfterCreate } from "./chat-after-create";
 
 const mocks = vi.hoisted(() => {

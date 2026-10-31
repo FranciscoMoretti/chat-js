@@ -1,4 +1,4 @@
-import { createGateway } from "@/integrations/gateway";
+import { createGateway } from "@/integrations/providers/gateway";
 import type { GatewayProvider } from "./gateways/registry";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { config } from "@/lib/config";

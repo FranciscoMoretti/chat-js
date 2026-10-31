@@ -149,7 +149,7 @@ const toolItems = (
           : []),
       ].map((file) => ({
         path: `src/tools/${definition.id}/${file}`,
-        target: `~/tools/chatjs/${definition.id}/${file}`,
+        target: `~/chatjs/tools/${definition.id}/${file}`,
         type: "registry:file",
       })),
       meta: {
@@ -183,22 +183,22 @@ const searchToolItems = (
   files: [
     {
       path: `src/tools/${id}/${id}-env.ts`,
-      target: `~/tools/chatjs/${id}/${id}-env.ts`,
+      target: `~/chatjs/tools/${id}/${id}-env.ts`,
       type: "registry:file" as const,
     },
     {
       path: `src/tools/${id}/tool.ts`,
-      target: `~/tools/chatjs/${id}/tool.ts`,
+      target: `~/chatjs/tools/${id}/tool.ts`,
       type: "registry:file" as const,
     },
     {
       path: `src/tools/${id}/renderer.tsx`,
-      target: `~/tools/chatjs/${id}/renderer.tsx`,
+      target: `~/chatjs/tools/${id}/renderer.tsx`,
       type: "registry:file" as const,
     },
     {
       path: `src/tools/${id}/schemas.ts`,
-      target: `~/tools/chatjs/${id}/schemas.ts`,
+      target: `~/chatjs/tools/${id}/schemas.ts`,
       type: "registry:file" as const,
     },
   ],

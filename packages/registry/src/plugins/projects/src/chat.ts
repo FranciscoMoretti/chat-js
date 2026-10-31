@@ -5,7 +5,7 @@ import { eveChat } from "@/lib/db/schema";
 import type {
   ChatServerIntegration,
   ChatLinks,
-} from "@/lib/chat-plugin-contracts";
+} from "@/chatjs/core/chat/contracts";
 import { eveChatProject } from "./db/project-schema";
 import { assignCreationProject } from "./creation";
 

@@ -1,2 +1,2 @@
-// ChatJS plugin: attachment-uploads. Editable source; ownership: plugins/attachment-uploads/chatjs.json.
-export { POST } from "@/plugins/attachment-uploads/routes/upload";
+// ChatJS source: attachment-uploads. Ownership: chatjs/plugins/attachment-uploads/chatjs.json.
+export { POST } from "@/chatjs/plugins/attachment-uploads/routes/upload";

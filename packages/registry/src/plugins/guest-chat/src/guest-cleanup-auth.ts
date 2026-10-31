@@ -1,5 +1,5 @@
 import { getEveConnectionOptions } from "@/lib/eve/connection-options";
-import { issueGuestCredential } from "@/plugins/guest-chat/guest-credential";
+import { issueGuestCredential } from "@/chatjs/plugins/guest-chat/guest-credential";
 
 /** Server-only cleanup authorization is valid only for a deletion-pending policy. */
 export const getGuestCleanupConnectionOptions = (input: {

@@ -3,11 +3,11 @@
 import { SidebarLink } from "@/components/navigation-links";
 import { SidebarActionMenu } from "@/components/sidebar-menus";
 import { useState } from "react";
-import { DeleteProjectDialog } from "@/plugins/projects/ui/delete-project-dialog";
+import { DeleteProjectDialog } from "@/chatjs/plugins/projects/ui/delete-project-dialog";
 
 import { MoreHorizontal } from "lucide-react";
-import type { ProjectDetailsData } from "@/plugins/projects/ui/project-details-dialog";
-import { ProjectDetailsDialog } from "@/plugins/projects/ui/project-details-dialog";
+import type { ProjectDetailsData } from "@/chatjs/plugins/projects/ui/project-details-dialog";
+import { ProjectDetailsDialog } from "@/chatjs/plugins/projects/ui/project-details-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,15 +17,15 @@ import { SidebarMenuItem } from "@/components/ui/sidebar";
 import {
   getProjectColorName,
   getProjectIconName,
-} from "@/plugins/projects/project-icons";
-import type { Project } from "@/plugins/projects/db/project-schema";
-import { ProjectIcon } from "@/plugins/projects/ui/project-icon";
-import { ProjectMenuItems } from "@/plugins/projects/ui/project-menu-items";
+} from "@/chatjs/plugins/projects/project-icons";
+import type { Project } from "@/chatjs/plugins/projects/db/project-schema";
+import { ProjectIcon } from "@/chatjs/plugins/projects/ui/project-icon";
+import { ProjectMenuItems } from "@/chatjs/plugins/projects/ui/project-menu-items";
 
 import type { JSX as ReactJSX } from "react";
 
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-import { useRenameProject } from "@/plugins/projects/use-projects";
+import { useRenameProject } from "@/chatjs/plugins/projects/use-projects";
 
 export const SidebarProjectItem = ({
   project,

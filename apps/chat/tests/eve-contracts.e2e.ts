@@ -1,8 +1,8 @@
-import { userCredit } from "@/plugins/credits/credits-schema";
+import { userCredit } from "@/chatjs/plugins/credits/credits-schema";
 import {
   getPublicEveConversation,
   setSharing,
-} from "@/plugins/sharing/queries";
+} from "@/chatjs/plugins/sharing/queries";
 import { createEveTestSession } from "./eve-native-session.fixture";
 import { cleanupWorkspaceIfUnused } from "../lib/eve/persistent-sandbox-store";
 import { reconcileEveWorkspaceTurn } from "../lib/eve/reconcile-workspace-turn";

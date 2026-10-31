@@ -18,7 +18,7 @@ The policy is 5 messages per IP per minute, 5 sessions per IP per hour, a one-ho
 
 The 24-hour target applies to conversation/workflow payloads. Minimal deletion fences and policy audit metadata (including identifiers, counters and hashed IP) remain for safe retries and late-write prevention; rate buckets are pruned after two days. This is not a promise that all metadata disappears after 24 hours.
 
-The plugin-owned `plugins/guest-chat/guest-policy.ts` is authoritative. The obsolete `ai.anonymousModels` and `anonymous` settings are removed. The provider prompt includes assistant replies and framing, so a long conversation can reach that bound before its user-input allowance. Failed or ambiguous dispatches remain charged to admission capacity.
+The plugin-owned `chatjs/plugins/guest-chat/guest-policy.ts` is authoritative. The obsolete `ai.anonymousModels` and `anonymous` settings are removed. The provider prompt includes assistant replies and framing, so a long conversation can reach that bound before its user-input allowance. Failed or ambiguous dispatches remain charged to admission capacity.
 
 The plugin contributes a signed-out screen, native session profile, and cleanup task. Core keeps account ownership, tool guards, and verified deletion infrastructure. An installation without Guest Chat redirects signed-out chat visitors to `/login`, and installs no guest schema or bootstrap route.
 

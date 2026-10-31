@@ -8,7 +8,7 @@ import type { z } from "zod";
 
 import { DocumentToolResult } from "@/components/part/document-common";
 import { useArtifact } from "@/hooks/use-artifact";
-import type { eveDocumentResult } from "@/lib/eve/document-contracts";
+import type { eveDocumentResult } from "@/chatjs/core/documents/contracts";
 import { useTRPC } from "@/trpc/react";
 
 import { DocumentBody } from "./eve-document-body";

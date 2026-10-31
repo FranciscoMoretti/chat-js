@@ -1,6 +1,6 @@
 "use client";
 
-import { documentDefinitions } from "@/integrations/documents";
+import { documentDefinitions } from "@/integrations/documents/definitions";
 
 import { hasText } from "@/components/text-value";
 
@@ -11,7 +11,7 @@ import { z } from "zod";
 
 import { DocumentToolResult } from "@/components/part/document-common";
 import { useArtifact } from "@/hooks/use-artifact";
-import { eveDocumentResult } from "@/lib/eve/document-contracts";
+import { eveDocumentResult } from "@/chatjs/core/documents/contracts";
 import type { ReadonlyEveMessagePart } from "@/lib/eve/readonly-message-types";
 
 import {

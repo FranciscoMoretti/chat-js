@@ -2,8 +2,8 @@
 
 import React from "react";
 
-import type { DocumentBodyProps } from "@/lib/eve/document-ui";
-import { documents } from "@/integrations/document-ui";
+import type { DocumentBodyProps } from "@/chatjs/core/documents/ui";
+import { documents } from "@/integrations/documents/ui";
 
 export const DocumentBody = ({
   kind,

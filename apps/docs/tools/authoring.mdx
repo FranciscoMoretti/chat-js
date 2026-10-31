@@ -46,7 +46,7 @@ Export a renderer built with `defineToolRenderer`. It validates persisted input 
 "use client";
 
 import { z } from "zod";
-import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
+import { defineToolRenderer } from "@/chatjs/core/tools/define-renderer";
 
 export const WordCountRenderer = defineToolRenderer({
   inputSchema: z.object({ text: z.string() }),
@@ -68,7 +68,7 @@ You can share schemas, description and display metadata through a pure module:
 
 ```ts title="definition.ts"
 import { z } from "zod";
-import type { ToolDefinition } from "@/lib/ai/tool-definition";
+import type { ToolDefinition } from "@/chatjs/core/tools/tool-definition";
 
 export const toolDefinition = {
   name: "wordCount",
@@ -92,7 +92,7 @@ Use a lowercase kebab-case kind of at most 100 characters. A kind is exclusive w
 
 ```ts title="definition.ts"
 import { z } from "zod";
-import type { DocumentDefinition } from "@/lib/eve/document-definition";
+import type { DocumentDefinition } from "@/chatjs/core/documents/document-definition";
 
 export const documentDefinition = {
   kind: "diagram",
@@ -102,11 +102,11 @@ export const documentDefinition = {
 } as const satisfies DocumentDefinition;
 ```
 
-Declare `"documentKind": "diagram"` in the descriptor, register those two tools, and include `definition.ts` and `document.tsx` in the item. The editor exports a `documentUi` object satisfying `DocumentUi` from `@/lib/eve/document-ui`. It includes `definition: documentDefinition` and a `Body` component. Optional fields supply assistant actions, content copying, copy labels and comparison support.
+Declare `"documentKind": "diagram"` in the descriptor, register those two tools, and include `definition.ts` and `document.tsx` in the item. The editor exports a `documentUi` object satisfying `DocumentUi` from `@/chatjs/core/documents/ui`. It includes `definition: documentDefinition` and a `Body` component. Optional fields supply assistant actions, content copying, copy labels and comparison support.
 
 The server tools remain ordinary EVE definitions. Use the core document create/edit input schemas and call `executeEveDocumentTool(documentDefinition.createTool, input, context)` or the corresponding edit operation. That helper enforces conversation ownership, revision checks, the content schema and persistence. Declare `readDocument` in `requiresTools` and `@chatjs/read-document` in `registryDependencies` to share authorized revision reads.
 
-`integrations/documents.ts` composes kinds and operations. `integrations/document-ui.ts` composes views. Duplicate kinds, duplicate operation names and the reserved `readDocument` operation fail composition. Removing the editor preserves historical revisions in a read-only source view. Removing the definition blocks writes. Reinstalling the same kind restores editing without converting stored content.
+`integrations/documents/definitions.ts` composes kinds and operations. `integrations/documents/ui.ts` composes views. Duplicate kinds, duplicate operation names and the reserved `readDocument` operation fail composition. Removing the editor preserves historical revisions in a read-only source view. Removing the definition blocks writes. Reinstalling the same kind restores editing without converting stored content.
 
 ## Item metadata
 
@@ -124,13 +124,13 @@ Declare standard shadcn files and dependencies in `packages/registry/registry.ts
 }
 ```
 
-Use `contractVersion: 1` for a UI-independent descriptor. Version 2 additionally declares `uiBase: "base"` or `"radix"` for UI compatibility. Neither selects an execution implementation. The same metadata is emitted as `meta.chatjs` in the registry item and as an installed `tools/chatjs/word-count/chatjs.json` descriptor.
+Use `contractVersion: 1` for a UI-independent descriptor. Version 2 additionally declares `uiBase: "base"` or `"radix"` for UI compatibility. Neither selects an execution implementation. The same metadata is emitted as `meta.chatjs` in the registry item and as an installed `chatjs/tools/word-count/chatjs.json` descriptor.
 
 A registry item can register several native tools through its `tools` array. Each export comes from the item’s `tool.ts`, and optional renderers come from `renderer.tsx`. Registration names must be unique across all installed items. Provider slots register exactly one tool.
 
 Document bundles declare their own `documentKind` and ship shared definitions and editors. See [Document bundles](#document-bundles).
 
-Items target files under `~/tools/chatjs/<id>/`. Declare npm packages in `dependencies` or `devDependencies`, and shared registry items in `registryDependencies`. EVE and the ChatJS receipt/renderer helpers are supplied by the host app.
+Items target files under `~/chatjs/tools/<id>/`. Declare npm packages in `dependencies` or `devDependencies`, and shared registry items in `registryDependencies`. EVE and the ChatJS receipt/renderer helpers are supplied by the host app.
 
 The `saved-code-execution` bundle requires code documents and a `codeExecution` provider exporting a typed `CodeExecutor` from `lib/eve/code-executor.ts`. Declare its export name with `codeExecutorExport: "executeCode"` in the descriptor. Both native tools call this shared operation with exact `{ code, language, title }` input and the current call's session, call ID, and abort signal. The operation owns sandbox lifecycle and returns one ChatJS usage receipt containing `{ message, chart }`. It does not receive EVE approval or token-access functions, and does not invoke another tool definition. Authorization belongs to each native entry point; the saved-document entry point additionally checks document ownership. No older provider contract is adapted.
 
@@ -165,7 +165,7 @@ export { configSchema };
 
 Use `modelRoles.smart`, `.balanced` or `.fast` for language models. Image and video roles are optional and require the corresponding gateway capability. These modules must be pure and safe to import in the browser: do not import runtime `config`, credentials, server SDKs or the tool implementation. The CLI generates typed imports without executing the module during installation. It rejects duplicate keys and the reserved core key `followupSuggestions`.
 
-Document views may expose `assistantActions`, a function returning `DocumentAssistantAction[]` from `@/lib/eve/document-contracts`. Keep prompts and model selection beside the editor. There is no separate action registry or descriptor flag.
+Document views may expose `assistantActions`, a function returning `DocumentAssistantAction[]` from `@/chatjs/core/documents/contracts`. Keep prompts and model selection beside the editor. There is no separate action registry or descriptor flag.
 
 ## Provider selections
 
@@ -185,7 +185,7 @@ Workflow registrations declare `workflow: true` alongside their `toolExport` and
 
 A bundle can declare `availabilityExport`, naming a predicate in `availability.ts`. The generated availability registry filters model exposure. Keep an execution guard in the workflow's preparation step as well. An unavailable tool must not rely on model filtering alone for authorization.
 
-To remove research, delete `tools/chatjs/deep-research`, `agent/tools/deepResearch.ts`, and the `researchPlanner`, `researcher`, `researchCompressor`, and `researchWriter` directories under `agent/subagents`, then run `chat-js sync`. These are installed source files, including the native EVE entry points.
+To remove research, delete `chatjs/tools/deep-research`, `agent/tools/deepResearch.ts`, and the `researchPlanner`, `researcher`, `researchCompressor`, and `researchWriter` directories under `agent/subagents`, then run `chat-js sync`. These are installed source files, including the native EVE entry points.
 
 Renderers can declare an `updateSchema` and `renderProgress` component. ChatJS validates receipt updates before rendering them and retains valid progress when the receipt reports an error.
 
@@ -195,7 +195,7 @@ Tools receive EVE's native context. Import only the ChatJS services your impleme
 
 Keep provider credentials and SDK dependencies in the installed integration. Tools accessing private user data must authorize that access using the native session identity. Both official and third-party tools use the same registration and accounting contract.
 
-For local custom tools, add native definitions to `integrations/tools.ts` with `defineToolSet` from `@/lib/eve/tool-types`. This checks each definition without widening its concrete input/output types. Add renderers in `integrations/tool-ui.ts`, and shared metadata in the client-safe `integrations/tool-definitions.ts`. Retain the installed spreads and native workflow-name guard. App-owned composition may explicitly replace installed tools; installed descriptors cannot duplicate each other.
+For local custom tools, add native definitions to `integrations/tools/execution.ts` with `defineToolSet` from `@/lib/eve/tool-types`. This checks each definition without widening its concrete input/output types. Add renderers in `integrations/tools/ui.ts`, and shared metadata in the client-safe `integrations/tools/definitions.ts`. Retain the installed spreads and native workflow-name guard. App-owned composition may explicitly replace installed tools; installed descriptors cannot duplicate each other.
 
 ## Build and verify
 

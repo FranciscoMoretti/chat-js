@@ -3,9 +3,9 @@ import { Hint } from "@/components/hint";
 import {
   installedDocumentKinds,
   installedToolNames,
-} from "@/integrations/tool-catalog";
+} from "@/integrations/tools/catalog";
 import { Button } from "@/components/ui/button";
-import type { DocumentRunProps } from "@/lib/eve/document-ui";
+import type { DocumentRunProps } from "@/chatjs/core/documents/ui";
 import { EveDocumentRunResult } from "./result";
 import { Play } from "lucide-react";
 import React from "react";

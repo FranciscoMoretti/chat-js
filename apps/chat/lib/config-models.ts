@@ -7,7 +7,7 @@ import type {
 import {
   gatewayCapabilities,
   gatewayModelDefaults,
-} from "./ai/gateway-model-defaults";
+} from "@/chatjs/providers/gateway-defaults";
 import { isNonEmptyString } from "./is-non-empty-string";
 import { z } from "zod";
 

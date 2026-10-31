@@ -2,19 +2,19 @@ import type { RegistryItem } from "shadcn/schema";
 import { pluginDefinitionSchema } from "../../../metadata";
 
 const desktopFiles = [
-  "plugins/desktop/desktop-auth-client.ts",
-  "plugins/desktop/auth-form.tsx",
-  "plugins/desktop/auth-handler.tsx",
-  "plugins/desktop/auth-server.ts",
-  "plugins/desktop/auth-ui.tsx",
-  "plugins/desktop/bridge.ts",
-  "plugins/desktop/client-plugin.ts",
-  "plugins/desktop/navigation.ts",
-  "plugins/desktop/protocol.ts",
-  "plugins/desktop/device-login-page.tsx",
-  "plugins/desktop/device-login-route.tsx",
-  "plugins/desktop/electron-auth.ts",
-  "plugins/desktop/sign-out.ts",
+  "chatjs/plugins/desktop/desktop-auth-client.ts",
+  "chatjs/plugins/desktop/auth-form.tsx",
+  "chatjs/plugins/desktop/auth-handler.tsx",
+  "chatjs/plugins/desktop/auth-server.ts",
+  "chatjs/plugins/desktop/auth-ui.tsx",
+  "chatjs/plugins/desktop/bridge.ts",
+  "chatjs/plugins/desktop/client-plugin.ts",
+  "chatjs/plugins/desktop/navigation.ts",
+  "chatjs/plugins/desktop/protocol.ts",
+  "chatjs/plugins/desktop/device-login-page.tsx",
+  "chatjs/plugins/desktop/device-login-route.tsx",
+  "chatjs/plugins/desktop/electron-auth.ts",
+  "chatjs/plugins/desktop/sign-out.ts",
   "app/(auth)/device-login/page.tsx",
 ];
 const desktopDefinition = pluginDefinitionSchema.parse({
@@ -43,8 +43,8 @@ const desktopItem: RegistryItem = {
     "sonner",
   ],
   files: desktopFiles.map((file) => ({
-    path: file.startsWith("plugins/desktop/")
-      ? `src/plugins/desktop/src/${file.slice("plugins/desktop/".length)}`
+    path: file.startsWith("chatjs/plugins/desktop/")
+      ? `src/plugins/desktop/src/${file.slice("chatjs/plugins/desktop/".length)}`
       : `src/plugins/desktop/adapters/${file}`,
     target: `~/${file}`,
     type: "registry:file" as const,

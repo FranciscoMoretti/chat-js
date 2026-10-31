@@ -26,11 +26,11 @@ export const resolveStorage = async (
   if (
     !(item.files ?? []).some(
       (file: Readonly<RegistryFile>) =>
-        file.target === "~/lib/storage-provider.ts"
+        file.target === "~/chatjs/providers/storage.ts"
     )
   ) {
     throw new Error(
-      "Storage must install lib/storage-provider.ts exporting createStorageAdapter."
+      "Storage must install chatjs/providers/storage.ts exporting createStorageAdapter."
     );
   }
   return { definition, options: {}, source: address };

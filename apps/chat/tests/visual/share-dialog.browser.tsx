@@ -8,7 +8,7 @@ import { page } from "vitest/browser";
 import {
   ShareDialog,
   ShareDialogView,
-} from "@/plugins/sharing/ui/share-button";
+} from "@/chatjs/plugins/sharing/ui/share-button";
 
 import "./sandbox.css";
 

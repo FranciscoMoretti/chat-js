@@ -63,6 +63,6 @@ Creation validates ownership and inserts membership in the same transaction as t
 
 ## Customization
 
-Edit `plugins/projects/` for the implementation. Route adapters live in `app/(chat)/project/`, with native adapters in `agent/hooks/` and `agent/instructions/`.
+Edit `chatjs/plugins/projects/` for the implementation. Route adapters live in `app/(chat)/project/`, with native adapters in `agent/hooks/` and `agent/instructions/`.
 
 The plugin contributes the `project` tRPC router, history filtering, navigation links, sidebar content, chat actions, and breadcrumbs. See the [Plugin API](../reference/plugin-api) for lifecycle and UI contracts.

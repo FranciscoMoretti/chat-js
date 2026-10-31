@@ -4,7 +4,7 @@ import { toolDefinitionSchema } from "./metadata";
 const codeExecutionRuntimeItem: RegistryItem = {
   files: ["python.ts", "javascript.ts", "types.ts"].map((file) => ({
     path: `src/tools/_shared/code-execution/${file}`,
-    target: `~/tools/chatjs/_shared/code-execution/${file}`,
+    target: `~/chatjs/tools/_shared/code-execution/${file}`,
     type: "registry:file",
   })),
   name: "code-execution-runtime",
@@ -17,7 +17,7 @@ const codeExecutionItem = {
     "Execute Python and JavaScript with the selected sandbox provider",
   files: ["tool.ts", "renderer.tsx", "schemas.ts"].map((file) => ({
     path: `src/tools/code-execution/${file}`,
-    target: `~/tools/chatjs/code-execution/${file}`,
+    target: `~/chatjs/tools/code-execution/${file}`,
     type: "registry:file" as const,
   })),
   meta: {

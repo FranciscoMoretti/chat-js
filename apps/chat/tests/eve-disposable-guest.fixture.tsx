@@ -7,9 +7,9 @@ import { ChatHeaderView } from "@/components/chat-header-view";
 import {
   GuestChatScreen,
   GuestConversationView,
-} from "@/plugins/guest-chat/signed-out";
+} from "@/chatjs/plugins/guest-chat/signed-out";
 import type { AppModelDefinition } from "@/lib/ai/app-models";
-import { GUEST_POLICY } from "@/plugins/guest-chat/guest-policy";
+import { GUEST_POLICY } from "@/chatjs/plugins/guest-chat/guest-policy";
 import { ChatModelsProvider } from "@/providers/chat-models-provider";
 import { DefaultModelProvider } from "@/providers/default-model-provider";
 

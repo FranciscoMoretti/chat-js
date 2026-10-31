@@ -45,9 +45,9 @@ export const planPluginRemoval = async (
   const candidates = new Set<string>();
   for (const plugin of retiring) {
     // oxlint-disable-next-line no-await-in-loop -- Validate each owned directory before enumerating it.
-    await preflight(cwd, [`plugins/${plugin.id}/chatjs.json`]);
+    await preflight(cwd, [`chatjs/plugins/${plugin.id}/chatjs.json`]);
     // oxlint-disable-next-line no-await-in-loop -- Collect complete ownership including local files before preparing the transaction.
-    const files = await directoryFiles(cwd, `plugins/${plugin.id}`);
+    const files = await directoryFiles(cwd, `chatjs/plugins/${plugin.id}`);
     for (const file of [...files, ...plugin.files]) {
       candidates.add(file);
     }

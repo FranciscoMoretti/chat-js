@@ -1,9 +1,9 @@
 import { beforeEach, expect, test, vi } from "vitest";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-import { readGuestCredential } from "@/plugins/guest-chat/guest-credential";
+import { readGuestCredential } from "@/chatjs/plugins/guest-chat/guest-credential";
 import { z } from "zod";
 
-import { POST } from "@/plugins/guest-chat/routes/create-session";
+import { POST } from "@/chatjs/plugins/guest-chat/routes/create-session";
 
 const HTTP_STATUS = {
   badGateway: 502,
@@ -51,11 +51,11 @@ const settings = vi.hoisted(
   })
 );
 vi.mock("@/lib/env", () => ({ env: settings }));
-vi.mock("@/plugins/guest-chat/guest-queries", () => ({
+vi.mock("@/chatjs/plugins/guest-chat/guest-queries", () => ({
   createGuestRuntimeSession: mocks.create,
   bindGuestRuntimeSession: mocks.bind,
 }));
-vi.mock("@/plugins/guest-chat/guest-ip", () => ({
+vi.mock("@/chatjs/plugins/guest-chat/guest-ip", () => ({
   guestRequestIpHash: mocks.ip,
 }));
 vi.mock("@/lib/auth", () => {

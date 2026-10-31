@@ -1,0 +1,23 @@
+{
+  "id": "attachment-uploads",
+  "kind": "plugin",
+  "files": [
+    "chatjs/plugins/attachment-uploads/controls.tsx",
+    "chatjs/plugins/attachment-uploads/integration.tsx",
+    "chatjs/plugins/attachment-uploads/upload.ts",
+    "chatjs/plugins/attachment-uploads/upload-prep.ts",
+    "app/(chat)/api/files/upload/route.ts",
+    "chatjs/plugins/attachment-uploads/routes/upload.ts",
+    "chatjs/plugins/attachment-uploads/client-plugin.ts"
+  ],
+  "requiresStorage": true,
+  "requiresPersistentSandbox": true,
+  "client": {
+    "export": "attachmentUploadsClient",
+    "composerControls": ["attach-files", "take-photo"],
+    "settingsItems": [],
+    "uploads": true
+  },
+  "contractVersion": 2,
+  "uiBase": "base"
+}

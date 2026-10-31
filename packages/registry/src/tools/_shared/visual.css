@@ -16,8 +16,7 @@
 @import "../../../../../apps/chat/app/globals.css";
 
 @source "../../../../../apps/chat/components";
-@source "../../../../../apps/chat/plugins";
+@source "../../../../../apps/chat/chatjs/plugins";
+@source "../../../../../apps/chat/chatjs/tools";
 @source "../../../../../apps/chat/app";
 @source "../../../../../apps/chat/lib";
-
-@source "../../../../../apps/chat/plugins";

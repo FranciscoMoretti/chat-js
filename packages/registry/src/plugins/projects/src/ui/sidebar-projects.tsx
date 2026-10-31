@@ -7,12 +7,12 @@ import { usePathname, useRouter } from "next/navigation";
 
 import { FolderPlus } from "lucide-react";
 
-import type { ProjectDetailsData } from "@/plugins/projects/ui/project-details-dialog";
+import type { ProjectDetailsData } from "@/chatjs/plugins/projects/ui/project-details-dialog";
 
-import { ProjectDetailsDialog } from "@/plugins/projects/ui/project-details-dialog";
+import { ProjectDetailsDialog } from "@/chatjs/plugins/projects/ui/project-details-dialog";
 
 import type { JSX as ReactJSX } from "react";
-import { SidebarProjectItem } from "@/plugins/projects/ui/sidebar-project-item";
+import { SidebarProjectItem } from "@/chatjs/plugins/projects/ui/sidebar-project-item";
 
 import {
   SidebarMenuButton,

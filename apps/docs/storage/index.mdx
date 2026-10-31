@@ -59,22 +59,22 @@ shadcn installs the selected item source and declared dependencies. The ChatJS C
 
 | File | Responsibility |
 | --- | --- |
-| `lib/storage-provider.ts` | Installed source exporting `createStorageAdapter` |
-| `lib/storage-options.ts` | Typed non-secret options and environment requirements |
+| `chatjs/providers/storage.ts` | Installed source exporting `createStorageAdapter` |
+| `chatjs/providers/storage-options.ts` | Typed non-secret options and environment requirements |
 | `lib/file-storage.ts` | Shared upload, download, list, and delete operations |
 | `.env.example` | Environment hints for the selected provider |
 | `scripts/check-env.ts` | Build-time validation for provider requirements |
 
 For example, a Vercel Blob installation generates an adapter like this:
 
-```typescript title="lib/storage-provider.ts"
+```typescript title="chatjs/providers/storage.ts"
 import { vercelBlob } from "files-sdk/vercel-blob";
 
 export const createStorageAdapter = vercelBlob;
 ```
 
-```typescript title="lib/storage-options.ts"
-import type { createStorageAdapter } from "./storage-provider";
+```typescript title="chatjs/providers/storage-options.ts"
+import type { createStorageAdapter } from "./storage";
 
 export const storageOptions = {} satisfies Parameters<
   typeof createStorageAdapter
@@ -131,9 +131,9 @@ npx @chat-js/cli@latest create my-app \
 ## Changing providers
 
 <Callout type="warning">
-  Changing `lib/storage-provider.ts` does not copy existing files. Do not switch
-  a deployed app to a new provider until every referenced object exists under
-  the same ChatJS key in the destination provider.
+  Changing `chatjs/providers/storage.ts` does not copy existing files. Do not
+  switch a deployed app to a new provider until every referenced object exists
+  under the same ChatJS key in the destination provider.
 </Callout>
 
 Deploying a provider change only changes where future runtime operations read and write. It does not migrate stored objects or database references.

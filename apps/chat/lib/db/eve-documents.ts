@@ -1,4 +1,4 @@
-import { chat } from "@/integrations/chat";
+import { chat } from "@/integrations/chat/server";
 import { eveDeletionScope } from "./eve-deletion-scope";
 import { unretainedEveDocumentRevisionIds } from "./eve-document-retention";
 import { isNonEmptyString } from "@/lib/is-non-empty-string";
@@ -8,7 +8,7 @@ import type { SQL } from "drizzle-orm";
 import { z } from "zod";
 
 import { artifactKind } from "@/lib/artifacts/artifact-kind";
-import { documentFileIds } from "@/lib/eve/document-contracts";
+import { documentFileIds } from "@/chatjs/core/documents/contracts";
 import { isFileStorageKey } from "@/lib/file-url";
 
 import { db } from "./client";

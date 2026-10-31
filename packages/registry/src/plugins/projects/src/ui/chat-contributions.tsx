@@ -15,7 +15,7 @@ import {
   SidebarGroupLabel,
   SidebarMenu,
 } from "@/components/ui/sidebar";
-import type { ChatActionProps } from "@/lib/chat-plugin-contracts";
+import type { ChatActionProps } from "@/chatjs/core/chat/contracts";
 import { SidebarProjects } from "./sidebar-projects";
 
 import { ProjectIcon } from "./project-icon";

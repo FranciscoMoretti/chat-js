@@ -1,4 +1,4 @@
-import { userCredit } from "@/plugins/credits/credits-schema";
+import { userCredit } from "@/chatjs/plugins/credits/credits-schema";
 import { expect, test } from "@playwright/test";
 
 import { eq, sql } from "drizzle-orm";

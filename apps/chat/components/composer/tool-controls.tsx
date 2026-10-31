@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { ToolMenuItem } from "./tool-menu-item";
 import { LoginPrompt } from "@/components/upgrade-cta/login-prompt";
 import type { UiToolName } from "@/lib/ai/types";
-import { installedToolNames } from "@/integrations/tool-catalog";
+import { installedToolNames } from "@/integrations/tools/catalog";
 
 import { useChatModels } from "@/providers/chat-models-provider";
 

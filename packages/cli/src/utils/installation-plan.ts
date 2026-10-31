@@ -132,7 +132,7 @@ export const planInstallation = async (
       case "sandbox": {
         selectProvider(sandboxDefinitionSchema.parse(metadata));
         sandboxProviderSource = item.files?.find(
-          (file) => file.target === "~/lib/sandbox/provider.ts"
+          (file) => file.target === "~/chatjs/providers/sandbox/provider.ts"
         )?.content;
         break;
       }

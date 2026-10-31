@@ -14,7 +14,7 @@ import type { JSX as ReactJSX } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 
-import authClient from "@/plugins/desktop/desktop-auth-client";
+import authClient from "@/chatjs/plugins/desktop/desktop-auth-client";
 
 import { useRouter } from "next/navigation";
 

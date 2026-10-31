@@ -21,7 +21,7 @@ const load = (path) => loadAuthoredModuleNamespace(resolve(path), { appRoot: pro
 const providers = await load("lib/ai/providers.ts");
 const model = await providers.getLanguageModel("openai/gpt-5-nano");
 assert.equal(model.modelId, "openai/gpt-5-nano");
-const title = await load("plugins/ai-titles/generate-title.ts");
+const title = await load("chatjs/plugins/ai-titles/generate-title.ts");
 assert.equal(typeof title.generateEveConversationTitleResult, "function");
 const agent = await load("agent/agent.ts");
 assert.ok(agent.default);

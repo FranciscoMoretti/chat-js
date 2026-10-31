@@ -2,7 +2,12 @@ import { disableAutoSnapshot } from "@uiverify/vitest";
 import { act, lazy, Suspense, useState } from "react";
 import { expect, test } from "vitest";
 import { page } from "vitest/browser";
-import { definePlugin, defineSlot, Plugins, slot } from "@/lib/ui-slots";
+import {
+  definePlugin,
+  defineSlot,
+  Plugins,
+  slot,
+} from "@/chatjs/core/ui/slots";
 import { mount, renderRoot, unmount } from "./primitive-mount";
 
 const Actions = defineSlot<{ readonly label: string }>();

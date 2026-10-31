@@ -1,11 +1,11 @@
 "use client";
 import { codeExecutionInput, codeExecutionResult } from "./schemas";
-import { CodeExecutionChart } from "@/tools/chatjs/_shared/code-execution/code-execution-chart";
+import { CodeExecutionChart } from "@/chatjs/tools/_shared/code-execution/code-execution-chart";
 import React from "react";
 // Preserve the exact TSX target: shadcn otherwise confuses it with subagent sandbox.ts files.
 import { SandboxComposed } from "@/components/sandbox.tsx";
-import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
-import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
+import type { ToolRendererProps } from "@/chatjs/core/tools/define-renderer";
+import { defineToolRenderer } from "@/chatjs/core/tools/define-renderer";
 
 type CodeExecutionTool = ToolRendererProps<
   typeof codeExecutionInput,

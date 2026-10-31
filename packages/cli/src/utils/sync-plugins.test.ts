@@ -127,7 +127,7 @@ const install = async (root: string): Promise<void> => {
     })
   );
   await writeFile(
-    path.join(root, "plugins/mcp/chatjs.json"),
+    path.join(root, "chatjs/plugins/mcp/chatjs.json"),
     JSON.stringify(mcpItem.meta?.chatjs)
   );
 };
@@ -146,13 +146,13 @@ test("plugin sync generates UI registrations without editing application composi
       path.join(root, "chatjs/generated/installed-chat-ui.ts"),
       "utf-8"
     )
-  ).toContain("@/plugins/mcp/client-plugin");
+  ).toContain("@/chatjs/plugins/mcp/client-plugin");
   expect(
     await readFile(
       path.join(root, "chatjs/generated/installed-chat-ui.ts"),
       "utf-8"
     )
-  ).toContain("@/plugins/mcp/client-plugin");
+  ).toContain("@/chatjs/plugins/mcp/client-plugin");
   await syncPlugins(root);
   expect(await readFile(path.join(root, "composer-controls.ts"), "utf-8")).toBe(
     composer
@@ -212,7 +212,7 @@ test("MCP installation contributes its schema without modifying core tables", as
   files.push({
     content: JSON.stringify(mcpItem.meta?.chatjs),
     path: "mcp.json",
-    target: "~/plugins/mcp/chatjs.json",
+    target: "~/chatjs/plugins/mcp/chatjs.json",
     type: "registry:file",
   });
   const server = Bun.serve({
@@ -250,7 +250,7 @@ test("MCP installation contributes its schema without modifying core tables", as
         path.join(root, "chatjs/generated/installed-database.ts"),
         "utf-8"
       )
-    ).toContain("plugins/mcp/db/mcp-schema.ts");
+    ).toContain("chatjs/plugins/mcp/db/mcp-schema.ts");
     expect(
       await readFile(
         path.join(root, "chatjs/generated/installed-routers.ts"),
@@ -266,7 +266,7 @@ test("missing descriptors report partial MCP source and how to recover", async (
   const root = await fixture();
   await initializePluginUi(root);
   await install(root);
-  await rm(path.join(root, "plugins/mcp/chatjs.json"));
+  await rm(path.join(root, "chatjs/plugins/mcp/chatjs.json"));
   await rejects(syncPlugins(root), (reason: unknown) => {
     expect(() => {
       throw reason;
@@ -303,7 +303,7 @@ test("core scaffold omits uploads; shadcn add registers uploads alongside MCP an
       path.join(root, "chatjs/generated/installed-uploads.ts"),
       "utf-8"
     )
-  ).not.toContain("@/plugins/attachment-uploads");
+  ).not.toContain("@/chatjs/plugins/attachment-uploads");
   await Promise.all(
     [
       "components/context-bar.tsx",
@@ -330,7 +330,7 @@ test("core scaffold omits uploads; shadcn add registers uploads alongside MCP an
   files.push({
     content: JSON.stringify(attachmentUploadsItem.meta?.chatjs),
     path: "uploads.json",
-    target: "~/plugins/attachment-uploads/chatjs.json",
+    target: "~/chatjs/plugins/attachment-uploads/chatjs.json",
     type: "registry:file",
   });
   const server = Bun.serve({
@@ -351,8 +351,10 @@ test("core scaffold omits uploads; shadcn add registers uploads alongside MCP an
       path.join(root, "chatjs/generated/installed-chat-ui.ts"),
       "utf-8"
     );
-    expect(composer).toContain("@/plugins/attachment-uploads/client-plugin");
-    expect(composer).toContain("@/plugins/mcp/client-plugin");
+    expect(composer).toContain(
+      "@/chatjs/plugins/attachment-uploads/client-plugin"
+    );
+    expect(composer).toContain("@/chatjs/plugins/mcp/client-plugin");
     expect(
       await readFile(path.join(root, "chatjs/generated/installed.ts"), "utf-8")
     ).toContain('"attachment-uploads"');
@@ -361,7 +363,7 @@ test("core scaffold omits uploads; shadcn add registers uploads alongside MCP an
         path.join(root, "chatjs/generated/installed-uploads.ts"),
         "utf-8"
       )
-    ).toContain("@/plugins/attachment-uploads/client-plugin");
+    ).toContain("@/chatjs/plugins/attachment-uploads/client-plugin");
     await rm(path.join(root, "app/(chat)/api/files/upload/route.ts"));
     await rejects(
       syncPlugins(root, { expected: ["attachment-uploads"] }),
@@ -380,7 +382,7 @@ test("core scaffold omits uploads; shadcn add registers uploads alongside MCP an
 test("third-party plugins contribute without CLI changes or executing their server entrypoint", async () => {
   const root = await fixture();
   await initializePluginUi(root);
-  const directory = path.join(root, "plugins/team-notes");
+  const directory = path.join(root, "chatjs/plugins/team-notes");
   await mkdir(directory, { recursive: true });
   await writeFile(
     path.join(directory, "chatjs.json"),
@@ -404,14 +406,14 @@ test("third-party plugins contribute without CLI changes or executing their serv
   );
   await writeFile(
     path.join(directory, "client-plugin.ts"),
-    'import { definePlugin } from "@/lib/ui-slots"; export const teamNotesClient = definePlugin({ id: "team-notes", slots: [] });'
+    'import { definePlugin } from "@/chatjs/core/ui/slots"; export const teamNotesClient = definePlugin({ id: "team-notes", slots: [] });'
   );
   await syncPlugins(root, { expected: ["team-notes"] });
   const routers = await readFile(
     path.join(root, "chatjs/generated/installed-routers.ts"),
     "utf-8"
   );
-  expect(routers).toContain('from "@/plugins/team-notes/server-plugin"');
+  expect(routers).toContain('from "@/chatjs/plugins/team-notes/server-plugin"');
   expect(routers).toContain("notes: plugin0().routers.notes");
   const composer = await readFile(
     path.join(root, "chatjs/generated/installed-chat-ui.ts"),
@@ -419,8 +421,8 @@ test("third-party plugins contribute without CLI changes or executing their serv
   );
   await mkdir(path.join(root, "lib"), { recursive: true });
   await cp(
-    path.join(demo, "lib/ui-slots.tsx"),
-    path.join(root, "lib/ui-slots.tsx")
+    path.join(demo, "chatjs/core/ui/slots.tsx"),
+    path.join(root, "chatjs/core/ui/slots.tsx")
   );
   expect(registrationDiagnostics(root, "chat-ui")).toEqual([]);
   expect(composer).toContain("teamNotesClient");
@@ -442,10 +444,15 @@ for (const key of ["eve"]) {
       path.join(root, "composer-controls.ts"),
       "utf-8"
     );
-    await mkdir(path.join(root, "plugins/conflict"), { recursive: true });
-    await writeFile(path.join(root, "plugins/conflict/server-plugin.ts"), "");
+    await mkdir(path.join(root, "chatjs/plugins/conflict"), {
+      recursive: true,
+    });
     await writeFile(
-      path.join(root, "plugins/conflict/chatjs.json"),
+      path.join(root, "chatjs/plugins/conflict/server-plugin.ts"),
+      ""
+    );
+    await writeFile(
+      path.join(root, "chatjs/plugins/conflict/chatjs.json"),
       JSON.stringify({
         contractVersion: 1,
         id: "conflict",
@@ -483,10 +490,15 @@ for (const [contribution, ids] of [
         path.join(root, "chatjs/generated/installed.ts"),
         "utf-8"
       );
-      await mkdir(path.join(root, "plugins/conflict"), { recursive: true });
-      await writeFile(path.join(root, "plugins/conflict/client-plugin.ts"), "");
+      await mkdir(path.join(root, "chatjs/plugins/conflict"), {
+        recursive: true,
+      });
       await writeFile(
-        path.join(root, "plugins/conflict/chatjs.json"),
+        path.join(root, "chatjs/plugins/conflict/client-plugin.ts"),
+        ""
+      );
+      await writeFile(
+        path.join(root, "chatjs/plugins/conflict/chatjs.json"),
         JSON.stringify({
           contractVersion: 1,
           id: "conflict",
@@ -534,7 +546,7 @@ test.each([
       )
     );
     for (const source of uninstalled) {
-      expect(source).not.toContain("plugins/");
+      expect(source).not.toContain("chatjs/plugins/");
     }
     await Promise.all(
       (item.files ?? []).map(async (file) => {
@@ -547,7 +559,7 @@ test.each([
       })
     );
     await writeFile(
-      path.join(root, `plugins/${item.name}/chatjs.json`),
+      path.join(root, `chatjs/plugins/${item.name}/chatjs.json`),
       JSON.stringify(item.meta?.chatjs)
     );
     await syncPlugins(root, { expected: [item.name] });
@@ -556,15 +568,17 @@ test.each([
       "utf-8"
     );
     if (item.name === "model-preferences") {
-      expect(lifecycle).not.toContain("@/plugins/");
+      expect(lifecycle).not.toContain("@/chatjs/plugins/");
       const visibility = await readFile(
         path.join(root, "chatjs/generated/installed-model-visibility.ts"),
         "utf-8"
       );
       expect(visibility).toContain("plugin0.useModelVisibility");
-      expect(visibility).toContain("@/plugins/model-preferences/client-plugin");
+      expect(visibility).toContain(
+        "@/chatjs/plugins/model-preferences/client-plugin"
+      );
     } else {
-      expect(lifecycle).toContain(`@/plugins/${item.name}/chat`);
+      expect(lifecycle).toContain(`@/chatjs/plugins/${item.name}/chat`);
     }
     expect(lifecycle).not.toContain("server-plugin");
     expect(lifecycle).not.toContain("routers");
@@ -579,7 +593,7 @@ test.each([
         path.join(root, "chatjs/generated/installed-database.ts"),
         "utf-8"
       )
-    ).toContain(`plugins/${item.name}/${schema}`);
+    ).toContain(`chatjs/plugins/${item.name}/${schema}`);
   }
 );
 
@@ -594,13 +608,16 @@ test("absent model visibility preserves defaults; conflicting providers fail bef
   expect(before).toContain(
     "installedModelVisibility: readonly ModelVisibility[] = []"
   );
-  expect(before).not.toContain("@/plugins/");
+  expect(before).not.toContain("@/chatjs/plugins/");
   await Promise.all(
     ["first", "second"].map(async (id) => {
-      await mkdir(path.join(root, "plugins", id), { recursive: true });
-      await writeFile(path.join(root, "plugins", id, "client-plugin.ts"), "");
+      await mkdir(path.join(root, "chatjs/plugins", id), { recursive: true });
       await writeFile(
-        path.join(root, "plugins", id, "chatjs.json"),
+        path.join(root, "chatjs/plugins", id, "client-plugin.ts"),
+        ""
+      );
+      await writeFile(
+        path.join(root, "chatjs/plugins", id, "chatjs.json"),
         JSON.stringify({
           contractVersion: 1,
           id,
@@ -631,7 +648,7 @@ test("credits registers native billing and account UI; removing it restores opti
     })
   );
   await writeFile(
-    path.join(root, "plugins/credits/chatjs.json"),
+    path.join(root, "chatjs/plugins/credits/chatjs.json"),
     JSON.stringify(creditsItem.meta?.chatjs)
   );
   await syncPlugins(root, { expected: ["credits"] });
@@ -640,35 +657,37 @@ test("credits registers native billing and account UI; removing it restores opti
       path.join(root, `chatjs/generated/installed-${name}.ts`),
       "utf-8"
     );
-  expect(await registration("billing")).toContain("@/plugins/credits/billing");
+  expect(await registration("billing")).toContain(
+    "@/chatjs/plugins/credits/billing"
+  );
   expect(await registration("billing")).not.toContain("server-plugin");
   expect(await registration("chat-ui")).toContain(
-    "@/plugins/credits/client-plugin"
+    "@/chatjs/plugins/credits/client-plugin"
   );
   expect(await registration("database")).toContain(
-    "plugins/credits/credits-schema"
+    "chatjs/plugins/credits/credits-schema"
   );
   expect(await registration("routers")).toContain(
     "credits: plugin0().routers.credits"
   );
-  await rm(path.join(root, "plugins/credits"), { recursive: true });
+  await rm(path.join(root, "chatjs/plugins/credits"), { recursive: true });
   await syncPlugins(root);
   expect(await registration("billing")).toContain(
     "installedBilling: readonly UsageBilling[] = []"
   );
-  expect(await registration("billing")).not.toContain("@/plugins/");
-  expect(await registration("chat-ui")).not.toContain("@/plugins/");
+  expect(await registration("billing")).not.toContain("@/chatjs/plugins/");
+  expect(await registration("chat-ui")).not.toContain("@/chatjs/plugins/");
 });
 
 test.each(["usageBilling", "canSpend", "UsageBilling"])(
   "billing export %s compiles without collisions and preserves its receiver",
   async (exportName) => {
     const root = await fixture();
-    const directory = path.join(root, "plugins/custom-billing");
+    const directory = path.join(root, "chatjs/plugins/custom-billing");
     await mkdir(directory, { recursive: true });
-    await mkdir(path.join(root, "lib"), { recursive: true });
+    await mkdir(path.join(root, "chatjs/core/billing"), { recursive: true });
     await writeFile(
-      path.join(root, "lib/usage-billing-contracts.ts"),
+      path.join(root, "chatjs/core/billing/contracts.ts"),
       "export interface UsageBilling { canSpend: (ownerId: string) => Promise<boolean> }"
     );
     await writeFile(
@@ -681,7 +700,7 @@ test.each(["usageBilling", "canSpend", "UsageBilling"])(
         contractVersion: 1,
         kind: "plugin",
         id: "custom-billing",
-        files: ["plugins/custom-billing/billing.ts"],
+        files: ["chatjs/plugins/custom-billing/billing.ts"],
         billing: { export: exportName },
       })
     );
@@ -718,7 +737,7 @@ test("two billing contributors fail before any registration is written", async (
   const before = await readFile(file, "utf-8");
   await Promise.all(
     ["first", "second"].map(async (id) => {
-      const directory = path.join(root, "plugins", id);
+      const directory = path.join(root, "chatjs/plugins", id);
       await mkdir(directory, { recursive: true });
       await writeFile(
         path.join(directory, "billing.ts"),
@@ -730,7 +749,7 @@ test("two billing contributors fail before any registration is written", async (
           contractVersion: 1,
           kind: "plugin",
           id,
-          files: [`plugins/${id}/billing.ts`],
+          files: [`chatjs/plugins/${id}/billing.ts`],
           billing: { export: "billing" },
         })
       );
@@ -750,7 +769,7 @@ test("signed-out, session policy and cleanup contributions disappear when absent
       path.join(root, `chatjs/generated/installed-${name}.ts`),
       "utf-8"
     );
-    expect(content).not.toContain("@/plugins/");
+    expect(content).not.toContain("@/chatjs/plugins/");
   }
 });
 
@@ -781,7 +800,7 @@ test.each(runtimeContributions)(
     await initializePluginUi(root);
     await Promise.all(
       ["first", "second"].map(async (id) => {
-        const directory = path.join(root, "plugins", id);
+        const directory = path.join(root, "chatjs/plugins", id);
         await mkdir(directory, { recursive: true });
         await writeFile(path.join(directory, entry), "export {};\n");
         await writeFile(
@@ -802,7 +821,7 @@ test.each(runtimeContributions)(
         path.join(root, "chatjs/generated/installed-session-profiles.ts"),
         "utf-8"
       )
-    ).not.toContain("@/plugins/");
+    ).not.toContain("@/chatjs/plugins/");
   }
 );
 
@@ -818,7 +837,7 @@ test.each(runtimeContributions)(
         )
       );
     const before = await readRegistrations();
-    const directory = path.join(root, "plugins/fixture");
+    const directory = path.join(root, "chatjs/plugins/fixture");
     await mkdir(directory, { recursive: true });
     await writeFile(
       path.join(directory, "chatjs.json"),
@@ -831,7 +850,7 @@ test.each(runtimeContributions)(
       })
     );
     await rejects(syncPlugins(root), {
-      message: `fixture installation is incomplete. Missing: plugins/fixture/${entry}. Run chat-js add fixture.`,
+      message: `fixture installation is incomplete. Missing: chatjs/plugins/fixture/${entry}. Run chat-js add fixture.`,
     });
     expect(await readRegistrations()).toEqual(before);
     await writeFile(path.join(directory, entry), "export {};\n");
@@ -865,7 +884,7 @@ test.each([
     const before = await readFile(file, "utf-8");
     await Promise.all(
       ["first", "second"].map(async (id) => {
-        const directory = path.join(root, "plugins", id);
+        const directory = path.join(root, "chatjs/plugins", id);
         await mkdir(directory, { recursive: true });
         await writeFile(path.join(directory, entry), "export {};\n");
         await writeFile(
@@ -875,7 +894,7 @@ test.each([
             uiBase: "base",
             id,
             kind: "plugin",
-            files: [`plugins/${id}/${entry}`],
+            files: [`chatjs/plugins/${id}/${entry}`],
             ...contribution,
           })
         );
@@ -890,26 +909,26 @@ test.each([
 
 test("sign-out defaults to web and stays independent of auth forms and layout", async () => {
   const root = await fixture();
-  await mkdir(path.join(root, "integrations"));
+  await mkdir(path.join(root, "integrations/auth"), { recursive: true });
   await mkdir(path.join(root, "lib"));
   await cp(
-    path.join(demo, "integrations/sign-out.ts"),
-    path.join(root, "integrations/sign-out.ts")
+    path.join(demo, "integrations/auth/sign-out.ts"),
+    path.join(root, "integrations/auth/sign-out.ts")
   );
   await cp(
-    path.join(demo, "lib/select-integration.ts"),
-    path.join(root, "lib/select-integration.ts")
+    path.join(demo, "chatjs/core/installation/select.ts"),
+    path.join(root, "chatjs/core/installation/select.ts")
   );
   await initializePluginUi(root);
   expect(
     await runRegistration(
       root,
-      "sign-out",
+      "auth/sign-out",
       "assert.equal(await registration.signOutWithPlugin(), false);",
       true
     )
   ).toEqual({ exitCode: 0, stderr: "" });
-  const directory = path.join(root, "plugins", "auth-fixture");
+  const directory = path.join(root, "chatjs/plugins", "auth-fixture");
   await mkdir(directory, { recursive: true });
   await Promise.all([
     writeFile(
@@ -932,9 +951,9 @@ test("sign-out defaults to web and stays independent of auth forms and layout", 
         id: "auth-fixture",
         kind: "plugin",
         files: [
-          "plugins/auth-fixture/auth-form.tsx",
-          "plugins/auth-fixture/sign-out.ts",
-          "plugins/auth-fixture/client-plugin.ts",
+          "chatjs/plugins/auth-fixture/auth-form.tsx",
+          "chatjs/plugins/auth-fixture/sign-out.ts",
+          "chatjs/plugins/auth-fixture/client-plugin.ts",
         ],
         client: { export: "client", layout: true },
         authenticationUi: { form: "Form", signOut: "signOut" },
@@ -945,7 +964,7 @@ test("sign-out defaults to web and stays independent of auth forms and layout", 
   expect(
     await runRegistration(
       root,
-      "sign-out",
+      "auth/sign-out",
       "assert.equal(await registration.signOutWithPlugin(), true);",
       true
     )
@@ -954,13 +973,13 @@ test("sign-out defaults to web and stays independent of auth forms and layout", 
 
 test("a plugin with layout and chat UI participates in both scopes", async () => {
   const root = await fixture();
-  await mkdir(path.join(root, "plugins/mixed"), { recursive: true });
+  await mkdir(path.join(root, "chatjs/plugins/mixed"), { recursive: true });
   await writeFile(
-    path.join(root, "plugins/mixed/client-plugin.ts"),
+    path.join(root, "chatjs/plugins/mixed/client-plugin.ts"),
     "export const mixed = { id: 'mixed', slots: [] }; "
   );
   await writeFile(
-    path.join(root, "plugins/mixed/chatjs.json"),
+    path.join(root, "chatjs/plugins/mixed/chatjs.json"),
     JSON.stringify({
       contractVersion: 2,
       uiBase: "base",
@@ -980,6 +999,6 @@ test("a plugin with layout and chat UI participates in both scopes", async () =>
     )
   );
   for (const source of sources) {
-    expect(source).toContain("@/plugins/mixed/client-plugin");
+    expect(source).toContain("@/chatjs/plugins/mixed/client-plugin");
   }
 });

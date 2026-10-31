@@ -39,7 +39,7 @@ const adapterFiles = [
   "app/(chat)/project/[projectId]/page.tsx",
 ];
 const projectsFiles = [
-  ...sourceFiles.map((file) => `plugins/projects/${file}`),
+  ...sourceFiles.map((file) => `chatjs/plugins/projects/${file}`),
   ...adapterFiles,
 ];
 const projectsDefinition = pluginDefinitionSchema.parse({
@@ -48,7 +48,7 @@ const projectsDefinition = pluginDefinitionSchema.parse({
   id: "projects",
   kind: "plugin",
   files: projectsFiles,
-  databaseSchemas: ["plugins/projects/db/project-schema.ts"],
+  databaseSchemas: ["chatjs/plugins/projects/db/project-schema.ts"],
   server: { export: "projects", routers: ["project"] },
   chat: { export: "projectsChat" },
   client: { export: "projectsClient", chat: true },
@@ -80,8 +80,8 @@ const projectsItem: RegistryItem = {
   ],
   description: "Projects, chat organization, and shared project instructions",
   files: projectsFiles.map((file) => ({
-    path: file.startsWith("plugins/projects/")
-      ? `src/plugins/projects/src/${file.slice("plugins/projects/".length)}`
+    path: file.startsWith("chatjs/plugins/projects/")
+      ? `src/plugins/projects/src/${file.slice("chatjs/plugins/projects/".length)}`
       : `src/plugins/projects/adapters/${file}`,
     target: `~/${file}`,
     type: "registry:file" as const,

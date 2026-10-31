@@ -113,7 +113,7 @@ export const exportManualInstallation = async (
         "2. Select the source you need and copy it into app-owned locations. Explicit ~/ targets are relative to the app root; null targets require shadcn destination resolution. This is raw registry source: adapt aliases, styling/library transforms and package dependencies to your app. Existing components/ui primitives can be reused.",
         "3. Connect the exported behavior/components from app-owned integration files. Keep client and server imports separate. Resolve exclusive providers, duplicate names, ordering and prerequisites explicitly.",
         "4. Review app/ routes, agent/ hooks and database schema separately before copying them: placement can activate framework behavior. Review migrations before applying them.",
-        "5. Keep chatjs.json descriptors out of auto-discovered plugins/ and tools/chatjs/ directories unless you intend to enroll the item in chat-js sync. Do not copy this bundle wholesale into the app or edit chatjs/generated to make a manual connection.",
+        "5. Keep chatjs.json descriptors out of auto-discovered chatjs/plugins/ and chatjs/tools/ directories unless you intend to enroll the item in chat-js sync. Do not copy this bundle wholesale into the app or edit chatjs/generated to make a manual connection.",
         "6. Typecheck and exercise the integration in your app. Manual copies are app-owned; chat-js status/remove do not track this bundle or connections you create from it.",
         "",
         "To retry managed installation after resolving a conflict, run chat-js add with the original selection without --files-only. Review source collisions first; --yes does not authorize overwriting edits.",

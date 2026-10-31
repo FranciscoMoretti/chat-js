@@ -165,12 +165,12 @@ test("uploads and media reject memory storage, while a minimal installation acce
 test("add validates installed provider literals without executing user source", async () => {
   const cwd = await mkdtemp(path.join(tmpdir(), "chatjs-requirements-"));
   roots.push(cwd);
-  await mkdir(path.join(cwd, "lib/ai"), { recursive: true });
+  await mkdir(path.join(cwd, "chatjs/providers"), { recursive: true });
   await writeFile(
-    path.join(cwd, "lib/storage-options.ts"),
+    path.join(cwd, "chatjs/providers/storage-options.ts"),
     'const storageId = "s3";'
   );
-  const file = path.join(cwd, "lib/ai/gateway-model-defaults.ts");
+  const file = path.join(cwd, "chatjs/providers/gateway-defaults.ts");
   const source = `throw new Error("must not execute");
     const gatewayCapabilities = { image: true, video: false };
     const gatewayModelDefaults = { roles: { image: "image-model" } } satisfies UnknownType;`;
@@ -237,13 +237,13 @@ test("uploads reject absent and nonpersistent sandboxes, accept compatible exter
     sandboxProviderSource:
       'throw new Error("must not execute"); export const supportsPersistentSandbox = true;',
   });
-  await mkdir(path.join(cwd, "lib/sandbox"), { recursive: true });
+  await mkdir(path.join(cwd, "chatjs/providers/sandbox"), { recursive: true });
   await writeFile(
-    path.join(cwd, "lib/sandbox/options.ts"),
+    path.join(cwd, "chatjs/providers/sandbox/options.ts"),
     'export const sandboxId = "external";'
   );
   await writeFile(
-    path.join(cwd, "lib/sandbox/provider.ts"),
+    path.join(cwd, "chatjs/providers/sandbox/provider.ts"),
     "export const supportsPersistentSandbox = true;"
   );
   await validateProviderRequirements(cwd, target);

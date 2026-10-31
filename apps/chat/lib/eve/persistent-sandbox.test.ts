@@ -20,7 +20,9 @@ vi.mock("./workspace-attachments", () => ({
   recordWorkspaceAttachment: vi.fn(),
   readWorkspaceAttachment: vi.fn(),
 }));
-vi.mock("../sandbox/provider", () => ({ supportsPersistentSandbox: true }));
+vi.mock("@/chatjs/providers/sandbox/provider", () => ({
+  supportsPersistentSandbox: true,
+}));
 vi.mock("../env", () => ({ env: {} }));
 vi.mock("./persistent-sandbox-store", () => ({
   registerPersistentSession: mocks.register,

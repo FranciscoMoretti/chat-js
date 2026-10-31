@@ -1,3 +1,4 @@
+import { optionalDirectoryFiles } from "#cli/utils/installation-files";
 import { recordInstalledSource } from "#cli/utils/source-receipt";
 import { scaffoldNativeProject } from "#cli/helpers/native-scaffold";
 import { createStagedProject } from "#cli/helpers/staged-project";
@@ -546,7 +547,7 @@ const installRegistryItems = async (
     await installPlan(
       project.targetDir,
       plan,
-      { fresh: true, managedTargets: ["lib/sandbox/options.ts"] },
+      { fresh: true, managedTargets: ["chatjs/providers/sandbox/options.ts"] },
       async (): Promise<void> => {
         await configureGatewayProvider(
           project.targetDir,
@@ -580,11 +581,13 @@ const installRegistryItems = async (
     );
     await recordInstalledSource(project.targetDir, [
       ...plannedSourceTargets(plan),
+      ...(await optionalDirectoryFiles(project.targetDir, "chatjs/core")),
+      ...(await optionalDirectoryFiles(project.targetDir, "chatjs/providers")),
       "chat.config.ts",
-      "lib/ai/gateway-model-defaults.ts",
+      "chatjs/providers/gateway-defaults.ts",
       "lib/ai/models.generated.ts",
-      "lib/storage-options.ts",
-      "lib/sandbox/options.ts",
+      "chatjs/providers/storage-options.ts",
+      "chatjs/providers/sandbox/options.ts",
       ".env.example",
     ]);
     installSpinner.succeed("Registry items installed and configured.");

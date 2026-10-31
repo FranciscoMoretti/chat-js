@@ -17,14 +17,14 @@ import React, {
 import type { JSX as ReactJSX } from "react";
 
 import { Spinner } from "@/components/ui/spinner";
-import { documentDefinitions } from "@/integrations/documents";
+import { documentDefinitions } from "@/integrations/documents/definitions";
 import { LogicalChat } from "@/lib/eve/logical-chat";
 import { eveMessageTitle } from "@/lib/eve/message-input";
 import { projectEveMessageDisplay } from "@/lib/eve/message-display";
 import { hasPendingCreation } from "@/lib/eve/pending-create";
 import { pendingEveMetadataMutations } from "@/lib/eve/optimistic-metadata";
 import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
-import { installedToolNames } from "@/integrations/tool-catalog";
+import { installedToolNames } from "@/integrations/tools/catalog";
 import { useTRPC } from "@/trpc/react";
 
 import { EveChatHeader } from "./eve-chat-header";

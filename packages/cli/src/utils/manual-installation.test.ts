@@ -110,7 +110,7 @@ test("CLI offers files-only after a connection failure and exports against a leg
         {
           path: "example.ts",
           type: "registry:file",
-          target: "~/plugins/example/example.ts",
+          target: "~/chatjs/plugins/example/example.ts",
           content: "export const example = true;\n",
         },
       ],
@@ -239,7 +239,7 @@ test("add dry-run reports activation without changing the app or installing depe
     child.exited,
   ]);
   expect(code, stdout + stderr).toBe(0);
-  expect(stdout).toContain("integrations/chat.ts");
+  expect(stdout).toContain("integrations/chat/server.ts");
   expect(stdout).toContain("Next.js route");
   expect(stdout).toContain("app/api/example/route.ts");
   expect(await readdir(root, { recursive: true })).toEqual(before);

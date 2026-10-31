@@ -1,5 +1,5 @@
 import { defineSandboxProvider } from "eve/sandbox/provider";
-import { supportsPersistentSandbox } from "../sandbox/provider";
+import { supportsPersistentSandbox } from "@/chatjs/providers/sandbox/provider";
 import { createPersistentSandboxEnvironment } from "./persistent-sandbox";
 
 const unavailable = async (): Promise<never> =>

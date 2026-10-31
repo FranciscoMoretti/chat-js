@@ -1,4 +1,4 @@
-import { isDocumentResult } from "./document-contracts";
+import { isDocumentResult } from "@/chatjs/core/documents/contracts";
 import { EveForkBoundaryError } from "./fork-boundary-error";
 import { isNonEmptyString } from "@/lib/is-non-empty-string";
 
@@ -12,7 +12,7 @@ import type {
   ReadonlyEveMessageMetadata,
 } from "./readonly-message-types";
 import { createHash } from "node:crypto";
-import { documentDefinitions } from "@/integrations/documents";
+import { documentDefinitions } from "@/integrations/documents/definitions";
 import { sharedEveMessages } from "./shared-messages";
 import { z } from "zod";
 

@@ -18,25 +18,25 @@ export const uiImplementations = [
     radix: "apps/chat/components/composer/tool-menu-item.radix.tsx",
   },
   {
-    target: "plugins/search/search-surface.tsx",
+    target: "chatjs/plugins/search/search-surface.tsx",
     source: "packages/registry/src/plugins/search/src/search-surface.tsx",
     radix: "packages/registry/src/plugins/search/src/search-surface.radix.tsx",
   },
   {
-    target: "plugins/sharing/ui/share-menu-surface.tsx",
+    target: "chatjs/plugins/sharing/ui/share-menu-surface.tsx",
     source:
       "packages/registry/src/plugins/sharing/src/ui/share-menu-surface.tsx",
     radix:
       "packages/registry/src/plugins/sharing/src/ui/share-menu-surface.radix.tsx",
   },
   {
-    target: "plugins/projects/ui/move-menu-item.tsx",
+    target: "chatjs/plugins/projects/ui/move-menu-item.tsx",
     source: "packages/registry/src/plugins/projects/src/ui/move-menu-item.tsx",
     radix:
       "packages/registry/src/plugins/projects/src/ui/move-menu-item.radix.tsx",
   },
   {
-    target: "plugins/mcp/connector-menu-item.tsx",
+    target: "chatjs/plugins/mcp/connector-menu-item.tsx",
     source: "packages/registry/src/plugins/mcp/src/connector-menu-item.tsx",
     radix:
       "packages/registry/src/plugins/mcp/src/connector-menu-item.radix.tsx",
@@ -97,7 +97,7 @@ export const uiImplementations = [
     radix: "apps/chat/providers/ui-direction.radix.tsx",
   },
   {
-    target: "plugins/mcp/ui/transport-select.tsx",
+    target: "chatjs/plugins/mcp/ui/transport-select.tsx",
     source: "packages/registry/src/plugins/mcp/src/ui/transport-select.tsx",
     radix:
       "packages/registry/src/plugins/mcp/src/ui/transport-select.radix.tsx",

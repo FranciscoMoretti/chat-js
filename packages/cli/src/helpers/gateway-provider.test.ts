@@ -27,7 +27,7 @@ it("wires selected defaults and snapshot identity without managing dependencies"
         // oxlint-disable-next-line no-await-in-loop -- Finish reading this gateway's three outputs before the next configureGatewayProvider call overwrites them.
         await Promise.all([
           readFile(
-            pathModule.join(cwd, "lib/ai/gateway-model-defaults.ts"),
+            pathModule.join(cwd, "chatjs/providers/gateway-defaults.ts"),
             "utf-8"
           ),
           readFile(pathModule.join(cwd, "lib/ai/models.generated.ts"), "utf-8"),
@@ -46,7 +46,7 @@ it("wires selected defaults and snapshot identity without managing dependencies"
       );
       expect(currentManifest).toBe(manifest);
     }
-    const target = pathModule.join(cwd, "lib/ai/gateway-model-defaults.ts");
+    const target = pathModule.join(cwd, "chatjs/providers/gateway-defaults.ts");
     const snapshot = await readFile(
       pathModule.join(cwd, "lib/ai/models.generated.ts"),
       "utf-8"

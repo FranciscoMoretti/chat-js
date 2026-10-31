@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import type { ChatSuggestionsProps } from "@/lib/chat-plugin-contracts";
+import type { ChatSuggestionsProps } from "@/chatjs/core/chat/contracts";
 import { useEveFollowups } from "./use-followups";
 import { FollowUpSuggestionsView } from "./followup-suggestions-view";
 

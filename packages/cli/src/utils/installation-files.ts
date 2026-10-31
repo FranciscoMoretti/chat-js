@@ -1,4 +1,5 @@
 import { readFile, readdir } from "node:fs/promises";
+import { preflight } from "./preflight";
 import type { Dirent } from "node:fs";
 
 import path from "node:path";
@@ -36,4 +37,16 @@ const directoryFiles = async (
   return files.flat();
 };
 
-export { directoryFiles, optionalFile };
+const optionalDirectoryFiles = async (cwd: string, directory: string) => {
+  await preflight(cwd, [`${directory}/.ownership-check`]);
+  try {
+    return await directoryFiles(cwd, directory);
+  } catch (error) {
+    if (error instanceof Error && "code" in error && error.code === "ENOENT") {
+      return [];
+    }
+    throw error;
+  }
+};
+
+export { directoryFiles, optionalDirectoryFiles, optionalFile };

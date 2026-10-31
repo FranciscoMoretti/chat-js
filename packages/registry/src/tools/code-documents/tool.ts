@@ -2,7 +2,7 @@ import {
   eveDocumentCreateInput,
   eveDocumentEditInput,
   eveDocumentWriteResult,
-} from "@/lib/eve/document-contracts";
+} from "@/chatjs/core/documents/contracts";
 import type { ToolContext } from "eve/tools";
 import { codeGuidelines } from "./guidelines";
 import { defineTool } from "eve/tools";

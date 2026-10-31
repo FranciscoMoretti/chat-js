@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { DocumentDefinition } from "@/lib/eve/document-definition";
+import type { DocumentDefinition } from "@/chatjs/core/documents/document-definition";
 
 export const documentDefinition = {
   kind: "sheet",

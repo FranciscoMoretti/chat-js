@@ -1,6 +1,6 @@
 import { route } from "./route";
 import { expect, onTestFinished, test, vi } from "vitest";
-import { documentDefinitions } from "@/integrations/documents";
+import { documentDefinitions } from "@/integrations/documents/definitions";
 import { page, userEvent } from "vitest/browser";
 
 import ChatPage from "@/app/(chat)/chat/[id]/page";

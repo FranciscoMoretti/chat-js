@@ -1,6 +1,6 @@
 import { beforeEach, expect, it, vi } from "vitest";
 import { z } from "zod";
-import { composeDocuments } from "./document-definition";
+import { composeDocuments } from "@/chatjs/core/documents/document-definition";
 import { executeEveDocumentTool } from "./document-tools";
 import { saveManualEveDocument } from "./save-document";
 import { testToolContext } from "../../tests/helpers/eve-tool-context";
@@ -35,7 +35,7 @@ const current = () =>
         ]
       : []
   );
-vi.mock("@/integrations/documents", () => ({
+vi.mock("@/integrations/documents/definitions", () => ({
   documentDefinitions: {
     get kinds() {
       return current().kinds;

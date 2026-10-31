@@ -3,7 +3,7 @@ import {
   projectSelectionAvailable,
 } from "@/lib/eve/project-creation";
 import { CreationRejectedError } from "@/lib/creation-rejected-error";
-import { chat } from "@/integrations/chat";
+import { chat } from "@/integrations/chat/server";
 import { reserveConversationWorkspace } from "./eve-workspaces";
 import { eveDeletionScope } from "./eve-deletion-scope";
 import { markEveCreationFailure } from "./eve-creation-failure";

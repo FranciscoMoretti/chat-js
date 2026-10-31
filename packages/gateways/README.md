@@ -4,7 +4,7 @@ Shared contracts and runtime utilities for ChatJS gateway registry extensions. T
 
 The CLI installs the selected registry item's source files and npm dependencies. Built-in adapters are authored in `packages/registry/src/gateways`; third-party registries can ship source or a file importing their own npm package.
 
-The installed `lib/ai/gateway.ts` must export a `Gateway` constructor accepting `GatewayOptions`. Its instance implements `GatewayProvider`: a literal `type`, `fetchModels()`, and language/image/video model creation. Runtime factories accept string IDs from live catalogs. Unsupported media factories are `null`, which excludes their model IDs from configuration. Language models use AI SDK v4.
+The installed `chatjs/providers/gateway.ts` must export a `Gateway` constructor accepting `GatewayOptions`. Its instance implements `GatewayProvider`: a literal `type`, `fetchModels()`, and language/image/video model creation. Runtime factories accept string IDs from live catalogs. Unsupported media factories are `null`, which excludes their model IDs from configuration. Language models use AI SDK v4.
 
 The host supplies environment values, logging, a discovery `fetch` function, and `getFallbackModels(gateway)`. Model generation uses the selected SDK's transport. `GatewayRuntime` provides these host dependencies without importing Next.js.
 

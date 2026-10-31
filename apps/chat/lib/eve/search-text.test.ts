@@ -1,7 +1,7 @@
 import type { MessageStreamEvent } from "eve/client";
 import { expect, it } from "vitest";
 
-import { eveEventSearchText } from "@/plugins/search/search-text";
+import { eveEventSearchText } from "@/chatjs/plugins/search/search-text";
 
 const received: MessageStreamEvent = {
   data: {
