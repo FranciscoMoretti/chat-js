@@ -15,15 +15,10 @@ import type { UiToolName } from "@/lib/ai/types";
 import { eveMessageFileKeys } from "@/lib/eve/file-references";
 import { frontendToolsSchema } from "@/lib/ai/types";
 import { canStartPaidTurn } from "@/lib/eve/spending-admission";
-import { releaseEveGuestMessage } from "@/lib/db/eve-guests";
 import { env } from "@/lib/env";
 import { referenceEveFiles } from "@/lib/db/eve-files";
 import { getBoundEveConversationForSession } from "@/lib/db/eve-queries";
 import { rejectEveCommand } from "@/lib/eve/command-rejection";
-import {
-  admitGuestMessage,
-  settleGuestMessage,
-} from "@/lib/eve/guest-message-admission";
 import { EVE_MESSAGE_OPERATION_HEADER } from "@/lib/eve/message-delivery";
 import { loadEveModelDefinition } from "@/lib/eve/model-selection";
 import { prepareEveMessage } from "@/lib/eve/prepare-message";
@@ -57,7 +52,6 @@ const rejectRequest = (
     return Response.json({ error: message }, { status });
   };
 const checkTurnAdmission = async (
-  request: ReadonlyNativeSurface<Request>,
   {
     principal,
     sessionId,
@@ -68,16 +62,9 @@ const checkTurnAdmission = async (
   command: ReadonlyNativeSurface<
     Exclude<Awaited<ReturnType<typeof readCommand>>, Response>
   >
-): Promise<Awaited<ReturnType<typeof admitGuestMessage>> | undefined> => {
+): Promise<Response | undefined> => {
   if (!command.isNewMessage || command.message === undefined) {
     return undefined;
-  }
-  if (principal.kind === "guest") {
-    return await admitGuestMessage(request, principal.ownerId, sessionId, {
-      message: command.message,
-      modelId: command.modelId,
-      selectedTool: command.selectedTool,
-    });
   }
   if (!(await canStartPaidTurn(principal.ownerId, sessionId))) {
     return rejectEveCommand("Insufficient credits", HTTP_PAYMENT_REQUIRED);
@@ -192,19 +179,6 @@ const readCommand = async (
   }
   return { body, isNewMessage, message, modelId, selectedTool };
 };
-const refundRejectedGuestAdmission = async (
-  ownerId: string,
-  admission: Awaited<ReturnType<typeof checkTurnAdmission>>
-): Promise<void> => {
-  if (admission && !(admission instanceof Response)) {
-    // Called only when the workspace claim rejected before native dispatch.
-    await releaseEveGuestMessage(
-      ownerId,
-      admission.operationId,
-      admission.reservationId
-    );
-  }
-};
 const handle = async (
   request: ReadonlyNativeSurface<Request>,
   context: {
@@ -255,17 +229,14 @@ const handle = async (
     return command;
   }
   const { body, modelId, selectedTool } = command;
-  let admission: Awaited<ReturnType<typeof checkTurnAdmission>>;
   try {
-    admission = await checkTurnAdmission(
-      request,
+    const admission = await checkTurnAdmission(
       { principal, sessionId: policy.sessionId },
       command
     );
     if (admission instanceof Response) {
       return admission;
     }
-    const guestAdmission = admission;
     const dispatch = async (): Promise<Response> => {
       const result = await eveRequest(
         principal.ownerId,
@@ -283,9 +254,6 @@ const handle = async (
         modelId,
         selectedTool
       );
-      if (guestAdmission) {
-        await settleGuestMessage(result, principal.ownerId, guestAdmission);
-      }
       return result;
     };
     if (command.isNewMessage) {
@@ -330,7 +298,6 @@ const handle = async (
     );
   } catch (error) {
     if (error instanceof EveWorkspaceBusyError) {
-      await refundRejectedGuestAdmission(ownerId, admission);
       return rejectEveCommand(error.message, 409);
     }
     if (error instanceof EveUsageReconciliationBusyError) {

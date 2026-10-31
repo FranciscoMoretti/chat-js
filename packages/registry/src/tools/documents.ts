@@ -102,6 +102,7 @@ const documentItems: RegistryItem[] = [
     description: `Create and edit ${kind} documents with their editor UI`,
     files: documentFiles(`${kind}-documents`, [
       "tool.ts",
+      "definition.ts",
       "guidelines.ts",
       "configuration-schema.ts",
       "assistant-actions.ts",
@@ -114,7 +115,6 @@ const documentItems: RegistryItem[] = [
         contractVersion: 2,
         uiBase: "base",
         documentKind: kind,
-        documentActions: true,
         config: { key: kind },
         id: `${kind}-documents`,
         kind: "tool",

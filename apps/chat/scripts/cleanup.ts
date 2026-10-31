@@ -1,42 +1,47 @@
 // Drain the existing authenticated cleanup route without treating one bounded
-// guest batch as a completed sweep.
+// cleanup batch as a completed sweep.
 const emptyCount = 0;
 const batchStep = 1;
 const isRecord = (value: unknown): value is Readonly<Record<string, unknown>> =>
   typeof value === "object" && value !== null;
 
-const verifiedDeletedCount = (guests: unknown): number => {
+const verifiedDeletedCount = (inventory: unknown): number => {
   if (
-    !isRecord(guests) ||
-    typeof guests.deletedCount !== "number" ||
-    !Number.isSafeInteger(guests.deletedCount) ||
-    guests.deletedCount < emptyCount ||
-    typeof guests.pendingCount !== "number" ||
-    !Number.isSafeInteger(guests.pendingCount) ||
-    guests.pendingCount < emptyCount ||
-    (guests.pendingCount > emptyCount && guests.deletedCount === emptyCount) ||
-    guests.skipped !== false
+    !isRecord(inventory) ||
+    typeof inventory.deletedCount !== "number" ||
+    !Number.isSafeInteger(inventory.deletedCount) ||
+    inventory.deletedCount < emptyCount ||
+    typeof inventory.pendingCount !== "number" ||
+    !Number.isSafeInteger(inventory.pendingCount) ||
+    inventory.pendingCount < emptyCount ||
+    (inventory.pendingCount > emptyCount &&
+      inventory.deletedCount === emptyCount) ||
+    inventory.skipped !== false
   ) {
     throw new Error("Cleanup inventory unavailable; retry required.");
   }
-  return guests.deletedCount;
+  return inventory.deletedCount;
 };
 
-const deletedGuestCount = (result: unknown): number => {
+const deletedCount = (result: unknown): number => {
   if (
     !isRecord(result) ||
     !isRecord(result.results) ||
-    (result.success !== true &&
-      (!isRecord(result.results.orphanedAttachments) ||
-        result.results.orphanedAttachments.skipped !== false ||
-        "error" in result.results.orphanedAttachments))
+    typeof result.success !== "boolean"
   ) {
     throw new Error("Cleanup incomplete or unavailable; retry required.");
   }
-  return (
-    verifiedDeletedCount(result.results.expiredGuests) +
-    verifiedDeletedCount(result.results.runtimeGuests)
-  );
+  let total = 0;
+  for (const task of Object.values(result.results)) {
+    if (!isRecord(task) || "error" in task) {
+      throw new Error("Cleanup failed; retry required.");
+    }
+    total += verifiedDeletedCount({
+      ...task,
+      pendingCount: task.pendingCount ?? 0,
+    });
+  }
+  return total;
 };
 
 const drainCleanup = async (
@@ -52,7 +57,7 @@ const drainCleanup = async (
   if (!response.ok && response.status !== 503) {
     throw new Error("Cleanup incomplete or unavailable; retry required.");
   }
-  if (deletedGuestCount(await response.json()) > emptyCount) {
+  if (deletedCount(await response.json()) > emptyCount) {
     await drainCleanup(request, remaining - batchStep);
     return;
   }

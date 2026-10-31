@@ -17,7 +17,6 @@ const workflows = z.object({
   title: model,
 });
 const defaults = z.object({
-  anonymousModels: z.array(model),
   curatedDefaults: z.array(model),
   disabledModels: z.array(model),
   providerOrder: z.array(z.string()),

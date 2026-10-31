@@ -5,6 +5,8 @@ import { page } from "vitest/browser";
 import { takeSnapshot } from "@uiverify/vitest";
 import type { EveMessage } from "eve/client";
 
+import { MessageSiblingsView } from "@/components/message-siblings-view";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { EveMessages } from "@/components/eve/eve-messages";
 import type { ReadonlyEveMessage } from "@/lib/eve/readonly-message-types";
 import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
@@ -55,22 +57,24 @@ test("message actions retain their user boundary and readonly behavior", async (
     .fn<(message: ReadonlyEveMessage) => string>()
     .mockReturnValue("fixture-model");
   const render = (isReadonly: boolean) => (
-    <MessageScrollerProvider>
-      <EveMessages
-        disabled={false}
-        isReadonly={isReadonly}
-        messages={messages}
-        respond={respond}
-        onEdit={edit}
-        onRegenerate={regenerate}
-        modelForMessage={modelForMessage}
-        renderVersions={(message, user) => (
-          <span data-testid={`versions-${message.id}`}>
-            {user?.id ?? "none"}
-          </span>
-        )}
-      />
-    </MessageScrollerProvider>
+    <TooltipProvider>
+      <MessageScrollerProvider>
+        <EveMessages
+          disabled={false}
+          isReadonly={isReadonly}
+          messages={messages}
+          respond={respond}
+          onEdit={edit}
+          onRegenerate={regenerate}
+          modelForMessage={modelForMessage}
+          renderVersions={(message, user) => (
+            <span data-testid={`versions-${message.id}`}>
+              {user?.id ?? "none"}
+            </span>
+          )}
+        />
+      </MessageScrollerProvider>
+    </TooltipProvider>
   );
   const fixture = await mount(render(false));
   fixture.container.style.cssText = "width:800px;padding:24px";
@@ -132,6 +136,61 @@ test("message actions retain their user boundary and readonly behavior", async (
       )
       .not.toBeInTheDocument();
     expect(fixture.container.textContent).toContain("Second answer");
+  } finally {
+    await unmount(fixture);
+  }
+});
+
+test("message version actions retain navigation, labels and disabled boundaries", async () => {
+  const previous = vi.fn<() => void>();
+  const next = vi.fn<() => void>();
+  const render = (index: number, disabled = false) => (
+    <TooltipProvider>
+      <div className="p-8">
+        <MessageSiblingsView
+          index={index}
+          count={2}
+          disabled={disabled}
+          onPrevious={previous}
+          onNext={next}
+        />
+      </div>
+    </TooltipProvider>
+  );
+  const fixture = await mount(render(0));
+  try {
+    const previousButton = page.getByRole("button", {
+      name: "Previous version",
+      exact: true,
+    });
+    const nextButton = page.getByRole("button", {
+      name: "Next version",
+      exact: true,
+    });
+    await expect.element(previousButton).toBeDisabled();
+    await expect.element(nextButton).toBeEnabled();
+    await act(async () => {
+      await nextButton.click();
+    });
+    expect(next).toHaveBeenCalledOnce();
+    expect(previous).not.toHaveBeenCalled();
+    await renderRoot(fixture.root, render(1));
+    await expect.element(nextButton).toBeDisabled();
+    await expect.element(previousButton).toBeEnabled();
+    await act(async () => {
+      await previousButton.click();
+    });
+    expect(previous).toHaveBeenCalledOnce();
+    await renderRoot(fixture.root, render(1, true));
+    await expect.element(previousButton).toBeDisabled();
+    await expect.element(nextButton).toBeDisabled();
+    await act(async () => {
+      await page.getByText("2/2", { exact: true }).hover();
+    });
+    await expect
+      .poll(() => document.querySelector('[data-slot="tooltip-content"]'))
+      .toBeNull();
+    await takeSnapshot("message-version-actions-disabled");
   } finally {
     await unmount(fixture);
   }

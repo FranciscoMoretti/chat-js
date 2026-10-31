@@ -1,0 +1,96 @@
+/* Lexical Editor Styles */
+.lexical-editor-container {
+  position: relative;
+  width: 100%;
+}
+
+.lexical-content-editable {
+  position: relative;
+  overflow-y: auto;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: 1.5;
+  color: inherit;
+  word-break: break-word;
+  white-space: pre-wrap;
+  resize: none;
+  user-select: text;
+  outline: none;
+  scrollbar-width: thin;
+  background: transparent;
+  border: none;
+}
+
+.lexical-content-editable::-webkit-scrollbar {
+  width: 4px;
+}
+
+.lexical-content-editable::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.lexical-content-editable::-webkit-scrollbar-thumb {
+  background: color-mix(in oklch, var(--muted-foreground) 30%, transparent);
+  border-radius: 2px;
+}
+
+.lexical-content-editable::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in oklch, var(--muted-foreground) 50%, transparent);
+}
+
+.lexical-placeholder {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 1;
+  color: var(--muted-foreground);
+  pointer-events: none;
+  user-select: none;
+}
+
+.lexical-root {
+  position: relative;
+}
+
+.lexical-root p {
+  padding: 0;
+  margin: 0;
+}
+
+.lexical-root p:first-child {
+  margin-top: 0;
+}
+
+.lexical-root p:last-child {
+  margin-bottom: 0;
+}
+
+/* Focus styles */
+.lexical-content-editable:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+/* Ensure proper text selection */
+.lexical-content-editable::selection {
+  background: color-mix(in oklch, var(--primary) 30%, transparent);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .lexical-content-editable {
+    font-size: 16px; /* Prevent zoom on iOS */
+  }
+}
+
+.editor-input {
+  position: relative;
+  padding: 10px 10px 5px;
+  font-size: 15px;
+  tab-size: 1;
+  caret-color: currentColor;
+  resize: none;
+  outline: 0;
+}

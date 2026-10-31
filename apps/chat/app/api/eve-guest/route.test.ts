@@ -1,9 +1,9 @@
 import { beforeEach, expect, test, vi } from "vitest";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-import { readGuestCredential } from "@/lib/eve/disposable-guest";
+import { readGuestCredential } from "@/plugins/guest-chat/guest-credential";
 import { z } from "zod";
 
-import { POST } from "./route";
+import { POST } from "@/plugins/guest-chat/routes/create-session";
 
 const HTTP_STATUS = {
   badGateway: 502,
@@ -51,19 +51,18 @@ const settings = vi.hoisted(
   })
 );
 vi.mock("@/lib/env", () => ({ env: settings }));
-vi.mock("@/lib/db/guest-runtime", () => ({
+vi.mock("@/plugins/guest-chat/guest-queries", () => ({
   createGuestRuntimeSession: mocks.create,
   bindGuestRuntimeSession: mocks.bind,
 }));
-vi.mock("@/lib/eve/guest-admission", () => ({ guestRequestIpHash: mocks.ip }));
+vi.mock("@/plugins/guest-chat/guest-ip", () => ({
+  guestRequestIpHash: mocks.ip,
+}));
 vi.mock("@/lib/auth", () => {
   throw new Error("Guest creation must not load account authentication");
 });
 vi.mock("@/lib/eve/model-selection", () => ({
   loadEveModelDefinition: mocks.model,
-}));
-vi.mock("@/lib/types/anonymous", () => ({
-  ANONYMOUS_LIMITS: { AVAILABLE_MODELS: ["openai/gpt-5-nano"] },
 }));
 
 vi.mock("@/lib/eve/deletion-lifecycle", () => ({

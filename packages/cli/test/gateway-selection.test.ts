@@ -619,6 +619,8 @@ const verifyResearchInstallation = async (cwd: string, gateway: string) => {
       "install",
       "--ignore-scripts",
     ]);
+    // Native source imports generated branding; prepare it before linting the companion.
+    await run(nodePath.join(cwd, "electron"), ["bun", "run", "prebuild"]);
     await run(cwd, ["bun", "run", "lint"]);
     expect(
       await Bun.file(nodePath.join(cwd, "agent/tools/confirm-note.ts")).exists()
@@ -630,14 +632,11 @@ const verifyResearchInstallation = async (cwd: string, gateway: string) => {
     ).toBe(false);
     await run(cwd, ["node", cliEntry, "add", "delete-document", "--yes"]);
     expect(
-      await readFile(
-        nodePath.join(cwd, "composition/generated/tools.ts"),
-        "utf-8"
-      )
+      await readFile(nodePath.join(cwd, "chatjs/generated/tools.ts"), "utf-8")
     ).toContain('from "@/tools/chatjs/delete-document/tool"');
     expect(
       await readFile(
-        nodePath.join(cwd, "composition/generated/tool-availability.ts"),
+        nodePath.join(cwd, "chatjs/generated/tool-availability.ts"),
         "utf-8"
       )
     ).toContain("deleteDocumentAvailable");
@@ -668,7 +667,7 @@ const verifyResearchInstallation = async (cwd: string, gateway: string) => {
       ).exists()
     ).toBe(false);
     const registered = await readFile(
-      nodePath.join(cwd, "composition/generated/tools.ts"),
+      nodePath.join(cwd, "chatjs/generated/tools.ts"),
       "utf-8"
     );
     expect(registered).toContain(
@@ -686,13 +685,10 @@ const verifyResearchInstallation = async (cwd: string, gateway: string) => {
       ).exists()
     ).toBe(true);
     expect(
-      await readFile(
-        nodePath.join(cwd, "composition/generated/tools.ts"),
-        "utf-8"
-      )
+      await readFile(nodePath.join(cwd, "chatjs/generated/tools.ts"), "utf-8")
     ).not.toContain('from "@/tools/chatjs/deep-research/tool"');
     expect(
-      await readFile(nodePath.join(cwd, "composition/generated/ui.ts"), "utf-8")
+      await readFile(nodePath.join(cwd, "chatjs/generated/ui.ts"), "utf-8")
     ).toContain('from "@/tools/chatjs/deep-research/renderer"');
   }
 };
@@ -718,7 +714,7 @@ const verifyOptionalToolFiles = async (
       ).exists()
     ).toBe(false);
     expect(
-      await readFile(nodePath.join(cwd, "composition/generated/ui.ts"), "utf-8")
+      await readFile(nodePath.join(cwd, "chatjs/generated/ui.ts"), "utf-8")
     ).not.toContain("generate-image/renderer");
   }
   expect(
@@ -767,7 +763,7 @@ for (const gateway of [...GATEWAYS, "acme"]) {
     if (gateway === "openrouter") {
       expect(
         await readFile(
-          nodePath.join(cwd, "composition/generated/installed-tools.ts"),
+          nodePath.join(cwd, "chatjs/generated/installed-tools.ts"),
           "utf-8"
         )
       ).toContain("new Set([])");
@@ -793,10 +789,7 @@ for (const gateway of [...GATEWAYS, "acme"]) {
         ).exists()
       ).toBe(true);
       expect(
-        await readFile(
-          nodePath.join(cwd, "composition/generated/ui.ts"),
-          "utf-8"
-        )
+        await readFile(nodePath.join(cwd, "chatjs/generated/ui.ts"), "utf-8")
       ).toContain("generate-image/renderer");
       expect(
         await readFile(
@@ -811,7 +804,7 @@ for (const gateway of [...GATEWAYS, "acme"]) {
       ).toBe(true);
       expect(
         await readFile(
-          nodePath.join(cwd, "composition/generated/providers.ts"),
+          nodePath.join(cwd, "chatjs/generated/providers.ts"),
           "utf-8"
         )
       ).toContain("code-execution/tool");
@@ -823,7 +816,7 @@ for (const gateway of [...GATEWAYS, "acme"]) {
       ).toBe(false);
       expect(
         await readFile(
-          nodePath.join(cwd, "composition/generated/providers.ts"),
+          nodePath.join(cwd, "chatjs/generated/providers.ts"),
           "utf-8"
         )
       ).toContain("firecrawl-search/tool");
@@ -887,10 +880,7 @@ for (const gateway of [...GATEWAYS, "acme"]) {
         )
       ).toContain("ACME_VIDEO_KEY");
       expect(
-        await readFile(
-          nodePath.join(cwd, "composition/generated/ui.ts"),
-          "utf-8"
-        )
+        await readFile(nodePath.join(cwd, "chatjs/generated/ui.ts"), "utf-8")
       ).not.toContain("tool-generateVideo");
       expect(
         await readFile(
@@ -905,16 +895,10 @@ for (const gateway of [...GATEWAYS, "acme"]) {
         ).exists()
       ).toBe(false);
       expect(
-        await readFile(
-          nodePath.join(cwd, "composition/generated/ui.ts"),
-          "utf-8"
-        )
+        await readFile(nodePath.join(cwd, "chatjs/generated/ui.ts"), "utf-8")
       ).toContain("acme-execution/renderer");
       expect(
-        await readFile(
-          nodePath.join(cwd, "composition/generated/ui.ts"),
-          "utf-8"
-        )
+        await readFile(nodePath.join(cwd, "chatjs/generated/ui.ts"), "utf-8")
       ).not.toContain("tool-webSearch");
       expect(
         await Bun.file(
@@ -930,7 +914,7 @@ for (const gateway of [...GATEWAYS, "acme"]) {
       await writeFile(
         nodePath.join(cwd, "verify-execution.ts"),
         `import assert from "node:assert/strict";
-import {tools} from "./composition/generated/tools";
+import {tools} from "./integrations/tools";
 import type { ToolContext } from "eve/tools";
 const unavailable = () => { throw new Error("Unexpected resource access"); };
 const context: ToolContext = { callId: "fixture", toolName: "fixture", messages: [], abortSignal: new AbortController().signal, session: { id: "fixture", auth: { current: null, initiator: null }, turn: { id: "turn", sequence: 0 } }, getSandbox: unavailable, getToken: unavailable, requireAuth: unavailable };
@@ -964,10 +948,7 @@ assert.deepEqual(page, {text: "Page content", source: "https://example.com"});
         )
       ).toContain("ACME_RETRIEVAL_KEY");
       expect(
-        await readFile(
-          nodePath.join(cwd, "composition/generated/ui.ts"),
-          "utf-8"
-        )
+        await readFile(nodePath.join(cwd, "chatjs/generated/ui.ts"), "utf-8")
       ).not.toContain("tool-retrieveUrl");
       expect(dependencies["@vercel/blob"]).toBeUndefined();
       expect(dependencies["@aws-sdk/client-s3"]).toBeUndefined();
@@ -1021,15 +1002,12 @@ defineConfig({ ai: { gateway: "${gateway}", tools: { video: { default: "video" }
     if (gateway === "vercel") {
       await run(cwd, ["node", cliEntry, "add", "word-count", "--yes"]);
       const index = await readFile(
-        nodePath.join(cwd, "composition/generated/tools.ts"),
+        nodePath.join(cwd, "chatjs/generated/tools.ts"),
         "utf-8"
       );
       await run(cwd, ["node", cliEntry, "add", "word-count", "--yes"]);
       expect(
-        await readFile(
-          nodePath.join(cwd, "composition/generated/tools.ts"),
-          "utf-8"
-        )
+        await readFile(nodePath.join(cwd, "chatjs/generated/tools.ts"), "utf-8")
       ).toBe(index);
       await run(cwd, [
         "bunx",
@@ -1041,10 +1019,7 @@ defineConfig({ ai: { gateway: "${gateway}", tools: { video: { default: "video" }
       ]);
       await run(cwd, ["node", cliEntry, "sync"]);
       expect(
-        await readFile(
-          nodePath.join(cwd, "composition/generated/tools.ts"),
-          "utf-8"
-        )
+        await readFile(nodePath.join(cwd, "chatjs/generated/tools.ts"), "utf-8")
       ).toContain("getWeather as tool");
     }
     await run(cwd, ["bun", "run", "test:types"]);
@@ -1153,19 +1128,19 @@ assert.equal(aiConfigSchema.safeParse({ ...ai, tools: { ...ai.tools, video: { de
       await run(cwd, ["bun", "run", "lint"]);
       expect(
         await readFile(
-          nodePath.join(cwd, "composition/generated/installed.ts"),
+          nodePath.join(cwd, "chatjs/generated/installed.ts"),
           "utf-8"
         )
       ).toContain("langfuse");
       expect(
         await readFile(
-          nodePath.join(cwd, "composition/generated/installed-layout.ts"),
+          nodePath.join(cwd, "chatjs/generated/installed-layout.ts"),
           "utf-8"
         )
       ).toContain("vercel-speed-insights");
       expect(
         await readFile(
-          nodePath.join(cwd, "composition/generated/installed-uploads.ts"),
+          nodePath.join(cwd, "chatjs/generated/installed-uploads.ts"),
           "utf-8"
         )
       ).toContain("attachmentUploads");
@@ -1194,7 +1169,7 @@ assert.equal(aiConfigSchema.safeParse({ ...ai, tools: { ...ai.tools, video: { de
       ).toBe(false);
       expect(
         await readFile(
-          nodePath.join(cwd, "composition/generated/providers.ts"),
+          nodePath.join(cwd, "chatjs/generated/providers.ts"),
           "utf-8"
         )
       ).toContain("@/tools/chatjs/tavily-search/tool");
@@ -1203,7 +1178,7 @@ assert.equal(aiConfigSchema.safeParse({ ...ai, tools: { ...ai.tools, video: { de
           nodePath.join(cwd, "agent/subagents/researcher/tools/webSearch.ts"),
           "utf-8"
         )
-      ).toContain("Object.entries(providers)");
+      ).toContain("Object.entries(toolProviders)");
       const searchSource = nodePath.join(
         cwd,
         "tools/chatjs/tavily-search/tool.ts"
@@ -1450,13 +1425,13 @@ for (const installAtCreation of [false, true]) {
     ).toContain('"McpConnector"');
     expect(
       await readFile(
-        nodePath.join(cwd, "composition/generated/installed-database.ts"),
+        nodePath.join(cwd, "chatjs/generated/installed-database.ts"),
         "utf-8"
       )
     ).toContain("plugins/mcp/db/mcp-schema.ts");
     expect(
       await readFile(
-        nodePath.join(cwd, "composition/generated/installed-routers.ts"),
+        nodePath.join(cwd, "chatjs/generated/installed-routers.ts"),
         "utf-8"
       )
     ).toContain("mcp: plugin0().routers.mcp");
@@ -1465,7 +1440,7 @@ for (const installAtCreation of [false, true]) {
       "utf-8"
     );
     const settings = await readFile(
-      nodePath.join(cwd, "settings-items.ts"),
+      nodePath.join(cwd, "components/settings/settings-nav.tsx"),
       "utf-8"
     );
     await run(cwd, ["node", cliEntry, "sync"]);
@@ -1473,7 +1448,10 @@ for (const installAtCreation of [false, true]) {
       await readFile(nodePath.join(cwd, "composer-controls.ts"), "utf-8")
     ).toBe(composer);
     expect(
-      await readFile(nodePath.join(cwd, "settings-items.ts"), "utf-8")
+      await readFile(
+        nodePath.join(cwd, "components/settings/settings-nav.tsx"),
+        "utf-8"
+      )
     ).toBe(settings);
     await run(cwd, ["bun", "run", "test:types"]);
     await writeFile(
@@ -1552,20 +1530,27 @@ requireCredentials("mcp", descriptor.envRequirements, {NODE_ENV: "test", MCP_ENC
     const computedComposer = composer
       .replace(/[=]\s*\[/u, "= Array.from([")
       .replace(/\];\s*$/u, "]);\n");
-    const computedSettings = settings
-      .replace(/[=]\s*\[/u, "= Array.from([")
-      .replace(/\];\s*$/u, "]);\n");
+    const computedSettings = settings.replace(
+      "<nav",
+      '<nav aria-label="Application settings"'
+    );
     await writeFile(
       nodePath.join(cwd, "composer-controls.ts"),
       computedComposer
     );
-    await writeFile(nodePath.join(cwd, "settings-items.ts"), computedSettings);
+    await writeFile(
+      nodePath.join(cwd, "components/settings/settings-nav.tsx"),
+      computedSettings
+    );
     await run(cwd, ["node", cliEntry, "add", "word-count", "--yes"]);
     expect(
       await readFile(nodePath.join(cwd, "composer-controls.ts"), "utf-8")
     ).toBe(computedComposer);
     expect(
-      await readFile(nodePath.join(cwd, "settings-items.ts"), "utf-8")
+      await readFile(
+        nodePath.join(cwd, "components/settings/settings-nav.tsx"),
+        "utf-8"
+      )
     ).toBe(computedSettings);
   }, 180_000);
 }
@@ -1591,7 +1576,7 @@ it(
     ]);
     const executorPath = nodePath.join(
       cwd,
-      "composition/generated/code-executor.ts"
+      "chatjs/generated/code-executor.ts"
     );
     const executor = await readFile(executorPath, "utf-8");
     const appManifest = parsePackageJson(

@@ -1,0 +1,34 @@
+{
+  "id": "desktop",
+  "kind": "plugin",
+  "files": [
+    "plugins/desktop/desktop-auth-client.ts",
+    "plugins/desktop/auth-form.tsx",
+    "plugins/desktop/auth-handler.tsx",
+    "plugins/desktop/auth-server.ts",
+    "plugins/desktop/auth-ui.tsx",
+    "plugins/desktop/bridge.ts",
+    "plugins/desktop/client-plugin.ts",
+    "plugins/desktop/navigation.ts",
+    "plugins/desktop/protocol.ts",
+    "plugins/desktop/device-login-page.tsx",
+    "plugins/desktop/device-login-route.tsx",
+    "plugins/desktop/electron-auth.ts",
+    "plugins/desktop/sign-out.ts",
+    "app/(auth)/device-login/page.tsx"
+  ],
+  "authentication": { "export": "desktopAuth" },
+  "authenticationUi": {
+    "form": "DesktopAuthForm",
+    "signOut": "signOutDesktop"
+  },
+  "navigation": { "export": "desktopNavigation" },
+  "client": {
+    "export": "desktopClient",
+    "composerControls": [],
+    "settingsItems": [],
+    "layout": true
+  },
+  "contractVersion": 2,
+  "uiBase": "base"
+}

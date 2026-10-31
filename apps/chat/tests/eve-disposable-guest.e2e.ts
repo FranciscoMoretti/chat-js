@@ -42,6 +42,10 @@ test("anonymous chat stays disposable and disappears on reload", async ({
   await page
     .getByRole("textbox", { exact: true, name: "Message" })
     .fill("Reply with exactly: temporary chat works");
+  await expect(
+    page.getByRole("button", { name: "Composer options" })
+  ).toHaveCount(0);
+  await expect(page.locator('input[type="file"]')).toHaveCount(0);
   const creation = page.waitForResponse(
     (response: Readonly<Pick<Response, "url">>) =>
       response.url().endsWith("/api/eve-guest")
@@ -55,6 +59,10 @@ test("anonymous chat stays disposable and disappears on reload", async ({
     page.getByRole("log").locator('[data-role="assistant"]')
   ).toContainText("temporary chat works", { timeout: 90_000 });
   await expect(page).toHaveURL(/\/$/u);
+  await expect(
+    page.getByRole("button", { name: "Composer options" })
+  ).toHaveCount(0);
+  await expect(page.locator('input[type="file"]')).toHaveCount(0);
   await page.screenshot({
     animations: "disabled",
     path: testInfo.outputPath("guest-response.png"),

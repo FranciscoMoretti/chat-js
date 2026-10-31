@@ -1,13 +1,18 @@
 import { defineConfig } from "playwright/test";
 import { fileURLToPath } from "node:url";
 
-process.env.UIVERIFY_ARCHIVE_DIR = fileURLToPath(
+process.env.UIVERIFY_ARCHIVE_DIR ??= fileURLToPath(
   new URL("../uiverify-archive", import.meta.url)
 );
 
 export default defineConfig({
   testDir: ".",
-  testMatch: "create-activity.spec.mts",
+  testMatch: [
+    "create-activity.spec.mts",
+    "create-styles.spec.mts",
+    "create-conversation.spec.mts",
+    "create-parity.spec.mts",
+  ],
   workers: 1,
   timeout: 120_000,
   use: {

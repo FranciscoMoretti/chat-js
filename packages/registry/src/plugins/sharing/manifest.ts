@@ -12,6 +12,7 @@ const sharingFiles = [
   "plugins/sharing/ui/share-button.tsx",
   "plugins/sharing/ui/share-dialog.tsx",
   "plugins/sharing/ui/share-menu-item.tsx",
+  "plugins/sharing/ui/share-menu-surface.tsx",
   "plugins/sharing/ui/shared-badge.tsx",
   "plugins/sharing/ui/transcript-messages.tsx",
   "plugins/sharing/ui/shared-page.tsx",
@@ -30,6 +31,15 @@ const sharingDefinition = pluginDefinitionSchema.parse({
 const sharingItem: RegistryItem = {
   name: "sharing",
   type: "registry:item",
+  registryDependencies: [
+    "breadcrumb",
+    "button",
+    "dialog",
+    "dropdown-menu",
+    "message-scroller",
+    "popover",
+    "tooltip",
+  ],
   dependencies: [
     "@tanstack/react-query",
     "@trpc/server",

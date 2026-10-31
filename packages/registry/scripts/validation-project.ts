@@ -6,6 +6,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { scaffoldFromTemplate } from "../../cli/src/helpers/scaffold";
+import { prepareScaffoldUi } from "../../cli/src/helpers/scaffold-ui";
 import { buildConfigTs } from "../../cli/src/helpers/config-builder";
 import { parsePackageJson } from "../../cli/src/helpers/package-manifest";
 import { readProjectFiles } from "@chat-js/registry-validation";
@@ -30,6 +31,7 @@ export const prepareValidationCore = async (): Promise<
   );
   try {
     await scaffoldFromTemplate(temporary);
+    await prepareScaffoldUi(temporary);
     return await readProjectFiles(temporary);
   } finally {
     await rm(temporary, { recursive: true, force: true });
@@ -44,19 +46,8 @@ export const renderValidationProject = async (
   selection: InstallationSelection,
   identity = defaultIdentity
 ) => {
-  const coreSource = (file: string): string => {
-    const source = core.get(file);
-    if (!source) {
-      throw new Error(`Missing core source: ${file}`);
-    }
-    return new TextDecoder().decode(source);
-  };
   const installation = await generateInstallation(selection, {
     projectFiles: core,
-    pluginUi: {
-      "composer-controls.ts": coreSource("composer-controls.ts"),
-      "settings-items.ts": coreSource("settings-items.ts"),
-    },
   });
   const files = new Map(core);
   const put = (file: string, source: string): void => {
@@ -85,7 +76,6 @@ export const renderValidationProject = async (
       appName: identity.title,
       appPrefix: identity.name,
       appUrl: "http://localhost:3000",
-      withElectron: false,
       gateway: gateway.id,
       gatewayDefaults: gateway.defaults,
       coreFeatures,

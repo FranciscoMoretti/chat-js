@@ -1,4 +1,4 @@
-import { installedPlugins } from "@/composition/generated/installed";
+import { installedPlugins } from "@/integrations/plugin-catalog";
 
 type ChatRouteSource = "chat" | "home" | "plugin" | "share";
 interface ParsedChatIdFromPathname {

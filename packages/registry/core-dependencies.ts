@@ -8,7 +8,6 @@ export const coreDependencyNames: readonly string[] = [
   "@ai-sdk/provider-utils",
   "@base-ui/react",
   "@better-auth/core",
-  "@better-auth/electron",
   "@chat-js/gateways",
   "@chat-js/sandboxes",
   "@lexical/react",

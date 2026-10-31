@@ -1,16 +1,15 @@
 "use client";
+import { MenuLink } from "@/components/navigation-links";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plug, Settings } from "lucide-react";
 import type { ComposerControlProps } from "@/components/composer/control";
 import React from "react";
 import { toast } from "sonner";
 
-import { InternalLink } from "@/components/internal-link";
+import { ConnectorMenuItem } from "./connector-menu-item";
 
 import {
-  DropdownMenuCheckboxItem,
   DropdownMenuGroup,
-  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuSub,
@@ -18,7 +17,7 @@ import {
   DropdownMenuSubTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-import { installedPlugins } from "@/composition/generated/installed";
+import { installedPlugins } from "@/integrations/plugin-catalog";
 import { useSession } from "@/providers/session-provider";
 import { useTRPC } from "@/trpc/react";
 
@@ -113,36 +112,27 @@ const ConnectorsControl = ({
                 readonly userId: string | null;
                 readonly name: string;
               }) => (
-                <DropdownMenuCheckboxItem
+                <ConnectorMenuItem
                   key={connector.id}
                   checked={connector.enabled}
                   disabled={disabled === true || connector.userId === null}
-                  closeOnClick={false}
-                  onCheckedChange={(
-                    enabled: boolean | "indeterminate"
-                  ): void => {
+                  onActivate={() => {
                     toggleEnabled({
-                      enabled: enabled === true,
+                      enabled: !connector.enabled,
                       id: connector.id,
                     });
                   }}
                 >
                   <span className="truncate">{connector.name}</span>
-                </DropdownMenuCheckboxItem>
+                </ConnectorMenuItem>
               )
             )
           )}
           <DropdownMenuSeparator />
-          <DropdownMenuItem
-            render={
-              <InternalLink
-                href={isAuthenticated ? "/settings/connectors" : "/login"}
-              />
-            }
-          >
+          <MenuLink href={isAuthenticated ? "/settings/connectors" : "/login"}>
             <Settings />
             {isAuthenticated ? "Manage connectors" : "Sign in"}
-          </DropdownMenuItem>
+          </MenuLink>
         </DropdownMenuGroup>
       </DropdownMenuSubContent>
     </DropdownMenuSub>

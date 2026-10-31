@@ -62,7 +62,7 @@ const hookContext = (
       current: null,
       initiator: {
         attributes: { chatjsReservationId: "inherited-reservation" },
-        authenticator: "test",
+        authenticator: "chatjs-gateway",
         principalId: "owner",
         principalType: "user",
       },
@@ -96,7 +96,15 @@ const readInstructions = ():
       messages: [],
       model: null,
       session: {
-        auth: { current: null, initiator: null },
+        auth: {
+          current: null,
+          initiator: {
+            authenticator: "chatjs-gateway",
+            attributes: {},
+            principalId: "owner",
+            principalType: "user",
+          },
+        },
         id: "native-session",
       },
     }

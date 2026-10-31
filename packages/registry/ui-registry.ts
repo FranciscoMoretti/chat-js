@@ -1,13 +1,14 @@
 import type { RegistryItem } from "shadcn/schema";
 import { pluginDefinitionSchema, toolDefinitionSchema } from "./metadata";
-import { transformUiSource } from "./ui-source";
+import { uiImplementations } from "./ui-implementations";
 
 /** Produce native source for a library without changing public item addresses. */
 export const registryItemForUi = (
   item: RegistryItem,
-  base: "base" | "radix"
+  base: "base" | "radix",
+  nativeSources: ReadonlyMap<string, string> = new Map()
 ): RegistryItem => {
-  if (base === "base") {
+  if (base === "base" && nativeSources.size === 0) {
     return item;
   }
   const original: unknown = item.meta?.chatjs;
@@ -43,10 +44,15 @@ export const registryItemForUi = (
                 content: `${JSON.stringify(metadata, null, 2)}\n`,
               };
             }
-            return {
-              ...file,
-              content: transformUiSource(file.content, file.path, base),
-            };
+            const target = file.target?.replace(/^~\//u, "") ?? file.path;
+            if (uiImplementations.some((entry) => entry.target === target)) {
+              const content = nativeSources.get(target);
+              if (content === undefined) {
+                throw new Error(`Missing selected native source for ${target}`);
+              }
+              return { ...file, content };
+            }
+            return file;
           }),
         }
       : {}),

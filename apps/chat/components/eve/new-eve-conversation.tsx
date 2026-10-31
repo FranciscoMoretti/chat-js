@@ -293,7 +293,11 @@ export const NewEveConversation = ({
         status={busy ? "submitted" : "ready"}
         disabled={busy}
         draft={busy ? "" : draft}
-        files={busy ? { ...files, attachments: [] } : files}
+        capabilities={{
+          files: busy ? { ...files, attachments: [] } : files,
+          selectedTool,
+          onToolChange: setSelectedTool,
+        }}
         modelSelection={{
           onChange: async (value) => {
             setSelection(value);
@@ -317,11 +321,9 @@ export const NewEveConversation = ({
             await completion;
           });
         }}
-        onToolChange={setSelectedTool}
         readOnly={retained}
         retainedModelId={retainedModelId}
         retainedModelIds={retainedModelIds}
-        selectedTool={selectedTool}
       />
       {failure && <p role="alert">{failure}</p>}
     </>

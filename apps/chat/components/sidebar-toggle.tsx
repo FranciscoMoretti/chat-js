@@ -1,17 +1,10 @@
+import { Hint } from "@/components/hint";
 import type { ComponentProps, JSX as ReactJSX } from "react";
 
 import { PanelLeft } from "lucide-react";
 
-import React from "react";
-
 import type { SidebarTrigger } from "@/components/ui/sidebar";
 import { useSidebar } from "@/components/ui/sidebar";
-
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 import { Button } from "./ui/button";
 
@@ -23,27 +16,27 @@ export const SidebarToggle = ({
   const { toggleSidebar } = useSidebar();
 
   return (
-    <Tooltip>
-      <TooltipTrigger
-        render={
-          <Button
-            aria-label="Toggle sidebar"
-            {...props}
-            className={className}
-            onClick={(event) => {
-              onClick?.(event);
-              if (!event.defaultPrevented) {
-                toggleSidebar();
-              }
-            }}
-            size="icon"
-            variant="ghost"
-          >
-            <PanelLeft size={16} />
-          </Button>
-        }
-      />
-      <TooltipContent align="start">Toggle Sidebar</TooltipContent>
-    </Tooltip>
+    <Hint
+      trigger={
+        <Button
+          aria-label="Toggle sidebar"
+          {...props}
+          className={className}
+          onClick={(event) => {
+            onClick?.(event);
+            if (!event.defaultPrevented) {
+              toggleSidebar();
+            }
+          }}
+          size="icon"
+          variant="ghost"
+        >
+          <PanelLeft size={16} />
+        </Button>
+      }
+      contentProps={{ align: "start" }}
+    >
+      Toggle Sidebar
+    </Hint>
   );
 };

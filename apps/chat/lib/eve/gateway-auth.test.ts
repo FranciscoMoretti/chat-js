@@ -5,19 +5,11 @@ import { authenticateEveGateway } from "./gateway-auth";
 const mocks = vi.hoisted(() => ({
   child: vi.fn(),
   deleting: vi.fn(),
-  guest: vi.fn(),
   mapping: vi.fn(),
   model: vi.fn(),
   owns: vi.fn(),
 }));
 vi.mock("../db/eve-subagents", () => ({ getEveSubagent: mocks.child }));
-vi.mock("../db/eve-guests", () => ({ readEveGuestOwner: mocks.guest }));
-vi.mock("../types/anonymous", () => ({
-  ANONYMOUS_LIMITS: {
-    AVAILABLE_MODELS: ["cheap-model"],
-    AVAILABLE_TOOLS: ["webSearch"],
-  },
-}));
 vi.mock("../env", () => ({
   env: {
     EVE_GATEWAY_SECRET: "fixture-secret",
@@ -35,7 +27,6 @@ const reservationId = "01912345-1234-7123-8123-123456789abc";
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.child.mockResolvedValue(null);
-  mocks.guest.mockResolvedValue(null);
   mocks.mapping.mockResolvedValue({
     id: reservationId,
     ownerId: "owner",
@@ -159,34 +150,6 @@ it("accepts only a known tool selection as a gateway attribute", async () => {
   command.headers.set("x-chatjs-tool", "server__arbitrary");
   expect(await authenticateEveGateway(command)).toBeNull();
 });
-it("derives guest identity from storage and enforces anonymous model/tool policy", async () => {
-  const send = request("/eve/v1/session", "POST");
-  send.headers.delete("x-chatjs-deletion");
-  send.headers.set("x-chatjs-model", "cheap-model");
-  mocks.guest.mockResolvedValue({ expiresAt: new Date(Date.now() + 60_000) });
-  expect(await authenticateEveGateway(send)).toMatchObject({
-    attributes: { chatjsGuest: "true" },
-  });
-  send.headers.delete("x-chatjs-model");
-  expect(await authenticateEveGateway(send)).toBeNull();
-  send.headers.set("x-chatjs-model", "cheap-model");
-  send.headers.set("x-chatjs-tool", "webSearch");
-  expect(await authenticateEveGateway(send)).not.toBeNull();
-  send.headers.set("x-chatjs-tool", "deepResearch");
-  expect(await authenticateEveGateway(send)).toBeNull();
-  send.headers.delete("x-chatjs-tool");
-  send.headers.set("x-chatjs-model", "expensive-model");
-  expect(await authenticateEveGateway(send)).toBeNull();
-  send.headers.set("x-chatjs-model", "cheap-model");
-  mocks.guest.mockResolvedValue({ expiresAt: new Date(0) });
-  expect(await authenticateEveGateway(send)).toBeNull();
-  expect(
-    await authenticateEveGateway(
-      request("/eve/v1/session/session/reset", "POST")
-    )
-  ).toMatchObject({ attributes: { chatjsGuest: "true" } });
-});
-
 it("stamps the reservation from the body, ignoring forged identity headers and metadata", async () => {
   const command = request("/eve/v1/session", "POST");
   command.headers.delete("x-chatjs-deletion");

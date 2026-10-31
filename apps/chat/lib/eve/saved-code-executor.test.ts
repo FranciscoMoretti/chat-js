@@ -14,7 +14,7 @@ const mocks = vi.hoisted(() => ({
     toolInstalled: true,
   },
 }));
-vi.mock("../../composition/generated/code-executor", () => ({
+vi.mock("../../integrations/code-executor", () => ({
   get codeExecutor(): typeof mocks.execute | undefined {
     if (mocks.settings.installed) {
       return mocks.execute;
@@ -23,7 +23,7 @@ vi.mock("../../composition/generated/code-executor", () => ({
   },
 }));
 
-vi.mock("@/composition/generated/installed-tools", () => ({
+vi.mock("@/integrations/tool-catalog", () => ({
   installedDocumentKinds: {
     has: (): boolean => mocks.settings.documentInstalled,
   },
@@ -39,7 +39,7 @@ vi.mock("./conversation-scope", () => ({
 }));
 
 vi.mock("./turn-tools", () => ({
-  eveToolAllowed: (): boolean => mocks.settings.allowed,
+  eveTurnAccount: { get: (): boolean => mocks.settings.allowed },
 }));
 
 const input = {

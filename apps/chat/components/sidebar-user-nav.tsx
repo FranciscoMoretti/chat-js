@@ -1,6 +1,11 @@
 "use client";
 
 import {
+  AccountMenuTrigger,
+  AccountMenuContent,
+} from "@/components/sidebar-menus";
+import { MenuLink } from "@/components/navigation-links";
+import {
   ChevronsUpDown,
   LogIn,
   LogOut,
@@ -17,18 +22,14 @@ import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
 
-import { InternalLink } from "@/components/internal-link";
-
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 import {
   DropdownMenu,
-  DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
   SidebarMenu,
@@ -36,12 +37,12 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { installedAccountSummaries } from "@/composition/generated/installed-account-ui";
+import { AccountSummary } from "@/components/chat-slots";
 
 import authClient from "@/lib/auth-client";
 
 import { cn } from "@/lib/utils";
-import { isElectronRenderer } from "@/lib/electron-auth";
+import { signOutWithPlugin } from "@/integrations/sign-out";
 
 import { signOutAndNavigate } from "@/lib/sign-out";
 
@@ -107,18 +108,7 @@ export const SidebarUserNav = (): ReactJSX.Element => {
     <SidebarMenu>
       <SidebarMenuItem>
         <DropdownMenu>
-          <DropdownMenuTrigger
-            render={
-              <SidebarMenuButton
-                className={cn(
-                  "data-open:bg-sidebar-accent data-open:text-sidebar-accent-foreground mx-auto",
-                  isDesktopCollapsed &&
-                    "flex flex-col items-center justify-center"
-                )}
-                size="lg"
-              />
-            }
-          >
+          <AccountMenuTrigger collapsed={isDesktopCollapsed}>
             <Avatar
               className={cn(
                 "size-8 rounded-lg",
@@ -139,20 +129,13 @@ export const SidebarUserNav = (): ReactJSX.Element => {
               <span className="truncate font-medium">
                 {user.name || user.email}
               </span>
-              {installedAccountSummaries.map(({ id, Component }) => (
-                <Component key={id} />
-              ))}
+              <AccountSummary />
             </div>
             <ChevronsUpDown
               className={cn("ml-auto size-4", isDesktopCollapsed && "hidden")}
             />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align="end"
-            className="w-[var(--anchor-width)] min-w-56 rounded-lg"
-            side={isMobile ? "bottom" : "right"}
-            sideOffset={4}
-          >
+          </AccountMenuTrigger>
+          <AccountMenuContent side={isMobile ? "bottom" : "right"}>
             <DropdownMenuGroup>
               <DropdownMenuLabel className="p-0 font-normal">
                 <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
@@ -173,10 +156,10 @@ export const SidebarUserNav = (): ReactJSX.Element => {
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem render={<InternalLink href="/settings" />}>
+              <MenuLink href="/settings">
                 <Settings className="mr-2 size-4" />
                 Settings
-              </DropdownMenuItem>
+              </MenuLink>
               <DropdownMenuItem
                 onClick={() => {
                   setTheme(resolvedTheme === "light" ? "dark" : "light");
@@ -195,50 +178,21 @@ export const SidebarUserNav = (): ReactJSX.Element => {
               <DropdownMenuItem
                 onClick={() => {
                   startEventAction(async () => {
-                    if (
-                      isElectronRenderer() &&
-                      typeof window.signOut === "function"
-                    ) {
-                      const nativeSignOut = window.signOut.bind(window);
-                      await signOutAndNavigate({
-                        navigate: () => {
-                          globalThis.location.href = "/";
-                        },
-                        onFailure: () => {
-                          toast.error("Unable to sign out. Try again.");
-                        },
-                        onSyncFailure: (error) => {
-                          console.error(
-                            "Failed to refresh the signed-out Electron session",
-                            error
-                          );
-                        },
-                        signOut: nativeSignOut,
-                        syncSession: async () => {
-                          await window.electronAPI?.syncAuthSession?.();
-                        },
-                      });
-                    } else {
-                      await signOutAndNavigate({
-                        navigate: () => {
-                          globalThis.location.href = "/";
-                        },
-                        onFailure: () => {
-                          toast.error("Unable to sign out. Try again.");
-                        },
-                        onSyncFailure: (error) => {
-                          console.error(
-                            "Failed to refresh the signed-out session",
-                            error
-                          );
-                        },
-                        signOut: async () => {
+                    await signOutAndNavigate({
+                      navigate: () => {
+                        globalThis.location.href = "/";
+                      },
+                      onFailure: () => {
+                        toast.error("Unable to sign out. Try again.");
+                      },
+                      signOut: async () => {
+                        if (!(await signOutWithPlugin())) {
                           await authClient.signOut({
                             fetchOptions: { throw: true },
                           });
-                        },
-                      });
-                    }
+                        }
+                      },
+                    });
                   });
                 }}
               >
@@ -246,7 +200,7 @@ export const SidebarUserNav = (): ReactJSX.Element => {
                 Log out
               </DropdownMenuItem>
             </DropdownMenuGroup>
-          </DropdownMenuContent>
+          </AccountMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>
     </SidebarMenu>

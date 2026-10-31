@@ -91,20 +91,51 @@ chat-js add word-count --overwrite
 chat-js sync
 ```
 
-Tools install under `tools/chatjs`; `paths.tools` is no longer configuration. Generated server/client indexes in `composition/generated/` merge user-owned `custom-tools.ts` and `custom-ui.ts` from `composition/custom/`. Tool source remains yours to edit. Each tool registration can include `composer: { icon, name, shortName }` in its `chatjs.json` descriptor, where `icon` names a Lucide React icon export (including aliases). Sync validates it against the bundled Lucide catalog and rejects unknown names before changing generated files. Installed tools without optional display metadata use their tool name and a generic icon. Sync generates `composition/generated/composer-tools.ts` from installed descriptors; the menu and active-tool pill share this metadata independently of application-owned menu ordering. Removing a tool and syncing removes its metadata. A restored selection for an absent tool stays clearable and blocks sending until cleared or replaced. Missing descriptors and manually edited generated indexes cause an actionable error.
+### Manual connection when automatic registration conflicts
+
+Normal `add` maintains generated registrations in `chatjs/generated`; app-owned integration files consume those registrations and remain editable. If a legacy layout, edited index, or conflicting provider prevents automatic connection, export the source instead:
+
+```sh
+chat-js add projects --files-only
+chat-js add @acme/my-tool --files-only
+```
+
+`--files-only` writes a unique bundle in the operating system's temporary directory and prints its path. It does not install packages, change application files, write receipts, or register plugins. The bundle includes dependency source, a `manifest.json` mapping files to intended destinations and integration metadata, full upstream registry items, and a manual connection guide. Conflicting items remain separate so both implementations can be reviewed. Omit `--replace`, `--overwrite`, and `--storage-config` in this mode.
+
+This is raw registry source, not a shadcn-transformed installation: review aliases, package dependencies, styling and library adaptations before copying selected files. Keep existing `components/ui` primitives when they already meet the dependency. Connect behavior and components in app-owned composition. Review native routes, EVE hooks and database schemas separately because their placement can activate behavior. Keep descriptors out of auto-discovered `plugins/` and `tools/chatjs/` directories unless enrolling the item in `sync`; do not copy the bundle wholesale into your app. Manual copies are app-owned and are not enrolled in `status` or `remove`. Move the bundle to a durable location if you need to retain it beyond temporary-directory cleanup.
+
+After resolving the conflict, managed installation remains available by rerunning the original selection without `--files-only`. Existing source protections still apply.
+
+Tools install under `tools/chatjs`; `paths.tools` is no longer configuration. Generated server/client indexes in `chatjs/generated/` supply static inputs to app-owned `integrations/tools.ts` and `integrations/tool-ui.ts`. Tool source remains yours to edit. Each tool registration can include `composer: { icon, name, shortName }` in its `chatjs.json` descriptor, where `icon` names a Lucide React icon export (including aliases). Sync validates it against the bundled Lucide catalog and rejects unknown names before changing generated files. Installed tools without optional display metadata use their tool name and a generic icon. Sync generates `chatjs/generated/composer-tools.ts` from installed descriptors; the menu and active-tool pill share this metadata independently of application-owned menu ordering. Removing a tool and syncing removes its metadata. A restored selection for an absent tool stays clearable and blocks sending until cleared or replaced. Missing descriptors and manually edited generated indexes cause an actionable error.
 
 `create --from-git` preserves the cloned repository's configuration, dependencies, and installed source. It does not contact the registry or apply plugin-selection flags. Follow the cloned repository's setup instructions; use `chat-js add` for subsequent tool installations. Fresh scaffolds assemble the selected plugins. Direct shadcn installations require `chat-js sync` afterward.
 
-Older apps using `features/` descriptors or generated/custom registrations under `tools/chatjs/` must migrate before running `add` or `sync`. The CLI detects this layout and stops before writing. Use the current template to move implementation/descriptors into `plugins/<id>`, generated registrations into `composition/generated`, and custom registrations into `composition/custom`. Update imports and adopt the plugin descriptor plus server/client factory contract, then remove the old registration files.
+Older apps using `features/` descriptors or generated/custom registrations under `tools/chatjs/` must migrate before running `add` or `sync`. The CLI detects this layout and stops before writing. Use the current template to move implementation/descriptors into `plugins/<id>`, generated registrations into `chatjs/generated`, and custom registrations into `integrations/tools.ts` and `integrations/tool-ui.ts`. Update imports and adopt the plugin descriptor plus server/client factory contract, then remove the old registration files.
 
 ## MCP and composer controls
 
 Selecting MCP during app creation installs its tRPC router, connector settings pages, OAuth callback, and agent integration. Skipping MCP leaves those source files and database schemas out of the fresh scaffold. Historical message rendering remains available. The MCP registry item builds from canonical source in `packages/registry/src/plugins/mcp`. The demo contains installed copies. Use `--mcp` or `--no-mcp` to select MCP during creation.
 
-Use `chat-js add mcp` to install MCP later. Installed registrations determine availability. Set `MCP_ENCRYPTION_KEY` whenever MCP is installed, including before any connectors are added. Missing credentials produce an explicit setup error. For a direct shadcn installation, run `chat-js sync` to register the server plugin and add the MCP entries to the UI arrays yourself.
+Use `chat-js add mcp` to install MCP later. Installed registrations determine availability. Set `MCP_ENCRYPTION_KEY` whenever MCP is installed, including before any connectors are added. Missing credentials produce an explicit setup error. For a direct shadcn installation, run `chat-js sync` to register its server and UI contributions.
 
-`composer-controls.ts` contains the initial order of attachments, tool choices, and connectors in the single composer menu. The model picker stays visible beside it. `settings-items.ts` controls settings navigation. Both arrays belong to the application: reorder or extend them freely. `chat-js sync` preserves them; `chat-js add mcp` appends missing MCP contributions without reordering existing entries. If a customized array can no longer be extended automatically, the CLI reports the manual integration needed.
+Plugins export module-scope `definePlugin` declarations with typed slot contributions. Generated chat and layout lists reference those declarations. App-owned JSX places `SidebarSections`, `ChatActions`, `MessageActions`, settings links, account summaries, and other slots. `ComposerAttachments` and `ComposerExtensions` surround the app-owned tool controls in `composer-controls.ts`. Neither `add` nor `sync` rewrites this JSX or the plugin's component declarations.
 
-`composition/generated/installed-routers.ts` and `composition/generated/installed.ts` are generated from installed plugin descriptors. Keep application-specific routers in the main tRPC composition. Bundle and dependency optimization are separate from this source-installation boundary.
+Edit installed components directly or contribute normal React wrappers. Keep declarations at module scope, and use ordinary dynamic imports and Suspense for expensive UI. Plugin removal updates the generated list, so slots without contributions render nothing. UI placement does not change authorization.
 
-Automatic MCP removal is not supported. To remove MCP manually, remove its entries and imports from `composer-controls.ts` and `settings-items.ts`, remove the installed MCP source and `plugins/mcp/chatjs.json`, then run `chat-js sync`. Sync preserves application-owned UI files.
+Older apps need to adopt the current provider and slot composition explicitly. The CLI preserves existing customization and does not migrate arbitrary source expressions.
+
+`chatjs/generated/installed-routers.ts` and `chatjs/generated/installed.ts` are generated from installed plugin descriptors. Compose application-specific routers in `integrations/routers.ts`; native tRPC consumes the result. Bundle and dependency optimization are separate from this source-installation boundary.
+
+## Removing plugins
+
+```sh
+chat-js remove projects sharing --dry-run
+chat-js remove projects sharing
+chat-js remove projects --backup
+```
+
+Removal plans the complete change before writing: plugin source, Next/EVE adapters, and generated registrations. Required plugins and dangling static imports from app-owned source block removal. Modified or untracked source requires `--backup`, which retains removed files as `.bak` files at their original relative paths under `chatjs/removed-plugins/<run-id>/`. The command prints this path. `--yes` skips the prompt but never bypasses source protection. Reinstall using `chat-js add`, then restore selected customizations from the backup.
+
+Database schema files and their plugin-local dependencies stay at their original paths. `chatjs/retained-plugin-schemas.json` keeps them in Drizzle's schema inputs after runtime registration is removed. Removing plugin code does not delete database data or generate a destructive migration. Review any later schema retirement separately. Shared UI primitives, package dependencies, environment values, and migration history are retained.
+
+Source installed directly through shadcn has no ChatJS source receipt, so removal requires `--backup`. Import checks cover relative and `@/` static imports, re-exports and literal dynamic imports. Review integrations using computed imports or other custom aliases yourself.

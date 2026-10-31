@@ -1,5 +1,5 @@
 import type { DynamicResolveContext } from "eve";
-import { isGuestSession } from "../../lib/eve/session-identity";
+import { isAccountSession } from "../../lib/eve/session-identity";
 import { defineDynamic, defineInstructions } from "eve/instructions";
 
 import { eveTurnTool } from "../../lib/eve/turn-tools";
@@ -8,7 +8,7 @@ import { selectedEveTools } from "../../lib/eve/selected-tools";
 export default defineDynamic({
   events: {
     "turn.started": (_event: unknown, context: DynamicResolveContext) => {
-      if (isGuestSession(context.session)) {
+      if (!isAccountSession(context.session)) {
         return null;
       }
       const tools = selectedEveTools(eveTurnTool.get());

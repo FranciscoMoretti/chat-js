@@ -15,7 +15,7 @@ import { researchAvailable } from "@/tools/chatjs/deep-research/availability";
 
 import { testToolContext } from "../../tests/helpers/eve-tool-context";
 import { installedToolAvailabilityMiddleware } from "./tool-availability";
-import { eveTurnGuest, eveTurnTool } from "./turn-tools";
+import { eveTurnAccount, eveTurnTool } from "./turn-tools";
 
 const mocks = vi.hoisted(() => {
   const tools: { webSearch?: object } = { webSearch: {} };
@@ -25,10 +25,7 @@ const mocks = vi.hoisted(() => {
     tools,
   };
 });
-vi.mock("../types/anonymous", () => ({
-  ANONYMOUS_LIMITS: { AVAILABLE_TOOLS: ["webSearch"] },
-}));
-vi.mock("@/composition/generated/installed-tools", () => ({
+vi.mock("@/integrations/tool-catalog", () => ({
   installedDocumentKinds: {
     has: (kind: string): boolean => kind === "text" && mocks.text,
     get size() {
@@ -40,8 +37,8 @@ vi.mock("@/composition/generated/installed-tools", () => ({
   },
   installedToolNames: { has: (): boolean => mocks.research },
 }));
-vi.mock("../../composition/generated/providers", () => ({
-  providers: mocks.tools,
+vi.mock("../../integrations/tool-providers", () => ({
+  toolProviders: mocks.tools,
 }));
 beforeEach(() => {
   mocks.tools.webSearch = {};
@@ -72,14 +69,14 @@ it.each([
     if (scenario === "selected") {
       eveTurnTool.update(() => "deepResearch");
     }
-    eveTurnGuest.update(() => scenario === "guest");
+    eveTurnAccount.update(() => scenario !== "guest");
     const principal = {
       attributes: {
-        ...(scenario === "guest" ? { chatjsGuest: "true" } : {}),
         ...(scenario === "selected" ? { selectedTool: "deepResearch" } : {}),
         ...(scenario === "other-tool" ? { selectedTool: "webSearch" } : {}),
       },
-      authenticator: "test",
+      authenticator:
+        scenario === "guest" ? "chatjs-disposable-guest" : "chatjs-gateway",
       principalId: "owner",
       principalType: "user",
     };
@@ -129,13 +126,13 @@ it("preserves the turn restriction when approval/reconnect auth omits selectedTo
         auth: {
           current: {
             attributes: {},
-            authenticator: "test",
+            authenticator: "chatjs-gateway",
             principalId: "owner",
             principalType: "user",
           },
           initiator: {
             attributes: {},
-            authenticator: "test",
+            authenticator: "chatjs-gateway",
             principalId: "owner",
             principalType: "user",
           },

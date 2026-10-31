@@ -11,7 +11,7 @@ import { getEveChatPageConversation } from "@/lib/db/eve-queries";
 import type { CreationScope } from "@/lib/eve/pending-create";
 import { resolveEvePrincipal } from "@/lib/eve/principal";
 
-import { DisposableGuestChat } from "./disposable-guest-chat";
+import { SignedOutScreen } from "@/integrations/signed-out";
 import { EveArtifactLayout } from "./eve-artifact-layout";
 import { EveCopyButton } from "./eve-copy-button";
 import { EveCreationRecovery } from "./eve-creation-recovery";
@@ -41,7 +41,10 @@ export const EveChatPage = async ({
     if (hasText(conversationId)) {
       redirect("/");
     }
-    return <DisposableGuestChat />;
+    if (!SignedOutScreen) {
+      redirect("/login");
+    }
+    return <SignedOutScreen />;
   }
   if (hasText(conversationId) && !z.uuid().safeParse(conversationId).success) {
     notFound();

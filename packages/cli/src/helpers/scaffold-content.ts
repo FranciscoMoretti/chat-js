@@ -19,8 +19,21 @@ const researchTestFiles = [
 // Runtime regressions, historical migration tools and sample evaluations stay
 // in the reference repository rather than becoming downstream app source.
 const REPOSITORY_ONLY_FILES = new Set([
+  "lib/db/retire-legacy-guests.test.ts",
+  "lib/eve/guest-ip.test.ts",
+  "app/api/eve-guest/route.test.ts",
+  "app/api/cron/cleanup/route.test.ts",
+  "lib/cleanup/job.test.ts",
+  "lib/eve/guest-model.test.ts",
+  "lib/eve/cleanup-guest-runtime.test.ts",
+  "lib/eve/disposable-guest.test.ts",
+  "lib/eve/session-policy.test.ts",
+  "lib/eve/local-guest-cleanup-scheduler.test.ts",
+  "lib/db/guest-runtime.test.ts",
+
   "scripts/installed-environment-validation.test.ts",
   "lib/db/encrypted-text.test.ts",
+  "lib/electron-auth.test.ts",
   "app/api/eve/[...path]/route-journal.test.ts",
   "lib/db/eve-dispatch.test.ts",
   "lib/eve/operation-token.test.ts",
@@ -50,6 +63,7 @@ const REPOSITORY_ONLY_FILES = new Set([
   "lib/db/eve-search.test.ts",
   "lib/eve/search-text.test.ts",
   "lib/eve/conversation-title.test.ts",
+  "lib/eve/model-runtime.test.ts",
   "lib/db/ai-titles-plugin.test.ts",
   "lib/db/sharing-plugin.test.ts",
   "lib/eve/sharing-transcript.test.ts",
@@ -154,6 +168,11 @@ const shouldCopyAppFile = (relativePath: string): boolean => {
 
 const shouldCopyChatAppFile = (relativePath: string): boolean =>
   shouldCopyAppFile(relativePath) &&
+  !(
+    relativePath.startsWith(`chatjs${path.sep}`) &&
+    relativePath !== `chatjs${path.sep}generated` &&
+    !relativePath.startsWith(`chatjs${path.sep}generated${path.sep}`)
+  ) &&
   !relativePath.endsWith("-visual-fixture.tsx") &&
   !relativePath.endsWith(".visual.css") &&
   !isRepositoryOnlyFile(relativePath);

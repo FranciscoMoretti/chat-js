@@ -11,7 +11,7 @@ const mocks = vi.hoisted(() => ({
   resolve: vi.fn(),
 }));
 
-vi.mock("@/composition/generated/installed-tools", () => ({
+vi.mock("@/integrations/tool-catalog", () => ({
   installedDocumentKinds: { has: (): boolean => mocks.code },
   installedToolNames: {
     has: (name: string): boolean =>
@@ -23,11 +23,13 @@ vi.mock("../db/eve-documents", () => ({ getEveDocumentRevision: mocks.read }));
 vi.mock("./conversation-scope", () => ({
   resolveEveConversationScope: mocks.resolve,
 }));
-vi.mock("../../composition/generated/code-executor", () => ({
+vi.mock("../../integrations/code-executor", () => ({
   codeExecutor: mocks.execute,
 }));
 
-vi.mock("./turn-tools", () => ({ eveToolAllowed: (): boolean => true }));
+vi.mock("./turn-tools", () => ({
+  eveTurnAccount: { get: (): boolean => true },
+}));
 
 const input = {
   documentId: "60dbe86a-b2c4-4d32-ae09-a00e90b84e99",

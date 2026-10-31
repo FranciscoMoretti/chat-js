@@ -13,7 +13,7 @@ import "./composer-native-style.css";
 vi.mock("@/components/ui/input-group", async (importOriginal) => {
   const original = await importOriginal<typeof InputGroupModule>();
   const { InputGroup } =
-    await import("../../../site/components/create-preview/ui/nova/input-group");
+    await import("../../../site/components/create-preview/ui/base/input-group");
   return { ...original, InputGroup };
 });
 
@@ -26,7 +26,7 @@ test("native Nova keeps an editable empty composer opaque without enabling Send"
     { label: "Read only", disabled: false, readOnly: true },
   ];
   const fixture = await mount(
-    <main className="grid max-w-xl gap-8 p-6">
+    <main className="style-nova grid max-w-xl gap-8 p-6">
       {states.map(({ label, disabled, readOnly }) => (
         <section aria-label={label} key={label}>
           <h2>{label}</h2>

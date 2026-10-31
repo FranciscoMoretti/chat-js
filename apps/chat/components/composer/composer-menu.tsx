@@ -1,13 +1,12 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { MenuButton } from "@/components/menu-button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuSeparator,
-  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { ComposerControlProps } from "./control";
 
@@ -16,6 +15,10 @@ import { Plus } from "lucide-react";
 import React from "react";
 
 import type { JSX as ReactJSX } from "react";
+import {
+  ComposerAttachments,
+  ComposerExtensions,
+} from "@/components/chat-slots";
 import { composerControls } from "@/composer-controls";
 
 import { getToolDisplay } from "./tool-display";
@@ -26,6 +29,8 @@ export const ComposerMenu = (
   props: ComposerControlProps
 ): ReactJSX.Element | null => {
   const mobile = useIsMobile();
+  const hasAttachments = ComposerAttachments.useHasContent();
+  const hasExtensions = ComposerExtensions.useHasContent();
   const controls = composerControls.filter(
     ({
       Component,
@@ -35,27 +40,25 @@ export const ComposerMenu = (
       >;
     }) => Component.isAvailable?.(mobile) ?? true
   );
-  if (controls.length === 0 && !props.selectedTool) {
+  const hasControls = controls.length > 0 || hasAttachments || hasExtensions;
+  if (!hasControls && props.selectedTool === null) {
     return null;
   }
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger
-        render={
-          <Button
-            aria-label="Composer options"
-            className="h-8 gap-2 px-2 @[500px]:h-10"
-            disabled={props.disabled}
-            size="sm"
-            variant="ghost"
-          />
-        }
+      <MenuButton
+        aria-label="Composer options"
+        className="h-8 gap-2 px-2 @[500px]:h-10"
+        disabled={props.disabled}
+        size="sm"
+        variant="ghost"
       >
         <Plus className="size-4" />
         Add
-      </DropdownMenuTrigger>
+      </MenuButton>
       <DropdownMenuContent align="start" className="w-56">
         <DropdownMenuGroup>
+          <ComposerAttachments {...props} />
           {controls.map(
             ({
               id,
@@ -66,9 +69,10 @@ export const ComposerMenu = (
               <Component key={id} {...props} />
             )
           )}
-          {props.selectedTool && (
+          <ComposerExtensions {...props} />
+          {props.selectedTool !== null && (
             <>
-              {controls.length > 0 && <DropdownMenuSeparator />}
+              {hasControls && <DropdownMenuSeparator />}
               <DropdownMenuItem
                 disabled={props.disabled}
                 onClick={() => {

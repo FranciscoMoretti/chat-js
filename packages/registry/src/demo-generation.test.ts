@@ -93,6 +93,7 @@ test("fresh workers reload declarations, preserve transforms, fan out changes an
       "packages/sandboxes/package.json",
       "packages/registry/package.json",
       "apps/chat/components.json",
+      "apps/chat/components/ui",
       "apps/chat/oxfmt.config.ts",
       "oxfmt.config.ts",
       ...[

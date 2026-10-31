@@ -1,4 +1,4 @@
-import { isGuestSession } from "../../lib/eve/session-identity";
+import { isAccountSession } from "../../lib/eve/session-identity";
 import {
   getEveSubagent,
   registerEveSubagent,
@@ -20,7 +20,7 @@ export default defineHook({
         >;
       }>
     ) => {
-      if (isGuestSession(context.session)) {
+      if (!isAccountSession(context.session)) {
         return;
       }
       observeEveModelAccounting(event, context.session);

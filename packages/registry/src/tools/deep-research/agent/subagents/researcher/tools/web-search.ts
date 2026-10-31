@@ -1,7 +1,8 @@
 import { defineState } from "eve/context";
 import { defineDynamic } from "eve/tools";
 
-import { providers } from "@/composition/generated/providers";
+import { isAccountSession } from "@/lib/eve/session-identity";
+import { toolProviders } from "@/integrations/tool-providers";
 
 const MAX_RESEARCH_SEARCH_ROUNDS = 19;
 const INITIAL_SEARCH_ROUND = 0;
@@ -11,7 +12,7 @@ type ResearchSearchContext = Readonly<{
   session: Readonly<{
     auth: Readonly<{
       initiator: Readonly<{
-        attributes: Readonly<Record<string, string | readonly string[]>>;
+        authenticator?: string;
       }> | null;
     }>;
   }>;
@@ -23,8 +24,8 @@ const researchSteps = defineState<number>(
 );
 
 const requireResearchSearch =
-  (): (typeof providers)[keyof typeof providers] => {
-    const providerEntry = Object.entries(providers).find(
+  (): (typeof toolProviders)[keyof typeof toolProviders] => {
+    const providerEntry = Object.entries(toolProviders).find(
       ([name]: Readonly<[string, unknown]>) => name === "webSearch"
     );
     const [, search] = providerEntry ?? [];
@@ -37,8 +38,7 @@ const requireResearchSearch =
 export default defineDynamic({
   events: {
     "step.started": (_event, context: ResearchSearchContext) => {
-      const owner = context.session.auth.initiator;
-      if (owner && owner.attributes.chatjsGuest === "true") {
+      if (!isAccountSession(context.session)) {
         throw new Error("Research search is unavailable.");
       }
       const search = requireResearchSearch();

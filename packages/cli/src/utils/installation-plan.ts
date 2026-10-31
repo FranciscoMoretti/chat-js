@@ -257,7 +257,7 @@ export const planInstallation = async (
       "The selected tools require documents. Omit --no-documents or omit document-dependent tools."
     );
   }
-  await validateToolInstallation(cwd, target());
+  validateToolInstallation(target());
   const installedPlugins =
     options.fresh === true
       ? []

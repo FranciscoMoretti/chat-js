@@ -1,7 +1,26 @@
 @import "tailwindcss";
+@import "../../../../chat/components/composer/editor.css";
+@reference "../../globals.css";
 @import "shadcn/tailwind.css";
+@import "../../../components/create-preview/ui/style-registry.css";
+
+/* The upstream style sheets use this app-level utility. */
+@utility no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
 @custom-variant dark (&:is(.dark *));
 @source "../../../../chat/components/composer/prompt-form.tsx";
+@source "../../../../chat/components/composer/composer-attachments.tsx";
+@source "../../../../chat/components/chat-message-view.tsx";
+@source "../../../../chat/components/chat-sidebar-view.tsx";
+@source "../../../../chat/components/attachment-card-view.tsx";
+@source "../../../../chat/components/controlled-chat-composer.tsx";
+@source "../../../../chat/components/lexical-chat-input.tsx";
+@source "../../../../chat/components/chat/chat-welcome-view.tsx";
 @source "../../../../chat/components/part/tool-activity.tsx";
 @source "../../../../chat/components/part/tool-data.tsx";
 
@@ -10,6 +29,20 @@
     border-color: var(--border);
     outline-color: color-mix(in oklab, var(--ring) 50%, transparent);
   }
+}
+
+/* Keep upstream @apply fonts connected to the preview's preset variables,
+   rather than the host theme's inline Geist aliases. */
+@theme {
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+    "Noto Sans", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+    "Segoe UI Symbol", "Noto Color Emoji";
+  --font-mono:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
+  --default-font-family: var(--font-sans);
+  --default-mono-font-family: var(--font-mono);
 }
 
 @theme inline {
@@ -29,6 +62,9 @@
   --color-sidebar-accent: var(--sidebar-accent);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);

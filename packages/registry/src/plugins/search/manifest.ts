@@ -5,9 +5,12 @@ const searchFiles = [
   "plugins/search/backfill.ts",
   "plugins/search/chat.ts",
   "plugins/search/client-plugin.ts",
+  "plugins/search/sidebar-item.tsx",
   "plugins/search/router.ts",
   "plugins/search/search-backfill.ts",
   "plugins/search/search-chats.tsx",
+  "plugins/search/search-surface.tsx",
+  "plugins/search/search-surface-props.ts",
   "plugins/search/search-hook.ts",
   "plugins/search/search-queries.ts",
   "plugins/search/search-results-view.tsx",
@@ -37,6 +40,7 @@ const searchItem: RegistryItem = {
   ],
   name: "search",
   type: "registry:item",
+  registryDependencies: ["button", "command", "dialog", "sidebar", "skeleton"],
   description: "Search chat titles and conversation text",
   files: searchFiles.map((file) => ({
     path: file.startsWith("plugins/search/")

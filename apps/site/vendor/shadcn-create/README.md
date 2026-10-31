@@ -13,7 +13,7 @@ The upstream preset codec, URL state, color compatibility rules, transient hover
 
 ChatJS adaptations:
 
-- The host route uses ChatJS navigation, the native customizer and preview shell, and the existing ChatJS presentation fixture in the iframe. The fixture shares the app's PromptForm layout and uses generated native Message, Bubble, MessageScroller, Attachment and input/menu components for all eight styles; it does not embed the production Lexical editor, EVE, authentication, or server runtime.
+- The host route uses ChatJS navigation, the native customizer and preview shell, and the existing ChatJS presentation fixture in the iframe. The fixture shares the app's PromptForm layout and uses canonical native Message, Bubble, MessageScroller, Attachment and input/menu components for all eight styles; it does not embed the production Lexical editor, EVE, authentication, or server runtime.
 - `Preview` loads `/create/preview`, retains the upstream `design-system-params` channel and hover override mechanism, and adds the separate ChatJS installation synchronization boundary. Preview items are ChatJS conversation, new chat, and tool states. Desktop/mobile size controls use the existing upstream `size` query parameter.
 - Native `DesignSystemProvider` and upstream self-hosted Next font loaders apply the preset. Body and heading font variables also reach portaled content. No separate theme schema or remote theme resolution API is used.
 - The iframe presentation consumes the native provider's resolved query state through a typed React context. This keeps its component library, direction and preset aligned with the provider when selections change during iframe hydration, without duplicate query subscriptions or a separate state model.
@@ -27,6 +27,12 @@ ChatJS adaptations:
 
 Keep modifications small and record future deviations here. Vendor source retains upstream formatting; authored integration modules follow repository lint rules. Unit tests cover the imported codec/query seams, and the Create browser test covers interactions and visual states.
 
-The native preview generator accepts `base` (default) or `radix`: `bun apps/site/scripts/generate-create-preview.ts radix`. Radix components live alongside Base in `components/create-preview/ui/radix-<style>`, with separate `provenance-radix.json` hashes. Source adaptations are import destinations and upstream menu/direction transforms; preview composition uses native `render` or `asChild` triggers for the selected library.
+The preview imports one canonical component set per library from `apps/v4/registry/bases/{base,radix}/ui` at the commit above. They live in `components/create-preview/ui/{base,radix}`. The eight upstream `registry/styles/style-*.css` files and `app/style-registry.css` provide appearance through the provider's body style class. Menus retain upstream `cn-menu-target` and `cn-menu-translucent` markers: the unmodified native provider effect manages inversion and translucency, including portaled content and appearance changes while a menu is open. Styles and menu colors never select another component implementation.
 
-The generated preview primitives use native `transformDirection` so logical spacing, directional icons and submenu placement work in either reading direction. Preview and generated app roots provide the selected library’s native DirectionProvider; generated app direction comes from `components.json.rtl`.
+Run `bun apps/site/scripts/generate-create-preview.ts` to sync both libraries and CSS; add `--check` to fetch the immutable sources and verify the complete imported inventory byte-for-byte. `ui/provenance.json` records the commit, raw upstream hashes, adapted hashes, and the exact shadcn package version used for the RTL transform. There are no live registry lookups in this importer. The upstream MIT license above also covers these imports.
+
+Explicit preview adaptations:
+
+- Redirect component and icon imports locally, and stylesheet references to the site's existing theme definitions. `preview.css` supplies the upstream `no-scrollbar` utility and missing sidebar token aliases, and preserves the preview's preset font variables and Tailwind font stacks when referencing the host theme.
+- Apply the pinned shadcn `transformDirection` to TSX and to each CSS `@apply` utility list, parsed with PostCSS. This preserves logical spacing and directional icons without creating separate RTL variants. The preview root keeps the selected library's native DirectionProvider. Generated app direction still comes from `components.json.rtl`.
+- Keep native Base `render` and Radix `asChild` trigger APIs in the ChatJS scene composition. ChatJS scenes, installation synchronization, controls, and CLI handoff remain authored integration code.

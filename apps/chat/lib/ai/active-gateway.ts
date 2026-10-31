@@ -1,4 +1,4 @@
-import { Gateway } from "./gateway";
+import { createGateway } from "@/integrations/gateway";
 import type { GatewayProvider } from "./gateways/registry";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { config } from "@/lib/config";
@@ -9,7 +9,7 @@ import { getFallbackModels } from "./gateways/fallback-models";
 let activeGateway: GatewayProvider | null = null;
 
 export const getActiveGateway = (): GatewayProvider => {
-  activeGateway ??= new Gateway({
+  activeGateway ??= createGateway({
     env: gatewayEnv,
     fetch: async (
       input: string | ReadonlyNativeSurface<URL | Request>,

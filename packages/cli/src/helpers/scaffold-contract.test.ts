@@ -25,7 +25,6 @@ const buildConfigFor = (gateway: Gateway): string =>
       parallelResponses: true,
     },
     gateway,
-    withElectron: false,
   });
 
 describe("scaffold contracts", () => {

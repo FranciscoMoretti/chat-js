@@ -10,8 +10,8 @@ const navigation = vi.hoisted(() => ({
   electron: false,
   push: vi.fn<(href: string) => void>(),
 }));
-vi.mock("@/lib/electron-auth", () => ({
-  isElectronRenderer: () => navigation.electron,
+vi.mock("@/integrations/navigation", () => ({
+  handleModifiedNavigation: () => navigation.electron,
 }));
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: navigation.push }),

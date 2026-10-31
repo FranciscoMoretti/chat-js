@@ -1,3 +1,4 @@
+import { signOutDesktop } from "@/plugins/desktop/sign-out";
 import { takeSnapshot } from "@uiverify/vitest";
 import React, { act } from "react";
 import { createRoot } from "react-dom/client";
@@ -10,9 +11,12 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 
 import "./sandbox.css";
 
+vi.mock("@/integrations/sign-out", () => ({
+  signOutWithPlugin: signOutDesktop,
+}));
 const auth = vi.hoisted(() => ({ electron: false, signOut: vi.fn() }));
 vi.mock("@/lib/auth-client", () => ({ default: auth }));
-vi.mock("@/lib/electron-auth", () => ({
+vi.mock("@/plugins/desktop/bridge", () => ({
   isElectronRenderer: (): boolean => auth.electron,
 }));
 vi.mock("@/plugins/credits/use-credits", () => ({
@@ -72,11 +76,7 @@ test.each(["browser", "electron-sign-out"])(
       } else {
         expect(auth.signOut).not.toHaveBeenCalled();
         expect(signOut).toHaveBeenCalledOnce();
-        if (mode === "electron-sync") {
-          expect(syncAuthSession).toHaveBeenCalledOnce();
-        } else {
-          expect(syncAuthSession).not.toHaveBeenCalled();
-        }
+        expect(syncAuthSession).not.toHaveBeenCalled();
       }
       expect(globalThis.location.href).toBe(origin);
       if (mode === "browser") {

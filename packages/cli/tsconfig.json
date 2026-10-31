@@ -7,11 +7,6 @@
       "@/*": ["../../apps/chat/*"]
     }
   },
-  "include": [
-    "src/**/*.ts",
-    "test/**/*.ts",
-    "../../apps/chat/types/**/*.d.ts",
-    "../../apps/chat/electron.d.ts"
-  ],
+  "include": ["src/**/*.ts", "test/**/*.ts", "../../apps/chat/types/**/*.d.ts"],
   "exclude": ["node_modules", "templates", "dist"]
 }

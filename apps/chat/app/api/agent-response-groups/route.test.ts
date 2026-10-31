@@ -12,7 +12,6 @@ const HTTP_STATUS = {
 };
 
 const mocks = vi.hoisted(() => ({
-  admit: vi.fn(),
   after: vi.fn<(callback: () => void | Promise<void>) => void>(),
   create: vi.fn(),
   get: vi.fn(),
@@ -23,14 +22,11 @@ vi.mock("next/server", () => ({ after: mocks.after }));
 vi.mock("@/lib/eve/principal", () => ({
   resolveEvePrincipal: mocks.principal,
 }));
-vi.mock("@/lib/eve/guest-group-admission", () => ({
-  admitGuestResponseGroup: mocks.admit,
-}));
 vi.mock("@/lib/env", () => ({ env: { APP_URL: "http://localhost:3790" } }));
 vi.mock("@/lib/eve/response-group", () => ({
   createEveResponseGroup: mocks.create,
 }));
-vi.mock("@/lib/chat-plugins", () => ({
+vi.mock("@/lib/chat-after-create", () => ({
   runChatAfterCreate: mocks.afterCreate,
 }));
 vi.mock("@/lib/db/eve-response-groups", () => ({
@@ -61,7 +57,7 @@ test("authenticates and checks origin before dispatching with server-owned ident
   const resolvedResult2 = await POST(request());
   expect(resolvedResult2.status).toBe(HTTP_STATUS.ok);
   expect(mocks.create).toHaveBeenCalledOnce();
-  expect(mocks.create).toHaveBeenCalledWith("owner", input, undefined);
+  expect(mocks.create).toHaveBeenCalledWith("owner", input);
 });
 
 test("unauthenticated requests cannot create groups", async () => {
@@ -80,33 +76,6 @@ test("reads only through the authenticated owner's scope and does not cache bind
   expect(resolvedResult6.headers.get("cache-control")).toBe(
     "private, no-store"
   );
-});
-
-test("guest comparisons cannot dispatch without successful batch admission", async () => {
-  mocks.principal.mockResolvedValue({
-    kind: "guest",
-    ownerId: "guest",
-    tokenHash: "hash",
-  });
-  mocks.admit.mockResolvedValue(
-    new Response(null, { status: HTTP_STATUS.tooManyRequests })
-  );
-  const resolvedResult7 = await POST(request());
-  expect(resolvedResult7.status).toBe(HTTP_STATUS.tooManyRequests);
-  expect(mocks.create).not.toHaveBeenCalled();
-  const reservations = [
-    { operationId: input.operationId, reservationId: "quota" },
-  ];
-  mocks.admit.mockResolvedValue(reservations);
-  const resolvedResult8 = await POST(request());
-  expect(resolvedResult8.status).toBe(HTTP_STATUS.ok);
-  expect(mocks.create).toHaveBeenCalledExactlyOnceWith(
-    "guest",
-    input,
-    reservations
-  );
-  await GET(request(), { params: Promise.resolve({ id: input.operationId }) });
-  expect(mocks.get).toHaveBeenCalledWith("guest", input.operationId);
 });
 
 test("schedules one plugin work for an initial comparison chat", async () => {

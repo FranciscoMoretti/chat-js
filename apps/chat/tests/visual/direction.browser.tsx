@@ -2,7 +2,7 @@ import { act } from "react";
 import { disableAutoSnapshot, takeSnapshot } from "@uiverify/vitest";
 import { expect, test } from "vitest";
 import { page, userEvent } from "vitest/browser";
-import { DirectionProvider } from "@/components/ui/direction";
+import { UiDirection } from "@/providers/ui-direction";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,9 +10,8 @@ import {
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
-  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
+import { MenuButton } from "@/components/menu-button";
 import { mount, unmount } from "./primitive-mount";
 import "./sandbox.css";
 
@@ -21,12 +20,10 @@ for (const direction of ["ltr", "rtl"] as const) {
     const previousDirection = document.documentElement.dir;
     document.documentElement.dir = direction;
     const fixture = await mount(
-      <DirectionProvider direction={direction}>
+      <UiDirection direction={direction}>
         <div className="flex min-h-80 items-start justify-center p-12">
           <DropdownMenu>
-            <DropdownMenuTrigger render={<Button variant="outline" />}>
-              Menu
-            </DropdownMenuTrigger>
+            <MenuButton variant="outline">Menu</MenuButton>
             <DropdownMenuContent>
               <DropdownMenuSub>
                 <DropdownMenuSubTrigger>More options</DropdownMenuSubTrigger>
@@ -38,7 +35,7 @@ for (const direction of ["ltr", "rtl"] as const) {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-      </DirectionProvider>
+      </UiDirection>
     );
     try {
       await act(async () => {

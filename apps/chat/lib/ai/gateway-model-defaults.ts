@@ -3,7 +3,6 @@ import type { Gateway } from "./gateway";
 
 const gatewayType = "vercel" satisfies InstanceType<typeof Gateway>["type"];
 const gatewayModelDefaults = {
-  anonymousModels: ["google/gemini-2.5-flash-lite", "openai/gpt-5-nano"],
   curatedDefaults: [
     "openai/gpt-5-nano",
     "openai/gpt-5-mini",

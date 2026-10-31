@@ -1,111 +1,248 @@
 {
-  "cli": "4.22.1",
-  "base": "base",
-  "source": "https://ui.shadcn.com/r/styles",
-  "sha256": {
-    "nova/button": "313353436d0fcc8e44ab470adb614b9fd013d28626f624328ea0d66d41a6c81b",
-    "nova/input": "dab990dfefa0ba78854ab6602ad074270dba9d7d1262184d9bfbb62bd990903b",
-    "nova/textarea": "82601c91ffc6c727d924162c78d7cb853114bcced4e2eb922a68ca12d4239c0f",
-    "nova/input-group": "d6c74e82a2aa02980b337da519fc5b74dfc841e92453e32dd241e6baa1d9d9a6",
-    "nova/dropdown-menu": "ba92acc16e141ad77880f8c4a27f9854b8024075130df6f04b6b0bf9cfa9d3f2",
-    "nova/message": "64e9ae0f9d1e268b0ed7b738a53d374d273fe1e7e2dd7b35ad7417e50a9bbe6c",
-    "nova/bubble": "cef49b9490c90d90451037247adedb8671eae234d388f8c30c7b2eac37356983",
-    "nova/attachment": "a9f6d071c1e70bda93ed42d690e52bc1fecbf27d3afcf05e3096dbdc42f08a24",
-    "nova/message-scroller": "aacf4a03cb083bf009758e88faaacb4d8e407506a22aa0841dcc83f6f2b47133",
-    "nova/collapsible": "ead4349ff7b01d696ef89294a81d18ee1d3f732321398896462c834ab9b9e065",
-    "nova/trace": "caf842955e70affef04f8082f54d90e027e1f267d2eb3ba8b69290ed7a6ac924",
-    "nova/code-block": "226b3c2e6114a8e1adaf5d594276ce0bcc92da80a6c85dfdc20478eccfbf7657",
-    "vega/button": "fe8220afc0ec9b62c7a520f4e6eb0b56b3b9e951eb963183c29d274395ee476c",
-    "vega/input": "b8d0c2a2ab66080b5fe9a3467884f896eb6f9e6b45ac0185925e831f551362e6",
-    "vega/textarea": "6d096ef81ee782d94696d0ddad1c926e530d952b54b9ff9e8b837d8bbeea8d00",
-    "vega/input-group": "be4c0803307269e5fb59ec52bd80078357a29c4d30a74c3aec7c6bc2acd0eacc",
-    "vega/dropdown-menu": "472b75f1ffa1ae9438c31171f0f4245dc4188eea7b8cfee32f599d3520e92d43",
-    "vega/message": "64e9ae0f9d1e268b0ed7b738a53d374d273fe1e7e2dd7b35ad7417e50a9bbe6c",
-    "vega/bubble": "cef49b9490c90d90451037247adedb8671eae234d388f8c30c7b2eac37356983",
-    "vega/attachment": "c0e8ae2980e9ec583dc73d4f8893d4ae6be9a61717acb13b406194456d589c9f",
-    "vega/message-scroller": "e67bc3e1df8f739ba0fb1c32f11b8fc7d7a231a73f728934f09f99e555434bbd",
-    "vega/collapsible": "ead4349ff7b01d696ef89294a81d18ee1d3f732321398896462c834ab9b9e065",
-    "vega/trace": "87986e6531b1471aa8580edf51f0724060b89f591329bafc398a973efd7613df",
-    "vega/code-block": "78a2e6a5e965d91b0538e7c22188d2ec234532f4f0e2d689f395eeeb39fdac08",
-    "maia/button": "de430bf6ad6b6ac4fa09d07b21196e6fedbf407feade5679069e2ea698768c6f",
-    "maia/input": "9ab492446020c6e33793ba98537799b1c3a00531f288609e3207c2c32acfd1a1",
-    "maia/textarea": "6d6d804c693303795f819b7d4d3323720e0f69830f160e55e45286d6e7e4d7db",
-    "maia/input-group": "23ee6c659a1d3a607c13d5c0168faabfc7a83c3a80ba61a7cfb190e44a42e624",
-    "maia/dropdown-menu": "9c229f4517494854196e556db92f706568b90bfd20b659648e1a37f24fa5c8c1",
-    "maia/message": "5e7a552e1fa40e50be32d53d4d498fc2e97e15957cd45574ab9a883bbba0d542",
-    "maia/bubble": "d1c09165ed868a865c4bb6469d288de18d956043dea2b1060f00788f7e69ea6c",
-    "maia/attachment": "d5723d262647cf29d9fc3084fe9ed6a86a53e770ca00a7027c23a5a7f42281a3",
-    "maia/message-scroller": "907795c6d86d353ab14e8591d25c72952536c9b647ca13d8e653ee33abd2bf87",
-    "maia/collapsible": "ead4349ff7b01d696ef89294a81d18ee1d3f732321398896462c834ab9b9e065",
-    "maia/trace": "41a7a487fd7e5c531c9633fb1501cd7aa3a5baa9cec20905f30f75c2cf596d58",
-    "maia/code-block": "8caf35b4b2c3e5a4ce9bd852fa79e1759e06999ee3fc39c2e2dd914a05a7e8bb",
-    "lyra/button": "355c398aee0867a220b905448a0af44c19c847b2ed8e0ad7a34924d223722851",
-    "lyra/input": "3b080a0f4ca66a1a33a426581462c1029fdfe104ad58008450c4eb303d4864b4",
-    "lyra/textarea": "ee5c869462b6963be45f308342fc9f08bccf6a7d46f88d6470a5301560d87f9c",
-    "lyra/input-group": "efd472e38547491da7cd902db28069f4ded5150f62c4192e05115ec4a247d867",
-    "lyra/dropdown-menu": "892e18d405d177a9fdb3e58a08c6a59c25309d5bbb89478f6338d1cacab74240",
-    "lyra/message": "b2aa827a72f3603816c9b39a7acabcc8793c6d3e89809648b7ed19b992193926",
-    "lyra/bubble": "90362caae32b98c347ae20320699f47b7bf5ad03747714f9c58606a0512bc98b",
-    "lyra/attachment": "6daec233649023e46cbad0289dc71a08af412ade1eb8553600682e0253ca2d2d",
-    "lyra/message-scroller": "65480e7f6938c824b9af51eb6e203938040d8d4465fa3a77c50dedfd53d00072",
-    "lyra/collapsible": "ead4349ff7b01d696ef89294a81d18ee1d3f732321398896462c834ab9b9e065",
-    "lyra/trace": "f266745e9267c1b4777c33ad669061912f5ae43afd9ee4d9bd57774b16197153",
-    "lyra/code-block": "4ee0c9ddac474a08847dc3faf90006835e4bdc91f34ed08dfddcc5b17895cc78",
-    "mira/button": "d6ee890088e8a678f1f7daad150201d67dbee3d26cd4fbf43daef0740e89fa8b",
-    "mira/input": "710a10d2c4a97aaeaa5c3361545a313ce6eea65bf4695c8b242cbe0ac50866d2",
-    "mira/textarea": "a1615b32d672032b01f4b64c8cd0563eb0306250ce81f1bc8d12ae9a8a092d6c",
-    "mira/input-group": "3b0b4c6e94b722cc7c860a84738c2e8f50907b7a4cf9a57bf472c99ee9c2422f",
-    "mira/dropdown-menu": "5a24b2659836805a56e458fc5c57e5b501a310822c48700cfa073ffd6818563d",
-    "mira/message": "8f2aba448180a64780397248cbf059c912bcd8e7610c0f9abc11442961a74c09",
-    "mira/bubble": "b13cde983a6b7426e95e066eb2b574283e94fa01b07206e6cbe4b12669e24457",
-    "mira/attachment": "0bb95af679119d1bc0b9c4e737bd19d63141d89e09ea04a8b20abbb5551ef1ba",
-    "mira/message-scroller": "81d9f8425a25858b4f5660720e7e867638646635b31a1a1765aab0dbcca9c92f",
-    "mira/collapsible": "ead4349ff7b01d696ef89294a81d18ee1d3f732321398896462c834ab9b9e065",
-    "mira/trace": "ac22b11742c6b6e25ac14b622456c67fe5f528fa3e6b3b922786cbd890ebb008",
-    "mira/code-block": "b001f1e5d9d97b294cf12dceb3e58637ea99c683f2807078196d45bec1f76373",
-    "luma/button": "b84f15c31b5ba3f4dca954a665694796642cbd7d9afbcdcbccfd83ffa2e03e53",
-    "luma/input": "ef0edd9bb45b9fc8ef8a761962dec1f095971164a7ea6076f3bf6f23ebf2c6d0",
-    "luma/textarea": "7d66b757fc2086d9618fc99887dc62854f67283d58cc87e0e411b746b2778112",
-    "luma/input-group": "f699bc4b22619a94c5bde996e419496d4bbf7b0b3039d61cead105ab26283da0",
-    "luma/dropdown-menu": "31a9b7d17c9c52ef1a65053c19e1c0647a8f77d37a63c19cf4700c12c5e99b79",
-    "luma/message": "5e7a552e1fa40e50be32d53d4d498fc2e97e15957cd45574ab9a883bbba0d542",
-    "luma/bubble": "827576f68d736e5662ed70d3a55a5794d3879e07c6603b94b779b51a2fc5241e",
-    "luma/attachment": "820959619733d6934d59fa39d0939d1e3c5f676d2c0ea32f1c23efcb4d7b9b15",
-    "luma/message-scroller": "46751471498a9998c92d5de5ea96bcfcead9fe52d8b36f26465931f24e233da8",
-    "luma/collapsible": "ead4349ff7b01d696ef89294a81d18ee1d3f732321398896462c834ab9b9e065",
-    "luma/trace": "7acff1a1aac5795a8ac0bb57ee14974321da6147362c3dccd5d94ca7203c543d",
-    "luma/code-block": "058e56b8b96a0944bf614e4b59997762c24d0c0f55cf9ece996e21ad7cc72e38",
-    "sera/button": "ade19512dcd2344a03571d90d3de868aa4ea8c38bfb57a4cd2771c9e0b06f681",
-    "sera/input": "65a03a54c16c15c0f20cbc4f1dd745865cf2e5a74c66ac3ca3bf4a0b3a75e98c",
-    "sera/textarea": "5e191cc14149bdc7886eaccc73ee09cd8eb74721d17fae58297539c5b4e8b881",
-    "sera/input-group": "aebecff37d2b01fd5d34a75cdf695263c9e550a58a6c98e40605d94a068a9504",
-    "sera/dropdown-menu": "85a2f57ef22036c736609f18048b4efd2f53382f16fe1921578474ea843445eb",
-    "sera/message": "744ce78346b08e2fea7e7b0330148ef066f38868075b583f65aed86da3eaaa3a",
-    "sera/bubble": "97ee72e00fa28885d636001d8806d78e86a0702b552ce8db83bf28fbd8f569bc",
-    "sera/attachment": "57396846a82a65092e1d7f2293414a470875221ad2adbb5f4d40974ac0bb4f4e",
-    "sera/message-scroller": "62a1b8524f9ec70c361c4f60ef4ef461a74f972c2eb3825c509affccae27444c",
-    "sera/collapsible": "ead4349ff7b01d696ef89294a81d18ee1d3f732321398896462c834ab9b9e065",
-    "sera/trace": "fa8ecaaed900514fcd237d205b3ff2a7a8fa9dc0c83e5088e5a07bdc56cdf7d0",
-    "sera/code-block": "da09020c110ec11b27074eab259872dc5c96d5bf7970be27d38ca8e136bbf52b",
-    "rhea/button": "091c4bd0726a66e33ec2c562bb27a7e260ca67ac36d421fe105797fa847175d8",
-    "rhea/input": "c263a65e15e2d10303c2ae2c3dc94c3bb539911faa19109fefc25fadbc840e70",
-    "rhea/textarea": "0e88eb30a23efc04af6fdc545ed775e5ef6d85ada9e9430720ee47b1555c75e8",
-    "rhea/input-group": "0fb5a8d50c4a687b8cbd2f53786ac3d1968f508916874a02e79886c533791e9e",
-    "rhea/dropdown-menu": "fcef98b6872807bd0e156e0e5dee0767e21fcd259fdcf7eae742dd4fab70cb85",
-    "rhea/message": "64e9ae0f9d1e268b0ed7b738a53d374d273fe1e7e2dd7b35ad7417e50a9bbe6c",
-    "rhea/bubble": "defcae17bd4dce7ba77c2fbd4d7eb9c7a4beb07c35de0414ae7a09f67fa7ea5a",
-    "rhea/attachment": "3d7829f816d5ee6dd1ab23c94a0d94c8dc707202f15fb7b0c61f3f4a6cad5f15",
-    "rhea/message-scroller": "105672edb7029e01550a6976ea7ffd488f7d621bf124ba4d2c90794088df983e",
-    "rhea/collapsible": "ead4349ff7b01d696ef89294a81d18ee1d3f732321398896462c834ab9b9e065",
-    "rhea/trace": "5ba2b3d4e33cb9d14dc4a2921626a067bf5119ce8ca44cbec2b8820019a7aaca",
-    "rhea/code-block": "35ba12fcca82df9a77e105d743a35dc254a68ae9ca90c8a6e4dda616663ebe6a",
-    "nova/direction": "661ff5b9c0dc26edde1226bfedc0ab50976d84f8bae42ca83a38dc3b478fd4d4",
-    "vega/direction": "661ff5b9c0dc26edde1226bfedc0ab50976d84f8bae42ca83a38dc3b478fd4d4",
-    "maia/direction": "661ff5b9c0dc26edde1226bfedc0ab50976d84f8bae42ca83a38dc3b478fd4d4",
-    "lyra/direction": "661ff5b9c0dc26edde1226bfedc0ab50976d84f8bae42ca83a38dc3b478fd4d4",
-    "mira/direction": "661ff5b9c0dc26edde1226bfedc0ab50976d84f8bae42ca83a38dc3b478fd4d4",
-    "luma/direction": "661ff5b9c0dc26edde1226bfedc0ab50976d84f8bae42ca83a38dc3b478fd4d4",
-    "sera/direction": "661ff5b9c0dc26edde1226bfedc0ab50976d84f8bae42ca83a38dc3b478fd4d4",
-    "rhea/direction": "661ff5b9c0dc26edde1226bfedc0ab50976d84f8bae42ca83a38dc3b478fd4d4"
+  "repository": "https://github.com/shadcn-ui/ui",
+  "commit": "481d523374745e77d0cf9c53a4115ab5dd7c8481",
+  "rtlTransform": "shadcn@4.22.1",
+  "adaptations": [
+    "Local component, icon, and shared mobile hook import paths",
+    "Upstream RTL transform on TSX and CSS @apply utilities",
+    "Local stylesheet import and reference paths",
+    "Restore Radix mobile sidebar focus to the preview trigger on close"
+  ],
+  "files": {
+    "base/attachment.tsx": {
+      "source": "registry/bases/base/ui/attachment.tsx",
+      "sha256": "8990c8ba1b1737acdbaf847aae6360ae544700beac7f3f53e559a57b04a48bfe",
+      "adaptedSha256": "3e9bb3ada777ba1b8188cbc905c1389b4141a8daef115e617e94131b3fe5e1d0"
+    },
+    "base/bubble.tsx": {
+      "source": "registry/bases/base/ui/bubble.tsx",
+      "sha256": "7b997c07146c49b4d3371272b937bc4f1b9852b3c47150de1537997de0ea85a0",
+      "adaptedSha256": "51429c662f7d1648a84523aaad1091db33a22fd30eb11469281610c9c0732871"
+    },
+    "base/button.tsx": {
+      "source": "registry/bases/base/ui/button.tsx",
+      "sha256": "74f982d7ad7a764e3c95a519fc063a671e66ad758ea31dc89d747838e20c2487",
+      "adaptedSha256": "74f982d7ad7a764e3c95a519fc063a671e66ad758ea31dc89d747838e20c2487"
+    },
+    "base/code-block.tsx": {
+      "source": "registry/bases/base/ui/code-block.tsx",
+      "sha256": "66ae50e6a08ca54a0ffd8be7f71cb4f60002a0e0cb592910d85e8e2d839cca0a",
+      "adaptedSha256": "77771076b23a48679a482eb9759bd16f7ced439fd914e8260dd31b9263f88323"
+    },
+    "base/collapsible.tsx": {
+      "source": "registry/bases/base/ui/collapsible.tsx",
+      "sha256": "ead4349ff7b01d696ef89294a81d18ee1d3f732321398896462c834ab9b9e065",
+      "adaptedSha256": "ead4349ff7b01d696ef89294a81d18ee1d3f732321398896462c834ab9b9e065"
+    },
+    "base/direction.tsx": {
+      "source": "registry/bases/base/ui/direction.tsx",
+      "sha256": "661ff5b9c0dc26edde1226bfedc0ab50976d84f8bae42ca83a38dc3b478fd4d4",
+      "adaptedSha256": "661ff5b9c0dc26edde1226bfedc0ab50976d84f8bae42ca83a38dc3b478fd4d4"
+    },
+    "base/dropdown-menu.tsx": {
+      "source": "registry/bases/base/ui/dropdown-menu.tsx",
+      "sha256": "18c1829679694a9b9850afcabf1158a80ec3624fb5e03d0d4b13339b729e0503",
+      "adaptedSha256": "212e8ea159fe3f8f3f91d036f7991855ffd1884632252823d107544b4ec57fc9"
+    },
+    "base/input-group.tsx": {
+      "source": "registry/bases/base/ui/input-group.tsx",
+      "sha256": "b1ed344e05b4161c240fff21b6e224fcc61cbe35d5a3aaa997de02c8fb25e1fe",
+      "adaptedSha256": "f43da6deb00091d430b513aa4776a37bfc2cea6df99ea665d5c23bf8bf112481"
+    },
+    "base/input.tsx": {
+      "source": "registry/bases/base/ui/input.tsx",
+      "sha256": "00213ec177e4556e69b6680128c18023d859a8e4eaf4106fbcf6abdc4f2c419b",
+      "adaptedSha256": "00213ec177e4556e69b6680128c18023d859a8e4eaf4106fbcf6abdc4f2c419b"
+    },
+    "base/message-scroller.tsx": {
+      "source": "registry/bases/base/ui/message-scroller.tsx",
+      "sha256": "385d9b66036e6fcf4b21997914791121c55749223d4f28f95d72862c4bd724c0",
+      "adaptedSha256": "569bc8a5c13aa6fd9298c5c58f62875d6439b8934666b436607364ea6f72bdad"
+    },
+    "base/message.tsx": {
+      "source": "registry/bases/base/ui/message.tsx",
+      "sha256": "b57f3c9921ceb0695cb8164c7be8ce229519f2b485b95923bb980a5e39e11c72",
+      "adaptedSha256": "b57f3c9921ceb0695cb8164c7be8ce229519f2b485b95923bb980a5e39e11c72"
+    },
+    "base/scroll-area.tsx": {
+      "source": "registry/bases/base/ui/scroll-area.tsx",
+      "sha256": "7e49845827447091a6493473779a05ba45cb8302e3703a6f9e4225dd6315cce2",
+      "adaptedSha256": "7e49845827447091a6493473779a05ba45cb8302e3703a6f9e4225dd6315cce2"
+    },
+    "base/separator.tsx": {
+      "source": "registry/bases/base/ui/separator.tsx",
+      "sha256": "9a80ff8c110e0c55489509f4f82ebcc929c0174b59544047147b7134f86a54e7",
+      "adaptedSha256": "9a80ff8c110e0c55489509f4f82ebcc929c0174b59544047147b7134f86a54e7"
+    },
+    "base/sheet.tsx": {
+      "source": "registry/bases/base/ui/sheet.tsx",
+      "sha256": "5816119da5f3468b0b91d2c65bcf6befe1d769b7867e236b9f18db83908581cb",
+      "adaptedSha256": "2421eb8db7a7b4ecb286c60de6fe8295ff2b62613523e898db1b699b8aa68cbf"
+    },
+    "base/sidebar.tsx": {
+      "source": "registry/bases/base/ui/sidebar.tsx",
+      "sha256": "f0f4c21b8fa1b4750711711ac7a6833c713cf93a23f1d2143cf5ec26f1661d56",
+      "adaptedSha256": "1887c1c3990690c935cfc7857528ac3e353100a9b3a74fffeac2204b11aee911"
+    },
+    "base/skeleton.tsx": {
+      "source": "registry/bases/base/ui/skeleton.tsx",
+      "sha256": "8fcbad84e494a75484a0975221fb40f54c4a7d68f79cfc305cb158d1feb1badf",
+      "adaptedSha256": "8fcbad84e494a75484a0975221fb40f54c4a7d68f79cfc305cb158d1feb1badf"
+    },
+    "base/textarea.tsx": {
+      "source": "registry/bases/base/ui/textarea.tsx",
+      "sha256": "8f527c89dec40a9b372376dc93d2ebb149bfd82f209856d110ead1aabec19c6a",
+      "adaptedSha256": "8f527c89dec40a9b372376dc93d2ebb149bfd82f209856d110ead1aabec19c6a"
+    },
+    "base/tooltip.tsx": {
+      "source": "registry/bases/base/ui/tooltip.tsx",
+      "sha256": "dc5ec917d8276af9d66e7c951b0608d67c149bcb311072166bc8ce67ee2b7488",
+      "adaptedSha256": "dc5ec917d8276af9d66e7c951b0608d67c149bcb311072166bc8ce67ee2b7488"
+    },
+    "base/trace.tsx": {
+      "source": "registry/bases/base/ui/trace.tsx",
+      "sha256": "39aa939c4845029793d98bb9f4d9814686be0198ccee257cc198da276294ca79",
+      "adaptedSha256": "d2d9e8d5f930db8fd14d4a62316fe5454b0aba84249fe493e30689e5b6ba8a8e"
+    },
+    "radix/attachment.tsx": {
+      "source": "registry/bases/radix/ui/attachment.tsx",
+      "sha256": "742984b038e9f2fd87919684453bc6d30cdf03a31ee05ceed464a91b7de052e5",
+      "adaptedSha256": "6b3a3c56c2d7903c654473fefd5d918eded95b02de762021e225a9c0bde196fe"
+    },
+    "radix/bubble.tsx": {
+      "source": "registry/bases/radix/ui/bubble.tsx",
+      "sha256": "f3b952658607bdc73ccf1ee45af54c6189c77b6431cdc7c02b8bff0a7f11f7d9",
+      "adaptedSha256": "beb350b09cc97f69bd4cc4071ed45662bd764e7cb1ec7d93febfe3f5d63cd3d7"
+    },
+    "radix/button.tsx": {
+      "source": "registry/bases/radix/ui/button.tsx",
+      "sha256": "76c6abdf94fae4085fd6c50c97c7a99ec21240af187c63ea4b2e71551d33495f",
+      "adaptedSha256": "76c6abdf94fae4085fd6c50c97c7a99ec21240af187c63ea4b2e71551d33495f"
+    },
+    "radix/code-block.tsx": {
+      "source": "registry/bases/radix/ui/code-block.tsx",
+      "sha256": "95d4468cd2da58478f2a28bccc3d42a28db5d82549c7cd83cc9b59d4887680c2",
+      "adaptedSha256": "77771076b23a48679a482eb9759bd16f7ced439fd914e8260dd31b9263f88323"
+    },
+    "radix/collapsible.tsx": {
+      "source": "registry/bases/radix/ui/collapsible.tsx",
+      "sha256": "c6598e5584f4258b5d9fefadbc5ad6a66888ad58729f4b634a0bb2d9c513188b",
+      "adaptedSha256": "c6598e5584f4258b5d9fefadbc5ad6a66888ad58729f4b634a0bb2d9c513188b"
+    },
+    "radix/direction.tsx": {
+      "source": "registry/bases/radix/ui/direction.tsx",
+      "sha256": "84ae2ad658207f0e0f367978e5508cd8027cd00c29c41d3d13db21a708c3d1e6",
+      "adaptedSha256": "84ae2ad658207f0e0f367978e5508cd8027cd00c29c41d3d13db21a708c3d1e6"
+    },
+    "radix/dropdown-menu.tsx": {
+      "source": "registry/bases/radix/ui/dropdown-menu.tsx",
+      "sha256": "f29f9046532435ec183482ad990ac282e5ecfc76af80a6352eaa500a5689c447",
+      "adaptedSha256": "7d0dafde5694ca89a5ac0262d4a62d63b0995407fc09222ee8a46a5e8091209b"
+    },
+    "radix/input-group.tsx": {
+      "source": "registry/bases/radix/ui/input-group.tsx",
+      "sha256": "1dc8da17e81c94abc4d7b84a48ecd519f6b24e3007c0f2cdb3d70bcf5a657e19",
+      "adaptedSha256": "f03488236fe23f32980d47d0bdbe9f89f7ef279b5393c2e42c0d177b517ec564"
+    },
+    "radix/input.tsx": {
+      "source": "registry/bases/radix/ui/input.tsx",
+      "sha256": "df7e02c82048862d719d69c7b101de130e47f2448d3933f76317c3c853b8a01e",
+      "adaptedSha256": "df7e02c82048862d719d69c7b101de130e47f2448d3933f76317c3c853b8a01e"
+    },
+    "radix/message-scroller.tsx": {
+      "source": "registry/bases/radix/ui/message-scroller.tsx",
+      "sha256": "80328938060d2c7dd782f0a8ffa501b391cb4af77564cd682c574de2e5564ac2",
+      "adaptedSha256": "569bc8a5c13aa6fd9298c5c58f62875d6439b8934666b436607364ea6f72bdad"
+    },
+    "radix/message.tsx": {
+      "source": "registry/bases/radix/ui/message.tsx",
+      "sha256": "b57f3c9921ceb0695cb8164c7be8ce229519f2b485b95923bb980a5e39e11c72",
+      "adaptedSha256": "b57f3c9921ceb0695cb8164c7be8ce229519f2b485b95923bb980a5e39e11c72"
+    },
+    "radix/scroll-area.tsx": {
+      "source": "registry/bases/radix/ui/scroll-area.tsx",
+      "sha256": "088a0379c48cf5c856b7e182ebabd7ecc41b0dd298fc9cf794b34f718c765f74",
+      "adaptedSha256": "088a0379c48cf5c856b7e182ebabd7ecc41b0dd298fc9cf794b34f718c765f74"
+    },
+    "radix/separator.tsx": {
+      "source": "registry/bases/radix/ui/separator.tsx",
+      "sha256": "b5b5460e5337c2d5f361c1512001615b2e5eacb38c7449a4418bb9ddb47c4bba",
+      "adaptedSha256": "b5b5460e5337c2d5f361c1512001615b2e5eacb38c7449a4418bb9ddb47c4bba"
+    },
+    "radix/sheet.tsx": {
+      "source": "registry/bases/radix/ui/sheet.tsx",
+      "sha256": "0b90787b36db17aa84acc5c30d9df896eae06581955ed4f1d7ab28986e659aed",
+      "adaptedSha256": "e53d4e777f32ccdaa4f1aec7ae9cab41e927adbab588c5fc4e993cb3d0f0e494"
+    },
+    "radix/sidebar.tsx": {
+      "source": "registry/bases/radix/ui/sidebar.tsx",
+      "sha256": "5a1f82f0165377a9149c85f41dea5893d4e15431f47f822e6c365b4291b105ed",
+      "adaptedSha256": "fedd0dadc6b508d56418358f5b4e9aa6efe04a0c7a17f8c4720d9f72027f58d2"
+    },
+    "radix/skeleton.tsx": {
+      "source": "registry/bases/radix/ui/skeleton.tsx",
+      "sha256": "8fcbad84e494a75484a0975221fb40f54c4a7d68f79cfc305cb158d1feb1badf",
+      "adaptedSha256": "8fcbad84e494a75484a0975221fb40f54c4a7d68f79cfc305cb158d1feb1badf"
+    },
+    "radix/textarea.tsx": {
+      "source": "registry/bases/radix/ui/textarea.tsx",
+      "sha256": "8f527c89dec40a9b372376dc93d2ebb149bfd82f209856d110ead1aabec19c6a",
+      "adaptedSha256": "8f527c89dec40a9b372376dc93d2ebb149bfd82f209856d110ead1aabec19c6a"
+    },
+    "radix/tooltip.tsx": {
+      "source": "registry/bases/radix/ui/tooltip.tsx",
+      "sha256": "25b33cd3bfd6046067259e476c3b5137b9f018c394d6ea51926accb8d6d5134a",
+      "adaptedSha256": "25b33cd3bfd6046067259e476c3b5137b9f018c394d6ea51926accb8d6d5134a"
+    },
+    "radix/trace.tsx": {
+      "source": "registry/bases/radix/ui/trace.tsx",
+      "sha256": "e0bdf9c08f78fc785b15ff76826009c48ddbfcb3414ad4cd3db5169e0bba086d",
+      "adaptedSha256": "722006afa2f2dd88e82b6e22a586b2811441012e426814119e48c9576fae3423"
+    },
+    "style-registry.css": {
+      "source": "app/style-registry.css",
+      "sha256": "405358059b4985720ca897cd7d6dd2b596a96e57760122f34edff0b89216bc85",
+      "adaptedSha256": "589d1b0f0f255cd2150d3727731156101be13dd5aa8be4d22e189634a628a6db"
+    },
+    "styles/style-luma.css": {
+      "source": "registry/styles/style-luma.css",
+      "sha256": "35c0578be1623049da1f11729ae43a2a7884dcc17b948fc72dcdf4f1be3c0484",
+      "adaptedSha256": "25efdfefcdbcbdfed8c36100e5890efb07fafa38d528e01592e83653ddccff78"
+    },
+    "styles/style-lyra.css": {
+      "source": "registry/styles/style-lyra.css",
+      "sha256": "be24110aafbd07d794ced58f15512c640ab3dfa5733beb850e83f968457a9b52",
+      "adaptedSha256": "dd87d4be9a7fa32459f5ee22ae56018636c9cb77cd5e627c24d764e329e4420c"
+    },
+    "styles/style-maia.css": {
+      "source": "registry/styles/style-maia.css",
+      "sha256": "8d518bcb26fad2904e7048e7be4c708814168c5e4ee29f1228945f91efd694a1",
+      "adaptedSha256": "99321a8649eb028feaad5f4457fd7e864e211ff9d67a7e96bae841c455506f79"
+    },
+    "styles/style-mira.css": {
+      "source": "registry/styles/style-mira.css",
+      "sha256": "cdde6d38ee43c94cb6785672455adeea7fe195cc57772dc52b41acb5a1789732",
+      "adaptedSha256": "4f88a3ed0d354992b026799451fdc52fb277bd544da49bce5bf0bfdaeed24b0b"
+    },
+    "styles/style-nova.css": {
+      "source": "registry/styles/style-nova.css",
+      "sha256": "fd9803ec398290c306b377a46a769cad0c7ff024bf6a626993c113cacc20f16e",
+      "adaptedSha256": "5b0126edb2d3c75cae8289417025be752e61dabbddf7b2eab4d0ef61ec555ff9"
+    },
+    "styles/style-rhea.css": {
+      "source": "registry/styles/style-rhea.css",
+      "sha256": "bac4eff75a0e21d9dd90ce40634937f54730471d8f7fa50ca67b317892cf908f",
+      "adaptedSha256": "1aece96749eb3d25edafa02d08210d0b71ad60a4ee7db43d6a432888d589719f"
+    },
+    "styles/style-sera.css": {
+      "source": "registry/styles/style-sera.css",
+      "sha256": "c26380d5023bb63d25c03c94cae223e0a4f133f6bae0a63f77b8e4ac17483ba0",
+      "adaptedSha256": "0aa3ce19d4ec9d6d840a514a0362dd4129821c5ef7703ce4cf0801b4a3926662"
+    },
+    "styles/style-vega.css": {
+      "source": "registry/styles/style-vega.css",
+      "sha256": "10fa07bd61b429ae2c14c572ba9975f6e991d68a04f8fec7e354a062597e0d4e",
+      "adaptedSha256": "51041983555d5c8b6a0b7ffc35d473657088a90cfbd709f41412e72d1d7b4c18"
+    }
   }
 }

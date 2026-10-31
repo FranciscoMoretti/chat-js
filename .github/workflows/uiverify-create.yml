@@ -5,7 +5,12 @@ on:
     branches: [main]
     paths:
       - "apps/site/**"
-      - "apps/chat/components/part/**"
+      - "apps/chat/components/**"
+      - "apps/chat/hooks/**"
+      - "apps/chat/lib/**"
+      - "apps/chat/package.json"
+      - "packages/registry/**"
+      - "packages/chat-visual-tests/contracts/**"
       - "packages/thread/**"
       - "bun.lock"
       - "package.json"
@@ -13,7 +18,12 @@ on:
   pull_request:
     paths:
       - "apps/site/**"
-      - "apps/chat/components/part/**"
+      - "apps/chat/components/**"
+      - "apps/chat/hooks/**"
+      - "apps/chat/lib/**"
+      - "apps/chat/package.json"
+      - "packages/registry/**"
+      - "packages/chat-visual-tests/contracts/**"
       - "packages/thread/**"
       - "bun.lock"
       - "package.json"
@@ -29,7 +39,7 @@ concurrency:
 jobs:
   uiverify-create:
     name: uiverify-create
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     env:
       CREATE_BASE_URL: http://localhost:3000
@@ -46,6 +56,8 @@ jobs:
         with:
           bun-version: 1.3.1
       - run: bun install --frozen-lockfile
+      - name: Verify pinned upstream preview sources
+        run: bun apps/site/scripts/generate-create-preview.ts --check
       - run: node_modules/.bin/playwright install --with-deps chromium
       - run: bun --filter @chat-js/thread build
       - name: Capture Create with both primitive libraries

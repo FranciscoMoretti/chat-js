@@ -21,7 +21,7 @@ const definitions = await vi.hoisted(async () => {
     }),
   };
 });
-vi.mock("../../composition/generated/tools", () => ({ tools: definitions }));
+vi.mock("../../integrations/tools", () => ({ tools: definitions }));
 
 vi.mock("./turn-tools", () => ({
   filterEveTools: <Tools>(tools: Tools): Tools => tools,
@@ -38,7 +38,18 @@ test("installed and custom definitions retain their native policies and concrete
       channel: {},
       messages: [],
       model: null,
-      session: { auth: { current: null, initiator: null }, id: "test" },
+      session: {
+        auth: {
+          current: null,
+          initiator: {
+            authenticator: "chatjs-gateway",
+            attributes: {},
+            principalId: "owner",
+            principalType: "user",
+          },
+        },
+        id: "test",
+      },
     }
   );
   expect(Object.values(result)[0]).toBe(definitions.customEcho);
@@ -77,7 +88,18 @@ test("steps retain only current image inputs, not the conversation history", asy
     channel: {},
     messages,
     model: null,
-    session: { auth: { current: null, initiator: null }, id: "test" },
+    session: {
+      auth: {
+        current: null,
+        initiator: {
+          authenticator: "chatjs-gateway",
+          attributes: {},
+          principalId: "owner",
+          principalType: "user",
+        },
+      },
+      id: "test",
+    },
   };
   await resolve({}, context);
   const initial = state.update.mock.lastCall?.[0]();
@@ -111,4 +133,30 @@ test("steps retain only current image inputs, not the conversation history", asy
     attachments: [],
     lastGeneratedImage: next?.lastGeneratedImage,
   });
+});
+
+test.each([
+  null,
+  {
+    authenticator: "removed-profile",
+    attributes: {},
+    principalId: "visitor",
+    principalType: "user",
+  },
+])("unknown identities receive no installed tools: %o", async (initiator) => {
+  const resolve = installed.events["step.started"];
+  if (!resolve) {
+    throw new Error("Missing tool resolver");
+  }
+  expect(
+    await resolve(
+      {},
+      {
+        channel: {},
+        messages: [],
+        model: null,
+        session: { auth: { current: null, initiator }, id: "session" },
+      }
+    )
+  ).toEqual({});
 });

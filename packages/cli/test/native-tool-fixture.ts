@@ -69,8 +69,21 @@ export const PaidCounterRenderer = defineToolRenderer({
 const verifyNativeToolRuntime = async (cwd: string) => {
   const fixture = path.join(cwd, "native-runtime");
   await mkdir(path.join(fixture, "agent/tools"), { recursive: true });
+  await mkdir(path.join(fixture, "agent/hooks"), { recursive: true });
+  await mkdir(path.join(fixture, "agent/channels"), { recursive: true });
   await mkdir(path.join(fixture, "evals"), { recursive: true });
   await Promise.all([
+    writeFile(
+      path.join(fixture, "agent/hooks/tool-selection.ts"),
+      'export { default } from "../../../agent/hooks/tool-selection";\n'
+    ),
+    writeFile(
+      path.join(fixture, "agent/channels/eve.ts"),
+      `import { eveChannel } from "eve/channels/eve";
+export default eveChannel({
+  auth: () => ({ principalId: "fixture", principalType: "user", authenticator: "chatjs-gateway", attributes: {} }),
+});\n`
+    ),
     writeFile(
       path.join(fixture, "agent/instructions.md"),
       "Execute the requested tool once and report its result.\n"

@@ -3,7 +3,7 @@ import type { InstalledTools } from "./installed-tools";
 import type { ToolUIPart } from "ai";
 
 import { isValidatedToolRenderer } from "./define-tool-renderer";
-import { ui } from "@/composition/generated/ui";
+import { ui } from "@/integrations/tool-ui";
 
 type InstalledToolName = keyof InstalledTools;
 

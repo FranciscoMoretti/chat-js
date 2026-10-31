@@ -13,7 +13,7 @@ const mocks = vi.hoisted(() => ({
   remove: vi.fn(),
   resolve: vi.fn(),
 }));
-vi.mock("@/composition/generated/installed-tools", () => ({
+vi.mock("@/integrations/tool-catalog", () => ({
   installedDocumentKinds: mocks.kinds,
 }));
 vi.mock("../db/eve-documents", () => ({
@@ -34,7 +34,7 @@ const identity = {
   getToken: () => {
     throw new Error("Unexpected receipt credential access");
   },
-  authenticator: "test",
+  authenticator: "chatjs-gateway",
   principalId: "owner",
   principalType: "user",
 };
@@ -172,3 +172,23 @@ it("authorizes native deletion responses from the current owner principal only",
   ).toMatchObject({ status: "rejected" });
   expect(mocks.remove).not.toHaveBeenCalled();
 });
+
+it.each(["chatjs-disposable-guest", "unknown-plugin"])(
+  "rejects %s even when reconnect authentication is an account",
+  async (authenticator) => {
+    await expect(
+      requestDocumentDeletion(input, {
+        ...context,
+        session: {
+          ...context.session,
+          auth: {
+            current: identity,
+            initiator: { ...identity, authenticator },
+          },
+        },
+      })
+    ).rejects.toThrow("Document deletion is unavailable");
+    expect(mocks.resolve).not.toHaveBeenCalled();
+    expect(mocks.read).not.toHaveBeenCalled();
+  }
+);

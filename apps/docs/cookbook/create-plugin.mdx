@@ -15,11 +15,32 @@ In this repository, keep a plugin's installation manifest in `packages/registry/
 
 `server-plugin.ts` and `client-plugin.ts` use distinct names to avoid shadcn import resolution collisions with host modules such as `lib/db/client.ts` and `trpc/server.ts`.
 
-## 2. Define the contributions
+## 2. Define the integrations
 
-A server factory returns an object satisfying `ChatPlugin` from `@/lib/plugin-contracts`. It can contribute typed tRPC `routers` and an `instrumentation` registration. A client factory satisfies `ChatClientPlugin` and can contribute `composerControls`, `settingsItems`, a `layout` component, an `uploads` integration, and `chat` UI contributions. Core keeps explicit optional fields such as `projectId`; plugins own their validation against storage and lifecycle behavior. A separate runtime-safe `chat.ts` entrypoint provides contributions that participate in transactional creation, history, navigation, and deletion. See [Plugin integration points](../reference/plugin-api) for signatures and lifecycle guarantees. Use `satisfies` to retain the specific router and contribution types.
+A server factory returns an object satisfying `ChatPlugin` from `@/lib/plugin-contracts`. It can contribute typed tRPC `routers` and an `instrumentation` registration. Keep the inferred router types with `satisfies`.
 
-The built-in MCP factories are `mcp()` and `mcpClient()`. Its server entrypoint registers the `mcp` router. Its client entrypoint supplies the connector control and settings item. Keep credentials, database imports, and server implementations outside the client factory's import graph.
+A client entry exports a module-scope `definePlugin` declaration. Bind components to typed slots:
+
+```tsx
+"use client";
+
+import { ComposerExtensions, SettingsLinks } from "@/components/chat-slots";
+import { definePlugin, slot } from "@/lib/ui-slots";
+import { ConnectorsControl } from "./composer";
+import { ConnectorsSettingsLink } from "./settings";
+
+export const mcpClient = definePlugin({
+  id: "mcp",
+  slots: [
+    slot(ComposerExtensions, ConnectorsControl),
+    slot(SettingsLinks, ConnectorsSettingsLink),
+  ],
+});
+```
+
+The built-in MCP server factory is `mcp()`. Its client declaration is `mcpClient`, without a factory call. Keep credentials, database imports, and server implementations outside its import graph. Edit the bound components directly, or register normal React wrappers. Dynamic imports and Suspense can defer expensive components.
+
+Core keeps explicit optional fields such as `projectId`. Plugins validate them against their own storage and lifecycle behavior. A separate runtime-safe `chat.ts` entrypoint participates in transactional creation, history, navigation, and deletion. See [Plugin integration points](../reference/plugin-api) for signatures and lifecycle guarantees.
 
 ## 3. Declare the installation
 
@@ -39,16 +60,16 @@ For example, MCP declares these contributions in `chatjs.json`:
 }
 ```
 
-The full manifest also declares `files`, `databaseSchemas`, `envRequirements`, and `environmentValidation`. The registry build writes the descriptor beside the installed implementation. Router keys must be unique and cannot replace core routers. Composer and settings IDs must be unique across plugins. The composer IDs `canvas`, `web-search`, `deep-research`, `image`, and `video`, and settings IDs `general` and `models`, are reserved for the host. Only one plugin can supply uploads.
+The full manifest also declares `files`, `databaseSchemas`, `envRequirements`, and `environmentValidation`. The registry build writes the descriptor beside the installed implementation. Router keys must be unique and cannot replace core routers. Composer and settings IDs must be unique across plugins. The composer IDs `canvas`, `web-search`, `deep-research`, `image`, and `video`, and settings ID `general`, are reserved for the host. Only one plugin can supply uploads.
 
 Use `registryDependencies` to install another item and `requiresPlugins` to require its plugin ID in the installed selection. Declare `requiresStorage: true` for plugins requiring durable file storage.
 
-Database schema paths must belong to `plugins/<id>/`. Sync composes them for Drizzle through `composition/generated/installed-database.ts`. Adding or syncing a plugin preserves migration history and does not apply SQL. Environment readers belong to the plugin and remain separate from client-visible configuration.
+Database schema paths must belong to `plugins/<id>/`. Sync composes them for Drizzle through `chatjs/generated/installed-database.ts`. Adding or syncing a plugin preserves migration history and does not apply SQL. Environment readers belong to the plugin and remain separate from client-visible configuration.
 
 ## 4. Install and verify
 
 Run `chat-js sync` after a direct shadcn installation. Sync discovers plugin directories, validates descriptors and required source, checks contribution collisions, and then generates registrations. It reads metadata without importing server factories or requiring their runtime credentials.
 
-`chat-js add` also inserts declared composer and settings contributions into the editable application lists. Reorder or customize those lists as needed. If you replace a literal array with computed composition, add the contribution yourself and run sync.
+`chat-js add` and `sync` update generated installed-plugin lists. They preserve plugin component edits and application JSX. Move slots or add local components in the layout to change placement. Within a slot, contributions follow the installed list and declaration order.
 
-Verify both an app without the plugin and an app with it installed. Exercise the plugin's routes and UI, and check that client entrypoints cannot reach server-only code. In this repository, edit canonical source, run `bun demo:sync`, and commit the generated reference copies and baseline with it.
+Verify both an app without the plugin and an app with it installed. Exercise the plugin's routes and UI, and check that client entrypoints cannot reach server-only code. In this repository, edit canonical source, run `bun demo:sync`, and commit the generated reference copies and mirror manifest with it.

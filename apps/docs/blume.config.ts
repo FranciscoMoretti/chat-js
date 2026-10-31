@@ -147,6 +147,8 @@ export default defineConfig({
             "/plugins/model-preferences",
             "/plugins/ai-titles",
             "/plugins/credits",
+            "/plugins/guest-chat",
+            "/plugins/desktop",
             "/plugins/sharing",
             "/plugins/followup-suggestions",
             "/plugins/mcp",
@@ -179,7 +181,13 @@ export default defineConfig({
           label: "Platforms",
         },
         {
-          items: ["/cli", "/cli/create", "/cli/add", "/cli/config"],
+          items: [
+            "/cli",
+            "/cli/create",
+            "/cli/add",
+            "/cli/config",
+            "/cli/status",
+          ],
           label: "CLI",
         },
         {
@@ -200,6 +208,7 @@ export default defineConfig({
           items: [
             "/cookbook",
             "/cookbook/create-plugin",
+            "/cookbook/customize-integrations",
             "/cookbook/resumable-streams",
             "/cookbook/stop-resumable-streams",
             "/cookbook/tool-part",

@@ -83,8 +83,8 @@ const removeTemplateReferences = async (destination: string): Promise<void> => {
 };
 
 const rewriteTemplateStyles = async (destination: string): Promise<void> => {
-  // Replace monorepo-aware @source paths with single-app path in globals.css
-  const globalsCssPath = join(destination, "app", "globals.css");
+  // Replace monorepo-aware @source paths with single-app path in chatjs.css
+  const globalsCssPath = join(destination, "app", "chatjs.css");
   let globalsCss = await readFile(globalsCssPath, "utf-8");
   globalsCss = globalsCss.replace(
     /@source "\.\.\/node_modules\/streamdown\/dist\/\*\.js";\n@source "\.\.\/\.\.\/\.\.\/node_modules\/streamdown\/dist\/\*\.js";/u,
@@ -141,14 +141,17 @@ const applyTemplateTransforms = async (destination: string): Promise<void> => {
 const applyElectronTemplateTransforms = async (
   destination: string
 ): Promise<void> => {
-  // Rewrite the monorepo alias and ambient declaration paths for the single-app layout.
-  const tsconfigPath = join(destination, "tsconfig.json");
-  let tsconfig = await readFile(tsconfigPath, "utf-8");
-  tsconfig = tsconfig.replace(/"\.\.\/chat\/\*"/u, '"../*"');
-  tsconfig = tsconfig
-    .replace('"../chat/next-env.d.ts"', '"../next-env.d.ts"')
-    .replace('"../chat/electron.d.ts"', '"../electron.d.ts"');
-  await writeFile(tsconfigPath, tsconfig);
+  const brandingScript = join(destination, "scripts/write-branding.ts");
+  const source = await readFile(brandingScript, "utf-8");
+  await writeFile(
+    brandingScript,
+    source
+      .replace('"../../chat/lib/config"', '"../../lib/config"')
+      .replace(
+        '"../../chat/plugins/desktop/protocol"',
+        '"../../plugins/desktop/protocol"'
+      )
+  );
 
   // The package.json transform replaces the hardcoded package name and repository.
   const packageJsonPath = join(destination, "package.json");

@@ -10,8 +10,7 @@ import { nextCookies } from "better-auth/next-js";
 import { config } from "./config";
 import { db } from "./db/client";
 import { schema } from "./db/schema";
-import { ELECTRON_TRUSTED_ORIGINS } from "./electron-auth";
-import { electronAuthPlugin } from "./electron-auth-plugin";
+import { authentication } from "@/integrations/authentication";
 import { getBaseUrl } from "./url";
 
 let baseUrl = env.APP_URL;
@@ -31,11 +30,7 @@ export const auth = betterAuth({
     provider: "pg",
     schema,
   }),
-  plugins: [
-    lastLoginMethod(),
-    nextCookies(),
-    ...(config.desktopApp.enabled ? [electronAuthPlugin] : []),
-  ],
+  plugins: [lastLoginMethod(), nextCookies(), ...authentication.plugins],
   secret: env.AUTH_SECRET,
 
   ...authSessionOptions({
@@ -87,7 +82,7 @@ export const auth = betterAuth({
     // Vercel URL for preview branches
     ...(isNonEmptyString(env.VERCEL_URL) ? [`https://${env.VERCEL_URL}`] : []),
     config.appUrl,
-    ...(config.desktopApp.enabled ? ELECTRON_TRUSTED_ORIGINS : []),
+    ...authentication.trustedOrigins,
   ],
 });
 

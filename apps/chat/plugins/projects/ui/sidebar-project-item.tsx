@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import { SidebarLink } from "@/components/navigation-links";
+import { SidebarActionMenu } from "@/components/sidebar-menus";
+import { useState } from "react";
 import { DeleteProjectDialog } from "@/plugins/projects/ui/delete-project-dialog";
-
-import { InternalLink } from "@/components/internal-link";
 
 import { MoreHorizontal } from "lucide-react";
 import type { ProjectDetailsData } from "@/plugins/projects/ui/project-details-dialog";
@@ -12,13 +12,8 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuGroup,
-  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  SidebarMenuAction,
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from "@/components/ui/sidebar";
+import { SidebarMenuItem } from "@/components/ui/sidebar";
 import {
   getProjectColorName,
   getProjectIconName,
@@ -63,35 +58,24 @@ export const SidebarProjectItem = ({
   };
   return (
     <SidebarMenuItem>
-      <SidebarMenuButton
+      <SidebarLink
         className="cursor-pointer"
         isActive={isActive}
-        render={
-          <InternalLink
-            href={projectHref}
-            onNavigate={() => {
-              setOpenMobile(false);
-            }}
-            prefetch={false}
-          >
-            <ProjectIcon color={color} icon={icon} size={16} />
-            <span>{project.name}</span>
-          </InternalLink>
-        }
-      />
+        href={projectHref}
+        onNavigate={() => {
+          setOpenMobile(false);
+        }}
+        prefetch={false}
+      >
+        <ProjectIcon color={color} icon={icon} size={16} />
+        <span>{project.name}</span>
+      </SidebarLink>
 
       <DropdownMenu modal>
-        <DropdownMenuTrigger
-          render={
-            <SidebarMenuAction
-              className="data-open:bg-sidebar-accent data-open:text-sidebar-accent-foreground mr-0.5"
-              showOnHover={!isActive}
-            />
-          }
-        >
+        <SidebarActionMenu showOnHover={!isActive}>
           <MoreHorizontal size={16} />
           <span className="sr-only">More</span>
-        </DropdownMenuTrigger>
+        </SidebarActionMenu>
         <DropdownMenuContent align="end" side="bottom">
           <DropdownMenuGroup>
             <ProjectMenuItems

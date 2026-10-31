@@ -1,4 +1,4 @@
-import { isGuestSession } from "../../lib/eve/session-identity";
+import { isAccountSession } from "../../lib/eve/session-identity";
 import { defineHook } from "eve/hooks";
 
 import { ingestEveActivity } from "../../lib/eve/activity";
@@ -19,7 +19,7 @@ export default defineHook({
         };
       }
     ) => {
-      if (isGuestSession(context.session)) {
+      if (!isAccountSession(context.session)) {
         return;
       }
       const ownerId = context.session.auth.initiator?.principalId;

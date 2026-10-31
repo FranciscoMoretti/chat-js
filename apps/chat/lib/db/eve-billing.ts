@@ -1,4 +1,4 @@
-import { usageBilling } from "@/composition/generated/installed-billing";
+import { billing } from "@/integrations/billing";
 import { and, eq, isNotNull, isNull, sql } from "drizzle-orm";
 import { EveUsageReconciliationBusyError } from "@/lib/eve/usage-reconciliation-busy";
 import { databaseConnection } from "./connection";
@@ -9,7 +9,7 @@ import postgres from "postgres";
 import { z } from "zod";
 import { isDeepStrictEqual } from "node:util";
 
-import { eveConversation, eveGuest, eveUsage, user } from "./schema";
+import { eveConversation, eveUsage, user } from "./schema";
 
 const ZERO_CENTS = 0;
 const MINIMUM_COST_USD = 0;
@@ -112,7 +112,7 @@ const debitTurnUsage = async (
     readonly eventId: string;
   }
 ): Promise<void> => {
-  if (!usageBilling) {
+  if (!billing.debit) {
     return;
   }
   // Sum in Postgres decimal arithmetic; round once per turn, not once per model step.
@@ -131,7 +131,7 @@ const debitTurnUsage = async (
     );
   const delta = (totals?.due ?? ZERO_CENTS) - (totals?.paid ?? ZERO_CENTS);
   if (delta > ZERO_CENTS) {
-    await usageBilling.debit(tx, { ownerId: input.ownerId, cents: delta });
+    await billing.debit(tx, { ownerId: input.ownerId, cents: delta });
     await tx
       .update(eveUsage)
       .set({ chargedCents: sql`${eveUsage.chargedCents} + ${delta}` })
@@ -145,7 +145,7 @@ const debitTurnUsage = async (
  * @param {string} input.eventId Durable event identity used to deduplicate concurrent hook and replay ingestion.
  * @param {string} input.sessionId Native session whose turn cost is recorded.
  * @param {string} input.turnId Native turn whose decimal costs are rounded and charged together.
- * @param {string} input.ownerId Registered or guest owner whose identity scopes the record.
+ * @param {string} input.ownerId Registered owner whose identity scopes the record.
  * @param {number | undefined} input.costUsd Optional nonnegative provider cost, preserved as decimal evidence.
  * @param {string | undefined} input.generationId Optional provider generation identifier used for later reconciliation.
  * @returns {Promise<boolean>} Whether priced evidence is durably available after idempotent ingestion and any registered-user debit.
@@ -196,23 +196,15 @@ const recordEveUsage = async (input: {
     return true;
   }
   return await db.transaction(async (tx: UsageTransaction) => {
-    const [guest] = await tx
-      .select({ ownerId: eveGuest.ownerId })
-      .from(eveGuest)
-      .where(eq(eveGuest.ownerId, input.ownerId))
+    // Receipt deduplication must remain serialized even with no billing plugin.
+    const [owner] = await tx
+      .select({ id: user.id })
+      .from(user)
+      .where(eq(user.id, input.ownerId))
       .for("update");
-    const isGuest = Boolean(guest);
-    if (!isGuest) {
-      // Receipt deduplication must remain serialized even with no billing plugin.
-      const [owner] = await tx
-        .select({ id: user.id })
-        .from(user)
-        .where(eq(user.id, input.ownerId))
-        .for("update");
-      const hasOwner = Boolean(owner);
-      if (!hasOwner) {
-        throw new Error("Usage requires a registered owner or guest.");
-      }
+    const hasOwner = Boolean(owner);
+    if (!hasOwner) {
+      throw new Error("Usage requires a registered owner.");
     }
     const costUsd =
       input.costUsd === undefined
@@ -257,10 +249,7 @@ const recordEveUsage = async (input: {
     } else {
       await tx.insert(eveUsage).values({ ...input, costUsd });
     }
-    // Keep guest provider costs as evidence without creating a monetary balance.
-    if (!isGuest) {
-      await debitTurnUsage(tx, input);
-    }
+    await debitTurnUsage(tx, input);
     const recordedCost = costUsd ?? existing?.costUsd;
     return recordedCost !== null && recordedCost !== undefined;
   });

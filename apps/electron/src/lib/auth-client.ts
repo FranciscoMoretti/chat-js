@@ -1,9 +1,10 @@
-import { APP_SCHEME, APP_URL } from "../config";
 import {
+  APP_SCHEME,
+  APP_URL,
   ELECTRON_AUTH_CALLBACK_PATH,
   ELECTRON_AUTH_CLIENT_ID,
   ELECTRON_AUTH_COOKIE_PREFIX,
-} from "@/lib/electron-auth";
+} from "../config";
 import { createAuthClient } from "better-auth/client";
 import { electronClient } from "@better-auth/electron/client";
 import { safeStorage } from "electron";

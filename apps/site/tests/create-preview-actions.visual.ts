@@ -30,25 +30,21 @@ try {
     .getByRole("heading", { name: "A small start. A great experience." })
     .waitFor();
   await frame
-    .getByLabel("Preview message", { exact: true })
+    .getByLabel("Message", { exact: true })
     .fill("An unfinished draft");
   await frame.getByRole("button", { name: "New chat", exact: true }).click();
   await expect(
-    frame.getByRole("heading", { name: "What can we build together?" })
+    frame.getByRole("heading", { name: "How can I help you today?" })
   ).toBeVisible();
-  await expect(
-    frame.getByLabel("Preview message", { exact: true })
-  ).toHaveValue("");
+  await expect(frame.getByLabel("Message", { exact: true })).toHaveText("");
   await expect
     .poll(() => new URL(page.url()).searchParams.get("item"))
     .toBe("preview");
-  await frame
-    .getByLabel("Preview message", { exact: true })
-    .fill("A local message");
-  await frame.getByRole("button", { name: "Send preview message" }).click();
+  await frame.getByLabel("Message", { exact: true }).fill("A local message");
+  await frame.getByRole("button", { name: "Send" }).click();
   await frame.getByText("A local message", { exact: true }).waitFor();
   await frame
-    .getByLabel("Preview message", { exact: true })
+    .getByLabel("Message", { exact: true })
     .fill("Another unfinished draft");
   await frame.getByRole("button", { name: "Attach sample file" }).click();
   await frame
@@ -56,11 +52,9 @@ try {
     .waitFor();
   await frame.getByRole("button", { name: "New chat", exact: true }).click();
   await expect(
-    frame.getByRole("heading", { name: "What can we build together?" })
+    frame.getByRole("heading", { name: "How can I help you today?" })
   ).toBeVisible();
-  await expect(
-    frame.getByLabel("Preview message", { exact: true })
-  ).toHaveValue("");
+  await expect(frame.getByLabel("Message", { exact: true })).toHaveText("");
   await expect(frame.getByText("A local message", { exact: true })).toHaveCount(
     0
   );

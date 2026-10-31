@@ -253,3 +253,32 @@ test("unsupported effects and unsafe targets fail before installation, and failu
     /Invalid project path/u
   );
 }, 30_000);
+
+test("source-only installation excludes only explicitly verified prerequisites", async () => {
+  const items = [{ ...catalog[0], registryDependencies: ["button"] }];
+  await rejects(
+    withRegistryProject(
+      { namespace: "@notes", items, files },
+      async (project) => {
+        await project.install(["@notes/schema"]);
+      }
+    ),
+    /requires the local/u
+  );
+  const result = await withRegistryProject(
+    {
+      namespace: "@notes",
+      items,
+      files,
+      preinstalledRegistryDependencies: ["button"],
+    },
+    async (project) => {
+      await project.install(["@notes/schema"]);
+      return await project.readFiles();
+    }
+  );
+  expect(result.result.has("src/lib/schema.ts")).toBe(true);
+  expect(
+    [...result.result.keys()].some((file) => file.endsWith("button.tsx"))
+  ).toBe(false);
+});

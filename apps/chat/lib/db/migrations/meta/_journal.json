@@ -155,6 +155,13 @@
       "when": 1792944480400,
       "tag": "0021_glorious_chameleon",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1793206594637,
+      "tag": "0022_hard_photon",
+      "breakpoints": true
     }
   ]
 }

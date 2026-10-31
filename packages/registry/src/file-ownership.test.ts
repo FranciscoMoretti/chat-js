@@ -94,7 +94,7 @@ test("selecting a provider does not claim alternative providers", () => {
       {
         name: "chosen-gateway",
         type: "registry:item",
-        registryDependencies: ["@chatjs/shared"],
+        registryDependencies: ["dropdown-menu", "@chatjs/shared"],
       },
       { name: "other-gateway", type: "registry:item" },
       {

@@ -1,4 +1,10 @@
-import { APP_NAME, APP_SCHEME, APP_URL, WINDOW_DEFAULTS } from "./config";
+import {
+  APP_NAME,
+  APP_SCHEME,
+  APP_URL,
+  WINDOW_DEFAULTS,
+  ELECTRON_AUTH_COOKIE_PREFIX,
+} from "./config";
 import {
   BrowserWindow,
   Menu,
@@ -329,7 +335,7 @@ const syncAuthSessionCookies = async (
   await Promise.all(
     existingCookies
       .filter((cookie: Readonly<Electron.Cookie>): boolean =>
-        isBetterAuthCookieName(cookie.name)
+        isBetterAuthCookieName(cookie.name, ELECTRON_AUTH_COOKIE_PREFIX)
       )
       .map(async (cookie: Readonly<Electron.Cookie>): Promise<void> => {
         await targetSession.cookies.remove(url.origin, cookie.name);
@@ -357,7 +363,7 @@ const syncAuthSessionCookies = async (
     })
     .filter((cookie) => cookie !== null)
     .filter((cookie: Readonly<{ name: string; value: string }>): boolean =>
-      isBetterAuthCookieName(cookie.name)
+      isBetterAuthCookieName(cookie.name, ELECTRON_AUTH_COOKIE_PREFIX)
     );
 
   await Promise.all(

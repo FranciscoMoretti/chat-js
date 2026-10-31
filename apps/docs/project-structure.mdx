@@ -29,15 +29,20 @@ description: "How ChatJS is organized"
 │
 ├── plugins/<id>/           # Plugin implementation, UI, schema, and entrypoints
 ├── tools/chatjs/<id>/       # Installed tools and renderers
-├── composition/
-│   ├── generated/          # Installer-owned typed registrations
-│   └── custom/             # Editable custom tools and renderers
+├── chatjs/                 # CLI-managed installation files
+│   ├── generated/          # Generated wiring; do not edit
+│   └── installed-source.json # Recorded installed-file hashes
+├── integrations/           # App-owned domain composition
 ├── agent/                  # EVE agent channels, hooks, and tools
 ├── trpc/                   # tRPC routers and procedures
 ├── hooks/                  # React hooks
 ├── providers/              # React context providers
 └── scripts/                # Build and dev scripts
 ```
+
+App-owned files are freely editable and preserved by add/remove/sync. Installed plugin source is editable too, but local changes are protected during replacement and removal. Some framework files under `app/` and `agent/` belong to plugins: their comments identify the owner, and `plugins/<id>/chatjs.json` records the complete file list.
+
+Run [`chat-js status`](./cli/status) to inspect source states, framework-file ownership, and removal dependencies. Keep installation receipts in version control. See [Customize plugin integrations](./cookbook/customize-integrations) for app-owned wrappers and local behavior.
 
 ## Key Files
 

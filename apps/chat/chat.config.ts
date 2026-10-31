@@ -1,20 +1,6 @@
 import { defineConfig } from "@/lib/config-schema";
 
-const isProd = process.env.NODE_ENV === "production";
-const PRODUCTION_REQUESTS_PER_MINUTE = 5;
-const DEVELOPMENT_REQUESTS_PER_MINUTE = 60;
-const PRODUCTION_REQUESTS_PER_MONTH = 10;
-const DEVELOPMENT_REQUESTS_PER_MONTH = 1000;
 const MAX_ATTACHMENT_BYTES = 1_048_576;
-
-const anonymousRateLimit = {
-  requestsPerMinute: isProd
-    ? PRODUCTION_REQUESTS_PER_MINUTE
-    : DEVELOPMENT_REQUESTS_PER_MINUTE,
-  requestsPerMonth: isProd
-    ? PRODUCTION_REQUESTS_PER_MONTH
-    : DEVELOPMENT_REQUESTS_PER_MONTH,
-};
 
 /**
  * ChatJS Configuration
@@ -24,7 +10,6 @@ const anonymousRateLimit = {
  */
 const config = defineConfig({
   ai: {
-    anonymousModels: ["openai/gpt-5-nano"],
     disabledModels: [],
     gateway: "vercel",
     providerOrder: [
@@ -74,10 +59,6 @@ const config = defineConfig({
       chatImageCompatible: "openai/gpt-4o-mini",
     },
   },
-  anonymous: {
-    availableTools: [],
-    rateLimit: anonymousRateLimit,
-  },
   appDescription:
     "Build and deploy AI chat applications in minutes. ChatJS provides authentication, streaming, tool calling, and all the features you need for production-ready AI conversations.",
   appName: "ChatJS",
@@ -101,9 +82,6 @@ const config = defineConfig({
     google: true,
     // Requires VERCEL_APP_CLIENT_ID + VERCEL_APP_CLIENT_SECRET
     vercel: true,
-  },
-  desktopApp: {
-    enabled: true,
   },
   features: {
     parallelResponses: true,

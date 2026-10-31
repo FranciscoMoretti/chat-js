@@ -30,11 +30,6 @@ ai: {
     "anthropic/claude-sonnet-4.5",
     // ...
   ],
-  anonymousModels: [
-    "google/gemini-2.5-flash-lite",
-    "openai/gpt-5-mini",
-    // ...
-  ],
   workflows: {
     chat: "openai/gpt-5-nano",
     title: "google/gemini-2.5-flash-lite",
@@ -55,7 +50,6 @@ ai: {
 | `ai.providerOrder`   | Provider sort order in the model selector       |
 | `ai.disabledModels`  | Models hidden from all users                    |
 | `ai.curatedDefaults` | Models enabled by default for new users         |
-| `ai.anonymousModels` | Models available to anonymous users             |
 | `ai.workflows.*`     | Default models for shared application workflows |
 | `ai.tools.*`         | Installed tool-specific model defaults          |
 
@@ -84,11 +78,10 @@ Model visibility is determined through a pipeline:
 2. **Apply defaults** (`ai.curatedDefaults` plus any new API models not in `models.generated.ts`)
 3. **Apply user overrides** when the [Model Preferences plugin](../plugins/model-preferences) is installed
 
-### Anonymous Users
+### Guest Users
 
-1. **Remove** disabled models
-2. **Filter** to `ai.anonymousModels` only
+[Guest Chat](../plugins/guest-chat) owns its fixed model and locked picker. Guests do not create multi-model comparisons.
 
 ## User Settings
 
-Install [Model Preferences](../plugins/model-preferences) to let users toggle individual models at `/settings/models`. Without the plugin, your picker uses the configured defaults and newly discovered API models. Model discovery, capability checks, and anonymous restrictions remain in core.
+Install [Model Preferences](../plugins/model-preferences) to let users toggle individual models at `/settings/models`. Without the plugin, your picker uses the configured defaults and newly discovered API models. Model discovery and capability checks remain in core. Guest Chat owns visitor policy.

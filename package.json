@@ -56,7 +56,7 @@
     "test:visual:create": "dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env site -- bun apps/site/tests/create.visual.ts && dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env site -- bun apps/site/tests/create-preview-actions.visual.ts && dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env site -- bun apps/site/tests/create-lifecycle.visual.ts && dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env site -- bun apps/site/tests/create-inflight.visual.ts",
     "test:visual:site": "dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env site -- bun apps/site/tests/thread-playground.visual.ts",
     "lint:fix": "bun lint:prepare && ultracite fix .",
-    "lint:prepare": "turbo run build --filter=@chat-js/gateways --filter=@chat-js/sandboxes --filter=@chat-js/thread && bun run --cwd apps/chat next typegen . && bun run --cwd apps/site next typegen .",
+    "lint:prepare": "turbo run build --filter=@chat-js/gateways --filter=@chat-js/sandboxes --filter=@chat-js/thread && bun run --cwd apps/chat next typegen . && bun run --cwd apps/site next typegen . && bun --cwd apps/electron scripts/write-branding.ts",
     "dev:eve": "dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env eve -- bun --filter @chatjs/chat eve:start",
     "eve:test-package": "bun scripts/test-eve-package.ts",
     "build:eve": "dotenv -e .env.worktree.local -e .env.local -- bun --filter @chatjs/chat eve:build",

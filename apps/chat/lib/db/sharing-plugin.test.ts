@@ -12,8 +12,8 @@ const installed = vi.hoisted(() => {
   const plugins: ChatServerIntegration[] = [];
   return { plugins };
 });
-vi.mock("@/composition/generated/installed-chat", () => ({
-  installedChatPlugins: installed.plugins,
+vi.mock("@/chatjs/generated/installed-chat", () => ({
+  installedChat: installed.plugins,
 }));
 const { getSharing, setSharing, getPublicEveConversation } =
   await import("@/plugins/sharing/queries");

@@ -10,14 +10,14 @@ import React from "react";
 
 import type { Route } from "next";
 
-import { isElectronRenderer } from "@/lib/electron-auth";
+import { handleModifiedNavigation } from "@/integrations/navigation";
 
 import { useRouter } from "next/navigation";
 
 const PRIMARY_MOUSE_BUTTON = 0;
 const AUXILIARY_MOUSE_BUTTON = 1;
 
-type InternalLinkProps<T extends string> = Omit<
+export type InternalLinkProps<T extends string> = Omit<
   ReactComponentProps<typeof Link>,
   "href" | "as"
 > & {
@@ -33,7 +33,7 @@ export const InternalLink = <T extends string>({
   ...props
 }: InternalLinkProps<T>): React.JSX.Element => {
   const router = useRouter();
-  const isElectron = isElectronRenderer();
+  const captureModifiedNavigation = handleModifiedNavigation();
 
   const navigate = (): void => {
     onNavigate?.();
@@ -47,7 +47,10 @@ export const InternalLink = <T extends string>({
       return;
     }
 
-    if (isElectron && (event.metaKey || event.ctrlKey || event.shiftKey)) {
+    if (
+      captureModifiedNavigation &&
+      (event.metaKey || event.ctrlKey || event.shiftKey)
+    ) {
       event.preventDefault();
       navigate();
       return;
@@ -66,7 +69,7 @@ export const InternalLink = <T extends string>({
     if (
       event.defaultPrevented ||
       event.button !== AUXILIARY_MOUSE_BUTTON ||
-      !isElectron
+      !captureModifiedNavigation
     ) {
       return;
     }

@@ -1,3 +1,4 @@
+import type { SessionModel } from "@/lib/session-profile-contracts";
 import { getModelProviderOptions } from "@chat-js/gateways/provider-options";
 import { wrapLanguageModel } from "ai";
 import { z } from "zod";
@@ -76,13 +77,7 @@ const loadEveModelDefinition = async (
   return getEveModelDefinition(requestedId, catalog.models);
 };
 
-const resolveEveModel = async (
-  requestedId?: string
-): Promise<{
-  model: ReturnType<typeof wrapLanguageModel>;
-  modelContextWindowTokens: number;
-  modelOptions: { providerOptions: z.output<typeof serializedOptions> };
-}> => {
+const resolveEveModel = async (requestedId?: string): Promise<SessionModel> => {
   const model = await loadEveModelDefinition(requestedId);
   return {
     model: wrapLanguageModel({

@@ -1,0 +1,10 @@
+@reference "../../../app/globals.css";
+
+@import "./styles/style-vega.css" layer(base);
+@import "./styles/style-nova.css" layer(base);
+@import "./styles/style-lyra.css" layer(base);
+@import "./styles/style-maia.css" layer(base);
+@import "./styles/style-mira.css" layer(base);
+@import "./styles/style-luma.css" layer(base);
+@import "./styles/style-sera.css" layer(base);
+@import "./styles/style-rhea.css" layer(base);

@@ -5,7 +5,7 @@ import { useEveDeletion } from "@/components/eve/eve-deletion-provider";
 import { useEveMetadataMutations } from "@/components/eve/use-eve-metadata-mutations";
 import { Separator } from "@/components/ui/separator";
 import { ProjectChatItem } from "./project-chat-item";
-import { PluginChatActions } from "@/components/plugin-chat-ui";
+import { ChatActions } from "@/components/chat-slots";
 
 export const ProjectHistory = ({
   projectId,
@@ -39,7 +39,7 @@ export const ProjectHistory = ({
             onDelete={() => {
               openDeletion(item);
             }}
-            pluginActions={<PluginChatActions chat={item} />}
+            pluginActions={<ChatActions chat={item} />}
             onRename={async (id, title) => {
               await rename.mutateAsync({ id, title });
             }}

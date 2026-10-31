@@ -1,5 +1,7 @@
 "use client";
 
+import { useAttachmentPicker } from "@/hooks/use-attachment-picker";
+
 import type {
   ComponentProps,
   Dispatch,
@@ -17,7 +19,7 @@ import { expandSelectedModelValue } from "@/lib/ai/types";
 import type { DraftAttachment } from "@/lib/eve/draft";
 import { useChatModels } from "@/providers/chat-models-provider";
 import { useDefaultModel } from "@/providers/default-model-provider";
-import { installedToolNames } from "@/composition/generated/installed-tools";
+import { installedToolNames } from "@/integrations/tool-catalog";
 
 import { EveModelPicker } from "./eve-model-picker";
 import type { useEveAttachments } from "./use-eve-attachments";
@@ -53,20 +55,9 @@ const unsupportedAttachments = (
   );
 
 const isUnavailableTool = (tool: UiToolName | null): boolean =>
-  Boolean(tool && !installedToolNames.has(tool));
+  tool !== null && !installedToolNames.has(tool);
 
-export const EveComposer = ({
-  files,
-  retainedModelId,
-  retainedModelIds,
-  modelSelection,
-  selectedTool,
-  onToolChange,
-  ...props
-}: Omit<
-  ComponentProps<typeof ControlledChatComposer>,
-  "tools" | "attachments" | "hasAttachments" | "onPaste"
-> & {
+interface ComposerCapabilities {
   readonly files: Readonly<
     Omit<ReturnType<typeof useEveAttachments>, "attachments" | "uploadQueue">
   > & {
@@ -75,12 +66,28 @@ export const EveComposer = ({
   };
   readonly selectedTool: UiToolName | null;
   readonly onToolChange: Dispatch<SetStateAction<UiToolName | null>>;
+}
+
+type ComposerProps = Omit<
+  ComponentProps<typeof ControlledChatComposer>,
+  "tools" | "attachments" | "hasAttachments" | "onPaste"
+> & {
   readonly retainedModelId?: string;
   readonly retainedModelIds?: readonly string[];
   readonly modelSelection?: ComponentProps<
     typeof EveModelPicker
   >["modelSelection"];
-}): ReactJSX.Element => {
+};
+
+const CapableComposer = ({
+  files,
+  retainedModelId,
+  retainedModelIds,
+  modelSelection,
+  selectedTool,
+  onToolChange,
+  ...props
+}: ComposerProps & ComposerCapabilities): ReactJSX.Element => {
   const selected = useDefaultModel();
   const { getModelById } = useChatModels();
   const models = modelSelectionIds(
@@ -99,16 +106,19 @@ export const EveComposer = ({
       current.filter((file) => file.url !== attachment.url)
     );
   };
-  const uploads = files.composer?.(Boolean(uploadLocked));
+  const uploads = useAttachmentPicker({
+    disabled: Boolean(uploadLocked) || !files.enabled,
+    onFiles: files.enqueue,
+  });
   return (
     <div
       {...{
         "aria-label": "Message composer",
         role: "group",
-        ...uploads?.rootProps,
+        ...uploads.rootProps,
       }}
     >
-      {uploads?.input}
+      {files.enabled && <input {...uploads.inputProps} />}
       <ControlledChatComposer
         {...props}
         attachments={
@@ -130,7 +140,7 @@ export const EveComposer = ({
               selectedModelId={models[0]?.id ?? ""}
               selectedTool={selectedTool}
               onToolChange={onToolChange}
-              onAttach={uploads?.onAttach ?? uploadsOmitted}
+              onAttach={files.enabled ? uploads.open : uploadsOmitted}
             />
             <ActiveTool
               selectedTool={selectedTool}
@@ -162,5 +172,38 @@ export const EveComposer = ({
         </p>
       )}
     </div>
+  );
+};
+
+/** Omit capabilities for text-only chat; account callers supply their owned controls. */
+export const EveComposer = ({
+  capabilities,
+  ...props
+}: ComposerProps & {
+  readonly capabilities?: ComposerCapabilities;
+}): ReactJSX.Element => {
+  if (capabilities) {
+    return <CapableComposer {...props} {...capabilities} />;
+  }
+  const { retainedModelId, retainedModelIds, modelSelection, ...composer } =
+    props;
+  return (
+    <fieldset className="min-w-0" aria-label="Message composer">
+      <ControlledChatComposer
+        {...composer}
+        tools={
+          <EveModelPicker
+            disabled={
+              composer.disabled ||
+              composer.readOnly === true ||
+              Boolean(retainedModelId)
+            }
+            modelSelection={modelSelection}
+            retainedModelId={retainedModelId}
+            retainedModelIds={retainedModelIds}
+          />
+        }
+      />
+    </fieldset>
   );
 };

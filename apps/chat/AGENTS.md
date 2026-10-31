@@ -7,7 +7,7 @@ These instructions apply to this application directory.
 - Use Next.js App Router, React, the Vercel AI SDK, Tailwind CSS 4, and shadcn/ui.
 - Keep shadcn primitives in `components/ui`; its config is `components.json`.
 - EVE is the only chat runtime. Browser commands enter through `app/api/eve/[...path]/route.ts`; agent hooks and tools live in `agent/`.
-- Keep core tables in `lib/db/schema.ts`; installable plugins own their schema and query modules. Declare plugin schemas in their manifests so `composition/generated/installed-database.ts` composes the installed selection.
+- Keep core tables in `lib/db/schema.ts`; installable plugins own their schema and query modules. Declare plugin schemas in their manifests so `chatjs/generated/installed-database.ts` composes the installed selection.
 - Core routers compose in `trpc/routers/_app.ts`. Plugins declare routers in their descriptor and server factory; sync generates their registration.
 - Edit plugin implementations in `packages/registry/src/plugins/<id>/src`, run root `bun dev`, and save to update the installed reference copies automatically. Installed registry files in this reference app are disposable registry-mirror output; local edits are overwritten. Use `bun demo:sync` for one-shot regeneration and `bun demo:check` for verification. Keep framework entrypoints thin.
 
@@ -27,7 +27,7 @@ These instructions apply to this application directory.
 ## Environment and configuration
 
 - Core environment variables use `lib/env.ts`. Installables own server-side environment readers and format validation; declare credential requirements in their manifests for the joint `scripts/check-env.ts` check.
-- Keep one editable `chat.config.ts`. Tool configuration schemas own their defaults and validation and compose through generated `composition/generated/installed-config.ts`. Keep credential readers out of this client-visible schema graph.
+- Keep one editable `chat.config.ts`. Tool configuration schemas own their defaults and validation and compose through generated `chatjs/generated/installed-config.ts`. Keep credential readers out of this client-visible schema graph.
 
 ## TypeScript and React
 

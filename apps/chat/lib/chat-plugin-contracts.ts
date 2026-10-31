@@ -1,6 +1,5 @@
 import type { ReadonlyEveMessageInput } from "./eve/readonly-message-types";
 import type { MessageStreamEvent } from "eve/client";
-import type { ComponentType } from "react";
 import type { SQL } from "drizzle-orm";
 import type { db } from "./db/client";
 
@@ -80,14 +79,4 @@ export interface ChatSuggestionsProps {
   };
   readonly disabled: boolean;
   readonly onSelect: (suggestion: string) => void;
-}
-export interface ChatClientIntegration {
-  readonly HeaderActions?: ComponentType<ChatActionProps>;
-  readonly Suggestions?: ComponentType<ChatSuggestionsProps>;
-  readonly MessageActions?: ComponentType<ChatMessageActionProps>;
-  readonly Sidebar?: ComponentType;
-  /** Fixed sidebar menu, scoped to the request principal. */
-  readonly SidebarHeader?: ComponentType<{ readonly ownerId?: string }>;
-  readonly Actions?: ComponentType<ChatActionProps>;
-  readonly Breadcrumb?: ComponentType<{ readonly chatId: string }>;
 }

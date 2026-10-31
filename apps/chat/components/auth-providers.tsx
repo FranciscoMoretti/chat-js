@@ -11,8 +11,6 @@ import type {
 
 import { toast } from "sonner";
 
-import { ElectronBrowserSignIn } from "@/components/electron-auth-ui";
-
 import {
   getEnabledSocialAuthProviders,
   isSocialAuthProvider,
@@ -110,15 +108,11 @@ const AUTH_PROVIDER_METADATA = {
 
 export const SocialAuthProviders = ({
   callbackURL,
-  electronBrowserLabel,
-  isElectron = false,
   onRedirectToUrl,
   query = emptyQuery,
   signInOptions,
 }: {
   readonly callbackURL?: string;
-  readonly electronBrowserLabel?: string;
-  readonly isElectron?: boolean;
   readonly onRedirectToUrl?: (url: string) => void;
   readonly query?: Readonly<Record<string, string>>;
   readonly signInOptions?: Readonly<SocialAuthSignInOptions>;
@@ -144,13 +138,6 @@ export const SocialAuthProviders = ({
       lastUsedProvider
     );
   }, [lastUsedProvider]);
-
-  // In the Electron app, use the @better-auth/electron bridges exposed by
-  // setupRenderer() in the preload script. requestAuth() opens the sign-in
-  // URL in the user's default browser with the proper PKCE params.
-  if (config.desktopApp.enabled && isElectron) {
-    return <ElectronBrowserSignIn buttonLabel={electronBrowserLabel} />;
-  }
 
   const signIn = async (provider: SocialAuthProvider): Promise<void> => {
     try {

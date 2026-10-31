@@ -1,66 +1,20 @@
 "use client";
-
 import React from "react";
-
-import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
-
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-
-import type { JSX as ReactJSX } from "react";
-
 import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
-import { Share } from "lucide-react";
-
 import { useSession } from "@/providers/session-provider";
-
-interface ShareMenuItemProps {
-  readonly children?: ReadonlyReactNode;
-  readonly onShare: () => void;
-}
+import { ShareMenuSurface } from "./share-menu-surface";
 
 export const ShareMenuItem = ({
   onShare,
   children,
-}: ShareMenuItemProps): ReactJSX.Element => {
+}: {
+  readonly children?: ReadonlyReactNode;
+  readonly onShare: () => void;
+}): React.JSX.Element => {
   const { data: session } = useSession();
-  const isAuthenticated = Boolean(session?.user);
-
-  if (!isAuthenticated) {
-    return (
-      <Popover>
-        <PopoverTrigger
-          render={
-            <DropdownMenuItem
-              className="cursor-pointer opacity-50"
-              closeOnClick={false}
-            >
-              <Share size={16} />
-              <span>Share</span>
-            </DropdownMenuItem>
-          }
-        />
-        <PopoverContent className="w-auto p-2">
-          <p className="text-sm">Sign in to share your chats</p>
-        </PopoverContent>
-      </Popover>
-    );
-  }
-
   return (
-    <DropdownMenuItem
-      className="cursor-pointer"
-      closeOnClick={false}
-      onClick={() => {
-        onShare();
-      }}
-    >
-      <Share size={16} />
-      <span>Share</span>
+    <ShareMenuSurface authenticated={Boolean(session?.user)} onShare={onShare}>
       {children}
-    </DropdownMenuItem>
+    </ShareMenuSurface>
   );
 };

@@ -21,11 +21,13 @@ type InstallationSelection = z.infer<typeof installationSelectionSchema>;
 // Checked-in demo preset preserves the application's installed plugins.
 const demoInstallation = installationSelectionSchema.parse({
   plugins: [
+    "desktop",
     "projects",
     "feedback",
     "followup-suggestions",
     "search",
     "credits",
+    "guest-chat",
     "model-preferences",
     "ai-titles",
     "sharing",

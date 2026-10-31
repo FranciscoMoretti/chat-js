@@ -1,4 +1,8 @@
-import { parseJsonObject, requireJsonObject } from "../src/helpers/json-object";
+import {
+  isStringArray,
+  parseJsonObject,
+  requireJsonObject,
+} from "../src/helpers/json-object";
 import { expect } from "bun:test";
 import { format } from "oxfmt";
 import {
@@ -6,10 +10,11 @@ import {
   compareProjects,
 } from "@chat-js/registry-validation";
 import type { ProjectFiles } from "@chat-js/registry-validation";
-import {
-  prepareValidationCore,
-  renderValidationProject,
-} from "../../registry/scripts/validation-project";
+import { renderValidationProject } from "../../registry/scripts/validation-project";
+import { scaffoldNativeProject } from "../src/helpers/native-scaffold";
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import type { InstallationSelection } from "../../registry/installation";
 import { parsePackageJson } from "../src/helpers/package-manifest";
 import gatewayPackage from "@chat-js/gateways/package.json";
@@ -21,6 +26,13 @@ const fixture: { core?: Map<string, Uint8Array> } = {};
 // are independently exercised by their existing integration checks.
 const comparable = (file: string): boolean =>
   file !== "next-env.d.ts" &&
+  !(
+    file.startsWith("chatjs/") &&
+    file !== "chatjs/generated" &&
+    !file.startsWith("chatjs/generated/")
+  ) &&
+  // Companion contents/build are exercised by the packed desktop fixture.
+  !file.startsWith("electron/") &&
   !/^(?:node_modules|\.git|\.chatjs|\.next|\.eve|\.output|lib\/db\/migrations)(?:\/|$)/u.test(
     file
   ) &&
@@ -28,6 +40,24 @@ const comparable = (file: string): boolean =>
     file
   ) &&
   !file.endsWith(".tsbuildinfo");
+
+export const readInstallationProject = async (
+  directory: string
+): Promise<Map<string, Uint8Array>> =>
+  await readProjectFiles(directory, comparable);
+
+// Predict compositions on an independently initialized native shell, just as
+// create does. Keep whole-tree comparison: copying the actual app's native files
+// or excluding all UI files would hide accidental overwrites during add/sync.
+const prepareNativeCore = async (): Promise<Map<string, Uint8Array>> => {
+  const directory = await mkdtemp(path.join(tmpdir(), "chatjs-native-parity-"));
+  try {
+    await scaffoldNativeProject(directory, "bun", []);
+    return await readInstallationProject(directory);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+};
 
 const normalize = (source: string) => {
   const value = parseJsonObject(source, "components.json");
@@ -61,12 +91,15 @@ const normalizeFile = async (
 ): Promise<unknown> => {
   const source = new TextDecoder().decode(bytes);
   const encoder = new TextEncoder();
+  if (file === "tsconfig.json") {
+    return parseJsonObject(source, "tsconfig.json");
+  }
   if (file === "package.json" || file === "components.json") {
     return file === "package.json" ? manifest(source) : normalize(source);
   }
   if (
     /\.(?:[cm]?[jt]sx?|json|css)$/u.test(file) &&
-    !file.startsWith("composition/generated/")
+    !file.startsWith("chatjs/generated/")
   ) {
     const result = await format(file, source, formatConfig);
     if (result.errors.length > 0) {
@@ -91,7 +124,7 @@ export const verifyInstallationParity = async (
   selection: InstallationSelection,
   name: string
 ): Promise<void> => {
-  fixture.core ??= await prepareValidationCore();
+  fixture.core ??= await prepareNativeCore();
   const predicted = await renderValidationProject(fixture.core, selection, {
     name,
     title: name
@@ -99,7 +132,25 @@ export const verifyInstallationParity = async (
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
       .join(" "),
   });
-  const actual = await readProjectFiles(cwd, comparable);
+  if (selection.plugins.includes("desktop")) {
+    const bytes = predicted.files.get("tsconfig.json");
+    if (!bytes) {
+      throw new Error("Missing predicted tsconfig");
+    }
+    const config = parseJsonObject(
+      new TextDecoder().decode(bytes),
+      "tsconfig.json"
+    );
+    config.exclude = [
+      ...(isStringArray(config.exclude) ? config.exclude : []),
+      "electron",
+    ];
+    predicted.files.set(
+      "tsconfig.json",
+      new TextEncoder().encode(JSON.stringify(config))
+    );
+  }
+  const actual = await readInstallationProject(cwd);
   expect(await compareInstallationProjects(predicted.files, actual)).toEqual(
     []
   );

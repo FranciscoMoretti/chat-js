@@ -1,6 +1,6 @@
 import type { DocumentAssistantAction } from "@/lib/eve/document-contracts";
 import { config } from "@/lib/config";
-import { installedDocumentKinds } from "@/composition/generated/installed-tools";
+import { installedDocumentKinds } from "@/integrations/tool-catalog";
 
 const documentAssistantActions = (): DocumentAssistantAction[] => [
   {

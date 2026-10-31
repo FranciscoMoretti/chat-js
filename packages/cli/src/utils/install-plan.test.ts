@@ -10,7 +10,8 @@ import { scaffoldFromTemplate } from "#cli/helpers/scaffold";
 
 import { installItems } from "#cli/registry/shadcn";
 
-import { installPlan, recordInstalledSource } from "./install-plan";
+import { installPlan } from "./install-plan";
+import { recordInstalledSource } from "./source-receipt";
 
 import { planInstallation } from "./installation-plan";
 
@@ -118,7 +119,7 @@ test("receipt hashing bounds live buffers, drains failures and never writes a pa
     await rejected;
     expect(reads).toBe(4);
     expect(
-      await Bun.file(path.join(root, ".chatjs/installed-source.json")).exists()
+      await Bun.file(path.join(root, "chatjs/installed-source.json")).exists()
     ).toBe(false);
   } finally {
     read.mockRestore();
@@ -220,7 +221,7 @@ test.each(["registration", "finalization"] as const)(
       const manifest = path.join(root, "package.json");
       const dependencies = path.join(
         root,
-        ".chatjs/installed-dependencies.json"
+        "chatjs/installed-dependencies.json"
       );
       const lockfile = path.join(root, "bun.lock");
       await writeFile(lockfile, "original lockfile");
@@ -228,7 +229,7 @@ test.each(["registration", "finalization"] as const)(
       const oldDependencies = await readFile(dependencies, "utf-8");
       const oldEnv = await readFile(env, "utf-8");
       const oldConfig = await readFile(config, "utf-8");
-      await rm(path.join(root, "composition/generated/workflow-types.ts"));
+      await rm(path.join(root, "chatjs/generated/workflow-types.ts"));
       const registrationContents = async (
         target: string
       ): Promise<string | null> => {
@@ -262,7 +263,7 @@ test.each(["registration", "finalization"] as const)(
             await syncTools(root, { expected: plan.expected });
             expect(
               await readFile(
-                path.join(root, "composition/generated/providers.ts"),
+                path.join(root, "chatjs/generated/providers.ts"),
                 "utf-8"
               )
             ).toContain("@/tools/chatjs/second/tool");
@@ -339,7 +340,7 @@ test("native shadcn source can be composed without overwriting or blessing user 
     });
     expect(await readFile(file, "utf-8")).toContain("native user edit");
     const receipt = parseJsonObject(
-      await readFile(path.join(root, ".chatjs/installed-source.json"), "utf-8"),
+      await readFile(path.join(root, "chatjs/installed-source.json"), "utf-8"),
       "installed source receipt"
     );
     expect(receipt["tools/chatjs/first/tool.ts"]).toBeUndefined();
@@ -413,7 +414,7 @@ test("registration refreshes untouched rollback baselines without blessing user 
         await writeFile(file, "STORAGE=changed\n");
       }
     );
-    const receiptFile = path.join(root, ".chatjs/installed-source.json");
+    const receiptFile = path.join(root, "chatjs/installed-source.json");
     const baseline = await readFile(receiptFile, "utf-8");
     await writeFile(file, "# user storage notes\nSTORAGE=changed\n");
     await installPlan(
@@ -532,7 +533,7 @@ test("provider installation refuses inferred native dependency destinations befo
       tools: [`http://127.0.0.1:${registry.port}/ui.json`],
     });
     const receipt = await readFile(
-      path.join(root, ".chatjs/installed-source.json"),
+      path.join(root, "chatjs/installed-source.json"),
       "utf-8"
     );
     expect(receipt).not.toContain("components/ui/fixture.tsx");

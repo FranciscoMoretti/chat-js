@@ -1,4 +1,4 @@
-import { isGuestSession } from "@/lib/eve/session-identity";
+import { isAccountSession } from "@/lib/eve/session-identity";
 import type { ToolDefinition, ToolModelOutput } from "eve/tools";
 import { defineDynamic, defineTool } from "eve/tools";
 import { parse, stringify } from "superjson";
@@ -8,7 +8,7 @@ import {
   executeEveMcpTool,
   requestEveMcpApproval,
 } from "@/plugins/mcp/runtime/mcp-tools";
-import { eveTurnGuest, eveTurnTool } from "@/lib/eve/turn-tools";
+import { eveTurnAccount, eveTurnTool } from "@/lib/eve/turn-tools";
 import type { McpToolContext } from "@/plugins/mcp/runtime/mcp-tools";
 import { createModuleLogger } from "@/lib/logger";
 
@@ -25,9 +25,9 @@ const mcpTools = defineDynamic({
       }>
     ) => {
       if (
-        isGuestSession(context.session) ||
-        eveTurnGuest.get() ||
-        eveTurnTool.get()
+        !isAccountSession(context.session) ||
+        !eveTurnAccount.get() ||
+        eveTurnTool.get() !== null
       ) {
         return {};
       }

@@ -14,11 +14,15 @@ This deployment removes the old `/eve/guest/v1/*` mount and guest worker. Existi
 
 Run the guest browser suite with `bunx playwright test --config playwright.guest.config.ts` from `apps/chat`. It covers unauthenticated replies, session authorization, memory-only browser identity, reload and New chat. Policy/authentication, cleanup and registered workflow tests provide the server-side isolation checks.
 
-The MVP policy is 10 admitted messages per session, 5 messages per IP per minute, 5 sessions per IP per hour, a one-hour credential, 4,000 characters per message, 24,000 cumulative user-input characters and a 24,000-character serialized model prompt, and 512 output tokens. GPT-5 nano uses minimal reasoning to leave room for visible output. Admission is charged before dispatch, including failed attempts. Configure a trusted proxy IP header; missing trusted client identity fails closed.
+The policy is 5 messages per IP per minute, 5 sessions per IP per hour, a one-hour credential, 4,000 characters per message, 24,000 cumulative user-input characters and a 24,000-character serialized model prompt, and 512 output tokens. GPT-5 nano uses minimal reasoning to leave room for visible output. Admission is charged before dispatch, including failed attempts. Configure a trusted proxy IP header; missing trusted client identity fails closed.
 
 The 24-hour target applies to conversation/workflow payloads. Minimal deletion fences and policy audit metadata (including identifiers, counters and hashed IP) remain for safe retries and late-write prevention; rate buckets are pruned after two days. This is not a promise that all metadata disappears after 24 hours.
 
-The MVP's server-owned `lib/eve/session-policy.ts` is authoritative for the guest model and tool access; legacy `ai.anonymousModels` and `anonymous.availableTools` settings do not expand those capabilities. The provider prompt bound includes assistant replies and framing, so a long conversation can reach that bound before its user-input allowance. Failed or ambiguous dispatches remain charged to prevent retries from bypassing admission limits.
+The plugin-owned `plugins/guest-chat/guest-policy.ts` is authoritative. The obsolete `ai.anonymousModels` and `anonymous` settings are removed. The provider prompt includes assistant replies and framing, so a long conversation can reach that bound before its user-input allowance. Failed or ambiguous dispatches remain charged to admission capacity.
+
+The plugin contributes a signed-out screen, native session profile, and cleanup task. Core keeps account ownership, tool guards, and verified deletion infrastructure. An installation without Guest Chat redirects signed-out chat visitors to `/login`, and installs no guest schema or bootstrap route.
+
+Migration 0022 drops the old `EveGuest`, `EveGuestMessage`, and `EveGuestRate` tables and their conversation cleanup column. It stops if a legacy guest still owns an undeleted conversation: drain that inventory using the previous release before upgrading. Current `GuestRuntimeSession` and `GuestRuntimeRate` tables retain their names and data under plugin ownership.
 
 Cleanup refuses ambiguous workflow queue ownership rather than risking another session's data. A partial batch reports its remaining expired backlog; the hosted scheduler continues batches that make progress and fails on stalled work so operators can retry. The default Vercel schedule remains daily for Hobby compatibility; PostgreSQL guest deployments need the hourly external scheduler described in the Render profile.
 

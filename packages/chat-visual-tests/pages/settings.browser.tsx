@@ -36,6 +36,14 @@ const request = (path: string) => ({
 test("general settings", async () => {
   await renderRoute(settings(<GeneralPage />), request("/settings"));
   await expect
+    .element(page.getByRole("link", { name: "Models", exact: true }).first())
+    .toBeVisible();
+  const navigation = [...document.querySelectorAll('a[href^="/settings"]')].map(
+    (link) => link.getAttribute("href")
+  );
+  expect(navigation).toContain("/settings/models");
+  expect(navigation).toContain("/settings/connectors");
+  await expect
     .element(page.getByText("General settings will be available here soon."))
     .toBeVisible();
 });

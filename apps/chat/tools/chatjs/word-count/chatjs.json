@@ -4,7 +4,11 @@
   "kind": "tool",
   "requiresTools": [],
   "tools": [
-    { "rendererExport": "WordCountRenderer", "toolExport": "wordCount" }
+    {
+      "rendererExport": "WordCountRenderer",
+      "definitionExport": "toolDefinition",
+      "toolExport": "wordCount"
+    }
   ],
   "contractVersion": 1
 }

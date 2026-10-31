@@ -16,8 +16,8 @@ const mocks = vi.hoisted(() => ({
   referenceFiles: vi.fn(),
 }));
 
-vi.mock("@/composition/generated/installed-billing", () => ({
-  canSpend: mocks.canSpend,
+vi.mock("@/integrations/billing", () => ({
+  billing: { canSpend: mocks.canSpend, debit: undefined },
 }));
 vi.mock("@/lib/db/eve-files", () => ({
   referenceEveFiles: mocks.referenceFiles,
@@ -26,10 +26,6 @@ vi.mock("@/lib/db/eve-queries", () => ({
   getBoundEveConversationForSession: mocks.bound,
 }));
 vi.mock("@/lib/env", () => ({ env: { APP_URL: "http://localhost:3790" } }));
-vi.mock("@/lib/eve/guest-message-admission", () => ({
-  admitGuestMessage: vi.fn(),
-  settleGuestMessage: vi.fn(),
-}));
 vi.mock("@/lib/eve/model-selection", () => ({
   loadEveModelDefinition: vi.fn(),
 }));

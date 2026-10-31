@@ -16,6 +16,7 @@ const sourceFiles = [
   "routes/project-page.tsx",
   "server-plugin.ts",
   "ui/chat-contributions.tsx",
+  "ui/move-menu-item.tsx",
   "ui/delete-project-dialog.tsx",
   "ui/eve-move-project-dialog.tsx",
   "ui/eve-project-home.tsx",
@@ -64,6 +65,19 @@ const projectsItem: RegistryItem = {
   ],
   name: "projects",
   type: "registry:item",
+  registryDependencies: [
+    "alert-dialog",
+    "breadcrumb",
+    "button",
+    "dialog",
+    "dropdown-menu",
+    "input",
+    "label",
+    "popover",
+    "separator",
+    "sidebar",
+    "textarea",
+  ],
   description: "Projects, chat organization, and shared project instructions",
   files: projectsFiles.map((file) => ({
     path: file.startsWith("plugins/projects/")

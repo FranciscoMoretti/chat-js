@@ -1,6 +1,6 @@
 ---
 title: add
-description: Install registry tools, features and providers
+description: Install registry tools, plugins and providers
 ---
 
 ```bash
@@ -13,6 +13,8 @@ Accepts built-in names, standard `@namespace/item` addresses, complete item URLs
 | --- | --- | --- |
 | `-y, --yes` | `false` | Skip ChatJS confirmation |
 | `-o, --overwrite` | `false` | Authorize overwriting modified or untracked source |
+| `--dry-run` | `false` | Resolve and report declared integrations and native entry paths without installing or writing app files |
+| `--files-only` | `false` | Export source and connection metadata to a temporary review directory |
 | `--replace` | `false` | Explicitly authorize exclusive provider replacement |
 | `--sandbox-provider <item>` | None | Select optional sandbox infrastructure: Vercel, Daytona or a registry address |
 | `--gateway <item>` | Not applicable | Select an AI gateway |
@@ -36,9 +38,9 @@ npx @chat-js/cli@latest add attachment-uploads mcp vercel-analytics vercel-speed
 
 Uploads require durable storage and a sandbox with persistent-file support. Existing compatible providers satisfy these requirements. The CLI rejects replacing that sandbox with an incompatible provider while uploads remain installed.
 
-New contributions append to `composer-controls.ts` and `settings-items.ts`. Your existing entries and their order remain intact. Ordinary `sync` preserves those arrays. If you use a computed array, add the contribution manually and run `sync`.
+UI plugins export typed contributions with `definePlugin`. The CLI updates generated installed-plugin lists and preserves your component edits and app layout JSX. Move slot components or wrap contributed components to customize placement and behavior.
 
-After direct shadcn source installation, use `add` for automatic composition, or register the editable UI contributions yourself and run `sync`:
+After direct shadcn source installation, regenerate registrations with `sync`:
 
 ```bash
 npx @chat-js/cli@latest sync --cwd apps/chat
@@ -53,11 +55,19 @@ npx @chat-js/cli@latest add firecrawl-search --replace --yes
 npx @chat-js/cli@latest add --storage-provider s3 --storage-config '{"bucket":"uploads","region":"eu-west-1"}' --replace --yes
 ```
 
-`--yes` skips confirmation. It does not authorize replacement or overwriting edited files. ChatJS records installed-source hashes in `.chatjs/installed-source.json`. Changed or untracked source is protected until you review it and explicitly pass `--overwrite`. This includes source installed with native shadcn, which has no ChatJS baseline. Keep the baseline in version control. Unrelated tools and features remain installed, and previous tool-provider source is retired only after registration succeeds.
+`--yes` skips confirmation. It does not authorize replacement or overwriting edited files. ChatJS records installed-source hashes in `chatjs/installed-source.json`. Changed or untracked source is protected until you review it and explicitly pass `--overwrite`. This includes source installed with native shadcn, which has no ChatJS baseline. Keep the baseline in version control. Unrelated tools and plugins remain installed, and previous tool-provider source is retired only after registration succeeds.
 
 Gateway replacement updates the gateway discriminator and provider configuration while preserving your model IDs and runtime settings. Review those model IDs for the new gateway and run `bun run setup` and `bun run fetch:models`.
 
-If source installation or registration fails, the command exits unsuccessfully. Previous tool-provider source is restored, but newly installed source or packages may remain. Review the partial installation and retry the same `add` command with `--overwrite`, or integrate the source manually and run `sync`. This CLI supports creation and add, including explicit exclusive replacement. It does not manage removal or upgrades.
+If source installation or registration fails, the command exits unsuccessfully. Previous tool-provider source is restored, but newly installed source or packages may remain. Review the partial installation and retry the same `add` command with `--overwrite`, or integrate the source manually and run `sync`. This CLI supports creation, add, explicit exclusive replacement, and plugin removal with `chat-js remove`. It does not automatically upgrade older app templates.
 
 - [Tool Registry](../tools/overview) explains customizations.
 - [Tools](../tools/authoring) explains authoring.
+
+## Inspect activation first
+
+Run `chat-js add <item> --dry-run` to resolve the proposed installation and inspect its wiring before mutation. This can read a registry over the network. It does not install packages, run source, write app files, or record source hashes.
+
+The output separates app-owned integration modules, known Next.js/EVE entry paths, and ordinary framework source. It classifies explicit `~/` targets. Other shadcn destinations are reported as unresolved rather than guessed. Native path matches are an inventory, not proof that an export or framework setting activates them. Registering a database schema does not apply a migration.
+
+Use `--files-only` when you want source to review and connect manually. It exports files and metadata into a temporary directory without installing or activating them in your app. You cannot combine it with `--dry-run`.

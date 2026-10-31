@@ -95,7 +95,7 @@ const connector = {
   url: "https://docs.example.test/mcp",
   userId: "fixture-owner",
 };
-vi.mock("@/composition/generated/installed", () => ({
+vi.mock("@/integrations/plugin-catalog", () => ({
   installedPlugins: new Set(["mcp"]),
 }));
 

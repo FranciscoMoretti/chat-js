@@ -184,7 +184,7 @@ const applyChatTemplateSourceTransforms = async (
     ["<GitHubLink />", ""],
   ]);
 
-  const globalsCssPath = pathModule.join(destination, "app", "globals.css");
+  const globalsCssPath = pathModule.join(destination, "app", "chatjs.css");
   await replaceInFile(globalsCssPath, [
     [
       '@source "../node_modules/streamdown/dist/*.js";\n@source "../../../node_modules/streamdown/dist/*.js";',
@@ -241,12 +241,16 @@ const applyChatTemplateSourceTransforms = async (
 const applyElectronTemplateSourceTransforms = async (
   destination: string
 ): Promise<void> => {
-  const tsconfigPath = pathModule.join(destination, "tsconfig.json");
-  await replaceInFile(tsconfigPath, [
-    ['"../chat/*"', '"../*"'],
-    ['"../chat/next-env.d.ts"', '"../next-env.d.ts"'],
-    ['"../chat/electron.d.ts"', '"../electron.d.ts"'],
-  ]);
+  await replaceInFile(
+    pathModule.join(destination, "scripts/write-branding.ts"),
+    [
+      ['"../../chat/lib/config"', '"../../lib/config"'],
+      [
+        '"../../chat/plugins/desktop/protocol"',
+        '"../../plugins/desktop/protocol"',
+      ],
+    ]
+  );
 
   const packageJsonPath = pathModule.join(destination, "package.json");
   await replaceInFile(packageJsonPath, [
@@ -349,15 +353,6 @@ const normalizeElectronFiles = async (
       `bun run ${scriptPlaceholder} failed`,
       `${packageManager} run ${scriptPlaceholder} failed`,
     ],
-  ]);
-
-  await replaceInFile(pathModule.join(destination, "README.md"), [
-    ["bun install", `${packageManager} install`],
-    ["bun run dev", runScript(packageManager, "dev")],
-    ["bun run generate-icons", runScript(packageManager, "generate-icons")],
-    ["bun run make:mac", runScript(packageManager, "make:mac")],
-    ["bun run make:win", runScript(packageManager, "make:win")],
-    ["bun run make:linux", runScript(packageManager, "make:linux")],
   ]);
 
   if (packageManager === "pnpm") {
@@ -548,33 +543,43 @@ const scaffoldElectron = async (
     electronOptions.tsxVersion = rootPackageJson.devDependencies.tsx;
   }
   const destination = pathModule.join(projectDir, "electron");
-  const templateDir = findTemplateDir("electron");
+  if (existsSync(destination)) {
+    throw new Error(
+      "The electron directory already exists. Keep or move it before scaffolding a new companion."
+    );
+  }
+  try {
+    const templateDir = findTemplateDir("electron");
 
-  await (typeof templateDir === "string" && templateDir !== ""
-    ? cp(templateDir, destination, {
-        filter: (file) =>
-          shouldCopyElectronFile(pathModule.relative(templateDir, file)),
-        recursive: true,
-      })
-    : copyElectronTemplateFromRepoSource(destination));
+    await (typeof templateDir === "string" && templateDir !== ""
+      ? cp(templateDir, destination, {
+          filter: (file) =>
+            shouldCopyElectronFile(pathModule.relative(templateDir, file)),
+          recursive: true,
+        })
+      : copyElectronTemplateFromRepoSource(destination));
 
-  const packageJsonPath = pathModule.join(destination, "package.json");
-  const packageJsonSource = await readFile(packageJsonPath, "utf-8");
-  const packageJson = normalizeScaffoldedPackageJson(
-    parsePackageJson(
-      packageJsonSource
-        .replace("__PROJECT_NAME__-electron", `${opts.projectName}-electron`)
-        .replace("__GITHUB_OWNER__", "your-github-username")
-        .replace("__GITHUB_REPO__", opts.projectName)
-    ),
-    electronOptions
-  );
-  await writeFile(
-    packageJsonPath,
-    `${JSON.stringify(packageJson, null, JSON_INDENTATION_SPACES)}\n`
-  );
-  await normalizeElectronFiles(destination, packageManager);
-  await excludeElectronFromRootTypecheck(projectDir);
+    const packageJsonPath = pathModule.join(destination, "package.json");
+    const packageJsonSource = await readFile(packageJsonPath, "utf-8");
+    const packageJson = normalizeScaffoldedPackageJson(
+      parsePackageJson(
+        packageJsonSource
+          .replace("__PROJECT_NAME__-electron", `${opts.projectName}-electron`)
+          .replace("__GITHUB_OWNER__", "your-github-username")
+          .replace("__GITHUB_REPO__", opts.projectName)
+      ),
+      electronOptions
+    );
+    await writeFile(
+      packageJsonPath,
+      `${JSON.stringify(packageJson, null, JSON_INDENTATION_SPACES)}\n`
+    );
+    await normalizeElectronFiles(destination, packageManager);
+    await excludeElectronFromRootTypecheck(projectDir);
+  } catch (error) {
+    await rm(destination, { recursive: true, force: true });
+    throw error;
+  }
 };
 
 const scaffoldFromGit = async (

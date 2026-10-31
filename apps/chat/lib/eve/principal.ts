@@ -1,14 +1,10 @@
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { auth } from "@/lib/auth";
 
-export type EvePrincipal =
-  | { kind: "registered"; ownerId: string }
-  | {
-      kind: "guest";
-      ownerId: string;
-      tokenHash: string;
-      state: "pending" | "active";
-    };
+export interface EvePrincipal {
+  kind: "registered";
+  ownerId: string;
+}
 
 /** Disposable guests never enter application ownership, billing, or history routes.
  * Old guest cookies grant no access.

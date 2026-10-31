@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { DrawerCloseButton } from "@/components/drawer-close-button";
 import { ArrowRight, FileText } from "lucide-react";
 import {
   Dialog,
@@ -13,7 +13,6 @@ import {
 import {
   Drawer,
   DrawerContent,
-  DrawerClose,
   DrawerFooter,
   DrawerHeader,
   DrawerTitle,
@@ -128,7 +127,7 @@ const AllSourcesView = ({
           <SourcesList sources={sources} />
         </div>
         <DrawerFooter>
-          <DrawerClose render={<Button variant="outline" />}>Close</DrawerClose>
+          <DrawerCloseButton variant="outline">Close</DrawerCloseButton>
         </DrawerFooter>
       </DrawerContent>
     </Drawer>

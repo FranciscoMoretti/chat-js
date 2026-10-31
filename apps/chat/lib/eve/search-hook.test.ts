@@ -61,7 +61,7 @@ const context: HookContext = {
       current: null,
       initiator: {
         attributes: { chatjsReservationId: "reservation" },
-        authenticator: "test",
+        authenticator: "chatjs-gateway",
         principalId: "owner",
         principalType: "user",
       },

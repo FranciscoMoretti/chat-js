@@ -2,42 +2,62 @@
 
 import type { ComponentProps, JSX as ReactJSX } from "react";
 
-import { PromptForm } from "@/components/composer/prompt-form";
-import { InputGroupButton } from "@/components/ui/input-group";
+import { PromptForm } from "./composer/prompt-form";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+} from "./ui/input-group";
 import { ArrowUpIcon, Loader2Icon, SquareIcon } from "lucide-react";
 
 import type { ChatStatus } from "ai";
 
-import { LexicalChatInput } from "@/components/lexical-chat-input";
+import { LexicalChatInput } from "./lexical-chat-input";
 
 import React from "react";
-import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
+import type { ReadonlyReactNode } from "../lib/readonly-react-node";
 
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from "../hooks/use-mobile";
 
 const MAX_DRAFT_LENGTH = 16_000;
+
+const defaultPrimitives = { InputGroup, InputGroupAddon, InputGroupButton };
+type ComposerPrimitives = NonNullable<
+  ComponentProps<typeof PromptForm>["primitives"]
+> & {
+  InputGroupButton: React.ComponentType<
+    ComponentProps<"button"> & {
+      size: "icon-sm";
+      variant: "outline" | "default";
+    }
+  >;
+};
 
 const ComposerAction = ({
   status,
   onStop,
   stopDisabled,
   canSend,
+  primitives,
+  sendIcon,
 }: {
   readonly status: ChatStatus;
   readonly onStop?: () => void;
   readonly stopDisabled: boolean;
   readonly canSend: boolean;
+  readonly primitives: ComposerPrimitives;
+  readonly sendIcon?: ReadonlyReactNode;
 }): React.JSX.Element => {
   const stopping =
     (status === "submitted" || status === "streaming") && Boolean(onStop);
-  let icon = <ArrowUpIcon />;
+  let icon = sendIcon ?? <ArrowUpIcon />;
   if (status === "submitted") {
     icon = <Loader2Icon className="animate-spin" />;
   } else if (stopping) {
     icon = <SquareIcon />;
   }
   return (
-    <InputGroupButton
+    <primitives.InputGroupButton
       aria-label={stopping ? "Stop" : "Send"}
       size="icon-sm"
       variant={stopping ? "outline" : "default"}
@@ -46,7 +66,7 @@ const ComposerAction = ({
       onClick={stopping ? onStop : undefined}
     >
       {icon}
-    </InputGroupButton>
+    </primitives.InputGroupButton>
   );
 };
 
@@ -82,7 +102,11 @@ export const ControlledChatComposer = ({
   hasAttachments = false,
   readOnly = false,
   onPaste,
+  primitives = defaultPrimitives,
+  sendIcon,
 }: {
+  readonly primitives?: ComposerPrimitives;
+  readonly sendIcon?: ReadonlyReactNode;
   readonly attachments?: ReadonlyReactNode;
   readonly hasAttachments?: boolean;
   readonly readOnly?: boolean;
@@ -113,6 +137,7 @@ export const ControlledChatComposer = ({
   };
   return (
     <PromptForm
+      primitives={primitives}
       editable={!disabled && !editorReadOnly}
       onSubmit={(event) => {
         event.preventDefault();
@@ -122,6 +147,8 @@ export const ControlledChatComposer = ({
       tools={tools}
       actions={
         <ComposerAction
+          primitives={primitives}
+          sendIcon={sendIcon}
           status={status}
           onStop={onStop}
           stopDisabled={stopDisabled}

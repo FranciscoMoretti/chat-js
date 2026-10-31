@@ -1,16 +1,17 @@
 import type { LanguageModelMiddleware } from "ai";
 import type { LanguageModelV4 } from "@ai-sdk/provider";
 import { extractReasoningMiddleware, wrapLanguageModel } from "ai";
-import type { AppModelId } from "./app-models";
+import type { AppModelId } from "./app-model-id";
 
 import { devToolsMiddleware } from "@ai-sdk/devtools";
 import { getActiveGateway } from "./active-gateway";
-import { getAppModelDefinition } from "./app-models";
+import { loadEveModelDefinition } from "../eve/model-selection";
 
 const getLanguageModel = async (
   modelId: AppModelId
 ): Promise<LanguageModelV4> => {
-  const model = await getAppModelDefinition(modelId);
+  // This provider is also loaded by authored EVE modules outside Next.js.
+  const model = await loadEveModelDefinition(modelId);
   const languageProvider = getActiveGateway().createLanguageModel(
     model.apiModelId
   );

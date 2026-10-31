@@ -36,11 +36,8 @@ vi.mock("@/lib/db/eve-dispatch", () => ({
   },
   EveDispatchUnknownError: class extends Error {},
 }));
-vi.mock("@/lib/db/eve-guests", () => ({
-  releaseEveGuestMessage: mocks.release,
-}));
-vi.mock("@/composition/generated/installed-billing", () => ({
-  canSpend: mocks.canSpend,
+vi.mock("@/integrations/billing", () => ({
+  billing: { canSpend: mocks.canSpend, debit: undefined },
 }));
 vi.mock("@/lib/db/eve-files", () => ({
   referenceEveFiles: mocks.referenceFiles,
@@ -49,10 +46,6 @@ vi.mock("@/lib/db/eve-queries", () => ({
   getBoundEveConversationForSession: mocks.bound,
 }));
 vi.mock("@/lib/env", () => ({ env: { APP_URL: "http://localhost:3790" } }));
-vi.mock("@/lib/eve/guest-message-admission", () => ({
-  admitGuestMessage: mocks.admit,
-  settleGuestMessage: vi.fn(),
-}));
 vi.mock("@/lib/eve/model-selection", () => ({
   loadEveModelDefinition: vi.fn(),
 }));
@@ -217,13 +210,8 @@ vi.mock("@/lib/db/eve-workspace-turns", () => ({
 }));
 
 test.each([true, false])(
-  "refunds a guest reservation only for pre-dispatch workspace rejection: %s",
+  "distinguishes pre-dispatch workspace rejection from transport failure: %s",
   async (busy) => {
-    mocks.principal.mockResolvedValue({ kind: "guest", ownerId: "owner" });
-    mocks.admit.mockResolvedValue({
-      operationId,
-      reservationId: "exact-reservation",
-    });
     if (busy) {
       mocks.dispatch.mockImplementation(() => {
         throw new EveWorkspaceBusyError();
@@ -238,15 +226,5 @@ test.each([true, false])(
       }
     );
     expect(response.status).toBe(busy ? 409 : 502);
-    if (busy) {
-      expect(mocks.release).toHaveBeenCalledExactlyOnceWith(
-        "owner",
-        operationId,
-        "exact-reservation"
-      );
-      expect(mocks.eveRequest).not.toHaveBeenCalled();
-    } else {
-      expect(mocks.release).not.toHaveBeenCalled();
-    }
   }
 );

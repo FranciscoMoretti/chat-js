@@ -1,3 +1,4 @@
+import { user } from "./schema";
 import { readFile, readdir } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
 import { PGlite } from "@electric-sql/pglite";
@@ -5,14 +6,9 @@ import { drizzle } from "drizzle-orm/pglite";
 import { eq, sql } from "drizzle-orm";
 import { afterAll, beforeAll, expect, test, vi } from "vitest";
 import {
-  eveChat,
-  eveConversation,
-  eveGuest,
-  eveWorkspace,
   guestRuntimeSession,
   guestRuntimeRate,
-  user,
-} from "./schema";
+} from "@/plugins/guest-chat/guest-schema";
 
 const postgres = new PGlite();
 const database = drizzle(postgres);
@@ -28,7 +24,7 @@ const {
   claimExpiredGuestRuntimeSession,
   completeGuestRuntimeDeletion,
   countPendingGuestRuntimeDeletions,
-} = await import("./guest-runtime");
+} = await import("@/plugins/guest-chat/guest-queries");
 beforeAll(async () => {
   const directory = new URL("migrations/", import.meta.url);
   const entries = await readdir(directory);
@@ -197,44 +193,6 @@ test("cumulative input budget is atomic and denied inputs do not consume quota",
   expect(outcomes.toSorted()).toEqual(["input-limit", "ready"]);
   const policy = await readGuestRuntimeSession(guest.sessionId);
   expect(policy?.inputCharactersUsed).toBe(8);
-});
-
-test("legacy read-only inventory ignores accounts and fully deleted guest families", async () => {
-  const { hasExpiredEveGuestFamilies } = await import("./eve-guest-cleanup");
-  const ownerId = randomUUID();
-  const chatId = randomUUID();
-  const conversationId = randomUUID();
-  const workspaceId = randomUUID();
-  await database.insert(user).values({
-    id: ownerId,
-    email: `${ownerId}@example.test`,
-    name: "Inventory fixture",
-  });
-  await database
-    .insert(eveChat)
-    .values({ id: chatId, ownerId, title: "Fixture" });
-  await database.insert(eveWorkspace).values({ id: workspaceId, ownerId });
-  await database.insert(eveConversation).values({
-    id: conversationId,
-    workspaceId,
-    chatId,
-    ownerId,
-    operationId: randomUUID(),
-    firstMessage: "Fixture",
-    state: "bound",
-  });
-  expect(await hasExpiredEveGuestFamilies()).toBe(false);
-  await database.insert(eveGuest).values({
-    ownerId,
-    expiresAt: new Date(0),
-    tokenHash: "f".repeat(64),
-  });
-  expect(await hasExpiredEveGuestFamilies()).toBe(true);
-  await database
-    .update(eveConversation)
-    .set({ state: "deleted" })
-    .where(eq(eveConversation.id, conversationId));
-  expect(await hasExpiredEveGuestFamilies()).toBe(false);
 });
 
 test("pruning drains more than one old rate batch and retains live limits", async () => {

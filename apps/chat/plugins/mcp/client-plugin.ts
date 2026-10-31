@@ -1,10 +1,13 @@
-import type { ChatClientPlugin } from "@/lib/plugin-contracts";
+"use client";
+import { definePlugin, slot } from "@/lib/ui-slots";
+import { ComposerExtensions, SettingsLinks } from "@/components/chat-slots";
 import { ConnectorsControl } from "./composer";
-import { mcpSettingsItem } from "./settings";
+import { ConnectorsSettingsLink } from "./settings";
 
-export const mcpClient = () =>
-  ({
-    id: "mcp",
-    composerControls: [{ Component: ConnectorsControl, id: "mcp" }],
-    settingsItems: [mcpSettingsItem],
-  }) satisfies ChatClientPlugin;
+export const mcpClient = definePlugin({
+  id: "mcp",
+  slots: [
+    slot(ComposerExtensions, ConnectorsControl),
+    slot(SettingsLinks, ConnectorsSettingsLink),
+  ],
+});

@@ -6,10 +6,10 @@ import type { JSX as ReactJSX } from "react";
 
 import { toast } from "sonner";
 
-import { DropdownMenuCheckboxItem } from "@/components/ui/dropdown-menu";
+import { ToolMenuItem } from "./tool-menu-item";
 import { LoginPrompt } from "@/components/upgrade-cta/login-prompt";
 import type { UiToolName } from "@/lib/ai/types";
-import { installedToolNames } from "@/composition/generated/installed-tools";
+import { installedToolNames } from "@/integrations/tool-catalog";
 
 import { useChatModels } from "@/providers/chat-models-provider";
 
@@ -46,11 +46,10 @@ const ToolControl = ({
     Boolean(tool.endsWith("Document") && selectedTool?.endsWith("Document"));
   const unsupported = !model || model.toolCall === false;
   return (
-    <DropdownMenuCheckboxItem
-      closeOnClick
+    <ToolMenuItem
       checked={checked}
       disabled={disabled === true || (!checked && unsupported)}
-      onClick={() => {
+      onActivate={() => {
         if (checked) {
           onToolChange(null);
           return;
@@ -71,7 +70,7 @@ const ToolControl = ({
           </span>
         )}
       </span>
-    </DropdownMenuCheckboxItem>
+    </ToolMenuItem>
   );
 };
 

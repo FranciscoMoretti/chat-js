@@ -19,17 +19,17 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("./turn-tools", () => ({
-  eveToolAllowed: (): boolean => true,
+  eveTurnAccount: { get: (): boolean => true },
   eveTurnTool: { get: mocks.selected },
 }));
 
-vi.mock("@/composition/generated/installed-tools", () => ({
+vi.mock("@/integrations/tool-catalog", () => ({
   installedDocumentKinds: { has: (): boolean => mocks.text },
   installedToolNames: { has: (): boolean => mocks.research },
 }));
 
-vi.mock("../../composition/generated/providers", () => ({
-  providers: mocks.tools,
+vi.mock("../../integrations/tool-providers", () => ({
+  toolProviders: mocks.tools,
 }));
 vi.mock("@/tools/chatjs/deep-research/configuration", () => ({
   getDeepResearchConfig: () => ({}),
@@ -60,7 +60,7 @@ vi.mock("./shared-messages", () => ({
 }));
 const owner = {
   attributes: {},
-  authenticator: "test",
+  authenticator: "chatjs-gateway",
   principalId: "owner",
   principalType: "user",
 };
@@ -126,7 +126,7 @@ it("rejects guest and incompatible selected-tool invocations", async () => {
         ...ctx.session,
         auth: {
           current: owner,
-          initiator: { ...owner, attributes: { chatjsGuest: "true" } },
+          initiator: { ...owner, authenticator: "chatjs-disposable-guest" },
         },
       },
     })

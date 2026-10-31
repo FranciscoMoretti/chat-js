@@ -135,12 +135,12 @@ const normalizeChatAppScripts = (scripts: ScriptMap): void => {
 
 const configureElectronRuntimeScripts = (scripts: ScriptMap): string => {
   const build =
-    "esbuild src/main.ts --bundle --platform=node --format=cjs --outfile=dist/main.js --external:electron --external:electron-updater --alias:@=.. && esbuild src/preload.ts --bundle --platform=browser --format=cjs --outfile=dist/preload.js --external:electron --alias:@=..";
+    "esbuild src/main.ts --bundle --platform=node --format=cjs --outfile=dist/main.js --external:electron --external:electron-updater && esbuild src/preload.ts --bundle --platform=browser --format=cjs --outfile=dist/preload.js --external:electron";
 
   scripts.forge = "node ./scripts/run-forge.cjs";
   scripts["generate-icons"] = "tsx scripts/generate-icons.ts";
   scripts.prebuild =
-    "tsx scripts/write-branding.ts && tsx scripts/generate-icons.ts";
+    "tsx --tsconfig ../tsconfig.json scripts/write-branding.ts && tsx scripts/generate-icons.ts";
   scripts.build = build;
   scripts.start = "node ./scripts/run-forge.cjs start";
   scripts.dev = "node ./scripts/run-forge.cjs start";

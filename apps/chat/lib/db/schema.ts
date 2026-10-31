@@ -55,134 +55,6 @@ const user = pgTable("user", {
 type User = InferSelectModel<typeof user>;
 
 // Disposable runtime policy records never create an application account.
-const guestRuntimeSession = pgTable(
-  "GuestRuntimeSession",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    ownerId: text("ownerId").notNull().unique(),
-    sessionId: text("sessionId").unique(),
-    modelId: text("modelId").notNull(),
-    ipHash: text("ipHash").notNull(),
-    policyVersion: integer("policyVersion").notNull().default(1),
-    state: text("state").notNull().default("active"),
-    createdAt: timestamp("createdAt", { withTimezone: true })
-      .notNull()
-      .defaultNow(),
-    expiresAt: timestamp("expiresAt", { withTimezone: true })
-      .notNull()
-      .default(sql`now() + interval '24 hours'`),
-    credentialExpiresAt: timestamp("credentialExpiresAt", {
-      withTimezone: true,
-    }).notNull(),
-    inputCharactersUsed: integer("inputCharactersUsed").notNull().default(0),
-    cleanupAttemptedAt: timestamp("cleanupAttemptedAt", { withTimezone: true }),
-    deletedAt: timestamp("deletedAt", { withTimezone: true }),
-  },
-  (columns) => [
-    check(
-      "GuestRuntimeSession_state",
-      sql`${columns.state} in ('active', 'deleting', 'deleted')`
-    ),
-    check(
-      "GuestRuntimeSession_ip_hash",
-      sql`${columns.ipHash} ~ '^[0-9a-f]{64}$'`
-    ),
-    check(
-      "GuestRuntimeSession_expiry",
-      sql`${columns.expiresAt} = ${columns.createdAt} + interval '24 hours'`
-    ),
-    index("GuestRuntimeSession_cleanup_idx").on(
-      columns.state,
-      columns.expiresAt
-    ),
-  ]
-);
-
-const guestRuntimeRate = pgTable(
-  "GuestRuntimeRate",
-  {
-    ipHash: text("ipHash").notNull(),
-    kind: text("kind").notNull(),
-    startsAt: timestamp("startsAt", { withTimezone: true }).notNull(),
-    requests: integer("requests").notNull().default(0),
-  },
-  (columns) => [
-    primaryKey({ columns: [columns.ipHash, columns.kind, columns.startsAt] }),
-    check("GuestRuntimeRate_requests", sql`${columns.requests} >= 0`),
-    check(
-      "GuestRuntimeRate_kind",
-      sql`${columns.kind} in ('session', 'message')`
-    ),
-  ]
-);
-
-// Guest ownership is separate from BetterAuth sessions and monetary credits.
-// Retain expired identities after content cleanup so late usage remains guest usage.
-const eveGuest = pgTable(
-  "EveGuest",
-  {
-    createdAt: timestamp("createdAt", { withTimezone: true })
-      .defaultNow()
-      .notNull(),
-    expiresAt: timestamp("expiresAt", { withTimezone: true }).notNull(),
-    ownerId: text("ownerId")
-      .primaryKey()
-      .references(() => user.id, { onDelete: "cascade" }),
-    tokenHash: varchar("tokenHash", { length: 64 }).notNull().unique(),
-  },
-  (columns) => [
-    check("EveGuest_token_hash", sql`${columns.tokenHash} ~ '^[0-9a-f]{64}$'`),
-    index("EveGuest_expiry_idx").on(columns.expiresAt),
-  ]
-);
-
-const eveGuestRate = pgTable(
-  "EveGuestRate",
-  {
-    ipHash: varchar("ipHash", { length: 64 }).notNull(),
-    requests: integer("requests").notNull(),
-    startsAt: timestamp("startsAt", { withTimezone: true }).notNull(),
-    windowSeconds: integer("windowSeconds").notNull(),
-  },
-  (columns) => [
-    primaryKey({
-      columns: [columns.ipHash, columns.windowSeconds, columns.startsAt],
-    }),
-    check("EveGuestRate_requests", sql`${columns.requests} >= 0`),
-    check(
-      "EveGuestRate_window",
-      sql`${columns.windowSeconds} in (60, 2592000)`
-    ),
-  ]
-);
-
-const eveGuestMessage = pgTable(
-  "EveGuestMessage",
-  {
-    ipHash: varchar("ipHash", { length: 64 }).notNull(),
-    operationId: uuid("operationId").notNull(),
-    ownerId: text("ownerId")
-      .notNull()
-      .references(() => eveGuest.ownerId, { onDelete: "cascade" }),
-    requestHash: varchar("requestHash", { length: 64 }).notNull(),
-    reservationId: uuid("reservationId").notNull(),
-    reservedAt: timestamp("reservedAt", { withTimezone: true }).notNull(),
-    state: text("state")
-      .$type<"reserved" | "committed" | "released">()
-      .notNull(),
-  },
-  (columns) => [
-    primaryKey({ columns: [columns.ownerId, columns.operationId] }),
-    check(
-      "EveGuestMessage_state",
-      sql`${columns.state} in ('reserved', 'committed', 'released')`
-    ),
-    check(
-      "EveGuestMessage_request_hash",
-      sql`${columns.requestHash} ~ '^[0-9a-f]{64}$'`
-    ),
-  ]
-);
 
 const session = pgTable("session", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -317,9 +189,6 @@ const eveConversation = pgTable(
     }),
     forkMessageId: text("forkMessageId"),
     forkTurnId: text("forkTurnId"),
-    guestCleanupAttemptedAt: timestamp("guestCleanupAttemptedAt", {
-      withTimezone: true,
-    }),
     id: uuid("id").primaryKey().defaultRandom(),
     initialContentHash: text("initialContentHash"),
     initialModelId: text("initialModelId"),
@@ -678,7 +547,7 @@ const eveDocumentRevision = pgTable(
     documentId: uuid("documentId").notNull(),
     fileIds: jsonb("fileIds").$type<readonly string[]>().notNull().default([]),
     id: uuid("id").primaryKey().defaultRandom(),
-    kind: varchar("kind", { enum: ["text", "code", "sheet"] }).notNull(),
+    kind: varchar("kind").notNull(),
     operationId: text("operationId").notNull(),
     ownerId: text("ownerId").notNull(),
     parentRevisionId: uuid("parentRevisionId"),
@@ -936,11 +805,6 @@ export {
   eveDocumentRevision,
   eveFileReference,
   eveWorkspaceAttachment,
-  eveGuest,
-  guestRuntimeSession,
-  guestRuntimeRate,
-  eveGuestMessage,
-  eveGuestRate,
   eveImportedDocumentCheckpoint,
   eveImportedDocumentCheckpointEntry,
   eveNamedDocumentCheckpoint,

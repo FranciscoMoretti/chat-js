@@ -1,5 +1,5 @@
 import { Analytics } from "@vercel/analytics/next";
 
-import type { InstalledLayoutComponent } from "@/lib/installation-contracts";
+import type { ComponentType } from "react";
 
-export const Component = Analytics satisfies InstalledLayoutComponent;
+export const Component = Analytics satisfies ComponentType;

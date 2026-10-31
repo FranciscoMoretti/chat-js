@@ -6,12 +6,13 @@ import type { ReactNode } from "react";
 import type { AttachmentViewData } from "@/components/attachment-list";
 import {
   Attachment,
-  AttachmentAction,
-  AttachmentActions,
   AttachmentContent,
   AttachmentMedia,
   AttachmentTitle,
+  AttachmentAction,
+  AttachmentActions,
 } from "@/components/ui/attachment";
+import { AttachmentCardView } from "./attachment-card-view";
 import { Spinner } from "@/components/ui/spinner";
 import { getFileImageProps } from "@/lib/file-url";
 import { useImageLoadError } from "@/hooks/use-image-load-error";
@@ -58,34 +59,34 @@ export const AttachmentCard = ({
     media = <FileTextIcon />;
   }
   return (
-    <Attachment
-      data-testid="input-attachment-preview"
-      orientation={variant === "card" ? "vertical" : "horizontal"}
-      size={variant === "card" ? "default" : "xs"}
+    <AttachmentCardView
+      primitives={{
+        Attachment,
+        AttachmentContent,
+        AttachmentMedia,
+        AttachmentTitle,
+      }}
+      title={name || (isImage ? "Image" : "Attachment")}
+      media={media}
+      mediaVariant={isImage && !imageUnavailable ? "image" : "icon"}
+      variant={variant}
       state={isUploading ? "uploading" : "done"}
+      actions={
+        onRemove &&
+        !isUploading && (
+          <AttachmentActions>
+            <AttachmentAction
+              aria-label="Remove attachment"
+              onClick={onRemove}
+              type="button"
+            >
+              <XIcon />
+            </AttachmentAction>
+          </AttachmentActions>
+        )
+      }
     >
-      <AttachmentMedia
-        variant={isImage && !imageUnavailable ? "image" : "icon"}
-      >
-        {media}
-      </AttachmentMedia>
-      <AttachmentContent>
-        <AttachmentTitle>
-          {name || (isImage ? "Image" : "Attachment")}
-        </AttachmentTitle>
-      </AttachmentContent>
       {children}
-      {onRemove && !isUploading && (
-        <AttachmentActions>
-          <AttachmentAction
-            aria-label="Remove attachment"
-            onClick={onRemove}
-            type="button"
-          >
-            <XIcon />
-          </AttachmentAction>
-        </AttachmentActions>
-      )}
-    </Attachment>
+    </AttachmentCardView>
   );
 };

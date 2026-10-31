@@ -2,7 +2,7 @@
 
 import { useEveDeliveryReceipt } from "./use-eve-delivery-receipt";
 
-import { PluginSuggestions } from "@/components/plugin-chat-ui";
+import { ChatSuggestions } from "@/components/chat-slots";
 
 import { withTaskCleanup } from "@/components/task-cleanup";
 
@@ -252,12 +252,14 @@ const EveConversationEditor = ({
         }
         readOnly={Boolean(fork.pending)}
         draft={fork.draft}
-        files={fork.files}
+        capabilities={{
+          files: fork.files,
+          selectedTool: fork.selectedTool,
+          onToolChange: handleEditToolChange,
+        }}
         modelSelection={fork.modelSelection}
         onDraftChange={handleEditDraft}
         onSubmit={onSubmit}
-        onToolChange={handleEditToolChange}
-        selectedTool={fork.selectedTool}
       />
       {fork.error && (
         <p className="text-destructive text-sm" role="alert">
@@ -443,20 +445,22 @@ const EveConversationComposer = ({
           fork.locked
         }
         draft={composerDraft.text}
-        files={files}
+        capabilities={{
+          files,
+          onToolChange: handleSelectedToolChange,
+          selectedTool: retainedToolSelection(
+            comparison,
+            pendingMessage,
+            composerDraft.selectedTool
+          ),
+        }}
         modelSelection={modelSelection}
         onDraftChange={handleDraftChange}
         onStop={onStop}
         onSubmit={onSubmit}
-        onToolChange={handleSelectedToolChange}
         readOnly={Boolean(comparison)}
         retainedModelId={pendingMessage?.modelId}
         retainedModelIds={comparison?.modelIds}
-        selectedTool={retainedToolSelection(
-          comparison,
-          pendingMessage,
-          composerDraft.selectedTool
-        )}
         stopDisabled={cancelPending || status === "resuming"}
       />
       {hasText(displayedError) &&
@@ -616,7 +620,8 @@ const EveConversation = ({
             ...(hasText(pending.modelId)
               ? { "x-chatjs-selected-model": pending.modelId }
               : {}),
-            ...(pending.selectedTool
+            ...(pending.selectedTool !== undefined &&
+            pending.selectedTool !== null
               ? { "x-chatjs-selected-tool": pending.selectedTool }
               : {}),
           },
@@ -833,7 +838,7 @@ const EveConversation = ({
                     }}
 
                     suggestions={
-                      <PluginSuggestions
+                      <ChatSuggestions
                         conversationId={conversationId}
                         events={agent.events}
                         lastMessage={lastMessage}

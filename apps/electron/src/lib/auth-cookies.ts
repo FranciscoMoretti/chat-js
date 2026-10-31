@@ -1,11 +1,9 @@
-import { ELECTRON_AUTH_COOKIE_PREFIX } from "@/lib/electron-auth";
-
 const isSessionTokenCookieName = (name: string): boolean =>
   name.endsWith(".session_token");
 
-const isBetterAuthCookieName = (name: string): boolean =>
-  name.startsWith(ELECTRON_AUTH_COOKIE_PREFIX) ||
-  name.startsWith(`__Secure-${ELECTRON_AUTH_COOKIE_PREFIX}`) ||
+const isBetterAuthCookieName = (name: string, cookiePrefix: string): boolean =>
+  name.startsWith(cookiePrefix) ||
+  name.startsWith(`__Secure-${cookiePrefix}`) ||
   isSessionTokenCookieName(name) ||
   name.endsWith(".session_data");
 

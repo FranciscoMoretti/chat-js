@@ -7,10 +7,14 @@ export const eveCreationContentHash = (
   selectedTool?: UiToolName
 ): string | undefined => {
   // Preserve the identity of already-reserved requests with automatic tools.
-  if (!selectedTool && typeof message === "string") {
+  if (selectedTool === undefined && typeof message === "string") {
     return undefined;
   }
   return createHash("sha256")
-    .update(JSON.stringify(selectedTool ? { message, selectedTool } : message))
+    .update(
+      JSON.stringify(
+        selectedTool === undefined ? message : { message, selectedTool }
+      )
+    )
     .digest("hex");
 };

@@ -1,4 +1,4 @@
-import type { InstalledLayoutComponent } from "@/lib/installation-contracts";
+import type { ComponentType } from "react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
-export const Component = SpeedInsights satisfies InstalledLayoutComponent;
+export const Component = SpeedInsights satisfies ComponentType;

@@ -1,2 +1,13 @@
 @import "./sandbox.css";
-@source "../../../site/components/create-preview/ui/nova";
+@import "../../../site/components/create-preview/ui/styles/style-nova.css"
+  layer(base);
+
+@utility no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@source "../../../site/components/create-preview/ui/base";

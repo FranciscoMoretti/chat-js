@@ -9,9 +9,9 @@ vi.mock("@/lib/env", () => ({ env: {} }));
 const { isEveRootTitlePending, replaceEveRootFallbackTitle } =
   await import("@/plugins/ai-titles/title-queries");
 const { settleEveRootFallbackTitle } = await import("./eve-title");
-const { runChatAfterCreate } = await import("../chat-plugins");
-vi.mock("@/composition/generated/installed-chat", () => ({
-  installedChatPlugins: [],
+const { runChatAfterCreate } = await import("../chat-after-create");
+vi.mock("@/chatjs/generated/installed-chat", () => ({
+  installedChat: [],
 }));
 const chat = "00000000-0000-4000-8000-000000000001";
 const conversation = "00000000-0000-4000-8000-000000000002";

@@ -1,5 +1,7 @@
 "use client";
 
+import { isDocumentResult } from "@/lib/eve/document-contracts";
+
 import { hasText } from "@/components/text-value";
 
 import type { InputResponse } from "eve/client";
@@ -8,6 +10,7 @@ import type { JSX as ReactJSX, ReactNode } from "react";
 import { toast } from "sonner";
 
 import { Message, MessageContent } from "@/components/ui/message";
+import { ChatMessageView } from "../chat-message-view";
 import { MessageScrollerItem } from "@/components/ui/message-scroller";
 import { MessageActionsView } from "@/components/message-actions-view";
 import { RetryButtonView } from "@/components/retry-button-view";
@@ -20,9 +23,9 @@ import type {
 import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 
 import { EveAttachment } from "./eve-attachment";
-import { eveDocumentOperations } from "@/lib/eve/document-contracts";
+import { documentDefinitions } from "@/integrations/documents";
 import { EveMessagePart } from "./eve-message-part";
-import { PluginMessageActions } from "@/components/plugin-chat-ui";
+import { MessageActions } from "@/components/chat-slots";
 
 const messagePartIdentity = (part: ReadonlyEveMessagePart): string => {
   switch (part.type) {
@@ -115,7 +118,7 @@ const AssistantFeedback = ({
 > & { readonly modelId: string | undefined }): ReactJSX.Element => (
   <>
     {hasText(conversationId) && (
-      <PluginMessageActions
+      <MessageActions
         conversationId={conversationId}
         disabled={disabled}
         messageId={message.id}
@@ -317,38 +320,34 @@ const EveMessageRow = ({
     );
   }
   return (
-    <Message
-      className="py-1"
-      data-eve-message-id={message.id}
-      data-role={message.role}
-      align="start"
+    <ChatMessageView
+      messageId={message.id}
+      author={message.role}
+      primitives={{ Message, MessageContent }}
+      actions={actions}
+      followUp={isLast && !isReadonly && !actionsDisabled && suggestions}
     >
-      <MessageContent>
-        <span className="sr-only">Assistant</span>
-        {message.parts
-          .filter((part: ReadonlyEveMessagePart) => part.type !== "step-start")
-          .map((part): React.JSX.Element => (
-            <EveMessagePart
-              inputDisabled={responseDisabled(
-                isReadonly,
-                disabled,
-                inputDisabled
-              )}
-              isReadonly={isReadonly}
-              key={nextPartKey(part)}
-              messageId={message.id}
-              part={part}
-              respond={respond}
-              previewDocument={
-                part.type === "dynamic-tool" &&
-                part.toolCallId === latestDocumentCallId
-              }
-            />
-          ))}
-        {actions}
-        {isLast && !isReadonly && !actionsDisabled && suggestions}
-      </MessageContent>
-    </Message>
+      {message.parts
+        .filter((part: ReadonlyEveMessagePart) => part.type !== "step-start")
+        .map((part): React.JSX.Element => (
+          <EveMessagePart
+            inputDisabled={responseDisabled(
+              isReadonly,
+              disabled,
+              inputDisabled
+            )}
+            isReadonly={isReadonly}
+            key={nextPartKey(part)}
+            messageId={message.id}
+            part={part}
+            respond={respond}
+            previewDocument={
+              part.type === "dynamic-tool" &&
+              part.toolCallId === latestDocumentCallId
+            }
+          />
+        ))}
+    </ChatMessageView>
   );
 };
 
@@ -368,8 +367,9 @@ export const EveMessages = ({
     .filter((part: ReadonlyEveMessagePart) => part.type === "dynamic-tool")
     .findLast(
       (part) =>
-        Object.hasOwn(eveDocumentOperations, part.toolName) ||
-        part.toolName === "readDocument"
+        documentDefinitions.operations.has(part.toolName) ||
+        part.toolName === "readDocument" ||
+        (part.state === "output-available" && isDocumentResult(part.output))
     )?.toolCallId;
   const precedingUsers: (ReadonlyEveMessage | undefined)[] = [];
   let precedingUser: ReadonlyEveMessage | undefined;

@@ -1,4 +1,6 @@
 "use client";
+import { SidebarLink } from "@/components/navigation-links";
+import { SidebarActionMenu } from "@/components/sidebar-menus";
 import { pluginRoute } from "@/lib/plugin-route";
 
 import React, { memo, useState } from "react";
@@ -12,19 +14,12 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuGroup,
-  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
 import { ChatMenuItems } from "@/components/chat-menu-items";
 import { Input } from "@/components/ui/input";
 
-import { InternalLink } from "@/components/internal-link";
-
-import {
-  SidebarMenuAction,
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from "@/components/ui/sidebar";
+import { SidebarMenuItem } from "@/components/ui/sidebar";
 
 const PureSidebarChatItem = ({
   chat,
@@ -104,34 +99,23 @@ const PureSidebarChatItem = ({
           />
         </div>
       ) : (
-        <SidebarMenuButton
+        <SidebarLink
           isActive={isActive}
-          render={
-            <InternalLink
-              href={pluginRoute(chatHref)}
-              onNavigate={() => {
-                setOpenMobile(false);
-              }}
-              prefetch={prefetch}
-            >
-              <span>{chat.title}</span>
-            </InternalLink>
-          }
-        />
+          href={pluginRoute(chatHref)}
+          onNavigate={() => {
+            setOpenMobile(false);
+          }}
+          prefetch={prefetch}
+        >
+          <span>{chat.title}</span>
+        </SidebarLink>
       )}
 
       <DropdownMenu modal>
-        <DropdownMenuTrigger
-          render={
-            <SidebarMenuAction
-              className="data-open:bg-sidebar-accent data-open:text-sidebar-accent-foreground mr-0.5"
-              showOnHover={!isActive}
-            />
-          }
-        >
+        <SidebarActionMenu showOnHover={!isActive}>
           <MoreHorizontal size={16} />
           <span className="sr-only">More</span>
-        </DropdownMenuTrigger>
+        </SidebarActionMenu>
 
         <DropdownMenuContent align="end" side="bottom">
           <DropdownMenuGroup>

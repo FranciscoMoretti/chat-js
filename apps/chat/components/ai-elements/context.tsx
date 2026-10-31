@@ -7,10 +7,9 @@ import React, { createContext, useContext, useMemo } from "react";
 import { getUsage } from "tokenlens";
 import { Button } from "@/components/ui/button";
 import {
-  HoverCard,
   HoverCardContent,
-  HoverCardTrigger,
 } from "@/components/ui/hover-card";
+import { ContextHover, ContextHoverTrigger } from "./context-hover";
 import { Progress } from "@/components/ui/progress";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import type { StoredLanguageModelUsage } from "@/lib/ai/usage-token-details";
@@ -48,7 +47,7 @@ const useContextValue = (): ContextSchema => {
   return context;
 };
 
-type ContextProps = ComponentProps<typeof HoverCard> & ContextSchema;
+type ContextProps = ComponentProps<typeof ContextHover> & ContextSchema;
 
 const Context = ({
   usedTokens,
@@ -64,7 +63,7 @@ const Context = ({
 
   return (
     <ContextContext.Provider value={contextValue}>
-      <HoverCard {...props} />
+      <ContextHover {...props} />
     </ContextContext.Provider>
   );
 };
@@ -123,7 +122,7 @@ const ContextTrigger = ({
   }).format(usedPercent);
 
   return (
-    <HoverCardTrigger delay={0} closeDelay={0} render={
+    <ContextHoverTrigger button={
         <Button type="button" variant="ghost" {...props}>
           {children ?? <><span className="text-muted-foreground font-medium">{renderedPercent}</span><ContextIcon /></>}
         </Button>

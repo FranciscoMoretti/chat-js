@@ -15,7 +15,6 @@ interface Gateways {
 }
 type GatewayType = keyof Gateways;
 const vercelDefaults = {
-  anonymousModels: ["google/gemini-2.5-flash-lite", "openai/gpt-5-nano"],
   curatedDefaults: [
     "openai/gpt-5-nano",
     "openai/gpt-5-mini",
@@ -44,7 +43,6 @@ const vercelDefaults = {
 } satisfies GatewayModelDefaults<Gateways["vercel"]>;
 
 const openrouterDefaults = {
-  anonymousModels: ["google/gemini-2.5-flash-lite", "openai/gpt-5-nano"],
   curatedDefaults: [
     "openai/gpt-5-nano",
     "openai/gpt-5-mini",
@@ -73,7 +71,6 @@ const openrouterDefaults = {
 } satisfies GatewayModelDefaults<Gateways["openrouter"]>;
 
 const openaiDefaults = {
-  anonymousModels: ["gpt-5-nano"],
   curatedDefaults: [
     "gpt-5-nano",
     "gpt-5-mini",
@@ -101,7 +98,6 @@ const openaiCompatibleDefaults = {
 } satisfies GatewayModelDefaults<Gateways["openai-compatible"]>;
 
 const litellmDefaults = {
-  anonymousModels: ["openai/gpt-4o-mini"],
   curatedDefaults: [
     "openai/gpt-4o-mini",
     "openai/gpt-4o",

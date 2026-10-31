@@ -33,6 +33,7 @@ const composerSchema = z.object({
 const toolRegistrationSchema = z.object({
   composer: composerSchema.optional(),
   rendererExport: identifier.optional(),
+  definitionExport: identifier.optional(),
   toolExport: identifier,
   workflow: z.literal(true).optional(),
 });
@@ -57,8 +58,11 @@ const toolDefinitionBase = z.object({
   availabilityExport: identifier.optional(),
   codeExecutionCapabilities: executionCapabilities.optional(),
   codeExecutorExport: identifier.optional(),
-  documentActions: z.literal(true).optional(),
-  documentKind: z.enum(["text", "code", "sheet"]).optional(),
+  documentKind: z
+    .string()
+    .regex(/^[a-z][a-z0-9-]*$/u)
+    .max(100)
+    .optional(),
   documentRunExport: identifier.optional(),
   envRequirements: z.array(envRequirementSchema).default([]),
   id: z.string().regex(/^[a-z][a-z0-9-]*$/u),
@@ -128,10 +132,6 @@ const toolDefinitionSchema = toolDefinitionBase
     (item: Readonly<{ slot?: string; tools: readonly unknown[] }>) =>
       (item.slot ?? "") === "" || item.tools.length === PROVIDER_TOOL_COUNT,
     { message: "A provider slot must register exactly one tool" }
-  )
-  .refine(
-    (item) => item.documentActions !== true || item.documentKind !== undefined,
-    { message: "Document actions require a document kind" }
   );
 
 type ToolDefinition = z.infer<typeof toolDefinitionSchema>;
@@ -164,6 +164,16 @@ const pluginDefinitionBase = z.object({
   requiresPersistentSandbox: z.literal(true).optional(),
   chat: z.object({ export: identifier }).optional(),
   billing: z.object({ export: identifier }).optional(),
+  signedOut: z.object({ export: identifier }).optional(),
+  sessionProfile: z
+    .object({ export: identifier, authenticator: z.string().min(1) })
+    .optional(),
+  cleanup: z.object({ export: identifier, id: pluginIdSchema }).optional(),
+  authentication: z.object({ export: identifier }).optional(),
+  authenticationUi: z
+    .object({ form: identifier, signOut: identifier })
+    .optional(),
+  navigation: z.object({ export: identifier }).optional(),
   server: z
     .object({
       export: identifier,

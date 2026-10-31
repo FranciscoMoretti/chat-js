@@ -31,7 +31,7 @@ Admission first reconciles recorded usage, then requires a strictly positive bal
 
 Core sums provider costs using database decimal arithmetic, rounds up once per turn to whole cents, and subtracts only the unpaid difference. Receipt writes, the debit, and the settlement marker commit in one transaction. Replayed evidence does not charge twice. Unknown costs remain pending until reconciliation resolves them.
 
-Guest sessions remain core behavior. Both guest paths use IP limits, identity and ownership checks, expiry, and input/output limits without monetary or message-credit balances. Legacy retry-safe rate reservations and refunds remain in core. This plugin does not add payments, subscriptions, top-ups, or an administrative balance editor.
+[Guest Chat](./guest-chat) owns disposable visitor sessions and rate limits. Guests do not enter account billing or own monetary balances. Credits does not add payments, subscriptions, top-ups, or an administrative balance editor.
 
 ## Storage
 

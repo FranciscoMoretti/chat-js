@@ -1,6 +1,5 @@
 import { z } from "zod";
 
-import { releaseEveGuestCreation } from "@/lib/db/eve-guests";
 import {
   recordEveResponseGroupRejection,
   reserveEveResponseGroup,
@@ -9,7 +8,6 @@ import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 import { conversationBinding } from "./contracts";
 import { createEveConversationOperation } from "./create-conversation-operation";
-import { settleGuestCreation } from "./guest-admission";
 import type { EveResponseGroupResult } from "./response-group-contracts";
 import { eveResponseGroupInput } from "./response-group-input";
 
@@ -20,27 +18,14 @@ type CandidateResult = EveResponseGroupResult["candidates"][number];
  *
  * @param {string} ownerId Owner whose comparison group and candidate identities are reserved.
  * @param {z.infer<typeof eveResponseGroupInput>} value Comparison input validated before reservation and dispatch.
- * @param {{ reservations: { operationId: string; reservationId: string; }[]; group: Pick< Awaited<ReturnType<typeof reserveEveResponseGroup>>, "id" | "candidates" >; }} guestAdmission Optional pre-reserved guest group and quotas used instead of reserving another group.
  * @returns {Promise<{ id: string; candidates: CandidateResult[] }>} The group identity and ordered bound, rejected, unresolved or waiting candidate results; later root candidates remain waiting until the primary binds.
  */
 export const createEveResponseGroup = async (
   ownerId: string,
-  value: ReadonlyNativeSurface<z.infer<typeof eveResponseGroupInput>>,
-  guestAdmission?: ReadonlyNativeSurface<{
-    readonly reservations: {
-      readonly operationId: string;
-      readonly reservationId: string;
-    }[];
-    readonly group: Pick<
-      Awaited<ReturnType<typeof reserveEveResponseGroup>>,
-      "id" | "candidates"
-    >;
-  }>
+  value: ReadonlyNativeSurface<z.infer<typeof eveResponseGroupInput>>
 ): Promise<EveResponseGroupResult> => {
   const input = eveResponseGroupInput.parse(value);
-  const group =
-    guestAdmission?.group ?? (await reserveEveResponseGroup(ownerId, input));
-  const guestReservations = guestAdmission?.reservations;
+  const group = await reserveEveResponseGroup(ownerId, input);
   const dispatch = async (
     candidate: ReadonlyNativeSurface<(typeof group.candidates)[number]>,
     fork = input.fork
@@ -52,29 +37,13 @@ export const createEveResponseGroup = async (
         group.id,
         candidate.operationId
       );
-      const guestReservation = guestReservations?.find(
-        (entry) => entry.operationId === candidate.operationId
-      );
-      const response = await createEveConversationOperation(
-        ownerId,
-        {
-          message: input.message,
-          modelId: candidate.modelId,
-          operationId: candidate.operationId,
-          selectedTool: input.selectedTool,
-          ...(fork ? { fork, forkKind } : { projectId: input.projectId }),
-        },
-        guestReservation?.reservationId
-      );
-      let released: boolean | undefined;
-      if (guestReservation) {
-        released = await settleGuestCreation(
-          response,
-          ownerId,
-          candidate.operationId,
-          guestReservation.reservationId
-        );
-      }
+      const response = await createEveConversationOperation(ownerId, {
+        message: input.message,
+        modelId: candidate.modelId,
+        operationId: candidate.operationId,
+        selectedTool: input.selectedTool,
+        ...(fork ? { fork, forkKind } : { projectId: input.projectId }),
+      });
       if (!response.ok) {
         const failureBody: unknown = await response.json().catch(() => null);
         if (
@@ -92,7 +61,6 @@ export const createEveResponseGroup = async (
           })
           .safeParse(failureBody);
         if (
-          (!guestReservation || released === true) &&
           (response.status === 400 || response.status === 404) &&
           failure.success
         ) {
@@ -153,27 +121,6 @@ export const createEveResponseGroup = async (
   }
   const primary = await dispatch(first);
   if (primary.state !== "bound") {
-    if (primary.state === "rejected" && guestReservations) {
-      await Promise.all(
-        rest.map(async (candidate: { readonly operationId: string }) => {
-          const quota = guestReservations.find(
-            (entry) => entry.operationId === candidate.operationId
-          );
-          if (quota) {
-            const released = await releaseEveGuestCreation(
-              ownerId,
-              candidate.operationId,
-              quota.reservationId
-            );
-            if (!released) {
-              throw new Error(
-                "Guest candidate may already be admitted. Retain comparison recovery."
-              );
-            }
-          }
-        })
-      );
-    }
     return {
       candidates: [
         primary,

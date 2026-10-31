@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useSyncExternalStore } from "react";
-import { InternalLink } from "@/components/internal-link";
+import { SidebarLink } from "@/components/navigation-links";
+import { useSyncExternalStore } from "react";
 
-import { SidebarMenuButton, useSidebar } from "@/components/ui/sidebar";
+import { useSidebar } from "@/components/ui/sidebar";
 
 import { Plus } from "lucide-react";
 import type { JSX as ReactJSX } from "react";
@@ -21,25 +21,21 @@ export const NewChatButton = (): ReactJSX.Element => {
   );
 
   return (
-    <SidebarMenuButton
+    <SidebarLink
       className="mt-4"
       tooltip="New Chat"
-      render={
-        <InternalLink
-          className="flex w-full items-center gap-2"
-          href="/"
-          onNavigate={() => {
-            setOpenMobile(false);
-            globalThis.dispatchEvent(new Event("chatjs:new-chat"));
-          }}
-        >
-          <Plus aria-label="New Chat" size={16} />
-          <span>New Chat</span>
-          <span className="text-muted-foreground ml-auto text-xs">
-            {shortcutText}
-          </span>
-        </InternalLink>
-      }
-    />
+      linkClassName="flex w-full items-center gap-2"
+      href="/"
+      onNavigate={() => {
+        setOpenMobile(false);
+        globalThis.dispatchEvent(new Event("chatjs:new-chat"));
+      }}
+    >
+      <Plus aria-label="New Chat" size={16} />
+      <span>New Chat</span>
+      <span className="text-muted-foreground ml-auto text-xs">
+        {shortcutText}
+      </span>
+    </SidebarLink>
   );
 };

@@ -214,7 +214,6 @@ const toConfigInput = (
     appName: string;
     appPrefix: string;
     appUrl: string;
-    withElectron: boolean;
     gateway: Gateway;
     gatewayDefaults?: GatewayDefinition["defaults"];
     coreFeatures: Record<CoreFeatureKey, boolean>;
@@ -229,7 +228,6 @@ const toConfigInput = (
   appPrefix: string;
   appUrl: string;
   authentication: Readonly<Record<AuthProvider, boolean>>;
-  desktopApp: { enabled: boolean };
   features: { parallelResponses: boolean };
 } => ({
   ai: {
@@ -244,9 +242,6 @@ const toConfigInput = (
   appPrefix: input.appPrefix,
   appUrl: input.appUrl,
   authentication: input.auth,
-  desktopApp: {
-    enabled: input.withElectron,
-  },
   features: {
     parallelResponses: input.coreFeatures.parallelResponses,
   },
@@ -257,7 +252,6 @@ export const buildConfigTs = (
     appName: string;
     appPrefix: string;
     appUrl: string;
-    withElectron: boolean;
     gateway: Gateway;
     gatewayDefaults?: GatewayDefinition["defaults"];
     coreFeatures: Record<CoreFeatureKey, boolean>;

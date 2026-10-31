@@ -16,6 +16,7 @@
     "plugins/projects/routes/project-page.tsx",
     "plugins/projects/server-plugin.ts",
     "plugins/projects/ui/chat-contributions.tsx",
+    "plugins/projects/ui/move-menu-item.tsx",
     "plugins/projects/ui/delete-project-dialog.tsx",
     "plugins/projects/ui/eve-move-project-dialog.tsx",
     "plugins/projects/ui/eve-project-home.tsx",

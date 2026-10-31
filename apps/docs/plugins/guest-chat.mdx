@@ -1,0 +1,66 @@
+---
+title: Guest Chat
+description: Offer disposable text conversations without creating accounts or saved chat history
+---
+
+Guest Chat lets visitors try one inexpensive text model at `/`. The browser keeps its session binding and credential only in memory. Reloading, choosing New chat, or signing in does not transfer the conversation into an account.
+
+## Installation
+
+```bash
+bunx @chat-js/cli add guest-chat
+```
+
+Before accepting guest traffic, configure the shared EVE runtime and a PostgreSQL deletion lifecycle with verified write and queue fences. Run `bun eve:setup` and apply your generated database migration. Bootstrap returns HTTP 503 when the deployment cannot verify safe deletion.
+
+On Vercel, admission uses the verified `x-vercel-forwarded-for` header. Elsewhere, set `TRUSTED_CLIENT_IP_HEADER` to a header your reverse proxy overwrites with one validated client IP. Missing or malformed addresses reject admission. Development uses the loopback address.
+
+Schedule the protected `/api/cron/cleanup` endpoint and monitor unsuccessful sweeps. `bun cleanup` drains batches that make progress. Local development starts a cleanup timer only for a local PostgreSQL database and a supported local deletion runtime.
+
+## Behavior and limits
+
+Guests and accounts use the same EVE agent. The plugin authenticates signed credentials against its persisted policy and binds each credential to one native session. Reconnecting with a different identity cannot change the session's original capabilities.
+
+| Limit | Default |
+| --- | --- |
+| Model | GPT-5 nano, using the selected gateway's model ID |
+| Messages per IP | 5 per minute |
+| New sessions per IP | 5 per hour |
+| Credential lifetime | 1 hour |
+| Message length | 4,000 characters |
+| Cumulative user input | 24,000 characters |
+| Serialized provider prompt | 24,000 characters |
+| Output | 512 tokens with a bounded stream and timeout |
+| Transcript cleanup target | 24 hours, plus scheduling delay and retries |
+
+There is no per-session message-credit balance. Failed or ambiguous sends still consume admission capacity. Guests cannot use tools, files, projects, comparisons, account APIs, or account billing. Provider middleware also rejects non-text inputs and tool output, independently of the UI.
+
+Retirement on unload and New chat is best effort. Scheduled cleanup performs the durable purge through core's verified lifecycle. Minimal policy and deletion metadata remains for retries and late-write prevention. Rate buckets expire after two days. Provider logs and tracing have separate retention policies.
+
+## Source and customization
+
+All implementation lives in `plugins/guest-chat/`:
+
+| Module | Responsibility |
+| --- | --- |
+| `signed-out.tsx` | Guest screen and memory-only conversation binding |
+| `routes/create-session.ts` | Same-origin bootstrap and session binding |
+| `session-profile.ts` | Native authentication, bounded model, and instructions |
+| `guest-policy.ts` | Model, rate, input, output, and expiry policy |
+| `guest-schema.ts`, `guest-queries.ts` | Durable admission, isolation, and cleanup inventory |
+| `cleanup.ts`, `guest-cleanup.ts` | Bounded cleanup contribution using core deletion safeguards |
+| `server-plugin.ts`, `guest-scheduler.ts` | Local development cleanup registration |
+
+`app/api/eve-guest/route.ts` is a thin adapter. Core imports generated registrations, not this implementation. Account tools and hooks require the registered account authenticator. Unknown or removed session profiles cannot fall back to account capabilities.
+
+Edit the installed source to change policy. The provider prompt includes assistant replies and framing, so a conversation can reach that bound before its user-input allowance. Changes to persisted policy semantics should invalidate or explicitly handle existing credentials.
+
+## Without Guest Chat
+
+A new installation without this plugin redirects signed-out chat visitors to `/login`. It has no guest bootstrap route, authenticator, cleanup task, or guest tables. Account chat continues to use the same agent.
+
+To remove the plugin from an existing deployment, stop guest admission and drain its sessions before removing its cleanup contribution and schema. Removing a plugin does not itself purge existing runtime payloads.
+
+The reference repository's migration 0022 removes the obsolete account-shaped guest tables. It refuses to run while those tables still own undeleted conversations. Purge those conversations using the previous release before upgrading. Current disposable guest tables and sessions retain their names and data.
+
+See the [Plugin API](../reference/plugin-api) for the signed-out screen, session profile, and cleanup contracts.

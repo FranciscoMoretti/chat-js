@@ -122,6 +122,14 @@ vi.mock("@/lib/auth-client", () => ({
   },
 }));
 
+vi.mock("@/plugins/desktop/desktop-auth-client", () => ({
+  default: {
+    electron: { transferUser: () => Promise.withResolvers().promise },
+    ensureElectronRedirect: () => null,
+    getSession: () => Promise.resolve({ data: route.session }),
+  },
+}));
+
 vi.mock("@/lib/db/eve-queries", () => ({
   getEveChatPageConversation: () => Promise.resolve(route.server.conversation),
   listEveConversations: (

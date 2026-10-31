@@ -1,5 +1,5 @@
 import type { DynamicResolveContext } from "eve";
-import { isGuestSession } from "@/lib/eve/session-identity";
+import { isAccountSession } from "@/lib/eve/session-identity";
 import { defineDynamic, defineInstructions } from "eve/instructions";
 
 import { projectInstructions } from "./instructions-state";
@@ -7,7 +7,7 @@ import { projectInstructions } from "./instructions-state";
 export default defineDynamic({
   events: {
     "turn.started": (_event: unknown, context: DynamicResolveContext) => {
-      if (isGuestSession(context.session)) {
+      if (!isAccountSession(context.session)) {
         return null;
       }
       const { content } = projectInstructions.get();

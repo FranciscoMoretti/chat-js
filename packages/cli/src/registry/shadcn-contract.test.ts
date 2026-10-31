@@ -21,8 +21,20 @@ const configuredRegistry = {
 test("registry config preserves the SDK object URL, parameters and headers contract", async () => {
   const root = await createConfigFixture(configuredRegistry);
   try {
+    await writeFile(
+      path.join(root, "components.json"),
+      JSON.stringify({
+        style: "radix-lyra",
+        iconLibrary: "phosphor",
+        rtl: true,
+        registries: { "@chatjs": configuredRegistry },
+      })
+    );
     const source = await readFile(path.join(root, "components.json"), "utf-8");
     const config = await registryConfig(root);
+    expect(config.style).toBe("radix-lyra");
+    expect(config.iconLibrary).toBe("phosphor");
+    expect(config.rtl).toBe(true);
     expect(config.registries["@chatjs"]).toEqual(configuredRegistry);
     expect(await readFile(path.join(root, "components.json"), "utf-8")).toBe(
       source

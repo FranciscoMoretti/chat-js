@@ -19,7 +19,6 @@ const attachmentUploadsItem: RegistryItem = {
     "lucide-react",
     "sonner",
     `browser-image-compression@${registryPackage.devDependencies["browser-image-compression"]}`,
-    `react-dropzone@${registryPackage.devDependencies["react-dropzone"]}`,
   ],
   description:
     "User attachment picker, camera, paste/drop, preprocessing and upload endpoint",

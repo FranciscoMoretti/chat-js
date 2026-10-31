@@ -13,7 +13,7 @@ const home = (
     <HomePage />
   </ChatLayout>
 );
-test("home for a guest with a fixed inexpensive model", async () => {
+test("home with Guest Chat installed has a fixed inexpensive model", async () => {
   await renderRoute(home);
   await expect
     .element(page.getByText("How can I help you today?"))
@@ -24,6 +24,10 @@ test("home for a guest with a fixed inexpensive model", async () => {
   await expect
     .element(page.getByRole("button", { name: "Sign in" }).first())
     .toBeVisible();
+  await expect
+    .element(page.getByRole("button", { name: "Composer options" }))
+    .not.toBeInTheDocument();
+  expect(document.querySelector('input[type="file"]')).toBeNull();
   await page.viewport(390, 844);
   const header = document.querySelector("header");
   if (!header) {
@@ -143,5 +147,9 @@ test("signed-in composer options expose uploads with the native menu", async () 
   await expect
     .element(page.getByRole("menuitem", { name: "Attach files" }))
     .toBeVisible();
+  const items = [...document.querySelectorAll('[role="menuitem"]')].map(
+    (item) => item.textContent
+  );
+  expect(items[0]).toContain("Attach files");
   await page.screenshot({ path: "__screenshots__/home-upload-menu.png" });
 });

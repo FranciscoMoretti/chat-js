@@ -1,11 +1,10 @@
 import {
-  PluginSidebar,
-  PluginSidebarHeader,
-} from "@/components/plugin-chat-ui";
+  SidebarSections,
+  ModelSettingsLink,
+  SidebarHeaderItems,
+} from "@/components/chat-slots";
 import components from "@/components.json";
-import { settingsItems } from "@/settings-items";
 import React, { Suspense } from "react";
-import { Cpu } from "lucide-react";
 
 import { EveHistory } from "@/components/eve/eve-history";
 
@@ -13,20 +12,19 @@ import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
-  SidebarGroup,
   SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
   SidebarSeparator,
+  SidebarGroup,
+  SidebarMenu,
+  SidebarMenuItem,
 } from "@/components/ui/sidebar";
 
-import { InternalLink } from "@/components/internal-link";
 import { NewChatButton } from "@/components/new-chat-button";
 import type { JSX as ReactJSX } from "react";
 import { SidebarTopRow } from "@/components/sidebar-top-row";
 
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { ChatSidebarView } from "./chat-sidebar-view";
 
 import { SidebarUserNav } from "./sidebar-user-nav";
 
@@ -35,12 +33,10 @@ import { headers } from "next/headers";
 
 import { resolveEvePrincipal } from "@/lib/eve/principal";
 
-const modelSettingsItem = settingsItems.find((item) => item.id === "models");
-
-const ScopedPluginSidebarHeader = async (): Promise<ReactJSX.Element> => {
+const ScopedSidebarHeaderItems = async (): Promise<ReactJSX.Element> => {
   const principal = await resolveEvePrincipal(await headers());
   return (
-    <PluginSidebarHeader
+    <SidebarHeaderItems
       key={principal?.ownerId ?? "anonymous"}
       ownerId={principal?.ownerId}
     />
@@ -59,13 +55,18 @@ const HistorySkeleton = (): React.JSX.Element => (
 );
 
 export const AppSidebar = (): React.JSX.Element => (
-  <Sidebar
-    className="grid max-h-dvh grid-rows-[auto_1fr_auto] border-x-0"
-    side={components.rtl ? "right" : "left"}
-    dir={components.rtl ? "rtl" : "ltr"}
-    collapsible="icon"
-  >
-    <SidebarHeader className="shrink-0">
+  <ChatSidebarView
+    primitives={{
+      Sidebar,
+      SidebarContent,
+      SidebarFooter,
+      SidebarHeader,
+      SidebarSeparator,
+      ScrollArea,
+    }}
+    direction={components.rtl ? "rtl" : "ltr"}
+    footer={<SidebarUserNav />}
+    header={
       <SidebarMenu>
         <div className="flex flex-row items-center justify-between">
           <SidebarTopRow />
@@ -79,37 +80,15 @@ export const AppSidebar = (): React.JSX.Element => (
             </SidebarMenuItem>
           }
         >
-          <ScopedPluginSidebarHeader />
+          <ScopedSidebarHeaderItems />
         </Suspense>
-        {modelSettingsItem && (modelSettingsItem.isVisible?.() ?? true) && (
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              tooltip="Models"
-              render={
-                <InternalLink aria-label="Models" href={modelSettingsItem.href}>
-                  <Cpu className="size-4" />
-                  <span className="group-data-[collapsible=icon]:hidden">
-                    Models
-                  </span>
-                </InternalLink>
-              }
-            />
-          </SidebarMenuItem>
-        )}
+        <ModelSettingsLink surface="sidebar" />
       </SidebarMenu>
-    </SidebarHeader>
-    <SidebarSeparator />
-    <ScrollArea className="relative flex-1 overflow-y-auto">
-      <SidebarContent className="max-w-(--sidebar-width) pr-2 group-data-[collapsible=icon]:hidden">
-        <Suspense fallback={<HistorySkeleton />}>
-          <PluginSidebar />
-          <EveHistory />
-        </Suspense>
-      </SidebarContent>
-    </ScrollArea>
-    <SidebarSeparator />
-    <SidebarFooter>
-      <SidebarUserNav />
-    </SidebarFooter>
-  </Sidebar>
+    }
+  >
+    <Suspense fallback={<HistorySkeleton />}>
+      <SidebarSections />
+      <EveHistory />
+    </Suspense>
+  </ChatSidebarView>
 );

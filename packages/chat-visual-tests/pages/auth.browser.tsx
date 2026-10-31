@@ -4,7 +4,7 @@ import { page } from "vitest/browser";
 import DeviceLoginPage from "@/app/(auth)/device-login/page";
 import LoginPage from "@/app/(auth)/login/page";
 import RegisterPage from "@/app/(auth)/register/page";
-import { ELECTRON_AUTH_CLIENT_ID } from "@/lib/electron-auth";
+import { ELECTRON_AUTH_CLIENT_ID } from "@/plugins/desktop/protocol";
 
 import { session } from "./fixtures";
 import { renderRoute } from "./render";
@@ -12,7 +12,7 @@ import { renderRoute } from "./render";
 const desktopTransfer = `client_id=${ELECTRON_AUTH_CLIENT_ID}&state=visual`;
 
 test("login offers every configured provider", async () => {
-  await renderRoute(<LoginPage searchParams={Promise.resolve({})} />, {
+  await renderRoute(<LoginPage />, {
     path: "/login",
   });
   await expect.element(page.getByText("Welcome back")).toBeVisible();
@@ -28,19 +28,16 @@ test("login offers every configured provider", async () => {
 });
 
 test("login from the desktop app hands over the signed-in account", async () => {
-  await renderRoute(
-    <LoginPage
-      searchParams={Promise.resolve(
-        Object.fromEntries(new URLSearchParams(desktopTransfer))
-      )}
-    />,
-    { path: "/login", search: desktopTransfer, session }
-  );
+  await renderRoute(<LoginPage />, {
+    path: "/login",
+    search: desktopTransfer,
+    session,
+  });
   await expect.element(page.getByText(session.user.email)).toBeVisible();
 });
 
 test("login remembers the provider used last", async () => {
-  await renderRoute(<LoginPage searchParams={Promise.resolve({})} />, {
+  await renderRoute(<LoginPage />, {
     lastLoginMethod: "github",
     path: "/login",
   });
@@ -50,7 +47,7 @@ test("login remembers the provider used last", async () => {
 test("login inside the desktop app sends the user to the browser", async () => {
   // The desktop app's preload script exposes this to the pages it opens.
   vi.stubGlobal("requestAuth", () => null);
-  await renderRoute(<LoginPage searchParams={Promise.resolve({})} />, {
+  await renderRoute(<LoginPage />, {
     path: "/login",
   });
   await expect

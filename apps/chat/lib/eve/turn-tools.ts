@@ -1,13 +1,12 @@
 import { defineState } from "eve/context";
 
 import type { UiToolName } from "@/lib/ai/types";
-import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 import {
   installedDocumentKinds,
   installedToolNames,
-} from "@/composition/generated/installed-tools";
+} from "@/integrations/tool-catalog";
 
-import { eveDocumentOperations } from "./document-contracts";
+import { documentDefinitions } from "@/integrations/documents";
 import { selectedEveTools } from "./selected-tools";
 
 // Set only by turn.started. Approval/reconnect authentication must not change it.
@@ -16,27 +15,15 @@ const eveTurnTool = defineState<UiToolName | null>(
   () => null
 );
 
-const eveTurnGuest = defineState<boolean>("chatjs.turn-guest", () => false);
-
-const eveToolAllowed = (name: string): boolean =>
-  !eveTurnGuest.get() ||
-  ANONYMOUS_LIMITS.AVAILABLE_TOOLS.some((tool) => tool === name);
+const eveTurnAccount = defineState<boolean>("chatjs.turn-account", () => false);
 
 const eveInstalledToolEnabled = (name: string): boolean => {
-  const operation = Object.entries(eveDocumentOperations).find(
-    ([key]: readonly [string, ...unknown[]]) => key === name
-  )?.[1];
+  const operation = documentDefinitions.operations.get(name);
   if (operation) {
     return installedDocumentKinds.has(operation.kind);
   }
   if (name === "readDocument") {
-    return installedDocumentKinds.size > 0;
-  }
-  if (name === "runCodeDocument") {
-    return (
-      installedDocumentKinds.has("code") &&
-      installedToolNames.has("runCodeDocument")
-    );
+    return installedToolNames.has(name);
   }
   return true;
 };
@@ -49,7 +36,7 @@ const filterEveTools = <T extends object>(tools: T): Partial<T> => {
     if (
       typeof name === "string" &&
       (!eveInstalledToolEnabled(name) ||
-        !eveToolAllowed(name) ||
+        !eveTurnAccount.get() ||
         (selected && !selected.includes(name)))
     ) {
       continue;
@@ -62,10 +49,4 @@ const filterEveTools = <T extends object>(tools: T): Partial<T> => {
   }
   return available;
 };
-export {
-  eveInstalledToolEnabled,
-  eveToolAllowed,
-  eveTurnGuest,
-  eveTurnTool,
-  filterEveTools,
-};
+export { eveInstalledToolEnabled, eveTurnAccount, eveTurnTool, filterEveTools };

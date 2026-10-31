@@ -8,7 +8,7 @@ import type { planInstallation } from "./installation-plan";
 import { z } from "zod";
 import { preflight } from "./preflight";
 
-const dependencyReceipt = ".chatjs/installed-dependencies.json";
+const dependencyReceipt = "chatjs/installed-dependencies.json";
 const dependencyMap = z.record(z.string(), z.string());
 const manifestSchema = z.looseObject({
   dependencies: dependencyMap.optional(),
@@ -75,12 +75,14 @@ const maxSourceBytes = 1_048_576;
 // Conservative protection for dependencies used by source outside registry items.
 const protectSourceDependencies = async (
   cwd: string,
-  unused: Set<string>
+  unused: Set<string>,
+  root: string = cwd
 ): Promise<void> => {
   const entries = await readdir(cwd, { withFileTypes: true });
   for (const entry of entries) {
     if (
       ignored.has(entry.name) ||
+      (path.relative(root, cwd) === "chatjs" && entry.name !== "generated") ||
       entry.name === "package.json" ||
       entry.name.endsWith(".tsbuildinfo") ||
       (entry.isFile() &&
@@ -96,7 +98,7 @@ const protectSourceDependencies = async (
     const file = path.join(cwd, entry.name);
     if (entry.isDirectory()) {
       // oxlint-disable-next-line eslint/no-await-in-loop -- Stop scanning once every candidate is protected by usage or unknown source; later unreadable files must not invalidate that conservative result.
-      await protectSourceDependencies(file, unused);
+      await protectSourceDependencies(file, unused, root);
     } else if (entry.isFile()) {
       // oxlint-disable-next-line eslint/no-await-in-loop -- Bound memory before reading each user-authored file.
       const metadata = await stat(file);

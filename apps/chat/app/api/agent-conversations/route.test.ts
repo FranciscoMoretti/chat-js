@@ -10,12 +10,10 @@ const HTTP_STATUS = {
 };
 
 const mocks = vi.hoisted(() => ({
-  admit: vi.fn(),
   after: vi.fn<(callback: () => void | Promise<void>) => void>(),
   create: vi.fn(),
   afterCreate: vi.fn(),
   principal: vi.fn(),
-  settle: vi.fn(),
 }));
 vi.mock("next/server", () => ({ after: mocks.after }));
 vi.mock("@/lib/env", () => ({
@@ -24,14 +22,10 @@ vi.mock("@/lib/env", () => ({
 vi.mock("@/lib/eve/principal", () => ({
   resolveEvePrincipal: mocks.principal,
 }));
-vi.mock("@/lib/eve/guest-admission", () => ({
-  admitGuestCreation: mocks.admit,
-  settleGuestCreation: mocks.settle,
-}));
 vi.mock("@/lib/eve/create-conversation-operation", () => ({
   createEveConversationOperation: mocks.create,
 }));
-vi.mock("@/lib/chat-plugins", () => ({
+vi.mock("@/lib/chat-after-create", () => ({
   runChatAfterCreate: mocks.afterCreate,
 }));
 
@@ -53,40 +47,12 @@ const request = (): Request =>
 beforeEach(() => {
   vi.resetAllMocks();
   mocks.principal.mockResolvedValue({
-    kind: "guest",
-    ownerId: "guest",
-    tokenHash: "hash",
-  });
-  mocks.admit.mockResolvedValue({
-    reservationId: "reservation",
-    status: "replay",
+    kind: "registered",
+    ownerId: "account",
   });
 });
 
-test("keeps a terminal creation response ambiguous when its refund is refused", async () => {
-  mocks.create.mockResolvedValue(
-    Response.json(
-      { creationRejected: true, error: "terminal" },
-      { status: HTTP_STATUS.badRequest }
-    )
-  );
-  mocks.settle.mockResolvedValue(false);
-
-  const response = await POST(request());
-
-  expect(response.status).toBe(HTTP_STATUS.serviceUnavailable);
-  expect(await response.json()).toEqual({
-    error: "Creation is unresolved. Retry the saved operation to recover it.",
-  });
-  expect(mocks.settle).toHaveBeenCalledWith(
-    expect.any(Response),
-    "guest",
-    input.operationId,
-    "reservation"
-  );
-});
-
-test("preserves authoritative deletion when its committed quota cannot be refunded", async () => {
+test("preserves authoritative deletion", async () => {
   mocks.create.mockResolvedValue(
     Response.json(
       {
@@ -97,7 +63,6 @@ test("preserves authoritative deletion when its committed quota cannot be refund
       { status: HTTP_STATUS.notFound }
     )
   );
-  mocks.settle.mockResolvedValue(false);
 
   const response = await POST(request());
 
@@ -126,6 +91,13 @@ test("defers root plugin work until after the creation response", async () => {
   expect(mocks.afterCreate).toHaveBeenCalledWith({
     conversationId: "00000000-0000-4000-8000-000000000002",
     message: "hello",
-    ownerId: "guest",
+    ownerId: "account",
   });
+});
+
+test("signed-out callers cannot create account conversations", async () => {
+  mocks.principal.mockResolvedValue(null);
+  const response = await POST(request());
+  expect(response.status).toBe(401);
+  expect(mocks.create).not.toHaveBeenCalled();
 });

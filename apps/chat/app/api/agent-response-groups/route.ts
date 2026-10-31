@@ -1,8 +1,7 @@
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { after } from "next/server";
 import { env } from "@/lib/env";
-import { runChatAfterCreate } from "@/lib/chat-plugins";
-import { admitGuestResponseGroup } from "@/lib/eve/guest-group-admission";
+import { runChatAfterCreate } from "@/lib/chat-after-create";
 import { resolveEvePrincipal } from "@/lib/eve/principal";
 import { sameOrigin } from "@/lib/eve/request-policy";
 import { createEveResponseGroup } from "@/lib/eve/response-group";
@@ -61,15 +60,8 @@ export const POST = async (
     );
   }
   try {
-    const admission =
-      principal.kind === "guest"
-        ? await admitGuestResponseGroup(request, principal, input.data)
-        : undefined;
-    if (admission instanceof Response) {
-      return admission;
-    }
     const result = eveResponseGroupResult.parse(
-      await createEveResponseGroup(principal.ownerId, input.data, admission)
+      await createEveResponseGroup(principal.ownerId, input.data)
     );
     scheduleResponseGroupContributions(result, input, principal);
     return Response.json(result);

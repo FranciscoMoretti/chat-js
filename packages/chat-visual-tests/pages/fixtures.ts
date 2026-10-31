@@ -227,7 +227,6 @@ export const invoicesConversation: NonNullable<ServerData["conversation"]> = {
   forkKind: null,
   forkMessageId: null,
   forkTurnId: null,
-  guestCleanupAttemptedAt: null,
   id: invoicesChatId,
   initialContentHash: null,
   initialModelId: "google/gemini-2.5-flash-lite",
@@ -519,3 +518,60 @@ export const invoicesSearchTrpc = {
     nextCursor: null,
   },
 };
+
+const archivedDocumentId = "60dbe86a-b2c4-4d32-ae09-a00e90b84e99";
+const archivedRevisionId = "663ccf42-10c9-453f-b9da-ebf684a6da97";
+export const archivedDiagram = {
+  canEdit: true,
+  history: [
+    {
+      id: archivedRevisionId,
+      createdAt: now,
+      kind: "diagram",
+      title: "Deployment flow",
+      parentRevisionId: null,
+      turnIndex: 0,
+    },
+    {
+      id: "c599092d-4d5a-4f13-bfed-a2e46c8ab675",
+      createdAt: now,
+      kind: "diagram",
+      title: "Deployment flow",
+      parentRevisionId: archivedRevisionId,
+      turnIndex: 1,
+    },
+  ],
+  revision: {
+    id: archivedRevisionId,
+    documentId: archivedDocumentId,
+    createdAt: now,
+    kind: "diagram",
+    title: "Deployment flow",
+    content: "graph TD; Draft-->Review; Review-->Publish",
+  },
+} satisfies Outputs["eve"]["document"];
+export const archivedDiagramTranscript: EveMessage[] = [
+  {
+    id: "archived-diagram-message",
+    role: "assistant",
+    metadata: { status: "complete", turnId: "turn_0" },
+    parts: [
+      {
+        type: "dynamic-tool",
+        toolName: "drawDiagram",
+        toolCallId: "archived-diagram-call",
+        state: "output-available",
+        input: { title: "Deployment flow" },
+        output: {
+          documentId: archivedDocumentId,
+          revisionId: archivedRevisionId,
+          kind: "diagram",
+          title: "Deployment flow",
+          date: now.toISOString(),
+          status: "success",
+          result: "Document saved.",
+        },
+      },
+    ],
+  },
+];

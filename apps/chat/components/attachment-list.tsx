@@ -1,16 +1,12 @@
 "use client";
 
+import { AttachmentPreviewTrigger } from "@/components/attachment-preview-trigger";
 import { Download, ExternalLink } from "lucide-react";
 import React from "react";
 import type { JSX as ReactJSX } from "react";
 import { toast } from "sonner";
 
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@/components/ui/hover-card";
-import { AttachmentTrigger } from "@/components/ui/attachment";
+import { HoverCard, HoverCardContent } from "@/components/ui/hover-card";
 
 import { AttachmentCard } from "@/components/attachment-card";
 import { Button } from "@/components/ui/button";
@@ -60,17 +56,13 @@ const AttachmentItem = ({
   return (
     <HoverCard>
       {card(
-        <HoverCardTrigger
-          render={
-            <AttachmentTrigger
-              aria-label={attachmentLabel}
-              onClick={() => {
-                if (isImage && onImageClick) {
-                  onImageClick(url, name);
-                }
-              }}
-            />
-          }
+        <AttachmentPreviewTrigger
+          aria-label={attachmentLabel}
+          onClick={() => {
+            if (isImage && onImageClick) {
+              onImageClick(url, name);
+            }
+          }}
         />
       )}
       <HoverCardContent className="w-auto p-2">

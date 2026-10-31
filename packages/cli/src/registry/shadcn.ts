@@ -4,7 +4,11 @@ import {
   getRegistry,
   getRegistryItems,
 } from "shadcn/registry";
-import { registryItemSchema } from "shadcn/schema";
+import { registryItemSchema, rawConfigSchema } from "shadcn/schema";
+import type { Config } from "shadcn/schema";
+import path from "node:path";
+import { optionalFile } from "#cli/utils/installation-files";
+import { resolveNativeProjectConfig } from "#cli/helpers/native-project-config";
 
 import { withRegistryTransport } from "./transport";
 
@@ -13,9 +17,16 @@ const registryUrl =
 
 const registryConfig = async (
   cwd: string
-): Promise<Awaited<ReturnType<typeof getRegistriesConfig>>> => {
+): Promise<
+  Partial<Config> & Awaited<ReturnType<typeof getRegistriesConfig>>
+> => {
   const config = await getRegistriesConfig(cwd);
+  const source = await optionalFile(path.join(cwd, "components.json"));
+  const native = source
+    ? rawConfigSchema.partial().parse(JSON.parse(source.toString()))
+    : {};
   return {
+    ...native,
     registries: {
       "@chatjs": process.env.CHATJS_REGISTRY_URL ?? registryUrl,
       ...config.registries,
@@ -71,7 +82,10 @@ const installItems = async (
   overwrite = false
 ): Promise<void> => {
   await withRegistryTransport(async (): Promise<void> => {
-    const config = await registryConfig(cwd);
+    const config = await resolveNativeProjectConfig(
+      cwd,
+      await registryConfig(cwd)
+    );
     // The SDK's mutable array annotation describes its installation work list;
     // keep that ownership separate from the caller's readonly source selection.
     await addRegistryItems([...sources], {

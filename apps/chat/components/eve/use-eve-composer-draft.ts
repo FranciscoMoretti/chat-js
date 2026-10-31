@@ -4,7 +4,7 @@ import type { Dispatch, SetStateAction } from "react";
 import { useCallback, useMemo, useSyncExternalStore } from "react";
 import { z } from "zod";
 
-import { frontendToolsSchema } from "@/lib/ai/types";
+import { toolNameSchema } from "@/lib/ai/types";
 import type { UiToolName } from "@/lib/ai/types";
 import { draftAttachment } from "@/lib/eve/draft";
 import type { DraftAttachment } from "@/lib/eve/draft";
@@ -12,7 +12,7 @@ import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 const composerDraft = z.object({
   attachments: z.array(draftAttachment),
-  selectedTool: frontendToolsSchema.nullable().default(null),
+  selectedTool: toolNameSchema.nullable().default(null),
   text: z.string(),
 });
 type Draft = ReadonlyNativeSurface<z.infer<typeof composerDraft>>;
@@ -67,7 +67,11 @@ const createDraftStore = (key: string) => {
       const value = change(snapshot.value);
       let error: string | undefined;
       try {
-        if (value.text || value.attachments.length > 0 || value.selectedTool) {
+        if (
+          value.text ||
+          value.attachments.length > 0 ||
+          value.selectedTool !== null
+        ) {
           sessionStorage.setItem(key, JSON.stringify(value));
         } else {
           sessionStorage.removeItem(key);

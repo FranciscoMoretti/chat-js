@@ -1,5 +1,5 @@
-import { isGuestSession } from "../../lib/eve/session-identity";
-import { eveTurnGuest, eveTurnTool } from "../../lib/eve/turn-tools";
+import { isAccountSession } from "../../lib/eve/session-identity";
+import { eveTurnAccount, eveTurnTool } from "../../lib/eve/turn-tools";
 import type { HookContext } from "eve/hooks";
 import { defineHook } from "eve/hooks";
 
@@ -13,11 +13,7 @@ export default defineHook({
         session: Readonly<Pick<HookContext["session"], "auth">>;
       }>
     ) => {
-      eveTurnGuest.update(
-        () =>
-          isGuestSession(context.session) ||
-          context.session.auth.initiator?.attributes.chatjsGuest === "true"
-      );
+      eveTurnAccount.update(() => isAccountSession(context.session));
       const supplied = context.session.auth.current?.attributes.selectedTool;
       const selected =
         supplied === undefined ? null : frontendToolsSchema.parse(supplied);

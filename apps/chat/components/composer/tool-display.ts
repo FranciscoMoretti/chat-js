@@ -2,8 +2,8 @@ import type { LucideIcon } from "lucide-react";
 import type { UiToolName } from "@/lib/ai/types";
 import { Wrench } from "lucide-react";
 
-import { composerTools } from "@/composition/generated/composer-tools";
-import { installedToolNames } from "@/composition/generated/installed-tools";
+import { composerTools } from "@/integrations/composer-tools";
+import { installedToolNames } from "@/integrations/tool-catalog";
 
 export const getToolDisplay = (
   tool: UiToolName

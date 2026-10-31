@@ -74,14 +74,12 @@ const creationFailure = (cause: unknown): Response => {
  * Executes an admitted creation command while retaining its journaled operation identity.
  * @param {string} ownerId Owner used to resolve source conversations and reserve the creation.
  * @param {z.infer<typeof createConversationInput>} input Immutable original creation request retained when dispatch is unresolved.
- * @param {string | undefined} guestReservationId Optional admission reservation attached to the created conversation.
  * @param {Awaited<ReturnType<typeof prepareEveMessage>> | undefined} initialPreparedMessage Optional prepared message reused without preparing it again.
  * @returns {Promise<Response>} The bound conversation, or an error response that leaves unresolved creation recoverable.
  */
 export const executeEveConversationCreation = async (
   ownerId: string,
   input: ReadonlyNativeSurface<z.infer<typeof createConversationInput>>,
-  guestReservationId?: string,
   initialPreparedMessage?:
     | string
     | readonly PreparedContentPart<UserContent[number]>[]
@@ -129,7 +127,6 @@ export const executeEveConversationCreation = async (
         fileKeys: eveMessageFileKeys(input.message),
         fork: input.fork,
         forkKind: input.forkKind,
-        guestReservationId,
         initialContentHash: eveCreationContentHash(
           input.message,
           input.selectedTool

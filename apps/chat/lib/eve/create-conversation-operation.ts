@@ -2,7 +2,6 @@ import type { z } from "zod";
 
 import { canStartPaidTurn } from "@/lib/eve/spending-admission";
 import { assertEveFilesOwned } from "@/lib/db/eve-files";
-import { readEveGuestOwner } from "@/lib/db/eve-guests";
 import { getEveCreation } from "@/lib/db/eve-queries";
 import { createModuleLogger } from "@/lib/logger";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
@@ -23,8 +22,7 @@ const logger = createModuleLogger("eve/admission");
 
 export const createEveConversationOperation = async (
   ownerId: string,
-  input: ReadonlyNativeSurface<z.infer<typeof createConversationInput>>,
-  guestReservationId?: string
+  input: ReadonlyNativeSurface<z.infer<typeof createConversationInput>>
 ): Promise<Response> => {
   try {
     assertEveConfigured();
@@ -73,10 +71,7 @@ export const createEveConversationOperation = async (
           { status: 400 }
         );
       }
-      if (
-        (await readEveGuestOwner(ownerId)) === null &&
-        !(await canStartPaidTurn(ownerId))
-      ) {
+      if (!(await canStartPaidTurn(ownerId))) {
         return Response.json(
           { error: "Insufficient credits" },
           { status: 402 }
@@ -108,10 +103,5 @@ export const createEveConversationOperation = async (
       { status: 503 }
     );
   }
-  return await executeEveConversationCreation(
-    ownerId,
-    input,
-    guestReservationId,
-    preparedMessage
-  );
+  return await executeEveConversationCreation(ownerId, input, preparedMessage);
 };

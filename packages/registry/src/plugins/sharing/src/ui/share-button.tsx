@@ -1,4 +1,6 @@
 "use client";
+import { DialogButton } from "@/components/dialog-button";
+import { PopoverButton } from "@/components/popover-button";
 
 import { Copy, GlobeIcon, Loader2, LockIcon, Share } from "lucide-react";
 import React, { useState } from "react";
@@ -11,13 +13,8 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent } from "@/components/ui/popover";
 import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/providers/session-provider";
@@ -287,17 +284,18 @@ const ShareButton = ({
   const { data: session } = useSession();
   const isAuthenticated = Boolean(session?.user);
 
+  const TriggerButton = isAuthenticated ? DialogButton : PopoverButton;
   const triggerButton = (
-    <Button className={cn("", className)} size="sm" variant="outline">
+    <TriggerButton className={cn("", className)} size="sm" variant="outline">
       <Share size={16} />
       <span className="sr-only">Share chat</span>
-    </Button>
+    </TriggerButton>
   );
 
   if (!isAuthenticated) {
     return (
       <Popover>
-        <PopoverTrigger render={triggerButton} />
+        {triggerButton}
         <PopoverContent align="start" className="w-80 p-0">
           <LoginPrompt
             description="Control who can see your conversations and share them with others."
@@ -314,7 +312,7 @@ const ShareButton = ({
       open={open}
       renderContent={renderContent}
     >
-      <DialogTrigger render={triggerButton} />
+      {triggerButton}
     </ShareDialog>
   );
 };

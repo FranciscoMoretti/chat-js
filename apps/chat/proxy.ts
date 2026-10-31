@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { auth } from "@/lib/auth";
-import { config as appConfig } from "@/lib/config";
+import { authentication } from "@/integrations/authentication";
 import { isPlaywrightTestEnvironment } from "@/lib/constants";
 
 const EVE_CHAT_PAGE = /^\/chat\/[^/]+$/u;
@@ -34,13 +34,8 @@ const isPublicPage = (pathname: string): boolean => {
   );
 };
 
-const isDeviceLoginPage = (pathname: string): boolean =>
-  appConfig.desktopApp.enabled && pathname.startsWith("/device-login");
-
 const isAuthPage = (pathname: string): boolean =>
-  pathname.startsWith("/login") ||
-  pathname.startsWith("/register") ||
-  isDeviceLoginPage(pathname);
+  pathname.startsWith("/login") || pathname.startsWith("/register");
 
 const getSafeReturnTo = (
   url: Readonly<{ searchParams: Readonly<{ get: URLSearchParams["get"] }> }>
@@ -56,23 +51,23 @@ type ReadonlyRedirectUrl = Readonly<
 >;
 
 const resolvePageResponse = ({
-  isDeviceLoginRoute,
+  isPluginAuthRoute,
   isLoggedIn,
   pathname,
   returnTo,
   url,
 }: {
-  readonly isDeviceLoginRoute: boolean;
+  readonly isPluginAuthRoute: boolean;
   readonly isLoggedIn: boolean;
   readonly pathname: string;
   readonly returnTo: string;
   readonly url: ReadonlyRedirectUrl;
 }): NextResponse | undefined => {
-  if (isLoggedIn && isAuthPage(pathname) && !isDeviceLoginRoute) {
+  if (isLoggedIn && isAuthPage(pathname) && !isPluginAuthRoute) {
     return NextResponse.redirect(new URL(returnTo, url));
   }
 
-  if (isAuthPage(pathname) || isPublicPage(pathname)) {
+  if (isPluginAuthRoute || isAuthPage(pathname) || isPublicPage(pathname)) {
     return undefined;
   }
 
@@ -102,11 +97,11 @@ export const proxy = async (
 
   const session = await auth.api.getSession({ headers: req.headers });
   const isLoggedIn = Boolean(session?.user);
-  const isDeviceLoginRoute = isDeviceLoginPage(pathname);
+  const isPluginAuthRoute = authentication.isAuthRoute(url);
   const returnTo = getSafeReturnTo(url);
 
   return resolvePageResponse({
-    isDeviceLoginRoute,
+    isPluginAuthRoute,
     isLoggedIn,
     pathname,
     returnTo,

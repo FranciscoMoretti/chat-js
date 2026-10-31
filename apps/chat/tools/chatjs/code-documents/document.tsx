@@ -1,5 +1,7 @@
 "use client";
 import type { DocumentBodyProps, DocumentUi } from "@/lib/eve/document-ui";
+import { documentDefinition } from "./definition";
+import { documentAssistantActions } from "./assistant-actions";
 import React from "react";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -17,6 +19,9 @@ const CodeEditor = dynamic(
 );
 
 export const documentUi: DocumentUi = {
+  copyLabel: "Copy code to clipboard",
+  definition: documentDefinition,
+  assistantActions: documentAssistantActions,
   Body: ({ title, editorProps }: ReadonlyNativeSurface<DocumentBodyProps>) => (
     <ScrollArea className="min-h-0 flex-1">
       <CodeEditor

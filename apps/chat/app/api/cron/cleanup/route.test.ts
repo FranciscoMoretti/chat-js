@@ -29,7 +29,6 @@ const mocks = vi.hoisted(() => {
         skipped: boolean;
       }>
     >(),
-    cleanupGuests: vi.fn(),
     cleanupRuntimeGuests: vi.fn(),
     env,
   };
@@ -41,12 +40,8 @@ vi.mock("@/lib/eve/cleanup-orphaned-files", () => ({
   cleanupEveOrphanedFiles: mocks.cleanupEve,
 }));
 
-vi.mock("@/lib/eve/cleanup-expired-guests", () => ({
-  cleanupExpiredEveGuests: mocks.cleanupGuests,
-}));
-
-vi.mock("@/lib/eve/cleanup-guest-runtime", () => ({
-  cleanupGuestRuntimeSessions: mocks.cleanupRuntimeGuests,
+vi.mock("@/integrations/cleanup", () => ({
+  cleanupTasks: [{ id: "example", run: mocks.cleanupRuntimeGuests }],
 }));
 
 beforeEach(() => {
@@ -58,11 +53,6 @@ beforeEach(() => {
     skipped: false,
   });
   mocks.cleanupEve.mockResolvedValue({ deletedCount: 0, skipped: false });
-  mocks.cleanupGuests.mockResolvedValue({
-    deletedCount: 0,
-    pendingCount: 0,
-    skipped: false,
-  });
 });
 
 test.each([undefined, "", "   "])(
@@ -77,7 +67,7 @@ test.each([undefined, "", "   "])(
     expect(response.status).toBe(HTTP_STATUS.unauthorized);
 
     expect(mocks.cleanupEve).not.toHaveBeenCalled();
-    expect(mocks.cleanupGuests).not.toHaveBeenCalled();
+    expect(mocks.cleanupRuntimeGuests).not.toHaveBeenCalled();
   }
 );
 
@@ -119,15 +109,15 @@ test("storage failure does not prevent expired guest cleanup and reports retry",
     })
   );
   expect(response.status).toBe(HTTP_STATUS.serviceUnavailable);
-  expect(mocks.cleanupGuests).toHaveBeenCalledWith(process.cwd());
+  expect(mocks.cleanupRuntimeGuests).toHaveBeenCalledOnce();
   expect(await response.json()).toMatchObject({
-    results: { expiredGuests: { pendingCount: 0 } },
+    results: { example: { pendingCount: 0 } },
     success: false,
   });
 });
 
 test("pending guest deletion is retryable failure after attachment cleanup runs", async () => {
-  mocks.cleanupGuests.mockResolvedValueOnce({
+  mocks.cleanupRuntimeGuests.mockResolvedValueOnce({
     deletedCount: 1,
     pendingCount: 1,
     skipped: false,
@@ -148,7 +138,7 @@ test("unsupported guest cleanup never reports cron success or an empty backlog",
     reason: "unsupported_runtime",
     skipped: true,
   };
-  mocks.cleanupGuests.mockResolvedValueOnce(unsupported);
+  mocks.cleanupRuntimeGuests.mockResolvedValueOnce(unsupported);
   const response = await GET(
     new NextRequest("http://localhost/api/cron/cleanup", {
       headers: { authorization: "Bearer fixture-secret" },
@@ -158,13 +148,13 @@ test("unsupported guest cleanup never reports cron success or an empty backlog",
   expect(mocks.cleanupEve).toHaveBeenCalledOnce();
   const result: unknown = await response.json();
   expect(result).toMatchObject({
-    results: { expiredGuests: unsupported },
+    results: { example: unsupported },
     success: false,
   });
-  expect(result).not.toHaveProperty("results.expiredGuests.pendingCount");
+  expect(result).not.toHaveProperty("results.example.pendingCount");
 });
 test("a skipped cleanup cannot become successful through a zero pending count", async () => {
-  mocks.cleanupGuests.mockResolvedValueOnce({
+  mocks.cleanupRuntimeGuests.mockResolvedValueOnce({
     deletedCount: 0,
     pendingCount: 0,
     skipped: true,
@@ -178,7 +168,7 @@ test("a skipped cleanup cannot become successful through a zero pending count", 
   expect(await response.json()).toMatchObject({ success: false });
 });
 test("guest inventory failure reports retry while attachment cleanup still runs", async () => {
-  mocks.cleanupGuests.mockRejectedValueOnce(
+  mocks.cleanupRuntimeGuests.mockRejectedValueOnce(
     new Error("private database details")
   );
   const response = await GET(
@@ -190,7 +180,7 @@ test("guest inventory failure reports retry while attachment cleanup still runs"
   expect(mocks.cleanupEve).toHaveBeenCalledOnce();
   expect(await response.json()).toMatchObject({
     results: {
-      expiredGuests: { error: "Guest cleanup failed; retry required." },
+      example: { error: "Cleanup failed; retry required." },
       orphanedAttachments: { deletedCount: 0, skipped: false },
     },
     success: false,
@@ -207,10 +197,10 @@ test("runtime guest cleanup failure is visible and does not skip other cleanup",
     })
   );
   expect(response.status).toBe(HTTP_STATUS.serviceUnavailable);
-  expect(mocks.cleanupGuests).toHaveBeenCalledOnce();
+  expect(mocks.cleanupRuntimeGuests).toHaveBeenCalledOnce();
   expect(await response.json()).toMatchObject({
     results: {
-      runtimeGuests: { error: "Guest runtime cleanup failed; retry required." },
+      example: { error: "Cleanup failed; retry required." },
     },
     success: false,
   });

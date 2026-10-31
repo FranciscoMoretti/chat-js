@@ -1,8 +1,12 @@
-import { config } from "@/lib/config";
+import branding from "../branding.json";
 
-const APP_NAME = config.appName;
+const ELECTRON_AUTH_CLIENT_ID = branding.auth.clientId;
+const ELECTRON_AUTH_CALLBACK_PATH = branding.auth.callbackPath;
+const ELECTRON_AUTH_COOKIE_PREFIX = branding.auth.cookiePrefix;
 
-const APP_SCHEME = config.appPrefix;
+const APP_NAME = branding.appName;
+
+const APP_SCHEME = branding.appPrefix;
 
 const DEFAULT_DEV_APP_URL = "http://localhost:3000";
 const EMPTY_URL_LENGTH = 0;
@@ -21,7 +25,7 @@ const resolveAppUrl = (
   }
 
   if (environment.NODE_ENV === "production") {
-    return config.appUrl;
+    return branding.appUrl;
   }
   return DEFAULT_DEV_APP_URL;
 };
@@ -35,4 +39,12 @@ const WINDOW_DEFAULTS = {
   minWidth: 800,
   width: 1280,
 } as const;
-export { APP_NAME, APP_SCHEME, APP_URL, WINDOW_DEFAULTS };
+export {
+  APP_NAME,
+  APP_SCHEME,
+  APP_URL,
+  WINDOW_DEFAULTS,
+  ELECTRON_AUTH_CLIENT_ID,
+  ELECTRON_AUTH_CALLBACK_PATH,
+  ELECTRON_AUTH_COOKIE_PREFIX,
+};

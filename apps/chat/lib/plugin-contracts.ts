@@ -1,11 +1,4 @@
-import type { ComponentType } from "react";
-import type { ChatClientIntegration } from "./chat-plugin-contracts";
-import type { ComposerControl } from "@/components/composer/control";
-import type { SettingsItem } from "@/components/settings/settings-item";
 import type {
-  AttachmentUploadIntegration,
-  ModelVisibility,
-  InstalledLayoutComponent,
   InstalledRouters,
   InstrumentationRegistration,
 } from "./installation-contracts";
@@ -17,15 +10,4 @@ interface ChatPlugin {
   readonly instrumentation?: InstrumentationRegistration;
 }
 
-/** Use satisfies to retain each plugin's inferred contributions. */
-interface ChatClientPlugin {
-  readonly id: string;
-  readonly accountSummary?: ComponentType;
-  readonly chat?: ChatClientIntegration;
-  readonly composerControls?: readonly ComposerControl[];
-  readonly settingsItems?: readonly SettingsItem[];
-  readonly layout?: InstalledLayoutComponent;
-  readonly uploads?: AttachmentUploadIntegration;
-  readonly useModelVisibility?: ModelVisibility;
-}
-export type { ChatPlugin, ChatClientPlugin };
+export type { ChatPlugin };

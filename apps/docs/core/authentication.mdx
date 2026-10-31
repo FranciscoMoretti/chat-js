@@ -141,32 +141,13 @@ Sessions are stored in Postgres. A short-lived cookie cache reduces database hit
 
 ---
 
-## Anonymous Users
+## Guest Chat
 
-Users can start a temporary text conversation without signing in. Guests have **no credit balance** and are never charged against registered-user balances.
+Install [Guest Chat](../plugins/guest-chat) to let visitors start disposable text conversations without an account. Without it, signed-out visitors at `/` are redirected to `/login`.
 
-The disposable guest runtime uses a signed credential and a stored policy in `GuestRuntimeSession`. Its server-owned limits live in `lib/eve/session-policy.ts`:
+The plugin owns its signed credentials, session policy, IP rate limits, and cleanup inventory. Its fixed model has no tools or files. Guests have no monetary balance and cannot access account APIs or history. Signing in does not migrate the temporary transcript.
 
-- A fixed inexpensive model with no tools or files.
-- Five messages per minute and five session creations per hour, shared by IP.
-- A one-hour credential lifetime and 24-hour session retention.
-- Limits on individual message size, cumulative input, and model output.
-
-There is no per-session message-count allowance. Reaching a rate limit temporarily prevents more work. Reaching an input-size limit requires a new conversation. Signing in does not automatically migrate the temporary transcript into saved chat history.
-
-The older account-backed guest route still uses the IP windows configured in `chat.config.ts`:
-
-```typescript title="chat.config.ts"
-anonymous: {
-  availableTools: [],
-  rateLimit: {
-    requestsPerMinute: 5,
-    requestsPerMonth: 10,
-  },
-},
-```
-
-`requestsPerMonth` means a fixed 30-day window. These windows are shared by IP, so changing a guest cookie does not reset them. Matching operation retries reuse their reservation, and a proven unaccepted request releases its rate capacity. The obsolete `anonymous.credits` setting and stored guest message balances have been removed.
+Core account authentication remains in Better Auth. The shared EVE agent requires a verified account authenticator for account hooks and capabilities. A guest or unknown session cannot gain those capabilities through reconnect credentials.
 
 ---
 
@@ -174,7 +155,7 @@ anonymous: {
 
 Public routes (auth callbacks, shared chats, landing pages) are accessible without signing in. All other routes redirect unauthenticated users to `/login`.
 
-The chat API is public at the middleware level. Guest identity validation and usage-limit enforcement happen inside the route handler.
+Account chat handlers require a registered principal. Guest Chat installs a separate bootstrap adapter and native authenticator that enforce its session policy.
 
 ---
 

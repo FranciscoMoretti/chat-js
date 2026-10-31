@@ -1,8 +1,9 @@
-import type { ChatClientPlugin } from "@/lib/plugin-contracts";
+"use client";
+import { definePlugin, slot } from "@/lib/ui-slots";
+import { LayoutEffects } from "@/components/layout-slots";
 import { Component } from "./component";
 
-export const vercelSpeedInsightsClient = () =>
-  ({
-    id: "vercel-speed-insights",
-    layout: Component,
-  }) satisfies ChatClientPlugin;
+export const vercelSpeedInsightsClient = definePlugin({
+  id: "vercel-speed-insights",
+  slots: [slot(LayoutEffects, Component)],
+});

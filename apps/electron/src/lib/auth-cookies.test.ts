@@ -12,7 +12,7 @@ describe("desktop session cookies", () => {
     expect(hasSessionCookie(`theme=dark; ${name}=signed=token; other=1`)).toBe(
       true
     );
-    expect(isBetterAuthCookieName(name)).toBe(true);
+    expect(isBetterAuthCookieName(name, "better-auth")).toBe(true);
   });
 
   test.each([
@@ -25,4 +25,10 @@ describe("desktop session cookies", () => {
   ])("rejects a missing session token: %s", (header) => {
     expect(hasSessionCookie(header)).toBe(false);
   });
+});
+
+test("uses the configured prefix for non-session auth cookies", () => {
+  expect(isBetterAuthCookieName("custom.state", "custom")).toBe(true);
+  expect(isBetterAuthCookieName("__Secure-custom.state", "custom")).toBe(true);
+  expect(isBetterAuthCookieName("unrelated.state", "custom")).toBe(false);
 });

@@ -17,9 +17,10 @@ export CHATJS_NATIVE_BASE="${CHATJS_NATIVE_BASE:-base}"
 export CHATJS_NATIVE_SCENARIO="${CHATJS_NATIVE_SCENARIO:-uploads}"
 case "$CHATJS_NATIVE_SCENARIO" in
   minimal) installation=(--gateway vercel --no-attachments --no-documents) ;;
+  full) installation=(--gateway vercel --no-attachments --projects --mcp --observability vercel-analytics,vercel-speed-insights) ;;
   documents) installation=(--gateway vercel --no-attachments) ;;
   uploads) installation=(--sandbox-provider vercel --gateway openrouter --attachments --storage-provider s3 --storage-config '{"bucket":"chatjs-native-smoke"}') ;;
-  *) echo "CHATJS_NATIVE_SCENARIO must be minimal, documents or uploads" >&2; exit 1 ;;
+  *) echo "CHATJS_NATIVE_SCENARIO must be minimal, documents, full or uploads" >&2; exit 1 ;;
 esac
 cleanup() {
   kill "${registry_pid:-}" 2>/dev/null || true
@@ -52,7 +53,14 @@ CHATJS_REGISTRY_URL="$(cat "$fixture_root/address")"
 export CHATJS_REGISTRY_URL
 export npm_config_user_agent="bun/$(bun --version)"
 
-node "$cli_root/dist/index.js" create "$fixture_root/app" --yes "${installation[@]}" --no-electron -- --preset "$CHATJS_NATIVE_PRESET" --base "$CHATJS_NATIVE_BASE" "${direction[@]}" --pointer > "$fixture_root/create.log" 2>&1
+create_command=(node "$cli_root/dist/index.js" create "$fixture_root/app" --yes "${installation[@]}" --no-electron)
+if [ "${CHATJS_NATIVE_DEFAULT:-0}" = 1 ]; then
+  "${create_command[@]}" > "$fixture_root/create.log" 2>&1
+else
+  native_options=(--preset "$CHATJS_NATIVE_PRESET" "${direction[@]}" --pointer)
+  if [ "${CHATJS_NATIVE_BASE_FROM_PRESET:-0}" != 1 ]; then native_options+=(--base "$CHATJS_NATIVE_BASE"); fi
+  "${create_command[@]}" -- "${native_options[@]}" > "$fixture_root/create.log" 2>&1
+fi
 cd "$fixture_root/app"
 node "$shadcn_cli" --version > "$fixture_root/shadcn-version.txt"
 node "$shadcn_cli" preset resolve --json > "$fixture_root/preset.json"
@@ -60,7 +68,11 @@ bun -e '
 import { strict as assert } from "node:assert";
 const root = process.env.CHATJS_NATIVE_FIXTURE;
 const preset = await Bun.file(`${root}/preset.json`).json();
-assert.equal(preset.code, process.env.CHATJS_NATIVE_PRESET);
+if (process.env.CHATJS_NATIVE_DEFAULT === "1") {
+  assert.equal(preset.values.style, "rhea");
+} else {
+  assert.equal(preset.code, process.env.CHATJS_NATIVE_EXPECTED_CODE ?? process.env.CHATJS_NATIVE_PRESET);
+}
 assert.deepEqual(preset.fallbacks, []);
 const config = await Bun.file("components.json").json();
 assert.equal(config.style, `${process.env.CHATJS_NATIVE_BASE}-${preset.values.style}`);
@@ -86,7 +98,7 @@ assert.match(await Bun.file("lib/storage-options.ts").text(), /chatjs-native-smo
 assert.match(await Bun.file("lib/ai/gateway.ts").text(), /openrouter/);
 } else {
 assert.equal(await Bun.file("plugins/attachment-uploads/chatjs.json").exists(), false);
-assert.equal(await Bun.file("tools/chatjs/text-documents/chatjs.json").exists(), process.env.CHATJS_NATIVE_SCENARIO === "documents");
+assert.equal(await Bun.file("tools/chatjs/text-documents/chatjs.json").exists(), process.env.CHATJS_NATIVE_SCENARIO !== "minimal");
 assert.match(await Bun.file("lib/ai/gateway.ts").text(), /vercel|gateway/);
 }
 const paths = ["components.json", "app/globals.css", "app/layout.tsx", "chat.config.ts", "lib/storage-options.ts", "lib/utils.ts", "lib/id.ts", "lib/file-language.ts", "components/ui/button.tsx"];

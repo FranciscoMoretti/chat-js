@@ -5,28 +5,64 @@ import path from "node:path";
 import { registry } from "./registry";
 import { spawn } from "bun";
 import { registryItemSchema, registrySchema } from "shadcn/schema";
+import { selectUiSources } from "./ui-implementations";
 import { registryItemForUi } from "./ui-registry";
 
 const JSON_INDENTATION = 2;
 const SUCCESS_EXIT_CODE = 0;
 
 const cwd = import.meta.dir;
+// Select each item independently: alternative providers intentionally share
+// installation targets, and must never overwrite one another in a global map.
+const selectedItems = new Map(
+  await Promise.all(
+    registry.items.map(async (item) => {
+      const sources = new Map(
+        await Promise.all(
+          (item.files ?? []).map(
+            async (file) =>
+              [
+                file.target?.replace(/^~\//u, "") ?? file.path,
+                await readFile(path.join(cwd, file.path), "utf-8"),
+              ] as const
+          )
+        )
+      );
+      const selected = new Map(
+        await Promise.all(
+          (["base", "radix"] as const).map(async (base) => {
+            const output = await selectUiSources(
+              sources,
+              base,
+              async (entry) =>
+                await readFile(path.resolve(cwd, "../..", entry.radix), "utf-8")
+            );
+            assertItemDependencies(
+              item,
+              new Map(
+                (item.files ?? []).map((file) => {
+                  const target = file.target?.replace(/^~\//u, "") ?? file.path;
+                  const content = output.get(target);
+                  if (content === undefined) {
+                    throw new Error(`Missing selected source: ${target}`);
+                  }
+                  return [file.path, content];
+                })
+              )
+            );
+            return [base, output] as const;
+          })
+        )
+      );
+      return [item.name, selected] as const;
+    })
+  )
+);
+
 await rm(path.join(cwd, "dist"), { force: true, recursive: true });
 await mkdir(path.join(cwd, "dist/source"), { recursive: true });
 await Promise.all(
   registry.items.map(async (item) => {
-    const sources = new Map(
-      await Promise.all(
-        (item.files ?? []).map(
-          async (file) =>
-            [
-              file.path,
-              await readFile(path.join(cwd, file.path), "utf-8"),
-            ] as const
-        )
-      )
-    );
-    assertItemDependencies(item, sources);
     const descriptor = await registryDescriptor(item);
     if (descriptor) {
       await writeFile(
@@ -85,7 +121,13 @@ await Promise.all(
                   .parse(data)
                   .items.map((item) => registryItemForUi(item, base)),
               }
-            : registryItemForUi(registryItemSchema.parse(data), base);
+            : registryItemForUi(
+                registryItemSchema.parse(data),
+                base,
+                selectedItems
+                  .get(registryItemSchema.parse(data).name)
+                  ?.get(base)
+              );
         await writeFile(
           path.join(destination, file),
           `${JSON.stringify(transformed, null, JSON_INDENTATION)}\n`

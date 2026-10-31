@@ -1,20 +1,23 @@
+import { signOutDesktop } from "@/plugins/desktop/sign-out";
 import {
-  ELECTRON_APP_SCHEME,
   ELECTRON_AUTH_CALLBACK_PATH,
   ELECTRON_AUTH_CLIENT_ID,
   ELECTRON_AUTH_COOKIE_PREFIX,
+} from "@/plugins/desktop/protocol";
+import {
+  ELECTRON_APP_SCHEME,
   ELECTRON_TRUSTED_ORIGINS,
   buildSocialAuthRequest,
-} from "./electron-auth";
+} from "@/plugins/desktop/electron-auth";
 import { afterEach, expect, it, vi } from "vitest";
-import authClient from "./auth-client";
+import authClient from "@/plugins/desktop/desktop-auth-client";
 import { betterAuth } from "better-auth";
 import { createHash } from "node:crypto";
-import { electronAuthPlugin } from "./electron-auth-plugin";
+import { desktopAuth, electronAuthPlugin } from "@/plugins/desktop/auth-server";
 import { z } from "zod";
 
 vi.mock("@/lib/config", () => ({
-  config: { appPrefix: "chatjs", desktopApp: { enabled: true } },
+  config: { appPrefix: "chatjs" },
 }));
 
 const baseURL = "http://localhost:3999";
@@ -129,6 +132,7 @@ it("transfers a browser login through PKCE and accepts only the current desktop 
 });
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
   vi.useRealTimers();
 });
 
@@ -146,4 +150,47 @@ it("the inferred browser client delivers the transfer cookie to the current desk
   );
   await vi.advanceTimersByTimeAsync(100);
   expect(replace).toHaveBeenCalledOnce();
+});
+
+it.each([
+  ["/login?client_id=electron", true],
+  ["/register?client_id=electron", true],
+  ["/device-login", true],
+  ["/login", false],
+  ["/login?client_id=other", false],
+  ["/device-login/private", false],
+  ["/project/private?client_id=electron", false],
+])("recognizes only desktop authentication routes: %s", (route, expected) => {
+  expect(desktopAuth.isAuthRoute(new URL(route, baseURL))).toBe(expected);
+});
+
+it("defers to web sign-out outside a native renderer", async () => {
+  vi.stubGlobal("window", {});
+  expect(await signOutDesktop()).toBe(false);
+});
+
+it("fails a native sign-out when its bridge is missing", async () => {
+  vi.stubGlobal("window", { requestAuth: vi.fn() });
+  await expect(signOutDesktop()).rejects.toThrow(
+    "Desktop sign-out is unavailable"
+  );
+});
+
+it("keeps successful native sign-out successful when session sync fails", async () => {
+  const signOut = vi.fn<() => Promise<void>>().mockResolvedValue();
+  const syncAuthSession = vi
+    .fn()
+    .mockRejectedValue(new Error("Sync unavailable"));
+  const error = vi.spyOn(console, "error").mockImplementation(() => {
+    /* Silence the expected sync failure. */
+  });
+  vi.stubGlobal("window", {
+    requestAuth: vi.fn(),
+    signOut,
+    electronAPI: { syncAuthSession },
+  });
+  expect(await signOutDesktop()).toBe(true);
+  expect(signOut).toHaveBeenCalledOnce();
+  expect(syncAuthSession).toHaveBeenCalledOnce();
+  expect(error).toHaveBeenCalledOnce();
 });

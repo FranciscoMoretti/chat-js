@@ -8,7 +8,7 @@ import { EveRuntimeRoute } from "@/components/eve/eve-runtime-provider";
 import { NewEveConversation } from "@/components/eve/new-eve-conversation";
 import { mountNative } from "@/tests/visual/native-eve-fixture";
 import { unmount } from "@/tests/visual/primitive-mount";
-import { PluginSidebar } from "@/components/plugin-chat-ui";
+import { SidebarSections } from "@/components/chat-slots";
 
 const registrationState = vi.hoisted(() => ({ present: true }));
 vi.mock("@/providers/session-provider", async (importOriginal) => ({
@@ -109,7 +109,7 @@ const serverRegistrations: readonly ("registered" | "missing")[] = [
 for (const registration of serverRegistrations) {
   test(`native plugin projects ${registration}`, async () => {
     registrationState.present = registration === "registered";
-    const state = await mountNative(<PluginSidebar />);
+    const state = await mountNative(<SidebarSections />);
     try {
       await verifyServerProjects(registration, state.requests);
       await takeSnapshot(`server-projects-${registration}`);

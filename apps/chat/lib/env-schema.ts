@@ -102,13 +102,6 @@ const serverEnvSchema = {
   NODE_ENV: z
     .enum(["development", "production", "test"])
     .default("development"),
-  TRUSTED_CLIENT_IP_HEADER: z
-    .string()
-    .regex(/^[a-zA-Z0-9-]+$/u)
-    .optional()
-    .describe(
-      "Self-hosted reverse proxy header containing one verified client IP; the proxy must overwrite it"
-    ),
   VERCEL: z.string().optional(),
   VERCEL_APP_CLIENT_ID: z
     .string()

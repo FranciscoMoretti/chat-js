@@ -5,15 +5,15 @@ import React, { useState } from "react";
 
 import { ChatHeaderView } from "@/components/chat-header-view";
 import {
-  DisposableGuestChat,
+  GuestChatScreen,
   GuestConversationView,
-} from "@/components/eve/disposable-guest-chat";
+} from "@/plugins/guest-chat/signed-out";
 import type { AppModelDefinition } from "@/lib/ai/app-models";
-import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
+import { GUEST_POLICY } from "@/plugins/guest-chat/guest-policy";
 import { ChatModelsProvider } from "@/providers/chat-models-provider";
 import { DefaultModelProvider } from "@/providers/default-model-provider";
 
-const [modelId] = ANONYMOUS_LIMITS.AVAILABLE_MODELS;
+const { modelId } = GUEST_POLICY;
 const model: AppModelDefinition = {
   apiModelId: modelId,
   context_window: 128_000,
@@ -72,7 +72,7 @@ export const GuestVisualFixture = (): React.JSX.Element => {
           className="bg-background flex h-[680px] min-h-0 flex-col overflow-hidden"
         >
           {state === "welcome" ? (
-            <DisposableGuestChat />
+            <GuestChatScreen />
           ) : (
             <>
               <ChatHeaderView breadcrumb={null} />

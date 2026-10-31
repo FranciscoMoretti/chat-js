@@ -1,6 +1,7 @@
 @import "../../app/globals.css";
 @source "../../components";
 @source "../../plugins";
+@source "../../tools";
 @source "./";
 
 @source "../../lib/highlighter.tsx";

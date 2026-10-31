@@ -58,7 +58,9 @@ test("project UI edits instructions, creates a native conversation and lists it 
   await expect(createDialog.getByPlaceholder("Project name")).toHaveValue(
     "Project UI fixture"
   );
-
+  await expect(createDialog).toHaveScreenshot("create-error.png", {
+    animations: "disabled",
+  });
   await createDialog.screenshot({
     animations: "disabled",
     path: testInfo.outputPath("create-error.png"),
@@ -101,7 +103,9 @@ test("project UI edits instructions, creates a native conversation and lists it 
       path: testInfo.outputPath("sidebar-search.png"),
     });
     await page.keyboard.press("Escape");
-
+    await expect(
+      page.locator('[data-sidebar="header"]').first()
+    ).toHaveScreenshot("sidebar-controls.png", { animations: "disabled" });
     await page
       .locator('[data-sidebar="sidebar"]')
       .first()
@@ -112,7 +116,14 @@ test("project UI edits instructions, creates a native conversation and lists it 
     /* oxlint-disable eslint/no-await-in-loop -- Viewport changes and screenshots operate on the same browser page. */
     for (const width of [1100, 390]) {
       await page.setViewportSize({ height: 850, width });
-
+      await expect(
+        page.locator("section").filter({
+          has: page.getByRole("textbox", { exact: true, name: "Message" }),
+        })
+      ).toHaveScreenshot(`project-empty-${width}.png`, {
+        animations: "disabled",
+        stylePath: "tests/visual-capture.css",
+      });
       await page
         .locator("section")
         .filter({
@@ -150,7 +161,9 @@ test("project UI edits instructions, creates a native conversation and lists it 
       .getByRole("button", { name: "Save instructions" })
       .click();
     await expect(instructionDialog.getByRole("alert")).toBeVisible();
-
+    await expect(instructionDialog).toHaveScreenshot("instructions-error.png", {
+      animations: "disabled",
+    });
     await instructionDialog.screenshot({
       animations: "disabled",
       path: testInfo.outputPath("instructions-error.png"),
@@ -212,7 +225,9 @@ test("project UI edits instructions, creates a native conversation and lists it 
         name: "Project UI fixture",
       })
     ).toBeVisible();
-
+    await expect(renameDialog).toHaveScreenshot("rename-error.png", {
+      animations: "disabled",
+    });
     await renameDialog.screenshot({
       animations: "disabled",
       path: testInfo.outputPath("rename-error.png"),
@@ -298,7 +313,9 @@ test("project UI edits instructions, creates a native conversation and lists it 
       .getByRole("button", { exact: true, name: "Delete" })
       .click();
     await expect(deleteDialog.getByRole("alert")).toBeVisible();
-
+    await expect(deleteDialog).toHaveScreenshot("delete-error.png", {
+      animations: "disabled",
+    });
     await deleteDialog.screenshot({
       animations: "disabled",
       path: testInfo.outputPath("delete-error.png"),

@@ -1,24 +1,23 @@
-import { eveToolAllowed, eveTurnTool } from "@/lib/eve/turn-tools";
+import { isAccountSession } from "@/lib/eve/session-identity";
+import { eveTurnAccount, eveTurnTool } from "@/lib/eve/turn-tools";
 import {
   installedDocumentKinds,
   installedToolNames,
-} from "@/composition/generated/installed-tools";
+} from "@/integrations/tool-catalog";
 import type { ToolContext } from "eve/tools";
-import { providers } from "@/composition/generated/providers";
+import { toolProviders } from "@/integrations/tool-providers";
 
 export const researchAvailable = (
   session: Pick<ToolContext["session"], "auth" | "parent">
 ): boolean => {
-  const owner = session.auth.initiator;
   const selected = eveTurnTool.get();
-  return Boolean(
-    owner &&
+  return (
+    isAccountSession(session) &&
     !session.parent &&
-    owner.attributes.chatjsGuest !== "true" &&
-    eveToolAllowed("deepResearch") &&
-    (!selected || selected === "deepResearch") &&
+    eveTurnAccount.get() &&
+    (selected === null || selected === "deepResearch") &&
     installedToolNames.has("deepResearch") &&
     installedDocumentKinds.has("text") &&
-    Object.hasOwn(providers, "webSearch")
+    Object.hasOwn(toolProviders, "webSearch")
   );
 };

@@ -3,13 +3,16 @@ import { NextRequest } from "next/server";
 
 import { proxy } from "./proxy";
 
-const mocks = vi.hoisted(() => ({ session: vi.fn() }));
+const mocks = vi.hoisted(() => ({ session: vi.fn(), isAuthRoute: vi.fn() }));
 vi.mock("@/lib/auth", () => ({ auth: { api: { getSession: mocks.session } } }));
-vi.mock("@/lib/config", () => ({ config: { desktopApp: { enabled: false } } }));
+vi.mock("@/integrations/authentication", () => ({
+  authentication: { isAuthRoute: mocks.isAuthRoute },
+}));
 vi.mock("@/lib/constants", () => ({ isPlaywrightTestEnvironment: false }));
 
 beforeEach(() => {
   mocks.session.mockClear();
+  mocks.isAuthRoute.mockReset().mockReturnValue(false);
   mocks.session.mockResolvedValue(null);
 });
 
@@ -77,3 +80,25 @@ it.each(["", "//external.example/path", "https://external.example/path"])(
     expect(response.headers.get("location")).toBe("http://localhost/");
   }
 );
+
+it.each([
+  "/login?client_id=electron",
+  "/register?client_id=electron",
+  "/device-login",
+])(
+  "keeps installed auth route %s accessible to signed-in users",
+  async (route) => {
+    mocks.session.mockResolvedValue({ user: { id: "registered-user" } });
+    mocks.isAuthRoute.mockReturnValue(true);
+    const request = new NextRequest(`http://localhost${route}`);
+    expect(await proxy(request)).toBeUndefined();
+    expect(mocks.isAuthRoute).toHaveBeenCalledWith(request.nextUrl);
+  }
+);
+
+it("protects an uninstalled device-login route", async () => {
+  const response = await proxy(
+    new NextRequest("http://localhost/device-login")
+  );
+  expect(response?.headers.get("location")).toBe("http://localhost/login");
+});

@@ -1,3 +1,4 @@
+import { rejects } from "node:assert/strict";
 import { SourceTextModule, SyntheticModule, createContext } from "node:vm";
 import { afterEach, describe, expect, it } from "bun:test";
 import { existsSync, readFileSync } from "node:fs";
@@ -5,6 +6,7 @@ import { once } from "node:events";
 import { ChildProcess } from "node:child_process";
 import {
   mkdir,
+  cp,
   readFile,
   rename,
   rm,
@@ -142,7 +144,7 @@ afterEach(async (): Promise<void> => {
 });
 
 describe("buildConfigTs", (): void => {
-  it("writes desktopApp.enabled=false for web-only scaffolds", (): void => {
+  it("leaves desktop support to plugin installation", (): void => {
     const output = buildConfigTs({
       appName: "My Chat",
       appPrefix: "my-chat",
@@ -162,46 +164,13 @@ describe("buildConfigTs", (): void => {
         parallelResponses: true,
       },
       gateway: "vercel",
-      withElectron: false,
     });
 
-    expect(output).toMatch(
-      /desktopApp:\s*\{(?:\s*\/\/[^\n]*\n)*\s*enabled:\s*false,/mu
-    );
+    expect(output).not.toContain("desktopApp");
     expect(output).toContain("parallelResponses: true");
     expect(output).not.toContain("documents: {");
     expect(output).not.toContain("codeExecution: {");
     expect(output).not.toContain("attachments: false");
-  });
-  it("writes desktopApp.enabled=true for Electron scaffolds", (): void => {
-    const output = buildConfigTs({
-      appName: "My Chat",
-      appPrefix: "my-chat",
-      appUrl: "http://localhost:3000",
-      auth: {
-        github: true,
-        google: false,
-        vercel: false,
-      },
-      coreFeatures: {
-        attachments: false,
-        documents: true,
-        followupSuggestions: true,
-        feedback: false,
-        mcp: false,
-        projects: false,
-        parallelResponses: true,
-      },
-      gateway: "vercel",
-      withElectron: true,
-    });
-
-    expect(output).toMatch(
-      /desktopApp:\s*\{(?:\s*\/\/[^\n]*\n)*\s*enabled:\s*true,/mu
-    );
-    expect(output).toContain("parallelResponses: true");
-    expect(output).not.toContain("documents: {");
-    expect(output).not.toContain("video: {");
   });
   it("leaves uninstalled media configuration to tool contributions", (): void => {
     const output = buildConfigTs({
@@ -223,7 +192,6 @@ describe("buildConfigTs", (): void => {
         parallelResponses: true,
       },
       gateway: "openai-compatible",
-      withElectron: false,
     });
 
     expect(output).toContain('gateway: "openai-compatible"');
@@ -356,6 +324,7 @@ describe("scaffoldFromTemplate", (): void => {
       "tests/eve-message-presentation.fixture.tsx",
       "tests/fixtures/eve-oauth-mcp-server.ts",
       "lib/eve/tool-selection.test.ts",
+      "lib/eve/model-runtime.test.ts",
       "lib/eve/local-sandbox-inventory.test.ts",
       "lib/eve/purge-local-sandbox.test.ts",
       "lib/eve/verify-local-coverage.test.ts",
@@ -516,7 +485,7 @@ describe("scaffoldFromTemplate", (): void => {
 
     expect(packageJson.packageManager).toBe(`bun@${Bun.version}`);
     expect(packageJson.dependencies["@better-auth/core"]).toBe("1.6.2");
-    expect(packageJson.dependencies["@better-auth/electron"]).toBe("1.6.2");
+    expect(packageJson.dependencies["@better-auth/electron"]).toBeUndefined();
     expect(packageJson.dependencies["better-auth"]).toBe("1.6.2");
     expect(packageJson.dependencies["@chat-js/thread"]).toBeUndefined();
     expect(packageJson.overrides?.["@better-auth/core"]).toBe("1.6.2");
@@ -719,13 +688,13 @@ describe("scaffoldFromTemplate", (): void => {
     ).toBe(false);
     expect(
       await readFile(
-        pathModule.join(destination, "composition", "generated", "tools.ts"),
+        pathModule.join(destination, "chatjs", "generated", "tools.ts"),
         "utf-8"
       )
     ).not.toContain("getWeather");
     expect(
       await readFile(
-        pathModule.join(destination, "composition", "generated", "ui.ts"),
+        pathModule.join(destination, "chatjs", "generated", "ui.ts"),
         "utf-8"
       )
     ).not.toContain("GetWeatherRenderer");
@@ -754,11 +723,11 @@ describe("scaffoldFromTemplate", (): void => {
           pathModule.join(projectDir, "electron", "tsconfig.json"),
           "utf-8"
         );
-        expect(electronTsconfig).toContain('"../next-env.d.ts"');
-        expect(electronTsconfig).toContain('"../electron.d.ts"');
+        expect(electronTsconfig).not.toContain('"../next-env.d.ts"');
+        expect(electronTsconfig).not.toContain('"../electron.d.ts"');
         expect(electronTsconfig).not.toContain("../chat/");
         expect(existsSync(pathModule.join(projectDir, "electron.d.ts"))).toBe(
-          true
+          false
         );
         const lintConfig = await readFile(
           pathModule.join(projectDir, "oxlint.config.ts"),
@@ -873,6 +842,31 @@ describe("scaffoldFromGit", (): void => {
 });
 
 describe("scaffoldElectron", (): void => {
+  it("cleans up an incomplete companion so installation can be retried", async () => {
+    const projectDir = makeTempDir("electron-rollback");
+    await scaffoldFromTemplate(projectDir);
+    await writeFile(pathModule.join(projectDir, "tsconfig.json"), "{}");
+    await mkdir(pathModule.join(projectDir, "electron"));
+    await writeFile(pathModule.join(projectDir, "electron/owned.txt"), "keep");
+    await rejects(
+      scaffoldElectron(projectDir, { projectName: "test" }),
+      /already exists/u
+    );
+    expect(
+      await readFile(pathModule.join(projectDir, "electron/owned.txt"), "utf-8")
+    ).toBe("keep");
+    await rm(pathModule.join(projectDir, "electron"), { recursive: true });
+    await writeFile(
+      pathModule.join(projectDir, "tsconfig.json"),
+      '{"exclude": "invalid"}'
+    );
+    await rejects(
+      scaffoldElectron(projectDir, { projectName: "test" }),
+      /exclude must be an array/u
+    );
+    expect(existsSync(pathModule.join(projectDir, "electron"))).toBe(false);
+  });
+
   it(
     "runs generated Electron prebuild under Node and tsx",
     async (): Promise<void> => {
@@ -907,6 +901,16 @@ describe("scaffoldElectron", (): void => {
         organization: { name: "Test", contact: { privacyEmail: "test@example.com" } },
       };`
       );
+      await mkdir(pathModule.join(projectDir, "plugins/desktop"), {
+        recursive: true,
+      });
+      await cp(
+        pathModule.resolve(
+          getCliPackageRoot(),
+          "../registry/src/plugins/desktop/src/protocol.ts"
+        ),
+        pathModule.join(projectDir, "plugins/desktop/protocol.ts")
+      );
       const result = Bun.spawnSync(["npm", "run", "prebuild"], {
         cwd: electronDir,
         stderr: "pipe",
@@ -925,6 +929,11 @@ describe("scaffoldElectron", (): void => {
         appUrl: "http://localhost:3000",
         orgEmail: "test@example.com",
         orgName: "Test",
+        auth: {
+          clientId: "electron",
+          cookiePrefix: "better-auth",
+          callbackPath: "/auth/callback",
+        },
       });
       const icons = await Promise.all(
         ["png", "icns", "ico"].map(
@@ -1171,10 +1180,12 @@ describe("scaffoldElectron", (): void => {
       pathModule.join(projectDir, "electron", "tsconfig.json"),
       "utf-8"
     );
-    expect(electronTsconfig).toContain('"../next-env.d.ts"');
-    expect(electronTsconfig).toContain('"../electron.d.ts"');
+    expect(electronTsconfig).not.toContain('"../next-env.d.ts"');
+    expect(electronTsconfig).not.toContain('"../electron.d.ts"');
     expect(electronTsconfig).not.toContain("../chat/");
-    expect(existsSync(pathModule.join(projectDir, "electron.d.ts"))).toBe(true);
+    expect(existsSync(pathModule.join(projectDir, "electron.d.ts"))).toBe(
+      false
+    );
 
     expect(packageJson.devDependencies.tsx).toBe(
       rootPackageJson.devDependencies.tsx
@@ -1186,11 +1197,8 @@ describe("scaffoldElectron", (): void => {
     }
     expect(packageJson.overrides?.["@better-auth/core"]).toBe("1.6.2");
     expect(
-      await readFile(
-        pathModule.join(projectDir, "electron", "README.md"),
-        "utf-8"
-      )
-    ).not.toContain("bun ");
+      existsSync(pathModule.join(projectDir, "electron", "README.md"))
+    ).toBe(false);
   });
   it("allows Electron install/build scripts for pnpm scaffolds", async (): Promise<void> => {
     process.env.npm_config_user_agent = "pnpm/10.33.1";

@@ -4,9 +4,6 @@ import type { GatewayProvider } from "./gateway-provider.ts";
 const MODEL_ID_PARAMETER_INDEX = 0;
 
 interface GatewayModelDefaults<TGateway extends GatewayProvider> {
-  anonymousModels: Parameters<
-    TGateway["createLanguageModel"]
-  >[typeof MODEL_ID_PARAMETER_INDEX][];
   curatedDefaults: Parameters<
     TGateway["createLanguageModel"]
   >[typeof MODEL_ID_PARAMETER_INDEX][];

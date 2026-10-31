@@ -11,11 +11,7 @@ const generateDemo = async (
   }> = {}
 ): Promise<{ files: Map<string, string>; ownedPaths: readonly string[] }> => {
   const installation = await generateInstallation(demoInstallation, options);
-  const excluded = new Set([
-    "lib/ai/models.generated.ts",
-    "composition/custom/custom-tools.ts",
-    "composition/custom/custom-ui.ts",
-  ]);
+  const excluded = new Set(["lib/ai/models.generated.ts"]);
   const files = new Map(
     [...installation.files].filter(([file]) => !excluded.has(file))
   );

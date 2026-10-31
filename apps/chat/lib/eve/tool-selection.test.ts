@@ -13,7 +13,7 @@ import { expect, it, vi } from "vitest";
 import type {
   installedDocumentKinds,
   installedToolNames,
-} from "@/composition/generated/installed-tools";
+} from "@/integrations/tool-catalog";
 
 import selectionHook from "../../agent/hooks/tool-selection";
 import { frontendToolsSchema } from "../ai/types";
@@ -31,7 +31,7 @@ import {
 } from "./turn-tools";
 
 const mocks = vi.hoisted(() => ({ kinds: new Set<string>() }));
-vi.mock("@/composition/generated/installed-tools", async (importOriginal) => {
+vi.mock("@/integrations/tool-catalog", async (importOriginal) => {
   const actual = await importOriginal<{
     installedDocumentKinds: typeof installedDocumentKinds;
     installedToolNames: typeof installedToolNames;
@@ -41,9 +41,6 @@ vi.mock("@/composition/generated/installed-tools", async (importOriginal) => {
   }
   return { ...actual, installedDocumentKinds: mocks.kinds };
 });
-vi.mock("../types/anonymous", () => ({
-  ANONYMOUS_LIMITS: { AVAILABLE_TOOLS: [] },
-}));
 
 const startTurn = async (selectedTool?: string, principalType = "user") =>
   await selectionHook.events?.["turn.started"]?.(
@@ -68,14 +65,16 @@ const startTurn = async (selectedTool?: string, principalType = "user") =>
               ...(isNonEmptyString(selectedTool) ? { selectedTool } : {}),
               ...(principalType === "guest" ? { chatjsGuest: "true" } : {}),
             },
-            authenticator: "gateway",
+            authenticator: "chatjs-gateway",
             principalId: "owner",
             principalType: "user",
           },
           initiator: {
             attributes: { selectedTool: "webSearch" },
             authenticator:
-              principalType === "guest" ? "chatjs-disposable-guest" : "gateway",
+              principalType === "guest"
+                ? "chatjs-disposable-guest"
+                : "chatjs-gateway",
             principalId: "owner",
             principalType: "user",
           },
@@ -115,15 +114,17 @@ it("limits every toolbox and resets a later automatic turn instead of inheriting
   });
 });
 it("includes document revision reads without leaking unrelated tools", () => {
-  expect(selectedEveTools("createTextDocument")).toEqual([
-    "createTextDocument",
-    "createCodeDocument",
-    "createSheetDocument",
-    "editTextDocument",
-    "editCodeDocument",
-    "editSheetDocument",
-    "readDocument",
-  ]);
+  expect(selectedEveTools("createTextDocument")?.toSorted()).toEqual(
+    [
+      "createTextDocument",
+      "createCodeDocument",
+      "createSheetDocument",
+      "editTextDocument",
+      "editCodeDocument",
+      "editSheetDocument",
+      "readDocument",
+    ].toSorted()
+  );
   for (const tool of [
     "createCodeDocument",
     "createSheetDocument",
@@ -244,12 +245,12 @@ it("guest automatic and explicit turns retain only configured anonymous tools", 
   });
 });
 
-it("withholds document operations when their implementations are not installed", () => {
+it("withholds removed document writes while preserving installed revision reads", () => {
   const original = new Set(mocks.kinds);
   const installed = mocks.kinds;
   try {
     installed.clear();
-    expect(eveInstalledToolEnabled("readDocument")).toBe(false);
+    expect(eveInstalledToolEnabled("readDocument")).toBe(true);
     expect(eveInstalledToolEnabled("createTextDocument")).toBe(false);
     installed.add("text");
     expect(eveInstalledToolEnabled("readDocument")).toBe(true);

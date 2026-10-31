@@ -66,7 +66,7 @@ const main = async (): Promise<void> => {
     "dir"
   );
   await Promise.all(
-    `agent/tools/deepResearch.ts agent/hooks/billing.ts lib/eve/usage.ts
+    `agent/tools/deepResearch.ts agent/hooks/billing.ts lib/eve/usage.ts lib/eve/session-identity.ts
 agent/subagents/researcher/tools/webSearch.ts
  tools/chatjs/deep-research/schemas.ts tools/chatjs/deep-research/search-updates.ts
  tools/platform/research-updates-schema.ts lib/eve/tool-result.ts lib/eve/document-contracts.ts
@@ -95,7 +95,7 @@ agent/subagents/researcher/tools/webSearch.ts
     `import { eveChannel } from "eve/channels/eve";
 import { parseEveCopySeed } from "../../lib/eve/copy-seed";
 const channel = eveChannel({
-  auth: () => ({ principalId: "owner", principalType: "user", authenticator: "fixture", attributes: {} }),
+  auth: () => ({ principalId: "owner", principalType: "user", authenticator: "chatjs-gateway", attributes: {} }),
   resolveSeed: ({ auth, operationId }) => {
     if (auth.principalId !== "owner" || operationId !== "accepted-copy") throw new Error("Unaccepted destination");
     const seed = parseEveCopySeed({ attachments: "channel", messages: [
@@ -109,7 +109,7 @@ export default channel;`
   );
   await write(
     "lib/eve/gateway-auth.ts",
-    'export const authenticateEveGateway = () => ({ principalId: "owner", principalType: "user", authenticator: "fixture", attributes: {} });'
+    'export const authenticateEveGateway = () => ({ principalId: "owner", principalType: "user", authenticator: "chatjs-gateway", attributes: {} });'
   );
   await write(
     "lib/db/eve-billing.ts",
@@ -244,7 +244,7 @@ export default defineAgent({ defaultTools: false, modelContextWindowTokens: 1280
 }`)
   );
   await write(
-    "composition/generated/providers.ts",
+    "integrations/tool-providers.ts",
     `
 import { defineTool } from "eve/tools";
 import { z } from "zod";
@@ -255,7 +255,7 @@ const webSearch = defineTool({ description: "Fixture search", inputSchema: z.obj
    return { kind: "chatjs.tool-result", version: 1, status: "success", output: { result: input.query }, usage: { costUsd: 0.02 }, updates: [{ type: "web", toolCallId: ctx.callId, title: "Search complete", status: "completed", queries: [input.query], results: [{ title: "Evidence", url: "https://example.com", content: input.query, source: "web" }] }] };
  },
 });
-export const providers = { webSearch };`
+export const toolProviders = { webSearch };`
   );
   await write(
     "lib/config.ts",

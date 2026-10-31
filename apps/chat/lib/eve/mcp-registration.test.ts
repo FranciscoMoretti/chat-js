@@ -38,7 +38,7 @@ it("discovers for the session owner and preserves namespaced tool definitions", 
           current: null,
           initiator: {
             attributes: {},
-            authenticator: "test",
+            authenticator: "chatjs-gateway",
             principalId: "owner",
             principalType: "user",
           },
@@ -76,7 +76,7 @@ it("continues ordinary chat when MCP discovery times out", async () => {
 });
 
 vi.mock("./turn-tools", () => ({
-  eveTurnGuest: { get: (): boolean => mocks.guest },
+  eveTurnAccount: { get: (): boolean => !mocks.guest },
   eveTurnTool: {
     get: () => {
       if (mocks.selected) {

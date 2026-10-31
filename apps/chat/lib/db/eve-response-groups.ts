@@ -212,20 +212,6 @@ const reserveEveResponseGroup = async (
 };
 
 /**
- * Must commit with guest quota when admitting an anonymous comparison.
- * @param {ResponseGroupWriteTransaction} tx Native transaction capabilities shared with the caller's guest quota admission.
- * @param {string} ownerId Owner whose family lock fences the comparison reservation.
- * @param {z.infer<typeof eveResponseGroupInput>} value Comparison input whose hash and candidate order define replay identity.
- * @returns {Promise<ReservedResponseGroup>} The allocated or replayed group; the caller controls the shared transaction commit.
- */
-const reserveEveResponseGroupInTransaction = async (
-  tx: ResponseGroupWriteTransaction,
-  ownerId: string,
-  value: ReadonlyNativeSurface<z.infer<typeof eveResponseGroupInput>>
-): Promise<ReservedResponseGroup> =>
-  requireGroup(await reserveGroupRow(tx, ownerId, value));
-
-/**
  * Caller holds the owner family lock; retain identities but erase request metadata.
  * @param {ResponseGroupTransaction} tx Native deletion transaction already holding the owner family lock.
  * @param {string} ownerId Owner whose source and candidate groups are tombstoned.
@@ -613,6 +599,5 @@ export {
   getEveResponseGroupForConversation,
   recordEveResponseGroupRejection,
   reserveEveResponseGroup,
-  reserveEveResponseGroupInTransaction,
   tombstoneEveResponseGroups,
 };

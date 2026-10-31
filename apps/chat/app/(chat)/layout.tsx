@@ -13,10 +13,10 @@ import { config } from "@/lib/config";
 import { isPlaywrightTestEnvironment } from "@/lib/constants";
 import { resolveEvePrincipal } from "@/lib/eve/principal";
 import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
-import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 import { ChatModelsProvider } from "@/providers/chat-models-provider";
 import { DefaultModelProvider } from "@/providers/default-model-provider";
 import { SessionProvider, SessionSeed } from "@/providers/session-provider";
+import { ChatPlugins } from "@/providers/chat-plugins";
 import { TRPCReactProvider } from "@/trpc/react";
 import { HydrateClient } from "@/trpc/server";
 
@@ -26,25 +26,16 @@ const sidebarInsetClassName = "[--header-height:calc(var(--spacing)*13)]";
 
 const resolveDefaultModel = (
   cookieModel: string | undefined,
-  chatModels: readonly { readonly id: string }[],
-  isAnonymous: boolean
+  chatModels: readonly { readonly id: string }[]
 ): AppModelId => {
   const configuredModel = config.ai.workflows.chat;
-  const anonymousModels: readonly AppModelId[] =
-    ANONYMOUS_LIMITS.AVAILABLE_MODELS;
   let defaultModel: AppModelId = cookieModel ?? configuredModel;
 
   if (typeof cookieModel === "string" && cookieModel !== "") {
     const modelExists = chatModels.some((model) => model.id === cookieModel);
-    if (
-      !modelExists ||
-      (isAnonymous && !anonymousModels.includes(cookieModel))
-    ) {
+    if (!modelExists) {
       defaultModel = configuredModel;
     }
-  }
-  if (isAnonymous && !anonymousModels.includes(defaultModel)) {
-    return anonymousModels[0] ?? configuredModel;
   }
   return defaultModel;
 };
@@ -67,13 +58,8 @@ const ChatLayoutDynamic = async ({
     : await resolveEvePrincipal(headersRes);
 
   const cookieModel = cookieStore.get("chat-model")?.value;
-  const isAnonymous = !session?.user;
 
-  const defaultModel = resolveDefaultModel(
-    cookieModel,
-    chatModels,
-    isAnonymous
-  );
+  const defaultModel = resolveDefaultModel(cookieModel, chatModels);
 
   return (
     <HydrateClient>
@@ -116,7 +102,9 @@ const ChatLayout = async ({
     <TRPCReactProvider>
       <SessionProvider>
         <SidebarProvider defaultOpen={defaultOpen}>
-          <EveDeletionProvider>{content}</EveDeletionProvider>
+          <ChatPlugins>
+            <EveDeletionProvider>{content}</EveDeletionProvider>
+          </ChatPlugins>
         </SidebarProvider>
       </SessionProvider>
     </TRPCReactProvider>

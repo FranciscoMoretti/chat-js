@@ -1,10 +1,5 @@
 {
   "extends": "../registry/tsconfig.json",
-  "include": [
-    "**/*.ts",
-    "**/*.tsx",
-    "../../apps/chat/types/**/*.d.ts",
-    "../../apps/chat/electron.d.ts"
-  ],
+  "include": ["**/*.ts", "**/*.tsx", "../../apps/chat/types/**/*.d.ts"],
   "exclude": ["node_modules", "uiverify-archive"]
 }

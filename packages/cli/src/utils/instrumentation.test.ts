@@ -18,11 +18,11 @@ const compiled = ts.transpileModule(source, {
 
 for (const runtime of ["nodejs", "edge"]) {
   for (const fail of [false, true]) {
-    test(`core lifecycle survives optional instrumentation ${fail ? "failure" : "omission"} on ${runtime}`, async (): Promise<void> => {
+    test(`all registrations start despite another instrumentation ${fail ? "failure" : "omission"} on ${runtime}`, async (): Promise<void> => {
       const events: string[] = [];
       const received: unknown[] = [];
       const failure = new Error("Missing credentials for langfuse");
-      const registrations = fail
+      const registrations: ((context: unknown) => void)[] = fail
         ? [
             (context: unknown): never => {
               received.push(context);
@@ -31,21 +31,19 @@ for (const runtime of ["nodejs", "edge"]) {
             },
           ]
         : [];
+      registrations.push(() => {
+        events.push("cleanup");
+      });
       const exports: { register?: () => Promise<void> } = {};
       runInNewContext(compiled, {
         exports,
         process: { env: { NEXT_RUNTIME: runtime } },
         require: (name: string) => {
-          if (name === "@/composition/generated/installed-instrumentation") {
-            return { installedInstrumentation: registrations };
+          if (name === "@/integrations/instrumentation") {
+            return { instrumentation: registrations };
           }
           if (name === "@/lib/config") {
             return { config: { appPrefix: "test" } };
-          }
-          if (name === "./lib/eve/local-guest-cleanup-scheduler") {
-            return {
-              startLocalEveGuestCleanup: (): number => events.push("core"),
-            };
           }
           throw new Error(`Unexpected import: ${name}`);
         },
@@ -57,10 +55,7 @@ for (const runtime of ["nodejs", "edge"]) {
         ? rejects(exports.register(), (reason: unknown) => reason === failure)
         : exports.register());
       expect(received).toEqual(fail ? [{ appPrefix: "test", runtime }] : []);
-      expect(events).toEqual([
-        ...(runtime === "nodejs" ? ["core"] : []),
-        ...(fail ? ["optional"] : []),
-      ]);
+      expect(events).toEqual([...(fail ? ["optional"] : []), "cleanup"]);
     });
   }
 }

@@ -31,8 +31,8 @@ const lintInstalledObservability = async (root: string): Promise<void> => {
       "--no-ignore",
       "--report-unused-disable-directives-severity",
       "error",
-      path.join(root, "composition/generated/installed-layout.ts"),
-      path.join(root, "composition/generated/installed-instrumentation.ts"),
+      path.join(root, "chatjs/generated/installed-layout.ts"),
+      path.join(root, "chatjs/generated/installed-instrumentation.ts"),
     ],
     stderr: "pipe",
     stdout: "pipe",
@@ -111,15 +111,15 @@ for (let mask = 0; mask < 2 ** observabilityItems.length; mask += 1) {
     await syncPlugins(root);
     await lintInstalledObservability(root);
     const layout = await readFile(
-      path.join(root, "composition/generated/installed-layout.ts"),
+      path.join(root, "chatjs/generated/installed-layout.ts"),
       "utf-8"
     );
     const instrumentation = await readFile(
-      path.join(root, "composition/generated/installed-instrumentation.ts"),
+      path.join(root, "chatjs/generated/installed-instrumentation.ts"),
       "utf-8"
     );
     const plugins = await readFile(
-      path.join(root, "composition/generated/installed.ts"),
+      path.join(root, "chatjs/generated/installed.ts"),
       "utf-8"
     );
     expect(instrumentation).not.toContain("sort-imports");
@@ -133,7 +133,7 @@ for (let mask = 0; mask < 2 ** observabilityItems.length; mask += 1) {
     await syncPlugins(root);
     expect(
       await readFile(
-        path.join(root, "composition/generated/installed-layout.ts"),
+        path.join(root, "chatjs/generated/installed-layout.ts"),
         "utf-8"
       )
     ).toBe(layout);
@@ -207,7 +207,7 @@ for (const item of observabilityItems) {
         expect(installedDependencies[name]).toBeDefined();
       }
       const registration = await readFile(
-        path.join(root, "composition/generated/installed.ts"),
+        path.join(root, "chatjs/generated/installed.ts"),
         "utf-8"
       );
       expect(registration).toContain(`"${item.name}"`);
@@ -220,7 +220,7 @@ for (const item of observabilityItems) {
       expect(syncPlugins(root)).rejects.toThrow("installation is incomplete");
       expect(
         await readFile(
-          path.join(root, "composition/generated/installed.ts"),
+          path.join(root, "chatjs/generated/installed.ts"),
           "utf-8"
         )
       ).toBe(registration);
@@ -248,7 +248,7 @@ for (const item of observabilityItems) {
     expect(syncPlugins(root)).rejects.toThrow("id must match its directory");
     expect(
       await Bun.file(
-        path.join(root, "composition/generated/installed-layout.ts")
+        path.join(root, "chatjs/generated/installed-layout.ts")
       ).exists()
     ).toBe(false);
   });

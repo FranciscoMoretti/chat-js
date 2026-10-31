@@ -174,7 +174,7 @@ test.each([
   ["apps/chat/oxfmt.config.ts", true],
   ["apps/chat/components.json", true],
   ["apps/chat/tools/chatjs/word-count/tool.ts", true],
-  ["apps/chat/composition/generated/tools.ts", true],
+  ["apps/chat/chatjs/generated/tools.ts", true],
   ["apps/chat/.env.local", false],
   ["apps/chat/.next/generated.js", false],
   ["apps/chat/node_modules/example/index.js", false],

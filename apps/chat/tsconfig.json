@@ -38,5 +38,5 @@
     "next.config.js",
     ".next/dev/types/**/*.ts"
   ],
-  "exclude": ["node_modules", "**/.eve/**", "**/.output/**"]
+  "exclude": ["**/*.radix.tsx", "node_modules", "**/.eve/**", "**/.output/**"]
 }

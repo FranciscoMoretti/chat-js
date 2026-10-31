@@ -6,11 +6,8 @@ import type { createEveConversationOperation } from "./create-conversation-opera
 
 const mocks = vi.hoisted(() => ({
   create: vi.fn<typeof createEveConversationOperation>(),
-  refund: vi.fn(),
   reserve: vi.fn(),
-  settle: vi.fn(),
 }));
-vi.mock("../db/eve-guests", () => ({ releaseEveGuestCreation: mocks.refund }));
 vi.mock("../db/eve-response-groups", () => ({
   recordEveResponseGroupRejection: vi.fn(),
   reserveEveResponseGroup: mocks.reserve,
@@ -18,7 +15,6 @@ vi.mock("../db/eve-response-groups", () => ({
 vi.mock("./create-conversation-operation", () => ({
   createEveConversationOperation: mocks.create,
 }));
-vi.mock("./guest-admission", () => ({ settleGuestCreation: mocks.settle }));
 const input = {
   message: "hello",
   modelIds: ["cheap", "cheap"],
@@ -29,16 +25,6 @@ const group = {
   id: crypto.randomUUID(),
 };
 
-const admission = {
-  group,
-  reservations: group.candidates.map(
-    ({ operationId }: Readonly<{ modelId: string; operationId: string }>) => ({
-      operationId,
-      reservationId: crypto.randomUUID(),
-    })
-  ),
-};
-
 beforeEach(() => {
   vi.resetAllMocks();
   mocks.create.mockResolvedValue(
@@ -47,43 +33,9 @@ beforeEach(() => {
       { status: 400 }
     )
   );
-  mocks.settle.mockResolvedValue(true);
-  mocks.refund.mockResolvedValue(true);
+  mocks.reserve.mockResolvedValue(group);
 });
 
-it("refunds undispatched siblings after a proven primary rejection", async () => {
-  const result = await createEveResponseGroup("guest", input, admission);
-  expect(result.candidates.map((candidate) => candidate.state)).toEqual([
-    "rejected",
-    "waiting",
-  ]);
-  expect(mocks.create).toHaveBeenCalledTimes(1);
-  expect(mocks.create.mock.calls[0][2]).toBe(
-    admission.reservations[0].reservationId
-  );
-  expect(mocks.refund).toHaveBeenCalledExactlyOnceWith(
-    "guest",
-    group.candidates[1].operationId,
-    admission.reservations[1].reservationId
-  );
-  expect(mocks.reserve).not.toHaveBeenCalled();
-});
-
-it("retains recovery if a sibling has concurrently claimed its creation", async () => {
-  mocks.refund.mockResolvedValue(false);
-  await expect(
-    createEveResponseGroup("guest", input, admission)
-  ).rejects.toThrow("Retain comparison recovery");
-});
-it("does not declare terminal rejection when the primary refund cannot prove non-admission", async () => {
-  mocks.settle.mockResolvedValue(false);
-  const result = await createEveResponseGroup("guest", input, admission);
-  expect(result.candidates.map((candidate) => candidate.state)).toEqual([
-    "unresolved",
-    "waiting",
-  ]);
-  expect(mocks.refund).not.toHaveBeenCalled();
-});
 it("marks every multi-model edited candidate with the shared user intent", async () => {
   mocks.reserve.mockResolvedValue(group);
   await createEveResponseGroup("owner", {

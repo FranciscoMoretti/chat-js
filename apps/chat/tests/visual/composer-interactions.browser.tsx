@@ -6,6 +6,39 @@ import { ControlledChatComposer } from "@/components/controlled-chat-composer";
 import { InputGroupButton } from "@/components/ui/input-group";
 import { mount, unmount } from "./primitive-mount";
 import "./sandbox.css";
+import { composerDraftCases } from "../../../../packages/chat-visual-tests/contracts/composer";
+
+test("app and Create share submission eligibility", async () => {
+  disableAutoSnapshot();
+  const fixture = await mount(
+    <main>
+      {composerDraftCases.map(({ name, canSend: _canSend, ...props }) => (
+        <section key={name} aria-label={name}>
+          <ControlledChatComposer
+            {...props}
+            disabled={false}
+            onDraftChange={vi.fn<(value: string) => void>()}
+            onSubmit={vi.fn<() => void>()}
+          />
+        </section>
+      ))}
+    </main>
+  );
+  try {
+    await Promise.all(
+      composerDraftCases.map(async ({ name, canSend }) => {
+        const send = page
+          .getByRole("region", { name, exact: true })
+          .getByRole("button", { name: "Send", exact: true });
+        await (canSend
+          ? expect.element(send).toBeEnabled()
+          : expect.element(send).toBeDisabled());
+      })
+    );
+  } finally {
+    await unmount(fixture);
+  }
+});
 
 const DraftComposer = ({
   onSubmit,
