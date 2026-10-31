@@ -16,8 +16,11 @@ import {
 import {
   assignEveConversationProject,
   getEveConversationProject,
-} from "@/plugins/projects/db/project-queries";
-import { project, eveChatProject } from "@/plugins/projects/db/project-schema";
+} from "@/chatjs/plugins/projects/db/project-queries";
+import {
+  project,
+  eveChatProject,
+} from "@/chatjs/plugins/projects/db/project-schema";
 import { env } from "../lib/env";
 import { assertEveTestDatabase } from "./eve-test-database";
 

@@ -11,13 +11,13 @@ Use a working ChatJS app and a shadcn registry. Read [Using plugins](../core/plu
 
 ## 1. Organize the source
 
-In this repository, keep a plugin's installation manifest in `packages/registry/src/plugins/<id>/manifest.ts`, its implementation in `src/`, and its framework entrypoints in `adapters/`. Map implementation files into `~/plugins/<id>/`. Map thin Next and EVE entrypoints into their required `app/` and `agent/` locations. List every distributed file explicitly. Tests and authoring metadata stay in the repository.
+In this repository, keep a plugin's installation manifest in `packages/registry/src/plugins/<id>/manifest.ts`, its implementation in `src/`, and its framework entrypoints in `adapters/`. Map implementation files into `~/chatjs/plugins/<id>/`. Map thin Next and EVE entrypoints into their required `app/` and `agent/` locations. List every distributed file explicitly. Tests and authoring metadata stay in the repository.
 
 `server-plugin.ts` and `client-plugin.ts` use distinct names to avoid shadcn import resolution collisions with host modules such as `lib/db/client.ts` and `trpc/server.ts`.
 
 ## 2. Define the integrations
 
-A server factory returns an object satisfying `ChatPlugin` from `@/lib/plugin-contracts`. It can contribute typed tRPC `routers` and an `instrumentation` registration. Keep the inferred router types with `satisfies`.
+A server factory returns an object satisfying `ChatPlugin` from `@/chatjs/core/installation/plugin`. It can contribute typed tRPC `routers` and an `instrumentation` registration. Keep the inferred router types with `satisfies`.
 
 A client entry exports a module-scope `definePlugin` declaration. Bind components to typed slots:
 
@@ -25,7 +25,7 @@ A client entry exports a module-scope `definePlugin` declaration. Bind component
 "use client";
 
 import { ComposerExtensions, SettingsLinks } from "@/components/chat-slots";
-import { definePlugin, slot } from "@/lib/ui-slots";
+import { definePlugin, slot } from "@/chatjs/core/ui/slots";
 import { ConnectorsControl } from "./composer";
 import { ConnectorsSettingsLink } from "./settings";
 
@@ -64,7 +64,7 @@ The full manifest also declares `files`, `databaseSchemas`, `envRequirements`, a
 
 Use `registryDependencies` to install another item and `requiresPlugins` to require its plugin ID in the installed selection. Declare `requiresStorage: true` for plugins requiring durable file storage.
 
-Database schema paths must belong to `plugins/<id>/`. Sync composes them for Drizzle through `chatjs/generated/installed-database.ts`. Adding or syncing a plugin preserves migration history and does not apply SQL. Environment readers belong to the plugin and remain separate from client-visible configuration.
+Database schema paths must belong to `chatjs/plugins/<id>/`. Sync composes them for Drizzle through `chatjs/generated/installed-database.ts`. Adding or syncing a plugin preserves migration history and does not apply SQL. Environment readers belong to the plugin and remain separate from client-visible configuration.
 
 ## 4. Install and verify
 

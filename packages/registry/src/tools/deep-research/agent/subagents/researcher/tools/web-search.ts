@@ -1,8 +1,9 @@
+// ChatJS source: deep-research. Ownership: chatjs/tools/deep-research/chatjs.json.
 import { defineState } from "eve/context";
 import { defineDynamic } from "eve/tools";
 
 import { isAccountSession } from "@/lib/eve/session-identity";
-import { toolProviders } from "@/integrations/tool-providers";
+import { toolProviders } from "@/integrations/tools/providers";
 
 const MAX_RESEARCH_SEARCH_ROUNDS = 19;
 const INITIAL_SEARCH_ROUND = 0;

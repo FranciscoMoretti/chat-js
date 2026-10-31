@@ -1,6 +1,6 @@
 "use client";
 
-import { isDocumentResult } from "@/lib/eve/document-contracts";
+import { isDocumentResult } from "@/chatjs/core/documents/contracts";
 
 import React, { useState } from "react";
 import type { JSX as ReactJSX } from "react";
@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { parseToolId } from "@/lib/ai/mcp-name-id";
 import { getEveInstalledToolRenderer } from "@/lib/ai/tool-renderer-registry";
-import { documentDefinitions } from "@/integrations/documents";
+import { documentDefinitions } from "@/integrations/documents/definitions";
 import type { ReadonlyEveMessagePart } from "@/lib/eve/readonly-message-types";
 import { EveAttachment } from "./eve-attachment";
 import { EveDocumentTool } from "./eve-document-tool";

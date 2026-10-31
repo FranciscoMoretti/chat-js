@@ -1,6 +1,6 @@
-import type { toolNameSchema } from "./tool-definition";
+import type { toolNameSchema } from "@/chatjs/core/tools/tool-definition";
 
-import { selectableToolNames } from "@/integrations/tool-selection";
+import { selectableToolNames } from "@/integrations/tools/selection";
 import type { AppModelId } from "./app-models";
 import { z } from "zod";
 
@@ -82,4 +82,4 @@ export {
 };
 export type { SelectedModelCounts, SelectedModelValue, ToolName, UiToolName };
 
-export { toolNameSchema } from "./tool-definition";
+export { toolNameSchema } from "@/chatjs/core/tools/tool-definition";

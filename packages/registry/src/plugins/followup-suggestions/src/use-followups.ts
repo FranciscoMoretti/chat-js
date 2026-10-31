@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useTRPC } from "@/trpc/react";
-import type { ChatSuggestionsProps } from "@/lib/chat-plugin-contracts";
+import type { ChatSuggestionsProps } from "@/chatjs/core/chat/contracts";
 import { followupCompletion } from "./followup-completion";
 import { config } from "@/lib/config";
 

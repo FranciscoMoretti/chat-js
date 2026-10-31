@@ -15,7 +15,8 @@ describe("resolveSandboxAuth", () => {
       get: () => ({ headers: { "x-vercel-oidc-token": token } }),
     });
     expect(getVercelOidcTokenSync()).toBe(token);
-    const { resolveSandboxAuth } = await import("./adapter");
+    const { resolveSandboxAuth } =
+      await import("@/chatjs/providers/sandbox/adapter");
 
     expect(resolveSandboxAuth()).toEqual({
       projectId: "project",
@@ -26,7 +27,8 @@ describe("resolveSandboxAuth", () => {
   it("resolves the provider scope from an OIDC token", async () => {
     const token = jwt({ owner_id: "team", project_id: "project" });
     vi.stubEnv("VERCEL_OIDC_TOKEN", token);
-    const { resolveSandboxAuth } = await import("./adapter");
+    const { resolveSandboxAuth } =
+      await import("@/chatjs/providers/sandbox/adapter");
 
     expect(resolveSandboxAuth()).toEqual({
       projectId: "project",
@@ -36,7 +38,8 @@ describe("resolveSandboxAuth", () => {
   });
   it("pins explicitly configured opaque credentials", async () => {
     configureSandboxCredentials();
-    const { resolveSandboxAuth } = await import("./adapter");
+    const { resolveSandboxAuth } =
+      await import("@/chatjs/providers/sandbox/adapter");
 
     expect(resolveSandboxAuth()).toEqual({
       projectId: "project",
@@ -87,7 +90,8 @@ it.each([
     } else if (typeof token === "string") {
       vi.stubEnv("VERCEL_OIDC_TOKEN", token);
     }
-    const { resolveSandboxAuth } = await import("./adapter");
+    const { resolveSandboxAuth } =
+      await import("@/chatjs/providers/sandbox/adapter");
     expect(() => resolveSandboxAuth()).toThrow(error);
   }
 );
@@ -102,7 +106,7 @@ it("resolveSandboxAuth uses each request's token for execution and cleanup inste
     get: () => ({ headers: { "x-vercel-oidc-token": token } }),
   });
   const { resolveSandboxAuth, createCleanupSession } =
-    await import("./adapter");
+    await import("@/chatjs/providers/sandbox/adapter");
 
   expect(resolveSandboxAuth()).toEqual({
     projectId: "first",

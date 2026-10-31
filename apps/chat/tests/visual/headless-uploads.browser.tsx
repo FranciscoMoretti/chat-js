@@ -1,10 +1,10 @@
 import React, { act, useState } from "react";
-import { useAttachmentPicker } from "@/hooks/use-attachment-picker";
+import { useAttachmentPicker } from "@/chatjs/core/uploads/use-attachment-picker";
 import { createRoot } from "react-dom/client";
 import { expect, test, vi } from "vitest";
 import { page } from "vitest/browser";
 import { takeSnapshot } from "@uiverify/vitest";
-import { useAttachmentUploads } from "@/plugins/attachment-uploads/integration";
+import { useAttachmentUploads } from "@/chatjs/plugins/attachment-uploads/integration";
 import { renderRoot, unmountRoot } from "./primitive-mount";
 import "./sandbox.css";
 
@@ -14,10 +14,10 @@ vi.mock("@/providers/session-provider", () => ({
     data: mocks.signedIn ? { user: { id: "fixture" } } : null,
   }),
 }));
-vi.mock("@/plugins/attachment-uploads/upload", () => ({
+vi.mock("@/chatjs/plugins/attachment-uploads/upload", () => ({
   uploadAttachment: mocks.upload,
 }));
-vi.mock("@/plugins/attachment-uploads/upload-prep", () => ({
+vi.mock("@/chatjs/plugins/attachment-uploads/upload-prep", () => ({
   processFilesForUpload: async (files: readonly File[]) =>
     await Promise.resolve({ files, stillOversized: [], unsupportedFiles: [] }),
 }));

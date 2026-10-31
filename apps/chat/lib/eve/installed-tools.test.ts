@@ -21,7 +21,7 @@ const definitions = await vi.hoisted(async () => {
     }),
   };
 });
-vi.mock("../../integrations/tools", () => ({ tools: definitions }));
+vi.mock("../../integrations/tools/execution", () => ({ tools: definitions }));
 
 vi.mock("./turn-tools", () => ({
   filterEveTools: <Tools>(tools: Tools): Tools => tools,

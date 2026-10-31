@@ -1,4 +1,4 @@
-import type { SessionAuthentication } from "@/lib/session-profile-contracts";
+import type { SessionAuthentication } from "@/chatjs/core/session/contracts";
 import { isNonEmptyString } from "@/lib/is-non-empty-string";
 
 import { timingSafeEqual } from "node:crypto";

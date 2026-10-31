@@ -1,7 +1,7 @@
 import { clientEnvSchema, serverEnvSchema } from "./env-schema";
 
 import { createEnv } from "@t3-oss/env-nextjs";
-import { gatewayEnvVariables } from "./ai/gateway-model-defaults";
+import { gatewayEnvVariables } from "@/chatjs/providers/gateway-defaults";
 import { resolveEveEnvironment } from "./eve/environment";
 
 const env = createEnv({

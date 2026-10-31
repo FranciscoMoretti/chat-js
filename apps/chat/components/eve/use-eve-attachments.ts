@@ -4,7 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import type { Dispatch, SetStateAction } from "react";
 
-import { attachmentUploads } from "@/integrations/uploads";
+import { attachmentUploads } from "@/integrations/chat/uploads";
 import type { DraftAttachment } from "@/lib/eve/draft";
 
 export const useEveAttachments = (state?: {

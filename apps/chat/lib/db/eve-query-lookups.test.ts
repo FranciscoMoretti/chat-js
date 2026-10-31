@@ -1,4 +1,4 @@
-import type { project } from "@/plugins/projects/db/project-schema";
+import type { project } from "@/chatjs/plugins/projects/db/project-schema";
 
 import { readFile, readdir } from "node:fs/promises";
 import { createHash } from "node:crypto";
@@ -14,7 +14,7 @@ vi.mock("./client", () => ({ db: drizzle(postgres) }));
 vi.mock("@/lib/env", () => ({ env: {} }));
 
 const { getEveConversationProject } =
-  await import("@/plugins/projects/db/project-queries");
+  await import("@/chatjs/plugins/projects/db/project-queries");
 const {
   getBoundEveConversationForSession,
   getEveConversation,
@@ -199,7 +199,7 @@ vi.mock("@/lib/eve/persistent-sandbox-store", () => ({
 test("Projects assigns atomically and retries never reconsider membership", async () => {
   const { createEveConversation } = await import("./eve-queries");
   const { assignEveConversationProject } =
-    await import("@/plugins/projects/db/project-queries");
+    await import("@/chatjs/plugins/projects/db/project-queries");
   const first = crypto.randomUUID();
   const moved = crypto.randomUUID();
   await postgres.query(
@@ -458,7 +458,7 @@ test("a failed plugin mutation rolls back its writes and the core timestamp", as
   const { updateOwnedChat } = await import("./update-owned-chat");
   const { createEveConversation } = await import("./eve-queries");
   const { eveChatProject } =
-    await import("@/plugins/projects/db/project-schema");
+    await import("@/chatjs/plugins/projects/db/project-schema");
   const bound = await createEveConversation(
     "owner",
     crypto.randomUUID(),

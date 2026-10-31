@@ -1,4 +1,4 @@
-import { userCredit } from "@/plugins/credits/credits-schema";
+import { userCredit } from "@/chatjs/plugins/credits/credits-schema";
 import { setTimeout as delay } from "node:timers/promises";
 import { mkdir } from "node:fs/promises";
 

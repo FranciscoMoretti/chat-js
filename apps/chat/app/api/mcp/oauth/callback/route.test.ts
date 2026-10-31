@@ -29,17 +29,17 @@ const mocks = vi.hoisted(() => {
     requireCredentials: vi.fn(),
   };
 });
-vi.mock("@/plugins/mcp/setup", () => ({
+vi.mock("@/chatjs/plugins/mcp/setup", () => ({
   requireMcpCredentials: mocks.requireCredentials,
 }));
-vi.mock("@/plugins/mcp/oauth/mcp-client-manager", () => ({
+vi.mock("@/chatjs/plugins/mcp/oauth/mcp-client-manager", () => ({
   createMcpClientForCallback: vi.fn(),
   removeMcpClient: mocks.removeClient,
 }));
-vi.mock("@/plugins/mcp/oauth/cache", () => ({
+vi.mock("@/chatjs/plugins/mcp/oauth/cache", () => ({
   invalidateAllMcpCaches: mocks.invalidate,
 }));
-vi.mock("@/plugins/mcp/db/mcp-queries", () => ({
+vi.mock("@/chatjs/plugins/mcp/db/mcp-queries", () => ({
   deletePendingSessionByState: mocks.deleteSession,
   getMcpConnectorById: vi.fn(),
   getSessionByState: mocks.getSession,
@@ -50,7 +50,7 @@ vi.mock("@/lib/logger", () => ({
     info: (...arguments_: readonly unknown[]) => unknown;
   } => ({ error: vi.fn(), info: vi.fn() }),
 }));
-vi.mock("@/plugins/mcp/search/mcp-search-params.server", () => ({
+vi.mock("@/chatjs/plugins/mcp/search/mcp-search-params.server", () => ({
   loadMcpOAuthCallbackSearchParams: (): typeof mocks.params => mocks.params,
 }));
 

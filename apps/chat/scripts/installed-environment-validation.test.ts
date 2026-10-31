@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { describe, expect, it } from "vitest";
 import { validateInstalledEnvironment } from "./installed-environment-validation";
 
-const mcpDirectory = path.resolve(import.meta.dirname, "../plugins/mcp");
+const mcpDirectory = path.resolve(import.meta.dirname, "../chatjs/plugins/mcp");
 
 describe("installed environment validators", () => {
   it("does not load an optional feature without a declared validator", async () => {

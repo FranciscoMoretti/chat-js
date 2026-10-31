@@ -26,6 +26,13 @@ test("fresh installation planning does not require the destination to exist", as
 });
 
 for (const marker of [
+  "plugins/mcp/chatjs.json",
+  "tools/chatjs/word-count/chatjs.json",
+  "lib/ui-slots.tsx",
+  "lib/compose-chat.ts",
+  "lib/ai/gateway.ts",
+  "lib/storage-provider.ts",
+  "lib/sandbox/provider.ts",
   "composition/generated/tools.ts",
   "composition/custom/custom-tools.ts",
   "composition/custom/custom-ui.ts",
@@ -71,6 +78,22 @@ test("old generated behavior is rejected even without custom composition files",
     await writeFile(file, source);
     await rejects(syncPlugins(root), /Legacy ChatJS installation layout/u);
     expect(await readFile(file, "utf-8")).toBe(source);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("an application plugins directory without installation descriptors remains application source", async () => {
+  const root = await mkdtemp(
+    path.join(tmpdir(), "chatjs-application-plugins-")
+  );
+  try {
+    const directory = path.join(root, "plugins/local");
+    await mkdir(directory, { recursive: true });
+    const file = path.join(directory, "custom.ts");
+    await writeFile(file, "export const local = true;\n");
+    await syncPlugins(root);
+    expect(await readFile(file, "utf-8")).toBe("export const local = true;\n");
   } finally {
     await rm(root, { recursive: true, force: true });
   }

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { composeDocumentViews } from "@/lib/eve/compose-document-views";
+import { composeDocumentViews } from "@/chatjs/core/documents/compose-views";
 import { renderRoot, unmountRoot } from "./primitive-mount";
 import { takeSnapshot } from "@uiverify/vitest";
 import React, { act } from "react";
@@ -8,14 +8,14 @@ import { expect, test, vi } from "vitest";
 import { page } from "vitest/browser";
 
 import { DocumentBody } from "@/components/eve/eve-document-body";
-import { documents as documentUi } from "@/integrations/document-ui";
-import { installedToolNames } from "@/integrations/tool-catalog";
-import { EveDocumentRun } from "@/tools/chatjs/saved-code-execution/document";
-import type { DocumentAssistantRequest } from "@/lib/eve/document-contracts";
+import { documents as documentUi } from "@/integrations/documents/ui";
+import { installedToolNames } from "@/integrations/tools/catalog";
+import { EveDocumentRun } from "@/chatjs/tools/saved-code-execution/document";
+import type { DocumentAssistantRequest } from "@/chatjs/core/documents/contracts";
 
 import "./sandbox.css";
 
-vi.mock("@/tools/chatjs/text-documents/comparison", () => ({
+vi.mock("@/chatjs/tools/text-documents/comparison", () => ({
   EveDocumentComparison: () => null,
 }));
 

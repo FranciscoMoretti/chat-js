@@ -29,7 +29,7 @@ const clientIntegrations = (client: PluginDefinition["client"]): string[] => {
   return enabledNames([
     ["layout", client.layout],
     [
-      "chat-ui",
+      "chat/ui",
       [
         !client.layout,
         client.chat,
@@ -40,21 +40,21 @@ const clientIntegrations = (client: PluginDefinition["client"]): string[] => {
         client.settingsItems.length,
       ].some(Boolean),
     ],
-    ["uploads", client.uploads],
-    ["model-visibility", client.modelVisibility],
+    ["chat/uploads", client.uploads],
+    ["chat/model-visibility", client.modelVisibility],
   ]);
 };
 
 const pluginIntegrations = (value: PluginDefinition): string[] => [
   ...enabledNames([
-    ["chat", value.chat],
+    ["chat/server", value.chat],
     ["billing", value.billing],
-    ["signed-out", value.signedOut],
-    ["session-profiles", value.sessionProfile],
+    ["auth/signed-out", value.signedOut],
+    ["chat/session-profiles", value.sessionProfile],
     ["cleanup", value.cleanup],
-    ["authentication", value.authentication],
-    ["authentication-form", value.authenticationUi],
-    ["sign-out", value.authenticationUi],
+    ["auth/server", value.authentication],
+    ["auth/form", value.authenticationUi],
+    ["auth/sign-out", value.authenticationUi],
     ["navigation", value.navigation],
     ["database", value.databaseSchemas?.length],
     ["routers", value.server?.routers.length],
@@ -65,28 +65,28 @@ const pluginIntegrations = (value: PluginDefinition): string[] => [
 
 const toolIntegrations = (value: ToolDefinition): string[] =>
   enabledNames([
-    ["tools", true],
-    ["tool-catalog", true],
-    ["tool-ui", value.tools.some((item) => item.rendererExport !== undefined)],
+    ["tools/execution", true],
+    ["tools/catalog", true],
+    ["tools/ui", value.tools.some((item) => item.rendererExport !== undefined)],
     [
-      "tool-definitions",
+      "tools/definitions",
       value.tools.some((item) => item.definitionExport !== undefined),
     ],
-    ["composer-tools", value.tools.some((item) => item.composer !== undefined)],
+    ["tools/composer", value.tools.some((item) => item.composer !== undefined)],
     [
-      "tool-selection",
+      "tools/selection",
       value.tools.some(
         (item) =>
           item.composer !== undefined || item.definitionExport !== undefined
       ),
     ],
-    ["tool-configuration", value.config],
-    ["tool-availability", value.availabilityExport],
-    ["tool-providers", value.slot],
-    ["documents", value.documentKind],
-    ["document-ui", value.documentKind],
-    ["document-run", value.documentRunExport],
-    ["code-executor", value.codeExecutorExport],
+    ["tools/configuration", value.config],
+    ["tools/availability", value.availabilityExport],
+    ["tools/providers", value.slot],
+    ["documents/definitions", value.documentKind],
+    ["documents/ui", value.documentKind],
+    ["documents/run", value.documentRunExport],
+    ["tools/code-executor", value.codeExecutorExport],
   ]);
 
 /** Inventory descriptor wiring and known native path conventions; never execute source. */

@@ -3,7 +3,7 @@
 import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { AppRouter } from "@/trpc/routers/_app";
-import type { Project } from "@/plugins/projects/db/project-schema";
+import type { Project } from "@/chatjs/plugins/projects/db/project-schema";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import type { TRPCClientErrorLike } from "@trpc/client";
 import type { UseMutationResult } from "@tanstack/react-query";

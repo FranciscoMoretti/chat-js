@@ -80,7 +80,7 @@ const itemFiles = async (item: ReadonlyObservabilityItem) => [
   {
     content: JSON.stringify(item.meta.chatjs),
     path: `${item.name}.json`,
-    target: `~/plugins/${item.name}/chatjs.json`,
+    target: `~/chatjs/plugins/${item.name}/chatjs.json`,
     type: "registry:file" as const,
   },
 ];
@@ -125,7 +125,7 @@ for (let mask = 0; mask < 2 ** observabilityItems.length; mask += 1) {
     expect(instrumentation).not.toContain("sort-imports");
     for (const item of observabilityItems) {
       const output = item.name === "langfuse" ? instrumentation : layout;
-      expect(output.includes(`@/plugins/${item.name}/`)).toBe(
+      expect(output.includes(`@/chatjs/plugins/${item.name}/`)).toBe(
         selected.includes(item)
       );
       expect(plugins.includes(`"${item.name}"`)).toBe(selected.includes(item));
@@ -164,7 +164,7 @@ for (const item of observabilityItems) {
       observabilityItems.map(
         async (plugin: { readonly name: string }): Promise<boolean> =>
           await Bun.file(
-            path.join(root, `plugins/${plugin.name}/chatjs.json`)
+            path.join(root, `chatjs/plugins/${plugin.name}/chatjs.json`)
           ).exists()
       )
     );
@@ -238,7 +238,10 @@ for (const item of observabilityItems) {
         await writeFile(target, file.content);
       })
     );
-    const descriptor = path.join(root, `plugins/${item.name}/chatjs.json`);
+    const descriptor = path.join(
+      root,
+      `chatjs/plugins/${item.name}/chatjs.json`
+    );
     await rm(descriptor);
     expect(syncPlugins(root)).rejects.toThrow("missing its descriptor");
     await writeFile(

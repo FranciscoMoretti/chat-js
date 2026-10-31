@@ -30,7 +30,7 @@ afterEach(async () => {
 const fixture = async () => {
   const root = await mkdtemp(path.join(tmpdir(), "chatjs-status-"));
   roots.push(root);
-  await mkdir(path.join(root, "plugins/alpha"), { recursive: true });
+  await mkdir(path.join(root, "chatjs/plugins/alpha"), { recursive: true });
   return root;
 };
 const put = async (root: string, file: string, source: string) => {
@@ -52,13 +52,13 @@ const snapshot = async (root: string) => {
 test("status identifies edits, missing files, local files, framework ownership and removal dependencies without writes", async () => {
   const root = await fixture();
   const files = [
-    "plugins/alpha/source.ts",
-    "plugins/alpha/missing.ts",
+    "chatjs/plugins/alpha/source.ts",
+    "chatjs/plugins/alpha/missing.ts",
     "app/api/alpha/route.ts",
   ];
   await put(
     root,
-    "plugins/alpha/chatjs.json",
+    "chatjs/plugins/alpha/chatjs.json",
     JSON.stringify({ contractVersion: 1, kind: "plugin", id: "alpha", files })
   );
   await Promise.all(
@@ -66,13 +66,20 @@ test("status identifies edits, missing files, local files, framework ownership a
       await put(root, file, "export const value = 1;\n");
     })
   );
-  await recordInstalledSource(root, [...files, "plugins/alpha/chatjs.json"]);
+  await recordInstalledSource(root, [
+    ...files,
+    "chatjs/plugins/alpha/chatjs.json",
+  ]);
   await put(root, files[0], "export const value = 2;\n");
   await rm(path.join(root, files[1]));
-  await put(root, "plugins/alpha/local.ts", "export const local = true;\n");
   await put(
     root,
-    "plugins/beta/chatjs.json",
+    "chatjs/plugins/alpha/local.ts",
+    "export const local = true;\n"
+  );
+  await put(
+    root,
+    "chatjs/plugins/beta/chatjs.json",
     JSON.stringify({
       contractVersion: 1,
       kind: "plugin",
@@ -84,12 +91,12 @@ test("status identifies edits, missing files, local files, framework ownership a
   await put(
     root,
     "integrations/local.ts",
-    'export { value } from "@/plugins/alpha/source";\n'
+    'export { value } from "@/chatjs/plugins/alpha/source";\n'
   );
   await put(
     root,
     "chatjs/generated/installed.ts",
-    'export { value } from "@/plugins/alpha/source";\n'
+    'export { value } from "@/chatjs/plugins/alpha/source";\n'
   );
   const before = await snapshot(root);
   const report = await installationStatus(root);
@@ -105,13 +112,15 @@ test("status identifies edits, missing files, local files, framework ownership a
     outsidePluginDirectory: true,
   });
   expect(
-    alpha?.files.find((file) => file.path === "plugins/alpha/local.ts")
+    alpha?.files.find((file) => file.path === "chatjs/plugins/alpha/local.ts")
   ).toMatchObject({ state: "untracked" });
   expect(alpha?.requiredBy).toEqual(["beta"]);
   expect(alpha?.removalReferences).toEqual([
     { file: "integrations/local.ts", target: files[0] },
   ]);
-  expect(report.generated).toEqual(["chatjs/generated/installed.ts"]);
+  expect(report.files.filter((file) => file.kind === "generated")).toEqual([
+    { path: "chatjs/generated/installed.ts", kind: "generated" },
+  ]);
   expect(formatInstallationStatus(report, false)).toContain(
     "plugin-owned framework file"
   );
@@ -140,25 +149,25 @@ test("native installs without receipts stay untracked, and status reports missin
   const root = await fixture();
   await put(
     root,
-    "plugins/alpha/chatjs.json",
+    "chatjs/plugins/alpha/chatjs.json",
     JSON.stringify({
       contractVersion: 1,
       kind: "plugin",
       id: "alpha",
-      files: ["plugins/alpha/schema.ts"],
-      databaseSchemas: ["plugins/alpha/schema.ts"],
+      files: ["chatjs/plugins/alpha/schema.ts"],
+      databaseSchemas: ["chatjs/plugins/alpha/schema.ts"],
     })
   );
   const before = await snapshot(root);
   const report = await installationStatus(root);
   expect(
     report.plugins[0]?.files.find(
-      (file) => file.path === "plugins/alpha/chatjs.json"
+      (file) => file.path === "chatjs/plugins/alpha/chatjs.json"
     )
   ).toMatchObject({ state: "untracked" });
   expect(
     report.plugins[0]?.files.find(
-      (file) => file.path === "plugins/alpha/schema.ts"
+      (file) => file.path === "chatjs/plugins/alpha/schema.ts"
     )
   ).toMatchObject({ state: "missing" });
   expect(report.plugins[0]?.removalIssue).toBeDefined();
@@ -169,27 +178,27 @@ test("status refuses symlinked plugin source instead of reading outside the proj
   const root = await fixture();
   await put(
     root,
-    "plugins/alpha/chatjs.json",
+    "chatjs/plugins/alpha/chatjs.json",
     JSON.stringify({
       contractVersion: 1,
       kind: "plugin",
       id: "alpha",
-      files: ["plugins/alpha/source.ts"],
+      files: ["chatjs/plugins/alpha/source.ts"],
     })
   );
   await symlink(
-    path.join(root, "plugins/alpha/chatjs.json"),
-    path.join(root, "plugins/alpha/source.ts")
+    path.join(root, "chatjs/plugins/alpha/chatjs.json"),
+    path.join(root, "chatjs/plugins/alpha/source.ts")
   );
   await rejects(installationStatus(root), /symlinked ChatJS target/u);
 });
 
 test("project formatter classifies formatting without changing receipts or removal protection", async () => {
   const root = await fixture();
-  const file = "plugins/alpha/settings.json";
+  const file = "chatjs/plugins/alpha/settings.json";
   await put(
     root,
-    "plugins/alpha/chatjs.json",
+    "chatjs/plugins/alpha/chatjs.json",
     JSON.stringify({
       contractVersion: 1,
       kind: "plugin",
@@ -198,7 +207,7 @@ test("project formatter classifies formatting without changing receipts or remov
     })
   );
   await put(root, file, '{"label":"hello world"}');
-  await recordInstalledSource(root, [file, "plugins/alpha/chatjs.json"]);
+  await recordInstalledSource(root, [file, "chatjs/plugins/alpha/chatjs.json"]);
   await put(root, file, '{ "label": "hello world" }\n');
   await put(
     root,
@@ -249,10 +258,10 @@ test("project formatter classifies formatting without changing receipts or remov
 
 test("old or mismatched baselines and invalid UTF-8 cannot be blessed by formatting", async () => {
   const root = await fixture();
-  const file = "plugins/alpha/data.json";
+  const file = "chatjs/plugins/alpha/data.json";
   await put(
     root,
-    "plugins/alpha/chatjs.json",
+    "chatjs/plugins/alpha/chatjs.json",
     JSON.stringify({
       contractVersion: 1,
       kind: "plugin",
@@ -288,4 +297,76 @@ test("old or mismatched baselines and invalid UTF-8 cannot be blessed by formatt
     state: "modified",
     formatting: "unsupported",
   });
+});
+
+test("file kinds separate application policy, installed source, generated wiring and records without adopting edits", async () => {
+  const root = await fixture();
+  await put(
+    root,
+    "chatjs/plugins/alpha/chatjs.json",
+    JSON.stringify({
+      contractVersion: 1,
+      kind: "plugin",
+      id: "alpha",
+      files: ["app/api/alpha/route.ts"],
+    })
+  );
+  const sources = [
+    "chatjs/core/ui/slots.tsx",
+    "chatjs/providers/gateway.ts",
+    "chatjs/tools/weather/tool.ts",
+    "app/api/alpha/route.ts",
+    "agent/tools/weather.ts",
+  ];
+  const application = [
+    "integrations/chat/server.ts",
+    "chat.config.ts",
+    ".env.example",
+  ];
+  await Promise.all(
+    [...sources, ...application, "chatjs/generated/tools.ts"].map(
+      async (file) => {
+        await put(root, file, "export const value = 1;\n");
+      }
+    )
+  );
+  await recordInstalledSource(root, [...sources, ...application]);
+  await put(root, sources[0], "export const value = 2;\n");
+  await rm(path.join(root, sources[1]));
+  await put(root, "chatjs/providers/local.ts", "export const local = true;\n");
+  const before = await snapshot(root);
+  const report = await installationStatus(root);
+  expect(report.files.find((file) => file.path === sources[0])).toMatchObject({
+    kind: "source",
+    state: "modified",
+  });
+  expect(report.files.find((file) => file.path === sources[1])).toMatchObject({
+    kind: "source",
+    state: "missing",
+  });
+  expect(
+    report.files.find((file) => file.path === "chatjs/providers/local.ts")
+  ).toMatchObject({ kind: "source", state: "untracked" });
+  for (const file of sources.slice(2)) {
+    expect(report.files.find((entry) => entry.path === file)).toMatchObject({
+      kind: "source",
+      state: "unchanged",
+    });
+  }
+  for (const file of application) {
+    expect(report.files.find((entry) => entry.path === file)).toEqual({
+      path: file,
+      kind: "application",
+    });
+  }
+  expect(
+    report.files.find((file) => file.path === "chatjs/generated/tools.ts")
+  ).toEqual({ path: "chatjs/generated/tools.ts", kind: "generated" });
+  expect(report.files.find((file) => file.path === sourceBaselineFile)).toEqual(
+    { path: sourceBaselineFile, kind: "record" }
+  );
+  expect(formatInstallationStatus(report, true)).toContain(
+    "chatjs/providers/gateway.ts"
+  );
+  expect(await snapshot(root)).toEqual(before);
 });

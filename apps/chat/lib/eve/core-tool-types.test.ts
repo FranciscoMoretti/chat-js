@@ -1,10 +1,10 @@
 import { beforeEach, expect, expectTypeOf, test, vi } from "vitest";
 import type { NativeToolUI } from "./tool-types";
-import { createTextDocument } from "@/tools/chatjs/text-documents/tool";
-import type { editTextDocument } from "@/tools/chatjs/text-documents/tool";
-import type { readDocument } from "@/tools/chatjs/read-document/tool";
+import { createTextDocument } from "@/chatjs/tools/text-documents/tool";
+import type { editTextDocument } from "@/chatjs/tools/text-documents/tool";
+import type { readDocument } from "@/chatjs/tools/read-document/tool";
 import type research from "@/agent/tools/deepResearch";
-import type { runCodeDocument } from "@/tools/chatjs/saved-code-execution/tool";
+import type { runCodeDocument } from "@/chatjs/tools/saved-code-execution/tool";
 import { testToolContext } from "@/tests/helpers/eve-tool-context";
 
 const mocks = vi.hoisted(() => ({

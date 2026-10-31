@@ -6,12 +6,12 @@ import {
 import {
   installedDocumentKinds,
   installedToolNames,
-} from "@/integrations/tool-catalog";
+} from "@/integrations/tools/catalog";
 import type { ToolContext } from "eve/tools";
 import { getEveDocumentRevision } from "@/lib/db/eve-documents";
 import { resolveEveConversationScope } from "@/lib/eve/conversation-scope";
 import { eveTurnAccount } from "@/lib/eve/turn-tools";
-import { codeExecutor } from "@/integrations/code-executor";
+import { codeExecutor } from "@/integrations/tools/code-executor";
 
 type ReadonlyCodeExecutionContext = Readonly<
   Pick<ToolContext, "callId" | "session"> & {

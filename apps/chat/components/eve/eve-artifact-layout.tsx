@@ -1,7 +1,7 @@
 "use client";
 
-import { documentDefinitions } from "@/integrations/documents";
-import { documents } from "@/integrations/document-ui";
+import { documentDefinitions } from "@/integrations/documents/definitions";
+import { documents } from "@/integrations/documents/ui";
 
 import { hasText } from "@/components/text-value";
 
@@ -20,14 +20,14 @@ import {
 import { DocumentSkeleton } from "@/components/document-skeleton";
 import { Button } from "@/components/ui/button";
 import { ArtifactProvider, useArtifact } from "@/hooks/use-artifact";
-import type { DocumentAssistantRequest } from "@/lib/eve/document-contracts";
-import { eveDocumentResult } from "@/lib/eve/document-contracts";
+import type { DocumentAssistantRequest } from "@/chatjs/core/documents/contracts";
+import { eveDocumentResult } from "@/chatjs/core/documents/contracts";
 import type {
   ReadonlyEveMessage,
   ReadonlyEveMessagePart,
 } from "@/lib/eve/readonly-message-types";
 import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
-import { DocumentRun } from "@/integrations/document-run";
+import { DocumentRun } from "@/integrations/documents/run";
 import { useTRPC } from "@/trpc/react";
 
 import { EveDocumentActions } from "./eve-document-actions";

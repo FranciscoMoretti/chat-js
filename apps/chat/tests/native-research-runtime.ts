@@ -68,9 +68,9 @@ const main = async (): Promise<void> => {
   await Promise.all(
     `agent/tools/deepResearch.ts agent/hooks/billing.ts lib/eve/usage.ts lib/eve/session-identity.ts
 agent/subagents/researcher/tools/webSearch.ts
- tools/chatjs/deep-research/schemas.ts tools/chatjs/deep-research/search-updates.ts
- tools/platform/research-updates-schema.ts lib/eve/tool-result.ts lib/eve/document-contracts.ts
- lib/file-url.ts lib/eve/tool-model-output.ts lib/eve/copy-seed.ts tools/chatjs/deep-research/prompts.ts`
+ chatjs/tools/deep-research/schemas.ts chatjs/tools/deep-research/search-updates.ts
+ tools/platform/research-updates-schema.ts lib/eve/tool-result.ts chatjs/core/documents/contracts.ts
+ lib/file-url.ts lib/eve/tool-model-output.ts lib/eve/copy-seed.ts chatjs/tools/deep-research/prompts.ts`
       .split(/\s+/u)
       .map(async (name) => {
         await mkdir(path.dirname(path.join(fixture, name)), {
@@ -181,7 +181,7 @@ export async function registerEveSubagent(owner, parent, session, turn) {
 export const getEveConnectionOptions = () => ({ host: readFileSync(${JSON.stringify(path.join(fixture, "host"))}, "utf8") });`
   );
   await write(
-    "tools/chatjs/deep-research/steps.ts",
+    "chatjs/tools/deep-research/steps.ts",
     `
 export async function prepareResearch() {
   "use step";
@@ -244,7 +244,7 @@ export default defineAgent({ defaultTools: false, modelContextWindowTokens: 1280
 }`)
   );
   await write(
-    "integrations/tool-providers.ts",
+    "integrations/tools/providers.ts",
     `
 import { defineTool } from "eve/tools";
 import { z } from "zod";

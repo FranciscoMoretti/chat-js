@@ -1,0 +1,33 @@
+{
+  "id": "guest-chat",
+  "kind": "plugin",
+  "files": [
+    "chatjs/plugins/guest-chat/cleanup.ts",
+    "chatjs/plugins/guest-chat/guest-auth.ts",
+    "chatjs/plugins/guest-chat/guest-body.ts",
+    "chatjs/plugins/guest-chat/guest-cleanup-auth.ts",
+    "chatjs/plugins/guest-chat/guest-cleanup.ts",
+    "chatjs/plugins/guest-chat/guest-credential.ts",
+    "chatjs/plugins/guest-chat/guest-ip.ts",
+    "chatjs/plugins/guest-chat/guest-model.ts",
+    "chatjs/plugins/guest-chat/guest-policy.ts",
+    "chatjs/plugins/guest-chat/guest-queries.ts",
+    "chatjs/plugins/guest-chat/guest-scheduler.ts",
+    "chatjs/plugins/guest-chat/guest-schema.ts",
+    "chatjs/plugins/guest-chat/routes/create-session.ts",
+    "chatjs/plugins/guest-chat/server-plugin.ts",
+    "chatjs/plugins/guest-chat/session-profile.ts",
+    "chatjs/plugins/guest-chat/signed-out.tsx",
+    "app/api/eve-guest/route.ts"
+  ],
+  "databaseSchemas": ["chatjs/plugins/guest-chat/guest-schema.ts"],
+  "signedOut": { "export": "GuestChatScreen" },
+  "sessionProfile": {
+    "export": "guestSessionProfile",
+    "authenticator": "chatjs-disposable-guest"
+  },
+  "cleanup": { "export": "guestCleanup", "id": "guest-chat" },
+  "server": { "export": "guestChat", "routers": [], "instrumentation": true },
+  "contractVersion": 2,
+  "uiBase": "base"
+}

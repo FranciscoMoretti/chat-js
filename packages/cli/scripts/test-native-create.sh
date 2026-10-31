@@ -80,28 +80,28 @@ assert.equal(config.iconLibrary, preset.values.iconLibrary);
 assert.equal(config.rtl, process.env.CHATJS_NATIVE_RTL === "1");
 assert.equal(config.registries["@chatjs"], process.env.CHATJS_NATIVE_BASE === "radix" ? process.env.CHATJS_REGISTRY_URL.replace("/{name}.json", "/radix/{name}.json") : process.env.CHATJS_REGISTRY_URL);
 if (process.env.CHATJS_NATIVE_SCENARIO === "uploads") {
-const uploads = await Bun.file("plugins/attachment-uploads/chatjs.json").json();
+const uploads = await Bun.file("chatjs/plugins/attachment-uploads/chatjs.json").json();
 assert.equal(uploads.contractVersion, 2);
 assert.equal(uploads.uiBase, process.env.CHATJS_NATIVE_BASE);
 assert.equal(uploads.requiresPersistentSandbox, true);
-assert.match(await Bun.file("lib/sandbox/provider.ts").text(), /supportsPersistentSandbox = true/);
+assert.match(await Bun.file("chatjs/providers/sandbox/provider.ts").text(), /supportsPersistentSandbox = true/);
 }
 if (process.env.CHATJS_NATIVE_SCENARIO !== "minimal") {
 for (const kind of ["text", "code", "sheet"]) {
-  const descriptor = await Bun.file(`tools/chatjs/${kind}-documents/chatjs.json`).json();
+  const descriptor = await Bun.file(`chatjs/tools/${kind}-documents/chatjs.json`).json();
   assert.equal(descriptor.contractVersion, 2);
   assert.equal(descriptor.uiBase, process.env.CHATJS_NATIVE_BASE);
 }
 }
 if (process.env.CHATJS_NATIVE_SCENARIO === "uploads") {
-assert.match(await Bun.file("lib/storage-options.ts").text(), /chatjs-native-smoke/);
-assert.match(await Bun.file("lib/ai/gateway.ts").text(), /openrouter/);
+assert.match(await Bun.file("chatjs/providers/storage-options.ts").text(), /chatjs-native-smoke/);
+assert.match(await Bun.file("chatjs/providers/gateway.ts").text(), /openrouter/);
 } else {
-assert.equal(await Bun.file("plugins/attachment-uploads/chatjs.json").exists(), false);
-assert.equal(await Bun.file("tools/chatjs/text-documents/chatjs.json").exists(), process.env.CHATJS_NATIVE_SCENARIO !== "minimal");
-assert.match(await Bun.file("lib/ai/gateway.ts").text(), /vercel|gateway/);
+assert.equal(await Bun.file("chatjs/plugins/attachment-uploads/chatjs.json").exists(), false);
+assert.equal(await Bun.file("chatjs/tools/text-documents/chatjs.json").exists(), process.env.CHATJS_NATIVE_SCENARIO !== "minimal");
+assert.match(await Bun.file("chatjs/providers/gateway.ts").text(), /vercel|gateway/);
 }
-const paths = ["components.json", "app/globals.css", "app/layout.tsx", "chat.config.ts", "lib/storage-options.ts", "lib/utils.ts", "lib/id.ts", "lib/file-language.ts", "components/ui/button.tsx"];
+const paths = ["components.json", "app/globals.css", "app/layout.tsx", "chat.config.ts", "chatjs/providers/storage-options.ts", "lib/utils.ts", "lib/id.ts", "lib/file-language.ts", "components/ui/button.tsx"];
 const before = Object.fromEntries(await Promise.all(paths.map(async path => [path, await Bun.file(path).text()])));
 await Bun.write(`${root}/before.json`, JSON.stringify(before));
 '

@@ -13,7 +13,7 @@ Choose Electron when creating your app, or add Desktop to an existing app:
 bunx @chat-js/cli@latest add desktop
 ```
 
-The CLI installs `plugins/desktop/`, its `/device-login` route, and authentication registrations. It also creates an `electron/` companion directory when one does not already exist. Adding the plugin again preserves an existing companion. Desktop adds no database tables or migrations.
+The CLI installs `chatjs/plugins/desktop/`, its `/device-login` route, and authentication registrations. It also creates an `electron/` companion directory when one does not already exist. Adding the plugin again preserves an existing companion. Desktop adds no database tables or migrations.
 
 Start your web app, then launch the companion in another terminal:
 
@@ -37,7 +37,7 @@ Native sign-out runs through the preload bridge. A failed native sign-out leaves
 
 Set `appName`, `appPrefix`, and `appUrl` in `chat.config.ts`. `appPrefix` is your desktop protocol scheme, so use the same configuration for the deployed web app and desktop build.
 
-The companion's prebuild reads those values and `plugins/desktop/protocol.ts`, then writes `electron/branding.json`. The native runtime reads that generated file. Rebuild the companion after changing the app identity or protocol settings.
+The companion's prebuild reads those values and `chatjs/plugins/desktop/protocol.ts`, then writes `electron/branding.json`. The native runtime reads that generated file. Rebuild the companion after changing the app identity or protocol settings.
 
 Desktop is enabled by installation. There is no `desktopApp.enabled` flag.
 
@@ -45,14 +45,14 @@ Desktop is enabled by installation. There is no `desktopApp.enabled` flag.
 
 | Location | Responsibility |
 | --- | --- |
-| `plugins/desktop/auth-server.ts` | Better Auth integration, exact origin validation, auth route matching |
-| `plugins/desktop/desktop-auth-client.ts` | Browser transfer client |
-| `plugins/desktop/auth-form.tsx`, `auth-ui.tsx` | Native login and browser account handoff |
-| `plugins/desktop/auth-handler.tsx` | Renderer session synchronization and overlay |
-| `plugins/desktop/device-login-page.tsx` | Transfer completion and error states |
-| `plugins/desktop/sign-out.ts` | Native sign-out and session refresh |
-| `plugins/desktop/navigation.ts` | Modified-link handling in native windows |
-| `plugins/desktop/protocol.ts`, `bridge.ts` | Shared protocol settings, renderer bridge types, and renderer detection |
+| `chatjs/plugins/desktop/auth-server.ts` | Better Auth integration, exact origin validation, auth route matching |
+| `chatjs/plugins/desktop/desktop-auth-client.ts` | Browser transfer client |
+| `chatjs/plugins/desktop/auth-form.tsx`, `auth-ui.tsx` | Native login and browser account handoff |
+| `chatjs/plugins/desktop/auth-handler.tsx` | Renderer session synchronization and overlay |
+| `chatjs/plugins/desktop/device-login-page.tsx` | Transfer completion and error states |
+| `chatjs/plugins/desktop/sign-out.ts` | Native sign-out and session refresh |
+| `chatjs/plugins/desktop/navigation.ts` | Modified-link handling in native windows |
+| `chatjs/plugins/desktop/protocol.ts`, `bridge.ts` | Shared protocol settings, renderer bridge types, and renderer detection |
 | `app/(auth)/device-login/page.tsx` | Thin route adapter |
 | `electron/` | Companion source and build tooling |
 

@@ -5,9 +5,9 @@ import React, { useEffect, useRef, useState } from "react";
 import {
   DEFAULT_PROJECT_COLOR,
   DEFAULT_PROJECT_ICON,
-} from "@/plugins/projects/project-icons";
+} from "@/chatjs/plugins/projects/project-icons";
 
-import { ProjectIconPicker } from "@/plugins/projects/ui/project-icon-picker";
+import { ProjectIconPicker } from "@/chatjs/plugins/projects/ui/project-icon-picker";
 
 import {
   Dialog,
@@ -21,7 +21,7 @@ import {
 import type {
   ProjectColorName,
   ProjectIconName,
-} from "@/plugins/projects/project-icons";
+} from "@/chatjs/plugins/projects/project-icons";
 
 import { Button } from "@/components/ui/button";
 

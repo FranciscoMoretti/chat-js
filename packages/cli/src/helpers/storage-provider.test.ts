@@ -50,7 +50,9 @@ describe("storage registry integration", () => {
   it("accepts external storage and configures it without touching source or dependencies", async () => {
     const cwd = await mkdtemp(pathModule.join(tmpdir(), "chatjs-storage-"));
     try {
-      await mkdir(pathModule.join(cwd, "lib"));
+      await mkdir(pathModule.join(cwd, "chatjs/providers"), {
+        recursive: true,
+      });
       const definition = storageDefinitionSchema.parse({
         contractVersion: 1,
         envRequirements: [{ options: [["ACME_TOKEN"]] }],
@@ -63,7 +65,7 @@ describe("storage registry integration", () => {
           {
             content: "throw new Error('must not execute during configuration')",
             path: "provider.ts",
-            target: "~/lib/storage-provider.ts",
+            target: "~/chatjs/providers/storage.ts",
             type: "registry:file",
           },
         ],
@@ -75,19 +77,25 @@ describe("storage registry integration", () => {
       const selection = await resolveStorage(source, cwd);
       selection.options = { bucket: "uploads" };
       await writeFile(
-        pathModule.join(cwd, "lib/storage-provider.ts"),
+        pathModule.join(cwd, "chatjs/providers/storage.ts"),
         "// installed custom source"
       );
       await writeFile(pathModule.join(cwd, "package.json"), "{}");
       await configureStorageProvider(cwd, selection);
       expect(
-        await readFile(pathModule.join(cwd, "lib/storage-provider.ts"), "utf-8")
+        await readFile(
+          pathModule.join(cwd, "chatjs/providers/storage.ts"),
+          "utf-8"
+        )
       ).toBe("// installed custom source");
       expect(
         await readFile(pathModule.join(cwd, "package.json"), "utf-8")
       ).toBe("{}");
       expect(
-        await readFile(pathModule.join(cwd, "lib/storage-options.ts"), "utf-8")
+        await readFile(
+          pathModule.join(cwd, "chatjs/providers/storage-options.ts"),
+          "utf-8"
+        )
       ).toContain('"bucket": "uploads"');
       expect(
         await readFile(pathModule.join(cwd, ".env.example"), "utf-8")
@@ -102,7 +110,7 @@ describe("storage registry integration", () => {
       expect(resolveStorage(source, cwd)).rejects.toThrow();
       await writeFile(source, JSON.stringify({ ...item, files: [] }));
       expect(resolveStorage(source, cwd)).rejects.toThrow(
-        "storage-provider.ts"
+        "chatjs/providers/storage.ts"
       );
     } finally {
       await rm(cwd, { force: true, recursive: true });

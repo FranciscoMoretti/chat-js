@@ -12,7 +12,7 @@ vi.mock("eve/tools", () => ({
   defineDynamic: <Value>(value: Value): Value => value,
   defineTool: <Value>(value: Value): Value => value,
 }));
-vi.mock("../../plugins/mcp/runtime/mcp-tools", () => ({
+vi.mock("../../chatjs/plugins/mcp/runtime/mcp-tools", () => ({
   discoverEveMcpTools: mocks.discover,
   executeEveMcpTool: mocks.execute,
 }));

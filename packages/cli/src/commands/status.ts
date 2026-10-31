@@ -9,7 +9,7 @@ import {
 
 export const status = new Command("status")
   .description(
-    "inspect plugin ownership, local edits, and removal dependencies without writing"
+    "inspect installation file kinds, local edits, and plugin removal dependencies without writing"
   )
   .option("-c, --cwd <cwd>", "project directory", process.cwd())
   .option("--files", "list every plugin-owned file", false)

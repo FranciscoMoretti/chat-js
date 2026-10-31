@@ -1,7 +1,7 @@
-import { Plugins } from "@/lib/ui-slots";
-import { attachmentUploadsClient } from "@/plugins/attachment-uploads/client-plugin";
-import { mcpClient } from "@/plugins/mcp/client-plugin";
-import { modelPreferencesClient } from "@/plugins/model-preferences/client-plugin";
+import { Plugins } from "@/chatjs/core/ui/slots";
+import { attachmentUploadsClient } from "@/chatjs/plugins/attachment-uploads/client-plugin";
+import { mcpClient } from "@/chatjs/plugins/mcp/client-plugin";
+import { modelPreferencesClient } from "@/chatjs/plugins/model-preferences/client-plugin";
 import { renderRoot, unmountRoot } from "./primitive-mount";
 import { disableAutoSnapshot, takeSnapshot } from "@uiverify/vitest";
 import React, { act, useState } from "react";
@@ -19,9 +19,9 @@ import { SettingsNav } from "@/components/settings/settings-nav";
 import { composerControls } from "@/composer-controls";
 import type { UiToolName } from "@/lib/ai/types";
 import type { DraftAttachment } from "@/lib/eve/draft";
-import type { AttachmentUploadInput } from "@/lib/installation-contracts";
+import type { AttachmentUploadInput } from "@/chatjs/core/installation/contracts";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-import type { composerTools } from "@/integrations/composer-tools";
+import type { composerTools } from "@/integrations/tools/composer";
 
 import "./sandbox.css";
 
@@ -46,9 +46,9 @@ const state = vi.hoisted(() => ({
   uploadsInstalled: true,
 }));
 
-vi.mock("@/integrations/uploads", async () => {
+vi.mock("@/integrations/chat/uploads", async () => {
   const { attachmentUploads } =
-    await import("@/plugins/attachment-uploads/integration");
+    await import("@/chatjs/plugins/attachment-uploads/integration");
   const useFixtureUploads = (files: AttachmentUploadInput) => {
     const behavior = attachmentUploads.useUploads(files);
     if (state.uploadsInstalled) {
@@ -63,7 +63,7 @@ vi.mock("@/integrations/uploads", async () => {
   };
 });
 
-vi.mock("@/plugins/attachment-uploads/upload", () => ({
+vi.mock("@/chatjs/plugins/attachment-uploads/upload", () => ({
   uploadAttachment: async (file: ReadonlyNativeSurface<File>) => {
     await state.upload(file);
     return {
@@ -113,7 +113,7 @@ vi.mock("@/integrations/plugin-catalog", () => ({
   },
 }));
 
-vi.mock("@/integrations/tool-catalog", () => ({
+vi.mock("@/integrations/tools/catalog", () => ({
   installedToolNames: {
     has: (name: string) =>
       state.featuresEnabled &&
@@ -171,7 +171,7 @@ vi.mock("@/components/internal-link", () => ({
   ),
 }));
 
-vi.mock("@/integrations/composer-tools", async (importOriginal) => {
+vi.mock("@/integrations/tools/composer", async (importOriginal) => {
   const actual = await importOriginal<{
     composerTools: typeof composerTools;
   }>();

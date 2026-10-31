@@ -1,5 +1,5 @@
 "use client";
-import type { DocumentBodyProps, DocumentUi } from "@/lib/eve/document-ui";
+import type { DocumentBodyProps, DocumentUi } from "@/chatjs/core/documents/ui";
 import { parse, unparse } from "papaparse";
 import { documentDefinition } from "./definition";
 import { documentAssistantActions } from "./assistant-actions";

@@ -5,8 +5,8 @@ import { generateImageInput, generateImageResult } from "./schemas";
 import Image from "next/image";
 import { ImageOffIcon } from "lucide-react";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
-import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
+import type { ToolRendererProps } from "@/chatjs/core/tools/define-renderer";
+import { defineToolRenderer } from "@/chatjs/core/tools/define-renderer";
 import { useImageLoadError } from "@/hooks/use-image-load-error";
 
 type GenerateImageTool = ToolRendererProps<

@@ -9,7 +9,7 @@ test("separates declared composition, native entry points and ordinary framework
       kind: "plugin",
       chat: { export: "projects" },
       server: { export: "projects", routers: ["projects"] },
-      databaseSchemas: ["plugins/projects/schema.ts"],
+      databaseSchemas: ["chatjs/plugins/projects/schema.ts"],
     },
     [
       "app/(chat)/project/[id]/page.tsx",
@@ -17,11 +17,11 @@ test("separates declared composition, native entry points and ordinary framework
       "agent/hooks/projects.ts",
       "agent/subagents/researcher/tools/search.ts",
       "agent/hooks/projects.test.ts",
-      "plugins/projects/client.tsx",
+      "chatjs/plugins/projects/client.tsx",
     ]
   );
   expect(result.integrations).toEqual([
-    "integrations/chat.ts",
+    "integrations/chat/server.ts",
     "integrations/database.ts",
     "integrations/routers.ts",
   ]);
@@ -46,8 +46,10 @@ test("describes custom document and tool definitions without evaluating them", (
     },
     []
   );
-  expect(result.integrations).toContain("integrations/documents.ts");
-  expect(result.integrations).toContain("integrations/tool-definitions.ts");
+  expect(result.integrations).toContain(
+    "integrations/documents/definitions.ts"
+  );
+  expect(result.integrations).toContain("integrations/tools/definitions.ts");
 });
 
 test("reports native root configuration, markdown instructions and nested EVE tools", () => {

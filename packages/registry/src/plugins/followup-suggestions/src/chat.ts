@@ -1,5 +1,5 @@
 import { inArray } from "drizzle-orm";
-import type { ChatServerIntegration } from "@/lib/chat-plugin-contracts";
+import type { ChatServerIntegration } from "@/chatjs/core/chat/contracts";
 import { eveFollowup } from "./followup-schema";
 
 export const followupChat = {

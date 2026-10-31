@@ -4,7 +4,7 @@ import type {
   AttachmentUploadBehavior,
   AttachmentUploadInput,
   AttachmentUploadIntegration,
-} from "@/lib/installation-contracts";
+} from "@/chatjs/core/installation/contracts";
 
 import { useEffect, useRef, useState } from "react";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";

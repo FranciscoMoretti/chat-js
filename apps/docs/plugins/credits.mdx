@@ -45,7 +45,7 @@ Core retains `EveUsage`, its `chargedCents` settlement marker, receipt deduplica
 
 ## Customization
 
-- Edit `plugins/credits/credits-schema.ts` to change the default for new balance rows, then generate and apply a migration. Existing balances stay unchanged.
+- Edit `chatjs/plugins/credits/credits-schema.ts` to change the default for new balance rows, then generate and apply a migration. Existing balances stay unchanged.
 - Edit `credits-queries.ts` for balance reads.
 - Edit `billing.ts` for admission and debit behavior. Use the supplied database transaction; throwing rolls back the receipt and debit together. Keep external payment calls out of this operation.
 - Edit `balance.tsx` and `use-credits.ts` for the sidebar display and balance refresh.

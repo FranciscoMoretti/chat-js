@@ -1,6 +1,6 @@
 "use client";
 
-import { useAttachmentPicker } from "@/hooks/use-attachment-picker";
+import { useAttachmentPicker } from "@/chatjs/core/uploads/use-attachment-picker";
 
 import type {
   ComponentProps,
@@ -19,7 +19,7 @@ import { expandSelectedModelValue } from "@/lib/ai/types";
 import type { DraftAttachment } from "@/lib/eve/draft";
 import { useChatModels } from "@/providers/chat-models-provider";
 import { useDefaultModel } from "@/providers/default-model-provider";
-import { installedToolNames } from "@/integrations/tool-catalog";
+import { installedToolNames } from "@/integrations/tools/catalog";
 
 import { EveModelPicker } from "./eve-model-picker";
 import type { useEveAttachments } from "./use-eve-attachments";

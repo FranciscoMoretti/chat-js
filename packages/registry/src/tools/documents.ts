@@ -8,7 +8,7 @@ const documentFiles = (
 ): { path: string; target: string; type: "registry:file" }[] =>
   files.map((file) => ({
     path: `src/tools/${id}/${file}`,
-    target: `~/tools/chatjs/${id}/${file}`,
+    target: `~/chatjs/tools/${id}/${file}`,
     type: "registry:file" as const,
   }));
 
@@ -176,7 +176,7 @@ const codeExecutionUiItem: RegistryItem = {
     "interactive-chart-impl.tsx",
   ].map((file) => ({
     path: `src/ui/code-execution/${file}`,
-    target: `~/tools/chatjs/_shared/code-execution/${file}`,
+    target: `~/chatjs/tools/_shared/code-execution/${file}`,
     type: "registry:file",
   })),
   name: "code-execution-ui",

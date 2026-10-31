@@ -1,9 +1,9 @@
-import { documentDefinitions } from "@/integrations/documents";
+import { documentDefinitions } from "@/integrations/documents/definitions";
 import {
   eveDocumentCreateInput,
   eveDocumentEditInput,
   eveDocumentReadInput,
-} from "./document-contracts";
+} from "@/chatjs/core/documents/contracts";
 import {
   getEveDocumentRevision,
   saveEveDocumentRevision,

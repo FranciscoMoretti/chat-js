@@ -7,8 +7,8 @@ import { expect, test } from "vitest";
 import { page } from "vitest/browser";
 
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-import { ReasonSearchResearchProgress } from "@/tools/chatjs/deep-research/progress";
-import { ResearchTasks } from "@/tools/chatjs/deep-research/tasks";
+import { ReasonSearchResearchProgress } from "@/chatjs/tools/deep-research/progress";
+import { ResearchTasks } from "@/chatjs/tools/deep-research/tasks";
 import type { ResearchUpdate } from "@/tools/platform/research-updates-schema";
 
 const updates: ResearchUpdate[] = [

@@ -2,7 +2,7 @@ import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
 
 import { customType } from "drizzle-orm/pg-core";
 
-import { readMcpEncryptionKey } from "@/plugins/mcp/mcp-env";
+import { readMcpEncryptionKey } from "@/chatjs/plugins/mcp/mcp-env";
 
 const isJsonObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);

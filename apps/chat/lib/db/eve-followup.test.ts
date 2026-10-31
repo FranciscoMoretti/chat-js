@@ -15,7 +15,7 @@ vi.mock("@/lib/eve/persistent-sandbox-store", () => ({
 }));
 const { completeEveConversationDeletion } = await import("./eve-deletion");
 const { claimEveFollowup, finishEveFollowup, getEveFollowup } =
-  await import("@/plugins/followup-suggestions/followup-queries");
+  await import("@/chatjs/plugins/followup-suggestions/followup-queries");
 const chatId = "00000000-0000-4000-8000-000000000001";
 const branchId = "00000000-0000-4000-8000-000000000002";
 beforeAll(async () => {

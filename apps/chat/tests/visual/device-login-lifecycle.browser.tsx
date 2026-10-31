@@ -2,7 +2,7 @@ import React from "react";
 import { createDomHarness } from "@/components/test-dom-harness";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { DeviceLoginPage } from "@/plugins/desktop/device-login-page";
+import { DeviceLoginPage } from "@/chatjs/plugins/desktop/device-login-page";
 
 const mocks = vi.hoisted(() => ({
   transferUser:
@@ -13,7 +13,7 @@ const mocks = vi.hoisted(() => ({
     >(),
 }));
 
-vi.mock("@/plugins/desktop/desktop-auth-client", () => ({
+vi.mock("@/chatjs/plugins/desktop/desktop-auth-client", () => ({
   default: {
     electron: { transferUser: mocks.transferUser },
     getSession: vi.fn(),

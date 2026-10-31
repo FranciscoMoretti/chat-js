@@ -5,7 +5,7 @@ description: Typed server and client contracts for optional ChatJS capabilities
 
 Plugins own optional behavior, storage, and UI. Core owns authentication, chat identity, lifecycle coordination, dispatch, and recovery. Core can name a capability such as Projects and declare its optional input fields without importing its implementation.
 
-Start with [Create a plugin](../cookbook/create-plugin) for installation and packaging. Use [Customize plugin integrations](../cookbook/customize-integrations) to add app-owned chat and billing behavior that survives later installation. Installed source lives in `plugins/<id>/`, with thin framework adapters under `app/` and `agent/`.
+Start with [Create a plugin](../cookbook/create-plugin) for installation and packaging. Use [Customize plugin integrations](../cookbook/customize-integrations) to add app-owned chat and billing behavior that survives later installation. Installed source lives in `chatjs/plugins/<id>/`, with thin framework adapters under `app/` and `agent/`.
 
 ## Entry points
 
@@ -29,8 +29,8 @@ Keep `chat.ts` and `billing.ts` free of web routers and Next.js request helpers:
 Factories return concrete types with `satisfies`. Sync generates static imports and registrations from the descriptor without executing server factories during installation.
 
 ```ts
-import type { ChatPlugin } from "@/lib/plugin-contracts";
-import { projectRouter } from "@/plugins/projects/router";
+import type { ChatPlugin } from "@/chatjs/core/installation/plugin";
+import { projectRouter } from "@/chatjs/plugins/projects/router";
 
 export const projects = () =>
   ({
@@ -64,7 +64,7 @@ Use `updateOwnedChat` from `@/lib/db/update-owned-chat` for existing-chat metada
 ```ts
 import { eq } from "drizzle-orm";
 import { updateOwnedChat } from "@/lib/db/update-owned-chat";
-import { eveChatProject as membership } from "@/plugins/projects/db/project-schema";
+import { eveChatProject as membership } from "@/chatjs/plugins/projects/db/project-schema";
 
 // ownerId and chatId come from the authorized procedure.
 await updateOwnedChat({ ownerId, chatId }, async ({ tx, chatId }) => {
@@ -114,13 +114,13 @@ The [Credits plugin](../plugins/credits) uses this contract. Native EVE imports 
 
 ## Client slots
 
-Declare a client plugin once at module scope. Import typed slot components from `@/components/chat-slots`, and `definePlugin` and `slot` from `@/lib/ui-slots`:
+Declare a client plugin once at module scope. Import typed slot components from `@/components/chat-slots`, and `definePlugin` and `slot` from `@/chatjs/core/ui/slots`:
 
 ```tsx
 "use client";
 
 import { ChatActions } from "@/components/chat-slots";
-import { definePlugin, slot } from "@/lib/ui-slots";
+import { definePlugin, slot } from "@/chatjs/core/ui/slots";
 import { ProjectChatActions } from "./ui/chat-contributions";
 
 export const projectsClient = definePlugin({
@@ -196,7 +196,7 @@ Declare plugin schema paths in `databaseSchemas`. Drizzle composes installed sch
   "contractVersion": 1,
   "id": "projects",
   "kind": "plugin",
-  "databaseSchemas": ["plugins/projects/db/project-schema.ts"],
+  "databaseSchemas": ["chatjs/plugins/projects/db/project-schema.ts"],
   "server": { "export": "projects", "routers": ["project"] },
   "chat": { "export": "projectsChat" },
   "client": { "export": "projectsClient", "chat": true }
@@ -215,7 +215,7 @@ The screen owns its conversation state and policy. It can reuse core presentatio
 
 ## Native session profiles
 
-Declare `sessionProfile: { export: "guestSessionProfile", authenticator: "chatjs-disposable-guest" }`. Export a `SessionProfile` from `session-profile.ts`, which must be safe to load in the native EVE graph. It contains `authenticator`, `authenticate(request)`, `resolveModel()`, and `instructions`. Shared `SessionAuthentication` and `SessionModel` types in `lib/session-profile-contracts.ts` define the returned identity and model settings independently of account implementations. A profile resolves its own model without accepting an account model-selection argument.
+Declare `sessionProfile: { export: "guestSessionProfile", authenticator: "chatjs-disposable-guest" }`. Export a `SessionProfile` from `session-profile.ts`, which must be safe to load in the native EVE graph. It contains `authenticator`, `authenticate(request)`, `resolveModel()`, and `instructions`. Shared `SessionAuthentication` and `SessionModel` types in `chatjs/core/session/contracts.ts` define the returned identity and model settings independently of account implementations. A profile resolves its own model without accepting an account model-selection argument.
 
 The channel composes installed authenticators. Model and instruction selection uses the persisted initiator's authenticator, never reconnect credentials or caller-supplied attributes. Unknown or removed profiles throw. Account hooks, tool execution, billing, and workspace access require the account authenticator explicitly. A profile does not grant those account capabilities.
 

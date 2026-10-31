@@ -19,16 +19,32 @@ const exists = async (file: string): Promise<boolean> => {
 export const assertCurrentInstallationLayout = async (
   cwd: string
 ): Promise<void> => {
-  await preflight(cwd, ["features/.layout-check"]);
-  const features = await readdir(path.join(cwd, "features"), {
-    withFileTypes: true,
-  }).catch((error: unknown) => {
-    if (error instanceof Error && "code" in error && error.code === "ENOENT") {
-      return [];
-    }
-    throw error;
-  });
+  const legacyDirectories = await Promise.all(
+    ["features", "plugins", "tools/chatjs"].map(async (directory) => {
+      await preflight(cwd, [`${directory}/.layout-check`]);
+      const entries = await readdir(path.join(cwd, directory), {
+        withFileTypes: true,
+      }).catch((error: unknown) => {
+        if (
+          error instanceof Error &&
+          "code" in error &&
+          error.code === "ENOENT"
+        ) {
+          return [];
+        }
+        throw error;
+      });
+      return entries
+        .filter((entry) => entry.isDirectory() || entry.isSymbolicLink())
+        .map((entry) => `${directory}/${entry.name}/chatjs.json`);
+    })
+  );
   const markers = [
+    "lib/ui-slots.tsx",
+    "lib/compose-chat.ts",
+    "lib/ai/gateway.ts",
+    "lib/storage-provider.ts",
+    "lib/sandbox/provider.ts",
     "composition/generated",
     "composition/custom/custom-tools.ts",
     "composition/custom/custom-ui.ts",
@@ -38,9 +54,7 @@ export const assertCurrentInstallationLayout = async (
     "tools/chatjs/custom-tools.ts",
     "tools/chatjs/custom-ui.ts",
     "features/installed.ts",
-    ...features
-      .filter((entry) => entry.isDirectory() || entry.isSymbolicLink())
-      .map((entry) => `features/${entry.name}/chatjs.json`),
+    ...legacyDirectories.flat(),
   ];
   const found = await Promise.all(
     markers.map(async (marker) =>
@@ -86,7 +100,7 @@ export const assertCurrentInstallationLayout = async (
   legacy.push(...incompatible.filter((target) => target !== null));
   if (legacy.length > 0) {
     throw new Error(
-      `Legacy ChatJS installation layout detected: ${legacy.join(", ")}. Before add, sync, or remove, move generated registrations to chatjs/generated and installation metadata/backups from .chatjs to chatjs without overwriting existing files. Adopt the current app-owned integrations/ modules and move custom tools/renderers there, and plugin implementations/descriptors in plugins/<id>. Update app imports and plugin descriptors/factories to the current template contract, then remove the old registration files. Existing files were not changed.`
+      `Legacy ChatJS installation layout detected: ${legacy.join(", ")}. Before add, sync, or remove, move generated registrations to chatjs/generated and installation metadata/backups from .chatjs to chatjs without overwriting existing files. Move installed infrastructure to chatjs/core and selected provider implementations/configuration to chatjs/providers, updating imports and preserving source receipts. Adopt the current app-owned integrations/ modules and move custom tools/renderers there, plugin implementations/descriptors to chatjs/plugins/<id>, and installed tools/descriptors to chatjs/tools/<id>. Update app imports and plugin descriptors/factories to the current template contract, then remove the old registration files. Existing files were not changed.`
     );
   }
 };

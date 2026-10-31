@@ -1,4 +1,4 @@
-import type { ChatPlugin } from "@/lib/plugin-contracts";
+import type { ChatPlugin } from "@/chatjs/core/installation/plugin";
 import { sharingRouter } from "./router";
 
 export const sharing = () =>

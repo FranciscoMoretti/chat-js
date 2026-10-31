@@ -4,7 +4,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
-import { EveDocumentRun } from "../tools/chatjs/saved-code-execution/document";
+import { EveDocumentRun } from "../chatjs/tools/saved-code-execution/document";
 
 const input = {
   documentId: "60dbe86a-b2c4-4d32-ae09-a00e90b84e99",

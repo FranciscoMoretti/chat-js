@@ -4,9 +4,9 @@ import type { UiToolName } from "@/lib/ai/types";
 import {
   installedDocumentKinds,
   installedToolNames,
-} from "@/integrations/tool-catalog";
+} from "@/integrations/tools/catalog";
 
-import { documentDefinitions } from "@/integrations/documents";
+import { documentDefinitions } from "@/integrations/documents/definitions";
 import { selectedEveTools } from "./selected-tools";
 
 // Set only by turn.started. Approval/reconnect authentication must not change it.

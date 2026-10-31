@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { guestModelIdForGateway } from "@/plugins/guest-chat/guest-policy";
+import { guestModelIdForGateway } from "@/chatjs/plugins/guest-chat/guest-policy";
 import { isAccountSession, requireAccountSession } from "./session-identity";
 
 test("session class is pinned to the verified initiator, not current caller attributes", () => {

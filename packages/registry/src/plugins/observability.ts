@@ -44,7 +44,7 @@ export const observabilityItems = [
     description,
     files: files.map((file) => ({
       path: `src/plugins/${id}/src/${file}`,
-      target: `~/plugins/${id}/${file}`,
+      target: `~/chatjs/plugins/${id}/${file}`,
       type: "registry:file" as const,
     })),
     meta: {
@@ -52,7 +52,7 @@ export const observabilityItems = [
         contractVersion: 1,
         id,
         kind: "plugin",
-        files: files.map((file) => `plugins/${id}/${file}`),
+        files: files.map((file) => `chatjs/plugins/${id}/${file}`),
         ...(id === "langfuse"
           ? { server: { export: "langfuse", instrumentation: true } }
           : {

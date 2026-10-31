@@ -1,5 +1,5 @@
 "use client";
-import { Plugins } from "@/lib/ui-slots";
+import { Plugins } from "@/chatjs/core/ui/slots";
 import { LayoutEffects } from "@/components/layout-slots";
 import { layoutPlugins } from "@/integrations/layout";
 

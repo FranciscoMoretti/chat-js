@@ -1,4 +1,4 @@
-import type { AuthenticationIntegration } from "@/lib/authentication-contracts";
+import type { AuthenticationIntegration } from "@/chatjs/core/authentication/contracts";
 import {
   ELECTRON_AUTH_CLIENT_ID,
   ELECTRON_AUTH_COOKIE_PREFIX,

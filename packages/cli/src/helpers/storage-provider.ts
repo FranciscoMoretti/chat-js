@@ -5,7 +5,7 @@ import { generatedRegistrationSource } from "#cli/utils/generated-registration-s
 import path from "node:path";
 import { preflight } from "#cli/utils/preflight";
 import { updateEnvironmentExample } from "#cli/utils/environment-example";
-import { writeFile } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
 import { z } from "zod";
 
 const CONFIG_JSON_INDENTATION_SPACES = 2;
@@ -28,7 +28,10 @@ const parseStorageOptions = (value: string): Record<string, unknown> => {
   }
 };
 
-const storageConfigurationTargets = ["lib/storage-options.ts", ".env.example"];
+const storageConfigurationTargets = [
+  "chatjs/providers/storage-options.ts",
+  ".env.example",
+];
 
 /**
  * Configure the installed source without evaluating it or editing dependencies.
@@ -40,11 +43,12 @@ const configureStorageProvider = async (
   selection: ReadonlyInput<StorageSelection>
 ): Promise<void> => {
   await preflight(destination, storageConfigurationTargets);
+  await mkdir(path.join(destination, "chatjs/providers"), { recursive: true });
   const { definition, options } = selection;
   await writeFile(
-    path.join(destination, "lib/storage-options.ts"),
-    generatedRegistrationSource(`import type { EnvRequirement } from "./config-requirements";
-import type { createStorageAdapter } from "./storage-provider";
+    path.join(destination, "chatjs/providers/storage-options.ts"),
+    generatedRegistrationSource(`import type { EnvRequirement } from "@/lib/config-requirements";
+import type { createStorageAdapter } from "@/chatjs/providers/storage";
 
 export const storageOptions = ${serializedConfigValue(options)} satisfies Parameters<typeof createStorageAdapter>[0];
 export const storageId = ${serializedConfigValue(definition.id)};

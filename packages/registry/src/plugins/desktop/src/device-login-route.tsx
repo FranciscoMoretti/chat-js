@@ -4,9 +4,9 @@ import { redirect } from "next/navigation";
 import React, { Suspense } from "react";
 
 import { AuthCardSkeleton } from "@/components/auth-card-skeleton";
-import { DeviceLoginPage } from "@/plugins/desktop/device-login-page";
+import { DeviceLoginPage } from "@/chatjs/plugins/desktop/device-login-page";
 import { auth } from "@/lib/auth";
-import { toSearchParamRecord } from "@/plugins/desktop/electron-auth";
+import { toSearchParamRecord } from "@/chatjs/plugins/desktop/electron-auth";
 
 const metadata: Metadata = {
   description: "Sign in for the desktop app",

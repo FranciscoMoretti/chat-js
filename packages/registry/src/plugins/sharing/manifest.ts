@@ -2,20 +2,20 @@ import type { RegistryItem } from "shadcn/schema";
 import { pluginDefinitionSchema } from "../../../metadata";
 
 const sharingFiles = [
-  "plugins/sharing/chat.ts",
-  "plugins/sharing/client-plugin.ts",
-  "plugins/sharing/public-conversation.ts",
-  "plugins/sharing/queries.ts",
-  "plugins/sharing/router.ts",
-  "plugins/sharing/server-plugin.ts",
-  "plugins/sharing/ui/chat-contributions.tsx",
-  "plugins/sharing/ui/share-button.tsx",
-  "plugins/sharing/ui/share-dialog.tsx",
-  "plugins/sharing/ui/share-menu-item.tsx",
-  "plugins/sharing/ui/share-menu-surface.tsx",
-  "plugins/sharing/ui/shared-badge.tsx",
-  "plugins/sharing/ui/transcript-messages.tsx",
-  "plugins/sharing/ui/shared-page.tsx",
+  "chatjs/plugins/sharing/chat.ts",
+  "chatjs/plugins/sharing/client-plugin.ts",
+  "chatjs/plugins/sharing/public-conversation.ts",
+  "chatjs/plugins/sharing/queries.ts",
+  "chatjs/plugins/sharing/router.ts",
+  "chatjs/plugins/sharing/server-plugin.ts",
+  "chatjs/plugins/sharing/ui/chat-contributions.tsx",
+  "chatjs/plugins/sharing/ui/share-button.tsx",
+  "chatjs/plugins/sharing/ui/share-dialog.tsx",
+  "chatjs/plugins/sharing/ui/share-menu-item.tsx",
+  "chatjs/plugins/sharing/ui/share-menu-surface.tsx",
+  "chatjs/plugins/sharing/ui/shared-badge.tsx",
+  "chatjs/plugins/sharing/ui/transcript-messages.tsx",
+  "chatjs/plugins/sharing/ui/shared-page.tsx",
   "app/(chat)/share/[id]/page.tsx",
 ];
 const sharingDefinition = pluginDefinitionSchema.parse({
@@ -49,8 +49,8 @@ const sharingItem: RegistryItem = {
   ],
   description: "Share read-only conversations with revocable public access",
   files: sharingFiles.map((file) => ({
-    path: file.startsWith("plugins/sharing/")
-      ? `src/plugins/sharing/src/${file.slice("plugins/sharing/".length)}`
+    path: file.startsWith("chatjs/plugins/sharing/")
+      ? `src/plugins/sharing/src/${file.slice("chatjs/plugins/sharing/".length)}`
       : `src/plugins/sharing/adapters/${file}`,
     target: `~/${file}`,
     type: "registry:file" as const,

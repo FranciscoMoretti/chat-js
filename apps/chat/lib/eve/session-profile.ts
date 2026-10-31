@@ -1,5 +1,5 @@
-import { sessionProfiles } from "@/integrations/session-profiles";
-import type { SessionProfile } from "@/lib/session-profile-contracts";
+import { sessionProfiles } from "@/integrations/chat/session-profiles";
+import type { SessionProfile } from "@/chatjs/core/session/contracts";
 
 /** Resolve only persisted initiator identity; unknown or removed profiles fail closed. */
 export const requireSessionProfile = (session: {

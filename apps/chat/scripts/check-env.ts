@@ -1,5 +1,8 @@
 #!/usr/bin/env bun
-import { sandboxEnvRequirements, sandboxId } from "@/lib/sandbox/options";
+import {
+  sandboxEnvRequirements,
+  sandboxId,
+} from "@/chatjs/providers/sandbox/options";
 /**
  * Build-time config validation script.
  * Validates environment requirements for installed integrations.
@@ -15,16 +18,19 @@ import {
   reportEnvironmentFailure,
   reportEnvironmentSuccess,
 } from "./environment-validation-report";
-import { storageEnvRequirements, storageId } from "@/lib/storage-options";
+import {
+  storageEnvRequirements,
+  storageId,
+} from "@/chatjs/providers/storage-options";
 
 import { config } from "@/lib/config";
 import { databaseEnvOptions } from "@/lib/db/connection";
 import fs from "node:fs/promises";
-import { gatewayEnvRequirements } from "@/lib/ai/gateway-model-defaults";
+import { gatewayEnvRequirements } from "@/chatjs/providers/gateway-defaults";
 import { generatedForGateway } from "@/lib/ai/models.generated";
 import { getEveRuntimeEnvOptions } from "@/lib/env-schema";
 import { installedPlugins } from "@/integrations/plugin-catalog";
-import { installedToolNames } from "@/integrations/tool-catalog";
+import { installedToolNames } from "@/integrations/tools/catalog";
 import { isPlaywrightTestEnvironment } from "@/lib/playwright-test-environment";
 import { config as loadEnvConfig } from "dotenv";
 import path from "node:path";
@@ -142,7 +148,7 @@ const validateAuthentication = (
 
 const validateInstalledItems = async (
   env: Readonly<NodeJS.ProcessEnv>,
-  directory: "tools/chatjs" | "plugins"
+  directory: "chatjs/tools" | "chatjs/plugins"
 ): Promise<ValidationError[]> => {
   const toolsDir = path.join(projectRoot, directory);
   const entries = await fs
@@ -181,7 +187,7 @@ const validateInstalledItems = async (
           }
           return [
             {
-              feature: `${directory === "tools/chatjs" ? "tools" : "plugins"}.${entry.name}`,
+              feature: `${directory === "chatjs/tools" ? "tools" : "plugins"}.${entry.name}`,
               missing: [missing],
             },
           ];
@@ -198,7 +204,7 @@ const validateInstalledItems = async (
       return invalid.length > 0
         ? [
             {
-              feature: `${directory === "tools/chatjs" ? "tools" : "plugins"}.${entry.name}`,
+              feature: `${directory === "chatjs/tools" ? "tools" : "plugins"}.${entry.name}`,
               missing: invalid,
             },
           ]
@@ -309,12 +315,12 @@ const checkEnv = async (): Promise<void> => {
   }
 
   const configuredErrors = validateConfiguredEnvironment(env);
-  const installedToolErrors = await validateInstalledItems(env, "tools/chatjs");
+  const installedToolErrors = await validateInstalledItems(env, "chatjs/tools");
   const errors = [
     ...configuredErrors,
     ...validateAuthentication(env),
     ...installedToolErrors,
-    ...(await validateInstalledItems(env, "plugins")),
+    ...(await validateInstalledItems(env, "chatjs/plugins")),
   ];
 
   if (reportEnvironmentFailure(errors)) {

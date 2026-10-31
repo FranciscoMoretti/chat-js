@@ -3,9 +3,9 @@ import {
   saveEveDocumentRevision,
 } from "@/lib/db/eve-documents";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-import { eveManualDocumentInput } from "./document-contracts";
+import { eveManualDocumentInput } from "@/chatjs/core/documents/contracts";
 import { getEveConversation } from "@/lib/db/eve-queries";
-import { documentDefinitions } from "@/integrations/documents";
+import { documentDefinitions } from "@/integrations/documents/definitions";
 import type { z } from "zod";
 
 type SavedDocumentReceipt = Pick<

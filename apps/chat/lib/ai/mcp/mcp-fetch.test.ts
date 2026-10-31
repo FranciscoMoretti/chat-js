@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 
-import { mcpFetch } from "../../../plugins/mcp/oauth/mcp-fetch";
+import { mcpFetch } from "../../../chatjs/plugins/mcp/oauth/mcp-fetch";
 
 test.each([
   "http://127.0.0.1/",

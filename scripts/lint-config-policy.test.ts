@@ -734,7 +734,7 @@ test.each(["", "apps/chat/"])(
       "chatjs/generated/installed-tools.ts",
       "chatjs/generated/composer-tools.ts",
       "lib/ai/models.generated.ts",
-      "plugins/composer-icons.generated.ts",
+      "chatjs/plugins/composer-icons.generated.ts",
       "next-env.d.ts",
       ".next/types/routes.ts",
       ".eve/worker.ts",
@@ -751,10 +751,10 @@ test.each(["", "apps/chat/"])(
       "components/ai-elements/nested/message.test.ts",
       "components/ui/__tests__/fixture.ts",
       "components/ai-elements/nested/__tests__/fixture.ts",
-      "plugins/mcp/component.ts",
+      "chatjs/plugins/mcp/component.ts",
       "composition/custom/custom-tools.ts",
       "composition/custom/custom-ui.ts",
-      "tools/chatjs/retrieve-url/tool.ts",
+      "chatjs/tools/retrieve-url/tool.ts",
       "scripts/generate-models.ts",
     ];
     const malformed = "debugger;export  const chosen={answer:42}\n";

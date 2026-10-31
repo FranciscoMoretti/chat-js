@@ -35,6 +35,6 @@ Use a model ID supported by your installed gateway. Your gateway supplies the de
 
 ## Customization
 
-Edit `plugins/ai-titles/generate-title.ts` to change the prompt, normalization, or timeout. The default timeout is 15 seconds, with no model retries. `title-queries.ts` rechecks ownership, bound state, the fallback value, and title status before updating the logical chat. Generating a title does not change chat recency.
+Edit `chatjs/plugins/ai-titles/generate-title.ts` to change the prompt, normalization, or timeout. The default timeout is 15 seconds, with no model retries. `title-queries.ts` rechecks ownership, bound state, the fallback value, and title status before updating the logical chat. Generating a title does not change chat recency.
 
 Core owns fallback titles, manual rename, and title status. Without this plugin, your chats retain their fallback titles until you rename them. The callback is best-effort work after a response, not a durable job queue. See the [Plugin API](../reference/plugin-api).

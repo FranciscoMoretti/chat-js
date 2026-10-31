@@ -1,4 +1,4 @@
-import { documentDefinitions } from "@/integrations/documents";
+import { documentDefinitions } from "@/integrations/documents/definitions";
 import type { UiToolName } from "@/lib/ai/types";
 
 /** Canvas editing needs Eve's read operation to obtain the current revision.

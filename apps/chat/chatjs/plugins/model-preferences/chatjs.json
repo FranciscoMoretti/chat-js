@@ -1,0 +1,31 @@
+{
+  "id": "model-preferences",
+  "kind": "plugin",
+  "files": [
+    "chatjs/plugins/model-preferences/apply-model-preferences.ts",
+    "chatjs/plugins/model-preferences/client-plugin.ts",
+    "chatjs/plugins/model-preferences/settings-link.tsx",
+    "chatjs/plugins/model-preferences/model-preferences-queries.ts",
+    "chatjs/plugins/model-preferences/model-preferences-schema.ts",
+    "chatjs/plugins/model-preferences/model-row.tsx",
+    "chatjs/plugins/model-preferences/models-page.tsx",
+    "chatjs/plugins/model-preferences/models-settings.tsx",
+    "chatjs/plugins/model-preferences/models-table.tsx",
+    "chatjs/plugins/model-preferences/router.ts",
+    "chatjs/plugins/model-preferences/server-plugin.ts",
+    "chatjs/plugins/model-preferences/use-model-preferences.ts",
+    "app/(chat)/settings/models/page.tsx"
+  ],
+  "databaseSchemas": [
+    "chatjs/plugins/model-preferences/model-preferences-schema.ts"
+  ],
+  "server": { "export": "modelPreferences", "routers": ["modelPreferences"] },
+  "client": {
+    "export": "modelPreferencesClient",
+    "composerControls": [],
+    "settingsItems": ["models"],
+    "modelVisibility": true
+  },
+  "contractVersion": 2,
+  "uiBase": "base"
+}

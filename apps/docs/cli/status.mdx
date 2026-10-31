@@ -1,6 +1,6 @@
 ---
 title: status
-description: Inspect plugin ownership, local edits, and removal dependencies without changing files
+description: Inspect installation file kinds, local edits, and plugin removal dependencies
 ---
 
 `chat-js status` reads your local installation. It does not contact a registry, install dependencies, run sync, or change source receipts.
@@ -17,25 +17,51 @@ This command is available in the CLI source accompanying this change. Use your m
 
 ## Understand the file tree
 
+Files have four lifecycle kinds. Kind describes how installation treats a file, not whether you are allowed to edit it.
+
+| Kind | What it means | Installation behavior |
+| --- | --- | --- |
+| `application` | Your application and its composition | Add/remove/sync preserve your integration code |
+| `source` | Installed implementation, including its descriptor | Editable and tracked against the recorded installation. Replacement/removal protect local changes |
+| `generated` | Derived imports, registrations or model catalog | Change the inputs and regenerate |
+| `record` | Installation hashes, original content and dependency/schema receipts | Maintained by the CLI. Keep in version control |
+
 ```text
 chatjs/
-  generated/                   CLI-generated imports and registrations
-  installed-source.json        Installed file hashes
-  installed-source-content.json Original installed bytes (base64)
-  installed-dependencies.json  Package ownership receipt
-  retained-plugin-schemas.json Schema inputs preserved after removal
-  removed-plugins/             Backups requested during removal
+  core/                        source: composition helpers and contracts
+  providers/                   source: selected providers and configuration
+  plugins/<id>/                source: plugin implementation and chatjs.json
+  tools/<id>/                  source: tool implementation and chatjs.json
+  generated/                   generated: installation wiring
+  installed-source.json        record: installed file hashes
+  installed-source-content.json record: original installed content
+  installed-dependencies.json  record: package ownership
+  retained-plugin-schemas.json record: schemas retained after removal
+  removed-plugins/             requested removal backups
 
-integrations/                  App-owned domain composition
-plugins/<id>/                  Editable installed plugin source
-  chatjs.json                  Installation descriptor and owned file list
+integrations/                  application: composition and policy
+  auth/
+  chat/
+  tools/
+  documents/
+  providers/
+  billing.ts
+  database.ts
+  …
 ```
 
-Generated files identify themselves with a comment and must not be edited. Change plugin source or app-owned composition instead. Sync rewrites generated registrations and leaves app-owned composition alone.
+Scaffolded application files become your application code. Their ChatJS origin does not make them replacement targets. Reusable composition helpers live in `chatjs/core/`, while your choices and wrappers stay in `integrations/`. Source under `chatjs/core/` is recorded during creation. There is no automatic core updater or merge of local edits.
 
-Installed plugin source is editable. Changes matter when replacing or removing the plugin. Keep the source and dependency receipts in version control so that the CLI can identify local edits consistently across machines.
+Next.js routes and EVE entries can belong to installed plugins even though they live outside these source directories. Built-in adapters carry a short exception header:
 
-The tree is not the complete ownership map. Next.js route files under `app/` and EVE adapters under `agent/` can belong to plugins. Built-in plugin adapters identify their owner in a comment. Their descriptor and status output list these paths even when they are outside `plugins/<id>/`. External plugins can use the same descriptor mechanism without adding comments.
+```ts
+// ChatJS source: attachment-uploads. Ownership: chatjs/plugins/attachment-uploads/chatjs.json.
+export { POST } from "@/chatjs/plugins/attachment-uploads/routes/upload";
+```
+
+The descriptor and receipts establish ownership. Headers explain it to readers and are not parsed by the installer. External plugins can declare the same paths without a header. Generated files carry a generation notice. Other application files do not need a ChatJS header.
+
+Installed source is editable. Keep the source and dependency receipts in version control so the CLI can identify local edits consistently across machines. A locally added file inside a source directory is reported as `untracked`, not adopted as freshly installed source.
 
 ## Source states
 
@@ -79,7 +105,7 @@ Both versions use the same current hook, so changing formatter settings does not
 
 Hook failures, invalid return values and unsupported files remain `modified`, with a `formatting` reason in the report. Non-UTF-8 source uses exact comparison. A module that cannot load or lacks the named export fails the command. Formatting-only classification does not relax replacement or removal protection: those operations still protect every byte change.
 
-By default, output includes state counts, changed/missing/untracked files, and plugin-owned files outside the plugin directory. `--files` also lists unchanged plugin files. `--json` includes the full inventory, generated paths, app-owned integration paths, retained plugin directories, declared dependencies, shared files, and supported source references that affect removal.
+By default, output includes state counts, changed/missing/untracked files, and plugin-owned files outside the plugin directory. `--files` also lists unchanged plugin files. `--json` includes a flat `files` inventory with `kind` and source state, plus plugin dependency and removal details. Core, provider and tool directories and recorded external paths are included. Application files outside `integrations/` and recorded paths are not enumerated.
 
 Each plugin also reports its declared app-owned integration modules, known Next.js/EVE entry paths, and other framework source. The JSON field is `activation`. This inventory matches path conventions without evaluating exports or applying migrations. `remove --dry-run` shows the same wiring for the plugins it would retire.
 
@@ -92,7 +118,7 @@ If a schema is missing or its retained dependencies cannot be resolved, status r
 3. Use `--backup` when explicitly removing customized source. The backup is stored outside active application source under `chatjs/removed-plugins/`.
 4. For replacement through `add`, review modified/untracked files before explicitly passing `--overwrite`. Updates are not automatically merged.
 
-Status compares your files against the recorded installation, not the newest upstream release. It does not report available upgrades. Source reference inspection covers relative and `@/` static imports, re-exports, and literal dynamic imports. Computed imports and custom aliases require review. Tools, gateways, storage, and sandbox implementations are outside the plugin inventory.
+Status compares your files against the recorded installation, not the newest upstream release. It does not report available upgrades. Source reference inspection covers relative and `@/` static imports, re-exports, and literal dynamic imports. Computed imports and custom aliases require review. Core, tools and providers appear in the file inventory. Dependency and removal analysis still applies only to plugins. Files installed directly through shadcn may have no recorded baseline, and external files without a plugin claim or receipt cannot be inferred.
 
 See [Customize plugin integrations](../cookbook/customize-integrations) for app-owned wrappers that survive later installation, and [add](./add) for replacement and removal safeguards.
 
@@ -100,6 +126,12 @@ See [Customize plugin integrations](../cookbook/customize-integrations) for app-
 
 New scaffolds use `chatjs/generated/` and store installation receipts in `chatjs/`. Older apps using `composition/generated/` or `.chatjs/` must migrate explicitly before add, sync, remove, or status. These commands stop before changing files when they detect the old layout.
 
-Move generated registrations to `chatjs/generated/`, update their imports and tooling paths, and move the contents of `.chatjs/` into `chatjs/` without overwriting existing files. Preserve source/dependency receipts, retained-schema records, and backups. Move local registrations from `composition/custom/` into `integrations/tools.ts` and `integrations/tool-ui.ts`. Adopt the current generated-input exports and update runtime consumers to import app-owned integration modules. Preserve existing integration customizations. Remove the empty old directories after migration, then run sync and your app checks.
+Move generated registrations to `chatjs/generated/`, update their imports and tooling paths, and move the contents of `.chatjs/` into `chatjs/` without overwriting existing files. Preserve source/dependency receipts, retained-schema records, and backups. Move local registrations from `composition/custom/` into `integrations/tools/execution.ts` and `integrations/tools/ui.ts`. Adopt the current generated-input exports and update runtime consumers to import app-owned integration modules. Preserve existing integration customizations. Remove the empty old directories after migration, then run sync and your app checks.
 
 Do not delete receipts to bypass the layout check. If both layouts already exist, reconcile their records deliberately rather than overwriting either set. This change does not provide automatic migration of arbitrary developer-modified application code.
+
+Existing scaffolds with infrastructure in `lib/` or `hooks/` also need an explicit source move to `chatjs/core/` and provider implementations/configuration to `chatjs/providers/`. Update imports, tests and any receipt keys together, retaining the original hashes and content. Do not record customized files as fresh installation baselines. The CLI rejects recognized older layouts before mutation rather than moving application code automatically.
+
+Older installations with top-level `plugins/<id>/chatjs.json` are also rejected before writing. Move their source into `chatjs/plugins/<id>/`, then update descriptor file lists, imports, retained schema paths, and source/dependency receipt paths together. Keep original hashes and content. An unrelated application `plugins/` directory without ChatJS descriptors remains application code.
+
+Older installed tools under `tools/chatjs/<id>/chatjs.json` require the same explicit move to `chatjs/tools/<id>/`, including descriptor paths, imports and receipt keys. Native EVE entries remain under `agent/`.

@@ -1,4 +1,4 @@
-import type { ChatServerIntegration } from "@/lib/chat-plugin-contracts";
+import type { ChatServerIntegration } from "@/chatjs/core/chat/contracts";
 
 export const aiTitlesChat = {
   afterCreate: async (context) => {

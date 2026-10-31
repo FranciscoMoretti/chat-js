@@ -1,3 +1,4 @@
+// ChatJS source: deep-research. Ownership: chatjs/tools/deep-research/chatjs.json.
 import { requireAccountSession } from "@/lib/eve/session-identity";
 import { defineWorkflowTool } from "eve/tools";
 import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
@@ -9,11 +10,11 @@ import {
   leadResearcherPrompt,
   researchSystemPrompt,
   transformMessagesIntoResearchTopicPrompt,
-} from "@/tools/chatjs/deep-research/prompts";
+} from "@/chatjs/tools/deep-research/prompts";
 import {
   prepareResearch,
   saveResearchReport,
-} from "@/tools/chatjs/deep-research/steps";
+} from "@/chatjs/tools/deep-research/steps";
 import {
   researchBrief,
   researchInput,
@@ -21,13 +22,13 @@ import {
   researchDecision,
   researchFindings,
   researchReport,
-} from "@/tools/chatjs/deep-research/schemas";
+} from "@/chatjs/tools/deep-research/schemas";
 import type { ResearchUpdate } from "@/tools/platform/research-updates-schema";
 import type { ToolResult } from "@/lib/eve/tool-result";
 import type { AgentSession, WorkflowToolContext } from "eve/tools";
 import { createToolResult } from "@/lib/eve/tool-result";
-import type { researchOutput } from "@/tools/chatjs/deep-research/schemas";
-import { researchSearchUpdates } from "@/tools/chatjs/deep-research/search-updates";
+import type { researchOutput } from "@/chatjs/tools/deep-research/schemas";
+import { researchSearchUpdates } from "@/chatjs/tools/deep-research/search-updates";
 import { z } from "zod";
 
 type ResearchOutput = z.infer<typeof researchOutput>;

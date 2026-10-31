@@ -1,4 +1,4 @@
-import { userCredit } from "@/plugins/credits/credits-schema";
+import { userCredit } from "@/chatjs/plugins/credits/credits-schema";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { createServer } from "node:http";
 import { once } from "node:events";
@@ -11,14 +11,14 @@ import { z } from "zod";
 
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
-import { MCPClient } from "../plugins/mcp/oauth/mcp-client";
+import { MCPClient } from "../chatjs/plugins/mcp/oauth/mcp-client";
 import { db } from "../lib/db/client";
-import { mcpConnector } from "@/plugins/mcp/db/mcp-schema";
+import { mcpConnector } from "@/chatjs/plugins/mcp/db/mcp-schema";
 import { env } from "../lib/env";
 import {
   discoverEveMcpTools,
   executeEveMcpTool,
-} from "../plugins/mcp/runtime/mcp-tools";
+} from "../chatjs/plugins/mcp/runtime/mcp-tools";
 
 if (!["localhost", "127.0.0.1"].includes(new URL(env.DATABASE_URL).hostname)) {
   throw new Error("MCP acceptance requires local Postgres.");

@@ -1,4 +1,4 @@
-import { userCredit } from "@/plugins/credits/credits-schema";
+import { userCredit } from "@/chatjs/plugins/credits/credits-schema";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 

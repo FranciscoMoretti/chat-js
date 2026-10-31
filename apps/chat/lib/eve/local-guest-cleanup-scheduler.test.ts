@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
-import { startLocalEveGuestCleanup } from "@/plugins/guest-chat/guest-scheduler";
+import { startLocalEveGuestCleanup } from "@/chatjs/plugins/guest-chat/guest-scheduler";
 
 const mocks = vi.hoisted(() => ({
   available: vi.fn(),
@@ -16,7 +16,7 @@ vi.mock("../env", () => ({ env: mocks.env }));
 vi.mock("./local-deletion-available", () => ({
   localDeletionAvailable: mocks.available,
 }));
-vi.mock("@/plugins/guest-chat/guest-cleanup", () => ({
+vi.mock("@/chatjs/plugins/guest-chat/guest-cleanup", () => ({
   cleanupGuestRuntimeSessions: mocks.runtimeCleanup,
 }));
 let stop: (() => void) | undefined;

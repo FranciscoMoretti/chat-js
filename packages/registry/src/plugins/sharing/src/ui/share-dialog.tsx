@@ -7,7 +7,7 @@ import type { JSX as ReactJSX } from "react";
 import {
   ShareButton,
   ShareDialogView,
-} from "@/plugins/sharing/ui/share-button";
+} from "@/chatjs/plugins/sharing/ui/share-button";
 import { useTRPC } from "@/trpc/react";
 
 const EveShareDialogContent = ({

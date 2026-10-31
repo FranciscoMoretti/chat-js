@@ -1,20 +1,20 @@
 "use client";
 
 import { PopoverButton } from "@/components/popover-button";
-import { ProjectIcon } from "@/plugins/projects/ui/project-icon";
+import { ProjectIcon } from "@/chatjs/plugins/projects/ui/project-icon";
 
 import {
   DEFAULT_PROJECT_COLOR,
   PROJECT_COLORS,
   PROJECT_ICONS,
-} from "@/plugins/projects/project-icons";
+} from "@/chatjs/plugins/projects/project-icons";
 
 import { Popover, PopoverContent } from "@/components/ui/popover";
 
 import type {
   ProjectColorName,
   ProjectIconName,
-} from "@/plugins/projects/project-icons";
+} from "@/chatjs/plugins/projects/project-icons";
 
 import React from "react";
 

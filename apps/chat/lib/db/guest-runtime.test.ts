@@ -8,7 +8,7 @@ import { afterAll, beforeAll, expect, test, vi } from "vitest";
 import {
   guestRuntimeSession,
   guestRuntimeRate,
-} from "@/plugins/guest-chat/guest-schema";
+} from "@/chatjs/plugins/guest-chat/guest-schema";
 
 const postgres = new PGlite();
 const database = drizzle(postgres);
@@ -24,7 +24,7 @@ const {
   claimExpiredGuestRuntimeSession,
   completeGuestRuntimeDeletion,
   countPendingGuestRuntimeDeletions,
-} = await import("@/plugins/guest-chat/guest-queries");
+} = await import("@/chatjs/plugins/guest-chat/guest-queries");
 beforeAll(async () => {
   const directory = new URL("migrations/", import.meta.url);
   const entries = await readdir(directory);

@@ -1,9 +1,9 @@
 import type {
   DocumentAssistantAction,
   DocumentAssistantRequest,
-} from "./document-contracts";
-import { installedDocumentKinds } from "@/integrations/tool-catalog";
-import { documents } from "@/integrations/document-ui";
+} from "@/chatjs/core/documents/contracts";
+import { installedDocumentKinds } from "@/integrations/tools/catalog";
+import { documents } from "@/integrations/documents/ui";
 
 const documentAssistantActions = (kind: string): DocumentAssistantAction[] =>
   installedDocumentKinds.has(kind)

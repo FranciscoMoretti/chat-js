@@ -21,7 +21,7 @@ flowchart LR
 
 `lib/eve/reconcile-usage.ts` reads only the unprocessed suffix of the native stream and advances a durable cursor after successful reconciliation. Missing tool receipts remain eligible for replay without themselves blocking admission. Reconciliation failures can still prevent new work.
 
-[Credits](../plugins/credits) owns balance storage. `plugins/credits/credits-queries.ts` reads registered-user balances through `getBalanceCents`. The TypeScript field and tRPC response use `balanceCents`, while the existing database column remains `UserCredit.credits` to preserve stored balances.
+[Credits](../plugins/credits) owns balance storage. `chatjs/plugins/credits/credits-queries.ts` reads registered-user balances through `getBalanceCents`. The TypeScript field and tRPC response use `balanceCents`, while the existing database column remains `UserCredit.credits` to preserve stored balances.
 
 Both new-conversation and follow-up-message admission call `canStartPaidTurn` in `lib/eve/spending-admission.ts`. It reconciles usage before reading the balance. Reconciliation failures propagate to the request's existing recovery response. A positive balance gate does not reserve a concurrent budget for work that has already started.
 

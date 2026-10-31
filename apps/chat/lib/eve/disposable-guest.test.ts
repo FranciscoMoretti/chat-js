@@ -3,8 +3,8 @@ import {
   issueGuestCredential,
   newGuestClaims,
   readGuestCredential,
-} from "@/plugins/guest-chat/guest-credential";
-import { authenticateDisposableGuest } from "@/plugins/guest-chat/guest-auth";
+} from "@/chatjs/plugins/guest-chat/guest-credential";
+import { authenticateDisposableGuest } from "@/chatjs/plugins/guest-chat/guest-auth";
 import { randomUUID } from "node:crypto";
 
 vi.mock("../env", () => ({
@@ -13,7 +13,7 @@ vi.mock("../env", () => ({
   },
 }));
 const store = vi.hoisted(() => ({ read: vi.fn(), reserve: vi.fn() }));
-vi.mock("@/plugins/guest-chat/guest-queries", () => ({
+vi.mock("@/chatjs/plugins/guest-chat/guest-queries", () => ({
   readGuestRuntimePolicy: store.read,
   reserveGuestRuntimeMessage: store.reserve,
 }));
