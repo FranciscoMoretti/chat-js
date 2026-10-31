@@ -11,7 +11,11 @@ import { scaffoldFromTemplate } from "#cli/helpers/scaffold";
 import { installItems } from "#cli/registry/shadcn";
 
 import { installPlan } from "./install-plan";
-import { recordInstalledSource } from "./source-receipt";
+import {
+  readReceipt,
+  readSourceBaselines,
+  recordInstalledSource,
+} from "./source-receipt";
 
 import { planInstallation } from "./installation-plan";
 
@@ -153,6 +157,13 @@ test("explicit provider replacement preserves unrelated installations and refuse
       { plugins: [], tools: [source("second")] },
       { replace: true }
     );
+    const deleted = "chatjs/tools/first/deleted.ts";
+    await writeFile(
+      path.join(root, deleted),
+      "// removed before replacement\n"
+    );
+    await recordInstalledSource(root, [deleted]);
+    await rm(path.join(root, deleted));
     const old = path.join(root, "chatjs/tools/first/tool.ts");
     await writeFile(
       old,
@@ -188,6 +199,18 @@ test("explicit provider replacement preserves unrelated installations and refuse
       tools.map((tool: { readonly id: string }): string => tool.id)
     ).toEqual(["extra", "second"]);
     expect(await Bun.file(old).exists()).toBe(false);
+    for (const record of [
+      await readReceipt(root),
+      await readSourceBaselines(root),
+    ]) {
+      expect(
+        Object.keys(record).some((file) =>
+          file.startsWith("chatjs/tools/first/")
+        )
+      ).toBe(false);
+      expect(record["chatjs/tools/extra/tool.ts"]).toBeDefined();
+      expect(record["chatjs/tools/second/tool.ts"]).toBeDefined();
+    }
     expect(
       await readFile(path.join(root, "chatjs/tools/extra/tool.ts"), "utf-8")
     ).toContain("extra");
@@ -227,6 +250,8 @@ test.each(["registration", "finalization"] as const)(
       await writeFile(lockfile, "original lockfile");
       const oldManifest = await readFile(manifest, "utf-8");
       const oldDependencies = await readFile(dependencies, "utf-8");
+      const oldReceipt = await readReceipt(root);
+      const oldBaselines = await readSourceBaselines(root);
       const oldEnv = await readFile(env, "utf-8");
       const oldConfig = await readFile(config, "utf-8");
       await rm(path.join(root, "chatjs/generated/workflow-types.ts"));
@@ -279,6 +304,8 @@ test.each(["registration", "finalization"] as const)(
           return true;
         }
       );
+      expect(await readReceipt(root)).toEqual(oldReceipt);
+      expect(await readSourceBaselines(root)).toEqual(oldBaselines);
       expect(await readFile(manifest, "utf-8")).toBe(oldManifest);
       expect(await readFile(dependencies, "utf-8")).toBe(oldDependencies);
       expect(await readFile(lockfile, "utf-8")).toBe("original lockfile");

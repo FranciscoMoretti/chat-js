@@ -251,7 +251,8 @@ const installPlan = async (
         options.fresh === true ||
         replacingShared
       );
-    })
+    }),
+    plan.replacements.map(({ previous }) => `chatjs/tools/${previous.id}`)
   );
 };
 export { installPlan, plannedSourceTargets };

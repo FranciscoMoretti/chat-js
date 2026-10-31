@@ -78,13 +78,21 @@ const sourceHashes = async (
  * Capture only source we actually installed. Never bless a skipped user file.
  * @param {string} cwd Project containing the receipt and installed source files.
  * @param {readonly string[]} targets Ordered installed paths to hash without modifying the caller list.
+ * @param {readonly string[]} retiredDirectories Replaced source directories to forget after successful installation.
  */
 const recordInstalledSource = async (
   cwd: string,
-  targets: readonly string[]
+  targets: readonly string[],
+  retiredDirectories: readonly string[] = []
 ): Promise<void> => {
-  const receipt = await readReceipt(cwd);
-  const baselines = await readSourceBaselines(cwd);
+  const retained = ([file]: readonly [string, string]): boolean =>
+    !retiredDirectories.some((directory) => file.startsWith(`${directory}/`));
+  const receipt = Object.fromEntries(
+    Object.entries(await readReceipt(cwd)).filter(retained)
+  );
+  const baselines = Object.fromEntries(
+    Object.entries(await readSourceBaselines(cwd)).filter(retained)
+  );
   await preflight(cwd, targets);
   const hashes = await sourceHashes(
     cwd,
