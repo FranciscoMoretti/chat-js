@@ -1,5 +1,5 @@
 import { preflight } from "#cli/utils/preflight";
-import { rm, writeFile } from "node:fs/promises";
+import { mkdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import type { resolveSandbox } from "#cli/registry/sandboxes";
 import type { ReadonlyInput } from "./readonly-input";
@@ -15,9 +15,9 @@ export const sandboxProviderTargets = (
     return [];
   }
   return [
-    "lib/sandbox/options.ts",
+    "chatjs/providers/sandbox/options.ts",
     ...(selection.definition.id === "daytona"
-      ? ["lib/sandbox/persistent.ts"]
+      ? ["chatjs/providers/sandbox/persistent.ts"]
       : []),
   ];
 };
@@ -27,11 +27,14 @@ export const configureSandboxProvider = async (
   selection: ReadonlyInput<Awaited<ReturnType<typeof resolveSandbox>>>
 ): Promise<void> => {
   await preflight(cwd, [...sandboxProviderTargets(selection), ".env.example"]);
+  await mkdir(path.join(cwd, "chatjs/providers/sandbox"), { recursive: true });
   if (selection.definition.id === "daytona") {
-    await rm(path.join(cwd, "lib/sandbox/persistent.ts"), { force: true });
+    await rm(path.join(cwd, "chatjs/providers/sandbox/persistent.ts"), {
+      force: true,
+    });
   }
   await writeFile(
-    path.join(cwd, "lib/sandbox/options.ts"),
+    path.join(cwd, "chatjs/providers/sandbox/options.ts"),
     generatedRegistrationSource(`import type { EnvRequirement } from "@/lib/config-requirements";
 
 export const sandboxId = ${JSON.stringify(selection.definition.id)};

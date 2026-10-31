@@ -75,7 +75,7 @@ Choosing **Yes** installs the [Desktop plugin](../plugins/desktop) in the web ap
 ```text
 my-app/
 ├── app/
-├── plugins/desktop/
+├── chatjs/plugins/desktop/
 ├── electron/
 │   ├── src/
 │   │   ├── main.ts
@@ -134,8 +134,8 @@ sequenceDiagram
 
 The main integration points are:
 
-- **Server**: `plugins/desktop/auth-server.ts` contributes the Electron Better Auth plugin
-- **Web client**: `plugins/desktop/desktop-auth-client.ts` handles the browser-side redirect flow
+- **Server**: `chatjs/plugins/desktop/auth-server.ts` contributes the Electron Better Auth plugin
+- **Web client**: `chatjs/plugins/desktop/desktop-auth-client.ts` handles the browser-side redirect flow
 - **Electron main**: `src/main.ts` sets up deep-link handling and IPC bridges
 - **Electron preload**: `src/preload.ts` exposes auth bridges to the renderer
 

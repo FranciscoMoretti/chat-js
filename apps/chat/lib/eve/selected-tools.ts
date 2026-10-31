@@ -1,13 +1,5 @@
+import { documentDefinitions } from "@/integrations/documents/definitions";
 import type { UiToolName } from "@/lib/ai/types";
-
-const canvasTools: UiToolName[] = [
-  "createTextDocument",
-  "createCodeDocument",
-  "createSheetDocument",
-  "editTextDocument",
-  "editCodeDocument",
-  "editSheetDocument",
-];
 
 /** Canvas editing needs Eve's read operation to obtain the current revision.
  * @param {UiToolName | null} selectedTool User-selected tool, or null when no explicit tool restriction is requested.
@@ -16,12 +8,12 @@ const canvasTools: UiToolName[] = [
 export const selectedEveTools = (
   selectedTool: UiToolName | null
 ): string[] | null => {
-  if (!selectedTool) {
+  if (selectedTool === null || selectedTool === "") {
     return null;
   }
 
-  if (canvasTools.includes(selectedTool)) {
-    return [...canvasTools, "readDocument"];
+  if (documentDefinitions.operations.has(selectedTool)) {
+    return [...documentDefinitions.operations.keys(), "readDocument"];
   }
   if (selectedTool.endsWith("Document")) {
     return [selectedTool, "readDocument"];

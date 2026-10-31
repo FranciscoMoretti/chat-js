@@ -1,5 +1,5 @@
 import { eq, sql } from "drizzle-orm";
-import type { UsageBilling } from "@/lib/usage-billing-contracts";
+import type { UsageBilling } from "@/chatjs/core/billing/contracts";
 import { getBalanceCents } from "./credits-queries";
 import { userCredit } from "./credits-schema";
 

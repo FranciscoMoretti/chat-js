@@ -1,5 +1,22 @@
+import {
+  installationActivation,
+  formatActivation,
+} from "./installation-activation";
 import path from "node:path";
-import { directoryFiles } from "./installation-files";
+import { compareRegistrySource } from "@chat-js/registry-validation/compare";
+import type {
+  FormatSource,
+  SourceComparison,
+} from "@chat-js/registry-validation/compare";
+import {
+  installationFileKind,
+  installationRecordPaths,
+} from "./installation-file-kinds";
+import {
+  directoryFiles,
+  optionalDirectoryFiles,
+  optionalFile,
+} from "./installation-files";
 import { pluginSourceFiles, readPluginDescriptors } from "./installed-plugins";
 import {
   findSourceReferences,
@@ -8,19 +25,12 @@ import {
 import { preflight } from "./preflight";
 import { readRetainedSchemas } from "./retained-plugin-schemas";
 import { pluginRegistrationTargets } from "./sync-plugins";
-import { readReceipt, sourceHashes } from "./source-receipt";
-
-const optionalDirectoryFiles = async (cwd: string, directory: string) => {
-  await preflight(cwd, [`${directory}/.ownership-check`]);
-  try {
-    return await directoryFiles(cwd, directory);
-  } catch (error) {
-    if (error instanceof Error && "code" in error && error.code === "ENOENT") {
-      return [];
-    }
-    throw error;
-  }
-};
+import {
+  hash,
+  readReceipt,
+  readSourceBaselines,
+  sourceHashes,
+} from "./source-receipt";
 
 const sourceState = (
   digest: string | null | undefined,
@@ -36,7 +46,10 @@ const sourceState = (
 };
 
 /** Local inventory only: never generates files, updates receipts, or contacts a registry. */
-export const installationStatus = async (cwd: string) => {
+export const installationStatus = async (
+  cwd: string,
+  options: Readonly<{ formatSource?: FormatSource }> = {}
+) => {
   const plugins = await readPluginDescriptors(cwd);
   const receipt = await readReceipt(cwd);
   const retained = await readRetainedSchemas(cwd);
@@ -44,9 +57,9 @@ export const installationStatus = async (cwd: string) => {
     plugins.map(async (plugin) => {
       const files = [
         ...new Set([
-          `plugins/${plugin.id}/chatjs.json`,
+          `chatjs/plugins/${plugin.id}/chatjs.json`,
           ...pluginSourceFiles(plugin),
-          ...(await directoryFiles(cwd, `plugins/${plugin.id}`)),
+          ...(await directoryFiles(cwd, `chatjs/plugins/${plugin.id}`)),
         ]),
       ].toSorted();
       try {
@@ -69,9 +82,75 @@ export const installationStatus = async (cwd: string) => {
       }
     })
   );
-  const targets = new Set(owners.flatMap(({ files }) => files));
+  const namespaceGroups = await Promise.all(
+    ["chatjs/core", "chatjs/providers", "chatjs/tools"].map(
+      async (directory) => await optionalDirectoryFiles(cwd, directory)
+    )
+  );
+  const namespaceFiles = namespaceGroups.flat();
+  const targets = new Set([
+    ...owners.flatMap(({ files }) => files),
+    ...namespaceFiles,
+    ...Object.keys(receipt),
+  ]);
   await preflight(cwd, [...targets]);
-  const hashes = new Map(await sourceHashes(cwd, [...targets]));
+  const modifiedSources = new Map<string, Buffer>();
+  const hashes = new Map(
+    await sourceHashes(cwd, [...targets], (file, digest, content) => {
+      if (
+        options.formatSource &&
+        content &&
+        receipt[file] &&
+        receipt[file] !== digest
+      ) {
+        modifiedSources.set(file, content);
+      }
+    })
+  );
+  const baselines = options.formatSource ? await readSourceBaselines(cwd) : {};
+  const comparisons = new Map<
+    string,
+    {
+      readonly state: SourceComparison["status"];
+      readonly formatting?: string;
+    }
+  >(
+    await Promise.all(
+      [...modifiedSources].map(async ([file, content]) => {
+        const baseline = baselines[file];
+        const bytes =
+          baseline === undefined ? undefined : Buffer.from(baseline, "base64");
+        if (!bytes || hash(bytes) !== receipt[file]) {
+          return [
+            file,
+            { state: "modified", formatting: "baseline-unavailable" },
+          ] as const;
+        }
+        let original: string;
+        let local: string;
+        try {
+          const decoder = new TextDecoder("utf-8", {
+            fatal: true,
+            ignoreBOM: true,
+          });
+          original = decoder.decode(bytes);
+          local = decoder.decode(content);
+        } catch {
+          return [
+            file,
+            { state: "modified", formatting: "unsupported" },
+          ] as const;
+        }
+        const { status: state, ...detail } = await compareRegistrySource({
+          path: file,
+          baseline: original,
+          local,
+          formatSource: options.formatSource,
+        });
+        return [file, { state, ...detail }] as const;
+      })
+    )
+  );
   const references = await findSourceReferences(
     cwd,
     targets,
@@ -79,7 +158,8 @@ export const installationStatus = async (cwd: string) => {
   );
   const items = owners.map(({ plugin, files, preserved, removalIssue }) => ({
     id: plugin.id,
-    descriptor: `plugins/${plugin.id}/chatjs.json`,
+    descriptor: `chatjs/plugins/${plugin.id}/chatjs.json`,
+    activation: installationActivation(plugin, files),
     removalIssue,
     requires: plugin.requiresPlugins ?? [],
     requiredBy: plugins
@@ -87,13 +167,15 @@ export const installationStatus = async (cwd: string) => {
       .map((other) => other.id),
     files: files.map((file) => {
       const digest = hashes.get(file);
-      const state = sourceState(digest, receipt[file]);
       return {
         path: file,
-        kind:
-          file === `plugins/${plugin.id}/chatjs.json` ? "descriptor" : "source",
-        state,
-        outsidePluginDirectory: !file.startsWith(`plugins/${plugin.id}/`),
+        kind: "source" as const,
+        ...(comparisons.get(file) ?? {
+          state: sourceState(digest, receipt[file]),
+        }),
+        outsidePluginDirectory: !file.startsWith(
+          `chatjs/plugins/${plugin.id}/`
+        ),
         retainedOnRemoval: preserved.has(file),
       };
     }),
@@ -115,24 +197,66 @@ export const installationStatus = async (cwd: string) => {
       .map(async ([id, schemas]) => ({
         id,
         schemas,
-        files: await optionalDirectoryFiles(cwd, `plugins/${id}`),
+        files: await optionalDirectoryFiles(cwd, `chatjs/plugins/${id}`),
       }))
   );
   const generated = await optionalDirectoryFiles(cwd, "chatjs/generated");
+  const application = await optionalDirectoryFiles(cwd, "integrations");
+  const recordCandidates = await Promise.all(
+    installationRecordPaths.map(async (file) => {
+      await preflight(cwd, [file]);
+      return (await optionalFile(path.join(cwd, file))) ? file : null;
+    })
+  );
+  const records = recordCandidates.filter((file) => file !== null);
+  const files = [
+    ...new Set([...targets, ...generated, ...application, ...records]),
+  ]
+    .toSorted()
+    .map((file) => {
+      const kind = installationFileKind(file, targets);
+      return {
+        path: file,
+        kind,
+        ...(kind === "source"
+          ? (comparisons.get(file) ?? {
+              state: sourceState(hashes.get(file), receipt[file]),
+            })
+          : {}),
+      };
+    });
   return {
     project: path.resolve(cwd),
+    files,
     plugins: items,
     retainedPlugins,
-    generated: generated.toSorted(),
-    appOwnedIntegrations: [
-      ...(await optionalDirectoryFiles(cwd, "integrations")),
-    ].toSorted(),
     limitations: [
       "Source states compare against the last recorded installation, not the latest registry release.",
+      "Formatting-only is advisory; replacement and removal still protect every byte change. Old receipts without source content use exact comparison.",
       "Removal references cover relative and @/ static imports, re-exports, and literal dynamic imports; computed imports and custom aliases need review.",
-      "Tools, gateways, storage, and sandbox implementations are not included in the plugin inventory.",
+      "Native entries are path-convention matches; exports and framework configuration determine activation. Schema registration does not apply migrations.",
+      "Core, tools, and providers are inventoried from their source directories and existing receipts. Removal dependency analysis applies to plugins only. Application files outside integrations/ and recorded paths are not enumerated.",
     ],
   };
+};
+
+const formatOtherFiles = (
+  status: Awaited<ReturnType<typeof installationStatus>>,
+  allFiles: boolean
+): string[] => {
+  const pluginPaths = new Set(
+    status.plugins.flatMap((plugin) => plugin.files.map((file) => file.path))
+  );
+  return status.files
+    .filter(
+      (file) =>
+        !pluginPaths.has(file.path) &&
+        (allFiles || ("state" in file && file.state !== "unchanged"))
+    )
+    .map(
+      (file) =>
+        `  ${file.kind.padEnd(12)} ${("state" in file ? (file.state ?? "") : "").padEnd(15)} ${file.path}`
+    );
 };
 
 export const formatInstallationStatus = (
@@ -141,19 +265,29 @@ export const formatInstallationStatus = (
 ): string => {
   const lines = [
     "ChatJS file ownership",
-    "  chatjs/                 CLI-managed wiring, receipts, and backups",
-    "  integrations/           App-owned; add/remove/sync leave it alone",
-    "  plugins/<id>/           Editable installed source; tracked for safe replacement/removal",
+    "  application  Your application; installation preserves its composition.",
+    "  source       Installed source; local edits are tracked, not automatically merged.",
+    "  generated    Derived wiring; change its inputs instead.",
+    "  record       Installation bookkeeping; maintained by the CLI.",
+    "",
+    ...formatOtherFiles(status, allFiles),
     "",
   ];
   for (const plugin of status.plugins) {
-    const counts = ["unchanged", "modified", "missing", "untracked"].map(
+    const counts = [
+      "unchanged",
+      "formatting-only",
+      "modified",
+      "missing",
+      "untracked",
+    ].map(
       (state) =>
         `${plugin.files.filter((file) => file.state === state).length} ${state}`
     );
     lines.push(
       `${plugin.id}: ${counts.join(", ")}`,
-      `  Descriptor: ${plugin.descriptor}`
+      `  Descriptor: ${plugin.descriptor}`,
+      formatActivation(plugin.activation)
     );
     for (const file of plugin.files) {
       if (
@@ -162,7 +296,7 @@ export const formatInstallationStatus = (
         file.outsidePluginDirectory
       ) {
         lines.push(
-          `  ${file.state.padEnd(9)} ${file.path}${file.retainedOnRemoval ? " (retained schema source)" : ""}${file.outsidePluginDirectory ? " (plugin-owned framework file)" : ""}`
+          `  ${file.state.padEnd(15)} ${file.path}${"formatting" in file ? ` (formatting: ${file.formatting})` : ""}${file.retainedOnRemoval ? " (retained schema source)" : ""}${file.outsidePluginDirectory ? " (plugin-owned framework file)" : ""}`
         );
       }
     }
@@ -194,9 +328,8 @@ export const formatInstallationStatus = (
     );
   }
   lines.push(
-    `Generated files: ${status.generated.length}. Do not edit; use chat-js sync.`,
-    "App-owned composition files:",
-    ...status.appOwnedIntegrations.map((file) => `  ${file}`),
+    `Generated files: ${status.files.filter((file) => file.kind === "generated").length}. Change inputs and regenerate.`,
+    `Application files inventoried: ${status.files.filter((file) => file.kind === "application").length}. Composition is preserved.`,
     "",
     ...status.limitations,
     "Use chat-js remove <plugin> --dry-run for the full removal check. No files were changed."

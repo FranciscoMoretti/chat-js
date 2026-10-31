@@ -1,19 +1,22 @@
-import { signOutDesktop } from "@/plugins/desktop/sign-out";
+import { signOutDesktop } from "@/chatjs/plugins/desktop/sign-out";
 import {
   ELECTRON_AUTH_CALLBACK_PATH,
   ELECTRON_AUTH_CLIENT_ID,
   ELECTRON_AUTH_COOKIE_PREFIX,
-} from "@/plugins/desktop/protocol";
+} from "@/chatjs/plugins/desktop/protocol";
 import {
   ELECTRON_APP_SCHEME,
   ELECTRON_TRUSTED_ORIGINS,
   buildSocialAuthRequest,
-} from "@/plugins/desktop/electron-auth";
+} from "@/chatjs/plugins/desktop/electron-auth";
 import { afterEach, expect, it, vi } from "vitest";
-import authClient from "@/plugins/desktop/desktop-auth-client";
+import authClient from "@/chatjs/plugins/desktop/desktop-auth-client";
 import { betterAuth } from "better-auth";
 import { createHash } from "node:crypto";
-import { desktopAuth, electronAuthPlugin } from "@/plugins/desktop/auth-server";
+import {
+  desktopAuth,
+  electronAuthPlugin,
+} from "@/chatjs/plugins/desktop/auth-server";
 import { z } from "zod";
 
 vi.mock("@/lib/config", () => ({

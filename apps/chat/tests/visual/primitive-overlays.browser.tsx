@@ -37,6 +37,10 @@ test("existing primitives preserve anchored overlay states", async () => {
 test("layout primitives preserve alert dialog and sheet portals", async () => {
   let fixture = await mount(<LayoutPrimitivesVisualFixture />);
   try {
+    await expect
+      .element(page.getByTestId("layout-primitives-fixture"))
+      .toBeVisible();
+    await takeSnapshot("layout-primitives-closed");
     await act(async () => {
       await page.getByRole("button", { name: "Open alert" }).click();
     });

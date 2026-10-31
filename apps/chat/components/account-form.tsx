@@ -1,6 +1,6 @@
 "use client";
 import { useSearchParams } from "next/navigation";
-import { AuthenticationForm } from "@/integrations/authentication-form";
+import { AuthenticationForm } from "@/integrations/auth/form";
 import { AuthFormView } from "./auth-form-view";
 import { SocialAuthProviders } from "./auth-providers";
 

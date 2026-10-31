@@ -5,8 +5,8 @@ import React from "react";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { ReasonSearchResearchProgress } from "./progress";
 import { ResearchUpdateSchema } from "@/tools/platform/research-updates-schema";
-import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
-import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
+import type { ToolRendererProps } from "@/chatjs/core/tools/define-renderer";
+import { defineToolRenderer } from "@/chatjs/core/tools/define-renderer";
 
 export const DeepResearchRenderer = defineToolRenderer({
   inputSchema: researchInput,

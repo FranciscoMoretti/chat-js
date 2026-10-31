@@ -3,7 +3,7 @@ import type { EveMessagePart } from "eve/client";
 import React from "react";
 import { eveCodeExecutionResult } from "./schemas";
 import { toolOutputSchema } from "@/lib/eve/tool-result";
-import { CodeExecutionChart } from "@/tools/chatjs/_shared/code-execution/code-execution-chart";
+import { CodeExecutionChart } from "@/chatjs/tools/_shared/code-execution/code-execution-chart";
 
 export const EveDocumentRunResult = ({
   part,

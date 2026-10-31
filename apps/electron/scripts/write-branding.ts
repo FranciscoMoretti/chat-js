@@ -3,7 +3,7 @@ import {
   ELECTRON_AUTH_CALLBACK_PATH,
   ELECTRON_AUTH_CLIENT_ID,
   ELECTRON_AUTH_COOKIE_PREFIX,
-} from "../../chat/plugins/desktop/protocol";
+} from "../../chat/chatjs/plugins/desktop/protocol";
 import { writeFile } from "node:fs/promises";
 
 const { appName, appPrefix, appUrl, organization } = config;

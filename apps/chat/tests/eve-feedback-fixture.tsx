@@ -1,7 +1,7 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
 
-import { MessageVoteActions } from "../plugins/feedback/message-vote-actions";
+import { MessageVoteActions } from "../chatjs/plugins/feedback/message-vote-actions";
 
 const states: {
   label: string;

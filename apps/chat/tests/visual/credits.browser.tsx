@@ -1,24 +1,24 @@
 import { takeSnapshot } from "@uiverify/vitest";
 import { act, createContext, useContext } from "react";
-import { Plugins } from "@/lib/ui-slots";
+import { Plugins } from "@/chatjs/core/ui/slots";
 import { createRoot } from "react-dom/client";
 import { expect, test, vi } from "vitest";
 import { page } from "vitest/browser";
 
 import { SidebarUserNav } from "@/components/sidebar-user-nav";
 import { SidebarProvider } from "@/components/ui/sidebar";
-import { creditsClient } from "@/plugins/credits/client-plugin";
+import { creditsClient } from "@/chatjs/plugins/credits/client-plugin";
 import "./sandbox.css";
 
 const Balance = createContext<{
   balanceCents: number | undefined;
   isError: boolean;
 }>({ balanceCents: undefined, isError: false });
-vi.mock("@/plugins/credits/use-credits", () => ({
+vi.mock("@/chatjs/plugins/credits/use-credits", () => ({
   useGetCredits: () => useContext(Balance),
 }));
 vi.mock("@/lib/auth-client", () => ({ default: {} }));
-vi.mock("@/integrations/sign-out", () => ({
+vi.mock("@/integrations/auth/sign-out", () => ({
   signOutWithPlugin: async (): Promise<boolean> => await Promise.resolve(false),
 }));
 vi.mock("@/integrations/navigation", () => ({

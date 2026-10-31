@@ -1,5 +1,5 @@
 "use client";
-import { definePlugin, slot } from "@/lib/ui-slots";
+import { definePlugin, slot } from "@/chatjs/core/ui/slots";
 import { ComposerAttachments } from "@/components/chat-slots";
 import { attachmentUploads } from "./integration";
 import { AttachFilesControl, TakePhotoControl } from "./controls";

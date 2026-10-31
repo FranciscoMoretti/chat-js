@@ -28,7 +28,7 @@ export const externalGatewayFixture = () => {
         {
           content: adapter,
           path: "adapter.ts",
-          target: "~/lib/ai/gateway/adapter.ts",
+          target: "~/chatjs/providers/gateway/adapter.ts",
           type: "registry:file",
         },
       ],
@@ -41,7 +41,7 @@ export const externalGatewayFixture = () => {
         {
           content: 'export { Gateway } from "./gateway/adapter";\n',
           path: "gateway.ts",
-          target: "~/lib/ai/gateway.ts",
+          target: "~/chatjs/providers/gateway.ts",
           type: "registry:file",
         },
       ],

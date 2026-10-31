@@ -17,9 +17,9 @@ import React, { Fragment, useCallback, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 
 import { InternalLink } from "@/components/internal-link";
-import { ConnectorHeader } from "@/plugins/mcp/ui/connector-header";
-import { McpConnectDialog } from "@/plugins/mcp/ui/mcp-connect-dialog";
-import { McpCreateDialog } from "@/plugins/mcp/ui/mcp-create-dialog";
+import { ConnectorHeader } from "@/chatjs/plugins/mcp/ui/connector-header";
+import { McpConnectDialog } from "@/chatjs/plugins/mcp/ui/mcp-connect-dialog";
+import { McpCreateDialog } from "@/chatjs/plugins/mcp/ui/mcp-create-dialog";
 import { SettingsPageContent } from "@/components/settings/settings-page";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -30,12 +30,12 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import type { McpConnector } from "@/plugins/mcp/db/mcp-schema";
-import type { McpConnectorsDialog } from "@/plugins/mcp/search/mcp-search-params";
+import type { McpConnector } from "@/chatjs/plugins/mcp/db/mcp-schema";
+import type { McpConnectorsDialog } from "@/chatjs/plugins/mcp/search/mcp-search-params";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { Separator } from "@/components/ui/separator";
 import { installedPlugins } from "@/integrations/plugin-catalog";
-import { mcpConnectorsSettingsSearchParams } from "@/plugins/mcp/search/mcp-search-params";
+import { mcpConnectorsSettingsSearchParams } from "@/chatjs/plugins/mcp/search/mcp-search-params";
 import { useTRPC } from "@/trpc/react";
 
 const CustomConnectorRow = ({

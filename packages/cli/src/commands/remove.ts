@@ -1,3 +1,4 @@
+import { formatActivation } from "#cli/utils/installation-activation";
 import { confirm, isCancel, log } from "@clack/prompts";
 import { Command } from "commander";
 import path from "node:path";
@@ -34,6 +35,11 @@ export const remove = new Command("remove")
       try {
         const cwd = path.resolve(options.cwd);
         const plan = await removePlugins(cwd, ids, { dryRun: true });
+        for (const item of plan.activation) {
+          log.info(
+            `${item.id} activation being removed:\n${formatActivation(item)}`
+          );
+        }
         log.info(`Remove:\n${plan.files.join("\n")}`);
         if (plan.preserved.length) {
           log.info(`Retain schema sources:\n${plan.preserved.join("\n")}`);

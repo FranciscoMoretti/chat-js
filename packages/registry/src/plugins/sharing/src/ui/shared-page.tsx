@@ -12,7 +12,7 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
 } from "@/components/ui/breadcrumb";
-import { getPublicEveTranscript } from "@/plugins/sharing/public-conversation";
+import { getPublicEveTranscript } from "@/chatjs/plugins/sharing/public-conversation";
 
 import { EveArtifactLayout } from "@/components/eve/eve-artifact-layout";
 import { EveSharedBadge } from "./shared-badge";

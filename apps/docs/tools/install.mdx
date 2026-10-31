@@ -23,7 +23,7 @@ The app derives installed tool types through `lib/ai/installed-tools.ts` and sel
 
 ## Customize and update
 
-Edit installed `tool.ts` and `renderer.tsx` normally. Put additional registrations in `integrations/tools.ts` and `integrations/tool-ui.ts`. Leave generated indexes to `sync`.
+Edit installed `tool.ts` and `renderer.tsx` normally. Put additional registrations in `integrations/tools/execution.ts` and `integrations/tools/ui.ts`. Leave generated indexes to `sync`.
 
 Repeat `add` to update an item. Existing files use normal shadcn overwrite behavior. Use `--overwrite` only when you want to replace installed source.
 

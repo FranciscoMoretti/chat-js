@@ -9,7 +9,7 @@ import {
   discoverEveMcpTools,
   executeEveMcpTool,
   requestEveMcpApproval,
-} from "../../plugins/mcp/runtime/mcp-tools";
+} from "../../chatjs/plugins/mcp/runtime/mcp-tools";
 import { createToolResult, hasEveToolReceipt } from "./tool-result";
 
 const mocks = vi.hoisted(() => ({
@@ -22,7 +22,7 @@ const mocks = vi.hoisted(() => ({
   requireCredentials: vi.fn(),
   tools: vi.fn(),
 }));
-vi.mock("@/plugins/mcp/setup", () => ({
+vi.mock("@/chatjs/plugins/mcp/setup", () => ({
   requireMcpCredentials: mocks.requireCredentials,
 }));
 
@@ -30,11 +30,11 @@ vi.mock("@/integrations/plugin-catalog", () => ({
   installedPlugins: { has: (): boolean => mocks.enabled.enabled },
 }));
 
-vi.mock("@/plugins/mcp/db/mcp-queries", () => ({
+vi.mock("@/chatjs/plugins/mcp/db/mcp-queries", () => ({
   getMcpConnectorById: mocks.get,
   getMcpConnectorsByUserId: mocks.list,
 }));
-vi.mock("@/plugins/mcp/oauth/mcp-client", () => ({
+vi.mock("@/chatjs/plugins/mcp/oauth/mcp-client", () => ({
   MCPClient: class {
     public constructor(_id: string, _name: string, options: unknown) {
       mocks.configure(options);

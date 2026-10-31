@@ -7,8 +7,8 @@ import {
   ContextTrigger,
   ContextContent,
 } from "@/components/ai-elements/context";
-import { ShareMenuSurface } from "@/plugins/sharing/ui/share-menu-surface";
-import { MoveMenuItem } from "@/plugins/projects/ui/move-menu-item";
+import { ShareMenuSurface } from "@/chatjs/plugins/sharing/ui/share-menu-surface";
+import { MoveMenuItem } from "@/chatjs/plugins/projects/ui/move-menu-item";
 import {
   DropdownMenu,
   DropdownMenuContent,

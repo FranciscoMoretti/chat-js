@@ -5,7 +5,7 @@ import { z } from "zod";
 import {
   describeMcpTool,
   executeMcpTool,
-} from "../../plugins/mcp/runtime/mcp-adapter";
+} from "../../chatjs/plugins/mcp/runtime/mcp-adapter";
 
 describe("Eve tool contract", () => {
   it("removes executable schema metadata from the advertised JSON schema", async () => {

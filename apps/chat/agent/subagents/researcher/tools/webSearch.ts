@@ -2,7 +2,7 @@ import { runs } from "eve/events";
 import { defineDynamic } from "eve/tools";
 
 import { isAccountSession } from "@/lib/eve/session-identity";
-import { toolProviders } from "@/integrations/tool-providers";
+import { toolProviders } from "@/integrations/tools/providers";
 
 const MAX_RESEARCH_SEARCH_ROUNDS = 19;
 

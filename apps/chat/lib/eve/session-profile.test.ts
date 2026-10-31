@@ -4,7 +4,7 @@ import { requireSessionProfile } from "./session-profile";
 const mocks = vi.hoisted(() => ({
   profiles: new Array<{ authenticator: string; instructions: string }>(),
 }));
-vi.mock("@/integrations/session-profiles", () => ({
+vi.mock("@/integrations/chat/session-profiles", () => ({
   sessionProfiles: mocks.profiles,
 }));
 

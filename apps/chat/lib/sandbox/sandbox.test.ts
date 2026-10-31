@@ -107,20 +107,22 @@ const imageScenarios: readonly Readonly<{
 describe("getSandboxImage", () => {
   it("rejects an empty image override before provisioning", async () => {
     vi.stubEnv("VERCEL_SANDBOX_IMAGE_PYTHON", "");
-    const { getSandboxImage } = await import("./adapter");
+    const { getSandboxImage } =
+      await import("@/chatjs/providers/sandbox/adapter");
     expect(() => getSandboxImage("python")).toThrow();
   });
   it.each(imageScenarios)("$name", async ({ language, overrides, image }) => {
     for (const [name, value] of Object.entries(overrides)) {
       vi.stubEnv(name, value);
     }
-    const { getSandboxImage } = await import("./adapter");
+    const { getSandboxImage } =
+      await import("@/chatjs/providers/sandbox/adapter");
     expect(getSandboxImage(language)).toBe(image);
   });
 });
 
 it("sandbox cleanup waits for terminal stop and propagates a failed confirmation", async () => {
-  const { cleanupSandbox } = await import("./adapter");
+  const { cleanupSandbox } = await import("@/chatjs/providers/sandbox/adapter");
   const gate = Promise.withResolvers<never>();
   const { stop, log, remove } = createCleanupFixture();
   stop.mockReturnValue(gate.promise);
@@ -152,7 +154,7 @@ it("sandbox cleanup waits for terminal stop and propagates a failed confirmation
 });
 
 it("creates an image-backed disposable sandbox with its scope and resource bounds", async () => {
-  const { createSandbox } = await import("./adapter");
+  const { createSandbox } = await import("@/chatjs/providers/sandbox/adapter");
   const create = vi
     .spyOn(Sandbox, "create")
     .mockRejectedValueOnce(new Error("fixture"));
@@ -196,7 +198,8 @@ it.each(["python", "javascript"] as const)(
       })
     );
     vi.stubGlobal("fetch", fetch);
-    const { createSandbox, getSandboxImage } = await import("./adapter");
+    const { createSandbox, getSandboxImage } =
+      await import("@/chatjs/providers/sandbox/adapter");
     const { signal } = new AbortController();
     const image = getSandboxImage(language);
     const sandbox = await createSandbox(image, signal, "owned");
@@ -224,7 +227,7 @@ it.each(["python", "javascript"] as const)(
 );
 
 it("does not report successful cleanup until deletion has completed", async () => {
-  const { cleanupSandbox } = await import("./adapter");
+  const { cleanupSandbox } = await import("@/chatjs/providers/sandbox/adapter");
   const gate = Promise.withResolvers<undefined>();
   const { stop, log, remove } = createCleanupFixture();
   remove.mockReturnValue(gate.promise);
@@ -247,7 +250,8 @@ it("createCleanupSession deletes an exact disposable sandbox and confirms provid
     .mockResolvedValueOnce(sandbox)
     .mockRejectedValueOnce(new APIError(new Response(null, { status: 404 })));
   try {
-    const { createCleanupSession } = await import("./adapter");
+    const { createCleanupSession } =
+      await import("@/chatjs/providers/sandbox/adapter");
     const cleanup = createCleanupSession();
     expect(cleanup.provider).toMatchObject({
       projectId: "project",
@@ -273,7 +277,8 @@ it.each([
     const { sandbox, stop, remove, get } = createSandboxFixture(identity);
     get.mockResolvedValue(sandbox);
     try {
-      const { createCleanupSession } = await import("./adapter");
+      const { createCleanupSession } =
+        await import("@/chatjs/providers/sandbox/adapter");
       const cleanup = createCleanupSession();
       await expect(cleanup.deleteAndConfirmAbsent("owned")).rejects.toThrow(
         "identity or persistence"

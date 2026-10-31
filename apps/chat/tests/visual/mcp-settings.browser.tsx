@@ -6,10 +6,10 @@ import { Toaster, toast } from "sonner";
 import { afterEach, expect, test, vi } from "vitest";
 import { page } from "vitest/browser";
 
-import { ConnectorsSettings } from "@/plugins/mcp/ui/connectors-settings";
-import { McpConnectDialog } from "@/plugins/mcp/ui/mcp-connect-dialog";
-import { McpCreateDialog } from "@/plugins/mcp/ui/mcp-create-dialog";
-import { McpDetailsPage } from "@/plugins/mcp/ui/mcp-details-page";
+import { ConnectorsSettings } from "@/chatjs/plugins/mcp/ui/connectors-settings";
+import { McpConnectDialog } from "@/chatjs/plugins/mcp/ui/mcp-connect-dialog";
+import { McpCreateDialog } from "@/chatjs/plugins/mcp/ui/mcp-create-dialog";
+import { McpDetailsPage } from "@/chatjs/plugins/mcp/ui/mcp-details-page";
 import {
   SettingsPage,
   SettingsPageHeader,
@@ -105,7 +105,7 @@ vi.mock("next/navigation", () => ({
   useRouter: () => mocks.router,
   useSearchParams: () => mocks.search,
 }));
-vi.mock("@/plugins/mcp/search/mcp-search-params", () => ({
+vi.mock("@/chatjs/plugins/mcp/search/mcp-search-params", () => ({
   mcpConnectorsSettingsSearchParams: {},
 }));
 

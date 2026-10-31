@@ -1,9 +1,9 @@
 import type { HookContext } from "eve/hooks";
 import { beforeEach, expect, test, vi } from "vitest";
 
-import conversation from "@/plugins/projects/conversation-hook";
+import conversation from "@/chatjs/plugins/projects/conversation-hook";
 import followups from "@/agent/hooks/followup-suggestions";
-import instructions from "@/plugins/projects/instructions";
+import instructions from "@/chatjs/plugins/projects/instructions";
 
 const mocks = vi.hoisted(() => {
   const state: { content: string | null } = { content: null };
@@ -14,7 +14,7 @@ const mocks = vi.hoisted(() => {
     state,
   };
 });
-vi.mock("@/plugins/followup-suggestions/generate-suggestions", () => ({
+vi.mock("@/chatjs/plugins/followup-suggestions/generate-suggestions", () => ({
   generateEveFollowupSuggestions: mocks.followups,
 }));
 vi.mock("eve/context", () => ({
@@ -30,7 +30,7 @@ vi.mock("eve/instructions", () => ({
   defineDynamic: <Value>(value: Value): Value => value,
   defineInstructions: <Value>(value: Value): Value => value,
 }));
-vi.mock("@/plugins/projects/instructions-state", () => ({
+vi.mock("@/chatjs/plugins/projects/instructions-state", () => ({
   projectInstructions: {
     get: (): typeof mocks.state => mocks.state,
     update: (update: () => { content: string | null }): void => {
@@ -41,7 +41,7 @@ vi.mock("@/plugins/projects/instructions-state", () => ({
 vi.mock("@/lib/eve/conversation-scope", () => ({
   resolveEveConversationScope: mocks.resolve,
 }));
-vi.mock("@/plugins/projects/db/project-queries", () => ({
+vi.mock("@/chatjs/plugins/projects/db/project-queries", () => ({
   getEveConversationProject: mocks.project,
 }));
 

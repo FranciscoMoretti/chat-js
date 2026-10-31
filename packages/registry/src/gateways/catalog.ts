@@ -49,7 +49,7 @@ export const builtInGateways = Object.entries(gatewayMetadata).map(
       files: [
         {
           path: `src/gateways/${id}/gateway.ts`,
-          target: "~/lib/ai/gateway.ts",
+          target: "~/chatjs/providers/gateway.ts",
           type: "registry:file" as const,
         },
       ],

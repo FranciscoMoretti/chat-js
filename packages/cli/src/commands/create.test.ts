@@ -38,17 +38,17 @@ it.each([false, true])(
     const config = "export default { custom: true };\n";
     const customized = "export const customTool = { execute: () => 42 };\n";
     if (chatjs) {
-      await mkdir(path.join(source, "tools/chatjs/custom"), {
+      await mkdir(path.join(source, "chatjs/tools/custom"), {
         recursive: true,
       });
-      await mkdir(path.join(source, "lib/ai"), { recursive: true });
+      await mkdir(path.join(source, "chatjs/providers"), { recursive: true });
       await writeFile(path.join(source, "chat.config.ts"), config);
       await writeFile(
-        path.join(source, "lib/ai/gateway.ts"),
+        path.join(source, "chatjs/providers/gateway.ts"),
         "export const gateway = {};\n"
       );
       await writeFile(
-        path.join(source, "tools/chatjs/custom/tool.ts"),
+        path.join(source, "chatjs/tools/custom/tool.ts"),
         customized
       );
     }
@@ -84,7 +84,7 @@ it.each([false, true])(
       ).toBe(config);
       expect(
         await readFile(
-          path.join(destination, "tools/chatjs/custom/tool.ts"),
+          path.join(destination, "chatjs/tools/custom/tool.ts"),
           "utf-8"
         )
       ).toBe(customized);

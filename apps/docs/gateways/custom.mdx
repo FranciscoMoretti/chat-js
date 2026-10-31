@@ -16,7 +16,7 @@ Remote registry items and their dependencies require HTTPS. HTTP is supported fo
 
 Start from a built-in item in the [gateway registry](https://github.com/FranciscoMoretti/chat-js/tree/cbfc757b353bc29bb46b58d14b994f798859ce8e/packages/registry/src/gateways). The [authoring contract](https://github.com/FranciscoMoretti/chat-js/blob/cbfc757b353bc29bb46b58d14b994f798859ce8e/packages/registry/src/gateways/README.md) describes the complete metadata and adapter interface.
 
-Your root item must use `type: "registry:item"`. Declare its SDK in `dependencies`, and include an adapter exporting `Gateway` at `~/lib/ai/gateway.ts`. Supporting files belong under `~/lib/ai/gateway/` and can come from `registryDependencies`.
+Your root item must use `type: "registry:item"`. Declare its SDK in `dependencies`, and include an adapter exporting `Gateway` at `~/chatjs/providers/gateway.ts`. Supporting files belong under `~/chatjs/providers/gateway/` and can come from `registryDependencies`.
 
 Set `meta.chatjs` with:
 
@@ -39,7 +39,7 @@ This is a metadata fragment, not a complete registry item. Read declared credent
 
 ## Generated app
 
-The CLI installs the selected adapter and dependencies, then writes `lib/ai/gateway-model-defaults.ts` with the gateway ID, defaults, capabilities, and environment declarations. `lib/env.ts` forwards those declared variables to the adapter, and `scripts/check-env.ts` checks the requirements. You do not add gateway entries to a central application registry or environment schema.
+The CLI installs the selected adapter and dependencies, then writes `chatjs/providers/gateway-defaults.ts` with the gateway ID, defaults, capabilities, and environment declarations. `lib/env.ts` forwards those declared variables to the adapter, and `scripts/check-env.ts` checks the requirements. You do not add gateway entries to a central application registry or environment schema.
 
 The generated `chat.config.ts` selects your gateway. Add credentials to `.env.local`, then verify the app:
 

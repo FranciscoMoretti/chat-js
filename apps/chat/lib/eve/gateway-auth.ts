@@ -1,4 +1,4 @@
-import type { SessionAuthentication } from "@/lib/session-profile-contracts";
+import type { SessionAuthentication } from "@/chatjs/core/session/contracts";
 import { isNonEmptyString } from "@/lib/is-non-empty-string";
 
 import { timingSafeEqual } from "node:crypto";
@@ -95,7 +95,7 @@ const readGatewayAttributes = async (
     return null;
   }
   const attributes: Record<string, string> = {};
-  if (selectedTool.data) {
+  if (selectedTool.data !== undefined) {
     attributes.selectedTool = selectedTool.data;
   }
   if (isNonEmptyString(modelId)) {

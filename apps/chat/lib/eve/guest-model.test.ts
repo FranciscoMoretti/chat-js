@@ -2,8 +2,8 @@ import type { LanguageModelV4StreamPart } from "@ai-sdk/provider";
 import { expect, test, vi } from "vitest";
 import { MockLanguageModelV4 } from "ai/test";
 import { wrapLanguageModel } from "ai";
-import { guestModelMiddleware } from "@/plugins/guest-chat/guest-model";
-import { GUEST_POLICY } from "@/plugins/guest-chat/guest-policy";
+import { guestModelMiddleware } from "@/chatjs/plugins/guest-chat/guest-model";
+import { GUEST_POLICY } from "@/chatjs/plugins/guest-chat/guest-policy";
 
 vi.mock("./model-selection", () => ({ resolveEveModel: vi.fn() }));
 const usage = {

@@ -1,3 +1,4 @@
+import { installationActivation } from "./installation-activation";
 import { randomUUID } from "node:crypto";
 import { mkdir, rename, rm, rmdir, writeFile } from "node:fs/promises";
 import path from "node:path";
@@ -13,7 +14,13 @@ import {
   readRetainedSchemas,
   retainedSchemasFile,
 } from "./retained-plugin-schemas";
-import { hash, readReceipt, receiptFile } from "./source-receipt";
+import {
+  hash,
+  readReceipt,
+  receiptFile,
+  readSourceBaselines,
+  sourceBaselineFile,
+} from "./source-receipt";
 import { planPluginRegistrations } from "./sync-plugins";
 import { writeGeneratedFiles } from "./write-generated-files";
 
@@ -38,9 +45,9 @@ export const planPluginRemoval = async (
   const candidates = new Set<string>();
   for (const plugin of retiring) {
     // oxlint-disable-next-line no-await-in-loop -- Validate each owned directory before enumerating it.
-    await preflight(cwd, [`plugins/${plugin.id}/chatjs.json`]);
+    await preflight(cwd, [`chatjs/plugins/${plugin.id}/chatjs.json`]);
     // oxlint-disable-next-line no-await-in-loop -- Collect complete ownership including local files before preparing the transaction.
-    const files = await directoryFiles(cwd, `plugins/${plugin.id}`);
+    const files = await directoryFiles(cwd, `chatjs/plugins/${plugin.id}`);
     for (const file of [...files, ...plugin.files]) {
       candidates.add(file);
     }
@@ -76,6 +83,7 @@ export const planPluginRemoval = async (
     new Set(registrations.keys())
   );
   const receipt = await readReceipt(cwd);
+  const baselines = await readSourceBaselines(cwd);
   const modified: string[] = [];
   const originals = new Map<string, Buffer>();
   await Promise.all(
@@ -97,8 +105,18 @@ export const planPluginRemoval = async (
     receiptFile,
     `${JSON.stringify(Object.fromEntries(Object.entries(receipt).filter(([file]) => !candidates.has(file) || preserved.has(file))), null, 2)}\n`
   );
+  if (Object.keys(baselines).length > 0) {
+    registrations.set(
+      sourceBaselineFile,
+      `${JSON.stringify(Object.fromEntries(Object.entries(baselines).filter(([file]) => !candidates.has(file) || preserved.has(file))), null, 2)}\n`
+    );
+  }
   return {
     ids: [...selected],
+    activation: retiring.map((plugin) => ({
+      id: plugin.id,
+      ...installationActivation(plugin, plugin.files),
+    })),
     files,
     modified: modified.toSorted(),
     preserved: [...preserved].toSorted(),

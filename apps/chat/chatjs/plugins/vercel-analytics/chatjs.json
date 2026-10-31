@@ -1,0 +1,15 @@
+{
+  "id": "vercel-analytics",
+  "kind": "plugin",
+  "files": [
+    "chatjs/plugins/vercel-analytics/component.tsx",
+    "chatjs/plugins/vercel-analytics/client-plugin.ts"
+  ],
+  "client": {
+    "export": "vercelAnalyticsClient",
+    "composerControls": [],
+    "settingsItems": [],
+    "layout": true
+  },
+  "contractVersion": 1
+}

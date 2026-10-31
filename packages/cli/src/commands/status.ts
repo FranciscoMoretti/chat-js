@@ -1,6 +1,7 @@
 import { Command } from "commander";
 import path from "node:path";
 import { handleError } from "#cli/utils/handle-error";
+import { loadSourceFormatter } from "#cli/utils/source-formatter";
 import {
   formatInstallationStatus,
   installationStatus,
@@ -8,17 +9,31 @@ import {
 
 export const status = new Command("status")
   .description(
-    "inspect plugin ownership, local edits, and removal dependencies without writing"
+    "inspect installation file kinds, local edits, and plugin removal dependencies without writing"
   )
   .option("-c, --cwd <cwd>", "project directory", process.cwd())
   .option("--files", "list every plugin-owned file", false)
   .option("--json", "print the full inventory as JSON", false)
+  .option(
+    "--format-source <module>",
+    "project module exporting formatSource for comparison"
+  )
   .action(
     async (
-      options: Readonly<{ cwd: string; files: boolean; json: boolean }>
+      options: Readonly<{
+        cwd: string;
+        files: boolean;
+        json: boolean;
+        formatSource?: string;
+      }>
     ) => {
       try {
-        const report = await installationStatus(path.resolve(options.cwd));
+        const cwd = path.resolve(options.cwd);
+        const formatSource =
+          options.formatSource === undefined
+            ? undefined
+            : await loadSourceFormatter(cwd, options.formatSource);
+        const report = await installationStatus(cwd, { formatSource });
         process.stdout.write(
           options.json
             ? `${JSON.stringify(report, null, 2)}\n`

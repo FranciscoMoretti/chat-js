@@ -173,9 +173,11 @@ test("provider-only installations expose no model tools and reject ambiguous sel
 test("replacement requires --replace and the existing provider satisfies later consumers", async () => {
   const f = await fixture();
   try {
-    await mkdir(path.join(f.root, "lib/sandbox"), { recursive: true });
+    await mkdir(path.join(f.root, "chatjs/providers/sandbox"), {
+      recursive: true,
+    });
     await writeFile(
-      path.join(f.root, "lib/sandbox/options.ts"),
+      path.join(f.root, "chatjs/providers/sandbox/options.ts"),
       'export const sandboxId = "vercel";'
     );
     const consumer = await planInstallation(f.root, {
@@ -281,11 +283,11 @@ test("uploads require a persistent provider through create planning and installe
       }
     );
     expect(selected.sandbox?.definition.id).toBe("vercel");
-    await mkdir(path.join(f.root, "plugins/attachment-uploads"), {
+    await mkdir(path.join(f.root, "chatjs/plugins/attachment-uploads"), {
       recursive: true,
     });
     await writeFile(
-      path.join(f.root, "plugins/attachment-uploads/chatjs.json"),
+      path.join(f.root, "chatjs/plugins/attachment-uploads/chatjs.json"),
       JSON.stringify({
         kind: "plugin",
         contractVersion: 1,
@@ -293,17 +295,19 @@ test("uploads require a persistent provider through create planning and installe
         files: [],
       })
     );
-    await mkdir(path.join(f.root, "lib/sandbox"), { recursive: true });
+    await mkdir(path.join(f.root, "chatjs/providers/sandbox"), {
+      recursive: true,
+    });
     await writeFile(
-      path.join(f.root, "lib/sandbox/options.ts"),
+      path.join(f.root, "chatjs/providers/sandbox/options.ts"),
       'export const sandboxId = "vercel";'
     );
     await writeFile(
-      path.join(f.root, "lib/sandbox/provider.ts"),
+      path.join(f.root, "chatjs/providers/sandbox/provider.ts"),
       "export const supportsPersistentSandbox = true;"
     );
     await writeFile(
-      path.join(f.root, "lib/storage-options.ts"),
+      path.join(f.root, "chatjs/providers/storage-options.ts"),
       'export const storageId = "s3";'
     );
     await rejects(

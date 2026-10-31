@@ -9,39 +9,43 @@ Start with a scaffold that includes these integration modules. An existing app u
 
 ## Ownership
 
+There are four file kinds: application, installed source, generated, and installation record. Application code is preserved during installation. Installed source can be customized, with local changes tracked for replacement/removal. Generated files are rebuilt from inputs, and records retain installation history. These kinds describe lifecycle, not editing permissions.
+
+Reusable helpers and contracts live in `chatjs/core/`. Selected provider implementations and configuration live in `chatjs/providers/`. Your composition remains in `integrations/`. Native route and agent adapters that belong to plugins carry a short source header because their framework paths do not show ownership.
+
 Run `chat-js status` to inspect the ownership and local-edit state of installed plugin files. See [status](../cli/status) for the file tree, source states, and migration from older layouts.
 
 | Location | Owner | What belongs here |
 | --- | --- | --- |
-| `plugins/<id>/chat.ts`, `plugins/<id>/billing.ts` | Installed plugin source, editable in your app | Plugin implementations |
+| `chatjs/plugins/<id>/chat.ts`, `chatjs/plugins/<id>/billing.ts` | Installed plugin source, editable in your app | Plugin implementations |
 | `chatjs/generated/installed-chat.ts`, `chatjs/generated/installed-billing.ts` | Installer | Static imports and typed adapter lists |
-| `integrations/chat.ts`, `integrations/billing.ts` | Your app | Selection, ordering, wrappers, and local adapters |
-| `lib/compose-chat.ts`, `lib/compose-billing.ts` | Your app | Shared composition rules and defaults |
+| `integrations/chat/server.ts`, `integrations/billing.ts` | Your app | Selection, ordering, wrappers, and local adapters |
+| `chatjs/core/chat/compose.ts`, `chatjs/core/billing/compose.ts` | Installed source | Shared composition rules and defaults |
 | Routes, queries, and native runtime callers | Your app | Calls to the composed integration |
 
-Keep local application modules outside `plugins/<id>/` when they should survive removal of that plugin. Generated lists do not contain callbacks, default policies, or application behavior.
+Keep local application modules outside `chatjs/plugins/<id>/` when they should survive removal of that plugin. Generated lists do not contain callbacks, default policies, or application behavior.
 
 ## Chat lifecycle
 
 The default composition is:
 
 ```ts
-// integrations/chat.ts
+// integrations/chat/server.ts
 import { installedChat } from "@/chatjs/generated/installed-chat";
-import { composeChat } from "@/lib/compose-chat";
+import { composeChat } from "@/chatjs/core/chat/compose";
 
 export const chat = composeChat(installedChat);
 ```
 
-Callers import `chat` from `@/integrations/chat`. They do not enumerate installed plugins themselves. The composed interface exposes `onCreate`, `afterCreate`, `historyFilter`, `publicReadFilter`, `links`, `onDeleteConversations`, and `onDelete`.
+Callers import `chat` from `@/integrations/chat/server`. They do not enumerate installed plugins themselves. The composed interface exposes `onCreate`, `afterCreate`, `historyFilter`, `publicReadFilter`, `links`, `onDeleteConversations`, and `onDelete`.
 
 To add app-owned behavior, put another adapter beside the installed list. For example, this adds a post-creation log:
 
 ```ts
-// integrations/chat.ts
+// integrations/chat/server.ts
 import { installedChat } from "@/chatjs/generated/installed-chat";
-import type { ChatServerIntegration } from "@/lib/chat-plugin-contracts";
-import { composeChat } from "@/lib/compose-chat";
+import type { ChatServerIntegration } from "@/chatjs/core/chat/contracts";
+import { composeChat } from "@/chatjs/core/chat/compose";
 import { createModuleLogger } from "@/lib/logger";
 
 const log = createModuleLogger("app.chat");
@@ -78,7 +82,7 @@ The default composition is:
 ```ts
 // integrations/billing.ts
 import { installedBilling } from "@/chatjs/generated/installed-billing";
-import { composeBilling } from "@/lib/compose-billing";
+import { composeBilling } from "@/chatjs/core/billing/compose";
 
 export const billing = composeBilling(installedBilling);
 ```
@@ -98,7 +102,7 @@ Wrap the composed policy in this same file. This example restricts paid turns to
 ```ts
 // integrations/billing.ts
 import { installedBilling } from "@/chatjs/generated/installed-billing";
-import { composeBilling } from "@/lib/compose-billing";
+import { composeBilling } from "@/chatjs/core/billing/compose";
 
 const selected = composeBilling(installedBilling);
 const permittedOwners = new Set(["your-owner-id"]);
@@ -124,42 +128,114 @@ Keep chat lifecycle and billing modules safe for Next.js server code and native 
 
 ## Integration points
 
+Related modules are grouped under `auth/`, `chat/`, `tools/`, `documents/` and `providers/`. Single-file domains such as billing and database remain at the top level. Import each module directly. There are no directory barrel exports, and browser-safe definitions and UI remain separate from server execution.
+
 All runtime consumers go through app-owned composition. There is no shared plugin runtime or discovery system: these are ordinary TypeScript modules, React slots, and native framework entry points.
 
 | App-owned modules in `integrations/` | Responsibility |
 | --- | --- |
-| `chat.ts`, `billing.ts` | Compose lifecycle adapters and select billing policy |
-| `chat-ui.ts`, `layout.ts` | Order or extend typed UI plugin lists; JSX slots still control placement |
-| `authentication.ts`, `authentication-form.ts`, `sign-out.ts`, `signed-out.ts` | Select authentication policy, form, sign-out handler and signed-out screen separately |
-| `navigation.ts`, `model-visibility.ts`, `uploads.ts` | Select navigation, model visibility and attachment hooks with explicit defaults |
-| `tools.ts`, `tool-ui.ts`, `tool-providers.ts` | Compose native tools, renderers and shared provider definitions |
-| `tool-availability.ts`, `tool-configuration.ts`, `composer-tools.ts` | Compose exposure predicates, client-safe schemas and display metadata |
-| `document-ui.ts`, `document-actions.ts`, `document-run.ts`, `code-executor.ts` | Compose editors and assistant actions, select saved-document execution |
+| `chat/server.ts`, `billing.ts` | Compose lifecycle adapters and select billing policy |
+| `chat/ui.ts`, `layout.ts` | Order or extend typed UI plugin lists; JSX slots still control placement |
+| `auth/server.ts`, `auth/form.ts`, `auth/sign-out.ts`, `auth/signed-out.ts` | Select authentication policy, form, sign-out handler and signed-out screen separately |
+| `navigation.ts`, `chat/model-visibility.ts`, `chat/uploads.ts` | Select navigation, model visibility and attachment hooks with explicit defaults |
+| `tools/execution.ts`, `tools/ui.ts`, `tools/providers.ts` | Compose native tools, renderers and shared provider definitions |
+| `tools/definitions.ts`, `tools/selection.ts`, `tools/availability.ts`, `tools/configuration.ts`, `tools/composer.ts` | Compose exposure predicates, client-safe schemas and display metadata |
+| `documents/definitions.ts`, `documents/ui.ts`, `documents/run.ts`, `tools/code-executor.ts` | Compose editors and assistant actions, select saved-document execution |
 | `routers.ts`, `instrumentation.ts`, `database.ts` | Compose native tRPC routers, startup handlers and Drizzle schema paths |
-| `session-profiles.ts`, `cleanup.ts` | Select persisted-session profiles and scheduled cleanup tasks |
-| `plugin-catalog.ts`, `tool-catalog.ts` | Client-safe installation names and document kinds |
-| `gateway.ts`, `storage.ts`, `sandbox.ts` | Wrap the installed native provider factories |
+| `chat/session-profiles.ts`, `cleanup.ts` | Select persisted-session profiles and scheduled cleanup tasks |
+| `plugin-catalog.ts`, `tools/catalog.ts` | Client-safe installation names and document kinds |
+| `providers/gateway.ts`, `providers/storage.ts`, `providers/sandbox.ts` | Wrap the installed native provider factories |
 
 Each file imports the matching generated input and exports the app's selection. Gateway, storage and sandbox use their installed implementation modules directly rather than a generated registry. Their lifecycle and credentials remain in the provider implementations and runtime callers.
 
 ### Add or wrap tools
 
-Add a native EVE definition to the object in `integrations/tools.ts`, retaining the installed inputs and workflow-name guard. Add its renderer to `integrations/tool-ui.ts`. An explicit object property after a spread can replace an installed definition or wrap an installed renderer. Installed descriptors still reject duplicate names; dynamic tools cannot shadow native workflow names.
+Add a native EVE definition to the object in `integrations/tools/execution.ts`, retaining the installed inputs and workflow-name guard. Add its renderer to `integrations/tools/ui.ts`. An explicit object property after a spread can replace an installed definition or wrap an installed renderer. Installed descriptors still reject duplicate names; dynamic tools cannot shadow native workflow names.
 
-Update `integrations/tool-catalog.ts` for an app-owned tool that should participate in selection, and `composer-tools.ts` for its display metadata. Keep these modules browser-safe. The catalog cannot import the server tool map to infer names: that would pull provider implementations and credentials into the client graph. There is no automatic discovery of arbitrary app-owned tools.
+Add its shared definition to `integrations/tools/definitions.ts` for catalog membership, selection (`selectable: true`), and display metadata. Use `tools/composer.ts` when you need a custom icon. Keep these modules browser-safe. The catalog cannot import the server tool map to infer names: that would pull provider implementations and credentials into the client graph. There is no automatic discovery of arbitrary app-owned tools.
+
+### Shared tool definitions
+
+Keep schemas and display metadata in a browser-safe `definition.ts`. Server execution and the renderer import the same definition. Do not export execution functions, environment readers, or server SDKs from this module.
+
+```ts
+// integrations/tools/definitions.ts
+import { installedToolDefinitions } from "@/chatjs/generated/tool-definitions";
+import { validateToolDefinitions } from "@/chatjs/core/tools/tool-definition";
+import { summarizeNotes } from "@/tools/local/summarize-notes/definition";
+
+export const toolDefinitions = validateToolDefinitions([
+  ...installedToolDefinitions,
+  summarizeNotes,
+]);
+```
+
+This list declares metadata, not execution. Register the native tool in `integrations/tools/execution.ts` and its validated renderer in `integrations/tools/ui.ts`. These separate imports keep execution out of the browser graph. Duplicate definition names fail at composition. Installed definitions also have a generated type check against their descriptor's registration name.
+
+### Document kinds
+
+A document bundle owns three entry points:
+
+| Entry | Responsibility |
+| --- | --- |
+| `definition.ts` | Browser-safe kind, content schema, create/edit operation names |
+| `tool.ts` | Native EVE tools with authorization and persistence |
+| `document.tsx` | Editor, copy behavior, comparison support, assistant actions |
+
+The app composes definitions in `integrations/documents/definitions.ts` and editors in `integrations/documents/ui.ts`. Add a kind such as `diagram` by adding its definition and view to those lists. You do not edit a core enum or add kind-specific branches. See [Authoring tools](../tools/authoring#document-bundles) for the bundle contract.
+
+Saved revisions store the kind as a string. Removing a bundle preserves its saved content and renders a read-only source fallback with a reinstall notice. Existing authorized reads still work. Tool and manual writes require the installed definition and pass its content schema. Reinstall the same kind to restore its editor. The content remains text, with a core size limit of two million characters. Structured formats can validate a textual representation.
+
+Wrap a document's `Body` in `integrations/documents/ui.ts` using ordinary React composition while retaining the other properties. A direct import of its installed source creates an explicit removal dependency, just like a tool renderer wrapper.
+
+### Uploads outside the composer
+
+`integrations/chat/uploads.ts` selects a headless upload hook. It returns `enabled`, `busy`, `uploadQueue`, `errors`, and `enqueue(files)`. The hook owns authentication checks, file preparation, the attachment limit, ordered delivery, and queue locking. It does not render controls, show toast notifications, or install DOM handlers.
+
+```tsx
+"use client";
+
+import { attachmentUploads } from "@/integrations/chat/uploads";
+import type { AttachmentUploadInput } from "@/chatjs/core/installation/contracts";
+
+export function ProjectFileInput(props: AttachmentUploadInput) {
+  const files = attachmentUploads.useUploads(props);
+  return (
+    <section>
+      <input
+        type="file"
+        multiple
+        disabled={!files.enabled || files.busy}
+        onChange={(event) => {
+          const selected = [...(event.currentTarget.files ?? [])];
+          event.currentTarget.value = "";
+          void files.enqueue(selected);
+        }}
+      />
+      {files.errors.map((error) => (
+        <p key={error} role="alert">
+          {error}
+        </p>
+      ))}
+    </section>
+  );
+}
+```
+
+Pass the current attachment count and an `onUploaded` callback. An optional `onError` callback lets your app display errors elsewhere. The chat composer separately uses `chatjs/core/uploads/use-attachment-picker.ts` for picker, drop, and paste events. The omitted-plugin default reports `enabled: false` and rejects direct enqueue calls. There is no separate progress or cancellation contract.
 
 ### Wrap UI
 
 For a renderer, retain the installed map and replace one entry with a normal React component:
 
 ```tsx
-// integrations/tool-ui.tsx (rename the scaffold's .ts file when adding JSX)
+// integrations/tools/ui.tsx (rename the scaffold's .ts file when adding JSX)
 import { installedToolUi } from "@/chatjs/generated/ui";
-import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
+import { defineToolRenderer } from "@/chatjs/core/tools/define-renderer";
 import {
   wordCountInput,
   wordCountResult,
-} from "@/tools/chatjs/word-count/schemas";
+} from "@/chatjs/tools/word-count/schemas";
 
 const WordCount = installedToolUi["tool-wordCount"];
 export const ui = {
@@ -182,8 +258,10 @@ Exclusive integrations reject multiple selections. Hook implementations are sele
 
 ## Native entry points and migration
 
-Next.js routes, EVE entry files and database migrations keep their native file conventions. Installing those files can activate behavior without a composition list. Plugin descriptors and `chat-js status` identify their ownership; integration modules do not intercept framework discovery. Removing a plugin retains its database schema history.
+Next.js routes, EVE entry files and database migrations keep their native file conventions. Installing those files can activate behavior without a composition list. `chat-js add --dry-run`, `chat-js status`, and `chat-js remove --dry-run` distinguish declared integration modules from native entry paths and ordinary framework source. The inventory matches known file conventions without executing source. Exports and framework configuration still determine actual activation. Integration modules do not intercept framework discovery. Removing a plugin retains its database schema history.
 
-Apps with the older generated exports or `composition/custom/` files must explicitly adopt the new modules and update callers before sync. Move local tool and renderer registrations into `integrations/tools.ts` and `integrations/tool-ui.ts`; preserve their behavior rather than overwriting them with scaffold defaults. After updating consumers, remove the obsolete generated behavior files named by the layout error, then run sync and app checks. Preserve receipts and user source. Sync does not rewrite arbitrary user source.
+Apps with the older generated exports or `composition/custom/` files must explicitly adopt the new modules and update callers before sync. Move local tool and renderer registrations into `integrations/tools/execution.ts` and `integrations/tools/ui.ts`; preserve their behavior rather than overwriting them with scaffold defaults. After updating consumers, remove the obsolete generated behavior files named by the layout error, then run sync and app checks. Preserve receipts and user source. Sync does not rewrite arbitrary user source.
 
 When automatic installation conflicts, `chat-js add <item> --files-only` exports raw source and connection metadata into a temporary review directory. Review and copy selected files, adapt aliases/dependencies, and connect them through these app-owned modules. The export does not install or activate the plugin. See [add](../cli/add).
+
+If your scaffold has flat integration files, move them into the domain paths listed above and update their imports, including imports between integration modules. Preserve your implementations and wrappers. Sync does not relocate or overwrite these application files.

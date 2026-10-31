@@ -106,15 +106,15 @@ const imports = (
   selected
     .map(
       (plugin, index) =>
-        `import { ${plugin[side]?.export} as plugin${index} } from "@/plugins/${plugin.id}/${side}-plugin";`
+        `import { ${plugin[side]?.export} as plugin${index} } from "@/chatjs/plugins/${plugin.id}/${side}-plugin";`
     )
     .join("\n");
 
 const billingRegistration = (plugins: readonly PluginDefinition[]): string => {
   const plugin = plugins.find((candidate) => candidate.billing);
   const billing = plugin?.billing;
-  return `${billing ? `import { ${billing.export} as pluginBilling } from "@/plugins/${plugin?.id}/billing";` : ""}
-import type { UsageBilling } from "@/lib/usage-billing-contracts";
+  return `${billing ? `import { ${billing.export} as pluginBilling } from "@/chatjs/plugins/${plugin?.id}/billing";` : ""}
+import type { UsageBilling } from "@/chatjs/core/billing/contracts";
 export const installedBilling: readonly UsageBilling[] = [${billing ? "pluginBilling" : ""}];`;
 };
 
@@ -152,59 +152,59 @@ const renderPluginRegistrations = (
   const contents = [
     [
       "installed-signed-out",
-      `${signedOut ? `import { ${signedOut.signedOut?.export} as pluginScreen } from "@/plugins/${signedOut.id}/signed-out";` : ""}
+      `${signedOut ? `import { ${signedOut.signedOut?.export} as pluginScreen } from "@/chatjs/plugins/${signedOut.id}/signed-out";` : ""}
 import type { ComponentType } from "react";
 export const installedSignedOutScreens: readonly ComponentType[] = [${signedOut ? "pluginScreen" : ""}];`,
     ],
     [
       "installed-session-profiles",
-      `${profiles.map((plugin, index) => `import { ${plugin.sessionProfile?.export} as profile${index} } from "@/plugins/${plugin.id}/session-profile";`).join("\n")}
-import type { SessionProfile } from "@/lib/session-profile-contracts";
+      `${profiles.map((plugin, index) => `import { ${plugin.sessionProfile?.export} as profile${index} } from "@/chatjs/plugins/${plugin.id}/session-profile";`).join("\n")}
+import type { SessionProfile } from "@/chatjs/core/session/contracts";
 ${profiles.map((plugin, index) => `if (profile${index}.authenticator !== ${JSON.stringify(plugin.sessionProfile?.authenticator)}) throw new Error("Session profile identity disagrees with its descriptor.");`).join("\n")}
 export const installedSessionProfiles: readonly SessionProfile[] = [${profiles.map((_, index) => `profile${index}`).join(", ")}];`,
     ],
     [
       "installed-cleanup",
-      `${cleanup.map((plugin, index) => `import { ${plugin.cleanup?.export} as cleanup${index} } from "@/plugins/${plugin.id}/cleanup";`).join("\n")}
+      `${cleanup.map((plugin, index) => `import { ${plugin.cleanup?.export} as cleanup${index} } from "@/chatjs/plugins/${plugin.id}/cleanup";`).join("\n")}
 import type { CleanupTask } from "@/lib/cleanup/contracts";
 ${cleanup.map((plugin, index) => `if (cleanup${index}.id !== ${JSON.stringify(plugin.cleanup?.id)}) throw new Error("Cleanup identity disagrees with its descriptor.");`).join("\n")}
 export const installedCleanupTasks: readonly CleanupTask[] = [${cleanup.map((_, index) => `cleanup${index}`).join(", ")}];`,
     ],
     [
       "installed-auth",
-      `${authentication ? `import { ${authentication.authentication?.export} as pluginAuth } from "@/plugins/${authentication.id}/auth-server";` : ""}
-import type { AuthenticationIntegration } from "@/lib/authentication-contracts";
+      `${authentication ? `import { ${authentication.authentication?.export} as pluginAuth } from "@/chatjs/plugins/${authentication.id}/auth-server";` : ""}
+import type { AuthenticationIntegration } from "@/chatjs/core/authentication/contracts";
 export const installedAuth: readonly AuthenticationIntegration[] = [${authentication ? "pluginAuth" : ""}];`,
     ],
     [
       "installed-auth-ui",
-      `${authUi ? `import { ${authUi.authenticationUi?.form} as pluginForm } from "@/plugins/${authUi.id}/auth-form";` : ""}
-import type { AuthenticationUi } from "@/lib/authentication-contracts";
+      `${authUi ? `import { ${authUi.authenticationUi?.form} as pluginForm } from "@/chatjs/plugins/${authUi.id}/auth-form";` : ""}
+import type { AuthenticationUi } from "@/chatjs/core/authentication/contracts";
 export const installedAuthenticationForms: readonly AuthenticationUi["Form"][] = [${authUi ? "pluginForm" : ""}];`,
     ],
     [
       "installed-sign-out",
-      `${authUi ? `import { ${authUi.authenticationUi?.signOut} as pluginSignOut } from "@/plugins/${authUi.id}/sign-out";` : ""}
-import type { AuthenticationUi } from "@/lib/authentication-contracts";
+      `${authUi ? `import { ${authUi.authenticationUi?.signOut} as pluginSignOut } from "@/chatjs/plugins/${authUi.id}/sign-out";` : ""}
+import type { AuthenticationUi } from "@/chatjs/core/authentication/contracts";
 export const installedSignOutHandlers: readonly AuthenticationUi["signOut"][] = [${authUi ? "pluginSignOut" : ""}];`,
     ],
     [
       "installed-navigation",
-      `${navigation.map((plugin) => `import { ${plugin.navigation?.export} as navigate } from "@/plugins/${plugin.id}/navigation";`).join("\n")}
+      `${navigation.map((plugin) => `import { ${plugin.navigation?.export} as navigate } from "@/chatjs/plugins/${plugin.id}/navigation";`).join("\n")}
 export const installedNavigationHandlers: readonly (() => boolean)[] = [${navigation.length > 0 ? "navigate" : ""}];`,
     ],
     ["installed-billing", billingRegistration(plugins)],
     [
       "installed-model-visibility",
-      `${imports(modelVisibility, "client")}\nimport type { ModelVisibility } from "@/lib/installation-contracts";\nexport const installedModelVisibility: readonly ModelVisibility[] = [${modelVisibility.length > 0 ? "plugin0.useModelVisibility" : ""}];`,
+      `${imports(modelVisibility, "client")}\nimport type { ModelVisibility } from "@/chatjs/core/installation/contracts";\nexport const installedModelVisibility: readonly ModelVisibility[] = [${modelVisibility.length > 0 ? "plugin0.useModelVisibility" : ""}];`,
     ],
     [
       "installed-chat",
-      `${chat.map((plugin, index) => `import { ${plugin.chat?.export} as chat${index} } from "@/plugins/${plugin.id}/chat";`).join("\n")}\nimport type { ChatServerIntegration } from "@/lib/chat-plugin-contracts";\nexport const installedChat: readonly ChatServerIntegration[] = [${chat.map((_, index) => `chat${index}`).join(", ")}];`,
+      `${chat.map((plugin, index) => `import { ${plugin.chat?.export} as chat${index} } from "@/chatjs/plugins/${plugin.id}/chat";`).join("\n")}\nimport type { ChatServerIntegration } from "@/chatjs/core/chat/contracts";\nexport const installedChat: readonly ChatServerIntegration[] = [${chat.map((_, index) => `chat${index}`).join(", ")}];`,
     ],
     [
       "installed-chat-ui",
-      `"use client";\n${imports(chatUi, "client")}\nimport type { UiPlugin } from "@/lib/ui-slots";\nexport const installedChatPlugins: readonly UiPlugin[] = [${chatUi.map((_, index) => `plugin${index}`).join(", ")}];`,
+      `"use client";\n${imports(chatUi, "client")}\nimport type { UiPlugin } from "@/chatjs/core/ui/slots";\nexport const installedChatPlugins: readonly UiPlugin[] = [${chatUi.map((_, index) => `plugin${index}`).join(", ")}];`,
     ],
     [
       "installed",
@@ -212,19 +212,19 @@ export const installedNavigationHandlers: readonly (() => boolean)[] = [${naviga
     ],
     [
       "installed-routers",
-      `${imports(routerPlugins, "server")}\nimport type { InstalledRouters } from "@/lib/installation-contracts";\nexport const installedRouters = { ${routerPlugins.flatMap((plugin, index) => plugin.server?.routers.map((key) => `${key}: plugin${index}().routers.${key}`) ?? []).join(", ")} } satisfies InstalledRouters;`,
+      `${imports(routerPlugins, "server")}\nimport type { InstalledRouters } from "@/chatjs/core/installation/contracts";\nexport const installedRouters = { ${routerPlugins.flatMap((plugin, index) => plugin.server?.routers.map((key) => `${key}: plugin${index}().routers.${key}`) ?? []).join(", ")} } satisfies InstalledRouters;`,
     ],
     [
       "installed-instrumentation",
-      `${imports(instrumented, "server")}\nimport type { InstrumentationRegistration } from "@/lib/installation-contracts";\nexport const installedInstrumentation: readonly InstrumentationRegistration[] = [${instrumented.map((_, index) => `plugin${index}().instrumentation`).join(", ")}];`,
+      `${imports(instrumented, "server")}\nimport type { InstrumentationRegistration } from "@/chatjs/core/installation/contracts";\nexport const installedInstrumentation: readonly InstrumentationRegistration[] = [${instrumented.map((_, index) => `plugin${index}().instrumentation`).join(", ")}];`,
     ],
     [
       "installed-layout",
-      `"use client";\n${imports(layout, "client")}\nimport type { UiPlugin } from "@/lib/ui-slots";\nexport const installedLayoutPlugins: readonly UiPlugin[] = [${layout.map((_, index) => `plugin${index}`).join(", ")}];`,
+      `"use client";\n${imports(layout, "client")}\nimport type { UiPlugin } from "@/chatjs/core/ui/slots";\nexport const installedLayoutPlugins: readonly UiPlugin[] = [${layout.map((_, index) => `plugin${index}`).join(", ")}];`,
     ],
     [
       "installed-uploads",
-      `${imports(uploads, "client")}\nimport type { AttachmentUploadIntegration } from "@/lib/installation-contracts";\nexport const installedUploads: readonly AttachmentUploadIntegration[] = [${uploads.length > 0 ? "plugin0.uploads" : ""}];`,
+      `${imports(uploads, "client")}\nimport type { AttachmentUploadIntegration } from "@/chatjs/core/installation/contracts";\nexport const installedUploads: readonly AttachmentUploadIntegration[] = [${uploads.length > 0 ? "plugin0.uploads" : ""}];`,
     ],
   ] as const;
   return new Map([
@@ -266,7 +266,9 @@ const syncPlugins = async (
   const plugins = await readInstalledPlugins(cwd);
   for (const id of options.expected ?? []) {
     if (!plugins.some((plugin) => plugin.id === id)) {
-      throw new Error(`Missing plugin descriptor: plugins/${id}/chatjs.json`);
+      throw new Error(
+        `Missing plugin descriptor: chatjs/plugins/${id}/chatjs.json`
+      );
     }
   }
   await writeGeneratedFiles(cwd, await planPluginRegistrations(cwd, plugins));
@@ -285,7 +287,7 @@ const initializePluginUi = async (cwd: string): Promise<void> => {
       })
     )
   );
-  await rm(path.join(cwd, "plugins"), { force: true, recursive: true });
+  await rm(path.join(cwd, "chatjs/plugins"), { force: true, recursive: true });
   await syncPlugins(cwd);
 };
 

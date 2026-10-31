@@ -1,10 +1,10 @@
 import { takeSnapshot } from "@uiverify/vitest";
-import { SharingActions } from "@/plugins/sharing/ui/chat-contributions";
+import { SharingActions } from "@/chatjs/plugins/sharing/ui/chat-contributions";
 import React, { act } from "react";
 import { expect, vi } from "vitest";
 import { page } from "vitest/browser";
 
-import { ProjectChatItem } from "@/plugins/projects/ui/project-chat-item";
+import { ProjectChatItem } from "@/chatjs/plugins/projects/ui/project-chat-item";
 import { SidebarChatItem } from "@/components/sidebar-chat-item";
 import { DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { SidebarMenu } from "@/components/ui/sidebar";
@@ -20,7 +20,7 @@ vi.mock("@/providers/session-provider", () => ({
   }),
 }));
 
-vi.mock("@/plugins/sharing/ui/share-dialog", () => ({
+vi.mock("@/chatjs/plugins/sharing/ui/share-dialog", () => ({
   EveShareButton: () => null,
   EveShareDialogContent: ({
     chatId,

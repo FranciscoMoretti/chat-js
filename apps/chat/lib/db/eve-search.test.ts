@@ -41,9 +41,10 @@ vi.mock(
 );
 vi.mock("@/lib/env", () => ({ env: {} }));
 
-const { eveEventSearchText } = await import("@/plugins/search/search-text");
+const { eveEventSearchText } =
+  await import("@/chatjs/plugins/search/search-text");
 const { indexEveSearchText, searchEveConversations } =
-  await import("@/plugins/search/search-queries");
+  await import("@/chatjs/plugins/search/search-queries");
 const { completeEveConversationDeletion } = await import("./eve-deletion");
 const chat = "00000000-0000-4000-8000-000000000001";
 const branch = "00000000-0000-4000-8000-000000000002";

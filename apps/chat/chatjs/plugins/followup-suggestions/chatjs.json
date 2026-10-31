@@ -1,0 +1,35 @@
+{
+  "id": "followup-suggestions",
+  "kind": "plugin",
+  "files": [
+    "chatjs/plugins/followup-suggestions/chat.ts",
+    "chatjs/plugins/followup-suggestions/client-plugin.ts",
+    "chatjs/plugins/followup-suggestions/followup-completion.ts",
+    "chatjs/plugins/followup-suggestions/followup-context.ts",
+    "chatjs/plugins/followup-suggestions/followup-hook.ts",
+    "chatjs/plugins/followup-suggestions/followup-queries.ts",
+    "chatjs/plugins/followup-suggestions/followup-schema.ts",
+    "chatjs/plugins/followup-suggestions/followup-suggestions-view.tsx",
+    "chatjs/plugins/followup-suggestions/generate-suggestions.ts",
+    "chatjs/plugins/followup-suggestions/router.ts",
+    "chatjs/plugins/followup-suggestions/server-plugin.ts",
+    "chatjs/plugins/followup-suggestions/suggestion-output.ts",
+    "chatjs/plugins/followup-suggestions/suggestions.tsx",
+    "chatjs/plugins/followup-suggestions/use-followups.ts",
+    "agent/hooks/followup-suggestions.ts"
+  ],
+  "databaseSchemas": ["chatjs/plugins/followup-suggestions/followup-schema.ts"],
+  "chat": { "export": "followupChat" },
+  "server": {
+    "export": "followupSuggestions",
+    "routers": ["followupSuggestions"]
+  },
+  "client": {
+    "export": "followupSuggestionsClient",
+    "composerControls": [],
+    "settingsItems": [],
+    "chat": true
+  },
+  "contractVersion": 2,
+  "uiBase": "base"
+}

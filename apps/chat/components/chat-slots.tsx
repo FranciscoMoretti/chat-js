@@ -1,10 +1,10 @@
 "use client";
-import { defineSlot } from "@/lib/ui-slots";
+import { defineSlot } from "@/chatjs/core/ui/slots";
 import type {
   ChatActionProps,
   ChatSuggestionsProps,
   ChatMessageActionProps,
-} from "@/lib/chat-plugin-contracts";
+} from "@/chatjs/core/chat/contracts";
 import type { ComposerControlProps } from "@/components/composer/control";
 
 export const SidebarSections = defineSlot();

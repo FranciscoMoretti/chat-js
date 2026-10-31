@@ -1,0 +1,14 @@
+{
+  "id": "langfuse",
+  "kind": "plugin",
+  "files": [
+    "chatjs/plugins/langfuse/instrumentation.ts",
+    "chatjs/plugins/langfuse/credentials.ts",
+    "chatjs/plugins/langfuse/server-plugin.ts"
+  ],
+  "envRequirements": [
+    { "options": [["LANGFUSE_PUBLIC_KEY", "LANGFUSE_SECRET_KEY"]] }
+  ],
+  "server": { "export": "langfuse", "routers": [], "instrumentation": true },
+  "contractVersion": 1
+}

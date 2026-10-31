@@ -206,11 +206,11 @@ process.exit(0);
     const declaration = original
       .replace(
         '  "agent/tools/mcp.ts",',
-        '  "plugins/mcp/sync-probe.ts",\n  "plugins/mcp/sync-alias.ts",\n  "agent/tools/mcp.ts",'
+        '  "chatjs/plugins/mcp/sync-probe.ts",\n  "chatjs/plugins/mcp/sync-alias.ts",\n  "agent/tools/mcp.ts",'
       )
       .replace(
-        'file.slice("plugins/mcp/".length)',
-        'file.slice("plugins/mcp/".length).replace("sync-alias.ts", "sync-probe.ts")'
+        'file.slice("chatjs/plugins/mcp/".length)',
+        'file.slice("chatjs/plugins/mcp/".length).replace("sync-alias.ts", "sync-probe.ts")'
       );
     await write(source, 'export const probe = "first";\n');
     await write(manifest, declaration);
@@ -223,7 +223,7 @@ process.exit(0);
     );
     const outputs = await Promise.all(
       ["sync-probe.ts", "sync-alias.ts"].map(
-        async (file) => await read(`apps/chat/plugins/mcp/${file}`)
+        async (file) => await read(`apps/chat/chatjs/plugins/mcp/${file}`)
       )
     );
     expect(outputs).toEqual([
@@ -249,12 +249,12 @@ process.exit(0);
     expect(await run([manifest])).toContain("Full generation");
     expect(
       await Bun.file(
-        path.join(fixture, "apps/chat/plugins/mcp/sync-probe.ts")
+        path.join(fixture, "apps/chat/chatjs/plugins/mcp/sync-probe.ts")
       ).exists()
     ).toBe(false);
     expect(
       await Bun.file(
-        path.join(fixture, "apps/chat/plugins/mcp/sync-alias.ts")
+        path.join(fixture, "apps/chat/chatjs/plugins/mcp/sync-alias.ts")
       ).exists()
     ).toBe(false);
     // Fresh preset imports remove an installed plugin and its ownership.
@@ -267,7 +267,10 @@ process.exit(0);
     await run([preset]);
     expect(
       await Bun.file(
-        path.join(fixture, "apps/chat/plugins/vercel-analytics/chatjs.json")
+        path.join(
+          fixture,
+          "apps/chat/chatjs/plugins/vercel-analytics/chatjs.json"
+        )
       ).exists()
     ).toBe(false);
     // Exercise the production process adapter, including its incremental cache.
@@ -278,7 +281,7 @@ import { strict as assert } from "node:assert";
 import { createDemoMirror } from "./packages/registry/scripts/demo-mirror";
 const mirror = createDemoMirror();
 const source = "packages/registry/src/plugins/mcp/src/runtime/mcp-tools.ts";
-const target = "apps/chat/plugins/mcp/runtime/mcp-tools.ts";
+const target = "apps/chat/chatjs/plugins/mcp/runtime/mcp-tools.ts";
 const original = await Bun.file(source).text();
 await mirror.run();
 await Bun.write(source, original + "\\n// adapter edit\\n");

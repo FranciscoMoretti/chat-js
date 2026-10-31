@@ -1,5 +1,5 @@
 "use client";
-import { definePlugin, slot } from "@/lib/ui-slots";
+import { definePlugin, slot } from "@/chatjs/core/ui/slots";
 import { ComposerExtensions, SettingsLinks } from "@/components/chat-slots";
 import { ConnectorsControl } from "./composer";
 import { ConnectorsSettingsLink } from "./settings";

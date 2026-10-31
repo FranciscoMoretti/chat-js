@@ -17,7 +17,7 @@ import {
   documentAssistantActions,
   documentAssistantRequest,
 } from "@/lib/eve/document-assistant-actions";
-import type { DocumentAssistantRequest } from "@/lib/eve/document-contracts";
+import type { DocumentAssistantRequest } from "@/chatjs/core/documents/contracts";
 
 const helperIcon = (label: string) => {
   switch (label) {
@@ -48,7 +48,7 @@ export const EveDocumentAssistantActions = ({
   busy = false,
   onStop,
 }: {
-  readonly kind: "text" | "code" | "sheet";
+  readonly kind: string;
   readonly documentId: string;
   readonly revisionId: string;
   readonly disabled: boolean;

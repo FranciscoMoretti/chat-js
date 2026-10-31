@@ -1,5 +1,5 @@
-import { setSharing } from "../plugins/sharing/queries";
-import { eveVote } from "../plugins/feedback/feedback-schema";
+import { setSharing } from "../chatjs/plugins/sharing/queries";
+import { eveVote } from "../chatjs/plugins/feedback/feedback-schema";
 import { createEveTestSession } from "./eve-native-session.fixture";
 
 import { eq } from "drizzle-orm";
@@ -12,10 +12,10 @@ import {
   beginEveConversationDeletion,
   createEveConversation,
 } from "../lib/db/eve-queries";
-import { getEveMessageVotes } from "../plugins/feedback/feedback-queries";
+import { getEveMessageVotes } from "../chatjs/plugins/feedback/feedback-queries";
 import { eveConversation, user } from "../lib/db/schema";
 import { env } from "../lib/env";
-import { voteEveMessage } from "../plugins/feedback/vote-message";
+import { voteEveMessage } from "../chatjs/plugins/feedback/vote-message";
 import { assertEveTestDatabase } from "./eve-test-database";
 
 vi.mock("server-only", () => ({}));

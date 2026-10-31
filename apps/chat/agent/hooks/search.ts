@@ -1,2 +1,2 @@
-// ChatJS plugin: search. Editable source; ownership: plugins/search/chatjs.json.
-export { default } from "@/plugins/search/search-hook";
+// ChatJS source: search. Ownership: chatjs/plugins/search/chatjs.json.
+export { default } from "@/chatjs/plugins/search/search-hook";

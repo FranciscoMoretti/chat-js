@@ -7,8 +7,8 @@ import {
   completeGuestRuntimeDeletion,
   countPendingGuestRuntimeDeletions,
   pruneGuestRuntimeRates,
-} from "@/plugins/guest-chat/guest-queries";
-import { getGuestCleanupConnectionOptions } from "@/plugins/guest-chat/guest-cleanup-auth";
+} from "@/chatjs/plugins/guest-chat/guest-queries";
+import { getGuestCleanupConnectionOptions } from "@/chatjs/plugins/guest-chat/guest-cleanup-auth";
 import { requireEveDeletionLifecycle } from "@/lib/eve/deletion-lifecycle";
 
 const MAX_CLEANUP_BATCH = 5;

@@ -41,7 +41,7 @@ const definition = (
 test("rejects conflicting provider selections and permits reinstalling the selected provider", async (): Promise<void> => {
   const root = await mkdtemp(path.join(tmpdir(), "chatjs-plan-provider-"));
   roots.push(root);
-  const directory = path.join(root, "tools/chatjs/first");
+  const directory = path.join(root, "chatjs/tools/first");
   await mkdir(directory, { recursive: true });
   await writeFile(
     path.join(directory, "chatjs.json"),
@@ -111,7 +111,7 @@ test("replaces an older executor descriptor but rejects newly requested provider
   const old = definition("previous-executor");
   const { codeExecutionCapabilities, ...oldDescriptor } = old;
   expect(codeExecutionCapabilities).toBeDefined();
-  const directory = path.join(root, "tools/chatjs/previous-executor");
+  const directory = path.join(root, "chatjs/tools/previous-executor");
   await mkdir(directory, { recursive: true });
   const installed = JSON.stringify(oldDescriptor);
   await writeFile(path.join(directory, "chatjs.json"), installed);

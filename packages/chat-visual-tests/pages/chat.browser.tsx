@@ -1,5 +1,6 @@
 import { route } from "./route";
-import { expect, test, vi } from "vitest";
+import { expect, onTestFinished, test, vi } from "vitest";
+import { documentDefinitions } from "@/integrations/documents/definitions";
 import { page, userEvent } from "vitest/browser";
 
 import ChatPage from "@/app/(chat)/chat/[id]/page";
@@ -14,6 +15,8 @@ import {
 
 import {
   history,
+  archivedDiagram,
+  archivedDiagramTranscript,
   invoicesConversation,
   invoicesShared,
   invoicesTranscripts,
@@ -915,3 +918,59 @@ test("message activity renders reasoning, tool errors and falsy results in the c
     .element(page.getByTestId("message-reasoning"))
     .toHaveTextContent("Checking the inventory before answering.");
 });
+
+test.each(["plugin", "editor"])(
+  "a historical document remains readable after its %s is removed",
+  async (removed) => {
+    if (removed === "editor") {
+      const installed = new Set([...documentDefinitions.kinds, "diagram"]);
+      const kinds = vi
+        .spyOn(documentDefinitions.kinds, "has")
+        .mockImplementation((kind) => installed.has(kind));
+      onTestFinished(() => {
+        kinds.mockRestore();
+      });
+    }
+    const { sessionId } = invoicesConversation;
+    if (sessionId === null) {
+      throw new Error("Missing fixture session");
+    }
+    await renderRoute(conversation, {
+      ...request,
+      transcripts: { [sessionId]: archivedDiagramTranscript },
+      trpc: { ...invoicesTrpc, "eve.document": archivedDiagram },
+    });
+    await expect
+      .element(page.getByRole("button", { name: 'Updated "Deployment flow"' }))
+      .toBeVisible();
+    await page
+      .getByRole("button", { name: 'Updated "Deployment flow"' })
+      .click();
+    await expect
+      .element(
+        page.getByText("Your saved content is preserved.", { exact: false })
+      )
+      .toBeVisible();
+    await expect
+      .element(
+        page.getByText(archivedDiagram.revision.content, { exact: true })
+      )
+      .toBeVisible();
+    await expect
+      .element(
+        page.getByRole("button", { name: "Copy to clipboard", exact: true })
+      )
+      .toBeEnabled();
+    expect(document.querySelector('[aria-label="Diagram source"]')).toBeNull();
+    await expect
+      .element(
+        page.getByRole("button", { name: "Restore this version", exact: true })
+      )
+      .not.toBeInTheDocument();
+    if (removed === "editor") {
+      await page.elementLocator(document.body).screenshot({
+        path: "__screenshots__/document-without-editor.png",
+      });
+    }
+  }
+);

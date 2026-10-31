@@ -7,7 +7,7 @@ import { expect, test, vi } from "vitest";
 import { page } from "vitest/browser";
 
 import { ToolOutput } from "@/components/part/tool-data";
-import { SidebarProjectItem } from "@/plugins/projects/ui/sidebar-project-item";
+import { SidebarProjectItem } from "@/chatjs/plugins/projects/ui/sidebar-project-item";
 import {
   Field,
   FieldDescription,
@@ -16,8 +16,8 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { SidebarMenu, SidebarProvider } from "@/components/ui/sidebar";
-import type { Project } from "@/plugins/projects/db/project-schema";
-import { DiffView } from "@/tools/chatjs/text-documents/diffview";
+import type { Project } from "@/chatjs/plugins/projects/db/project-schema";
+import { DiffView } from "@/chatjs/tools/text-documents/diffview";
 
 import "./sandbox.css";
 
@@ -25,7 +25,7 @@ const noop = (): void => {
   /* Capture callbacks do not persist fixture state. */
 };
 const renameProject = vi.fn().mockResolvedValue({});
-vi.mock("@/plugins/projects/use-projects", () => ({
+vi.mock("@/chatjs/plugins/projects/use-projects", () => ({
   useRenameProject: () => ({ isPending: false, mutateAsync: renameProject }),
 }));
 vi.mock("next/navigation", () => ({
@@ -69,7 +69,7 @@ const FixtureForm = ({
 
 // The inactive deletion dialog is outside this rename/fallback capture.
 vi.mock(
-  "@/plugins/projects/ui/delete-project-dialog",
+  "@/chatjs/plugins/projects/ui/delete-project-dialog",
   (): { DeleteProjectDialog: () => null } => ({
     DeleteProjectDialog: (): null => null,
   })

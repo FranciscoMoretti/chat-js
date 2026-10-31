@@ -1,13 +1,13 @@
 import { beforeEach, expect, it, vi } from "vitest";
-import type { indexEveSearchText } from "@/plugins/search/search-queries";
+import type { indexEveSearchText } from "@/chatjs/plugins/search/search-queries";
 
-import { backfillEveSearchConversation } from "@/plugins/search/search-backfill";
+import { backfillEveSearchConversation } from "@/chatjs/plugins/search/search-backfill";
 
 const mocks = vi.hoisted(() => ({
   index: vi.fn<typeof indexEveSearchText>(),
   snapshot: vi.fn(),
 }));
-vi.mock("@/plugins/search/search-queries", () => ({
+vi.mock("@/chatjs/plugins/search/search-queries", () => ({
   indexEveSearchText: mocks.index,
 }));
 vi.mock("./connection-options", () => ({

@@ -1,7 +1,10 @@
 import { aiConfigSchema, applyDefaults, defineConfig } from "./config-schema";
 
 import { expect, test } from "vitest";
-import { gatewayModelDefaults, gatewayType } from "./ai/gateway-model-defaults";
+import {
+  gatewayModelDefaults,
+  gatewayType,
+} from "@/chatjs/providers/gateway-defaults";
 
 test("partial tool and workflow overrides retain required sibling defaults", () => {
   const input = defineConfig({

@@ -3,8 +3,8 @@ import { beforeEach, expect, it, vi } from "vitest";
 import {
   executeDocumentDeletion,
   requestDocumentDeletion,
-} from "../../tools/chatjs/delete-document/execute";
-import { deleteDocument } from "../../tools/chatjs/delete-document/tool";
+} from "../../chatjs/tools/delete-document/execute";
+import { deleteDocument } from "../../chatjs/tools/delete-document/tool";
 import { testToolContext } from "../../tests/helpers/eve-tool-context";
 
 const mocks = vi.hoisted(() => ({
@@ -13,7 +13,7 @@ const mocks = vi.hoisted(() => ({
   remove: vi.fn(),
   resolve: vi.fn(),
 }));
-vi.mock("@/integrations/tool-catalog", () => ({
+vi.mock("@/integrations/tools/catalog", () => ({
   installedDocumentKinds: mocks.kinds,
 }));
 vi.mock("../db/eve-documents", () => ({

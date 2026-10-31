@@ -2,22 +2,22 @@ import type { RegistryItem } from "shadcn/schema";
 import { pluginDefinitionSchema } from "../../../metadata";
 
 const searchFiles = [
-  "plugins/search/backfill.ts",
-  "plugins/search/chat.ts",
-  "plugins/search/client-plugin.ts",
-  "plugins/search/sidebar-item.tsx",
-  "plugins/search/router.ts",
-  "plugins/search/search-backfill.ts",
-  "plugins/search/search-chats.tsx",
-  "plugins/search/search-surface.tsx",
-  "plugins/search/search-surface-props.ts",
-  "plugins/search/search-hook.ts",
-  "plugins/search/search-queries.ts",
-  "plugins/search/search-results-view.tsx",
-  "plugins/search/search-schema.ts",
-  "plugins/search/search-text.ts",
-  "plugins/search/server-plugin.ts",
-  "plugins/search/use-debounced-search.ts",
+  "chatjs/plugins/search/backfill.ts",
+  "chatjs/plugins/search/chat.ts",
+  "chatjs/plugins/search/client-plugin.ts",
+  "chatjs/plugins/search/sidebar-item.tsx",
+  "chatjs/plugins/search/router.ts",
+  "chatjs/plugins/search/search-backfill.ts",
+  "chatjs/plugins/search/search-chats.tsx",
+  "chatjs/plugins/search/search-surface.tsx",
+  "chatjs/plugins/search/search-surface-props.ts",
+  "chatjs/plugins/search/search-hook.ts",
+  "chatjs/plugins/search/search-queries.ts",
+  "chatjs/plugins/search/search-results-view.tsx",
+  "chatjs/plugins/search/search-schema.ts",
+  "chatjs/plugins/search/search-text.ts",
+  "chatjs/plugins/search/server-plugin.ts",
+  "chatjs/plugins/search/use-debounced-search.ts",
   "agent/hooks/search.ts",
 ];
 const searchDefinition = pluginDefinitionSchema.parse({
@@ -26,7 +26,7 @@ const searchDefinition = pluginDefinitionSchema.parse({
   id: "search",
   kind: "plugin",
   files: searchFiles,
-  databaseSchemas: ["plugins/search/search-schema.ts"],
+  databaseSchemas: ["chatjs/plugins/search/search-schema.ts"],
   server: { export: "search", routers: ["search"] },
   chat: { export: "searchChat" },
   client: { export: "searchClient", chat: true },
@@ -43,8 +43,8 @@ const searchItem: RegistryItem = {
   registryDependencies: ["button", "command", "dialog", "sidebar", "skeleton"],
   description: "Search chat titles and conversation text",
   files: searchFiles.map((file) => ({
-    path: file.startsWith("plugins/search/")
-      ? `src/plugins/search/src/${file.slice("plugins/search/".length)}`
+    path: file.startsWith("chatjs/plugins/search/")
+      ? `src/plugins/search/src/${file.slice("chatjs/plugins/search/".length)}`
       : `src/plugins/search/adapters/${file}`,
     target: `~/${file}`,
     type: "registry:file" as const,

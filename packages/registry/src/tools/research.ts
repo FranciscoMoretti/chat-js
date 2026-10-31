@@ -57,7 +57,7 @@ const researchItem: RegistryItem = {
       "configuration-schema.ts",
     ].map((file) => ({
       path: `src/tools/deep-research/${file}`,
-      target: `~/tools/chatjs/deep-research/${file}`,
+      target: `~/chatjs/tools/deep-research/${file}`,
       type: "registry:file" as const,
     })),
     ...researchAgentFiles.map((file) => ({

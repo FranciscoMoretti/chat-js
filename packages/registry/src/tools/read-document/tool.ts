@@ -1,7 +1,7 @@
 import {
   eveDocumentReadInput,
   eveDocumentReadResult,
-} from "@/lib/eve/document-contracts";
+} from "@/chatjs/core/documents/contracts";
 import type { ToolContext } from "eve/tools";
 import { defineTool } from "eve/tools";
 import { executeEveDocumentTool } from "@/lib/eve/document-tools";

@@ -1,5 +1,5 @@
 import { installedNavigationHandlers } from "@/chatjs/generated/installed-navigation";
-import { selectIntegration } from "@/lib/select-integration";
+import { selectIntegration } from "@/chatjs/core/installation/select";
 
 const navigate = selectIntegration(
   "modified navigation",

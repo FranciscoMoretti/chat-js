@@ -35,10 +35,10 @@ const generateDemo = async (
       throw result.reason;
     }
   }
-  const defaults = files.get("lib/ai/gateway-model-defaults.ts");
+  const defaults = files.get("chatjs/providers/gateway-defaults.ts");
   if (defaults !== undefined) {
     files.set(
-      "lib/ai/gateway-model-defaults.ts",
+      "chatjs/providers/gateway-defaults.ts",
       defaults.replace(
         'chat: "openai/gpt-5-mini"',
         'chat: "google/gemini-2.5-flash-lite"'

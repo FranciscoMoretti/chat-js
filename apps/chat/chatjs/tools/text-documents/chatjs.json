@@ -1,0 +1,20 @@
+{
+  "config": { "key": "text" },
+  "documentKind": "text",
+  "envRequirements": [],
+  "id": "text-documents",
+  "kind": "tool",
+  "requiresTools": ["readDocument"],
+  "tools": [
+    {
+      "composer": { "icon": "Edit3", "name": "Canvas", "shortName": "Canvas" },
+      "toolExport": "createTextDocument"
+    },
+    {
+      "composer": { "icon": "Edit3", "name": "Canvas", "shortName": "Canvas" },
+      "toolExport": "editTextDocument"
+    }
+  ],
+  "contractVersion": 2,
+  "uiBase": "base"
+}

@@ -31,7 +31,7 @@ afterEach(async (): Promise<void> => {
 const fixture = async (): Promise<string> => {
   const root = await mkdtemp(path.join(tmpdir(), "chatjs-database-"));
   roots.push(root);
-  await mkdir(path.join(root, "plugins/mcp"), { recursive: true });
+  await mkdir(path.join(root, "chatjs/plugins/mcp"), { recursive: true });
   await mkdir(path.join(root, "chatjs/generated"), { recursive: true });
   return root;
 };
@@ -93,16 +93,16 @@ test("offline baseline omits uninstalled schemas and adding MCP extends the same
   ).toHaveLength(1);
 
   await cp(
-    path.join(demo, "plugins/mcp/db"),
-    path.join(root, "plugins/mcp/db"),
+    path.join(demo, "chatjs/plugins/mcp/db"),
+    path.join(root, "chatjs/plugins/mcp/db"),
     { recursive: true }
   );
   await cp(
-    path.join(demo, "plugins/mcp/mcp-env.ts"),
-    path.join(root, "plugins/mcp/mcp-env.ts")
+    path.join(demo, "chatjs/plugins/mcp/mcp-env.ts"),
+    path.join(root, "chatjs/plugins/mcp/mcp-env.ts")
   );
   await writeFile(
-    path.join(root, "plugins/mcp/chatjs.json"),
+    path.join(root, "chatjs/plugins/mcp/chatjs.json"),
     JSON.stringify(mcpDefinition)
   );
   await writeFile(
@@ -127,12 +127,12 @@ test("offline baseline omits uninstalled schemas and adding MCP extends the same
   expect(next).not.toContain("DROP");
   await rejects(generateBaseline(root, "bun"), /existing migration history/u);
   await cp(
-    path.join(demo, "plugins/projects/db"),
-    path.join(root, "plugins/projects/db"),
+    path.join(demo, "chatjs/plugins/projects/db"),
+    path.join(root, "chatjs/plugins/projects/db"),
     { recursive: true }
   );
   await writeFile(
-    path.join(root, "plugins/projects/chatjs.json"),
+    path.join(root, "chatjs/plugins/projects/chatjs.json"),
     JSON.stringify(projectsDefinition)
   );
   await writeFile(
@@ -176,12 +176,16 @@ test("offline baseline omits uninstalled schemas and adding MCP extends the same
   expect(fullBaseline).toContain('CREATE TABLE "user"');
 }, 60_000);
 
-test.each(["../outside.ts", "lib/db/schema.ts", "plugins/other/schema.ts"])(
+test.each([
+  "../outside.ts",
+  "lib/db/schema.ts",
+  "chatjs/plugins/other/schema.ts",
+])(
   "plugin schema must remain within its owner: %s",
   async (schema): Promise<void> => {
     const root = await fixture();
     await writeFile(
-      path.join(root, "plugins/mcp/chatjs.json"),
+      path.join(root, "chatjs/plugins/mcp/chatjs.json"),
       JSON.stringify({ ...mcpDefinition, databaseSchemas: [schema] })
     );
     await rejects(planDatabaseSchemas(root, ["mcp"]));
@@ -191,7 +195,7 @@ test.each(["../outside.ts", "lib/db/schema.ts", "plugins/other/schema.ts"])(
 test("a selected schema must exist before registration", async (): Promise<void> => {
   const root = await fixture();
   await writeFile(
-    path.join(root, "plugins/mcp/chatjs.json"),
+    path.join(root, "chatjs/plugins/mcp/chatjs.json"),
     JSON.stringify(mcpDefinition)
   );
   await rejects(planDatabaseSchemas(root, ["mcp"]), /ENOENT/u);

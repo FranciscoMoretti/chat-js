@@ -1,0 +1,22 @@
+import type { InstrumentationRegistration } from "@/chatjs/core/installation/contracts";
+import { getLangfuseEnvironment } from "./credentials";
+import { isPlaywrightTestEnvironment } from "@/lib/playwright-test-environment";
+
+export const register: InstrumentationRegistration = async ({
+  appPrefix,
+  runtime,
+}: Readonly<{ appPrefix: string; runtime: string | undefined }>) => {
+  // Browser fixtures deliberately omit optional service credentials and exports.
+  if (runtime !== "nodejs" || isPlaywrightTestEnvironment()) {
+    return;
+  }
+  const environment = getLangfuseEnvironment();
+  const [{ registerOTel }, { LangfuseExporter }] = await Promise.all([
+    import("@vercel/otel"),
+    import("langfuse-vercel"),
+  ]);
+  registerOTel({
+    serviceName: appPrefix,
+    traceExporter: new LangfuseExporter(environment),
+  });
+};

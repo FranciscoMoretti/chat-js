@@ -1,4 +1,4 @@
-import type { DocumentAssistantAction } from "@/lib/eve/document-contracts";
+import type { DocumentAssistantAction } from "@/chatjs/core/documents/contracts";
 import { config } from "@/lib/config";
 
 const documentAssistantActions = (): DocumentAssistantAction[] => [

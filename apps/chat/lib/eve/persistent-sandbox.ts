@@ -14,7 +14,7 @@ import {
   getSandboxProvider,
   getPersistentSandboxProvider,
 } from "../sandbox/runtime";
-import { supportsPersistentSandbox } from "../sandbox/provider";
+import { supportsPersistentSandbox } from "@/chatjs/providers/sandbox/provider";
 import {
   accessPersistentSandbox,
   cleanupPersistentSession,

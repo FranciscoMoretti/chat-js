@@ -6,8 +6,8 @@ import {
   auth,
   experimental_createMCPClient as createMCPClient,
 } from "@ai-sdk/mcp";
-import { McpOAuthClientProvider } from "@/plugins/mcp/oauth/mcp-oauth-provider";
-import { OAuthAuthorizationRequiredError } from "@/plugins/mcp/oauth/oauth-authorization-required-error";
+import { McpOAuthClientProvider } from "@/chatjs/plugins/mcp/oauth/mcp-oauth-provider";
+import { OAuthAuthorizationRequiredError } from "@/chatjs/plugins/mcp/oauth/oauth-authorization-required-error";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import type { Tool } from "ai";
 import { config } from "@/lib/config";

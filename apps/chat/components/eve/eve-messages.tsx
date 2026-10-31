@@ -1,5 +1,7 @@
 "use client";
 
+import { isDocumentResult } from "@/chatjs/core/documents/contracts";
+
 import { hasText } from "@/components/text-value";
 
 import type { Answer } from "eve/events";
@@ -21,7 +23,7 @@ import type {
 import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 
 import { EveAttachment } from "./eve-attachment";
-import { eveDocumentOperations } from "@/lib/eve/document-contracts";
+import { documentDefinitions } from "@/integrations/documents/definitions";
 import { EveMessagePart } from "./eve-message-part";
 import { MessageActions } from "@/components/chat-slots";
 
@@ -355,8 +357,9 @@ export const EveMessages = ({
     .filter((part: ReadonlyEveMessagePart) => part.type === "tool")
     .findLast(
       (part) =>
-        Object.hasOwn(eveDocumentOperations, part.name) ||
-        part.name === "readDocument"
+        documentDefinitions.operations.has(part.name) ||
+        part.name === "readDocument" ||
+        (part.state === "completed" && isDocumentResult(part.output))
     )?.callId;
   const precedingUsers: (ReadonlyEveMessage | undefined)[] = [];
   let precedingUser: ReadonlyEveMessage | undefined;

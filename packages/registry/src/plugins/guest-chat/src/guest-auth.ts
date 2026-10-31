@@ -1,12 +1,12 @@
-import type { SessionAuthentication } from "@/lib/session-profile-contracts";
-import { readGuestBody } from "@/plugins/guest-chat/guest-body";
-import { GUEST_POLICY } from "@/plugins/guest-chat/guest-policy";
+import type { SessionAuthentication } from "@/chatjs/core/session/contracts";
+import { readGuestBody } from "@/chatjs/plugins/guest-chat/guest-body";
+import { GUEST_POLICY } from "@/chatjs/plugins/guest-chat/guest-policy";
 import {
   readGuestRuntimePolicy,
   reserveGuestRuntimeMessage,
-} from "@/plugins/guest-chat/guest-queries";
+} from "@/chatjs/plugins/guest-chat/guest-queries";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-import { readGuestCredential } from "@/plugins/guest-chat/guest-credential";
+import { readGuestCredential } from "@/chatjs/plugins/guest-chat/guest-credential";
 import { safeStreamQuery } from "@/lib/eve/request-policy";
 import { z } from "zod";
 

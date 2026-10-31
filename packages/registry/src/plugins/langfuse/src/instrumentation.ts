@@ -1,4 +1,4 @@
-import type { InstrumentationRegistration } from "@/lib/installation-contracts";
+import type { InstrumentationRegistration } from "@/chatjs/core/installation/contracts";
 import { getLangfuseEnvironment } from "./credentials";
 import { isPlaywrightTestEnvironment } from "@/lib/playwright-test-environment";
 

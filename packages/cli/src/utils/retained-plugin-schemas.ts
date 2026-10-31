@@ -15,7 +15,7 @@ export const readRetainedSchemas = async (cwd: string) => {
   for (const [id, files] of Object.entries(retained)) {
     pluginIdSchema.parse(id);
     for (const file of files) {
-      if (!file.startsWith(`plugins/${id}/`)) {
+      if (!file.startsWith(`chatjs/plugins/${id}/`)) {
         throw new Error(`Retained schema must belong to plugin ${id}: ${file}`);
       }
     }

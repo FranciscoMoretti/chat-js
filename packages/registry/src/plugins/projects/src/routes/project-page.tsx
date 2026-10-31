@@ -4,10 +4,10 @@ import React, { Suspense } from "react";
 import { z } from "zod";
 
 import { EveCreationRecovery } from "@/components/eve/eve-creation-recovery";
-import { EveProjectHome } from "@/plugins/projects/ui/eve-project-home";
+import { EveProjectHome } from "@/chatjs/plugins/projects/ui/eve-project-home";
 import { auth } from "@/lib/auth";
 import { listEveConversations } from "@/lib/db/eve-queries";
-import { getProjectById } from "@/plugins/projects/db/project-queries";
+import { getProjectById } from "@/chatjs/plugins/projects/db/project-queries";
 
 const ProjectContent = async ({
   params,

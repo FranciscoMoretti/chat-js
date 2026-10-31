@@ -34,7 +34,7 @@ for (const gateway of GATEWAYS) {
       tools: [],
     });
     expect(
-      [...files.keys()].filter((file) => file.startsWith("plugins/"))
+      [...files.keys()].filter((file) => file.startsWith("chatjs/plugins/"))
     ).toEqual([]);
     expect(
       typecheckProject(files, validationDependencyFixtures).diagnostics
@@ -86,7 +86,7 @@ for (const plugin of plugins) {
       typecheckProject(output.files, validationDependencyFixtures).diagnostics
     ).toEqual([]);
     if (plugin.id === "search") {
-      output.files.delete("plugins/search/server-plugin.ts");
+      output.files.delete("chatjs/plugins/search/server-plugin.ts");
       expect(
         typecheckProject(
           output.files,
@@ -179,7 +179,7 @@ test("plugin removal and reinstall preserve a type-correct app with retained sch
     const pluginSources = new Map(
       [...output.files].filter(
         ([file]) =>
-          file.startsWith("plugins/") ||
+          file.startsWith("chatjs/plugins/") ||
           file.startsWith("agent/") ||
           file.startsWith("app/")
       )

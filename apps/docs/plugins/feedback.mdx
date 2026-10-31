@@ -39,6 +39,6 @@ Before saving your rating, the plugin validates the message against an EVE snaps
 
 ## Customization
 
-Edit `plugins/feedback/` to change the rating UI, queries, or validation. The `MessageActions` placement receives `conversationId`, `messageId`, and `disabled`.
+Edit `chatjs/plugins/feedback/` to change the rating UI, queries, or validation. The `MessageActions` placement receives `conversationId`, `messageId`, and `disabled`.
 
 When you delete conversations, cleanup uses `onDeleteConversations` inside the core deletion transaction. Feedback does not use `updateOwnedChat`, because voting must not update chat recency. See the [Plugin API](../reference/plugin-api).

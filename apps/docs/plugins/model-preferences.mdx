@@ -43,6 +43,6 @@ You do not need a plugin-specific configuration block. Configure your catalog an
 
 ## Customization
 
-Edit `plugins/model-preferences/` to change the settings UI, queries, or preference policy. The installed `app/(chat)/settings/models/page.tsx` is a thin route adapter. The plugin contributes the `modelPreferences` router and the `models` settings item.
+Edit `chatjs/plugins/model-preferences/` to change the settings UI, queries, or preference policy. The installed `app/(chat)/settings/models/page.tsx` is a thin route adapter. The plugin contributes the `modelPreferences` router and the `models` settings item.
 
 The [model visibility integration](../reference/plugin-api#model-visibility) keeps persistence out of the core model provider. Your plugin returns IDs, and core filters its available catalog against them. Without this plugin, core uses its default list and makes no preference request.

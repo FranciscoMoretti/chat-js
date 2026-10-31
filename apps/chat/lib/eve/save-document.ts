@@ -3,9 +3,9 @@ import {
   saveEveDocumentRevision,
 } from "@/lib/db/eve-documents";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-import { eveManualDocumentInput } from "./document-contracts";
+import { eveManualDocumentInput } from "@/chatjs/core/documents/contracts";
 import { getEveConversation } from "@/lib/db/eve-queries";
-import { installedDocumentKinds } from "@/integrations/tool-catalog";
+import { documentDefinitions } from "@/integrations/documents/definitions";
 import type { z } from "zod";
 
 type SavedDocumentReceipt = Pick<
@@ -60,7 +60,7 @@ const resolveManualDocumentContext = async (
     input.documentId,
     input.expectedRevisionId
   );
-  if (!(previous && installedDocumentKinds.has(previous.kind))) {
+  if (!(previous && documentDefinitions.kinds.has(previous.kind))) {
     throw new Error("Document not found.");
   }
   return { conversation, previous };
@@ -74,6 +74,9 @@ export const saveManualEveDocument = async (
   const { previous } = await resolveManualDocumentContext(ownerId, input);
   const saved = await saveEveDocumentRevision({
     ...input,
+    content: documentDefinitions
+      .require(previous.kind)
+      .contentSchema.parse(input.content),
     fileIds: [...new Set([...previous.fileIds, ...input.fileIds])],
     kind: previous.kind,
     operationId: `manual:${input.operationId}`,

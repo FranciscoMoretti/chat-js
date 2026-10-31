@@ -11,7 +11,7 @@ const planDatabaseSchemas = async (
 ): Promise<string> => {
   const contributions = await Promise.all(
     installed.map(async (id): Promise<string[]> => {
-      const descriptor = `plugins/${id}/chatjs.json`;
+      const descriptor = `chatjs/plugins/${id}/chatjs.json`;
       await preflight(cwd, [descriptor]);
       const definition = pluginDefinitionSchema.parse(
         JSON.parse(await readFile(path.join(cwd, descriptor), "utf-8"))
@@ -21,7 +21,7 @@ const planDatabaseSchemas = async (
       }
       const schemas = definition.databaseSchemas ?? [];
       for (const schema of schemas) {
-        if (!schema.startsWith(`plugins/${id}/`)) {
+        if (!schema.startsWith(`chatjs/plugins/${id}/`)) {
           throw new Error(
             `Database schema must belong to plugin ${id}: ${schema}`
           );

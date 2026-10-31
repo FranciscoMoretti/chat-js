@@ -1,6 +1,6 @@
 import { expect, it } from "vitest";
 
-import { followupContext } from "@/plugins/followup-suggestions/followup-context";
+import { followupContext } from "@/chatjs/plugins/followup-suggestions/followup-context";
 
 const meta = { at: "2026-09-12T00:00:00Z", id: "event" };
 it("keeps only bounded current-turn text and excludes tool-call preambles", () => {

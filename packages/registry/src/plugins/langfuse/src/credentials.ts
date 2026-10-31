@@ -1,4 +1,4 @@
-import descriptor from "@/plugins/langfuse/chatjs.json";
+import descriptor from "@/chatjs/plugins/langfuse/chatjs.json";
 import { requireCredentials } from "@/lib/required-credentials";
 
 // Read at registration time so an omitted integration never validates credentials.

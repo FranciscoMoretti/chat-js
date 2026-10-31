@@ -54,6 +54,6 @@ A durable claim is written before the model call. Replayed callbacks and interru
 
 ## Customization
 
-Edit `plugins/followup-suggestions/` for generation, queries, bounded polling, and rendering. The thin adapter in `agent/hooks/followup-suggestions.ts` registers the native hook.
+Edit `chatjs/plugins/followup-suggestions/` for generation, queries, bounded polling, and rendering. The thin adapter in `agent/hooks/followup-suggestions.ts` registers the native hook.
 
 When you render suggestions, the `Suggestions` placement receives the conversation ID, native events, last-message identity, disabled state, and selection callback. See the [Plugin API](../reference/plugin-api) and [Follow-up Questions recipe](../cookbook/follow-up-questions).

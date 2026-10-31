@@ -42,7 +42,7 @@ export const schemaSourceClosure = async (
   pluginId: string
 ): Promise<Set<string>> => {
   for (const file of roots) {
-    if (!file.startsWith(`plugins/${pluginId}/`)) {
+    if (!file.startsWith(`chatjs/plugins/${pluginId}/`)) {
       throw new Error(
         `Database schema must belong to plugin ${pluginId}: ${file}`
       );
@@ -58,7 +58,7 @@ export const schemaSourceClosure = async (
     kept.add(file);
     await Promise.all(
       sourceImports(file, source).map(async (imported) => {
-        if (!imported.startsWith(`plugins/${pluginId}/`)) {
+        if (!imported.startsWith(`chatjs/plugins/${pluginId}/`)) {
           return;
         }
         const stem = imported.replace(/\.[cm]?js$/u, "");

@@ -6,8 +6,8 @@ import type {
   getEveChatPageConversation,
   listEveConversations,
 } from "@/lib/db/eve-queries";
-import type { getProjectById } from "@/plugins/projects/db/project-queries";
-import type { getPublicEveTranscript } from "@/plugins/sharing/public-conversation";
+import type { getProjectById } from "@/chatjs/plugins/projects/db/project-queries";
+import type { getPublicEveTranscript } from "@/chatjs/plugins/sharing/public-conversation";
 
 /** What the route files' server reads return for this request. */
 export interface ServerData {

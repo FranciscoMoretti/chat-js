@@ -107,7 +107,7 @@ Returns search results grouped by query:
 
 ### Tool Definition
 
-The selected implementation lives in `tools/chatjs/<id>/tool.ts`. Edit its typed schema, description, and execution options there. Shared progress and source card events are handled by `tools/platform/search-presentation.ts`.
+The selected implementation lives in `chatjs/tools/<id>/tool.ts`. Edit its typed schema, description, and execution options there. Shared progress and source card events are handled by `tools/platform/search-presentation.ts`.
 
 ### Change the selected tool
 
@@ -141,4 +141,4 @@ Use web search for discovery and URL retrieval for extracting content from known
 
 Pass an external registry item URL to `--search-tool`. The item exports a native EVE tool using `defineTool` from `eve/tools` and declares `slot: "webSearch"`. It owns its schema, output, credentials, and optional renderer. The multi-query schema and progress cards above describe the built-in items, not requirements for external search tools.
 
-Chat and deep research both expose the selected tool to their models. See [Authoring tools](../tools/authoring#feature-selections) for metadata and renderer registration.
+Chat and deep research both expose the selected tool to their models. See [Authoring tools](../tools/authoring#provider-selections) for metadata and renderer registration.

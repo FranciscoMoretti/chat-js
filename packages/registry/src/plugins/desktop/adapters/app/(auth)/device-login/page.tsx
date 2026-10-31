@@ -1,2 +1,2 @@
-// ChatJS plugin: desktop. Editable source; ownership: plugins/desktop/chatjs.json.
-export { default, metadata } from "@/plugins/desktop/device-login-route";
+// ChatJS source: desktop. Ownership: chatjs/plugins/desktop/chatjs.json.
+export { default, metadata } from "@/chatjs/plugins/desktop/device-login-route";

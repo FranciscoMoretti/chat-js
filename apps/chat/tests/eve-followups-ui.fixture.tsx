@@ -4,7 +4,7 @@ import { createRoot } from "react-dom/client";
 
 import { EveMessages } from "../components/eve/eve-messages";
 
-import { FollowUpSuggestionsView } from "../plugins/followup-suggestions/followup-suggestions-view";
+import { FollowUpSuggestionsView } from "../chatjs/plugins/followup-suggestions/followup-suggestions-view";
 
 const suggestions = [
   "Can you give an example?",

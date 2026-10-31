@@ -2,7 +2,7 @@ import React from "react";
 import { test } from "vitest";
 import type { z } from "zod";
 
-import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
+import type { ToolRendererProps } from "@/chatjs/core/tools/define-renderer";
 
 import { captureChatStory } from "../_shared/visual";
 import { GetWeatherRenderer } from "./renderer";

@@ -64,7 +64,7 @@ export default defineHook({
         needsRecovery.update(() => true);
         // Recover from durable EVE events after binding; manual backfill is a fallback.
         console.error(
-          "Search retry buffer overflow; automatic snapshot recovery queued. Run plugins/search/backfill.ts if retries keep failing.",
+          "Search retry buffer overflow; automatic snapshot recovery queued. Run chatjs/plugins/search/backfill.ts if retries keep failing.",
           {
             omitted,
             sessionId: context.session.id,

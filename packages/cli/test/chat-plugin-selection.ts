@@ -95,7 +95,7 @@ export const testChatPluginSelections = (
       expect(
         "@better-auth/electron" in (installedPackage.dependencies ?? {})
       ).toBe(selection === "desktop");
-      const pluginDirectory = path.join(cwd, "plugins");
+      const pluginDirectory = path.join(cwd, "chatjs/plugins");
       const installedPlugins = existsSync(pluginDirectory)
         ? await readdir(pluginDirectory)
         : [];
@@ -180,14 +180,14 @@ export const testChatPluginSelections = (
           true
         );
         expect(
-          existsSync(path.join(created, "plugins/desktop/chatjs.json"))
+          existsSync(path.join(created, "chatjs/plugins/desktop/chatjs.json"))
         ).toBe(true);
         expect(
           await readFile(
             path.join(created, "chatjs/generated/installed-auth.ts"),
             "utf-8"
           )
-        ).toContain("@/plugins/desktop/auth-server");
+        ).toContain("@/chatjs/plugins/desktop/auth-server");
       }
 
       await writeFile(
@@ -245,7 +245,7 @@ process.env.OPENAI_API_KEY = "fixture-key";
         `
 import assert from "node:assert/strict";
 import { installedChat } from "./chatjs/generated/installed-chat";
-import { chat } from "./integrations/chat";
+import { chat } from "./integrations/chat/server";
 import { installedSessionProfiles } from "./chatjs/generated/installed-session-profiles";
 import { installedCleanupTasks } from "./chatjs/generated/installed-cleanup";
 import { requireSessionProfile } from "./lib/eve/session-profile";

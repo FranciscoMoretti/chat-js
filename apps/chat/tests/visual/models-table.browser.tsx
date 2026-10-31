@@ -8,7 +8,7 @@ import React, { act } from "react";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { page } from "vitest/browser";
 
-import { ModelsTable } from "@/plugins/model-preferences/models-table";
+import { ModelsTable } from "@/chatjs/plugins/model-preferences/models-table";
 import type { AppModelDefinition } from "@/lib/ai/app-models";
 import { ChatModelsProvider } from "@/providers/chat-models-provider";
 import { mount, renderRoot, unmount } from "@/tests/visual/primitive-mount";

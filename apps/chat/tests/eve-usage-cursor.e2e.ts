@@ -1,4 +1,4 @@
-import { userCredit } from "@/plugins/credits/credits-schema";
+import { userCredit } from "@/chatjs/plugins/credits/credits-schema";
 import { createEveTestSession } from "./eve-native-session.fixture";
 
 import { eq } from "drizzle-orm";

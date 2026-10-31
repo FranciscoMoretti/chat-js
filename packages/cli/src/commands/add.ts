@@ -1,3 +1,7 @@
+import {
+  installationActivation,
+  formatActivation,
+} from "#cli/utils/installation-activation";
 import { existsSync } from "node:fs";
 import { scaffoldElectron } from "#cli/helpers/scaffold";
 import { assertUiCompatibility } from "#cli/utils/ui-compatibility";
@@ -56,6 +60,7 @@ interface AddCommandOptions extends AddOptions {
   readonly yes: boolean;
   readonly overwrite: boolean;
   readonly filesOnly: boolean;
+  readonly dryRun: boolean;
 }
 
 interface AddSetup {
@@ -296,6 +301,52 @@ const reportAddError = (error: unknown, filesOnly: boolean): never => {
   handleError(error);
 };
 
+const logReplacementPlan = ({
+  plan,
+  gatewayChange,
+}: Readonly<AddSetup>): void => {
+  for (const { previous, next } of plan.replacements) {
+    log.info(
+      `Replace ${previous.slot ?? previous.documentKind}: ${previous.id} → ${next.id}. Retire only ${previous.id}'s source; retain unrelated installations and editable UI order.`
+    );
+  }
+  for (const { kind, previous, next } of plan.providerChanges) {
+    if (hasNonEmptyValue(previous) && previous !== next) {
+      log.info(
+        `Replace ${kind}: ${previous} → ${next}. Update provider source and environment requirements.`
+      );
+    }
+  }
+  if (gatewayChange) {
+    log.info(
+      "Preserving model IDs and other runtime configuration in chat.config.ts. Review model IDs for the new gateway, then run setup/fetch:models."
+    );
+  }
+};
+
+const logInstallationActivation = (
+  items: readonly RegistryItemInput[]
+): void => {
+  for (const item of items) {
+    const explicitPaths = (item.files ?? []).flatMap((file) =>
+      file.target?.startsWith("~/") === true ? [file.target.slice(2)] : []
+    );
+    const inventory = installationActivation(item.meta?.chatjs, explicitPaths);
+    log.info(`${item.name}:\n${formatActivation(inventory)}`);
+    const inferred = (item.files ?? []).filter(
+      (file) => file.target?.startsWith("~/") !== true
+    );
+    if (inferred.length) {
+      log.info(
+        `  Destinations resolved by shadcn (not classified here): ${inferred.map((file) => file.path).join(", ")}`
+      );
+    }
+  }
+  log.info(
+    "Native entry points follow framework path conventions. Composition files are preserved; schema registration does not apply migrations."
+  );
+};
+
 export const add = new Command("add")
   .description(
     "install registry tools/plugins/providers and compose their ChatJS registrations"
@@ -327,6 +378,11 @@ export const add = new Command("add")
   .option("--gateway <item>", "install or replace the AI gateway")
   .option("--storage-provider <item>", "install or replace file storage")
   .option("--storage-config <json>", "non-secret storage adapter options")
+  .option(
+    "--dry-run",
+    "inspect installation wiring and native entry points without installing",
+    false
+  )
   .option("-c, --cwd <cwd>", "project directory", process.cwd())
   .action(
     async (
@@ -335,6 +391,9 @@ export const add = new Command("add")
     ): Promise<void> => {
       try {
         const cwd = path.resolve(options.cwd);
+        if (options.filesOnly && options.dryRun) {
+          throw new Error("Choose --files-only or --dry-run.");
+        }
         if (options.filesOnly) {
           await exportAddSelection(cwd, items, options);
           return;
@@ -350,26 +409,13 @@ export const add = new Command("add")
           selectedGateway,
           selectedSandbox,
           selectedStorage,
-          gatewayChange,
           configEdit,
           keepStorageOptions,
         } = setup;
-        for (const { previous, next } of plan.replacements) {
-          log.info(
-            `Replace ${previous.slot ?? previous.documentKind}: ${previous.id} → ${next.id}. Retire only ${previous.id}'s source; retain unrelated installations and editable UI order.`
-          );
-        }
-        for (const { kind, previous, next } of plan.providerChanges) {
-          if (hasNonEmptyValue(previous) && previous !== next) {
-            log.info(
-              `Replace ${kind}: ${previous} → ${next}. Update provider source and environment requirements.`
-            );
-          }
-        }
-        if (gatewayChange) {
-          log.info(
-            "Preserving model IDs and other runtime configuration in chat.config.ts. Review model IDs for the new gateway, then run setup/fetch:models."
-          );
+        logReplacementPlan(setup);
+        logInstallationActivation(plan.items);
+        if (options.dryRun) {
+          return;
         }
         if (!options.yes) {
           const answer = await confirm({
@@ -400,16 +446,20 @@ export const add = new Command("add")
                   "--write",
                   "package.json",
                   "chatjs/installed-dependencies.json",
-                  ...(selectedSandbox ? ["lib/sandbox/options.ts"] : []),
+                  ...(selectedSandbox
+                    ? ["chatjs/providers/sandbox/options.ts"]
+                    : []),
                 ],
                 cwd
               );
             },
             managedTargets: [
-              ...(selectedGateway ? ["lib/ai/gateway-model-defaults.ts"] : []),
+              ...(selectedGateway
+                ? ["chatjs/providers/gateway-defaults.ts"]
+                : []),
               ...sandboxProviderTargets(selectedSandbox),
               ...(selectedStorage && !keepStorageOptions
-                ? ["lib/storage-options.ts"]
+                ? ["chatjs/providers/storage-options.ts"]
                 : []),
             ],
             overwrite: options.overwrite,

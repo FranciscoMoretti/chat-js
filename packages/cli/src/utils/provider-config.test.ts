@@ -19,8 +19,8 @@ afterEach(async () => {
 test("provider replacement recognizes literal wrappers and refuses unknown installed IDs", async () => {
   const root = await mkdtemp(path.join(tmpdir(), "chatjs-provider-"));
   roots.push(root);
-  await mkdir(path.join(root, "lib/ai"), { recursive: true });
-  const file = path.join(root, "lib/ai/gateway-model-defaults.ts");
+  await mkdir(path.join(root, "chatjs/providers"), { recursive: true });
+  const file = path.join(root, "chatjs/providers/gateway-defaults.ts");
   await writeFile(
     file,
     'export const gatewayType = ("openai" as const) satisfies string;'

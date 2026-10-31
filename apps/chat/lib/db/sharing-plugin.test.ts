@@ -1,5 +1,5 @@
-import type { ChatServerIntegration } from "@/lib/chat-plugin-contracts";
-import { sharingChat } from "@/plugins/sharing/chat";
+import type { ChatServerIntegration } from "@/chatjs/core/chat/contracts";
+import { sharingChat } from "@/chatjs/plugins/sharing/chat";
 import { readFile, readdir } from "node:fs/promises";
 import { PGlite } from "@electric-sql/pglite";
 import { drizzle } from "drizzle-orm/pglite";
@@ -16,7 +16,7 @@ vi.mock("@/chatjs/generated/installed-chat", () => ({
   installedChat: installed.plugins,
 }));
 const { getSharing, setSharing, getPublicEveConversation } =
-  await import("@/plugins/sharing/queries");
+  await import("@/chatjs/plugins/sharing/queries");
 const { canReadEveFile } = await import("./eve-files");
 const { getAccessibleEveDocument, saveEveDocumentRevision } =
   await import("./eve-documents");

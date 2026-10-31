@@ -7,9 +7,9 @@ import {
   discoverEveMcpTools,
   executeEveMcpTool,
   requestEveMcpApproval,
-} from "@/plugins/mcp/runtime/mcp-tools";
+} from "@/chatjs/plugins/mcp/runtime/mcp-tools";
 import { eveTurnAccount, eveTurnTool } from "@/lib/eve/turn-tools";
-import type { McpToolContext } from "@/plugins/mcp/runtime/mcp-tools";
+import type { McpToolContext } from "@/chatjs/plugins/mcp/runtime/mcp-tools";
 import { createModuleLogger } from "@/lib/logger";
 
 const log = createModuleLogger("eve.mcp-registration");
@@ -25,7 +25,7 @@ const mcpTools = defineDynamic(
     if (
       !isAccountSession(context.session) ||
       !eveTurnAccount.get() ||
-      eveTurnTool.get()
+      eveTurnTool.get() !== null
     ) {
       return {};
     }

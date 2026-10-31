@@ -1,4 +1,4 @@
-import { sessionProfiles } from "../../integrations/session-profiles";
+import { sessionProfiles } from "../../integrations/chat/session-profiles";
 import { eveChannel } from "eve/channels/eve";
 import { requireWorkspaceSeedPaths } from "../../lib/eve/copy-seed";
 

@@ -1,4 +1,4 @@
-import { getPublicEveTranscript } from "@/plugins/sharing/public-conversation";
+import { getPublicEveTranscript } from "@/chatjs/plugins/sharing/public-conversation";
 import { beforeEach, expect, test, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
@@ -7,7 +7,7 @@ const mocks = vi.hoisted(() => ({
   receipts: vi.fn().mockResolvedValue([]),
   project: vi.fn().mockReturnValue([]),
 }));
-vi.mock("@/plugins/sharing/queries", () => ({
+vi.mock("@/chatjs/plugins/sharing/queries", () => ({
   getPublicEveConversation: mocks.lookup,
 }));
 vi.mock("@/lib/db/eve-dispatch", () => ({

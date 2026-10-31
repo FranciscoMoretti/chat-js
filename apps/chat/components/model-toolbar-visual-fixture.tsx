@@ -9,7 +9,7 @@ import React from "react";
 
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
-import { gatewayModelDefaults } from "@/lib/ai/gateway-model-defaults";
+import { gatewayModelDefaults } from "@/chatjs/providers/gateway-defaults";
 
 const defaultModelOptions: Pick<AppModelDefinition, "reasoning" | "toolCall"> =
   {

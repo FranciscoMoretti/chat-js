@@ -1,4 +1,4 @@
-import descriptor from "@/plugins/mcp/chatjs.json";
+import descriptor from "@/chatjs/plugins/mcp/chatjs.json";
 import { validateEnvironment } from "./mcp-env";
 import {
   MissingCredentialsError,

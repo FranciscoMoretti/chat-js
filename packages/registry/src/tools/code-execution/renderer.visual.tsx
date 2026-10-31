@@ -15,7 +15,7 @@ import { CodeExecution } from "./renderer";
 
 // Use the real chart implementation instead of the dynamic (ssr:false) wrapper.
 vi.mock(
-  "@/tools/chatjs/_shared/code-execution/interactive-charts",
+  "@/chatjs/tools/_shared/code-execution/interactive-charts",
   async () => await import("../../ui/code-execution/interactive-chart-impl")
 );
 vi.mock("echarts-for-react/lib/index", async (importOriginal) => {
