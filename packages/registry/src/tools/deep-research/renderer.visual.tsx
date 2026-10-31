@@ -92,7 +92,7 @@ const assertSourceLayout = (section: HTMLElement) => {
   expect(sources).toHaveLength(3);
   for (const source of sources) {
     const favicon = source.querySelector("img");
-    const domain = source.querySelector("span");
+    const domain = source.querySelector("span.truncate");
     if (favicon === null || domain === null) {
       throw new Error("Research source badge must show its favicon and domain");
     }
