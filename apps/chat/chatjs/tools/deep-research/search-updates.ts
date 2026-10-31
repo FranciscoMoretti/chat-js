@@ -14,34 +14,6 @@ type Context = Readonly<
 type Snapshot = Awaited<
   ReturnType<ReturnType<Client["sessions"]["attach"]>["snapshot"]>
 >;
-type StreamEvent = Snapshot["events"][number];
-type InvocationData = Extract<StreamEvent, { type: "agent.started" }>["data"];
-type InvocationEventView =
-  | Readonly<{
-      type: "agent.started";
-      data: Readonly<
-        Pick<InvocationData, "callId" | "sessionId" | "name" | "turnId"> & {
-          remote?: Readonly<NonNullable<InvocationData["remote"]>>;
-        }
-      >;
-    }>
-  | Readonly<{ type: Exclude<StreamEvent["type"], "agent.started"> }>;
-type ActionResult = Extract<
-  StreamEvent,
-  { type: "action.result" }
->["data"]["result"];
-type ActionEventView =
-  | Readonly<{
-      type: "action.result";
-      data: Readonly<{
-        result:
-          | Readonly<{ kind: "tool-result"; output: unknown }>
-          | Readonly<{ kind: Exclude<ActionResult["kind"], "tool-result"> }>;
-      }>;
-    }>
-  | Readonly<{ type: Exclude<StreamEvent["type"], "action.result"> }>;
-type SnapshotView = Readonly<{ events: readonly ActionEventView[] }>;
-
 const readResearchSnapshots = async (
   client: Readonly<{ sessions: Readonly<Pick<Client["sessions"], "attach">> }>,
   sessionIds: readonly string[],
@@ -67,29 +39,27 @@ export async function researchSearchUpdates(
   const root = await client.sessions
     .attach(context.session.id)
     .snapshot(options);
-  const children = root.events.flatMap((event: InvocationEventView) => {
+  const children = root.events.flatMap((event) => {
     if (
-      event.type === "agent.started" &&
-      !event.data.remote &&
+      event.type === "child.opened" &&
+      event.data.stream ===
+        `/eve/v1/session/${encodeURIComponent(event.data.sessionId)}/stream` &&
       event.data.name === "researcher" &&
-      event.data.turnId === context.session.turn.id &&
-      // Native agent.started carries the exact owning workflow tool call ID.
-      event.data.callId === context.callId
+      event.scope?.turnId === context.session.turn.id &&
+      "callId" in event.data.owner &&
+      event.data.owner.callId === context.callId
     ) {
       return [event.data.sessionId];
     }
     return [];
   });
   const snapshots = await readResearchSnapshots(client, children, options);
-  return snapshots.flatMap((snapshot: SnapshotView) =>
+  return snapshots.flatMap((snapshot) =>
     snapshot.events.flatMap((event) => {
-      if (
-        event.type !== "action.result" ||
-        event.data.result.kind !== "tool-result"
-      ) {
+      if (event.type !== "call.settled") {
         return [];
       }
-      const receipt = toolOutputSchema.safeParse(event.data.result.output);
+      const receipt = toolOutputSchema.safeParse(event.data.output);
       if (!receipt.success) {
         return [];
       }

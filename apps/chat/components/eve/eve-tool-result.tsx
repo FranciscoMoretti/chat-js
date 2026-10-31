@@ -1,5 +1,6 @@
 "use client";
 
+import { eveToolUIState } from "@/lib/eve/tool-ui-state";
 import { createElement } from "react";
 
 import { getEveInstalledToolRenderer } from "@/lib/ai/tool-renderer-registry";
@@ -11,21 +12,23 @@ export const EveToolResult = ({
   messageId,
   isReadonly,
 }: {
-  readonly part: Extract<
-    ReadonlyEveMessagePart,
-    { readonly type: "dynamic-tool" }
-  >;
+  readonly part: Extract<ReadonlyEveMessagePart, { readonly type: "tool" }>;
   readonly messageId: string;
   readonly isReadonly: boolean;
 }) => {
-  const Renderer = getEveInstalledToolRenderer(`tool-${part.toolName}`);
+  const Renderer = getEveInstalledToolRenderer(`tool-${part.name}`);
   if (!Renderer) {
     return null;
   }
+  const presentation = {
+    ...part,
+    toolCallId: part.callId,
+    toolName: part.name,
+    state: eveToolUIState(part.state),
+    errorText: part.error?.message,
+  };
   const platformOutput =
-    part.state === "output-available"
-      ? toolOutputSchema.safeParse(part.output)
-      : null;
+    part.state === "completed" ? toolOutputSchema.safeParse(part.output) : null;
   if (
     platformOutput?.success === true &&
     platformOutput.data.status === "error"
@@ -34,7 +37,7 @@ export const EveToolResult = ({
       isReadonly,
       messageId,
       tool: {
-        ...part,
+        ...presentation,
         errorText: platformOutput.data.error,
         state: "output-error",
         updates: platformOutput.data.updates,
@@ -44,10 +47,10 @@ export const EveToolResult = ({
   const tool =
     platformOutput?.success === true
       ? {
-          ...part,
+          ...presentation,
           output: platformOutput.data.output,
           updates: platformOutput.data.updates,
         }
-      : part;
+      : presentation;
   return createElement(Renderer, { isReadonly, messageId, tool });
 };

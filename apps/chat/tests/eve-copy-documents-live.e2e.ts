@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import type { TestInfo } from "@playwright/test";
 import { eq } from "drizzle-orm";
 import { Client } from "eve/client";
-import type { MessageStreamEvent } from "eve/client";
+import type { SessionStreamEvent } from "eve/client";
 
 import { z } from "zod";
 
@@ -31,7 +31,7 @@ type HistorySeedEventReader =
       }>;
     }>
   | Readonly<{
-      type: Exclude<MessageStreamEvent["type"], "history.seeded">;
+      type: Exclude<SessionStreamEvent["type"], "history.seeded">;
       data?: unknown;
     }>;
 type ActionResultEventReader =
@@ -42,7 +42,7 @@ type ActionResultEventReader =
       }>;
     }>
   | Readonly<{
-      type: Exclude<MessageStreamEvent["type"], "action.result">;
+      type: Exclude<SessionStreamEvent["type"], "action.result">;
       data?: unknown;
     }>;
 const modelId = "google/gemini-2.5-flash";
@@ -161,7 +161,7 @@ test("copied document history survives source deletion and supports native editi
         return idle.events.some(
           (
             event: HistorySeedEventReader
-          ): event is Extract<MessageStreamEvent, { type: "history.seeded" }> =>
+          ): event is Extract<SessionStreamEvent, { type: "history.seeded" }> =>
             event.type === "history.seeded"
         );
       },
@@ -170,7 +170,7 @@ test("copied document history survives source deletion and supports native editi
     .toBe(true);
   expect(
     idle.events.some(
-      (event: Readonly<Pick<MessageStreamEvent, "type">>) =>
+      (event: Readonly<Pick<SessionStreamEvent, "type">>) =>
         event.type === "turn.started" || event.type === "actions.requested"
     )
   ).toBe(false);
@@ -328,7 +328,7 @@ test("copied document history survives source deletion and supports native editi
   const seed = forkSnapshot.events.find(
     (
       event: HistorySeedEventReader
-    ): event is Extract<MessageStreamEvent, { type: "history.seeded" }> =>
+    ): event is Extract<SessionStreamEvent, { type: "history.seeded" }> =>
       event.type === "history.seeded"
   );
   expect(seed?.data.messages).toHaveLength(2);

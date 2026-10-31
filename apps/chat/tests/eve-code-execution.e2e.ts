@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { eq } from "drizzle-orm";
 import { Client } from "eve/client";
-import type { MessageStreamEvent } from "eve/client";
+import type { SessionStreamEvent } from "eve/client";
 import { z } from "zod";
 
 import { db } from "../lib/db/client";
@@ -20,7 +20,7 @@ type CodeExecutionEventReader =
       }>;
     }
   | {
-      readonly type: Exclude<MessageStreamEvent["type"], "action.result">;
+      readonly type: Exclude<SessionStreamEvent["type"], "action.result">;
       readonly data?: unknown;
     };
 

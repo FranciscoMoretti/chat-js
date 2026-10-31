@@ -8,7 +8,6 @@ import { reconcileEveWorkspaceTurn } from "../eve/reconcile-workspace-turn";
 import { z } from "zod";
 import { frontendToolsSchema } from "@/lib/ai/types";
 import type { EveMessageDisplayReceipt } from "@/lib/eve/message-display";
-import { eveMessageInput } from "@/lib/eve/message-input";
 
 const hasRow: (row: unknown) => boolean = Boolean;
 
@@ -49,12 +48,6 @@ export const getEveMessageDisplayReceipts = async (
       return [];
     }
     const selectedTool = intent.data.selectedTool ?? null;
-    if (row.kind === "create") {
-      return z.object({ message: eveMessageInput }).safeParse(row.intent)
-        .success
-        ? [{ kind: "initial", selectedTool }]
-        : [];
-    }
     return isNonEmptyString(row.deliveryId)
       ? [{ kind: "send", deliveryId: row.deliveryId, selectedTool }]
       : [];

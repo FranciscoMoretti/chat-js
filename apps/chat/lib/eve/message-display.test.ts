@@ -1,5 +1,5 @@
 import { defaultMessageReducer } from "eve/client";
-import type { MessageStreamEvent } from "eve/client";
+import type { SessionStreamEvent } from "eve/client";
 import { expect, it } from "vitest";
 import type { EveMessageDisplayReceipt } from "./message-display";
 import { projectEveMessageDisplay } from "./message-display";
@@ -7,13 +7,13 @@ import { projectEveMessageDisplay } from "./message-display";
 const reducer = defaultMessageReducer();
 const fold = reducer.reduce.bind(reducer);
 
-const received = (id: string, deliveryId: string): MessageStreamEvent => ({
+const received = (id: string, deliveryId: string): SessionStreamEvent => ({
   type: "message.received",
   meta: { id, at: "2026-10-17T12:00:00Z", deliveryIds: [deliveryId] },
   data: { message: "Identical text", sequence: 0, turnId: "turn_0" },
 });
 
-const started = (deliveryIds: readonly string[]): MessageStreamEvent => ({
+const started = (deliveryIds: readonly string[]): SessionStreamEvent => ({
   type: "session.started",
   data: {},
   meta: { id: "start", at: "2026-10-17T12:00:00Z", deliveryIds },
@@ -36,7 +36,7 @@ it("correlates a bound initial selection through native session-start delivery m
     projectEveMessageDisplay(data, events, [receipt]).messages[1]?.metadata
       ?.custom
   ).toBeUndefined();
-  const unproven: MessageStreamEvent[][] = [
+  const unproven: SessionStreamEvent[][] = [
     [first, later],
     [started([]), first, later],
     [started(["initial-delivery", "later-delivery"]), first, later],

@@ -1,6 +1,6 @@
 import { setTimeout as delay } from "node:timers/promises";
 import { beforeEach, expect, it, vi } from "vitest";
-import type { MessageStreamEvent } from "eve/client";
+import type { SessionStreamEvent } from "eve/client";
 import { reconcileEveOwnerUsage } from "./reconcile-usage";
 import type { withManagedUsageReconciliation } from "@/lib/db/eve-billing";
 
@@ -15,7 +15,7 @@ const mocks = vi.hoisted(() => ({
     VERCEL: "",
     VERCEL_ENV: "preview",
   },
-  events: new Map<string, MessageStreamEvent[]>(),
+  events: new Map<string, SessionStreamEvent[]>(),
   ingest: vi.fn(),
   managed: vi.fn<typeof withManagedUsageReconciliation>(),
   positions: vi.fn(),
@@ -60,11 +60,11 @@ vi.mock("eve/client", () => ({
       attach: (
         sessionId: string
       ): {
-        stream: (options: unknown) => AsyncGenerator<MessageStreamEvent, void>;
+        stream: (options: unknown) => AsyncGenerator<SessionStreamEvent, void>;
       } => ({
         async *stream(
           options: unknown
-        ): AsyncGenerator<MessageStreamEvent, void> {
+        ): AsyncGenerator<SessionStreamEvent, void> {
           mocks.streamOptions(options);
           await mocks.read(sessionId);
           yield* mocks.events.get(sessionId) ?? [];
@@ -276,7 +276,7 @@ it("reconciles child tails even when the root cursor is unchanged and preserves 
       usageStreamIndex: 2,
     },
   ]);
-  const event: MessageStreamEvent = {
+  const event: SessionStreamEvent = {
     data: {
       code: "cancelled",
       message: "Cancelled",

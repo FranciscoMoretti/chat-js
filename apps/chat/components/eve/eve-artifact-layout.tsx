@@ -634,11 +634,9 @@ const Layout = ({
           message.parts
       )
       .find(
-        (part) =>
-          part.type === "dynamic-tool" &&
-          part.toolCallId === artifact.previewCallId
+        (part) => part.type === "tool" && part.callId === artifact.previewCallId
       );
-    if (call?.type === "dynamic-tool" && call.state === "output-available") {
+    if (call?.type === "tool" && call.state === "completed") {
       const result = eveDocumentResult.safeParse(call.output);
       if (result.success) {
         setArtifact((current) => ({

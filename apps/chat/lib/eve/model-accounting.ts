@@ -1,5 +1,5 @@
-import type { DynamicResolveContext } from "eve";
-import type { MessageStreamEvent } from "eve/client";
+import type { DynamicModelContext } from "eve";
+import type { SessionStreamEvent } from "eve/client";
 import { defineState } from "eve/context";
 import { z } from "zod";
 
@@ -27,14 +27,10 @@ const accounting = defineState<AccountingState>(
     sessionId: "",
   })
 );
-const stepEvent = z.object({
-  data: z.object({ turnId: z.string() }),
-  type: z.literal("step.started"),
-});
 const BINDING_TIMEOUT_MS = 10_000;
 
 const observeEveModelAccounting = (
-  event: { readonly type: MessageStreamEvent["type"]; readonly data?: unknown },
+  event: { readonly type: SessionStreamEvent["type"]; readonly data?: unknown },
   session: Pick<AccountingState, "parent"> & { readonly id: string }
 ): void => {
   if (event.type === "session.started") {
@@ -44,12 +40,7 @@ const observeEveModelAccounting = (
       sessionId: session.id,
     }));
   }
-  if (
-    event.type === "turn.started" ||
-    event.type === "turn.completed" ||
-    event.type === "turn.failed" ||
-    event.type === "turn.cancelled"
-  ) {
+  if (event.type === "turn.started" || event.type === "turn.settled") {
     const { turnId } = z.object({ turnId: z.string() }).parse(event.data);
     accounting.update((current) => {
       const remaining =
@@ -72,10 +63,8 @@ const accountEveModel = (
 });
 const resolveAccountedEveModel = async (
   requestedId: string | undefined,
-  rawEvent: unknown,
-  context: DynamicResolveContext
+  context: DynamicModelContext
 ): Promise<Awaited<ReturnType<typeof resolveEveModel>>> => {
-  const event = stepEvent.parse(rawEvent);
   const state = accounting.get();
   const ownerId = context.session.auth.initiator?.principalId;
   if (typeof ownerId !== "string" || ownerId === "") {
@@ -96,14 +85,15 @@ const resolveAccountedEveModel = async (
     : resolveEveConversationScope(
         ownerId,
         context.session.id,
-        context.abortSignal ?? AbortSignal.timeout(BINDING_TIMEOUT_MS),
+        AbortSignal.timeout(BINDING_TIMEOUT_MS),
         context.session.auth.initiator?.attributes.chatjsReservationId
       ));
   return accountEveModel(await resolveEveModel(requestedId), {
     ownerId,
     sessionId: context.session.id,
-    ...(state.openTurns.includes(event.data.turnId)
-      ? { turnId: event.data.turnId }
+    ...(context.turn?.status === "running" &&
+    state.openTurns.includes(context.turn.id)
+      ? { turnId: context.turn.id }
       : {}),
   });
 };

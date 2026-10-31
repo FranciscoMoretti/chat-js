@@ -2,7 +2,7 @@ import { userCredit } from "@/chatjs/plugins/credits/credits-schema";
 import { expect, test } from "@playwright/test";
 import { eq, sql } from "drizzle-orm";
 import { Client } from "eve/client";
-import type { MessageStreamEvent } from "eve/client";
+import type { SessionStreamEvent } from "eve/client";
 import { z } from "zod";
 
 import { db } from "../lib/db/client";
@@ -103,8 +103,8 @@ test("the single-model picker dispatches and retains the selected native model",
       .snapshot();
     const modelStep = snapshot.events.find(
       (
-        event: Readonly<Pick<MessageStreamEvent, "type">>
-      ): event is Extract<MessageStreamEvent, { type: "step.started" }> =>
+        event: Readonly<Pick<SessionStreamEvent, "type">>
+      ): event is Extract<SessionStreamEvent, { type: "step.started" }> =>
         event.type === "step.started"
     );
     expect(modelStep?.data.modelId).toBe(`gateway/${modelId}`);

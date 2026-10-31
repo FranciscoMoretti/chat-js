@@ -1,9 +1,9 @@
-import type { MessageStreamEvent } from "eve/client";
+import type { SessionStreamEvent } from "eve/client";
 import { expect, it } from "vitest";
 
 import { eveEventSearchText } from "@/chatjs/plugins/search/search-text";
 
-const received: MessageStreamEvent = {
+const received: SessionStreamEvent = {
   data: {
     message: "fallback",
     parts: [{ text: "saffron rice", type: "text" }],
@@ -13,7 +13,7 @@ const received: MessageStreamEvent = {
   meta: { at: "2026-09-25T10:00:00Z", id: "user-1" },
   type: "message.received",
 };
-const completed: MessageStreamEvent = {
+const completed: SessionStreamEvent = {
   data: {
     finishReason: "stop",
     message: "Toast the saffron.",
@@ -61,6 +61,6 @@ it("indexes seeded display text while excluding reasoning, tools and model lifec
       },
       meta: received.meta,
       type: "history.seeded",
-    } satisfies MessageStreamEvent)
+    } satisfies SessionStreamEvent)
   ).toEqual([{ key: "seed:0", text: "visible answer" }]);
 });

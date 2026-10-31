@@ -1,8 +1,10 @@
+import { readdir, readFile } from "node:fs/promises";
+import nodePath from "node:path";
 import { defineSandboxProvider } from "eve/sandbox/provider";
 import type {
   SandboxProviderImplementation,
-  SandboxProviderSessionContext,
-  SandboxProviderHandle,
+  SandboxSessionContext,
+  SandboxConnection,
 } from "eve/sandbox/provider";
 import type { SandboxEnvironment } from "eve/sandbox";
 import type { PersistentSandbox } from "@chat-js/sandboxes/persistent";
@@ -29,9 +31,13 @@ import {
 } from "./workspace-attachments";
 
 const stateSchema = z.object({ name: z.string().min(1) });
-type Files = { path: string; content: string }[];
+type Files = {
+  path: string;
+  content: string;
+  location: "workspace" | "skills";
+}[];
 const identityFor = async (
-  context: Pick<SandboxProviderSessionContext, "session">
+  context: Pick<SandboxSessionContext, "session">
 ): Promise<SessionIdentity> => {
   if (
     env.NODE_ENV === "development" &&
@@ -63,7 +69,7 @@ const remove = async (identity: SessionIdentity): Promise<void> => {
 const handle = (
   identity: SessionIdentity,
   sandbox: PersistentSandbox
-): SandboxProviderHandle<PersistentSandbox> => {
+): SandboxConnection => {
   const infrastructure = getSandboxProvider();
   const { persistent } = infrastructure;
   if (!persistent) {
@@ -105,92 +111,70 @@ const handle = (
     );
   };
   return {
-    // Fence cached handles too: EVE may retain a handle after stop/delete.
-    sandbox: {
-      name: sandbox.name,
-      resolvePath: sandbox.resolvePath,
-      run: async (options) =>
-        await access(async () => await sandbox.run(options)),
-      spawn: async (options) => {
-        const process = await access(async () => await sandbox.spawn(options));
-        return {
-          stdout: stream(process.stdout),
-          stderr: stream(process.stderr),
-          wait: async () => await access(async () => await process.wait()),
-          kill: async () => {
-            await access(async () => {
-              await process.kill();
-            });
-          },
-        };
-      },
-      readFile: async (options) => {
-        const content = await access(
-          async () => await sandbox.readFile(options)
-        );
-        return content === null ? null : stream(content);
-      },
-      readBinaryFile: async (options) =>
-        await access(async () => {
-          const path = sandbox.resolvePath(options.path);
-          if (
-            path.startsWith(
-              `${sandbox.resolvePath("/workspace/.eve/attachments")}/`
-            )
-          ) {
-            const original = await readWorkspaceAttachment({ identity, path });
-            if (original !== undefined) {
-              return original;
-            }
+    workspaceRoot: "/workspace",
+    spawn: async (options) => {
+      if (options.stdin === true) {
+        throw new Error("The installed sandbox does not support stdin.");
+      }
+      const process = await access(
+        async () =>
+          await sandbox.spawn({
+            ...options,
+            env: { ...options.env },
+            abortSignal: options.signal,
+          })
+      );
+      return {
+        stdout: stream(process.stdout),
+        stderr: stream(process.stderr),
+        wait: async () => await access(async () => await process.wait()),
+        kill: async () => {
+          await access(async () => {
+            await process.kill();
+          });
+        },
+      };
+    },
+    readFile: async (options) =>
+      await access(async () => {
+        const path = sandbox.resolvePath(options.path);
+        if (path.startsWith("/workspace/.eve/attachments/")) {
+          const original = await readWorkspaceAttachment({ identity, path });
+          if (original !== undefined) {
+            return original;
           }
-          return await sandbox.readBinaryFile(options);
-        }),
-      readTextFile: async (options) =>
-        await access(async () => await sandbox.readTextFile(options)),
-      writeFile: async (options) => {
-        // The source may be another fenced read; consume it before locking the write.
-        const content = new Uint8Array(
-          await new Response(options.content).arrayBuffer()
-        );
-        await access(async () => {
-          await sandbox.writeBinaryFile({ ...options, content });
+        }
+        return await sandbox.readBinaryFile({
+          path,
+          abortSignal: options.signal,
         });
-      },
-      writeBinaryFile: async (options) => {
+      }),
+    writeFiles: async (options) => {
+      for (const file of options.files) {
+        // oxlint-disable-next-line eslint/no-await-in-loop -- Fence each write before the next file can be staged.
         await access(async () => {
-          const path = sandbox.resolvePath(options.path);
-          if (
-            path.startsWith(
-              `${sandbox.resolvePath("/workspace/.eve/attachments")}/`
-            )
-          ) {
+          const path = sandbox.resolvePath(file.path);
+          if (path.startsWith("/workspace/.eve/attachments/")) {
             await recordWorkspaceAttachment({
               identity,
               path,
-              content: options.content,
+              content: file.content,
             });
           }
-          await sandbox.writeBinaryFile(options);
+          await sandbox.writeBinaryFile({
+            ...file,
+            path,
+            abortSignal: options.signal,
+          });
         });
-      },
-      writeTextFile: async (options) => {
-        await access(async () => {
-          await sandbox.writeTextFile(options);
-        });
-      },
-      removePath: async (options) => {
-        await access(async () => {
-          await sandbox.removePath(options);
-        });
-      },
+      }
     },
-    onSandboxDelete: async () => {
-      await remove(identity);
+    removePath: async (options) => {
+      await access(async () => {
+        await sandbox.removePath({ ...options, abortSignal: options.signal });
+      });
     },
-    onSandboxStop: async () => {
-      await stopPersistentWorkspace(identity, getPersistentSandboxProvider);
-    },
-    onRuntimeShutdown: async () => {
+    stop: async () => {
       await stopPersistentWorkspace(identity, getPersistentSandboxProvider);
     },
   };
@@ -200,26 +184,50 @@ export const appSandboxProvider = (): SandboxProviderImplementation<
   undefined,
   Files,
   { name: string },
-  PersistentSandbox
+  object
 > => ({
   async prepare(context) {
-    // Per-session preparation avoids shared remote snapshots and their retention graph.
-    const files: Files = [];
-    for (const tree of [
-      context.resources.workspace,
-      context.resources.skills,
-    ]) {
-      if (!tree) {
-        continue;
-      }
-      for (const file of tree.files) {
-        files.push({
-          path: `${tree.targetPath}/${file.relativePath}`,
-          content: Buffer.from(file.content).toString("base64"),
-        });
-      }
+    const resources = await context.resourcesDirectory();
+    if (resources === undefined || resources === "") {
+      return [];
     }
-    return await Promise.resolve(files);
+    const groups = await Promise.all(
+      (["workspace", "skills"] as const).map(
+        async (location): Promise<Files> => {
+          const root = nodePath.join(resources, location);
+          let entries;
+          try {
+            entries = await readdir(root, {
+              recursive: true,
+              withFileTypes: true,
+            });
+          } catch (error) {
+            if (
+              error instanceof Error &&
+              "code" in error &&
+              error.code === "ENOENT"
+            ) {
+              return [];
+            }
+            throw error;
+          }
+          return await Promise.all(
+            entries
+              .filter((entry) => entry.isFile())
+              .map(async (entry) => {
+                const filePath = nodePath.join(entry.parentPath, entry.name);
+                const content = await readFile(filePath);
+                return {
+                  location,
+                  path: nodePath.relative(root, filePath),
+                  content: content.toString("base64"),
+                };
+              })
+          );
+        }
+      )
+    );
+    return groups.flat();
   },
   async start(context, _options, artifact) {
     const identity = await identityFor(context);
@@ -247,10 +255,24 @@ export const appSandboxProvider = (): SandboxProviderImplementation<
           name: reservation.name,
           signal: initializationSignal,
         });
+        let home = "";
+        if (artifact.some((file) => file.location === "skills")) {
+          const result = await created.run({
+            command: 'printf "%s" "$HOME"',
+            abortSignal: initializationSignal,
+          });
+          if (result.exitCode !== 0 || !result.stdout.startsWith("/")) {
+            throw new Error("Sandbox home directory is unavailable.");
+          }
+          home = result.stdout.trim();
+        }
         for (const file of artifact) {
           // oxlint-disable-next-line eslint/no-await-in-loop -- Initialize each file before confirming the persistent allocation is ready.
           await created.writeBinaryFile({
-            path: file.path,
+            path:
+              file.location === "skills"
+                ? `${home}/.agents/skills/${file.path}`
+                : `/workspace/${file.path}`,
             content: Buffer.from(file.content, "base64"),
             abortSignal: initializationSignal,
           });
@@ -260,7 +282,7 @@ export const appSandboxProvider = (): SandboxProviderImplementation<
       reservation.create
     );
     return {
-      handle: handle(identity, sandbox),
+      connection: handle(identity, sandbox),
       state: { name: reservation.name },
     };
   },
@@ -295,7 +317,7 @@ export const createPersistentSandboxEnvironment = (): SandboxEnvironment =>
   provider.environment();
 
 export const registerAppSandboxSession = async (
-  context: Pick<SandboxProviderSessionContext, "session">
+  context: Pick<SandboxSessionContext, "session">
 ): Promise<void> => {
   if (supportsPersistentSandbox) {
     await registerPersistentSession(await identityFor(context));

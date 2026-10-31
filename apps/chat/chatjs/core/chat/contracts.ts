@@ -1,5 +1,5 @@
 import type { ReadonlyEveMessageInput } from "@/lib/eve/readonly-message-types";
-import type { MessageStreamEvent } from "eve/client";
+import type { SessionStreamEvent } from "eve/client";
 import type { SQL } from "drizzle-orm";
 import type { db } from "@/lib/db/client";
 
@@ -72,7 +72,7 @@ export interface ChatMessageActionProps {
 }
 export interface ChatSuggestionsProps {
   readonly conversationId: string;
-  readonly events: readonly MessageStreamEvent[];
+  readonly events: readonly SessionStreamEvent[];
   readonly lastMessage?: {
     readonly role: string;
     readonly metadata?: { readonly turnId?: string };

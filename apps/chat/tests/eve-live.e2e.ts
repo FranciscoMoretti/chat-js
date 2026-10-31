@@ -4,7 +4,7 @@ import { mkdir } from "node:fs/promises";
 import { expect, test } from "@playwright/test";
 import { eq, getTableColumns } from "drizzle-orm";
 import { Client } from "eve/client";
-import type { MessageStreamEvent } from "eve/client";
+import type { SessionStreamEvent } from "eve/client";
 
 import { getEvePostgresStreamPositions } from "@/lib/eve/lifecycle/postgres/eve-stream-positions";
 
@@ -21,11 +21,11 @@ type TurnStartedEventReader =
   | {
       readonly type: "turn.started";
       readonly data: Readonly<
-        Extract<MessageStreamEvent, { type: "turn.started" }>["data"]
+        Extract<SessionStreamEvent, { type: "turn.started" }>["data"]
       >;
     }
   | {
-      readonly type: Exclude<MessageStreamEvent["type"], "turn.started">;
+      readonly type: Exclude<SessionStreamEvent["type"], "turn.started">;
       readonly data?: unknown;
     };
 
@@ -143,7 +143,7 @@ test("real provider, native application tool and replay-safe usage ledger", asyn
       async () => {
         const snapshot = await session.snapshot();
         return snapshot.events.some(
-          (event: Readonly<Pick<MessageStreamEvent, "type">>) =>
+          (event: Readonly<Pick<SessionStreamEvent, "type">>) =>
             event.type === "compaction.completed"
         );
       },
@@ -298,7 +298,7 @@ test("the composer selects models for initial and subsequent durable turns", asy
           .attach(conversation.sessionId ?? "")
           .snapshot();
         return current.events.filter(
-          (event: Readonly<Pick<MessageStreamEvent, "type">>) =>
+          (event: Readonly<Pick<SessionStreamEvent, "type">>) =>
             event.type === "turn.completed"
         ).length;
       },
@@ -315,8 +315,8 @@ test("the composer selects models for initial and subsequent durable turns", asy
     .snapshot();
   const firstStep = snapshot.events.find(
     (
-      event: Readonly<Pick<MessageStreamEvent, "type">>
-    ): event is Extract<MessageStreamEvent, { type: "step.started" }> =>
+      event: Readonly<Pick<SessionStreamEvent, "type">>
+    ): event is Extract<SessionStreamEvent, { type: "step.started" }> =>
       event.type === "step.started"
   );
   expect(firstStep?.data.modelId).toBe("gateway/openai/gpt-4.1-mini-fast");
@@ -325,14 +325,14 @@ test("the composer selects models for initial and subsequent durable turns", asy
   ).toContainText("GPT-4.1");
   const lastStep = snapshot.events.findLast(
     (
-      event: Readonly<Pick<MessageStreamEvent, "type">>
-    ): event is Extract<MessageStreamEvent, { type: "step.started" }> =>
+      event: Readonly<Pick<SessionStreamEvent, "type">>
+    ): event is Extract<SessionStreamEvent, { type: "step.started" }> =>
       event.type === "step.started"
   );
   expect(lastStep?.data.modelId).toBe(`gateway/${selected}`);
   expect(
     snapshot.events.filter(
-      (event: Readonly<Pick<MessageStreamEvent, "type">>) =>
+      (event: Readonly<Pick<SessionStreamEvent, "type">>) =>
         event.type === "message.received"
     )
   ).toHaveLength(2);

@@ -1,4 +1,4 @@
-import { Client, defaultMessageReducer } from "eve/client";
+import { Client, conversationOf } from "eve/client";
 import { assertEveConfigured } from "@/lib/eve/server";
 import { getEveConnectionOptions } from "@/lib/eve/connection-options";
 import {
@@ -34,13 +34,7 @@ export const voteEveMessage = async (
   const snapshot = await client.sessions
     .attach(conversation.sessionId)
     .snapshot({ signal: AbortSignal.timeout(VOTE_SNAPSHOT_TIMEOUT_MS) });
-  const reducer = defaultMessageReducer();
-  const reduceEvent = reducer.reduce.bind(reducer);
-  let state = reducer.initial();
-  for (const event of snapshot.events) {
-    state = reduceEvent(state, event);
-  }
-  const { messages } = state;
+  const { messages } = conversationOf(snapshot.events);
   if (
     !messages.some(
       (message: { readonly id: string; readonly role: string }) =>

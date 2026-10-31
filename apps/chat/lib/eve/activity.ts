@@ -1,24 +1,14 @@
-import type { MessageStreamEvent } from "eve/client";
-
+import type { SessionEvent } from "eve/client";
 import { recordEveConversationActivity } from "@/lib/db/eve-queries";
 
-/** Project only activity metadata from Eve; replay must never move a chat backwards.
- * @param {string} ownerId Owner used to scope the monotonic activity update.
- * @param {string} sessionId Native session whose conversation receives activity metadata.
- * @param {MessageStreamEvent} event Native event supplying a received/completed message timestamp.
- * @returns {Promise<void>} Resolves after the authorized activity update, or without a write for unrelated event kinds.
- */
+/** Hook commit time, never progress arrival time, determines conversation activity. */
 export const ingestEveActivity = async (
   ownerId: string,
   sessionId: string,
-
-  event: Readonly<Pick<MessageStreamEvent, "type" | "meta">>
+  event: Readonly<Pick<SessionEvent, "type">>,
+  at: Date
 ): Promise<void> => {
-  if (event.type === "message.received" || event.type === "message.completed") {
-    await recordEveConversationActivity(
-      ownerId,
-      sessionId,
-      new Date(event.meta.at)
-    );
+  if (event.type === "delivery.consumed" || event.type === "turn.settled") {
+    await recordEveConversationActivity(ownerId, sessionId, at);
   }
 };

@@ -1,4 +1,4 @@
-import type { MessageStreamEvent } from "eve/client";
+import type { SessionStreamEvent } from "eve/client";
 import { expect, it } from "vitest";
 
 import { responseModel } from "./response-model";
@@ -12,7 +12,7 @@ const step = {
   },
   meta: { at: "2026-09-10T00:00:00Z", id: "step" },
   type: "step.started",
-} satisfies MessageStreamEvent;
+} satisfies SessionStreamEvent;
 
 it("preserves the response selection across reload and subsequent turns", () => {
   expect(responseModel([step], "turn_0")).toBe(

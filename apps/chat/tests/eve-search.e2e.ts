@@ -4,7 +4,7 @@ import { expect, test } from "@playwright/test";
 
 import { eq } from "drizzle-orm";
 import { Client } from "eve/client";
-import type { MessageStreamEvent } from "eve/client";
+import type { SessionStreamEvent } from "eve/client";
 import { z } from "zod";
 
 import { db } from "../lib/db/client";
@@ -17,9 +17,9 @@ import { ResearchUpdateSchema } from "../tools/platform/research-updates-schema"
 import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(env.DATABASE_URL);
-type SearchResultEvent = Extract<MessageStreamEvent, { type: "action.result" }>;
+type SearchResultEvent = Extract<SessionStreamEvent, { type: "action.result" }>;
 type SearchPartialEvent = Extract<
-  MessageStreamEvent,
+  SessionStreamEvent,
   { type: "action.partial" }
 >;
 type SearchEventReader =
@@ -35,7 +35,7 @@ type SearchEventReader =
     })
   | {
       readonly type: Exclude<
-        MessageStreamEvent["type"],
+        SessionStreamEvent["type"],
         "action.result" | "action.partial"
       >;
       readonly data?: unknown;

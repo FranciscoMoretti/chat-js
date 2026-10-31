@@ -1,9 +1,11 @@
 "use client";
 
+import { idle } from "eve/events";
+
 import { hasText } from "@/components/text-value";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import type { MessageStreamEvent } from "eve/client";
+import type { SessionStreamEvent } from "eve/client";
 import { useEveAgent } from "eve/react";
 import { usePathname } from "next/navigation";
 import React, {
@@ -17,14 +19,12 @@ import React, {
 import type { JSX as ReactJSX } from "react";
 
 import { Spinner } from "@/components/ui/spinner";
-import { documentDefinitions } from "@/integrations/documents/definitions";
 import { LogicalChat } from "@/lib/eve/logical-chat";
 import { eveMessageTitle } from "@/lib/eve/message-input";
 import { projectEveMessageDisplay } from "@/lib/eve/message-display";
 import { hasPendingCreation } from "@/lib/eve/pending-create";
 import { pendingEveMetadataMutations } from "@/lib/eve/optimistic-metadata";
 import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
-import { installedToolNames } from "@/integrations/tools/catalog";
 import { useTRPC } from "@/trpc/react";
 
 import { EveChatHeader } from "./eve-chat-header";
@@ -54,44 +54,20 @@ const NativeObserver = ({
   const trpc = useTRPC();
   const display = useQuery(trpc.eve.messageDisplay.queryOptions({ sessionId }));
   const agent = useEveAgent({
-    host: "/api",
+    baseUrl: "/api",
     // Every branch has an observer. Release idle HTTP connections so completed
     // histories cannot starve creation/navigation requests; send/resume reconnect.
-    followIdle: false,
+    followWhile: (view) => !idle(view),
     initialSession: { sessionId, streamIndex: 0 },
-    onEvent: (
-      event:
-        | {
-            readonly type: Exclude<MessageStreamEvent["type"], "action.result">;
-          }
-        | {
-            readonly type: "action.result";
-            readonly data: {
-              readonly result:
-                | { readonly kind: "tool-result"; readonly toolName: string }
-                | {
-                    readonly kind: Exclude<
-                      Extract<
-                        MessageStreamEvent,
-                        { type: "action.result" }
-                      >["data"]["result"]["kind"],
-                      "tool-result"
-                    >;
-                  };
-            };
-          }
-    ) => {
-      if (
-        event.type === "turn.completed" ||
-        event.type === "turn.failed" ||
-        event.type === "turn.cancelled"
-      ) {
+    onEvent: (event: SessionStreamEvent) => {
+      if (event.type === "turn.settled") {
         void queryClient.invalidateQueries({
           predicate: (query) => query.meta?.refreshOnTurnEnd === true,
         });
       }
       if (
-        event.type === "turn.completed" &&
+        event.type === "turn.settled" &&
+        event.data.outcome === "completed" &&
         pendingEveMetadataMutations(queryClient) === 0
       ) {
         void queryClient.invalidateQueries({
@@ -104,13 +80,7 @@ const NativeObserver = ({
           queryKey: trpc.eve.messageDisplay.queryKey({ sessionId }),
         });
       }
-      if (
-        event.type === "action.result" &&
-        event.data.result.kind === "tool-result" &&
-        (documentDefinitions.operations.has(event.data.result.toolName) ||
-          (installedToolNames.has("deleteDocument") &&
-            event.data.result.toolName === "deleteDocument"))
-      ) {
+      if (event.type === "call.settled") {
         void queryClient.invalidateQueries({
           queryKey: trpc.eve.document.pathKey(),
         });
@@ -123,7 +93,7 @@ const NativeObserver = ({
     const refreshSelected = async (): Promise<void> => {
       if (
         !selected ||
-        status !== "ready" ||
+        status !== "idle" ||
         document.visibilityState !== "visible"
       ) {
         return;
@@ -150,12 +120,14 @@ const NativeObserver = ({
   // The native hook returns a fresh wrapper on render. Project only when its
   // contents change, otherwise observe() publishes a new snapshot indefinitely.
   const displayedData = useMemo(
-    () =>
-      projectEveMessageDisplay(agent.data, agent.events, display.data ?? []),
-    [agent.data, agent.events, display.data]
+    () => projectEveMessageDisplay({ messages: agent.messages }, agent.events, display.data ?? []),
+    [agent.messages, agent.events, display.data]
   );
   useEffect(() => {
-    controller.observe(conversationId, { ...agent, data: displayedData });
+    controller.observe(conversationId, {
+      ...agent,
+      messages: displayedData.messages,
+    });
   }, [agent, displayedData, controller, conversationId]);
   return null;
 };

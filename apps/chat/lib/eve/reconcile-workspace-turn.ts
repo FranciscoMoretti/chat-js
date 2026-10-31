@@ -12,19 +12,6 @@ import {
 import type { WorkspaceTurnEvent } from "./workspace-turn-evidence";
 import { z } from "zod";
 
-const eventsSchema = z.array(
-  z.object({
-    type: z.string(),
-    data: z
-      .object({
-        turnId: z.string().optional(),
-        sessionId: z.string().optional(),
-        remote: z.boolean().optional(),
-      })
-      .optional(),
-    meta: z.object({ deliveryIds: z.array(z.string()).optional() }).optional(),
-  })
-);
 const seededCreation = z.object({ fork: z.looseObject({}) });
 
 /** Wait only for known seed initialization; timeout never authorizes another dispatch. */
@@ -53,10 +40,12 @@ const hasSettledDescendants = async (
   const visited = new Set([sessionId]);
   const pending = [...events];
   for (const event of pending) {
-    const childId = event.data?.sessionId;
+    const childId =
+      event.type === "child.opened" ? event.data.sessionId : undefined;
     if (
-      event.type !== "agent.started" ||
-      event.data?.remote === true ||
+      event.type !== "child.opened" ||
+      event.data.stream !==
+        `/eve/v1/session/${encodeURIComponent(event.data.sessionId)}/stream` ||
       childId === undefined ||
       childId === "" ||
       visited.has(childId)
@@ -110,7 +99,7 @@ export const reconcileEveWorkspaceTurn = async (
     const snapshot = await client.sessions
       .attach(nativeSessionId)
       .snapshot({ signal });
-    return eventsSchema.parse(snapshot.events);
+    return snapshot.events;
   };
   let events: readonly WorkspaceTurnEvent[];
   try {

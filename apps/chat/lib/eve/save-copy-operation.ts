@@ -16,8 +16,13 @@ export const saveEveCopyOperation = async (
     ownerId,
     input.operationId,
     existing?.firstMessage ?? "Conversation fork",
-    async (reservationId) =>
-      await createNativeEveCopy(ownerId, reservationId, input.modelId),
+    async (reservationId) => ({
+      sessionId: await createNativeEveCopy(
+        ownerId,
+        reservationId,
+        input.modelId
+      ),
+    }),
     {
       seedOnly: true,
       initialModelId: input.modelId,

@@ -1,9 +1,11 @@
+import { activeTurn, idle, session, turns } from "eve/events";
+import { conversationOf } from "eve/client";
 import { isDocumentResult } from "@/chatjs/core/documents/contracts";
 import { EveForkBoundaryError } from "./fork-boundary-error";
 import { isNonEmptyString } from "@/lib/is-non-empty-string";
 
 import type { EveMessageDisplayReceipt } from "./message-display";
-import type { MessageStreamEvent } from "eve/client";
+import type { SessionStreamEvent } from "eve/client";
 import { FILES_PATH, isFileStorageKey, keyFromFileUrl } from "@/lib/file-url";
 import { eveMessageTool, eveToolMetadata } from "./message-tool-selection";
 import type { EveCopySeed } from "./copy-seed";
@@ -23,18 +25,6 @@ const EMPTY_CONTENT_LENGTH = 0;
 
 const RESOURCE_TOKEN = /[^\s<>()"'`[\]]+/gu;
 const SENTENCE_END = /[.,;:!?]+$/u;
-const COPY_BOUNDARIES = new Set<MessageStreamEvent["type"]>([
-  "session.waiting",
-  "session.completed",
-  "session.failed",
-  "turn.started",
-  "turn.waiting",
-  "message.received",
-  "step.started",
-  "input.requested",
-  "authorization.required",
-  "history.seeded",
-]);
 const DOCUMENT_TOOLS = new Set([
   ...documentDefinitions.operations.keys(),
   "readDocument",
@@ -77,33 +67,30 @@ const completedPart = (part: ReadonlyEveMessagePart): SeedPart => {
   if (part.type === "file") {
     return copySeedFile(part);
   }
-  if (part.type === "step-start") {
-    return { type: "step-start" };
-  }
-  if (part.type !== "dynamic-tool") {
+  if (part.type !== "tool") {
     throw new EveCopyNotReadyError();
   }
   const base = {
-    type: part.type,
-    toolName: part.toolName,
+    type: "dynamic-tool" as const,
+    toolName: part.name,
     input: z.json().parse(part.input),
   };
-  if (part.state === "output-available") {
-    if (part.partial) {
-      throw new EveCopyNotReadyError();
-    }
+  if (part.state === "completed") {
     return {
       ...base,
-      state: part.state,
+      state: "output-available",
       output: z.json().parse(part.output),
-      ...(part.outputType ? { outputType: part.outputType } : {}),
     };
   }
-  if (part.state === "output-error") {
-    return { ...base, state: part.state, errorText: part.errorText };
+  if (part.state === "failed") {
+    return {
+      ...base,
+      state: "output-error",
+      errorText: part.error?.message ?? "Tool failed",
+    };
   }
-  if (part.state === "output-denied") {
-    return { ...base, state: part.state, reason: part.approval.reason };
+  if (part.state === "rejected") {
+    return { ...base, state: "output-denied" };
   }
   throw new EveCopyNotReadyError();
 };
@@ -286,13 +273,13 @@ const copyAssistantSeedMessage = (message: {
 
 /**
  * Prepares a sanitized completed transcript without model calls or storage access.
- * @param {readonly MessageStreamEvent[]} events Ordered native events whose latest copy boundary must be waiting or completed.
+ * @param {readonly SessionStreamEvent[]} events Ordered native events whose latest copy boundary must be waiting or completed.
  * @param {readonly EveMessageDisplayReceipt[]} receipts Owner-scoped positive bindings for display-only selection metadata.
  * @param {string} beforeMessageId Optional user message to replace; only the preceding transcript is seeded.
  * @returns {{ seed: Seed; projectionHash: string; resources: ReturnType<typeof transcriptResources>; }} The seed, its sanitized projection hash, and application resources to allocate; incomplete content throws.
  */
 const prepareEveCopyTranscript = (
-  events: readonly MessageStreamEvent[],
+  events: readonly SessionStreamEvent[],
   receipts: readonly EveMessageDisplayReceipt[] = [],
   beforeMessageId?: string
 ): {
@@ -300,23 +287,14 @@ const prepareEveCopyTranscript = (
   projectionHash: string;
   resources: ReturnType<typeof transcriptResources>;
 } => {
-  const boundary = events.findLast(
-    (event: Readonly<Pick<MessageStreamEvent, "type">>) =>
-      COPY_BOUNDARIES.has(event.type)
-  );
+  const { view } = conversationOf(events);
+  const lastTurn = turns(view).at(-1);
   if (
-    boundary?.type !== "session.waiting" &&
-    boundary?.type !== "session.completed"
+    !idle(view) ||
+    activeTurn(view) ||
+    (lastTurn && lastTurn.outcome !== "completed") ||
+    session(view).outcome === "failed"
   ) {
-    throw new EveCopyNotReadyError();
-  }
-  const latestTurnOutcome = events.findLast(
-    (event) =>
-      event.type === "turn.completed" ||
-      event.type === "turn.failed" ||
-      event.type === "turn.cancelled"
-  );
-  if (latestTurnOutcome && latestTurnOutcome.type !== "turn.completed") {
     throw new EveCopyNotReadyError();
   }
   const transcript = sharedEveMessages(events, receipts);

@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 import { eq } from "drizzle-orm";
 import { Client } from "eve/client";
-import type { MessageStreamEvent } from "eve/client";
+import type { SessionStreamEvent } from "eve/client";
 import { z } from "zod";
 
 import { db } from "../lib/db/client";
@@ -21,7 +21,7 @@ type SharingEventReader =
       };
     }
   | {
-      readonly type: Exclude<MessageStreamEvent["type"], "message.completed">;
+      readonly type: Exclude<SessionStreamEvent["type"], "message.completed">;
       readonly data?: unknown;
     };
 
