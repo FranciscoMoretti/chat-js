@@ -39,16 +39,23 @@ export const useAttachmentPicker = ({
     },
     rootProps: {
       onDragOver: (event: DragEvent<HTMLDivElement>): void => {
-        if (!disabled && event.dataTransfer.types.includes("Files")) {
-          event.preventDefault();
+        if (!event.dataTransfer.types.includes("Files")) {
+          return;
+        }
+        event.preventDefault();
+        if (disabled) {
+          event.dataTransfer.dropEffect = "none";
         }
       },
       onDrop: (event: DragEvent<HTMLDivElement>): void => {
-        if (disabled || event.dataTransfer.files.length === 0) {
+        if (event.dataTransfer.files.length === 0) {
           return;
         }
         event.preventDefault();
         event.stopPropagation();
+        if (disabled) {
+          return;
+        }
         submit([...event.dataTransfer.files]);
       },
       onPasteCapture: (event: ClipboardEvent<HTMLDivElement>): void => {

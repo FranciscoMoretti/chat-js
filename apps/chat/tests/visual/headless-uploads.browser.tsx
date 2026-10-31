@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { act, useState } from "react";
+import { useAttachmentPicker } from "@/hooks/use-attachment-picker";
 import { createRoot } from "react-dom/client";
 import { expect, test, vi } from "vitest";
 import { page } from "vitest/browser";
@@ -22,6 +23,64 @@ vi.mock("@/plugins/attachment-uploads/upload-prep", () => ({
 }));
 
 const file = new File(["fixture"], "notes.pdf", { type: "application/pdf" });
+
+test.each([false, true])(
+  "file drops prevent navigation when disabled=%s",
+  async (disabled) => {
+    const onFiles = vi.fn(async () => {
+      await Promise.resolve();
+    });
+    const Picker = () => {
+      const picker = useAttachmentPicker({ disabled, onFiles });
+      return (
+        <div {...picker.rootProps} data-testid="drop-target">
+          <input {...picker.inputProps} />
+          {disabled ? "Uploads disabled" : "Drop files here"}
+        </div>
+      );
+    };
+    const container = document.createElement("main");
+    document.body.append(container);
+    const root = createRoot(container);
+    try {
+      await renderRoot(root, <Picker />);
+      const target = container.querySelector('[data-testid="drop-target"]');
+      if (!target) {
+        throw new Error("Missing drop target");
+      }
+      const dataTransfer = new DataTransfer();
+      dataTransfer.items.add(file);
+      const drag = new DragEvent("dragover", {
+        bubbles: true,
+        cancelable: true,
+        dataTransfer,
+      });
+      target.dispatchEvent(drag);
+      expect(drag.defaultPrevented).toBe(true);
+      const drop = new DragEvent("drop", {
+        bubbles: true,
+        cancelable: true,
+        dataTransfer,
+      });
+      await act(async () => {
+        target.dispatchEvent(drop);
+        await Promise.resolve();
+      });
+      expect(drop.defaultPrevented).toBe(true);
+      expect(onFiles).toHaveBeenCalledTimes(disabled ? 0 : 1);
+      if (!disabled) {
+        expect(onFiles).toHaveBeenCalledWith([file]);
+      }
+      await takeSnapshot(
+        disabled ? "disabled-upload-picker" : "enabled-upload-picker"
+      );
+    } finally {
+      await unmountRoot(root);
+      container.remove();
+    }
+  }
+);
+
 const Form = () => {
   const [count, setCount] = useState(0);
   const files = useAttachmentUploads({

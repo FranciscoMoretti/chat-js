@@ -1,6 +1,7 @@
 "use client";
 
 import { documentDefinitions } from "@/integrations/documents";
+import { documents } from "@/integrations/document-ui";
 
 import { hasText } from "@/components/text-value";
 
@@ -165,7 +166,9 @@ const documentSubtitle = (
 };
 
 const isInstalledDocument = (kind: string | undefined): boolean =>
-  kind !== undefined && documentDefinitions.kinds.has(kind);
+  kind !== undefined &&
+  documentDefinitions.kinds.has(kind) &&
+  documents[kind]?.Body !== undefined;
 
 const useDocumentPanel = ({
   conversationId,
