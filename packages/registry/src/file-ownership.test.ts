@@ -94,7 +94,7 @@ test("selecting a provider does not claim alternative providers", () => {
       {
         name: "chosen-gateway",
         type: "registry:item",
-        registryDependencies: ["@chatjs/shared"],
+        registryDependencies: ["dropdown-menu", "@chatjs/shared"],
       },
       { name: "other-gateway", type: "registry:item" },
       {
@@ -122,7 +122,7 @@ test("plugin descriptors are owned and implicit shadcn targets fail explicitly",
     {
       owner: "mcp",
       source: "descriptor:mcp",
-      target: "plugins/mcp/chatjs.json",
+      target: "chatjs/plugins/mcp/chatjs.json",
     },
   ]);
   expect(() =>

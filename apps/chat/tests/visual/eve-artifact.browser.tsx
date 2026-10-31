@@ -65,6 +65,9 @@ const showStreamingArtifact = async (): Promise<void> => {
   await expect
     .element(page.getByTestId("artifact-state"))
     .toHaveTextContent("fixtureVersion");
+  await expect
+    .element(page.getByRole("heading", { name: "Owned draft", exact: true }))
+    .toBeVisible();
   await takeSnapshot("artifact-streaming");
   await page.elementLocator(document.body).screenshot();
 };

@@ -12,24 +12,31 @@ import {
   FileText,
   MessageSquare,
   MoreHorizontal,
+  PanelLeft,
   Plus,
   Search,
   X,
 } from "lucide-react";
 import {
   IconCopy,
+  IconLayoutSidebar,
+  IconX,
   IconCheck,
   IconChevronRight,
   IconArrowDown,
 } from "@tabler/icons-react";
 import {
   CopyIcon,
+  SidebarIcon,
+  XIcon,
   CheckIcon,
   CaretRightIcon,
   ArrowDownIcon,
 } from "@phosphor-icons/react";
 import {
   RiFileCopyLine,
+  RiSideBarLine,
+  RiCloseLine,
   RiCheckLine,
   RiArrowRightSLine,
   RiArrowDownLine,
@@ -37,6 +44,8 @@ import {
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Copy01Icon,
+  SidebarLeftIcon,
+  Cancel01Icon,
   Tick02Icon,
   ArrowRight01Icon,
   ArrowDown02Icon,
@@ -73,7 +82,13 @@ export const IconPlaceholder = ({
   lucide,
   className,
 }: Readonly<{
-  lucide: "ChevronRightIcon" | "CheckIcon" | "ArrowDownIcon" | "CopyIcon";
+  lucide:
+    | "ChevronRightIcon"
+    | "CheckIcon"
+    | "ArrowDownIcon"
+    | "CopyIcon"
+    | "PanelLeftIcon"
+    | "XIcon";
   tabler: string;
   hugeicons: string;
   phosphor: string;
@@ -82,6 +97,20 @@ export const IconPlaceholder = ({
 }>) => {
   const library = useContext(IconLibraryContext);
   const icons = {
+    PanelLeftIcon: {
+      hugeicons: SidebarLeftIcon,
+      tabler: IconLayoutSidebar,
+      phosphor: SidebarIcon,
+      remixicon: RiSideBarLine,
+      lucide: PanelLeft,
+    },
+    XIcon: {
+      hugeicons: Cancel01Icon,
+      tabler: IconX,
+      phosphor: XIcon,
+      remixicon: RiCloseLine,
+      lucide: X,
+    },
     ChevronRightIcon: {
       hugeicons: ArrowRight01Icon,
       tabler: IconChevronRight,

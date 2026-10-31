@@ -1,5 +1,7 @@
 "use client";
+import { TransportSelect } from "./transport-select";
 
+import { DisclosureButton } from "@/components/disclosure-button";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ChevronDown } from "lucide-react";
@@ -10,11 +12,7 @@ import { z } from "zod";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import {
   Dialog,
   DialogContent,
@@ -30,14 +28,6 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
 import { MCP_NAME_MAX_LENGTH } from "@/lib/ai/mcp-name-id";
 import { config } from "@/lib/config";
@@ -255,21 +245,17 @@ export const McpCreateDialog = ({
             />
 
             <Collapsible onOpenChange={setAdvancedOpen} open={advancedOpen}>
-              <CollapsibleTrigger
-                render={
-                  <Button
-                    className="text-muted-foreground hover:text-foreground h-auto p-0 hover:bg-transparent"
-                    size="sm"
-                    type="button"
-                    variant="ghost"
-                  >
-                    <ChevronDown
-                      className={`mr-1.5 size-4 transition-transform ${advancedOpen ? "" : "-rotate-90"}`}
-                    />
-                    Advanced settings
-                  </Button>
-                }
-              />
+              <DisclosureButton
+                className="text-muted-foreground hover:text-foreground h-auto p-0 hover:bg-transparent"
+                size="sm"
+                type="button"
+                variant="ghost"
+              >
+                <ChevronDown
+                  className={`mr-1.5 size-4 transition-transform ${advancedOpen ? "" : "-rotate-90"}`}
+                />
+                Advanced settings
+              </DisclosureButton>
               <CollapsibleContent className="space-y-4 pt-2">
                 <Controller
                   control={form.control}
@@ -280,39 +266,18 @@ export const McpCreateDialog = ({
                         Transport Type
                       </FieldLabel>
 
-                      <Select
-                        items={{
-                          http: "HTTP (Streamable)",
-                          sse: "SSE (Server-Sent Events)",
+                      <TransportSelect
+                        id={field.name}
+                        invalid={fieldState.invalid}
+                        onBlur={() => {
+                          field.onBlur();
                         }}
-                        onValueChange={(value): void => {
-                          if (value !== null) {
-                            field.onChange(value);
-                          }
+                        onValueChange={(value) => {
+                          field.onChange(value);
                         }}
                         value={field.value}
-                      >
-                        <SelectTrigger
-                          id={field.name}
-                          aria-invalid={fieldState.invalid}
-                          onBlur={() => {
-                            field.onBlur();
-                          }}
-                          ref={field.ref}
-                        >
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectGroup>
-                            <SelectItem value="http">
-                              HTTP (Streamable)
-                            </SelectItem>
-                            <SelectItem value="sse">
-                              SSE (Server-Sent Events)
-                            </SelectItem>
-                          </SelectGroup>
-                        </SelectContent>
-                      </Select>
+                        ref={field.ref}
+                      />
 
                       <FieldError errors={[fieldState.error]} />
                     </Field>

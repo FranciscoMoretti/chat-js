@@ -7,8 +7,8 @@ import { expect, test } from "vitest";
 import { page } from "vitest/browser";
 
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-import { ReasonSearchResearchProgress } from "@/tools/chatjs/deep-research/progress";
-import { ResearchTasks } from "@/tools/chatjs/deep-research/tasks";
+import { ReasonSearchResearchProgress } from "@/chatjs/tools/deep-research/progress";
+import { ResearchTasks } from "@/chatjs/tools/deep-research/tasks";
 import type { ResearchUpdate } from "@/tools/platform/research-updates-schema";
 
 const updates: ResearchUpdate[] = [
@@ -115,10 +115,7 @@ test("research task progress renders its update states together", async () => {
       .poll(() => container.textContent)
       .toContain("Research complete");
     await expect
-      .poll(
-        () =>
-          container.querySelectorAll('.group > div[style*="opacity: 1"]').length
-      )
+      .poll(() => container.querySelectorAll("[data-research-step]").length)
       .toBe(updates.length);
     await takeSnapshot("research-task-progress-states");
 
@@ -155,17 +152,10 @@ test("research task progress renders its update states together", async () => {
       .poll(
         () =>
           container.querySelectorAll(
-            '[aria-label="Completed research"] .group > div[style*="opacity: 1"]'
+            '[aria-label="Completed research"] [data-research-step]'
           ).length
       )
       .toBe(updates.length);
-    await expect
-      .poll(() =>
-        [
-          ...container.querySelectorAll<HTMLElement>('div[style*="opacity"]'),
-        ].every((element) => getComputedStyle(element).opacity === "1")
-      )
-      .toBe(true);
     await takeSnapshot("research-progress-active-and-complete");
   } finally {
     await unmountRoot(root);

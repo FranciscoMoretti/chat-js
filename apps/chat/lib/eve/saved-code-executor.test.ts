@@ -1,6 +1,6 @@
 import { beforeEach, expect, test, vi } from "vitest";
 import type { CodeExecutor } from "./code-executor";
-import { executeEveCodeDocument } from "@/tools/chatjs/saved-code-execution/execute";
+import { executeEveCodeDocument } from "@/chatjs/tools/saved-code-execution/execute";
 import { testToolContext } from "@/tests/helpers/eve-tool-context";
 
 const mocks = vi.hoisted(() => ({
@@ -14,7 +14,7 @@ const mocks = vi.hoisted(() => ({
     toolInstalled: true,
   },
 }));
-vi.mock("../../composition/generated/code-executor", () => ({
+vi.mock("../../integrations/tools/code-executor", () => ({
   get codeExecutor(): typeof mocks.execute | undefined {
     if (mocks.settings.installed) {
       return mocks.execute;
@@ -23,7 +23,7 @@ vi.mock("../../composition/generated/code-executor", () => ({
   },
 }));
 
-vi.mock("@/composition/generated/installed-tools", () => ({
+vi.mock("@/integrations/tools/catalog", () => ({
   installedDocumentKinds: {
     has: (): boolean => mocks.settings.documentInstalled,
   },

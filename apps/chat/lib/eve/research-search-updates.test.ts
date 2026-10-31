@@ -1,7 +1,7 @@
 import type { WorkflowToolContext } from "eve/tools";
 import { expect, it, vi } from "vitest";
 
-import { researchSearchUpdates } from "@/tools/chatjs/deep-research/search-updates";
+import { researchSearchUpdates } from "@/chatjs/tools/deep-research/search-updates";
 
 import { testToolContext } from "../../tests/helpers/eve-tool-context";
 import { createToolResult } from "./tool-result";

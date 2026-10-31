@@ -15,6 +15,12 @@ const destination = fileURLToPath(
   new URL("../components/create-preview/ui/", import.meta.url)
 );
 const names = [
+  "scroll-area",
+  "sidebar",
+  "sheet",
+  "separator",
+  "skeleton",
+  "tooltip",
   "direction",
   "button",
   "input",
@@ -79,8 +85,26 @@ await Promise.all(
     names.map(async (name) => {
       const source = `registry/bases/${base}/ui/${name}.tsx`;
       const original = await fetchSource(source);
+      // Radix's controlled Sidebar has no SheetTrigger to restore focus to.
+      // The preview contains exactly one sidebar trigger in this document.
+      const focusable =
+        base === "radix" && name === "sidebar"
+          ? original.replace(
+              "<SheetContent\n",
+              `<SheetContent
+          onCloseAutoFocus={(event) => {
+            event.preventDefault()
+            document.querySelector<HTMLElement>('[data-sidebar="trigger"]')?.focus()
+          }}
+`
+            )
+          : original;
       const adapted = await transformDirection(
-        original
+        focusable
+          .replaceAll(
+            `@/registry/bases/${base}/hooks/use-mobile`,
+            "../../../../../chat/hooks/use-mobile"
+          )
           .replaceAll(new RegExp(`@/registry/bases/${base}/ui/`, "gu"), "./")
           .replaceAll(
             "@/app/(create)/components/icon-placeholder",
@@ -137,9 +161,10 @@ files.set(
       commit,
       rtlTransform: `shadcn@${sitePackage.dependencies.shadcn}`,
       adaptations: [
-        "Local component and icon import paths",
+        "Local component, icon, and shared mobile hook import paths",
         "Upstream RTL transform on TSX and CSS @apply utilities",
         "Local stylesheet import and reference paths",
+        "Restore Radix mobile sidebar focus to the preview trigger on close",
       ],
       files: Object.fromEntries(
         Object.entries(sources).toSorted(([a], [b]) => a.localeCompare(b))

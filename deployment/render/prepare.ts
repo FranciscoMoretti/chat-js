@@ -13,12 +13,12 @@ if (bucket === undefined || bucket === "") {
 await verifyPrivateBucket(bucket);
 await copyFile(
   path.join(root, "packages/registry/src/storage/supabase/storage-provider.ts"),
-  path.join(app, "lib/storage-provider.ts")
+  path.join(app, "chatjs/providers/storage.ts")
 );
 await writeFile(
-  path.join(app, "lib/storage-options.ts"),
-  `import type { EnvRequirement } from "./config-requirements";
-import type { createStorageAdapter } from "./storage-provider";
+  path.join(app, "chatjs/providers/storage-options.ts"),
+  `import type { EnvRequirement } from "@/lib/config-requirements";
+import type { createStorageAdapter } from "./storage";
 export const storageOptions = ${JSON.stringify({ bucket, public: false })} satisfies Parameters<typeof createStorageAdapter>[0];
 export const storageId = "supabase";
 export const storageEnvRequirements: EnvRequirement[] = [{ options: [["SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"]] }];
@@ -33,8 +33,10 @@ const providerTests = await readFile(
   "utf-8"
 );
 await writeFile(
-  path.join(app, "lib/storage-provider.test.ts"),
-  providerTests.replace('from "bun:test"', 'from "vitest"')
+  path.join(app, "chatjs/providers/storage.test.ts"),
+  providerTests
+    .replace('from "bun:test"', 'from "vitest"')
+    .replace('from "./storage-provider"', 'from "./storage"')
 );
 // JustBash owns this profile's EVE workspace. Its sessions must not register
 // persistent-provider records whose retirement callback is no longer installed.

@@ -11,11 +11,7 @@ const generateDemo = async (
   }> = {}
 ): Promise<{ files: Map<string, string>; ownedPaths: readonly string[] }> => {
   const installation = await generateInstallation(demoInstallation, options);
-  const excluded = new Set([
-    "lib/ai/models.generated.ts",
-    "composition/custom/custom-tools.ts",
-    "composition/custom/custom-ui.ts",
-  ]);
+  const excluded = new Set(["lib/ai/models.generated.ts"]);
   const files = new Map(
     [...installation.files].filter(([file]) => !excluded.has(file))
   );
@@ -39,10 +35,10 @@ const generateDemo = async (
       throw result.reason;
     }
   }
-  const defaults = files.get("lib/ai/gateway-model-defaults.ts");
+  const defaults = files.get("chatjs/providers/gateway-defaults.ts");
   if (defaults !== undefined) {
     files.set(
-      "lib/ai/gateway-model-defaults.ts",
+      "chatjs/providers/gateway-defaults.ts",
       defaults.replace(
         'chat: "openai/gpt-5-mini"',
         'chat: "google/gemini-2.5-flash-lite"'

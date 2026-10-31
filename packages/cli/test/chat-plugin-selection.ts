@@ -71,16 +71,7 @@ export const testChatPluginSelections = (
         "--no-documents",
         "--no-attachments",
       ]);
-      const pluginUi = {
-        "composer-controls.ts": await readFile(
-          path.join(cwd, "composer-controls.ts"),
-          "utf-8"
-        ),
-        "settings-items.ts": await readFile(
-          path.join(cwd, "settings-items.ts"),
-          "utf-8"
-        ),
-      };
+
       if (selection !== "none") {
         await run(cwd, ["node", cliEntry, "add", selection, "--yes"]);
       }
@@ -104,27 +95,23 @@ export const testChatPluginSelections = (
       expect(
         "@better-auth/electron" in (installedPackage.dependencies ?? {})
       ).toBe(selection === "desktop");
-      const pluginDirectory = path.join(cwd, "plugins");
+      const pluginDirectory = path.join(cwd, "chatjs/plugins");
       const installedPlugins = existsSync(pluginDirectory)
         ? await readdir(pluginDirectory)
         : [];
       expect(installedPlugins.toSorted()).toEqual(
         selection === "none" ? [] : [selection]
       );
-      const predicted = await generateInstallation(
-        {
-          gateway: "openai",
-          storage: { source: "memory", options: {} },
-          tools: [],
-          plugins: selection === "none" ? [] : [selection],
-        },
-        { pluginUi }
-      );
+      const predicted = await generateInstallation({
+        gateway: "openai",
+        storage: { source: "memory", options: {} },
+        tools: [],
+        plugins: selection === "none" ? [] : [selection],
+      });
       // Compare the shared renderer with independently packaged registry installation.
       // Targets come from manifests and the real registration generator, not a test inventory.
       const targets = new Set([
         ...pluginRegistrationTargets,
-        ...Object.keys(pluginUi),
         ...predicted.items
           .filter(
             (item) =>
@@ -193,14 +180,14 @@ export const testChatPluginSelections = (
           true
         );
         expect(
-          existsSync(path.join(created, "plugins/desktop/chatjs.json"))
+          existsSync(path.join(created, "chatjs/plugins/desktop/chatjs.json"))
         ).toBe(true);
         expect(
           await readFile(
-            path.join(created, "composition/generated/installed-auth.ts"),
+            path.join(created, "chatjs/generated/installed-auth.ts"),
             "utf-8"
           )
-        ).toContain("@/plugins/desktop/auth-server");
+        ).toContain("@/chatjs/plugins/desktop/auth-server");
       }
 
       await writeFile(
@@ -257,10 +244,10 @@ process.env.OPENAI_API_KEY = "fixture-key";
         path.join(cwd, "plugin-lifecycle-probe.ts"),
         `
 import assert from "node:assert/strict";
-import { installedChatPlugins } from "./composition/generated/installed-chat";
-import { chatLinks } from "./lib/chat-plugins";
-import { installedSessionProfiles } from "./composition/generated/installed-session-profiles";
-import { installedCleanupTasks } from "./composition/generated/installed-cleanup";
+import { installedChat } from "./chatjs/generated/installed-chat";
+import { chat } from "./integrations/chat/server";
+import { installedSessionProfiles } from "./chatjs/generated/installed-session-profiles";
+import { installedCleanupTasks } from "./chatjs/generated/installed-cleanup";
 import { requireSessionProfile } from "./lib/eve/session-profile";
 import { requireAccountSession } from "./lib/eve/session-identity";
 assert.equal(installedSessionProfiles.length, ${selection === "guest-chat" ? 1 : 0});
@@ -270,12 +257,12 @@ assert.throws(() => requireAccountSession({ auth: { initiator: { authenticator: 
 for (const profile of installedSessionProfiles) {
   assert.equal(await profile.authenticate(new Request("http://localhost/eve/v1/session")), null);
 }
-import { usageBilling, canSpend } from "./composition/generated/installed-billing";
-assert.equal(usageBilling !== undefined, ${selection === "credits"});
-${selection === "none" ? 'assert.equal(await canSpend("fixture-owner"), true);' : ""}
-assert.equal(installedChatPlugins.length, ${["none", "desktop", "credits", "model-preferences", "guest-chat"].includes(selection) ? 0 : 1});
-assert.deepEqual(await chatLinks("fixture-owner", []), new Map());
-for (const plugin of installedChatPlugins) {
+import { billing } from "./integrations/billing";
+assert.equal(billing.debit !== undefined, ${selection === "credits"});
+${selection === "none" ? 'assert.equal(await billing.canSpend("fixture-owner"), true);' : ""}
+assert.equal(installedChat.length, ${["none", "desktop", "credits", "model-preferences", "guest-chat"].includes(selection) ? 0 : 1});
+assert.deepEqual(await chat.links("fixture-owner", []), new Map());
+for (const plugin of installedChat) {
   assert.equal(typeof plugin.${lifecycleMethod}, "function");
 }
 `

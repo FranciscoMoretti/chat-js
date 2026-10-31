@@ -1,4 +1,4 @@
-import { signOutDesktop } from "@/plugins/desktop/sign-out";
+import { signOutDesktop } from "@/chatjs/plugins/desktop/sign-out";
 import { takeSnapshot } from "@uiverify/vitest";
 import React, { act } from "react";
 import { createRoot } from "react-dom/client";
@@ -11,15 +11,15 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 
 import "./sandbox.css";
 
-vi.mock("@/composition/generated/installed-sign-out", () => ({
+vi.mock("@/integrations/auth/sign-out", () => ({
   signOutWithPlugin: signOutDesktop,
 }));
 const auth = vi.hoisted(() => ({ electron: false, signOut: vi.fn() }));
 vi.mock("@/lib/auth-client", () => ({ default: auth }));
-vi.mock("@/plugins/desktop/bridge", () => ({
+vi.mock("@/chatjs/plugins/desktop/bridge", () => ({
   isElectronRenderer: (): boolean => auth.electron,
 }));
-vi.mock("@/plugins/credits/use-credits", () => ({
+vi.mock("@/chatjs/plugins/credits/use-credits", () => ({
   useGetCredits: (): { balanceCents: number; isError: boolean } => ({
     balanceCents: 0,
     isError: false,

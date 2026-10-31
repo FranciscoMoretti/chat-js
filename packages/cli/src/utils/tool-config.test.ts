@@ -35,8 +35,8 @@ test("configuration only accepts installed tools, with typed partial overrides a
   const root = await fixture();
   await scaffoldFromTemplate(root);
   await cp(
-    path.join(demo, "lib/ai/gateway.ts"),
-    path.join(root, "lib/ai/gateway.ts")
+    path.join(demo, "chatjs/providers/gateway.ts"),
+    path.join(root, "chatjs/providers/gateway.ts")
   );
   await linkWorkspaceDependencies(demo, root);
   await writeFile(
@@ -47,7 +47,7 @@ test("configuration only accepts installed tools, with typed partial overrides a
     path.join(root, "probe.ts"),
     `
 import { defineConfig, applyDefaults } from "./lib/config-schema";
-import { gatewayType } from "./lib/ai/gateway-model-defaults";
+import { gatewayType } from "./chatjs/providers/gateway-defaults";
 import assert from "node:assert/strict";
 const input = defineConfig({ ai: { gateway: gatewayType, tools: { followupSuggestions: { enabled: true } } } });
 assert.deepEqual(Object.keys(applyDefaults(input).ai.tools), ["followupSuggestions"]);
@@ -77,22 +77,22 @@ defineConfig({ ai: { gateway: gatewayType, tools: { followupSuggestions: {}, res
     "tsconfig.probe.json",
   ]);
   await run(root, ["bun", "probe.ts"]);
-  await mkdir(path.join(root, "tools/chatjs/custom-research"), {
+  await mkdir(path.join(root, "chatjs/tools/custom-research"), {
     recursive: true,
   });
   await cp(
-    path.join(demo, "tools/chatjs/deep-research/configuration-schema.ts"),
-    path.join(root, "tools/chatjs/custom-research/configuration-schema.ts")
+    path.join(demo, "chatjs/tools/deep-research/configuration-schema.ts"),
+    path.join(root, "chatjs/tools/custom-research/configuration-schema.ts")
   );
   await writeFile(
-    path.join(root, "composition/generated/installed-config.ts"),
+    path.join(root, "chatjs/generated/installed-config.ts"),
     await planToolConfig(root, [definition])
   );
   await writeFile(
     path.join(root, "probe.ts"),
     `
 import { defineConfig, applyDefaults, aiConfigSchema } from "./lib/config-schema";
-import { gatewayType, gatewayModelDefaults } from "./lib/ai/gateway-model-defaults";
+import { gatewayType, gatewayModelDefaults } from "./chatjs/providers/gateway-defaults";
 import assert from "node:assert/strict";
 const input = defineConfig({ ai: { gateway: gatewayType, tools: { research: { allowClarification: false } } } });
 const parsed = applyDefaults(input);

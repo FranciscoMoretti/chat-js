@@ -1,4 +1,4 @@
-import { usageBilling } from "@/composition/generated/installed-billing";
+import { billing } from "@/integrations/billing";
 import { and, eq, isNotNull, isNull, sql } from "drizzle-orm";
 import { EveUsageReconciliationBusyError } from "@/lib/eve/usage-reconciliation-busy";
 import { databaseConnection } from "./connection";
@@ -112,7 +112,7 @@ const debitTurnUsage = async (
     readonly eventId: string;
   }
 ): Promise<void> => {
-  if (!usageBilling) {
+  if (!billing.debit) {
     return;
   }
   // Sum in Postgres decimal arithmetic; round once per turn, not once per model step.
@@ -131,7 +131,7 @@ const debitTurnUsage = async (
     );
   const delta = (totals?.due ?? ZERO_CENTS) - (totals?.paid ?? ZERO_CENTS);
   if (delta > ZERO_CENTS) {
-    await usageBilling.debit(tx, { ownerId: input.ownerId, cents: delta });
+    await billing.debit(tx, { ownerId: input.ownerId, cents: delta });
     await tx
       .update(eveUsage)
       .set({ chargedCents: sql`${eveUsage.chargedCents} + ${delta}` })

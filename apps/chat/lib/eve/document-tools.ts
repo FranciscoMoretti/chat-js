@@ -1,9 +1,9 @@
+import { documentDefinitions } from "@/integrations/documents/definitions";
 import {
   eveDocumentCreateInput,
   eveDocumentEditInput,
-  eveDocumentOperations,
   eveDocumentReadInput,
-} from "./document-contracts";
+} from "@/chatjs/core/documents/contracts";
 import {
   getEveDocumentRevision,
   saveEveDocumentRevision,
@@ -11,12 +11,10 @@ import {
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import type { ToolContext } from "eve/tools";
 import { createHash } from "node:crypto";
-import { installedDocumentKinds } from "@/composition/generated/installed-tools";
 import { resolveEveConversationScope } from "./conversation-scope";
 
 type DocumentContext = Pick<ToolContext, "session" | "callId" | "abortSignal">;
 
-const DOCUMENT_OPERATION_VALUE_INDEX = 1;
 const UUID_START_OFFSET = 0;
 const UUID_BYTE_LENGTH = 16;
 const UUID_VERSION_BYTE_INDEX = 6;
@@ -67,7 +65,7 @@ const readEveDocumentTool = async (
     scope.conversationId,
     input.documentId
   );
-  if (!(revision && installedDocumentKinds.has(revision.kind))) {
+  if (!revision) {
     throw new Error("Document not found.");
   }
   return {
@@ -111,10 +109,8 @@ const writeEveDocumentTool = async (
   value: unknown,
   context: ReadonlyNativeSurface<DocumentContext>
 ): Promise<DocumentToolResult> => {
-  const operation = Object.entries(eveDocumentOperations).find(
-    ([key]: readonly [string, ...unknown[]]) => key === name
-  )?.[DOCUMENT_OPERATION_VALUE_INDEX];
-  if (!(operation && installedDocumentKinds.has(operation.kind))) {
+  const operation = documentDefinitions.operations.get(name);
+  if (!operation) {
     throw new Error("Document tool is unavailable.");
   }
   const edit = operation.edit ? eveDocumentEditInput.parse(value) : undefined;
@@ -128,7 +124,9 @@ const writeEveDocumentTool = async (
   const revision = await saveEveDocumentRevision(
     {
       ...scope,
-      content: input.content,
+      content: documentDefinitions
+        .require(operation.kind)
+        .contentSchema.parse(input.content),
       documentId:
         edit?.documentId ??
         documentIdForCall(context.session.id, context.callId),

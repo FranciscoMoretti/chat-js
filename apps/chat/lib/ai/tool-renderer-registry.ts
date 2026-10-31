@@ -2,8 +2,8 @@ import type { ComponentType, FunctionComponent } from "react";
 import type { InstalledTools } from "./installed-tools";
 import type { ToolUIPart } from "ai";
 
-import { isValidatedToolRenderer } from "./define-tool-renderer";
-import { ui } from "@/composition/generated/ui";
+import { isValidatedToolRenderer } from "@/chatjs/core/tools/define-renderer";
+import { ui } from "@/integrations/tools/ui";
 
 type InstalledToolName = keyof InstalledTools;
 

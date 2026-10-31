@@ -1,198 +1,14 @@
 import { assertUiCompatibility } from "./ui-compatibility";
 import { writeGeneratedFiles } from "./write-generated-files";
 import { assertCurrentInstallationLayout } from "./installation-layout";
-import { readFile, writeFile, rm } from "node:fs/promises";
+import { rm } from "node:fs/promises";
 import path from "node:path";
-import ts from "typescript";
 import type { PluginDefinition } from "../../../registry/metadata";
 import { readInstalledPlugins } from "./installed-plugins";
 import { planDatabaseSchemas } from "./sync-database";
 import { generatedRegistrationSource } from "./generated-registration-source";
-import { preflight } from "./preflight";
 import { initializeObservability } from "./sync-observability";
 import { pluginItems } from "../../../registry/src/plugins/catalog";
-
-type ReadonlyNative<Value> = Value extends (
-  ...args: readonly never[]
-) => unknown
-  ? Value
-  : Value extends object
-    ? { readonly [Key in keyof Value]: ReadonlyNative<Value[Key]> }
-    : Value;
-
-interface ContributionBinding {
-  binding: string;
-  bindings: ts.NamedImportBindings | undefined;
-  specifier: ts.ImportSpecifier | undefined;
-}
-
-const contributionBinding = (
-  parsed: ReadonlyNative<ts.SourceFile>,
-  marker: string,
-  symbol: string
-): ContributionBinding => {
-  const imports = parsed.statements.filter(ts.isImportDeclaration);
-  const imported = imports.find(
-    (node: ReadonlyNative<ts.ImportDeclaration>): boolean =>
-      ts.isStringLiteral(node.moduleSpecifier) &&
-      node.moduleSpecifier.text === marker &&
-      (!node.importClause || !ts.isTypeOnlyImportDeclaration(node.importClause))
-  );
-  const importClause = imported && imported.importClause;
-  const bindings = importClause && importClause.namedBindings;
-  const namedBindings =
-    bindings && ts.isNamedImports(bindings) ? bindings.elements : [];
-  const specifier = namedBindings.find(
-    (item: ReadonlyNative<ts.ImportSpecifier>): boolean =>
-      !item.isTypeOnly && (item.propertyName ?? item.name).text === symbol
-  );
-  if (bindings && ts.isNamespaceImport(bindings)) {
-    return { binding: `${bindings.name.text}.${symbol}`, bindings, specifier };
-  }
-  return {
-    binding: (specifier && specifier.name.text) ?? symbol,
-    bindings,
-    specifier,
-  };
-};
-interface PlannedContribution {
-  content: string;
-  file: string;
-}
-interface SourceEdit {
-  readonly start: number;
-  readonly text: string;
-}
-const LAST_ELEMENT = -1;
-const CLOSING_DELIMITER_WIDTH = 1;
-const SOURCE_START = 0;
-
-// Plan both application-owned UI edits before writing any registrations.
-const planContribution = async (
-  file: string,
-  name: string,
-  symbol: string,
-  marker: string,
-  id: string | readonly string[],
-  entry: (binding: string) => string,
-  sourceOverride?: string
-): Promise<PlannedContribution> => {
-  const source = sourceOverride ?? (await readFile(file, "utf-8"));
-  const parsed = ts.createSourceFile(
-    file,
-    source,
-    ts.ScriptTarget.Latest,
-    true
-  );
-  const declaration = parsed.statements
-    .filter(ts.isVariableStatement)
-    .flatMap(
-      (statement: ReadonlyNative<ts.VariableStatement>) =>
-        statement.declarationList.declarations
-    )
-    .find(
-      (item: ReadonlyNative<ts.VariableDeclaration>): boolean =>
-        item.name.getText(parsed) === name
-    );
-  if (
-    !declaration ||
-    !declaration.initializer ||
-    !ts.isArrayLiteralExpression(declaration.initializer)
-  ) {
-    throw new Error(
-      `Add the plugin contribution to ${file} manually: ${name} is no longer a literal array. Then run chat-js sync. To retry automatic UI integration, restore a literal array and retry chat-js add.`
-    );
-  }
-  const array = declaration.initializer;
-  const contributionIds = typeof id === "string" ? [id] : id;
-  const { binding, bindings, specifier } = contributionBinding(
-    parsed,
-    marker,
-    symbol
-  );
-  // The array determines presence; an unused import is not a contribution.
-  if (
-    array.elements.some(
-      (item: ReadonlyNative<ts.Expression>): boolean =>
-        item.getText(parsed) === binding ||
-        (ts.isSpreadElement(item) &&
-          item.expression.getText(parsed) === `${binding}().${name}`) ||
-        (ts.isObjectLiteralExpression(item) &&
-          item.properties.some(
-            (prop: ReadonlyNative<ts.ObjectLiteralElementLike>): boolean =>
-              ts.isPropertyAssignment(prop) &&
-              ((prop.name
-                .getText(parsed)
-                .replaceAll('"', "")
-                .replaceAll("'", "") === "id" &&
-                ts.isStringLiteral(prop.initializer) &&
-                contributionIds.includes(prop.initializer.text)) ||
-                (prop.name.getText(parsed) === "Component" &&
-                  prop.initializer.getText(parsed) === binding))
-          ))
-    )
-  ) {
-    return { content: source, file };
-  }
-  const edits: SourceEdit[] = [];
-  if (!specifier && !(bindings && ts.isNamespaceImport(bindings))) {
-    // Avoid overwriting a user binding with the same name from another module.
-    const identifiers = new Set<string>();
-    const collect = (node: ReadonlyNative<ts.Node>): void => {
-      if (ts.isIdentifier(node)) {
-        identifiers.add(node.text);
-      }
-      ts.forEachChild(node, collect);
-    };
-    collect(parsed);
-    if (identifiers.has(symbol)) {
-      throw new Error(
-        `Cannot import ${symbol} in ${file}: that name is already used. Add the plugin contribution manually and run chat-js sync.`
-      );
-    }
-    if (bindings && ts.isNamedImports(bindings)) {
-      const last = bindings.elements.at(LAST_ELEMENT);
-      if (last && !bindings.elements.hasTrailingComma) {
-        edits.push({ start: last.end, text: "," });
-      }
-      edits.push({
-        start: bindings.end - CLOSING_DELIMITER_WIDTH,
-        text: ` ${symbol} `,
-      });
-    } else {
-      const lastImport = parsed.statements.findLast(
-        (node: ReadonlyNative<ts.Statement>): boolean =>
-          ts.isImportDeclaration(node) ||
-          (ts.isExpressionStatement(node) &&
-            ts.isStringLiteral(node.expression))
-      );
-      const importEnd = (lastImport && lastImport.end) ?? SOURCE_START;
-      edits.push({
-        start: importEnd,
-        text: `\nimport { ${symbol} } from "${marker}";\n`,
-      });
-    }
-  }
-  edits.push({
-    start: array.end - CLOSING_DELIMITER_WIDTH,
-    text: `\n  ${entry(binding)},\n`,
-  });
-  const last = array.elements.at(LAST_ELEMENT);
-  if (last && !array.elements.hasTrailingComma) {
-    edits.push({ start: last.end, text: "," });
-  }
-  let content = source;
-  for (const edit of edits.toSorted(
-    (leftEdit: SourceEdit, rightEdit: SourceEdit): number =>
-      rightEdit.start - leftEdit.start
-  )) {
-    content =
-      content.slice(SOURCE_START, edit.start) +
-      edit.text +
-      content.slice(edit.start);
-  }
-  return { content, file };
-};
 
 const assertPluginDependencies = (
   plugins: readonly PluginDefinition[]
@@ -290,33 +106,17 @@ const imports = (
   selected
     .map(
       (plugin, index) =>
-        `import { ${plugin[side]?.export} as plugin${index} } from "@/plugins/${plugin.id}/${side}-plugin";`
+        `import { ${plugin[side]?.export} as plugin${index} } from "@/chatjs/plugins/${plugin.id}/${side}-plugin";`
     )
     .join("\n");
 
 const billingRegistration = (plugins: readonly PluginDefinition[]): string => {
   const plugin = plugins.find((candidate) => candidate.billing);
   const billing = plugin?.billing;
-  return `${billing ? `import { ${billing.export} as pluginBilling } from "@/plugins/${plugin?.id}/billing";` : ""}
-import type { UsageBilling } from "@/lib/usage-billing-contracts";
-export const usageBilling: UsageBilling | undefined = ${billing ? "pluginBilling" : "undefined"};
-export const canSpend: UsageBilling["canSpend"] = ${billing ? "pluginBilling.canSpend.bind(pluginBilling)" : "() => Promise.resolve(true)"};`;
+  return `${billing ? `import { ${billing.export} as pluginBilling } from "@/chatjs/plugins/${plugin?.id}/billing";` : ""}
+import type { UsageBilling } from "@/chatjs/core/billing/contracts";
+export const installedBilling: readonly UsageBilling[] = [${billing ? "pluginBilling" : ""}];`;
 };
-
-const accountSummaryRegistration = (
-  plugins: readonly PluginDefinition[]
-): string => `${imports(plugins, "client")}
-import type { ComponentType } from "react";
-${plugins
-  .map(
-    (
-      plugin,
-      index
-    ) => `const accountSummary${index} = plugin${index}().accountSummary;
-if (!accountSummary${index}) throw new Error('Plugin "${plugin.id}" declares accountSummary but does not provide it.');`
-  )
-  .join("\n")}
-export const installedAccountSummaries: readonly { id: string; Component: ComponentType }[] = [${plugins.map((plugin, index) => `{ id: "${plugin.id}", Component: accountSummary${index} }`).join(", ")}];`;
 
 const renderPluginRegistrations = (
   plugins: readonly PluginDefinition[],
@@ -333,9 +133,16 @@ const renderPluginRegistrations = (
   const modelVisibility = plugins.filter(
     (plugin) => plugin.client?.modelVisibility
   );
-  const accountUi = plugins.filter((plugin) => plugin.client?.accountSummary);
   const chat = plugins.filter((plugin) => plugin.chat);
-  const chatUi = plugins.filter((plugin) => plugin.client?.chat);
+  const chatUi = plugins.filter(
+    ({ client }) =>
+      client !== undefined &&
+      (client.layout !== true ||
+        client.chat === true ||
+        client.accountSummary === true ||
+        client.composerControls.length > 0 ||
+        client.settingsItems.length > 0)
+  );
   const signedOut = plugins.find((plugin) => plugin.signedOut);
   const profiles = plugins.filter((plugin) => plugin.sessionProfile);
   const cleanup = plugins.filter((plugin) => plugin.cleanup);
@@ -345,60 +152,59 @@ const renderPluginRegistrations = (
   const contents = [
     [
       "installed-signed-out",
-      `${signedOut ? `import { ${signedOut.signedOut?.export} as pluginScreen } from "@/plugins/${signedOut.id}/signed-out";` : ""}
+      `${signedOut ? `import { ${signedOut.signedOut?.export} as pluginScreen } from "@/chatjs/plugins/${signedOut.id}/signed-out";` : ""}
 import type { ComponentType } from "react";
-export const SignedOutScreen: ComponentType | undefined = ${signedOut ? "pluginScreen" : "undefined"};`,
+export const installedSignedOutScreens: readonly ComponentType[] = [${signedOut ? "pluginScreen" : ""}];`,
     ],
     [
       "installed-session-profiles",
-      `${profiles.map((plugin, index) => `import { ${plugin.sessionProfile?.export} as profile${index} } from "@/plugins/${plugin.id}/session-profile";`).join("\n")}
-import type { SessionProfile } from "@/lib/session-profile-contracts";
+      `${profiles.map((plugin, index) => `import { ${plugin.sessionProfile?.export} as profile${index} } from "@/chatjs/plugins/${plugin.id}/session-profile";`).join("\n")}
+import type { SessionProfile } from "@/chatjs/core/session/contracts";
 ${profiles.map((plugin, index) => `if (profile${index}.authenticator !== ${JSON.stringify(plugin.sessionProfile?.authenticator)}) throw new Error("Session profile identity disagrees with its descriptor.");`).join("\n")}
 export const installedSessionProfiles: readonly SessionProfile[] = [${profiles.map((_, index) => `profile${index}`).join(", ")}];`,
     ],
     [
       "installed-cleanup",
-      `${cleanup.map((plugin, index) => `import { ${plugin.cleanup?.export} as cleanup${index} } from "@/plugins/${plugin.id}/cleanup";`).join("\n")}
+      `${cleanup.map((plugin, index) => `import { ${plugin.cleanup?.export} as cleanup${index} } from "@/chatjs/plugins/${plugin.id}/cleanup";`).join("\n")}
 import type { CleanupTask } from "@/lib/cleanup/contracts";
 ${cleanup.map((plugin, index) => `if (cleanup${index}.id !== ${JSON.stringify(plugin.cleanup?.id)}) throw new Error("Cleanup identity disagrees with its descriptor.");`).join("\n")}
 export const installedCleanupTasks: readonly CleanupTask[] = [${cleanup.map((_, index) => `cleanup${index}`).join(", ")}];`,
     ],
     [
       "installed-auth",
-      `${authentication ? `import { ${authentication.authentication?.export} as pluginAuth } from "@/plugins/${authentication.id}/auth-server";` : ""}
-import type { AuthenticationIntegration } from "@/lib/authentication-contracts";
-export const installedAuth: AuthenticationIntegration = ${authentication ? "pluginAuth" : "{ plugins: [], trustedOrigins: [], isAuthRoute: () => false }"};`,
+      `${authentication ? `import { ${authentication.authentication?.export} as pluginAuth } from "@/chatjs/plugins/${authentication.id}/auth-server";` : ""}
+import type { AuthenticationIntegration } from "@/chatjs/core/authentication/contracts";
+export const installedAuth: readonly AuthenticationIntegration[] = [${authentication ? "pluginAuth" : ""}];`,
     ],
     [
       "installed-auth-ui",
-      `${authUi ? `import { ${authUi.authenticationUi?.form} as pluginForm } from "@/plugins/${authUi.id}/auth-form";` : ""}
-import type { AuthenticationUi } from "@/lib/authentication-contracts";
-export const AuthenticationForm: AuthenticationUi["Form"] = ${authUi ? "pluginForm" : "({ children }) => children"};`,
+      `${authUi ? `import { ${authUi.authenticationUi?.form} as pluginForm } from "@/chatjs/plugins/${authUi.id}/auth-form";` : ""}
+import type { AuthenticationUi } from "@/chatjs/core/authentication/contracts";
+export const installedAuthenticationForms: readonly AuthenticationUi["Form"][] = [${authUi ? "pluginForm" : ""}];`,
     ],
     [
       "installed-sign-out",
-      `${authUi ? `import { ${authUi.authenticationUi?.signOut} as pluginSignOut } from "@/plugins/${authUi.id}/sign-out";` : ""}
-import type { AuthenticationUi } from "@/lib/authentication-contracts";
-export const signOutWithPlugin: AuthenticationUi["signOut"] = ${authUi ? "pluginSignOut" : "() => Promise.resolve(false)"};`,
+      `${authUi ? `import { ${authUi.authenticationUi?.signOut} as pluginSignOut } from "@/chatjs/plugins/${authUi.id}/sign-out";` : ""}
+import type { AuthenticationUi } from "@/chatjs/core/authentication/contracts";
+export const installedSignOutHandlers: readonly AuthenticationUi["signOut"][] = [${authUi ? "pluginSignOut" : ""}];`,
     ],
     [
       "installed-navigation",
-      `${navigation.map((plugin) => `import { ${plugin.navigation?.export} as navigate } from "@/plugins/${plugin.id}/navigation";`).join("\n")}
-export const handleModifiedNavigation: () => boolean = ${navigation.length > 0 ? "navigate" : "() => false"};`,
+      `${navigation.map((plugin) => `import { ${plugin.navigation?.export} as navigate } from "@/chatjs/plugins/${plugin.id}/navigation";`).join("\n")}
+export const installedNavigationHandlers: readonly (() => boolean)[] = [${navigation.length > 0 ? "navigate" : ""}];`,
     ],
     ["installed-billing", billingRegistration(plugins)],
-    ["installed-account-ui", accountSummaryRegistration(accountUi)],
     [
       "installed-model-visibility",
-      `${imports(modelVisibility, "client")}\nimport type { ModelVisibility } from "@/lib/installation-contracts";\nexport const useModelVisibility: ModelVisibility = ${modelVisibility.length > 0 ? "plugin0().useModelVisibility" : "(defaultEnabledIds) => defaultEnabledIds"};`,
+      `${imports(modelVisibility, "client")}\nimport type { ModelVisibility } from "@/chatjs/core/installation/contracts";\nexport const installedModelVisibility: readonly ModelVisibility[] = [${modelVisibility.length > 0 ? "plugin0.useModelVisibility" : ""}];`,
     ],
     [
       "installed-chat",
-      `${chat.map((plugin, index) => `import { ${plugin.chat?.export} as chat${index} } from "@/plugins/${plugin.id}/chat";`).join("\n")}\nimport type { ChatServerIntegration } from "@/lib/chat-plugin-contracts";\nexport const installedChatPlugins: readonly ChatServerIntegration[] = [${chat.map((_, index) => `chat${index}`).join(", ")}];`,
+      `${chat.map((plugin, index) => `import { ${plugin.chat?.export} as chat${index} } from "@/chatjs/plugins/${plugin.id}/chat";`).join("\n")}\nimport type { ChatServerIntegration } from "@/chatjs/core/chat/contracts";\nexport const installedChat: readonly ChatServerIntegration[] = [${chat.map((_, index) => `chat${index}`).join(", ")}];`,
     ],
     [
       "installed-chat-ui",
-      `${imports(chatUi, "client")}\nimport type { ChatClientIntegration } from "@/lib/chat-plugin-contracts";\nexport const installedChatUi: readonly { id: string; chat: ChatClientIntegration }[] = [${chatUi.map((plugin, index) => `{ id: "${plugin.id}", chat: plugin${index}().chat }`).join(", ")}];`,
+      `"use client";\n${imports(chatUi, "client")}\nimport type { UiPlugin } from "@/chatjs/core/ui/slots";\nexport const installedChatPlugins: readonly UiPlugin[] = [${chatUi.map((_, index) => `plugin${index}`).join(", ")}];`,
     ],
     [
       "installed",
@@ -406,29 +212,29 @@ export const handleModifiedNavigation: () => boolean = ${navigation.length > 0 ?
     ],
     [
       "installed-routers",
-      `${imports(routerPlugins, "server")}\nimport type { InstalledRouters } from "@/lib/installation-contracts";\nexport const installedRouters = { ${routerPlugins.flatMap((plugin, index) => plugin.server?.routers.map((key) => `${key}: plugin${index}().routers.${key}`) ?? []).join(", ")} } satisfies InstalledRouters;`,
+      `${imports(routerPlugins, "server")}\nimport type { InstalledRouters } from "@/chatjs/core/installation/contracts";\nexport const installedRouters = { ${routerPlugins.flatMap((plugin, index) => plugin.server?.routers.map((key) => `${key}: plugin${index}().routers.${key}`) ?? []).join(", ")} } satisfies InstalledRouters;`,
     ],
     [
       "installed-instrumentation",
-      `${imports(instrumented, "server")}\nimport type { InstrumentationRegistration } from "@/lib/installation-contracts";\nexport const installedInstrumentation: readonly InstrumentationRegistration[] = [${instrumented.map((_, index) => `plugin${index}().instrumentation`).join(", ")}];`,
+      `${imports(instrumented, "server")}\nimport type { InstrumentationRegistration } from "@/chatjs/core/installation/contracts";\nexport const installedInstrumentation: readonly InstrumentationRegistration[] = [${instrumented.map((_, index) => `plugin${index}().instrumentation`).join(", ")}];`,
     ],
     [
       "installed-layout",
-      `${imports(layout, "client")}\nimport type { InstalledLayoutComponent } from "@/lib/installation-contracts";\nexport const installedLayoutComponents: readonly { id: string; Component: InstalledLayoutComponent }[] = [${layout.map((plugin, index) => `{ id: "${plugin.id}", Component: plugin${index}().layout }`).join(", ")}];`,
+      `"use client";\n${imports(layout, "client")}\nimport type { UiPlugin } from "@/chatjs/core/ui/slots";\nexport const installedLayoutPlugins: readonly UiPlugin[] = [${layout.map((_, index) => `plugin${index}`).join(", ")}];`,
     ],
     [
       "installed-uploads",
-      `${imports(uploads, "client")}\nimport type { AttachmentUploadIntegration } from "@/lib/installation-contracts";\nexport const attachmentUploads: AttachmentUploadIntegration = ${uploads.length > 0 ? "plugin0().uploads" : "{ controls: [], useUploads: () => ({ uploadQueue: [] }) }"};`,
+      `${imports(uploads, "client")}\nimport type { AttachmentUploadIntegration } from "@/chatjs/core/installation/contracts";\nexport const installedUploads: readonly AttachmentUploadIntegration[] = [${uploads.length > 0 ? "plugin0.uploads" : ""}];`,
     ],
   ] as const;
   return new Map([
-    ["composition/generated/installed-database.ts", databaseSchemas],
+    ["chatjs/generated/installed-database.ts", databaseSchemas],
     ...contents.map(
       ([name, content]) =>
         [
-          `composition/generated/${name}.ts`,
+          `chatjs/generated/${name}.ts`,
           generatedRegistrationSource(
-            `// Generated by chat-js sync.\n${content}\n`
+            `// Generated by chat-js sync. Do not edit. Customize integrations/ or plugin source; inspect ownership with chat-js status.\n${content}\n`
           ),
         ] as const
     ),
@@ -436,155 +242,40 @@ export const handleModifiedNavigation: () => boolean = ${navigation.length > 0 ?
 };
 const pluginRegistrationTargets = [...renderPluginRegistrations([], "").keys()];
 
-const syncPlugins = async (
+const planPluginRegistrations = async (
   cwd: string,
-  options: Readonly<{
-    addUi?: boolean | readonly string[];
-    expected?: readonly string[];
-  }> = {}
-): Promise<void> => {
+  plugins: readonly PluginDefinition[],
+  retainedSchemas?: Readonly<Record<string, readonly string[]>>
+): Promise<Map<string, string>> => {
   await assertCurrentInstallationLayout(cwd);
-  await preflight(cwd, [
-    ...pluginRegistrationTargets,
-    "composer-controls.ts",
-    "settings-items.ts",
-  ]);
-  const plugins = await readInstalledPlugins(cwd);
   await assertUiCompatibility(cwd, plugins);
-  for (const id of options.expected ?? []) {
-    if (!plugins.some((plugin) => plugin.id === id)) {
-      throw new Error(`Missing plugin descriptor: plugins/${id}/chatjs.json`);
-    }
-  }
   assertUniqueContributions(plugins);
   const databaseSchemas = await planDatabaseSchemas(
     cwd,
-    plugins.map((plugin) => plugin.id)
+    plugins.map((plugin) => plugin.id),
+    retainedSchemas
   );
-  const ui: PlannedContribution[] = [];
-  for (const plugin of plugins) {
-    if (
-      !plugin.client ||
-      !(
-        options.addUi === true ||
-        (Array.isArray(options.addUi) && options.addUi.includes(plugin.id))
-      )
-    ) {
-      continue;
-    }
-    for (const [name, file, ids] of [
-      [
-        "composerControls",
-        "composer-controls.ts",
-        plugin.client.composerControls,
-      ],
-      ["settingsItems", "settings-items.ts", plugin.client.settingsItems],
-    ] as const) {
-      if (ids.length === 0) {
-        continue;
-      }
-      const target = path.join(cwd, file);
-      const previous = ui.find((edit) => edit.file === target);
-      // oxlint-disable-next-line no-await-in-loop -- Each plugin extends the previous planned edit of this application-owned array.
-      const edit = await planContribution(
-        target,
-        name,
-        plugin.client.export,
-        `@/plugins/${plugin.id}/client-plugin`,
-        ids,
-        (binding) => `...${binding}().${name}`,
-        previous?.content
-      );
-      if (previous) {
-        previous.content = edit.content;
-      } else {
-        ui.push(edit);
-      }
-    }
-  }
-  await writeGeneratedFiles(
-    cwd,
-    renderPluginRegistrations(plugins, databaseSchemas)
-  );
-  await Promise.all(
-    ui.map(async ({ file, content }) => {
-      await writeFile(file, content);
-    })
-  );
+  return renderPluginRegistrations(plugins, databaseSchemas);
 };
 
-// Only creation resets demo contributions. Add/sync preserve app-owned order.
-const initializePluginUi = async (cwd: string): Promise<void> => {
-  for (const [file, name] of [
-    ["composer-controls.ts", "composerControls"],
-    ["settings-items.ts", "settingsItems"],
-  ]) {
-    const location = path.join(cwd, file);
-    // oxlint-disable-next-line no-await-in-loop -- Each application-owned file is planned and written independently.
-    const source = await readFile(location, "utf-8");
-    const parsed = ts.createSourceFile(
-      file,
-      source,
-      ts.ScriptTarget.Latest,
-      true
-    );
-    const bindings = new Set<string>();
-    const edits: { start: number; end: number; text: string }[] = [];
-    for (const node of parsed.statements) {
-      if (
-        ts.isImportDeclaration(node) &&
-        ts.isStringLiteral(node.moduleSpecifier) &&
-        node.moduleSpecifier.text.startsWith("@/plugins/")
-      ) {
-        const named = node.importClause?.namedBindings;
-        if (named && ts.isNamedImports(named)) {
-          for (const specifier of named.elements) {
-            bindings.add(specifier.name.text);
-          }
-        }
-        if (named && ts.isNamespaceImport(named)) {
-          bindings.add(named.name.text);
-        }
-        edits.push({ start: node.getFullStart(), end: node.end, text: "" });
-      }
+const syncPlugins = async (
+  cwd: string,
+  options: Readonly<{ expected?: readonly string[] }> = {}
+): Promise<void> => {
+  await assertCurrentInstallationLayout(cwd);
+  const plugins = await readInstalledPlugins(cwd);
+  for (const id of options.expected ?? []) {
+    if (!plugins.some((plugin) => plugin.id === id)) {
+      throw new Error(
+        `Missing plugin descriptor: chatjs/plugins/${id}/chatjs.json`
+      );
     }
-    const usesPlugin = (node: ts.Node): boolean => {
-      if (ts.isIdentifier(node) && bindings.has(node.text)) {
-        return true;
-      }
-      return ts.forEachChild(node, usesPlugin) === true;
-    };
-    for (const node of parsed.statements) {
-      if (!ts.isVariableStatement(node)) {
-        continue;
-      }
-      for (const declaration of node.declarationList.declarations) {
-        if (
-          declaration.name.getText(parsed) !== name ||
-          !declaration.initializer ||
-          !ts.isArrayLiteralExpression(declaration.initializer)
-        ) {
-          continue;
-        }
-        const array = declaration.initializer;
-        edits.push({
-          start: array.getStart(parsed),
-          end: array.end,
-          text: `[\n${array.elements
-            .filter((entry) => !usesPlugin(entry))
-            .map((entry) => `${entry.getText(parsed)},`)
-            .join("\n")}\n]`,
-        });
-      }
-    }
-    let content = source;
-    for (const edit of edits.toSorted((a, b) => b.start - a.start)) {
-      content =
-        content.slice(0, edit.start) + edit.text + content.slice(edit.end);
-    }
-    // oxlint-disable-next-line no-await-in-loop -- Finish this file before resetting the next creation-only composition file.
-    await writeFile(location, content);
   }
+  await writeGeneratedFiles(cwd, await planPluginRegistrations(cwd, plugins));
+};
+
+// Creation removes reference plugins; app-owned composition never needs source edits.
+const initializePluginUi = async (cwd: string): Promise<void> => {
   await initializeObservability(cwd);
   // The reference preset's plugin sources, including adapters, are explicit.
   await Promise.all(
@@ -596,8 +287,13 @@ const initializePluginUi = async (cwd: string): Promise<void> => {
       })
     )
   );
-  await rm(path.join(cwd, "plugins"), { force: true, recursive: true });
+  await rm(path.join(cwd, "chatjs/plugins"), { force: true, recursive: true });
   await syncPlugins(cwd);
 };
 
-export { initializePluginUi, pluginRegistrationTargets, syncPlugins };
+export {
+  initializePluginUi,
+  planPluginRegistrations,
+  pluginRegistrationTargets,
+  syncPlugins,
+};

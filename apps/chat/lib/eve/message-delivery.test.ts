@@ -22,6 +22,28 @@ const received = (_message: string, operationId: string) => ({
 });
 
 describe("Eve message delivery recovery", () => {
+  it("preserves pending delivery data when its selected tool is no longer installed", () => {
+    const storage = memoryStorage();
+    const pending = eveMessageDelivery.begin(storage, "session", {
+      attachments: [
+        {
+          contentType: "image/png",
+          digest: "digest",
+          name: "image.png",
+          url: "/api/files/abcdefghijklmnopqrstuvwx.png",
+        },
+      ],
+      message: "Keep this message after removing its tool",
+      modelId: "model",
+      selectedTool: "removedPluginTool",
+    });
+
+    expect(eveMessageDelivery.read(storage, "session")).toEqual(pending);
+    expect(
+      storage.getItem("chatjs.eve.pending-message:session")
+    ).not.toBeNull();
+  });
+
   it("retains a lost response across reload until the exact operation is acknowledged", () => {
     const storage = memoryStorage();
     const pending = eveMessageDelivery.begin(storage, "session", {

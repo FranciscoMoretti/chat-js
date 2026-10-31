@@ -1,7 +1,7 @@
-import type { SessionModel } from "@/lib/session-profile-contracts";
+import type { SessionModel } from "@/chatjs/core/session/contracts";
 import type { LanguageModelMiddleware } from "ai";
 import { wrapLanguageModel } from "ai";
-import { GUEST_POLICY } from "@/plugins/guest-chat/guest-policy";
+import { GUEST_POLICY } from "@/chatjs/plugins/guest-chat/guest-policy";
 import { resolveEveModel } from "@/lib/eve/model-selection";
 
 const MAX_OUTPUT_CHARACTERS = GUEST_POLICY.maxOutputTokens * 16;

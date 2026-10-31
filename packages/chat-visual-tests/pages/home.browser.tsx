@@ -147,6 +147,10 @@ test("signed-in composer options expose uploads with the native menu", async () 
   await expect
     .element(page.getByRole("menuitem", { name: "Attach files" }))
     .toBeVisible();
+  const items = [...document.querySelectorAll('[role="menuitem"]')].map(
+    (item) => item.textContent
+  );
+  expect(items[0]).toContain("Attach files");
   await page.screenshot({ path: "__screenshots__/home-upload-menu.png" });
 });
 

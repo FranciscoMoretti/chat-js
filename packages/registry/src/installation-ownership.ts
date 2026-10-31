@@ -30,6 +30,10 @@ const installationItems = (
     }
     selected.set(name, item);
     for (const dependency of item.registryDependencies ?? []) {
+      // Bare shadcn prerequisites belong to the host, not the ChatJS inventory.
+      if (/^[a-z][a-z0-9-]*$/u.test(dependency)) {
+        continue;
+      }
       if (!dependency.startsWith("@chatjs/")) {
         throw new Error(`Unsupported registry dependency: ${dependency}`);
       }

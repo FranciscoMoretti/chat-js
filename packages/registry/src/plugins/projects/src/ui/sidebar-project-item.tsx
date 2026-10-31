@@ -1,36 +1,31 @@
 "use client";
 
-import React, { useState } from "react";
-import { DeleteProjectDialog } from "@/plugins/projects/ui/delete-project-dialog";
-
-import { InternalLink } from "@/components/internal-link";
+import { SidebarLink } from "@/components/navigation-links";
+import { SidebarActionMenu } from "@/components/sidebar-menus";
+import { useState } from "react";
+import { DeleteProjectDialog } from "@/chatjs/plugins/projects/ui/delete-project-dialog";
 
 import { MoreHorizontal } from "lucide-react";
-import type { ProjectDetailsData } from "@/plugins/projects/ui/project-details-dialog";
-import { ProjectDetailsDialog } from "@/plugins/projects/ui/project-details-dialog";
+import type { ProjectDetailsData } from "@/chatjs/plugins/projects/ui/project-details-dialog";
+import { ProjectDetailsDialog } from "@/chatjs/plugins/projects/ui/project-details-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuGroup,
-  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  SidebarMenuAction,
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from "@/components/ui/sidebar";
+import { SidebarMenuItem } from "@/components/ui/sidebar";
 import {
   getProjectColorName,
   getProjectIconName,
-} from "@/plugins/projects/project-icons";
-import type { Project } from "@/plugins/projects/db/project-schema";
-import { ProjectIcon } from "@/plugins/projects/ui/project-icon";
-import { ProjectMenuItems } from "@/plugins/projects/ui/project-menu-items";
+} from "@/chatjs/plugins/projects/project-icons";
+import type { Project } from "@/chatjs/plugins/projects/db/project-schema";
+import { ProjectIcon } from "@/chatjs/plugins/projects/ui/project-icon";
+import { ProjectMenuItems } from "@/chatjs/plugins/projects/ui/project-menu-items";
 
 import type { JSX as ReactJSX } from "react";
 
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-import { useRenameProject } from "@/plugins/projects/use-projects";
+import { useRenameProject } from "@/chatjs/plugins/projects/use-projects";
 
 export const SidebarProjectItem = ({
   project,
@@ -63,35 +58,24 @@ export const SidebarProjectItem = ({
   };
   return (
     <SidebarMenuItem>
-      <SidebarMenuButton
+      <SidebarLink
         className="cursor-pointer"
         isActive={isActive}
-        render={
-          <InternalLink
-            href={projectHref}
-            onNavigate={() => {
-              setOpenMobile(false);
-            }}
-            prefetch={false}
-          >
-            <ProjectIcon color={color} icon={icon} size={16} />
-            <span>{project.name}</span>
-          </InternalLink>
-        }
-      />
+        href={projectHref}
+        onNavigate={() => {
+          setOpenMobile(false);
+        }}
+        prefetch={false}
+      >
+        <ProjectIcon color={color} icon={icon} size={16} />
+        <span>{project.name}</span>
+      </SidebarLink>
 
       <DropdownMenu modal>
-        <DropdownMenuTrigger
-          render={
-            <SidebarMenuAction
-              className="data-open:bg-sidebar-accent data-open:text-sidebar-accent-foreground mr-0.5"
-              showOnHover={!isActive}
-            />
-          }
-        >
+        <SidebarActionMenu showOnHover={!isActive}>
           <MoreHorizontal size={16} />
           <span className="sr-only">More</span>
-        </DropdownMenuTrigger>
+        </SidebarActionMenu>
         <DropdownMenuContent align="end" side="bottom">
           <DropdownMenuGroup>
             <ProjectMenuItems

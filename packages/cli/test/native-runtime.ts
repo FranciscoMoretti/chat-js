@@ -2,6 +2,7 @@
 // Opt-in network integration. Run only against a disposable generated app.
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
+import type { ChildProcess } from "node:child_process";
 import { once } from "node:events";
 import { createWriteStream } from "node:fs";
 import { mkdir, realpath, writeFile } from "node:fs/promises";
@@ -84,6 +85,7 @@ const env: NodeJS.ProcessEnv = {
     ? process.env.AI_GATEWAY_API_KEY
     : "local-runtime-verification",
   OPENROUTER_API_KEY: "local-runtime-verification",
+  MCP_ENCRYPTION_KEY: randomBytes(32).toString("base64"),
   AWS_REGION: "us-east-1",
 };
 
@@ -111,9 +113,14 @@ const runSetup = async (): Promise<void> => {
   }
 };
 
-const waitForServer = async (): Promise<void> => {
+const waitForServer = async (server: ChildProcess): Promise<void> => {
   const deadline = Date.now() + STARTUP_TIMEOUT;
   while (Date.now() < deadline) {
+    if (server.exitCode !== null || server.signalCode !== null) {
+      throw new Error(
+        `Generated app exited before readiness; inspect ${output}/server.log`
+      );
+    }
     try {
       const response = await fetch(baseUrl, {
         signal: AbortSignal.timeout(PROCESS_TIMEOUT),
@@ -149,7 +156,7 @@ try {
   server.stdout.pipe(log, { end: false });
   server.stderr.pipe(log, { end: false });
   try {
-    await waitForServer();
+    await waitForServer(server);
     console.log(
       `Generated app running at ${baseUrl}; checking browser behavior.`
     );

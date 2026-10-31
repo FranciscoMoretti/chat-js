@@ -4,7 +4,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
-import { EveSharedMessages } from "../plugins/sharing/ui/transcript-messages";
+import { EveSharedMessages } from "../chatjs/plugins/sharing/ui/transcript-messages";
 import { sharedEvePart } from "../lib/eve/shared-messages";
 
 const parts: EveMessagePart[] = [

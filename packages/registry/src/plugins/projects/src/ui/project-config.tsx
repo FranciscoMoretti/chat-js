@@ -3,10 +3,10 @@
 import type {
   ProjectColorName,
   ProjectIconName,
-} from "@/plugins/projects/project-icons";
+} from "@/chatjs/plugins/projects/project-icons";
 import { Pencil } from "lucide-react";
 
-import { ProjectIcon } from "@/plugins/projects/ui/project-icon";
+import { ProjectIcon } from "@/chatjs/plugins/projects/ui/project-icon";
 
 import { Button } from "@/components/ui/button";
 

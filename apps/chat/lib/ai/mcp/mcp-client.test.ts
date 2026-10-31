@@ -1,8 +1,8 @@
 import { beforeEach, expect, it, vi } from "vitest";
 
-import { MCPClient } from "../../../plugins/mcp/oauth/mcp-client";
+import { MCPClient } from "../../../chatjs/plugins/mcp/oauth/mcp-client";
 import type { MCPClientConfig } from "@ai-sdk/mcp";
-import type { McpOAuthClientProvider } from "../../../plugins/mcp/oauth/mcp-oauth-provider";
+import type { McpOAuthClientProvider } from "../../../chatjs/plugins/mcp/oauth/mcp-oauth-provider";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 const mocks = vi.hoisted(() => ({
@@ -37,10 +37,10 @@ vi.mock("@/lib/url", () => ({
   getBaseUrl: (): string => "http://localhost:3790",
 }));
 
-vi.mock("../../../plugins/mcp/oauth/mcp-oauth-provider", () => ({
+vi.mock("../../../chatjs/plugins/mcp/oauth/mcp-oauth-provider", () => ({
   McpOAuthClientProvider: mocks.provider,
 }));
-vi.mock("../../../plugins/mcp/oauth/cache", () => {
+vi.mock("../../../chatjs/plugins/mcp/oauth/cache", () => {
   throw new Error("Runtime client must not load Next.js cache APIs");
 });
 

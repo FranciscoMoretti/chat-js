@@ -301,6 +301,47 @@ export const invoicesShared: NonNullable<ServerData["transcript"]> = {
 
 export const invoicesTranscripts = { [invoicesSessionId]: invoicesTranscript };
 
+export const questionTranscripts = {
+  [invoicesSessionId]: [
+    {
+      id: "question-message",
+      role: "assistant",
+      parts: [
+        { type: "text", text: "Let’s narrow down the invoice investigation." },
+        {
+          type: "dynamic-tool",
+          toolName: "askQuestion",
+          toolCallId: "question-call",
+          state: "approval-requested",
+          approval: { id: "question-request" },
+          input: {},
+          toolMetadata: {
+            eve: {
+              kind: "tool-call",
+              name: "askQuestion",
+              inputRequest: {
+                requestId: "question-request",
+                kind: "question",
+                display: "select",
+                prompt: "Which invoice issue should we investigate?",
+                allowFreeform: true,
+                options: [
+                  {
+                    id: "performance",
+                    label: "Query performance",
+                    description: "Find slow queries and missing indexes",
+                  },
+                  { id: "accuracy", label: "Invoice accuracy" },
+                ],
+              },
+            },
+          },
+        },
+      ],
+    },
+  ],
+} satisfies Record<string, readonly EveMessage[]>;
+
 type Connector = Outputs["mcp"]["list"][number];
 const connector = (
   id: string,
@@ -518,3 +559,60 @@ export const invoicesSearchTrpc = {
     nextCursor: null,
   },
 };
+
+const archivedDocumentId = "60dbe86a-b2c4-4d32-ae09-a00e90b84e99";
+const archivedRevisionId = "663ccf42-10c9-453f-b9da-ebf684a6da97";
+export const archivedDiagram = {
+  canEdit: true,
+  history: [
+    {
+      id: archivedRevisionId,
+      createdAt: now,
+      kind: "diagram",
+      title: "Deployment flow",
+      parentRevisionId: null,
+      turnIndex: 0,
+    },
+    {
+      id: "c599092d-4d5a-4f13-bfed-a2e46c8ab675",
+      createdAt: now,
+      kind: "diagram",
+      title: "Deployment flow",
+      parentRevisionId: archivedRevisionId,
+      turnIndex: 1,
+    },
+  ],
+  revision: {
+    id: archivedRevisionId,
+    documentId: archivedDocumentId,
+    createdAt: now,
+    kind: "diagram",
+    title: "Deployment flow",
+    content: "graph TD; Draft-->Review; Review-->Publish",
+  },
+} satisfies Outputs["eve"]["document"];
+export const archivedDiagramTranscript: EveMessage[] = [
+  {
+    id: "archived-diagram-message",
+    role: "assistant",
+    metadata: { status: "complete", turnId: "turn_0" },
+    parts: [
+      {
+        type: "dynamic-tool",
+        toolName: "drawDiagram",
+        toolCallId: "archived-diagram-call",
+        state: "output-available",
+        input: { title: "Deployment flow" },
+        output: {
+          documentId: archivedDocumentId,
+          revisionId: archivedRevisionId,
+          kind: "diagram",
+          title: "Deployment flow",
+          date: now.toISOString(),
+          status: "success",
+          result: "Document saved.",
+        },
+      },
+    ],
+  },
+];

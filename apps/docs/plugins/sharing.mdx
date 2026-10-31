@@ -29,7 +29,7 @@ Sharing has no additional credentials or configuration. Its menu action and head
 
 ## Customization
 
-Edit `plugins/sharing/ui/` for the dialog and public page. `sharing.get` and `sharing.setVisibility` accept exact conversation IDs, not logical chat IDs. The plugin owns their queries and cache invalidation.
+Edit `chatjs/plugins/sharing/ui/` for the dialog and public page. `sharing.get` and `sharing.setVisibility` accept exact conversation IDs, not logical chat IDs. The plugin owns their queries and cache invalidation.
 
 `chat.publicReadFilter()` supplies the public visibility predicate. Core combines installed public-read predicates with OR, then applies its own bound-state and resource checks. Without a contribution, public access is denied. Omitting Sharing removes its route, router, and UI, and existing public flags no longer grant managed-file or document access. Reinstalling it honors those stored flags again.
 

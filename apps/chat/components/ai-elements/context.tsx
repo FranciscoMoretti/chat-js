@@ -7,10 +7,9 @@ import React, { createContext, useContext, useMemo } from "react";
 import { getUsage } from "tokenlens";
 import { Button } from "@/components/ui/button";
 import {
-  HoverCard,
   HoverCardContent,
-  HoverCardTrigger,
 } from "@/components/ui/hover-card";
+import { ContextHover, ContextHoverTrigger } from "./context-hover";
 import { Progress } from "@/components/ui/progress";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import type { StoredLanguageModelUsage } from "@/lib/ai/usage-token-details";
@@ -18,14 +17,8 @@ import { cn } from "@/lib/utils";
 import { getUsageTokenDetails } from "@/lib/ai/usage-token-details";
 
 const PERCENT_MAX = 100;
-const FULL_CIRCLE_MULTIPLIER = 2;
-const COMPLETE_FRACTION = 1;
 const NO_KNOWN_TOKENS = 0;
 const NO_KNOWN_COST = 0;
-const ICON_RADIUS = 10;
-const ICON_VIEWBOX = 24;
-const ICON_CENTER = 12;
-const ICON_STROKE_WIDTH = 2;
 
 type ModelId = string;
 
@@ -48,7 +41,7 @@ const useContextValue = (): ContextSchema => {
   return context;
 };
 
-type ContextProps = ComponentProps<typeof HoverCard> & ContextSchema;
+type ContextProps = ComponentProps<typeof ContextHover> & ContextSchema;
 
 const Context = ({
   usedTokens,
@@ -64,48 +57,8 @@ const Context = ({
 
   return (
     <ContextContext.Provider value={contextValue}>
-      <HoverCard {...props} />
+      <ContextHover {...props} />
     </ContextContext.Provider>
-  );
-};
-
-const ContextIcon = (): React.JSX.Element => {
-  const { usedTokens, maxTokens } = useContextValue();
-  const circumference = FULL_CIRCLE_MULTIPLIER * Math.PI * ICON_RADIUS;
-  const usedPercent = usedTokens / maxTokens;
-  const dashOffset = circumference * (COMPLETE_FRACTION - usedPercent);
-
-  return (
-    <svg
-      aria-label="Model context usage"
-      height="20"
-      style={{ color: "currentcolor" }}
-      viewBox={`0 0 ${ICON_VIEWBOX} ${ICON_VIEWBOX}`}
-      width="20"
-    >
-      <circle
-        cx={ICON_CENTER}
-        cy={ICON_CENTER}
-        fill="none"
-        opacity="0.25"
-        r={ICON_RADIUS}
-        stroke="currentColor"
-        strokeWidth={ICON_STROKE_WIDTH}
-      />
-      <circle
-        cx={ICON_CENTER}
-        cy={ICON_CENTER}
-        fill="none"
-        opacity="0.7"
-        r={ICON_RADIUS}
-        stroke="currentColor"
-        strokeDasharray={`${circumference} ${circumference}`}
-        strokeDashoffset={dashOffset}
-        strokeLinecap="round"
-        strokeWidth={ICON_STROKE_WIDTH}
-        style={{ transform: "rotate(-90deg)", transformOrigin: "center" }}
-      />
-    </svg>
   );
 };
 
@@ -123,9 +76,9 @@ const ContextTrigger = ({
   }).format(usedPercent);
 
   return (
-    <HoverCardTrigger delay={0} closeDelay={0} render={
-        <Button type="button" variant="ghost" {...props}>
-          {children ?? <><span className="text-muted-foreground font-medium">{renderedPercent}</span><ContextIcon /></>}
+    <ContextHoverTrigger button={
+        <Button type="button" variant="outline" size="sm" {...props}>
+          {children ?? <span>{renderedPercent} context</span>}
         </Button>
     } />
   );
@@ -174,7 +127,7 @@ const ContextContentHeader = ({
             </p>
           </div>
           <div className="space-y-2">
-            <Progress className="bg-muted" value={usedPercent * PERCENT_MAX} />
+            <Progress aria-label="Context used" value={usedPercent * PERCENT_MAX} />
           </div>
         </>
       )}

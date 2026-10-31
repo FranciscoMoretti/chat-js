@@ -1,7 +1,7 @@
 import React from "react";
 import { expect, test } from "vitest";
 
-import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
+import type { ToolRendererProps } from "@/chatjs/core/tools/define-renderer";
 
 import { captureChatStory, flush } from "../_shared/visual";
 import { RetrieveUrlRenderer } from "./renderer";

@@ -1,4 +1,4 @@
-import { project } from "@/plugins/projects/db/project-schema";
+import { project } from "@/chatjs/plugins/projects/db/project-schema";
 import { expect, test } from "@playwright/test";
 import type { TestInfo } from "@playwright/test";
 import { eq } from "drizzle-orm";

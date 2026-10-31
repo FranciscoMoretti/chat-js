@@ -1,13 +1,8 @@
 "use client";
 
-import React, { memo } from "react";
+import { Hint } from "@/components/hint";
+import { memo } from "react";
 import { Button } from "@/components/ui/button";
-
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 import { DocsLink } from "@/components/docs-link";
 
@@ -28,26 +23,25 @@ const PureHeaderActions = (): ReactJSX.Element => {
   return (
     <div className="flex items-center gap-2">
       {!user && (
-        <Tooltip>
-          <TooltipTrigger
-            render={
-              <Button
-                aria-label="Sign in"
-                className="h-8 px-3"
-                onClick={() => {
-                  router.push("/login");
-                  router.refresh();
-                }}
-                size="sm"
-                variant="outline"
-              >
-                <LogIn className="mr-2 h-4 w-4" />
-                <span className="hidden sm:inline">Sign in</span>
-              </Button>
-            }
-          />
-          <TooltipContent>Sign in to your account</TooltipContent>
-        </Tooltip>
+        <Hint
+          trigger={
+            <Button
+              aria-label="Sign in"
+              className="h-8 px-3"
+              onClick={() => {
+                router.push("/login");
+                router.refresh();
+              }}
+              size="sm"
+              variant="outline"
+            >
+              <LogIn className="mr-2 h-4 w-4" />
+              <span className="hidden sm:inline">Sign in</span>
+            </Button>
+          }
+        >
+          Sign in to your account
+        </Hint>
       )}
       <DocsLink />
       <GitHubLink />

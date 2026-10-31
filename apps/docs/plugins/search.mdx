@@ -30,7 +30,7 @@ Your existing reference-app data keeps the same `EveSearchText` table and keys. 
 New messages are indexed as you chat. To make older conversation text searchable, run the backfill from your app directory with your database and EVE environment configured:
 
 ```bash
-bunx tsx plugins/search/backfill.ts
+bunx tsx chatjs/plugins/search/backfill.ts
 ```
 
 You can rerun the command safely. It reads durable EVE snapshots in batches, updates existing entries, and reports failures for you to retry. Chat titles are searchable without a backfill.
@@ -51,6 +51,6 @@ Indexing failures do not fail your chat turn. The hook retains a bounded retry b
 
 ## Customization
 
-Edit `plugins/search/` to customize your dialog, query behavior, indexing, or backfill. The installed `agent/hooks/search.ts` is a thin native EVE adapter.
+Edit `chatjs/plugins/search/` to customize your dialog, query behavior, indexing, or backfill. The installed `agent/hooks/search.ts` is a thin native EVE adapter.
 
 The `SidebarHeader` placement receives the server-resolved `ownerId`. The `search.query` procedure checks it against your authenticated principal. Your ordinary chat history stays in core and remains available without this plugin. See the [Plugin API](../reference/plugin-api).

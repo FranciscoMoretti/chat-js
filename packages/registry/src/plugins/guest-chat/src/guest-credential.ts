@@ -2,7 +2,7 @@ import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
 import { env } from "@/lib/env";
 import { z } from "zod";
 
-import { GUEST_POLICY } from "@/plugins/guest-chat/guest-policy";
+import { GUEST_POLICY } from "@/chatjs/plugins/guest-chat/guest-policy";
 
 const MINIMUM_IDENTIFIER_LENGTH = 1;
 const MAXIMUM_CREDENTIAL_CHARACTERS = 2048;

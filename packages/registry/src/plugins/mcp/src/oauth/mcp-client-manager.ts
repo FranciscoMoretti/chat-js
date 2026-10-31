@@ -1,5 +1,5 @@
-import { invalidateAllMcpCaches } from "@/plugins/mcp/oauth/cache";
-import { MCPClient } from "@/plugins/mcp/oauth/mcp-client";
+import { invalidateAllMcpCaches } from "@/chatjs/plugins/mcp/oauth/cache";
+import { MCPClient } from "@/chatjs/plugins/mcp/oauth/mcp-client";
 
 // Map to store active MCP clients by connector ID
 const clientsMap = new Map<string, MCPClient>();

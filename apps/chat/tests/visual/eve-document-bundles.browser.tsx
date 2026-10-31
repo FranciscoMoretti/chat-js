@@ -1,3 +1,5 @@
+import { z } from "zod";
+import { composeDocumentViews } from "@/chatjs/core/documents/compose-views";
 import { renderRoot, unmountRoot } from "./primitive-mount";
 import { takeSnapshot } from "@uiverify/vitest";
 import React, { act } from "react";
@@ -6,14 +8,14 @@ import { expect, test, vi } from "vitest";
 import { page } from "vitest/browser";
 
 import { DocumentBody } from "@/components/eve/eve-document-body";
-import { documentUi } from "@/composition/generated/document-ui";
-import { installedToolNames } from "@/composition/generated/installed-tools";
-import { EveDocumentRun } from "@/tools/chatjs/saved-code-execution/document";
-import type { DocumentAssistantRequest } from "@/lib/eve/document-contracts";
+import { documents as documentUi } from "@/integrations/documents/ui";
+import { installedToolNames } from "@/integrations/tools/catalog";
+import { EveDocumentRun } from "@/chatjs/tools/saved-code-execution/document";
+import type { DocumentAssistantRequest } from "@/chatjs/core/documents/contracts";
 
 import "./sandbox.css";
 
-vi.mock("@/tools/chatjs/text-documents/comparison", () => ({
+vi.mock("@/chatjs/tools/text-documents/comparison", () => ({
   EveDocumentComparison: () => null,
 }));
 
@@ -116,7 +118,7 @@ test("a removed editor has an explicit notice in panel and inline views", async 
       </div>
     );
     expect(container.querySelectorAll("output")).toHaveLength(2);
-    expect(container.textContent).toContain("Install text-documents");
+    expect(container.textContent).toContain("Your saved content is preserved.");
     expect(
       [...container.querySelectorAll("pre")].map(
         (element: { readonly textContent: string }) => element.textContent
@@ -206,6 +208,69 @@ test("saved code run controls follow installed execution and retain disabled sta
   } finally {
     vi.restoreAllMocks();
 
+    await unmountRoot(root);
+    container.remove();
+  }
+});
+
+test("a fourth document kind renders, preserves content after removal and restores its editor", async () => {
+  const definition = {
+    kind: "diagram",
+    contentSchema: z.string(),
+    createTool: "drawDiagram",
+    editTool: "reviseDiagram",
+  };
+  const { diagram } = composeDocumentViews([
+    {
+      definition,
+      Body: ({ editorProps: props }) => (
+        <textarea
+          aria-label="Diagram source"
+          readOnly={props.isReadonly}
+          value={props.content}
+          onChange={(event) => {
+            props.onSaveContent(event.target.value, false);
+          }}
+        />
+      ),
+    },
+  ]);
+  const container = document.createElement("main");
+  container.style.cssText = "padding:24px;width:980px;background:#171717";
+  document.body.append(container);
+  const root = createRoot(container);
+  const save = vi.fn<(content: string, debounce: boolean) => void>();
+  const content = "graph TD; A-->B";
+  const view = (
+    <DocumentBody
+      kind="diagram"
+      title="Flow"
+      editorProps={{
+        ...editorProps,
+        isReadonly: false,
+        content,
+        onSaveContent: save,
+      }}
+    />
+  );
+  try {
+    documentUi.diagram = diagram;
+    await renderRoot(root, view);
+    const input = container.querySelector("textarea");
+    expect(input?.value).toBe(content);
+    expect(input?.readOnly).toBe(false);
+    delete documentUi.diagram;
+    await renderRoot(root, <section>{view}</section>);
+    expect(container.querySelector("textarea")).toBeNull();
+    expect(container.textContent).toContain(content);
+    expect(container.textContent).toContain("Reinstall its document plugin");
+    await takeSnapshot("removed-custom-document-preserves-source");
+    documentUi.diagram = diagram;
+    await renderRoot(root, view);
+    expect(container.querySelector("textarea")?.value).toBe(content);
+    expect(save).not.toHaveBeenCalled();
+  } finally {
+    delete documentUi.diagram;
     await unmountRoot(root);
     container.remove();
   }

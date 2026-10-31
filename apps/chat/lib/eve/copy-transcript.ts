@@ -1,3 +1,4 @@
+import { isDocumentResult } from "@/chatjs/core/documents/contracts";
 import { EveForkBoundaryError } from "./fork-boundary-error";
 import { isNonEmptyString } from "@/lib/is-non-empty-string";
 
@@ -11,7 +12,7 @@ import type {
   ReadonlyEveMessageMetadata,
 } from "./readonly-message-types";
 import { createHash } from "node:crypto";
-import { eveDocumentOperations } from "./document-contracts";
+import { documentDefinitions } from "@/integrations/documents/definitions";
 import { sharedEveMessages } from "./shared-messages";
 import { z } from "zod";
 
@@ -35,7 +36,7 @@ const COPY_BOUNDARIES = new Set<MessageStreamEvent["type"]>([
   "history.seeded",
 ]);
 const DOCUMENT_TOOLS = new Set([
-  ...Object.keys(eveDocumentOperations),
+  ...documentDefinitions.operations.keys(),
   "readDocument",
   "runCodeDocument",
   "deepResearch",
@@ -216,6 +217,7 @@ const transcriptResources = (seed: {
           readonly type: "dynamic-tool";
           readonly state: string;
           readonly toolName: string;
+          readonly output?: unknown;
         }
       | { readonly type: Exclude<SeedPart["type"], "dynamic-tool"> }
     )[];
@@ -229,7 +231,7 @@ const transcriptResources = (seed: {
       if (
         part.type === "dynamic-tool" &&
         part.state === "output-available" &&
-        DOCUMENT_TOOLS.has(part.toolName)
+        (DOCUMENT_TOOLS.has(part.toolName) || isDocumentResult(part.output))
       ) {
         const documentResources = eveCopyResources(part, true);
         for (const id of documentResources.documentIds) {
@@ -255,7 +257,9 @@ const copyUserSeedMessage = (message: {
   const selectedTool = eveMessageTool(message);
   return {
     role: "user",
-    ...(selectedTool ? { metadata: eveToolMetadata(selectedTool) } : {}),
+    ...(selectedTool === null
+      ? {}
+      : { metadata: eveToolMetadata(selectedTool) }),
     parts: message.parts.map((part: ReadonlyEveMessagePart) => {
       if (part.type === "text") {
         return { type: "text", text: part.text };

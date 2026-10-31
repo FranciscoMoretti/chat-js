@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { uiverifyPlugin } from "@uiverify/vitest/plugin";
 import { defineConfig } from "vitest/config";
 import type { Alias, AliasOptions } from "vite";
-import { transformUiSource } from "../registry/ui-source";
+import { uiImplementations } from "../registry/ui-implementations";
 import interactions from "../registry/visual/vitest.config";
 import pages from "./vitest.config";
 
@@ -41,7 +41,7 @@ const isAliasList = (value: AliasOptions): value is readonly Alias[] =>
 const referenceAliases: AliasOptions = reference.resolve?.alias ?? {};
 
 // Compare the same routes, state, tokens and capture identities using native
-// Radix primitives. Compositions use the exact generator, not a runtime adapter.
+// Radix primitives. Compositions select the authored native source used by the installer.
 export default defineConfig({
   ...reference,
   define: {
@@ -56,7 +56,10 @@ export default defineConfig({
         : "ltr"
     ),
   },
-  cacheDir: path.join(root, "node_modules/.vite/chat-radix"),
+  cacheDir: path.join(
+    root,
+    `node_modules/.vite/chat-${uiBase}-${interactionMode ? "interactions" : "pages"}`
+  ),
   resolve: {
     ...reference.resolve,
     // Generated sources and the shared test harness must use one native context.
@@ -87,7 +90,21 @@ export default defineConfig({
           (id.startsWith(path.join(root, "apps/chat")) ||
             id.startsWith(path.join(root, "packages/registry/src")))
         ) {
-          return transformUiSource(source, id, uiBase);
+          const implementation = uiImplementations.find(
+            (entry) =>
+              id === path.join(root, entry.source) ||
+              id === path.join(root, "apps/chat", entry.target)
+          );
+          if (implementation) {
+            return readFileSync(
+              path.join(
+                root,
+                uiBase === "base" ? implementation.source : implementation.radix
+              ),
+              "utf-8"
+            );
+          }
+          return null;
         }
         return null;
       },
@@ -110,9 +127,13 @@ export default defineConfig({
     include: interactionMode
       ? [
           "../../apps/chat/tests/visual/direction.browser.tsx",
+          "../../apps/chat/tests/visual/native-feature-boundaries.browser.tsx",
+          "../../apps/chat/tests/visual/native-compositions.browser.tsx",
           "../../apps/chat/tests/visual/composer-interactions.browser.tsx",
           "../../apps/chat/tests/visual/composer-menu.browser.tsx",
           "../../apps/chat/tests/visual/conversation-native.browser.tsx",
+          "../../apps/chat/tests/visual/eve-message-actions.browser.tsx",
+          "../../apps/chat/tests/visual/eve-artifact.browser.tsx",
           "../../apps/chat/tests/visual/model-selector.browser.tsx",
           "../../apps/chat/tests/visual/model-selector-actions.browser.tsx",
           "../../apps/chat/tests/visual/reasoning.browser.tsx",

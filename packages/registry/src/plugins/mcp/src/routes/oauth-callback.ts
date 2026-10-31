@@ -3,19 +3,19 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
-import { requireMcpCredentials } from "@/plugins/mcp/setup";
+import { requireMcpCredentials } from "@/chatjs/plugins/mcp/setup";
 import {
   createMcpClientForCallback,
   removeMcpClient,
-} from "@/plugins/mcp/oauth/mcp-client-manager";
+} from "@/chatjs/plugins/mcp/oauth/mcp-client-manager";
 import {
   deletePendingSessionByState,
   getMcpConnectorById,
   getSessionByState,
-} from "@/plugins/mcp/db/mcp-queries";
+} from "@/chatjs/plugins/mcp/db/mcp-queries";
 import { createModuleLogger } from "@/lib/logger";
-import { invalidateAllMcpCaches } from "@/plugins/mcp/oauth/cache";
-import { loadMcpOAuthCallbackSearchParams } from "@/plugins/mcp/search/mcp-search-params.server";
+import { invalidateAllMcpCaches } from "@/chatjs/plugins/mcp/oauth/cache";
+import { loadMcpOAuthCallbackSearchParams } from "@/chatjs/plugins/mcp/search/mcp-search-params.server";
 
 const hasNonEmptyValue = (value: string | null | undefined): value is string =>
   typeof value === "string" && value !== "";

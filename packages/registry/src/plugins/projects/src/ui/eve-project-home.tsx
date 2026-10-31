@@ -10,19 +10,19 @@ import type { JSX as ReactJSX } from "react";
 import React, { useMemo, useState } from "react";
 
 import { ChatHeaderView } from "@/components/chat-header-view";
-import { ProjectConfig } from "@/plugins/projects/ui/project-config";
-import { ProjectDetailsDialog } from "@/plugins/projects/ui/project-details-dialog";
-import { ProjectInstructionsDialog } from "@/plugins/projects/ui/project-instructions-dialog";
+import { ProjectConfig } from "@/chatjs/plugins/projects/ui/project-config";
+import { ProjectDetailsDialog } from "@/chatjs/plugins/projects/ui/project-details-dialog";
+import { ProjectInstructionsDialog } from "@/chatjs/plugins/projects/ui/project-instructions-dialog";
 import { Button } from "@/components/ui/button";
-import { useRenameProject } from "@/plugins/projects/use-projects";
+import { useRenameProject } from "@/chatjs/plugins/projects/use-projects";
 import type { listEveConversations } from "@/lib/db/eve-queries";
-import type { Project } from "@/plugins/projects/db/project-schema";
+import type { Project } from "@/chatjs/plugins/projects/db/project-schema";
 import {
   DEFAULT_PROJECT_COLOR,
   DEFAULT_PROJECT_ICON,
   PROJECT_COLORS,
   PROJECT_ICONS,
-} from "@/plugins/projects/project-icons";
+} from "@/chatjs/plugins/projects/project-icons";
 import { cn } from "@/lib/utils";
 import { useTRPC } from "@/trpc/react";
 

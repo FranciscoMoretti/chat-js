@@ -19,7 +19,7 @@ Use a built item as a starting point. Declare:
 - `type: "registry:item"`, a name, and `files` with source paths and explicit targets. shadcn build embeds the source content in the published JSON.
 - `dependencies` / `devDependencies`: npm names with optional versions.
 - `registryDependencies`: standard shadcn addresses to supporting registry items. Use namespace addresses or absolute URLs for portable dependencies.
-- A file targeting `~/lib/ai/gateway.ts`, exporting a `Gateway` constructor. Supporting files live under `~/lib/ai/gateway/`.
+- A file targeting `~/chatjs/providers/gateway.ts`, exporting a `Gateway` constructor. Supporting files live under `~/chatjs/providers/gateway/`.
 - `meta.chatjs`: `kind: "gateway"`, `contractVersion: 1`, a unique literal `id`, `capabilities: { image, video }`, `defaults`, and `envRequirements`.
 
 Each environment requirement has `options: string[][]`: outer entries are alternatives, and every variable within one alternative is required. Separate requirements must all be satisfied. `optionalEnv` declares optional variables that the adapter also needs. The app passes only these declared variables to it.

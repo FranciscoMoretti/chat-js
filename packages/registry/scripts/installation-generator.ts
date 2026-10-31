@@ -36,7 +36,6 @@ import { incrementalPluginFiles } from "./demo-incremental";
 const bootstrapPaths = [
   "components.json",
   "composer-controls.ts",
-  "settings-items.ts",
   "package.json",
   "tsconfig.json",
   "app/globals.css",
@@ -108,8 +107,7 @@ const resolveProviders = async (
 const configureInstallation = async (
   directory: string,
   providers: Awaited<ReturnType<typeof resolveProviders>>,
-  plan: Awaited<ReturnType<typeof planInstallation>>,
-  addUi: boolean
+  plan: Awaited<ReturnType<typeof planInstallation>>
 ): Promise<void> => {
   if (providers.sandbox) {
     await configureSandboxProvider(directory, providers.sandbox);
@@ -120,7 +118,6 @@ const configureInstallation = async (
   // The mirror preserves app-owned order; consumer validation supplies its core UI.
   await syncPlugins(directory, {
     expected: plan.plugins.map((plugin) => plugin.id),
-    addUi,
   });
   await updateEnvironmentExample(
     directory,
@@ -136,9 +133,6 @@ const generateInstallation = async (
     projectFiles?: ReadonlyMap<string, Uint8Array>;
     changes?: readonly string[];
     previous?: Readonly<Record<string, string>>;
-    pluginUi?: Readonly<
-      Record<"composer-controls.ts" | "settings-items.ts", string>
-    >;
   }> = {}
 ): Promise<{
   files: Map<string, string>;
@@ -149,6 +143,31 @@ const generateInstallation = async (
   const timings: Record<string, number> = {};
   const beforeCapture = performance.now();
   const items = await captureRegistry();
+  // The mirror owns feature source only. Native primitives already belong to
+  // its host; verify them before excluding their installation from this stage.
+  const nativeDependencies = [
+    ...new Set(
+      items.flatMap((item) =>
+        (item.registryDependencies ?? []).filter((dependency) =>
+          /^[a-z][a-z0-9-]*$/u.test(dependency)
+        )
+      )
+    ),
+  ];
+  await Promise.all(
+    nativeDependencies.map(async (dependency) => {
+      const file = `components/ui/${dependency}.tsx`;
+      if (options.projectFiles?.has(file) === true) {
+        return;
+      }
+      if (options.projectFiles) {
+        throw new Error(
+          `Missing native prerequisite in validation host: ${file}`
+        );
+      }
+      await readFile(path.join(demoRoot, file));
+    })
+  );
   timings.captureMs = performance.now() - beforeCapture;
   const encoder = new TextEncoder();
   const projectFiles = new Map([
@@ -162,9 +181,6 @@ const generateInstallation = async (
     ],
     ["app/globals.css", encoder.encode('@import "tailwindcss";')],
     ...(options.projectFiles ?? []),
-    ...Object.entries(options.pluginUi ?? {}).map(
-      ([file, source]) => [file, encoder.encode(source)] as const
-    ),
   ]);
   const staged = await withRegistryProject(
     {
@@ -172,6 +188,7 @@ const generateInstallation = async (
       items,
       files: projectFiles,
       protectedPaths: bootstrapPaths,
+      preinstalledRegistryDependencies: nativeDependencies,
     },
     async (project) => {
       const { directory } = project;
@@ -202,21 +219,12 @@ const generateInstallation = async (
       const beforeConfigure = performance.now();
       const providers = await resolveProviders(selection, directory);
       if (!incrementalItem) {
-        await configureInstallation(
-          directory,
-          providers,
-          plan,
-          options.pluginUi !== undefined
-        );
+        await configureInstallation(directory, providers, plan);
       }
       timings.configureMs = performance.now() - beforeConfigure;
-      const seedFiles = options.pluginUi ?? {};
       const excluded = new Set(bootstrapPaths);
       if (options.projectFiles) {
         excluded.delete(".env.example");
-      }
-      for (const file of Object.keys(seedFiles)) {
-        excluded.delete(file);
       }
       const ownedPaths = [
         ...plan.items.flatMap((item) =>
@@ -229,7 +237,6 @@ const generateInstallation = async (
             return file.target.slice(2);
           })
         ),
-        ...Object.keys(seedFiles),
         ...toolRegistrationTargets,
         ...pluginRegistrationTargets,
         ...gatewayConfigurationTargets,

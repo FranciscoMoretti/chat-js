@@ -109,7 +109,7 @@ MCP has no enable flag in `chat.config.ts`. Set `MCP_ENCRYPTION_KEY` whenever th
 
 ## Schema
 
-MCP owns its tables in `plugins/mcp/db/mcp-schema.ts`. Generated `composition/generated/installed-database.ts` composes them with the app's other installed schemas. Adding or syncing MCP does not apply SQL or erase migration history.
+MCP owns its tables in `chatjs/plugins/mcp/db/mcp-schema.ts`. Generated `chatjs/generated/installed-database.ts` composes them with the app's other installed schemas. Adding or syncing MCP does not apply SQL or erase migration history.
 
 Server URLs, OAuth tokens, and credentials are encrypted with `MCP_ENCRYPTION_KEY`. Keep this key in your environment and out of source control.
 
@@ -135,4 +135,4 @@ Server URLs, OAuth tokens, and credentials are encrypted with `MCP_ENCRYPTION_KE
 
 ## Customization
 
-Edit `plugins/mcp/` for connector behavior, the router, and browser contributions. The plugin's `mcp-env.ts` owns credential validation and is loaded only when MCP is installed. See [Create a plugin](../cookbook/create-plugin) and the [Plugin API](../reference/plugin-api) for contribution contracts.
+Edit `chatjs/plugins/mcp/` for connector behavior, the router, and browser contributions. The plugin's `mcp-env.ts` owns credential validation and is loaded only when MCP is installed. See [Create a plugin](../cookbook/create-plugin) and the [Plugin API](../reference/plugin-api) for contribution contracts.

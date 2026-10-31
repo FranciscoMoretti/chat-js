@@ -1,7 +1,8 @@
+// ChatJS source: sharing. Ownership: chatjs/plugins/sharing/chatjs.json.
 import React, { Suspense } from "react";
 
 import { ChatLoadingShell } from "@/components/chat-loading-shell";
-import { EveSharedPage } from "@/plugins/sharing/ui/shared-page";
+import { EveSharedPage } from "@/chatjs/plugins/sharing/ui/shared-page";
 
 const SharedChatPageContent = async ({
   params,

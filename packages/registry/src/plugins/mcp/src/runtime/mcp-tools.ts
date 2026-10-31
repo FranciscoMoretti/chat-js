@@ -4,17 +4,17 @@ import { asSchema, jsonSchema } from "ai";
 import { describeMcpTool, executeMcpTool } from "./mcp-adapter";
 import Ajv from "ajv";
 import Ajv2020 from "ajv/dist/2020.js";
-import type { McpConnector } from "@/plugins/mcp/db/mcp-schema";
+import type { McpConnector } from "@/chatjs/plugins/mcp/db/mcp-schema";
 import type { ToolContext } from "eve/tools";
-import { requireMcpCredentials } from "@/plugins/mcp/setup";
-import { MCPClient } from "@/plugins/mcp/oauth/mcp-client";
+import { requireMcpCredentials } from "@/chatjs/plugins/mcp/setup";
+import { MCPClient } from "@/chatjs/plugins/mcp/oauth/mcp-client";
 import { createModuleLogger } from "@/lib/logger";
 import { createToolId } from "@/lib/ai/mcp-name-id";
-import { installedPlugins } from "@/composition/generated/installed";
+import { installedPlugins } from "@/integrations/plugin-catalog";
 import {
   getMcpConnectorById,
   getMcpConnectorsByUserId,
-} from "@/plugins/mcp/db/mcp-queries";
+} from "@/chatjs/plugins/mcp/db/mcp-queries";
 import { eveMcpResult } from "@/lib/eve/mcp-result";
 
 // Read-only native session/approval metadata and cancellation used by MCP adapters.

@@ -1,4 +1,4 @@
-import { eveVote } from "../plugins/feedback/feedback-schema";
+import { eveVote } from "../chatjs/plugins/feedback/feedback-schema";
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 

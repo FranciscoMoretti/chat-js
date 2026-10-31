@@ -17,7 +17,7 @@ import type { Session } from "@/lib/auth";
 
 import config from "@/chat.config";
 
-import authClient from "@/plugins/desktop/desktop-auth-client";
+import authClient from "@/chatjs/plugins/desktop/desktop-auth-client";
 
 import { Button, buttonVariants } from "@/components/ui/button";
 

@@ -4,21 +4,18 @@ import { hasText } from "@/components/text-value";
 
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { SearchIcon } from "lucide-react";
-import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState, useSyncExternalStore } from "react";
 import type { JSX as ReactJSX } from "react";
 
 import {
-  Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
-  DialogOverlay,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
-import { SidebarMenuButton, useSidebar } from "@/components/ui/sidebar";
+import { useSidebar } from "@/components/ui/sidebar";
+import { SearchSurface } from "./search-surface";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { useTRPC } from "@/trpc/react";
 
@@ -187,7 +184,7 @@ export const EveSearchChats = ({
   );
   const [open, setOpen] = useState(false);
   const router = useRouter();
-  const { isMobile, openMobile, setOpenMobile } = useSidebar();
+  const { setOpenMobile } = useSidebar();
   useEffect(() => {
     const down = (
       event: Readonly<
@@ -205,19 +202,19 @@ export const EveSearchChats = ({
     };
   }, []);
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<SidebarMenuButton tooltip="Search chats" />}>
-        <SearchIcon className="size-4" />
-        <span>Search chats</span>
-        <span className="text-muted-foreground ml-auto text-xs">
-          {shortcut}
-        </span>
-      </DialogTrigger>
-      {/* Base UI omits nested backdrops. Search must also cover its parent sheet. */}
-      {open &&
-        isMobile &&
-        openMobile &&
-        createPortal(<DialogOverlay forceRender />, document.body)}
+    <SearchSurface
+      open={open}
+      onOpenChange={setOpen}
+      trigger={
+        <>
+          <SearchIcon className="size-4" />
+          <span>Search chats</span>
+          <span className="text-muted-foreground ml-auto text-xs">
+            {shortcut}
+          </span>
+        </>
+      }
+    >
       <DialogContent
         className="overflow-hidden p-0 max-md:z-[51]"
         showCloseButton={!hasText(ownerId)}
@@ -248,6 +245,6 @@ export const EveSearchChats = ({
           />
         )}
       </DialogContent>
-    </Dialog>
+    </SearchSurface>
   );
 };

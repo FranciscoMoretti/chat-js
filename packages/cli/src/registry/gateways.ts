@@ -24,11 +24,12 @@ export const resolveGateway = async (
   const definition = gatewayDefinitionSchema.parse(chatjs);
   if (
     !(item.files ?? []).some(
-      (file: Readonly<RegistryFile>) => file.target === "~/lib/ai/gateway.ts"
+      (file: Readonly<RegistryFile>) =>
+        file.target === "~/chatjs/providers/gateway.ts"
     )
   ) {
     throw new Error(
-      "Gateway must install lib/ai/gateway.ts exporting Gateway."
+      "Gateway must install chatjs/providers/gateway.ts exporting Gateway."
     );
   }
   return { definition, source: address };

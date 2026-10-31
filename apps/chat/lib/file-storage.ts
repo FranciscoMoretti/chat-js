@@ -9,8 +9,8 @@ import {
   storageKeyForFile,
 } from "./db/file-storage-keys";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-import { createStorageAdapter } from "./storage-provider";
-import { storageOptions } from "./storage-options";
+import { createStorageAdapter } from "@/integrations/providers/storage";
+import { storageOptions } from "@/chatjs/providers/storage-options";
 
 const PATH_SEPARATOR = /[\\/]/u;
 const ASCII_CONTROL_CHARACTERS = /[\p{ASCII}&&\p{Control}]/gv;

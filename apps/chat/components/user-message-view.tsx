@@ -1,13 +1,15 @@
 "use client";
 
 import React from "react";
+import { EditableBubble } from "./editable-bubble";
 
 import {
   Message,
   MessageContent,
   MessageFooter,
 } from "@/components/ui/message";
-import { Bubble, BubbleContent } from "@/components/ui/bubble";
+import { ChatMessageView } from "./chat-message-view";
+import { Bubble } from "@/components/ui/bubble";
 import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 import { hasCustomContent } from "@/components/custom-content";
 
@@ -43,28 +45,26 @@ export const UserMessageView = ({
   readonly editDisabled?: boolean;
   readonly messageId?: string;
 }): React.JSX.Element => (
-  <Message
-    align="end"
-    className="py-1"
-    data-eve-message-id={messageId}
-    data-role="user"
+  <ChatMessageView
+    author="user"
+    primitives={{ Message, MessageContent }}
+    messageId={messageId}
+    actions={<MessageFooter>{actions}</MessageFooter>}
   >
-    <MessageContent>
-      {!hasCustomContent(editor) && responses}
-      {!hasCustomContent(editor) && hasCustomContent(attachments) && (
-        <div className="max-w-full self-end">{attachments}</div>
-      )}
-      {!hasCustomContent(editor) && text && (
-        <Bubble align="end" variant="muted">
-          <BubbleContent
-            data-testid="message-content"
-            render={
-              onEdit ? (
-                <button
-                  aria-disabled={editDisabled}
-                  aria-label={text}
-                  className="cursor-pointer select-text"
-                  onClick={(event) => {
+    {!hasCustomContent(editor) && responses}
+    {!hasCustomContent(editor) && hasCustomContent(attachments) && (
+      <div className="max-w-full self-end">{attachments}</div>
+    )}
+    {!hasCustomContent(editor) && text && (
+      <Bubble align="end" variant="muted">
+        <EditableBubble
+          button={
+            onEdit
+              ? {
+                  "aria-disabled": editDisabled,
+                  "aria-label": text,
+                  className: "cursor-pointer select-text",
+                  onClick: (event) => {
                     if (editDisabled) {
                       return;
                     }
@@ -77,22 +77,16 @@ export const UserMessageView = ({
                       return;
                     }
                     onEdit();
-                  }}
-                  type="button"
-                />
-              ) : undefined
-            }
-          >
-            <pre className="font-sans whitespace-pre-wrap">{text}</pre>
-          </BubbleContent>
-        </Bubble>
-      )}
-      {hasCustomContent(editor) ? (
-        <div className="w-full">{editor}</div>
-      ) : (
-        editor
-      )}
-      <MessageFooter>{actions}</MessageFooter>
-    </MessageContent>
-  </Message>
+                  },
+                  type: "button",
+                }
+              : undefined
+          }
+        >
+          <pre className="font-sans whitespace-pre-wrap">{text}</pre>
+        </EditableBubble>
+      </Bubble>
+    )}
+    {hasCustomContent(editor) ? <div className="w-full">{editor}</div> : editor}
+  </ChatMessageView>
 );

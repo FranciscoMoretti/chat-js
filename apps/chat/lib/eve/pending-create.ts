@@ -1,4 +1,4 @@
-import type { ChatCreationScope } from "@/lib/chat-plugin-contracts";
+import type { ChatCreationScope } from "@/chatjs/core/chat/contracts";
 import { projectCreationScope } from "./project-creation";
 import { isNonEmptyString } from "@/lib/is-non-empty-string";
 

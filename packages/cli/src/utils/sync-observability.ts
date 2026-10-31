@@ -28,7 +28,7 @@ const initializeObservability = async (cwd: string): Promise<void> => {
   await Promise.all(
     observabilityItems.map(
       async (item: Readonly<{ name: string }>): Promise<void> => {
-        await rm(path.join(cwd, "plugins", item.name), {
+        await rm(path.join(cwd, "chatjs/plugins", item.name), {
           force: true,
           recursive: true,
         });

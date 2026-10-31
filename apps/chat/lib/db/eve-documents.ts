@@ -1,4 +1,4 @@
-import { publicChatReadFilter } from "@/lib/chat-plugins";
+import { chat } from "@/integrations/chat/server";
 import { eveDeletionScope } from "./eve-deletion-scope";
 import { unretainedEveDocumentRevisionIds } from "./eve-document-retention";
 import { isNonEmptyString } from "@/lib/is-non-empty-string";
@@ -7,8 +7,8 @@ import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import type { SQL } from "drizzle-orm";
 import { z } from "zod";
 
-import { artifactKinds } from "@/lib/artifacts/artifact-kind";
-import { documentFileIds } from "@/lib/eve/document-contracts";
+import { artifactKind } from "@/lib/artifacts/artifact-kind";
+import { documentFileIds } from "@/chatjs/core/documents/contracts";
 import { isFileStorageKey } from "@/lib/file-url";
 
 import { db } from "./client";
@@ -38,7 +38,7 @@ const revisionInput = z.object({
   documentId: z.uuid(),
   expectedRevisionId: z.uuid().nullable(),
   fileIds: documentFileIds,
-  kind: z.enum(artifactKinds),
+  kind: artifactKind,
   operationId: z
     .string()
     .min(MINIMUM_TEXT_LENGTH)
@@ -537,7 +537,7 @@ const getAccessibleEveDocument = async (
       and(
         eq(eveConversation.id, conversationId),
         eq(eveConversation.state, "bound"),
-        sql`(${eveConversation.ownerId} = ${viewerId ?? null} or ${publicChatReadFilter()})`
+        sql`(${eveConversation.ownerId} = ${viewerId ?? null} or ${chat.publicReadFilter()})`
       )
     );
   const conversation = conversationRows.at(FIRST_ROW_INDEX);
@@ -570,7 +570,7 @@ const getAccessibleEveDocument = async (
       and(
         eq(eveConversation.id, conversationId),
         eq(eveConversation.state, "bound"),
-        sql`(${eveConversation.ownerId} = ${viewerId ?? null} or ${publicChatReadFilter()})`
+        sql`(${eveConversation.ownerId} = ${viewerId ?? null} or ${chat.publicReadFilter()})`
       )
     );
   const current = currentRows.at(FIRST_ROW_INDEX);

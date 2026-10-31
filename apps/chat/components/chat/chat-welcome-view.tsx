@@ -1,7 +1,7 @@
 import React from "react";
 
-import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
-import { cn } from "@/lib/utils";
+import type { ReadonlyReactNode } from "../../lib/readonly-react-node";
+import { cn } from "cn";
 
 const WelcomeMessage = (): React.JSX.Element => (
   <div className="pointer-events-none text-center">

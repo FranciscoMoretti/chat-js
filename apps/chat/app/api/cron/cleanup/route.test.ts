@@ -40,8 +40,8 @@ vi.mock("@/lib/eve/cleanup-orphaned-files", () => ({
   cleanupEveOrphanedFiles: mocks.cleanupEve,
 }));
 
-vi.mock("@/composition/generated/installed-cleanup", () => ({
-  installedCleanupTasks: [{ id: "example", run: mocks.cleanupRuntimeGuests }],
+vi.mock("@/integrations/cleanup", () => ({
+  cleanupTasks: [{ id: "example", run: mocks.cleanupRuntimeGuests }],
 }));
 
 beforeEach(() => {

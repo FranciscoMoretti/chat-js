@@ -12,7 +12,7 @@ vi.mock("@/lib/eve/persistent-sandbox-store", () => ({
     .mockResolvedValue(),
 }));
 const { getEveMessageVotes, saveEveMessageVote } =
-  await import("@/plugins/feedback/feedback-queries");
+  await import("@/chatjs/plugins/feedback/feedback-queries");
 const { completeEveConversationDeletion } = await import("./eve-deletion");
 const chatId = "00000000-0000-4000-8000-000000000001";
 const branchId = "00000000-0000-4000-8000-000000000002";

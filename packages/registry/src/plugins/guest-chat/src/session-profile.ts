@@ -1,4 +1,4 @@
-import type { SessionProfile } from "@/lib/session-profile-contracts";
+import type { SessionProfile } from "@/chatjs/core/session/contracts";
 import { authenticateDisposableGuest } from "./guest-auth";
 import { resolveGuestModel } from "./guest-model";
 import { GUEST_INSTRUCTIONS } from "./guest-policy";

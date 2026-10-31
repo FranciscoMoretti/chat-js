@@ -40,6 +40,8 @@ export const withRegistryProject = async <Result>(
     items: readonly RegistryItem[];
     files: ProjectFiles;
     protectedPaths?: readonly string[];
+    /** Prerequisites verified by the caller; never fetched or overwritten here. */
+    preinstalledRegistryDependencies?: readonly string[];
   }>,
   operation: (project: RegistryProject) => Promise<Result>
 ): Promise<{ result: Result; timings: Record<string, number> }> => {
@@ -50,6 +52,7 @@ export const withRegistryProject = async <Result>(
   const started = performance.now();
   const directory = await mkdtemp(path.join(tmpdir(), "registry-validation-"));
   const items = new Map(options.items.map((item) => [item.name, item]));
+  const preinstalled = new Set(options.preinstalledRegistryDependencies);
   if (items.size !== options.items.length) {
     await rm(directory, { recursive: true, force: true });
     throw new Error("Duplicate registry item names");
@@ -65,7 +68,14 @@ export const withRegistryProject = async <Result>(
           .replace(/\.json$/u, "");
         const item = items.get(name);
         return item
-          ? Response.json({ ...item, dependencies: [], devDependencies: [] })
+          ? Response.json({
+              ...item,
+              dependencies: [],
+              devDependencies: [],
+              registryDependencies: item.registryDependencies?.filter(
+                (dependency) => !preinstalled.has(dependency)
+              ),
+            })
           : new Response("Not found", { status: 404 });
       },
     });
@@ -114,6 +124,9 @@ export const withRegistryProject = async <Result>(
         }
         const visited = new Set<string>();
         const check = (source: string): void => {
+          if (preinstalled.has(source)) {
+            return;
+          }
           if (!source.startsWith(`${options.namespace}/`)) {
             throw new Error(
               `Source validation requires the local ${options.namespace} registry: ${source}`

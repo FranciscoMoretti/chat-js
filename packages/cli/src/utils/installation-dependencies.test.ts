@@ -19,7 +19,7 @@ import { prepareDependencyUpdate } from "./installation-dependencies";
 const installDependencies = async (
   cwd: string
 ): Promise<() => Promise<void>> => {
-  await mkdir(path.join(cwd, ".chatjs"));
+  await mkdir(path.join(cwd, "chatjs"));
   const manifest = path.join(cwd, "package.json");
   await writeFile(manifest, JSON.stringify({ private: true }));
   const previous = toolDefinitionSchema.parse({
@@ -68,7 +68,7 @@ const orderSourceEntries = async (cwd: string) => {
 test("replacement prunes only owned, unchanged, unused dependencies", async () => {
   const cwd = await mkdtemp(path.join(tmpdir(), "chatjs-dependencies-"));
   try {
-    await mkdir(path.join(cwd, ".chatjs"));
+    await mkdir(path.join(cwd, "chatjs"));
     const manifest = path.join(cwd, "package.json");
     const dependencies = {
       custom: "1",
@@ -158,7 +158,7 @@ test("replacement prunes only owned, unchanged, unused dependencies", async () =
     expect(
       JSON.parse(
         await readFile(
-          path.join(cwd, ".chatjs/installed-dependencies.json"),
+          path.join(cwd, "chatjs/installed-dependencies.json"),
           "utf-8"
         )
       )
@@ -168,6 +168,44 @@ test("replacement prunes only owned, unchanged, unused dependencies", async () =
     });
   } finally {
     await rm(cwd, { force: true, recursive: true });
+  }
+});
+
+test("replacement protects generated dependencies and ignores installation backups", async () => {
+  const parent = await mkdtemp(path.join(tmpdir(), "chatjs-dependencies-"));
+  const cwd = path.join(parent, "chatjs");
+  try {
+    await mkdir(cwd);
+    const replace = await installDependencies(cwd);
+    await Promise.all(
+      ["generated", "removed-plugins/prior", "replaced-prior"].map(
+        async (directory) =>
+          await mkdir(path.join(cwd, "chatjs", directory), { recursive: true })
+      )
+    );
+    await writeFile(
+      path.join(cwd, "chatjs/generated/tools.ts"),
+      'import "alpha";'
+    );
+    await writeFile(path.join(cwd, "app.ts"), 'import "beta";');
+    await writeFile(
+      path.join(cwd, "chatjs/removed-plugins/prior/source.ts.bak"),
+      'import "retired";'
+    );
+    await writeFile(
+      path.join(cwd, "chatjs/replaced-prior/source.ts"),
+      'import "retired";'
+    );
+    await replace();
+    expect(
+      JSON.parse(await readFile(path.join(cwd, "package.json"), "utf-8"))
+    ).toEqual({
+      dependencies: { alpha: "1" },
+      devDependencies: { beta: "1" },
+      private: true,
+    });
+  } finally {
+    await rm(parent, { force: true, recursive: true });
   }
 });
 
@@ -195,6 +233,7 @@ test("replacement reads each source once for all used and unused candidates", as
       expect(directories.mock.calls.map(([target]) => target)).toEqual([
         cwd,
         source,
+        path.join(cwd, "chatjs"),
       ]);
     } finally {
       reads.mockRestore();
@@ -210,7 +249,7 @@ test("replacement reads each source once for all used and unused candidates", as
     expect(
       JSON.parse(
         await readFile(
-          path.join(cwd, ".chatjs/installed-dependencies.json"),
+          path.join(cwd, "chatjs/installed-dependencies.json"),
           "utf-8"
         )
       )
@@ -256,7 +295,7 @@ test.each(["symlink", "oversized"])(
       expect(
         JSON.parse(
           await readFile(
-            path.join(cwd, ".chatjs/installed-dependencies.json"),
+            path.join(cwd, "chatjs/installed-dependencies.json"),
             "utf-8"
           )
         )
@@ -275,7 +314,7 @@ test("source read failures leave manifest and receipt unchanged", async () => {
     const unreadable = path.join(cwd, "10-unreadable.ts");
     await writeFile(unreadable, "source cannot be read");
     const manifest = path.join(cwd, "package.json");
-    const receipt = path.join(cwd, ".chatjs/installed-dependencies.json");
+    const receipt = path.join(cwd, "chatjs/installed-dependencies.json");
     const beforeManifest = await readFile(manifest, "utf-8");
     const beforeReceipt = await readFile(receipt, "utf-8");
     const failure = new Error(
@@ -342,7 +381,7 @@ test("finding all candidates in a subtree skips later unreadable source", async 
     expect(
       JSON.parse(
         await readFile(
-          path.join(cwd, ".chatjs/installed-dependencies.json"),
+          path.join(cwd, "chatjs/installed-dependencies.json"),
           "utf-8"
         )
       )

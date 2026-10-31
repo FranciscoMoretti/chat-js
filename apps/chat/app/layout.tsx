@@ -6,13 +6,13 @@ import { NuqsAdapter } from "nuqs/adapters/next/app";
 
 import "./globals.css";
 import components from "@/components.json";
-import { DirectionProvider } from "@/components/ui/direction";
+import { UiDirection } from "@/providers/ui-direction";
 import React from "react";
 import { Toaster } from "sonner";
 
 import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { installedLayoutComponents } from "@/composition/generated/installed-layout";
+import { LayoutPlugins } from "@/components/layout-plugins";
 import { config } from "@/lib/config";
 import { cn } from "@/lib/utils";
 import { env } from "@/lib/env";
@@ -97,7 +97,7 @@ const RootLayout = ({
         src="https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js"
         strategy="afterInteractive"
       />
-      <DirectionProvider direction={components.rtl ? "rtl" : "ltr"}>
+      <UiDirection direction={components.rtl ? "rtl" : "ltr"}>
         <NuqsAdapter>
           <ThemeProvider
             attribute="class"
@@ -111,20 +111,8 @@ const RootLayout = ({
             </TooltipProvider>
           </ThemeProvider>
         </NuqsAdapter>
-      </DirectionProvider>
-      {installedLayoutComponents.map(
-        ({
-          id,
-          Component,
-        }: {
-          readonly id: string;
-          readonly Component: React.JSXElementConstructor<
-            Readonly<React.Attributes>
-          >;
-        }) => (
-          <Component key={id} />
-        )
-      )}
+      </UiDirection>
+      <LayoutPlugins />
     </body>
   </html>
 );

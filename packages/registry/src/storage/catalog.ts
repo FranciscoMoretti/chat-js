@@ -45,7 +45,7 @@ export const builtInStorage = builtInStorageProviders.map((provider) => {
     files: [
       {
         path: `src/storage/${id}/storage-provider.ts`,
-        target: "~/lib/storage-provider.ts",
+        target: "~/chatjs/providers/storage.ts",
         type: "registry:file" as const,
       },
     ],

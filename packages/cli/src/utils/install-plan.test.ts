@@ -10,7 +10,12 @@ import { scaffoldFromTemplate } from "#cli/helpers/scaffold";
 
 import { installItems } from "#cli/registry/shadcn";
 
-import { installPlan, recordInstalledSource } from "./install-plan";
+import { installPlan } from "./install-plan";
+import {
+  readReceipt,
+  readSourceBaselines,
+  recordInstalledSource,
+} from "./source-receipt";
 
 import { planInstallation } from "./installation-plan";
 
@@ -54,13 +59,13 @@ const server = (): Bun.Server<undefined> =>
           {
             content: JSON.stringify(definition),
             path: "chatjs.json",
-            target: `~/tools/chatjs/${id}/chatjs.json`,
+            target: `~/chatjs/tools/${id}/chatjs.json`,
             type: "registry:file",
           },
           {
             content: `export const ${id === "extra" ? "extra" : "executeCode"} = {};\n`,
             path: "tool.ts",
-            target: `~/tools/chatjs/${id}/tool.ts`,
+            target: `~/chatjs/tools/${id}/tool.ts`,
             type: "registry:file",
           },
         ],
@@ -118,7 +123,7 @@ test("receipt hashing bounds live buffers, drains failures and never writes a pa
     await rejected;
     expect(reads).toBe(4);
     expect(
-      await Bun.file(path.join(root, ".chatjs/installed-source.json")).exists()
+      await Bun.file(path.join(root, "chatjs/installed-source.json")).exists()
     ).toBe(false);
   } finally {
     read.mockRestore();
@@ -152,7 +157,14 @@ test("explicit provider replacement preserves unrelated installations and refuse
       { plugins: [], tools: [source("second")] },
       { replace: true }
     );
-    const old = path.join(root, "tools/chatjs/first/tool.ts");
+    const deleted = "chatjs/tools/first/deleted.ts";
+    await writeFile(
+      path.join(root, deleted),
+      "// removed before replacement\n"
+    );
+    await recordInstalledSource(root, [deleted]);
+    await rm(path.join(root, deleted));
+    const old = path.join(root, "chatjs/tools/first/tool.ts");
     await writeFile(
       old,
       "// my implementation\nexport const executeCode = {};\n"
@@ -170,7 +182,7 @@ test("explicit provider replacement preserves unrelated installations and refuse
     );
     expect(
       await Bun.file(
-        path.join(root, "tools/chatjs/second/chatjs.json")
+        path.join(root, "chatjs/tools/second/chatjs.json")
       ).exists()
     ).toBe(false);
     expect(await readFile(old, "utf-8")).toContain("my implementation");
@@ -187,8 +199,20 @@ test("explicit provider replacement preserves unrelated installations and refuse
       tools.map((tool: { readonly id: string }): string => tool.id)
     ).toEqual(["extra", "second"]);
     expect(await Bun.file(old).exists()).toBe(false);
+    for (const record of [
+      await readReceipt(root),
+      await readSourceBaselines(root),
+    ]) {
+      expect(
+        Object.keys(record).some((file) =>
+          file.startsWith("chatjs/tools/first/")
+        )
+      ).toBe(false);
+      expect(record["chatjs/tools/extra/tool.ts"]).toBeDefined();
+      expect(record["chatjs/tools/second/tool.ts"]).toBeDefined();
+    }
     expect(
-      await readFile(path.join(root, "tools/chatjs/extra/tool.ts"), "utf-8")
+      await readFile(path.join(root, "chatjs/tools/extra/tool.ts"), "utf-8")
     ).toContain("extra");
   } finally {
     await registry.stop(true);
@@ -220,15 +244,17 @@ test.each(["registration", "finalization"] as const)(
       const manifest = path.join(root, "package.json");
       const dependencies = path.join(
         root,
-        ".chatjs/installed-dependencies.json"
+        "chatjs/installed-dependencies.json"
       );
       const lockfile = path.join(root, "bun.lock");
       await writeFile(lockfile, "original lockfile");
       const oldManifest = await readFile(manifest, "utf-8");
       const oldDependencies = await readFile(dependencies, "utf-8");
+      const oldReceipt = await readReceipt(root);
+      const oldBaselines = await readSourceBaselines(root);
       const oldEnv = await readFile(env, "utf-8");
       const oldConfig = await readFile(config, "utf-8");
-      await rm(path.join(root, "composition/generated/workflow-types.ts"));
+      await rm(path.join(root, "chatjs/generated/workflow-types.ts"));
       const registrationContents = async (
         target: string
       ): Promise<string | null> => {
@@ -262,10 +288,10 @@ test.each(["registration", "finalization"] as const)(
             await syncTools(root, { expected: plan.expected });
             expect(
               await readFile(
-                path.join(root, "composition/generated/providers.ts"),
+                path.join(root, "chatjs/generated/providers.ts"),
                 "utf-8"
               )
-            ).toContain("@/tools/chatjs/second/tool");
+            ).toContain("@/chatjs/tools/second/tool");
             if (phase === "registration") {
               throw new Error("fixture registration failed");
             }
@@ -278,12 +304,14 @@ test.each(["registration", "finalization"] as const)(
           return true;
         }
       );
+      expect(await readReceipt(root)).toEqual(oldReceipt);
+      expect(await readSourceBaselines(root)).toEqual(oldBaselines);
       expect(await readFile(manifest, "utf-8")).toBe(oldManifest);
       expect(await readFile(dependencies, "utf-8")).toBe(oldDependencies);
       expect(await readFile(lockfile, "utf-8")).toBe("original lockfile");
       expect(
         await Bun.file(
-          path.join(root, "tools/chatjs/second/chatjs.json")
+          path.join(root, "chatjs/tools/second/chatjs.json")
         ).exists()
       ).toBe(false);
       expect(await readFile(env, "utf-8")).toBe(oldEnv);
@@ -297,7 +325,7 @@ test.each(["registration", "finalization"] as const)(
       ).toEqual(oldRegistrations);
       expect(
         await Bun.file(
-          path.join(root, "tools/chatjs/first/chatjs.json")
+          path.join(root, "chatjs/tools/first/chatjs.json")
         ).exists()
       ).toBe(true);
       await installPlan(
@@ -325,7 +353,7 @@ test("native shadcn source can be composed without overwriting or blessing user 
   const address = `http://127.0.0.1:${registry.port}/first.json`;
   try {
     await installItems([address], root);
-    const file = path.join(root, "tools/chatjs/first/tool.ts");
+    const file = path.join(root, "chatjs/tools/first/tool.ts");
     await writeFile(
       file,
       "// native user edit\nexport const executeCode = {};\n"
@@ -339,10 +367,10 @@ test("native shadcn source can be composed without overwriting or blessing user 
     });
     expect(await readFile(file, "utf-8")).toContain("native user edit");
     const receipt = parseJsonObject(
-      await readFile(path.join(root, ".chatjs/installed-source.json"), "utf-8"),
+      await readFile(path.join(root, "chatjs/installed-source.json"), "utf-8"),
       "installed source receipt"
     );
-    expect(receipt["tools/chatjs/first/tool.ts"]).toBeUndefined();
+    expect(receipt["chatjs/tools/first/tool.ts"]).toBeUndefined();
     const tools = await syncTools(root, { checkOnly: true });
     expect(
       tools.map((tool: { readonly id: string }): string => tool.id)
@@ -357,7 +385,7 @@ test("registration refreshes untouched rollback baselines without blessing user 
   const file = path.join(root, ".env.example");
   await recordInstalledSource(root, [
     ".env.example",
-    "lib/storage-provider.ts",
+    "chatjs/providers/storage.ts",
   ]);
   const registry = Bun.serve({
     fetch: () =>
@@ -366,7 +394,7 @@ test("registration refreshes untouched rollback baselines without blessing user 
           {
             content: "export const createStorageAdapter = () => ({});\n",
             path: "storage-provider.ts",
-            target: "~/lib/storage-provider.ts",
+            target: "~/chatjs/providers/storage.ts",
             type: "registry:file",
           },
         ],
@@ -413,7 +441,7 @@ test("registration refreshes untouched rollback baselines without blessing user 
         await writeFile(file, "STORAGE=changed\n");
       }
     );
-    const receiptFile = path.join(root, ".chatjs/installed-source.json");
+    const receiptFile = path.join(root, "chatjs/installed-source.json");
     const baseline = await readFile(receiptFile, "utf-8");
     await writeFile(file, "# user storage notes\nSTORAGE=changed\n");
     await installPlan(
@@ -479,7 +507,7 @@ test("provider installation refuses inferred native dependency destinations befo
           {
             content: "export const createStorageAdapter = () => ({});\n",
             path: "storage-provider.ts",
-            target: "~/lib/storage-provider.ts",
+            target: "~/chatjs/providers/storage.ts",
             type: "registry:file",
           },
         ],
@@ -499,9 +527,9 @@ test("provider installation refuses inferred native dependency destinations befo
     port: 0,
   });
   try {
-    const provider = path.join(root, "lib/storage-provider.ts");
+    const provider = path.join(root, "chatjs/providers/storage.ts");
     await writeFile(provider, "// original provider\n");
-    await recordInstalledSource(root, ["lib/storage-provider.ts"]);
+    await recordInstalledSource(root, ["chatjs/providers/storage.ts"]);
     const originalProvider = await readFile(provider, "utf-8");
     const plan = await planInstallation(
       root,
@@ -532,7 +560,7 @@ test("provider installation refuses inferred native dependency destinations befo
       tools: [`http://127.0.0.1:${registry.port}/ui.json`],
     });
     const receipt = await readFile(
-      path.join(root, ".chatjs/installed-source.json"),
+      path.join(root, "chatjs/installed-source.json"),
       "utf-8"
     );
     expect(receipt).not.toContain("components/ui/fixture.tsx");
@@ -559,7 +587,7 @@ test("provider installation refuses inferred native dependency destinations befo
 
 test("failed fresh registration restores the scaffold sandbox selection", async () => {
   const root = await fixture();
-  const target = path.join(root, "lib/sandbox/options.ts");
+  const target = path.join(root, "chatjs/providers/sandbox/options.ts");
   const original = await readFile(target, "utf-8");
   const plan = await planInstallation(
     root,
@@ -572,7 +600,7 @@ test("failed fresh registration restores the scaffold sandbox selection", async 
       plan,
       {
         fresh: true,
-        managedTargets: ["lib/sandbox/options.ts"],
+        managedTargets: ["chatjs/providers/sandbox/options.ts"],
       },
       async () => {
         await writeFile(target, 'export const sandboxId = "daytona";');

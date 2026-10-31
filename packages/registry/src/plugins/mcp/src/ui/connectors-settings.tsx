@@ -1,5 +1,6 @@
 "use client";
 
+import { MenuButton } from "@/components/menu-button";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertTriangle,
@@ -16,9 +17,9 @@ import React, { Fragment, useCallback, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 
 import { InternalLink } from "@/components/internal-link";
-import { ConnectorHeader } from "@/plugins/mcp/ui/connector-header";
-import { McpConnectDialog } from "@/plugins/mcp/ui/mcp-connect-dialog";
-import { McpCreateDialog } from "@/plugins/mcp/ui/mcp-create-dialog";
+import { ConnectorHeader } from "@/chatjs/plugins/mcp/ui/connector-header";
+import { McpConnectDialog } from "@/chatjs/plugins/mcp/ui/mcp-connect-dialog";
+import { McpCreateDialog } from "@/chatjs/plugins/mcp/ui/mcp-create-dialog";
 import { SettingsPageContent } from "@/components/settings/settings-page";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -28,14 +29,13 @@ import {
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuSeparator,
-  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { McpConnector } from "@/plugins/mcp/db/mcp-schema";
-import type { McpConnectorsDialog } from "@/plugins/mcp/search/mcp-search-params";
+import type { McpConnector } from "@/chatjs/plugins/mcp/db/mcp-schema";
+import type { McpConnectorsDialog } from "@/chatjs/plugins/mcp/search/mcp-search-params";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { Separator } from "@/components/ui/separator";
-import { installedPlugins } from "@/composition/generated/installed";
-import { mcpConnectorsSettingsSearchParams } from "@/plugins/mcp/search/mcp-search-params";
+import { installedPlugins } from "@/integrations/plugin-catalog";
+import { mcpConnectorsSettingsSearchParams } from "@/chatjs/plugins/mcp/search/mcp-search-params";
 import { useTRPC } from "@/trpc/react";
 
 const CustomConnectorRow = ({
@@ -162,17 +162,13 @@ const CustomConnectorRow = ({
           </InternalLink>
         ) : null}
         <DropdownMenu>
-          <DropdownMenuTrigger
-            render={
-              <Button
-                aria-label="More connector actions"
-                size="icon"
-                variant="ghost"
-              />
-            }
+          <MenuButton
+            aria-label="More connector actions"
+            size="icon"
+            variant="ghost"
           >
             <MoreHorizontal className="size-4" />
-          </DropdownMenuTrigger>
+          </MenuButton>
           <DropdownMenuContent align="end">
             <DropdownMenuGroup>
               {authStatus?.isAuthenticated === true ? (

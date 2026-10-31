@@ -4,8 +4,8 @@ import { requireSessionProfile } from "./session-profile";
 const mocks = vi.hoisted(() => ({
   profiles: new Array<{ authenticator: string; instructions: string }>(),
 }));
-vi.mock("@/composition/generated/installed-session-profiles", () => ({
-  installedSessionProfiles: mocks.profiles,
+vi.mock("@/integrations/chat/session-profiles", () => ({
+  sessionProfiles: mocks.profiles,
 }));
 
 test("missing plugins reject persisted non-account sessions without account fallback", () => {
@@ -29,6 +29,20 @@ test("profile selection is pinned to the initiator, not reconnect authentication
       },
     };
     expect(requireSessionProfile(session)).toBe(profile);
+  } finally {
+    mocks.profiles.length = 0;
+  }
+});
+
+test("ambiguous app-owned session profiles fail closed", () => {
+  mocks.profiles.push(
+    { authenticator: "same", instructions: "one" },
+    { authenticator: "same", instructions: "two" }
+  );
+  try {
+    expect(() =>
+      requireSessionProfile({ auth: { initiator: { authenticator: "same" } } })
+    ).toThrow("Multiple session profiles");
   } finally {
     mocks.profiles.length = 0;
   }

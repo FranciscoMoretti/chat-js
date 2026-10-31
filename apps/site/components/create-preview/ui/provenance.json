@@ -3,9 +3,10 @@
   "commit": "481d523374745e77d0cf9c53a4115ab5dd7c8481",
   "rtlTransform": "shadcn@4.22.1",
   "adaptations": [
-    "Local component and icon import paths",
+    "Local component, icon, and shared mobile hook import paths",
     "Upstream RTL transform on TSX and CSS @apply utilities",
-    "Local stylesheet import and reference paths"
+    "Local stylesheet import and reference paths",
+    "Restore Radix mobile sidebar focus to the preview trigger on close"
   ],
   "files": {
     "base/attachment.tsx": {
@@ -63,10 +64,40 @@
       "sha256": "b57f3c9921ceb0695cb8164c7be8ce229519f2b485b95923bb980a5e39e11c72",
       "adaptedSha256": "b57f3c9921ceb0695cb8164c7be8ce229519f2b485b95923bb980a5e39e11c72"
     },
+    "base/scroll-area.tsx": {
+      "source": "registry/bases/base/ui/scroll-area.tsx",
+      "sha256": "7e49845827447091a6493473779a05ba45cb8302e3703a6f9e4225dd6315cce2",
+      "adaptedSha256": "7e49845827447091a6493473779a05ba45cb8302e3703a6f9e4225dd6315cce2"
+    },
+    "base/separator.tsx": {
+      "source": "registry/bases/base/ui/separator.tsx",
+      "sha256": "9a80ff8c110e0c55489509f4f82ebcc929c0174b59544047147b7134f86a54e7",
+      "adaptedSha256": "9a80ff8c110e0c55489509f4f82ebcc929c0174b59544047147b7134f86a54e7"
+    },
+    "base/sheet.tsx": {
+      "source": "registry/bases/base/ui/sheet.tsx",
+      "sha256": "5816119da5f3468b0b91d2c65bcf6befe1d769b7867e236b9f18db83908581cb",
+      "adaptedSha256": "2421eb8db7a7b4ecb286c60de6fe8295ff2b62613523e898db1b699b8aa68cbf"
+    },
+    "base/sidebar.tsx": {
+      "source": "registry/bases/base/ui/sidebar.tsx",
+      "sha256": "f0f4c21b8fa1b4750711711ac7a6833c713cf93a23f1d2143cf5ec26f1661d56",
+      "adaptedSha256": "1887c1c3990690c935cfc7857528ac3e353100a9b3a74fffeac2204b11aee911"
+    },
+    "base/skeleton.tsx": {
+      "source": "registry/bases/base/ui/skeleton.tsx",
+      "sha256": "8fcbad84e494a75484a0975221fb40f54c4a7d68f79cfc305cb158d1feb1badf",
+      "adaptedSha256": "8fcbad84e494a75484a0975221fb40f54c4a7d68f79cfc305cb158d1feb1badf"
+    },
     "base/textarea.tsx": {
       "source": "registry/bases/base/ui/textarea.tsx",
       "sha256": "8f527c89dec40a9b372376dc93d2ebb149bfd82f209856d110ead1aabec19c6a",
       "adaptedSha256": "8f527c89dec40a9b372376dc93d2ebb149bfd82f209856d110ead1aabec19c6a"
+    },
+    "base/tooltip.tsx": {
+      "source": "registry/bases/base/ui/tooltip.tsx",
+      "sha256": "dc5ec917d8276af9d66e7c951b0608d67c149bcb311072166bc8ce67ee2b7488",
+      "adaptedSha256": "dc5ec917d8276af9d66e7c951b0608d67c149bcb311072166bc8ce67ee2b7488"
     },
     "base/trace.tsx": {
       "source": "registry/bases/base/ui/trace.tsx",
@@ -128,10 +159,40 @@
       "sha256": "b57f3c9921ceb0695cb8164c7be8ce229519f2b485b95923bb980a5e39e11c72",
       "adaptedSha256": "b57f3c9921ceb0695cb8164c7be8ce229519f2b485b95923bb980a5e39e11c72"
     },
+    "radix/scroll-area.tsx": {
+      "source": "registry/bases/radix/ui/scroll-area.tsx",
+      "sha256": "088a0379c48cf5c856b7e182ebabd7ecc41b0dd298fc9cf794b34f718c765f74",
+      "adaptedSha256": "088a0379c48cf5c856b7e182ebabd7ecc41b0dd298fc9cf794b34f718c765f74"
+    },
+    "radix/separator.tsx": {
+      "source": "registry/bases/radix/ui/separator.tsx",
+      "sha256": "b5b5460e5337c2d5f361c1512001615b2e5eacb38c7449a4418bb9ddb47c4bba",
+      "adaptedSha256": "b5b5460e5337c2d5f361c1512001615b2e5eacb38c7449a4418bb9ddb47c4bba"
+    },
+    "radix/sheet.tsx": {
+      "source": "registry/bases/radix/ui/sheet.tsx",
+      "sha256": "0b90787b36db17aa84acc5c30d9df896eae06581955ed4f1d7ab28986e659aed",
+      "adaptedSha256": "e53d4e777f32ccdaa4f1aec7ae9cab41e927adbab588c5fc4e993cb3d0f0e494"
+    },
+    "radix/sidebar.tsx": {
+      "source": "registry/bases/radix/ui/sidebar.tsx",
+      "sha256": "5a1f82f0165377a9149c85f41dea5893d4e15431f47f822e6c365b4291b105ed",
+      "adaptedSha256": "fedd0dadc6b508d56418358f5b4e9aa6efe04a0c7a17f8c4720d9f72027f58d2"
+    },
+    "radix/skeleton.tsx": {
+      "source": "registry/bases/radix/ui/skeleton.tsx",
+      "sha256": "8fcbad84e494a75484a0975221fb40f54c4a7d68f79cfc305cb158d1feb1badf",
+      "adaptedSha256": "8fcbad84e494a75484a0975221fb40f54c4a7d68f79cfc305cb158d1feb1badf"
+    },
     "radix/textarea.tsx": {
       "source": "registry/bases/radix/ui/textarea.tsx",
       "sha256": "8f527c89dec40a9b372376dc93d2ebb149bfd82f209856d110ead1aabec19c6a",
       "adaptedSha256": "8f527c89dec40a9b372376dc93d2ebb149bfd82f209856d110ead1aabec19c6a"
+    },
+    "radix/tooltip.tsx": {
+      "source": "registry/bases/radix/ui/tooltip.tsx",
+      "sha256": "25b33cd3bfd6046067259e476c3b5137b9f018c394d6ea51926accb8d6d5134a",
+      "adaptedSha256": "25b33cd3bfd6046067259e476c3b5137b9f018c394d6ea51926accb8d6d5134a"
     },
     "radix/trace.tsx": {
       "source": "registry/bases/radix/ui/trace.tsx",

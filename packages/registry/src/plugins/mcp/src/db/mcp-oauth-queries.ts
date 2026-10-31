@@ -4,9 +4,9 @@ import type {
   OAuthTokens,
 } from "@ai-sdk/mcp";
 import { and, desc, eq, isNotNull, isNull, ne, sql } from "drizzle-orm";
-import type { McpOAuthSession } from "@/plugins/mcp/db/mcp-schema";
+import type { McpOAuthSession } from "@/chatjs/plugins/mcp/db/mcp-schema";
 import { db } from "@/lib/db/client";
-import { mcpOAuthSession } from "@/plugins/mcp/db/mcp-schema";
+import { mcpOAuthSession } from "@/chatjs/plugins/mcp/db/mcp-schema";
 import { createModuleLogger } from "@/lib/logger";
 
 const AUTHENTICATED_SESSION_LIMIT = 1;

@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { z } from "zod";
 
 import { auth } from "@/lib/auth";
-import { getEveConversationProject } from "@/plugins/projects/db/project-queries";
+import { getEveConversationProject } from "@/chatjs/plugins/projects/db/project-queries";
 
 const ProjectChatPageRoute = async ({
   params,

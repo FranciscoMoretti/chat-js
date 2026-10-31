@@ -1,3 +1,7 @@
+import { Plugins } from "@/chatjs/core/ui/slots";
+import { attachmentUploadsClient } from "@/chatjs/plugins/attachment-uploads/client-plugin";
+import { mcpClient } from "@/chatjs/plugins/mcp/client-plugin";
+import { modelPreferencesClient } from "@/chatjs/plugins/model-preferences/client-plugin";
 import { renderRoot, unmountRoot } from "./primitive-mount";
 import { disableAutoSnapshot, takeSnapshot } from "@uiverify/vitest";
 import React, { act, useState } from "react";
@@ -15,9 +19,9 @@ import { SettingsNav } from "@/components/settings/settings-nav";
 import { composerControls } from "@/composer-controls";
 import type { UiToolName } from "@/lib/ai/types";
 import type { DraftAttachment } from "@/lib/eve/draft";
-import type { AttachmentUploadInput } from "@/lib/installation-contracts";
+import type { AttachmentUploadInput } from "@/chatjs/core/installation/contracts";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-import type { composerTools } from "@/composition/generated/composer-tools";
+import type { composerTools } from "@/integrations/tools/composer";
 
 import "./sandbox.css";
 
@@ -27,6 +31,7 @@ const state = vi.hoisted(() => ({
   connectors: [{ enabled: true, id: "docs", name: "Documentation" }],
   error: false,
   featuresEnabled: true,
+  connectorsInstalled: true,
   globalConnector: false,
   handleSubmit: vi.fn<() => void>(),
   history: new Array<DraftAttachment>(),
@@ -41,25 +46,24 @@ const state = vi.hoisted(() => ({
   uploadsInstalled: true,
 }));
 
-vi.mock("@/composition/generated/installed-uploads", async () => {
+vi.mock("@/integrations/chat/uploads", async () => {
   const { attachmentUploads } =
-    await import("@/plugins/attachment-uploads/integration");
+    await import("@/chatjs/plugins/attachment-uploads/integration");
   const useFixtureUploads = (files: AttachmentUploadInput) => {
     const behavior = attachmentUploads.useUploads(files);
     if (state.uploadsInstalled) {
       return behavior;
     }
-    return { uploadQueue: [] };
+    return { ...behavior, enabled: false, uploadQueue: [] };
   };
   return {
     attachmentUploads: {
-      controls: attachmentUploads.controls,
       useUploads: useFixtureUploads,
     },
   };
 });
 
-vi.mock("@/plugins/attachment-uploads/upload", () => ({
+vi.mock("@/chatjs/plugins/attachment-uploads/upload", () => ({
   uploadAttachment: async (file: ReadonlyNativeSurface<File>) => {
     await state.upload(file);
     return {
@@ -101,7 +105,7 @@ vi.mock("@/lib/config", () => ({
   },
 }));
 
-vi.mock("@/composition/generated/installed", () => ({
+vi.mock("@/integrations/plugin-catalog", () => ({
   installedPlugins: {
     has: (id: string) =>
       state.featuresEnabled &&
@@ -109,7 +113,7 @@ vi.mock("@/composition/generated/installed", () => ({
   },
 }));
 
-vi.mock("@/composition/generated/installed-tools", () => ({
+vi.mock("@/integrations/tools/catalog", () => ({
   installedToolNames: {
     has: (name: string) =>
       state.featuresEnabled &&
@@ -167,7 +171,7 @@ vi.mock("@/components/internal-link", () => ({
   ),
 }));
 
-vi.mock("@/composition/generated/composer-tools", async (importOriginal) => {
+vi.mock("@/integrations/tools/composer", async (importOriginal) => {
   const actual = await importOriginal<{
     composerTools: typeof composerTools;
   }>();
@@ -267,7 +271,19 @@ const mount = async (
     );
   };
 
-  await renderRoot(root, <Fixture />);
+  const plugins = state.featuresEnabled
+    ? [
+        ...(state.uploadsInstalled ? [attachmentUploadsClient] : []),
+        ...(state.connectorsInstalled ? [mcpClient] : []),
+        modelPreferencesClient,
+      ]
+    : [];
+  await renderRoot(
+    root,
+    <Plugins plugins={plugins}>
+      <Fixture />
+    </Plugins>
+  );
   return async (): Promise<void> => {
     await unmountRoot(root);
     container.remove();
@@ -288,6 +304,7 @@ afterEach(() => {
   state.pending = false;
   state.error = false;
   state.featuresEnabled = true;
+  state.connectorsInstalled = true;
   state.globalConnector = false;
   state.connectors = [{ enabled: true, id: "docs", name: "Documentation" }];
   vi.clearAllMocks();
@@ -364,7 +381,25 @@ test("one ordered menu selects and clears tools, attaches files, and toggles con
         .getByRole("menuitemcheckbox", { name: "Documentation" })
         .click();
     });
-    expect(state.toggle).toHaveBeenCalledWith({ enabled: false, id: "docs" });
+    expect(state.toggle).toHaveBeenCalledExactlyOnceWith({
+      enabled: false,
+      id: "docs",
+    });
+    await expect
+      .element(page.getByRole("menuitemcheckbox", { name: "Documentation" }))
+      .toBeVisible();
+    const connector = page
+      .getByRole("menuitemcheckbox", { name: "Documentation" })
+      .element();
+    if (!(connector instanceof HTMLElement)) {
+      throw new Error("Missing connector item");
+    }
+    connector.focus();
+    await userEvent.keyboard("{Enter}");
+    expect(state.toggle).toHaveBeenCalledTimes(2);
+    await expect
+      .element(page.getByRole("menuitemcheckbox", { name: "Documentation" }))
+      .toBeVisible();
     await takeSnapshot("composer-connectors");
     await page.screenshot({ path: "__screenshots__/composer-connectors.png" });
   } finally {
@@ -473,6 +508,7 @@ test("mobile camera and guest controls respect the same order; disabled composer
 });
 
 test("custom ordering and omitted MCP need no placeholder", async () => {
+  state.connectorsInstalled = false;
   composerControls.splice(
     0,
     composerControls.length,
@@ -492,12 +528,12 @@ test("custom ordering and omitted MCP need no placeholder", async () => {
         )
       )
       .toEqual([
+        "Attach files",
         "Create a video",
         "Create an image",
         "Deep Research",
         "Web Search",
         "Canvas",
-        "Attach files",
       ]);
     await takeSnapshot("composer-custom-order-without-mcp");
     await act(async () => {

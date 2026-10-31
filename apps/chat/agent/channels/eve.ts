@@ -1,4 +1,4 @@
-import { installedSessionProfiles } from "../../composition/generated/installed-session-profiles";
+import { sessionProfiles } from "../../integrations/chat/session-profiles";
 import { eveChannel } from "eve/channels/eve";
 import { requireWorkspaceSeedPaths } from "../../lib/eve/copy-seed";
 
@@ -9,7 +9,7 @@ import { authenticateEveGateway } from "../../lib/eve/gateway-auth";
 export default eveChannel({
   auth: [
     authenticateEveGateway,
-    ...installedSessionProfiles.map((profile) => profile.authenticate),
+    ...sessionProfiles.map((profile) => profile.authenticate),
   ],
   fetchFile: fetchEveChannelFile,
   resolveSeed: async ({ auth, operationId }) => {

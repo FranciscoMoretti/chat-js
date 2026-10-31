@@ -14,7 +14,7 @@ import {
   updateEveConversationMetadata,
 } from "@/lib/db/eve-queries";
 import { eveHistoryInput } from "@/lib/eve/history-input";
-import { eveManualDocumentInput } from "@/lib/eve/document-contracts";
+import { eveManualDocumentInput } from "@/chatjs/core/documents/contracts";
 
 import { resolveEvePrincipal } from "@/lib/eve/principal";
 import { restoreMessageAttachments } from "@/lib/eve/restore-message-attachments";

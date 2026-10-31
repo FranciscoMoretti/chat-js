@@ -51,7 +51,7 @@ const TEMPLATE_REMOVED_FILES = [
   // This reference-app test requires both built-in tools, which scaffolds may omit.
   "components/part/tool-part.test.tsx",
   // This test covers the reference app's Vercel adapter; scaffolds select their own.
-  "lib/storage-provider.test.ts",
+  "chatjs/providers/storage.test.ts",
 ];
 
 /** Import lines stripped from template files after copying. */
@@ -83,8 +83,8 @@ const removeTemplateReferences = async (destination: string): Promise<void> => {
 };
 
 const rewriteTemplateStyles = async (destination: string): Promise<void> => {
-  // Replace monorepo-aware @source paths with single-app path in globals.css
-  const globalsCssPath = join(destination, "app", "globals.css");
+  // Replace monorepo-aware @source paths with single-app path in chatjs.css
+  const globalsCssPath = join(destination, "app", "chatjs.css");
   let globalsCss = await readFile(globalsCssPath, "utf-8");
   globalsCss = globalsCss.replace(
     /@source "\.\.\/node_modules\/streamdown\/dist\/\*\.js";\n@source "\.\.\/\.\.\/\.\.\/node_modules\/streamdown\/dist\/\*\.js";/u,
@@ -148,8 +148,8 @@ const applyElectronTemplateTransforms = async (
     source
       .replace('"../../chat/lib/config"', '"../../lib/config"')
       .replace(
-        '"../../chat/plugins/desktop/protocol"',
-        '"../../plugins/desktop/protocol"'
+        '"../../chat/chatjs/plugins/desktop/protocol"',
+        '"../../chatjs/plugins/desktop/protocol"'
       )
   );
 

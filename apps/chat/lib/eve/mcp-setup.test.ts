@@ -1,6 +1,6 @@
 import { afterEach, expect, it, vi } from "vitest";
 
-import { requireMcpCredentials } from "@/plugins/mcp/setup";
+import { requireMcpCredentials } from "@/chatjs/plugins/mcp/setup";
 import { MissingCredentialsError } from "@/lib/required-credentials";
 
 afterEach(() => {

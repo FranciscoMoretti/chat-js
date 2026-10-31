@@ -3,8 +3,7 @@
 import { useEveDeliveryReceipt } from "./use-eve-delivery-receipt";
 
 import { ParallelResponseModelPicker } from "@/components/parallel-responses/model-picker";
-import { PluginMessageResponses } from "@/components/plugin-message-responses";
-import { PluginSuggestions } from "@/components/plugin-chat-ui";
+import { ChatSuggestions, MessageResponses } from "@/components/chat-slots";
 
 import { withTaskCleanup } from "@/components/task-cleanup";
 
@@ -639,7 +638,8 @@ const EveConversation = ({
             ...(hasText(pending.modelId)
               ? { "x-chatjs-selected-model": pending.modelId }
               : {}),
-            ...(pending.selectedTool
+            ...(pending.selectedTool !== undefined &&
+            pending.selectedTool !== null
               ? { "x-chatjs-selected-tool": pending.selectedTool }
               : {}),
           },
@@ -802,7 +802,7 @@ const EveConversation = ({
                       />
                     )}
                     renderResponses={(message): React.JSX.Element => (
-                      <PluginMessageResponses
+                      <MessageResponses
                         conversationId={conversationId}
                         messageId={message.id}
                         disabled={actionLocks.navigation}
@@ -856,7 +856,7 @@ const EveConversation = ({
                     }}
 
                     suggestions={
-                      <PluginSuggestions
+                      <ChatSuggestions
                         conversationId={conversationId}
                         events={agent.events}
                         lastMessage={lastMessage}

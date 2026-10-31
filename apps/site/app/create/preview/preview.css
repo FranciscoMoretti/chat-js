@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "../../../../chat/components/composer/editor.css";
 @reference "../../globals.css";
 @import "shadcn/tailwind.css";
 @import "../../../components/create-preview/ui/style-registry.css";
@@ -13,6 +14,13 @@
 }
 @custom-variant dark (&:is(.dark *));
 @source "../../../../chat/components/composer/prompt-form.tsx";
+@source "../../../../chat/components/composer/composer-attachments.tsx";
+@source "../../../../chat/components/chat-message-view.tsx";
+@source "../../../../chat/components/chat-sidebar-view.tsx";
+@source "../../../../chat/components/attachment-card-view.tsx";
+@source "../../../../chat/components/controlled-chat-composer.tsx";
+@source "../../../../chat/components/lexical-chat-input.tsx";
+@source "../../../../chat/components/chat/chat-welcome-view.tsx";
 @source "../../../../chat/components/part/tool-activity.tsx";
 @source "../../../../chat/components/part/tool-data.tsx";
 

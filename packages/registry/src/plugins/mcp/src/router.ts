@@ -1,24 +1,24 @@
 import type {
   ConnectionStatusResult,
   DiscoveryResult,
-} from "@/plugins/mcp/oauth/cache";
+} from "@/chatjs/plugins/mcp/oauth/cache";
 import { MCP_NAME_MAX_LENGTH, generateMcpNameId } from "@/lib/ai/mcp-name-id";
 import { MissingCredentialsError } from "@/lib/required-credentials";
 import { TRPCError } from "@trpc/server";
 import { assertUrlIsSafeToFetch } from "guarded-fetch";
 import { z } from "zod";
-import { requireMcpCredentials } from "@/plugins/mcp/setup";
+import { requireMcpCredentials } from "@/chatjs/plugins/mcp/setup";
 import {
   createCachedConnectionStatus,
   createCachedDiscovery,
   invalidateAllMcpCaches,
-} from "@/plugins/mcp/oauth/cache";
+} from "@/chatjs/plugins/mcp/oauth/cache";
 import {
   getOrCreateMcpClient,
   removeMcpClient,
-} from "@/plugins/mcp/oauth/mcp-client-manager";
+} from "@/chatjs/plugins/mcp/oauth/mcp-client-manager";
 import { createModuleLogger } from "@/lib/logger";
-import { installedPlugins } from "@/composition/generated/installed";
+import { installedPlugins } from "@/integrations/plugin-catalog";
 import {
   createMcpConnector,
   deleteMcpConnector,
@@ -28,7 +28,7 @@ import {
   getMcpConnectorByNameId,
   getMcpConnectorsByUserId,
   updateMcpConnector,
-} from "@/plugins/mcp/db/mcp-queries";
+} from "@/chatjs/plugins/mcp/db/mcp-queries";
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 
 // Procedure callbacks read only the authenticated user identity from tRPC context.

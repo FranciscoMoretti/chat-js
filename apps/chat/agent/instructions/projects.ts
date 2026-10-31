@@ -1,1 +1,2 @@
-export { default } from "@/plugins/projects/instructions";
+// ChatJS source: projects. Ownership: chatjs/plugins/projects/chatjs.json.
+export { default } from "@/chatjs/plugins/projects/instructions";

@@ -1,15 +1,13 @@
 import type {
   DocumentAssistantAction,
   DocumentAssistantRequest,
-} from "./document-contracts";
-import { installedDocumentKinds } from "@/composition/generated/installed-tools";
-import { installedDocumentActions } from "@/composition/generated/document-actions";
+} from "@/chatjs/core/documents/contracts";
+import { installedDocumentKinds } from "@/integrations/tools/catalog";
+import { documents } from "@/integrations/documents/ui";
 
-const documentAssistantActions = (
-  kind: "text" | "code" | "sheet"
-): DocumentAssistantAction[] =>
+const documentAssistantActions = (kind: string): DocumentAssistantAction[] =>
   installedDocumentKinds.has(kind)
-    ? (installedDocumentActions[kind]?.() ?? [])
+    ? (documents[kind]?.assistantActions?.() ?? [])
     : [];
 
 const documentAssistantRequest = (

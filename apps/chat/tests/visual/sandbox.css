@@ -1,6 +1,7 @@
 @import "../../app/globals.css";
 @source "../../components";
-@source "../../plugins";
+@source "../../chatjs/plugins";
+@source "../../chatjs/tools";
 @source "./";
 
 @source "../../lib/highlighter.tsx";

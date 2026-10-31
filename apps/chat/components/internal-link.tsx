@@ -10,14 +10,14 @@ import React from "react";
 
 import type { Route } from "next";
 
-import { handleModifiedNavigation } from "@/composition/generated/installed-navigation";
+import { handleModifiedNavigation } from "@/integrations/navigation";
 
 import { useRouter } from "next/navigation";
 
 const PRIMARY_MOUSE_BUTTON = 0;
 const AUXILIARY_MOUSE_BUTTON = 1;
 
-type InternalLinkProps<T extends string> = Omit<
+export type InternalLinkProps<T extends string> = Omit<
   ReactComponentProps<typeof Link>,
   "href" | "as"
 > & {

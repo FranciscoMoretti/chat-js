@@ -1,13 +1,14 @@
 "use client";
+
 import {
-  PluginChatBreadcrumb,
-  PluginChatActions,
-  PluginChatHeaderActions,
-} from "@/components/plugin-chat-ui";
+  ChatBreadcrumbs,
+  ChatActions,
+  ChatHeaderActions,
+} from "@/components/chat-slots";
 
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDown } from "lucide-react";
-import React, { useState } from "react";
+import { useState } from "react";
 import type { JSX as ReactJSX } from "react";
 import { toast } from "sonner";
 
@@ -68,7 +69,7 @@ const EveChatHeader = ({
     <ChatHeaderView
       actions={
         hasMessages && (
-          <PluginChatHeaderActions
+          <ChatHeaderActions
             chat={{ id: chatId, title, conversationId, state: "bound" }}
           />
         )
@@ -76,18 +77,14 @@ const EveChatHeader = ({
       breadcrumb={
         <Breadcrumb className="ml-2 min-w-0">
           <BreadcrumbList className="flex-nowrap">
-            <PluginChatBreadcrumb chatId={chatId} />
+            <ChatBreadcrumbs chatId={chatId} />
             <BreadcrumbItem className="min-w-0">
               {draft === undefined ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger
-                    render={
-                      <button
-                        aria-label={`Chat menu: ${title}`}
-                        className="group text-foreground hover:bg-muted focus-visible:ring-ring flex min-w-0 items-center gap-1.5 rounded-md border border-transparent bg-transparent px-2 py-1 text-sm font-medium transition focus-visible:ring-1 focus-visible:outline-none"
-                        type="button"
-                      />
-                    }
+                    aria-label={`Chat menu: ${title}`}
+                    className="group text-foreground hover:bg-muted focus-visible:ring-ring flex min-w-0 items-center gap-1.5 rounded-md border border-transparent bg-transparent px-2 py-1 text-sm font-medium transition focus-visible:ring-1 focus-visible:outline-none"
+                    type="button"
                   >
                     <span className="truncate">{title}</span>
                     <ChevronDown
@@ -99,7 +96,7 @@ const EveChatHeader = ({
                     <DropdownMenuGroup>
                       <ChatMenuItems
                         pluginActions={
-                          <PluginChatActions
+                          <ChatActions
                             chat={{
                               id: chatId,
                               title,

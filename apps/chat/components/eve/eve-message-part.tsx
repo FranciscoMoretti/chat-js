@@ -1,79 +1,22 @@
 "use client";
-import React, { useState } from "react";
-import type { JSX as ReactJSX } from "react";
-import type { EveMessageInputRequest, InputResponse } from "eve/client";
+
+import { isDocumentResult } from "@/chatjs/core/documents/contracts";
+
+import React from "react";
+import type { InputResponse } from "eve/client";
 import { Response } from "@/components/ai-elements/response";
 import { ToolInput, ToolOutput } from "@/components/part/tool-data";
 import { ToolActivity } from "@/components/part/tool-activity";
 import { ReasoningPart } from "@/components/part/message-reasoning";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { EvePendingInput } from "./eve-pending-input";
 import { parseToolId } from "@/lib/ai/mcp-name-id";
 import { getEveInstalledToolRenderer } from "@/lib/ai/tool-renderer-registry";
-import { eveDocumentOperations } from "@/lib/eve/document-contracts";
+import { documentDefinitions } from "@/integrations/documents/definitions";
 import type { ReadonlyEveMessagePart } from "@/lib/eve/readonly-message-types";
 import { EveAttachment } from "./eve-attachment";
 import { EveDocumentTool } from "./eve-document-tool";
 import { EveMcpResult } from "./eve-mcp-result";
 import { EveToolResult } from "./eve-tool-result";
-
-const PendingInput = ({
-  request,
-  disabled,
-  respond,
-}: {
-  readonly request: EveMessageInputRequest;
-  readonly disabled: boolean;
-  readonly respond: (response: InputResponse) => void;
-}): ReactJSX.Element => {
-  const [text, setText] = useState("");
-  return (
-    <div className="space-y-3">
-      <p>{request.prompt}</p>
-      <div className="flex flex-wrap gap-2">
-        {request.options?.map((option): React.JSX.Element => (
-          <Button
-            disabled={disabled}
-            key={option.id}
-            onClick={() => {
-              respond({ optionId: option.id, requestId: request.requestId });
-            }}
-            type="button"
-            variant={option.style === "danger" ? "outline" : "default"}
-          >
-            {option.label}
-          </Button>
-        ))}
-      </div>
-      {request.allowFreeform === true && (
-        <form
-          className="space-y-2"
-          onSubmit={(event: { readonly preventDefault: () => void }) => {
-            event.preventDefault();
-            if (!disabled && text.trim()) {
-              respond({ requestId: request.requestId, text: text.trim() });
-            }
-          }}
-        >
-          <Textarea
-            aria-label="Your answer"
-            disabled={disabled}
-            maxLength={16_000}
-            onChange={(event: {
-              readonly target: { readonly value: string };
-            }) => {
-              setText(event.target.value);
-            }}
-            value={text}
-          />
-          <Button disabled={disabled || !text.trim()} type="submit">
-            Submit answer
-          </Button>
-        </form>
-      )}
-    </div>
-  );
-};
 
 const toolStatus = (
   part: Extract<ReadonlyEveMessagePart, { type: "dynamic-tool" }>
@@ -108,7 +51,7 @@ const ToolFallback = ({
   );
   if (part.state === "approval-requested" && request) {
     content = (
-      <PendingInput
+      <EvePendingInput
         disabled={disabled}
         key={request.requestId}
         request={request}
@@ -188,8 +131,9 @@ export const EveMessagePart = ({
   }
 
   if (
-    Object.hasOwn(eveDocumentOperations, part.toolName) ||
-    part.toolName === "readDocument"
+    documentDefinitions.operations.has(part.toolName) ||
+    part.toolName === "readDocument" ||
+    (part.state === "output-available" && isDocumentResult(part.output))
   ) {
     return (
       <EveDocumentTool

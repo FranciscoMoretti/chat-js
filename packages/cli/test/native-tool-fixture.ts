@@ -23,7 +23,7 @@ const nativeToolFixture = {
     {
       content: JSON.stringify(definition),
       path: "chatjs.json",
-      target: "~/tools/chatjs/paid-counter/chatjs.json",
+      target: "~/chatjs/tools/paid-counter/chatjs.json",
       type: "registry:file",
     },
     {
@@ -43,20 +43,20 @@ export const externalPaidCounter = defineTool({
   toModelOutput: toolResultToModelOutput,
 });`,
       path: "tool.ts",
-      target: "~/tools/chatjs/paid-counter/tool.ts",
+      target: "~/chatjs/tools/paid-counter/tool.ts",
       type: "registry:file",
     },
     {
       content: `"use client";
 import { z } from "zod";
-import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
+import { defineToolRenderer } from "@/chatjs/core/tools/define-renderer";
 export const PaidCounterRenderer = defineToolRenderer({
   inputSchema: z.object({ fail: z.boolean() }),
   outputSchema: z.object({ answer: z.number() }),
   render: ({ tool }) => <p>{tool.state === "output-available" ? tool.output.answer : "Working"}</p>,
 });`,
       path: "renderer.tsx",
-      target: "~/tools/chatjs/paid-counter/renderer.tsx",
+      target: "~/chatjs/tools/paid-counter/renderer.tsx",
       type: "registry:file",
     },
   ],

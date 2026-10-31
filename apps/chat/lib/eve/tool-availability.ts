@@ -1,7 +1,7 @@
 import type { LanguageModelMiddleware } from "ai";
 import type { ToolContext } from "eve/tools";
 
-import { toolAvailability } from "@/composition/generated/tool-availability";
+import { availability } from "@/integrations/tools/availability";
 
 export type ToolAvailability = (
   session: Pick<ToolContext["session"], "auth" | "parent">
@@ -11,7 +11,7 @@ export const installedToolAvailabilityMiddleware = (
   session: Parameters<ToolAvailability>[0]
 ): LanguageModelMiddleware => {
   const unavailable = new Set(
-    Object.entries(toolAvailability).flatMap(
+    Object.entries(availability).flatMap(
       ([name, available]: readonly [string, ToolAvailability]) => {
         if (available(session)) {
           return [];

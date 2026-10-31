@@ -3,14 +3,14 @@ import type {
   OAuthClientProvider,
   OAuthTokens,
 } from "@ai-sdk/mcp";
-import type { McpOAuthSession } from "@/plugins/mcp/db/mcp-schema";
-import type { OAuthClientInformationFull } from "@/plugins/mcp/db/mcp-queries";
+import type { McpOAuthSession } from "@/chatjs/plugins/mcp/db/mcp-schema";
+import type { OAuthClientInformationFull } from "@/chatjs/plugins/mcp/db/mcp-queries";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 
-import { mcpFetch } from "@/plugins/mcp/oauth/mcp-fetch";
-import { withMcpOAuthRefreshLock } from "@/plugins/mcp/db/mcp-oauth-lock";
+import { mcpFetch } from "@/chatjs/plugins/mcp/oauth/mcp-fetch";
+import { withMcpOAuthRefreshLock } from "@/chatjs/plugins/mcp/db/mcp-oauth-lock";
 import {
   createOAuthSession,
   deleteSessionByState,
@@ -20,7 +20,7 @@ import {
   setOAuthClientInfoOnceByState,
   setOAuthCodeVerifierOnceByState,
   updateSessionByState,
-} from "@/plugins/mcp/db/mcp-queries";
+} from "@/chatjs/plugins/mcp/db/mcp-queries";
 import { createModuleLogger } from "@/lib/logger";
 
 const log = createModuleLogger("mcp-oauth-provider");

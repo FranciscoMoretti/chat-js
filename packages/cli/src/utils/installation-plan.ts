@@ -132,7 +132,7 @@ export const planInstallation = async (
       case "sandbox": {
         selectProvider(sandboxDefinitionSchema.parse(metadata));
         sandboxProviderSource = item.files?.find(
-          (file) => file.target === "~/lib/sandbox/provider.ts"
+          (file) => file.target === "~/chatjs/providers/sandbox/provider.ts"
         )?.content;
         break;
       }
@@ -257,7 +257,7 @@ export const planInstallation = async (
       "The selected tools require documents. Omit --no-documents or omit document-dependent tools."
     );
   }
-  await validateToolInstallation(cwd, target());
+  validateToolInstallation(target());
   const installedPlugins =
     options.fresh === true
       ? []

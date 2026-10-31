@@ -19,5 +19,5 @@
     "visual/**/*.tsx",
     "test/**/*.test.ts"
   ],
-  "exclude": ["node_modules", "dist"]
+  "exclude": ["**/*.radix.tsx", "node_modules", "dist"]
 }

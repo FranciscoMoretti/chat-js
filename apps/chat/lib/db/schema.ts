@@ -547,7 +547,7 @@ const eveDocumentRevision = pgTable(
     documentId: uuid("documentId").notNull(),
     fileIds: jsonb("fileIds").$type<readonly string[]>().notNull().default([]),
     id: uuid("id").primaryKey().defaultRandom(),
-    kind: varchar("kind", { enum: ["text", "code", "sheet"] }).notNull(),
+    kind: varchar("kind").notNull(),
     operationId: text("operationId").notNull(),
     ownerId: text("ownerId").notNull(),
     parentRevisionId: uuid("parentRevisionId"),

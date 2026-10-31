@@ -1,4 +1,5 @@
-import { ConnectorsSettingsPage } from "@/plugins/mcp/routes/connectors-page";
+// ChatJS source: mcp. Ownership: chatjs/plugins/mcp/chatjs.json.
+import { ConnectorsSettingsPage } from "@/chatjs/plugins/mcp/routes/connectors-page";
 
 const Page = () => <ConnectorsSettingsPage />;
 

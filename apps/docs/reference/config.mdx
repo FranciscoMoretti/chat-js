@@ -19,18 +19,19 @@ Use `config` from `@/lib/config` for runtime access. See [Configuration](../core
 
 | Source | Ownership |
 | --- | --- |
-| `lib/ai/gateway.ts` | Installed gateway implementation |
-| `lib/ai/gateway-model-defaults.ts` | Gateway discriminator, defaults, capabilities and environment requirements |
-| `lib/storage-provider.ts`, `lib/storage-options.ts` | Installed Files SDK adapter, non-secret options and credential requirements |
-| `tools/chatjs/*/chatjs.json` | Installed tool requirements, registration names, exclusive provider slots and document kinds |
-| `tools/chatjs/*/configuration-schema.ts` | Tool-owned validation and defaults |
-| `composition/generated/installed-config.ts` | Generated composition of installed tool schemas |
-| `composition/generated/document-actions.ts` | Generated composition of document assistant actions |
-| `composition/generated/providers.ts` | Shared search, retrieval, media and code-execution provider registrations |
-| `composition/custom/custom-tools.ts`, `custom-ui.ts` | User-authored tool and renderer registrations |
-| `plugins/*/chatjs.json`, generated feature registrations | Installed uploads, MCP and telemetry contributions |
+| `chatjs/providers/gateway.ts` | Installed gateway implementation |
+| `chatjs/providers/gateway-defaults.ts` | Gateway discriminator, defaults, capabilities and environment requirements |
+| `chatjs/providers/storage.ts`, `chatjs/providers/storage-options.ts` | Installed Files SDK adapter, non-secret options and credential requirements |
+| `chatjs/tools/*/chatjs.json` | Installed tool requirements, registration names, exclusive provider slots and document kinds |
+| `chatjs/tools/*/configuration-schema.ts` | Tool-owned validation and defaults |
+| `chatjs/generated/installed-config.ts` | Generated composition of installed tool schemas |
+| `chatjs/generated/documents.ts`, `document-ui.ts` | Separate shared document definitions and browser views, including assistant actions |
+| `chatjs/generated/tool-definitions.ts` | Browser-safe tool schemas and display metadata |
+| `chatjs/generated/providers.ts` | Shared search, retrieval, media and code-execution provider registrations |
+| `integrations/tools/execution.ts`, `integrations/tools/ui.ts` | User-authored tool and renderer registrations |
+| `chatjs/plugins/*/chatjs.json`, generated plugin registrations | Installed uploads, MCP and telemetry contributions |
 
-Tools can declare `requiresTools`, `requiresGateway` (`image` or `video`) and `requiresStorage`. Features can declare `requiresPlugins` and `requiresStorage`. Provider slots and document kinds are exclusive. The planner validates the complete resulting installation, including existing tools during replacement. Declared external capabilities still need adapter and lifecycle tests.
+Tools can declare `requiresTools`, `requiresGateway` (`image` or `video`) and `requiresStorage`. Plugins can declare `requiresPlugins` and `requiresStorage`. Provider slots and document kinds are exclusive. The planner validates the complete resulting installation, including existing tools during replacement. Declared external capabilities still need adapter and lifecycle tests.
 
 ## AI policy
 
@@ -72,4 +73,4 @@ Pricing text does not configure payment processing. Guest access limits do not r
 
 For example, a minimal app omits MCP, uploads, tools and telemetry and needs no credentials for those absent capabilities. Adding MCP requires `MCP_ENCRYPTION_KEY` even before a connector is configured. See [Configuration](../core/configuration) for installation and replacement commands.
 
-Guest model and rate limits belong to [Guest Chat](../plugins/guest-chat) in `plugins/guest-chat/guest-policy.ts`. Core has no anonymous model or quota settings.
+Guest model and rate limits belong to [Guest Chat](../plugins/guest-chat) in `chatjs/plugins/guest-chat/guest-policy.ts`. Core has no anonymous model or quota settings.

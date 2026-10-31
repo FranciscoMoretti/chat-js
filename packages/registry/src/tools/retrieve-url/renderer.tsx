@@ -1,11 +1,12 @@
 "use client";
 import { ChevronDown, ExternalLink, Globe, TextIcon } from "lucide-react";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { retrievedInput, retrievedResult } from "./schemas";
 import React from "react";
 import ReactMarkdown from "react-markdown";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
-import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
+import type { ToolRendererProps } from "@/chatjs/core/tools/define-renderer";
+import { defineToolRenderer } from "@/chatjs/core/tools/define-renderer";
 
 type RetrieveUrlRendererTool = ToolRendererProps<
   typeof retrievedInput,
@@ -33,21 +34,11 @@ const LoadingState = (): React.JSX.Element => (
 const ErrorState = ({
   errorMessage,
 }: Readonly<{ errorMessage: string | undefined }>): React.JSX.Element => (
-  <div className="my-4 rounded-xl border border-red-200 bg-red-50 p-4 dark:border-red-500 dark:bg-red-950/50">
-    <div className="flex items-center gap-3">
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/50">
-        <Globe className="h-4 w-4 text-red-600 dark:text-red-300" />
-      </div>
-      <div>
-        <div className="text-sm font-medium text-red-700 dark:text-red-300">
-          Error retrieving content
-        </div>
-        <div className="mt-1 text-xs text-red-600/80 dark:text-red-400/80">
-          {errorMessage}
-        </div>
-      </div>
-    </div>
-  </div>
+  <Alert variant="destructive" className="my-4">
+    <Globe />
+    <AlertTitle>Error retrieving content</AlertTitle>
+    <AlertDescription>{errorMessage}</AlertDescription>
+  </Alert>
 );
 
 const getItemProperty = (

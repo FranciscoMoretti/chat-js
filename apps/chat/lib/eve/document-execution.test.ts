@@ -1,6 +1,6 @@
 import { beforeEach, expect, it, vi } from "vitest";
 
-import { executeEveCodeDocument } from "../../tools/chatjs/saved-code-execution/execute";
+import { executeEveCodeDocument } from "../../chatjs/tools/saved-code-execution/execute";
 import { testToolContext } from "../../tests/helpers/eve-tool-context";
 
 const mocks = vi.hoisted(() => ({
@@ -11,7 +11,7 @@ const mocks = vi.hoisted(() => ({
   resolve: vi.fn(),
 }));
 
-vi.mock("@/composition/generated/installed-tools", () => ({
+vi.mock("@/integrations/tools/catalog", () => ({
   installedDocumentKinds: { has: (): boolean => mocks.code },
   installedToolNames: {
     has: (name: string): boolean =>
@@ -23,7 +23,7 @@ vi.mock("../db/eve-documents", () => ({ getEveDocumentRevision: mocks.read }));
 vi.mock("./conversation-scope", () => ({
   resolveEveConversationScope: mocks.resolve,
 }));
-vi.mock("../../composition/generated/code-executor", () => ({
+vi.mock("../../integrations/tools/code-executor", () => ({
   codeExecutor: mocks.execute,
 }));
 

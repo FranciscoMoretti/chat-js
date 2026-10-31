@@ -1,55 +1,15 @@
 import { createRequire } from "node:module";
 import { spawn } from "node:child_process";
-import { prepareScaffoldUi } from "./scaffold-ui";
+import { readUiBase } from "#cli/utils/ui-compatibility";
 
-// Native init owns theme validation, encoding, font transforms and component
-// reinstallation. Its executable is public; its internal command modules are not.
-export const initializeShadcn = async (
+export const runNativeShadcn = async (
   cwd: string,
   args: readonly string[]
 ): Promise<void> => {
-  if (args.length === 0) {
-    return;
-  }
   const executable = createRequire(import.meta.url).resolve("shadcn");
-  const interactive = process.stdin.isTTY;
-  const child = spawn(
-    process.execPath,
-    [
-      executable,
-      "init",
-      "--preset",
-      "rhea",
-      "--no-monorepo",
-      "--force",
-      "--reinstall",
-      "--yes",
-      ...args,
-    ],
-    { cwd, stdio: [interactive ? "inherit" : "pipe", "pipe", "pipe"] }
-  );
-  // Native init prompts again on a library switch even with --yes. This runs
-  // only against a fresh scaffold: confirm that owned source replacement while
-  // preserving native option parsing, diagnostics, and generated components.
-  let promptOutput = "";
-  let confirmed = false;
-  const forward = (chunk: Buffer, stream: NodeJS.WriteStream): void => {
-    stream.write(chunk);
-    promptOutput += chunk.toString();
-    if (
-      !interactive &&
-      !confirmed &&
-      promptOutput.includes("Would you like to continue?")
-    ) {
-      confirmed = true;
-      child.stdin?.end("y\n");
-    }
-  };
-  child.stdout?.on("data", (chunk: Buffer) => {
-    forward(chunk, process.stdout);
-  });
-  child.stderr?.on("data", (chunk: Buffer) => {
-    forward(chunk, process.stderr);
+  const child = spawn(process.execPath, [executable, ...args], {
+    cwd,
+    stdio: [process.stdin.isTTY ? "inherit" : "ignore", "inherit", "inherit"],
   });
   const { promise, resolve, reject }: PromiseWithResolvers<void> =
     Promise.withResolvers();
@@ -60,11 +20,32 @@ export const initializeShadcn = async (
     } else {
       reject(
         new Error(
-          `Native shadcn initialization failed (exit ${code}). See its diagnostic above. The scaffold remains at ${cwd}; no selected registry source was installed.`
+          `Native shadcn ${args[0]} failed (exit ${code}). See its diagnostic above.`
         )
       );
     }
   });
   await promise;
-  await prepareScaffoldUi(cwd);
+};
+
+// Native init owns all visual options. Defaults precede the unmodified argument
+// sequence, so native parsing keeps the user's last option authoritative.
+export const initializeShadcn = async (
+  cwd: string,
+  args: readonly string[]
+): Promise<void> => {
+  await runNativeShadcn(cwd, [
+    "init",
+    "--preset",
+    "rhea",
+    "--no-monorepo",
+    "--yes",
+    ...args,
+  ]);
+  // Native can exit zero on cancellation/EOF. A usable config is required.
+  if (!(await readUiBase(cwd))) {
+    throw new Error(
+      "Native shadcn initialization did not produce a supported Base/Radix configuration."
+    );
+  }
 };

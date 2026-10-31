@@ -31,8 +31,8 @@ const lintInstalledObservability = async (root: string): Promise<void> => {
       "--no-ignore",
       "--report-unused-disable-directives-severity",
       "error",
-      path.join(root, "composition/generated/installed-layout.ts"),
-      path.join(root, "composition/generated/installed-instrumentation.ts"),
+      path.join(root, "chatjs/generated/installed-layout.ts"),
+      path.join(root, "chatjs/generated/installed-instrumentation.ts"),
     ],
     stderr: "pipe",
     stdout: "pipe",
@@ -80,7 +80,7 @@ const itemFiles = async (item: ReadonlyObservabilityItem) => [
   {
     content: JSON.stringify(item.meta.chatjs),
     path: `${item.name}.json`,
-    target: `~/plugins/${item.name}/chatjs.json`,
+    target: `~/chatjs/plugins/${item.name}/chatjs.json`,
     type: "registry:file" as const,
   },
 ];
@@ -111,21 +111,21 @@ for (let mask = 0; mask < 2 ** observabilityItems.length; mask += 1) {
     await syncPlugins(root);
     await lintInstalledObservability(root);
     const layout = await readFile(
-      path.join(root, "composition/generated/installed-layout.ts"),
+      path.join(root, "chatjs/generated/installed-layout.ts"),
       "utf-8"
     );
     const instrumentation = await readFile(
-      path.join(root, "composition/generated/installed-instrumentation.ts"),
+      path.join(root, "chatjs/generated/installed-instrumentation.ts"),
       "utf-8"
     );
     const plugins = await readFile(
-      path.join(root, "composition/generated/installed.ts"),
+      path.join(root, "chatjs/generated/installed.ts"),
       "utf-8"
     );
     expect(instrumentation).not.toContain("sort-imports");
     for (const item of observabilityItems) {
       const output = item.name === "langfuse" ? instrumentation : layout;
-      expect(output.includes(`@/plugins/${item.name}/`)).toBe(
+      expect(output.includes(`@/chatjs/plugins/${item.name}/`)).toBe(
         selected.includes(item)
       );
       expect(plugins.includes(`"${item.name}"`)).toBe(selected.includes(item));
@@ -133,7 +133,7 @@ for (let mask = 0; mask < 2 ** observabilityItems.length; mask += 1) {
     await syncPlugins(root);
     expect(
       await readFile(
-        path.join(root, "composition/generated/installed-layout.ts"),
+        path.join(root, "chatjs/generated/installed-layout.ts"),
         "utf-8"
       )
     ).toBe(layout);
@@ -164,7 +164,7 @@ for (const item of observabilityItems) {
       observabilityItems.map(
         async (plugin: { readonly name: string }): Promise<boolean> =>
           await Bun.file(
-            path.join(root, `plugins/${plugin.name}/chatjs.json`)
+            path.join(root, `chatjs/plugins/${plugin.name}/chatjs.json`)
           ).exists()
       )
     );
@@ -207,7 +207,7 @@ for (const item of observabilityItems) {
         expect(installedDependencies[name]).toBeDefined();
       }
       const registration = await readFile(
-        path.join(root, "composition/generated/installed.ts"),
+        path.join(root, "chatjs/generated/installed.ts"),
         "utf-8"
       );
       expect(registration).toContain(`"${item.name}"`);
@@ -220,7 +220,7 @@ for (const item of observabilityItems) {
       expect(syncPlugins(root)).rejects.toThrow("installation is incomplete");
       expect(
         await readFile(
-          path.join(root, "composition/generated/installed.ts"),
+          path.join(root, "chatjs/generated/installed.ts"),
           "utf-8"
         )
       ).toBe(registration);
@@ -238,7 +238,10 @@ for (const item of observabilityItems) {
         await writeFile(target, file.content);
       })
     );
-    const descriptor = path.join(root, `plugins/${item.name}/chatjs.json`);
+    const descriptor = path.join(
+      root,
+      `chatjs/plugins/${item.name}/chatjs.json`
+    );
     await rm(descriptor);
     expect(syncPlugins(root)).rejects.toThrow("missing its descriptor");
     await writeFile(
@@ -248,7 +251,7 @@ for (const item of observabilityItems) {
     expect(syncPlugins(root)).rejects.toThrow("id must match its directory");
     expect(
       await Bun.file(
-        path.join(root, "composition/generated/installed-layout.ts")
+        path.join(root, "chatjs/generated/installed-layout.ts")
       ).exists()
     ).toBe(false);
   });

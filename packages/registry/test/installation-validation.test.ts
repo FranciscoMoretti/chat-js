@@ -34,7 +34,7 @@ for (const gateway of GATEWAYS) {
       tools: [],
     });
     expect(
-      [...files.keys()].filter((file) => file.startsWith("plugins/"))
+      [...files.keys()].filter((file) => file.startsWith("chatjs/plugins/"))
     ).toEqual([]);
     expect(
       typecheckProject(files, validationDependencyFixtures).diagnostics
@@ -86,7 +86,7 @@ for (const plugin of plugins) {
       typecheckProject(output.files, validationDependencyFixtures).diagnostics
     ).toEqual([]);
     if (plugin.id === "search") {
-      output.files.delete("plugins/search/server-plugin.ts");
+      output.files.delete("chatjs/plugins/search/server-plugin.ts");
       expect(
         typecheckProject(
           output.files,
@@ -138,3 +138,61 @@ for (const scenario of combinationCases) {
     ).toEqual([]);
   }, 60_000);
 }
+
+test("plugin removal and reinstall preserve a type-correct app with retained schemas", async () => {
+  const { mkdtemp, mkdir, rm, writeFile } = await import("node:fs/promises");
+  const { tmpdir } = await import("node:os");
+  const { default: path } = await import("node:path");
+  const { readProjectFiles } = await import("@chat-js/registry-validation");
+  const { removePlugins } = await import("../../cli/src/utils/remove-plugins");
+  const { recordInstalledSource } =
+    await import("../../cli/src/utils/source-receipt");
+  const { syncPlugins } = await import("../../cli/src/utils/sync-plugins");
+  const output = await renderValidationProject(prepared.core, {
+    gateway: "openai",
+    storage: { source: "memory", options: {} },
+    plugins: ["projects", "sharing", "mcp"],
+    tools: [],
+  });
+  const root = await mkdtemp(path.join(tmpdir(), "chatjs-plugin-lifecycle-"));
+  try {
+    const writeSources = async (files: ReadonlyMap<string, Uint8Array>) => {
+      await Promise.all(
+        [...files].map(async ([file, source]) => {
+          await mkdir(path.dirname(path.join(root, file)), { recursive: true });
+          await writeFile(path.join(root, file), source);
+        })
+      );
+    };
+    await writeSources(output.files);
+    await recordInstalledSource(root, [...output.files.keys()]);
+    await removePlugins(root, ["projects", "sharing", "mcp"]);
+    const removed = await readProjectFiles(root);
+    expect(
+      typecheckProject(removed, validationDependencyFixtures).diagnostics
+    ).toEqual([]);
+    expect(
+      new TextDecoder().decode(
+        removed.get("chatjs/generated/installed-database.ts")
+      )
+    ).toContain("project-schema.ts");
+    const pluginSources = new Map(
+      [...output.files].filter(
+        ([file]) =>
+          file.startsWith("chatjs/plugins/") ||
+          file.startsWith("agent/") ||
+          file.startsWith("app/")
+      )
+    );
+    await writeSources(pluginSources);
+    await syncPlugins(root);
+    expect(
+      typecheckProject(
+        await readProjectFiles(root),
+        validationDependencyFixtures
+      ).diagnostics
+    ).toEqual([]);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+}, 60_000);

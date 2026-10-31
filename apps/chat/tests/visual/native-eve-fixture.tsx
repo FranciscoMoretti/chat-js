@@ -1,3 +1,4 @@
+import { ChatPlugins } from "@/providers/chat-plugins";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TRPCClientError, createTRPCClient } from "@trpc/client";
 import type { OperationResultObserver, TRPCLink } from "@trpc/client";
@@ -290,11 +291,13 @@ const mountNative = async (
               <DefaultModelProvider defaultModel="openai/gpt-4.1">
                 <PathnameContext.Provider value="/">
                   <SidebarProvider>
-                    <EveDeletionProvider>
-                      <EveRuntimeProvider ownerId="fixture-user">
-                        {children}
-                      </EveRuntimeProvider>
-                    </EveDeletionProvider>
+                    <ChatPlugins>
+                      <EveDeletionProvider>
+                        <EveRuntimeProvider ownerId="fixture-user">
+                          {children}
+                        </EveRuntimeProvider>
+                      </EveDeletionProvider>
+                    </ChatPlugins>
                   </SidebarProvider>
                 </PathnameContext.Provider>
               </DefaultModelProvider>

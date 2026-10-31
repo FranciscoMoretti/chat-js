@@ -1,6 +1,6 @@
 "use client";
 
-import type { ChatMessageProps } from "@/lib/chat-plugin-contracts";
+import type { ChatMessageProps } from "@/chatjs/core/chat/contracts";
 import type { JSX as ReactJSX } from "react";
 import React, { useMemo, useSyncExternalStore } from "react";
 

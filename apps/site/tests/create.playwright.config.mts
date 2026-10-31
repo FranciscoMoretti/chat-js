@@ -11,6 +11,7 @@ export default defineConfig({
     "create-activity.spec.mts",
     "create-styles.spec.mts",
     "create-conversation.spec.mts",
+    "create-parity.spec.mts",
   ],
   workers: 1,
   timeout: 120_000,

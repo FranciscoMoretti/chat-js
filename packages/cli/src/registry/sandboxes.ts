@@ -8,11 +8,11 @@ export const resolveSandbox = async (source: string, cwd = process.cwd()) => {
   if (
     item.type !== "registry:item" ||
     !(item.files ?? []).some(
-      (file) => file.target === "~/lib/sandbox/provider.ts"
+      (file) => file.target === "~/chatjs/providers/sandbox/provider.ts"
     )
   ) {
     throw new Error(
-      "Sandbox provider must install lib/sandbox/provider.ts exporting createSandboxProvider."
+      "Sandbox provider must install chatjs/providers/sandbox/provider.ts exporting createSandboxProvider."
     );
   }
   return { definition, source: address };

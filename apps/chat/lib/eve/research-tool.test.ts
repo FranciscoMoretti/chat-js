@@ -8,8 +8,8 @@ import { z } from "zod";
 import type {
   prepareResearch,
   saveResearchReport,
-} from "@/tools/chatjs/deep-research/steps";
-import { getDeepResearchConfig } from "@/tools/chatjs/deep-research/configuration";
+} from "@/chatjs/tools/deep-research/steps";
+import { getDeepResearchConfig } from "@/chatjs/tools/deep-research/configuration";
 
 import deepResearch from "@/agent/tools/deepResearch";
 
@@ -20,10 +20,10 @@ const mocks = vi.hoisted(() => ({
   save: vi.fn<typeof saveResearchReport>(),
   searches: vi.fn(),
 }));
-vi.mock("@/tools/chatjs/deep-research/search-updates", () => ({
+vi.mock("@/chatjs/tools/deep-research/search-updates", () => ({
   researchSearchUpdates: mocks.searches,
 }));
-vi.mock("@/tools/chatjs/deep-research/steps", () => ({
+vi.mock("@/chatjs/tools/deep-research/steps", () => ({
   prepareResearch: mocks.prepare,
   saveResearchReport: mocks.save,
 }));

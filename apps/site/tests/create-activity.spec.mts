@@ -242,7 +242,7 @@ test("library selection preserves the preset, uploads, and native command", asyn
     .getByRole("menuitemradio", { name: "New chat", exact: true })
     .click();
   await expect(
-    frame.getByRole("heading", { name: "What can we build together?" })
+    frame.getByRole("heading", { name: "How can I help you today?" })
   ).toBeVisible();
   await frame.getByRole("button", { name: "Choose preview model" }).click();
   await frame.getByRole("menuitemradio", { name: "Fast", exact: true }).click();

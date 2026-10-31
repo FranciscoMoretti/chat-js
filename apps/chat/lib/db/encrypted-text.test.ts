@@ -1,14 +1,17 @@
 import { pgTable } from "drizzle-orm/pg-core";
 import { expect, test, vi } from "vitest";
 
-import { encryptedJson, encryptedText } from "@/plugins/mcp/db/encrypted-text";
+import {
+  encryptedJson,
+  encryptedText,
+} from "@/chatjs/plugins/mcp/db/encrypted-text";
 
 const { encryptionKey } = vi.hoisted(() => {
   const AES_256_KEY_BYTES = 32;
   return { encryptionKey: Buffer.alloc(AES_256_KEY_BYTES).toString("base64") };
 });
 
-vi.mock("@/plugins/mcp/mcp-env", () => ({
+vi.mock("@/chatjs/plugins/mcp/mcp-env", () => ({
   readMcpEncryptionKey: () => encryptionKey,
 }));
 const table = pgTable("encrypted_fixture", {

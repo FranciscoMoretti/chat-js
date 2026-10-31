@@ -1,15 +1,15 @@
 import { requireEveDeletionLifecycle } from "@/lib/eve/deletion-lifecycle";
-import { readGuestBody } from "@/plugins/guest-chat/guest-body";
+import { readGuestBody } from "@/chatjs/plugins/guest-chat/guest-body";
 import {
   createGuestRuntimeSession,
   bindGuestRuntimeSession,
-} from "@/plugins/guest-chat/guest-queries";
-import { guestRequestIpHash } from "@/plugins/guest-chat/guest-ip";
-import { GUEST_POLICY } from "@/plugins/guest-chat/guest-policy";
+} from "@/chatjs/plugins/guest-chat/guest-queries";
+import { guestRequestIpHash } from "@/chatjs/plugins/guest-chat/guest-ip";
+import { GUEST_POLICY } from "@/chatjs/plugins/guest-chat/guest-policy";
 import {
   issueGuestCredential,
   newGuestClaims,
-} from "@/plugins/guest-chat/guest-credential";
+} from "@/chatjs/plugins/guest-chat/guest-credential";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { env } from "@/lib/env";
 import { getEveConnectionOptions } from "@/lib/eve/connection-options";

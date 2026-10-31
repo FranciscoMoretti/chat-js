@@ -1,5 +1,7 @@
 "use client";
 
+import { useAttachmentPicker } from "@/chatjs/core/uploads/use-attachment-picker";
+
 import type {
   ComponentProps,
   Dispatch,
@@ -17,7 +19,7 @@ import type { UiToolName } from "@/lib/ai/types";
 import type { DraftAttachment } from "@/lib/eve/draft";
 import { useChatModels } from "@/providers/chat-models-provider";
 import { useDefaultModel } from "@/providers/default-model-provider";
-import { installedToolNames } from "@/composition/generated/installed-tools";
+import { installedToolNames } from "@/integrations/tools/catalog";
 
 import { EveModelPicker } from "./eve-model-picker";
 import type { useEveAttachments } from "./use-eve-attachments";
@@ -42,7 +44,7 @@ const unsupportedAttachments = (
   );
 
 const isUnavailableTool = (tool: UiToolName | null): boolean =>
-  Boolean(tool && !installedToolNames.has(tool));
+  tool !== null && !installedToolNames.has(tool);
 
 interface ComposerCapabilities {
   readonly files: Readonly<
@@ -89,16 +91,19 @@ const CapableComposer = ({
       current.filter((file) => file.url !== attachment.url)
     );
   };
-  const uploads = files.composer?.(Boolean(uploadLocked));
+  const uploads = useAttachmentPicker({
+    disabled: Boolean(uploadLocked) || !files.enabled,
+    onFiles: files.enqueue,
+  });
   return (
     <div
       {...{
         "aria-label": "Message composer",
         role: "group",
-        ...uploads?.rootProps,
+        ...uploads.rootProps,
       }}
     >
-      {uploads?.input}
+      {files.enabled && <input {...uploads.inputProps} />}
       <ControlledChatComposer
         {...props}
         attachments={
@@ -120,7 +125,7 @@ const CapableComposer = ({
               selectedModelId={models[0]?.id ?? ""}
               selectedTool={selectedTool}
               onToolChange={onToolChange}
-              onAttach={uploads?.onAttach ?? uploadsOmitted}
+              onAttach={files.enabled ? uploads.open : uploadsOmitted}
             />
             <ActiveTool
               selectedTool={selectedTool}

@@ -1,4 +1,4 @@
-import { installedCleanupTasks } from "@/composition/generated/installed-cleanup";
+import { cleanupTasks } from "@/integrations/cleanup";
 import { cleanupEveOrphanedFiles } from "@/lib/eve/cleanup-orphaned-files";
 import type { CleanupResult, CleanupTask } from "./contracts";
 
@@ -13,8 +13,11 @@ export const runCleanupJob = async () => {
           new Date(Date.now() - ORPHANED_ATTACHMENTS_RETENTION_TIME)
         ),
     },
-    ...installedCleanupTasks,
+    ...cleanupTasks,
   ];
+  if (new Set(tasks.map((task) => task.id)).size !== tasks.length) {
+    throw new Error("Cleanup tasks must have unique ids.");
+  }
   const results: Record<string, CleanupResult | { error: string }> = {};
   const settled = await Promise.allSettled(
     tasks.map(async (task) => {

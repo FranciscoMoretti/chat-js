@@ -1,4 +1,5 @@
 "use client";
+import { MenuButton } from "@/components/menu-button";
 import { pluginRoute } from "@/lib/plugin-route";
 
 import { formatDistance } from "date-fns";
@@ -8,7 +9,6 @@ import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import React, { useState, useSyncExternalStore } from "react";
 import type { JSX as ReactJSX } from "react";
 
-import { Button } from "@/components/ui/button";
 import { ChatRenameDialog } from "@/components/chat-rename-dialog";
 import { InternalLink } from "@/components/internal-link";
 
@@ -17,7 +17,6 @@ import {
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
-  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
@@ -110,19 +109,15 @@ export const ProjectChatItem = ({
           </div>
           <div className="z-20">
             <DropdownMenu modal>
-              <DropdownMenuTrigger
-                render={
-                  <Button
-                    className="h-7 w-7 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100"
-                    size="icon"
-                    type="button"
-                    variant="ghost"
-                  />
-                }
+              <MenuButton
+                className="h-7 w-7 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100"
+                size="icon"
+                type="button"
+                variant="ghost"
               >
                 <MoreHorizontal size={16} />
                 <span className="sr-only">More</span>
-              </DropdownMenuTrigger>
+              </MenuButton>
 
               <DropdownMenuContent align="end" side="bottom">
                 <DropdownMenuGroup>

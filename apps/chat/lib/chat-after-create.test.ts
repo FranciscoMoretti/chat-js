@@ -1,13 +1,14 @@
 import { beforeEach, expect, test, vi } from "vitest";
-import type { ChatServerIntegration } from "./chat-plugin-contracts";
-import { runChatAfterCreate } from "./chat-plugins";
+import type { ChatServerIntegration } from "@/chatjs/core/chat/contracts";
+import { chat } from "@/integrations/chat/server";
+import { runChatAfterCreate } from "./chat-after-create";
 
 const mocks = vi.hoisted(() => {
   const plugins: ChatServerIntegration[] = [];
   return { plugins, warn: vi.fn(), settle: vi.fn() };
 });
-vi.mock("@/composition/generated/installed-chat", () => ({
-  installedChatPlugins: mocks.plugins,
+vi.mock("@/chatjs/generated/installed-chat", () => ({
+  installedChat: mocks.plugins,
 }));
 vi.mock("./db/eve-title", () => ({ settleEveRootFallbackTitle: mocks.settle }));
 vi.mock("./logger", () => ({
@@ -50,4 +51,24 @@ test("one failed contribution does not prevent the remaining contributions or ex
     { errorName: "Error" },
     "Chat afterCreate contribution failed"
   );
+});
+
+test("app-owned afterCreate failure still settles the fallback without exposing the message", async () => {
+  const afterCreate = vi
+    .spyOn(chat, "afterCreate")
+    .mockRejectedValueOnce(new Error(context.message));
+  try {
+    await expect(runChatAfterCreate(context)).resolves.toBeUndefined();
+    expect(mocks.settle).toHaveBeenCalledWith(
+      "owner",
+      "bound",
+      "Private message"
+    );
+    expect(mocks.warn).toHaveBeenCalledWith(
+      { errorName: "Error" },
+      "Chat afterCreate failed"
+    );
+  } finally {
+    afterCreate.mockRestore();
+  }
 });

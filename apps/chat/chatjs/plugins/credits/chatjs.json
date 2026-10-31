@@ -1,0 +1,25 @@
+{
+  "id": "credits",
+  "kind": "plugin",
+  "files": [
+    "chatjs/plugins/credits/balance.tsx",
+    "chatjs/plugins/credits/billing.ts",
+    "chatjs/plugins/credits/client-plugin.ts",
+    "chatjs/plugins/credits/credits-queries.ts",
+    "chatjs/plugins/credits/credits-schema.ts",
+    "chatjs/plugins/credits/router.ts",
+    "chatjs/plugins/credits/server-plugin.ts",
+    "chatjs/plugins/credits/use-credits.ts"
+  ],
+  "databaseSchemas": ["chatjs/plugins/credits/credits-schema.ts"],
+  "billing": { "export": "creditsBilling" },
+  "server": { "export": "credits", "routers": ["credits"] },
+  "client": {
+    "export": "creditsClient",
+    "composerControls": [],
+    "settingsItems": [],
+    "accountSummary": true
+  },
+  "contractVersion": 2,
+  "uiBase": "base"
+}

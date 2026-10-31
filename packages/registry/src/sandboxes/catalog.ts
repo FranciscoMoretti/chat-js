@@ -22,7 +22,7 @@ export const builtInSandboxes = ["vercel", "daytona"].map((id) => ({
     ...(id === "vercel" ? ["persistent.ts"] : []),
   ].map((file) => ({
     path: `src/sandboxes/${id}/${file}`,
-    target: `~/lib/sandbox/${file}`,
+    target: `~/chatjs/providers/sandbox/${file}`,
     type: "registry:file" as const,
   })),
   meta: {

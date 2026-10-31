@@ -35,9 +35,9 @@ import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
 
 import { PlainTextPlugin } from "@lexical/react/LexicalPlainTextPlugin";
 
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 
-import { useAutoFocus } from "@/hooks/use-auto-focus";
+import { useAutoFocus } from "../hooks/use-auto-focus";
 
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 

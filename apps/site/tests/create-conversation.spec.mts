@@ -25,7 +25,7 @@ for (const base of ["base", "radix"] as const) {
         `/create/preview?base=${base}&preset=${preset}&rtl=${mobile}&item=preview-02`
       );
       await expect(
-        page.getByRole("textbox", { name: "Preview message" })
+        page.getByRole("textbox", { name: "Message" })
       ).toBeVisible();
       await page.evaluate(
         (data) => {
@@ -60,15 +60,15 @@ for (const base of ["base", "radix"] as const) {
         page.getByRole("button", { name: "Remove sample attachment" })
       ).toBeVisible();
       await page
-        .getByRole("textbox", { name: "Preview message" })
+        .getByRole("textbox", { name: "Message" })
         .fill("Test the composer");
-      await page.getByRole("button", { name: "Send preview message" }).click();
+      await page.getByRole("button", { name: "Send" }).click();
       await expect(
         page.getByText("Test the composer", { exact: true })
       ).toBeVisible();
-      await expect(
-        page.getByRole("textbox", { name: "Preview message" })
-      ).toBeEmpty();
+      await expect(page.getByRole("textbox", { name: "Message" })).toHaveText(
+        ""
+      );
       uiVerify.disableAutoSnapshot();
     });
   }

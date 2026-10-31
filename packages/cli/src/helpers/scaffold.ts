@@ -119,7 +119,7 @@ const normalizeGatewaySnapshotCommands = async (
 };
 
 const resetInstallableTools = async (destination: string): Promise<void> => {
-  const toolsDir = pathModule.join(destination, "tools", "chatjs");
+  const toolsDir = pathModule.join(destination, "chatjs", "tools");
   await rm(toolsDir, { force: true, recursive: true });
   await mkdir(toolsDir, { recursive: true });
   await Promise.all(
@@ -184,7 +184,7 @@ const applyChatTemplateSourceTransforms = async (
     ["<GitHubLink />", ""],
   ]);
 
-  const globalsCssPath = pathModule.join(destination, "app", "globals.css");
+  const globalsCssPath = pathModule.join(destination, "app", "chatjs.css");
   await replaceInFile(globalsCssPath, [
     [
       '@source "../node_modules/streamdown/dist/*.js";\n@source "../../../node_modules/streamdown/dist/*.js";',
@@ -246,8 +246,8 @@ const applyElectronTemplateSourceTransforms = async (
     [
       ['"../../chat/lib/config"', '"../../lib/config"'],
       [
-        '"../../chat/plugins/desktop/protocol"',
-        '"../../plugins/desktop/protocol"',
+        '"../../chat/chatjs/plugins/desktop/protocol"',
+        '"../../chatjs/plugins/desktop/protocol"',
       ],
     ]
   );
@@ -355,15 +355,6 @@ const normalizeElectronFiles = async (
     ],
   ]);
 
-  await replaceInFile(pathModule.join(destination, "README.md"), [
-    ["bun install", `${packageManager} install`],
-    ["bun run dev", runScript(packageManager, "dev")],
-    ["bun run generate-icons", runScript(packageManager, "generate-icons")],
-    ["bun run make:mac", runScript(packageManager, "make:mac")],
-    ["bun run make:win", runScript(packageManager, "make:win")],
-    ["bun run make:linux", runScript(packageManager, "make:linux")],
-  ]);
-
   if (packageManager === "pnpm") {
     await writePnpmWorkspaceConfig(destination, { blockExoticSubdeps: false });
   }
@@ -440,8 +431,11 @@ const scaffoldFromTemplate = async (
     packageJsonPath,
     `${JSON.stringify(packageJson, null, JSON_INDENTATION_SPACES)}\n`
   );
+  await mkdir(pathModule.join(destination, "chatjs/providers/sandbox"), {
+    recursive: true,
+  });
   await writeFile(
-    pathModule.join(destination, "lib/sandbox/provider.ts"),
+    pathModule.join(destination, "chatjs/providers/sandbox/provider.ts"),
     `import type { SandboxProvider } from "@chat-js/sandboxes/provider";
 
 export const createSandboxProvider: (() => SandboxProvider) | undefined = undefined;
@@ -449,7 +443,7 @@ export const supportsPersistentSandbox = false;
 `
   );
   await writeFile(
-    pathModule.join(destination, "lib/sandbox/options.ts"),
+    pathModule.join(destination, "chatjs/providers/sandbox/options.ts"),
     `import type { EnvRequirement } from "@/lib/config-requirements";
 
 const sandboxId = "";

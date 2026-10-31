@@ -39,8 +39,8 @@ for (const runtime of ["nodejs", "edge"]) {
         exports,
         process: { env: { NEXT_RUNTIME: runtime } },
         require: (name: string) => {
-          if (name === "@/composition/generated/installed-instrumentation") {
-            return { installedInstrumentation: registrations };
+          if (name === "@/integrations/instrumentation") {
+            return { instrumentation: registrations };
           }
           if (name === "@/lib/config") {
             return { config: { appPrefix: "test" } };

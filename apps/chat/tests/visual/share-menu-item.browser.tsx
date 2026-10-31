@@ -9,7 +9,7 @@ import {
 import React, { act, createContext, useContext } from "react";
 import { expect, test, vi } from "vitest";
 import { mount, unmount } from "./primitive-mount";
-import { ShareMenuItem } from "@/plugins/sharing/ui/share-menu-item";
+import { ShareMenuItem } from "@/chatjs/plugins/sharing/ui/share-menu-item";
 import { page, userEvent } from "vitest/browser";
 import { takeSnapshot } from "@uiverify/vitest";
 

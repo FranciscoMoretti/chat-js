@@ -1,4 +1,4 @@
-import { readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import type { GatewaySelection } from "#cli/registry/gateways";
 import type { ReadonlyInput } from "./readonly-input";
 import { generatedRegistrationSource } from "#cli/utils/generated-registration-source";
@@ -63,7 +63,7 @@ const gatewayDefaultsSource = (
   definition: ReadonlyInput<GatewaySelection["definition"]>
 ): string =>
   generatedRegistrationSource(`import type { GatewayModelDefaults } from "@chat-js/gateways/defaults";
-import type { Gateway } from "./gateway";
+import type { Gateway } from "@/chatjs/providers/gateway";
 
 export const gatewayType = ${JSON.stringify(definition.id)} satisfies InstanceType<typeof Gateway>["type"];
 export const gatewayModelDefaults = ${serializedDefaults(definition.defaults)} satisfies GatewayModelDefaults<InstanceType<typeof Gateway>>;
@@ -73,7 +73,7 @@ export const gatewayEnvVariables = ${JSON.stringify(gatewayEnvVariables(definiti
 `);
 
 export const gatewayConfigurationTargets = [
-  "lib/ai/gateway-model-defaults.ts",
+  "chatjs/providers/gateway-defaults.ts",
   "lib/ai/models.generated.ts",
   ".env.example",
 ];
@@ -88,6 +88,8 @@ export const configureGatewayProvider = async (
   selection: ReadonlyInput<GatewaySelection>
 ): Promise<void> => {
   await preflight(destination, gatewayConfigurationTargets);
+  await mkdir(path.join(destination, "chatjs/providers"), { recursive: true });
+  await mkdir(path.join(destination, "lib/ai"), { recursive: true });
   const snapshotPath = path.join(destination, "lib/ai/models.generated.ts");
   const snapshot = await readFile(snapshotPath, "utf-8").catch(
     (error: unknown) => {
@@ -103,7 +105,7 @@ export const configureGatewayProvider = async (
   );
   const { definition } = selection;
   await writeFile(
-    path.join(destination, "lib/ai/gateway-model-defaults.ts"),
+    path.join(destination, "chatjs/providers/gateway-defaults.ts"),
     gatewayDefaultsSource(definition)
   );
   if (

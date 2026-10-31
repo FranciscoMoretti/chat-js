@@ -17,14 +17,14 @@ import React, {
 import type { JSX as ReactJSX } from "react";
 
 import { Spinner } from "@/components/ui/spinner";
-import { eveDocumentOperations } from "@/lib/eve/document-contracts";
+import { documentDefinitions } from "@/integrations/documents/definitions";
 import { LogicalChat } from "@/lib/eve/logical-chat";
 import { eveMessageTitle } from "@/lib/eve/message-input";
 import { projectEveMessageDisplay } from "@/lib/eve/message-display";
 import { hasPendingCreation } from "@/lib/eve/pending-create";
 import { pendingEveMetadataMutations } from "@/lib/eve/optimistic-metadata";
 import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
-import { installedToolNames } from "@/composition/generated/installed-tools";
+import { installedToolNames } from "@/integrations/tools/catalog";
 import { useTRPC } from "@/trpc/react";
 
 import { EveChatHeader } from "./eve-chat-header";
@@ -107,7 +107,7 @@ const NativeObserver = ({
       if (
         event.type === "action.result" &&
         event.data.result.kind === "tool-result" &&
-        (Object.hasOwn(eveDocumentOperations, event.data.result.toolName) ||
+        (documentDefinitions.operations.has(event.data.result.toolName) ||
           (installedToolNames.has("deleteDocument") &&
             event.data.result.toolName === "deleteDocument"))
       ) {

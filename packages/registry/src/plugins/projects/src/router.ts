@@ -1,7 +1,7 @@
 import {
   PROJECT_COLOR_NAMES,
   PROJECT_ICONS,
-} from "@/plugins/projects/project-icons";
+} from "@/chatjs/plugins/projects/project-icons";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
@@ -13,7 +13,7 @@ import {
   getProjectById,
   getProjectsByUserId,
   updateProject,
-} from "@/plugins/projects/db/project-queries";
+} from "@/chatjs/plugins/projects/db/project-queries";
 
 import { generateUUID } from "@/lib/id";
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";

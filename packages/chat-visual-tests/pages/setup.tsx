@@ -122,7 +122,7 @@ vi.mock("@/lib/auth-client", () => ({
   },
 }));
 
-vi.mock("@/plugins/desktop/desktop-auth-client", () => ({
+vi.mock("@/chatjs/plugins/desktop/desktop-auth-client", () => ({
   default: {
     electron: { transferUser: () => Promise.withResolvers().promise },
     ensureElectronRedirect: () => null,
@@ -138,11 +138,11 @@ vi.mock("@/lib/db/eve-queries", () => ({
   ) => Promise.resolve(chatsIn(route.server.conversations, input)),
 }));
 
-vi.mock("@/plugins/projects/db/project-queries", () => ({
+vi.mock("@/chatjs/plugins/projects/db/project-queries", () => ({
   getProjectById: () => Promise.resolve(route.server.project),
 }));
 
-vi.mock("@/plugins/sharing/public-conversation", () => ({
+vi.mock("@/chatjs/plugins/sharing/public-conversation", () => ({
   getPublicEveTranscript: () => Promise.resolve(route.server.transcript),
 }));
 

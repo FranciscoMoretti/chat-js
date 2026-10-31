@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { installedPlugins } from "@/composition/generated/installed";
-import type { ChatCreationScope } from "@/lib/chat-plugin-contracts";
+import { installedPlugins } from "@/integrations/plugin-catalog";
+import type { ChatCreationScope } from "@/chatjs/core/chat/contracts";
 
 export const projectCreationInput = z.object({
   projectId: z.uuid().optional(),

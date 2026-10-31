@@ -11,7 +11,7 @@ import { MockLanguageModelV3 } from "ai/test";
 import { beforeEach, expect, it, vi } from "vitest";
 import { z } from "zod";
 
-import { researchAvailable } from "@/tools/chatjs/deep-research/availability";
+import { researchAvailable } from "@/chatjs/tools/deep-research/availability";
 
 import { testToolContext } from "../../tests/helpers/eve-tool-context";
 import { installedToolAvailabilityMiddleware } from "./tool-availability";
@@ -25,7 +25,7 @@ const mocks = vi.hoisted(() => {
     tools,
   };
 });
-vi.mock("@/composition/generated/installed-tools", () => ({
+vi.mock("@/integrations/tools/catalog", () => ({
   installedDocumentKinds: {
     has: (kind: string): boolean => kind === "text" && mocks.text,
     get size() {
@@ -37,8 +37,8 @@ vi.mock("@/composition/generated/installed-tools", () => ({
   },
   installedToolNames: { has: (): boolean => mocks.research },
 }));
-vi.mock("../../composition/generated/providers", () => ({
-  providers: mocks.tools,
+vi.mock("../../integrations/tools/providers", () => ({
+  toolProviders: mocks.tools,
 }));
 beforeEach(() => {
   mocks.tools.webSearch = {};

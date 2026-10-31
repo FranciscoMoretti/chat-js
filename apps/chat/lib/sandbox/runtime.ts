@@ -1,14 +1,7 @@
-import { createSandboxProvider } from "./provider";
+import { createSandboxProvider } from "@/integrations/providers/sandbox";
 
 /** Resolve infrastructure independently of whichever tools are installed. */
-export const getSandboxProvider = () => {
-  if (typeof createSandboxProvider !== "function") {
-    throw new TypeError(
-      "Select a sandbox provider before using sandbox infrastructure."
-    );
-  }
-  return createSandboxProvider();
-};
+export const getSandboxProvider = () => createSandboxProvider();
 
 export const getPersistentSandboxProvider = () => {
   const provider = getSandboxProvider();

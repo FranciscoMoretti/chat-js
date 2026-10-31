@@ -1,4 +1,5 @@
 import { beforeEach, expect, test, vi } from "vitest";
+import { cleanupTasks } from "@/integrations/cleanup";
 import { runCleanupJob } from "./job";
 
 const tasks = vi.hoisted(() => ({
@@ -8,8 +9,8 @@ const tasks = vi.hoisted(() => ({
 vi.mock("@/lib/eve/cleanup-orphaned-files", () => ({
   cleanupEveOrphanedFiles: tasks.attachments,
 }));
-vi.mock("@/composition/generated/installed-cleanup", () => ({
-  installedCleanupTasks: [{ id: "example", run: tasks.runtime }],
+vi.mock("@/integrations/cleanup", () => ({
+  cleanupTasks: [{ id: "example", run: tasks.runtime }],
 }));
 beforeEach(() => {
   vi.resetAllMocks();
@@ -72,4 +73,15 @@ test.each([
   });
   const result = await runCleanupJob();
   expect(result.success).toBe(false);
+});
+
+test("duplicate app-owned cleanup ids fail before any side effects", async () => {
+  cleanupTasks.push({ id: "orphanedAttachments", run: tasks.runtime });
+  try {
+    await expect(runCleanupJob()).rejects.toThrow("unique ids");
+    expect(tasks.attachments).not.toHaveBeenCalled();
+    expect(tasks.runtime).not.toHaveBeenCalled();
+  } finally {
+    cleanupTasks.pop();
+  }
 });

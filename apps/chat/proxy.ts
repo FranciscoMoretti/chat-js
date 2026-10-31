@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { auth } from "@/lib/auth";
-import { installedAuth } from "@/composition/generated/installed-auth";
+import { authentication } from "@/integrations/auth/server";
 import { isPlaywrightTestEnvironment } from "@/lib/constants";
 
 const EVE_CHAT_PAGE = /^\/chat\/[^/]+$/u;
@@ -97,7 +97,7 @@ export const proxy = async (
 
   const session = await auth.api.getSession({ headers: req.headers });
   const isLoggedIn = Boolean(session?.user);
-  const isPluginAuthRoute = installedAuth.isAuthRoute(url);
+  const isPluginAuthRoute = authentication.isAuthRoute(url);
   const returnTo = getSafeReturnTo(url);
 
   return resolvePageResponse({

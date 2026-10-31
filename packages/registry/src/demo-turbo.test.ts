@@ -173,8 +173,8 @@ test.each([
   ["oxfmt.config.ts", true],
   ["apps/chat/oxfmt.config.ts", true],
   ["apps/chat/components.json", true],
-  ["apps/chat/tools/chatjs/word-count/tool.ts", true],
-  ["apps/chat/composition/generated/tools.ts", true],
+  ["apps/chat/chatjs/tools/word-count/tool.ts", true],
+  ["apps/chat/chatjs/generated/tools.ts", true],
   ["apps/chat/.env.local", false],
   ["apps/chat/.next/generated.js", false],
   ["apps/chat/node_modules/example/index.js", false],
@@ -226,7 +226,7 @@ const verifyAffectedExecution = async (base: string): Promise<void> => {
 };
 test.each([
   "packages/registry/src/tools/word-count/tool.ts",
-  "apps/chat/tools/chatjs/word-count/tool.ts",
+  "apps/chat/chatjs/tools/word-count/tool.ts",
 ])(
   "CI affected query and execution select demo checking for %s",
   async (file) => {

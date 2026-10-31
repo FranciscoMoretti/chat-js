@@ -15,8 +15,8 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { InternalLink } from "@/components/internal-link";
-import { ConnectorHeader } from "@/plugins/mcp/ui/connector-header";
-import { McpConnectDialog } from "@/plugins/mcp/ui/mcp-connect-dialog";
+import { ConnectorHeader } from "@/chatjs/plugins/mcp/ui/connector-header";
+import { McpConnectDialog } from "@/chatjs/plugins/mcp/ui/mcp-connect-dialog";
 import { SettingsPageContent } from "@/components/settings/settings-page";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";

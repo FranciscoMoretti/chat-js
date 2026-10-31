@@ -1,3 +1,7 @@
+import {
+  installationActivation,
+  formatActivation,
+} from "#cli/utils/installation-activation";
 import { existsSync } from "node:fs";
 import { scaffoldElectron } from "#cli/helpers/scaffold";
 import { assertUiCompatibility } from "#cli/utils/ui-compatibility";
@@ -26,6 +30,8 @@ import { resolveGateway } from "#cli/registry/gateways";
 import { resolveStorage } from "#cli/registry/storage";
 import { runCommand } from "#cli/utils/run-command";
 import { readInstalledTools, syncTools } from "#cli/utils/sync-tools";
+import { itemAddress } from "#cli/registry/shadcn";
+import { exportManualInstallation } from "#cli/utils/manual-installation";
 
 type ReadonlyNative<Value> = Value extends (
   ...args: readonly never[]
@@ -53,6 +59,8 @@ interface AddCommandOptions extends AddOptions {
   readonly cwd: string;
   readonly yes: boolean;
   readonly overwrite: boolean;
+  readonly filesOnly: boolean;
+  readonly dryRun: boolean;
 }
 
 interface AddSetup {
@@ -221,6 +229,16 @@ const printSetupRequirements = (setup: ReadonlyNative<AddSetup>): void => {
       `Required: ${requirement.options.map((option: readonly string[]): string => option.join(" + ")).join(" or ")}`
     );
   }
+  if (
+    plan.plugins.some(
+      (plugin: PluginInput): boolean =>
+        (plugin.databaseSchemas?.length ?? 0) > 0
+    )
+  ) {
+    log.info(
+      "Database schema added. Run your db:generate script and review the SQL before running setup or db:migrate."
+    );
+  }
 };
 
 const scaffoldDesktopCompanion = async (
@@ -240,6 +258,95 @@ const scaffoldDesktopCompanion = async (
   }
 };
 
+const exportAddSelection = async (
+  cwd: string,
+  items: readonly string[],
+  options: AddCommandOptions
+): Promise<void> => {
+  validateAddSelection(items, options);
+  if (
+    options.overwrite ||
+    options.replace === true ||
+    hasNonEmptyValue(options.storageConfig)
+  ) {
+    throw new Error(
+      "--files-only does not replace source or configure providers. Omit --overwrite, --replace and --storage-config; configure the exported source manually."
+    );
+  }
+  const sources = [
+    ...items.map((item) => itemAddress(item, "tool")),
+    ...(hasNonEmptyValue(options.gateway)
+      ? [itemAddress(options.gateway, "gateway")]
+      : []),
+    ...(hasNonEmptyValue(options.sandboxProvider)
+      ? [itemAddress(options.sandboxProvider, "sandbox")]
+      : []),
+    ...(hasNonEmptyValue(options.storageProvider)
+      ? [itemAddress(options.storageProvider, "storage")]
+      : []),
+  ];
+  const output = await exportManualInstallation(cwd, sources);
+  log.success(`Source exported to ${output}`);
+  log.info(
+    "Nothing was installed or registered. Follow the bundle's README.md and manifest.json to connect the source manually."
+  );
+};
+
+const reportAddError = (error: unknown, filesOnly: boolean): never => {
+  if (!filesOnly) {
+    log.info(
+      "For manual connection, retry the same selection with --files-only (omit --replace, --overwrite and --storage-config). This exports source and instructions without changing app code or generated registrations."
+    );
+  }
+  handleError(error);
+};
+
+const logReplacementPlan = ({
+  plan,
+  gatewayChange,
+}: Readonly<AddSetup>): void => {
+  for (const { previous, next } of plan.replacements) {
+    log.info(
+      `Replace ${previous.slot ?? previous.documentKind}: ${previous.id} → ${next.id}. Retire only ${previous.id}'s source; retain unrelated installations and editable UI order.`
+    );
+  }
+  for (const { kind, previous, next } of plan.providerChanges) {
+    if (hasNonEmptyValue(previous) && previous !== next) {
+      log.info(
+        `Replace ${kind}: ${previous} → ${next}. Update provider source and environment requirements.`
+      );
+    }
+  }
+  if (gatewayChange) {
+    log.info(
+      "Preserving model IDs and other runtime configuration in chat.config.ts. Review model IDs for the new gateway, then run setup/fetch:models."
+    );
+  }
+};
+
+const logInstallationActivation = (
+  items: readonly RegistryItemInput[]
+): void => {
+  for (const item of items) {
+    const explicitPaths = (item.files ?? []).flatMap((file) =>
+      file.target?.startsWith("~/") === true ? [file.target.slice(2)] : []
+    );
+    const inventory = installationActivation(item.meta?.chatjs, explicitPaths);
+    log.info(`${item.name}:\n${formatActivation(inventory)}`);
+    const inferred = (item.files ?? []).filter(
+      (file) => file.target?.startsWith("~/") !== true
+    );
+    if (inferred.length) {
+      log.info(
+        `  Destinations resolved by shadcn (not classified here): ${inferred.map((file) => file.path).join(", ")}`
+      );
+    }
+  }
+  log.info(
+    "Native entry points follow framework path conventions. Composition files are preserved; schema registration does not apply migrations."
+  );
+};
+
 export const add = new Command("add")
   .description(
     "install registry tools/plugins/providers and compose their ChatJS registrations"
@@ -255,6 +362,11 @@ export const add = new Command("add")
   )
   .option("--replace", "explicitly replace an exclusive provider", false)
   .option(
+    "--files-only",
+    "export source and connection instructions to a temporary directory without installing or registering",
+    false
+  )
+  .option(
     "-o, --overwrite",
     "authorize overwriting modified or untracked installed source",
     false
@@ -266,6 +378,11 @@ export const add = new Command("add")
   .option("--gateway <item>", "install or replace the AI gateway")
   .option("--storage-provider <item>", "install or replace file storage")
   .option("--storage-config <json>", "non-secret storage adapter options")
+  .option(
+    "--dry-run",
+    "inspect installation wiring and native entry points without installing",
+    false
+  )
   .option("-c, --cwd <cwd>", "project directory", process.cwd())
   .action(
     async (
@@ -274,6 +391,13 @@ export const add = new Command("add")
     ): Promise<void> => {
       try {
         const cwd = path.resolve(options.cwd);
+        if (options.filesOnly && options.dryRun) {
+          throw new Error("Choose --files-only or --dry-run.");
+        }
+        if (options.filesOnly) {
+          await exportAddSelection(cwd, items, options);
+          return;
+        }
         await access(path.join(cwd, "chat.config.ts"));
         await assertUiCompatibility(cwd, [
           ...(await readInstalledPlugins(cwd)),
@@ -285,26 +409,13 @@ export const add = new Command("add")
           selectedGateway,
           selectedSandbox,
           selectedStorage,
-          gatewayChange,
           configEdit,
           keepStorageOptions,
         } = setup;
-        for (const { previous, next } of plan.replacements) {
-          log.info(
-            `Replace ${previous.slot ?? previous.documentKind}: ${previous.id} → ${next.id}. Retire only ${previous.id}'s source; retain unrelated installations and editable UI order.`
-          );
-        }
-        for (const { kind, previous, next } of plan.providerChanges) {
-          if (hasNonEmptyValue(previous) && previous !== next) {
-            log.info(
-              `Replace ${kind}: ${previous} → ${next}. Update provider source and environment requirements.`
-            );
-          }
-        }
-        if (gatewayChange) {
-          log.info(
-            "Preserving model IDs and other runtime configuration in chat.config.ts. Review model IDs for the new gateway, then run setup/fetch:models."
-          );
+        logReplacementPlan(setup);
+        logInstallationActivation(plan.items);
+        if (options.dryRun) {
+          return;
         }
         if (!options.yes) {
           const answer = await confirm({
@@ -334,17 +445,21 @@ export const add = new Command("add")
                   "oxfmt",
                   "--write",
                   "package.json",
-                  ".chatjs/installed-dependencies.json",
-                  ...(selectedSandbox ? ["lib/sandbox/options.ts"] : []),
+                  "chatjs/installed-dependencies.json",
+                  ...(selectedSandbox
+                    ? ["chatjs/providers/sandbox/options.ts"]
+                    : []),
                 ],
                 cwd
               );
             },
             managedTargets: [
-              ...(selectedGateway ? ["lib/ai/gateway-model-defaults.ts"] : []),
+              ...(selectedGateway
+                ? ["chatjs/providers/gateway-defaults.ts"]
+                : []),
               ...sandboxProviderTargets(selectedSandbox),
               ...(selectedStorage && !keepStorageOptions
-                ? ["lib/storage-options.ts"]
+                ? ["chatjs/providers/storage-options.ts"]
                 : []),
             ],
             overwrite: options.overwrite,
@@ -371,28 +486,17 @@ export const add = new Command("add")
             }
             await syncTools(cwd, { expected: plan.expected });
             await syncPlugins(cwd, {
-              addUi: plan.plugins.map((plugin: PluginInput) => plugin.id),
               expected: plan.plugins.map((plugin) => plugin.id),
             });
           }
         );
         await scaffoldDesktopCompanion(cwd, plan);
         printSetupRequirements(setup);
-        if (
-          plan.plugins.some(
-            (plugin: PluginInput): boolean =>
-              (plugin.databaseSchemas?.length ?? 0) > 0
-          )
-        ) {
-          log.info(
-            "Database schema added. Run your db:generate script and review the SQL before running setup or db:migrate."
-          );
-        }
         log.success(
           "Installed and registered. Review .env.local, then run setup."
         );
       } catch (error) {
-        handleError(error);
+        reportAddError(error, options.filesOnly);
       }
     }
   );

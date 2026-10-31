@@ -61,7 +61,7 @@ const validateStorage = async (
     return;
   }
   if (typeof selected !== "string") {
-    await preflight(cwd, ["lib/storage-options.ts"]);
+    await preflight(cwd, ["chatjs/providers/storage-options.ts"]);
   }
   const storage = selected ?? (await readProviderId(cwd, "storage"));
   if (typeof storage !== "string" || storage === "" || storage === "memory") {
@@ -71,7 +71,7 @@ const validateStorage = async (
   }
 };
 const installedMediaGateway = async (cwd: string): Promise<MediaGateway> => {
-  const file = "lib/ai/gateway-model-defaults.ts";
+  const file = "chatjs/providers/gateway-defaults.ts";
   await preflight(cwd, [file]);
   const capabilities = await readProviderLiteral(
     cwd,
@@ -126,7 +126,7 @@ const validatePersistentSandbox = async (
   if (typeof sandbox !== "string" || sandbox === "") {
     throw new SandboxRequiredError(true);
   }
-  const file = "lib/sandbox/provider.ts";
+  const file = "chatjs/providers/sandbox/provider.ts";
   let persistent: unknown;
   if (selected === undefined) {
     await preflight(cwd, [file]);

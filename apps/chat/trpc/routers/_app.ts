@@ -1,4 +1,4 @@
-import { installedRouters } from "@/composition/generated/installed-routers";
+import { routers } from "@/integrations/routers";
 import { createCallerFactory, createTRPCRouter } from "@/trpc/init";
 
 import { eveRouter } from "./eve.router";
@@ -11,7 +11,7 @@ import { eveRouter } from "./eve.router";
 
 const appRouter = createTRPCRouter({
   eve: eveRouter,
-  ...installedRouters,
+  ...routers,
 });
 
 // Export the type definition for the API.

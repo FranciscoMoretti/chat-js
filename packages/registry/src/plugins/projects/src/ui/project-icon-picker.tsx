@@ -1,25 +1,20 @@
 "use client";
 
-import { ProjectIcon } from "@/plugins/projects/ui/project-icon";
+import { PopoverButton } from "@/components/popover-button";
+import { ProjectIcon } from "@/chatjs/plugins/projects/ui/project-icon";
 
 import {
   DEFAULT_PROJECT_COLOR,
   PROJECT_COLORS,
   PROJECT_ICONS,
-} from "@/plugins/projects/project-icons";
+} from "@/chatjs/plugins/projects/project-icons";
 
-import { Button } from "@/components/ui/button";
-
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent } from "@/components/ui/popover";
 
 import type {
   ProjectColorName,
   ProjectIconName,
-} from "@/plugins/projects/project-icons";
+} from "@/chatjs/plugins/projects/project-icons";
 
 import React from "react";
 
@@ -48,21 +43,17 @@ export const ProjectIconPicker = ({
 
   return (
     <Popover>
-      <PopoverTrigger
-        render={
-          <Button
-            className={cn("size-9 p-0", className)}
-            type="button"
-            variant="outline"
-          >
-            {icon ? (
-              <ProjectIcon color={displayColor} icon={icon} size={18} />
-            ) : (
-              <Smile className="text-muted-foreground size-[18px]" />
-            )}
-          </Button>
-        }
-      />
+      <PopoverButton
+        className={cn("size-9 p-0", className)}
+        type="button"
+        variant="outline"
+      >
+        {icon ? (
+          <ProjectIcon color={displayColor} icon={icon} size={18} />
+        ) : (
+          <Smile className="text-muted-foreground size-[18px]" />
+        )}
+      </PopoverButton>
       <PopoverContent align="start" className="w-auto p-3">
         {/* Color row */}
         <div className="mb-3 flex gap-1.5">

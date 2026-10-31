@@ -11,7 +11,7 @@ const calls = vi.hoisted(() => ({
   reset: vi.fn(),
   snapshot: vi.fn(),
 }));
-vi.mock("@/plugins/guest-chat/guest-queries", () => ({
+vi.mock("@/chatjs/plugins/guest-chat/guest-queries", () => ({
   claimExpiredGuestRuntimeSession: calls.claim,
   completeGuestRuntimeDeletion: calls.complete,
   bindGuestRuntimeCleanupSession: calls.bind,
@@ -24,7 +24,7 @@ vi.mock("./deletion-lifecycle", () => ({
     purge: calls.purge,
   }),
 }));
-vi.mock("@/plugins/guest-chat/guest-cleanup-auth", () => ({
+vi.mock("@/chatjs/plugins/guest-chat/guest-cleanup-auth", () => ({
   getGuestCleanupConnectionOptions: () => ({
     host: "http://localhost/eve/chat",
     auth: { bearer: "cleanup-only" },
@@ -39,7 +39,7 @@ vi.mock("eve/client", () => ({
   },
 }));
 const { cleanupGuestRuntimeSessions } =
-  await import("@/plugins/guest-chat/guest-cleanup");
+  await import("@/chatjs/plugins/guest-chat/guest-cleanup");
 const guest = { id: "policy", ownerId: "owner", sessionId: "guest-session" };
 
 beforeEach(() => {

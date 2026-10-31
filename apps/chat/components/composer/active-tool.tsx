@@ -19,7 +19,7 @@ export const ActiveTool = ({
   readonly disabled?: boolean;
   readonly onClear: () => void;
 }): React.JSX.Element | null => {
-  if (!selectedTool) {
+  if (selectedTool === null) {
     return null;
   }
   const definition = getToolDisplay(selectedTool);

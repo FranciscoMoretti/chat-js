@@ -5,7 +5,12 @@ on:
     branches: [main]
     paths:
       - "apps/site/**"
-      - "apps/chat/components/part/**"
+      - "apps/chat/components/**"
+      - "apps/chat/hooks/**"
+      - "apps/chat/lib/**"
+      - "apps/chat/package.json"
+      - "packages/registry/**"
+      - "packages/chat-visual-tests/contracts/**"
       - "packages/thread/**"
       - "bun.lock"
       - "package.json"
@@ -13,7 +18,12 @@ on:
   pull_request:
     paths:
       - "apps/site/**"
-      - "apps/chat/components/part/**"
+      - "apps/chat/components/**"
+      - "apps/chat/hooks/**"
+      - "apps/chat/lib/**"
+      - "apps/chat/package.json"
+      - "packages/registry/**"
+      - "packages/chat-visual-tests/contracts/**"
       - "packages/thread/**"
       - "bun.lock"
       - "package.json"

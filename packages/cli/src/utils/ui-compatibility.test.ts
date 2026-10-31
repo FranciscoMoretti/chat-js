@@ -103,13 +103,15 @@ test.each(["new-york", "radix-rhea", "aria-rhea", undefined])(
 test("sync validates Base UI plugins before regenerating tool registrations", async () => {
   const root = await mkdtemp(path.join(tmpdir(), "chatjs-ui-sync-"));
   try {
-    await mkdir(path.join(root, "plugins/base-plugin"), { recursive: true });
+    await mkdir(path.join(root, "chatjs/plugins/base-plugin"), {
+      recursive: true,
+    });
     await writeFile(
       path.join(root, "components.json"),
       JSON.stringify({ style: "new-york" })
     );
     await writeFile(
-      path.join(root, "plugins/base-plugin/chatjs.json"),
+      path.join(root, "chatjs/plugins/base-plugin/chatjs.json"),
       JSON.stringify({
         contractVersion: 2,
         uiBase: "base",
@@ -138,7 +140,7 @@ test("sync validates Base UI plugins before regenerating tool registrations", as
       "No source or registrations were written"
     );
     const entries = await readdir(root);
-    expect(entries.toSorted()).toEqual(["components.json", "plugins"]);
+    expect(entries.toSorted()).toEqual(["chatjs", "components.json"]);
     await writeFile(
       path.join(root, "components.json"),
       JSON.stringify({ style: "base-rhea" })

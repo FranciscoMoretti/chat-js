@@ -1,4 +1,6 @@
-import { weatherInput, weatherResult } from "./schemas";
+import { toolDefinition } from "./definition";
+import type { weatherInput } from "./schemas";
+import { weatherResult } from "./schemas";
 import type { ToolUsage } from "@/lib/eve/tool-usage";
 import { defineTool } from "eve/tools";
 import { executeWithToolUsage } from "@/lib/eve/tool-usage";
@@ -8,7 +10,7 @@ import type { z } from "zod";
 const UNBILLED_TOOL_COST_USD = 0;
 
 export const getWeather = defineTool({
-  description: "Get the current weather at a location",
+  description: toolDefinition.description,
   execute: async (
     { latitude, longitude }: Readonly<z.infer<typeof weatherInput>>,
     context: Readonly<{ abortSignal: Readonly<AbortSignal> }>
@@ -27,6 +29,6 @@ export const getWeather = defineTool({
         return weatherResult.parse(await response.json());
       }
     ),
-  inputSchema: weatherInput,
+  inputSchema: toolDefinition.inputSchema,
   toModelOutput: toolResultToModelOutput,
 });

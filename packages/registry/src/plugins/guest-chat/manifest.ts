@@ -2,22 +2,22 @@ import type { RegistryItem } from "shadcn/schema";
 import { pluginDefinitionSchema } from "../../../metadata";
 
 const guestChatFiles = [
-  "plugins/guest-chat/cleanup.ts",
-  "plugins/guest-chat/guest-auth.ts",
-  "plugins/guest-chat/guest-body.ts",
-  "plugins/guest-chat/guest-cleanup-auth.ts",
-  "plugins/guest-chat/guest-cleanup.ts",
-  "plugins/guest-chat/guest-credential.ts",
-  "plugins/guest-chat/guest-ip.ts",
-  "plugins/guest-chat/guest-model.ts",
-  "plugins/guest-chat/guest-policy.ts",
-  "plugins/guest-chat/guest-queries.ts",
-  "plugins/guest-chat/guest-scheduler.ts",
-  "plugins/guest-chat/guest-schema.ts",
-  "plugins/guest-chat/routes/create-session.ts",
-  "plugins/guest-chat/server-plugin.ts",
-  "plugins/guest-chat/session-profile.ts",
-  "plugins/guest-chat/signed-out.tsx",
+  "chatjs/plugins/guest-chat/cleanup.ts",
+  "chatjs/plugins/guest-chat/guest-auth.ts",
+  "chatjs/plugins/guest-chat/guest-body.ts",
+  "chatjs/plugins/guest-chat/guest-cleanup-auth.ts",
+  "chatjs/plugins/guest-chat/guest-cleanup.ts",
+  "chatjs/plugins/guest-chat/guest-credential.ts",
+  "chatjs/plugins/guest-chat/guest-ip.ts",
+  "chatjs/plugins/guest-chat/guest-model.ts",
+  "chatjs/plugins/guest-chat/guest-policy.ts",
+  "chatjs/plugins/guest-chat/guest-queries.ts",
+  "chatjs/plugins/guest-chat/guest-scheduler.ts",
+  "chatjs/plugins/guest-chat/guest-schema.ts",
+  "chatjs/plugins/guest-chat/routes/create-session.ts",
+  "chatjs/plugins/guest-chat/server-plugin.ts",
+  "chatjs/plugins/guest-chat/session-profile.ts",
+  "chatjs/plugins/guest-chat/signed-out.tsx",
 ];
 const guestChatDefinition = pluginDefinitionSchema.parse({
   contractVersion: 2,
@@ -25,7 +25,7 @@ const guestChatDefinition = pluginDefinitionSchema.parse({
   id: "guest-chat",
   kind: "plugin",
   files: [...guestChatFiles, "app/api/eve-guest/route.ts"],
-  databaseSchemas: ["plugins/guest-chat/guest-schema.ts"],
+  databaseSchemas: ["chatjs/plugins/guest-chat/guest-schema.ts"],
   signedOut: { export: "GuestChatScreen" },
   sessionProfile: {
     export: "guestSessionProfile",
@@ -42,7 +42,7 @@ const guestChatItem: RegistryItem = {
   dependencies: ["ai", "drizzle-orm", "zod"],
   files: [
     ...guestChatFiles.map((file) => ({
-      path: `src/plugins/guest-chat/src/${file.slice("plugins/guest-chat/".length)}`,
+      path: `src/plugins/guest-chat/src/${file.slice("chatjs/plugins/guest-chat/".length)}`,
       target: `~/${file}`,
       type: "registry:file" as const,
     })),

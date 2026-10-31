@@ -32,7 +32,7 @@ For gateways, use `chat-js create --gateway` to install and configure the select
 
 Author and test TypeScript source. The registry build serializes metadata and runs shadcn to embed that source in distributable JSON. Do not edit generated JSON.
 
-Your app owns the installed source. Its selected gateway occupies `lib/ai/gateway.ts`. Built-in registry tools coexist under `tools/chatjs/<id>/`. Keep manual tool registrations in `custom-tools.ts` and `custom-ui.ts`, leaving `tools.ts` and `ui.ts` to the generator. Product tools under `tools/platform/` remain part of the app.
+Your app owns the installed source. Its selected gateway occupies `chatjs/providers/gateway.ts`. Built-in registry tools coexist under `chatjs/tools/<id>/`. Keep manual tool registrations in `integrations/tools/execution.ts` and `integrations/tools/ui.ts`, leaving `tools.ts` and `ui.ts` to the generator. Product tools under `tools/platform/` remain part of the app.
 
 ## Registry guides
 

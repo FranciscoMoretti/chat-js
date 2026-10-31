@@ -1,6 +1,6 @@
 import { and, eq } from "drizzle-orm";
 import { CreationRejectedError } from "@/lib/creation-rejected-error";
-import type { ChatServerIntegration } from "@/lib/chat-plugin-contracts";
+import type { ChatServerIntegration } from "@/chatjs/core/chat/contracts";
 import { project, eveChatProject } from "./db/project-schema";
 
 export const assignCreationProject: NonNullable<

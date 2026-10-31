@@ -4,7 +4,7 @@ import { page } from "vitest/browser";
 import DeviceLoginPage from "@/app/(auth)/device-login/page";
 import LoginPage from "@/app/(auth)/login/page";
 import RegisterPage from "@/app/(auth)/register/page";
-import { ELECTRON_AUTH_CLIENT_ID } from "@/plugins/desktop/protocol";
+import { ELECTRON_AUTH_CLIENT_ID } from "@/chatjs/plugins/desktop/protocol";
 
 import { session } from "./fixtures";
 import { renderRoute } from "./render";

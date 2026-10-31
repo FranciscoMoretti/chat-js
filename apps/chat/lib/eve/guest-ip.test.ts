@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import { guestRequestIpHash } from "@/plugins/guest-chat/guest-ip";
+import { guestRequestIpHash } from "@/chatjs/plugins/guest-chat/guest-ip";
 
 const mocks = vi.hoisted(() => ({
   env: {

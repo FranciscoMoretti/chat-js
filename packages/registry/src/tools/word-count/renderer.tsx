@@ -1,9 +1,11 @@
 "use client";
-import { wordCountInput, wordCountResult } from "./schemas";
+
+import { toolDefinition } from "./definition";
+import type { wordCountInput, wordCountResult } from "./schemas";
 import React from "react";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
-import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
+import type { ToolRendererProps } from "@/chatjs/core/tools/define-renderer";
+import { defineToolRenderer } from "@/chatjs/core/tools/define-renderer";
 
 type WordCountRendererTool = ToolRendererProps<
   typeof wordCountInput,
@@ -56,7 +58,7 @@ const WordCountView = ({
 };
 
 export const WordCountRenderer = defineToolRenderer({
-  inputSchema: wordCountInput,
-  outputSchema: wordCountResult,
+  inputSchema: toolDefinition.inputSchema,
+  outputSchema: toolDefinition.outputSchema,
   render: WordCountView,
 });

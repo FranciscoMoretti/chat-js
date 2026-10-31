@@ -16,6 +16,7 @@ import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 import { ChatModelsProvider } from "@/providers/chat-models-provider";
 import { DefaultModelProvider } from "@/providers/default-model-provider";
 import { SessionProvider, SessionSeed } from "@/providers/session-provider";
+import { ChatPlugins } from "@/providers/chat-plugins";
 import { TRPCReactProvider } from "@/trpc/react";
 import { HydrateClient } from "@/trpc/server";
 
@@ -101,7 +102,9 @@ const ChatLayout = async ({
     <TRPCReactProvider>
       <SessionProvider>
         <SidebarProvider defaultOpen={defaultOpen}>
-          <EveDeletionProvider>{content}</EveDeletionProvider>
+          <ChatPlugins>
+            <EveDeletionProvider>{content}</EveDeletionProvider>
+          </ChatPlugins>
         </SidebarProvider>
       </SessionProvider>
     </TRPCReactProvider>

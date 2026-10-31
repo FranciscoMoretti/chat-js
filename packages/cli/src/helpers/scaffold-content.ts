@@ -63,6 +63,7 @@ const REPOSITORY_ONLY_FILES = new Set([
   "lib/db/eve-search.test.ts",
   "lib/eve/search-text.test.ts",
   "lib/eve/conversation-title.test.ts",
+  "lib/eve/model-runtime.test.ts",
   "lib/db/ai-titles-plugin.test.ts",
   "lib/db/sharing-plugin.test.ts",
   "lib/eve/sharing-transcript.test.ts",
@@ -93,7 +94,7 @@ const REPOSITORY_ONLY_FILES = new Set([
   "lib/sandbox/sandbox.test.ts",
   "lib/sandbox/sandbox-auth.test.ts",
   "lib/sandbox/sandbox-test-environment.ts",
-  "lib/sandbox/persistent.test.ts",
+  "chatjs/providers/sandbox/persistent.test.ts",
   "lib/eve/mcp-setup.test.ts",
   "app/api/mcp/oauth/callback/route.test.ts",
   "lib/db/mcp-oauth-lock.test.ts",
@@ -167,6 +168,14 @@ const shouldCopyAppFile = (relativePath: string): boolean => {
 
 const shouldCopyChatAppFile = (relativePath: string): boolean =>
   shouldCopyAppFile(relativePath) &&
+  !(
+    relativePath.startsWith(`chatjs${path.sep}`) &&
+    !["core", "providers", "plugins", "tools", "generated"].some(
+      (directory) =>
+        relativePath === `chatjs${path.sep}${directory}` ||
+        relativePath.startsWith(`chatjs${path.sep}${directory}${path.sep}`)
+    )
+  ) &&
   !relativePath.endsWith("-visual-fixture.tsx") &&
   !relativePath.endsWith(".visual.css") &&
   !isRepositoryOnlyFile(relativePath);

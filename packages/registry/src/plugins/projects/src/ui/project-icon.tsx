@@ -28,11 +28,11 @@ import {
 import type {
   ProjectColorName,
   ProjectIconName,
-} from "@/plugins/projects/project-icons";
+} from "@/chatjs/plugins/projects/project-icons";
 
 import React from "react";
 
-import { getColorValue } from "@/plugins/projects/project-icons";
+import { getColorValue } from "@/chatjs/plugins/projects/project-icons";
 
 import { cn } from "@/lib/utils";
 

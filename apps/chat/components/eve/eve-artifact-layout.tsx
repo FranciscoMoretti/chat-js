@@ -1,5 +1,8 @@
 "use client";
 
+import { documentDefinitions } from "@/integrations/documents/definitions";
+import { documents } from "@/integrations/documents/ui";
+
 import { hasText } from "@/components/text-value";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -7,14 +10,7 @@ import { formatDistanceToNow } from "date-fns";
 import React, { useCallback, useEffect, useState } from "react";
 import type { JSX as ReactJSX } from "react";
 
-import {
-  Artifact,
-  ArtifactClose,
-  ArtifactContent,
-  ArtifactDescription,
-  ArtifactHeader,
-  ArtifactTitle,
-} from "@/components/ai-elements/artifact";
+import { XIcon } from "lucide-react";
 import {
   ChatLayout,
   ChatLayoutHandle,
@@ -24,14 +20,14 @@ import {
 import { DocumentSkeleton } from "@/components/document-skeleton";
 import { Button } from "@/components/ui/button";
 import { ArtifactProvider, useArtifact } from "@/hooks/use-artifact";
-import type { DocumentAssistantRequest } from "@/lib/eve/document-contracts";
-import { eveDocumentResult } from "@/lib/eve/document-contracts";
+import type { DocumentAssistantRequest } from "@/chatjs/core/documents/contracts";
+import { eveDocumentResult } from "@/chatjs/core/documents/contracts";
 import type {
   ReadonlyEveMessage,
   ReadonlyEveMessagePart,
 } from "@/lib/eve/readonly-message-types";
 import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
-import { DocumentRun } from "@/composition/generated/document-run";
+import { DocumentRun } from "@/integrations/documents/run";
 import { useTRPC } from "@/trpc/react";
 
 import { EveDocumentActions } from "./eve-document-actions";
@@ -152,6 +148,28 @@ const documentContentState = ({
   };
 };
 
+const documentSubtitle = (
+  previewing: boolean,
+  editing: ReturnType<typeof useDocumentDraft>,
+  createdAt: Date | undefined
+): string => {
+  if (previewing) {
+    return "Writing document…";
+  }
+  if (editing.draft || editing.saving) {
+    return "Saving changes...";
+  }
+  if (createdAt) {
+    return `Updated ${formatDistanceToNow(new Date(createdAt), { addSuffix: true })}`;
+  }
+  return "Loading document…";
+};
+
+const isInstalledDocument = (kind: string | undefined): boolean =>
+  kind !== undefined &&
+  documentDefinitions.kinds.has(kind) &&
+  documents[kind]?.Body !== undefined;
+
 const useDocumentPanel = ({
   conversationId,
   readOnly,
@@ -199,7 +217,10 @@ const useDocumentPanel = ({
   );
   const previewing =
     artifact.status === "streaming" && artifact.followLive !== false;
-  const owned = !readOnly && document.data?.canEdit;
+  const owned =
+    !readOnly &&
+    document.data?.canEdit === true &&
+    isInstalledDocument(revision?.kind);
   const onSaved = useCallback(async () => {
     // Hydrate the destination query before switching the view: an empty latest query would unmount the focused editor.
 
@@ -227,7 +248,7 @@ const useDocumentPanel = ({
   const editing = useDocumentDraft({
     conversationId,
     documentId: artifact.documentId,
-    enabled: owned === true && !document.isError,
+    enabled: owned && !document.isError,
     onRestore: setSelectedRevisionId,
     onSaved,
     revision,
@@ -257,16 +278,7 @@ const useDocumentPanel = ({
   const previousRevisionId = history[index - 1]?.id;
   const canCompare = Boolean(previousRevisionId && !editing.draft);
   const comparing = showChanges && canCompare;
-  let subtitle = "Loading document…";
-  if (revision?.createdAt) {
-    subtitle = `Updated ${formatDistanceToNow(new Date(revision.createdAt), { addSuffix: true })}`;
-  }
-  if (editing.draft || editing.saving) {
-    subtitle = "Saving changes...";
-  }
-  if (previewing) {
-    subtitle = "Writing document…";
-  }
+  const subtitle = documentSubtitle(previewing, editing, revision?.createdAt);
   return {
     conversationId,
     readOnly,
@@ -321,18 +333,23 @@ const DocumentPanelHeader = ({ model }: PanelModelProps): ReactJSX.Element => {
     onDocumentAction,
   } = model;
   return (
-    <ArtifactHeader className="bg-background/80 shrink-0 items-start p-2">
+    <div className="bg-background/80 flex shrink-0 items-start justify-between border-b p-2">
       <div className="flex min-w-0 items-start gap-4">
-        <ArtifactClose
-          className="hover:bg-accent h-fit p-2"
+        <Button
+          className="text-muted-foreground hover:text-foreground hover:bg-accent h-fit w-8 p-2"
           onClick={closeArtifact}
+          size="sm"
+          type="button"
           variant="outline"
-        />
+        >
+          <XIcon className="size-4" />
+          <span className="sr-only">Close</span>
+        </Button>
         <div className="min-w-0">
-          <ArtifactTitle className="break-words">
+          <p className="text-foreground text-sm font-medium break-words">
             {previewing ? artifact.title : (revision?.title ?? artifact.title)}
-          </ArtifactTitle>
-          <ArtifactDescription>{subtitle} </ArtifactDescription>
+          </p>
+          <p className="text-muted-foreground text-sm">{subtitle} </p>
         </div>
       </div>
       {revision && !document.isError && (
@@ -366,14 +383,14 @@ const DocumentPanelHeader = ({ model }: PanelModelProps): ReactJSX.Element => {
                 kind={revision.kind}
                 messages={messages}
                 disabled={actionsDisabled}
-                onAction={owned === true ? onDocumentAction : undefined}
+                onAction={owned ? onDocumentAction : undefined}
                 buttonOnly
               />
             )
           }
         />
       )}
-    </ArtifactHeader>
+    </div>
   );
 };
 
@@ -410,7 +427,7 @@ const DocumentAssistantControls = ({
             onStop={onStop}
           />
         )}
-      {owned === true &&
+      {owned &&
         index === history.length - 1 &&
         (onDocumentAction !== undefined || onStop !== undefined) &&
         revision && (
@@ -448,7 +465,7 @@ const DocumentPanelContent = ({ model }: PanelModelProps): ReactJSX.Element => {
     index,
   } = model;
   return (
-    <ArtifactContent className="flex min-h-0 flex-1 flex-col overflow-hidden p-0">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-0">
       {document.isPending && !previewing && (
         <DocumentSkeleton artifactKind={artifact.kind} />
       )}
@@ -491,7 +508,7 @@ const DocumentPanelContent = ({ model }: PanelModelProps): ReactJSX.Element => {
         />
       )}
       <DocumentAssistantControls model={model} />
-    </ArtifactContent>
+    </div>
   );
 };
 
@@ -523,13 +540,13 @@ const DocumentPanelFooter = ({
           documentId={artifact.documentId}
           kind={revision.kind}
           messages={messages}
-          onAction={owned === true ? onDocumentAction : undefined}
+          onAction={owned ? onDocumentAction : undefined}
           revisionId={revision.id}
           title={revision.title}
           resultOnly
         />
       )}
-      {owned === true && index !== -1 && index < history.length - 1 && (
+      {owned && index !== -1 && index < history.length - 1 && (
         <div className="bg-background flex flex-col justify-between gap-4 border-t p-4 lg:flex-row">
           <div>
             <div>You are viewing a previous version</div>
@@ -566,23 +583,23 @@ const EveArtifactPanel = (
   const model = useDocumentPanel(props);
   const { owned, editing, index, history } = model;
   return (
-    <Artifact
+    <div
       aria-label="Document"
-      className="relative h-full min-h-0 w-full rounded-none border-0"
+      className="bg-background relative flex h-full min-h-0 w-full flex-col overflow-hidden rounded-none border-0 shadow-sm"
       data-testid="artifact"
       {...artifactRegionProps}
     >
       <DocumentPanelHeader model={model} />
-      {owned === true && <DocumentSaveStatus editing={editing} />}
+      {owned && <DocumentSaveStatus editing={editing} />}
       <span className="sr-only">
         Version {index + 1} of {history.length}
       </span>
-      {owned === true && !editing.draft && !editing.saving && (
+      {owned && !editing.draft && !editing.saving && (
         <span className="sr-only">All changes saved</span>
       )}
       <DocumentPanelContent model={model} />
       <DocumentPanelFooter model={model} />
-    </Artifact>
+    </div>
   );
 };
 

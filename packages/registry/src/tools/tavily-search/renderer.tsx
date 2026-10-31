@@ -2,9 +2,9 @@
 import { webSearchInput, webSearchResult } from "./schemas";
 import React from "react";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
+import type { ToolRendererProps } from "@/chatjs/core/tools/define-renderer";
 import { WebSearch } from "@/components/part/web-search";
-import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
+import { defineToolRenderer } from "@/chatjs/core/tools/define-renderer";
 
 const WebSearchView = ({
   tool,

@@ -3,7 +3,7 @@ import { PGlite } from "@electric-sql/pglite";
 import { drizzle } from "drizzle-orm/pglite";
 import { afterAll, beforeAll, beforeEach, expect, it, vi } from "vitest";
 import { z } from "zod";
-import type { UsageBilling } from "@/lib/usage-billing-contracts";
+import type { UsageBilling } from "@/chatjs/core/billing/contracts";
 
 const postgres = new PGlite();
 const policy = vi.hoisted((): { current: UsageBilling | undefined } => ({
@@ -11,12 +11,15 @@ const policy = vi.hoisted((): { current: UsageBilling | undefined } => ({
 }));
 vi.mock("./client", () => ({ db: drizzle(postgres) }));
 vi.mock("../env", () => ({ env: {} }));
-vi.mock("@/composition/generated/installed-billing", () => ({
-  get usageBilling() {
-    return policy.current;
-  },
-}));
-const { creditsBilling } = await import("@/plugins/credits/billing");
+vi.mock("@/integrations/billing", async () => {
+  const { composeBilling } = await import("@/chatjs/core/billing/compose");
+  return {
+    get billing() {
+      return composeBilling(policy.current ? [policy.current] : []);
+    },
+  };
+});
+const { creditsBilling } = await import("@/chatjs/plugins/credits/billing");
 const { recordEveUsage } = await import("./eve-billing");
 const rows = async (query: string): Promise<unknown[]> => {
   const result = await postgres.query(query);

@@ -1,6 +1,6 @@
 import { Client } from "eve/client";
 
-import { indexEveSearchText } from "@/plugins/search/search-queries";
+import { indexEveSearchText } from "@/chatjs/plugins/search/search-queries";
 
 import { getEveConnectionOptions } from "@/lib/eve/connection-options";
 import type { EveSearchText } from "./search-text";

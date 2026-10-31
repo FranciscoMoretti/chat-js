@@ -71,7 +71,7 @@ for (const base of ["base", "radix"] as const) {
             .getByRole("menuitemradio", { name: "New chat", exact: true })
             .click();
           await expect(
-            page.getByRole("heading", { name: "What can we build together?" })
+            page.getByRole("heading", { name: "How can I help you today?" })
           ).toBeVisible();
           const model = page.getByRole("button", {
             name: "Choose preview model",
@@ -109,7 +109,7 @@ for (const base of ["base", "radix"] as const) {
     await page.goto(`/create?base=${base}`);
     const frame = page.frameLocator("iframe");
     // Radix modal menus hide background controls from the accessibility tree.
-    const draft = frame.locator('textarea[aria-label="Preview message"]');
+    const draft = frame.locator('[contenteditable][aria-label="Message"]');
     await draft.fill("Keep my draft while changing the preset");
     await frame.getByRole("button", { name: "Choose preview model" }).click();
     const popup = frame.locator('[data-slot="dropdown-menu-content"]');
@@ -149,9 +149,7 @@ for (const base of ["base", "radix"] as const) {
           inverted: menuColor.startsWith("inverted"),
           translucent: menuColor.endsWith("translucent"),
         });
-      await expect(draft).toHaveValue(
-        "Keep my draft while changing the preset"
-      );
+      await expect(draft).toHaveText("Keep my draft while changing the preset");
       // Portaled menus and upstream @apply utilities must use the preset font,
       // even when the host site's theme defines a different inline font alias.
       await expect(popup).toHaveCSS("font-family", /inter/iu);

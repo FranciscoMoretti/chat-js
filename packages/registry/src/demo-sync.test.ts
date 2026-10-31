@@ -12,11 +12,11 @@ test(
       [
         {
           source: "./plugins/mcp/src/runtime/mcp-tools.ts",
-          target: "plugins/mcp/runtime/mcp-tools.ts",
+          target: "chatjs/plugins/mcp/runtime/mcp-tools.ts",
         },
         {
           source: "./plugins/vercel-speed-insights/src/component.tsx",
-          target: "plugins/vercel-speed-insights/component.tsx",
+          target: "chatjs/plugins/vercel-speed-insights/component.tsx",
         },
       ].map(
         async ({

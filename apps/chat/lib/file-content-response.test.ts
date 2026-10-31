@@ -8,7 +8,7 @@ vi.mock("@/lib/config", () => ({
   config: { appPrefix: "file-response-test" },
 }));
 
-vi.mock("./storage-provider", async () => {
+vi.mock("@/chatjs/providers/storage", async () => {
   const { memory } = await import("files-sdk/memory");
   return {
     createStorageAdapter: (): ReturnType<typeof memory> => memory(),

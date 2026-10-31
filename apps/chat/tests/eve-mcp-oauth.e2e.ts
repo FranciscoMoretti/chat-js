@@ -1,13 +1,16 @@
-import { userCredit } from "@/plugins/credits/credits-schema";
+import { userCredit } from "@/chatjs/plugins/credits/credits-schema";
 import { expect, test } from "@playwright/test";
 import { eq, sql } from "drizzle-orm";
 import { z } from "zod";
 
-import { MCPClient } from "../plugins/mcp/oauth/mcp-client";
+import { MCPClient } from "../chatjs/plugins/mcp/oauth/mcp-client";
 import { db } from "../lib/db/client";
-import { mcpConnector, mcpOAuthSession } from "@/plugins/mcp/db/mcp-schema";
+import {
+  mcpConnector,
+  mcpOAuthSession,
+} from "@/chatjs/plugins/mcp/db/mcp-schema";
 import { conversationBinding } from "../lib/eve/contracts";
-import { discoverEveMcpTools } from "../plugins/mcp/runtime/mcp-tools";
+import { discoverEveMcpTools } from "../chatjs/plugins/mcp/runtime/mcp-tools";
 import { assertEveTestDatabase } from "./eve-test-database";
 import { startEveOAuthMcpServer } from "./fixtures/eve-oauth-mcp-server";
 

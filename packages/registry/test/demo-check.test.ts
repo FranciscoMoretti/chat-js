@@ -18,11 +18,11 @@ const required = (
 const verifyGatewayAndTool = (
   expected: Readonly<Record<string, string>>
 ): void => {
-  expect(required(expected, "lib/ai/gateway-model-defaults.ts")).toContain(
+  expect(required(expected, "chatjs/providers/gateway-defaults.ts")).toContain(
     'chat: "google/gemini-2.5-flash-lite"'
   );
   expect(
-    required(expected, "tools/chatjs/code-execution/renderer.tsx")
+    required(expected, "chatjs/tools/code-execution/renderer.tsx")
   ).toContain('from "@/components/sandbox.tsx"');
 };
 
@@ -34,39 +34,43 @@ const verifyPlugins = (expected: Readonly<Record<string, string>>): void => {
     "vercel-speed-insights",
     "langfuse",
   ]) {
-    expect(Object.hasOwn(expected, `plugins/${id}/chatjs.json`)).toBe(true);
-    expect(required(expected, "composition/generated/installed.ts")).toContain(
+    expect(Object.hasOwn(expected, `chatjs/plugins/${id}/chatjs.json`)).toBe(
+      true
+    );
+    expect(required(expected, "chatjs/generated/installed.ts")).toContain(
       `"${id}"`
     );
   }
+  expect(required(expected, "chatjs/generated/installed-uploads.ts")).toContain(
+    "@/chatjs/plugins/attachment-uploads/client-plugin"
+  );
+  expect(required(expected, "chatjs/generated/installed-layout.ts")).toContain(
+    "@/chatjs/plugins/vercel-speed-insights/client-plugin"
+  );
   expect(
-    required(expected, "composition/generated/installed-uploads.ts")
-  ).toContain("@/plugins/attachment-uploads/client-plugin");
-  expect(
-    required(expected, "composition/generated/installed-layout.ts")
-  ).toContain("@/plugins/vercel-speed-insights/client-plugin");
-  expect(
-    required(expected, "composition/generated/installed-instrumentation.ts")
-  ).toContain("@/plugins/langfuse/server-plugin");
+    required(expected, "chatjs/generated/installed-instrumentation.ts")
+  ).toContain("@/chatjs/plugins/langfuse/server-plugin");
 };
 
 const verifyEnvironmentBoundaries = (
   expected: Readonly<Record<string, string>>
 ): void => {
   for (const [file, reader] of [
-    ["plugins/mcp/setup.ts", "./mcp-env"],
-    ["tools/chatjs/retrieve-url/tool.ts", "./retrieve-url-env"],
-    ["tools/chatjs/tavily-search/tool.ts", "./tavily-search-env"],
-    ["lib/sandbox/adapter.ts", "./vercel-sandbox-env"],
+    ["chatjs/plugins/mcp/setup.ts", "./mcp-env"],
+    ["chatjs/tools/retrieve-url/tool.ts", "./retrieve-url-env"],
+    ["chatjs/tools/tavily-search/tool.ts", "./tavily-search-env"],
+    ["chatjs/providers/sandbox/adapter.ts", "./vercel-sandbox-env"],
   ] as const) {
     expect(required(expected, file)).toContain(`from "${reader}"`);
     expect(required(expected, file)).not.toContain('from "@/lib/env"');
-    expect(required(expected, file)).not.toContain("@/plugins/langfuse/");
+    expect(required(expected, file)).not.toContain(
+      "@/chatjs/plugins/langfuse/"
+    );
   }
   // Database credentials still belong to core, even for an installable query.
-  expect(required(expected, "plugins/mcp/db/mcp-oauth-lock.ts")).toContain(
-    'from "@/lib/env"'
-  );
+  expect(
+    required(expected, "chatjs/plugins/mcp/db/mcp-oauth-lock.ts")
+  ).toContain('from "@/lib/env"');
 };
 
 const verifyExcludedFiles = (
@@ -74,9 +78,8 @@ const verifyExcludedFiles = (
 ): void => {
   for (const file of [
     "test-json.ts",
-    "plugins/test-runtime.ts",
+    "chatjs/plugins/test-runtime.ts",
     "composer-controls.ts",
-    "settings-items.ts",
     "composition/custom/custom-tools.ts",
     "composition/custom/custom-ui.ts",
   ]) {

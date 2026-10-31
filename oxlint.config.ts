@@ -16,7 +16,7 @@ export default defineConfig({
     "apps/site/components/create-preview/ui/**",
     // Vendored MIT shadcn Create source; preserve upstream formatting and patterns.
     "apps/site/vendor/shadcn-create/**",
-    "**/composition/generated/*.ts",
+    "**/chatjs/generated/*.ts",
     // Library-installed components and generator-owned registrations.
     "**/components/{ai-elements,ui}/**",
     "!**/components/{ai-elements,ui}/**/",

@@ -10,7 +10,7 @@ const navigation = vi.hoisted(() => ({
   electron: false,
   push: vi.fn<(href: string) => void>(),
 }));
-vi.mock("@/composition/generated/installed-navigation", () => ({
+vi.mock("@/integrations/navigation", () => ({
   handleModifiedNavigation: () => navigation.electron,
 }));
 vi.mock("next/navigation", () => ({

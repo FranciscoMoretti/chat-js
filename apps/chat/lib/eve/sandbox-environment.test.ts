@@ -2,7 +2,7 @@ import { beforeEach, expect, it, vi } from "vitest";
 
 const installed = vi.hoisted(() => ({ persistent: false }));
 const calls = vi.hoisted(() => ({ register: vi.fn(), provider: vi.fn() }));
-vi.mock("../sandbox/provider", () => ({
+vi.mock("@/chatjs/providers/sandbox/provider", () => ({
   get supportsPersistentSandbox() {
     return installed.persistent;
   },

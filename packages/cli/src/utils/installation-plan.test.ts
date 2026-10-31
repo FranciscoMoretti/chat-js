@@ -21,7 +21,7 @@ afterEach(async (): Promise<void> => {
 test("requested plugins can repair incomplete installations while unrelated installs still reject them", async (): Promise<void> => {
   const root = await mkdtemp(path.join(tmpdir(), "chatjs-plugin-repair-"));
   roots.push(root);
-  const directory = path.join(root, "plugins/team-notes");
+  const directory = path.join(root, "chatjs/plugins/team-notes");
   await mkdir(directory, { recursive: true });
   const definition = {
     contractVersion: 1,
@@ -127,9 +127,9 @@ test("plans transitive dependencies and repairs against the complete resulting i
         .toSorted()
     ).toEqual(["read-document", "text-documents"]);
     expect(
-      await Bun.file(path.join(root, "composition/generated/tools.ts")).exists()
+      await Bun.file(path.join(root, "chatjs/generated/tools.ts")).exists()
     ).toBe(false);
-    const dir = path.join(root, "tools/chatjs/text-documents");
+    const dir = path.join(root, "chatjs/tools/text-documents");
     await mkdir(dir, { recursive: true });
     await writeFile(path.join(dir, "chatjs.json"), JSON.stringify(documents));
     await writeFile(
@@ -230,7 +230,7 @@ test("validates plugin dependencies and exclusive storage slots before writing",
         return true;
       }
     );
-    const dir = path.join(root, "plugins/mcp");
+    const dir = path.join(root, "chatjs/plugins/mcp");
     await mkdir(dir, { recursive: true });
     await writeFile(
       path.join(dir, "chatjs.json"),
@@ -257,7 +257,7 @@ test("validates plugin dependencies and exclusive storage slots before writing",
     );
     expect(
       await Bun.file(
-        path.join(root, "composition/generated/installed-routers.ts")
+        path.join(root, "chatjs/generated/installed-routers.ts")
       ).exists()
     ).toBe(false);
   } finally {

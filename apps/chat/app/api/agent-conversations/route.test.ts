@@ -25,7 +25,7 @@ vi.mock("@/lib/eve/principal", () => ({
 vi.mock("@/lib/eve/create-conversation-operation", () => ({
   createEveConversationOperation: mocks.create,
 }));
-vi.mock("@/lib/chat-plugins", () => ({
+vi.mock("@/lib/chat-after-create", () => ({
   runChatAfterCreate: mocks.afterCreate,
 }));
 
