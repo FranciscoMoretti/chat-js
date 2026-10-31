@@ -33,10 +33,7 @@ export const EveDocumentTool = ({
   isReadonly,
   preview = false,
 }: {
-  readonly part: Extract<
-    ReadonlyEveMessagePart,
-    { readonly type: "dynamic-tool" }
-  >;
+  readonly part: Extract<ReadonlyEveMessagePart, { readonly type: "tool" }>;
   readonly messageId: string;
   readonly isReadonly: boolean;
   readonly preview?: boolean;
@@ -53,10 +50,10 @@ export const EveDocumentTool = ({
       return;
     }
     const operation = Object.entries(eveDocumentOperations).find(
-      ([name]: readonly [string, unknown]) => name === part.toolName
+      ([name]: readonly [string, unknown]) => name === part.name
     )?.[1];
-    if (part.state === "input-streaming" || part.state === "input-available") {
-      pendingCall.current = part.toolCallId;
+    if (part.state === "streaming" || part.state === "running") {
+      pendingCall.current = part.callId;
       const input = partialDocument.safeParse(part.input);
       if (isReadonly || !operation || !input.success) {
         return;
@@ -79,12 +76,10 @@ export const EveDocumentTool = ({
           documentId: data.documentId ?? "init",
           followLive: true,
           isVisible:
-            current.previewCallId === part.toolCallId
-              ? current.isVisible
-              : true,
+            current.previewCallId === part.callId ? current.isVisible : true,
           kind: operation.kind,
           messageId,
-          previewCallId: part.toolCallId,
+          previewCallId: part.callId,
           status: "streaming",
           title: data.title ?? current.title,
         };
@@ -92,24 +87,24 @@ export const EveDocumentTool = ({
       return;
     }
     if (
-      part.state !== "output-available" &&
-      part.state !== "output-error" &&
-      part.state !== "output-denied"
+      part.state !== "completed" &&
+      part.state !== "failed" &&
+      part.state !== "rejected"
     ) {
       return;
     }
-    const wasPending = pendingCall.current === part.toolCallId;
+    const wasPending = pendingCall.current === part.callId;
     pendingCall.current = undefined;
     if (!wasPending || isReadonly || !operation) {
       return;
     }
     const completed =
-      part.state === "output-available"
+      part.state === "completed"
         ? eveDocumentResult.safeParse(part.output)
         : undefined;
     setArtifact((current) => {
       if (!(completed?.success === true)) {
-        if (current.previewCallId === part.toolCallId) {
+        if (current.previewCallId === part.callId) {
           return {
             ...current,
             isVisible: current.documentId !== "init",
@@ -134,7 +129,7 @@ export const EveDocumentTool = ({
         documentId: completed.data.documentId,
         followLive: true,
         isVisible:
-          current.previewCallId === part.toolCallId ? current.isVisible : true,
+          current.previewCallId === part.callId ? current.isVisible : true,
         kind: completed.data.kind,
         messageId,
         status: "idle",
@@ -142,16 +137,16 @@ export const EveDocumentTool = ({
       };
     });
   }, [part, isReadonly, messageId, setArtifact, conversationId, replaying]);
-  if (part.state === "output-error") {
-    return <p role="alert">{part.errorText}</p>;
+  if (part.state === "failed") {
+    return <p role="alert">{part.error?.message ?? "Tool failed"}</p>;
   }
-  if (part.state === "output-denied") {
+  if (part.state === "rejected") {
     return <p>Document operation declined.</p>;
   }
-  if (part.state !== "output-available") {
+  if (part.state !== "completed") {
     return (
       <output>
-        {part.toolName === "readDocument"
+        {part.name === "readDocument"
           ? "Reading document…"
           : "Writing document…"}
       </output>
@@ -161,12 +156,12 @@ export const EveDocumentTool = ({
   if (!result.success) {
     return <p role="alert">This document result could not be displayed.</p>;
   }
-  const writeAction = part.toolName.startsWith("create") ? "create" : "update";
+  const writeAction = part.name.startsWith("create") ? "create" : "update";
   if (preview && hasText(conversationId)) {
     return (
       <EveDocumentPreview
         isReadonly={isReadonly}
-        action={part.toolName === "readDocument" ? "read" : writeAction}
+        action={part.name === "readDocument" ? "read" : writeAction}
         conversationId={conversationId}
         result={result.data}
         messageId={messageId}
@@ -179,7 +174,7 @@ export const EveDocumentTool = ({
       isReadonly={isReadonly}
       messageId={messageId}
       result={{ ...result.data, id: result.data.documentId }}
-      type={part.toolName === "readDocument" ? "read" : writeAction}
+      type={part.name === "readDocument" ? "read" : writeAction}
     />
   );
 };

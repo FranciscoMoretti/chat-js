@@ -1,4 +1,4 @@
-import type { MessageStreamEvent } from "eve/client";
+import type { SessionStreamEvent } from "eve/client";
 import { beforeEach, expect, it, vi } from "vitest";
 import type { recordEveUsage } from "../db/eve-billing";
 
@@ -33,7 +33,7 @@ const toolEvent = (
   output: unknown,
   id = "event-one",
   status: Extract<
-    MessageStreamEvent,
+    SessionStreamEvent,
     { type: "action.result" }
   >["data"]["status"] = "completed"
 ): Parameters<typeof ingestEveUsage>[2] & {

@@ -1,7 +1,7 @@
 import { expect, it } from "vitest";
 import { sharedEveMessages, sharedEvePart } from "./shared-messages";
 import type { EveMessageDisplayReceipt } from "./message-display";
-import type { EveMessagePart, MessageStreamEvent } from "eve/client";
+import type { EveMessagePart, SessionStreamEvent } from "eve/client";
 
 it("shares transcript content without authorization challenges or runtime metadata", () => {
   const messages = sharedEveMessages([
@@ -263,7 +263,7 @@ it("shares display-safe tool selection only through an exact known delivery", ()
     deliveryId: "known",
     selectedTool: "webSearch",
   } satisfies EveMessageDisplayReceipt;
-  const events: MessageStreamEvent[] = [
+  const events: SessionStreamEvent[] = [
     {
       type: "message.received",
       data: { message: "Search", sequence: 0, turnId: "turn_0" },

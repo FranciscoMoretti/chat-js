@@ -8,7 +8,7 @@ import {
   getEveUsageCursor,
   withManagedUsageReconciliation,
 } from "@/lib/db/eve-billing";
-import type { MessageStreamEvent } from "eve/client";
+import type { SessionStreamEvent } from "eve/client";
 import { assertEveConfigured } from "./server";
 import { env } from "@/lib/env";
 import { getEveConnectionOptions } from "./connection-options";
@@ -21,7 +21,6 @@ import { resolveWorkflowWorld } from "./world-config";
 import { tryEveAccountingWrite } from "./accounting-log";
 
 const INITIAL_STREAM_INDEX = 0;
-const STREAM_EVENT_INCREMENT = 1;
 const STREAM_READ_TIMEOUT_MS = 15_000;
 const MAX_CONCURRENT_USAGE_READS = 4;
 
@@ -43,17 +42,13 @@ const reconcileEveUsage = async (
   const session = client.sessions.attach(sessionId);
   let streamIndex = startIndex;
   let unresolved = false;
-  let latestActivity: MessageStreamEvent | undefined;
+  let latestActivity: SessionStreamEvent | undefined;
   for await (const event of session.stream({
     follow: false,
     signal: AbortSignal.timeout(STREAM_READ_TIMEOUT_MS),
     startIndex,
   })) {
-    streamIndex += STREAM_EVENT_INCREMENT;
-    if (
-      event.type === "message.received" ||
-      event.type === "message.completed"
-    ) {
+    if (event.type === "delivery.consumed" || event.type === "turn.settled") {
       latestActivity = event;
     }
     const priced = await ingestEveUsage(ownerId, sessionId, event);
@@ -61,11 +56,17 @@ const reconcileEveUsage = async (
       unresolved = true;
     }
   }
+  ({ streamIndex } = session.state);
   if (!(await reconcileEveSubagentUsage(ownerId, sessionId, replayUnpriced))) {
     unresolved = true;
   }
   if (latestActivity) {
-    await ingestEveActivity(ownerId, sessionId, latestActivity);
+    await ingestEveActivity(
+      ownerId,
+      sessionId,
+      latestActivity,
+      new Date(latestActivity.meta.at)
+    );
   }
   if (unresolved) {
     // Keep replay available for missing tool receipts without blocking admission.

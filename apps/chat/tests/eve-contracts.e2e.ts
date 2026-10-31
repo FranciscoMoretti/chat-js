@@ -18,7 +18,7 @@ import {
 import { setTimeout as delay } from "node:timers/promises";
 
 import { eq, sql } from "drizzle-orm";
-import type { MessageStreamEvent } from "eve/client";
+import type { SessionStreamEvent } from "eve/client";
 import { afterAll, expect, test, vi } from "vitest";
 
 import { db } from "../lib/db/client";
@@ -806,7 +806,7 @@ test("auxiliary model calls settle once per actual attempt independently of comp
       );
     })
   );
-  const event: MessageStreamEvent = {
+  const event: SessionStreamEvent = {
     data: {
       sequence: 0,
       turnId: "turn_0",

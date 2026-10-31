@@ -4,7 +4,7 @@ import { expect, test } from "@playwright/test";
 import type { ConsoleMessage, TestInfo } from "@playwright/test";
 import { eq, sql } from "drizzle-orm";
 import { Client } from "eve/client";
-import type { MessageStreamEvent } from "eve/client";
+import type { SessionStreamEvent } from "eve/client";
 import { z } from "zod";
 
 import { db } from "../lib/db/client";
@@ -22,12 +22,12 @@ type ResearchEventReader =
       readonly type: "action.result";
       readonly data: Readonly<
         Omit<
-          Extract<MessageStreamEvent, { type: "action.result" }>["data"],
+          Extract<SessionStreamEvent, { type: "action.result" }>["data"],
           "result"
         > & {
           readonly result: Readonly<
             Extract<
-              MessageStreamEvent,
+              SessionStreamEvent,
               { type: "action.result" }
             >["data"]["result"]
           >;
@@ -35,7 +35,7 @@ type ResearchEventReader =
       >;
     }
   | {
-      readonly type: Exclude<MessageStreamEvent["type"], "action.result">;
+      readonly type: Exclude<SessionStreamEvent["type"], "action.result">;
       readonly data?: unknown;
     };
 

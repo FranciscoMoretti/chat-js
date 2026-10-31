@@ -120,8 +120,9 @@ export const executeEveConversationCreation = async (
         return z
           .object({
             sessionId: z.string().min(MINIMUM_SESSION_IDENTIFIER_LENGTH),
+            deliveryId: z.string().min(1).optional(),
           })
-          .parse(await result.json()).sessionId;
+          .parse(await result.json());
       },
       {
         fileKeys: eveMessageFileKeys(input.message),

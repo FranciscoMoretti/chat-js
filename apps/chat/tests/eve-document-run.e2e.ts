@@ -4,7 +4,7 @@ import { expect, test } from "@playwright/test";
 import type { TestInfo } from "@playwright/test";
 import { eq } from "drizzle-orm";
 import { Client } from "eve/client";
-import type { MessageStreamEvent } from "eve/client";
+import type { SessionStreamEvent } from "eve/client";
 
 import { db } from "../lib/db/client";
 import { eveConversation, eveUsage } from "../lib/db/schema";
@@ -29,7 +29,7 @@ type RunCodeActionResultReader =
       }>;
     }>
   | Readonly<{
-      type: Exclude<MessageStreamEvent["type"], "action.result">;
+      type: Exclude<SessionStreamEvent["type"], "action.result">;
       data?: unknown;
     }>;
 
@@ -154,7 +154,7 @@ test("artifact Run executes saved source, retains output across reload and shari
   const executions = snapshot.events.filter(
     (
       event: RunCodeActionResultReader
-    ): event is Extract<MessageStreamEvent, { type: "action.result" }> =>
+    ): event is Extract<SessionStreamEvent, { type: "action.result" }> =>
       event.type === "action.result" &&
       event.data.result.kind === "tool-result" &&
       event.data.result.toolName === "runCodeDocument"

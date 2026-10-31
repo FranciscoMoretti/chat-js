@@ -23,17 +23,29 @@ const readRetiredSessionSnapshot = async (
   sessionId: string
 ): Promise<SessionSnapshot> => {
   const session = client.sessions.attach(sessionId);
-  await session.reset({
+  const current = await session.snapshot({
+    signal: AbortSignal.timeout(RETIRED_SNAPSHOT_TIMEOUT_MS),
+  });
+  if (current.events.some((event) => event.type === "session.ended")) {
+    return current;
+  }
+  const retirement = await session.end({
     reason: "Conversation deleted",
     signal: AbortSignal.timeout(SESSION_RETIRE_TIMEOUT_MS),
   });
+  for await (const event of retirement.stream({
+    signal: AbortSignal.timeout(SESSION_RETIRE_TIMEOUT_MS),
+  })) {
+    if (event.type === "session.ended") {
+      break;
+    }
+  }
   const snapshot = await session.snapshot({
     signal: AbortSignal.timeout(RETIRED_SNAPSHOT_TIMEOUT_MS),
   });
   if (
     !snapshot.events.some(
-      (event: { readonly type: string }) =>
-        event.type === "session.completed" || event.type === "session.failed"
+      (event: { readonly type: string }) => event.type === "session.ended"
     )
   ) {
     throw new Error("Session retirement has not completed. Retry cleanup.");
@@ -87,6 +99,7 @@ const retireEveSessionForDeletion = async (
     ...connection,
     headers: { ...connection.headers, "x-chatjs-deletion": "1" },
   });
+  await reconcileEveWorkspaceTurn(ownerId, conversation.id);
   const snapshot = await readRetiredSessionSnapshot(client, sessionId);
   await reconcileRetiredSessionUsage(ownerId, sessionId, snapshot.events);
   await reconcileEveWorkspaceTurn(ownerId, conversation.id);

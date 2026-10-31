@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises";
 
 import { PGlite } from "@electric-sql/pglite";
 import { drizzle } from "drizzle-orm/pglite";
-import type { MessageStreamEvent } from "eve/client";
+import type { SessionStreamEvent } from "eve/client";
 import { afterAll, beforeAll, expect, expectTypeOf, it, vi } from "vitest";
 import { z } from "zod";
 
@@ -136,7 +136,7 @@ it("charges native child receipts once and rounds their combined cost on the roo
       },
       meta: { at: "2026-09-28T00:00:00Z", id: "same-event-name" },
       type: "action.result",
-    } satisfies MessageStreamEvent;
+    } satisfies SessionStreamEvent;
     // oxlint-disable-next-line eslint/no-await-in-loop -- Migration SQL and user/chat/conversation foreign-key fixtures require predecessor completion; billing fixtures intentionally replay receipts in order before asserting the ledger.
     await ingestEveUsage("owner", sessionId, event, attribution);
   }

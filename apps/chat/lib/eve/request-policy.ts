@@ -25,11 +25,11 @@ const message = z
   .strict();
 const respond = z
   .object({
-    inputResponses: z
+    answers: z
       .array(
         z
           .object({
-            requestId: z.string().min(MIN_IDENTIFIER_LENGTH),
+            interactionId: z.string().min(MIN_IDENTIFIER_LENGTH),
             optionId: z.string().optional(),
             text: z.string().optional(),
           })

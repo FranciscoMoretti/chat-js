@@ -838,7 +838,7 @@ const createEveConversation = async (
   ownerId: string,
   operationId: string,
   message: string,
-  create: (id: string) => string | Promise<string>,
+  create: (id: string) => Promise<{ sessionId: string; deliveryId?: string }>,
   {
     initialModelId,
     initialRequest,
@@ -962,13 +962,14 @@ const createEveConversation = async (
               "This conversation can no longer be created."
             );
           }
-          const sessionId = await create(reservation.id);
-          return await bindConversationSession(
+          const accepted = await create(reservation.id);
+          const bound = await bindConversationSession(
             tx,
             ownerId,
             reservation.id,
-            sessionId
+            accepted.sessionId
           );
+          return { ...bound, deliveryId: accepted.deliveryId };
         })
     );
     return { id: reservation.id, sessionId: dispatched.sessionId };

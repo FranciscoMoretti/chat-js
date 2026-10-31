@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, expect, test, vi } from "vitest";
 import { eq, sql } from "drizzle-orm";
-import type { MessageStreamEvent } from "eve/client";
+import type { SessionStreamEvent } from "eve/client";
 import { db } from "../lib/db/client";
 import { env } from "../lib/env";
 import {
@@ -111,7 +111,7 @@ test.each(["early-message", "later-message"])(
         paths: [`/workspace/.eve/attachments/${fileKey}`],
       }))
     );
-    const events: MessageStreamEvent[] = [
+    const events: SessionStreamEvent[] = [
       {
         type: "history.seeded",
         meta: { at: "2026-10-20T00:00:00Z", id: "seed-fixture" },
@@ -268,7 +268,7 @@ test("a public historical fork cannot expose future document revisions or their 
       revisionId: unrelatedId,
     },
   ]);
-  const events: MessageStreamEvent[] = [
+  const events: SessionStreamEvent[] = [
     {
       type: "history.seeded",
       meta: { id: "documents", at: "2026-10-20T00:00:00Z" },

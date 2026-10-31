@@ -3,7 +3,7 @@ import { eveVote } from "../plugins/feedback/feedback-schema";
 import { createEveTestSession } from "./eve-native-session.fixture";
 
 import { eq } from "drizzle-orm";
-import type { Client, MessageStreamEvent } from "eve/client";
+import type { Client, SessionStreamEvent } from "eve/client";
 import { afterAll, beforeEach, expect, test, vi } from "vitest";
 
 import { db } from "../lib/db/client";
@@ -37,7 +37,7 @@ afterAll(async () => {
   await db.delete(eveConversation).where(eq(eveConversation.ownerId, owner));
   await db.delete(user).where(eq(user.id, owner));
 });
-const events: MessageStreamEvent[] = [
+const events: SessionStreamEvent[] = [
   {
     data: { message: "Question", sequence: 0, turnId: "turn_0" },
     meta: { at: "2026-09-11T00:00:00Z", id: "received" },

@@ -1,51 +1,4 @@
-import type { MessageStreamEvent } from "eve/client";
-import type { EveCopySeed } from "@/lib/eve/copy-seed";
-
-/** SDK fields this reader does not inspect remain optional and opaque. */
-type IgnoredSdkFields<Value> = Value extends object
-  ? { readonly [Key in keyof Value]?: unknown }
-  : unknown;
-
-// Accepted copy plans are indexed before native session binding.
-type SeedMessage = EveCopySeed["messages"][number];
-type IncomingMessage = Extract<
-  MessageStreamEvent,
-  { type: "message.received" }
->;
-
-type SearchTextEvent = IgnoredSdkFields<MessageStreamEvent> &
-  (
-    | {
-        readonly type: "history.seeded";
-        readonly data: {
-          readonly messages: Parameters<typeof eveSeedSearchText>[0];
-        } & IgnoredSdkFields<
-          Extract<MessageStreamEvent, { type: "history.seeded" }>["data"]
-        >;
-      }
-    | {
-        readonly type: "message.received";
-        readonly data: Parameters<typeof incomingMessageSearchText>[0]["data"];
-        readonly meta: { readonly id: string } & IgnoredSdkFields<
-          MessageStreamEvent["meta"]
-        >;
-      }
-    | {
-        readonly type: "message.completed";
-        readonly data: { readonly message: string | null } & IgnoredSdkFields<
-          Extract<MessageStreamEvent, { type: "message.completed" }>["data"]
-        >;
-        readonly meta: { readonly id: string } & IgnoredSdkFields<
-          MessageStreamEvent["meta"]
-        >;
-      }
-    | {
-        readonly type: Exclude<
-          MessageStreamEvent["type"],
-          "history.seeded" | "message.received" | "message.completed"
-        >;
-      }
-  );
+import type { SessionEvent } from "eve/client";
 
 const MAX_SEARCH_QUERY_LENGTH = 255;
 
@@ -60,13 +13,13 @@ interface EveSearchText {
  * @returns {EveSearchText[]} Nonempty user/assistant text indexed by its original seed position.
  */
 const eveSeedSearchText = (
-  messages: readonly ({
+  messages: readonly {
     readonly role: string;
-    readonly parts: readonly ({
+    readonly parts: readonly {
       readonly type: string;
       readonly text?: string;
-    } & IgnoredSdkFields<SeedMessage["parts"][number]>)[];
-  } & IgnoredSdkFields<SeedMessage> & { readonly id?: string })[]
+    }[];
+  }[]
 ): EveSearchText[] =>
   messages.flatMap((message, index) => {
     const text = message.parts
@@ -80,57 +33,27 @@ const eveSeedSearchText = (
     return [];
   });
 
-/** Read the display text of an incoming event without trimming its stored value.
- * @param {{ readonly data: { readonly message: string; readonly parts?: readonly { readonly type: string; readonly text?: string }[]; }; readonly meta: { readonly id: string; }; }} event Incoming message fields needed to extract visible text and preserve its event identity.
- * @returns {EveSearchText[]} The nonempty display text item, or an empty array.
- */
-const incomingMessageSearchText = (event: {
-  readonly data: {
-    readonly message: string;
-    readonly parts?: readonly ({
-      readonly type: string;
-      readonly text?: string;
-    } & IgnoredSdkFields<
-      NonNullable<IncomingMessage["data"]["parts"]>[number]
-    >)[];
-  } & IgnoredSdkFields<IncomingMessage["data"]>;
-  readonly meta: { readonly id: string } & IgnoredSdkFields<
-    MessageStreamEvent["meta"]
-  >;
-}): EveSearchText[] => {
-  const text = event.data.parts
-    ? event.data.parts
-        .filter((part) => part.type === "text")
-        .map((part) => part.text)
-        .join("\n")
-    : event.data.message;
-  if (text.trim()) {
-    return [{ key: `event:${event.meta.id}`, text }];
+const eveEventSearchText = (event: SessionEvent): EveSearchText[] => {
+  if (event.type === "session.started" && event.data.transcriptSeed) {
+    return eveSeedSearchText(event.data.transcriptSeed.messages);
   }
-  return [];
-};
-
-/**
- * Immutable event identities make live delivery, seeded prefixes and backfills idempotent.
- * @param {MessageStreamEvent} event Native history or live event that may contain visible user/assistant text.
- * @returns {EveSearchText[]} Display text with stable event/seed keys, including seeded history and excluding empty content.
- */
-const eveEventSearchText = (event: SearchTextEvent): EveSearchText[] => {
-  if (event.type === "history.seeded") {
-    return eveSeedSearchText(event.data.messages);
-  }
-  if (event.type === "message.received") {
-    return incomingMessageSearchText(event);
+  if (event.type === "delivery.consumed") {
+    const text = event.data.parts
+      .flatMap((part) => (part.kind === "text" ? [part.text] : []))
+      .join("\n");
+    return text.trim()
+      ? [{ key: `delivery:${event.data.deliveryId}`, text }]
+      : [];
   }
   if (
-    event.type === "message.completed" &&
-    typeof event.data.message === "string" &&
-    event.data.message.trim() !== ""
+    event.type === "content.completed" &&
+    event.data.kind === "text" &&
+    typeof event.data.value === "string" &&
+    event.data.value.trim()
   ) {
-    return [{ key: `event:${event.meta.id}`, text: event.data.message }];
+    return [{ key: `part:${event.data.partId}`, text: event.data.value }];
   }
   return [];
 };
-
 export { eveEventSearchText, eveSeedSearchText, MAX_SEARCH_QUERY_LENGTH };
 export type { EveSearchText };

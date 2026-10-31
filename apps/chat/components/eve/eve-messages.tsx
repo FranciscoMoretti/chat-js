@@ -2,7 +2,7 @@
 
 import { hasText } from "@/components/text-value";
 
-import type { InputResponse } from "eve/client";
+import type { Answer } from "eve/events";
 import React from "react";
 import type { JSX as ReactJSX, ReactNode } from "react";
 import { toast } from "sonner";
@@ -37,14 +37,11 @@ const messagePartIdentity = (part: ReadonlyEveMessagePart): string => {
       }
       return `file:${part.stepIndex ?? "unscoped"}:${part.filename ?? "unnamed"}:${part.mediaType}`;
     }
-    case "step-start": {
-      return "step-start";
+    case "interaction": {
+      return `interaction:${part.interactionId}`;
     }
-    case "authorization": {
-      return `authorization:${part.turnId}:${part.stepIndex}:${part.name}`;
-    }
-    case "dynamic-tool": {
-      return `dynamic-tool:${part.toolCallId}`;
+    case "tool": {
+      return `dynamic-tool:${part.callId}`;
     }
     default: {
       const unreachable: never = part;
@@ -81,7 +78,7 @@ interface EveMessagesProps {
   ) => string | undefined;
   readonly disabled: boolean;
   readonly inputDisabled?: boolean;
-  readonly respond: (response: InputResponse) => void;
+  readonly respond: (response: Answer) => void;
 }
 
 interface MessageRowProps extends Omit<
@@ -325,26 +322,19 @@ const EveMessageRow = ({
       actions={actions}
       followUp={isLast && !isReadonly && !actionsDisabled && suggestions}
     >
-      {message.parts
-        .filter((part: ReadonlyEveMessagePart) => part.type !== "step-start")
-        .map((part): React.JSX.Element => (
-          <EveMessagePart
-            inputDisabled={responseDisabled(
-              isReadonly,
-              disabled,
-              inputDisabled
-            )}
-            isReadonly={isReadonly}
-            key={nextPartKey(part)}
-            messageId={message.id}
-            part={part}
-            respond={respond}
-            previewDocument={
-              part.type === "dynamic-tool" &&
-              part.toolCallId === latestDocumentCallId
-            }
-          />
-        ))}
+      {message.parts.map((part): React.JSX.Element => (
+        <EveMessagePart
+          inputDisabled={responseDisabled(isReadonly, disabled, inputDisabled)}
+          isReadonly={isReadonly}
+          key={nextPartKey(part)}
+          messageId={message.id}
+          part={part}
+          respond={respond}
+          previewDocument={
+            part.type === "tool" && part.callId === latestDocumentCallId
+          }
+        />
+      ))}
     </ChatMessageView>
   );
 };
@@ -362,12 +352,12 @@ export const EveMessages = ({
       (message: Readonly<{ parts: readonly ReadonlyEveMessagePart[] }>) =>
         message.parts
     )
-    .filter((part: ReadonlyEveMessagePart) => part.type === "dynamic-tool")
+    .filter((part: ReadonlyEveMessagePart) => part.type === "tool")
     .findLast(
       (part) =>
-        Object.hasOwn(eveDocumentOperations, part.toolName) ||
-        part.toolName === "readDocument"
-    )?.toolCallId;
+        Object.hasOwn(eveDocumentOperations, part.name) ||
+        part.name === "readDocument"
+    )?.callId;
   const precedingUsers: (ReadonlyEveMessage | undefined)[] = [];
   let precedingUser: ReadonlyEveMessage | undefined;
   for (const message of messages) {

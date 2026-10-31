@@ -4,7 +4,7 @@ import type { TestInfo } from "@playwright/test";
 
 import { and, eq, sql } from "drizzle-orm";
 import { Client } from "eve/client";
-import type { MessageStreamEvent } from "eve/client";
+import type { SessionStreamEvent } from "eve/client";
 import { z } from "zod";
 
 import { db } from "../lib/db/client";
@@ -21,7 +21,7 @@ type DeleteDocumentEventReader =
   | Readonly<{ type: "turn.started"; data: Readonly<{ turnId: string }> }>
   | Readonly<{
       type: Exclude<
-        MessageStreamEvent["type"],
+        SessionStreamEvent["type"],
         "step.started" | "turn.started"
       >;
       data?: unknown;
@@ -165,7 +165,7 @@ test("installed deleteDocument requires approval, survives reload, and honors re
     .filter(
       (
         event: DeleteDocumentEventReader
-      ): event is Extract<MessageStreamEvent, { type: "step.started" }> =>
+      ): event is Extract<SessionStreamEvent, { type: "step.started" }> =>
         event.type === "step.started"
     );
   expect(resumedSteps.length).toBeGreaterThan(0);

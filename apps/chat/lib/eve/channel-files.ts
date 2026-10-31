@@ -1,11 +1,11 @@
-import type { EveChannelInput } from "eve/channels/eve";
+import type { EveChannelConfig } from "eve/channels/eve";
 import { assertEveFilesOwned } from "@/lib/db/eve-files";
 import { downloadFile } from "@/lib/file-storage";
 import { keyFromFileUrl } from "@/lib/file-url";
 import { retainWorkspaceAttachment } from "./workspace-attachments";
 
 type FileContext = NonNullable<
-  Parameters<NonNullable<EveChannelInput["fetchFile"]>>[1]
+  Parameters<NonNullable<EveChannelConfig["fetchFile"]>>[1]
 >;
 
 /** Interpret owned storage keys locally; never fetch the URL's hostname.

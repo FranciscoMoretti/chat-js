@@ -1,4 +1,4 @@
-import type { EveMessage, MessageStreamEvent } from "eve/client";
+import type { EveMessage, SessionStreamEvent } from "eve/client";
 import {
   EveCopyNotReadyError,
   eveCopyResources,
@@ -16,7 +16,7 @@ const history = (
       readonly parts: readonly ReadonlyEveMessagePart[];
     }
   >[]
-): MessageStreamEvent[] => [
+): SessionStreamEvent[] => [
   {
     data: { messages },
     meta: { at: "2026-09-12T00:00:00Z", id: "seed-event" },
@@ -177,7 +177,7 @@ it("requires a durable idle boundary, including when a new turn has no assistant
   expect(() => prepareEveCopyTranscript(events.slice(0, 1))).toThrow(
     EveCopyNotReadyError
   );
-  const received: MessageStreamEvent = {
+  const received: SessionStreamEvent = {
     data: { message: "Next question", sequence: 1, turnId: "turn_1" },
     meta: { at: "2026-09-12T00:00:02Z", id: "new" },
     type: "message.received",

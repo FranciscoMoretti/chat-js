@@ -168,10 +168,7 @@ const GuestConversation = ({
   const [expired, setExpired] = useState(false);
   const started = useRef(false);
   const pending = useRef(false);
-  const busy =
-    agent.status === "submitted" ||
-    agent.status === "streaming" ||
-    agent.status === "resuming";
+  const busy = agent.status === "busy" || agent.status === "resuming";
   const send = async (text: string): Promise<void> => {
     if (pending.current) {
       return;
@@ -234,19 +231,17 @@ const GuestConversation = ({
     }
   };
   const latestTurn = agent.events.findLast(
-    (event) =>
-      event.type === "turn.started" ||
-      event.type === "turn.failed" ||
-      event.type === "turn.completed" ||
-      event.type === "turn.cancelled"
+    (event) => event.type === "turn.started" || event.type === "turn.settled"
   );
   const failure =
     nonEmptyText(commandError) ??
     nonEmptyText(agent.error?.message) ??
-    (latestTurn?.type === "turn.failed" ? latestTurn.data.message : undefined);
+    (latestTurn?.type === "turn.settled"
+      ? latestTurn.data.error?.message
+      : undefined);
   return (
     <GuestConversationView
-      messages={agent.data.messages}
+      messages={agent.messages}
       modelId={binding.modelId}
       busy={busy}
       failure={failure}

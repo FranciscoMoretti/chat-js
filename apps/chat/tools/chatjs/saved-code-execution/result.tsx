@@ -1,23 +1,22 @@
 "use client";
 import type { EveMessagePart } from "eve/client";
 import React from "react";
-import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { eveCodeExecutionResult } from "./schemas";
 import { toolOutputSchema } from "@/lib/eve/tool-result";
 import { CodeExecutionChart } from "@/tools/chatjs/_shared/code-execution/code-execution-chart";
 
 export const EveDocumentRunResult = ({
   part,
-}: ReadonlyNativeSurface<{
-  part: Extract<EveMessagePart, { type: "dynamic-tool" }>;
+}: Readonly<{
+  part: Extract<EveMessagePart, { type: "tool" }>;
 }>): React.JSX.Element => {
-  if (part.state === "output-error") {
-    return <p role="alert">{part.errorText}</p>;
+  if (part.state === "failed") {
+    return <p role="alert">{part.error?.message ?? "Tool failed"}</p>;
   }
-  if (part.state === "output-denied") {
+  if (part.state === "rejected") {
     return <p>Document execution declined.</p>;
   }
-  if (part.state !== "output-available") {
+  if (part.state !== "completed") {
     return <output>Running saved code…</output>;
   }
   const result = toolOutputSchema.safeParse(part.output);

@@ -1,5 +1,5 @@
 import { ensureFonts } from "../../registry/src/tools/_shared/visual-fonts";
-import type { EveMessage, MessageStreamEvent } from "eve/client";
+import type { EveMessage, SessionStreamEvent } from "eve/client";
 import { MotionGlobalConfig } from "motion/react";
 import type { AnchorHTMLAttributes } from "react";
 import superjson, { serialize } from "superjson";
@@ -174,7 +174,7 @@ vi.mock("eve/react", () => {
       onEvent,
     }: {
       initialSession?: { sessionId: string };
-      onEvent?: (event: MessageStreamEvent) => void;
+      onEvent?: (event: SessionStreamEvent) => void;
     }) => {
       const sessionId = initialSession?.sessionId ?? "";
       if (onEvent) {

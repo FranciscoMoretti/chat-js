@@ -1,5 +1,5 @@
 import type { QueryClient } from "@tanstack/react-query";
-import type { EveMessage, MessageStreamEvent } from "eve/client";
+import type { EveMessage, SessionStreamEvent } from "eve/client";
 
 import type { Session } from "@/lib/auth";
 import type {
@@ -22,8 +22,8 @@ export const route: {
   /** The error the replayed EVE session reports, as when the last reply failed. */
   agentError: string | null;
   agentStatus: "ready" | "streaming";
-  agentEventHandlers: Map<string, (event: MessageStreamEvent) => void>;
-  events: Record<string, readonly MessageStreamEvent[]>;
+  agentEventHandlers: Map<string, (event: SessionStreamEvent) => void>;
+  events: Record<string, readonly SessionStreamEvent[]>;
   cookies: Record<string, string>;
   /** The sign-in method this browser remembers using last. */
   lastLoginMethod: string | null;

@@ -5,7 +5,7 @@ import { promisify } from "node:util";
 import { expect, test } from "@playwright/test";
 import type { Response } from "@playwright/test";
 import { eq, sql } from "drizzle-orm";
-import type { MessageStreamEvent } from "eve/client";
+import type { SessionStreamEvent } from "eve/client";
 import postgres from "postgres";
 import { z } from "zod";
 
@@ -111,7 +111,7 @@ test("internal retirement settles usage after access revocation and is retryable
   const snapshot = await retireEveSessionForDeletion(owner, binding.sessionId);
   expect(
     snapshot.events.some(
-      (event: Readonly<Pick<MessageStreamEvent, "type">>) =>
+      (event: Readonly<Pick<SessionStreamEvent, "type">>) =>
         event.type === "session.completed"
     )
   ).toBe(true);

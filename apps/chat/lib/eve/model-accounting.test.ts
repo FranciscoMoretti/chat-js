@@ -1,4 +1,4 @@
-import type { DynamicResolveContext } from "eve";
+import type { DynamicContext } from "eve";
 import { beforeEach, expect, it, vi } from "vitest";
 
 import {
@@ -47,7 +47,7 @@ vi.mock("./model-selection", () => ({ resolveEveModel: mocks.resolve }));
 vi.mock("./conversation-scope", () => ({
   resolveEveConversationScope: mocks.scope,
 }));
-const context: DynamicResolveContext = {
+const context: DynamicContext = {
   channel: {},
   messages: [],
   model: null,

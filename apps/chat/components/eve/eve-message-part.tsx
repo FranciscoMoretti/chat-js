@@ -1,7 +1,8 @@
 "use client";
+import { eveToolUIState } from "@/lib/eve/tool-ui-state";
 import React, { useState } from "react";
 import type { JSX as ReactJSX } from "react";
-import type { EveMessageInputRequest, InputResponse } from "eve/client";
+import type { InteractionRequest, Answer } from "eve/events";
 import { Response } from "@/components/ai-elements/response";
 import { ToolInput, ToolOutput } from "@/components/part/tool-data";
 import { ToolActivity } from "@/components/part/tool-activity";
@@ -22,9 +23,9 @@ const PendingInput = ({
   disabled,
   respond,
 }: {
-  readonly request: EveMessageInputRequest;
+  readonly request: InteractionRequest & { readonly interactionId: string };
   readonly disabled: boolean;
-  readonly respond: (response: InputResponse) => void;
+  readonly respond: (response: Answer) => void;
 }): ReactJSX.Element => {
   const [text, setText] = useState("");
   return (
@@ -36,7 +37,10 @@ const PendingInput = ({
             disabled={disabled}
             key={option.id}
             onClick={() => {
-              respond({ optionId: option.id, requestId: request.requestId });
+              respond({
+                optionId: option.id,
+                interactionId: request.interactionId,
+              });
             }}
             type="button"
             variant={option.style === "danger" ? "outline" : "default"}
@@ -51,7 +55,10 @@ const PendingInput = ({
           onSubmit={(event: { readonly preventDefault: () => void }) => {
             event.preventDefault();
             if (!disabled && text.trim()) {
-              respond({ requestId: request.requestId, text: text.trim() });
+              respond({
+                interactionId: request.interactionId,
+                text: text.trim(),
+              });
             }
           }}
         >
@@ -76,18 +83,18 @@ const PendingInput = ({
 };
 
 const toolStatus = (
-  part: Extract<ReadonlyEveMessagePart, { type: "dynamic-tool" }>
+  part: Extract<ReadonlyEveMessagePart, { type: "tool" }>
 ): string => {
-  if (part.state === "approval-requested") {
+  if (part.state === "approval") {
     return "Waiting for input.";
   }
-  if (part.state === "output-denied") {
+  if (part.state === "rejected") {
     return "Request declined.";
   }
-  if (part.state === "output-error") {
-    return part.errorText;
+  if (part.state === "failed") {
+    return part.error?.message ?? "Tool failed";
   }
-  if (part.state === "output-available") {
+  if (part.state === "completed") {
     return "Tool completed.";
   }
   return "Working…";
@@ -98,30 +105,39 @@ const ToolFallback = ({
   disabled,
   respond,
 }: {
-  readonly part: Extract<ReadonlyEveMessagePart, { type: "dynamic-tool" }>;
+  readonly part: Extract<ReadonlyEveMessagePart, { type: "tool" }>;
   readonly disabled: boolean;
-  readonly respond: (response: InputResponse) => void;
+  readonly respond: (response: Answer) => void;
 }): React.JSX.Element => {
-  const request = part.toolMetadata?.eve?.inputRequest;
+  const request = part.interaction
+    ? {
+        ...part.interaction.request,
+        interactionId: part.interaction.interactionId,
+      }
+    : undefined;
   let content: React.ReactNode = (
     <p className="text-muted-foreground text-sm">{toolStatus(part)}</p>
   );
-  if (part.state === "approval-requested" && request) {
+  if (part.interaction?.status === "open" && request) {
     content = (
       <PendingInput
         disabled={disabled}
-        key={request.requestId}
+        key={request.interactionId}
         request={request}
         respond={respond}
       />
     );
-  } else if (part.state === "output-error") {
-    content = <ToolOutput errorText={part.errorText} />;
-  } else if (part.state === "output-available" && part.output !== undefined) {
+  } else if (part.state === "failed") {
+    content = <ToolOutput errorText={part.error?.message ?? "Tool failed"} />;
+  } else if (part.state === "completed" && part.output !== undefined) {
     content = <ToolOutput output={part.output} />;
   }
   return (
-    <ToolActivity title={part.toolName} state={part.state} defaultOpen>
+    <ToolActivity
+      title={part.name}
+      state={eveToolUIState(part.state)}
+      defaultOpen
+    >
       <ToolInput input={part.input} />
       {content}
     </ToolActivity>
@@ -143,7 +159,7 @@ export const EveMessagePart = ({
   readonly isReadonly: boolean;
   readonly part: ReadonlyEveMessagePart;
   readonly inputDisabled: boolean;
-  readonly respond: (response: InputResponse) => void;
+  readonly respond: (response: Answer) => void;
 }): React.JSX.Element | null => {
   if (part.type === "text") {
     return <Response>{part.text}</Response>;
@@ -159,16 +175,19 @@ export const EveMessagePart = ({
       />
     );
   }
-  if (part.type === "step-start") {
-    return null;
+  if (part.type === "interaction") {
+    return part.status === "open" ? (
+      <PendingInput
+        request={{ ...part.request, interactionId: part.interactionId }}
+        disabled={inputDisabled || isReadonly}
+        respond={respond}
+      />
+    ) : null;
   }
-  if (part.type !== "dynamic-tool") {
+  if (part.type !== "tool") {
     return <p>Unsupported content in this conversation.</p>;
   }
-  if (
-    part.state === "approval-requested" ||
-    part.state === "approval-responded"
-  ) {
+  if (part.state === "approval" || part.state === "blocked") {
     return (
       <ToolFallback
         part={part}
@@ -177,7 +196,7 @@ export const EveMessagePart = ({
       />
     );
   }
-  if (getEveInstalledToolRenderer(`tool-${part.toolName}`)) {
+  if (getEveInstalledToolRenderer(`tool-${part.name}`)) {
     return (
       <EveToolResult
         isReadonly={isReadonly}
@@ -188,8 +207,8 @@ export const EveMessagePart = ({
   }
 
   if (
-    Object.hasOwn(eveDocumentOperations, part.toolName) ||
-    part.toolName === "readDocument"
+    Object.hasOwn(eveDocumentOperations, part.name) ||
+    part.name === "readDocument"
   ) {
     return (
       <EveDocumentTool
@@ -200,7 +219,7 @@ export const EveMessagePart = ({
       />
     );
   }
-  if (parseToolId(part.toolName)) {
+  if (parseToolId(part.name)) {
     return <EveMcpResult part={part} />;
   }
   return (
