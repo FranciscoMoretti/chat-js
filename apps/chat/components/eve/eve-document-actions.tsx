@@ -23,7 +23,7 @@ export const EveDocumentActions = ({
   disabled,
   run,
 }: {
-  readonly kind: "text" | "code" | "sheet";
+  readonly kind: string;
   readonly content: string;
   readonly canCompare: boolean;
   readonly comparing: boolean;
@@ -35,31 +35,24 @@ export const EveDocumentActions = ({
   readonly disabled: boolean;
   readonly run: ReadonlyReactNode;
 }): React.JSX.Element => {
+  const document = documents[kind];
   const copy = async (): Promise<void> => {
     try {
       const copied = documents[kind]?.copyContent?.(content) ?? content;
       await navigator.clipboard.writeText(copied);
-      toast.success(
-        kind === "sheet" ? "Copied csv to clipboard!" : "Copied to clipboard!"
-      );
+      toast.success(document?.copySuccessMessage ?? "Copied to clipboard!");
     } catch {
       toast.error(
         "Could not copy. Check your browser's clipboard permissions."
       );
     }
   };
-  let copyLabel = "Copy to clipboard";
-  if (kind === "code") {
-    copyLabel = "Copy code to clipboard";
-  }
-  if (kind === "sheet") {
-    copyLabel = "Copy as .csv";
-  }
+  const copyLabel = document?.copyLabel ?? "Copy to clipboard";
   const buttonClass = "hover:bg-accent h-fit p-2 [&_svg]:size-[18px]";
   return (
     <div className="flex shrink-0 flex-row gap-1">
       {run}
-      {kind === "text" && (
+      {document?.supportsComparison === true && (
         <Hint
           trigger={
             <div>
@@ -112,9 +105,7 @@ export const EveDocumentActions = ({
         trigger={
           <Button
             aria-label={copyLabel}
-            className={
-              kind === "sheet" ? "hover:bg-accent h-fit p-2" : buttonClass
-            }
+            className={document?.copyButtonClassName ?? buttonClass}
             variant="outline"
             disabled={disabled}
 
@@ -122,7 +113,7 @@ export const EveDocumentActions = ({
               void copy();
             }}
           >
-            <Copy size={kind === "sheet" ? 16 : 18} />
+            <Copy size={document?.copyIconSize ?? 18} />
           </Button>
         }
       >

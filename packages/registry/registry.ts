@@ -1,3 +1,5 @@
+import { toolDefinition as wordCountDefinition } from "./src/tools/word-count/definition";
+import { toolDefinition as weatherDefinition } from "./src/tools/get-weather/definition";
 import { guestChatItem } from "./src/plugins/guest-chat/manifest";
 import { desktopItem } from "./src/plugins/desktop/manifest";
 import { creditsItem } from "./src/plugins/credits/manifest";
@@ -72,16 +74,26 @@ const toolItems = (
     },
     {
       dependencies: ["ai", "zod"],
-      description: "Count words, characters, and sentences in text",
+      description: wordCountDefinition.description,
       id: "word-count",
-      tools: [{ rendererExport: "WordCountRenderer", toolExport: "wordCount" }],
+      tools: [
+        {
+          rendererExport: "WordCountRenderer",
+          toolExport: wordCountDefinition.name,
+          definitionExport: "toolDefinition",
+        },
+      ],
     },
     {
       dependencies: ["ai", "zod", "date-fns"],
-      description: "Get the current weather at a location",
+      description: weatherDefinition.description,
       id: "get-weather",
       tools: [
-        { rendererExport: "GetWeatherRenderer", toolExport: "getWeather" },
+        {
+          rendererExport: "GetWeatherRenderer",
+          toolExport: weatherDefinition.name,
+          definitionExport: "toolDefinition",
+        },
       ],
     },
     {
@@ -120,6 +132,9 @@ const toolItems = (
       files: [
         ...(definition.config ? ["configuration-schema.ts"] : []),
         ...(definition.id === "retrieve-url" ? ["retrieve-url-env.ts"] : []),
+        ...(["word-count", "get-weather"].includes(definition.id)
+          ? ["definition.ts"]
+          : []),
         "tool.ts",
         "renderer.tsx",
         "schemas.ts",

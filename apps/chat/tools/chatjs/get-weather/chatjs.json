@@ -4,7 +4,11 @@
   "kind": "tool",
   "requiresTools": [],
   "tools": [
-    { "rendererExport": "GetWeatherRenderer", "toolExport": "getWeather" }
+    {
+      "rendererExport": "GetWeatherRenderer",
+      "definitionExport": "toolDefinition",
+      "toolExport": "getWeather"
+    }
   ],
   "contractVersion": 1
 }

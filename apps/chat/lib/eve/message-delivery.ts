@@ -2,7 +2,7 @@ import { isNonEmptyString } from "@/lib/is-non-empty-string";
 
 import { z } from "zod";
 
-import { frontendToolsSchema } from "@/lib/ai/types";
+import { toolNameSchema } from "@/lib/ai/types";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 import { draftAttachment } from "./draft";
@@ -22,7 +22,7 @@ const pendingMessage = z.object({
   operationId: z.uuid().optional(),
   rejection: z.string().optional(),
   retryable: z.boolean().optional(),
-  selectedTool: frontendToolsSchema.optional(),
+  selectedTool: toolNameSchema.optional(),
 });
 
 type PendingEveMessage = ReadonlyNativeSurface<z.infer<typeof pendingMessage>>;

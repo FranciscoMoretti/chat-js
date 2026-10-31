@@ -27,7 +27,7 @@ const mcpTools = defineDynamic({
       if (
         !isAccountSession(context.session) ||
         !eveTurnAccount.get() ||
-        eveTurnTool.get()
+        eveTurnTool.get() !== null
       ) {
         return {};
       }

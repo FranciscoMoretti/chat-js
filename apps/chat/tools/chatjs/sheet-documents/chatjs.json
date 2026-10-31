@@ -1,6 +1,5 @@
 {
   "config": { "key": "sheet" },
-  "documentActions": true,
   "documentKind": "sheet",
   "envRequirements": [],
   "id": "sheet-documents",

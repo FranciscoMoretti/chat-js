@@ -15,7 +15,7 @@ export const researchAvailable = (
     isAccountSession(session) &&
     !session.parent &&
     eveTurnAccount.get() &&
-    (!selected || selected === "deepResearch") &&
+    (selected === null || selected === "deepResearch") &&
     installedToolNames.has("deepResearch") &&
     installedDocumentKinds.has("text") &&
     Object.hasOwn(toolProviders, "webSearch")

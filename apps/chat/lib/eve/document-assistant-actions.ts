@@ -3,12 +3,12 @@ import type {
   DocumentAssistantRequest,
 } from "./document-contracts";
 import { installedDocumentKinds } from "@/integrations/tool-catalog";
-import { documentActions } from "@/integrations/document-actions";
+import { documents } from "@/integrations/document-ui";
 
-const documentAssistantActions = (
-  kind: "text" | "code" | "sheet"
-): DocumentAssistantAction[] =>
-  installedDocumentKinds.has(kind) ? (documentActions[kind]?.() ?? []) : [];
+const documentAssistantActions = (kind: string): DocumentAssistantAction[] =>
+  installedDocumentKinds.has(kind)
+    ? (documents[kind]?.assistantActions?.() ?? [])
+    : [];
 
 const documentAssistantRequest = (
   action: Readonly<ReturnType<typeof documentAssistantActions>[number]>,

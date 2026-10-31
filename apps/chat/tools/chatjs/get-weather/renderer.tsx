@@ -1,6 +1,8 @@
 "use client";
+
+import { toolDefinition } from "./definition";
 import { format, isWithinInterval } from "date-fns";
-import { weatherInput, weatherResult } from "./schemas";
+import type { weatherInput, weatherResult } from "./schemas";
 import React from "react";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
@@ -282,7 +284,7 @@ const GetWeatherView = ({
 };
 
 export const GetWeatherRenderer = defineToolRenderer({
-  inputSchema: weatherInput,
-  outputSchema: weatherResult,
+  inputSchema: toolDefinition.inputSchema,
+  outputSchema: toolDefinition.outputSchema,
   render: GetWeatherView,
 });

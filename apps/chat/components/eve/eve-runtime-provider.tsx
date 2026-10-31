@@ -17,7 +17,7 @@ import React, {
 import type { JSX as ReactJSX } from "react";
 
 import { Spinner } from "@/components/ui/spinner";
-import { eveDocumentOperations } from "@/lib/eve/document-contracts";
+import { documentDefinitions } from "@/integrations/documents";
 import { LogicalChat } from "@/lib/eve/logical-chat";
 import { eveMessageTitle } from "@/lib/eve/message-input";
 import { projectEveMessageDisplay } from "@/lib/eve/message-display";
@@ -107,7 +107,7 @@ const NativeObserver = ({
       if (
         event.type === "action.result" &&
         event.data.result.kind === "tool-result" &&
-        (Object.hasOwn(eveDocumentOperations, event.data.result.toolName) ||
+        (documentDefinitions.operations.has(event.data.result.toolName) ||
           (installedToolNames.has("deleteDocument") &&
             event.data.result.toolName === "deleteDocument"))
       ) {

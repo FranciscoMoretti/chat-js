@@ -1,5 +1,7 @@
 "use client";
 
+import { documentDefinitions } from "@/integrations/documents";
+
 import { hasText } from "@/components/text-value";
 
 import type { JSX as ReactJSX } from "react";
@@ -9,10 +11,7 @@ import { z } from "zod";
 
 import { DocumentToolResult } from "@/components/part/document-common";
 import { useArtifact } from "@/hooks/use-artifact";
-import {
-  eveDocumentOperations,
-  eveDocumentResult,
-} from "@/lib/eve/document-contracts";
+import { eveDocumentResult } from "@/lib/eve/document-contracts";
 import type { ReadonlyEveMessagePart } from "@/lib/eve/readonly-message-types";
 
 import {
@@ -52,9 +51,7 @@ export const EveDocumentTool = ({
       pendingCall.current = undefined;
       return;
     }
-    const operation = Object.entries(eveDocumentOperations).find(
-      ([name]: readonly [string, unknown]) => name === part.toolName
-    )?.[1];
+    const operation = documentDefinitions.operations.get(part.toolName);
     if (part.state === "input-streaming" || part.state === "input-available") {
       pendingCall.current = part.toolCallId;
       const input = partialDocument.safeParse(part.input);
@@ -161,7 +158,12 @@ export const EveDocumentTool = ({
   if (!result.success) {
     return <p role="alert">This document result could not be displayed.</p>;
   }
-  const writeAction = part.toolName.startsWith("create") ? "create" : "update";
+  const completedOperation = documentDefinitions.operations.get(part.toolName);
+  const writeAction =
+    completedOperation?.edit === false ||
+    (!completedOperation && part.toolName.startsWith("create"))
+      ? "create"
+      : "update";
   if (preview && hasText(conversationId)) {
     return (
       <EveDocumentPreview

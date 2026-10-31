@@ -1,6 +1,3 @@
-import type { HTMLAttributes, ReactNode } from "react";
-import type { ComposerControlProps } from "@/components/composer/control";
-
 import type { AnyTRPCRouter } from "@trpc/server";
 import type { DraftAttachment } from "@/lib/eve/draft";
 
@@ -14,26 +11,26 @@ type ModelVisibility = (
   defaultEnabledIds: ReadonlySet<string>
 ) => ReadonlySet<string>;
 
-/** D owns picker/camera/paste/drop behavior; core owns persisted attachments. */
+/** Headless upload policy and delivery; callers own attachment state and UI. */
 interface AttachmentUploadInput {
   readonly attachmentCount: number;
+  readonly onError?: (message: string) => void;
   readonly onUploaded: (attachment: Readonly<DraftAttachment>) => void;
 }
 
 interface AttachmentUploadBehavior {
-  uploadQueue: string[];
-  composer?: (disabled: boolean) => {
-    rootProps: HTMLAttributes<HTMLDivElement>;
-    input: ReactNode;
-    onAttach: ComposerControlProps["onAttach"];
-  };
+  readonly enabled: boolean;
+  readonly busy: boolean;
+  readonly uploadQueue: readonly string[];
+  readonly errors: readonly string[];
+  readonly enqueue: (files: readonly File[]) => Promise<void>;
 }
 
 interface AttachmentUploadIntegration {
   useUploads: (input: AttachmentUploadInput) => AttachmentUploadBehavior;
 }
 
-/** E supplies optional registrations; core lifecycle runs independently. */
+/** Optional startup registrations; core lifecycle runs independently. */
 type InstrumentationRegistration = (context: {
   readonly appPrefix: string;
   readonly runtime: string | undefined;

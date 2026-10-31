@@ -1,3 +1,4 @@
+import { installationActivation } from "./installation-activation";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -79,6 +80,14 @@ export const exportManualInstallation = async (
           devDependencies: item.devDependencies ?? [],
           registryDependencies: item.registryDependencies ?? [],
           integration,
+          activation: installationActivation(
+            integration,
+            files.flatMap((file) =>
+              file.target?.startsWith("~/") === true
+                ? [file.target.slice(2)]
+                : []
+            )
+          ),
           registryItem: `${directory}/registry-item.json`,
         };
       })

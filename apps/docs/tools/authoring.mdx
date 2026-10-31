@@ -62,6 +62,52 @@ export const WordCountRenderer = defineToolRenderer({
 
 Keep shared schemas in `schemas.ts`. For a separate view component, use `ToolRendererProps<typeof inputSchema, typeof outputSchema>` from the same helper module. The validated renderer handles malformed results, approvals, denied requests, and errors.
 
+## Shared definitions
+
+You can share schemas, description and display metadata through a pure module:
+
+```ts title="definition.ts"
+import { z } from "zod";
+import type { ToolDefinition } from "@/lib/ai/tool-definition";
+
+export const toolDefinition = {
+  name: "wordCount",
+  description: "Count words in text",
+  inputSchema: z.object({ text: z.string() }),
+  outputSchema: z.object({ words: z.number() }),
+  display: { name: "Word count", shortName: "Word count" },
+  selectable: true,
+} as const satisfies ToolDefinition;
+```
+
+Use `toolDefinition.description` and `.inputSchema` in `defineTool`, and `.inputSchema` and `.outputSchema` in `defineToolRenderer`. Keep EVE execution and receipt policy in `tool.ts`. This definition is metadata, not another tool execution API.
+
+Add `"definitionExport": "toolDefinition"` beside the registration's `toolExport` in its descriptor and include `definition.ts` in its file list. The CLI emits a typed static import. The definition name must match the registration name, including a provider slot when selected. Imports are not executed by the installer. App composition rejects duplicate definition names.
+
+`selectable: true` exposes the name to the composer selection contract. Display metadata supplies labels with a default icon. Descriptor `composer` metadata can supply a specific icon and takes precedence. Existing tools without a shared definition continue using descriptor metadata. Historical messages preserve removed tool names so that their selection can be shown as unavailable instead of becoming automatic.
+
+## Document bundles
+
+Use a lowercase kebab-case kind of at most 100 characters. A kind is exclusive within an installation. The shared definition declares its create and edit operations explicitly:
+
+```ts title="definition.ts"
+import { z } from "zod";
+import type { DocumentDefinition } from "@/lib/eve/document-definition";
+
+export const documentDefinition = {
+  kind: "diagram",
+  contentSchema: z.string().startsWith("graph ").max(2_000_000),
+  createTool: "drawDiagram",
+  editTool: "reviseDiagram",
+} as const satisfies DocumentDefinition;
+```
+
+Declare `"documentKind": "diagram"` in the descriptor, register those two tools, and include `definition.ts` and `document.tsx` in the item. The editor exports a `documentUi` object satisfying `DocumentUi` from `@/lib/eve/document-ui`. It includes `definition: documentDefinition` and a `Body` component. Optional fields supply assistant actions, content copying, copy labels and comparison support.
+
+The server tools remain ordinary EVE definitions. Use the core document create/edit input schemas and call `executeEveDocumentTool(documentDefinition.createTool, input, context)` or the corresponding edit operation. That helper enforces conversation ownership, revision checks, the content schema and persistence. Declare `readDocument` in `requiresTools` and `@chatjs/read-document` in `registryDependencies` to share authorized revision reads.
+
+`integrations/documents.ts` composes kinds and operations. `integrations/document-ui.ts` composes views. Duplicate kinds, duplicate operation names and the reserved `readDocument` operation fail composition. Removing the editor preserves historical revisions in a read-only source view. Removing the definition blocks writes. Reinstalling the same kind restores editing without converting stored content.
+
 ## Item metadata
 
 Declare standard shadcn files and dependencies in `packages/registry/registry.ts`:
@@ -78,11 +124,11 @@ Declare standard shadcn files and dependencies in `packages/registry/registry.ts
 }
 ```
 
-`contractVersion: 1` is the single supported native EVE descriptor format. It does not select an execution implementation. The same metadata is emitted as `meta.chatjs` in the registry item and as an installed `tools/chatjs/word-count/chatjs.json` descriptor.
+Use `contractVersion: 1` for a UI-independent descriptor. Version 2 additionally declares `uiBase: "base"` or `"radix"` for UI compatibility. Neither selects an execution implementation. The same metadata is emitted as `meta.chatjs` in the registry item and as an installed `tools/chatjs/word-count/chatjs.json` descriptor.
 
 A registry item can register several native tools through its `tools` array. Each export comes from the item’s `tool.ts`, and optional renderers come from `renderer.tsx`. Registration names must be unique across all installed items. Provider slots register exactly one tool.
 
-Document bundles also declare `documentKind` (`text`, `code`, or `sheet`) and export `documentUi` from `document.tsx`. The CLI generates the installed editor registry. Use `registryDependencies` to share `read-document` across bundles.
+Document bundles declare their own `documentKind` and ship shared definitions and editors. See [Document bundles](#document-bundles).
 
 Items target files under `~/tools/chatjs/<id>/`. Declare npm packages in `dependencies` or `devDependencies`, and shared registry items in `registryDependencies`. EVE and the ChatJS receipt/renderer helpers are supplied by the host app.
 
@@ -100,7 +146,7 @@ const envRequirements = [{ options: [["FIRECRAWL_API_KEY"]] }];
 
 Every outer requirement must be satisfied. Within a requirement, `options` lists alternatives, and each alternative lists variables needed together. The app validates these requirements without evaluating remote source.
 
-## Configuration contributions
+## Configuration
 
 A tool can declare `"config": { "key": "myTool" }` in its descriptor and install `configuration-schema.ts` alongside `tool.ts`. Export a Zod schema named `configSchema`. Its input becomes `ai.tools.myTool` in the app's single `chat.config.ts`, and its output becomes the parsed runtime configuration. Supply defaults for omitted fields and for the omitted object:
 
@@ -119,9 +165,9 @@ export { configSchema };
 
 Use `modelRoles.smart`, `.balanced` or `.fast` for language models. Image and video roles are optional and require the corresponding gateway capability. These modules must be pure and safe to import in the browser: do not import runtime `config`, credentials, server SDKs or the tool implementation. The CLI generates typed imports without executing the module during installation. It rejects duplicate keys and the reserved core key `followupSuggestions`.
 
-Document bundles may also declare `documentActions: true` and export `documentAssistantActions` from `assistant-actions.ts`. This function returns `DocumentAssistantAction[]` from `@/lib/eve/document-contracts`. The generated document action registry keeps each bundle's prompts and model selection with its implementation.
+Document views may expose `assistantActions`, a function returning `DocumentAssistantAction[]` from `@/lib/eve/document-contracts`. Keep prompts and model selection beside the editor. There is no separate action registry or descriptor flag.
 
-## Feature selections
+## Provider selections
 
 An optional `slot` selects a product feature independently of the execution contract. Supported values are `webSearch`, `codeExecution`, `retrieveUrl`, `generateImage`, and `generateVideo`. The CLI registers that item under the selected feature name and applies its existing feature toggle. Only one item can occupy each selection.
 
@@ -149,7 +195,7 @@ Tools receive EVE's native context. Import only the ChatJS services your impleme
 
 Keep provider credentials and SDK dependencies in the installed integration. Tools accessing private user data must authorize that access using the native session identity. Both official and third-party tools use the same registration and accounting contract.
 
-For local custom tools, add native definitions to `integrations/tools.ts` with `defineToolSet` from `@/lib/eve/tool-types`. This checks each definition without widening its concrete input/output types. Add renderers in `integrations/tool-ui.ts`, and selection names in the client-safe `integrations/tool-catalog.ts`. Retain the installed spreads and native workflow-name guard. App-owned composition may explicitly replace installed tools; installed descriptors cannot duplicate each other.
+For local custom tools, add native definitions to `integrations/tools.ts` with `defineToolSet` from `@/lib/eve/tool-types`. This checks each definition without widening its concrete input/output types. Add renderers in `integrations/tool-ui.ts`, and shared metadata in the client-safe `integrations/tool-definitions.ts`. Retain the installed spreads and native workflow-name guard. App-owned composition may explicitly replace installed tools; installed descriptors cannot duplicate each other.
 
 ## Build and verify
 

@@ -181,7 +181,7 @@ The generic tool, renderer, schemas and descriptor live in `tools/chatjs/code-ex
 
 In this repository, contracts and lifecycle code live in `packages/sandboxes`, provider implementations in `packages/registry/src/sandboxes/{vercel,daytona}`, and the generic tool in `packages/registry/src/tools/code-execution`.
 
-Third-party sandbox registry items use `kind: "sandbox"` metadata matching `@chat-js/sandboxes/definition` and install `lib/sandbox/provider.ts` exporting `createSandboxProvider`. Version 1 requires Python and JavaScript commands, terminating cancellation and durable allocation cleanup. Capability metadata is a declaration, not evidence of live service behavior. Custom code-execution tools can separately implement the [typed executor contract](../tools/authoring#feature-selections).
+Third-party sandbox registry items use `kind: "sandbox"` metadata matching `@chat-js/sandboxes/definition` and install `lib/sandbox/provider.ts` exporting `createSandboxProvider`. Version 1 requires Python and JavaScript commands, terminating cancellation and durable allocation cleanup. Capability metadata is a declaration, not evidence of live service behavior. Custom code-execution tools can separately implement the [typed executor contract](../tools/authoring#provider-selections).
 
 ## Lifecycle and accounting
 

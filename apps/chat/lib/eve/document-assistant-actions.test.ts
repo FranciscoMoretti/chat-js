@@ -1,62 +1,48 @@
 import { beforeEach, expect, it, vi } from "vitest";
+import {
+  documentAssistantActions,
+  documentAssistantRequest,
+} from "./document-assistant-actions";
 
-import { documentAssistantActions } from "./document-assistant-actions";
-
-const kinds = vi.hoisted(() => new Set(["code", "sheet", "text"]));
-vi.mock("@/integrations/tool-catalog", () => ({
-  installedDocumentKinds: kinds,
-}));
-vi.mock("../config", () => ({
-  config: {
-    ai: {
-      tools: {
-        code: { edits: "code-model" },
-        sheet: { analyze: "analysis-model", format: "format-model" },
-        text: { polish: "polish-model" },
-      },
+const kinds = vi.hoisted(() => new Set(["diagram"]));
+vi.mock("@/integrations/document-ui", () => ({
+  documents: {
+    diagram: {
+      assistantActions: () => [
+        {
+          instruction: "Improve the diagram.",
+          label: "Improve",
+          modelId: "diagram-model",
+        },
+      ],
     },
   },
 }));
-
+vi.mock("@/integrations/tool-catalog", () => ({
+  installedDocumentKinds: kinds,
+}));
 beforeEach(() => {
   kinds.clear();
-  for (const kind of ["code", "sheet", "text"]) {
-    kinds.add(kind);
-  }
+  kinds.add("diagram");
 });
 
-it("does not offer spreadsheet analysis without its code-document destination", () => {
-  expect(documentAssistantActions("sheet")).toHaveLength(2);
-  kinds.delete("code");
+it("hides actions when their definition is absent and restores them on reinstall", () => {
+  expect(documentAssistantActions("diagram")).toHaveLength(1);
+  kinds.delete("diagram");
+  expect(documentAssistantActions("diagram")).toEqual([]);
+  expect(documentAssistantActions("unknown")).toEqual([]);
+  kinds.add("diagram");
+  expect(documentAssistantActions("diagram")).toHaveLength(1);
+});
+it("returns bundle actions without taking ownership of their policy", () => {
+  const actions = documentAssistantActions("diagram");
   expect(
-    documentAssistantActions("sheet").map(
-      (action: { readonly label: string }) => action.label
-    )
-  ).toEqual(["Format and clean data"]);
-  expect(documentAssistantActions("code")).toEqual([]);
-});
-
-it("hides actions when their source implementation is absent", () => {
-  kinds.delete("sheet");
-  expect(documentAssistantActions("sheet")).toEqual([]);
-  kinds.clear();
-  expect(documentAssistantActions("text")).toEqual([]);
-});
-
-const documentKinds: readonly ("text" | "code" | "sheet")[] = [
-  "text",
-  "code",
-  "sheet",
-];
-it.each(documentKinds)("returns fresh mutable actions for %s", (kind) => {
-  const actions = documentAssistantActions(kind);
-  const freshActions = documentAssistantActions(kind);
-  expect(actions).toEqual(freshActions);
-  expect(actions).not.toBe(freshActions);
-  for (const action of actions) {
-    expect(freshActions).not.toContain(action);
-    action.label = "Changed by caller";
-  }
-  actions.length = 0;
-  expect(documentAssistantActions(kind)).toEqual(freshActions);
+    documentAssistantRequest(actions[0], "document-id", "revision-id")
+  ).toEqual({
+    message:
+      "Improve the diagram.\n\nTarget document: document-id. Selected revision: revision-id. Use readDocument to read this document, then use the document tools to apply the requested changes.",
+    modelId: "diagram-model",
+  });
+  actions[0].label = "App label";
+  expect(documentAssistantActions("diagram")[0].label).toBe("Improve");
 });

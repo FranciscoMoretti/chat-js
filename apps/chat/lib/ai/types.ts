@@ -1,35 +1,12 @@
+import type { toolNameSchema } from "./tool-definition";
+
+import { selectableToolNames } from "@/integrations/tool-selection";
 import type { AppModelId } from "./app-models";
 import { z } from "zod";
 
-const toolNameSchema = z.enum([
-  "createTextDocument",
-  "createCodeDocument",
-  "createSheetDocument",
-  "editTextDocument",
-  "editCodeDocument",
-  "editSheetDocument",
-  "readDocument",
-  "webSearch",
-  "codeExecution",
-  "generateImage",
-  "generateVideo",
-  "deepResearch",
-]);
-
 type ToolName = z.infer<typeof toolNameSchema>;
 
-const frontendToolsSchema = z.enum([
-  "webSearch",
-  "deepResearch",
-  "generateImage",
-  "generateVideo",
-  "createTextDocument",
-  "createCodeDocument",
-  "createSheetDocument",
-  "editTextDocument",
-  "editCodeDocument",
-  "editSheetDocument",
-]);
+const frontendToolsSchema = z.enum([...selectableToolNames]);
 
 type UiToolName = z.infer<typeof frontendToolsSchema>;
 
@@ -102,6 +79,7 @@ export {
   getPrimarySelectedModelId,
   isSelectedModelCounts,
   isSelectedModelValue,
-  toolNameSchema,
 };
 export type { SelectedModelCounts, SelectedModelValue, ToolName, UiToolName };
+
+export { toolNameSchema } from "./tool-definition";

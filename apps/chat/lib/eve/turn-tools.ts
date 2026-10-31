@@ -6,7 +6,7 @@ import {
   installedToolNames,
 } from "@/integrations/tool-catalog";
 
-import { eveDocumentOperations } from "./document-contracts";
+import { documentDefinitions } from "@/integrations/documents";
 import { selectedEveTools } from "./selected-tools";
 
 // Set only by turn.started. Approval/reconnect authentication must not change it.
@@ -18,20 +18,12 @@ const eveTurnTool = defineState<UiToolName | null>(
 const eveTurnAccount = defineState<boolean>("chatjs.turn-account", () => false);
 
 const eveInstalledToolEnabled = (name: string): boolean => {
-  const operation = Object.entries(eveDocumentOperations).find(
-    ([key]: readonly [string, ...unknown[]]) => key === name
-  )?.[1];
+  const operation = documentDefinitions.operations.get(name);
   if (operation) {
     return installedDocumentKinds.has(operation.kind);
   }
   if (name === "readDocument") {
-    return installedDocumentKinds.size > 0;
-  }
-  if (name === "runCodeDocument") {
-    return (
-      installedDocumentKinds.has("code") &&
-      installedToolNames.has("runCodeDocument")
-    );
+    return installedToolNames.has(name);
   }
   return true;
 };

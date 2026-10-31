@@ -16,6 +16,7 @@ type ReadonlyNative<Value> = Value extends (
 const RECEIPT_INDENTATION_SPACES = 2;
 const SOURCE_READ_CONCURRENCY = 4;
 const receiptFile = "chatjs/installed-source.json";
+const sourceBaselineFile = "chatjs/installed-source-content.json";
 const receiptSchema = z.record(z.string(), z.string());
 const hash = (content: ReadonlyNative<Buffer>): string =>
   createHash("sha256").update(content).digest("hex");
@@ -30,10 +31,21 @@ const readReceipt = async (
   }
   return {};
 };
+const readSourceBaselines = async (
+  cwd: string
+): Promise<Record<string, string>> => {
+  await preflight(cwd, [sourceBaselineFile]);
+  const source = await optionalFile(path.join(cwd, sourceBaselineFile));
+  return source ? receiptSchema.parse(JSON.parse(source.toString())) : {};
+};
 const sourceHashes = async (
   cwd: string,
   targets: readonly string[],
-  validate?: (target: string, digest: string | null) => void
+  validate?: (
+    target: string,
+    digest: string | null,
+    content: Buffer | null
+  ) => void
 ): Promise<(readonly [string, string | null])[]> => {
   const hashes: (readonly [string, string | null])[] = [];
   for (
@@ -48,7 +60,7 @@ const sourceHashes = async (
         .map(async (target) => {
           const content = await optionalFile(path.join(cwd, target));
           const digest = content ? hash(content) : null;
-          validate?.(target, digest);
+          validate?.(target, digest, content ?? null);
           return [target, digest] as const;
         })
     );
@@ -72,17 +84,48 @@ const recordInstalledSource = async (
   targets: readonly string[]
 ): Promise<void> => {
   const receipt = await readReceipt(cwd);
+  const baselines = await readSourceBaselines(cwd);
   await preflight(cwd, targets);
-  for (const [target, digest] of await sourceHashes(cwd, targets)) {
+  const hashes = await sourceHashes(
+    cwd,
+    targets,
+    (target, _digest, content) => {
+      if (content !== null) {
+        baselines[target] = content.toString("base64");
+      }
+    }
+  );
+  for (const [target, digest] of hashes) {
     if (digest !== null) {
       receipt[target] = digest;
     }
   }
   await mkdir(path.join(cwd, "chatjs"), { recursive: true });
+  // Readers verify these bytes against the receipt, so interrupted writes fail closed.
+  await writeFile(
+    path.join(cwd, sourceBaselineFile),
+    `${JSON.stringify(
+      Object.fromEntries(
+        Object.keys(baselines)
+          .toSorted()
+          .map((file) => [file, baselines[file]])
+      ),
+      null,
+      RECEIPT_INDENTATION_SPACES
+    )}\n`
+  );
   await writeFile(
     path.join(cwd, receiptFile),
     `${JSON.stringify(receipt, null, RECEIPT_INDENTATION_SPACES)}\n`
   );
 };
 
-export { hash, readReceipt, receiptFile, sourceHashes, recordInstalledSource };
+export {
+  hash,
+  readReceipt,
+  receiptFile,
+  sourceHashes,
+  recordInstalledSource,
+  readSourceBaselines,
+  sourceBaselineFile,
+};

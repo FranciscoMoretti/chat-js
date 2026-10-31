@@ -220,7 +220,7 @@ test("sync registers direct installs deterministically and preserves custom modu
   expect(contentHash).toBe(
     `// Content: ${new Bun.CryptoHasher("sha256").update(body.join("\n")).digest("hex")}`
   );
-  expect(installedBefore).toContain("installedToolNames,");
+  expect(installedBefore).toContain("installedToolNames");
   expect(installedBefore).not.toContain("import/group-exports");
   await syncTools(root);
   expect(
@@ -859,4 +859,68 @@ test("grouped tool and composer imports keep bindings attached beyond nine alias
   await syncTools(root, { checkOnly: true });
   await syncTools(root);
   expect(await readFile(file, "utf-8")).toBe(generated);
+});
+
+test("sync installs and removes a fourth document kind without rewriting app composition", async () => {
+  const root = await project();
+  const integration = path.join(root, "integrations/documents.ts");
+  await writeFile(integration, "// app-owned document policy\n");
+  const directory = path.join(root, "tools/chatjs/diagram");
+  await mkdir(directory, { recursive: true });
+  const descriptor = {
+    contractVersion: 1,
+    id: "diagram",
+    kind: "tool",
+    documentKind: "diagram",
+    tools: [
+      { toolExport: "drawDiagram", definitionExport: "drawing" },
+      { toolExport: "reviseDiagram" },
+    ],
+  };
+  const installDiagram = async () => {
+    await mkdir(directory, { recursive: true });
+    await Promise.all([
+      writeFile(
+        path.join(directory, "chatjs.json"),
+        JSON.stringify(descriptor)
+      ),
+      writeFile(
+        path.join(directory, "tool.ts"),
+        "export const drawDiagram = {}; export const reviseDiagram = {};"
+      ),
+      writeFile(
+        path.join(directory, "definition.ts"),
+        'export const documentDefinition = { kind: "diagram" } as const; export const drawing = { name: "drawDiagram" } as const;'
+      ),
+      writeFile(
+        path.join(directory, "document.tsx"),
+        "export const documentUi = {};"
+      ),
+    ]);
+    await syncTools(root);
+  };
+  await installDiagram();
+  const generated = await readFile(
+    path.join(root, "chatjs/generated/documents.ts"),
+    "utf-8"
+  );
+  expect(generated).toContain("@/tools/chatjs/diagram/definition");
+  expect(
+    await readFile(
+      path.join(root, "chatjs/generated/tool-definitions.ts"),
+      "utf-8"
+    )
+  ).toContain('"drawDiagram"');
+  await rm(directory, { recursive: true });
+  await syncTools(root);
+  expect(
+    await readFile(path.join(root, "chatjs/generated/documents.ts"), "utf-8")
+  ).not.toContain("diagram/definition");
+  await installDiagram();
+  expect(
+    await readFile(path.join(root, "chatjs/generated/documents.ts"), "utf-8")
+  ).toBe(generated);
+  expect(await readFile(integration, "utf-8")).toBe(
+    "// app-owned document policy\n"
+  );
 });

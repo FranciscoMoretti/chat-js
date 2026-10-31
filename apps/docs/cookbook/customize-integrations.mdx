@@ -133,8 +133,8 @@ All runtime consumers go through app-owned composition. There is no shared plugi
 | `authentication.ts`, `authentication-form.ts`, `sign-out.ts`, `signed-out.ts` | Select authentication policy, form, sign-out handler and signed-out screen separately |
 | `navigation.ts`, `model-visibility.ts`, `uploads.ts` | Select navigation, model visibility and attachment hooks with explicit defaults |
 | `tools.ts`, `tool-ui.ts`, `tool-providers.ts` | Compose native tools, renderers and shared provider definitions |
-| `tool-availability.ts`, `tool-configuration.ts`, `composer-tools.ts` | Compose exposure predicates, client-safe schemas and display metadata |
-| `document-ui.ts`, `document-actions.ts`, `document-run.ts`, `code-executor.ts` | Compose editors and assistant actions, select saved-document execution |
+| `tool-definitions.ts`, `tool-selection.ts`, `tool-availability.ts`, `tool-configuration.ts`, `composer-tools.ts` | Compose exposure predicates, client-safe schemas and display metadata |
+| `documents.ts`, `document-ui.ts`, `document-run.ts`, `code-executor.ts` | Compose editors and assistant actions, select saved-document execution |
 | `routers.ts`, `instrumentation.ts`, `database.ts` | Compose native tRPC routers, startup handlers and Drizzle schema paths |
 | `session-profiles.ts`, `cleanup.ts` | Select persisted-session profiles and scheduled cleanup tasks |
 | `plugin-catalog.ts`, `tool-catalog.ts` | Client-safe installation names and document kinds |
@@ -146,7 +146,77 @@ Each file imports the matching generated input and exports the app's selection. 
 
 Add a native EVE definition to the object in `integrations/tools.ts`, retaining the installed inputs and workflow-name guard. Add its renderer to `integrations/tool-ui.ts`. An explicit object property after a spread can replace an installed definition or wrap an installed renderer. Installed descriptors still reject duplicate names; dynamic tools cannot shadow native workflow names.
 
-Update `integrations/tool-catalog.ts` for an app-owned tool that should participate in selection, and `composer-tools.ts` for its display metadata. Keep these modules browser-safe. The catalog cannot import the server tool map to infer names: that would pull provider implementations and credentials into the client graph. There is no automatic discovery of arbitrary app-owned tools.
+Add its shared definition to `integrations/tool-definitions.ts` for catalog membership, selection (`selectable: true`), and display metadata. Use `composer-tools.ts` when you need a custom icon. Keep these modules browser-safe. The catalog cannot import the server tool map to infer names: that would pull provider implementations and credentials into the client graph. There is no automatic discovery of arbitrary app-owned tools.
+
+### Shared tool definitions
+
+Keep schemas and display metadata in a browser-safe `definition.ts`. Server execution and the renderer import the same definition. Do not export execution functions, environment readers, or server SDKs from this module.
+
+```ts
+// integrations/tool-definitions.ts
+import { installedToolDefinitions } from "@/chatjs/generated/tool-definitions";
+import { validateToolDefinitions } from "@/lib/ai/tool-definition";
+import { summarizeNotes } from "@/tools/local/summarize-notes/definition";
+
+export const toolDefinitions = validateToolDefinitions([
+  ...installedToolDefinitions,
+  summarizeNotes,
+]);
+```
+
+This list declares metadata, not execution. Register the native tool in `integrations/tools.ts` and its validated renderer in `integrations/tool-ui.ts`. These separate imports keep execution out of the browser graph. Duplicate definition names fail at composition. Installed definitions also have a generated type check against their descriptor's registration name.
+
+### Document kinds
+
+A document bundle owns three entry points:
+
+| Entry | Responsibility |
+| --- | --- |
+| `definition.ts` | Browser-safe kind, content schema, create/edit operation names |
+| `tool.ts` | Native EVE tools with authorization and persistence |
+| `document.tsx` | Editor, copy behavior, comparison support, assistant actions |
+
+The app composes definitions in `integrations/documents.ts` and editors in `integrations/document-ui.ts`. Add a kind such as `diagram` by adding its definition and view to those lists. You do not edit a core enum or add kind-specific branches. See [Authoring tools](../tools/authoring#document-bundles) for the bundle contract.
+
+Saved revisions store the kind as a string. Removing a bundle preserves its saved content and renders a read-only source fallback with a reinstall notice. Existing authorized reads still work. Tool and manual writes require the installed definition and pass its content schema. Reinstall the same kind to restore its editor. The content remains text, with a core size limit of two million characters. Structured formats can validate a textual representation.
+
+Wrap a document's `Body` in `integrations/document-ui.ts` using ordinary React composition while retaining the other properties. A direct import of its installed source creates an explicit removal dependency, just like a tool renderer wrapper.
+
+### Uploads outside the composer
+
+`integrations/uploads.ts` selects a headless upload hook. It returns `enabled`, `busy`, `uploadQueue`, `errors`, and `enqueue(files)`. The hook owns authentication checks, file preparation, the attachment limit, ordered delivery, and queue locking. It does not render controls, show toast notifications, or install DOM handlers.
+
+```tsx
+"use client";
+
+import { attachmentUploads } from "@/integrations/uploads";
+import type { AttachmentUploadInput } from "@/lib/installation-contracts";
+
+export function ProjectFileInput(props: AttachmentUploadInput) {
+  const files = attachmentUploads.useUploads(props);
+  return (
+    <section>
+      <input
+        type="file"
+        multiple
+        disabled={!files.enabled || files.busy}
+        onChange={(event) => {
+          const selected = [...(event.currentTarget.files ?? [])];
+          event.currentTarget.value = "";
+          void files.enqueue(selected);
+        }}
+      />
+      {files.errors.map((error) => (
+        <p key={error} role="alert">
+          {error}
+        </p>
+      ))}
+    </section>
+  );
+}
+```
+
+Pass the current attachment count and an `onUploaded` callback. An optional `onError` callback lets your app display errors elsewhere. The chat composer separately uses `hooks/use-attachment-picker.ts` for picker, drop, and paste events. The omitted-plugin default reports `enabled: false` and rejects direct enqueue calls. There is no separate progress or cancellation contract.
 
 ### Wrap UI
 
@@ -182,7 +252,7 @@ Exclusive integrations reject multiple selections. Hook implementations are sele
 
 ## Native entry points and migration
 
-Next.js routes, EVE entry files and database migrations keep their native file conventions. Installing those files can activate behavior without a composition list. Plugin descriptors and `chat-js status` identify their ownership; integration modules do not intercept framework discovery. Removing a plugin retains its database schema history.
+Next.js routes, EVE entry files and database migrations keep their native file conventions. Installing those files can activate behavior without a composition list. `chat-js add --dry-run`, `chat-js status`, and `chat-js remove --dry-run` distinguish declared integration modules from native entry paths and ordinary framework source. The inventory matches known file conventions without executing source. Exports and framework configuration still determine actual activation. Integration modules do not intercept framework discovery. Removing a plugin retains its database schema history.
 
 Apps with the older generated exports or `composition/custom/` files must explicitly adopt the new modules and update callers before sync. Move local tool and renderer registrations into `integrations/tools.ts` and `integrations/tool-ui.ts`; preserve their behavior rather than overwriting them with scaffold defaults. After updating consumers, remove the obsolete generated behavior files named by the layout error, then run sync and app checks. Preserve receipts and user source. Sync does not rewrite arbitrary user source.
 

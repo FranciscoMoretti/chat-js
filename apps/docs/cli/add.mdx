@@ -13,6 +13,8 @@ Accepts built-in names, standard `@namespace/item` addresses, complete item URLs
 | --- | --- | --- |
 | `-y, --yes` | `false` | Skip ChatJS confirmation |
 | `-o, --overwrite` | `false` | Authorize overwriting modified or untracked source |
+| `--dry-run` | `false` | Resolve and report declared integrations and native entry paths without installing or writing app files |
+| `--files-only` | `false` | Export source and connection metadata to a temporary review directory |
 | `--replace` | `false` | Explicitly authorize exclusive provider replacement |
 | `--sandbox-provider <item>` | None | Select optional sandbox infrastructure: Vercel, Daytona or a registry address |
 | `--gateway <item>` | Not applicable | Select an AI gateway |
@@ -61,3 +63,11 @@ If source installation or registration fails, the command exits unsuccessfully. 
 
 - [Tool Registry](../tools/overview) explains customizations.
 - [Tools](../tools/authoring) explains authoring.
+
+## Inspect activation first
+
+Run `chat-js add <item> --dry-run` to resolve the proposed installation and inspect its wiring before mutation. This can read a registry over the network. It does not install packages, run source, write app files, or record source hashes.
+
+The output separates app-owned integration modules, known Next.js/EVE entry paths, and ordinary framework source. It classifies explicit `~/` targets. Other shadcn destinations are reported as unresolved rather than guessed. Native path matches are an inventory, not proof that an export or framework setting activates them. Registering a database schema does not apply a migration.
+
+Use `--files-only` when you want source to review and connect manually. It exports files and metadata into a temporary directory without installing or activating them in your app. You cannot combine it with `--dry-run`.

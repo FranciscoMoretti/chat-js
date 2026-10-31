@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 import type { Dispatch, SetStateAction } from "react";
 
 import { attachmentUploads } from "@/integrations/uploads";
@@ -19,6 +20,9 @@ export const useEveAttachments = (state?: {
   const setAttachments = state?.setAttachments ?? setLocalAttachments;
   const behavior = attachmentUploads.useUploads({
     attachmentCount: attachments.length,
+    onError: (message) => {
+      toast.error(message);
+    },
     onUploaded: (attachment) => {
       setAttachments((current: readonly Readonly<DraftAttachment>[]) => [
         ...current,

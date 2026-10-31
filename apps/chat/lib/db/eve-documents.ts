@@ -7,7 +7,7 @@ import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import type { SQL } from "drizzle-orm";
 import { z } from "zod";
 
-import { artifactKinds } from "@/lib/artifacts/artifact-kind";
+import { artifactKind } from "@/lib/artifacts/artifact-kind";
 import { documentFileIds } from "@/lib/eve/document-contracts";
 import { isFileStorageKey } from "@/lib/file-url";
 
@@ -38,7 +38,7 @@ const revisionInput = z.object({
   documentId: z.uuid(),
   expectedRevisionId: z.uuid().nullable(),
   fileIds: documentFileIds,
-  kind: z.enum(artifactKinds),
+  kind: artifactKind,
   operationId: z
     .string()
     .min(MINIMUM_TEXT_LENGTH)
