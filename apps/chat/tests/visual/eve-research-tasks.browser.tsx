@@ -115,10 +115,7 @@ test("research task progress renders its update states together", async () => {
       .poll(() => container.textContent)
       .toContain("Research complete");
     await expect
-      .poll(
-        () =>
-          container.querySelectorAll('.group > div[style*="opacity: 1"]').length
-      )
+      .poll(() => container.querySelectorAll("[data-research-step]").length)
       .toBe(updates.length);
     await takeSnapshot("research-task-progress-states");
 
@@ -155,17 +152,10 @@ test("research task progress renders its update states together", async () => {
       .poll(
         () =>
           container.querySelectorAll(
-            '[aria-label="Completed research"] .group > div[style*="opacity: 1"]'
+            '[aria-label="Completed research"] [data-research-step]'
           ).length
       )
       .toBe(updates.length);
-    await expect
-      .poll(() =>
-        [
-          ...container.querySelectorAll<HTMLElement>('div[style*="opacity"]'),
-        ].every((element) => getComputedStyle(element).opacity === "1")
-      )
-      .toBe(true);
     await takeSnapshot("research-progress-active-and-complete");
   } finally {
     await unmountRoot(root);

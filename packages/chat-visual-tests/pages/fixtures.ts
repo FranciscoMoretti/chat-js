@@ -301,6 +301,47 @@ export const invoicesShared: NonNullable<ServerData["transcript"]> = {
 
 export const invoicesTranscripts = { [invoicesSessionId]: invoicesTranscript };
 
+export const questionTranscripts = {
+  [invoicesSessionId]: [
+    {
+      id: "question-message",
+      role: "assistant",
+      parts: [
+        { type: "text", text: "Let’s narrow down the invoice investigation." },
+        {
+          type: "dynamic-tool",
+          toolName: "askQuestion",
+          toolCallId: "question-call",
+          state: "approval-requested",
+          approval: { id: "question-request" },
+          input: {},
+          toolMetadata: {
+            eve: {
+              kind: "tool-call",
+              name: "askQuestion",
+              inputRequest: {
+                requestId: "question-request",
+                kind: "question",
+                display: "select",
+                prompt: "Which invoice issue should we investigate?",
+                allowFreeform: true,
+                options: [
+                  {
+                    id: "performance",
+                    label: "Query performance",
+                    description: "Find slow queries and missing indexes",
+                  },
+                  { id: "accuracy", label: "Invoice accuracy" },
+                ],
+              },
+            },
+          },
+        },
+      ],
+    },
+  ],
+} satisfies Record<string, readonly EveMessage[]>;
+
 type Connector = Outputs["mcp"]["list"][number];
 const connector = (
   id: string,

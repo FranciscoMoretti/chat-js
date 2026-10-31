@@ -9,7 +9,6 @@ import {
 import React, { useCallback, useState } from "react";
 import { Button } from "@/components/ui/button";
 import type { JSX as ReactJSX } from "react";
-import { Shimmer } from "@/components/ai-elements/shimmer";
 import { Spinner } from "@/components/ui/spinner";
 
 const INITIAL_ACTION_COUNT = 0;
@@ -24,6 +23,8 @@ export const LintControlsVisualFixture = (): ReactJSX.Element => {
   const changeShimmerElement = useCallback(() => {
     setInline((value) => !value);
   }, []);
+
+  const Thinking = inline ? "span" : "p";
 
   return (
     <main
@@ -46,7 +47,7 @@ export const LintControlsVisualFixture = (): ReactJSX.Element => {
       <p>Actions: {actions}</p>
       <div className="flex items-center gap-2">
         <Spinner aria-label="Saving" />
-        <Shimmer as={inline ? "span" : "p"}>Thinking...</Shimmer>
+        <Thinking className="shimmer text-muted-foreground motion-reduce:shimmer-none">Thinking...</Thinking>
       </div>
       <Button onClick={changeShimmerElement} type="button">
         Change shimmer element
