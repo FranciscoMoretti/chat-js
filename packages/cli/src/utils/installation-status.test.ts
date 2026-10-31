@@ -15,7 +15,9 @@ import {
   installationStatus,
   formatInstallationStatus,
 } from "./installation-status";
-import { recordInstalledSource } from "./source-receipt";
+import { recordInstalledSource, sourceBaselineFile } from "./source-receipt";
+import { loadSourceFormatter } from "./source-formatter";
+import { removePlugins } from "./remove-plugins";
 
 const roots: string[] = [];
 afterEach(async () => {
@@ -180,4 +182,110 @@ test("status refuses symlinked plugin source instead of reading outside the proj
     path.join(root, "plugins/alpha/source.ts")
   );
   await rejects(installationStatus(root), /symlinked ChatJS target/u);
+});
+
+test("project formatter classifies formatting without changing receipts or removal protection", async () => {
+  const root = await fixture();
+  const file = "plugins/alpha/settings.json";
+  await put(
+    root,
+    "plugins/alpha/chatjs.json",
+    JSON.stringify({
+      contractVersion: 1,
+      kind: "plugin",
+      id: "alpha",
+      files: [file],
+    })
+  );
+  await put(root, file, '{"label":"hello world"}');
+  await recordInstalledSource(root, [file, "plugins/alpha/chatjs.json"]);
+  await put(root, file, '{ "label": "hello world" }\n');
+  await put(
+    root,
+    "format-source.mjs",
+    'export async function formatSource({ path, source }) { return path.endsWith(".json") ? JSON.stringify(JSON.parse(source), null, 2) : null; }'
+  );
+  const formatSource = await loadSourceFormatter(root, "format-source.mjs");
+  const before = await snapshot(root);
+  const report = await installationStatus(root, { formatSource });
+  expect(
+    report.plugins[0]?.files.find((entry) => entry.path === file)?.state
+  ).toBe("formatting-only");
+  expect(formatInstallationStatus(report, false)).toContain(
+    "1 formatting-only"
+  );
+  const exact = await installationStatus(root);
+  expect(
+    exact.plugins[0]?.files.find((entry) => entry.path === file)?.state
+  ).toBe("modified");
+  const child = Bun.spawn(
+    [
+      process.execPath,
+      path.resolve(import.meta.dir, "../index.ts"),
+      "status",
+      "--cwd",
+      root,
+      "--format-source",
+      "format-source.mjs",
+      "--json",
+    ],
+    { stdout: "pipe", stderr: "pipe" }
+  );
+  const [output, error, exit] = await Promise.all([
+    new Response(child.stdout).text(),
+    new Response(child.stderr).text(),
+    child.exited,
+  ]);
+  expect({ exit, error }).toEqual({ exit: 0, error: "" });
+  expect(JSON.parse(output)).toEqual(report);
+  expect(await snapshot(root)).toEqual(before);
+  const plan = await removePlugins(root, ["alpha"], { dryRun: true });
+  expect(plan.modified).toContain(file);
+  await removePlugins(root, ["alpha"], { backup: true });
+  expect(
+    JSON.parse(await readFile(path.join(root, sourceBaselineFile), "utf-8"))
+  ).toEqual({});
+});
+
+test("old or mismatched baselines and invalid UTF-8 cannot be blessed by formatting", async () => {
+  const root = await fixture();
+  const file = "plugins/alpha/data.json";
+  await put(
+    root,
+    "plugins/alpha/chatjs.json",
+    JSON.stringify({
+      contractVersion: 1,
+      kind: "plugin",
+      id: "alpha",
+      files: [file],
+    })
+  );
+  await put(root, file, '{"value":1}');
+  await recordInstalledSource(root, [file]);
+  await put(root, file, '{ "value": 1 }');
+  await rm(path.join(root, sourceBaselineFile));
+  const state = async () => {
+    const report = await installationStatus(root, { formatSource: () => file });
+    return report.plugins[0]?.files.find((entry) => entry.path === file);
+  };
+  expect(await state()).toMatchObject({
+    state: "modified",
+    formatting: "baseline-unavailable",
+  });
+  await put(
+    root,
+    sourceBaselineFile,
+    JSON.stringify({ [file]: Buffer.from("wrong baseline").toString("base64") })
+  );
+  expect(await state()).toMatchObject({
+    state: "modified",
+    formatting: "baseline-unavailable",
+  });
+  await writeFile(path.join(root, file), Buffer.from([255]));
+  await recordInstalledSource(root, [file]);
+  await writeFile(path.join(root, file), Buffer.from([254]));
+  expect(await state()).toMatchObject({
+    state: "modified",
+    formatting: "unsupported",
+  });
 });

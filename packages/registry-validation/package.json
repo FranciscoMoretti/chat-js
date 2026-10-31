@@ -6,6 +6,7 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./compare": "./src/compare.ts",
     "./ownership": "./src/ownership.ts",
     "./shadcn": "./src/shadcn.ts"
   },

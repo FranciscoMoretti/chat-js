@@ -10,6 +10,7 @@ chat-js status
 chat-js status --files
 chat-js status --json
 chat-js status --cwd ./my-app
+chat-js status --format-source ./format-source.mjs
 ```
 
 This command is available in the CLI source accompanying this change. Use your matching local CLI build until a release includes it.
@@ -20,6 +21,7 @@ This command is available in the CLI source accompanying this change. Use your m
 chatjs/
   generated/                   CLI-generated imports and registrations
   installed-source.json        Installed file hashes
+  installed-source-content.json Original installed bytes (base64)
   installed-dependencies.json  Package ownership receipt
   retained-plugin-schemas.json Schema inputs preserved after removal
   removed-plugins/             Backups requested during removal
@@ -40,11 +42,42 @@ The tree is not the complete ownership map. Next.js route files under `app/` and
 | State | Meaning |
 | --- | --- |
 | `unchanged` | Matches the last hash recorded when the CLI installed that file |
+| `formatting-only` | Bytes differ, but the selected project formatter produces identical text for the original and local source |
 | `modified` | Differs from its recorded installed version |
 | `missing` | The descriptor declares a file that is absent |
 | `untracked` | No installation hash exists, including locally added plugin files and source installed directly through shadcn |
 
 Untracked does not mean safe to replace. Status never establishes a new baseline or treats existing files as freshly installed.
+
+## Project formatter
+
+Use `--format-source <module>` to explicitly load a project-owned JavaScript module exporting `formatSource`. The path is relative to `--cwd` and must stay inside the project. Without this option, comparisons use exact bytes and no formatter module is loaded.
+
+For example, a project already using Prettier can put this in `format-source.mjs` at its root:
+
+```js
+import { fileURLToPath } from "node:url";
+import { resolve } from "node:path";
+import * as prettier from "prettier";
+
+const root = fileURLToPath(new URL(".", import.meta.url));
+
+export async function formatSource({ path, source }) {
+  const filepath = resolve(root, path);
+  const info = await prettier.getFileInfo(filepath, {
+    ignorePath: resolve(root, ".prettierignore"),
+  });
+  if (info.ignored || !info.inferredParser) return null;
+  const options = await prettier.resolveConfig(filepath);
+  return prettier.format(source, { ...options, filepath });
+}
+```
+
+The CLI does not install or bundle a formatter. The hook receives the project-relative destination path and source text. Return formatted text or `null` when unsupported. Format in memory without writing files, running lint fixes, sorting imports or changing source meaning. Explicitly selecting a module executes trusted local code, including its imports; registry metadata cannot select the hook.
+
+Both versions use the same current hook, so changing formatter settings does not require resetting the installation baseline. Newly recorded installations retain their original bytes alongside their hashes. Keep both receipts in version control. Older hash-only receipts remain valid but cannot classify formatting-only changes; status reports `baseline-unavailable` and never adopts your current edits as a baseline.
+
+Hook failures, invalid return values and unsupported files remain `modified`, with a `formatting` reason in the report. Non-UTF-8 source uses exact comparison. A module that cannot load or lacks the named export fails the command. Formatting-only classification does not relax replacement or removal protection: those operations still protect every byte change.
 
 By default, output includes state counts, changed/missing/untracked files, and plugin-owned files outside the plugin directory. `--files` also lists unchanged plugin files. `--json` includes the full inventory, generated paths, app-owned integration paths, retained plugin directories, declared dependencies, shared files, and supported source references that affect removal.
 
