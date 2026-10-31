@@ -40,7 +40,15 @@ const searchItem: RegistryItem = {
   ],
   name: "search",
   type: "registry:item",
-  registryDependencies: ["button", "command", "dialog", "sidebar", "skeleton"],
+  registryDependencies: [
+    "alert",
+    "button",
+    "command",
+    "dialog",
+    "empty",
+    "sidebar",
+    "skeleton",
+  ],
   description: "Search chat titles and conversation text",
   files: searchFiles.map((file) => ({
     path: file.startsWith("chatjs/plugins/search/")

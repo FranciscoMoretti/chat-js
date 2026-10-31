@@ -11,6 +11,8 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
+import { Alert, AlertAction, AlertDescription } from "@/components/ui/alert";
+import { Empty, EmptyDescription } from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const highlightedExcerpt = (
@@ -156,19 +158,23 @@ export const EveSearchResultsView = ({
           </output>
         )}
         {error && (
-          <div className="p-4 text-sm" role="alert">
-            Could not search chats.{" "}
-            <Button variant="ghost" onClick={onRetry}>
-              Retry
-            </Button>
-          </div>
+          <Alert variant="destructive">
+            <AlertDescription>Could not search chats.</AlertDescription>
+            <AlertAction>
+              <Button variant="ghost" size="sm" onClick={onRetry}>
+                Retry
+              </Button>
+            </AlertAction>
+          </Alert>
         )}
         {!pending && !error && !searching && items.length === 0 && (
-          <p className="text-muted-foreground p-4 text-sm">
-            {isSearch
-              ? "No chats found. Try different words."
-              : "Your recent chats will appear here."}
-          </p>
+          <Empty className="p-4">
+            <EmptyDescription>
+              {isSearch
+                ? "No chats found. Try different words."
+                : "Your recent chats will appear here."}
+            </EmptyDescription>
+          </Empty>
         )}
         {items.length > 0 && (
           <CommandGroup heading={isSearch ? "Best matches" : "Recent chats"}>
