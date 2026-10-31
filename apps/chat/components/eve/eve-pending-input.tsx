@@ -3,6 +3,7 @@
 import React from "react";
 import type { EveMessageInputRequest, InputResponse } from "eve/client";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Item,
   ItemActions,
@@ -83,8 +84,18 @@ const PendingQuestion = ({
         {request.allowFreeform === true && (
           <QuestionnaireInput
             aria-label="Your answer"
+            className="h-auto min-h-20 resize-y"
             placeholder="Write your answer…"
             maxLength={16_000}
+            render={
+              <Textarea
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.stopPropagation();
+                  }
+                }}
+              />
+            }
           />
         )}
       </QuestionnaireChoices>

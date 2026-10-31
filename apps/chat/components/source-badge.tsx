@@ -28,7 +28,8 @@ export const WebSourceBadge = ({
         "max-w-50 gap-1"
       )}
     >
-      <Favicon className="size-3 shrink-0" url={getFaviconUrl(result)} />
+      <Favicon alt="" className="size-3 shrink-0" url={getFaviconUrl(result)} />
+      <span className="sr-only">{result.title} — </span>
       <span className="truncate">{getDomainFromUrl(result.url)}</span>
       <span className="sr-only"> (opens in a new tab)</span>
     </HoverCardTrigger>

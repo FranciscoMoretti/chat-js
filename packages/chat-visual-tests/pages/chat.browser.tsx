@@ -25,6 +25,7 @@ import {
   invoicesFollowupEvents,
   invoicesFollowupTrpc,
   launchProject,
+  questionTranscripts,
   session,
   signedIn,
 } from "./fixtures";
@@ -388,6 +389,36 @@ test("shared conversation, signed in", async () => {
       return action.top >= bounds.top && action.bottom <= bounds.bottom;
     })
     .toBe(true);
+});
+
+test("owner can select or write a question answer while the native turn stays open", async () => {
+  await renderRoute(conversation, {
+    ...request,
+    agentStatus: "streaming",
+    transcripts: questionTranscripts,
+  });
+  await expect
+    .element(page.getByText("Which invoice issue should we investigate?"))
+    .toBeVisible();
+  const choice = page.getByRole("radio", { name: /Query performance/u });
+  await choice.click();
+  await expect.element(choice).toBeChecked();
+  const answer = page.getByRole("textbox", { name: "Your answer" });
+  await answer.fill(
+    "Compare overdue invoices across accounts\nInclude payment terms"
+  );
+  await expect.element(choice).not.toBeChecked();
+  await expect
+    .element(answer)
+    .toHaveValue(
+      "Compare overdue invoices across accounts\nInclude payment terms"
+    );
+  await expect
+    .element(page.getByRole("button", { name: "Submit answer" }))
+    .toBeEnabled();
+  await expect
+    .element(page.getByRole("textbox", { name: "Message", exact: true }))
+    .toBeVisible();
 });
 
 test("owner can answer approval while the native turn stays open", async () => {

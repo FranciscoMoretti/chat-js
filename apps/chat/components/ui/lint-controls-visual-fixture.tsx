@@ -47,7 +47,7 @@ export const LintControlsVisualFixture = (): ReactJSX.Element => {
       <p>Actions: {actions}</p>
       <div className="flex items-center gap-2">
         <Spinner aria-label="Saving" />
-        <Thinking className="shimmer motion-reduce:shimmer-none">Thinking...</Thinking>
+        <Thinking className="shimmer text-muted-foreground motion-reduce:shimmer-none">Thinking...</Thinking>
       </div>
       <Button onClick={changeShimmerElement} type="button">
         Change shimmer element

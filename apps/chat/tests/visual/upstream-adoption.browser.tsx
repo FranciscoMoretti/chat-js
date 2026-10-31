@@ -1,6 +1,6 @@
 import React from "react";
 import { expect, test, vi } from "vitest";
-import { page, commands } from "vitest/browser";
+import { page, commands, userEvent } from "vitest/browser";
 import { takeSnapshot } from "@uiverify/vitest";
 import { EvePendingInput } from "@/components/eve/eve-pending-input";
 import type { EveMessageInputRequest, InputResponse } from "eve/client";
@@ -118,13 +118,17 @@ for (const viewport of [
         requestId: question.requestId,
         optionId: "accessibility",
       });
-      await page
-        .getByRole("textbox", { name: "Your answer" })
-        .fill("  Security  ");
+      respond.mockClear();
+      const answer = page.getByRole("textbox", { name: "Your answer" });
+      await answer.fill("  Security");
+      await answer.click();
+      await userEvent.keyboard("{End}{Enter}Privacy  ");
+      await expect.element(answer).toHaveValue("  Security\nPrivacy  ");
+      expect(respond).not.toHaveBeenCalled();
       await page.getByRole("button", { name: "Submit answer" }).click();
       expect(respond).toHaveBeenLastCalledWith({
         requestId: question.requestId,
-        text: "Security",
+        text: "Security\nPrivacy",
       });
       await page
         .getByRole("button", { name: "Delete document", exact: true })
@@ -160,7 +164,10 @@ for (const viewport of [
         )
         .toBeNull();
       await page
-        .getByRole("link", { name: /example.test/u })
+        .getByRole("link", {
+          name: "Accessible interfaces — example.test (opens in a new tab)",
+          exact: true,
+        })
         .first()
         .hover();
       await expect
