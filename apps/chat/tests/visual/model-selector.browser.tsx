@@ -91,8 +91,10 @@ const models: AppModelDefinition[] = [
 ];
 const Controller = ({
   initialSelection,
+  allowMultiple,
 }: {
   readonly initialSelection: SelectedModelValue;
+  readonly allowMultiple?: boolean;
 }): React.JSX.Element => {
   const [selection, setSelection] =
     useState<SelectedModelValue>(initialSelection);
@@ -100,6 +102,7 @@ const Controller = ({
     <section>
       <output data-testid="selection">{JSON.stringify(selection)}</output>
       <ModelSelector
+        allowMultiple={allowMultiple}
         selectedModelId="openai/gpt-4.1"
         selectedModelSelection={selection}
         onModelSelectionChangeAction={setSelection}
@@ -177,7 +180,8 @@ const createPreferencesClient = (): {
   return { client, requests };
 };
 const mountSelector = async (
-  initialSelection: Readonly<SelectedModelValue>
+  initialSelection: Readonly<SelectedModelValue>,
+  allowMultiple?: boolean
 ): Promise<{
   readonly fixture: Awaited<ReturnType<typeof mount>>;
   readonly queryClient: QueryClient;
@@ -193,7 +197,10 @@ const mountSelector = async (
         <TRPCProvider trpcClient={client} queryClient={queryClient}>
           <SessionProvider>
             <ChatModelsProvider models={models}>
-              <Controller initialSelection={initialSelection} />
+              <Controller
+                initialSelection={initialSelection}
+                allowMultiple={allowMultiple}
+              />
             </ChatModelsProvider>
           </SessionProvider>
         </TRPCProvider>
@@ -221,7 +228,8 @@ for (const scenario of scenarios) {
     await commands.modelAssets();
 
     const { fixture, queryClient, requests } = await mountSelector(
-      scenario.initialSelection
+      scenario.initialSelection,
+      true
     );
     try {
       await selectBeta(scenario.name);
@@ -236,3 +244,25 @@ for (const scenario of scenarios) {
     }
   });
 }
+
+test("model selection defaults to a single model", async () => {
+  await commands.modelAssets();
+  const { fixture, queryClient } = await mountSelector("openai/gpt-4.1");
+  try {
+    await page.getByTestId("model-selector").click();
+    await expect
+      .element(page.getByRole("option", { name: /Fixture Beta/u }))
+      .toBeVisible();
+    await expect
+      .element(page.getByRole("switch", { name: "Use Multiple Models" }))
+      .not.toBeInTheDocument();
+    await takeSnapshot("model-default-single-selection");
+    await page.getByRole("option", { name: /Fixture Beta/u }).click();
+    await expect
+      .element(page.getByTestId("selection"))
+      .toHaveTextContent('"google/gemini-2.5-flash"');
+  } finally {
+    await unmount(fixture);
+    queryClient.clear();
+  }
+});

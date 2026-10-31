@@ -65,7 +65,7 @@ export interface ChatActionProps {
     readonly state?: string;
   };
 }
-export interface ChatMessageActionProps {
+export interface ChatMessageProps {
   readonly conversationId: string;
   readonly messageId: string;
   readonly disabled: boolean;

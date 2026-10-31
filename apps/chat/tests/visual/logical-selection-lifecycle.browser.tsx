@@ -1,5 +1,5 @@
 import { createDomHarness } from "@/components/test-dom-harness";
-import { EveLogicalResponses } from "@/components/eve/eve-logical-navigation";
+import { ParallelResponses } from "@/components/parallel-responses/responses";
 import React, { act } from "react";
 import { expect, it, vi } from "vitest";
 
@@ -94,7 +94,7 @@ it("confirms a pending response once, clears it before recursive selection event
   let harness: ReturnType<typeof createDomHarness> | undefined;
   act(() => {
     harness = createDomHarness(
-      <EveLogicalResponses
+      <ParallelResponses
         conversationId="conversation"
         messageId="message"
         disabled={false}
@@ -136,7 +136,7 @@ it("confirms a pending response once, clears it before recursive selection event
       ];
       fixture.emit();
       rendered.update(
-        <EveLogicalResponses
+        <ParallelResponses
           conversationId="conversation"
           messageId="message"
           disabled={false}
@@ -156,7 +156,7 @@ it("confirms a pending response once, clears it before recursive selection event
       ];
       fixture.controller = { ...fixture.controller };
       rendered.update(
-        <EveLogicalResponses
+        <ParallelResponses
           conversationId="conversation"
           messageId="message"
           disabled={false}

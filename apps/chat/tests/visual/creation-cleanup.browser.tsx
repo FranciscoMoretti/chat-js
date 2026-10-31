@@ -6,6 +6,10 @@ import { page } from "vitest/browser";
 
 import type { EveComposer } from "@/components/eve/eve-composer";
 import { NewEveConversation } from "@/components/eve/new-eve-conversation";
+import {
+  prepareResponseGroupCreation,
+  readCreationRequest,
+} from "@/lib/eve/pending-create";
 import { CreationRejectedError } from "@/lib/eve/create-conversation";
 import { mount, unmount } from "@/tests/visual/primitive-mount";
 
@@ -179,6 +183,41 @@ test("creation cleanup warning survives the recovery handoff without resending a
     expect(runtime.open).not.toHaveBeenCalled();
   } finally {
     removal.mockRestore();
+    sessionStorage.clear();
+    await unmount(fixture);
+  }
+});
+
+test("restored parallel creation retries the original request without rebuilding selection", async () => {
+  sessionStorage.clear();
+  const saved = prepareResponseGroupCreation(
+    sessionStorage,
+    "test-owner",
+    "Keep both copies of this model",
+    ["openai/gpt-4.1", "openai/gpt-4.1"]
+  );
+  runtime.resolve.mockRejectedValue(new Error("Still unconfirmed"));
+  const fixture = await mount(<NewEveConversation ownerId="test-owner" />);
+  try {
+    await expect
+      .element(page.getByRole("region", { name: "Conversation recovery" }))
+      .toHaveTextContent("Keep both copies of this model");
+    await expect
+      .element(page.getByRole("textbox", { name: "Message" }))
+      .not.toBeInTheDocument();
+    expect(runtime.resolve).not.toHaveBeenCalled();
+    await act(async () => {
+      await page.getByRole("button", { name: "Retry creation" }).click();
+    });
+    await expect
+      .element(page.getByRole("alert"))
+      .toHaveTextContent("Still unconfirmed");
+    expect(runtime.resolve.mock.calls).toEqual([
+      [sessionStorage, "test-owner", saved, undefined],
+    ]);
+    expect(readCreationRequest(sessionStorage, "test-owner")).toEqual(saved);
+    expect(runtime.open).not.toHaveBeenCalled();
+  } finally {
     sessionStorage.clear();
     await unmount(fixture);
   }

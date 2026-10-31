@@ -3,7 +3,7 @@ import { defineSlot } from "@/chatjs/core/ui/slots";
 import type {
   ChatActionProps,
   ChatSuggestionsProps,
-  ChatMessageActionProps,
+  ChatMessageProps,
 } from "@/chatjs/core/chat/contracts";
 import type { ComposerControlProps } from "@/components/composer/control";
 
@@ -12,7 +12,8 @@ export const SidebarHeaderItems = defineSlot<{ readonly ownerId?: string }>();
 export const ChatActions = defineSlot<ChatActionProps>();
 export const ChatBreadcrumbs = defineSlot<{ readonly chatId: string }>();
 export const ChatHeaderActions = defineSlot<ChatActionProps>();
-export const MessageActions = defineSlot<ChatMessageActionProps>();
+export const MessageResponses = defineSlot<ChatMessageProps>();
+export const MessageActions = defineSlot<ChatMessageProps>();
 export const ChatSuggestions = defineSlot<ChatSuggestionsProps>();
 export const AccountSummary = defineSlot();
 export const ComposerAttachments = defineSlot<ComposerControlProps>();
