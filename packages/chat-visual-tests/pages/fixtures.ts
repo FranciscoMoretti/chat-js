@@ -617,7 +617,6 @@ export const archivedDiagramTranscript: EveMessage[] = [
   },
 ];
 
-export const chatFailure =
-  "The model provider is unavailable. Try again in a moment.";
+export const chatFailure = `The model provider is unavailable. Request reference: ${"reference".repeat(20)}`;
 export const creationFailure =
   "Unable to start this conversation. Choose another model.";
