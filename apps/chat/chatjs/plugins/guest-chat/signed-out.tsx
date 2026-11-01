@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import type { ReadonlyEveMessage } from "@/lib/eve/readonly-message-types";
 import { GUEST_POLICY } from "./guest-policy";
 
+import { EveModelPicker } from "@/components/eve/eve-model-picker";
 import { EveComposer } from "@/components/eve/eve-composer";
 import { EveMessages } from "@/components/eve/eve-messages";
 
@@ -132,7 +133,7 @@ const GuestConversationView = ({
       <EveComposer
         autoFocus
 
-        retainedModelId={modelId}
+        modelPicker={<EveModelPicker disabled modelId={modelId} />}
         status={busy ? "streaming" : "ready"}
         disabled={busy || expired}
         draft={draft}
@@ -347,7 +348,7 @@ const GuestChatScreen = (): ReactJSX.Element => {
               )}
               <EveComposer
                 autoFocus
-                retainedModelId={modelId}
+                modelPicker={<EveModelPicker disabled modelId={modelId} />}
                 status={busy ? "submitted" : "ready"}
                 disabled={busy || !modelId}
                 draft={draft}

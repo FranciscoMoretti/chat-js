@@ -4,7 +4,6 @@ import React, { memo } from "react";
 import type { ComponentProps } from "react";
 import { ModelSettingsLink } from "@/components/chat-slots";
 import { LoginCtaBanner } from "@/components/upgrade-cta/login-cta-banner";
-import { config } from "@/lib/config";
 import { getEnabledFeatures } from "@/lib/features-config";
 import { useChatModels } from "@/providers/chat-models-provider";
 import { useSession } from "@/providers/session-provider";
@@ -28,11 +27,7 @@ const ConnectedModelSelector = (
   return (
     <ModelSelectorView
       {...props}
-      allowMultiple={
-        props.allowMultiple !== false &&
-        !isAnonymous &&
-        config.features.parallelResponses
-      }
+      allowMultiple={props.allowMultiple === true && !isAnonymous}
       chatModels={models}
       allModels={allModels}
       modelsDisabled={isAnonymous}
