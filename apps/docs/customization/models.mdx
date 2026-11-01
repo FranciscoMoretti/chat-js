@@ -22,7 +22,6 @@ ai: {
   providerOrder: string[];        // Provider sort order in model selector
   disabledModels: AppModelId[];   // Models hidden from all users
   curatedDefaults: AppModelId[];  // Default models enabled for new users
-  anonymousModels: AppModelId[];  // Models available to anonymous users
   workflows: {                    // Default model for shared app workflows
     chat: AppModelId;
     title: AppModelId;
@@ -83,20 +82,9 @@ ai: {
 }
 ```
 
-## Anonymous Models
+## Guest Models
 
-Restrict which models anonymous (non-authenticated) users can access:
-
-```ts
-ai: {
-  anonymousModels: [
-    "google/gemini-2.5-flash-lite",
-    "openai/gpt-5-mini",
-    "openai/gpt-5-nano",
-    "anthropic/claude-haiku-4.5",
-  ],
-}
-```
+[Guest Chat](../plugins/guest-chat) owns its fixed model and locked picker. Customize its plugin policy instead of the account catalog.
 
 ## Workflow Defaults
 

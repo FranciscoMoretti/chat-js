@@ -1,18 +1,24 @@
-/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 
 import { expect, test } from "@playwright/test";
+import type { TestInfo } from "@playwright/test";
 
 test("installed renderer states stay readable at desktop and mobile sizes", async ({
   page,
 }) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   await page.goto("/");
   const styles = await page
     .locator('link[rel="stylesheet"]')
-    .evaluateAll((links) => links.map((link) => link.outerHTML).join(""));
+    .evaluateAll((links: readonly { readonly outerHTML: string }[]) =>
+      links
+        .map((link: { readonly outerHTML: string }) => link.outerHTML)
+        .join("")
+    );
   expect(styles.length).toBeGreaterThan(0);
   const content = execFileSync("bun", ["tests/eve-renderer-fixture.ts"], {
     encoding: "utf-8",
@@ -24,6 +30,7 @@ test("installed renderer states stay readable at desktop and mobile sizes", asyn
   await expect(page.getByText("Words", { exact: true })).toBeVisible();
   await expect(page.getByRole("alert")).toHaveCount(2);
   await expect(page.getByText("Request declined.")).toBeVisible();
+  /* oxlint-disable eslint/no-await-in-loop -- Viewport changes and screenshots operate on the same browser page. */
   for (const width of [1100, 390]) {
     await page.setViewportSize({ height: 850, width });
     expect(
@@ -35,20 +42,30 @@ test("installed renderer states stay readable at desktop and mobile sizes", asyn
       path: `tests/eve-results/screenshots/eve-renderer-states-${width}.png`,
     });
   }
+  /* oxlint-enable eslint/no-await-in-loop */
 });
 
 test("native video renderer covers progress, completion and failure states", async ({
   page,
 }) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
-  await page.route("**/api/files/abcdefghijklmnopqrstuvwx.mp4", (route) =>
-    route.abort()
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
+  await page.route(
+    "**/api/files/abcdefghijklmnopqrstuvwx.mp4",
+    async (route) => {
+      await route.abort();
+    }
   );
   await page.goto("/api/dev-login");
   await page.goto("/");
   const styles = await page
     .locator('link[rel="stylesheet"]')
-    .evaluateAll((links) => links.map((link) => link.outerHTML).join(""));
+    .evaluateAll((links: readonly { readonly outerHTML: string }[]) =>
+      links
+        .map((link: { readonly outerHTML: string }) => link.outerHTML)
+        .join("")
+    );
   const content = execFileSync("bun", ["tests/eve-video-renderer-fixture.ts"], {
     encoding: "utf-8",
   });
@@ -67,6 +84,7 @@ test("native video renderer covers progress, completion and failure states", asy
   );
   await expect(page.getByRole("alert")).toHaveCount(3);
   await expect(page.getByText("Request declined.")).toBeVisible();
+  /* oxlint-disable eslint/no-await-in-loop -- Viewport changes and screenshots operate on the same browser page. */
   for (const width of [1100, 390]) {
     await page.setViewportSize({ height: 850, width });
     expect(
@@ -78,23 +96,33 @@ test("native video renderer covers progress, completion and failure states", asy
       path: `tests/eve-results/screenshots/eve-video-states-${width}.png`,
     });
   }
+  /* oxlint-enable eslint/no-await-in-loop */
 });
 
 test("native image renderer covers progress, completion and failure states", async ({
   page,
 }) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
-  await page.route("**/api/files/abcdefghijklmnopqrstuvwx.png", (route) =>
-    route.fulfill({
-      body: '<svg xmlns="http://www.w3.org/2000/svg" width="512" height="320"><rect width="512" height="320" fill="white"/><rect x="176" y="80" width="160" height="160" fill="royalblue"/></svg>',
-      contentType: "image/svg+xml",
-    })
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
+  await page.route(
+    "**/api/files/abcdefghijklmnopqrstuvwx.png",
+    async (route) => {
+      await route.fulfill({
+        body: '<svg xmlns="http://www.w3.org/2000/svg" width="512" height="320"><rect width="512" height="320" fill="white"/><rect x="176" y="80" width="160" height="160" fill="royalblue"/></svg>',
+        contentType: "image/svg+xml",
+      });
+    }
   );
   await page.goto("/api/dev-login");
   await page.goto("/");
   const styles = await page
     .locator('link[rel="stylesheet"]')
-    .evaluateAll((links) => links.map((link) => link.outerHTML).join(""));
+    .evaluateAll((links: readonly { readonly outerHTML: string }[]) =>
+      links
+        .map((link: { readonly outerHTML: string }) => link.outerHTML)
+        .join("")
+    );
   const content = execFileSync(
     "bun",
     ["tests/eve-video-renderer-fixture.ts", "--image"],
@@ -117,6 +145,7 @@ test("native image renderer covers progress, completion and failure states", asy
   );
   await expect(page.getByRole("alert")).toHaveCount(3);
   await expect(page.getByText("Request declined.")).toBeVisible();
+  /* oxlint-disable eslint/no-await-in-loop -- Viewport changes and screenshots operate on the same browser page. */
   for (const width of [1100, 390]) {
     await page.setViewportSize({ height: 850, width });
     expect(
@@ -128,17 +157,24 @@ test("native image renderer covers progress, completion and failure states", asy
       path: `tests/eve-results/screenshots/eve-image-states-${width}.png`,
     });
   }
+  /* oxlint-enable eslint/no-await-in-loop */
 });
 
 test("native research renderer covers progress, clarification, report and failures", async ({
   page,
 }) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   await page.goto("/");
   const styles = await page
     .locator('link[rel="stylesheet"]')
-    .evaluateAll((links) => links.map((link) => link.outerHTML).join(""));
+    .evaluateAll((links: readonly { readonly outerHTML: string }[]) =>
+      links
+        .map((link: { readonly outerHTML: string }) => link.outerHTML)
+        .join("")
+    );
   const content = execFileSync(
     "bun",
     ["tests/eve-research-renderer-fixture.tsx"],
@@ -155,6 +191,7 @@ test("native research renderer covers progress, clarification, report and failur
   ).toBeVisible();
   await expect(page.getByText("Request declined.")).toBeVisible();
   await expect(page.getByRole("alert")).toHaveCount(3);
+  /* oxlint-disable eslint/no-await-in-loop -- Viewport changes and screenshots operate on the same browser page. */
   for (const width of [1100, 390]) {
     await page.setViewportSize({ height: 850, width });
     expect(
@@ -166,17 +203,24 @@ test("native research renderer covers progress, clarification, report and failur
       path: `tests/eve-results/screenshots/eve-research-states-${width}.png`,
     });
   }
+  /* oxlint-enable eslint/no-await-in-loop */
 });
 
 test("native MCP renderer covers pending, result, denial and errors", async ({
   page,
-}, testInfo) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+}, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   await page.goto("/");
   const styles = await page
     .locator('link[rel="stylesheet"]')
-    .evaluateAll((links) => links.map((link) => link.outerHTML).join(""));
+    .evaluateAll((links: readonly { readonly outerHTML: string }[]) =>
+      links
+        .map((link: { readonly outerHTML: string }) => link.outerHTML)
+        .join("")
+    );
   const bundlePath = testInfo.outputPath("mcp-fixture.js");
   execFileSync("bun", [
     "build",
@@ -212,14 +256,17 @@ test("native MCP renderer covers pending, result, denial and errors", async ({
     .click();
   await expect(native.getByText("Result", { exact: true })).toHaveCount(6);
 
-  for (const value of ["false", "0", "true", "null", '""']) {
-    await expect(
-      page
-        .locator("pre:visible")
-        .filter({ hasText: new RegExp(`^${value}$`, "u") })
-    ).toHaveCount(2);
-  }
+  await Promise.all(
+    ["false", "0", "true", "null", '""'].map(async (value) => {
+      await expect(
+        page
+          .locator("pre:visible")
+          .filter({ hasText: new RegExp(`^${value}$`, "u") })
+      ).toHaveCount(2);
+    })
+  );
 
+  /* oxlint-disable eslint/no-await-in-loop -- Viewport changes and screenshots operate on the same browser page. */
   for (const width of [1100, 390]) {
     await page.setViewportSize({ height: 850, width });
     expect(
@@ -231,16 +278,21 @@ test("native MCP renderer covers pending, result, denial and errors", async ({
       path: `tests/eve-results/screenshots/eve-mcp-states-${width}.png`,
     });
   }
+  /* oxlint-enable eslint/no-await-in-loop */
 });
 
 test("public tool projection preserves readable results without approval controls or private envelopes", async ({
   page,
-}, testInfo) => {
+}, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
   await page.goto("/api/dev-login");
   await page.goto("/");
   const styles = await page
     .locator('link[rel="stylesheet"]')
-    .evaluateAll((links) => links.map((link) => link.outerHTML).join(""));
+    .evaluateAll((links: readonly { readonly outerHTML: string }[]) =>
+      links
+        .map((link: { readonly outerHTML: string }) => link.outerHTML)
+        .join("")
+    );
   const content = execFileSync("bun", ["tests/eve-public-tools.fixture.ts"], {
     encoding: "utf-8",
   });

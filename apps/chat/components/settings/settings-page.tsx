@@ -1,15 +1,17 @@
 "use client";
+import React from "react";
 
+import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 
-export const SettingsPage = ({
+const SettingsPage = ({
   children,
   className,
 }: {
-  children: React.ReactNode;
-  className?: string;
-}) => (
+  readonly children: ReadonlyReactNode;
+  readonly className?: string;
+}): React.JSX.Element => (
   <div
     className={cn(
       "flex min-h-0 flex-1 flex-col gap-6 overflow-hidden",
@@ -20,21 +22,23 @@ export const SettingsPage = ({
   </div>
 );
 
-export const SettingsPageHeader = ({
+const SettingsPageHeader = ({
   children,
   className,
 }: {
-  children: React.ReactNode;
-  className?: string;
-}) => <div className={cn("shrink-0", className)}>{children}</div>;
+  readonly children: ReadonlyReactNode;
+  readonly className?: string;
+}): React.JSX.Element => (
+  <div className={cn("shrink-0", className)}>{children}</div>
+);
 
-export const SettingsPageContent = ({
+const SettingsPageContent = ({
   children,
   className,
 }: {
-  children: React.ReactNode;
-  className?: string;
-}) => (
+  readonly children: ReadonlyReactNode;
+  readonly className?: string;
+}): React.JSX.Element => (
   <div
     className={cn("flex min-h-0 flex-1 flex-col overflow-hidden", className)}
   >
@@ -42,10 +46,18 @@ export const SettingsPageContent = ({
   </div>
 );
 
-export const SettingsPageScrollArea = ({
+const SettingsPageScrollArea = ({
   children,
   className,
 }: {
-  children: React.ReactNode;
-  className?: string;
-}) => <ScrollArea className={className}>{children}</ScrollArea>;
+  readonly children: ReadonlyReactNode;
+  readonly className?: string;
+}): React.JSX.Element => (
+  <ScrollArea className={className}>{children}</ScrollArea>
+);
+export {
+  SettingsPage,
+  SettingsPageContent,
+  SettingsPageHeader,
+  SettingsPageScrollArea,
+};

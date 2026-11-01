@@ -1,10 +1,17 @@
 import { beforeEach, expect, it, vi } from "vitest";
-
+import type { assertEveFilesOwned } from "../db/eve-files";
 import { fetchEveChannelFile } from "./channel-files";
 
-const mocks = vi.hoisted(() => ({ download: vi.fn(), owned: vi.fn() }));
+const mocks = vi.hoisted(() => ({
+  download: vi.fn(),
+  retain: vi.fn(),
+  owned: vi.fn<typeof assertEveFilesOwned>(),
+}));
 vi.mock("../db/eve-files", () => ({ assertEveFilesOwned: mocks.owned }));
 vi.mock("../file-storage", () => ({ downloadFile: mocks.download }));
+vi.mock("./workspace-attachments", () => ({
+  retainWorkspaceAttachment: mocks.retain,
+}));
 
 const key = "abcdefghijklmnopqrstuvwx.png";
 const owner = {
@@ -16,12 +23,12 @@ const owner = {
   NonNullable<Parameters<typeof fetchEveChannelFile>[1]>["session"]
 >["auth"]["current"];
 const context = {
-  session: { auth: { current: owner, initiator: owner } },
+  session: { id: "native-session", auth: { current: owner, initiator: owner } },
   state: {},
 };
 beforeEach(() => {
   vi.clearAllMocks();
-  mocks.owned.mockResolvedValue(undefined);
+  mocks.owned.mockResolvedValue();
   mocks.download.mockResolvedValue(
     new Blob(["image bytes"], { type: "image/png" })
   );
@@ -37,8 +44,17 @@ it("checks the destination owner before reading local storage, regardless of the
   expect(mocks.owned.mock.invocationCallOrder[0]).toBeLessThan(
     mocks.download.mock.invocationCallOrder[0]
   );
-  expect(result?.bytes.toString()).toBe("image bytes");
-  expect(result?.mediaType).toBe("image/png");
+  if (!result) {
+    throw new Error("Expected channel file");
+  }
+  expect(result.bytes.toString()).toBe("image bytes");
+  expect(result.mediaType).toBe("image/png");
+  expect(mocks.retain).toHaveBeenCalledWith({
+    ownerId: owner.principalId,
+    sessionId: "native-session",
+    fileKey: key,
+    content: Buffer.from("image bytes"),
+  });
 });
 
 it("never reads a foreign or deleted file after an ownership rejection", async () => {
@@ -48,7 +64,6 @@ it("never reads a foreign or deleted file after an ownership rejection", async (
   ).rejects.toThrow("Not owned");
   expect(mocks.download).not.toHaveBeenCalled();
 });
-
 it("does not resolve files without authenticated session context", async () => {
   await expect(fetchEveChannelFile(`/api/files/${key}`)).rejects.toThrow(
     "authenticated owner"
@@ -56,7 +71,6 @@ it("does not resolve files without authenticated session context", async () => {
   expect(mocks.owned).not.toHaveBeenCalled();
   expect(mocks.download).not.toHaveBeenCalled();
 });
-
 it.each([
   "https://foreign.example/private",
   "/api/files/../../private",

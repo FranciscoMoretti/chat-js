@@ -1,6 +1,5 @@
-import type { ModelMessage } from "ai";
 import { expect, test } from "vitest";
-
+import type { ModelMessage } from "ai";
 import { eveImageContext } from "./image-context";
 
 test("uses only the latest user attachments and generated images from this native branch", () => {

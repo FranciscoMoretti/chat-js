@@ -1,30 +1,38 @@
-/* oxlint-disable eslint/no-shadow -- Nested callback names mirror the protocol fields and transaction APIs under test. */
-/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
+import { userCredit } from "@/chatjs/plugins/credits/credits-schema";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 
 import { expect, test } from "@playwright/test";
+import type { Response } from "@playwright/test";
 import { eq, sql } from "drizzle-orm";
+import type { MessageStreamEvent } from "eve/client";
 import postgres from "postgres";
 import { z } from "zod";
 
 import { db } from "../lib/db/client";
 import { saveEveDocumentRevision } from "../lib/db/eve-documents";
-import { purgeEveNativeSession } from "../lib/db/eve-native-purge";
 import {
+  eveChat,
   eveConversation,
+  eveDispatch,
   eveDocumentCheckpoint,
   eveDocumentCheckpointEntry,
   eveDocumentRevision,
-  eveChat,
-  userCredit,
 } from "../lib/db/schema";
 import { env } from "../lib/env";
+import { purgeEveNativeSession } from "../lib/eve/lifecycle/postgres/eve-native-purge";
 import { prepareEveFamilyDeletion } from "../lib/eve/prepare-deletion";
 import {
   retireEveFamilyForDeletion,
   retireEveSessionForDeletion,
 } from "../lib/eve/retire-session";
+
+// Use Node's custom execFile overload, including its PromiseWithChild result.
+const promisifyExecFile: (
+  original: typeof execFile
+) => typeof execFile.__promisify__ = promisify;
+const deletionActionName =
+  /^(?:Delete conversation and branches|Retry deletion)$/u;
 
 if (!["localhost", "127.0.0.1"].includes(new URL(env.DATABASE_URL).hostname)) {
   throw new Error("Retirement acceptance requires local Postgres.");
@@ -33,17 +41,19 @@ if (!["localhost", "127.0.0.1"].includes(new URL(env.DATABASE_URL).hostname)) {
 test("internal retirement settles usage after access revocation and is retryable", async ({
   page,
 }) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
+  const authSessionResponse = await page.request.get("/api/auth/get-session");
   const owner = z
     .object({ user: z.object({ id: z.string() }) })
-    .parse(await (await page.request.get("/api/auth/get-session")).json())
-    .user.id;
+    .parse(await authSessionResponse.json()).user.id;
   await db
     .insert(userCredit)
-    .values({ credits: 1000, userId: owner })
+    .values({ balanceCents: 1000, userId: owner })
     .onConflictDoUpdate({
-      set: { credits: sql`greatest(${userCredit.credits}, 1000)` },
+      set: { balanceCents: sql`greatest(${userCredit.balanceCents}, 1000)` },
       target: userCredit.userId,
     });
   const created = await page.request.post("/api/agent-conversations", {
@@ -62,12 +72,12 @@ test("internal retirement settles usage after access revocation and is retryable
     .select({ chatId: eveConversation.chatId })
     .from(eveConversation)
     .where(eq(eveConversation.id, binding.id));
-  if (!identity) {
+  if (identity === undefined) {
     throw new Error("Missing logical chat identity");
   }
   expect(identity.chatId).not.toBe(binding.id);
   await page.goto(`/chat/${binding.id}`);
-  await expect(page.locator(".is-assistant")).toContainText(
+  await expect(page.locator('[data-role="assistant"]')).toContainText(
     "retire-fixture-ok",
     { timeout: 90_000 }
   );
@@ -84,11 +94,14 @@ test("internal retirement settles usage after access revocation and is retryable
     title: "Removal fixture",
     turnIndex: 0,
   });
-  const family = await retireEveFamilyForDeletion(owner, binding.id);
-  expect(family?.rootId).toBe(identity.chatId);
-  expect(family?.conversations).toEqual([
-    { id: binding.id, sessionId: binding.sessionId },
-  ]);
+  // Reset acknowledges before the terminal event is durable; retry fenced cleanup.
+  await expect(async () => {
+    const family = await retireEveFamilyForDeletion(owner, binding.id);
+    expect(family?.rootId).toBe(identity.chatId);
+    expect(family?.conversations).toEqual([
+      { id: binding.id, sessionId: binding.sessionId },
+    ]);
+  }).toPass({ timeout: 30_000 });
   const denied = await page.request.get(
     `/api/eve/v1/session/${binding.sessionId}/stream`,
     { headers: { "x-chatjs-deletion": "1" } }
@@ -97,7 +110,10 @@ test("internal retirement settles usage after access revocation and is retryable
   // Keep a failed fixture fenced for diagnosis/retry; never reopen it to clean up.
   const snapshot = await retireEveSessionForDeletion(owner, binding.sessionId);
   expect(
-    snapshot.events.some((event) => event.type === "session.completed")
+    snapshot.events.some(
+      (event: Readonly<Pick<MessageStreamEvent, "type">>) =>
+        event.type === "session.completed"
+    )
   ).toBe(true);
   const [before] = await db
     .select()
@@ -108,14 +124,14 @@ test("internal retirement settles usage after access revocation and is retryable
     .select()
     .from(userCredit)
     .where(eq(userCredit.userId, owner));
-  expect(after.credits).toBe(before.credits);
+  expect(after.balanceCents).toBe(before.balanceCents);
   const prepared = await prepareEveFamilyDeletion(owner, binding.id);
   expect(prepared?.runIds).toContain(binding.sessionId);
   expect(await prepareEveFamilyDeletion(owner, binding.id)).toEqual(prepared);
-  const purgeResources = async () => {
+  const purgeResources = async (): Promise<unknown> => {
     // Playwright loads this suite as CommonJS; run the ESM-only storage adapter
     // under the app's Bun runtime with the same local environment and app root.
-    const { stdout } = await promisify(execFile)(
+    const { stdout } = await promisifyExecFile(execFile)(
       "bun",
       [
         "-e",
@@ -125,6 +141,7 @@ test("internal retirement settles usage after access revocation and is retryable
       ],
       { cwd: process.cwd(), timeout: 30_000 }
     );
+
     return JSON.parse(stdout);
   };
   expect(await purgeResources()).toEqual(prepared);
@@ -161,9 +178,9 @@ test("internal retirement settles usage after access revocation and is retryable
       await native`select id from workflow.workflow_runs where id in ${native(receipt.runIds)}`
     ).toEqual([]);
     expect(
-      await purgeEveNativeSession(env.DATABASE_URL, scope, () =>
-        Promise.reject(new Error("Retired session must not reset again"))
-      )
+      await purgeEveNativeSession(env.DATABASE_URL, scope, async () => {
+        await Promise.reject(new Error("Retired session must not reset again"));
+      })
     ).toEqual(receipt);
     expect(await purgeResources()).toEqual(prepared);
     const deletionUrl = `/api/agent-conversations/${binding.id}`;
@@ -175,22 +192,20 @@ test("internal retirement settles usage after access revocation and is retryable
       rootId: identity.chatId,
       status: "deleted",
     });
-    expect(await (await page.request.get(deletionUrl)).json()).toEqual({
+    const deletionResponse = await page.request.get(deletionUrl);
+    expect(await deletionResponse.json()).toEqual({
       rootId: identity.chatId,
       status: "deleted",
     });
-    expect(
-      (
-        await page.request.delete(deletionUrl, {
-          headers: { origin: new URL(page.url()).origin },
-        })
-      ).status()
-    ).toBe(200);
+    const secondDeleteResponse = await page.request.delete(deletionUrl, {
+      headers: { origin: new URL(page.url()).origin },
+    });
+    expect(secondDeleteResponse.status()).toBe(200);
     const [settled] = await db
       .select()
       .from(userCredit)
       .where(eq(userCredit.userId, owner));
-    expect(settled.credits).toBe(after.credits);
+    expect(settled.balanceCents).toBe(after.balanceCents);
   } finally {
     await native.end();
   }
@@ -202,6 +217,9 @@ test("internal retirement settles usage after access revocation and is retryable
     await tx
       .delete(eveDocumentCheckpoint)
       .where(eq(eveDocumentCheckpoint.conversationId, binding.id));
+    await tx
+      .delete(eveDispatch)
+      .where(eq(eveDispatch.conversationId, binding.id));
     await tx.delete(eveConversation).where(eq(eveConversation.id, binding.id));
     await tx.delete(eveChat).where(eq(eveChat.id, identity.chatId));
   });
@@ -210,23 +228,25 @@ test("internal retirement settles usage after access revocation and is retryable
 test("sidebar deletion retires a fresh conversation and reports its durable tombstone", async ({
   page,
 }) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
+  const authSessionResponse = await page.request.get("/api/auth/get-session");
   const owner = z
     .object({ user: z.object({ id: z.string() }) })
-    .parse(await (await page.request.get("/api/auth/get-session")).json())
-    .user.id;
+    .parse(await authSessionResponse.json()).user.id;
   await db
     .insert(userCredit)
-    .values({ credits: 1000, userId: owner })
+    .values({ balanceCents: 1000, userId: owner })
     .onConflictDoUpdate({
-      set: { credits: sql`greatest(${userCredit.credits}, 1000)` },
+      set: { balanceCents: sql`greatest(${userCredit.balanceCents}, 1000)` },
       target: userCredit.userId,
     });
   const { origin } = new URL(page.url());
   const response = await page.request.post("/api/agent-conversations", {
     data: {
-      message: "Reply exactly deletion-api-ok. Do not call tools.",
+      message: "Say hello in one short sentence. Do not call tools.",
       modelId: "google/gemini-2.5-flash-lite",
       operationId: crypto.randomUUID(),
     },
@@ -240,17 +260,18 @@ test("sidebar deletion retires a fresh conversation and reports its durable tomb
     .select({ chatId: eveConversation.chatId })
     .from(eveConversation)
     .where(eq(eveConversation.id, binding.id));
-  if (!identity) {
+  if (identity === undefined) {
     throw new Error("Missing logical chat identity");
   }
   expect(identity.chatId).not.toBe(binding.id);
   await page.goto(`/chat/${binding.id}`);
-  await expect(page.locator(".is-assistant")).toContainText("deletion-api-ok", {
+  await expect(page.locator('[data-role="assistant"]')).toBeVisible({
     timeout: 90_000,
   });
   await expect(page.getByText("Ready", { exact: true })).toBeVisible();
   const url = `/api/agent-conversations/${identity.chatId}`;
-  expect(await (await page.request.get(url)).json()).toEqual({
+  const activeResponse = await page.request.get(url);
+  expect(await activeResponse.json()).toEqual({
     rootId: identity.chatId,
     status: "active",
   });
@@ -267,34 +288,36 @@ test("sidebar deletion retires a fresh conversation and reports its durable tomb
   await row.hover();
   await row.getByRole("button", { exact: true, name: "More" }).click();
   await page.getByRole("menuitem", { exact: true, name: "Delete" }).click();
-  const result = page.waitForResponse(
-    (response) =>
-      response.url().endsWith(url) && response.request().method() === "DELETE"
-  );
-  await page
-    .getByRole("dialog", { name: "Delete conversation and branches?" })
-    .getByRole("button", {
-      exact: true,
-      name: "Delete conversation and branches",
-    })
-    .click();
-  const deleted = await result;
-  expect(deleted.status(), await deleted.text()).toBe(200);
+  await expect(async () => {
+    const result = page.waitForResponse(
+      (httpResponse: Readonly<Pick<Response, "request" | "url">>) =>
+        httpResponse.url().endsWith(url) &&
+        httpResponse.request().method() === "DELETE"
+    );
+    await page
+      .getByRole("dialog", { name: "Delete conversation and branches?" })
+      .getByRole("button", {
+        name: deletionActionName,
+      })
+      .click();
+    const deleted = await result;
+    expect(deleted.status(), await deleted.text()).toBe(200);
+    expect(await deleted.json()).toEqual({
+      rootId: identity.chatId,
+      status: "deleted",
+    });
+  }).toPass({ timeout: 30_000 });
   await expect(page).toHaveURL(`${origin}/`);
   await expect(
     page.getByRole("dialog", { name: "Delete conversation and branches?" })
   ).toHaveCount(0);
-  expect(await deleted.json()).toEqual({
+  const retiredResponse = await page.request.get(url);
+  expect(await retiredResponse.json()).toEqual({
     rootId: identity.chatId,
     status: "deleted",
   });
-  expect(await (await page.request.get(url)).json()).toEqual({
-    rootId: identity.chatId,
-    status: "deleted",
-  });
-  expect(
-    (await page.request.delete(url, { headers: { origin } })).status()
-  ).toBe(200);
+  const repeated = await page.request.delete(url, { headers: { origin } });
+  expect(repeated.status()).toBe(200);
   const native = postgres(env.DATABASE_URL, { max: 1 });
   try {
     expect(

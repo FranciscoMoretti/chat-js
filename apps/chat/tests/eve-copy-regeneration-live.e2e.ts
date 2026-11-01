@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import type { TestInfo } from "@playwright/test";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 
@@ -18,11 +19,16 @@ const answer = /^provenance-ready\.?$/iu;
 
 test("copied responses regenerate with their original model after reload", async ({
   page,
-}, testInfo) => {
+}, testInfo: Readonly<{
+  project: Readonly<{ use: Readonly<{ baseURL?: string | undefined }> }>;
+  outputPath: TestInfo["outputPath"];
+}>) => {
   test.setTimeout(300_000);
   page.setDefaultTimeout(20_000);
   page.setDefaultNavigationTimeout(120_000);
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.request.get("/api/dev-login", { maxRedirects: 0 });
   await page.request.post("/api/chat-model", {
     data: { model: originalModel },
@@ -87,7 +93,7 @@ test("copied responses regenerate with their original model after reload", async
   await expect(page.getByRole("log").getByText(answer)).toBeVisible();
   const regenerate = page.getByRole("button", {
     exact: true,
-    name: "Retry",
+    name: "Regenerate response",
   });
   await expect(regenerate).toBeEnabled();
   await page.getByRole("log").screenshot({
@@ -102,8 +108,8 @@ test("copied responses regenerate with their original model after reload", async
         route.request().postDataJSON()
       );
       expect(input.fork).toEqual({
-        beforeMessageId: "seed_message_0",
         conversationId: destination.id,
+        beforeMessageId: expect.any(String),
       });
       expect(input.modelId).toBe(originalModel);
       const response = await route.fetch({ timeout: 90_000 });
@@ -115,15 +121,18 @@ test("copied responses regenerate with their original model after reload", async
   );
   await regenerate.click();
   await expect.poll(() => regenerated?.id, { timeout: 95_000 }).toBeTruthy();
-  await expect(page).toHaveURL(`${origin}/chat/${regenerated?.id}`);
-  await expect(page.getByRole("log").getByText(answer)).toBeVisible({
+  await expect(page).toHaveURL(`${origin}/chat/${destination.id}`);
+  await expect(page.getByRole("log").getByText(answer).last()).toBeVisible({
     timeout: 45_000,
   });
   await expect(
-    page.getByRole("button", { exact: true, name: "Retry" })
+    page.getByRole("button", {
+      exact: true,
+      name: "Regenerate response",
+    })
   ).toHaveCount(1);
   await page.reload();
-  await expect(page.getByRole("log").getByText(answer)).toBeVisible({
+  await expect(page.getByRole("log").getByText(answer).last()).toBeVisible({
     timeout: 30_000,
   });
 });

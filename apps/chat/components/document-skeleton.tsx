@@ -1,12 +1,13 @@
 "use client";
 
 import type { ArtifactKind } from "@/lib/artifacts/artifact-kind";
+import React from "react";
 
-export const DocumentSkeleton = ({
+const DocumentSkeleton = ({
   artifactKind: _artifactKind,
 }: {
-  artifactKind: ArtifactKind;
-}) => (
+  readonly artifactKind: ArtifactKind;
+}): React.JSX.Element => (
   <div className="flex w-full flex-col gap-4">
     <div className="bg-muted-foreground/20 h-12 w-1/2 animate-pulse rounded-lg" />
     <div className="bg-muted-foreground/20 h-5 w-full animate-pulse rounded-lg" />
@@ -18,7 +19,7 @@ export const DocumentSkeleton = ({
   </div>
 );
 
-export const InlineDocumentSkeleton = () => (
+const InlineDocumentSkeleton = (): React.JSX.Element => (
   <div className="flex w-full flex-col gap-4">
     <div className="bg-muted-foreground/20 h-4 w-48 animate-pulse rounded-lg" />
     <div className="bg-muted-foreground/20 h-4 w-3/4 animate-pulse rounded-lg" />
@@ -29,3 +30,4 @@ export const InlineDocumentSkeleton = () => (
     <div className="bg-muted-foreground/20 h-4 w-64 animate-pulse rounded-lg" />
   </div>
 );
+export { DocumentSkeleton, InlineDocumentSkeleton };

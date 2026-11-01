@@ -1,3 +1,4 @@
+import { getSandboxProvider } from "../lib/sandbox/runtime";
 import { expect, test } from "@playwright/test";
 import { APIError, Sandbox } from "@vercel/sandbox";
 import { eq } from "drizzle-orm";
@@ -11,19 +12,25 @@ import {
   beginEveConversationDeletion,
   createEveConversation,
 } from "../lib/db/eve-queries";
-import { eveCodeSandbox, eveConversation, user } from "../lib/db/schema";
+import {
+  eveCodeSandbox,
+  eveConversation,
+  eveDispatch,
+  user,
+} from "../lib/db/schema";
 import { env } from "../lib/env";
 import { eveCodeSandboxName } from "../lib/eve/code-sandbox-name";
 import { purgeEveFamilyCodeSandboxes } from "../lib/eve/purge-code-sandboxes";
 import { createModuleLogger } from "../lib/logger";
-import { executeJavaScriptInSandbox } from "../tools/chatjs/vercel-code-execution/javascript";
-import { executePythonInSandbox } from "../tools/chatjs/vercel-code-execution/python";
+import { executeJavaScriptInSandbox } from "../chatjs/tools/_shared/code-execution/javascript";
+import { executePythonInSandbox } from "../chatjs/tools/_shared/code-execution/python";
 import {
   cleanupSandbox,
   createSandbox,
+  getSandboxImage,
   resolveSandboxAuth,
-} from "../tools/chatjs/vercel-code-execution/sandbox";
-import { codeExecution } from "../tools/chatjs/vercel-code-execution/tool";
+} from "@/chatjs/providers/sandbox/adapter";
+import { codeExecution } from "../chatjs/tools/code-execution/tool";
 import { assertEveTestDatabase } from "./eve-test-database";
 import { testToolContext } from "./helpers/eve-tool-context";
 
@@ -34,11 +41,15 @@ for (const language of ["javascript", "python"] as const) {
     const name = eveCodeSandboxName({
       callId: language,
       ownerId: "local-sdk-fixture",
-      provider: auth,
+      provider: {
+        providerId: "vercel",
+        accountId: auth.teamId,
+        scopeId: auth.projectId,
+      },
       sessionId: crypto.randomUUID(),
     });
     const sandbox = await createSandbox(
-      language === "javascript" ? "node22" : "python3.13",
+      getSandboxImage(language),
       AbortSignal.timeout(30_000),
       name,
       auth
@@ -93,14 +104,14 @@ test("native sandbox ownership is durably released after real provider cleanup",
     ownerId,
     crypto.randomUUID(),
     "Ownership fixture",
-    () => Promise.resolve(crypto.randomUUID())
+    () => crypto.randomUUID()
   );
   if (!row.sessionId) {
     throw new Error("Missing native fixture session");
   }
   try {
     const tool = codeExecution;
-    if (!tool.execute) {
+    if (tool.execute === undefined) {
       throw new Error("Missing code executor");
     }
     const result = await tool.execute(
@@ -155,18 +166,21 @@ test("native sandbox ownership is durably released after real provider cleanup",
       ownerId,
       row.id,
       "orphan-fixture",
-      resolveSandboxAuth()
+      getSandboxProvider().scope
     );
     const orphan = await createSandbox(
-      "node22",
+      getSandboxImage("javascript"),
       AbortSignal.timeout(30_000),
       orphanName,
       resolveSandboxAuth()
     );
     await confirmEveCodeSandboxCreation(ownerId, row.id, orphan.name);
-    await beginEveConversationDeletion(ownerId, row.id);
-    await purgeEveFamilyCodeSandboxes(ownerId, row.id);
-    await purgeEveFamilyCodeSandboxes(ownerId, row.id);
+    const family = await beginEveConversationDeletion(ownerId, row.id);
+    if (family === null) {
+      throw new Error("Missing sandbox fixture conversation family");
+    }
+    await purgeEveFamilyCodeSandboxes(ownerId, family.rootId);
+    await purgeEveFamilyCodeSandboxes(ownerId, family.rootId);
     const [recovered] = await db
       .select()
       .from(eveCodeSandbox)
@@ -178,10 +192,16 @@ test("native sandbox ownership is durably released after real provider cleanup",
       .from(eveCodeSandbox)
       .where(eq(eveCodeSandbox.ownerId, ownerId));
     // Preserve ownership evidence if allocation or cleanup had an uncertain outcome.
-    if (resources.every((resource) => resource.state === "deleted")) {
+    if (
+      resources.every(
+        (resource: { readonly state: "deleted" | "unresolved" }) =>
+          resource.state === "deleted"
+      )
+    ) {
       await db
         .delete(eveCodeSandbox)
         .where(eq(eveCodeSandbox.ownerId, ownerId));
+      await db.delete(eveDispatch).where(eq(eveDispatch.ownerId, ownerId));
       await db
         .delete(eveConversation)
         .where(eq(eveConversation.ownerId, ownerId));

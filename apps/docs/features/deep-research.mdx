@@ -9,19 +9,13 @@ Deep Research is an autonomous agent that conducts multi-step research on comple
 
 ## Quick Start
 
-Enable deep research in `chat.config.ts`:
+Install the capability in your app:
 
-```ts
-ai: {
-  tools: {
-    deepResearch: {
-      enabled: true,
-    },
-  },
-}
+```bash
+bunx @chat-js/cli@latest add deep-research
 ```
 
-Deep research uses the same search provider as [web search](/features/web-search). Configure one of the supported providers:
+Deep research uses the same search provider as [web search](/features/web-search). Install one provider and configure its matching key. Missing search defaults to Tavily. To use Firecrawl, run `bunx @chat-js/cli@latest add firecrawl-search --replace`:
 
 ```bash
 # Option 1: Tavily (recommended)
@@ -85,7 +79,6 @@ Configure deep research behavior in `chat.config.ts`:
 ai: {
   tools: {
     deepResearch: {
-      enabled: true,
       defaultModel: "google/gemini-2.5-flash-lite",
       finalReportModel: "google/gemini-3-flash",
       allowClarification: true,      // Ask clarifying questions

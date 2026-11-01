@@ -1,13 +1,14 @@
 import Image from "next/image";
-import type { ReactNode } from "react";
+import React from "react";
+import type { ReactElement } from "react";
 
 interface Tech {
-  glowColor: string;
-  icon: ReactNode;
-  name: string;
+  readonly glowColor: string;
+  readonly icon: Readonly<ReactElement>;
+  readonly name: string;
 }
 
-const TECHS: Tech[] = [
+const TECHS: readonly Tech[] = [
   {
     glowColor: "#a1a1a1",
     icon: (
@@ -180,7 +181,13 @@ const TECHS: Tech[] = [
   },
 ];
 
-const TechCard = ({ tech, index }: { tech: Tech; index: number }) => {
+const TechCard = ({
+  tech,
+  index,
+}: {
+  readonly tech: Readonly<Pick<Tech, "glowColor" | "icon" | "name">>;
+  readonly index: number;
+}): React.JSX.Element => {
   const delay = `${0.04 * index}s`;
 
   return (
@@ -207,7 +214,7 @@ const TechCard = ({ tech, index }: { tech: Tech; index: number }) => {
   );
 };
 
-export const TechStack = () => (
+export const TechStack = (): React.JSX.Element => (
   <section className="bg-secondary relative overflow-hidden py-24 sm:py-32">
     {/* Seamless edge blending — tall gradients for a smooth transition */}
     <div className="from-background via-background/60 pointer-events-none absolute inset-x-0 top-0 h-48 bg-linear-to-b to-transparent sm:h-56" />
@@ -244,9 +251,14 @@ export const TechStack = () => (
 
       {/* Tech grid — 5 columns desktop, 3 tablet, 2 mobile */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-5">
-        {TECHS.map((tech, i) => (
-          <TechCard index={i} key={tech.name} tech={tech} />
-        ))}
+        {TECHS.map(
+          (
+            tech: Readonly<Pick<Tech, "glowColor" | "icon" | "name">>,
+            technologyIndex
+          ) => (
+            <TechCard index={technologyIndex} key={tech.name} tech={tech} />
+          )
+        )}
       </div>
     </div>
   </section>

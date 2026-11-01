@@ -1,6 +1,5 @@
-import { defineConfig } from "@playwright/test";
-
 import config from "./playwright.eve.config";
+import { defineConfig } from "@playwright/test";
 
 export default defineConfig({
   ...config,

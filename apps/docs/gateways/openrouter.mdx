@@ -17,9 +17,17 @@ Use this gateway when you want the widest model selection or need access to mode
 OPENROUTER_API_KEY=sk-or-v1-...
 ```
 
-4. Set the gateway in your config:
+4. Install the gateway source (add `--replace` when another gateway is installed):
+
+```bash
+bunx @chat-js/cli@latest add --gateway openrouter
+```
+
+Then configure runtime model overrides for that installation:
 
 ```typescript title="chat.config.ts"
+import type { ConfigInput } from "@/lib/config-schema";
+
 const config: ConfigInput = {
   ai: {
     gateway: "openrouter",
@@ -51,9 +59,7 @@ Your existing model configuration in `chat.config.ts` works across gateways as l
 
 ## Image Generation
 
-OpenRouter routes image generation through multimodal language models rather than dedicated image APIs. `createImageModel()` returns `null` for this gateway.
-
-Models with the `image-generation` tag (those with `image` in their output modalities) can still generate images inline through `createLanguageModel()`. The existing [Image Generation](/features/image-generation) feature handles this automatically.
+The current ChatJS OpenRouter adapter declares no image-generation capability. The installer rejects the built-in `generate-image` tool with this gateway. Upstream model availability alone does not establish an installed adapter capability.
 
 ## Pricing
 

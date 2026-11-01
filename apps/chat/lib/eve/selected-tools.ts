@@ -1,25 +1,22 @@
-import type { UiToolName } from "../ai/types";
+import { documentDefinitions } from "@/integrations/documents/definitions";
+import type { UiToolName } from "@/lib/ai/types";
 
-const toolGroups: Partial<Record<UiToolName, UiToolName[]>> = {
-  createTextDocument: [
-    "createTextDocument",
-    "createCodeDocument",
-    "createSheetDocument",
-    "editTextDocument",
-    "editCodeDocument",
-    "editSheetDocument",
-  ],
-};
-
-/** Canvas editing needs Eve's read operation to obtain the current revision. */
+/** Canvas editing needs Eve's read operation to obtain the current revision.
+ * @param {UiToolName | null} selectedTool User-selected tool, or null when no explicit tool restriction is requested.
+ * @returns {string[] | null} Selected execution names; canvas tools share their editing family and document operations also include readDocument. Null preserves unrestricted selection.
+ */
 export const selectedEveTools = (
   selectedTool: UiToolName | null
 ): string[] | null => {
-  if (!selectedTool) {
+  if (selectedTool === null || selectedTool === "") {
     return null;
   }
-  const names = toolGroups[selectedTool] ?? [selectedTool];
-  return names.some((name) => name.endsWith("Document"))
-    ? [...names, "readDocument"]
-    : names;
+
+  if (documentDefinitions.operations.has(selectedTool)) {
+    return [...documentDefinitions.operations.keys(), "readDocument"];
+  }
+  if (selectedTool.endsWith("Document")) {
+    return [selectedTool, "readDocument"];
+  }
+  return [selectedTool];
 };

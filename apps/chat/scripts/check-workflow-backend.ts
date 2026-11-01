@@ -1,10 +1,9 @@
+import { databaseConnection } from "@/lib/db/connection";
+import { ensureWorkflowBackend } from "@/lib/db/workflow-backend";
 import postgres from "postgres";
+import { resolveWorkflowWorld } from "@/lib/eve/world-config";
 
-import { databaseConnection } from "../lib/db/connection";
-import { ensureWorkflowBackend } from "../lib/db/workflow-backend";
-import { resolveWorkflowWorld } from "../lib/eve/world-config";
-
-const check = async () => {
+const check = async (): Promise<void> => {
   const world = resolveWorkflowWorld();
   const settings = databaseConnection(
     {
@@ -20,7 +19,7 @@ const check = async () => {
     await connection.end();
   }
 };
-void (async () => {
+void (async (): Promise<void> => {
   try {
     await check();
   } catch (error) {

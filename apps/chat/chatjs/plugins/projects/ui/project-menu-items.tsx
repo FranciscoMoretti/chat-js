@@ -1,0 +1,27 @@
+"use client";
+
+import { Pencil, Trash2 } from "lucide-react";
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
+
+import React from "react";
+
+interface ProjectMenuItemsProps {
+  readonly onDelete: () => void;
+  readonly onRename: () => void;
+}
+
+export const ProjectMenuItems = ({
+  onRename,
+  onDelete,
+}: ProjectMenuItemsProps): React.JSX.Element => (
+  <>
+    <DropdownMenuItem className="cursor-pointer" onClick={onRename}>
+      <Pencil size={16} />
+      <span>Rename</span>
+    </DropdownMenuItem>
+    <DropdownMenuItem variant="destructive" onClick={onDelete}>
+      <Trash2 size={16} />
+      <span>Delete</span>
+    </DropdownMenuItem>
+  </>
+);

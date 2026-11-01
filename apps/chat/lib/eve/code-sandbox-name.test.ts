@@ -2,7 +2,11 @@ import { expect, test } from "vitest";
 
 import { eveCodeSandboxName } from "./code-sandbox-name";
 
-const provider = { projectId: "project-a", teamId: "team-a" };
+const provider = {
+  providerId: "vercel",
+  scopeId: "project-a",
+  accountId: "team-a",
+};
 const sandboxNamePattern = /^chatjs-code-[a-f0-9]{48}$/u;
 
 test("the same native call has a stable opaque name, isolated by owner and session", () => {
@@ -18,8 +22,9 @@ test("the same native call has a stable opaque name, isolated by owner and sessi
   expect(name).not.toContain(scope.ownerId);
   for (const other of [
     { ...scope, ownerId: "bob" },
-    { ...scope, provider: { ...provider, teamId: "team-b" } },
-    { ...scope, provider: { ...provider, projectId: "project-b" } },
+    { ...scope, provider: { ...provider, providerId: "daytona" } },
+    { ...scope, provider: { ...provider, accountId: "team-b" } },
+    { ...scope, provider: { ...provider, scopeId: "project-b" } },
     { ...scope, sessionId: "fork-b" },
     { ...scope, callId: "call-b", provider },
   ]) {

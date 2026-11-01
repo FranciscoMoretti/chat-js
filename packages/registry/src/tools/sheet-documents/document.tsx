@@ -1,18 +1,28 @@
 "use client";
-
-import dynamic from "next/dynamic";
+import type { DocumentBodyProps, DocumentUi } from "@/chatjs/core/documents/ui";
 import { parse, unparse } from "papaparse";
-
-import type { DocumentUi } from "@/lib/eve/document-ui";
+import { documentDefinition } from "./definition";
+import { documentAssistantActions } from "./assistant-actions";
+import React from "react";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import dynamic from "next/dynamic";
 
 const SpreadsheetEditor = dynamic(
-  // oxlint-disable-next-line promise/prefer-await-to-then
-  () => import("./editor").then((m) => m.SpreadsheetEditor),
+  async () => {
+    const { SpreadsheetEditor: Editor } = await import("./editor");
+    return Editor;
+  },
   { ssr: false }
 );
 
 export const documentUi: DocumentUi = {
-  Body: ({ editorProps }) => (
+  copyLabel: "Copy as .csv",
+  copySuccessMessage: "Copied csv to clipboard!",
+  copyIconSize: 16,
+  copyButtonClassName: "hover:bg-accent h-fit p-2",
+  definition: documentDefinition,
+  assistantActions: documentAssistantActions,
+  Body: ({ editorProps }: ReadonlyNativeSurface<DocumentBodyProps>) => (
     <div className="min-h-0 flex-1 overflow-hidden">
       <SpreadsheetEditor
         {...editorProps}
@@ -23,7 +33,9 @@ export const documentUi: DocumentUi = {
   copyContent: (content) => {
     const parsed = parse<string[]>(content, { skipEmptyLines: true });
     return unparse(
-      parsed.data.filter((row) => row.some((cell) => cell.trim() !== ""))
+      parsed.data.filter((row: readonly string[]) =>
+        row.some((cell) => cell.trim() !== "")
+      )
     );
   },
 };

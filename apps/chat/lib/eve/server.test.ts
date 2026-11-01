@@ -1,6 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-
 import { assertEveConfigured, eveRequest } from "./server";
+
+const FIRST_CALL = 0;
+const URL_ARGUMENT = 0;
+const INIT_ARGUMENT = 1;
 
 const mocks = vi.hoisted(() => ({
   env: {
@@ -29,18 +32,21 @@ describe("EVE deployment authentication", () => {
     const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response());
     vi.stubGlobal("fetch", fetcher);
     await eveRequest("owner", "/eve/chat/v1/operation/operation");
-    const headers = new Headers(fetcher.mock.calls[0]?.[1]?.headers);
+    const headers = new Headers(
+      (fetcher.mock.calls[FIRST_CALL][INIT_ARGUMENT] ?? {}).headers
+    );
     expect(headers.get("x-vercel-protection-bypass")).toBe("deployment-secret");
     expect(headers.get("authorization")).toBe("Bearer eve-secret");
     expect(headers.get("x-chatjs-owner")).toBe("owner");
   });
-
   it("does not send the project deployment credential to a separate worker", async () => {
     mocks.env.EVE_INTERNAL_ORIGIN = "https://worker.example.com";
     const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response());
     vi.stubGlobal("fetch", fetcher);
     await eveRequest("owner", "/eve/chat/v1/health");
-    const headers = new Headers(fetcher.mock.calls[0]?.[1]?.headers);
+    const headers = new Headers(
+      (fetcher.mock.calls[FIRST_CALL][INIT_ARGUMENT] ?? {}).headers
+    );
     expect(headers.has("x-vercel-protection-bypass")).toBe(false);
   });
 });
@@ -49,12 +55,15 @@ it("sends protocol requests directly to the named chat worker", async () => {
   const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response());
   vi.stubGlobal("fetch", fetcher);
   await eveRequest("owner", "/eve/chat/v1/operation/recovery?kind=seed");
-  expect(String(fetcher.mock.calls[0]?.[0])).toBe(
-    "https://preview.example.com/eve/chat/v1/operation/recovery?kind=seed"
+  expect(fetcher.mock.calls[FIRST_CALL][URL_ARGUMENT]).toEqual(
+    new URL(
+      "https://preview.example.com/eve/chat/v1/operation/recovery?kind=seed"
+    )
   );
-  expect(fetcher.mock.calls[0]?.[1]?.redirect).toBe("error");
+  expect((fetcher.mock.calls[FIRST_CALL][INIT_ARGUMENT] ?? {}).redirect).toBe(
+    "error"
+  );
 });
-
 it("routes the real SDK directly to the named chat worker", async () => {
   const { Client } = await import("eve/client");
   const { getEveConnectionOptions } = await import("./connection-options");
@@ -65,12 +74,13 @@ it("routes the real SDK directly to the named chat worker", async () => {
     );
   vi.stubGlobal("fetch", fetcher);
   await new Client(getEveConnectionOptions("owner")).health();
-  expect(String(fetcher.mock.calls[0]?.[0])).toBe(
+  expect(fetcher.mock.calls[FIRST_CALL][URL_ARGUMENT]).toBe(
     "https://preview.example.com/eve/chat/v1/health"
   );
-  expect(fetcher.mock.calls[0]?.[1]?.redirect).toBe("error");
+  expect((fetcher.mock.calls[FIRST_CALL][INIT_ARGUMENT] ?? {}).redirect).toBe(
+    "error"
+  );
 });
-
 it("requires a workflow database locally but not on managed Vercel", () => {
   mocks.env.WORKFLOW_POSTGRES_URL = "";
   expect(assertEveConfigured).toThrow("local workflow database");

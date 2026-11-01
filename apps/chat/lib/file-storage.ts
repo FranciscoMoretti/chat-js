@@ -1,17 +1,22 @@
+import type { Body, StoredFile, UploadResult } from "files-sdk";
+import { createFileUrl, isFileStorageKey, keyFromFileUrl } from "./file-url";
+import { FILE_STORAGE_PREFIX } from "./constants";
 import { Files } from "files-sdk";
-import type { Body } from "files-sdk";
 import { nanoid } from "nanoid";
 
-import { FILE_STORAGE_PREFIX } from "./constants";
 import {
   fileIdsForStorageKeys,
   storageKeyForFile,
 } from "./db/file-storage-keys";
-import { createFileUrl, isFileStorageKey, keyFromFileUrl } from "./file-url";
-import { storageOptions } from "./storage-options";
-import { createStorageAdapter } from "./storage-provider";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import { createStorageAdapter } from "@/integrations/providers/storage";
+import { storageOptions } from "@/chatjs/providers/storage-options";
 
 const PATH_SEPARATOR = /[\\/]/u;
+const ASCII_CONTROL_CHARACTERS = /[\p{ASCII}&&\p{Control}]/gv;
+const FILE_ID_LENGTH = 24;
+const INVENTORY_PAGE_SIZE = 100;
+const SIGNED_URL_LIFETIME_SECONDS = 300;
 
 let files: Files | undefined;
 
@@ -25,25 +30,35 @@ const getFiles = (): Files => {
 };
 
 const sanitizeFilename = (filename: string): string => {
-  const basename = filename.split(PATH_SEPARATOR).at(-1) ?? "";
-  const withoutControlCharacters = [...basename]
-    .filter((character) => {
-      const code = character.codePointAt(0) ?? 0;
-      return code > 31 && code !== 127;
-    })
-    .join("");
+  const basename = filename.split(PATH_SEPARATOR).pop() ?? "";
+  const withoutControlCharacters = basename.replace(
+    ASCII_CONTROL_CHARACTERS,
+    ""
+  );
   return withoutControlCharacters.trim() || "file";
 };
 
-export const createFileId = (): string => nanoid(24);
+const createFileId = (): string => nanoid(FILE_ID_LENGTH);
 
-/** Internal preallocated key, recorded by the caller before external storage I/O. */
-export const uploadFileAtKey = async (
+/**
+ * Upload using a preallocated key recorded by the caller before external storage I/O.
+ * @param {string} key - Registered file identity validated before provider access.
+ * @param {string} filename - Original filename sanitized for the stored pathname.
+ * @param {Body} body - Upload content consumed by the storage SDK.
+ * @param {string | undefined} contentType - Optional MIME override forwarded to storage.
+ * @returns {Promise<{ contentType: UploadResult["contentType"]; fileId: string; pathname: string; url: string; }>} Registered identity, provider content type, sanitized pathname and application URL.
+ */
+const uploadFileAtKey = async (
   key: string,
   filename: string,
-  body: Body,
+  body: ReadonlyNativeSurface<Body>,
   contentType?: string
-) => {
+): Promise<{
+  contentType: UploadResult["contentType"];
+  fileId: string;
+  pathname: string;
+  url: string;
+}> => {
   if (!isFileStorageKey(key)) {
     throw new Error("Invalid storage key.");
   }
@@ -60,9 +75,9 @@ export const uploadFileAtKey = async (
   };
 };
 
-export type FileUploader = (
+type FileUploader = (
   filename: string,
-  body: Body,
+  body: ReadonlyNativeSurface<Body>,
   contentType?: string
 ) => ReturnType<typeof uploadFileAtKey>;
 
@@ -70,16 +85,22 @@ export type FileUploader = (
  * Resolve one provider page at a time, bounding inventory memory and DB queries.
  * @yields {{ pathname: string; uploadedAt: Date; url: string }} Registered file metadata.
  */
-export const iterateStoredFiles = async function* iterateStoredFiles() {
+const iterateStoredFiles = async function* iterateStoredFiles(): AsyncGenerator<
+  { pathname: string; uploadedAt: Date; url: string },
+  void,
+  unknown
+> {
   let cursor: string | undefined;
   do {
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Each page requires the preceding cursor.
-    const page = await getFiles().list({ cursor, limit: 100 });
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Resolve only the current inventory page.
-    const ids = await fileIdsForStorageKeys(page.items.map((file) => file.key));
+    // oxlint-disable-next-line eslint/no-await-in-loop -- The next inventory page needs this page's cursor; resolve only this page's file-ID mapping before yielding and fetching another page.
+    const page = await getFiles().list({ cursor, limit: INVENTORY_PAGE_SIZE });
+    // oxlint-disable-next-line eslint/no-await-in-loop -- The next inventory page needs this page's cursor; resolve only this page's file-ID mapping before yielding and fetching another page.
+    const ids = await fileIdsForStorageKeys(
+      page.items.map((file: { readonly key: string }) => file.key)
+    );
     for (const file of page.items) {
       const fileId = ids.get(file.key);
-      if (fileId) {
+      if (typeof fileId === "string" && fileId !== "") {
         yield {
           pathname: fileId,
           uploadedAt: new Date(file.lastModified ?? Date.now()),
@@ -88,17 +109,20 @@ export const iterateStoredFiles = async function* iterateStoredFiles() {
       }
     }
     ({ cursor } = page);
-  } while (cursor);
+  } while (typeof cursor === "string" && cursor !== "");
 };
 
-export const listFiles = async () => ({
+const listFiles = async (): Promise<{
+  files: { pathname: string; uploadedAt: Date; url: string }[];
+}> => ({
   files: await Array.fromAsync(iterateStoredFiles()),
 });
-
-export const deleteFilesByUrls = async (urls: string[]): Promise<void> => {
+const deleteFilesByUrls = async (urls: readonly string[]): Promise<void> => {
   const keys = [
     ...new Set(
-      urls.map(keyFromFileUrl).filter((key): key is string => key !== null)
+      urls
+        .map((url) => keyFromFileUrl(url))
+        .filter((key): key is string => key !== null)
     ),
   ];
   if (keys.length === 0) {
@@ -106,42 +130,55 @@ export const deleteFilesByUrls = async (urls: string[]): Promise<void> => {
   }
 
   const result = await getFiles().delete(
-    await Promise.all(keys.map(storageKeyForFile))
+    await Promise.all(keys.map(async (key) => await storageKeyForFile(key)))
   );
-  const errors = "errors" in result ? result.errors : undefined;
-  if (errors?.length) {
+  const errors = "errors" in result ? (result.errors ?? []) : [];
+  if (errors.length > 0) {
     throw new AggregateError(
-      errors.map(({ error }) => error),
+      errors.map((failure: { readonly error: unknown }) => failure.error),
       `Failed to delete ${errors.length} stored file(s)`
     );
   }
 };
 
-export const downloadFile = async (
+const downloadFile = async (
   key: string,
-  range?: { start: number; end?: number }
-) =>
-  getFiles().download(
+  range?: { readonly start: number; readonly end?: number }
+): Promise<StoredFile> =>
+  await getFiles().download(
     await storageKeyForFile(key),
     range ? { range } : undefined
   );
 
-export const getFileMetadata = async (key: string) =>
-  getFiles().head(await storageKeyForFile(key));
+const getFileMetadata = async (key: string): Promise<StoredFile> =>
+  await getFiles().head(await storageKeyForFile(key));
+const storageSupportsRange = (): boolean => getFiles().capabilities.rangeRead;
 
-export const storageSupportsRange = (): boolean =>
-  getFiles().capabilities.rangeRead;
-
-export const getFileProviderUrl = async (
-  key: string
-): Promise<string | null> => {
+const getFileProviderUrl = async (key: string): Promise<string | null> => {
   const fileService = getFiles();
   if (!fileService.capabilities.signedUrl.supported) {
     return null;
   }
   const value = await fileService.url(await storageKeyForFile(key), {
-    expiresIn: 300,
+    expiresIn: SIGNED_URL_LIFETIME_SECONDS,
   });
   const url = new URL(value);
-  return url.protocol === "http:" || url.protocol === "https:" ? value : null;
+
+  if (url.protocol === "http:" || url.protocol === "https:") {
+    return value;
+  }
+  return null;
 };
+
+export {
+  createFileId,
+  uploadFileAtKey,
+  iterateStoredFiles,
+  listFiles,
+  deleteFilesByUrls,
+  downloadFile,
+  getFileMetadata,
+  storageSupportsRange,
+  getFileProviderUrl,
+};
+export type { FileUploader };

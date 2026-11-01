@@ -1,0 +1,8 @@
+{
+  "envRequirements": [],
+  "id": "read-document",
+  "kind": "tool",
+  "requiresTools": [],
+  "tools": [{ "toolExport": "readDocument" }],
+  "contractVersion": 1
+}

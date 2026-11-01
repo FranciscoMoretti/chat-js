@@ -1,57 +1,80 @@
 import type { ChatStatus, ChatTransport, UIMessage } from "ai";
 
-import type { ThreadRunHost, ThreadRunSpec } from "../../src/ai-sdk-run-chat";
-import { MessageTree } from "../../src/message-tree";
+import type {
+  ThreadRunHost,
+  ThreadRunSpec,
+} from "#thread-source/ai-sdk-run-chat";
+import { MessageTree } from "#thread-source/message-tree";
 
-const generateMessageId = () => "client-response";
-const registerToolCall: ThreadRunHost<UIMessage>["registerToolCall"] = () =>
-  null;
+const generateMessageId = (): string => "client-response";
+const registerToolCall: ThreadRunHost<UIMessage>["registerToolCall"] =
+  (): void => {
+    /* This host fixture does not persist tool-call registrations. */
+  };
 
 export class TestRunHost implements ThreadRunHost<UIMessage> {
-  readonly dataPartSchemas = undefined;
-  readonly id = "thread";
-  readonly messageMetadataSchema = undefined;
-  readonly generateMessageId = generateMessageId;
-  readonly spec: ThreadRunSpec;
-  readonly tree: MessageTree<UIMessage>;
-  onData: ThreadRunHost<UIMessage>["onData"];
-  onError: ThreadRunHost<UIMessage>["onError"];
-  onFinish: ThreadRunHost<UIMessage>["onFinish"];
-  onToolCall: ThreadRunHost<UIMessage>["onToolCall"];
-  sendAutomaticallyWhen: ThreadRunHost<UIMessage>["sendAutomaticallyWhen"];
-  transport: ChatTransport<UIMessage>;
-  status: ChatStatus = "ready";
-  readonly errors: Error[] = [];
+  public readonly dataPartSchemas: undefined;
+  public readonly id = "thread";
+  public readonly messageMetadataSchema: undefined;
+  public readonly generateMessageId = generateMessageId;
+  public readonly spec: ThreadRunSpec;
+  public readonly tree: MessageTree;
+  public onData: ThreadRunHost<UIMessage>["onData"];
+  public onError: ThreadRunHost<UIMessage>["onError"];
+  public onFinish: ThreadRunHost<UIMessage>["onFinish"];
+  public onToolCall: ThreadRunHost<UIMessage>["onToolCall"];
+  public sendAutomaticallyWhen: ThreadRunHost<UIMessage>["sendAutomaticallyWhen"];
+  public transport: ChatTransport<UIMessage>;
+  public status: ChatStatus = "ready";
+  public readonly errors: Error[] = [];
 
-  constructor(
-    transport: ChatTransport<UIMessage>,
-    initialMessage: UIMessage,
-    spec: ThreadRunSpec
+  public constructor(
+    transport: Readonly<ChatTransport<UIMessage>>,
+    initialMessage: Readonly<UIMessage>,
+    spec: Readonly<ThreadRunSpec>
   ) {
     this.transport = transport;
     this.spec = spec;
     this.tree = new MessageTree({ messages: [initialMessage] });
   }
 
-  getMessagePath = (messageId: string | null) => this.tree.getPath(messageId);
-  updateRunPath = (messages: UIMessage[]) => {
+  public getMessagePath = (messageId: string | null): UIMessage[] =>
+    this.tree.getPath(messageId);
+  public updateRunPath = (messages: readonly Readonly<UIMessage>[]): void => {
     this.tree.updatePath(messages);
   };
-  registerToolCall = registerToolCall;
-  removeMessage = (messageId: string) => this.tree.removeLeaf(messageId);
-  setRunError = (_runId: string, error: Error | undefined) => {
+  public registerToolCall = registerToolCall;
+  public removeMessage = (messageId: string): void => {
+    this.tree.removeLeaf(messageId);
+  };
+  public setRunError = (
+    _runId: string,
+    error: Readonly<Error> | undefined
+  ): void => {
     if (error) {
       this.errors.push(error);
     }
   };
-  setRunStatus = (_runId: string, status: ChatStatus) => {
+  public setRunStatus = (_runId: string, status: ChatStatus): void => {
     this.status = status;
   };
-  writeRunMessage = (_runId: string, message: UIMessage) => {
-    if (this.spec.messageId && this.spec.messageId !== message.id) {
+  public writeRunMessage = (
+    _runId: string,
+    message: Readonly<UIMessage>
+  ): void => {
+    if (
+      typeof this.spec.messageId === "string" &&
+      this.spec.messageId !== "" &&
+      this.spec.messageId !== message.id
+    ) {
       throw new Error("Run message identity changed");
     }
-    if (!this.spec.messageId && this.tree.has(message.id)) {
+    if (
+      !(
+        typeof this.spec.messageId === "string" && this.spec.messageId !== ""
+      ) &&
+      this.tree.has(message.id)
+    ) {
       throw new Error("Run message identity already exists");
     }
     this.spec.messageId = message.id;

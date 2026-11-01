@@ -1,11 +1,34 @@
 {
   "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$(git rev-parse --show-toplevel)\"/scripts/ai-post-codegen.sh start",
+            "timeout": 60
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "apply_patch",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$(git rev-parse --show-toplevel)\"/scripts/ai-post-codegen.sh edit",
+            "timeout": 60
+          }
+        ]
+      }
+    ],
     "Stop": [
       {
         "hooks": [
           {
             "type": "command",
-            "command": "\"$(git rev-parse --show-toplevel)\"/scripts/ai-post-codegen.sh codex",
+            "command": "\"$(git rev-parse --show-toplevel)\"/scripts/ai-post-codegen.sh check",
             "timeout": 600
           }
         ]

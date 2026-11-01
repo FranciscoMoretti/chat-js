@@ -1,11 +1,11 @@
-/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 import { execFileSync } from "node:child_process";
 
 import { expect, test } from "@playwright/test";
+import type { TestInfo } from "@playwright/test";
 
 test("shared follow-up controls are actionable, bounded and safe when unavailable", async ({
   page,
-}, testInfo) => {
+}, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
   const script = execFileSync(
     "bun",
     ["tests/eve-comparison-ui.build.mjs", "tests/eve-followups-ui.fixture.tsx"],
@@ -19,11 +19,15 @@ test("shared follow-up controls are actionable, bounded and safe when unavailabl
     ],
     { encoding: "utf-8", maxBuffer: 20 * 1024 * 1024 }
   );
-  await page.route("https://eve-followups.test/**", (route) => {
+  await page.route("https://eve-followups.test/**", async (route) => {
     if (new URL(route.request().url()).pathname === "/fixture.js") {
-      return route.fulfill({ body: script, contentType: "text/javascript" });
+      await route.fulfill({
+        body: script,
+        contentType: "text/javascript",
+      });
+      return;
     }
-    return route.fulfill({
+    await route.fulfill({
       body: `<!doctype html><html class="dark"><head><style>${css}</style></head><body class="bg-background text-foreground"><div id="root"></div><script type="module" src="/fixture.js"></script></body></html>`,
       contentType: "text/html",
     });
@@ -37,14 +41,18 @@ test("shared follow-up controls are actionable, bounded and safe when unavailabl
     "Can you give an example?"
   );
   const pending = page.getByRole("region", { name: "Pending request" });
-  for (const button of await pending.getByRole("button").all()) {
-    await expect(button).toBeDisabled();
-  }
+  const pendingButtons = await pending.getByRole("button").all();
+  await Promise.all(
+    pendingButtons.map(async (button) => {
+      await expect(button).toBeDisabled();
+    })
+  );
   await expect(
     page
       .getByRole("region", { name: "Unavailable suggestions" })
       .getByRole("button")
   ).toHaveCount(0);
+  /* oxlint-disable eslint/no-await-in-loop -- One browser page must finish each viewport assertion and capture before its dimensions change. */
   for (const width of [1100, 390]) {
     await page.setViewportSize({ height: 600, width });
     expect(
@@ -55,4 +63,5 @@ test("shared follow-up controls are actionable, bounded and safe when unavailabl
       path: testInfo.outputPath(`followups-${width}.png`),
     });
   }
+  /* oxlint-enable eslint/no-await-in-loop */
 });

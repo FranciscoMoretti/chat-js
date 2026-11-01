@@ -1,4 +1,12 @@
-export const GitIcon = ({ size = 16 }: { size?: number }) => (
+import React from "react";
+
+const DEFAULT_ICON_SIZE = 16;
+
+const GitIcon = ({
+  size = DEFAULT_ICON_SIZE,
+}: {
+  readonly size?: number;
+}): React.JSX.Element => (
   <svg
     strokeLinejoin="round"
     style={{ color: "currentcolor", height: size, width: size }}
@@ -21,7 +29,11 @@ export const GitIcon = ({ size = 16 }: { size?: number }) => (
   </svg>
 );
 
-export const SummarizeIcon = ({ size = 16 }: { size?: number }) => (
+const SummarizeIcon = ({
+  size = DEFAULT_ICON_SIZE,
+}: {
+  readonly size?: number;
+}): React.JSX.Element => (
   <svg
     height={size}
     strokeLinejoin="round"
@@ -38,3 +50,4 @@ export const SummarizeIcon = ({ size = 16 }: { size?: number }) => (
     />
   </svg>
 );
+export { GitIcon, SummarizeIcon };

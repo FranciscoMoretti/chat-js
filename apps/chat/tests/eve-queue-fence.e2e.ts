@@ -1,15 +1,13 @@
-/* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
-/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
-/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import postgres from "postgres";
 import { afterAll, expect, test } from "vitest";
 
-import { installEvePostgresQueueFence } from "../lib/db/eve-queue-fence";
-import { purgeEvePostgresQueue } from "../lib/db/eve-queue-purge";
+import { installEvePostgresQueueFence } from "@/lib/eve/lifecycle/postgres/eve-queue-fence";
+import { purgeEvePostgresQueue } from "@/lib/eve/lifecycle/postgres/eve-queue-purge";
 import {
   fenceEvePostgresResources,
   installEvePostgresResourceFence,
-} from "../lib/db/eve-resource-fence";
+} from "@/lib/eve/lifecycle/postgres/eve-resource-fence";
+
 import { env } from "../lib/env";
 
 if (!["localhost", "127.0.0.1"].includes(new URL(env.DATABASE_URL).hostname)) {
@@ -22,64 +20,64 @@ const runIds: string[] = [];
 await installEvePostgresResourceFence(query);
 await installEvePostgresQueueFence(query, task);
 afterAll(async () => {
-  if (ids.length) {
+  if (ids.length > 0) {
     await query`update graphile_worker._private_jobs set locked_at = null, locked_by = null where id::text in ${query(ids)}`;
     await query`select id from graphile_worker.complete_jobs(${query.array(ids)}::bigint[])`;
   }
   await query`delete from graphile_worker._private_tasks where identifier = ${task}`;
   await query`delete from workflow.eve_queue_tasks where identifier = ${task}`;
   await query`delete from workflow.eve_queue_purge_runs where task_identifier = ${task}`;
-  if (runIds.length) {
+  if (runIds.length > 0) {
     await query`delete from workflow.eve_resource_fences where resource in ${query(runIds.map((id) => `run:${id}`))}`;
   }
   await query.end();
 });
-function runId() {
+
+const runId = (): string => {
   const id = crypto.randomUUID();
   runIds.push(id);
   return id;
-}
-function envelope(body: unknown) {
-  return {
-    attempt: 1,
-    data: Buffer.from(JSON.stringify(body)).toString("base64"),
-    id: "fixture",
-    messageId: `msg_${crypto.randomUUID()}`,
-  };
-}
-async function job(body: unknown) {
-  const [row] = await query`select id::text from graphile_worker.add_job(
+};
+
+const envelope = (body: unknown) => ({
+  attempt: 1,
+  data: Buffer.from(JSON.stringify(body)).toString("base64"),
+  id: "fixture",
+  messageId: `msg_${crypto.randomUUID()}`,
+});
+const job = async (body: unknown): Promise<string> => {
+  const [row] = await query<
+    { id: string }[]
+  >`select id::text from graphile_worker.add_job(
     ${task}, ${query.json(envelope(body))}::json, run_at := now() + interval '1 day')`;
   ids.push(row.id);
   return row.id;
-}
-
+};
 test("queue fencing rejects retries and resilient child creation for fenced roots", async () => {
   const root = runId();
   await fenceEvePostgresResources(query, { runIds: [root], streamIds: [] });
   await expect(job({ runId: root })).rejects.toMatchObject({ code: "55000" });
-  for (const key of [
-    "$parentRunId",
-    "$rootRunId",
-    "$eve.parent",
-    "$eve.root",
-  ]) {
-    await expect(
-      job({ runId: runId(), runInput: { attributes: { [key]: root } } })
-    ).rejects.toMatchObject({ code: "55000" });
-  }
+  await Promise.all(
+    ["$parentRunId", "$rootRunId", "$eve.parent", "$eve.root"].map(
+      async (key) => {
+        await expect(
+          job({ runId: runId(), runInput: { attributes: { [key]: root } } })
+        ).rejects.toMatchObject({ code: "55000" });
+      }
+    )
+  );
   await job({ runId: runId() });
   await job({ __healthCheck: true, correlationId: "fixture" });
 });
-
 test("workers can release locks after fencing but cannot replace or move a protected payload", async () => {
   const root = runId();
   const id = await job({ runId: root });
   await query`update graphile_worker._private_jobs set locked_at = now(), locked_by = 'fixture-only' where id::text = ${id}`;
   await fenceEvePostgresResources(query, { runIds: [root], streamIds: [] });
   await query`update graphile_worker._private_jobs set locked_at = null, locked_by = null, payload = payload where id::text = ${id}`;
-  const [stored] =
-    await query`select payload::text as payload from graphile_worker._private_jobs where id::text = ${id}`;
+  const [stored] = await query<
+    { payload: string }[]
+  >`select payload::text as payload from graphile_worker._private_jobs where id::text = ${id}`;
   // JSONB equality would discard this duplicate field and mistake changed bytes
   // for unchanged bookkeeping. The protected envelope must remain untouched.
   const duplicateField = `${stored.payload.trimEnd().slice(0, -1)},"attempt":1}`;
@@ -99,7 +97,6 @@ test("unsupported queue messages fail closed for registered tasks", async () => 
     code: "22023",
   });
 });
-
 test("queue purge removes queued descendants and retains their IDs across retries", async () => {
   const root = runId();
   const child = runId();
@@ -152,7 +149,64 @@ test("queue purge refuses even an old worker lock and succeeds after explicit re
     await query`select id from graphile_worker._private_jobs where id::text = ${id}`
   ).toHaveLength(1);
   await query`update graphile_worker._private_jobs set locked_at = null, locked_by = null where id::text = ${id}`;
-  expect((await purgeEvePostgresQueue(query, input)).removedJobIds).toEqual([
-    id,
-  ]);
+  const purgeResult = await purgeEvePostgresQueue(query, input);
+  expect(purgeResult.removedJobIds).toEqual([id]);
 });
+
+test.each([99, 100])(
+  "queue purge preserves the discovery boundary for a chain of %i descendants",
+  async (descendantCount) => {
+    const root = runId();
+    const descendants = Array.from({ length: descendantCount }, () => runId());
+    const family = [root, ...descendants];
+    const payloads = family.map((id, index) =>
+      JSON.stringify(
+        envelope({
+          runId: id,
+          ...(index > 0 && {
+            runInput: { attributes: { $parentRunId: family[index - 1] } },
+          }),
+        })
+      )
+    );
+    const queued = await query<{ id: string }[]>`
+      select (graphile_worker.add_job(
+        ${task}, payload::json, run_at := now() + interval '1 day'
+      )).id::text as id from unnest(${query.array(payloads)}::text[]) payload`;
+    const jobIds = queued.map(({ id }) => id);
+    ids.push(...jobIds);
+    await fenceEvePostgresResources(query, { runIds: [root], streamIds: [] });
+    const input = { runIds: [root], sessionId: root, taskIdentifier: task };
+
+    if (descendantCount === 99) {
+      expect(await purgeEvePostgresQueue(query, input)).toEqual({
+        removedJobIds: jobIds.toSorted(),
+        runIds: family.toSorted(),
+      });
+      expect(await purgeEvePostgresQueue(query, input)).toEqual({
+        removedJobIds: [],
+        runIds: family.toSorted(),
+      });
+      return;
+    }
+
+    await expect(purgeEvePostgresQueue(query, input)).rejects.toThrow(
+      "Queue inventory did not stabilize"
+    );
+    expect(
+      await query`select id from graphile_worker._private_jobs where id::text in ${query(jobIds)}`
+    ).toHaveLength(family.length);
+    expect(
+      await query`select run_id from workflow.eve_queue_purge_runs
+        where session_id = ${root} and task_identifier = ${task}`
+    ).toEqual([]);
+    expect(
+      await query`select resource from workflow.eve_resource_fences
+        where resource in ${query(descendants.map((id) => `run:${id}`))} and fenced`
+    ).toEqual([]);
+    expect(
+      await query`select resource from workflow.eve_resource_fences
+        where resource = ${`run:${root}`} and fenced`
+    ).toHaveLength(1);
+  }
+);

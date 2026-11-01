@@ -1,0 +1,248 @@
+{
+  "repository": "https://github.com/shadcn-ui/ui",
+  "commit": "481d523374745e77d0cf9c53a4115ab5dd7c8481",
+  "rtlTransform": "shadcn@4.22.1",
+  "adaptations": [
+    "Local component, icon, and shared mobile hook import paths",
+    "Upstream RTL transform on TSX and CSS @apply utilities",
+    "Local stylesheet import and reference paths",
+    "Restore Radix mobile sidebar focus to the preview trigger on close"
+  ],
+  "files": {
+    "base/attachment.tsx": {
+      "source": "registry/bases/base/ui/attachment.tsx",
+      "sha256": "8990c8ba1b1737acdbaf847aae6360ae544700beac7f3f53e559a57b04a48bfe",
+      "adaptedSha256": "3e9bb3ada777ba1b8188cbc905c1389b4141a8daef115e617e94131b3fe5e1d0"
+    },
+    "base/bubble.tsx": {
+      "source": "registry/bases/base/ui/bubble.tsx",
+      "sha256": "7b997c07146c49b4d3371272b937bc4f1b9852b3c47150de1537997de0ea85a0",
+      "adaptedSha256": "51429c662f7d1648a84523aaad1091db33a22fd30eb11469281610c9c0732871"
+    },
+    "base/button.tsx": {
+      "source": "registry/bases/base/ui/button.tsx",
+      "sha256": "74f982d7ad7a764e3c95a519fc063a671e66ad758ea31dc89d747838e20c2487",
+      "adaptedSha256": "74f982d7ad7a764e3c95a519fc063a671e66ad758ea31dc89d747838e20c2487"
+    },
+    "base/code-block.tsx": {
+      "source": "registry/bases/base/ui/code-block.tsx",
+      "sha256": "66ae50e6a08ca54a0ffd8be7f71cb4f60002a0e0cb592910d85e8e2d839cca0a",
+      "adaptedSha256": "77771076b23a48679a482eb9759bd16f7ced439fd914e8260dd31b9263f88323"
+    },
+    "base/collapsible.tsx": {
+      "source": "registry/bases/base/ui/collapsible.tsx",
+      "sha256": "ead4349ff7b01d696ef89294a81d18ee1d3f732321398896462c834ab9b9e065",
+      "adaptedSha256": "ead4349ff7b01d696ef89294a81d18ee1d3f732321398896462c834ab9b9e065"
+    },
+    "base/direction.tsx": {
+      "source": "registry/bases/base/ui/direction.tsx",
+      "sha256": "661ff5b9c0dc26edde1226bfedc0ab50976d84f8bae42ca83a38dc3b478fd4d4",
+      "adaptedSha256": "661ff5b9c0dc26edde1226bfedc0ab50976d84f8bae42ca83a38dc3b478fd4d4"
+    },
+    "base/dropdown-menu.tsx": {
+      "source": "registry/bases/base/ui/dropdown-menu.tsx",
+      "sha256": "18c1829679694a9b9850afcabf1158a80ec3624fb5e03d0d4b13339b729e0503",
+      "adaptedSha256": "212e8ea159fe3f8f3f91d036f7991855ffd1884632252823d107544b4ec57fc9"
+    },
+    "base/input-group.tsx": {
+      "source": "registry/bases/base/ui/input-group.tsx",
+      "sha256": "b1ed344e05b4161c240fff21b6e224fcc61cbe35d5a3aaa997de02c8fb25e1fe",
+      "adaptedSha256": "f43da6deb00091d430b513aa4776a37bfc2cea6df99ea665d5c23bf8bf112481"
+    },
+    "base/input.tsx": {
+      "source": "registry/bases/base/ui/input.tsx",
+      "sha256": "00213ec177e4556e69b6680128c18023d859a8e4eaf4106fbcf6abdc4f2c419b",
+      "adaptedSha256": "00213ec177e4556e69b6680128c18023d859a8e4eaf4106fbcf6abdc4f2c419b"
+    },
+    "base/message-scroller.tsx": {
+      "source": "registry/bases/base/ui/message-scroller.tsx",
+      "sha256": "385d9b66036e6fcf4b21997914791121c55749223d4f28f95d72862c4bd724c0",
+      "adaptedSha256": "569bc8a5c13aa6fd9298c5c58f62875d6439b8934666b436607364ea6f72bdad"
+    },
+    "base/message.tsx": {
+      "source": "registry/bases/base/ui/message.tsx",
+      "sha256": "b57f3c9921ceb0695cb8164c7be8ce229519f2b485b95923bb980a5e39e11c72",
+      "adaptedSha256": "b57f3c9921ceb0695cb8164c7be8ce229519f2b485b95923bb980a5e39e11c72"
+    },
+    "base/scroll-area.tsx": {
+      "source": "registry/bases/base/ui/scroll-area.tsx",
+      "sha256": "7e49845827447091a6493473779a05ba45cb8302e3703a6f9e4225dd6315cce2",
+      "adaptedSha256": "7e49845827447091a6493473779a05ba45cb8302e3703a6f9e4225dd6315cce2"
+    },
+    "base/separator.tsx": {
+      "source": "registry/bases/base/ui/separator.tsx",
+      "sha256": "9a80ff8c110e0c55489509f4f82ebcc929c0174b59544047147b7134f86a54e7",
+      "adaptedSha256": "9a80ff8c110e0c55489509f4f82ebcc929c0174b59544047147b7134f86a54e7"
+    },
+    "base/sheet.tsx": {
+      "source": "registry/bases/base/ui/sheet.tsx",
+      "sha256": "5816119da5f3468b0b91d2c65bcf6befe1d769b7867e236b9f18db83908581cb",
+      "adaptedSha256": "2421eb8db7a7b4ecb286c60de6fe8295ff2b62613523e898db1b699b8aa68cbf"
+    },
+    "base/sidebar.tsx": {
+      "source": "registry/bases/base/ui/sidebar.tsx",
+      "sha256": "f0f4c21b8fa1b4750711711ac7a6833c713cf93a23f1d2143cf5ec26f1661d56",
+      "adaptedSha256": "1887c1c3990690c935cfc7857528ac3e353100a9b3a74fffeac2204b11aee911"
+    },
+    "base/skeleton.tsx": {
+      "source": "registry/bases/base/ui/skeleton.tsx",
+      "sha256": "8fcbad84e494a75484a0975221fb40f54c4a7d68f79cfc305cb158d1feb1badf",
+      "adaptedSha256": "8fcbad84e494a75484a0975221fb40f54c4a7d68f79cfc305cb158d1feb1badf"
+    },
+    "base/textarea.tsx": {
+      "source": "registry/bases/base/ui/textarea.tsx",
+      "sha256": "8f527c89dec40a9b372376dc93d2ebb149bfd82f209856d110ead1aabec19c6a",
+      "adaptedSha256": "8f527c89dec40a9b372376dc93d2ebb149bfd82f209856d110ead1aabec19c6a"
+    },
+    "base/tooltip.tsx": {
+      "source": "registry/bases/base/ui/tooltip.tsx",
+      "sha256": "dc5ec917d8276af9d66e7c951b0608d67c149bcb311072166bc8ce67ee2b7488",
+      "adaptedSha256": "dc5ec917d8276af9d66e7c951b0608d67c149bcb311072166bc8ce67ee2b7488"
+    },
+    "base/trace.tsx": {
+      "source": "registry/bases/base/ui/trace.tsx",
+      "sha256": "39aa939c4845029793d98bb9f4d9814686be0198ccee257cc198da276294ca79",
+      "adaptedSha256": "d2d9e8d5f930db8fd14d4a62316fe5454b0aba84249fe493e30689e5b6ba8a8e"
+    },
+    "radix/attachment.tsx": {
+      "source": "registry/bases/radix/ui/attachment.tsx",
+      "sha256": "742984b038e9f2fd87919684453bc6d30cdf03a31ee05ceed464a91b7de052e5",
+      "adaptedSha256": "6b3a3c56c2d7903c654473fefd5d918eded95b02de762021e225a9c0bde196fe"
+    },
+    "radix/bubble.tsx": {
+      "source": "registry/bases/radix/ui/bubble.tsx",
+      "sha256": "f3b952658607bdc73ccf1ee45af54c6189c77b6431cdc7c02b8bff0a7f11f7d9",
+      "adaptedSha256": "beb350b09cc97f69bd4cc4071ed45662bd764e7cb1ec7d93febfe3f5d63cd3d7"
+    },
+    "radix/button.tsx": {
+      "source": "registry/bases/radix/ui/button.tsx",
+      "sha256": "76c6abdf94fae4085fd6c50c97c7a99ec21240af187c63ea4b2e71551d33495f",
+      "adaptedSha256": "76c6abdf94fae4085fd6c50c97c7a99ec21240af187c63ea4b2e71551d33495f"
+    },
+    "radix/code-block.tsx": {
+      "source": "registry/bases/radix/ui/code-block.tsx",
+      "sha256": "95d4468cd2da58478f2a28bccc3d42a28db5d82549c7cd83cc9b59d4887680c2",
+      "adaptedSha256": "77771076b23a48679a482eb9759bd16f7ced439fd914e8260dd31b9263f88323"
+    },
+    "radix/collapsible.tsx": {
+      "source": "registry/bases/radix/ui/collapsible.tsx",
+      "sha256": "c6598e5584f4258b5d9fefadbc5ad6a66888ad58729f4b634a0bb2d9c513188b",
+      "adaptedSha256": "c6598e5584f4258b5d9fefadbc5ad6a66888ad58729f4b634a0bb2d9c513188b"
+    },
+    "radix/direction.tsx": {
+      "source": "registry/bases/radix/ui/direction.tsx",
+      "sha256": "84ae2ad658207f0e0f367978e5508cd8027cd00c29c41d3d13db21a708c3d1e6",
+      "adaptedSha256": "84ae2ad658207f0e0f367978e5508cd8027cd00c29c41d3d13db21a708c3d1e6"
+    },
+    "radix/dropdown-menu.tsx": {
+      "source": "registry/bases/radix/ui/dropdown-menu.tsx",
+      "sha256": "f29f9046532435ec183482ad990ac282e5ecfc76af80a6352eaa500a5689c447",
+      "adaptedSha256": "7d0dafde5694ca89a5ac0262d4a62d63b0995407fc09222ee8a46a5e8091209b"
+    },
+    "radix/input-group.tsx": {
+      "source": "registry/bases/radix/ui/input-group.tsx",
+      "sha256": "1dc8da17e81c94abc4d7b84a48ecd519f6b24e3007c0f2cdb3d70bcf5a657e19",
+      "adaptedSha256": "f03488236fe23f32980d47d0bdbe9f89f7ef279b5393c2e42c0d177b517ec564"
+    },
+    "radix/input.tsx": {
+      "source": "registry/bases/radix/ui/input.tsx",
+      "sha256": "df7e02c82048862d719d69c7b101de130e47f2448d3933f76317c3c853b8a01e",
+      "adaptedSha256": "df7e02c82048862d719d69c7b101de130e47f2448d3933f76317c3c853b8a01e"
+    },
+    "radix/message-scroller.tsx": {
+      "source": "registry/bases/radix/ui/message-scroller.tsx",
+      "sha256": "80328938060d2c7dd782f0a8ffa501b391cb4af77564cd682c574de2e5564ac2",
+      "adaptedSha256": "569bc8a5c13aa6fd9298c5c58f62875d6439b8934666b436607364ea6f72bdad"
+    },
+    "radix/message.tsx": {
+      "source": "registry/bases/radix/ui/message.tsx",
+      "sha256": "b57f3c9921ceb0695cb8164c7be8ce229519f2b485b95923bb980a5e39e11c72",
+      "adaptedSha256": "b57f3c9921ceb0695cb8164c7be8ce229519f2b485b95923bb980a5e39e11c72"
+    },
+    "radix/scroll-area.tsx": {
+      "source": "registry/bases/radix/ui/scroll-area.tsx",
+      "sha256": "088a0379c48cf5c856b7e182ebabd7ecc41b0dd298fc9cf794b34f718c765f74",
+      "adaptedSha256": "088a0379c48cf5c856b7e182ebabd7ecc41b0dd298fc9cf794b34f718c765f74"
+    },
+    "radix/separator.tsx": {
+      "source": "registry/bases/radix/ui/separator.tsx",
+      "sha256": "b5b5460e5337c2d5f361c1512001615b2e5eacb38c7449a4418bb9ddb47c4bba",
+      "adaptedSha256": "b5b5460e5337c2d5f361c1512001615b2e5eacb38c7449a4418bb9ddb47c4bba"
+    },
+    "radix/sheet.tsx": {
+      "source": "registry/bases/radix/ui/sheet.tsx",
+      "sha256": "0b90787b36db17aa84acc5c30d9df896eae06581955ed4f1d7ab28986e659aed",
+      "adaptedSha256": "e53d4e777f32ccdaa4f1aec7ae9cab41e927adbab588c5fc4e993cb3d0f0e494"
+    },
+    "radix/sidebar.tsx": {
+      "source": "registry/bases/radix/ui/sidebar.tsx",
+      "sha256": "5a1f82f0165377a9149c85f41dea5893d4e15431f47f822e6c365b4291b105ed",
+      "adaptedSha256": "fedd0dadc6b508d56418358f5b4e9aa6efe04a0c7a17f8c4720d9f72027f58d2"
+    },
+    "radix/skeleton.tsx": {
+      "source": "registry/bases/radix/ui/skeleton.tsx",
+      "sha256": "8fcbad84e494a75484a0975221fb40f54c4a7d68f79cfc305cb158d1feb1badf",
+      "adaptedSha256": "8fcbad84e494a75484a0975221fb40f54c4a7d68f79cfc305cb158d1feb1badf"
+    },
+    "radix/textarea.tsx": {
+      "source": "registry/bases/radix/ui/textarea.tsx",
+      "sha256": "8f527c89dec40a9b372376dc93d2ebb149bfd82f209856d110ead1aabec19c6a",
+      "adaptedSha256": "8f527c89dec40a9b372376dc93d2ebb149bfd82f209856d110ead1aabec19c6a"
+    },
+    "radix/tooltip.tsx": {
+      "source": "registry/bases/radix/ui/tooltip.tsx",
+      "sha256": "25b33cd3bfd6046067259e476c3b5137b9f018c394d6ea51926accb8d6d5134a",
+      "adaptedSha256": "25b33cd3bfd6046067259e476c3b5137b9f018c394d6ea51926accb8d6d5134a"
+    },
+    "radix/trace.tsx": {
+      "source": "registry/bases/radix/ui/trace.tsx",
+      "sha256": "e0bdf9c08f78fc785b15ff76826009c48ddbfcb3414ad4cd3db5169e0bba086d",
+      "adaptedSha256": "722006afa2f2dd88e82b6e22a586b2811441012e426814119e48c9576fae3423"
+    },
+    "style-registry.css": {
+      "source": "app/style-registry.css",
+      "sha256": "405358059b4985720ca897cd7d6dd2b596a96e57760122f34edff0b89216bc85",
+      "adaptedSha256": "589d1b0f0f255cd2150d3727731156101be13dd5aa8be4d22e189634a628a6db"
+    },
+    "styles/style-luma.css": {
+      "source": "registry/styles/style-luma.css",
+      "sha256": "35c0578be1623049da1f11729ae43a2a7884dcc17b948fc72dcdf4f1be3c0484",
+      "adaptedSha256": "25efdfefcdbcbdfed8c36100e5890efb07fafa38d528e01592e83653ddccff78"
+    },
+    "styles/style-lyra.css": {
+      "source": "registry/styles/style-lyra.css",
+      "sha256": "be24110aafbd07d794ced58f15512c640ab3dfa5733beb850e83f968457a9b52",
+      "adaptedSha256": "dd87d4be9a7fa32459f5ee22ae56018636c9cb77cd5e627c24d764e329e4420c"
+    },
+    "styles/style-maia.css": {
+      "source": "registry/styles/style-maia.css",
+      "sha256": "8d518bcb26fad2904e7048e7be4c708814168c5e4ee29f1228945f91efd694a1",
+      "adaptedSha256": "99321a8649eb028feaad5f4457fd7e864e211ff9d67a7e96bae841c455506f79"
+    },
+    "styles/style-mira.css": {
+      "source": "registry/styles/style-mira.css",
+      "sha256": "cdde6d38ee43c94cb6785672455adeea7fe195cc57772dc52b41acb5a1789732",
+      "adaptedSha256": "4f88a3ed0d354992b026799451fdc52fb277bd544da49bce5bf0bfdaeed24b0b"
+    },
+    "styles/style-nova.css": {
+      "source": "registry/styles/style-nova.css",
+      "sha256": "fd9803ec398290c306b377a46a769cad0c7ff024bf6a626993c113cacc20f16e",
+      "adaptedSha256": "5b0126edb2d3c75cae8289417025be752e61dabbddf7b2eab4d0ef61ec555ff9"
+    },
+    "styles/style-rhea.css": {
+      "source": "registry/styles/style-rhea.css",
+      "sha256": "bac4eff75a0e21d9dd90ce40634937f54730471d8f7fa50ca67b317892cf908f",
+      "adaptedSha256": "1aece96749eb3d25edafa02d08210d0b71ad60a4ee7db43d6a432888d589719f"
+    },
+    "styles/style-sera.css": {
+      "source": "registry/styles/style-sera.css",
+      "sha256": "c26380d5023bb63d25c03c94cae223e0a4f133f6bae0a63f77b8e4ac17483ba0",
+      "adaptedSha256": "0aa3ce19d4ec9d6d840a514a0362dd4129821c5ef7703ce4cf0801b4a3926662"
+    },
+    "styles/style-vega.css": {
+      "source": "registry/styles/style-vega.css",
+      "sha256": "10fa07bd61b429ae2c14c572ba9975f6e991d68a04f8fec7e354a062597e0d4e",
+      "adaptedSha256": "51041983555d5c8b6a0b7ffc35d473657088a90cfbd709f41412e72d1d7b4c18"
+    }
+  }
+}

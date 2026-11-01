@@ -1,14 +1,16 @@
-import { and, eq, inArray, or, sql } from "drizzle-orm";
+import { chat } from "@/integrations/chat/server";
+import { checkDeletedWorkspaceMemberships } from "@/lib/eve/persistent-sandbox-store";
+import { eveDeletionScope } from "./eve-deletion-scope";
+import { unretainedEveDocumentRevisionIds } from "./eve-document-retention";
+import { and, eq, exists, inArray, or, sql } from "drizzle-orm";
+import type { QueryPromise } from "drizzle-orm/query-promise";
 
 import { db } from "./client";
 import { tombstoneEveResponseGroups } from "./eve-response-groups";
 import {
-  eveCodeSandbox,
   eveChat,
-  eveChatProject,
+  eveCodeSandbox,
   eveConversation,
-  eveConversationCopy,
-  eveConversationCopyFile,
   eveDocumentCheckpoint,
   eveDocumentCheckpointEntry,
   eveDocumentHead,
@@ -18,142 +20,132 @@ import {
   eveImportedDocumentCheckpointEntry,
   eveNamedDocumentCheckpoint,
   eveNamedDocumentCheckpointEntry,
-  eveVote,
-  eveSearchText,
   eveSubagentSession,
 } from "./schema";
 
-/**
- * Final application stage. The internal coordinator must confirm native payload,
- * sandbox and file removal before calling this; this is not a deletion endpoint.
- * Keep identity tombstones for replay protection and leave accounting intact.
+const SINGLE_MATCH_LIMIT = 1;
+const EMPTY_FAMILY_SIZE = 0;
+type DeletionTransaction = Readonly<
+  Pick<typeof db, "select" | "execute" | "delete" | "update">
+>;
+/** Select the requested root or joined member while retaining the owner filter.
+ * @param {string} ownerId - Owner required for either identity alternative.
+ * @param {string} conversationId - Root chat ID or joined member conversation ID.
+ * @returns {ReturnType<typeof and>} Native Drizzle owner-and-identity predicate, with the root alternative evaluated before the member alternative.
  */
-export const completeEveConversationDeletion = async (
-  ownerId: string,
-  routeId: string
-) => {
-  await db.transaction(async (tx) => {
-    await tx.execute(
-      sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
-    );
-    const [identity] = await tx
-      .select({ chatId: eveChat.id })
-      .from(eveChat)
-      .leftJoin(
-        eveConversation,
-        and(
-          eq(eveConversation.chatId, eveChat.id),
-          eq(eveConversation.ownerId, eveChat.ownerId),
-          eq(eveConversation.id, routeId)
-        )
-      )
-      .where(
-        and(
-          eq(eveChat.ownerId, ownerId),
-          or(eq(eveChat.id, routeId), eq(eveConversation.id, routeId))
-        )
-      );
-    if (!identity) {
-      throw new Error("Conversation identity is unavailable.");
-    }
-    const condition = and(
-      eq(eveConversation.ownerId, ownerId),
-      eq(eveConversation.chatId, identity.chatId)
-    );
-    const family = await tx.select().from(eveConversation).where(condition);
-    if (
-      !family.length ||
-      family.some((row) => row.state !== "deleting" && row.state !== "deleted")
-    ) {
-      throw new Error(
-        "The entire conversation family must be pending deletion."
-      );
-    }
-    await tombstoneEveResponseGroups(tx, ownerId, family);
-    const ids = family.map((row) => row.id);
-    const [sandbox] = await tx
-      .select({ name: eveCodeSandbox.name })
-      .from(eveCodeSandbox)
-      .where(
-        and(
-          inArray(eveCodeSandbox.conversationId, ids),
-          eq(eveCodeSandbox.state, "unresolved")
-        )
-      )
-      .limit(1);
-    if (sandbox) {
-      throw new Error("Code sandbox cleanup is incomplete.");
-    }
-    for (const table of [
-      eveFileReference,
-      eveImportedDocumentCheckpointEntry,
-      eveImportedDocumentCheckpoint,
-      eveNamedDocumentCheckpointEntry,
-      eveNamedDocumentCheckpoint,
-      eveDocumentCheckpointEntry,
-      eveDocumentCheckpoint,
-      eveDocumentHead,
-      eveDocumentRevision,
-    ]) {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Process one resource at a time so fencing and cleanup stay ordered and bounded.
-      const [remaining] = await tx
-        .select({ conversationId: table.conversationId })
-        .from(table)
-        .where(inArray(table.conversationId, ids))
-        .limit(1);
-      if (remaining) {
-        throw new Error("Application content cleanup is incomplete.");
-      }
-    }
-    // Transcript preparation and provenance must not survive a completed family deletion.
-    await tx
-      .delete(eveConversationCopyFile)
-      .where(inArray(eveConversationCopyFile.conversationId, ids));
-    await tx
-      .delete(eveConversationCopy)
-      .where(inArray(eveConversationCopy.conversationId, ids));
-    await tx
-      .delete(eveChatProject)
-      .where(eq(eveChatProject.chatId, identity.chatId));
-    await tx
-      .delete(eveSearchText)
-      .where(inArray(eveSearchText.conversationId, ids));
-    await tx
-      .delete(eveSubagentSession)
-      .where(inArray(eveSubagentSession.conversationId, ids));
-    await tx.delete(eveVote).where(inArray(eveVote.conversationId, ids));
-    await tx
-      .update(eveConversation)
-      .set({
-        firstMessage: "",
-        initialContentHash: null,
-        initialModelId: null,
-        initialProjectId: null,
-        initialRequest: null,
-        state: "deleted",
-        visibility: "private",
-      })
-      .where(condition);
-    await tx
-      .update(eveChat)
-      .set({
-        activeConversationId: null,
-        isPinned: false,
-        title: "",
-        titleStatus: "fallback",
-      })
-      .where(
-        and(eq(eveChat.id, identity.chatId), eq(eveChat.ownerId, ownerId))
-      );
-  });
-};
-
-/** Includes identity tombstones so owners can retry and inspect completed deletion. */
-export const getEveDeletionState = async (
+const ownerVisibleEveIdentityCondition = (
   ownerId: string,
   conversationId: string
-) => {
-  const [row] = await db
+): ReturnType<typeof and> =>
+  and(
+    eq(eveChat.ownerId, ownerId),
+    or(eq(eveChat.id, conversationId), eq(eveConversation.id, conversationId))
+  );
+
+/** Require an identity before looking up or mutating its conversation family.
+ * @param {Readonly<{ chatId: typeof eveChat.$inferSelect.id }> | undefined} identity - First owner-filtered identity row, absent when the native query found no match.
+ * @returns {Readonly<{ chatId: typeof eveChat.$inferSelect.id }>} The same identity object; throws before family reads when it is absent.
+ */
+const requireEveDeletionIdentity = (
+  identity: Readonly<{ chatId: typeof eveChat.$inferSelect.id }> | undefined
+): Readonly<{ chatId: typeof eveChat.$inferSelect.id }> => {
+  if (!identity) {
+    throw new Error("Conversation identity is unavailable.");
+  }
+  return identity;
+};
+
+/** Require every member to have entered deletion before final tombstoning.
+ * @param {readonly Readonly<Pick<typeof eveConversation.$inferSelect, "state">>[]} family - Native conversation state readers for the owner-visible family.
+ * @returns {void} Rejects an empty family or the first member outside deleting/deleted; reads no member IDs.
+ */
+const assertEveFamilyPendingDeletion = (
+  family: readonly Readonly<
+    Pick<typeof eveConversation.$inferSelect, "state">
+  >[]
+): void => {
+  if (
+    family.length === EMPTY_FAMILY_SIZE ||
+    family.some(
+      (row: Readonly<Pick<typeof eveConversation.$inferSelect, "state">>) =>
+        row.state !== "deleting" && row.state !== "deleted"
+    )
+  ) {
+    throw new Error("The entire conversation family must be pending deletion.");
+  }
+};
+
+/** Read the first unresolved native sandbox without changing query construction or execution.
+ * @param {Readonly<Pick<typeof db, "select">>} query - Existing transaction select capability; its receiver is forwarded unchanged.
+ * @param {readonly string[]} ids - Family conversation IDs already read after response-group tombstoning.
+ * @returns {QueryPromise<readonly (Readonly<Pick<typeof eveCodeSandbox.$inferSelect, "name">> | undefined)[]>} The original native query object; an empty result has no first row.
+ */
+const findUnresolvedEveFamilySandbox = (
+  query: Readonly<Pick<typeof db, "select">>,
+  ids: readonly string[]
+): QueryPromise<
+  readonly (
+    | Readonly<Pick<typeof eveCodeSandbox.$inferSelect, "name">>
+    | undefined
+  )[]
+> =>
+  query
+    .select({ name: eveCodeSandbox.name })
+    .from(eveCodeSandbox)
+    .where(
+      and(
+        inArray(eveCodeSandbox.conversationId, ids),
+        eq(eveCodeSandbox.state, "unresolved")
+      )
+    )
+    .limit(SINGLE_MATCH_LIMIT);
+
+/** Read the owner-filtered root/member identity before family finalization.
+ * @param {Readonly<Pick<typeof db, "select">>} query - Existing transaction select capability, used with its original receiver.
+ * @param {string} ownerId - Owner required by the joined identity predicate.
+ * @param {string} routeId - Root chat ID or joined member conversation ID.
+ * @returns {QueryPromise<readonly ({ readonly chatId: typeof eveChat.$inferSelect.id } | undefined)[]>} Original native query object; an empty result has no first row.
+ */
+const readOwnedEveDeletionIdentity = (
+  query: Readonly<Pick<typeof db, "select">>,
+  ownerId: string,
+  routeId: string
+): QueryPromise<
+  readonly ({ readonly chatId: typeof eveChat.$inferSelect.id } | undefined)[]
+> =>
+  query
+    .select({ chatId: eveChat.id })
+    .from(eveChat)
+    .leftJoin(
+      eveConversation,
+      and(
+        eq(eveConversation.chatId, eveChat.id),
+        eq(eveConversation.ownerId, eveChat.ownerId),
+        eq(eveConversation.id, routeId)
+      )
+    )
+    .where(ownerVisibleEveIdentityCondition(ownerId, routeId));
+
+/** Read the first owner-visible identity and joined member state for a deletion receipt.
+ * @param {Readonly<Pick<typeof db, "select">>} query - Existing select capability, forwarded without cloning or rebinding.
+ * @param {string} ownerId - Owner required by the joined identity predicate.
+ * @param {string} conversationId - Root chat ID or joined member conversation ID.
+ * @returns {QueryPromise<readonly ({ readonly chatId: typeof eveChat.$inferSelect.id; readonly state: typeof eveConversation.$inferSelect.state | null } | undefined)[]>} Original native query object; an empty result has no first row.
+ */
+const readOwnedEveDeletionReceipt = (
+  query: Readonly<Pick<typeof db, "select">>,
+  ownerId: string,
+  conversationId: string
+): QueryPromise<
+  readonly (
+    | {
+        readonly chatId: typeof eveChat.$inferSelect.id;
+        readonly state: typeof eveConversation.$inferSelect.state | null;
+      }
+    | undefined
+  )[]
+> =>
+  query
     .select({
       chatId: eveChat.id,
       state: eveConversation.state,
@@ -167,23 +159,26 @@ export const getEveDeletionState = async (
         eq(eveConversation.id, conversationId)
       )
     )
-    .where(
-      and(
-        eq(eveChat.ownerId, ownerId),
-        or(
-          eq(eveChat.id, conversationId),
-          eq(eveConversation.id, conversationId)
-        )
-      )
-    )
-    .limit(1);
-  if (!row) {
-    return;
-  }
-  if (row.state) {
-    return { rootId: row.chatId, state: row.state };
-  }
-  const [member] = await db
+    .where(ownerVisibleEveIdentityCondition(ownerId, conversationId))
+    .limit(SINGLE_MATCH_LIMIT);
+
+/** Read the owner-visible member state when a root receipt has no joined member state.
+ * @param {Readonly<Pick<typeof db, "select">>} query - Existing select capability.
+ * @param {string} ownerId - Owner required by the member-state predicate.
+ * @param {Readonly<{ chatId: typeof eveChat.$inferSelect.id }>} row - Same root identity object; chatId is read only at the original predicate position.
+ * @returns {QueryPromise<readonly (Readonly<Pick<typeof eveConversation.$inferSelect, "state">> | undefined)[]>} Original native query object; an empty result has no first row.
+ */
+const readOwnedEveDeletionMemberState = (
+  query: Readonly<Pick<typeof db, "select">>,
+  ownerId: string,
+  row: Readonly<{ chatId: typeof eveChat.$inferSelect.id }>
+): QueryPromise<
+  readonly (
+    | Readonly<Pick<typeof eveConversation.$inferSelect, "state">>
+    | undefined
+  )[]
+> =>
+  query
     .select({ state: eveConversation.state })
     .from(eveConversation)
     .where(
@@ -191,7 +186,182 @@ export const getEveDeletionState = async (
         eq(eveConversation.chatId, row.chatId),
         eq(eveConversation.ownerId, ownerId)
       )
-    )
-    .limit(1);
-  return member ? { rootId: row.chatId, state: member.state } : undefined;
+    );
+
+/**
+ * Final application stage. The internal coordinator must confirm native payload,
+ * sandbox and file removal before calling this; this is not a deletion endpoint.
+ * Keep identity tombstones for replay protection and leave accounting intact.
+ * @param {string} ownerId - Owner whose family lock and every identity predicate fence this transaction.
+ * @param {string} routeId - Root chat ID or member conversation ID resolving the family to tombstone.
+ * @returns {Promise<void>} Resolves after the application tombstone transaction commits; rejects for a missing identity, a family outside deletion, or remaining sandbox/application content.
+ */
+const completeEveConversationDeletion = async (
+  ownerId: string,
+  routeId: string
+): Promise<void> => {
+  await db.transaction(async (tx: DeletionTransaction) => {
+    await tx.execute(
+      sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
+    );
+    const [queriedIdentity] = await readOwnedEveDeletionIdentity(
+      tx,
+      ownerId,
+      routeId
+    );
+    const identity = requireEveDeletionIdentity(queriedIdentity);
+    const condition = and(
+      eq(eveConversation.ownerId, ownerId),
+      eveDeletionScope(ownerId, routeId)
+    );
+    const family = await tx.select().from(eveConversation).where(condition);
+    assertEveFamilyPendingDeletion(family);
+    await tombstoneEveResponseGroups(tx, ownerId, family);
+    const ids = family.map(
+      (row: Readonly<Pick<typeof eveConversation.$inferSelect, "id">>) => row.id
+    );
+    const [sandbox] = await findUnresolvedEveFamilySandbox(tx, ids);
+    if (sandbox) {
+      throw new Error("Code sandbox cleanup is incomplete.");
+    }
+    await checkDeletedWorkspaceMemberships(ownerId, ids, tx);
+
+    const contentTables = [
+      eveFileReference,
+      eveImportedDocumentCheckpointEntry,
+      eveImportedDocumentCheckpoint,
+      eveNamedDocumentCheckpointEntry,
+      eveNamedDocumentCheckpoint,
+      eveDocumentCheckpointEntry,
+      eveDocumentCheckpoint,
+      eveDocumentHead,
+    ];
+    // Only existence matters: check the fenced family's content in one snapshot.
+    const remaining = await tx
+      .select({ id: eveConversation.id })
+      .from(eveConversation)
+      .where(
+        and(
+          inArray(eveConversation.id, ids),
+          or(
+            exists(
+              tx
+                .select({ id: eveDocumentRevision.id })
+                .from(eveDocumentRevision)
+                .where(
+                  inArray(
+                    eveDocumentRevision.id,
+                    unretainedEveDocumentRevisionIds(ownerId, ids)
+                  )
+                )
+            ),
+            ...contentTables.map((table) =>
+              exists(
+                tx
+                  .select({ conversationId: table.conversationId })
+                  .from(table)
+                  .where(eq(table.conversationId, eveConversation.id))
+              )
+            )
+          )
+        )
+      )
+      .limit(SINGLE_MATCH_LIMIT);
+    if (remaining.length > EMPTY_FAMILY_SIZE) {
+      throw new Error("Application content cleanup is incomplete.");
+    }
+    await tx
+      .delete(eveSubagentSession)
+      .where(inArray(eveSubagentSession.conversationId, ids));
+    await chat.onDeleteConversations(tx, {
+      conversationIds: ids,
+      sessionIds: family.flatMap((row) =>
+        row.sessionId === null ? [] : [row.sessionId]
+      ),
+    });
+    await tx
+      .update(eveConversation)
+      .set({
+        firstMessage: "",
+        initialContentHash: null,
+        initialModelId: null,
+        initialRequest: null,
+        initialSeed: null,
+        state: "deleted",
+        visibility: "private",
+      })
+      .where(condition);
+    const survivors = await tx
+      .select({ id: eveConversation.id })
+      .from(eveConversation)
+      .where(
+        and(
+          eq(eveConversation.ownerId, ownerId),
+          eq(eveConversation.chatId, identity.chatId),
+          inArray(eveConversation.state, ["bound", "creating", "uncertain"])
+        )
+      )
+      .orderBy(eveConversation.createdAt, eveConversation.id)
+      .limit(1);
+    const survivor = survivors.at(0);
+    if (survivor) {
+      await tx
+        .update(eveChat)
+        .set({ activeConversationId: survivor.id })
+        .where(
+          and(
+            eq(eveChat.id, identity.chatId),
+            eq(eveChat.ownerId, ownerId),
+            inArray(eveChat.activeConversationId, ids)
+          )
+        );
+    } else {
+      await chat.onDelete(tx, identity.chatId);
+      await tx
+        .update(eveChat)
+        .set({
+          activeConversationId: null,
+          isPinned: false,
+          title: "",
+          titleStatus: "fallback",
+        })
+        .where(
+          and(eq(eveChat.id, identity.chatId), eq(eveChat.ownerId, ownerId))
+        );
+    }
+  });
 };
+interface EveDeletionState {
+  rootId: typeof eveChat.$inferSelect.id;
+  state: typeof eveConversation.$inferSelect.state;
+}
+
+/** Read the owner-visible root and native deletion state, including identity tombstones.
+ * @param {string} ownerId - Owner required by both identity and member queries.
+ * @param {string} conversationId - Root chat ID or member conversation ID to inspect.
+ * @returns {Promise<EveDeletionState | null>} Root identity and state, or no receipt when the owner has no matching identity or member.
+ */
+const getEveDeletionState = async (
+  ownerId: string,
+  conversationId: string
+): Promise<EveDeletionState | null> => {
+  const [row] = await readOwnedEveDeletionReceipt(db, ownerId, conversationId);
+  if (!row) {
+    return null;
+  }
+  if (row.state) {
+    return { rootId: conversationId, state: row.state };
+  }
+  const members = await readOwnedEveDeletionMemberState(db, ownerId, row);
+  const states = members.flatMap((member) => (member ? [member.state] : []));
+  if (states.length === 0) {
+    return null;
+  }
+  const active = states.find(
+    (state) => state !== "deleted" && state !== "deleting"
+  );
+  const state =
+    active ?? (states.includes("deleting") ? "deleting" : "deleted");
+  return { rootId: conversationId, state };
+};
+export { completeEveConversationDeletion, getEveDeletionState };

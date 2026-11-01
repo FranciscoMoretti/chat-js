@@ -1,28 +1,58 @@
 "use client";
 
-import { Github } from "lucide-react";
-import type { ComponentType } from "react";
-import { useMemo } from "react";
-import { toast } from "sonner";
+import type { ComponentType, JSX as ReactJSX } from "react";
 
-import { ElectronBrowserSignIn } from "@/components/electron-auth-ui";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import authClient from "@/lib/auth-client";
-import { config } from "@/lib/config";
-import {
-  getEnabledSocialAuthProviders,
-  isSocialAuthProvider,
-  sortSocialAuthProvidersByLastUsed,
-} from "@/lib/social-auth";
+import React, { useMemo } from "react";
+
 import type {
   SocialAuthProvider,
   SocialAuthSignInOptions,
 } from "@/lib/social-auth";
 
+import { toast } from "sonner";
+
+import {
+  getEnabledSocialAuthProviders,
+  isSocialAuthProvider,
+  sortSocialAuthProvidersByLastUsed,
+} from "@/lib/social-auth";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+
+import authClient from "@/lib/auth-client";
+
+import { config } from "@/lib/config";
+
 const emptyQuery: Record<string, string> = {};
 
-const GoogleIcon = ({ className }: { className?: string }) => (
+// Retains the existing Lucide GitHub geometry (ISC) alongside the other brand icons.
+const GithubIcon = ({
+  className,
+}: {
+  readonly className?: string;
+}): React.JSX.Element => (
+  <svg
+    className={className}
+    aria-hidden="true"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4" />
+    <path d="M9 18c-4.51 2-5-2-7-2" />
+  </svg>
+);
+
+const GoogleIcon = ({
+  className,
+}: {
+  readonly className?: string;
+}): React.JSX.Element => (
   <svg className={className} viewBox="0 0 24 24">
     <title>Google</title>
     <path
@@ -44,22 +74,26 @@ const GoogleIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-const VercelIcon = ({ className }: { className?: string }) => (
+const VercelIcon = ({
+  className,
+}: {
+  readonly className?: string;
+}): React.JSX.Element => (
   <svg className={className} fill="currentColor" viewBox="0 0 24 24">
     <title>Vercel</title>
     <path d="M12 1L24 22H0L12 1z" />
   </svg>
 );
 
-type AuthProviderDefinition = {
+interface AuthProviderDefinition {
   icon: ComponentType<{ className?: string }>;
   id: SocialAuthProvider;
   label: string;
-};
+}
 
 const AUTH_PROVIDER_METADATA = {
   github: {
-    icon: Github,
+    icon: GithubIcon,
     label: "GitHub",
   },
   google: {
@@ -74,22 +108,21 @@ const AUTH_PROVIDER_METADATA = {
 
 export const SocialAuthProviders = ({
   callbackURL,
-  electronBrowserLabel,
-  isElectron = false,
   onRedirectToUrl,
   query = emptyQuery,
   signInOptions,
 }: {
-  callbackURL?: string;
-  electronBrowserLabel?: string;
-  isElectron?: boolean;
-  onRedirectToUrl?: (url: string) => void;
-  query?: Record<string, string>;
-  signInOptions?: SocialAuthSignInOptions;
-} = {}) => {
+  readonly callbackURL?: string;
+  readonly onRedirectToUrl?: (url: string) => void;
+  readonly query?: Readonly<Record<string, string>>;
+  readonly signInOptions?: Readonly<SocialAuthSignInOptions>;
+} = {}): ReactJSX.Element => {
   const lastUsedProvider = useMemo<SocialAuthProvider | null>(() => {
     const remembered = authClient.getLastUsedLoginMethod();
-    return isSocialAuthProvider(remembered) ? remembered : null;
+    if (isSocialAuthProvider(remembered)) {
+      return remembered;
+    }
+    return null;
   }, []);
 
   const providers = useMemo<AuthProviderDefinition[]>(() => {
@@ -106,14 +139,7 @@ export const SocialAuthProviders = ({
     );
   }, [lastUsedProvider]);
 
-  // In the Electron app, use the @better-auth/electron bridges exposed by
-  // setupRenderer() in the preload script. requestAuth() opens the sign-in
-  // URL in the user's default browser with the proper PKCE params.
-  if (config.desktopApp.enabled && isElectron) {
-    return <ElectronBrowserSignIn buttonLabel={electronBrowserLabel} />;
-  }
-
-  const signIn = async (provider: SocialAuthProvider) => {
+  const signIn = async (provider: SocialAuthProvider): Promise<void> => {
     try {
       const result = await authClient.signIn.social({
         callbackURL,
@@ -125,7 +151,7 @@ export const SocialAuthProviders = ({
       });
 
       const redirectUrl = result.data?.url;
-      if (redirectUrl) {
+      if (typeof redirectUrl === "string" && redirectUrl !== "") {
         onRedirectToUrl?.(redirectUrl);
       }
     } catch (error) {
@@ -133,33 +159,43 @@ export const SocialAuthProviders = ({
       toast.error("Couldn't start sign-in. Please try again.");
     }
   };
-
   return (
     <div className="space-y-2">
-      {providers.map(({ icon: Icon, id, label }) => {
-        const isLastUsed = id === lastUsedProvider;
+      {providers.map(
+        ({
+          icon: Icon,
+          id,
+          label,
+        }: Readonly<Pick<AuthProviderDefinition, "id" | "label">> & {
+          readonly icon: React.JSXElementConstructor<{ className?: string }>;
+        }) => {
+          const isLastUsed = id === lastUsedProvider;
 
-        return (
-          <Button
-            className="relative w-full"
-            key={id}
-            onClick={() => signIn(id)}
-            type="button"
-            variant="outline"
-          >
-            <Icon className="mr-2 h-4 w-4" />
-            Continue with {label}
-            {isLastUsed ? (
-              <Badge
-                className="absolute top-0 right-2 h-5 -translate-y-1/2 px-1.5 text-[10px]"
-                variant="default"
-              >
-                Last used
-              </Badge>
-            ) : null}
-          </Button>
-        );
-      })}
+          return (
+            <Button
+              className="relative w-full"
+              key={id}
+
+              onClick={() => {
+                void signIn(id);
+              }}
+              type="button"
+              variant="outline"
+            >
+              <Icon className="mr-2 h-4 w-4" />
+              Continue with {label}
+              {isLastUsed ? (
+                <Badge
+                  className="absolute top-0 right-2 h-5 -translate-y-1/2 px-1.5 text-[10px]"
+                  variant="default"
+                >
+                  Last used
+                </Badge>
+              ) : null}
+            </Button>
+          );
+        }
+      )}
     </div>
   );
 };

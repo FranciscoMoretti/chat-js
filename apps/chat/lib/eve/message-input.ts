@@ -1,14 +1,22 @@
-/* oxlint-disable eslint/sort-keys -- Property order is part of persisted EVE request and transcript hashes; keep the original wire representation. */
 import { z } from "zod";
 
-import { keyFromFileUrl } from "../file-url";
+import { keyFromFileUrl } from "@/lib/file-url";
+
+const MIN_CONTENT_LENGTH = 1;
+const MIN_MESSAGE_PARTS = 1;
+const MAX_TEXT_LENGTH = 16_000;
+const MAX_FILENAME_LENGTH = 255;
+const MAX_TEXT_PARTS = 1;
+const MAX_FILE_PARTS = 16;
+const MAX_MESSAGE_PARTS = MAX_TEXT_PARTS + MAX_FILE_PARTS;
 
 const textPart = z
   .object({
     type: z.literal("text"),
-    text: z.string().trim().min(1).max(16_000),
+    text: z.string().trim().min(MIN_CONTENT_LENGTH).max(MAX_TEXT_LENGTH),
   })
   .strict();
+
 const filePart = z
   .object({
     type: z.literal("file"),
@@ -20,23 +28,30 @@ const filePart = z
         "Use a ChatJS upload"
       ),
     mediaType: z.enum(["image/jpeg", "image/png", "application/pdf"]),
-    filename: z.string().min(1).max(255),
+    filename: z.string().min(MIN_CONTENT_LENGTH).max(MAX_FILENAME_LENGTH),
   })
   .strict();
-export const eveMessageInput = z.union([
-  z.string().trim().min(1).max(16_000),
+
+type EveMessageInputPart = z.infer<typeof textPart> | z.infer<typeof filePart>;
+
+const eveMessageInput = z.union([
+  z.string().trim().min(MIN_CONTENT_LENGTH).max(MAX_TEXT_LENGTH),
   z
     .array(z.union([textPart, filePart]))
-    .min(1)
-    .max(17)
+    .min(MIN_MESSAGE_PARTS)
+    .max(MAX_MESSAGE_PARTS)
     .refine(
-      (parts) =>
-        parts.filter((part) => part.type === "text").length <= 1 &&
-        parts.filter((part) => part.type === "file").length <= 16
+      (parts: readonly Readonly<EveMessageInputPart>[]) =>
+        parts.filter((part) => part.type === "text").length <= MAX_TEXT_PARTS &&
+        parts.filter((part) => part.type === "file").length <= MAX_FILE_PARTS
     ),
 ]);
-export type EveMessageInput = z.infer<typeof eveMessageInput>;
-export const eveMessageTitle = (message: EveMessageInput) => {
+
+type EveMessageInput = z.infer<typeof eveMessageInput>;
+
+const eveMessageTitle = (
+  message: string | readonly Readonly<EveMessageInputPart>[]
+): string => {
   if (typeof message === "string") {
     return message;
   }
@@ -49,3 +64,6 @@ export const eveMessageTitle = (message: EveMessageInput) => {
     .map((part) => part.filename)
     .join(", ");
 };
+
+export { eveMessageInput, eveMessageTitle };
+export type { EveMessageInput };

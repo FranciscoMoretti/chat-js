@@ -1,19 +1,19 @@
 "use client";
 
 import type { EveMessage } from "eve/client";
-import { useState } from "react";
+import React, { useState } from "react";
 
 import { ChatHeaderView } from "@/components/chat-header-view";
 import {
-  DisposableGuestChat,
+  GuestChatScreen,
   GuestConversationView,
-} from "@/components/eve/disposable-guest-chat";
+} from "@/chatjs/plugins/guest-chat/signed-out";
 import type { AppModelDefinition } from "@/lib/ai/app-models";
-import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
+import { GUEST_POLICY } from "@/chatjs/plugins/guest-chat/guest-policy";
 import { ChatModelsProvider } from "@/providers/chat-models-provider";
 import { DefaultModelProvider } from "@/providers/default-model-provider";
 
-const [modelId] = ANONYMOUS_LIMITS.AVAILABLE_MODELS;
+const { modelId } = GUEST_POLICY;
 const model: AppModelDefinition = {
   apiModelId: modelId,
   context_window: 128_000,
@@ -47,7 +47,8 @@ const messages: EveMessage[] = [
     role: "assistant",
   },
 ];
-export const GuestVisualFixture = () => {
+
+export const GuestVisualFixture = (): React.JSX.Element => {
   const [state, setState] = useState("welcome");
   const [draft, setDraft] = useState("");
   return (
@@ -56,7 +57,11 @@ export const GuestVisualFixture = () => {
         <select
           aria-label="Fixture state"
           value={state}
-          onChange={(event) => setState(event.target.value)}
+          onChange={(event: {
+            readonly target: { readonly value: string };
+          }) => {
+            setState(event.target.value);
+          }}
         >
           <option value="welcome">Welcome</option>
           <option value="response">Response</option>
@@ -67,7 +72,7 @@ export const GuestVisualFixture = () => {
           className="bg-background flex h-[680px] min-h-0 flex-col overflow-hidden"
         >
           {state === "welcome" ? (
-            <DisposableGuestChat />
+            <GuestChatScreen />
           ) : (
             <>
               <ChatHeaderView breadcrumb={null} />
@@ -78,8 +83,12 @@ export const GuestVisualFixture = () => {
                 expired={state === "expired"}
                 draft={draft}
                 onDraftChange={setDraft}
-                onSend={() => null}
-                onStop={() => null}
+                onSend={() => {
+                  // Static preview never submits.
+                }}
+                onStop={() => {
+                  // Static preview has no active request.
+                }}
               />
             </>
           )}

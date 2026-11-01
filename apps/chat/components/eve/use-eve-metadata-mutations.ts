@@ -13,7 +13,7 @@ import { useTRPC } from "@/trpc/react";
 export const useEveMetadataMutations = () => {
   const cache = useQueryClient();
   const trpc = useTRPC();
-  const settle = async () => {
+  const settle = async (): Promise<void> => {
     if (pendingEveMetadataMutations(cache) > 1) {
       return;
     }
@@ -22,11 +22,11 @@ export const useEveMetadataMutations = () => {
       cache.invalidateQueries({ queryKey: trpc.eve.get.pathKey() }),
     ]);
   };
-  const optimistic = (
+  const optimistic = async (
     id: string,
-    patch: { title?: string; isPinned?: boolean }
+    patch: { readonly title?: string; readonly isPinned?: boolean }
   ) =>
-    optimisticEveMetadata(
+    await optimisticEveMetadata(
       cache,
       trpc.eve.list.pathKey(),
       trpc.eve.get.pathKey(),
@@ -36,11 +36,11 @@ export const useEveMetadataMutations = () => {
   const rename = useMutation(
     trpc.eve.rename.mutationOptions<() => void>({
       meta: { eveMetadata: true },
-      onError: (error, _input, rollback) => {
+      onError: (error: { readonly message: string }, _input, rollback) => {
         rollback?.();
         toast.error(error.message);
       },
-      onMutate: ({ id, title }) => optimistic(id, { title }),
+      onMutate: async ({ id, title }) => await optimistic(id, { title }),
       onSettled: settle,
       scope: { id: "eve-rename" },
     })
@@ -48,11 +48,11 @@ export const useEveMetadataMutations = () => {
   const pin = useMutation(
     trpc.eve.pin.mutationOptions<() => void>({
       meta: { eveMetadata: true },
-      onError: (error, _input, rollback) => {
+      onError: (error: { readonly message: string }, _input, rollback) => {
         rollback?.();
         toast.error(error.message);
       },
-      onMutate: ({ id, isPinned }) => optimistic(id, { isPinned }),
+      onMutate: async ({ id, isPinned }) => await optimistic(id, { isPinned }),
       onSettled: settle,
       scope: { id: "eve-pin" },
     })

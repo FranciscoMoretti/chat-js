@@ -1,5 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
+const DEFAULT_PORT = 3000;
+
 // Runs against an already started local ChatJS app and deterministic Eve worker.
 export default defineConfig({
   expect: { timeout: 20_000 },
@@ -11,7 +13,7 @@ export default defineConfig({
   timeout: 60_000,
   use: {
     ...devices["Desktop Chrome"],
-    baseURL: `http://localhost:${process.env.PORT || 3000}`,
+    baseURL: `http://localhost:${(process.env.PORT ?? "") || DEFAULT_PORT}`,
   },
   workers: 1,
 });

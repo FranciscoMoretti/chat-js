@@ -1,14 +1,13 @@
 "use client";
-import type { DynamicToolUIPart } from "ai";
-import type { ReactNode } from "react";
 
-import { McpToolHeader } from "@/components/ai-elements/extra/mcp-tool-header";
-import {
-  Tool,
-  ToolContent,
-  ToolInput,
-  ToolOutput,
-} from "@/components/ai-elements/tool";
+import { ToolActivity } from "@/components/part/tool-activity";
+import { ToolInput, ToolOutput } from "@/components/part/tool-data";
+import type { DynamicToolUIPart } from "ai";
+
+import React from "react";
+
+import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
+
 import { parseToolId } from "@/lib/ai/mcp-name-id";
 
 export const McpToolResult = ({
@@ -16,29 +15,29 @@ export const McpToolResult = ({
   icon,
   defaultOpen = false,
 }: {
-  part: Pick<DynamicToolUIPart, "toolName" | "title" | "state" | "input"> & {
-    output?: unknown;
-    errorText?: string;
+  readonly part: Pick<
+    DynamicToolUIPart,
+    "toolName" | "title" | "state" | "input"
+  > & {
+    readonly output?: unknown;
+    readonly errorText?: string;
   };
-  icon?: ReactNode;
-  defaultOpen?: boolean;
-}) => {
+  readonly icon?: ReadonlyReactNode;
+  readonly defaultOpen?: boolean;
+}): React.JSX.Element => {
   const parsed = parseToolId(part.toolName);
   return (
-    <Tool defaultOpen={defaultOpen}>
-      <McpToolHeader
-        icon={icon}
-        state={part.state}
-        title={part.title ?? parsed?.toolName ?? part.toolName}
-        type={`tool-${part.toolName}`}
+    <ToolActivity
+      defaultOpen={defaultOpen}
+      icon={icon}
+      state={part.state}
+      title={part.title ?? parsed?.toolName ?? part.toolName}
+    >
+      <ToolInput input={part.input} />
+      <ToolOutput
+        errorText={part.state === "output-error" ? part.errorText : undefined}
+        output={part.state === "output-available" ? part.output : undefined}
       />
-      <ToolContent>
-        <ToolInput input={part.input} />
-        <ToolOutput
-          errorText={part.state === "output-error" ? part.errorText : undefined}
-          output={part.state === "output-available" ? part.output : undefined}
-        />
-      </ToolContent>
-    </Tool>
+    </ToolActivity>
   );
 };

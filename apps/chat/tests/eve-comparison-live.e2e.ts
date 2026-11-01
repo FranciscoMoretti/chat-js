@@ -1,4 +1,6 @@
 import { expect, test } from "@playwright/test";
+import type { Response } from "@playwright/test";
+import { z } from "zod";
 
 import { env } from "../lib/env";
 import { conversationBinding } from "../lib/eve/contracts";
@@ -11,7 +13,9 @@ test("two cheap native responses bind, render, and preserve an unsent draft whil
   page,
 }, testInfo) => {
   test.setTimeout(150_000);
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   const marker = `comparison-${crypto.randomUUID().slice(0, 8)}`;
   const message = `Reply with exactly ${marker}. Do not call tools.`;
@@ -115,23 +119,31 @@ test("two cheap native responses bind, render, and preserve an unsent draft whil
       .fill("");
     // Retry belongs to the same model card even though EVE creates another session.
     const regenerationResponse = page.waitForResponse(
-      (result) =>
+      (result: Readonly<Pick<Response, "request" | "url">>) =>
         result.url().endsWith("/api/agent-conversations") &&
         result.request().method() === "POST"
     );
     await page
       .getByRole("log")
-      .getByRole("button", { exact: true, name: "Retry" })
+      .getByRole("button", {
+        exact: true,
+        name: "Regenerate response",
+      })
       .click();
     const regeneration = await regenerationResponse;
     expect(regeneration.ok()).toBe(true);
-    expect(regeneration.request().postDataJSON().forkKind).toBe("regenerate");
+
+    expect(
+      z
+        .looseObject({ forkKind: z.string() })
+        .parse(regeneration.request().postDataJSON()).forkKind
+    ).toBe("regenerate");
     const retry = conversationBinding.parse(await regeneration.json());
     await expect(page).toHaveURL(new URL(`/chat/${retry.id}`, page.url()).href);
     await expect(
       page.getByText("Ready", { exact: true }).filter({ visible: true })
     ).toBeVisible();
-    const userRow = page.getByRole("log").locator(".is-user");
+    const userRow = page.getByRole("log").locator('[data-role="user"]');
     await expect(
       userRow.getByRole("button", {
         exact: true,

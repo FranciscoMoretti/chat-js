@@ -6,16 +6,15 @@ import type { OpenAIGateway } from "./openai/gateway.ts";
 import type { OpenRouterGateway } from "./openrouter/gateway.ts";
 import type { VercelGateway } from "./vercel/gateway.ts";
 
-type Gateways = {
+interface Gateways {
   vercel: VercelGateway;
   openai: OpenAIGateway;
   "openai-compatible": OpenAICompatibleGateway;
   openrouter: OpenRouterGateway;
   litellm: LiteLLMGateway;
-};
+}
 type GatewayType = keyof Gateways;
 const vercelDefaults = {
-  anonymousModels: ["google/gemini-2.5-flash-lite", "openai/gpt-5-nano"],
   curatedDefaults: [
     "openai/gpt-5-nano",
     "openai/gpt-5-mini",
@@ -28,33 +27,12 @@ const vercelDefaults = {
   ],
   disabledModels: [],
   providerOrder: ["openai", "google", "anthropic"],
-  tools: {
-    code: { edits: "openai/gpt-5-mini" },
-    codeExecution: { enabled: false },
-    deepResearch: {
-      allowClarification: true,
-      defaultModel: "google/gemini-2.5-flash-lite",
-      enabled: false,
-      finalReportModel: "google/gemini-3-flash",
-      maxConcurrentResearchUnits: 2,
-      maxResearcherIterations: 1,
-      maxSearchQueries: 2,
-    },
-    documents: {
-      enabled: true,
-      types: { code: true, sheet: true, text: true },
-    },
-    followupSuggestions: {
-      default: "google/gemini-2.5-flash-lite",
-      enabled: false,
-    },
-    image: { default: "google/gemini-3-pro-image", enabled: false },
-    mcp: { enabled: false },
-    sheet: { analyze: "openai/gpt-5-mini", format: "openai/gpt-5-mini" },
-    text: { polish: "openai/gpt-5-mini" },
-    urlRetrieval: { enabled: false },
-    video: { default: "xai/grok-imagine-video", enabled: false },
-    webSearch: { enabled: false },
+  roles: {
+    fast: "google/gemini-2.5-flash-lite",
+    balanced: "openai/gpt-5-mini",
+    smart: "google/gemini-3-flash",
+    image: "google/gemini-3-pro-image",
+    video: "xai/grok-imagine-video",
   },
   workflows: {
     chat: "openai/gpt-5-mini",
@@ -65,7 +43,6 @@ const vercelDefaults = {
 } satisfies GatewayModelDefaults<Gateways["vercel"]>;
 
 const openrouterDefaults = {
-  anonymousModels: ["google/gemini-2.5-flash-lite", "openai/gpt-5-nano"],
   curatedDefaults: [
     "openai/gpt-5-nano",
     "openai/gpt-5-mini",
@@ -80,33 +57,10 @@ const openrouterDefaults = {
   ],
   disabledModels: [],
   providerOrder: ["openai", "google", "anthropic"],
-  tools: {
-    code: { edits: "openai/gpt-5-mini" },
-    codeExecution: { enabled: false },
-    deepResearch: {
-      allowClarification: true,
-      defaultModel: "google/gemini-2.5-flash-lite",
-      enabled: false,
-      finalReportModel: "google/gemini-3-flash",
-      maxConcurrentResearchUnits: 2,
-      maxResearcherIterations: 1,
-      maxSearchQueries: 2,
-    },
-    documents: {
-      enabled: true,
-      types: { code: true, sheet: true, text: true },
-    },
-    followupSuggestions: {
-      default: "google/gemini-2.5-flash-lite",
-      enabled: false,
-    },
-    image: { enabled: false },
-    mcp: { enabled: false },
-    sheet: { analyze: "openai/gpt-5-mini", format: "openai/gpt-5-mini" },
-    text: { polish: "openai/gpt-5-mini" },
-    urlRetrieval: { enabled: false },
-    video: { enabled: false },
-    webSearch: { enabled: false },
+  roles: {
+    fast: "google/gemini-2.5-flash-lite",
+    balanced: "openai/gpt-5-mini",
+    smart: "google/gemini-3-flash",
   },
   workflows: {
     chat: "openai/gpt-5-mini",
@@ -117,7 +71,6 @@ const openrouterDefaults = {
 } satisfies GatewayModelDefaults<Gateways["openrouter"]>;
 
 const openaiDefaults = {
-  anonymousModels: ["gpt-5-nano"],
   curatedDefaults: [
     "gpt-5-nano",
     "gpt-5-mini",
@@ -126,30 +79,11 @@ const openaiDefaults = {
   ],
   disabledModels: [],
   providerOrder: ["openai"],
-  tools: {
-    code: { edits: "gpt-5-mini" },
-    codeExecution: { enabled: false },
-    deepResearch: {
-      allowClarification: true,
-      defaultModel: "gpt-5-nano",
-      enabled: false,
-      finalReportModel: "gpt-5-mini",
-      maxConcurrentResearchUnits: 2,
-      maxResearcherIterations: 1,
-      maxSearchQueries: 2,
-    },
-    documents: {
-      enabled: true,
-      types: { code: true, sheet: true, text: true },
-    },
-    followupSuggestions: { default: "gpt-5-nano", enabled: false },
-    image: { default: "gpt-image-1", enabled: false },
-    mcp: { enabled: false },
-    sheet: { analyze: "gpt-5-mini", format: "gpt-5-mini" },
-    text: { polish: "gpt-5-mini" },
-    urlRetrieval: { enabled: false },
-    video: { enabled: false },
-    webSearch: { enabled: false },
+  roles: {
+    fast: "gpt-5-nano",
+    balanced: "gpt-5-mini",
+    smart: "gpt-5-mini",
+    image: "gpt-image-1",
   },
   workflows: {
     chat: "gpt-5-mini",
@@ -164,7 +98,6 @@ const openaiCompatibleDefaults = {
 } satisfies GatewayModelDefaults<Gateways["openai-compatible"]>;
 
 const litellmDefaults = {
-  anonymousModels: ["openai/gpt-4o-mini"],
   curatedDefaults: [
     "openai/gpt-4o-mini",
     "openai/gpt-4o",
@@ -173,30 +106,10 @@ const litellmDefaults = {
   ],
   disabledModels: [],
   providerOrder: ["openai"],
-  tools: {
-    code: { edits: "openai/gpt-4o-mini" },
-    codeExecution: { enabled: false },
-    deepResearch: {
-      allowClarification: true,
-      defaultModel: "openai/gpt-4o-mini",
-      enabled: false,
-      finalReportModel: "openai/gpt-4o",
-      maxConcurrentResearchUnits: 2,
-      maxResearcherIterations: 1,
-      maxSearchQueries: 2,
-    },
-    documents: {
-      enabled: true,
-      types: { code: true, sheet: true, text: true },
-    },
-    followupSuggestions: { default: "openai/gpt-4o-mini", enabled: false },
-    image: { enabled: false },
-    mcp: { enabled: false },
-    sheet: { analyze: "openai/gpt-4o-mini", format: "openai/gpt-4o-mini" },
-    text: { polish: "openai/gpt-4o-mini" },
-    urlRetrieval: { enabled: false },
-    video: { enabled: false },
-    webSearch: { enabled: false },
+  roles: {
+    fast: "openai/gpt-4o-mini",
+    balanced: "openai/gpt-4o-mini",
+    smart: "openai/gpt-4o",
   },
   workflows: {
     chat: "openai/gpt-4o-mini",
@@ -213,4 +126,6 @@ export const GATEWAY_MODEL_DEFAULTS = {
   "openai-compatible": openaiCompatibleDefaults,
   openrouter: openrouterDefaults,
   vercel: vercelDefaults,
-} satisfies { [G in GatewayType]: GatewayModelDefaults<Gateways[G]> };
+} satisfies {
+  [Gateway in GatewayType]: GatewayModelDefaults<Gateways[Gateway]>;
+};

@@ -16,16 +16,10 @@ Generate images directly in chat using AI models. Supports both generation from 
 
 ## Quick Start
 
-Install the [image tool](../tools/generate-image), then enable it in `chat.config.ts`:
+Install the capability in your app:
 
-```ts
-ai: {
-  tools: {
-    image: {
-      enabled: true, // Requires durable file storage
-    },
-  },
-}
+```bash
+bunx @chat-js/cli@latest add generate-image --storage-provider vercel-blob
 ```
 
 <Callout type="note">
@@ -106,7 +100,7 @@ async function collectEditImages({ imageParts, lastGeneratedImage }) {
 Follows the [Tool Part](/cookbook/tool-part) pattern:
 
 ```text
-tools/chatjs/generate-image/tool.ts → tools/chatjs/generate-image/renderer.tsx
+chatjs/tools/generate-image/tool.ts → chatjs/tools/generate-image/renderer.tsx
 ```
 
 ### Tool Output
@@ -147,7 +141,7 @@ The tool supports two types of models:
 | Image model | Standalone image generation models | `google/gemini-3-pro-image` |
 | Multimodal | Language models with image generation capability | `google/gemini-2.0-flash-exp` |
 
-Model selection is done in `resolveImageModel(selectedModel)` in `tools/chatjs/generate-image/tool.ts`:
+Model selection is done in `resolveImageModel(selectedModel)` in `chatjs/tools/generate-image/tool.ts`:
 
 1. If the user's selected chat model supports image output (per app model registry, `model.output.image`), use it
 2. Otherwise, fall back to `config.ai.tools.image.default`
@@ -158,13 +152,13 @@ The tool uses different generation paths based on model type:
 
 **Image model** (`generateImage` from AI SDK):
 
-- Uses standalone image models via `getImageModel()`
+- Uses standalone image models via the tool model provider's `createImageModel()`
 - Supports edit mode with image buffers as input
 - Returns base64-encoded images
 
 **Multimodal** (`generateText` with image output):
 
-- Uses language models via `getMultimodalImageModel()`
+- Uses language models via the tool model provider's `createLanguageModel()`
 - Passes images as URL references in message content
 - Requires `responseModalities: ["TEXT", "IMAGE"]` for Google models
 - Extracts generated image from response files

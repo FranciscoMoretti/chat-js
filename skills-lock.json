@@ -41,13 +41,13 @@
       "source": "uiverify/uiverify",
       "sourceType": "github",
       "skillPath": "packages/skills/skills/triage-visual-changes/SKILL.md",
-      "computedHash": "93e51149b914d5976e949b819dcc9ecddbe8e6d68f46ccc8c15f6be32a056e7e"
+      "computedHash": "badaf587bda1cd889be422b2f809357fdbe78e518e2a4dce7341c0ad5d049d56"
     },
     "vitest-visual-testing": {
       "source": "uiverify/uiverify",
       "sourceType": "github",
       "skillPath": "packages/skills/skills/vitest-visual-testing/SKILL.md",
-      "computedHash": "f8e3ef81a46070d40c758b766484ab93148aab276c336f6eef3f343269e091f3"
+      "computedHash": "3193468f4798bf4dce3d4480c13908b722adb41ef95f74374610b1fb03b0658d"
     }
   }
 }

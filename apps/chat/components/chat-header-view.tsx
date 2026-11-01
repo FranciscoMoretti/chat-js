@@ -1,8 +1,11 @@
 "use client";
 
-import type { ReactNode } from "react";
-
 import { HeaderActions } from "@/components/header-actions";
+
+import React from "react";
+
+import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
+
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 
@@ -11,10 +14,10 @@ export const ChatHeaderView = ({
   actions,
   className,
 }: {
-  breadcrumb: ReactNode;
-  actions?: ReactNode;
-  className?: string;
-}) => (
+  readonly breadcrumb: ReadonlyReactNode;
+  readonly actions?: ReadonlyReactNode;
+  readonly className?: string;
+}): React.JSX.Element => (
   <header
     className={cn(
       "bg-background sticky top-0 flex items-center justify-between gap-2 px-2 py-1.5 md:px-2",

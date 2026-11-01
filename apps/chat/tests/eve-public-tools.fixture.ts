@@ -2,7 +2,9 @@ import type { EveMessage, EveMessagePart } from "eve/client";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
-import { EveSharedMessages } from "../components/eve/eve-shared-messages";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+
+import { EveSharedMessages } from "../chatjs/plugins/sharing/ui/transcript-messages";
 import { sharedEvePart } from "../lib/eve/shared-messages";
 
 const parts: EveMessagePart[] = [
@@ -54,11 +56,13 @@ const parts: EveMessagePart[] = [
 process.stdout.write(
   renderToStaticMarkup(
     createElement(EveSharedMessages, {
-      messages: parts.map((part, index): EveMessage => ({
-        id: `public-${index}`,
-        parts: sharedEvePart(part),
-        role: "assistant",
-      })),
+      messages: parts.map(
+        (part: ReadonlyNativeSurface<EveMessagePart>, index): EveMessage => ({
+          id: `public-${index}`,
+          parts: sharedEvePart(part),
+          role: "assistant",
+        })
+      ),
     })
   )
 );

@@ -2,7 +2,9 @@
 
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 
-export const SettingsHeader = () => {
+import React from "react";
+
+export const SettingsHeader = (): React.JSX.Element => {
   const { isMobile } = useSidebar();
 
   return (

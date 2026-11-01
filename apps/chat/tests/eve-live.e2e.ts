@@ -1,21 +1,33 @@
-/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
-/* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
-/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
+import { z } from "zod";
 import { mkdir } from "node:fs/promises";
 
 import { expect, test } from "@playwright/test";
 import { eq, getTableColumns } from "drizzle-orm";
 import { Client } from "eve/client";
+import type { MessageStreamEvent } from "eve/client";
+
+import { getEvePostgresStreamPositions } from "@/lib/eve/lifecycle/postgres/eve-stream-positions";
 
 import { db } from "../lib/db/client";
 import { getEveUsageCursor } from "../lib/db/eve-billing";
-import { getEvePostgresStreamPositions } from "../lib/db/eve-stream-positions";
 import { eveChat, eveConversation, eveUsage } from "../lib/db/schema";
 import { env } from "../lib/env";
 import { getEveConnectionOptions } from "../lib/eve/connection-options";
 import { EVE_MESSAGE_OPERATION_HEADER } from "../lib/eve/message-delivery";
 import { reconcileEveUsage } from "../lib/eve/reconcile-usage";
 import { assertEveTestDatabase } from "./eve-test-database";
+
+type TurnStartedEventReader =
+  | {
+      readonly type: "turn.started";
+      readonly data: Readonly<
+        Extract<MessageStreamEvent, { type: "turn.started" }>["data"]
+      >;
+    }
+  | {
+      readonly type: Exclude<MessageStreamEvent["type"], "turn.started">;
+      readonly data?: unknown;
+    };
 
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
 
@@ -26,7 +38,9 @@ test("real provider, native application tool and replay-safe usage ledger", asyn
 }) => {
   test.setTimeout(180_000);
   page.setDefaultNavigationTimeout(120_000);
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   await page.request.post("/api/chat-model", {
     data: { model: "google/gemini-2.5-flash" },
@@ -43,7 +57,7 @@ test("real provider, native application tool and replay-safe usage ledger", asyn
   expect(
     created.ok(),
     JSON.stringify({
-      request: created.request().postDataJSON(),
+      request: created.request().postData(),
       status: created.status(),
     })
   ).toBe(true);
@@ -55,7 +69,7 @@ test("real provider, native application tool and replay-safe usage ledger", asyn
     timeout: 90_000,
   });
   const id = new URL(page.url()).pathname.split("/").at(-1);
-  if (!id) {
+  if (id === undefined || id === null || id === "") {
     throw new Error("Missing conversation identity.");
   }
   const [conversation] = await db
@@ -66,7 +80,13 @@ test("real provider, native application tool and replay-safe usage ledger", asyn
     .from(eveConversation)
     .innerJoin(eveChat, eq(eveChat.id, eveConversation.chatId))
     .where(eq(eveConversation.id, id));
-  if (!conversation?.sessionId) {
+  if (
+    conversation === undefined ||
+    conversation === null ||
+    conversation.sessionId === undefined ||
+    conversation.sessionId === null ||
+    conversation.sessionId === ""
+  ) {
     throw new Error("Missing session binding.");
   }
   const { ownerId, sessionId } = conversation;
@@ -75,8 +95,15 @@ test("real provider, native application tool and replay-safe usage ledger", asyn
     .from(eveUsage)
     .where(eq(eveUsage.sessionId, sessionId));
   expect(usage.length).toBeGreaterThan(0);
-  expect(usage.every((row) => row.costUsd !== null)).toBe(true);
-  const charged = usage.reduce((total, row) => total + row.chargedCents, 0);
+  expect(
+    usage.every(
+      (row: { readonly costUsd: string | null }) => row.costUsd !== null
+    )
+  ).toBe(true);
+  const charged = usage.reduce(
+    (total, row: { readonly chargedCents: number }) => total + row.chargedCents,
+    0
+  );
   expect(charged).toBeGreaterThan(0);
   await reconcileEveUsage(ownerId, sessionId);
   // Exercise the actual Eve-created default stream, not a fixture that shares
@@ -99,46 +126,47 @@ test("real provider, native application tool and replay-safe usage ledger", asyn
     .select()
     .from(eveUsage)
     .where(eq(eveUsage.sessionId, sessionId));
-  expect(replayed.reduce((total, row) => total + row.chargedCents, 0)).toBe(
-    charged
-  );
+  expect(
+    replayed.reduce(
+      (total, row: { readonly chargedCents: number }) =>
+        total + row.chargedCents,
+      0
+    )
+  ).toBe(charged);
   const client = new Client(getEveConnectionOptions(ownerId));
   const session = client.sessions.attach(sessionId);
   await expect(page.getByText("Ready", { exact: true })).toBeVisible();
-  expect((await session.compact()).status).toBe("accepted");
+  const compactionResult = await session.compact();
+  expect(compactionResult.status).toBe("accepted");
   await expect
     .poll(
       async () => {
         const snapshot = await session.snapshot();
         return snapshot.events.some(
-          (event) => event.type === "compaction.completed"
+          (event: Readonly<Pick<MessageStreamEvent, "type">>) =>
+            event.type === "compaction.completed"
         );
       },
       { intervals: [1000], timeout: 90_000 }
     )
     .toBe(true);
-  const compacted = await session.snapshot();
-  const compactionUsage = compacted.events.filter(
-    (event) => event.type === "compaction.usage"
+  const compactionUsage = await db
+    .select()
+    .from(eveUsage)
+    .where(eq(eveUsage.sessionId, sessionId));
+  const maintenance = compactionUsage.filter(
+    (row) => row.turnId === "chatjs:maintenance" && row.modelAttempt !== null
   );
-  expect(compactionUsage.length).toBeGreaterThan(0);
-  for (const event of compactionUsage) {
-    expect(event.meta.id.startsWith("evt_")).toBe(true);
-    expect(event.data.sessionId).toBe(sessionId);
-    expect(event.data.usage?.costUsd).toBeGreaterThan(0);
-    // No reconciliation before this read: the authored billing hook must have
-    // received and recorded the same event delivered by the public client.
-    const [recorded] = await db
-      .select()
-      .from(eveUsage)
-      .where(eq(eveUsage.eventId, event.meta.id));
-    expect(recorded?.sessionId).toBe(sessionId);
-    expect(Number(recorded?.costUsd)).toBe(event.data.usage?.costUsd);
+  expect(maintenance.length).toBeGreaterThan(0);
+  for (const recorded of maintenance) {
+    expect(recorded.ownerId).toBe(ownerId);
+    expect(Number(recorded.costUsd)).toBeGreaterThan(0);
+    expect(recorded.modelAttempt).toMatchObject({
+      ownerId,
+      sessionId,
+      state: "returned",
+    });
   }
-  const rewind = await client.sessions.attach(sessionId).snapshot();
-  expect(
-    rewind.events.filter((event) => event.type === "compaction.usage")
-  ).toEqual(compactionUsage);
   const beforeReplay = await db
     .select()
     .from(eveUsage)
@@ -149,8 +177,18 @@ test("real provider, native application tool and replay-safe usage ledger", asyn
     .from(eveUsage)
     .where(eq(eveUsage.sessionId, sessionId));
   expect(afterReplay.length).toBe(beforeReplay.length);
-  expect(afterReplay.reduce((total, row) => total + row.chargedCents, 0)).toBe(
-    beforeReplay.reduce((total, row) => total + row.chargedCents, 0)
+  expect(
+    afterReplay.reduce(
+      (total, row: { readonly chargedCents: number }) =>
+        total + row.chargedCents,
+      0
+    )
+  ).toBe(
+    beforeReplay.reduce(
+      (total, row: { readonly chargedCents: number }) =>
+        total + row.chargedCents,
+      0
+    )
   );
   await page.reload();
   await expect(page.getByRole("log")).toContainText("4 words");
@@ -168,7 +206,9 @@ test("real provider, native application tool and replay-safe usage ledger", asyn
 test("the composer selects models for initial and subsequent durable turns", async ({
   page,
 }) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   await page.goto("/");
   await page.getByTestId("model-selector").filter({ visible: true }).click();
@@ -188,13 +228,16 @@ test("the composer selects models for initial and subsequent durable turns", asy
   const creation = page.waitForResponse("**/api/agent-conversations");
   await page.getByRole("button", { exact: true, name: "Send" }).click();
   const created = await creation;
-  expect(created.request().postDataJSON().modelId).toBe(
-    "openai/gpt-4.1-mini-fast"
-  );
+
+  expect(
+    z
+      .looseObject({ modelId: z.string() })
+      .parse(created.request().postDataJSON()).modelId
+  ).toBe("openai/gpt-4.1-mini-fast");
   expect(
     created.ok(),
     JSON.stringify({
-      request: created.request().postDataJSON(),
+      request: created.request().postData(),
       status: created.status(),
     })
   ).toBe(true);
@@ -203,7 +246,7 @@ test("the composer selects models for initial and subsequent durable turns", asy
     timeout: 90_000,
   });
   const id = new URL(page.url()).pathname.split("/").at(-1);
-  if (!id) {
+  if (id === undefined || id === null || id === "") {
     throw new Error("Missing conversation ID");
   }
   const [conversation] = await db
@@ -214,7 +257,13 @@ test("the composer selects models for initial and subsequent durable turns", asy
     .from(eveConversation)
     .innerJoin(eveChat, eq(eveChat.id, eveConversation.chatId))
     .where(eq(eveConversation.id, id));
-  if (!conversation?.sessionId) {
+  if (
+    conversation === undefined ||
+    conversation === null ||
+    conversation.sessionId === undefined ||
+    conversation.sessionId === null ||
+    conversation.sessionId === ""
+  ) {
     throw new Error("Missing session");
   }
   const endpoint = `/api/eve/v1/session/${conversation.sessionId}`;
@@ -248,8 +297,10 @@ test("the composer selects models for initial and subsequent durable turns", asy
         const current = await client.sessions
           .attach(conversation.sessionId ?? "")
           .snapshot();
-        return current.events.filter((event) => event.type === "turn.completed")
-          .length;
+        return current.events.filter(
+          (event: Readonly<Pick<MessageStreamEvent, "type">>) =>
+            event.type === "turn.completed"
+        ).length;
       },
       { timeout: 90_000 }
     )
@@ -263,18 +314,27 @@ test("the composer selects models for initial and subsequent durable turns", asy
     .attach(conversation.sessionId)
     .snapshot();
   const firstStep = snapshot.events.find(
-    (event) => event.type === "step.started"
+    (
+      event: Readonly<Pick<MessageStreamEvent, "type">>
+    ): event is Extract<MessageStreamEvent, { type: "step.started" }> =>
+      event.type === "step.started"
   );
   expect(firstStep?.data.modelId).toBe("gateway/openai/gpt-4.1-mini-fast");
   await expect(
     page.getByTestId("model-selector").filter({ visible: true })
   ).toContainText("GPT-4.1");
   const lastStep = snapshot.events.findLast(
-    (event) => event.type === "step.started"
+    (
+      event: Readonly<Pick<MessageStreamEvent, "type">>
+    ): event is Extract<MessageStreamEvent, { type: "step.started" }> =>
+      event.type === "step.started"
   );
   expect(lastStep?.data.modelId).toBe(`gateway/${selected}`);
   expect(
-    snapshot.events.filter((event) => event.type === "message.received")
+    snapshot.events.filter(
+      (event: Readonly<Pick<MessageStreamEvent, "type">>) =>
+        event.type === "message.received"
+    )
   ).toHaveLength(2);
   await reconcileEveUsage(conversation.ownerId, conversation.sessionId);
   const [activeConversation] = await db
@@ -298,13 +358,13 @@ test("the composer selects models for initial and subsequent durable turns", asy
     expect(entry.costUsd).not.toBeNull();
     expect(
       snapshot.events.some(
-        (event) =>
+        (event: TurnStartedEventReader) =>
           event.type === "turn.started" && event.data.turnId === entry.turnId
       )
     ).toBe(true);
   }
   const chargedCents = chargedUsage.reduce(
-    (total, row) => total + row.chargedCents,
+    (total, row: { readonly chargedCents: number }) => total + row.chargedCents,
     0
   );
   await reconcileEveUsage(conversation.ownerId, conversation.sessionId);
@@ -313,32 +373,42 @@ test("the composer selects models for initial and subsequent durable turns", asy
     .from(eveUsage)
     .where(eq(eveUsage.sessionId, conversation.sessionId));
   expect(
-    replayedUsage.reduce((total, row) => total + row.chargedCents, 0)
+    replayedUsage.reduce(
+      (total, row: { readonly chargedCents: number }) =>
+        total + row.chargedCents,
+      0
+    )
   ).toBe(chargedCents);
 });
 
 test("a definitive model rejection unlocks the composer and releases the operation", async ({
   page,
 }) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   await page.goto("/");
-  await page.route("**/api/agent-conversations", (route) =>
-    route.fulfill({
+  await page.route("**/api/agent-conversations", async (route) => {
+    await route.fulfill({
       body: JSON.stringify({
         error: "This model is not available for chat.",
         creationRejected: true,
       }),
       contentType: "application/json",
       status: 400,
-    })
-  );
+    });
+  });
   await page
     .getByRole("textbox", { exact: true, name: "Message" })
     .fill("Retain my draft");
   const firstRequest = page.waitForRequest("**/api/agent-conversations");
   await page.getByRole("button", { exact: true, name: "Send" }).click();
-  const first = (await firstRequest).postDataJSON();
+  const firstRequestResult = await firstRequest;
+
+  const first = z
+    .looseObject({ operationId: z.string() })
+    .parse(firstRequestResult.postDataJSON());
   await expect(
     page.getByRole("alert").filter({ hasText: "This model is not available" })
   ).toBeVisible();
@@ -352,7 +422,13 @@ test("a definitive model rejection unlocks the composer and releases the operati
   ).toHaveText("Retain my draft");
   const secondRequest = page.waitForRequest("**/api/agent-conversations");
   await page.getByRole("button", { exact: true, name: "Send" }).click();
-  const second = (await secondRequest).postDataJSON();
+  const secondRequestResult = await secondRequest;
+
+  const second = z
+    .looseObject({ operationId: z.string(), modelId: z.string() })
+    .parse(secondRequestResult.postDataJSON());
+
   expect(second.operationId).not.toBe(first.operationId);
+
   expect(second.modelId).toBe("openai/gpt-4.1-mini-fast");
 });

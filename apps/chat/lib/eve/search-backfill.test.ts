@@ -1,18 +1,21 @@
 import { beforeEach, expect, it, vi } from "vitest";
+import type { indexEveSearchText } from "@/chatjs/plugins/search/search-queries";
 
-import { backfillEveSearchConversation } from "./search-backfill";
+import { backfillEveSearchConversation } from "@/chatjs/plugins/search/search-backfill";
 
 const mocks = vi.hoisted(() => ({
-  index: vi.fn(),
+  index: vi.fn<typeof indexEveSearchText>(),
   snapshot: vi.fn(),
 }));
-vi.mock("../db/eve-search", () => ({ indexEveSearchText: mocks.index }));
+vi.mock("@/chatjs/plugins/search/search-queries", () => ({
+  indexEveSearchText: mocks.index,
+}));
 vi.mock("./connection-options", () => ({
   getEveConnectionOptions: () => ({}),
 }));
 vi.mock("eve/client", () => ({
   Client: class {
-    sessions = { attach: () => ({ snapshot: mocks.snapshot }) };
+    public sessions = { attach: () => ({ snapshot: mocks.snapshot }) };
   },
 }));
 
@@ -40,7 +43,7 @@ beforeEach(() => {
 
 it("recovers every restored entry and the latest message, and can retry after a partial failure", async () => {
   mocks.index
-    .mockResolvedValueOnce(undefined)
+    .mockResolvedValueOnce()
     .mockRejectedValueOnce(new Error("offline"));
   await expect(
     backfillEveSearchConversation("owner", "branch", "session")
@@ -49,9 +52,19 @@ it("recovers every restored entry and the latest message, and can retry after a 
   await backfillEveSearchConversation("owner", "branch", "session");
   expect(mocks.index).toHaveBeenCalledTimes(4);
   expect(
-    mocks.index.mock.calls.slice(0, 3).map((call) => call[2].length)
+    mocks.index.mock.calls
+      .slice(0, 3)
+      .map(
+        (call: Readonly<(typeof mocks.index.mock.calls)[number]>) =>
+          call[2].length
+      )
   ).toEqual([100, 100, 100]);
-  expect(mocks.index.mock.calls.flatMap((call) => call[2])).toEqual([
+
+  expect(
+    mocks.index.mock.calls.flatMap(
+      (call: Readonly<(typeof mocks.index.mock.calls)[number]>) => call[2]
+    )
+  ).toEqual([
     ...Array.from({ length: 300 }, (_, index) => ({
       key: `seed:${index}`,
       text: `Restored message ${index}`,

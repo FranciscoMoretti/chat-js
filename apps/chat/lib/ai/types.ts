@@ -1,46 +1,23 @@
+import type { toolNameSchema } from "@/chatjs/core/tools/tool-definition";
+
+import { selectableToolNames } from "@/integrations/tools/selection";
+import type { AppModelId } from "./app-models";
 import { z } from "zod";
 
-import type { AppModelId } from "./app-models";
+type ToolName = z.infer<typeof toolNameSchema>;
 
-export const toolNameSchema = z.enum([
-  "createTextDocument",
-  "createCodeDocument",
-  "createSheetDocument",
-  "editTextDocument",
-  "editCodeDocument",
-  "editSheetDocument",
-  "readDocument",
-  "webSearch",
-  "codeExecution",
-  "generateImage",
-  "generateVideo",
-  "deepResearch",
-]);
+const frontendToolsSchema = z.enum([...selectableToolNames]);
 
-export type ToolName = z.infer<typeof toolNameSchema>;
+type UiToolName = z.infer<typeof frontendToolsSchema>;
 
-export const frontendToolsSchema = z.enum([
-  "webSearch",
-  "deepResearch",
-  "generateImage",
-  "generateVideo",
-  "createTextDocument",
-  "createCodeDocument",
-  "createSheetDocument",
-  "editTextDocument",
-  "editCodeDocument",
-  "editSheetDocument",
-]);
+type SelectedModelCounts = Readonly<Partial<Record<AppModelId, number>>>;
 
-export type UiToolName = z.infer<typeof frontendToolsSchema>;
+type SelectedModelValue = AppModelId | SelectedModelCounts;
 
-export type SelectedModelCounts = Partial<Record<AppModelId, number>>;
-export type SelectedModelValue = AppModelId | SelectedModelCounts;
-
-export const isSelectedModelCounts = (
+const isSelectedModelCounts = (
   value: unknown
 ): value is SelectedModelCounts => {
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
     return false;
   }
 
@@ -49,7 +26,7 @@ export const isSelectedModelCounts = (
   }
 
   return Object.entries(value).every(
-    ([modelId, count]) =>
+    ([modelId, count]: readonly [unknown, unknown]) =>
       typeof modelId === "string" &&
       typeof count === "number" &&
       Number.isInteger(count) &&
@@ -57,27 +34,30 @@ export const isSelectedModelCounts = (
   );
 };
 
-export const isSelectedModelValue = (
-  value: unknown
-): value is SelectedModelValue =>
+const isSelectedModelValue = (value: unknown): value is SelectedModelValue =>
   typeof value === "string" || isSelectedModelCounts(value);
 
-export const getPrimarySelectedModelId = (
+const getPrimarySelectedModelId = (
   selectedModel: SelectedModelValue | null | undefined
 ): AppModelId | null => {
-  if (!selectedModel) {
+  if (
+    selectedModel === null ||
+    !(typeof selectedModel === "string" || typeof selectedModel === "object") ||
+    (typeof selectedModel === "string" && selectedModel.length === 0)
+  ) {
     return null;
   }
   if (typeof selectedModel === "string") {
     return selectedModel;
   }
   const [firstSelectedModelId] = Object.entries(selectedModel).find(
-    ([, count]) => typeof count === "number" && count > 0
+    ([, count]: readonly [string, number | undefined]) =>
+      typeof count === "number" && count > 0
   ) ?? [null];
-  return firstSelectedModelId as AppModelId | null;
+  return firstSelectedModelId;
 };
 
-export const expandSelectedModelValue = (
+const expandSelectedModelValue = (
   selectedModel: SelectedModelValue
 ): AppModelId[] => {
   if (typeof selectedModel === "string") {
@@ -85,12 +65,21 @@ export const expandSelectedModelValue = (
   }
   const expanded: AppModelId[] = [];
   for (const [modelId, count] of Object.entries(selectedModel)) {
-    if (!(typeof count === "number" && Number.isInteger(count) && count > 0)) {
-      continue;
-    }
-    for (let index = 0; index < count; index += 1) {
-      expanded.push(modelId as AppModelId);
+    if (typeof count === "number" && Number.isInteger(count) && count > 0) {
+      for (let index = 0; index < count; index += 1) {
+        expanded.push(modelId);
+      }
     }
   }
   return expanded;
 };
+export {
+  expandSelectedModelValue,
+  frontendToolsSchema,
+  getPrimarySelectedModelId,
+  isSelectedModelCounts,
+  isSelectedModelValue,
+};
+export type { SelectedModelCounts, SelectedModelValue, ToolName, UiToolName };
+
+export { toolNameSchema } from "@/chatjs/core/tools/tool-definition";

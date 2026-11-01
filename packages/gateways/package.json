@@ -1,6 +1,6 @@
 {
   "name": "@chat-js/gateways",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Gateway contracts and shared runtime utilities for ChatJS registry extensions",
   "license": "Apache-2.0",
   "repository": {
@@ -76,19 +76,19 @@
   },
   "devDependencies": {
     "@ai-sdk/anthropic": "4.0.49",
-    "@ai-sdk/gateway": "4.0.85",
+    "@ai-sdk/gateway": "4.0.110",
     "@ai-sdk/google": "4.0.64",
     "@ai-sdk/openai": "4.0.59",
     "@ai-sdk/openai-compatible": "3.0.44",
-    "@ai-sdk/provider": "4.0.17",
+    "@ai-sdk/provider": "4.0.26",
     "@openrouter/ai-sdk-provider": "3.0.0",
     "@types/node": "^22.8.6",
-    "ai": "7.0.105",
+    "ai": "7.0.137",
     "typescript": "6.0.2",
     "vitest": "^4.0.0"
   },
   "peerDependencies": {
-    "@ai-sdk/provider": "4.0.17",
-    "ai": "7.0.105"
+    "@ai-sdk/provider": "4.0.26",
+    "ai": "7.0.137"
   }
 }

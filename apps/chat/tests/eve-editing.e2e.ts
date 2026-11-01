@@ -1,4 +1,6 @@
+import { z } from "zod";
 import { expect, test } from "@playwright/test";
+import type { Response } from "@playwright/test";
 
 import { conversationBinding } from "../lib/eve/contracts";
 import { assertEveTestDatabase } from "./eve-test-database";
@@ -7,7 +9,7 @@ assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
 
 const sourceModelId = "openai/gpt-5-nano";
 
-test("edit recovery and regeneration create navigable versions inside ChatJS", async ({
+test("edit recovery and regeneration replace the selected turn", async ({
   page,
 }, testInfo) => {
   test.setTimeout(180_000);
@@ -15,9 +17,9 @@ test("edit recovery and regeneration create navigable versions inside ChatJS", a
   let bodyFailed = false;
   let cleanupFailure: { error: unknown } | undefined;
   try {
-    await page.route("https://unpkg.com/react-scan/**", (route) =>
-      route.abort()
-    );
+    await page.route("https://unpkg.com/react-scan/**", async (route) => {
+      await route.abort();
+    });
     await page.goto("/api/dev-login");
     const { origin } = new URL(page.url());
     await page.request.post("/api/chat-model", {
@@ -41,9 +43,15 @@ test("edit recovery and regeneration create navigable versions inside ChatJS", a
       timeout: 90_000,
     });
     await page
-      .getByRole("button", { exact: true, name: "Edit message" })
+      .getByRole("button", {
+        exact: true,
+        name: "Edit message",
+      })
       .click();
-    const userMessage = page.getByRole("log").locator(".is-user").first();
+    const userMessage = page
+      .getByRole("log")
+      .locator('[data-role="user"]')
+      .first();
     const editor = userMessage.getByRole("group", {
       name: "Message composer",
     });
@@ -88,7 +96,7 @@ test("edit recovery and regeneration create navigable versions inside ChatJS", a
         .filter({ hasText: "Response creation is unconfirmed" })
     ).toBeVisible();
     await page.getByRole("button", { name: "Recover version" }).click();
-    await expect(page).toHaveURL(new RegExp(`/chat/${accepted?.id}$`, "u"), {
+    await expect(page).toHaveURL(new RegExp(`/chat/${source.id}$`, "u"), {
       timeout: 60_000,
     });
     await expect(
@@ -96,13 +104,16 @@ test("edit recovery and regeneration create navigable versions inside ChatJS", a
     ).toBeVisible({
       timeout: 90_000,
     });
-    await expect(page.getByRole("log").locator(".is-user")).toContainText(
-      "cobalt"
-    );
-    await expect(page.getByRole("log").locator(".is-assistant")).toHaveCount(1);
     await expect(
-      page.getByRole("log").locator(".is-user").first()
-    ).toContainText("2/2");
+      page.getByRole("log").locator('[data-role="user"]').last()
+    ).toContainText("cobalt");
+    await expect(
+      page.getByRole("log").locator('[data-role="assistant"]')
+    ).toHaveCount(1);
+    await expect(page.getByRole("log")).not.toContainText("amber");
+    await expect(
+      page.getByRole("log").locator('[data-role="user"]')
+    ).toHaveCount(1);
     await page.getByRole("log").screenshot({
       animations: "disabled",
       path: testInfo.outputPath("edited-messages.png"),
@@ -125,65 +136,75 @@ test("edit recovery and regeneration create navigable versions inside ChatJS", a
       timeout: 60_000,
     });
     const regenerated = page.waitForResponse(
-      (response) =>
+      (response: Readonly<Pick<Response, "request" | "url">>) =>
         response.url().endsWith("/api/agent-conversations") &&
         response.request().method() === "POST"
     );
-    await page.getByRole("button", { exact: true, name: "Retry" }).click();
+    await page
+      .getByRole("button", {
+        exact: true,
+        name: "Regenerate response",
+      })
+      .last()
+      .click();
     const regeneration = await regenerated;
     expect(regeneration.ok()).toBe(true);
-    expect(regeneration.request().postDataJSON().modelId).toBe(sourceModelId);
-    await expect(page).not.toHaveURL(
-      new RegExp(`/chat/${accepted?.id}$`, "u"),
-      {
-        timeout: 60_000,
-      }
-    );
+
+    expect(
+      z
+        .looseObject({ modelId: z.string() })
+        .parse(regeneration.request().postDataJSON()).modelId
+    ).toBe(sourceModelId);
+    await expect(page).toHaveURL(new RegExp(`/chat/${source.id}$`, "u"), {
+      timeout: 60_000,
+    });
     await expect(
       page.getByText("Ready", { exact: true }).filter({ visible: true })
     ).toBeVisible({
       timeout: 90_000,
     });
     await expect(
-      page.getByRole("log").locator(".is-user").first()
-    ).toContainText("2/2");
+      page.getByRole("log").locator('[data-role="user"]').last()
+    ).toContainText("cobalt");
     await expect(
-      page.getByRole("log").locator(".is-assistant").first()
-    ).toContainText("2/2");
-    await expect(page.getByRole("log").locator(".is-user")).toContainText(
-      "cobalt"
-    );
-    await expect(page.getByRole("log").locator(".is-assistant")).toHaveCount(1);
+      page.getByRole("log").locator('[data-role="assistant"]')
+    ).toHaveCount(1);
     await page
       .getByRole("log")
-      .locator(".is-user")
+      .locator('[data-role="user"]')
       .first()
       .screenshot({
         animations: "disabled",
         path: testInfo.outputPath("version-navigation.png"),
       });
-    await userMessage.hover();
-    await userMessage
-      .getByRole("button", { exact: true, name: "Previous version" })
+    await page
+      .getByRole("log")
+      .locator('[data-role="user"]')
+      .first()
+      .getByRole("button", { name: "Previous version", exact: true })
       .click();
     await expect(page).toHaveURL(new RegExp(`/chat/${source.id}$`, "u"));
-    await expect(page.getByRole("log").locator(".is-user")).toContainText(
-      "amber"
-    );
+    await expect(
+      page.getByRole("log").locator('[data-role="user"]').last()
+    ).toContainText("amber");
     await expect(page.getByRole("log")).not.toContainText("cobalt");
     await page
-      .getByRole("button", { exact: true, name: "Edit message" })
+      .getByRole("button", {
+        exact: true,
+        name: "Edit message",
+      })
       .click();
     await editor
       .getByRole("textbox", { exact: true, name: "Message" })
       .fill("Keep this edited violet draft.");
     await page.route(
       "**/api/agent-conversations",
-      (route) =>
-        route.fulfill({
+      async (route) => {
+        await route.fulfill({
           json: { error: "Temporary test outage" },
           status: 503,
-        }),
+        });
+      },
       { times: 1 }
     );
     await editor.getByRole("button", { exact: true, name: "Send" }).click();
@@ -191,9 +212,6 @@ test("edit recovery and regeneration create navigable versions inside ChatJS", a
       page.getByRole("button", { name: "Recover version" })
     ).toBeEnabled();
     await page.reload();
-    await expect(
-      page.getByRole("log").locator(".is-user").first()
-    ).toContainText("1/2");
     await expect(
       page.getByRole("button", { name: "Recover version" })
     ).toBeVisible();
@@ -203,11 +221,12 @@ test("edit recovery and regeneration create navigable versions inside ChatJS", a
     });
     await page.route(
       "**/api/agent-conversations",
-      (route) =>
-        route.fulfill({
+      async (route) => {
+        await route.fulfill({
           json: { creationRejected: true, error: "Test model rejection" },
           status: 400,
-        }),
+        });
+      },
       { times: 1 }
     );
     await page.getByRole("button", { name: "Recover version" }).click();
@@ -230,7 +249,7 @@ test("edit recovery and regeneration create navigable versions inside ChatJS", a
     await editor.getByRole("button", { exact: true, name: "Send" }).click();
     await expect(userMessage).toContainText("End of test");
     expect(replacement).toMatchObject({
-      fork: { beforeTurnId: "turn_0", conversationId: source.id },
+      fork: { conversationId: source.id },
       message: "Keep this edited violet draft.",
     });
   } catch (error) {
@@ -248,7 +267,11 @@ test("edit recovery and regeneration create navigable versions inside ChatJS", a
               const response = await page.request
                 .delete(url, { headers, timeout: 30_000 })
                 .catch(() => null);
-              return response?.status() === 200 ? response.json() : null;
+              if (response?.status() !== 200) {
+                return null;
+              }
+              const responseBody: unknown = await response.json();
+              return responseBody;
             },
             { intervals: [1000, 2000, 5000], timeout: 90_000 }
           )

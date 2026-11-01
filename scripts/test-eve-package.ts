@@ -1,26 +1,37 @@
-import { execFileSync } from "node:child_process";
 import { readFile, writeFile } from "node:fs/promises";
+import { execFileSync } from "node:child_process";
 import path from "node:path";
+import {
+  writeEvePackageManifests,
+  writePackageFiles,
+} from "./test-eve-manifests";
 
+const COMMAND_ARGUMENTS_START_INDEX = 2;
 const root = path.resolve(import.meta.dir, "..");
-const [argument] = process.argv.slice(2);
+const [argument] = process.argv.slice(COMMAND_ARGUMENTS_START_INDEX);
 if (!argument) {
   throw new Error(
     "Usage: bun run eve:test-package /absolute/path/to/chat-js-eve.tgz"
   );
 }
 const archive = path.resolve(argument);
-const candidate = JSON.parse(
+const candidate: unknown = JSON.parse(
   execFileSync("tar", ["-xOf", archive, "package/package.json"], {
     encoding: "utf-8",
   })
 );
-if (candidate.name !== "@chat-js/eve") {
+if (
+  typeof candidate !== "object" ||
+  candidate === null ||
+  !("name" in candidate) ||
+  candidate.name !== "@chat-js/eve"
+) {
   throw new Error("Expected a packed @chat-js/eve distribution.");
 }
 const manifestPaths = [
   "apps/chat/package.json",
   "apps/chat/tests/eve-fixture/package.json",
+  "packages/registry/package.json",
 ];
 const originals = await Promise.all(
   [...manifestPaths, "bun.lock"].map(async (file) => ({
@@ -28,28 +39,23 @@ const originals = await Promise.all(
     file,
   }))
 );
-const run = (args: string[], cwd = root) =>
+const run = (args: readonly string[], cwd = root): Buffer =>
   execFileSync("bun", args, { cwd, stdio: "inherit" });
+const manifestOriginals = originals.filter(
+  ({ file }: Readonly<(typeof originals)[number]>): boolean =>
+    manifestPaths.includes(file)
+);
+const writePackageFile = async (
+  file: string,
+  content: string
+): Promise<void> => {
+  await writeFile(path.join(root, file), content);
+};
 
 try {
-  await Promise.all(
-    originals
-      .filter(({ file }) => manifestPaths.includes(file))
-      .map(({ content, file }) => {
-        const manifest = JSON.parse(content);
-        manifest.dependencies.eve = `file:${archive}`;
-        return writeFile(
-          path.join(root, file),
-          `${JSON.stringify(manifest, null, 2)}\n`
-        );
-      })
-  );
+  await writeEvePackageManifests(manifestOriginals, archive, writePackageFile);
   run(["install", "--ignore-scripts"]);
-  await Promise.all(
-    originals
-      .filter(({ file }) => manifestPaths.includes(file))
-      .map(({ content, file }) => writeFile(path.join(root, file), content))
-  );
+  await writePackageFiles(manifestOriginals, writePackageFile);
   run(["lint"]);
   run(["test:types"]);
   run(
@@ -62,6 +68,7 @@ try {
       "tools/platform/deep-research",
       "tests/eve-mcp-native-approval.test.ts",
       "lib/db/eve-sandbox-run-coverage.test.ts",
+      "lib/db/eve-model-ledger.test.ts",
     ],
     path.join(root, "apps/chat")
   );
@@ -76,9 +83,5 @@ try {
   ]);
 } finally {
   // Local tarball paths and their lockfile entries must never leak into a PR.
-  await Promise.all(
-    originals.map(({ content, file }) =>
-      writeFile(path.join(root, file), content)
-    )
-  );
+  await writePackageFiles(originals, writePackageFile);
 }

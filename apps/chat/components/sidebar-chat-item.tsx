@@ -1,61 +1,56 @@
 "use client";
+import { SidebarLink } from "@/components/navigation-links";
+import { SidebarActionMenu } from "@/components/sidebar-menus";
+import { pluginRoute } from "@/lib/plugin-route";
+
+import React, { memo, useState } from "react";
+
+import type { JSX as ReactJSX } from "react";
+
 import { MoreHorizontal } from "lucide-react";
-import { memo, useState } from "react";
-import type { ReactNode } from "react";
 import { toast } from "sonner";
 
-import { ChatMenuItems } from "@/components/chat-menu-items";
-import { InternalLink } from "@/components/internal-link";
-import { ShareDialog } from "@/components/share-button";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuTrigger,
+  DropdownMenuGroup,
 } from "@/components/ui/dropdown-menu";
+
+import { ChatMenuItems } from "@/components/chat-menu-items";
 import { Input } from "@/components/ui/input";
-import {
-  SidebarMenuAction,
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from "@/components/ui/sidebar";
+
+import { SidebarMenuItem } from "@/components/ui/sidebar";
 
 const PureSidebarChatItem = ({
   chat,
   isActive,
   onDelete,
-  onMoveProject,
+  pluginActions,
   onRename,
   onPin,
   setOpenMobile,
   prefetch = false,
-  showShare = true,
-  renderShareContent,
 }: {
-  chat: {
-    id: string;
-    title: string;
-    isPinned: boolean;
-    projectId: string | null;
+  readonly chat: {
+    readonly id: string;
+    readonly title: string;
+    readonly isPinned: boolean;
+    readonly href?: string;
   };
-  isActive: boolean;
-  onDelete?: (chatId: string) => void;
-  onMoveProject?: () => void;
-  onRename: (chatId: string, title: string) => void;
-  onPin: (chatId: string, isPinned: boolean) => void;
-  setOpenMobile: (open: boolean) => void;
-  prefetch?: boolean;
-  showShare?: boolean;
-  renderShareContent: (chatId: string, onClose: () => void) => ReactNode;
-}) => {
-  const chatHref: `/project/${string}/chat/${string}` | `/chat/${string}` =
-    chat.projectId
-      ? `/project/${chat.projectId}/chat/${chat.id}`
-      : `/chat/${chat.id}`;
+  readonly isActive: boolean;
+  readonly onDelete?: (chatId: string) => void;
+  readonly pluginActions?: React.ReactNode;
+  readonly onRename: (chatId: string, title: string) => void | Promise<void>;
+  readonly onPin: (chatId: string, isPinned: boolean) => void;
+  readonly setOpenMobile: (open: boolean) => void;
+  readonly prefetch?: boolean;
+}): ReactJSX.Element => {
+  const [, startEventAction] = React.useTransition();
+  const chatHref = chat.href ?? `/chat/${chat.id}`;
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(chat.title);
-  const [shareDialogOpen, setShareDialogOpen] = useState(false);
 
-  const handleRename = async () => {
+  const handleRename = async (): Promise<void> => {
     if (editTitle.trim() === "" || editTitle === chat.title) {
       setIsEditing(false);
       setEditTitle(chat.title);
@@ -71,11 +66,12 @@ const PureSidebarChatItem = ({
       setIsEditing(false);
     }
   };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      handleRename();
-    } else if (e.key === "Escape") {
+  const handleKeyDown = (
+    event: Readonly<Pick<React.KeyboardEvent, "key">>
+  ): void => {
+    if (event.key === "Enter") {
+      void handleRename();
+    } else if (event.key === "Escape") {
       setIsEditing(false);
       setEditTitle(chat.title);
     }
@@ -89,60 +85,61 @@ const PureSidebarChatItem = ({
             autoFocus
             className="h-auto border-0 bg-transparent p-0 text-sm focus-visible:ring-0 focus-visible:ring-offset-0"
             maxLength={255}
-            onBlur={handleRename}
-            onChange={(e) => setEditTitle(e.target.value)}
+
+            onBlur={() => {
+              startEventAction(handleRename);
+            }}
+            onChange={(event: {
+              readonly target: { readonly value: string };
+            }) => {
+              setEditTitle(event.target.value);
+            }}
             onKeyDown={handleKeyDown}
             value={editTitle}
           />
         </div>
       ) : (
-        <SidebarMenuButton asChild isActive={isActive}>
-          <InternalLink
-            href={chatHref}
-            onNavigate={() => {
-              setOpenMobile(false);
-            }}
-            prefetch={prefetch}
-          >
-            <span>{chat.title}</span>
-          </InternalLink>
-        </SidebarMenuButton>
+        <SidebarLink
+          isActive={isActive}
+          href={pluginRoute(chatHref)}
+          onNavigate={() => {
+            setOpenMobile(false);
+          }}
+          prefetch={prefetch}
+        >
+          <span>{chat.title}</span>
+        </SidebarLink>
       )}
 
-      <DropdownMenu modal={true}>
-        <DropdownMenuTrigger asChild>
-          <SidebarMenuAction
-            className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground mr-0.5"
-            showOnHover={!isActive}
-          >
-            <MoreHorizontal size={16} />
-            <span className="sr-only">More</span>
-          </SidebarMenuAction>
-        </DropdownMenuTrigger>
+      <DropdownMenu modal>
+        <SidebarActionMenu showOnHover={!isActive}>
+          <MoreHorizontal size={16} />
+          <span className="sr-only">More</span>
+        </SidebarActionMenu>
 
         <DropdownMenuContent align="end" side="bottom">
-          <ChatMenuItems
-            isPinned={chat.isPinned}
-            onDelete={onDelete ? () => onDelete(chat.id) : undefined}
-            onMoveProject={onMoveProject}
-            onRename={() => {
-              setIsEditing(true);
-              setEditTitle(chat.title);
-            }}
-            onShare={() => setShareDialogOpen(true)}
-            onTogglePin={() => onPin(chat.id, !chat.isPinned)}
-            showShare={showShare}
-          />
+          <DropdownMenuGroup>
+            <ChatMenuItems
+              isPinned={chat.isPinned}
+              onDelete={
+                onDelete
+                  ? (): void => {
+                      onDelete(chat.id);
+                    }
+                  : undefined
+              }
+              pluginActions={pluginActions}
+              onRename={() => {
+                setIsEditing(true);
+                setEditTitle(chat.title);
+              }}
+              onTogglePin={() => {
+                onPin(chat.id, !chat.isPinned);
+              }}
+            />
+          </DropdownMenuGroup>
         </DropdownMenuContent>
       </DropdownMenu>
-
-      {shareDialogOpen && (
-        <ShareDialog
-          onOpenChange={setShareDialogOpen}
-          open={shareDialogOpen}
-          renderContent={(onClose) => renderShareContent(chat.id, onClose)}
-        />
-      )}
     </SidebarMenuItem>
   );
 };
@@ -151,13 +148,11 @@ export const SidebarChatItem = memo(
   PureSidebarChatItem,
   (prevProps, nextProps) => {
     if (
-      prevProps.showShare !== nextProps.showShare ||
-      prevProps.renderShareContent !== nextProps.renderShareContent ||
       prevProps.onDelete !== nextProps.onDelete ||
-      prevProps.onMoveProject !== nextProps.onMoveProject ||
+      prevProps.pluginActions !== nextProps.pluginActions ||
       prevProps.onRename !== nextProps.onRename ||
       prevProps.onPin !== nextProps.onPin ||
-      prevProps.chat.projectId !== nextProps.chat.projectId
+      prevProps.chat.href !== nextProps.chat.href
     ) {
       return false;
     }

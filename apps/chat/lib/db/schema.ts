@@ -18,20 +18,23 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 
-import type { EveCopyPlan, EveCopySeed } from "../eve/copy-journal-contract";
-import { encryptedJson, encryptedText } from "./encrypted-text";
+const INITIAL_USAGE_STREAM_INDEX = 0;
+const NO_USAGE_CHARGE_CENTS = 0;
+const WORKFLOW_BACKEND_SINGLETON_ID = 1;
 
 /** One application database belongs to one durable workflow world. */
-export const eveWorkflowBackend = pgTable(
+const eveWorkflowBackend = pgTable(
   "EveWorkflowBackend",
   {
-    id: integer("id").primaryKey().default(1),
+    id: integer("id").primaryKey().default(WORKFLOW_BACKEND_SINGLETON_ID),
     world: text("world").notNull(),
   },
-  (table) => [check("EveWorkflowBackend_singleton", sql`${table.id} = 1`)]
+  (table: { readonly id: unknown }) => [
+    check("EveWorkflowBackend_singleton", sql`${table.id} = 1`),
+  ]
 );
 
-export const user = pgTable("user", {
+const user = pgTable("user", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   email: text("email").notNull().unique(),
   emailVerified: boolean("email_verified").default(false).notNull(),
@@ -49,138 +52,11 @@ export const user = pgTable("user", {
     .notNull(),
 });
 
-export type User = InferSelectModel<typeof user>;
+type User = InferSelectModel<typeof user>;
 
-export const userCredit = pgTable("UserCredit", {
-  /** Balance in cents. Default = $0.50 */
-  credits: integer("credits").notNull().default(50),
-  userId: text("userId")
-    .primaryKey()
-    .notNull()
-    .references(() => user.id, { onDelete: "cascade" }),
-});
+// Disposable runtime policy records never create an application account.
 
-export type UserCredit = InferSelectModel<typeof userCredit>;
-
-export const userModelPreference = pgTable(
-  "UserModelPreference",
-  {
-    createdAt: timestamp("createdAt").notNull().defaultNow(),
-    enabled: boolean("enabled").notNull(),
-    modelId: varchar("modelId", { length: 256 }).notNull(),
-    updatedAt: timestamp("updatedAt")
-      .notNull()
-      .defaultNow()
-      .$onUpdate(() => new Date()),
-    userId: text("userId")
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
-  },
-  (t) => ({
-    UserModelPreference_user_id_idx: index(
-      "UserModelPreference_user_id_idx"
-    ).on(t.userId),
-    pk: primaryKey({ columns: [t.userId, t.modelId] }),
-  })
-);
-
-export type UserModelPreference = InferSelectModel<typeof userModelPreference>;
-
-export const project = pgTable(
-  "Project",
-  {
-    createdAt: timestamp("createdAt").notNull().defaultNow(),
-    icon: varchar("icon", { length: 64 }).notNull().default("folder"),
-    iconColor: varchar("iconColor", { length: 32 }).notNull().default("gray"),
-    id: uuid("id").primaryKey().notNull().defaultRandom(),
-    instructions: text("instructions").notNull().default(""),
-    name: text("name").notNull(),
-    updatedAt: timestamp("updatedAt")
-      .notNull()
-      .defaultNow()
-      .$onUpdate(() => new Date()),
-    userId: text("userId")
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
-  },
-  (t) => ({
-    Project_id_user: unique("Project_id_user").on(t.id, t.userId),
-    Project_user_id_idx: index("Project_user_id_idx").on(t.userId),
-  })
-);
-
-export type Project = InferSelectModel<typeof project>;
-
-// Guest ownership is separate from BetterAuth sessions and monetary credits.
-// Retain expired identities after content cleanup so late usage remains guest usage.
-export const eveGuest = pgTable(
-  "EveGuest",
-  {
-    createdAt: timestamp("createdAt", { withTimezone: true })
-      .defaultNow()
-      .notNull(),
-    expiresAt: timestamp("expiresAt", { withTimezone: true }).notNull(),
-    messageLimit: integer("messageLimit").notNull(),
-    ownerId: text("ownerId")
-      .primaryKey()
-      .references(() => user.id, { onDelete: "cascade" }),
-    remainingMessages: integer("remainingMessages").notNull(),
-    tokenHash: varchar("tokenHash", { length: 64 }).notNull().unique(),
-  },
-  (t) => [
-    check(
-      "EveGuest_message_balance",
-      sql`${t.remainingMessages} >= 0 and ${t.remainingMessages} <= ${t.messageLimit}`
-    ),
-    check("EveGuest_token_hash", sql`${t.tokenHash} ~ '^[0-9a-f]{64}$'`),
-    index("EveGuest_expiry_idx").on(t.expiresAt),
-  ]
-);
-
-export const eveGuestRate = pgTable(
-  "EveGuestRate",
-  {
-    ipHash: varchar("ipHash", { length: 64 }).notNull(),
-    requests: integer("requests").notNull(),
-    startsAt: timestamp("startsAt", { withTimezone: true }).notNull(),
-    windowSeconds: integer("windowSeconds").notNull(),
-  },
-  (t) => [
-    primaryKey({ columns: [t.ipHash, t.windowSeconds, t.startsAt] }),
-    check("EveGuestRate_requests", sql`${t.requests} >= 0`),
-    check("EveGuestRate_window", sql`${t.windowSeconds} in (60, 2592000)`),
-  ]
-);
-
-export const eveGuestMessage = pgTable(
-  "EveGuestMessage",
-  {
-    ipHash: varchar("ipHash", { length: 64 }).notNull(),
-    operationId: uuid("operationId").notNull(),
-    ownerId: text("ownerId")
-      .notNull()
-      .references(() => eveGuest.ownerId, { onDelete: "cascade" }),
-    requestHash: varchar("requestHash", { length: 64 }).notNull(),
-    reservationId: uuid("reservationId").notNull(),
-    reservedAt: timestamp("reservedAt", { withTimezone: true }).notNull(),
-    state: text("state")
-      .$type<"reserved" | "committed" | "released">()
-      .notNull(),
-  },
-  (t) => [
-    primaryKey({ columns: [t.ownerId, t.operationId] }),
-    check(
-      "EveGuestMessage_state",
-      sql`${t.state} in ('reserved', 'committed', 'released')`
-    ),
-    check(
-      "EveGuestMessage_request_hash",
-      sql`${t.requestHash} ~ '^[0-9a-f]{64}$'`
-    ),
-  ]
-);
-
-export const session = pgTable("session", {
+const session = pgTable("session", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   expiresAt: timestamp("expires_at").notNull(),
   id: text("id").primaryKey(),
@@ -199,7 +75,7 @@ export const session = pgTable("session", {
     .references(() => user.id, { onDelete: "cascade" }),
 });
 
-export const account = pgTable("account", {
+const account = pgTable("account", {
   accessToken: text("access_token"),
   accessTokenExpiresAt: timestamp("access_token_expires_at"),
   accountId: text("account_id").notNull(),
@@ -223,7 +99,7 @@ export const account = pgTable("account", {
     .references(() => user.id, { onDelete: "cascade" }),
 });
 
-export const verification = pgTable("verification", {
+const verification = pgTable("verification", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   expiresAt: timestamp("expires_at").notNull(),
   id: text("id").primaryKey(),
@@ -239,78 +115,26 @@ export const verification = pgTable("verification", {
   value: text("value").notNull(),
 });
 
-export const mcpConnector = pgTable(
-  "McpConnector",
+const schema = { account, session, user, verification };
+
+// Mutable filesystem ownership is independent of any conversation or native session.
+const eveWorkspace = pgTable(
+  "EveWorkspace",
   {
-    createdAt: timestamp("createdAt").notNull().defaultNow(),
-    enabled: boolean("enabled").notNull().default(true),
-    id: uuid("id").primaryKey().notNull().defaultRandom(),
-    name: varchar("name", { length: 256 }).notNull(),
-    // Unique per user, used as namespace for tool IDs.
-    nameId: varchar("nameId", { length: 256 }).notNull(),
-    oauthClientId: text("oauthClientId"),
-    oauthClientSecret: encryptedText("oauthClientSecret"),
-    type: varchar("type", { enum: ["http", "sse"] })
+    id: uuid("id").primaryKey().defaultRandom(),
+    ownerId: text("ownerId")
       .notNull()
-      .default("http"),
-    updatedAt: timestamp("updatedAt")
+      .references(() => user.id, { onDelete: "cascade" }),
+    state: text("state", { enum: ["active", "deleting", "deleted"] })
       .notNull()
-      .defaultNow()
-      .$onUpdate(() => new Date()),
-    url: encryptedText("url").notNull(),
-    // Null = global.
-    userId: text("userId").references(() => user.id, { onDelete: "cascade" }),
+      .default("active"),
+    activeOperationId: uuid("activeOperationId"),
   },
-  (t) => ({
-    McpConnector_user_id_idx: index("McpConnector_user_id_idx").on(t.userId),
-    McpConnector_user_name_id_idx: index("McpConnector_user_name_id_idx").on(
-      t.userId,
-      t.nameId
-    ),
-    McpConnector_user_name_id_unique: uniqueIndex(
-      "McpConnector_user_name_id_unique"
-    ).on(t.userId, t.nameId),
-  })
+  (table) => [unique("EveWorkspace_id_owner").on(table.id, table.ownerId)]
 );
-
-export type McpConnector = InferSelectModel<typeof mcpConnector>;
-
-export const mcpOAuthSession = pgTable(
-  "McpOAuthSession",
-  {
-    // OAuthClientInformationFull from MCP SDK.
-    clientInfo: encryptedJson<Record<string, unknown>>()("clientInfo"),
-    // PKCE verifier.
-    codeVerifier: encryptedText("codeVerifier"),
-    createdAt: timestamp("createdAt").notNull().defaultNow(),
-    id: uuid("id").primaryKey().notNull().defaultRandom(),
-    mcpConnectorId: uuid("mcpConnectorId")
-      .notNull()
-      .references(() => mcpConnector.id, { onDelete: "cascade" }),
-    serverUrl: text("serverUrl").notNull(),
-    // OAuth state parameter, unique for security.
-    state: text("state").unique(),
-    // OAuthTokens from MCP SDK.
-    tokens: encryptedJson<Record<string, unknown>>()("tokens"),
-    updatedAt: timestamp("updatedAt")
-      .notNull()
-      .defaultNow()
-      .$onUpdate(() => new Date()),
-  },
-  (t) => ({
-    McpOAuthSession_connector_idx: index("McpOAuthSession_connector_idx").on(
-      t.mcpConnectorId
-    ),
-    McpOAuthSession_state_idx: index("McpOAuthSession_state_idx").on(t.state),
-  })
-);
-
-export type McpOAuthSession = InferSelectModel<typeof mcpOAuthSession>;
-
-export const schema = { account, session, user, verification };
 
 // Metadata only. Eve owns the transcript and execution state.
-export const eveChat = pgTable(
+const eveChat = pgTable(
   "EveChat",
   {
     activeConversationId: uuid("activeConversationId"),
@@ -346,13 +170,14 @@ export const eveChat = pgTable(
   ]
 );
 
-export type EveChat = InferSelectModel<typeof eveChat>;
+type EveChat = InferSelectModel<typeof eveChat>;
 
 // One logical chat may contain several private native EVE sessions.
-export const eveConversation = pgTable(
+const eveConversation = pgTable(
   "EveConversation",
   {
     chatId: uuid("chatId").notNull(),
+    workspaceId: uuid("workspaceId").notNull(),
     createdAt: timestamp("createdAt").notNull().defaultNow(),
     creationKind: text("creationKind", { enum: ["message", "copy"] })
       .notNull()
@@ -364,15 +189,11 @@ export const eveConversation = pgTable(
     }),
     forkMessageId: text("forkMessageId"),
     forkTurnId: text("forkTurnId"),
-    guestCleanupAttemptedAt: timestamp("guestCleanupAttemptedAt", {
-      withTimezone: true,
-    }),
     id: uuid("id").primaryKey().defaultRandom(),
     initialContentHash: text("initialContentHash"),
     initialModelId: text("initialModelId"),
-    // Immutable creation intent; retained when the project is removed.
-    initialProjectId: uuid("initialProjectId"),
     initialRequest: jsonb("initialRequest").$type<unknown>(),
+    initialSeed: jsonb("initialSeed").$type<unknown>(),
     operationId: uuid("operationId").notNull(),
     ownerId: text("ownerId")
       .notNull()
@@ -385,7 +206,9 @@ export const eveConversation = pgTable(
     })
       .notNull()
       .default("creating"),
-    usageStreamIndex: integer("usageStreamIndex").notNull().default(0),
+    usageStreamIndex: integer("usageStreamIndex")
+      .notNull()
+      .default(INITIAL_USAGE_STREAM_INDEX),
     visibility: varchar("visibility", { enum: ["private", "public"] })
       .notNull()
       .default("private"),
@@ -395,14 +218,6 @@ export const eveConversation = pgTable(
       "EveConversation_creation_kind",
       sql`${table.creationKind} in ('message', 'copy')`
     ),
-    check(
-      "EveConversation_copy_root",
-      sql`${table.creationKind} <> 'copy' or (
-      ${table.parentConversationId} is null and ${table.rootConversationId} is null and
-      ${table.forkTurnId} is null and ${table.forkMessageId} is null and ${table.forkCheckpointId} is null and
-      ${table.forkKind} is null
-    )`
-    ),
     unique("EveConversation_id_owner").on(table.id, table.ownerId),
     unique("EveConversation_id_owner_chat").on(
       table.id,
@@ -410,6 +225,12 @@ export const eveConversation = pgTable(
       table.chatId
     ),
     index("EveConversation_owner_chat").on(table.ownerId, table.chatId),
+    index("EveConversation_workspace").on(table.workspaceId),
+    foreignKey({
+      columns: [table.workspaceId, table.ownerId],
+      foreignColumns: [eveWorkspace.id, eveWorkspace.ownerId],
+      name: "EveConversation_workspace_owner_fk",
+    }),
     foreignKey({
       columns: [table.chatId, table.ownerId],
       foreignColumns: [eveChat.id, eveChat.ownerId],
@@ -443,8 +264,9 @@ export const eveConversation = pgTable(
     ) or (
       ${table.parentConversationId} is not null and ${table.rootConversationId} is not null and
       (
+        (${table.forkTurnId} is null and ${table.forkMessageId} is null) or
         (${table.forkTurnId} is not null and ${table.forkTurnId} ~ '^turn_(0|[1-9][0-9]*)$' and ${table.forkMessageId} is null) or
-        (${table.forkMessageId} is not null and ${table.forkMessageId} ~ '^seed_message_(0|[1-9][0-9]{0,3})$' and ${table.forkTurnId} is null)
+        (${table.forkMessageId} is not null and length(${table.forkMessageId}) between 1 and 512 and ${table.forkTurnId} is null)
       ) and
       ${table.parentConversationId} <> ${table.id} and ${table.rootConversationId} <> ${table.id}
     )`
@@ -461,83 +283,37 @@ export const eveConversation = pgTable(
 );
 
 /** Temporary copy preparation is discarded once native history is bound. */
-export const eveConversationCopy = pgTable(
-  "EveConversationCopy",
+const eveDispatch = pgTable(
+  "EveDispatch",
   {
-    acceptedAt: timestamp("acceptedAt"),
-    conversationId: uuid("conversationId").primaryKey(),
-    documentsReady: boolean("documentsReady").notNull().default(false),
-    ownerId: text("ownerId").notNull(),
-    phase: text("phase", {
-      enum: ["preparing", "accepted", "bound", "rejected"],
-    })
+    ownerId: text("ownerId")
       .notNull()
-      .default("preparing"),
-    plan: jsonb("plan").$type<EveCopyPlan>(),
-    planHash: text("planHash").notNull(),
-    projectionHash: text("projectionHash").notNull(),
-    seed: jsonb("seed").$type<EveCopySeed>(),
-    sourceConversationId: uuid("sourceConversationId").notNull(),
-    sourceOwnerId: text("sourceOwnerId").notNull(),
-    sourceSessionId: text("sourceSessionId").notNull(),
+      .references(() => user.id),
+    operationId: uuid("operationId").notNull(),
+    conversationId: uuid("conversationId").notNull(),
+    kind: text("kind", { enum: ["create", "copy", "send"] }).notNull(),
+    intent: jsonb("intent").$type<unknown>().notNull(),
+    sessionId: text("sessionId"),
+    deliveryId: text("deliveryId"),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
   },
   (table) => [
-    unique("EveConversationCopy_owner_identity").on(
-      table.conversationId,
-      table.ownerId
-    ),
+    primaryKey({ columns: [table.ownerId, table.operationId] }),
     foreignKey({
       columns: [table.conversationId, table.ownerId],
       foreignColumns: [eveConversation.id, eveConversation.ownerId],
-      name: "EveConversationCopy_owner_fk",
+      name: "EveDispatch_conversation_owner_fk",
     }),
+    check("EveDispatch_kind", sql`${table.kind} in ('create', 'copy', 'send')`),
     check(
-      "EveConversationCopy_phase_payload",
-      sql`(
-    ${table.phase} = 'preparing' and ${table.plan} is not null and ${table.seed} is null and ${table.acceptedAt} is null
-  ) or (
-    ${table.phase} = 'accepted' and ${table.plan} is null and ${table.seed} is not null and ${table.acceptedAt} is not null and ${table.documentsReady}
-  ) or (
-    ${table.phase} = 'bound' and ${table.plan} is null and ${table.seed} is null and ${table.acceptedAt} is not null and ${table.documentsReady}
-  ) or (
-    ${table.phase} = 'rejected' and ${table.plan} is null and ${table.seed} is null and ${table.acceptedAt} is null
-  )`
-    ),
-  ]
-);
-
-/** Receipt metadata is committed only after writing the allocated destination bytes. */
-export const eveConversationCopyFile = pgTable(
-  "EveConversationCopyFile",
-  {
-    conversationId: uuid("conversationId").notNull(),
-    key: text("key").notNull(),
-    mediaType: text("mediaType").notNull(),
-    ownerId: text("ownerId").notNull(),
-    sha256: text("sha256").notNull(),
-    size: integer("size").notNull(),
-    writtenAt: timestamp("writtenAt"),
-  },
-  (table) => [
-    primaryKey({ columns: [table.conversationId, table.key] }),
-    foreignKey({
-      columns: [table.conversationId, table.ownerId],
-      foreignColumns: [
-        eveConversationCopy.conversationId,
-        eveConversationCopy.ownerId,
-      ],
-      name: "EveConversationCopyFile_copy_owner_fk",
-    }),
-    check("EveConversationCopyFile_size", sql`${table.size} > 0`),
-    check(
-      "EveConversationCopyFile_hash",
-      sql`${table.sha256} ~ '^[a-f0-9]{64}$'`
+      "EveDispatch_binding",
+      sql`${table.deliveryId} is null or ${table.sessionId} is not null`
     ),
   ]
 );
 
 /** Immutable fan-out intent. Native sessions remain the only transcript store. */
-export const eveResponseGroup = pgTable(
+const eveResponseGroup = pgTable(
   "EveResponseGroup",
   {
     candidateOperationIds: uuid("candidateOperationIds").array().notNull(),
@@ -545,7 +321,7 @@ export const eveResponseGroup = pgTable(
       {
         modelId: string;
         operationId: string;
-        rejection?: { error: string; code?: "project_not_found" };
+        rejection?: { error: string; code?: string };
       }[]
     >(),
     createdAt: timestamp("createdAt").notNull().defaultNow(),
@@ -569,42 +345,8 @@ export const eveResponseGroup = pgTable(
   ]
 );
 
-/** Removing a project detaches its conversations without deleting their native sessions. */
-export const eveChatProject = pgTable(
-  "EveChatProject",
-  {
-    chatId: uuid("chatId").primaryKey(),
-    ownerId: text("ownerId").notNull(),
-    projectId: uuid("projectId").notNull(),
-  },
-  (table) => [
-    index("EveChatProject_project").on(table.projectId),
-    foreignKey({
-      columns: [table.chatId, table.ownerId],
-      foreignColumns: [eveChat.id, eveChat.ownerId],
-    }).onDelete("cascade"),
-    foreignKey({
-      columns: [table.projectId, table.ownerId],
-      foreignColumns: [project.id, project.userId],
-    }).onDelete("cascade"),
-  ]
-);
-
-/** Feedback references native message IDs without copying the Eve transcript. */
-export const eveVote = pgTable(
-  "EveVote",
-  {
-    conversationId: uuid("conversationId")
-      .notNull()
-      .references(() => eveConversation.id, { onDelete: "cascade" }),
-    isUpvoted: boolean("isUpvoted").notNull(),
-    messageId: text("messageId").notNull(),
-  },
-  (table) => [primaryKey({ columns: [table.conversationId, table.messageId] })]
-);
-
 /** Application-owned storage identity; transcript contents remain in EVE. */
-export const eveStoredFile = pgTable(
+const eveStoredFile = pgTable(
   "EveStoredFile",
   {
     createdAt: timestamp("createdAt").notNull().defaultNow(),
@@ -627,7 +369,36 @@ export const eveStoredFile = pgTable(
   ]
 );
 
-export const eveFileReference = pgTable(
+/** Immutable uploaded originals retained by a workspace independently of transcript history. */
+const eveWorkspaceAttachment = pgTable(
+  "EveWorkspaceAttachment",
+  {
+    workspaceId: uuid("workspaceId").notNull(),
+    fileKey: text("fileKey").notNull(),
+    ownerId: text("ownerId").notNull(),
+    sha256: text("sha256").notNull(),
+    paths: text("paths")
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
+  },
+  (table) => [
+    primaryKey({ columns: [table.workspaceId, table.fileKey] }),
+    index("EveWorkspaceAttachment_file").on(table.fileKey),
+    foreignKey({
+      columns: [table.workspaceId, table.ownerId],
+      foreignColumns: [eveWorkspace.id, eveWorkspace.ownerId],
+      name: "EveWorkspaceAttachment_workspace_owner_fk",
+    }),
+    foreignKey({
+      columns: [table.fileKey, table.ownerId],
+      foreignColumns: [eveStoredFile.key, eveStoredFile.ownerId],
+      name: "EveWorkspaceAttachment_file_owner_fk",
+    }),
+  ]
+);
+
+const eveFileReference = pgTable(
   "EveFileReference",
   {
     conversationId: uuid("conversationId").notNull(),
@@ -649,7 +420,50 @@ export const eveFileReference = pgTable(
 );
 
 // Allocation intent survives provider timeouts and worker crashes.
-export const eveCodeSandbox = pgTable(
+// Persistent filesystem ownership is retained independently of native workflow payloads.
+const eveSandboxSession = pgTable(
+  "EveSandboxSession",
+  {
+    sessionId: text("sessionId").primaryKey(),
+    rootSessionId: text("rootSessionId").notNull(),
+    conversationId: uuid("conversationId").notNull(),
+    workspaceId: uuid("workspaceId").notNull(),
+    ownerId: text("ownerId").notNull(),
+    devRunId: text("devRunId"),
+    state: text("state", { enum: ["active", "retired"] }).notNull(),
+  },
+  (table) => [
+    index("EveSandboxSession_root").on(table.rootSessionId),
+    index("EveSandboxSession_workspace").on(table.workspaceId),
+    foreignKey({
+      columns: [table.conversationId, table.ownerId],
+      foreignColumns: [eveConversation.id, eveConversation.ownerId],
+      name: "EveSandboxSession_conversation_owner_fk",
+    }),
+    foreignKey({
+      columns: [table.workspaceId, table.ownerId],
+      foreignColumns: [eveWorkspace.id, eveWorkspace.ownerId],
+      name: "EveSandboxSession_workspace_owner_fk",
+    }),
+    index("EveSandboxSession_dev").on(table.devRunId),
+  ]
+);
+const evePersistentSandbox = pgTable(
+  "EvePersistentSandbox",
+  {
+    name: text("name").primaryKey(),
+    workspaceId: uuid("workspaceId")
+      .notNull()
+      .references(() => eveWorkspace.id),
+    providerId: text("providerId").notNull(),
+    accountId: text("accountId").notNull(),
+    scopeId: text("scopeId").notNull(),
+    state: text("state", { enum: ["pending", "ready", "deleted"] }).notNull(),
+  },
+  (table) => [unique("EvePersistentSandbox_workspace").on(table.workspaceId)]
+);
+
+const eveCodeSandbox = pgTable(
   "EveCodeSandbox",
   {
     callId: text("callId").notNull(),
@@ -672,7 +486,7 @@ export const eveCodeSandbox = pgTable(
 );
 
 /** Native child identity and billing progress; transcript stays in EVE. */
-export const eveSubagentSession = pgTable(
+const eveSubagentSession = pgTable(
   "EveSubagentSession",
   {
     conversationId: uuid("conversationId").notNull(),
@@ -680,7 +494,9 @@ export const eveSubagentSession = pgTable(
     parentSessionId: text("parentSessionId").notNull(),
     rootTurnId: text("rootTurnId").notNull(),
     sessionId: text("sessionId").primaryKey(),
-    usageStreamIndex: integer("usageStreamIndex").notNull().default(0),
+    usageStreamIndex: integer("usageStreamIndex")
+      .notNull()
+      .default(INITIAL_USAGE_STREAM_INDEX),
   },
   (table) => [
     foreignKey({
@@ -697,14 +513,17 @@ export const eveSubagentSession = pgTable(
   ]
 );
 
-export const eveUsage = pgTable(
+const eveUsage = pgTable(
   "EveUsage",
   {
-    chargedCents: integer("chargedCents").notNull().default(0),
+    chargedCents: integer("chargedCents")
+      .notNull()
+      .default(NO_USAGE_CHARGE_CENTS),
     costUsd: numeric("costUsd", { precision: 24, scale: 12 }),
     createdAt: timestamp("createdAt").notNull().defaultNow(),
     eventId: text("eventId").primaryKey(),
     generationId: text("generationId"),
+    modelAttempt: jsonb("modelAttempt").$type<unknown>(),
     ownerId: text("ownerId")
       .notNull()
       .references(() => user.id),
@@ -719,16 +538,16 @@ export const eveUsage = pgTable(
   ]
 );
 
-export const eveDocumentRevision = pgTable(
+const eveDocumentRevision = pgTable(
   "EveDocumentRevision",
   {
     content: text("content").notNull(),
     conversationId: uuid("conversationId").notNull(),
     createdAt: timestamp("createdAt").notNull().defaultNow(),
     documentId: uuid("documentId").notNull(),
-    fileIds: jsonb("fileIds").$type<string[]>().notNull().default([]),
+    fileIds: jsonb("fileIds").$type<readonly string[]>().notNull().default([]),
     id: uuid("id").primaryKey().defaultRandom(),
-    kind: varchar("kind", { enum: ["text", "code", "sheet"] }).notNull(),
+    kind: varchar("kind").notNull(),
     operationId: text("operationId").notNull(),
     ownerId: text("ownerId").notNull(),
     parentRevisionId: uuid("parentRevisionId"),
@@ -759,7 +578,7 @@ export const eveDocumentRevision = pgTable(
   ]
 );
 
-export const eveDocumentHead = pgTable(
+const eveDocumentHead = pgTable(
   "EveDocumentHead",
   {
     conversationId: uuid("conversationId").notNull(),
@@ -786,9 +605,9 @@ export const eveDocumentHead = pgTable(
   ]
 );
 
-export type EveDocumentRevision = InferSelectModel<typeof eveDocumentRevision>;
+type EveDocumentRevision = InferSelectModel<typeof eveDocumentRevision>;
 
-export const eveDocumentCheckpoint = pgTable(
+const eveDocumentCheckpoint = pgTable(
   "EveDocumentCheckpoint",
   {
     conversationId: uuid("conversationId").notNull(),
@@ -814,7 +633,7 @@ export const eveDocumentCheckpoint = pgTable(
   ]
 );
 
-export const eveDocumentCheckpointEntry = pgTable(
+const eveDocumentCheckpointEntry = pgTable(
   "EveDocumentCheckpointEntry",
   {
     conversationId: uuid("conversationId").notNull(),
@@ -849,7 +668,7 @@ export const eveDocumentCheckpointEntry = pgTable(
 );
 
 /** Immutable document boundary captured by a serialized native idle command. */
-export const eveNamedDocumentCheckpoint = pgTable(
+const eveNamedDocumentCheckpoint = pgTable(
   "EveNamedDocumentCheckpoint",
   {
     checkpointId: uuid("checkpointId").notNull(),
@@ -876,7 +695,7 @@ export const eveNamedDocumentCheckpoint = pgTable(
   ]
 );
 
-export const eveNamedDocumentCheckpointEntry = pgTable(
+const eveNamedDocumentCheckpointEntry = pgTable(
   "EveNamedDocumentCheckpointEntry",
   {
     checkpointId: uuid("checkpointId").notNull(),
@@ -911,7 +730,7 @@ export const eveNamedDocumentCheckpointEntry = pgTable(
 );
 
 /** Document heads at an imported transcript message boundary. */
-export const eveImportedDocumentCheckpoint = pgTable(
+const eveImportedDocumentCheckpoint = pgTable(
   "EveImportedDocumentCheckpoint",
   {
     conversationId: uuid("conversationId").notNull(),
@@ -937,7 +756,7 @@ export const eveImportedDocumentCheckpoint = pgTable(
   ]
 );
 
-export const eveImportedDocumentCheckpointEntry = pgTable(
+const eveImportedDocumentCheckpointEntry = pgTable(
   "EveImportedDocumentCheckpointEntry",
   {
     conversationId: uuid("conversationId").notNull(),
@@ -971,25 +790,33 @@ export const eveImportedDocumentCheckpointEntry = pgTable(
   ]
 );
 
-/** Rebuildable display-text projection; EVE remains the transcript source of truth. */
-export const eveSearchText = pgTable(
-  "EveSearchText",
-  {
-    conversationId: uuid("conversationId").notNull(),
-    key: text("key").notNull(),
-    ownerId: text("ownerId").notNull(),
-    text: text("text").notNull(),
-  },
-  (table) => [
-    primaryKey({ columns: [table.conversationId, table.key] }),
-    foreignKey({
-      columns: [table.conversationId, table.ownerId],
-      foreignColumns: [eveConversation.id, eveConversation.ownerId],
-    }).onDelete("cascade"),
-    index("EveSearchText_owner").on(table.ownerId),
-    index("EveSearchText_content").using(
-      "gin",
-      sql`to_tsvector('simple', ${table.text})`
-    ),
-  ]
-);
+export {
+  eveWorkspace,
+  eveSandboxSession,
+  evePersistentSandbox,
+  eveDispatch,
+  account,
+  eveChat,
+  eveCodeSandbox,
+  eveConversation,
+  eveDocumentCheckpoint,
+  eveDocumentCheckpointEntry,
+  eveDocumentHead,
+  eveDocumentRevision,
+  eveFileReference,
+  eveWorkspaceAttachment,
+  eveImportedDocumentCheckpoint,
+  eveImportedDocumentCheckpointEntry,
+  eveNamedDocumentCheckpoint,
+  eveNamedDocumentCheckpointEntry,
+  eveResponseGroup,
+  eveStoredFile,
+  eveSubagentSession,
+  eveUsage,
+  eveWorkflowBackend,
+  schema,
+  session,
+  user,
+  verification,
+};
+export type { EveChat, EveDocumentRevision, User };

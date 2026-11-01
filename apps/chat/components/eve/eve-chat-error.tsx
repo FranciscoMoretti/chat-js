@@ -1,8 +1,13 @@
+import type { ReactNode } from "react";
 import { CircleAlert } from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
-export const EveChatError = ({ message }: { message: string }) => (
+export const EveChatError = ({
+  message,
+}: {
+  readonly message: string;
+}): ReactNode => (
   <Alert variant="destructive">
     <CircleAlert className="size-4" aria-hidden="true" />
     <AlertTitle>Chat error</AlertTitle>

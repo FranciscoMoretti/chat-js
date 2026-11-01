@@ -2,14 +2,13 @@ import { Schema } from "@world-postgres-test/dist/drizzle/index.js";
 import { createStreamer } from "@world-postgres-test/dist/streamer.js";
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
-/* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
-/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
-/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
+
 import { Pool } from "pg";
 import postgres from "postgres";
 import { afterAll, expect, test } from "vitest";
 
-import { readEvePostgresStreamPositions } from "../lib/db/eve-stream-positions";
+import { readEvePostgresStreamPositions } from "@/lib/eve/lifecycle/postgres/eve-stream-positions";
+
 import { env } from "../lib/env";
 import { assertEveTestDatabase } from "./eve-test-database";
 
@@ -19,7 +18,7 @@ const positionConnection = postgres(env.DATABASE_URL, { max: 1 });
 const queries: string[] = [];
 const database = drizzle(pool, {
   logger: {
-    logQuery(query) {
+    logQuery(query): void {
       queries.push(query);
     },
   },
@@ -34,19 +33,22 @@ afterAll(async () => {
   await positionConnection.end();
 });
 const encoder = new TextEncoder();
-async function fixture(
-  values: string[],
+
+const fixture = async (
+  values: readonly string[],
   closed = true,
   name: string = crypto.randomUUID()
-) {
+): Promise<string> => {
+  /* oxlint-disable eslint/no-await-in-loop -- Stream chunks must be appended in fixture order to assert exact replay content. */
   for (const value of values) {
     await streamer.streams.write(runId, name, encoder.encode(value));
   }
+  /* oxlint-enable eslint/no-await-in-loop */
   if (closed) {
     await streamer.streams.close(runId, name);
   }
   return name;
-}
+};
 
 test("batched default-stream positions match the provider without counting EOF or other namespaces", async () => {
   const sessionId = `wrun_${crypto.randomUUID()}`;
@@ -72,29 +74,21 @@ test("batched default-stream positions match the provider without counting EOF o
   await streamer.streams.close(runId, name);
   const updated = await readEvePostgresStreamPositions(positionConnection, ids);
   expect(updated.get(sessionId)).toBe(3);
-  expect(updated.get(sessionId)).toBe(
-    (await streamer.streams.getInfo(runId, name)).tailIndex + 1
-  );
+  const streamInfo = await streamer.streams.getInfo(runId, name);
+  expect(updated.get(sessionId)).toBe(streamInfo.tailIndex + 1);
   expect(await readEvePostgresStreamPositions(positionConnection, [])).toEqual(
     new Map()
   );
 });
-async function read(name: string, index: number) {
+
+const read = async (name: string, index: number) => {
   const stream = await streamer.streams.get(runId, name, index);
-  const reader = stream.getReader();
   const result: string[] = [];
-  try {
-    for (;;) {
-      const next = await reader.read();
-      if (next.done) {
-        return result;
-      }
-      result.push(new TextDecoder().decode(next.value));
-    }
-  } finally {
-    await reader.cancel();
+  for await (const chunk of stream) {
+    result.push(new TextDecoder().decode(chunk));
   }
-}
+  return result;
+};
 
 test("resume excludes consumed payloads in SQL, including an at-tail read", async () => {
   const name = await fixture([
@@ -133,9 +127,11 @@ test("a resumed live stream delivers appended chunks once and terminates at EOF"
   try {
     const next = reader.read();
     await streamer.streams.write(runId, name, encoder.encode("new"));
-    expect(new TextDecoder().decode((await next).value)).toBe("new");
+    const nextChunk = await next;
+    expect(new TextDecoder().decode(nextChunk.value)).toBe("new");
     await streamer.streams.close(runId, name);
-    expect((await reader.read()).done).toBe(true);
+    const completedRead = await reader.read();
+    expect(completedRead.done).toBe(true);
   } finally {
     await reader.cancel();
   }
@@ -150,9 +146,11 @@ test("a future cursor skips new chunks until its absolute index is reached", asy
     await streamer.streams.write(runId, name, encoder.encode("one"));
     await streamer.streams.write(runId, name, encoder.encode("two"));
     await streamer.streams.write(runId, name, encoder.encode("three"));
-    expect(new TextDecoder().decode((await next).value)).toBe("three");
+    const nextChunk = await next;
+    expect(new TextDecoder().decode(nextChunk.value)).toBe("three");
     await streamer.streams.close(runId, name);
-    expect((await reader.read()).done).toBe(true);
+    const completedRead = await reader.read();
+    expect(completedRead.done).toBe(true);
   } finally {
     await reader.cancel();
   }

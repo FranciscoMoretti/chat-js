@@ -1,31 +1,35 @@
 import { beforeEach, expect, it, vi } from "vitest";
 
+import { executeEveCodeDocument } from "../../chatjs/tools/saved-code-execution/execute";
 import { testToolContext } from "../../tests/helpers/eve-tool-context";
-import { executeEveCodeDocument } from "../../tools/chatjs/saved-code-execution/execute";
 
 const mocks = vi.hoisted(() => ({
-  documents: { enabled: true, types: { code: true } },
+  code: true,
   execute: vi.fn(),
-  execution: { enabled: true },
+  execution: true,
   read: vi.fn(),
   resolve: vi.fn(),
 }));
-vi.mock("../config", () => ({
-  config: {
-    ai: {
-      tools: { codeExecution: mocks.execution, documents: mocks.documents },
-    },
+
+vi.mock("@/integrations/tools/catalog", () => ({
+  installedDocumentKinds: { has: (): boolean => mocks.code },
+  installedToolNames: {
+    has: (name: string): boolean =>
+      name === "runCodeDocument" && mocks.execution,
   },
 }));
+
 vi.mock("../db/eve-documents", () => ({ getEveDocumentRevision: mocks.read }));
 vi.mock("./conversation-scope", () => ({
   resolveEveConversationScope: mocks.resolve,
 }));
-vi.mock("../../tools/chatjs/code-executor", () => ({
+vi.mock("../../integrations/tools/code-executor", () => ({
   codeExecutor: mocks.execute,
 }));
 
-vi.mock("./turn-tools", () => ({ eveToolAllowed: () => true }));
+vi.mock("./turn-tools", () => ({
+  eveTurnAccount: { get: (): boolean => true },
+}));
 
 const input = {
   documentId: "60dbe86a-b2c4-4d32-ae09-a00e90b84e99",
@@ -58,9 +62,8 @@ const context = testToolContext({
 
 beforeEach(() => {
   vi.resetAllMocks();
-  mocks.documents.enabled = true;
-  mocks.documents.types.code = true;
-  mocks.execution.enabled = true;
+  mocks.code = true;
+  mocks.execution = true;
   mocks.resolve.mockResolvedValue({
     conversationId: "conversation",
     ownerId: "owner",
@@ -104,14 +107,24 @@ it("executes only the owned saved revision and preserves its billing receipt", a
     usage: { costUsd: 0.05 },
   });
 });
-
 it.each([
   undefined,
   { ...revision, kind: "text" },
   { ...revision, title: "unsupported.ts" },
 ])(
   "rejects unavailable or unsupported revisions before sandbox execution",
-  async (value) => {
+  async (
+    value: Readonly<
+      | {
+          kind: string;
+          content: string;
+          documentId: string;
+          id: string;
+          title: string;
+        }
+      | undefined
+    >
+  ) => {
     mocks.read.mockResolvedValue(value);
     await expect(
       executeEveCodeDocument(input, context).next()
@@ -134,7 +147,6 @@ it("does not execute when cancelled during revision lookup", async () => {
   ).rejects.toThrow();
   expect(mocks.execute).not.toHaveBeenCalled();
 });
-
 it("retains a charged receipt when sandbox chart output is malformed", async () => {
   mocks.execute.mockResolvedValue({
     kind: "chatjs.tool-result",
@@ -153,18 +165,14 @@ it("retains a charged receipt when sandbox chart output is malformed", async () 
     usage: { costUsd: 0.05 },
   });
 });
-
-it.each(["documents", "code", "execution"])(
-  "enforces the %s configuration gate before accessing documents",
+it.each(["code", "execution"])(
+  "enforces the %s installation requirement before accessing documents",
   async (gate) => {
-    if (gate === "documents") {
-      mocks.documents.enabled = false;
-    }
     if (gate === "code") {
-      mocks.documents.types.code = false;
+      mocks.code = false;
     }
     if (gate === "execution") {
-      mocks.execution.enabled = false;
+      mocks.execution = false;
     }
     await expect(executeEveCodeDocument(input, context).next()).rejects.toThrow(
       "disabled"

@@ -1,3 +1,5 @@
+/// <reference types="bun" />
+
 const result = await Bun.build({
   entrypoints: [
     `${import.meta.dir}/src/index.ts`,

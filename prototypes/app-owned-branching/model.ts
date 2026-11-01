@@ -1,5 +1,9 @@
-import type { Sql, TransactionSql } from "postgres";
+import type { Sql } from "postgres";
+import type postgres from "postgres";
 import { z } from "zod";
+
+const MAX_PREFIX_MESSAGES = 1000;
+const MAX_PREFIX_BYTES = 1_000_000;
 
 const part = z.discriminatedUnion("type", [
   z.object({ text: z.string(), type: z.literal("text") }).strict(),
@@ -22,7 +26,8 @@ const part = z.discriminatedUnion("type", [
     .object({ id: z.string(), output: z.string(), type: z.literal("result") })
     .strict(),
 ]);
-export const message = z
+
+const message = z
   .object({
     annotation: z
       .object({
@@ -35,16 +40,38 @@ export const message = z
     role: z.enum(["user", "assistant", "tool"]),
   })
   .strict();
-export type Message = z.infer<typeof message>;
-type Branch = {
+
+type Message = z.infer<typeof message>;
+
+type DeepReadonly<Value> = Value extends
+  | string
+  | number
+  | bigint
+  | boolean
+  | symbol
+  | null
+  | undefined
+  ? Value
+  : Value extends (...parameters: readonly never[]) => unknown
+    ? Value
+    : Value extends abstract new (...parameters: readonly never[]) => unknown
+      ? Value
+      : Value extends readonly unknown[]
+        ? { readonly [Index in keyof Value]: DeepReadonly<Value[Index]> }
+        : Value extends object
+          ? { readonly [Key in keyof Value]: DeepReadonly<Value[Key]> }
+          : Value;
+
+interface Branch {
   id: string;
   owner: string;
   head: string | null;
   documents: Record<string, string>;
   sandbox: string;
   barrier: string | null;
-};
-type Checkpoint = {
+}
+
+interface Checkpoint {
   id: string;
   owner: string;
   source: string | null;
@@ -53,73 +80,107 @@ type Checkpoint = {
   documents: Record<string, string>;
   sandbox: string;
   status: "pending" | "ready" | "failed";
-};
-type DB = Sql | TransactionSql;
+}
 
-const ownedBranch = async (sql: DB, owner: string, id: string) => {
+type ReadonlySqlTag = <
+  RowType extends readonly (object | undefined)[] = postgres.Row[],
+>(
+  template: readonly string[] & { readonly raw: readonly string[] },
+  ...parameters: readonly (string | number | null)[]
+) => postgres.PendingQuery<RowType>;
+
+// Expose the native operations used by the protocol. Readonly properties prevent
+// receiver reassignment while preserving queries that perform database writes.
+interface SqlQueries {
+  <RowType extends readonly (object | undefined)[] = postgres.Row[]>(
+    template: readonly string[] & { readonly raw: readonly string[] },
+    ...parameters: readonly postgres.ParameterOrFragment<never>[]
+  ): postgres.PendingQuery<RowType>;
+  (ids: readonly string[]): postgres.Helper<readonly string[], []>;
+  readonly json: Sql["json"];
+}
+
+type SqlConnection = SqlQueries & Readonly<Pick<Sql, "begin">>;
+
+const hasBarrier = (barrier: string | null): boolean =>
+  barrier !== null && barrier !== "";
+
+const ownedBranch = async (
+  sql: ReadonlySqlTag,
+  owner: string,
+  id: string
+): Promise<Branch> => {
   const [row] = await sql<
     Branch[]
   >`select * from branch where id=${id} and owner=${owner} for update`;
-  if (!row) {
+  if (row === undefined) {
     throw new Error("not owned");
   }
   return row;
 };
 
-export const history = async (sql: DB, owner: string, head: string | null) => {
+const history = async (
+  sql: ReadonlySqlTag,
+  owner: string,
+  head: string | null
+): Promise<Message[]> => {
   const rows = await sql<{ payload: unknown }[]>`
     with recursive prefix as (
       select id, previous, payload, 0 as depth from node where id=${head} and owner=${owner}
       union all
-      select n.id, n.previous, n.payload, p.depth+1 from node n join prefix p on n.id=p.previous where n.owner=${owner} and p.depth < 1000
+      select n.id, n.previous, n.payload, p.depth+1 from node n join prefix p on n.id=p.previous where n.owner=${owner} and p.depth < ${MAX_PREFIX_MESSAGES}
     ) select case when a.node is null then p.payload
       else p.payload || jsonb_build_object('annotation',a.payload) end as payload
       from prefix p left join annotation a on a.node=p.id and a.owner=${owner} order by depth desc`;
-  if (rows.length > 1000) {
+  if (rows.length > MAX_PREFIX_MESSAGES) {
     throw new Error("prefix too large");
   }
-  return rows.map((row) => message.parse(row.payload));
+  return rows.map((row: Readonly<{ payload: unknown }>) =>
+    message.parse(row.payload)
+  );
 };
-
 // A bounded neutral prototype format, NOT a claimed public EVE seed schema.
-export const validatePrefix = (messages: Message[]) => {
+const validatePrefix = (messages: readonly DeepReadonly<Message>[]): void => {
   if (
-    messages.length > 1000 ||
-    Buffer.byteLength(JSON.stringify(messages)) > 1_000_000
+    messages.length > MAX_PREFIX_MESSAGES ||
+    Buffer.byteLength(JSON.stringify(messages)) > MAX_PREFIX_BYTES
   ) {
     throw new Error("prefix too large");
   }
   const pending = new Set<string>();
   const used = new Set<string>();
   for (const item of messages) {
-    for (const p of item.parts) {
-      if (p.type === "call") {
-        if (item.role !== "assistant" || used.has(p.id)) {
+    for (const messagePart of item.parts) {
+      if (messagePart.type === "call") {
+        if (item.role !== "assistant" || used.has(messagePart.id)) {
           throw new Error("invalid tool call");
         }
-        pending.add(p.id);
-        used.add(p.id);
-      } else if (p.type === "result") {
-        if (item.role !== "tool" || !pending.delete(p.id)) {
+        pending.add(messagePart.id);
+        used.add(messagePart.id);
+      } else if (messagePart.type === "result") {
+        if (item.role !== "tool" || !pending.delete(messagePart.id)) {
           throw new Error("unpaired result");
         }
-      } else if (pending.size && item.role !== "assistant") {
+      } else if (pending.size > 0 && item.role !== "assistant") {
         throw new Error("unresolved tool boundary");
       }
     }
   }
-  if (pending.size) {
+  if (pending.size > 0) {
     throw new Error("unresolved tool boundary");
   }
 };
 
 const requireResources = async (
-  sql: DB,
+  sql: SqlQueries,
   owner: string,
-  ids: string[],
-  kind: "file" | "document"
-) => {
-  if (!ids.length) {
+  resources: Readonly<{
+    ids: readonly string[];
+    kind: "file" | "document";
+  }>
+): Promise<void> => {
+  const { ids, kind } = resources;
+  if (ids.length === 0) {
     return;
   }
   const rows =
@@ -129,79 +190,85 @@ const requireResources = async (
   }
 };
 
-export const append = async (
-  sql: Sql,
-  input: {
+const append = async (
+  sql: SqlConnection,
+  input: DeepReadonly<{
     owner: string;
     branch: string;
     expectedHead: string | null;
     id: string;
     message: Message;
-  }
-) => {
-  const parsed = message.parse(input.message);
-  const { annotation, ...payload } = parsed;
-  await sql.begin(async (tx) => {
-    const b = await ownedBranch(tx, input.owner, input.branch);
-    await requireResources(
-      tx,
-      input.owner,
-      payload.parts.flatMap((p) => (p.type === "file" ? [p.object] : [])),
-      "file"
-    );
-    if (b.barrier) {
+  }>
+): Promise<void> => {
+  const { annotation, parts, role } = message.parse(input.message);
+  const payload = { parts, role };
+  await sql.begin(async (tx: SqlQueries) => {
+    const ownedBranchRecord = await ownedBranch(tx, input.owner, input.branch);
+    await requireResources(tx, input.owner, {
+      ids: payload.parts.flatMap((messagePart) => {
+        if (messagePart.type === "file") {
+          return [messagePart.object];
+        }
+        return [];
+      }),
+      kind: "file",
+    });
+    if (hasBarrier(ownedBranchRecord.barrier)) {
       throw new Error("capture barrier");
     }
-    if (b.head !== input.expectedHead) {
+    if (ownedBranchRecord.head !== input.expectedHead) {
       throw new Error("stale head");
     }
-    await tx`insert into node (id,owner,previous,payload) values (${input.id},${input.owner},${b.head},${tx.json(payload)})`;
+    await tx`insert into node (id,owner,previous,payload) values (${input.id},${input.owner},${ownedBranchRecord.head},${tx.json(payload)})`;
     if (annotation) {
       await tx`insert into annotation (node,owner,payload) values (${input.id},${input.owner},${tx.json(annotation)})`;
     }
-    await tx`update branch set head=${input.id} where id=${b.id}`;
+    await tx`update branch set head=${input.id} where id=${ownedBranchRecord.id}`;
   });
 };
 
-export const editDocument = async (
-  sql: Sql,
+const editDocument = async (
+  sql: SqlConnection,
   owner: string,
   branch: string,
-  revisions: Record<string, string>
-) => {
-  await sql.begin(async (tx) => {
-    const b = await ownedBranch(tx, owner, branch);
-    if (b.barrier) {
+  revisions: Readonly<Record<string, string>>
+): Promise<void> => {
+  await sql.begin(async (tx: SqlQueries) => {
+    const ownedBranchRecord = await ownedBranch(tx, owner, branch);
+    if (hasBarrier(ownedBranchRecord.barrier)) {
       throw new Error("capture barrier");
     }
-    await requireResources(tx, owner, Object.values(revisions), "document");
-    await tx`update branch set documents=${tx.json(revisions)} where id=${b.id}`;
+    await requireResources(tx, owner, {
+      ids: Object.values(revisions),
+      kind: "document",
+    });
+    await tx`update branch set documents=${tx.json(revisions)} where id=${ownedBranchRecord.id}`;
   });
 };
 
-export const beginWriter = async (
-  sql: Sql,
+const beginWriter = async (
+  sql: SqlConnection,
   owner: string,
   branch: string,
   id: string,
   kind: string
-) => {
-  await sql.begin(async (tx) => {
-    const b = await ownedBranch(tx, owner, branch);
-    if (b.barrier) {
+): Promise<void> => {
+  await sql.begin(async (tx: SqlQueries) => {
+    const ownedBranchRecord = await ownedBranch(tx, owner, branch);
+    if (hasBarrier(ownedBranchRecord.barrier)) {
       throw new Error("capture barrier");
     }
     await tx`insert into writer (id,branch,kind) values (${id},${branch},${kind})`;
   });
 };
 
-export const endWriter = async (
-  sql: Sql,
+const endWriter = async (
+  sql: SqlConnection,
   owner: string,
   branch: string,
   id: string
-) => {
-  await sql.begin(async (tx) => {
+): Promise<void> => {
+  await sql.begin(async (tx: SqlQueries) => {
     await ownedBranch(tx, owner, branch);
     await tx`delete from writer where id=${id} and branch=${branch}`;
   });
@@ -209,16 +276,17 @@ export const endWriter = async (
 
 // Durable steps may retry this operation. The operation identity fixes the first
 // admitted boundary; retry never resamples documents or the live sandbox.
-export const reserve = async (
-  sql: Sql,
-  input: { owner: string; source: string; id: string; intent: string }
-) => {
-  await sql.begin(async (tx) => {
-    const b = await ownedBranch(tx, input.owner, input.source);
-    const [existing] = await tx<
+const reserve = async (
+  sql: SqlConnection,
+  input: Readonly<{ owner: string; source: string; id: string; intent: string }>
+): Promise<void> => {
+  await sql.begin(async (tx: SqlQueries) => {
+    const ownedBranchRecord = await ownedBranch(tx, input.owner, input.source);
+    const existingRows = await tx<
       Checkpoint[]
     >`select * from checkpoint where id=${input.id}`;
-    if (existing) {
+    if (existingRows.length > 0) {
+      const [existing] = existingRows;
       if (
         existing.owner !== input.owner ||
         existing.source !== input.source ||
@@ -228,64 +296,65 @@ export const reserve = async (
       }
       return;
     }
-    if (b.barrier) {
+    if (hasBarrier(ownedBranchRecord.barrier)) {
       throw new Error("capture barrier");
     }
-    const active = await tx`select id from writer where branch=${b.id}`;
-    if (active.length) {
+    const active =
+      await tx`select id from writer where branch=${ownedBranchRecord.id}`;
+    if (active.length > 0) {
       throw new Error("writers not drained");
     }
-    validatePrefix(await history(tx, input.owner, b.head));
+    validatePrefix(await history(tx, input.owner, ownedBranchRecord.head));
     await tx`insert into checkpoint (id,owner,source,intent,head,documents,sandbox,status)
-      values (${input.id},${input.owner},${b.id},${input.intent},${b.head},${tx.json(b.documents)},${b.sandbox},'pending')`;
-    await tx`update branch set barrier=${input.id} where id=${b.id}`;
+      values (${input.id},${input.owner},${ownedBranchRecord.id},${input.intent},${ownedBranchRecord.head},${tx.json(ownedBranchRecord.documents)},${ownedBranchRecord.sandbox},'pending')`;
+    await tx`update branch set barrier=${input.id} where id=${ownedBranchRecord.id}`;
   });
 };
 
-export interface SnapshotProvider {
+interface SnapshotProvider {
   // Stronger than Vercel snapshot(): replay/lookup by caller key is REQUIRED.
   capture: (key: string, sandbox: string) => Promise<void>;
   restore: (key: string, sandbox: string) => Promise<void>;
 }
 
-export const complete = async (
-  sql: Sql,
-  provider: SnapshotProvider,
+const complete = async (
+  sql: SqlConnection,
+  provider: Readonly<SnapshotProvider>,
   owner: string,
   id: string,
   afterRestore?: () => void
-) => {
-  const [c] = await sql<
+): Promise<void> => {
+  const [checkpoint] = await sql<
     Checkpoint[]
   >`select * from checkpoint where id=${id} and owner=${owner}`;
-  if (!c) {
+  if (checkpoint?.owner !== owner) {
     throw new Error("not owned");
   }
-  if (c.status === "ready") {
+  if (checkpoint.status === "ready") {
     return;
   }
-  if (!c.source) {
+  if (checkpoint.source === null || checkpoint.source === "") {
     throw new Error("source missing");
   }
-  const { source } = c;
+  const { source } = checkpoint;
   try {
-    await provider.capture(id, c.sandbox);
+    await provider.capture(id, checkpoint.sandbox);
     // Snapshot stops the original VM. Reopen parent before releasing admission.
     await provider.restore(id, `parent:${id}`);
     afterRestore?.();
-    await sql.begin(async (tx) => {
-      const b = await ownedBranch(tx, owner, source);
+    await sql.begin(async (tx: SqlQueries) => {
+      const ownedBranchRecord = await ownedBranch(tx, owner, source);
       const [current] = await tx<
         Checkpoint[]
       >`select * from checkpoint where id=${id} for update`;
       if (current?.status === "ready") {
         return;
       }
-      if (b.barrier !== id) {
+      if (ownedBranchRecord.barrier !== id) {
         throw new Error("lost barrier");
       }
       await tx`update checkpoint set status='ready', error=null where id=${id}`;
-      await tx`update branch set sandbox=${`parent:${id}`}, barrier=null where id=${b.id}`;
+      await tx`update branch set sandbox=${`parent:${id}`}, barrier=null where id=${ownedBranchRecord.id}`;
     });
   } catch (error) {
     await sql`update checkpoint set status='failed', error=${String(error)} where id=${id} and status <> 'ready'`;
@@ -294,31 +363,31 @@ export const complete = async (
   }
 };
 
-export const fork = async (
-  sql: Sql,
-  provider: SnapshotProvider,
-  input: { owner: string; checkpoint: string; child: string }
-) => {
-  const [c] = await sql<
+const fork = async (
+  sql: SqlConnection,
+  provider: Readonly<SnapshotProvider>,
+  input: Readonly<{ owner: string; checkpoint: string; child: string }>
+): Promise<void> => {
+  const [checkpoint] = await sql<
     Checkpoint[]
   >`select * from checkpoint where id=${input.checkpoint} and owner=${input.owner} and status='ready'`;
-  if (!c) {
+  if (checkpoint?.status !== "ready") {
     throw new Error("checkpoint not ready or not owned");
   }
-  await sql.begin(async (tx) => {
+  await sql.begin(async (tx: SqlQueries) => {
     const prior =
       await tx`select id from child_request where id=${input.child}`;
     const branch = await tx`select id from branch where id=${input.child}`;
-    if (!prior.length && branch.length) {
+    if (prior.length === 0 && branch.length > 0) {
       throw new Error("child already exists");
     }
-    await tx`insert into child_request (id,owner,checkpoint) values (${input.child},${input.owner},${c.id}) on conflict do nothing`;
+    await tx`insert into child_request (id,owner,checkpoint) values (${input.child},${input.owner},${checkpoint.id}) on conflict do nothing`;
     const [request] = await tx<
       { owner: string; checkpoint: string; deleted: boolean }[]
     >`select owner,checkpoint,deleted from child_request where id=${input.child} for update`;
     if (
       request?.owner !== input.owner ||
-      request.checkpoint !== c.id ||
+      request.checkpoint !== checkpoint.id ||
       request.deleted
     ) {
       throw new Error("conflicting child");
@@ -326,70 +395,108 @@ export const fork = async (
   });
   // Deterministic child identity + provider replay protects the allocation gap.
   const sandbox = `child:${input.child}`;
-  await provider.restore(c.id, sandbox);
-  await sql.begin(async (tx) => {
+  await provider.restore(checkpoint.id, sandbox);
+  await sql.begin(async (tx: SqlQueries) => {
     const [request] = await tx<
       { deleted: boolean }[]
     >`select deleted from child_request where id=${input.child} for update`;
-    if (!request || request.deleted) {
+    if (request?.deleted ?? true) {
       throw new Error("child deleted");
     }
     await tx`insert into branch (id,owner,head,documents,sandbox)
-      values (${input.child},${input.owner},${c.head},${tx.json(c.documents)},${sandbox}) on conflict do nothing`;
-    const b = await ownedBranch(tx, input.owner, input.child);
-    if (b.owner !== input.owner) {
+      values (${input.child},${input.owner},${checkpoint.head},${tx.json(checkpoint.documents)},${sandbox}) on conflict do nothing`;
+    const ownedBranchRecord = await ownedBranch(tx, input.owner, input.child);
+    if (ownedBranchRecord.owner !== input.owner) {
       throw new Error("conflicting child");
     }
   });
 };
 
 /** Retention proof only: keep immutable nodes/resources/checkpoints for children.
- * Production needs reachability GC + per-owner retention/deletion policy. */
-export const removeBranch = async (sql: Sql, owner: string, branch: string) => {
-  await sql.begin(async (tx) => {
+ * Production needs reachability GC + per-owner retention/deletion policy.
+ * @param {SqlConnection} sql - Connection owning the deletion transaction.
+ * @param {string} owner - Tenant whose branch may be removed.
+ * @param {string} branch - Branch identity to remove without deleting retained resources.
+ */
+const removeBranch = async (
+  sql: SqlConnection,
+  owner: string,
+  branch: string
+): Promise<void> => {
+  await sql.begin(async (tx: SqlQueries) => {
     await tx`select id from child_request where id=${branch} for update`;
-    const b = await ownedBranch(tx, owner, branch);
-    const writers = await tx`select id from writer where branch=${b.id}`;
-    if (b.barrier || writers.length) {
+    const ownedBranchRecord = await ownedBranch(tx, owner, branch);
+    const writers =
+      await tx`select id from writer where branch=${ownedBranchRecord.id}`;
+    if (hasBarrier(ownedBranchRecord.barrier) || writers.length > 0) {
       throw new Error("branch busy");
     }
-    await tx`update child_request set deleted=true where id=${b.id}`;
-    await tx`delete from branch where id=${b.id}`;
+    await tx`update child_request set deleted=true where id=${ownedBranchRecord.id}`;
+    await tx`delete from branch where id=${ownedBranchRecord.id}`;
   });
 };
 
-/** Mock backend write path: the writer token outlives the whole OS process/job. */
-export const writeFile = async (
-  sql: Sql,
-  input: {
+/**
+ * Write through an admitted writer token that outlives the OS process/job.
+ * @param {SqlConnection} sql - Connection owning the writer validation and update transaction.
+ * @param {Readonly<{ owner: string; branch: string; writer: string; path: string; bytes: string; }>} input - Owner, branch, writer token, and file contents for the update.
+ */
+const writeFile = async (
+  sql: SqlConnection,
+  input: Readonly<{
     owner: string;
     branch: string;
     writer: string;
     path: string;
     bytes: string;
-  }
-) => {
-  await sql.begin(async (tx) => {
-    const b = await ownedBranch(tx, input.owner, input.branch);
+  }>
+): Promise<void> => {
+  await sql.begin(async (tx: SqlQueries) => {
+    const ownedBranchRecord = await ownedBranch(tx, input.owner, input.branch);
     const tokens =
-      await tx`select id from writer where id=${input.writer} and branch=${b.id}`;
-    if (b.barrier || !tokens.length) {
+      await tx`select id from writer where id=${input.writer} and branch=${ownedBranchRecord.id}`;
+    if (hasBarrier(ownedBranchRecord.barrier) || tokens.length === 0) {
       throw new Error("writer not admitted");
     }
     const updated =
-      await tx`update provider_vm set files=files || ${tx.json({ [input.path]: input.bytes })} where id=${b.sandbox} and not stopped returning id`;
-    if (!updated.length) {
+      await tx`update provider_vm set files=files || ${tx.json({ [input.path]: input.bytes })} where id=${ownedBranchRecord.sandbox} and not stopped returning id`;
+    if (updated.length === 0) {
       throw new Error("VM stopped");
     }
   });
 };
 
-/** App annotations are never serialized into the model's transcript. */
-export const modelHistory = async (
-  sql: DB,
+/**
+ * Produce a model transcript without application annotations.
+ * @param {ReadonlySqlTag} sql - Read-only tag used to read the immutable message prefix.
+ * @param {string} owner - Tenant whose message nodes may be read.
+ * @param {string | null} head - Last node in the prefix, or null for an empty history.
+ * @returns {Promise<readonly DeepReadonly<Pick<Message, "parts" | "role">>[]>} Ordered read-only message roles and parts without application annotations.
+ */
+const modelHistory = async (
+  sql: ReadonlySqlTag,
   owner: string,
   head: string | null
-) => {
+): Promise<readonly DeepReadonly<Pick<Message, "parts" | "role">>[]> => {
   const messages = await history(sql, owner, head);
-  return messages.map(({ parts, role }) => ({ parts, role }));
+  return messages.map(({ parts, role }: DeepReadonly<Message>) => ({
+    parts,
+    role,
+  }));
 };
+
+export {
+  append,
+  beginWriter,
+  complete,
+  editDocument,
+  endWriter,
+  fork,
+  history,
+  modelHistory,
+  removeBranch,
+  reserve,
+  validatePrefix,
+  writeFile,
+};
+export type { Message, SnapshotProvider, SqlConnection, SqlQueries };

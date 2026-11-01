@@ -1,22 +1,25 @@
 "use client";
-
-import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
-import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
-
 import { generateVideoInput, generateVideoResult } from "./schemas";
+import React from "react";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import type { ToolRendererProps } from "@/chatjs/core/tools/define-renderer";
+import { defineToolRenderer } from "@/chatjs/core/tools/define-renderer";
 
 type GenerateVideoTool = ToolRendererProps<
   typeof generateVideoInput,
   typeof generateVideoResult
 >["tool"];
 
-const GenerateVideoView = ({ tool }: { tool: GenerateVideoTool }) => {
+const GenerateVideoView = ({
+  tool,
+}: ReadonlyNativeSurface<{ tool: GenerateVideoTool }>): React.JSX.Element => {
   if (tool.state === "input-streaming" || tool.state === "input-available") {
     return (
       <div className="flex w-full flex-col items-center justify-center gap-4 rounded-lg border p-8">
         <div className="bg-muted-foreground/20 h-64 w-full animate-pulse rounded-lg" />
         <div className="text-muted-foreground">
-          Generating video: &quot;{tool.input?.prompt ?? "Preparing prompt…"}
+          Generating video: &quot;
+          {tool.input?.prompt ?? "Preparing prompt…"}
           &quot;
         </div>
       </div>

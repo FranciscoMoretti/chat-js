@@ -1,13 +1,19 @@
 "use client";
 
-import type * as React from "react";
+import type {
+  ComponentProps as ReactComponentProps,
+  JSX as ReactJSX,
+} from "react";
 
 import { InternalLink } from "@/components/internal-link";
 import { cn } from "@/lib/utils";
 
-type ActionContainerProps = React.ComponentProps<"div">;
+type ActionContainerProps = ReactComponentProps<"div">;
 
-const ActionContainer = ({ className, ...props }: ActionContainerProps) => (
+const ActionContainer = ({
+  className,
+  ...props
+}: ActionContainerProps): ReactJSX.Element => (
   <div
     className={cn(
       "group border-border/60 bg-muted/20 hover:border-primary/25 relative rounded-xl border px-4 py-3 transition-all duration-200",
@@ -17,26 +23,27 @@ const ActionContainer = ({ className, ...props }: ActionContainerProps) => (
   />
 );
 
-type ActionContainerLinkProps = React.ComponentProps<typeof InternalLink>;
+type ActionContainerLinkProps = ReactComponentProps<typeof InternalLink>;
+const DISABLED_LINK_TAB_INDEX = -1;
 
 const ActionContainerLink = ({
   className,
   tabIndex,
   ...props
-}: ActionContainerLinkProps) => (
+}: ActionContainerLinkProps): ReactJSX.Element => (
   <InternalLink
     className={cn("absolute inset-0 z-10", className)}
-    tabIndex={tabIndex ?? -1}
+    tabIndex={tabIndex ?? DISABLED_LINK_TAB_INDEX}
     {...props}
   />
 );
 
-type ActionContainerTopProps = React.ComponentProps<"div">;
+type ActionContainerTopProps = ReactComponentProps<"div">;
 
 const ActionContainerTop = ({
   className,
   ...props
-}: ActionContainerTopProps) => (
+}: ActionContainerTopProps): ReactJSX.Element => (
   <div className={cn("z-20", className)} {...props} />
 );
 

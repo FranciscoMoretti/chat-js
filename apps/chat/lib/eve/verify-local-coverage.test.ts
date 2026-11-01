@@ -1,126 +1,131 @@
-import { createHash } from "node:crypto";
-import { mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import nodePath from "node:path";
-
-import { afterEach, beforeEach, expect, it, vi } from "vitest";
-
-import { verifyLocalEveFamilyCoverage } from "./verify-local-coverage";
+import { beforeEach, expect, it, vi } from "vitest";
+import {
+  manageEveLocalResources,
+  verifyLocalEveFamilyCoverage,
+} from "./verify-local-coverage";
 
 const mocks = vi.hoisted(() => ({
+  identity: vi.fn(),
+  resolve: vi.fn(),
+  retire: vi.fn(),
+  cleanup: vi.fn(),
   end: vi.fn(),
-  fetch: vi.fn(),
   verify: vi.fn(),
+  remove: vi.fn(),
+}));
+vi.mock("../sandbox/runtime", () => ({
+  getPersistentSandboxProvider: () => ({
+    scope: { providerId: "vercel", accountId: "account", scopeId: "project" },
+    persistent: { deleteAndConfirmAbsent: mocks.remove },
+  }),
+}));
+vi.mock("./persistent-sandbox-store", () => ({
+  readPersistentIdentity: mocks.identity,
+  resolvePersistentIdentity: mocks.resolve,
+  retirePersistentSession: mocks.retire,
+  cleanupPersistentSession: mocks.cleanup,
 }));
 vi.mock("postgres", () => ({ default: () => ({ end: mocks.end }) }));
-vi.mock("../db/eve-sandbox-coverage-proof", () => ({
+vi.mock("node:fs/promises", () => ({
+  realpath: async () => await Promise.resolve("/worker"),
+}));
+vi.mock("@/lib/eve/lifecycle/postgres/eve-sandbox-coverage-proof", () => ({
   verifyEveSandboxCoverage: mocks.verify,
 }));
 vi.mock("../env", () => ({
-  env: {
-    EVE_GATEWAY_SECRET: "fixture-secret",
-    EVE_INTERNAL_ORIGIN: "http://worker.local",
-    WORKFLOW_POSTGRES_URL: "postgresql://localhost",
-  },
+  env: { WORKFLOW_POSTGRES_URL: "postgresql://localhost" },
 }));
 vi.mock("./server", () => ({ assertEveConfigured: vi.fn() }));
-let root: string;
-const sessionId = "session";
-const inventories = [{ runIds: [sessionId], sessionId }];
-const identityPath = () =>
-  nodePath.join(
-    root,
-    ".eve",
-    "sandbox-identities",
-    `${createHash("sha256").update(sessionId).digest("hex")}.json`
-  );
-const identity = () => ({
-  appRoot: root,
-  backendName: "microsandbox",
-  sessionId,
-  version: 1,
-});
-beforeEach(async () => {
-  root = await mkdtemp(nodePath.join(tmpdir(), "eve-coverage-"));
-  // macOS /var is a link; the production verifier compares canonical roots.
-  const { realpath } = await import("node:fs/promises");
-  root = await realpath(root);
-  await mkdir(nodePath.join(root, ".eve", "sandbox-identities"), {
-    recursive: true,
-  });
-  await writeFile(identityPath(), JSON.stringify(identity()));
-  vi.clearAllMocks();
-  vi.stubGlobal("fetch", mocks.fetch);
-  mocks.verify.mockImplementation(async (_connection, _scope, verify) => {
-    await verify(sessionId);
-  });
-  mocks.fetch.mockImplementation(() =>
-    Promise.resolve(
-      Response.json({
-        local: identity(),
+const inventories = [{ sessionId: "root", runIds: ["root", "child"] }];
+beforeEach(() => {
+  vi.resetAllMocks();
+  mocks.verify.mockResolvedValue(["root", "child"]);
+  mocks.identity.mockImplementation(
+    async (sessionId: string) =>
+      await Promise.resolve({
+        ownerId: "owner",
         sessionId,
-        snapshotVersion: 2,
-        version: 1,
+        rootSessionId: "root",
       })
-    )
   );
 });
-afterEach(async () => {
-  vi.unstubAllGlobals();
-  await rm(root, { force: true, recursive: true });
-});
-it("matches native evidence to a local identity and carries owner/root authorization", async () => {
-  await verifyLocalEveFamilyCoverage("owner", root, inventories);
-  const [[url, init]] = mocks.fetch.mock.calls;
-  expect(String(url)).toBe(
-    "http://worker.local/eve/chat/v1/session/session/sandbox-identity"
-  );
-  expect(init.headers).toMatchObject({
-    "x-chatjs-deletion": "1",
-    "x-chatjs-deletion-root": sessionId,
-    "x-chatjs-owner": "owner",
+it("rechecks app ownership for all descendants when workflow coverage was retained", async () => {
+  expect(
+    await verifyLocalEveFamilyCoverage("owner", "/expected", inventories)
+  ).toEqual({
+    appRoot: "/worker",
+    sessions: [
+      { sessionId: "root", rootSessionId: "root" },
+      { sessionId: "child", rootSessionId: "root" },
+    ],
   });
-  expect(init.redirect).toBe("error");
+  expect(mocks.retire).toHaveBeenCalledTimes(2);
+  expect(mocks.cleanup).not.toHaveBeenCalled();
   expect(mocks.end).toHaveBeenCalledOnce();
 });
-it.each(["appRoot", "sessionId", "backendName"])(
-  "rejects native %s mismatch",
-  async (field) => {
-    mocks.fetch.mockImplementation(() =>
-      Promise.resolve(
-        Response.json({
-          local: { ...identity(), [field]: "different" },
-          sessionId,
-          snapshotVersion: 2,
-          version: 1,
-        })
-      )
-    );
-    await expect(
-      verifyLocalEveFamilyCoverage("owner", root, inventories)
-    ).rejects.toThrow();
-    expect(mocks.end).toHaveBeenCalledOnce();
-  }
-);
-it("rejects missing native evidence and mismatched local evidence", async () => {
-  mocks.fetch.mockResolvedValueOnce(new Response(null, { status: 503 }));
+it.each([
+  { ownerId: "foreign", sessionId: "root", rootSessionId: "root" },
+  { ownerId: "owner", sessionId: "root", rootSessionId: "foreign" },
+])("rejects mismatched ownership: %j", async (identity) => {
+  mocks.identity.mockResolvedValue(identity);
   await expect(
-    verifyLocalEveFamilyCoverage("owner", root, inventories)
-  ).rejects.toThrow("unavailable");
-  await writeFile(
-    identityPath(),
-    JSON.stringify({ ...identity(), sessionId: "other" })
-  );
-  await expect(
-    verifyLocalEveFamilyCoverage("owner", root, inventories)
-  ).rejects.toThrow("Local sandbox ownership");
+    verifyLocalEveFamilyCoverage("owner", "/expected", inventories)
+  ).rejects.toThrow("coverage is unavailable");
+  expect(mocks.retire).not.toHaveBeenCalled();
+  expect(mocks.cleanup).not.toHaveBeenCalled();
+  expect(mocks.end).toHaveBeenCalledOnce();
 });
-it("does not follow a linked identity file", async () => {
-  const actual = nodePath.join(root, "actual.json");
-  await writeFile(actual, JSON.stringify(identity()));
-  await rm(identityPath());
-  await symlink(actual, identityPath());
+it("propagates retirement failures instead of accepting cleanup coverage", async () => {
+  mocks.retire.mockRejectedValue(new Error("retirement failed"));
   await expect(
-    verifyLocalEveFamilyCoverage("owner", root, inventories)
-  ).rejects.toThrow();
+    verifyLocalEveFamilyCoverage("owner", "/expected", inventories)
+  ).rejects.toThrow("retirement failed");
+  expect(mocks.end).toHaveBeenCalledOnce();
+});
+it("retires before purging and propagates unconfirmed deletion", async () => {
+  mocks.cleanup.mockRejectedValue(new Error("absence unconfirmed"));
+  await expect(
+    manageEveLocalResources(
+      "owner",
+      { sessionId: "child", rootSessionId: "root" },
+      "purge"
+    )
+  ).rejects.toThrow("absence unconfirmed");
+  expect(mocks.retire.mock.invocationCallOrder[0]).toBeLessThan(
+    mocks.cleanup.mock.invocationCallOrder[0]
+  );
+  expect(mocks.cleanup).toHaveBeenCalledWith(
+    { ownerId: "owner", sessionId: "child", rootSessionId: "root" },
+    expect.any(Function)
+  );
+});
+
+it("retires a verified native session that never allocated an app filesystem", async () => {
+  mocks.identity.mockResolvedValue(null);
+  mocks.resolve.mockResolvedValue({
+    ownerId: "owner",
+    sessionId: "child",
+    rootSessionId: "root",
+    workspaceId: "workspace",
+  });
+  await manageEveLocalResources(
+    "owner",
+    { sessionId: "child", rootSessionId: "root" },
+    "purge"
+  );
+  expect(mocks.retire).toHaveBeenCalledWith({
+    ownerId: "owner",
+    sessionId: "child",
+    rootSessionId: "root",
+    workspaceId: "workspace",
+  });
+  expect(mocks.cleanup).toHaveBeenCalledWith(
+    {
+      ownerId: "owner",
+      sessionId: "child",
+      rootSessionId: "root",
+      workspaceId: "workspace",
+    },
+    expect.any(Function)
+  );
 });

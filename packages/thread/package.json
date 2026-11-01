@@ -27,6 +27,9 @@
   ],
   "type": "module",
   "types": "./dist/index.d.ts",
+  "imports": {
+    "#thread-source/*": "./src/*.ts"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -54,15 +57,16 @@
     "test:types": "tsc -p tsconfig.json --noEmit && bun run build"
   },
   "dependencies": {
-    "@ai-sdk/react": "4.0.108",
-    "ai": "7.0.105"
+    "@ai-sdk/react": "4.0.140",
+    "ai": "7.0.137"
   },
   "devDependencies": {
     "@types/bun": "^1.3.12",
     "@types/react": "19.2.7",
-    "@types/react-test-renderer": "19.1.0",
+    "@types/react-dom": "19.2.3",
+    "happy-dom": "20.14.5",
     "react": "19.2.3",
-    "react-test-renderer": "19.2.3",
+    "react-dom": "19.2.3",
     "typescript": "6.0.2"
   },
   "peerDependencies": {

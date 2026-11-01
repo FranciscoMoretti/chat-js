@@ -4,17 +4,12 @@ import { createEveToolCost } from "./tool-cost";
 
 vi.mock("../ai/active-gateway", () => ({
   getActiveGateway: () => ({
-    fetchModels: () =>
-      Promise.resolve([
-        { id: "priced", pricing: { input: "0.000001", output: "0.000002" } },
-        { id: "priced-image", pricing: { image: "0.04" } },
-      ]),
+    fetchModels: vi.fn().mockResolvedValue([
+      { id: "priced", pricing: { input: "0.000001", output: "0.000002" } },
+      { id: "priced-image", pricing: { image: "0.04" } },
+    ]),
   }),
 }));
-vi.mock("../ai/to-model-data", () => ({
-  toModelData: (value: unknown) => value,
-}));
-
 test("combines API and nested model usage without rounding each call", async () => {
   const cost = createEveToolCost();
   cost.addAPICost("api", 5);
@@ -38,7 +33,12 @@ test("missing pricing and missing usage remain unknown rather than free", async 
 
 test.each([{ inputTokens: 100 }, { outputTokens: 100 }])(
   "partial usage remains unresolved: %j",
-  async (usage) => {
+  async (
+    usage: Readonly<
+      | { inputTokens: number; outputTokens?: undefined }
+      | { outputTokens: number; inputTokens?: undefined }
+    >
+  ) => {
     const cost = createEveToolCost();
     cost.addLLMCost("priced", usage, "image");
     await expect(cost.totalUsd()).resolves.toBeUndefined();

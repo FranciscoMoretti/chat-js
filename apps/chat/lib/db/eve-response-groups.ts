@@ -1,24 +1,107 @@
+import {
+  and,
+  eq,
+  getTableColumns,
+  inArray,
+  isNull,
+  or,
+  sql,
+} from "drizzle-orm";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { createHash } from "node:crypto";
 
-import { and, eq, inArray, isNull, or, sql } from "drizzle-orm";
+import { eveResponseGroupCandidates } from "@/lib/eve/response-group-candidates";
+import { eveResponseGroupInput } from "@/lib/eve/response-group-input";
+import { eveResponseGroupResult } from "@/lib/eve/response-group-contracts";
+import { resolveEveResponseGroupLineage } from "@/lib/eve/response-group-lineage";
+
+import { db } from "./client";
+import { eveConversation, eveResponseGroup, eveDispatch } from "./schema";
 import type { z } from "zod";
 
-import { eveResponseGroupCandidates } from "../eve/response-group-candidates";
-import { eveResponseGroupResult } from "../eve/response-group-contracts";
-import { eveResponseGroupInput } from "../eve/response-group-input";
-import { resolveEveResponseGroupLineage } from "../eve/response-group-lineage";
-import { db } from "./client";
-import { eveConversation, eveResponseGroup } from "./schema";
+const hasQueryRow: (row: unknown) => boolean = Boolean;
+
+const isNonemptyString = (value: string | null | undefined): value is string =>
+  typeof value === "string" && value !== "";
+
+const FIRST_PARAMETER_INDEX = 0;
+const EMPTY_FAMILY_SIZE = 0;
+const SINGLE_MATCH_LIMIT = 1;
+
+type ResponseGroupTransaction = Parameters<
+  Parameters<typeof db.transaction>[typeof FIRST_PARAMETER_INDEX]
+>[typeof FIRST_PARAMETER_INDEX];
+type ResponseGroupTombstoneTransaction = Readonly<
+  Pick<ResponseGroupTransaction, "select" | "update">
+>;
+type ResponseGroupWriteTransaction = Readonly<
+  Pick<ResponseGroupTransaction, "select" | "execute" | "insert" | "update">
+>;
+type ResponseGroupRow = typeof eveResponseGroup.$inferSelect;
+type ConversationRow = typeof eveConversation.$inferSelect;
+type ReservedResponseGroup = ReadonlyNativeSurface<
+  Omit<ResponseGroupRow, "candidates" | "inputHash"> & {
+    candidates: NonNullable<ResponseGroupRow["candidates"]>;
+    inputHash: string;
+  }
+>;
+
+const hash = (request: unknown): string =>
+  createHash("sha256").update(JSON.stringify(request)).digest("hex");
+
+const legacyGroupHash = async (
+  tx: ResponseGroupWriteTransaction,
+  ownerId: string,
+  existing: ReadonlyNativeSurface<ResponseGroupRow>,
+  input: ReadonlyNativeSurface<z.infer<typeof eveResponseGroupInput>>,
+  coreInput: Readonly<Record<string, unknown>>
+): Promise<string> => {
+  // Upgrade legacy hashes only after proving every non-plugin input matches.
+  // The first candidate's pending request or dispatch journal retains its original assignment.
+  const [original] = await tx
+    .select({
+      request: eveConversation.initialRequest,
+      intent: eveDispatch.intent,
+    })
+    .from(eveConversation)
+    .leftJoin(
+      eveDispatch,
+      and(
+        eq(eveDispatch.conversationId, eveConversation.id),
+        eq(eveDispatch.kind, "create")
+      )
+    )
+    .where(
+      and(
+        eq(eveConversation.ownerId, ownerId),
+        eq(
+          eveConversation.operationId,
+          existing.candidateOperationIds[0] ?? input.operationId
+        )
+      )
+    );
+  const originalInput = original?.request ?? original?.intent;
+  const restored =
+    originalInput !== null && typeof originalInput === "object"
+      ? eveResponseGroupInput.parse({
+          ...coreInput,
+          projectId:
+            "projectId" in originalInput ? originalInput.projectId : undefined,
+        })
+      : input;
+  return hash(restored);
+};
 
 const reserveGroupRow = async (
-  tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
+  tx: ResponseGroupWriteTransaction,
   ownerId: string,
-  value: z.infer<typeof eveResponseGroupInput>
-) => {
+  value: ReadonlyNativeSurface<z.infer<typeof eveResponseGroupInput>>
+): Promise<ResponseGroupRow | undefined> => {
   const input = eveResponseGroupInput.parse(value);
-  const inputHash = createHash("sha256")
-    .update(JSON.stringify(input))
-    .digest("hex");
+  const coreInput = Object.fromEntries(
+    Object.entries(input).filter(([key]) => key !== "projectId")
+  );
+  const inputHash = hash(coreInput);
   await tx.execute(
     sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
   );
@@ -30,38 +113,47 @@ const reserveGroupRow = async (
   if (existing?.deleted) {
     throw new Error("This response group has been deleted.");
   }
-  if (existing && existing.inputHash !== inputHash) {
-    throw new Error(
-      "This response group already has a different message, model order, tool selection, or source."
-    );
+  if (hasQueryRow(existing) && existing.inputHash !== inputHash) {
+    if (
+      existing.inputHash !==
+      (await legacyGroupHash(tx, ownerId, existing, input, coreInput))
+    ) {
+      throw new Error(
+        "This response group already has a different message, model order, tool selection, or source."
+      );
+    }
+    await tx.update(eveResponseGroup).set({ inputHash }).where(condition);
+    existing.inputHash = inputHash;
   }
+
   const sourceId = input.fork?.conversationId ?? null;
-  const [source] = sourceId
-    ? await tx
-        .select()
-        .from(eveConversation)
-        .where(
-          and(
-            eq(eveConversation.id, sourceId),
-            eq(eveConversation.ownerId, ownerId)
+  const [source] =
+    typeof sourceId === "string" && sourceId !== ""
+      ? await tx
+          .select()
+          .from(eveConversation)
+          .where(
+            and(
+              eq(eveConversation.id, sourceId),
+              eq(eveConversation.ownerId, ownerId)
+            )
           )
-        )
-    : [];
-  if (sourceId && !source) {
+      : [];
+  if (typeof sourceId === "string" && sourceId !== "" && !hasQueryRow(source)) {
     throw new Error("Source conversation not found.");
   }
   // An exact replay can recover the missing association of a pre-contract group.
   // Commit it even when the source has since retired, so deletion can find it.
-  if (existing && !existing.sourceIdentityKnown) {
+  if (hasQueryRow(existing) && !existing.sourceIdentityKnown) {
     await tx
       .update(eveResponseGroup)
       .set({ sourceConversationId: sourceId, sourceIdentityKnown: true })
       .where(condition);
   }
-  if (source && source.state !== "bound") {
-    return;
+  if (hasQueryRow(source) && source.state !== "bound") {
+    return undefined;
   }
-  if (existing) {
+  if (hasQueryRow(existing)) {
     return existing;
   }
   const candidates = eveResponseGroupCandidates(
@@ -72,7 +164,8 @@ const reserveGroupRow = async (
     .insert(eveResponseGroup)
     .values({
       candidateOperationIds: candidates.map(
-        (candidate) => candidate.operationId
+        (candidate: Readonly<{ modelId: string; operationId: string }>) =>
+          candidate.operationId
       ),
       candidates,
       inputHash,
@@ -85,11 +178,13 @@ const reserveGroupRow = async (
   return group;
 };
 
-const requireGroup = (result: Awaited<ReturnType<typeof reserveGroupRow>>) => {
+const requireGroup = (
+  result: ReadonlyNativeSurface<Awaited<ReturnType<typeof reserveGroupRow>>>
+): ReservedResponseGroup => {
   if (!result) {
     throw new Error("Source conversation is unavailable.");
   }
-  if (!(result.candidates && result.inputHash)) {
+  if (!(result.candidates && isNonemptyString(result.inputHash))) {
     throw new Error("Response group content is unavailable.");
   }
   return {
@@ -99,33 +194,37 @@ const requireGroup = (result: Awaited<ReturnType<typeof reserveGroupRow>>) => {
   };
 };
 
-/** Reserve every candidate under the same owner lock used by family deletion. */
-export const reserveEveResponseGroup = async (
+/**
+ * Reserve every candidate under the same owner lock used by family deletion.
+ * @param {string} ownerId Owner whose family lock fences the comparison reservation.
+ * @param {z.infer<typeof eveResponseGroupInput>} value Comparison input whose complete content hash and ordered candidates define replay identity.
+ * @returns {Promise<ReservedResponseGroup>} The allocated or replayed group with available candidate content, after committing its reservation.
+ */
+const reserveEveResponseGroup = async (
   ownerId: string,
-  value: z.infer<typeof eveResponseGroupInput>
-) => {
-  const result = await db.transaction((tx) =>
-    reserveGroupRow(tx, ownerId, value)
+  value: ReadonlyNativeSurface<z.infer<typeof eveResponseGroupInput>>
+): Promise<ReservedResponseGroup> => {
+  const result = await db.transaction(
+    async (tx: ResponseGroupWriteTransaction) =>
+      await reserveGroupRow(tx, ownerId, value)
   );
   return requireGroup(result);
 };
 
-/** Must commit with guest quota when admitting an anonymous comparison. */
-export const reserveEveResponseGroupInTransaction = async (
-  tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
+/**
+ * Caller holds the owner family lock; retain identities but erase request metadata.
+ * @param {ResponseGroupTransaction} tx Native deletion transaction already holding the owner family lock.
+ * @param {string} ownerId Owner whose source and candidate groups are tombstoned.
+ * @param {{ id: string; operationId: string; }[]} family Conversation and operation identities defining the deleted family.
+ */
+const tombstoneEveResponseGroups = async (
+  tx: ResponseGroupTombstoneTransaction,
   ownerId: string,
-  value: z.infer<typeof eveResponseGroupInput>
-) => requireGroup(await reserveGroupRow(tx, ownerId, value));
-
-/** Caller holds the owner family lock; retain identities but erase request metadata. */
-export const tombstoneEveResponseGroups = async (
-  tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
-  ownerId: string,
-  family: {
+  family: readonly Readonly<{
     id: string;
     operationId: string;
-  }[]
-) => {
+  }>[]
+): Promise<void> => {
   const [unknown] = await tx
     .select({ id: eveResponseGroup.id })
     .from(eveResponseGroup)
@@ -136,8 +235,9 @@ export const tombstoneEveResponseGroups = async (
         eq(eveResponseGroup.deleted, false)
       )
     )
-    .limit(1);
-  if (unknown) {
+    .limit(SINGLE_MATCH_LIMIT);
+  const hasUnknownSource = hasQueryRow(unknown);
+  if (hasUnknownSource) {
     throw new Error(
       "Recover saved response group requests before deleting conversations."
     );
@@ -163,17 +263,23 @@ export const tombstoneEveResponseGroups = async (
     );
 };
 
-/** Clear an old rejection before retry; only a definitive result may replace it. */
-export const recordEveResponseGroupRejection = async (
+/**
+ * Clear an old rejection before retry; only a definitive result may replace it.
+ * @param {string} ownerId Owner whose family lock serializes the candidate update.
+ * @param {string} groupId Live response group containing the candidate operation.
+ * @param {string} operationId Exact candidate operation whose rejection is replaced or cleared.
+ * @param {{ error: string; code?: string; } | undefined} rejection Definitive rejection details; absence clears the prior rejection for retry.
+ */
+const recordEveResponseGroupRejection = async (
   ownerId: string,
   groupId: string,
   operationId: string,
   rejection?: {
-    error: string;
-    code?: "project_not_found";
+    readonly error: string;
+    readonly code?: string;
   }
-) => {
-  await db.transaction(async (tx) => {
+): Promise<void> => {
+  await db.transaction(async (tx: ResponseGroupWriteTransaction) => {
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
     );
@@ -184,27 +290,43 @@ export const recordEveResponseGroupRejection = async (
     );
     const [group] = await tx.select().from(eveResponseGroup).where(condition);
     if (
-      !group?.candidates?.some(
-        (candidate) => candidate.operationId === operationId
-      )
+      group?.candidates?.some(
+        (candidate: { readonly operationId: string }) =>
+          candidate.operationId === operationId
+      ) !== true
     ) {
       throw new Error("Response group is unavailable.");
     }
-    const candidates = group.candidates.map((candidate) =>
-      candidate.operationId === operationId
-        ? {
+    const candidates = group.candidates.map(
+      (
+        candidate: ReadonlyNativeSurface<
+          NonNullable<ResponseGroupRow["candidates"]>[number]
+        >
+      ) => {
+        if (candidate.operationId === operationId) {
+          return {
             modelId: candidate.modelId,
             operationId,
             ...(rejection ? { rejection } : {}),
-          }
-        : candidate
+          };
+        }
+        return candidate;
+      }
     );
     await tx.update(eveResponseGroup).set({ candidates }).where(condition);
   });
 };
 
-/** Owner-only ordered bindings; transcript content remains in native sessions. */
-export const getEveResponseGroup = async (ownerId: string, id: string) => {
+/**
+ * Owner-only ordered bindings; transcript content remains in native sessions.
+ * @param {string} ownerId Owner used to authorize group and conversation lookups.
+ * @param {string} id Live response group whose original candidate order is preserved.
+ * @returns {Promise<z.output<typeof eveResponseGroupResult> | undefined>} Parsed candidate binding or rejection states, or no result for missing or deleting groups.
+ */
+const getEveResponseGroup = async (
+  ownerId: string,
+  id: string
+): Promise<z.output<typeof eveResponseGroupResult> | undefined> => {
   const [group] = await db
     .select()
     .from(eveResponseGroup)
@@ -216,10 +338,16 @@ export const getEveResponseGroup = async (ownerId: string, id: string) => {
       )
     );
   if (!group?.candidates) {
-    return;
+    return undefined;
   }
   const conversations = await db
-    .select()
+    .select({
+      ...getTableColumns(eveConversation),
+      dispatched: sql<boolean>`exists (
+      select 1 from "EveDispatch" dispatch where dispatch."conversationId" = ${eveConversation.id}
+        and dispatch."ownerId" = ${ownerId}
+    )`,
+    })
     .from(eveConversation)
     .where(
       and(
@@ -229,43 +357,61 @@ export const getEveResponseGroup = async (ownerId: string, id: string) => {
     );
   if (
     conversations.some(
-      (row) => row.state === "deleting" || row.state === "deleted"
+      (row: Readonly<Pick<ConversationRow, "state">>) =>
+        row.state === "deleting" || row.state === "deleted"
     )
   ) {
-    return;
+    return undefined;
   }
   return eveResponseGroupResult.parse({
-    candidates: group.candidates.map((candidate) => {
-      const identity = {
-        modelId: candidate.modelId,
-        operationId: candidate.operationId,
-      };
-      const row = conversations.find(
-        (conversation) => conversation.operationId === candidate.operationId
-      );
-      if (row?.state === "bound" && row.sessionId) {
-        return {
-          ...identity,
-          conversationId: row.id,
-          sessionId: row.sessionId,
-          state: "bound",
+    candidates: group.candidates.map(
+      (
+        candidate: ReadonlyNativeSurface<
+          NonNullable<ResponseGroupRow["candidates"]>[number]
+        >
+      ) => {
+        const identity = {
+          modelId: candidate.modelId,
+          operationId: candidate.operationId,
         };
+        const row = conversations.find(
+          (conversation: Readonly<Pick<ConversationRow, "operationId">>) =>
+            conversation.operationId === candidate.operationId
+        );
+        if (row?.state === "bound" && isNonemptyString(row.sessionId)) {
+          return {
+            ...identity,
+            conversationId: row.id,
+            sessionId: row.sessionId,
+            state: "bound",
+          };
+        }
+        if (row) {
+          return {
+            ...identity,
+            state:
+              row.state === "creating" &&
+              row.sessionId === null &&
+              !row.dispatched
+                ? "waiting"
+                : "unresolved",
+          };
+        }
+
+        if (candidate.rejection) {
+          return { ...identity, state: "rejected", ...candidate.rejection };
+        }
+        return { ...identity, state: "waiting" };
       }
-      if (row) {
-        return { ...identity, state: "unresolved" };
-      }
-      return candidate.rejection
-        ? { ...identity, state: "rejected", ...candidate.rejection }
-        : { ...identity, state: "waiting" };
-    }),
+    ),
     id: group.id,
   });
 };
 
-export const getEveResponseGroupForConversation = async (
+const getEveResponseGroupForConversation = async (
   ownerId: string,
   conversationId: string
-) => {
+): Promise<z.output<typeof eveResponseGroupResult> | undefined> => {
   const [conversation] = await db
     .select({
       id: eveConversation.id,
@@ -279,8 +425,8 @@ export const getEveResponseGroupForConversation = async (
         eq(eveConversation.state, "bound")
       )
     );
-  if (!conversation) {
-    return;
+  if (!hasQueryRow(conversation)) {
+    return undefined;
   }
   const rootId = conversation.rootConversationId ?? conversation.id;
   const family = await db
@@ -305,14 +451,22 @@ export const getEveResponseGroupForConversation = async (
         )
       )
     );
-  const boundFamily = family.flatMap((member) =>
-    member.sessionId ? [{ ...member, sessionId: member.sessionId }] : []
+  const boundFamily = family.flatMap(
+    (member: ReadonlyNativeSurface<(typeof family)[number]>) => {
+      if (isNonemptyString(member.sessionId)) {
+        return [{ ...member, sessionId: member.sessionId }];
+      }
+      return [];
+    }
   );
-  if (!boundFamily.length) {
-    return;
+  if (boundFamily.length === EMPTY_FAMILY_SIZE) {
+    return undefined;
   }
   const operationIds = sql`ARRAY[${sql.join(
-    boundFamily.map((member) => sql`${member.operationId}::uuid`),
+    boundFamily.map(
+      (member: ReadonlyNativeSurface<(typeof boundFamily)[number]>) =>
+        sql`${member.operationId}::uuid`
+    ),
     sql`, `
   )}]`;
   const groups = await db
@@ -330,7 +484,10 @@ export const getEveResponseGroupForConversation = async (
           isNull(eveResponseGroup.sourceConversationId),
           inArray(
             eveResponseGroup.sourceConversationId,
-            boundFamily.map((member) => member.id)
+            boundFamily.map(
+              (member: ReadonlyNativeSurface<(typeof boundFamily)[number]>) =>
+                member.id
+            )
           )
         )
       )
@@ -341,11 +498,14 @@ export const getEveResponseGroupForConversation = async (
     groups
   );
   if (!lineage) {
-    return;
+    return undefined;
   }
-  const lineageGroup = groups.find((group) => group.id === lineage.groupId);
+  const lineageGroup = groups.find(
+    (group: ReadonlyNativeSurface<(typeof groups)[number]>) =>
+      group.id === lineage.groupId
+  );
   if (!lineageGroup) {
-    return;
+    return undefined;
   }
   const candidateConversations = await db
     .select({
@@ -363,12 +523,13 @@ export const getEveResponseGroupForConversation = async (
   const candidateRootIds = [
     ...new Set(
       candidateConversations.map(
-        (candidate) => candidate.rootConversationId ?? candidate.id
+        (candidate: Readonly<(typeof candidateConversations)[number]>) =>
+          candidate.rootConversationId ?? candidate.id
       )
     ),
   ];
-  if (!candidateRootIds.length) {
-    return;
+  if (candidateRootIds.length === EMPTY_FAMILY_SIZE) {
+    return undefined;
   }
   const groupFamilies = await db
     .select({
@@ -392,8 +553,13 @@ export const getEveResponseGroupForConversation = async (
         )
       )
     );
-  const boundGroupFamilies = groupFamilies.flatMap((member) =>
-    member.sessionId ? [{ ...member, sessionId: member.sessionId }] : []
+  const boundGroupFamilies = groupFamilies.flatMap(
+    (member: ReadonlyNativeSurface<(typeof groupFamilies)[number]>) => {
+      if (isNonemptyString(member.sessionId)) {
+        return [{ ...member, sessionId: member.sessionId }];
+      }
+      return [];
+    }
   );
   const groupLineage = resolveEveResponseGroupLineage(
     conversationId,
@@ -401,19 +567,37 @@ export const getEveResponseGroupForConversation = async (
     [lineageGroup]
   );
   if (!groupLineage) {
-    return;
+    return undefined;
   }
   const group = await getEveResponseGroup(ownerId, lineage.groupId);
   if (!group) {
-    return;
+    return undefined;
   }
   return eveResponseGroupResult.parse({
     ...group,
-    candidates: group.candidates.map((candidate) => {
-      const replacement = groupLineage.replacements.get(candidate.operationId);
-      return candidate.state === "bound" && replacement
-        ? { ...candidate, ...replacement }
-        : candidate;
-    }),
+    candidates: group.candidates.map(
+      (
+        candidate: ReadonlyNativeSurface<
+          z.output<typeof eveResponseGroupResult>["candidates"][number]
+        >
+      ) => {
+        const replacement = groupLineage.replacements.get(
+          candidate.operationId
+        );
+
+        if (candidate.state === "bound" && replacement) {
+          return { ...candidate, ...replacement };
+        }
+        return candidate;
+      }
+    ),
   });
+};
+
+export {
+  getEveResponseGroup,
+  getEveResponseGroupForConversation,
+  recordEveResponseGroupRejection,
+  reserveEveResponseGroup,
+  tombstoneEveResponseGroups,
 };

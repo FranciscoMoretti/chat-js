@@ -1,11 +1,13 @@
 import { afterEach, expect, it } from "bun:test";
+import { existsSync } from "node:fs";
 import { mkdir, readFile, rm } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import path from "node:path";
-
 import { create } from "./create";
+import path from "node:path";
+import { tmpdir } from "node:os";
 
 const tempDirs: string[] = [];
+const FIRST_TEMP_DIRECTORY = 0;
+const EXIT_SUCCESS = 0;
 
 const makeTempDir = (name: string): string => {
   const dir = path.join(
@@ -18,7 +20,9 @@ const makeTempDir = (name: string): string => {
 
 afterEach(async () => {
   await Promise.all(
-    tempDirs.splice(0).map((dir) => rm(dir, { force: true, recursive: true }))
+    tempDirs.splice(FIRST_TEMP_DIRECTORY).map(async (dir) => {
+      await rm(dir, { force: true, recursive: true });
+    })
   );
 });
 
@@ -34,17 +38,17 @@ it.each([false, true])(
     const config = "export default { custom: true };\n";
     const customized = "export const customTool = { execute: () => 42 };\n";
     if (chatjs) {
-      await mkdir(path.join(source, "tools/chatjs/custom"), {
+      await mkdir(path.join(source, "chatjs/tools/custom"), {
         recursive: true,
       });
-      await mkdir(path.join(source, "lib/ai"), { recursive: true });
+      await mkdir(path.join(source, "chatjs/providers"), { recursive: true });
       await writeFile(path.join(source, "chat.config.ts"), config);
       await writeFile(
-        path.join(source, "lib/ai/gateway.ts"),
+        path.join(source, "chatjs/providers/gateway.ts"),
         "export const gateway = {};\n"
       );
       await writeFile(
-        path.join(source, "tools/chatjs/custom/tool.ts"),
+        path.join(source, "chatjs/tools/custom/tool.ts"),
         customized
       );
     }
@@ -61,7 +65,9 @@ it.each([false, true])(
         "initial",
       ],
     ]) {
-      expect(Bun.spawnSync(["git", ...args], { cwd: source }).exitCode).toBe(0);
+      expect(Bun.spawnSync(["git", ...args], { cwd: source }).exitCode).toBe(
+        EXIT_SUCCESS
+      );
     }
     await create.parseAsync([destination, "--from-git", source, "--yes"], {
       from: "user",
@@ -78,7 +84,7 @@ it.each([false, true])(
       ).toBe(config);
       expect(
         await readFile(
-          path.join(destination, "tools/chatjs/custom/tool.ts"),
+          path.join(destination, "chatjs/tools/custom/tool.ts"),
           "utf-8"
         )
       ).toBe(customized);
@@ -86,15 +92,67 @@ it.each([false, true])(
   }
 );
 
-it("rejects retired installer flags explicitly", async () => {
+it("rejects retired installer flags explicitly", () => {
   create.exitOverride();
-  await expect(
-    create.parseAsync(["--no-install"], { from: "user" })
-  ).rejects.toThrow("unknown option");
-  await expect(
+  expect(create.parseAsync(["--no-install"], { from: "user" })).rejects.toThrow(
+    "unknown option"
+  );
+  expect(
     create.parseAsync(["--package-manager"], { from: "user" })
   ).rejects.toThrow("unknown option");
-  await expect(
-    create.parseAsync(["--registry"], { from: "user" })
-  ).rejects.toThrow("unknown option");
+  expect(create.parseAsync(["--registry"], { from: "user" })).rejects.toThrow(
+    "unknown option"
+  );
 });
+
+it.each([
+  {
+    args: ["--", "--base", "aria"],
+    message: "supports Base UI and Radix",
+  },
+  {
+    args: ["--", "--cwd=elsewhere"],
+    message: "ChatJS owns the target directory",
+  },
+  {
+    args: [
+      "--from-git",
+      "https://example.invalid/repo",
+      "--",
+      "--preset",
+      "rhea",
+    ],
+    message: "--from-git preserves",
+  },
+])(
+  "rejects unsafe preset creation before network or filesystem work: $message",
+  async ({ args, message }) => {
+    const destination = makeTempDir("native-preflight");
+    const child = Bun.spawn(
+      [
+        process.execPath,
+        path.join(import.meta.dir, "../index.ts"),
+        "create",
+        destination,
+        "--yes",
+        ...args,
+      ],
+      {
+        stdout: "pipe",
+        stderr: "pipe",
+        env: {
+          ...process.env,
+          CHATJS_REGISTRY_URL: "https://example.invalid/r/{name}.json",
+        },
+      }
+    );
+    const [exitCode, stdout, stderr] = await Promise.all([
+      child.exited,
+      new Response(child.stdout).text(),
+      new Response(child.stderr).text(),
+    ]);
+    expect(exitCode).toBe(1);
+    expect(stdout + stderr).toContain(message);
+    expect(existsSync(destination)).toBe(false);
+  }
+);

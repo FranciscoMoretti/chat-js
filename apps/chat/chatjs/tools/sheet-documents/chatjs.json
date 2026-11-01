@@ -1,0 +1,20 @@
+{
+  "config": { "key": "sheet" },
+  "documentKind": "sheet",
+  "envRequirements": [],
+  "id": "sheet-documents",
+  "kind": "tool",
+  "requiresTools": ["readDocument"],
+  "tools": [
+    {
+      "composer": { "icon": "Edit3", "name": "Canvas", "shortName": "Canvas" },
+      "toolExport": "createSheetDocument"
+    },
+    {
+      "composer": { "icon": "Edit3", "name": "Canvas", "shortName": "Canvas" },
+      "toolExport": "editSheetDocument"
+    }
+  ],
+  "contractVersion": 2,
+  "uiBase": "base"
+}

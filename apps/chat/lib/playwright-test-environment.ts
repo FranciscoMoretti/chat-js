@@ -1,5 +1,7 @@
+import { isNonEmptyString } from "@/lib/is-non-empty-string";
+
 const isEnabledFlag = (value: string | undefined): boolean => {
-  if (!value) {
+  if (typeof value !== "string" || value === "") {
     return false;
   }
 
@@ -8,10 +10,8 @@ const isEnabledFlag = (value: string | undefined): boolean => {
 };
 
 export const isPlaywrightTestEnvironment = (
-  env: NodeJS.ProcessEnv = process.env
+  env: Readonly<NodeJS.ProcessEnv> = process.env
 ): boolean =>
-  Boolean(
-    env.PLAYWRIGHT_TEST_BASE_URL ||
-    isEnabledFlag(env.PLAYWRIGHT) ||
-    isEnabledFlag(env.CI_PLAYWRIGHT)
-  );
+  isNonEmptyString(env.PLAYWRIGHT_TEST_BASE_URL) ||
+  isEnabledFlag(env.PLAYWRIGHT) ||
+  isEnabledFlag(env.CI_PLAYWRIGHT);

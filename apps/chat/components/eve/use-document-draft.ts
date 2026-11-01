@@ -1,7 +1,18 @@
 "use client";
 
+import { withTaskCleanup } from "@/components/task-cleanup";
+
+import { hasText } from "@/components/text-value";
+
 import { useMutation } from "@tanstack/react-query";
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { z } from "zod";
 
 import { useTRPC } from "@/trpc/react";
@@ -14,7 +25,77 @@ const draftSchema = z.object({
   title: z.string(),
 });
 type Draft = z.infer<typeof draftSchema>;
-type Revision = { id: string; title: string; content: string };
+interface Revision {
+  id: string;
+  title: string;
+  content: string;
+}
+
+const createDocumentDraftStore = (storageKey: string) => {
+  const initial: {
+    draft: Draft | undefined;
+    ready: boolean;
+    storageError: boolean;
+  } = {
+    draft: undefined,
+    ready: false,
+    storageError: false,
+  };
+  let snapshot = initial;
+  const latest: { current: Draft | undefined } = { current: undefined };
+  const listeners = new Set<() => void>();
+  const publish = (next: typeof initial): void => {
+    snapshot = next;
+    latest.current = next.draft;
+    for (const listener of listeners) {
+      listener();
+    }
+  };
+  return {
+    latest,
+    getSnapshot: () => snapshot,
+    getServerSnapshot: () => initial,
+    subscribe: (listener: () => void) => {
+      listeners.add(listener);
+      return () => {
+        listeners.delete(listener);
+      };
+    },
+    restore: (onRestore: (revisionId: string) => void): void => {
+      if (snapshot.ready) {
+        return;
+      }
+      let draft: Draft | undefined;
+      let storageError = false;
+      try {
+        const stored = sessionStorage.getItem(storageKey);
+        if (typeof stored === "string" && stored !== "") {
+          draft = draftSchema.parse(JSON.parse(stored));
+          latest.current = draft;
+          onRestore(draft.baseRevisionId);
+        }
+      } catch {
+        storageError = true;
+      }
+      publish({ draft, ready: true, storageError });
+    },
+    update: (draft?: Draft): void => {
+      latest.current = draft;
+      let storageError = false;
+      // Publish only after durable persistence, while retaining edits if storage fails.
+      try {
+        if (draft) {
+          sessionStorage.setItem(storageKey, JSON.stringify(draft));
+        } else {
+          sessionStorage.removeItem(storageKey);
+        }
+      } catch {
+        storageError = true;
+      }
+      publish({ ...snapshot, draft, storageError });
+    },
+  };
+};
 
 /** One immutable request at a time; newer edits remain queued behind it. */
 export const useDocumentDraft = ({
@@ -25,68 +106,47 @@ export const useDocumentDraft = ({
   onSaved,
   onRestore,
 }: {
-  conversationId: string;
-  documentId: string;
-  enabled: boolean;
-  revision: Revision | undefined;
-  onSaved: (revisionId: string) => Promise<void>;
-  onRestore: (revisionId: string) => void;
+  readonly conversationId: string;
+  readonly documentId: string;
+  readonly enabled: boolean;
+  readonly revision: Readonly<Revision> | undefined;
+  readonly onSaved: (revisionId: string) => Promise<void>;
+  readonly onRestore: (revisionId: string) => void;
 }) => {
   const trpc = useTRPC();
   const { mutateAsync, isPending } = useMutation(
     trpc.eve.saveDocument.mutationOptions()
   );
-  const [draft, setDraft] = useState<Draft>();
-  const latest = useRef<Draft | undefined>(undefined);
-  const [ready, setReady] = useState(false);
+  const storageKey = `eve-document-draft:${conversationId}:${documentId}`;
+  const store = useMemo(
+    () => createDocumentDraftStore(storageKey),
+    [storageKey]
+  );
+  const subscribe = useCallback(
+    (listener: () => void) => {
+      const unsubscribe = store.subscribe(listener);
+      if (enabled) {
+        store.restore(onRestore);
+      }
+      return unsubscribe;
+    },
+    [store, enabled, onRestore]
+  );
+  const { draft, ready, storageError } = useSyncExternalStore(
+    subscribe,
+    store.getSnapshot,
+    store.getServerSnapshot
+  );
+  const { latest, update } = store;
   const [failure, setFailure] = useState<string>();
-  const [storageError, setStorageError] = useState(false);
   const busy = useRef(false);
   const active = useRef(true);
   useEffect(() => {
     active.current = true;
-    return () => {
+    return (): void => {
       active.current = false;
     };
   }, []);
-  const storageKey = `eve-document-draft:${conversationId}:${documentId}`;
-
-  const update = useCallback(
-    (next: Draft | undefined) => {
-      latest.current = next;
-      setDraft(next);
-      try {
-        if (next) {
-          sessionStorage.setItem(storageKey, JSON.stringify(next));
-        } else {
-          sessionStorage.removeItem(storageKey);
-        }
-        setStorageError(false);
-      } catch {
-        setStorageError(true);
-      }
-    },
-    [storageKey]
-  );
-
-  useEffect(() => {
-    if (!enabled || ready) {
-      return;
-    }
-    try {
-      const stored = sessionStorage.getItem(storageKey);
-      if (stored) {
-        const restored = draftSchema.parse(JSON.parse(stored));
-        latest.current = restored;
-        // oxlint-disable-next-line react/set-state-in-effect -- Hydrate the controlled editor from browser storage.
-        setDraft(restored);
-        onRestore(restored.baseRevisionId);
-      }
-    } catch {
-      setStorageError(true);
-    }
-    setReady(true);
-  }, [enabled, ready, storageKey, onRestore]);
 
   const edit = useCallback(
     (content: string) => {
@@ -111,7 +171,7 @@ export const useDocumentDraft = ({
             }
       );
     },
-    [enabled, ready, revision, update]
+    [enabled, ready, revision, update, latest]
   );
 
   const save = useCallback(async () => {
@@ -126,43 +186,48 @@ export const useDocumentDraft = ({
       submittedContent: current.submittedContent ?? current.content,
     };
     update(submitted);
-    /* oxlint-disable react/todo -- Preserve save lock cleanup in finally. */
-    try {
-      const saved = await mutateAsync({
-        content: submitted.submittedContent,
-        conversationId,
-        documentId,
-        expectedRevisionId: submitted.baseRevisionId,
-        operationId: submitted.operationId,
-        title: submitted.title,
-      });
-      if (!active.current) {
-        return;
+
+    await withTaskCleanup(
+      async () => {
+        try {
+          const saved = await mutateAsync({
+            content: submitted.submittedContent,
+            conversationId,
+            documentId,
+            expectedRevisionId: submitted.baseRevisionId,
+            operationId: submitted.operationId,
+            title: submitted.title,
+          });
+          if (!active.current) {
+            return;
+          }
+          await onSaved(saved.id);
+          if (!active.current) {
+            return;
+          }
+          const newest = latest.current;
+          update(
+            newest && newest.content !== submitted.submittedContent
+              ? {
+                  baseRevisionId: saved.id,
+                  content: newest.content,
+                  operationId: crypto.randomUUID(),
+                  title: saved.title,
+                }
+              : undefined
+          );
+        } catch (error) {
+          setFailure(
+            error instanceof Error
+              ? error.message
+              : "Document could not be saved."
+          );
+        }
+      },
+      () => {
+        busy.current = false;
       }
-      await onSaved(saved.id);
-      if (!active.current) {
-        return;
-      }
-      const newest = latest.current;
-      update(
-        newest && newest.content !== submitted.submittedContent
-          ? {
-              baseRevisionId: saved.id,
-              content: newest.content,
-              operationId: crypto.randomUUID(),
-              title: saved.title,
-            }
-          : undefined
-      );
-    } catch (error) {
-      setFailure(
-        error instanceof Error ? error.message : "Document could not be saved."
-      );
-      // oxlint-disable-next-line react/todo -- React Compiler cannot analyze required save lock cleanup in finally.
-    } finally {
-      busy.current = false;
-    }
-    /* oxlint-enable react/todo */
+    );
   }, [
     enabled,
     ready,
@@ -171,20 +236,26 @@ export const useDocumentDraft = ({
     mutateAsync,
     update,
     onSaved,
+    latest,
   ]);
-
-  useEffect(() => {
-    if (!(enabled && ready && draft) || failure || isPending) {
-      return;
+  useEffect((): (() => void) | undefined => {
+    if (!(enabled && ready && draft) || hasText(failure) || isPending) {
+      return undefined;
     }
-    const timer = setTimeout(() => save(), 2000);
-    return () => clearTimeout(timer);
+
+    const timer = setTimeout(() => {
+      void save();
+    }, 2000);
+
+    return (): void => {
+      clearTimeout(timer);
+    };
   }, [enabled, ready, draft, failure, isPending, save]);
 
   return {
     discard: () => {
       if (!busy.current) {
-        update(undefined);
+        update();
         setFailure(undefined);
       }
     },
@@ -203,7 +274,7 @@ export const useDocumentDraft = ({
         title,
       });
     },
-    retry: () => save(),
+    retry: save,
     saving: isPending,
     storageError,
   };

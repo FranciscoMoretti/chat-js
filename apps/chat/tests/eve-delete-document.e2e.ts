@@ -1,32 +1,52 @@
+import { userCredit } from "@/chatjs/plugins/credits/credits-schema";
 import { expect, test } from "@playwright/test";
+import type { TestInfo } from "@playwright/test";
+
 import { and, eq, sql } from "drizzle-orm";
 import { Client } from "eve/client";
+import type { MessageStreamEvent } from "eve/client";
 import { z } from "zod";
 
 import { db } from "../lib/db/client";
-import { eveConversation, eveDocumentHead, userCredit } from "../lib/db/schema";
+import { eveConversation, eveDocumentHead } from "../lib/db/schema";
 import { getEveConnectionOptions } from "../lib/eve/connection-options";
 import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
+type DeleteDocumentEventReader =
+  | Readonly<{
+      type: "step.started";
+      data: Readonly<{ modelId: string; turnId: string }>;
+    }>
+  | Readonly<{ type: "turn.started"; data: Readonly<{ turnId: string }> }>
+  | Readonly<{
+      type: Exclude<
+        MessageStreamEvent["type"],
+        "step.started" | "turn.started"
+      >;
+      data?: unknown;
+    }>;
 
 test("installed deleteDocument requires approval, survives reload, and honors rejection", async ({
   page,
-}, testInfo) => {
+}, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
   test.setTimeout(240_000);
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   const session = z.object({ user: z.object({ id: z.string() }) }).parse(
     await page.evaluate(async () => {
       const response = await fetch("/api/auth/get-session");
-      return await response.json();
+      const responseBody: unknown = await response.json();
+      return responseBody;
     })
   );
   await db
     .insert(userCredit)
-    .values({ credits: 1000, userId: session.user.id })
+    .values({ balanceCents: 1000, userId: session.user.id })
     .onConflictDoUpdate({
-      set: { credits: sql`greatest(${userCredit.credits}, 1000)` },
+      set: { balanceCents: sql`greatest(${userCredit.balanceCents}, 1000)` },
       target: userCredit.userId,
     });
   await page.context().addCookies([
@@ -50,7 +70,7 @@ test("installed deleteDocument requires approval, survives reload, and honors re
   ).toBeVisible({ timeout: 90_000 });
   await expect(page.getByText("Ready", { exact: true })).toBeVisible();
   const chatId = new URL(page.url()).pathname.split("/").at(-1);
-  if (!chatId) {
+  if (chatId === undefined || chatId === null || chatId === "") {
     throw new Error("Missing conversation");
   }
   const [document] = await db
@@ -70,7 +90,13 @@ test("installed deleteDocument requires approval, survives reload, and honors re
         eq(eveConversation.ownerId, session.user.id)
       )
     );
-  if (!document?.sessionId) {
+  if (
+    document === undefined ||
+    document === null ||
+    document.sessionId === undefined ||
+    document.sessionId === null ||
+    document.sessionId === ""
+  ) {
     throw new Error("Missing created document");
   }
   const { conversationId } = document;
@@ -136,13 +162,18 @@ test("installed deleteDocument requires approval, survives reload, and honors re
   const afterApproval = await native.snapshot();
   const resumedSteps = afterApproval.events
     .slice(beforeApproval.events.length)
-    .filter((event) => event.type === "step.started");
+    .filter(
+      (
+        event: DeleteDocumentEventReader
+      ): event is Extract<MessageStreamEvent, { type: "step.started" }> =>
+        event.type === "step.started"
+    );
   expect(resumedSteps.length).toBeGreaterThan(0);
   for (const step of resumedSteps) {
     expect(step.data.modelId).toBe("gateway/openai/gpt-4.1-mini");
     expect(
       afterApproval.events.some(
-        (event) =>
+        (event: DeleteDocumentEventReader) =>
           event.type === "turn.started" &&
           event.data.turnId === step.data.turnId
       )

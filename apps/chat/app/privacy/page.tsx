@@ -1,9 +1,11 @@
+import React from "react";
+
 import { config } from "@/lib/config";
 
-const PrivacyPage = () => (
+const PrivacyPage = (): React.JSX.Element => (
   <main className="prose dark:prose-invert container mx-auto max-w-3xl py-10">
     <h1>{config.policies.privacy.title}</h1>
-    {config.policies.privacy.lastUpdated ? (
+    {(config.policies.privacy.lastUpdated ?? "").length > 0 ? (
       <p>
         <strong>Last updated:</strong> {config.policies.privacy.lastUpdated}
       </p>

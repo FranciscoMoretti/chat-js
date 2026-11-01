@@ -1,6 +1,3 @@
-/* oxlint-disable unicorn/prefer-ternary -- Explicit branches make stateful route behavior and cleanup order visible. */
-/* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
-/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
 import { eq } from "drizzle-orm";
@@ -15,7 +12,7 @@ import { insertEveConversationFixtures } from "./eve-conversation-fixture";
 import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
-async function openSidebar(page: Page) {
+const openSidebar = async (page: Page): Promise<void> => {
   if (
     await page
       .getByRole("textbox", { name: "Search conversations" })
@@ -27,29 +24,27 @@ async function openSidebar(page: Page) {
     exact: true,
     name: "Expand sidebar",
   });
-  if (await expand.isVisible()) {
-    await expand.click();
-  } else {
-    await page
-      .getByRole("button", { exact: true, name: "Toggle Sidebar" })
-      .click();
-  }
-}
+
+  const sidebarControl = (await expand.isVisible())
+    ? expand
+    : page.getByRole("button", { exact: true, name: "Toggle Sidebar" });
+  await sidebarControl.click();
+};
 
 for (const width of [1280, 390]) {
   test(`sidebar deletion at ${width}px survives reload and checks uncertain results`, async ({
     page,
   }, testInfo) => {
     await page.setViewportSize({ height: 844, width });
-    await page.route("https://unpkg.com/react-scan/**", (route) =>
-      route.abort()
-    );
+    await page.route("https://unpkg.com/react-scan/**", async (route) => {
+      await route.abort();
+    });
     await page.goto("/api/dev-login");
     const [owner] = await db
       .select()
       .from(user)
       .where(eq(user.email, "dev@localhost"));
-    if (!owner) {
+    if (owner === undefined) {
       throw new Error("Missing development user");
     }
     const id = crypto.randomUUID();
@@ -106,11 +101,13 @@ for (const width of [1280, 390]) {
         })
         .click();
       await expect(dialog).toContainText("cleanup is not complete");
-      expect(await getEveConversation(owner.id, id)).toBeUndefined();
+      expect(await getEveConversation(owner.id, id)).toBeNull();
+      const conversationMatchesDuringPendingCleanup =
+        await listEveConversations(owner.id, {
+          search: title,
+        });
       expect(
-        (await listEveConversations(owner.id, { search: title })).items.map(
-          (item) => item.id
-        )
+        conversationMatchesDuringPendingCleanup.items.map((item) => item.id)
       ).toContain(id);
       await dialog
         .getByRole("button", { exact: true, name: "Close" })
@@ -158,9 +155,13 @@ for (const width of [1280, 390]) {
         .click();
       await expect(dialog).toHaveCount(0);
       expect(deletes).toBe(2);
-      expect(
-        (await listEveConversations(owner.id, { search: title })).items
-      ).toHaveLength(0);
+      const conversationMatchesAfterCleanup = await listEveConversations(
+        owner.id,
+        {
+          search: title,
+        }
+      );
+      expect(conversationMatchesAfterCleanup.items).toHaveLength(0);
     } finally {
       await db.delete(eveConversation).where(eq(eveConversation.id, id));
     }

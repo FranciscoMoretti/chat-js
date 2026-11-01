@@ -1,4 +1,7 @@
+import assert from "node:assert/strict";
+import { setTimeout as delay } from "node:timers/promises";
 import { jsonSchema, tool } from "ai";
+import type { ToolExecutionOptions } from "ai";
 import { beforeEach, expect, it, vi } from "vitest";
 
 import mcp from "../../agent/tools/mcp";
@@ -6,30 +9,40 @@ import {
   discoverEveMcpTools,
   executeEveMcpTool,
   requestEveMcpApproval,
-} from "./mcp-tools";
-import { hasEveToolReceipt, createToolResult } from "./tool-result";
+} from "../../chatjs/plugins/mcp/runtime/mcp-tools";
+import { createToolResult, hasEveToolReceipt } from "./tool-result";
 
 const mocks = vi.hoisted(() => ({
-  close: vi.fn(),
-  connect: vi.fn(),
+  close: vi.fn<() => Promise<void>>(),
+  configure: vi.fn(),
+  connect: vi.fn<() => Promise<void>>(),
   enabled: { enabled: true },
   get: vi.fn(),
   list: vi.fn(),
+  requireCredentials: vi.fn(),
   tools: vi.fn(),
 }));
-vi.mock("../config", () => ({
-  config: { ai: { tools: { mcp: mocks.enabled } } },
+vi.mock("@/chatjs/plugins/mcp/setup", () => ({
+  requireMcpCredentials: mocks.requireCredentials,
 }));
-vi.mock("../db/mcp-queries", () => ({
+
+vi.mock("@/integrations/plugin-catalog", () => ({
+  installedPlugins: { has: (): boolean => mocks.enabled.enabled },
+}));
+
+vi.mock("@/chatjs/plugins/mcp/db/mcp-queries", () => ({
   getMcpConnectorById: mocks.get,
   getMcpConnectorsByUserId: mocks.list,
 }));
-vi.mock("../ai/mcp/mcp-client", () => ({
+vi.mock("@/chatjs/plugins/mcp/oauth/mcp-client", () => ({
   MCPClient: class {
-    status = "connected";
-    connect = mocks.connect;
-    tools = mocks.tools;
-    close = mocks.close;
+    public constructor(_id: string, _name: string, options: unknown) {
+      mocks.configure(options);
+    }
+    public status = "connected";
+    public connect = mocks.connect;
+    public tools = mocks.tools;
+    public close = mocks.close;
   },
 }));
 
@@ -41,6 +54,7 @@ const connector = {
   nameId: "server",
   oauthClientId: "secret-id",
   oauthClientSecret: "secret-password",
+  requireApproval: true,
   type: "http",
   updatedAt: new Date(),
   url: "https://secret.mcp.test",
@@ -48,13 +62,24 @@ const connector = {
 };
 const context = {
   abortSignal: new AbortController().signal,
+  approval: {
+    responder: {
+      attributes: {},
+      getToken: () => {
+        throw new Error("Unexpected receipt credential access");
+      },
+      authenticator: "chatjs-gateway",
+      principalId: "owner",
+      principalType: "user",
+    },
+  },
   callId: "call",
   session: {
     auth: {
       current: null,
       initiator: {
         attributes: {},
-        authenticator: "test",
+        authenticator: "chatjs-gateway",
         principalId: "owner",
         principalType: "user",
       },
@@ -63,7 +88,11 @@ const context = {
     turn: { id: "turn", sequence: 1 },
   },
 };
-const execute = vi.fn();
+const execute =
+  vi.fn<
+    (input: unknown, options: ToolExecutionOptions<unknown>) => Promise<unknown>
+  >();
+
 const definition = tool({
   description: "Echo",
   execute,
@@ -73,16 +102,20 @@ const definition = tool({
     required: ["text"],
     type: "object",
   }),
-  toModelOutput: ({ output }) => ({ type: "text", value: String(output) }),
+  toModelOutput: ({ output }: { readonly output: unknown }) => ({
+    type: "text",
+    value: String(output),
+  }),
 });
 
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.enabled.enabled = true;
+  mocks.requireCredentials.mockReset();
   mocks.list.mockResolvedValue([connector]);
   mocks.get.mockResolvedValue(connector);
-  mocks.connect.mockResolvedValue(undefined);
-  mocks.close.mockResolvedValue(undefined);
+  mocks.connect.mockResolvedValue();
+  mocks.close.mockResolvedValue();
   mocks.tools.mockResolvedValue({ echo: definition });
   execute.mockResolvedValue("Echo output");
 });
@@ -101,9 +134,79 @@ it("returns serializable namespaced discovery without credentials or live connec
   expect(mocks.close).toHaveBeenCalledOnce();
 });
 
+it("bounds live discovery scopes and folds descriptions in connector order", async () => {
+  mocks.list.mockResolvedValue([
+    connector,
+    { ...connector, id: "second", nameId: "second" },
+    { ...connector, id: "third", nameId: "third" },
+  ]);
+  const first = Promise.withResolvers<Record<string, typeof definition>>();
+  const second = Promise.withResolvers<Record<string, typeof definition>>();
+  mocks.tools
+    .mockReturnValueOnce(first.promise)
+    .mockReturnValueOnce(second.promise)
+    .mockResolvedValueOnce({ echo: definition });
+  const discovery = discoverEveMcpTools("owner", context.abortSignal);
+  await vi.waitFor(() => {
+    expect(mocks.tools).toHaveBeenCalledTimes(2);
+  });
+  second.resolve({ echo: definition });
+  await vi.waitFor(() => {
+    expect(mocks.close).toHaveBeenCalledOnce();
+  });
+  expect(mocks.connect).toHaveBeenCalledTimes(2);
+  first.resolve({ echo: definition });
+  const descriptions = await discovery;
+  expect(descriptions.map((item) => item.connectorId)).toEqual([
+    "connector",
+    "second",
+    "third",
+  ]);
+  expect(mocks.close).toHaveBeenCalledTimes(3);
+});
+
+it("drains every admitted connector close on cancellation without opening later scopes", async () => {
+  mocks.list.mockResolvedValue([
+    connector,
+    { ...connector, id: "second" },
+    { ...connector, id: "third" },
+  ]);
+  mocks.tools.mockReturnValue(
+    Promise.withResolvers<Record<string, typeof definition>>().promise
+  );
+  const closing = Promise.withResolvers<null>();
+  mocks.close.mockImplementation(async () => {
+    await closing.promise;
+  });
+  const controller = new AbortController();
+  const discovery = discoverEveMcpTools("owner", controller.signal);
+  const rejected = expect(discovery).rejects.toThrow("cancel discovery");
+  let settled = false;
+  void discovery.catch(() => {
+    settled = true;
+  });
+  await vi.waitFor(() => {
+    expect(mocks.tools).toHaveBeenCalledTimes(2);
+  });
+  controller.abort(new Error("cancel discovery"));
+  await vi.waitFor(() => {
+    expect(mocks.close).toHaveBeenCalledTimes(2);
+  });
+  expect(settled).toBe(false);
+  expect(mocks.connect).toHaveBeenCalledTimes(2);
+  closing.resolve(null);
+  await rejected;
+  expect(mocks.connect).toHaveBeenCalledTimes(2);
+});
+
 it.each([{ userId: "stranger" }, { enabled: false }])(
   "rejects inaccessible or disabled connectors before connection: %j",
-  async (change) => {
+  async (
+    change: Readonly<
+      | { userId: string; enabled?: undefined }
+      | { enabled: boolean; userId?: undefined }
+    >
+  ) => {
     mocks.get.mockResolvedValue({ ...connector, ...change });
     await expect(
       executeEveMcpTool("connector", "echo", { text: "test" }, context, [])
@@ -115,7 +218,7 @@ it.each([{ userId: "stranger" }, { enabled: false }])(
 
 it("revalidates after discovery and refuses a revoked connector", async () => {
   await discoverEveMcpTools("owner", context.abortSignal);
-  mocks.get.mockResolvedValue(undefined);
+  mocks.get.mockResolvedValue(null);
   await expect(
     executeEveMcpTool("connector", "echo", { text: "test" }, context, [])
   ).rejects.toThrow("unavailable");
@@ -132,7 +235,9 @@ it("keeps the execution connection open and preserves the MCP model output", asy
     context,
     []
   );
-  await vi.waitFor(() => expect(execute).toHaveBeenCalledOnce());
+  await vi.waitFor(() => {
+    expect(execute).toHaveBeenCalledOnce();
+  });
   expect(mocks.close).not.toHaveBeenCalled();
   pending.resolve("Echo output");
   expect(await result).toEqual({
@@ -142,7 +247,6 @@ it("keeps the execution connection open and preserves the MCP model output", asy
   });
   expect(mocks.close).toHaveBeenCalledOnce();
 });
-
 it("closes on execution errors and rejects invalid input before invoking the tool", async () => {
   await expect(
     executeEveMcpTool("connector", "echo", { text: 123 }, context, [])
@@ -169,17 +273,19 @@ it("permits global connectors with a separate namespace", async () => {
 
 it("forwards cancellation and closes the connection once", async () => {
   const cancellation = new AbortController();
-  execute.mockImplementation(
-    (_input, options) =>
-      // oxlint-disable-next-line promise/avoid-new -- Bridge the timer or abort callback to the awaited operation.
-      new Promise((_resolve, reject) => {
-        options.abortSignal.addEventListener(
-          "abort",
-          () => reject(options.abortSignal.reason),
-          { once: true }
-        );
-      })
-  );
+  execute.mockImplementation(async (_input, options) => {
+    const pending = Promise.withResolvers<unknown>();
+    options.abortSignal?.addEventListener(
+      "abort",
+      () => {
+        const reason: unknown = options.abortSignal?.reason;
+        assert.ok(reason instanceof DOMException);
+        pending.reject(reason);
+      },
+      { once: true }
+    );
+    return await pending.promise;
+  });
   const result = executeEveMcpTool(
     "connector",
     "echo",
@@ -188,7 +294,9 @@ it("forwards cancellation and closes the connection once", async () => {
     []
   );
   const rejected = expect(result).rejects.toMatchObject({ name: "AbortError" });
-  await vi.waitFor(() => expect(execute).toHaveBeenCalledOnce());
+  await vi.waitFor(() => {
+    expect(execute).toHaveBeenCalledOnce();
+  });
   cancellation.abort();
   await rejected;
   expect(mocks.close).toHaveBeenCalledOnce();
@@ -256,106 +364,48 @@ it("retains explicitly declared draft-07 tuple validation", async () => {
   ).resolves.toMatchObject({ output: "Echo output" });
 });
 
-it("refuses a policy that escalates between request and execution without a receipt", async () => {
+it("requires native owner approval when the connection setting is enabled", async () => {
   expect(
-    await requestEveMcpApproval(
-      "connector",
-      "echo",
-      { text: "test" },
-      context,
-      []
-    )
-  ).toBe("not-applicable");
-  mocks.tools.mockResolvedValue({
-    echo: { ...definition, needsApproval: true },
-  });
-  await expect(
-    executeEveMcpTool("connector", "echo", { text: "test" }, context, [])
-  ).rejects.toThrow("approval policy changed");
-  expect(execute).not.toHaveBeenCalled();
-});
-
-it("preserves conditional policy semantics and requires an owner receipt when true", async () => {
-  const needsApproval = vi.fn(
-    (input: { text: string }) => input.text === "write"
-  );
-  mocks.tools.mockResolvedValue({ echo: { ...definition, needsApproval } });
-  const messages = [{ content: "Read then write", role: "user" as const }];
-  expect(await discoverEveMcpTools("owner", context.abortSignal)).toHaveLength(
-    1
-  );
-  expect(
-    await requestEveMcpApproval(
-      "connector",
-      "echo",
-      { text: "read" },
-      context,
-      messages
-    )
-  ).toBe("not-applicable");
-  expect(
-    await executeEveMcpTool(
-      "connector",
-      "echo",
-      { text: "read" },
-      context,
-      messages
-    )
-  ).toMatchObject({ output: "Echo output" });
-  expect(
-    await requestEveMcpApproval(
-      "connector",
-      "echo",
-      { text: "write" },
-      context,
-      messages
-    )
+    await requestEveMcpApproval("connector", "echo", { text: "test" }, context)
   ).toBe("user-approval");
-  await expect(
-    executeEveMcpTool("connector", "echo", { text: "write" }, context, messages)
-  ).rejects.toThrow("approval policy changed");
-  const approval = {
-    requestId: "request",
-    responder: {
-      authenticator: "test",
-      principalId: "owner",
-      principalType: "user",
-    },
-  };
-  expect(
-    await executeEveMcpTool(
-      "connector",
-      "echo",
-      { text: "write" },
-      { ...context, approval },
-      messages
-    )
-  ).toMatchObject({ output: "Echo output" });
+  expect(execute).not.toHaveBeenCalled();
+  const { approval: _approval, ...unapprovedContext } = context;
   await expect(
     executeEveMcpTool(
       "connector",
       "echo",
-      { text: "write" },
+      { text: "test" },
+      unapprovedContext,
+      []
+    )
+  ).rejects.toThrow("owner approval receipt");
+  expect(execute).not.toHaveBeenCalled();
+});
+it("rejects a receipt from another principal", async () => {
+  await expect(
+    executeEveMcpTool(
+      "connector",
+      "echo",
+      { text: "test" },
       {
         ...context,
         approval: {
-          ...approval,
-          responder: { ...approval.responder, principalId: "other" },
+          ...context.approval,
+          responder: { ...context.approval.responder, principalId: "other" },
         },
       },
-      messages
+      []
     )
-  ).rejects.toThrow("approval policy changed");
-  expect(needsApproval).toHaveBeenLastCalledWith(
-    { text: "write" },
-    { context: undefined, messages, toolCallId: "call" }
-  );
+  ).rejects.toThrow("owner approval receipt");
+  expect(execute).not.toHaveBeenCalled();
 });
-
+it("validates tool input before asking for consent", async () => {
+  await expect(
+    requestEveMcpApproval("connector", "echo", { text: 123 }, context)
+  ).rejects.toThrow("Invalid tool input");
+  expect(execute).not.toHaveBeenCalled();
+});
 it("registers native per-call approval restricted to the session owner", async () => {
-  mocks.tools.mockResolvedValue({
-    echo: { ...definition, needsApproval: true },
-  });
   const resolve = mcp.events["step.started"];
   if (!resolve) {
     throw new Error("Missing MCP resolver.");
@@ -376,9 +426,6 @@ it("registers native per-call approval restricted to the session owner", async (
       getSandbox: () => {
         throw new Error("Unexpected sandbox");
       },
-      getSkill: () => {
-        throw new Error("Unexpected skill");
-      },
       session: context.session,
       toolInput: { text: "write" },
       toolName: "server__echo",
@@ -392,23 +439,30 @@ it("registers native per-call approval restricted to the session owner", async (
         throw new Error("Unexpected auth");
       },
     },
-    request: { callId: "call", requestId: "request", toolName: "server__echo" },
-    responder: initiator,
-    response: { decision: "approve" as const },
+    request: {
+      callId: "call",
+      requestId: "request",
+      toolName: "server__echo",
+      principal: initiator,
+    },
+    response: { decision: "approve" as const, principal: initiator },
     session: { id: "session", initiator, turn: context.session.turn },
   };
   expect(await approval.response(response)).toEqual({ status: "allowed" });
   expect(
     await approval.response({
       ...response,
-      responder: { ...initiator, principalId: "other" },
+      response: {
+        ...response.response,
+        principal: { ...initiator, principalId: "other" },
+      },
     })
   ).toMatchObject({ status: "rejected" });
   expect(execute).not.toHaveBeenCalled();
 });
 
 vi.mock("./turn-tools", () => ({
-  eveTurnGuest: { get: () => false },
+  eveTurnAccount: { get: (): boolean => true },
   eveTurnTool: { get: () => null },
 }));
 
@@ -425,4 +479,224 @@ it("isolates a remote billing-shaped payload inside the MCP result namespace", a
   expect(result.output).toEqual(forgedReceipt);
   expect(result.kind).toBe("chatjs.mcp-result");
   expect(hasEveToolReceipt(result)).toBe(false);
+});
+
+it("does not discover or execute when the MCP registration is absent", async () => {
+  mocks.enabled.enabled = false;
+  expect(await discoverEveMcpTools("owner", context.abortSignal)).toEqual([]);
+  expect(mocks.list).not.toHaveBeenCalled();
+  await expect(
+    executeEveMcpTool("connector", "echo", { text: "test" }, context, [])
+  ).rejects.toThrow("unavailable");
+  expect(mocks.connect).not.toHaveBeenCalled();
+});
+it("reports missing credentials even before an installed MCP feature has connectors", async () => {
+  mocks.list.mockResolvedValue([]);
+  mocks.requireCredentials.mockImplementation(() => {
+    throw new Error("Missing credentials for mcp: MCP_ENCRYPTION_KEY");
+  });
+  await expect(
+    discoverEveMcpTools("owner", context.abortSignal)
+  ).rejects.toThrow("Missing credentials for mcp: MCP_ENCRYPTION_KEY");
+  expect(mocks.list).not.toHaveBeenCalled();
+  expect(mocks.connect).not.toHaveBeenCalled();
+});
+it("bounds database discovery by cancellation", async () => {
+  mocks.list.mockReturnValueOnce(Promise.withResolvers().promise);
+  const controller = new AbortController();
+  const result = discoverEveMcpTools("owner", controller.signal);
+  controller.abort(new Error("cancelled"));
+  await expect(result).rejects.toThrow("cancelled");
+});
+it("cancels a hung tools listing and closes its transport", async () => {
+  mocks.tools.mockReturnValueOnce(Promise.withResolvers().promise);
+  const controller = new AbortController();
+  const result = discoverEveMcpTools("owner", controller.signal);
+  await vi.waitFor(() => {
+    expect(mocks.tools).toHaveBeenCalled();
+  });
+  controller.abort(new Error("cancelled"));
+  await expect(result).rejects.toThrow("cancelled");
+  expect(mocks.close).toHaveBeenCalledOnce();
+});
+it("normalizes dotted and long model IDs without losing original tool names or colliding with underscores", async () => {
+  const longName = "remote".repeat(20);
+  mocks.tools.mockResolvedValueOnce(
+    Object.fromEntries([
+      ["foo.bar", definition],
+      ["foo_bar", definition],
+      [longName, definition],
+    ])
+  );
+  const tools = await discoverEveMcpTools("owner", context.abortSignal);
+  expect(
+    tools.map((item: { readonly remoteName: string }) => item.remoteName)
+  ).toEqual(["foo.bar", "foo_bar", longName]);
+  expect(
+    new Set(tools.map((item: { readonly name: string }) => item.name)).size
+  ).toBe(3);
+  for (const item of tools) {
+    expect(item.name).toMatch(/^[a-zA-Z0-9_-]{1,64}$/u);
+  }
+});
+
+it("approval requests inherit cancellation", async () => {
+  mocks.tools.mockReturnValueOnce(Promise.withResolvers().promise);
+  const controller = new AbortController();
+  const result = requestEveMcpApproval(
+    "connector",
+    "echo",
+    { text: "test" },
+    { ...context, abortSignal: controller.signal }
+  );
+  await vi.waitFor(() => {
+    expect(mocks.tools).toHaveBeenCalled();
+  });
+  controller.abort(new Error("approval cancelled"));
+  await expect(result).rejects.toThrow("approval cancelled");
+  expect(mocks.close).toHaveBeenCalledOnce();
+});
+
+it("unsupported descriptions do not suppress later valid tools", async () => {
+  const unsupported = tool({
+    description: (): string => "Dynamic description",
+    inputSchema: jsonSchema({ type: "object" }),
+  });
+  mocks.tools.mockResolvedValueOnce(
+    Object.fromEntries([
+      ["unsupported", unsupported],
+      ["echo", definition],
+    ])
+  );
+  const descriptions = await discoverEveMcpTools("owner", context.abortSignal);
+  expect(
+    descriptions.map((item: { readonly remoteName: string }) => item.remoteName)
+  ).toEqual(["echo"]);
+});
+
+it("approval cancellation bounds connector lookup before any transport opens", async () => {
+  mocks.get.mockReturnValueOnce(Promise.withResolvers().promise);
+  const controller = new AbortController();
+  const result = requestEveMcpApproval(
+    "connector",
+    "echo",
+    {},
+    { ...context, abortSignal: controller.signal }
+  );
+  controller.abort(new Error("cancelled lookup"));
+  await expect(result).rejects.toThrow("cancelled lookup");
+  expect(mocks.connect).not.toHaveBeenCalled();
+});
+it("discovery sends configured OAuth credentials to the provider rather than transport headers", async () => {
+  await discoverEveMcpTools("owner", context.abortSignal);
+  expect(mocks.configure).toHaveBeenCalledWith({
+    oauthClientId: "secret-id",
+    oauthClientSecret: "secret-password",
+    type: "http",
+    url: connector.url,
+  });
+});
+it("a timed-out connector does not discard completed discovery or suppress the next connector", async () => {
+  const deadlines: AbortController[] = [];
+  const timeout = vi.spyOn(AbortSignal, "timeout").mockImplementation(() => {
+    const controller = new AbortController();
+    deadlines.push(controller);
+    return controller.signal;
+  });
+  try {
+    mocks.list.mockResolvedValue([
+      connector,
+      { ...connector, id: "slow", nameId: "slow" },
+      { ...connector, id: "later", nameId: "later" },
+    ]);
+    mocks.tools
+      .mockResolvedValueOnce({ echo: definition })
+      .mockReturnValueOnce(Promise.withResolvers().promise)
+      .mockResolvedValueOnce({ echo: definition });
+    const discovery = discoverEveMcpTools("owner", context.abortSignal);
+    await vi.waitFor(() => {
+      expect(mocks.tools).toHaveBeenCalledTimes(2);
+    });
+    deadlines[1].abort(new DOMException("Discovery timed out", "TimeoutError"));
+    const descriptions = await discovery;
+    expect(
+      descriptions.map(
+        (item: { readonly connectorId: string }) => item.connectorId
+      )
+    ).toEqual(["connector", "later"]);
+    expect(mocks.close).toHaveBeenCalledTimes(3);
+  } finally {
+    timeout.mockRestore();
+  }
+});
+
+it("schema conversion cancellation stops later tool conversions after the pending schema settles", async () => {
+  const controller = new AbortController();
+  const timeout = vi
+    .spyOn(AbortSignal, "timeout")
+    .mockReturnValue(controller.signal);
+  const gate = Promise.withResolvers<{ type: "object" }>();
+  const firstSchema = vi.fn().mockReturnValue(gate.promise);
+  const laterSchema = vi.fn(() => ({ type: "object" as const }));
+  try {
+    mocks.tools.mockResolvedValueOnce({
+      first: { ...definition, inputSchema: jsonSchema(firstSchema) },
+      later: { ...definition, inputSchema: jsonSchema(laterSchema) },
+    });
+    const discovery = discoverEveMcpTools("owner", context.abortSignal);
+    await vi.waitFor(() => {
+      expect(firstSchema).toHaveBeenCalledOnce();
+    });
+    controller.abort(new DOMException("Timed out", "TimeoutError"));
+    expect(await discovery).toEqual([]);
+    gate.resolve({ type: "object" });
+    await delay(10);
+    expect(laterSchema).not.toHaveBeenCalled();
+  } finally {
+    timeout.mockRestore();
+  }
+});
+
+it("runs without a receipt when approval is disabled for this connection", async () => {
+  mocks.get.mockResolvedValue({ ...connector, requireApproval: false });
+  const { approval: _approval, ...unapprovedContext } = context;
+  expect(
+    await requestEveMcpApproval(
+      "connector",
+      "echo",
+      { text: "test" },
+      unapprovedContext
+    )
+  ).toBe("not-applicable");
+  await expect(
+    executeEveMcpTool(
+      "connector",
+      "echo",
+      { text: "test" },
+      unapprovedContext,
+      []
+    )
+  ).resolves.toMatchObject({ output: "Echo output" });
+});
+it("rechecks the connection policy when approval is enabled after request evaluation", async () => {
+  mocks.get.mockResolvedValueOnce({ ...connector, requireApproval: false });
+  const { approval: _approval, ...unapprovedContext } = context;
+  expect(
+    await requestEveMcpApproval(
+      "connector",
+      "echo",
+      { text: "test" },
+      unapprovedContext
+    )
+  ).toBe("not-applicable");
+  await expect(
+    executeEveMcpTool(
+      "connector",
+      "echo",
+      { text: "test" },
+      unapprovedContext,
+      []
+    )
+  ).rejects.toThrow("owner approval receipt");
+  expect(execute).not.toHaveBeenCalled();
 });

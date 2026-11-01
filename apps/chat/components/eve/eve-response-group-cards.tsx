@@ -1,20 +1,22 @@
 "use client";
+import React from "react";
+import type { JSX as ReactJSX } from "react";
 
 import { ResponseChoiceCards } from "../response-choice-cards";
 
-export type EveResponseCardCandidate = {
-  operationId: string;
-  modelName: string;
-  state: "bound" | "unresolved" | "waiting" | "rejected" | "pending";
-  status?:
+export interface EveResponseCardCandidate {
+  readonly operationId: string;
+  readonly modelName: string;
+  readonly state: "bound" | "unresolved" | "waiting" | "rejected" | "pending";
+  readonly status?:
     | "submitted"
     | "streaming"
     | "resuming"
     | "ready"
     | "error"
     | "awaiting-input";
-  disabled?: boolean;
-};
+  readonly disabled?: boolean;
+}
 
 /** Controllers supply native status and handle navigation or recovery. */
 export const EveResponseGroupCards = ({
@@ -22,16 +24,16 @@ export const EveResponseGroupCards = ({
   selectedOperationId,
   onSelect,
 }: {
-  candidates: readonly EveResponseCardCandidate[];
-  selectedOperationId: string | null;
-  onSelect: (operationId: string) => void;
-}) => {
+  readonly candidates: readonly EveResponseCardCandidate[];
+  readonly selectedOperationId: string | null;
+  readonly onSelect: (operationId: string) => void;
+}): ReactJSX.Element | null => {
   if (candidates.length <= 1) {
     return null;
   }
   return (
     <ResponseChoiceCards
-      slots={candidates.map((candidate) => {
+      slots={candidates.map((candidate: EveResponseCardCandidate) => {
         const selected = candidate.operationId === selectedOperationId;
         const loading =
           candidate.state === "pending" ||
@@ -60,7 +62,9 @@ export const EveResponseGroupCards = ({
         }
         return {
           disabled: candidate.disabled,
-          handleSelect: () => onSelect(candidate.operationId),
+          handleSelect: () => {
+            onSelect(candidate.operationId);
+          },
           id: candidate.operationId,
           loading,
           modelName: candidate.modelName,

@@ -1,10 +1,6 @@
 import path from "node:path";
 
-export const isSafeTarget = (targetPath: string, root: string): boolean => {
-  if (targetPath.includes("\0")) {
-    return false;
-  }
-
+const decodeTargetPath = (targetPath: string): string | false => {
   let decodedPath = targetPath;
   try {
     let previous = "";
@@ -16,19 +12,36 @@ export const isSafeTarget = (targetPath: string, root: string): boolean => {
     return false;
   }
 
-  const normalizedTarget = path.normalize(decodedPath.replaceAll("\\", "/"));
-  const normalizedRoot = path.normalize(root);
+  return decodedPath;
+};
+
+const hasUnsafeSegments = (
+  decodedPath: string,
+  normalizedTarget: string
+): boolean => {
   const targetSegments = decodedPath
     .replaceAll("\\", "/")
     .split("/")
     .filter(Boolean);
   const normalizedSegments = normalizedTarget.split(/[\\/]+/u).filter(Boolean);
+  return (
+    targetSegments.includes("..") ||
+    normalizedSegments.includes("..") ||
+    /^[a-zA-Z]:[\\/]/u.test(decodedPath)
+  );
+};
 
-  if (targetSegments.includes("..") || normalizedSegments.includes("..")) {
+export const isSafeTarget = (targetPath: string, root: string): boolean => {
+  const decodedPath = targetPath.includes("\0")
+    ? false
+    : decodeTargetPath(targetPath);
+  if (decodedPath === false) {
     return false;
   }
 
-  if (/^[a-zA-Z]:[\\/]/u.test(decodedPath)) {
+  const normalizedTarget = path.normalize(decodedPath.replaceAll("\\", "/"));
+  const normalizedRoot = path.normalize(root);
+  if (hasUnsafeSegments(decodedPath, normalizedTarget)) {
     return false;
   }
 

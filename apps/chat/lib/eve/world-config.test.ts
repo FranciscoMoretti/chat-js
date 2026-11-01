@@ -26,7 +26,15 @@ describe("workflow deployment contract", () => {
     { NODE_ENV: "development", VERCEL: "1", VERCEL_ENV: "preview" },
   ])(
     "keeps local/dev/self-hosted execution on PostgreSQL: %j",
-    (environment) => {
+    (
+      environment: Readonly<
+        | { NODE_ENV?: undefined; VERCEL?: undefined; VERCEL_ENV?: undefined }
+        | { NODE_ENV: string; VERCEL?: undefined; VERCEL_ENV?: undefined }
+        | { VERCEL: string; VERCEL_ENV: string; NODE_ENV?: undefined }
+        | { VERCEL_ENV: string; NODE_ENV?: undefined; VERCEL?: undefined }
+        | { NODE_ENV: string; VERCEL: string; VERCEL_ENV: string }
+      >
+    ) => {
       expect(resolveWorkflowWorld(environment)).toBe(
         "@workflow/world-postgres"
       );

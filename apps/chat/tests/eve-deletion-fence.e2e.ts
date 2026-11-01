@@ -1,4 +1,3 @@
-/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import { expect, test } from "@playwright/test";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
@@ -17,14 +16,14 @@ for (const state of ["deleting", "deleted"] as const) {
     page,
     browser,
   }) => {
-    await page.route("https://unpkg.com/react-scan/**", (route) =>
-      route.abort()
-    );
+    await page.route("https://unpkg.com/react-scan/**", async (route) => {
+      await route.abort();
+    });
     await page.goto("/api/dev-login");
+    const authSessionResponse = await page.request.get("/api/auth/get-session");
     const owner = z
       .object({ user: z.object({ id: z.string() }) })
-      .parse(await (await page.request.get("/api/auth/get-session")).json())
-      .user.id;
+      .parse(await authSessionResponse.json()).user.id;
     const id = crypto.randomUUID();
     const operationId = crypto.randomUUID();
     const sessionId = `wrun_deleted_${id}`;
@@ -59,8 +58,11 @@ for (const state of ["deleting", "deleted"] as const) {
       );
       expect(stream.status()).toBe(404);
       const publicPage = await anonymous.newPage();
-      await publicPage.route("https://unpkg.com/react-scan/**", (route) =>
-        route.abort()
+      await publicPage.route(
+        "https://unpkg.com/react-scan/**",
+        async (route) => {
+          await route.abort();
+        }
       );
       await publicPage.goto(`${new URL(page.url()).origin}/share/${id}`);
       await expect(

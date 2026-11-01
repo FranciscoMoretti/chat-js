@@ -1,19 +1,22 @@
 import { describe, expect, it } from "vitest";
-
 import {
-  moveRejectedProjectCreation,
+  hasPendingCreation,
+  moveRejectedContextCreation,
   prepareCreation,
   readCreation,
 } from "./pending-create";
 
-const storageFixture = () => {
+const storageFixture = (): Pick<
+  Storage,
+  "getItem" | "removeItem" | "setItem"
+> => {
   const entries = new Map<string, string>();
   return {
     getItem: (key: string) => entries.get(key) ?? null,
-    removeItem: (key: string) => {
+    removeItem: (key: string): void => {
       entries.delete(key);
     },
-    setItem: (key: string, value: string) => {
+    setItem: (key: string, value: string): void => {
       entries.set(key, value);
     },
   };
@@ -23,6 +26,10 @@ describe("rejected project draft recovery", () => {
   it("moves the exact model and message to a fresh ordinary operation", () => {
     const storage = storageFixture();
     const projectId = crypto.randomUUID();
+    const context = {
+      key: `project:${projectId}`,
+      label: "project",
+    };
     const original = prepareCreation(
       storage,
       "owner",
@@ -36,12 +43,14 @@ describe("rejected project draft recovery", () => {
         },
       ],
       "chosen-model",
+      { context },
+      undefined,
       { projectId }
     );
-    const next = moveRejectedProjectCreation(
+    const next = moveRejectedContextCreation(
       storage,
       "owner",
-      projectId,
+      context,
       original.operationId
     );
     expect(next).toMatchObject({
@@ -51,36 +60,53 @@ describe("rejected project draft recovery", () => {
     expect(next.operationId).not.toBe(original.operationId);
     expect(next.projectId).toBeUndefined();
     expect(readCreation(storage, "owner")).toEqual(next);
-    expect(readCreation(storage, "owner", { projectId })).toBeUndefined();
+    expect(readCreation(storage, "owner", { context })).toBeUndefined();
   });
   it("preserves both requests if another root draft exists", () => {
     const storage = storageFixture();
     const projectId = crypto.randomUUID();
+    const context = {
+      key: `project:${projectId}`,
+      label: "project",
+    };
     const ordinary = prepareCreation(storage, "owner", "Other message");
     const original = prepareCreation(
       storage,
       "owner",
       "Project message",
       undefined,
+      { context },
+      undefined,
       { projectId }
     );
     expect(() =>
-      moveRejectedProjectCreation(
+      moveRejectedContextCreation(
         storage,
         "owner",
-        projectId,
+        context,
         original.operationId
       )
     ).toThrow("Finish the saved request");
     expect(readCreation(storage, "owner")).toEqual(ordinary);
-    expect(readCreation(storage, "owner", { projectId })).toEqual(original);
+    expect(readCreation(storage, "owner", { context })).toEqual(original);
     expect(() =>
-      moveRejectedProjectCreation(
+      moveRejectedContextCreation(
         storage,
         "other-owner",
-        projectId,
+        context,
         original.operationId
       )
     ).toThrow("saved request changed");
   });
+});
+
+it("keeps owner-scoped unresolved forks discoverable, including damaged drafts", () => {
+  const storage = storageFixture();
+  const conversationId = crypto.randomUUID();
+  expect(hasPendingCreation(storage, "owner", { conversationId })).toBe(false);
+  prepareCreation(storage, "owner", "edit", undefined, { conversationId });
+  expect(hasPendingCreation(storage, "owner", { conversationId })).toBe(true);
+  expect(hasPendingCreation(storage, "other", { conversationId })).toBe(false);
+  storage.setItem(`chatjs.eve.pending:owner:fork:${conversationId}`, "damaged");
+  expect(hasPendingCreation(storage, "owner", { conversationId })).toBe(true);
 });

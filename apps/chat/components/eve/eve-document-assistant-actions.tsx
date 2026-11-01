@@ -1,5 +1,6 @@
 "use client";
 
+import { Hint } from "@/components/hint";
 import {
   LineChart,
   List,
@@ -8,19 +9,15 @@ import {
   Sparkles,
   Square,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import type { JSX as ReactJSX } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import {
   documentAssistantActions,
   documentAssistantRequest,
 } from "@/lib/eve/document-assistant-actions";
-import type { DocumentAssistantRequest } from "@/lib/eve/document-contracts";
+import type { DocumentAssistantRequest } from "@/chatjs/core/documents/contracts";
 
 const helperIcon = (label: string) => {
   switch (label) {
@@ -51,29 +48,40 @@ export const EveDocumentAssistantActions = ({
   busy = false,
   onStop,
 }: {
-  kind: "text" | "code" | "sheet";
-  documentId: string;
-  revisionId: string;
-  disabled: boolean;
-  onAction?: (request: DocumentAssistantRequest) => Promise<void>;
-  busy?: boolean;
-  onStop?: () => Promise<void>;
-}) => {
+  readonly kind: string;
+  readonly documentId: string;
+  readonly revisionId: string;
+  readonly disabled: boolean;
+  readonly onAction?: (
+    request: DocumentAssistantRequest
+  ) => void | Promise<void>;
+  readonly busy?: boolean;
+  readonly onStop?: () => Promise<void>;
+}): ReactJSX.Element | null => {
+  const [, startEventAction] = React.useTransition();
   const [expanded, setExpanded] = useState(false);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
+    // oxlint-disable-next-line unicorn/no-useless-undefined -- React requires an initial ref value; undefined represents the uninitialized state.
     undefined
   );
-  useEffect(() => () => clearTimeout(closeTimer.current), []);
+  useEffect(
+    () => (): void => {
+      clearTimeout(closeTimer.current);
+    },
+    []
+  );
   const actions = documentAssistantActions(kind);
   if (actions.length === 0) {
     return null;
   }
-  const open = () => {
+  const open = (): void => {
     clearTimeout(closeTimer.current);
     setExpanded(true);
   };
-  const close = () => {
-    closeTimer.current = setTimeout(() => setExpanded(false), 200);
+  const close = (): void => {
+    closeTimer.current = setTimeout(() => {
+      setExpanded(false);
+    }, 200);
   };
   const [primary, ...secondary] = actions;
   const visible = expanded ? [...secondary, primary] : [primary];
@@ -93,41 +101,54 @@ export const EveDocumentAssistantActions = ({
       }}
     >
       {busy && onStop ? (
-        <Tooltip>
-          <TooltipTrigger asChild>
+        <Hint
+          trigger={
             <Button
               aria-label="Stop generation"
               className="h-auto w-auto rounded-full p-3"
               variant="ghost"
-              onClick={onStop}
+
+              onClick={() => {
+                startEventAction(async () => {
+                  if (typeof onStop === "function") {
+                    await onStop();
+                  }
+                });
+              }}
             >
               <Square size={16} />
             </Button>
-          </TooltipTrigger>
-          <TooltipContent side="left">Stop generation</TooltipContent>
-        </Tooltip>
+          }
+          contentProps={{ side: "left" }}
+        >
+          Stop generation
+        </Hint>
       ) : (
-        visible.map((action) => {
+        visible.map((action: Readonly<(typeof visible)[number]>) => {
           const Icon = helperIcon(action.label);
           return (
-            <Tooltip key={action.label}>
-              <TooltipTrigger asChild>
+            <Hint
+              key={action.label}
+              trigger={
                 <Button
                   disabled={disabled || !onAction}
                   variant="ghost"
                   className="h-auto w-auto rounded-full p-3"
                   aria-label={action.label}
-                  onClick={() =>
-                    onAction?.(
+
+                  onClick={() => {
+                    void onAction?.(
                       documentAssistantRequest(action, documentId, revisionId)
-                    )
-                  }
+                    );
+                  }}
                 >
                   <Icon size={16} />
                 </Button>
-              </TooltipTrigger>
-              <TooltipContent side="left">{action.label}</TooltipContent>
-            </Tooltip>
+              }
+              contentProps={{ side: "left" }}
+            >
+              {action.label}
+            </Hint>
           );
         })
       )}

@@ -4,15 +4,15 @@ import { expectTypeOf, test } from "vitest";
 import { z } from "zod";
 
 import { toolResultToModelOutput } from "./tool-model-output";
-import { defineToolSet } from "./tool-types";
 import type { NativeToolUI } from "./tool-types";
+import { defineToolSet } from "./tool-types";
 import { executeWithToolUsage } from "./tool-usage";
 
 test("declared EVE generics preserve schema and output types across overloads", () => {
   const counted = defineTool({
     description: "Count",
-    execute: ({ text }, context) =>
-      executeWithToolUsage(context, (usage) => {
+    execute: async ({ text }, context) =>
+      await executeWithToolUsage(context, (usage) => {
         usage.addCostUsd(0);
         return { length: text.length };
       }),
@@ -47,7 +47,7 @@ test("declared EVE generics preserve schema and output types across overloads", 
   }>();
   defineToolSet({
     // @ts-expect-error AI SDK tools do not satisfy the single native EVE contract.
-    wrong: tool({ execute: () => 1, inputSchema: z.object({}) }),
+    wrong: tool({ execute: (): number => 1, inputSchema: z.object({}) }),
   });
   defineToolSet({
     // @ts-expect-error Functions cannot cross the durable result boundary.

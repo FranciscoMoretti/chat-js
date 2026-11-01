@@ -1,3 +1,4 @@
+import type { SandboxProvider } from "@chat-js/sandboxes/provider";
 import { beforeEach, expect, test, vi } from "vitest";
 
 import { eveCodeSandboxName } from "./code-sandbox-name";
@@ -5,26 +6,29 @@ import { purgeEveFamilyCodeSandboxes } from "./purge-code-sandboxes";
 
 const mocks = vi.hoisted(() => ({
   capabilityInstalled: true,
-  cleanup: vi.fn(),
-  createCleanupSession: vi.fn(),
+  cleanup: vi.fn<(name: string) => Promise<void>>(),
+  createCleanupSession: vi.fn<() => SandboxProvider>(),
   list: vi.fn(),
-  record: vi.fn(),
+  record: vi.fn<() => Promise<void>>(),
 }));
-vi.mock("../../tools/chatjs/tools", () => ({
-  tools: { codeExecution: {} },
-}));
-vi.mock("../ai/installed-tool-capabilities", () => ({
-  getCodeSandboxCleanup: () =>
-    mocks.capabilityInstalled
-      ? { createCleanupSession: mocks.createCleanupSession }
-      : undefined,
+vi.mock("@/lib/sandbox/runtime", () => ({
+  getSandboxProvider: () => {
+    if (!mocks.capabilityInstalled) {
+      throw new Error("Select a sandbox provider");
+    }
+    return mocks.createCleanupSession();
+  },
 }));
 vi.mock("../db/eve-code-sandboxes", () => ({
   listEveCodeSandboxesForDeletion: mocks.list,
   recordEveCodeSandboxDeletion: mocks.record,
 }));
 
-const provider = { projectId: "project", teamId: "team" };
+const provider = {
+  providerId: "vercel",
+  scopeId: "project",
+  accountId: "team",
+};
 const name = eveCodeSandboxName({
   callId: "call",
   ownerId: "owner",
@@ -43,14 +47,19 @@ beforeEach(() => {
   vi.resetAllMocks();
   mocks.capabilityInstalled = true;
   mocks.createCleanupSession.mockReturnValue({
+    create: vi.fn(),
     deleteAndConfirmAbsent: mocks.cleanup,
-    provider,
+    scope: {
+      providerId: "vercel",
+      accountId: provider.accountId,
+      scopeId: provider.scopeId,
+    },
   });
   mocks.list.mockResolvedValue([resource]);
-  // eslint-disable-next-line unicorn/no-useless-undefined -- these mocks resolve void-returning APIs.
-  mocks.record.mockResolvedValue(undefined);
-  // eslint-disable-next-line unicorn/no-useless-undefined -- these mocks resolve void-returning APIs.
-  mocks.cleanup.mockResolvedValue(undefined);
+
+  mocks.record.mockResolvedValue();
+
+  mocks.cleanup.mockResolvedValue();
 });
 
 test("cleans confirmed ownership and releases its durable record", async () => {
@@ -58,13 +67,11 @@ test("cleans confirmed ownership and releases its durable record", async () => {
   expect(mocks.cleanup).toHaveBeenCalledWith(name);
   expect(mocks.record).toHaveBeenCalledWith("owner", "conversation", name);
 });
-
 test("a retry accepts provider-confirmed absence", async () => {
   await purgeEveFamilyCodeSandboxes("owner", "root");
   expect(mocks.cleanup).toHaveBeenCalledOnce();
   expect(mocks.record).toHaveBeenCalledOnce();
 });
-
 test("unknown creation never uses absence to declare deletion complete", async () => {
   mocks.list.mockResolvedValue([{ ...resource, creationConfirmed: false }]);
   await expect(purgeEveFamilyCodeSandboxes("owner", "root")).rejects.toThrow(
@@ -73,7 +80,6 @@ test("unknown creation never uses absence to declare deletion complete", async (
   expect(mocks.createCleanupSession).not.toHaveBeenCalled();
   expect(mocks.record).not.toHaveBeenCalled();
 });
-
 test("provider failures retain ownership", async () => {
   mocks.list.mockRejectedValueOnce(new Error("family is active"));
   await expect(purgeEveFamilyCodeSandboxes("owner", "root")).rejects.toThrow(
@@ -86,11 +92,15 @@ test("provider failures retain ownership", async () => {
   );
   expect(mocks.record).not.toHaveBeenCalled();
 });
-
 test("changed provider scope cannot release a resource", async () => {
   mocks.createCleanupSession.mockReturnValue({
+    create: vi.fn(),
     deleteAndConfirmAbsent: mocks.cleanup,
-    provider: { ...provider, projectId: "another-project" },
+    scope: {
+      providerId: "vercel",
+      accountId: provider.accountId,
+      scopeId: "another-project",
+    },
   });
   await expect(purgeEveFamilyCodeSandboxes("owner", "root")).rejects.toThrow(
     "provider scope"
@@ -98,7 +108,6 @@ test("changed provider scope cannot release a resource", async () => {
   expect(mocks.cleanup).not.toHaveBeenCalled();
   expect(mocks.record).not.toHaveBeenCalled();
 });
-
 test("zero resources need no installed provider capability", async () => {
   mocks.capabilityInstalled = false;
   mocks.list.mockResolvedValue([]);
@@ -106,11 +115,10 @@ test("zero resources need no installed provider capability", async () => {
     purgeEveFamilyCodeSandboxes("owner", "root")
   ).resolves.toBeUndefined();
 });
-
 test("durable resources cannot be released without their provider capability", async () => {
   mocks.capabilityInstalled = false;
   await expect(purgeEveFamilyCodeSandboxes("owner", "root")).rejects.toThrow(
-    "Install the code execution tool"
+    "Select a sandbox provider"
   );
   expect(mocks.cleanup).not.toHaveBeenCalled();
   expect(mocks.record).not.toHaveBeenCalled();

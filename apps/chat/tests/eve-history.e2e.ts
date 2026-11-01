@@ -1,6 +1,3 @@
-/* oxlint-disable promise/avoid-new -- These fixtures adapt callback, timer, stream, or browser event APIs into awaited Promises. */
-/* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
-/* oxlint-disable unicorn/consistent-function-scoping -- One-off helpers stay beside the scenario state they coordinate. */
 import { mkdir } from "node:fs/promises";
 
 import { expect, test } from "@playwright/test";
@@ -17,13 +14,15 @@ assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
 test("history pages and searches older conversations without exposing other owners", async ({
   page,
 }) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   const [owner] = await db
     .select()
     .from(user)
     .where(eq(user.email, "dev@localhost"));
-  if (!owner) {
+  if (owner === undefined) {
     throw new Error("Missing development user");
   }
   const prefix = `history-${crypto.randomUUID()}`;
@@ -76,14 +75,9 @@ test("history pages and searches older conversations without exposing other owne
       await expand.click();
     }
     const search = page.getByRole("textbox", { name: "Search conversations" });
-    let releaseSearch: () => void = () => {
-      /* Assigned synchronously below. */
-    };
-    const searchGate = new Promise<void>((resolve) => {
-      releaseSearch = resolve;
-    });
+    const searchGate: PromiseWithResolvers<void> = Promise.withResolvers();
     await page.route("**/api/trpc/eve.list**", async (route) => {
-      await searchGate;
+      await searchGate.promise;
       await route.continue();
     });
     await search.fill(prefix);
@@ -97,7 +91,7 @@ test("history pages and searches older conversations without exposing other owne
         path: "tests/eve-results/screenshots/eve-history-loading.png",
       });
     } finally {
-      releaseSearch();
+      searchGate.resolve();
     }
     await page.unroute("**/api/trpc/eve.list**");
     await expect(
@@ -139,7 +133,9 @@ test("history pages and searches older conversations without exposing other owne
       animations: "disabled",
       path: "tests/eve-results/screenshots/eve-history-empty.png",
     });
-    await page.route("**/api/trpc/eve.list**", (route) => route.abort());
+    await page.route("**/api/trpc/eve.list**", async (route) => {
+      await route.abort();
+    });
     await search.fill(`${prefix} failed`);
     await expect(
       page.getByText("Could not load conversations.", { exact: true })
@@ -149,7 +145,12 @@ test("history pages and searches older conversations without exposing other owne
       path: "tests/eve-results/screenshots/eve-history-error.png",
     });
     await page.unroute("**/api/trpc/eve.list**");
-    await page.getByRole("button", { exact: true, name: "Retry" }).click();
+    await page
+      .getByRole("button", {
+        exact: true,
+        name: "Regenerate response",
+      })
+      .click();
     await expect(
       page.getByText("No matching conversations.", { exact: true })
     ).toBeVisible();

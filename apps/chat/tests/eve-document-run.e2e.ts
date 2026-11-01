@@ -1,9 +1,10 @@
-/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 import { execFileSync } from "node:child_process";
 
 import { expect, test } from "@playwright/test";
+import type { TestInfo } from "@playwright/test";
 import { eq } from "drizzle-orm";
 import { Client } from "eve/client";
+import type { MessageStreamEvent } from "eve/client";
 
 import { db } from "../lib/db/client";
 import { eveConversation, eveUsage } from "../lib/db/schema";
@@ -15,16 +16,38 @@ import { toolResultSchema } from "../lib/eve/tool-result";
 import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(env.DATABASE_URL);
+type RunCodeActionResultReader =
+  | Readonly<{
+      type: "action.result";
+      data: Readonly<{
+        result: Readonly<{
+          callId: string;
+          kind: string;
+          output: unknown;
+          toolName?: string;
+        }>;
+      }>;
+    }>
+  | Readonly<{
+      type: Exclude<MessageStreamEvent["type"], "action.result">;
+      data?: unknown;
+    }>;
 
 test("saved-code controls cover pending, disabled, denied and error states", async ({
   page,
-}, testInfo) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+}, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   await page.goto("/");
   const styles = await page
     .locator('link[rel="stylesheet"]')
-    .evaluateAll((links) => links.map((link) => link.outerHTML).join(""));
+    .evaluateAll((links: readonly { readonly outerHTML: string }[]) =>
+      links
+        .map((link: { readonly outerHTML: string }) => link.outerHTML)
+        .join("")
+    );
   const content = execFileSync("bun", ["tests/eve-document-run-fixture.ts"], {
     encoding: "utf-8",
   });
@@ -37,6 +60,7 @@ test("saved-code controls cover pending, disabled, denied and error states", asy
   await expect(
     page.getByRole("button", { name: "Run" }).and(page.locator(":disabled"))
   ).toHaveCount(2);
+  /* oxlint-disable eslint/no-await-in-loop -- Viewport changes and screenshots operate on the same browser page. */
   for (const width of [1100, 390]) {
     await page.setViewportSize({ height: 850, width });
     expect(
@@ -48,12 +72,13 @@ test("saved-code controls cover pending, disabled, denied and error states", asy
       path: testInfo.outputPath(`run-states-${width}.png`),
     });
   }
+  /* oxlint-enable eslint/no-await-in-loop */
 });
 
 test("artifact Run executes saved source, retains output across reload and sharing, and bills once", async ({
   page,
   browser,
-}, testInfo) => {
+}, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
   test.setTimeout(180_000);
   page.setDefaultTimeout(20_000);
   await page.addInitScript(() => {
@@ -64,16 +89,21 @@ test("artifact Run executes saved source, retains output across reload and shari
       document.head.append(style);
     });
   });
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   const created = await page.evaluate(
-    async (data) => {
+    async (
+      data: Readonly<{ message: string; modelId: string; operationId: string }>
+    ) => {
       const response = await fetch("/api/agent-conversations", {
         body: JSON.stringify(data),
         headers: { "Content-Type": "application/json" },
         method: "POST",
       });
-      return { body: await response.json(), ok: response.ok };
+      const body: unknown = await response.json();
+      return { body, ok: response.ok };
     },
     {
       message:
@@ -122,7 +152,9 @@ test("artifact Run executes saved source, retains output across reload and shari
     .attach(binding.sessionId)
     .snapshot({ signal: AbortSignal.timeout(15_000) });
   const executions = snapshot.events.filter(
-    (event) =>
+    (
+      event: RunCodeActionResultReader
+    ): event is Extract<MessageStreamEvent, { type: "action.result" }> =>
       event.type === "action.result" &&
       event.data.result.kind === "tool-result" &&
       event.data.result.toolName === "runCodeDocument"
@@ -176,8 +208,11 @@ test("artifact Run executes saved source, retains output across reload and shari
     .where(eq(eveConversation.id, binding.id));
   const publicContext = await browser.newContext();
   try {
-    await publicContext.route("https://unpkg.com/react-scan/**", (route) =>
-      route.abort()
+    await publicContext.route(
+      "https://unpkg.com/react-scan/**",
+      async (route) => {
+        await route.abort();
+      }
     );
     await publicContext.addInitScript(() => {
       document.addEventListener("DOMContentLoaded", () => {

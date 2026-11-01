@@ -1,4 +1,7 @@
+import assert from "node:assert/strict";
 import { afterEach, expect, it, vi } from "vitest";
+
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 import {
   CreationRejectedError,
@@ -18,15 +21,19 @@ afterEach(() => {
 it("aborts a stalled creation without resending or changing its operation", async () => {
   vi.useFakeTimers();
   const fetchMock = vi.fn(
-    (_url: string, init: RequestInit) =>
-      // oxlint-disable-next-line promise/avoid-new -- Bridge the timer or abort callback to the awaited operation.
-      new Promise<Response>((_resolve, reject) => {
-        init.signal?.addEventListener(
-          "abort",
-          () => reject(init.signal?.reason),
-          { once: true }
-        );
-      })
+    async (_url: string, init: ReadonlyNativeSurface<RequestInit>) => {
+      const pending = Promise.withResolvers<Response>();
+      init.signal?.addEventListener(
+        "abort",
+        () => {
+          const reason: unknown = init.signal?.reason;
+          assert.ok(reason instanceof DOMException);
+          pending.reject(reason);
+        },
+        { once: true }
+      );
+      return await pending.promise;
+    }
   );
   vi.stubGlobal("fetch", fetchMock);
   const result = expect(requestConversation(operation)).rejects.toThrow(
@@ -92,7 +99,7 @@ it("identifies a missing project only on a definitive rejection", async () => {
     )
   );
   await expect(requestConversation(operation)).rejects.toMatchObject({
-    projectUnavailable: true,
+    code: "project_not_found",
   });
   vi.stubGlobal(
     "fetch",
@@ -106,14 +113,13 @@ it("identifies a missing project only on a definitive rejection", async () => {
       )
   );
   await expect(requestConversation(operation)).rejects.toMatchObject({
-    projectUnavailable: false,
+    code: undefined,
   });
 });
-
 it("automatically retries busy creation with the same operation identity", async () => {
   vi.useFakeTimers();
   const fetchMock = vi
-    .fn()
+    .fn<(_url: string, init: RequestInit) => Promise<Response>>()
     .mockResolvedValueOnce(
       Response.json(
         { code: "usage_reconciliation_busy", error: "Busy" },
@@ -128,8 +134,10 @@ it("automatically retries busy creation with the same operation identity", async
   await vi.advanceTimersByTimeAsync(2000);
   await expect(result).resolves.toMatchObject({ sessionId: "session" });
   expect(fetchMock).toHaveBeenCalledTimes(2);
-  expect(fetchMock.mock.calls.map(([, init]) => init.body)).toEqual([
-    JSON.stringify(operation),
-    JSON.stringify(operation),
-  ]);
+
+  expect(
+    fetchMock.mock.calls.map(
+      ([, init]: Readonly<(typeof fetchMock.mock.calls)[number]>) => init.body
+    )
+  ).toEqual([JSON.stringify(operation), JSON.stringify(operation)]);
 });

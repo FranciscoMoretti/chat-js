@@ -1,39 +1,75 @@
 "use client";
 
-import type { MessageStreamEvent } from "eve/client";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useMemo, useSyncExternalStore } from "react";
 
-import {
-  eveMessageDelivery,
-  eveMessageOperationId,
+import { eveMessageDelivery } from "@/lib/eve/message-delivery";
+import type {
+  DeliveryReceipt,
+  PendingEveMessage,
 } from "@/lib/eve/message-delivery";
-import type { PendingEveMessage } from "@/lib/eve/message-delivery";
+
+const createDeliveryStore = (sessionId: string) => {
+  let pending: PendingEveMessage | null = null;
+  let loaded = false;
+  const pendingRef: { current: PendingEveMessage | null | undefined } = {
+    current: undefined,
+  };
+  const acknowledged: { current: string | undefined } = { current: undefined };
+  const listeners = new Set<() => void>();
+  const setPending = (
+    change:
+      | PendingEveMessage
+      | null
+      | ((current: PendingEveMessage | null) => PendingEveMessage | null)
+  ): void => {
+    pending = typeof change === "function" ? change(pending) : change;
+    for (const listener of listeners) {
+      listener();
+    }
+  };
+  return {
+    pendingRef,
+    acknowledge: (operationId?: string): void => {
+      acknowledged.current = operationId;
+    },
+    hasAcknowledged: (operationId: string): boolean =>
+      acknowledged.current === operationId,
+    setPending,
+    getSnapshot: () => pending,
+    getServerSnapshot: (): null => null,
+    subscribe: (listener: () => void) => {
+      listeners.add(listener);
+      // An acknowledgement may arrive before React subscribes; never resurrect it.
+      if (!loaded) {
+        loaded = true;
+        if (pendingRef.current === undefined) {
+          pendingRef.current = eveMessageDelivery.read(
+            sessionStorage,
+            sessionId
+          );
+        }
+        setPending(pendingRef.current);
+      }
+      return () => {
+        listeners.delete(listener);
+      };
+    },
+  };
+};
 
 export const useEveMessageDelivery = (sessionId: string) => {
-  const [pending, setPending] = useState<PendingEveMessage | null>(null);
-  const pendingRef = useRef<PendingEveMessage | null | undefined>(undefined);
-  const acknowledged = useRef<string | undefined>(undefined);
-
-  useEffect(() => {
-    const stored = eveMessageDelivery.read(sessionStorage, sessionId);
-    pendingRef.current = stored;
-    acknowledged.current = undefined;
-    // oxlint-disable-next-line react/set-state-in-effect -- Synchronize the selected session with its browser delivery journal.
-    setPending(stored);
-    if (stored) {
-      // oxlint-disable-next-line react/set-state-in-effect -- Restore the durable pending-message marker on mount.
-      setPending((current) => {
-        const restored = current ?? stored;
-        pendingRef.current = restored;
-        return restored;
-      });
-    }
-  }, [sessionId]);
+  const store = useMemo(() => createDeliveryStore(sessionId), [sessionId]);
+  const pending = useSyncExternalStore(
+    store.subscribe,
+    store.getSnapshot,
+    store.getServerSnapshot
+  );
+  const { pendingRef, acknowledge, hasAcknowledged, setPending } = store;
 
   const accept = useCallback(
-    (event: MessageStreamEvent) => {
-      const operationId = eveMessageOperationId(event);
-      if (!operationId) {
+    (receipt: DeliveryReceipt) => {
+      const { operationId } = receipt;
+      if (!(typeof operationId === "string" && operationId !== "")) {
         return;
       }
       const current =
@@ -48,25 +84,28 @@ export const useEveMessageDelivery = (sessionId: string) => {
           sessionStorage,
           sessionId,
           current,
-          event
+          receipt
         )
       ) {
         return;
       }
-      acknowledged.current = operationId;
+      acknowledge(operationId);
       pendingRef.current = null;
-      setPending((pendingMessage) =>
-        pendingMessage?.operationId === operationId ? null : pendingMessage
-      );
+      setPending((pendingMessage) => {
+        if (pendingMessage?.operationId === operationId) {
+          return null;
+        }
+        return pendingMessage;
+      });
     },
-    [sessionId]
+    [sessionId, pendingRef, acknowledge, setPending]
   );
 
   return {
     accept,
     begin: useCallback(
       (input: Parameters<typeof eveMessageDelivery.begin>[2]) => {
-        acknowledged.current = undefined;
+        acknowledge();
         const delivery = eveMessageDelivery.begin(
           sessionStorage,
           sessionId,
@@ -76,12 +115,9 @@ export const useEveMessageDelivery = (sessionId: string) => {
         setPending(delivery);
         return delivery;
       },
-      [sessionId]
+      [sessionId, pendingRef, acknowledge, setPending]
     ),
-    hasAcknowledged: useCallback(
-      (operationId: string) => acknowledged.current === operationId,
-      []
-    ),
+    hasAcknowledged,
     pending,
     reject: useCallback(
       (delivery: PendingEveMessage, message: string, retryable = false) => {
@@ -95,10 +131,10 @@ export const useEveMessageDelivery = (sessionId: string) => {
         pendingRef.current = rejected;
         setPending(rejected);
       },
-      [sessionId]
+      [sessionId, pendingRef, setPending]
     ),
     release: useCallback(
-      (delivery: PendingEveMessage) => {
+      (delivery: Readonly<Pick<PendingEveMessage, "operationId">>) => {
         eveMessageDelivery.clear(
           sessionStorage,
           sessionId,
@@ -107,11 +143,14 @@ export const useEveMessageDelivery = (sessionId: string) => {
         if (pendingRef.current?.operationId === delivery.operationId) {
           pendingRef.current = null;
         }
-        setPending((current) =>
-          current?.operationId === delivery.operationId ? null : current
-        );
+        setPending((current) => {
+          if (current?.operationId === delivery.operationId) {
+            return null;
+          }
+          return current;
+        });
       },
-      [sessionId]
+      [sessionId, pendingRef, setPending]
     ),
     retry: useCallback(
       (delivery: PendingEveMessage) => {
@@ -126,7 +165,7 @@ export const useEveMessageDelivery = (sessionId: string) => {
         }
         return retried;
       },
-      [sessionId]
+      [sessionId, pendingRef, setPending]
     ),
   };
 };

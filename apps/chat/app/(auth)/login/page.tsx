@@ -1,63 +1,20 @@
 import { ChevronLeft } from "lucide-react";
 import type { Metadata } from "next";
-import { headers } from "next/headers";
-import { Suspense } from "react";
+import React, { Suspense } from "react";
 
 import { AuthCardSkeleton } from "@/components/auth-card-skeleton";
 import { DevLoginTool } from "@/components/dev-login-tool";
-import { ElectronTransferUser } from "@/components/electron-auth-ui";
 import { InternalLink } from "@/components/internal-link";
 import { LoginForm } from "@/components/login-form";
 import { buttonVariants } from "@/components/ui/button";
-import { auth } from "@/lib/auth";
-import { config } from "@/lib/config";
-import {
-  ELECTRON_AUTH_CLIENT_ID,
-  toSearchParamRecord,
-} from "@/lib/electron-auth";
 import { cn } from "@/lib/utils";
 
-export const metadata: Metadata = {
+const metadata: Metadata = {
   description: "Login to your account",
   title: "Login",
 };
 
-const LoginPageContent = async ({
-  searchParams,
-}: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-}) => {
-  const resolvedSearchParams = await searchParams;
-  const query = toSearchParamRecord(resolvedSearchParams);
-  const isElectronTransfer =
-    config.desktopApp.enabled && query.client_id === ELECTRON_AUTH_CLIENT_ID;
-  const session = isElectronTransfer
-    ? await auth.api.getSession({ headers: await headers() })
-    : null;
-
-  if (session?.user && isElectronTransfer) {
-    return <ElectronTransferUser query={query} session={session} />;
-  }
-
-  return (
-    <Suspense
-      fallback={
-        <AuthCardSkeleton
-          description="Sign in to your account"
-          title="Welcome back"
-        />
-      }
-    >
-      <LoginForm className="w-full" />
-    </Suspense>
-  );
-};
-
-const LoginPage = ({
-  searchParams,
-}: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-}) => (
+const LoginPage = (): React.JSX.Element => (
   <div className="container mx-auto flex h-dvh w-screen flex-col items-center justify-center">
     <InternalLink
       className={cn(
@@ -79,10 +36,11 @@ const LoginPage = ({
           />
         }
       >
-        <LoginPageContent searchParams={searchParams} />
+        <LoginForm className="w-full" />
       </Suspense>
     </div>
   </div>
 );
 
+export { metadata };
 export default LoginPage;

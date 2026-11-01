@@ -1,6 +1,7 @@
-import { createMCPClient } from "@ai-sdk/mcp";
 import type { OAuthClientProvider, OAuthTokens } from "@ai-sdk/mcp";
 import { expect, test } from "vitest";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import { createMCPClient } from "@ai-sdk/mcp";
 
 const serverUrl = "https://mcp.test/";
 const endpointUrl = `${serverUrl}messages`;
@@ -9,7 +10,7 @@ const tokenEndpoint = `${authorizationServerUrl}token`;
 
 test.each([{ timing: "simultaneous" }, { timing: "after-save" }])(
   "SSE $timing 401 responses share one complete OAuth refresh",
-  async ({ timing }) => {
+  async ({ timing }: Readonly<{ timing: string }>) => {
     let streamController:
       | ReadableStreamDefaultController<Uint8Array>
       | undefined;
@@ -24,33 +25,42 @@ test.each([{ timing: "simultaneous" }, { timing: "after-save" }])(
     let validAccessToken = tokens.access_token;
     let refreshes = 0;
     let oldTokenRequests = 0;
-    const firstRefreshSaved = Promise.withResolvers<undefined>();
-    const bothOldTokenRequestsStarted = Promise.withResolvers<undefined>();
+    const firstRefreshSaved: PromiseWithResolvers<void> =
+      Promise.withResolvers();
+    const bothOldTokenRequestsStarted: PromiseWithResolvers<void> =
+      Promise.withResolvers();
     const encoder = new TextEncoder();
 
     const provider: OAuthClientProvider = {
       clientInformation: () => ({ client_id: "client" }),
       clientMetadata: { redirect_uris: ["https://app.test/oauth/callback"] },
-      codeVerifier: () => "verifier",
-      redirectToAuthorization: () => {},
+      codeVerifier: (): string => "verifier",
+      redirectToAuthorization: (): void => {
+        // This fixture never enters the authorization redirect flow.
+      },
       redirectUrl: "https://app.test/oauth/callback",
-      saveCodeVerifier: () => {},
-      saveTokens: (nextTokens) => {
+      saveCodeVerifier: (): void => {
+        // This fixture already has a code verifier.
+      },
+      saveTokens: (nextTokens): void => {
         tokens = nextTokens;
-        firstRefreshSaved.resolve(undefined);
+        firstRefreshSaved.resolve();
       },
       tokens: () => tokens,
     };
 
     const fakeFetch = async (
-      input: string | URL | Request,
-      init?: RequestInit
+      input: string | ReadonlyNativeSurface<URL | Request>,
+
+      init?: Readonly<RequestInit>
     ): Promise<Response> => {
       const request = new Request(input, init);
 
       if (request.url === serverUrl && request.method === "GET") {
         const stream = new ReadableStream<Uint8Array>({
-          start(controller) {
+          start(
+            controller: Readonly<ReadableStreamDefaultController<Uint8Array>>
+          ): void {
             streamController = controller;
             controller.enqueue(
               encoder.encode(`event: endpoint\ndata: ${endpointUrl}\n\n`)
@@ -101,7 +111,7 @@ test.each([{ timing: "simultaneous" }, { timing: "after-save" }])(
         if (authorization !== `Bearer ${validAccessToken}`) {
           oldTokenRequests += 1;
           if (oldTokenRequests >= 2) {
-            bothOldTokenRequestsStarted.resolve(undefined);
+            bothOldTokenRequestsStarted.resolve();
           }
           if (timing === "after-save" && oldTokenRequests === 2) {
             await firstRefreshSaved.promise;
@@ -114,9 +124,10 @@ test.each([{ timing: "simultaneous" }, { timing: "after-save" }])(
           typeof message === "object" &&
           message !== null &&
           "id" in message &&
-          (typeof message.id === "string" || typeof message.id === "number")
+          (typeof message.id === "string" || typeof message.id === "number") &&
+          streamController
         ) {
-          streamController?.enqueue(
+          streamController.enqueue(
             encoder.encode(
               `data: ${JSON.stringify({
                 id: message.id,

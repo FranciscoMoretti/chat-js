@@ -1,15 +1,18 @@
 import type { ChatTransport, UIMessage } from "ai";
 
-const rejectSendMessages: ChatTransport<UIMessage>["sendMessages"] = () =>
-  Promise.reject(new Error("Unexpected send"));
+const ZERO_COUNT = 0;
+const COUNT_INCREMENT = 1;
 
+const rejectSendMessages: ChatTransport<UIMessage>["sendMessages"] =
+  async (): ReturnType<ChatTransport<UIMessage>["sendMessages"]> =>
+    await Promise.reject(new Error("Unexpected send"));
 export class ResumeTransport implements ChatTransport<UIMessage> {
-  reconnects = 0;
+  public reconnects = ZERO_COUNT;
 
-  sendMessages = rejectSendMessages;
+  public sendMessages = rejectSendMessages;
 
-  reconnectToStream() {
-    this.reconnects += 1;
-    return Promise.resolve(null);
+  public async reconnectToStream(): Promise<null> {
+    this.reconnects += COUNT_INCREMENT;
+    return await Promise.resolve(null);
   }
 }

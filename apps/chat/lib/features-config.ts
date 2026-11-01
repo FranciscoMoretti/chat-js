@@ -1,5 +1,5 @@
-import type { LucideIcon } from "lucide-react";
 import { Brain, Eye, FileText, Image, Mic, Zap } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 interface FeatureConfig {
   category: "capability" | "input" | "output";
@@ -11,7 +11,7 @@ interface FeatureConfig {
   order: number;
 }
 
-export const AVAILABLE_FEATURES: Record<string, FeatureConfig> = {
+const AVAILABLE_FEATURES: Record<string, FeatureConfig> = {
   audioInput: {
     category: "input",
     description: "Supports audio input",
@@ -78,7 +78,11 @@ export const AVAILABLE_FEATURES: Record<string, FeatureConfig> = {
 } as const;
 
 // Get only enabled features
-export const getEnabledFeatures = () =>
+const getEnabledFeatures = (): FeatureConfig[] =>
   Object.values(AVAILABLE_FEATURES)
-    .filter((feature) => feature.enabled)
-    .toSorted((left, right) => left.order - right.order);
+    .filter((feature: { readonly enabled: boolean }) => feature.enabled)
+    .toSorted(
+      (left: { readonly order: number }, right: { readonly order: number }) =>
+        left.order - right.order
+    );
+export { AVAILABLE_FEATURES, getEnabledFeatures };

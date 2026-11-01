@@ -1,0 +1,19 @@
+{
+  "envRequirements": [{ "options": [["TAVILY_API_KEY"]] }],
+  "id": "tavily-search",
+  "kind": "tool",
+  "requiresTools": [],
+  "slot": "webSearch",
+  "tools": [
+    {
+      "composer": {
+        "icon": "Globe",
+        "name": "Web Search",
+        "shortName": "Search"
+      },
+      "rendererExport": "WebSearchRenderer",
+      "toolExport": "webSearch"
+    }
+  ],
+  "contractVersion": 1
+}

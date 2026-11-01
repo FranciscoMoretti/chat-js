@@ -4,13 +4,17 @@ declare global {
   type Bridges = typeof electronAuthClient.$Infer.Bridges;
   type ElectronRendererAuthState =
     | {
-        status: "idle";
-        message: null;
+        readonly status: "idle";
+        readonly message: null;
       }
     | {
-        status: "awaiting-browser" | "finishing" | "timed-out" | "error";
-        message: string;
-        detail?: string | null;
+        readonly status:
+          | "awaiting-browser"
+          | "finishing"
+          | "timed-out"
+          | "error";
+        readonly message: string;
+        readonly detail?: string | null;
       };
   interface Window extends Bridges {
     electronAPI?: {

@@ -1,12 +1,12 @@
 import { describe, expect, test } from "bun:test";
 
 import { Chat } from "@ai-sdk/react";
-import type { UIMessage } from "ai";
 
-import { ThreadRunChat } from "../src/ai-sdk-run-chat";
-import type { ThreadRunSpec } from "../src/ai-sdk-run-chat";
 import { ControlledTransport } from "./support/run-chat-controlled-transport";
 import { TestRunHost } from "./support/test-run-host";
+import { ThreadRunChat } from "#thread-source/ai-sdk-run-chat";
+import type { ThreadRunSpec } from "#thread-source/ai-sdk-run-chat";
+import type { UIMessage } from "ai";
 
 const userMessage = (): UIMessage => ({
   id: "user-1",
@@ -21,7 +21,9 @@ const createSpec = (): ThreadRunSpec => ({
   siblingOrder: 0,
 });
 
-const emitRichResponse = (transport: ControlledTransport) => {
+const emitRichResponse = (
+  transport: Readonly<Pick<ControlledTransport, "emit" | "finish">>
+): void => {
   transport.emit(
     { messageId: "assistant-1", type: "start" },
     { id: "reasoning-1", type: "reasoning-start" },
@@ -35,7 +37,10 @@ const emitRichResponse = (transport: ControlledTransport) => {
   transport.finish();
 };
 
-const waitFor = async (predicate: () => boolean, attemptsRemaining = 500) => {
+const waitFor = async (
+  predicate: () => boolean,
+  attemptsRemaining = 500
+): Promise<void> => {
   if (predicate()) {
     return;
   }
@@ -43,17 +48,17 @@ const waitFor = async (predicate: () => boolean, attemptsRemaining = 500) => {
     throw new Error("Timed out waiting for request");
   }
   await Bun.sleep(1);
-  return waitFor(predicate, attemptsRemaining - 1);
+  await waitFor(predicate, attemptsRemaining - 1);
 };
 
-describe("ThreadRunChat", () => {
-  test("matches the AI SDK React Chat reducer for one response", async () => {
+describe("ThreadRunChat", (): void => {
+  test("matches the AI SDK React Chat reducer for one response", async (): Promise<void> => {
     const spec = createSpec();
     const standardTransport = new ControlledTransport();
     const threadTransport = new ControlledTransport();
     const input = userMessage();
     const standardChat = new Chat<UIMessage>({
-      generateId: () => "client-response",
+      generateId: (): string => "client-response",
       id: "standard-chat",
       transport: standardTransport,
     });
@@ -63,11 +68,16 @@ describe("ThreadRunChat", () => {
     const standardRequest = standardChat.sendMessage(input);
     const threadRequest = threadRunChat.start();
     await Bun.sleep(0);
-    expect(threadTransport.request?.messages).toEqual(
-      standardTransport.request?.messages
+    const threadRequestOptions = threadTransport.request;
+    const standardRequestOptions = standardTransport.request;
+    if (!threadRequestOptions || !standardRequestOptions) {
+      throw new Error("Both chat implementations must send a request");
+    }
+    expect(threadRequestOptions.messages).toEqual(
+      standardRequestOptions.messages
     );
-    expect(threadTransport.request?.messageId).toBe(
-      standardTransport.request?.messageId
+    expect(threadRequestOptions.messageId).toBe(
+      standardRequestOptions.messageId
     );
     emitRichResponse(standardTransport);
     emitRichResponse(threadTransport);
@@ -78,8 +88,7 @@ describe("ThreadRunChat", () => {
     );
     expect(host.status).toBe("ready");
   });
-
-  test("adopts the server response identity from the start chunk", async () => {
+  test("adopts the server response identity from the start chunk", async (): Promise<void> => {
     const spec = createSpec();
     const transport = new ControlledTransport();
     const input = userMessage();
@@ -98,21 +107,24 @@ describe("ThreadRunChat", () => {
     await request;
 
     expect(host.tree.getMessage("client-response")).toBeUndefined();
-    expect(host.tree.getMessage("server-id")?.id).toBe("server-id");
+    expect(host.tree.getMessage("server-id")).toMatchObject({
+      id: "server-id",
+    });
     expect(spec.messageId).toBe("server-id");
   });
-
-  test("reports a failed stream exactly once without adding a response", async () => {
+  test("reports a failed stream exactly once without adding a response", async (): Promise<void> => {
     const error = new Error("stream failed");
     const callbackErrors: Error[] = [];
     const spec = createSpec();
     const transport = new ControlledTransport();
     const host = new TestRunHost(transport, userMessage(), spec);
-    host.onError = (callbackError) => callbackErrors.push(callbackError);
+    host.onError = (callbackError: Readonly<Error>): void => {
+      callbackErrors.push(callbackError);
+    };
     const chat = new ThreadRunChat(host, spec);
 
     const request = chat.start();
-    await waitFor(() => transport.requests.length === 1);
+    await waitFor((): boolean => transport.requests.length === 1);
     transport.fail(error);
     await request;
 
@@ -121,16 +133,15 @@ describe("ThreadRunChat", () => {
     expect(host.status).toBe("error");
     expect(host.tree.getChildren(spec.parentMessageId)).toEqual([]);
   });
-
-  test("continues one response after an automatic tool follow-up", async () => {
+  test("continues one response after an automatic tool follow-up", async (): Promise<void> => {
     const spec = createSpec();
     const transport = new ControlledTransport();
     const host = new TestRunHost(transport, userMessage(), spec);
-    host.sendAutomaticallyWhen = () => transport.requests.length < 2;
+    host.sendAutomaticallyWhen = (): boolean => transport.requests.length < 2;
     const chat = new ThreadRunChat(host, spec);
 
     const request = chat.start();
-    await waitFor(() => transport.requests.length === 1);
+    await waitFor((): boolean => transport.requests.length === 1);
     transport.emit(
       { messageId: "assistant-1", type: "start" },
       {
@@ -150,8 +161,10 @@ describe("ThreadRunChat", () => {
     );
     transport.finish();
 
-    await waitFor(() => transport.requests.length === 2);
-    expect(transport.requests[1]?.options.messageId).toBe("assistant-1");
+    await waitFor((): boolean => transport.requests.length === 2);
+    expect(transport.requests.at(1)).toMatchObject({
+      options: { messageId: "assistant-1" },
+    });
     transport.emit(
       { messageId: "assistant-1", type: "start" },
       { id: "second", type: "text-start" },
@@ -164,20 +177,24 @@ describe("ThreadRunChat", () => {
 
     expect(transport.requests).toHaveLength(2);
     expect(
-      host.tree.getChildren(spec.parentMessageId).map(({ id }) => id)
+      host.tree
+        .getChildren(spec.parentMessageId)
+        .map(({ id }: Readonly<Pick<UIMessage, "id">>): string => id)
     ).toEqual(["assistant-1"]);
-    expect(host.tree.getMessage("assistant-1")?.parts).toEqual([
-      expect.objectContaining({
-        output: { temperature: 22 },
-        state: "output-available",
-        toolCallId: "tool-1",
-        type: "dynamic-tool",
-      }),
-      expect.objectContaining({
-        text: "It is 22 degrees.",
-        type: "text",
-      }),
-    ]);
+    expect(host.tree.getMessage("assistant-1")).toMatchObject({
+      parts: [
+        expect.objectContaining({
+          output: { temperature: 22 },
+          state: "output-available",
+          toolCallId: "tool-1",
+          type: "dynamic-tool",
+        }),
+        expect.objectContaining({
+          text: "It is 22 degrees.",
+          type: "text",
+        }),
+      ],
+    });
     expect(host.status).toBe("ready");
   });
 });

@@ -1,3 +1,4 @@
-import { defineResearchAgent } from "@/tools/chatjs/deep-research/agent";
+// ChatJS source: deep-research. Ownership: chatjs/tools/deep-research/chatjs.json.
+import { defineResearchAgent } from "@/chatjs/tools/deep-research/agent";
 
 export default defineResearchAgent("research");

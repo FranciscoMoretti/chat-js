@@ -1,12 +1,14 @@
 "use client";
 
+import { Compartment, EditorState, Transaction } from "@codemirror/state";
+import React, { memo, useEffect, useRef } from "react";
+import { EditorView } from "@codemirror/view";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import type { ViewUpdate } from "@codemirror/view";
 import { javascript } from "@codemirror/lang-javascript";
 import { python } from "@codemirror/lang-python";
-import { Compartment, EditorState, Transaction } from "@codemirror/state";
 import { oneDark } from "@codemirror/theme-one-dark";
-import { EditorView } from "@codemirror/view";
 import { basicSetup } from "codemirror";
-import { memo, useEffect, useRef } from "react";
 
 interface EditorProps {
   content: string;
@@ -18,7 +20,7 @@ interface EditorProps {
   status: "streaming" | "idle";
 }
 
-const getLanguageExtension = (language: string) => {
+const getLanguageExtension = (language: string): ReturnType<typeof python> => {
   switch (language) {
     case "typescript": {
       return javascript({ jsx: false, typescript: true });
@@ -43,15 +45,15 @@ const PureCodeEditor = ({
   onSaveContent,
   isReadonly,
   language = "python",
-}: EditorProps) => {
+}: ReadonlyNativeSurface<EditorProps>): React.JSX.Element => {
   const containerRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<EditorView | null>(null);
 
   const configuration = useRef(new Compartment());
 
-  useEffect(() => {
+  useEffect((): (() => void) | undefined => {
     if (!containerRef.current) {
-      return;
+      return undefined;
     }
     const view = new EditorView({
       parent: containerRef.current,
@@ -60,34 +62,41 @@ const PureCodeEditor = ({
       }),
     });
     editorRef.current = view;
-    return () => {
+    return (): void => {
       view.destroy();
       editorRef.current = null;
     };
   }, []);
 
-  useEffect(() => {
+  useEffect((): void => {
     editorRef.current?.dispatch({
       effects: configuration.current.reconfigure([
         getLanguageExtension(language),
-        EditorView.editable.of(!isReadonly),
+        EditorView.editable.of(!(isReadonly === true)),
         EditorState.readOnly.of(Boolean(isReadonly)),
-        EditorView.updateListener.of((update) => {
-          if (
-            update.docChanged &&
-            !isReadonly &&
-            update.transactions.some(
-              (transaction) => !transaction.annotation(Transaction.remote)
-            )
-          ) {
-            onSaveContent(update.state.doc.toString(), true);
+        EditorView.updateListener.of(
+          (
+            update: ReadonlyNativeSurface<
+              Pick<ViewUpdate, "docChanged" | "state" | "transactions">
+            >
+          ): void => {
+            if (
+              update.docChanged &&
+              isReadonly !== true &&
+              update.transactions.some(
+                (transaction: ReadonlyNativeSurface<Transaction>): boolean =>
+                  transaction.annotation(Transaction.remote) !== true
+              )
+            ) {
+              onSaveContent(update.state.doc.toString(), true);
+            }
           }
-        }),
+        ),
       ]),
     });
   }, [onSaveContent, isReadonly, language]);
 
-  useEffect(() => {
+  useEffect((): void => {
     const view = editorRef.current;
     if (!view) {
       return;
@@ -106,7 +115,10 @@ const PureCodeEditor = ({
   );
 };
 
-const areEqual = (prevProps: EditorProps, nextProps: EditorProps) => {
+const areEqual = (
+  prevProps: ReadonlyNativeSurface<EditorProps>,
+  nextProps: ReadonlyNativeSurface<EditorProps>
+): boolean => {
   if (prevProps.currentVersionIndex !== nextProps.currentVersionIndex) {
     return false;
   }

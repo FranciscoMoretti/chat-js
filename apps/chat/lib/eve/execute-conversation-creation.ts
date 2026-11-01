@@ -1,65 +1,61 @@
-import { z } from "zod";
+import { CreationRejectedError } from "@/lib/creation-rejected-error";
+import { reconcileEveWorkspaceTurn } from "./reconcile-workspace-turn";
+import { EveWorkspaceBusyError } from "../db/eve-workspace-turns";
+import { EveForkBoundaryError } from "./fork-boundary-error";
+import {
+  dispatchEveOnce,
+  EveDispatchUnknownError,
+} from "@/lib/db/eve-dispatch";
 
 import {
   CreationConflictError,
-  CreationProjectNotFoundError,
   createEveConversation,
-  getEveConversation,
   getEveCreation,
-} from "../db/eve-queries";
-import { createModuleLogger } from "../logger";
-import { waitForEveCheckpoint } from "./checkpoint-readiness";
-import type { createConversationInput, EveForkInput } from "./contracts";
-import { eveConversationTitleFallback } from "./conversation-title";
-import { eveCreationContentHash } from "./creation-content-hash";
+} from "@/lib/db/eve-queries";
 import {
   EveCreationTransportError,
   requestEveCreation,
 } from "./creation-transport";
+import type { createConversationInput } from "./contracts";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import type { UserContent } from "ai";
+import { createModuleLogger } from "@/lib/logger";
+import { eveConversationTitleFallback } from "./conversation-title";
+import { eveCreationContentHash } from "./creation-content-hash";
 import { eveMessageFileKeys } from "./file-references";
-import { eveMessageDeliveryMetadata } from "./message-delivery";
 import { eveMessageTitle } from "./message-input";
 import { loadEveModelDefinition } from "./model-selection";
 import { prepareEveMessage } from "./prepare-message";
+import { z } from "zod";
 
-const logger = createModuleLogger("eve/creation");
-
-const resolveFork = async (
-  ownerId: string,
-  input: EveForkInput | undefined
-) => {
-  if (!input) {
-    return;
-  }
-  const source = await getEveConversation(ownerId, input.conversationId);
-  if (!source?.sessionId || source.state !== "bound") {
-    return Response.json(
-      { creationRejected: true, error: "Source conversation not found." },
-      { status: 404 }
-    );
-  }
-  if (input.beforeMessageId) {
-    return {
-      beforeMessageId: input.beforeMessageId,
-      sessionId: source.sessionId,
-    };
-  }
-  return {
-    beforeTurnId: input.beforeTurnId,
-    sessionId: source.sessionId,
-    ...(input.checkpointId ? { checkpointId: input.checkpointId } : {}),
-  };
+type PreparedContentPart<Part> = {
+  readonly [Field in keyof Part]: Field extends "type" ? Part[Field] : unknown;
 };
 
-const creationFailure = (cause: unknown) => {
-  if (cause instanceof CreationProjectNotFoundError) {
+const logger = createModuleLogger("eve/creation");
+const SESSION_DISPATCH_TIMEOUT_MS = 30_000;
+const MINIMUM_SESSION_IDENTIFIER_LENGTH = 1;
+const creationFailure = (cause: unknown): Response => {
+  if (cause instanceof EveWorkspaceBusyError) {
+    return Response.json(
+      { code: "workspace_busy", error: cause.message },
+      { status: 409 }
+    );
+  }
+  if (cause instanceof EveForkBoundaryError) {
+    return Response.json(
+      { creationRejected: true, error: cause.message },
+      { status: 400 }
+    );
+  }
+  if (cause instanceof CreationRejectedError) {
     return Response.json(
       {
-        code: "project_not_found",
+        code: cause.code,
         creationRejected: true,
         error: cause.message,
       },
-      { status: 404 }
+      { status: cause.status }
     );
   }
   return Response.json(
@@ -74,88 +70,46 @@ const creationFailure = (cause: unknown) => {
   );
 };
 
-/** Executes an admitted, journaled command. Retries retain the reservation and native operation identity. */
+/**
+ * Executes an admitted creation command while retaining its journaled operation identity.
+ * @param {string} ownerId Owner used to resolve source conversations and reserve the creation.
+ * @param {z.infer<typeof createConversationInput>} input Immutable original creation request retained when dispatch is unresolved.
+ * @param {Awaited<ReturnType<typeof prepareEveMessage>> | undefined} initialPreparedMessage Optional prepared message reused without preparing it again.
+ * @returns {Promise<Response>} The bound conversation, or an error response that leaves unresolved creation recoverable.
+ */
 export const executeEveConversationCreation = async (
   ownerId: string,
-  input: z.infer<typeof createConversationInput>,
-  guestReservationId?: string,
-  initialPreparedMessage?: Awaited<ReturnType<typeof prepareEveMessage>>
-) => {
+  input: ReadonlyNativeSurface<z.infer<typeof createConversationInput>>,
+  initialPreparedMessage?:
+    | string
+    | readonly PreparedContentPart<UserContent[number]>[]
+): Promise<Response> => {
   let preparedMessage = initialPreparedMessage;
   try {
-    let fork: Exclude<Awaited<ReturnType<typeof resolveFork>>, Response>;
-    if (!(await getEveCreation(ownerId, input.operationId))) {
-      const resolved = await resolveFork(ownerId, input.fork);
-      if (resolved instanceof Response) {
-        return resolved;
-      }
-      fork = resolved;
+    const existing = await getEveCreation(ownerId, input.operationId);
+    if (
+      (existing?.state !== "bound" || input.fork) &&
+      preparedMessage === undefined
+    ) {
+      await loadEveModelDefinition(input.modelId);
+      preparedMessage = await prepareEveMessage(input.message, input.modelId);
     }
     const binding = await createEveConversation(
       ownerId,
       input.operationId,
       eveMessageTitle(input.message),
       async (operationId) => {
-        const existing = await requestEveCreation(
-          "lookup",
-          ownerId,
-          `/eve/chat/v1/operation/${operationId}`,
-          {
-            signal: AbortSignal.timeout(15_000),
-          }
-        );
-        if (existing.ok) {
-          return z
-            .object({ sessionId: z.string().min(1) })
-            .parse(await existing.json()).sessionId;
-        }
-        const lookupFailure = z
-          .object({ code: z.literal("eve_operation_not_found") })
-          .safeParse(await existing.json().catch(() => null));
-        if (existing.status !== 404 || !lookupFailure.success) {
-          throw new EveCreationTransportError("lookup", existing.status);
-        }
-        // Accepted operations recover independently of their former source.
-        if (input.fork && !fork) {
-          const resolved = await resolveFork(ownerId, input.fork);
-          if (resolved instanceof Response) {
-            throw new CreationConflictError("Source conversation not found.");
-          }
-          fork = resolved;
-        }
-        if (fork && "beforeTurnId" in fork && fork.beforeTurnId) {
-          await waitForEveCheckpoint(
-            ownerId,
-            fork.sessionId,
-            fork.beforeTurnId,
-            fork.checkpointId
-          );
-        }
-        // Uncertain reservations may have reached Eve before their reply was lost.
-        // Reuse the same operation with the original input; never dispatch an empty turn.
-        if (preparedMessage === undefined) {
-          await loadEveModelDefinition(input.modelId);
-          preparedMessage = await prepareEveMessage(
-            input.message,
-            input.modelId
-          );
-        }
         const result = await requestEveCreation(
           "dispatch",
           ownerId,
           "/eve/chat/v1/session",
           {
             body: JSON.stringify({
-              fork,
-              message: preparedMessage,
-              messageMetadata: eveMessageDeliveryMetadata(
-                input.operationId,
-                input.selectedTool
-              ),
+              ...(input.fork ? { seed: true } : { message: preparedMessage }),
               operationId,
             }),
             method: "POST",
-            signal: AbortSignal.timeout(30_000),
+            signal: AbortSignal.timeout(SESSION_DISPATCH_TIMEOUT_MS),
           },
           input.modelId,
           input.selectedTool
@@ -164,24 +118,66 @@ export const executeEveConversationCreation = async (
           throw new EveCreationTransportError("dispatch", result.status);
         }
         return z
-          .object({ sessionId: z.string().min(1) })
+          .object({
+            sessionId: z.string().min(MINIMUM_SESSION_IDENTIFIER_LENGTH),
+          })
           .parse(await result.json()).sessionId;
       },
       {
         fileKeys: eveMessageFileKeys(input.message),
         fork: input.fork,
         forkKind: input.forkKind,
-        guestReservationId,
         initialContentHash: eveCreationContentHash(
           input.message,
           input.selectedTool
         ),
         initialModelId: input.modelId,
-        initialProjectId: input.projectId,
         initialRequest: input,
         initialTitle: eveConversationTitleFallback(input.message),
       }
     );
+    if (input.fork) {
+      await reconcileEveWorkspaceTurn(ownerId, binding.id, {
+        waitForSeed: true,
+      });
+      await dispatchEveOnce(
+        {
+          ownerId,
+          operationId: input.operationId,
+          conversationId: binding.id,
+          kind: "send",
+          intent: {
+            sessionId: binding.sessionId,
+            message: input.message,
+            modelId: input.modelId ?? null,
+            selectedTool: input.selectedTool ?? null,
+          },
+        },
+        async () => {
+          const result = await requestEveCreation(
+            "dispatch",
+            ownerId,
+            `/eve/chat/v1/session/${binding.sessionId}`,
+            {
+              body: JSON.stringify({ message: preparedMessage }),
+              method: "POST",
+              signal: AbortSignal.timeout(SESSION_DISPATCH_TIMEOUT_MS),
+            },
+            input.modelId,
+            input.selectedTool
+          );
+          if (!result.ok) {
+            throw new EveDispatchUnknownError();
+          }
+          return z
+            .object({
+              sessionId: z.literal(binding.sessionId),
+              deliveryId: z.string().min(1),
+            })
+            .parse(await result.json());
+        }
+      );
+    }
     return Response.json(binding);
   } catch (error) {
     logger.error(

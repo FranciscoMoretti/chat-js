@@ -1,25 +1,27 @@
-import type { ToolContext } from "eve/tools";
-
 import {
   reserveEveGeneratedFile,
   writeEveGeneratedFile,
-} from "../db/eve-files";
-import { createFileId, uploadFileAtKey } from "../file-storage";
-import type { FileUploader } from "../file-storage";
+} from "@/lib/db/eve-files";
+import { createFileId, uploadFileAtKey } from "@/lib/file-storage";
+import type { FileUploader } from "@/lib/file-storage";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import type { ToolContext } from "eve/tools";
 import { resolveEveConversationScope } from "./conversation-scope";
 
 export const eveGeneratedFileUploader =
   (
-    context: Pick<ToolContext, "abortSignal"> & {
-      session?: {
-        id: string;
-        auth: {
-          initiator?: {
-            principalId: string;
-          } | null;
+    context: ReadonlyNativeSurface<
+      Pick<ToolContext, "abortSignal"> & {
+        readonly session?: {
+          readonly id: string;
+          readonly auth: {
+            readonly initiator?: {
+              readonly principalId: string;
+            } | null;
+          };
         };
-      };
-    }
+      }
+    >
   ): FileUploader =>
   async (filename, body, contentType) => {
     if (!context.session) {

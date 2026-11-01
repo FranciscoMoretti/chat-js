@@ -1,14 +1,20 @@
 "use client";
 
 import { PanelLeft } from "lucide-react";
+
 import Image from "next/image";
 
 import { InternalLink } from "@/components/internal-link";
+import React from "react";
+
+import type { JSX as ReactJSX } from "react";
+
 import { SidebarToggle } from "@/components/sidebar-toggle";
-import { useSidebar } from "@/components/ui/sidebar";
 import { config } from "@/lib/config";
 
-export const SidebarTopRow = () => {
+import { useSidebar } from "@/components/ui/sidebar";
+
+export const SidebarTopRow = (): ReactJSX.Element => {
   const { isMobile, openMobile, setOpenMobile, state, toggleSidebar } =
     useSidebar();
   const isExpanded = isMobile ? openMobile : state === "expanded";

@@ -2,17 +2,22 @@ import { z } from "zod";
 
 import { eveMessageInput } from "./message-input";
 import type { EveMessageInput } from "./message-input";
+import type { ReadonlyEveMessageInput } from "./readonly-message-types";
 
-export const draftAttachment = z.object({
+const HEX_RADIX = 16;
+const HEX_BYTE_WIDTH = 2;
+
+const draftAttachment = z.object({
   contentType: z.enum(["image/jpeg", "image/png", "application/pdf"]),
   digest: z.string(),
   name: z.string(),
   url: z.string(),
 });
-export type DraftAttachment = z.infer<typeof draftAttachment>;
 
-export const restoreDraft = (
-  message: EveMessageInput
+type DraftAttachment = z.infer<typeof draftAttachment>;
+
+const restoreDraft = (
+  message: ReadonlyEveMessageInput
 ): {
   text: string;
   attachments: DraftAttachment[];
@@ -36,11 +41,11 @@ export const restoreDraft = (
   };
 };
 
-export const draftMessage = (
+const draftMessage = (
   text: string,
-  attachments: DraftAttachment[]
+  attachments: readonly Readonly<DraftAttachment>[]
 ): EveMessageInput => {
-  if (!attachments.length) {
+  if (attachments.length === 0) {
     return eveMessageInput.parse(text);
   }
   return eveMessageInput.parse([
@@ -54,8 +59,12 @@ export const draftMessage = (
   ]);
 };
 
-export const attachmentDigest = async (bytes: ArrayBuffer) =>
+const attachmentDigest = async (
+  bytes: Readonly<ArrayBuffer>
+): Promise<string> =>
   Array.from(
     new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)),
-    (byte) => byte.toString(16).padStart(2, "0")
+    (byte) => byte.toString(HEX_RADIX).padStart(HEX_BYTE_WIDTH, "0")
   ).join("");
+export { attachmentDigest, draftAttachment, draftMessage, restoreDraft };
+export type { DraftAttachment };

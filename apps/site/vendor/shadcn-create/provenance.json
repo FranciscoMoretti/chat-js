@@ -1,0 +1,7 @@
+{
+  "repository": "https://github.com/shadcn-ui/ui",
+  "commit": "481d523374745e77d0cf9c53a4115ab5dd7c8481",
+  "license": "MIT",
+  "cli": "4.22.1",
+  "source": "apps/v4/app/(app)/(create)"
+}

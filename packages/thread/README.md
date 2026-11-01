@@ -2,7 +2,7 @@
 
 Build branching AI SDK conversations without mounting one `useChat` hook per branch.
 
-`useThread` preserves the `useChat` interface for the selected path and adds a `tree` namespace for navigation, sibling responses, concurrent runs, and run-specific cancellation.
+`useThread` exposes the current `useChat` helpers for the selected path and adds a `tree` namespace for navigation, sibling responses, concurrent runs, and run-specific cancellation. Use `addToolOutput` to provide client tool results. The deprecated `addToolResult` alias is not exposed.
 
 ## Package Layers
 
@@ -11,6 +11,12 @@ Build branching AI SDK conversations without mounting one `useChat` hook per bra
 `@chat-js/thread/react` is the React adapter. It exports `useThread` and owns React subscriptions, render throttling, and hook lifecycle behavior. The core entry point does not import React.
 
 `AbstractThread` exposes `getSnapshot()` and `subscribe()`, so future Vue, Svelte, or vanilla adapters can observe the same controller without changing the core.
+
+## Message types
+
+`Thread<TMessage>`, `createThread<TMessage>`, and `useThread<TMessage>` preserve the metadata, data-part, and tool types of AI SDK's `UIMessage<Metadata, Data, Tools>`. Messages created or streamed by the SDK retain its normal string IDs, message roles, and part arrays.
+
+A subtype with extra required top-level fields, a narrower ID or role, or a fixed part tuple is normalized to that SDK shape in thread and hook results. Earlier declarations promised those restrictions even though the runtime did not construct them. Store application-specific values in typed metadata or data parts instead. Existing `UIMessage<Metadata, Data, Tools>` specializations and `new Thread()` keep their behavior and inference.
 
 ## Install
 

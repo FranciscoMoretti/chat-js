@@ -5,12 +5,13 @@ import {
   retireEveSessionForDeletion,
 } from "./retire-session";
 
-vi.mock("./reconcile-usage", () => ({
-  reconcileEveSubagentUsage: vi.fn(() => Promise.resolve(true)),
+vi.mock("./reconcile-subagent-usage", () => ({
+  reconcileEveSubagentUsage: vi.fn().mockResolvedValue(true),
 }));
 
 const mocks = vi.hoisted(() => ({
   begin: vi.fn(),
+  check: vi.fn(),
   client: vi.fn(),
   deleting: vi.fn(),
   env: {
@@ -20,6 +21,7 @@ const mocks = vi.hoisted(() => ({
     VERCEL_ENV: "",
     WORKFLOW_POSTGRES_URL: "postgres://localhost/fixture",
   },
+  provider: vi.fn(),
   reset: vi.fn(),
   retireMany: vi.fn(),
   snapshot: vi.fn(),
@@ -31,26 +33,34 @@ vi.mock("../db/eve-queries", () => ({
   beginEveConversationDeletion: mocks.begin,
   getDeletingEveConversationForSession: mocks.deleting,
 }));
-vi.mock("../db/eve-native-purge", () => ({
-  retireEveNativeSessions: mocks.retireMany,
+vi.mock("./lifecycle/provider", () => ({
+  createEveLifecycleProvider: mocks.provider,
 }));
 vi.mock("./usage", () => ({ ingestEveUsage: mocks.usage }));
 vi.mock("eve/client", () => ({
   Client: class {
-    constructor(options: unknown) {
+    public constructor(options: unknown) {
       mocks.client(options);
     }
-    sessions = {
+    public sessions = {
       attach: () => ({ reset: mocks.reset, snapshot: mocks.snapshot }),
     };
   },
 }));
 beforeEach(() => {
   vi.clearAllMocks();
+  mocks.check.mockReset();
+  mocks.env.VERCEL = "";
+  mocks.env.VERCEL_ENV = "";
+  mocks.provider.mockReturnValue({
+    check: mocks.check,
+    retire: mocks.retireMany,
+    supported: true,
+  });
   mocks.deleting.mockResolvedValue({ id: "conversation" });
   mocks.reset.mockResolvedValue({ status: "reset" });
   mocks.snapshot.mockResolvedValue({ events: [{ type: "session.completed" }] });
-  mocks.usage.mockResolvedValue(undefined);
+  mocks.usage.mockResolvedValue(true);
 });
 
 it("retires before reading and settling the final snapshot, including retries", async () => {
@@ -70,7 +80,7 @@ it("retires before reading and settling the final snapshot, including retries", 
 });
 
 it("rejects non-deleting or foreign sessions before native access", async () => {
-  mocks.deleting.mockResolvedValue(undefined);
+  mocks.deleting.mockResolvedValue(null);
   await expect(retireEveSessionForDeletion("owner", "session")).rejects.toThrow(
     "not pending deletion"
   );
@@ -86,16 +96,14 @@ it("refuses erasure when retirement or cost settlement is incomplete", async () 
   mocks.snapshot.mockResolvedValue({
     events: [{ type: "step.completed" }, { type: "session.completed" }],
   });
-  mocks.usage.mockImplementation((_owner, _session, event) =>
-    Promise.resolve(event.type === "step.completed" ? false : undefined)
-  );
+  mocks.usage.mockResolvedValueOnce(false);
   await expect(retireEveSessionForDeletion("owner", "session")).rejects.toThrow(
     "Usage must be reconciled"
   );
 });
 
 it("does not enter native family cleanup for an inaccessible family or a missing session binding", async () => {
-  mocks.begin.mockResolvedValueOnce(undefined);
+  mocks.begin.mockResolvedValueOnce(null);
   expect(
     await retireEveFamilyForDeletion("stranger", "conversation")
   ).toBeUndefined();
@@ -113,9 +121,32 @@ it("does not enter native family cleanup for an inaccessible family or a missing
 it("rejects PostgreSQL retirement on Vercel before changing application access", async () => {
   mocks.env.VERCEL = "1";
   mocks.env.VERCEL_ENV = "production";
+  mocks.provider.mockReturnValue({
+    reason: "unverified erasure",
+    supported: false,
+    world: "vercel",
+  });
   await expect(retireEveFamilyForDeletion("owner", "root")).rejects.toThrow(
-    "requires the PostgreSQL workflow backend"
+    "unverified erasure"
   );
+  expect(mocks.provider).toHaveBeenCalledWith({
+    databaseUrl: mocks.env.WORKFLOW_POSTGRES_URL,
+    world: "vercel",
+  });
+  expect(mocks.check).not.toHaveBeenCalled();
   expect(mocks.begin).not.toHaveBeenCalled();
   expect(mocks.retireMany).not.toHaveBeenCalled();
 });
+it("checks provider compatibility before revoking family access", async () => {
+  mocks.check.mockRejectedValueOnce(new Error("workflow fences missing"));
+  await expect(retireEveFamilyForDeletion("owner", "root")).rejects.toThrow(
+    "workflow fences missing"
+  );
+  expect(mocks.begin).not.toHaveBeenCalled();
+  expect(mocks.retireMany).not.toHaveBeenCalled();
+  expect(mocks.reset).not.toHaveBeenCalled();
+});
+
+vi.mock("./reconcile-workspace-turn", () => ({
+  reconcileEveWorkspaceTurn: vi.fn(),
+}));

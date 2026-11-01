@@ -1,63 +1,115 @@
-/* oxlint-disable eslint/no-await-in-loop -- Assemble each fixture before starting the native worker. */
-/* oxlint-disable promise/prefer-await-to-then, promise/prefer-await-to-callbacks -- CommonJS-compatible CLI entry point reports rejected startup work. */
 /** Exercise the production workflow in a real EVE worker with deterministic models and storage. */
 import { spawn } from "node:child_process";
 import { once } from "node:events";
-import { cp, mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
+import {
+  cp,
+  mkdir,
+  mkdtemp,
+  readFile,
+  readdir,
+  rm,
+  symlink,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-const modelSource = (responder: string) => `import { defineAgent } from "eve";
+const modelSource = (
+  responder: string
+): string => `import { defineAgent } from "eve";
 import { mockModel } from "eve/evals";
 export default defineAgent({ description: "Research fixture", defaultTools: false, tool: false, modelContextWindowTokens: 128000, model: mockModel(${responder}) });`;
 
-const main = async () => {
+const hasEveBin = (value: unknown): value is { bin: { eve: string } } =>
+  typeof value === "object" &&
+  value !== null &&
+  "bin" in value &&
+  typeof value.bin === "object" &&
+  value.bin !== null &&
+  "eve" in value.bin &&
+  typeof value.bin.eve === "string";
+
+const main = async (): Promise<void> => {
   const app = path.resolve(path.dirname(process.argv[1]), "..");
+  const workspaceNodeModules = path.resolve(app, "../../node_modules");
+  const evePackageJson = fileURLToPath(import.meta.resolve("eve/package.json"));
+  const evePackage: unknown = JSON.parse(
+    await readFile(evePackageJson, "utf-8")
+  );
+  if (!hasEveBin(evePackage)) {
+    throw new Error("The resolved Eve package does not declare its CLI bin.");
+  }
+  const eveBin = path.resolve(path.dirname(evePackageJson), evePackage.bin.eve);
   const fixture = await mkdtemp(path.join(tmpdir(), "chatjs-native-research-"));
-  const write = async (name: string, content: string) => {
+  const write = async (name: string, content: string): Promise<void> => {
     const target = path.join(fixture, name);
     await mkdir(path.dirname(target), { recursive: true });
     await writeFile(target, content);
   };
+  const fixtureModules = path.join(fixture, "node_modules");
+  await mkdir(fixtureModules);
+  const workspaceDependencies = await readdir(workspaceNodeModules);
+  await Promise.all(
+    workspaceDependencies
+      .filter((name) => name !== "eve")
+      .map(async (name) => {
+        await symlink(
+          path.join(workspaceNodeModules, name),
+          path.join(fixtureModules, name)
+        );
+      })
+  );
   await symlink(
-    path.join(app, "node_modules"),
-    path.join(fixture, "node_modules"),
+    path.dirname(evePackageJson),
+    path.join(fixtureModules, "eve"),
     "dir"
   );
-  for (const name of [
-    "agent/tools/deepResearch.ts",
-    "agent/hooks/billing.ts",
-    "lib/eve/usage.ts",
-    "agent/subagents/researcher/tools/webSearch.ts",
-    "tools/chatjs/deep-research/workflow.ts",
-    "tools/chatjs/deep-research/schemas.ts",
-    "tools/chatjs/deep-research/search-updates.ts",
-    "tools/platform/research-updates-schema.ts",
-    "lib/eve/tool-result.ts",
-    "lib/eve/document-contracts.ts",
-    "lib/file-url.ts",
-    "lib/eve/tool-model-output.ts",
-    "tools/chatjs/deep-research/prompts.ts",
-  ]) {
-    await mkdir(path.dirname(path.join(fixture, name)), { recursive: true });
-    await cp(path.join(app, name), path.join(fixture, name));
-  }
-  for (const role of [
-    "researchPlanner",
-    "researcher",
-    "researchCompressor",
-    "researchWriter",
-  ]) {
-    await write(
-      `agent/subagents/${role}/hooks/billing.ts`,
-      'export { default } from "../../../hooks/billing";'
-    );
-  }
+  await Promise.all(
+    `agent/tools/deepResearch.ts agent/hooks/billing.ts lib/eve/usage.ts lib/eve/session-identity.ts
+agent/subagents/researcher/tools/webSearch.ts
+ chatjs/tools/deep-research/schemas.ts chatjs/tools/deep-research/search-updates.ts
+ tools/platform/research-updates-schema.ts lib/eve/tool-result.ts chatjs/core/documents/contracts.ts
+ lib/file-url.ts lib/eve/tool-model-output.ts lib/eve/copy-seed.ts chatjs/tools/deep-research/prompts.ts`
+      .split(/\s+/u)
+      .map(async (name) => {
+        await mkdir(path.dirname(path.join(fixture, name)), {
+          recursive: true,
+        });
+        await cp(path.join(app, name), path.join(fixture, name));
+      })
+  );
+  await Promise.all(
+    "researchPlanner researcher researchCompressor researchWriter"
+      .split(" ")
+      .map(async (role) => {
+        await write(
+          `agent/subagents/${role}/hooks/billing.ts`,
+          'export { default } from "../../../hooks/billing";'
+        );
+      })
+  );
   const ledger = path.join(fixture, "ledger");
   await write(
     "agent/channels/eve.ts",
     `import { eveChannel } from "eve/channels/eve";
-export default eveChannel({ auth: () => ({ principalId: "owner", principalType: "user", authenticator: "fixture", attributes: {} }) });`
+import { parseEveCopySeed } from "../../lib/eve/copy-seed";
+const channel = eveChannel({
+  auth: () => ({ principalId: "owner", principalType: "user", authenticator: "chatjs-gateway", attributes: {} }),
+  resolveSeed: ({ auth, operationId }) => {
+    if (auth.principalId !== "owner" || operationId !== "accepted-copy") throw new Error("Unaccepted destination");
+    const seed = parseEveCopySeed({ attachments: "channel", messages: [
+      { role: "user", parts: [{ type: "text", text: "COPY_CONTEXT_SENTINEL" }] },
+      { role: "assistant", modelId: "gateway/copied-model", parts: [{ type: "dynamic-tool", toolName: "historicalOnly", input: {}, state: "output-available", output: "retained result", outputType: "text" }] },
+    ] });
+    return { ...seed, attachments: "channel" };
+  },
+});
+export default channel;`
+  );
+  await write(
+    "lib/eve/gateway-auth.ts",
+    'export const authenticateEveGateway = () => ({ principalId: "owner", principalType: "user", authenticator: "chatjs-gateway", attributes: {} });'
   );
   await write(
     "lib/db/eve-billing.ts",
@@ -69,13 +121,26 @@ export async function recordEveUsage(row) {
   return row.costUsd !== undefined;
 }`
   );
+  // This fixture covers workflow/search receipts, not gateway model accounting.
+  await write(
+    "lib/eve/model-accounting.ts",
+    "export const observeEveModelAccounting = () => {};"
+  );
+  await cp(
+    path.join(app, "lib/eve/accounting-log.ts"),
+    path.join(fixture, "lib/eve/accounting-log.ts")
+  );
+  await write(
+    "lib/logger.ts",
+    "export const createModuleLogger = () => ({ error: console.error });"
+  );
   await write(
     "lib/db/eve-subagents.ts",
     `import { mkdir, readFile, writeFile } from "node:fs/promises";
 const directory = ${JSON.stringify(path.join(fixture, "children"))};
 export async function getEveSubagent(owner, session) {
   try { return JSON.parse(await readFile(directory + "/" + session + ".json", "utf8")); }
-  catch (error) { if (error.code === "ENOENT") return; throw error; }
+  catch (error) { if (error.code === "ENOENT") return null; throw error; }
 }
 export async function registerEveSubagent(owner, parent, session, turn) {
   const ancestor = await getEveSubagent(owner, parent);
@@ -88,7 +153,7 @@ export async function registerEveSubagent(owner, parent, session, turn) {
   await write(
     "package.json",
     JSON.stringify({
-      dependencies: { eve: "npm:@chat-js/eve@0.61.0-chatjs.0" },
+      dependencies: { eve: `file:${path.dirname(evePackageJson)}` },
       private: true,
       type: "module",
     })
@@ -116,7 +181,7 @@ export async function registerEveSubagent(owner, parent, session, turn) {
 export const getEveConnectionOptions = () => ({ host: readFileSync(${JSON.stringify(path.join(fixture, "host"))}, "utf8") });`
   );
   await write(
-    "tools/chatjs/deep-research/steps.ts",
+    "chatjs/tools/deep-research/steps.ts",
     `
 export async function prepareResearch() {
   "use step";
@@ -125,9 +190,8 @@ export async function prepareResearch() {
 export async function saveResearchReport(ctx, report) {
   "use step";
   ctx.abortSignal.throwIfAborted();
-  return { ...report, documentId: ctx.callId, revisionId: "revision", date: "2026-09-28", kind: "text", status: "success", result: "Saved" };
+  return { document: { ...report, documentId: ctx.callId, revisionId: "revision", date: "2026-09-28", kind: "text", status: "success", result: "Saved" }, completedAt: 1 };
 }
-export async function researchCompletionTime() { "use step"; return 1; }
 `
   );
   await write(
@@ -136,7 +200,13 @@ export async function researchCompletionTime() { "use step"; return 1; }
 import { defineAgent } from "eve";
 import { mockModel } from "eve/evals";
 export default defineAgent({ defaultTools: false, modelContextWindowTokens: 128000,
-  model: mockModel(({toolResults}) => toolResults.some(r => r.name === "deepResearch") ? "Done" : { toolCalls: [{ name: "deepResearch", input: {} }] }),
+  model: mockModel(({toolResults, userMessages}) => {
+    if (userMessages.includes("COPY_CONTEXT_SENTINEL")) {
+      if (!toolResults.some(r => r.name === "historicalOnly" && r.output === "retained result")) throw new Error("Copied tool history missing");
+      return "Copied context retained";
+    }
+    return toolResults.some(r => r.name === "deepResearch") ? "Done" : { toolCalls: [{ name: "deepResearch", input: {} }] };
+  }),
 });`
   );
   await write(
@@ -151,30 +221,30 @@ export default defineAgent({ defaultTools: false, modelContextWindowTokens: 1280
  const output = !decision ? { research_brief: "Compare evidence", title: "Report" } :
  message.includes("Follow-up evidence") ? { complete: true, topics: [] } :
  message.includes("First evidence") ? { complete: false, topics: ["Follow-up topic"] } : { complete: false, topics: ["Initial topic"] };
- return { toolCalls: [{ name: "final_output", input: output }] };
+ return { toolCalls: [{ name: "eve__reply", input: output }] };
 }`)
   );
   await write(
     "agent/subagents/researcher/agent.ts",
     modelSource(`({lastUserMessage,toolResults}) => !toolResults.some(r => r.name === "webSearch")
  ? { toolCalls: [{ name: "webSearch", input: { query: "evidence" } }] }
- : { toolCalls: [{ name: "final_output", input: { findings: lastUserMessage?.includes("Follow-up topic") ? "Follow-up evidence https://example.test/two" : "First evidence https://example.test/one" } }] }`)
+ : { toolCalls: [{ name: "eve__reply", input: { findings: lastUserMessage?.includes("Follow-up topic") ? "Follow-up evidence https://example.test/two" : "First evidence https://example.test/one" } }] }`)
   );
   await write(
     "agent/subagents/researchCompressor/agent.ts",
     modelSource(
-      `({lastUserMessage}) => ({ toolCalls: [{ name: "final_output", input: { findings: lastUserMessage?.includes("Follow-up evidence") ? "Follow-up evidence" : "First evidence" } }] })`
+      `({lastUserMessage}) => ({ toolCalls: [{ name: "eve__reply", input: { findings: lastUserMessage?.includes("Follow-up evidence") ? "Follow-up evidence" : "First evidence" } }] })`
     )
   );
   await write(
     "agent/subagents/researchWriter/agent.ts",
     modelSource(`({lastUserMessage}) => {
  if (!lastUserMessage?.includes("First evidence") || !lastUserMessage?.includes("Follow-up evidence")) throw new Error("Lost findings");
- return { toolCalls: [{ name: "final_output", input: { title: "Report", content: "# Both rounds" } }] };
+ return { toolCalls: [{ name: "eve__reply", input: { title: "Report", content: "# Both rounds" } }] };
 }`)
   );
   await write(
-    "tools/chatjs/providers.ts",
+    "integrations/tools/providers.ts",
     `
 import { defineTool } from "eve/tools";
 import { z } from "zod";
@@ -185,7 +255,7 @@ const webSearch = defineTool({ description: "Fixture search", inputSchema: z.obj
    return { kind: "chatjs.tool-result", version: 1, status: "success", output: { result: input.query }, usage: { costUsd: 0.02 }, updates: [{ type: "web", toolCallId: ctx.callId, title: "Search complete", status: "completed", queries: [input.query], results: [{ title: "Evidence", url: "https://example.com", content: input.query, source: "web" }] }] };
  },
 });
-export const providers = { webSearch };`
+export const toolProviders = { webSearch };`
   );
   await write(
     "lib/config.ts",
@@ -213,11 +283,11 @@ export default [defineEval({ description: "adaptive native research", async test
   assert.equal(receipt.updates.filter(u => u.type === "web").length, 2);
   const client = new Client({ host: t.target.url });
   const root = await client.sessions.attach(turn.sessionId).snapshot();
-  const children = root.events.filter(e => e.type === "subagent.called");
+  const children = root.events.filter(e => e.type === "agent.started");
   assert.equal(children.filter(e => e.data.name === "researcher").length, 2);
   let searchCalls = 0;
   for (const child of children) {
-    const stream = await client.sessions.attach(child.data.childSessionId).snapshot();
+    const stream = await client.sessions.attach(child.data.sessionId).snapshot();
     searchCalls += stream.events.filter(e => e.type === "action.result" && e.data.result.kind === "tool-result" && e.data.result.toolName === "webSearch").length;
   }
   assert.equal(searchCalls, 2);
@@ -226,13 +296,13 @@ export default [defineEval({ description: "adaptive native research", async test
   const searchCharges = evidence.filter(row => row.eventId.startsWith("eve-tool:") && row.costUsd === 0.02 && row.sessionId === turn.sessionId);
   assert.equal(searchCharges.length, 2);
   assert.equal(new Set(searchCharges.map(row => row.turnId)).size, 1);
-  assert.ok(evidence.some(row => row.eventId.startsWith("eve-child:") && row.sessionId === turn.sessionId));
+  // Mock models have no durable gateway accounting intents; only search receipts are charged here.
   assert.ok(root.events.some(e => e.type === "action.partial"));
 }}), defineEval({ description: "cancellation stops owned research", async test(t) {
   await writeFile(${JSON.stringify(path.join(fixture, "host"))}, t.target.url);
   const session = await t.session();
   const live = await session.start("Research then cancel");
-  const called = await live.waitForEvent("subagent.called", { data: { name: "researcher" } });
+  const called = await live.waitForEvent("agent.started", { data: { name: "researcher" } });
   await live.cancel();
   await live.result();
   const client = new Client({ host: t.target.url });
@@ -240,10 +310,32 @@ export default [defineEval({ description: "adaptive native research", async test
   assert.ok(root.events.some(e => e.type === "turn.cancelled"));
   assert.ok(!root.events.some(e => e.type === "action.result" && e.data.status === "completed" && e.data.result.kind === "tool-result" && e.data.result.output?.output?.format === "report"));
   let childStopped = false;
-  for await (const event of client.sessions.attach(called.data.childSessionId).stream({ follow: true, signal: AbortSignal.timeout(10000) })) {
+  for await (const event of client.sessions.attach(called.data.sessionId).stream({ follow: true, signal: AbortSignal.timeout(10000) })) {
     if (["turn.cancelled", "turn.failed", "session.completed", "session.failed"].includes(event.type)) { childStopped = true; break; }
   }
   assert.ok(childStopped, "owned child must stop");
+}}), defineEval({ description: "trusted seed installs before the first native turn", async test(t) {
+  const created = await fetch(new URL("/eve/v1/session", t.target.url), {
+    method: "POST", headers: { "content-type": "application/json" },
+    body: JSON.stringify({ operationId: "accepted-copy", seed: true }),
+  });
+  assert.equal(created.status, 202);
+  const { sessionId } = await created.json();
+  const client = new Client({ host: t.target.url });
+  const session = client.sessions.attach(sessionId);
+  const initial = [];
+  for await (const event of session.stream({ follow: true, signal: AbortSignal.timeout(10000) })) {
+    initial.push(event);
+    if (event.type === "session.waiting") break;
+  }
+  assert.deepEqual(initial.map(event => event.type), ["history.seeded", "session.waiting"]);
+  assert.deepEqual(initial[0].data.messages.map(message => message.id), ["seed_message_0", "seed_message_1"]);
+  const result = await (await session.send("Continue the copied conversation")).result();
+  assert.equal(result.message, "Copied context retained");
+  const snapshot = await session.snapshot();
+  assert.equal(snapshot.events.filter(event => event.type === "history.seeded").length, 1);
+  assert.ok(!snapshot.events.some(event => event.type === "actions.requested" || event.type === "action.result"));
+
 }})];`
   );
   console.log(`Native research fixture: ${fixture}`);
@@ -252,7 +344,7 @@ export default [defineEval({ description: "adaptive native research", async test
     [
       "--import",
       "./environment.mjs",
-      path.join(app, "node_modules/eve/bin/eve.js"),
+      eveBin,
       "eval",
       "--strict",
       "--verbose",
@@ -265,7 +357,8 @@ export default [defineEval({ description: "adaptive native research", async test
       stdio: "inherit",
     }
   );
-  const [code] = await once(worker, "exit");
+  const exitArguments: unknown[] = await once(worker, "exit");
+  const [code] = exitArguments;
   if (code !== 0) {
     throw new Error(
       `Native research verification failed. Fixture retained at ${fixture}`
@@ -273,7 +366,9 @@ export default [defineEval({ description: "adaptive native research", async test
   }
   await rm(fixture, { force: true, recursive: true });
 };
-main().catch((error) => {
+try {
+  await main();
+} catch (error) {
   console.error(error);
   process.exitCode = 1;
-});
+}

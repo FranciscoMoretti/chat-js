@@ -1,7 +1,9 @@
-import { InternalLink } from "@/components/internal-link";
-import { Button } from "@/components/ui/button";
+import React from "react";
 
-const NotFound = () => (
+import { InternalLink } from "@/components/internal-link";
+import { buttonVariants } from "@/components/ui/button";
+
+const NotFound = (): React.JSX.Element => (
   <div className="bg-background min-h-screen">
     <div className="container mx-auto p-6">
       <div className="flex min-h-[60vh] items-center justify-center">
@@ -11,9 +13,9 @@ const NotFound = () => (
           <p className="text-muted-foreground max-w-md">
             The page you are looking for does not exist or has been moved.
           </p>
-          <Button asChild>
-            <InternalLink href="/">Return Home</InternalLink>
-          </Button>
+          <InternalLink className={buttonVariants()} href="/">
+            Return Home
+          </InternalLink>
         </div>
       </div>
     </div>

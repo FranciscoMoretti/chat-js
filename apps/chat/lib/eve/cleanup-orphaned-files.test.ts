@@ -1,12 +1,12 @@
 import { beforeEach, expect, test, vi } from "vitest";
-
 import { cleanupEveOrphanedFiles } from "./cleanup-orphaned-files";
+import type { prepareEveOrphanedFilePurge } from "@/lib/db/eve-orphaned-files";
 
 const mocks = vi.hoisted(() => ({
   complete: vi.fn(),
   inventory: vi.fn(),
-  prepare: vi.fn(),
-  remove: vi.fn(),
+  prepare: vi.fn<typeof prepareEveOrphanedFilePurge>(),
+  remove: vi.fn<() => Promise<void>>(),
 }));
 vi.mock("../db/eve-orphaned-files", () => ({
   prepareEveOrphanedFilePurge: mocks.prepare,
@@ -24,9 +24,6 @@ const old = new Date("2025-12-31");
 const key = "abcdefghijklmnopqrstuvwx.png";
 beforeEach(() => {
   vi.resetAllMocks();
-  mocks.prepare.mockImplementation((keys: string[]) =>
-    Promise.resolve(keys.map((fileKey) => ({ key: fileKey, ownerId: "owner" })))
-  );
 });
 test("only submits old valid keys and deletes the ownership-filtered result", async () => {
   mocks.inventory.mockImplementation(function* fixtureOutput() {
@@ -61,20 +58,31 @@ test("only submits old valid keys and deletes the ownership-filtered result", as
   expect(mocks.complete).toHaveBeenCalledWith("owner", [key]);
 });
 test("a failed batch retains its deletion fence without starving subsequent batches", async () => {
-  const keys = Array.from({ length: 101 }, (_, i) =>
-    String(i).padStart(24, "0")
+  const keys = Array.from({ length: 101 }, (_unused, fileIndex) =>
+    String(fileIndex).padStart(24, "0")
   );
   mocks.inventory.mockImplementation(function* fixtureOutput() {
     for (const fileKey of keys) {
       yield { pathname: fileKey, uploadedAt: old };
     }
   });
+  mocks.prepare
+    .mockResolvedValueOnce(
+      keys.slice(0, 100).map((fileKey) => ({ key: fileKey, ownerId: "owner" }))
+    )
+    .mockResolvedValueOnce([{ key: keys[100], ownerId: "owner" }]);
   mocks.remove
     .mockRejectedValueOnce(new Error("partial storage failure"))
-    .mockResolvedValue(undefined);
+    .mockResolvedValue();
   await expect(cleanupEveOrphanedFiles(cutoff)).rejects.toThrow("incomplete");
-  expect(mocks.prepare.mock.calls.map(([fileKeys]) => fileKeys.length)).toEqual(
-    [100, 1]
-  );
+
+  expect(mocks.prepare.mock.calls).toEqual([
+    [keys.slice(0, 100), cutoff],
+    [keys.slice(100), cutoff],
+  ]);
+  expect(mocks.remove.mock.calls).toEqual([
+    [keys.slice(0, 100).map((fileKey) => `/api/files/${fileKey}`)],
+    [[`/api/files/${keys[100]}`]],
+  ]);
   expect(mocks.complete).toHaveBeenCalledExactlyOnceWith("owner", [keys[100]]);
 });

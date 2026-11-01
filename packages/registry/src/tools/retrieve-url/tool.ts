@@ -1,19 +1,33 @@
 import FirecrawlApp from "@mendable/firecrawl-js";
 import { defineTool } from "eve/tools";
+import { readToolEnvironment } from "./retrieve-url-env";
+import { createModuleLogger } from "@/lib/logger";
+import { executeWithToolUsage } from "@/lib/eve/tool-usage";
+import { retrievedInput } from "./schemas";
+import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
 import { z } from "zod";
 
-import { env } from "@/lib/env";
-import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
-import { executeWithToolUsage } from "@/lib/eve/tool-usage";
-import { createModuleLogger } from "@/lib/logger";
+type RetrieveUrlInput = Readonly<z.infer<typeof retrievedInput>>;
+type RetrieveUrlContext = Readonly<{
+  abortSignal: Readonly<AbortSignal>;
+}>;
+type RetrieveUrlUsage = Readonly<{
+  addCostUsd: (cost: number) => void;
+  markUnknown: () => void;
+}>;
 
-import { retrievedInput } from "./schemas";
+const hasNonEmptyValue = (value: string | null | undefined): value is string =>
+  typeof value === "string" && value !== "";
 
+const UNBILLED_TOOL_COST_USD = 0;
 const log = createModuleLogger("tools/retrieve-url");
 
-const app = env.FIRECRAWL_API_KEY
-  ? new FirecrawlApp({ apiKey: env.FIRECRAWL_API_KEY })
-  : null;
+const createClient = (): FirecrawlApp | null => {
+  const env = readToolEnvironment();
+  return hasNonEmptyValue(env.FIRECRAWL_API_KEY)
+    ? new FirecrawlApp({ apiKey: env.FIRECRAWL_API_KEY })
+    : null;
+};
 
 const parseUrl = (url: string): URL | null => {
   try {
@@ -27,7 +41,8 @@ const parseUrl = (url: string): URL | null => {
   }
 };
 
-const redactUrl = (url: URL): string => `${url.origin}${url.pathname}`;
+const redactUrl = (url: Readonly<Pick<URL, "origin" | "pathname">>): string =>
+  `${url.origin}${url.pathname}`;
 
 export const retrieveUrl = defineTool({
   description: `Fetch structured information from a single URL via Firecrawl.
@@ -37,10 +52,11 @@ Use for:
 
 Avoid:
 - General-purpose web searches`,
-  execute: ({ url }, context) =>
-    executeWithToolUsage(context, async (usage) => {
-      usage.addCostUsd(0);
+  execute: async ({ url }: RetrieveUrlInput, context: RetrieveUrlContext) =>
+    await executeWithToolUsage(context, async (usage: RetrieveUrlUsage) => {
+      usage.addCostUsd(UNBILLED_TOOL_COST_USD);
       try {
+        const app = createClient();
         if (!app) {
           return {
             error:
@@ -79,27 +95,50 @@ Avoid:
         let { description, title } = metadata;
         let extractedContent = content.markdown;
 
-        if (!(title && description && extractedContent)) {
+        if (
+          !(
+            hasNonEmptyValue(title) &&
+            hasNonEmptyValue(description) &&
+            hasNonEmptyValue(extractedContent)
+          )
+        ) {
           const extractResult = await app.extract([normalizedUrl], {
             prompt:
               "Extract the page title, main content, and a brief description.",
             schema,
           });
 
-          if (extractResult.success && extractResult.data) {
-            title ||= extractResult.data.title;
-            description ||= extractResult.data.description;
-            extractedContent ||= extractResult.data.content;
+          if (
+            extractResult.success &&
+            extractResult.data !== undefined &&
+            extractResult.data !== null
+          ) {
+            const extracted = schema
+              .extend({
+                content: schema.shape.content.catch(""),
+                description: schema.shape.description.catch(""),
+                title: schema.shape.title.catch(""),
+              })
+              .safeParse(extractResult.data);
+            if (extracted.success) {
+              title = hasNonEmptyValue(title) ? title : extracted.data.title;
+              description = hasNonEmptyValue(description)
+                ? description
+                : extracted.data.description;
+              extractedContent = hasNonEmptyValue(extractedContent)
+                ? extractedContent
+                : extracted.data.content;
+            }
           }
         }
 
         return {
           results: [
             {
-              content: extractedContent || "",
-              description: description || "",
+              content: extractedContent ?? "",
+              description: description ?? "",
               language: metadata.language,
-              title: title || "Untitled",
+              title: hasNonEmptyValue(title) ? title : "Untitled",
               url: redactedUrl,
             },
           ],

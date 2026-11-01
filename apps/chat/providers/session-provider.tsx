@@ -1,13 +1,14 @@
 "use client";
 
-import {
+import React, {
   createContext,
   useContext,
   useLayoutEffect,
   useMemo,
   useState,
 } from "react";
-
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 import type { Session } from "@/lib/auth";
 import authClient from "@/lib/auth-client";
 
@@ -25,20 +26,20 @@ const SessionContext = createContext<SessionContextValue | undefined>(
 );
 
 const SessionSeedContext = createContext<
-  ((session: Session | null) => void) | null
+  ((session: ReadonlyNativeSurface<Session | null>) => void) | null
 >(null);
 
-export const SessionProvider = ({
+const SessionProvider = ({
   children,
 }: {
-  children: React.ReactNode;
-}) => {
+  readonly children: ReadonlyReactNode;
+}): React.JSX.Element => {
   const {
     data: clientSession,
     isPending: isClientPending,
     error: clientError,
   } = authClient.useSession();
-  // undefined = not seeded from the server tree yet
+  // `undefined` means the server tree has not seeded the session yet.
   const [serverSession, setServerSession] = useState<
     Session | null | undefined
   >();
@@ -79,7 +80,9 @@ export const SessionProvider = ({
   );
 };
 
-export const SessionSeed = ({ session }: { session: Session | null }) => {
+const SessionSeed = ({
+  session,
+}: ReadonlyNativeSurface<{ readonly session: Session | null }>): null => {
   const setServerSession = useContext(SessionSeedContext);
 
   if (!setServerSession) {
@@ -93,10 +96,12 @@ export const SessionSeed = ({ session }: { session: Session | null }) => {
   return null;
 };
 
-export const useSession = (): SessionContextValue => {
+const useSession = (): SessionContextValue => {
   const ctx = useContext(SessionContext);
   if (!ctx) {
     throw new Error("useSession must be used within a SessionProvider");
   }
   return ctx;
 };
+
+export { SessionProvider, SessionSeed, useSession };

@@ -1,29 +1,33 @@
 import { z } from "zod";
 
 /** JSON values, permitting optional object properties omitted by persistence. */
-export type ToolOutput =
+type ToolOutput =
   | string
   | number
   | boolean
   | null
-  | ToolOutput[]
-  | { [key: string]: ToolOutput | undefined };
+  | readonly ToolOutput[]
+  | { readonly [key: string]: ToolOutput | undefined };
+
 const jsonOutput: z.ZodType<ToolOutput> = z.lazy(() =>
   z.union([
     z.string(),
-    z.number().finite(),
+    z.number(),
     z.boolean(),
     z.null(),
     z.array(jsonOutput),
     z.record(z.string(), jsonOutput.optional()),
   ])
 );
+const TOOL_RESULT_VERSION = 1;
+
 const base = z.object({
   kind: z.literal("chatjs.tool-result"),
   updates: z.array(jsonOutput).optional(),
-  version: z.literal(1),
+  version: z.literal(TOOL_RESULT_VERSION),
 });
-export const toolOutputSchema = z.discriminatedUnion("status", [
+
+const toolOutputSchema = z.discriminatedUnion("status", [
   base.extend({ output: jsonOutput, status: z.literal("success") }),
   base.extend({
     error: z.string(),
@@ -31,34 +35,34 @@ export const toolOutputSchema = z.discriminatedUnion("status", [
     status: z.literal("error"),
   }),
 ]);
+
 const usage = z.object({
-  costUsd: z.number().finite().nonnegative().optional(),
+  costUsd: z.number().nonnegative().optional(),
 });
-export const toolResultSchema = z.intersection(
-  toolOutputSchema,
-  z.object({ usage })
-);
-export type ToolResult<T extends ToolOutput> = {
-  kind: "chatjs.tool-result";
-  version: 1;
-  usage: { costUsd?: number };
-  updates?: ToolOutput[];
+
+const toolResultSchema = z.intersection(toolOutputSchema, z.object({ usage }));
+
+type ToolResult<Output extends ToolOutput> = {
+  readonly kind: "chatjs.tool-result";
+  readonly version: typeof TOOL_RESULT_VERSION;
+  readonly usage: { readonly costUsd?: number };
+  readonly updates?: readonly ToolOutput[];
 } & (
-  | { status: "success"; output: T }
-  | { status: "error"; output: null; error: string }
+  | { readonly status: "success"; readonly output: Output }
+  | { readonly status: "error"; readonly output: null; readonly error: string }
 );
 
-export const hasEveToolReceipt = (value: unknown) =>
+const hasEveToolReceipt = (value: unknown): boolean =>
   typeof value === "object" &&
   value !== null &&
   "kind" in value &&
   value.kind === "chatjs.tool-result";
 
-export const createToolResult = <T extends ToolOutput>(
-  output: T,
+const createToolResult = <Output extends ToolOutput>(
+  output: Output,
   costUsd: number | undefined,
-  updates?: ToolOutput[]
-): ToolResult<T> => {
+  updates?: readonly ToolOutput[]
+): ToolResult<Output> => {
   jsonOutput.parse(output);
   usage.parse({ costUsd });
   if (updates) {
@@ -70,15 +74,24 @@ export const createToolResult = <T extends ToolOutput>(
     status: "success",
     updates,
     usage: { costUsd },
-    version: 1,
+    version: TOOL_RESULT_VERSION,
   };
 };
-export const createToolError = (
+
+const createToolError = (
   costUsd: number | undefined,
-  updates?: ToolOutput[]
+  updates?: readonly ToolOutput[]
 ): ToolResult<never> => ({
   ...createToolResult(null, costUsd, updates),
   error: "The tool did not complete.",
   output: null,
   status: "error",
 });
+export {
+  createToolError,
+  createToolResult,
+  hasEveToolReceipt,
+  toolOutputSchema,
+  toolResultSchema,
+};
+export type { ToolOutput, ToolResult };

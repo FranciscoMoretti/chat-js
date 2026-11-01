@@ -1,7 +1,7 @@
-import type { EveMessagePart } from "eve/client";
 import { expect, it } from "vitest";
-
 import { sharedEveMessages, sharedEvePart } from "./shared-messages";
+import type { EveMessageDisplayReceipt } from "./message-display";
+import type { EveMessagePart, MessageStreamEvent } from "eve/client";
 
 it("shares transcript content without authorization challenges or runtime metadata", () => {
   const messages = sharedEveMessages([
@@ -28,9 +28,11 @@ it("shares transcript content without authorization challenges or runtime metada
   expect(json).toContain("An account connection was requested.");
   expect(json).not.toContain("secret-code");
   expect(json).not.toContain("webhookUrl");
-  expect(messages.every((message) => !Object.hasOwn(message, "metadata"))).toBe(
-    true
-  );
+  expect(
+    messages.every(
+      (message: Readonly<object>) => !Object.hasOwn(message, "metadata")
+    )
+  ).toBe(true);
 });
 
 it("retains clarification prompts and answers without their response identifiers", () => {
@@ -182,7 +184,7 @@ it.each([
     privateRuntimeToken: "secret",
     usage: { costUsd: 99 },
   },
-])("does not expose malformed platform result envelopes", (output) => {
+])("does not expose malformed platform result envelopes", (output: unknown) => {
   const parts = sharedEvePart({
     input: { code: "1 + 1" },
     output,
@@ -248,7 +250,38 @@ it("projects the original native model without private turn identities", () => {
     },
   ]);
   expect(
-    messages.find((message) => message.role === "assistant")?.metadata
+    messages.find(
+      (message: { readonly role: string }) => message.role === "assistant"
+    )?.metadata
   ).toEqual({ modelId: "gateway/google/gemini-2.5-flash-lite" });
   expect(JSON.stringify(messages)).not.toContain('"turnId"');
+});
+
+it("shares display-safe tool selection only through an exact known delivery", () => {
+  const receipt = {
+    kind: "send",
+    deliveryId: "known",
+    selectedTool: "webSearch",
+  } satisfies EveMessageDisplayReceipt;
+  const events: MessageStreamEvent[] = [
+    {
+      type: "message.received",
+      data: { message: "Search", sequence: 0, turnId: "turn_0" },
+      meta: {
+        id: "received",
+        at: "2026-10-17T00:00:00Z",
+        deliveryIds: ["known"],
+      },
+    },
+  ];
+  expect(sharedEveMessages(events, [receipt])[0]?.metadata).toEqual({
+    custom: { chatjs: { selectedTool: "webSearch" } },
+  });
+  expect(
+    sharedEveMessages(events, [{ ...receipt, deliveryId: "other" }])[0]
+      ?.metadata
+  ).toBeUndefined();
+  expect(JSON.stringify(sharedEveMessages(events, [receipt]))).not.toContain(
+    "deliveryId"
+  );
 });

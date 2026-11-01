@@ -1,27 +1,44 @@
-import { getMessageText } from "@chat-js/thread";
+import type { ChatTransport, UIMessage, UIMessageChunk } from "ai";
 import type { MessageTreeSnapshot } from "@chat-js/thread";
 import type { UseThreadHelpers } from "@chat-js/thread/react";
-import type { ChatTransport, UIMessage, UIMessageChunk } from "ai";
+import { getMessageText } from "@chat-js/thread";
 
-export interface PlaygroundMetadata {
-  activeStreamId: string | null;
-  createdAt: string;
-  title?: string;
+interface PlaygroundMetadata {
+  readonly activeStreamId: string | null;
+  readonly createdAt: string;
+  readonly title?: string;
 }
 
-export type PlaygroundMessage = UIMessage<PlaygroundMetadata>;
-export type PlaygroundChat = UseThreadHelpers<PlaygroundMessage>;
+type PlaygroundMessage = UIMessage<PlaygroundMetadata>;
+
+type PlaygroundChat = UseThreadHelpers<PlaygroundMessage>;
+
+type PlaygroundTransportMessage = Parameters<typeof getMessageText>[0] &
+  Readonly<Pick<PlaygroundMessage, "metadata">>;
+
+type PlaygroundTransportInput = Readonly<{
+  abortSignal: Readonly<AbortSignal> | undefined;
+  body?: Readonly<StreamBody>;
+  messages: readonly PlaygroundTransportMessage[];
+}>;
 
 interface StreamBody {
   responseLabel?: string;
 }
 
-export interface LayoutNode {
-  depth: number;
-  id: string;
-  x: number;
-  y: number;
+interface LayoutNode {
+  readonly depth: number;
+  readonly id: string;
+  readonly x: number;
+  readonly y: number;
 }
+
+type TreeLayout = Readonly<{
+  height: number;
+  nodes: readonly LayoutNode[];
+  positions: ReadonlyMap<string, LayoutNode>;
+  width: number;
+}>;
 
 const createMessage = ({
   id,
@@ -29,10 +46,10 @@ const createMessage = ({
   text,
   title,
 }: {
-  id: string;
-  role: "assistant" | "user";
-  text: string;
-  title: string;
+  readonly id: string;
+  readonly role: "assistant" | "user";
+  readonly text: string;
+  readonly title: string;
 }): PlaygroundMessage => ({
   id,
   metadata: {
@@ -110,21 +127,25 @@ const initialNodes = [
   },
 ] satisfies MessageTreeSnapshot<PlaygroundMessage>["nodes"];
 
-export const initialTree: MessageTreeSnapshot<PlaygroundMessage> = {
+const initialTree: MessageTreeSnapshot<PlaygroundMessage> = {
   cursorId: "msg_05a",
   nodes: initialNodes,
   version: 1,
 };
 
-const delay = async (ms: number, signal?: AbortSignal) => {
+const delay = async (
+  ms: number,
+  signal?: Readonly<AbortSignal>
+): Promise<void> => {
   signal?.throwIfAborted();
-  const { promise, resolve, reject } = Promise.withResolvers<undefined>();
+  const { promise, resolve, reject }: PromiseWithResolvers<void> =
+    Promise.withResolvers();
   const abort = new AbortController();
-  const timeout = setTimeout(() => {
+  const timeout = setTimeout((): void => {
     abort.abort();
-    resolve(undefined);
+    resolve();
   }, ms);
-  const onAbort = () => {
+  const onAbort = (): void => {
     clearTimeout(timeout);
     reject(new DOMException("Aborted", "AbortError"));
   };
@@ -137,52 +158,65 @@ const delay = async (ms: number, signal?: AbortSignal) => {
 
 const RESPONSE_NUMBER_PATTERN = /\d+/u;
 
-export const createPlaygroundTransport =
-  (): ChatTransport<PlaygroundMessage> => ({
-    reconnectToStream: () => Promise.resolve(null),
-    sendMessages: ({
-      abortSignal,
-      body,
-      messages,
-    }: Parameters<ChatTransport<PlaygroundMessage>["sendMessages"]>[0]) => {
-      const requestBody = body as StreamBody | undefined;
-      const responseLabel = requestBody?.responseLabel ?? "Assistant";
-      const streamId = crypto.randomUUID();
-      const userMessage = messages.at(-1);
-      const prompt = userMessage ? getMessageText(userMessage) : "this branch";
-      const response = `${responseLabel}: Let’s explore "${prompt}". Start with a small release that people can try immediately. Show one clear workflow, collect feedback from real integrations, and use it to decide what to improve next. This response has its own stream: you can explore another branch, stop a sibling, or return here without losing any of this progress.`;
-      const words = response.split(" ");
-      // Different cadences make independent streams easy to follow in the demo.
-      const responseNumber = Number(
-        responseLabel.match(RESPONSE_NUMBER_PATTERN)?.[0] ?? 1
-      );
-      const tokenDelay = 140 + (responseNumber % 3) * 35;
+const createPlaygroundTransport = (): ChatTransport<PlaygroundMessage> => ({
+  // oxlint-disable-next-line typescript/promise-function-async -- The SDK requires a Promise for the absent reconnect stream; this local demo has no work to await, and eslint/require-await rejects an immediate async result.
+  reconnectToStream: () => Promise.resolve(null),
+  // oxlint-disable-next-line typescript/promise-function-async -- The SDK requires a Promise of the newly constructed stream; awaiting its token producer would buffer the response instead of streaming, while an immediate async factory violates eslint/require-await.
+  sendMessages: ({ abortSignal, body, messages }: PlaygroundTransportInput) => {
+    const requestBody: StreamBody | undefined = body;
+    const responseLabel = requestBody?.responseLabel ?? "Assistant";
+    const streamId = crypto.randomUUID();
+    const userMessage = messages.at(-1);
+    const prompt = userMessage ? getMessageText(userMessage) : "this branch";
+    const response = `${responseLabel}: Let’s explore "${prompt}". Start with a small release that people can try immediately. Show one clear workflow, collect feedback from real integrations, and use it to decide what to improve next. This response has its own stream: you can explore another branch, stop a sibling, or return here without losing any of this progress.`;
+    const words = response.split(" ");
+    // Different cadences make independent streams easy to follow in the demo.
+    const responseNumber = Number(
+      RESPONSE_NUMBER_PATTERN.exec(responseLabel)?.[0] ?? 1
+    );
+    const tokenDelay = 140 + (responseNumber % 3) * 35;
 
-      return Promise.resolve(
-        new ReadableStream<UIMessageChunk<PlaygroundMetadata>>({
-          async start(controller) {
-            try {
+    return Promise.resolve(
+      new ReadableStream<UIMessageChunk<PlaygroundMetadata>>({
+        async start(
+          controller: Readonly<
+            ReadableStreamDefaultController<UIMessageChunk<PlaygroundMetadata>>
+          >
+        ): Promise<void> {
+          try {
+            controller.enqueue({
+              messageMetadata: {
+                activeStreamId: streamId,
+                createdAt: new Date().toISOString(),
+                title: responseLabel,
+              },
+              type: "start",
+            });
+            controller.enqueue({ id: "text", type: "text-start" });
+
+            for (const [index, word] of words.entries()) {
+              // oxlint-disable-next-line eslint/no-await-in-loop -- Each visible word is emitted only after its cancellable delay; concurrency would collapse streaming cadence and enqueue words after abort.
+              await delay(tokenDelay, abortSignal);
               controller.enqueue({
-                messageMetadata: {
-                  activeStreamId: streamId,
-                  createdAt: new Date().toISOString(),
-                  title: responseLabel,
-                },
-                type: "start",
+                delta: index === 0 ? word : ` ${word}`,
+                id: "text",
+                type: "text-delta",
               });
-              controller.enqueue({ id: "text", type: "text-start" });
+            }
 
-              for (const [index, word] of words.entries()) {
-                // oxlint-disable-next-line no-await-in-loop -- Stream words in order with a separate cancellable delay for each token.
-                await delay(tokenDelay, abortSignal);
-                controller.enqueue({
-                  delta: index === 0 ? word : ` ${word}`,
-                  id: "text",
-                  type: "text-delta",
-                });
-              }
-
-              controller.enqueue({ id: "text", type: "text-end" });
+            controller.enqueue({ id: "text", type: "text-end" });
+            controller.enqueue({
+              finishReason: "stop",
+              messageMetadata: {
+                activeStreamId: null,
+                createdAt: new Date().toISOString(),
+                title: responseLabel,
+              },
+              type: "finish",
+            });
+            controller.close();
+          } catch (error) {
+            if (abortSignal?.aborted === true) {
               controller.enqueue({
                 finishReason: "stop",
                 messageMetadata: {
@@ -193,35 +227,23 @@ export const createPlaygroundTransport =
                 type: "finish",
               });
               controller.close();
-            } catch (error) {
-              if (abortSignal?.aborted) {
-                controller.enqueue({
-                  finishReason: "stop",
-                  messageMetadata: {
-                    activeStreamId: null,
-                    createdAt: new Date().toISOString(),
-                    title: responseLabel,
-                  },
-                  type: "finish",
-                });
-                controller.close();
-                return;
-              }
-              controller.error(error);
+              return;
             }
-          },
-        })
-      );
-    },
-  });
+            controller.error(error);
+          }
+        },
+      })
+    );
+  },
+});
 
-export const buildTreeLayout = ({
+const buildTreeLayout = ({
   childrenByParentId,
   rootIds,
 }: {
-  childrenByParentId: Record<string, string[]>;
-  rootIds: string[];
-}) => {
+  readonly childrenByParentId: Readonly<Record<string, readonly string[]>>;
+  readonly rootIds: readonly string[];
+}): TreeLayout => {
   const positions = new Map<string, LayoutNode>();
   let nextLeaf = 0;
   let maxDepth = 0;
@@ -235,10 +257,14 @@ export const buildTreeLayout = ({
       column = nextLeaf;
       nextLeaf += 1;
     } else {
-      const childColumns = children.map((childId) => visit(childId, depth + 1));
+      const childColumns = children.map((childId): number =>
+        visit(childId, depth + 1)
+      );
       column =
-        childColumns.reduce((total, childColumn) => total + childColumn, 0) /
-        childColumns.length;
+        childColumns.reduce(
+          (total, childColumn): number => total + childColumn,
+          0
+        ) / childColumns.length;
     }
 
     positions.set(id, { depth, id, x: column * 164 + 92, y: depth * 122 + 64 });
@@ -256,4 +282,11 @@ export const buildTreeLayout = ({
     positions,
     width: Math.max(430, Math.max(0, nextLeaf - 2) * 164 + 184),
   };
+};
+export { buildTreeLayout, createPlaygroundTransport, initialTree };
+export type {
+  LayoutNode,
+  PlaygroundChat,
+  PlaygroundMessage,
+  PlaygroundMetadata,
 };

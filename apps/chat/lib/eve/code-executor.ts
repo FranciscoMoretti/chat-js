@@ -1,19 +1,32 @@
 import type { ToolContext } from "eve/tools";
+import { z } from "zod";
 
-import type { ToolOutput, ToolResult } from "./tool-result";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
-export type CodeExecutionInput = Readonly<{
+import type { ToolResult } from "./tool-result";
+
+type CodeExecutionInput = Readonly<{
   code: string;
   language: "python" | "javascript";
   title: string;
 }>;
-export type CodeExecutionContext = Pick<
+
+type CodeExecutionContext = Pick<
   ToolContext,
   "abortSignal" | "callId" | "session"
 >;
-export type CodeExecutionOutput = { chart: ToolOutput; message: string };
+
+/** Providers specialize chart formats while sharing the durable output envelope. */
+const codeExecutionOutputSchema = z.object({
+  chart: z.json(),
+  message: z.string(),
+});
+type CodeExecutionOutput = z.infer<typeof codeExecutionOutputSchema>;
+
 /** Executes exact source and owns its single usage receipt under the invoking tool call. */
-export type CodeExecutor = (
+type CodeExecutor = (
   input: CodeExecutionInput,
-  context: CodeExecutionContext
+  context: ReadonlyNativeSurface<CodeExecutionContext>
 ) => Promise<ToolResult<CodeExecutionOutput>>;
+
+export type { CodeExecutionContext, CodeExecutionInput, CodeExecutor };

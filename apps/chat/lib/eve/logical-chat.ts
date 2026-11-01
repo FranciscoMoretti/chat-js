@@ -1,30 +1,47 @@
+import { LogicalCommands } from "./logical-commands";
+import { isNonEmptyString } from "@/lib/is-non-empty-string";
+
 import type { EveMessage, EveMessageData } from "eve/client";
 import type { UseEveAgentHelpers } from "eve/react";
 
-import type { EveBranchReference } from "./fork-source";
-import { LogicalCommands } from "./logical-commands";
+import type { EveForkKind } from "./contracts";
 
-export type NativeChatAgent = UseEveAgentHelpers<EveMessageData>;
-export type LogicalBranch = EveBranchReference & {
-  sessionId: string | null;
-  createdAt: Date | string;
-  initialModelId: string | null;
-  operationId: string;
-  groupCandidates?:
-    | {
-        modelId: string;
-        operationId: string;
-        rejection?: { error: string; code?: "project_not_found" };
+interface EveBranchReference {
+  forkKind?: EveForkKind | null;
+  forkMessageId?: string | null;
+  forkTurnId: string | null;
+  id: string;
+  parentConversationId: string | null;
+  responseGroupId?: string | null;
+  responseGroupIndex?: number | null;
+}
+
+type NativeChatAgent = UseEveAgentHelpers<EveMessageData>;
+
+type LogicalBranch = EveBranchReference & {
+  readonly sessionId: string | null;
+  readonly createdAt: Date | string;
+  readonly initialModelId: string | null;
+  readonly operationId: string;
+  readonly groupCandidates?:
+    | readonly {
+        readonly modelId: string;
+        readonly operationId: string;
+        readonly rejection?: {
+          readonly error: string;
+          readonly code?: string;
+        };
       }[]
     | null;
 };
-type LogicalNode = {
+
+interface LogicalNode {
   id: string;
   parentId: string | null;
   conversationId: string;
   message: EveMessage;
-};
-export type LogicalChatSnapshot = {
+}
+interface LogicalChatSnapshot {
   readyBranches: ReadonlySet<string>;
   chatId: string;
   conversationId: string;
@@ -36,35 +53,34 @@ export type LogicalChatSnapshot = {
   branches: readonly LogicalBranch[];
   agents: ReadonlyMap<string, NativeChatAgent>;
   error?: string;
-};
+}
 
-const logicalNativeId = (sessionId: string, message: EveMessage) => {
-  const custom = message.metadata?.custom?.chatjs;
-  if (
-    message.role === "user" &&
-    custom &&
-    typeof custom === "object" &&
-    "operationId" in custom &&
-    typeof custom.operationId === "string"
-  ) {
-    return JSON.stringify([sessionId, "operation", custom.operationId, "user"]);
-  }
-  return JSON.stringify([sessionId, message.id]);
-};
+const logicalNativeId = (sessionId: string, message: EveMessage): string =>
+  JSON.stringify([sessionId, message.id]);
 
-const aliasKey = (branchId: string, messageId: string) =>
+const aliasKey = (branchId: string, messageId: string): string =>
   JSON.stringify([branchId, messageId]);
-const busy = (agent?: NativeChatAgent) =>
-  agent?.status === "streaming" ||
-  agent?.status === "submitted" ||
-  agent?.status === "resuming";
+
+const busy = (agent?: NativeChatAgent): boolean => {
+  if (!agent) {
+    return false;
+  }
+  return (
+    agent.status === "streaming" ||
+    agent.status === "submitted" ||
+    agent.status === "resuming"
+  );
+};
 
 const latestMessageTime = (
   agent: NativeChatAgent | undefined,
   createdAt: string | Date
-) => {
+): number => {
   let time = new Date(createdAt).getTime();
-  for (const event of agent?.events ?? []) {
+  if (!agent) {
+    return time;
+  }
+  for (const event of agent.events ?? []) {
     if (
       (event.type === "message.received" || event.type === "step.started") &&
       event.meta?.at
@@ -75,16 +91,114 @@ const latestMessageTime = (
   return time;
 };
 
+/** The immutable message boundary determines which copied seed positions are inherited. */
+const branchPrefix = (
+  branch: LogicalBranch,
+  paths: ReadonlyMap<string, readonly string[]>,
+  aliases: ReadonlyMap<string, string>
+): { prefix: readonly string[]; replaced?: string } => {
+  if (
+    !isNonEmptyString(branch.parentConversationId) ||
+    !isNonEmptyString(branch.forkMessageId)
+  ) {
+    return { prefix: [] };
+  }
+  const source = paths.get(branch.parentConversationId) ?? [];
+  const boundary = aliases.get(
+    aliasKey(branch.parentConversationId, branch.forkMessageId)
+  );
+  const index = boundary === undefined ? -1 : source.indexOf(boundary);
+  if (index < 0) {
+    throw new Error("The saved branch message is not available in its source.");
+  }
+  return { prefix: source.slice(0, index), replaced: boundary };
+};
+
+const inheritedSeedId = (
+  message: EveMessage,
+  prefix: readonly string[],
+  nodes: ReadonlyMap<string, LogicalNode>
+): string | undefined => {
+  const match = /^seed_message_(?<index>\d+)$/u.exec(message.id);
+  const id = match === null ? undefined : prefix[Number(match.groups?.index)];
+  if (id !== undefined && nodes.get(id)?.message.role !== message.role) {
+    throw new Error(
+      "Copied message roles do not match the saved branch prefix."
+    );
+  }
+  return id;
+};
+
+const projectBranch = (
+  branch: LogicalBranch,
+  agent: NativeChatAgent,
+  nodes: Map<string, LogicalNode>,
+  aliases: Map<string, string>,
+  paths: ReadonlyMap<string, readonly string[]>
+): { hasLocalMessage: boolean; path: string[] } => {
+  const messages = agent.data.messages.filter(
+    (message) =>
+      !(message.metadata?.optimistic && message.metadata.status === "failed")
+  );
+  const inherited = branchPrefix(branch, paths, aliases);
+  const path: string[] = [];
+  let hasPrompt = false;
+  for (const message of messages) {
+    const firstUser =
+      !hasPrompt &&
+      message.role === "user" &&
+      !message.id.startsWith("seed_message_");
+    if (firstUser) {
+      hasPrompt = true;
+    }
+    const inheritedId = inheritedSeedId(message, inherited.prefix, nodes);
+    const replacementId =
+      firstUser && branch.forkKind === "regenerate"
+        ? inherited.replaced
+        : undefined;
+    const id =
+      inheritedId ??
+      replacementId ??
+      (firstUser && isNonEmptyString(branch.responseGroupId)
+        ? `group:${branch.responseGroupId}:user`
+        : logicalNativeId(branch.sessionId ?? branch.id, message));
+    if (!nodes.has(id)) {
+      nodes.set(id, {
+        conversationId: branch.id,
+        id,
+        message,
+        parentId: path.at(-1) ?? null,
+      });
+    }
+    aliases.set(aliasKey(branch.id, message.id), id);
+    if (!path.includes(id)) {
+      path.push(id);
+    }
+  }
+  const needsResponse =
+    branch.forkKind === "regenerate" ||
+    (Boolean(branch.responseGroupId) && branch.forkKind !== "edit");
+  if (needsResponse) {
+    return {
+      hasLocalMessage: messages
+        .filter((message) => !message.id.startsWith("seed_message_"))
+        .some((message) => message.role === "assistant"),
+      path,
+    };
+  }
+  return { hasLocalMessage: hasPrompt, path };
+};
+
 /**
  * Chat identity and selection are independent of native session lifetime.
  * Durable branch intent plus native replay reconstructs this disposable index.
  * Content remains in the native store; copied prefixes never become writers.
  */
-export class LogicalChat {
-  readonly commands = new LogicalCommands();
+class LogicalChat {
+  public readonly commands = new LogicalCommands();
   private branches: LogicalBranch[] = [];
-  private agents = new Map<string, NativeChatAgent>();
-  private listeners = new Set<() => void>();
+  private readonly agents = new Map<string, NativeChatAgent>();
+  private readonly listeners = new Set<() => void>();
   private selected: string;
   private cursor: string | null = null;
   private follow = true;
@@ -93,8 +207,8 @@ export class LogicalChat {
   private pendingSelection: string | undefined;
   private snapshot: LogicalChatSnapshot;
 
-  readonly chatId: string;
-  constructor(
+  public readonly chatId: string;
+  public constructor(
     chatId: string,
     initialConversationId: string,
     hydrateLatest = false
@@ -116,25 +230,27 @@ export class LogicalChat {
     };
   }
 
-  getSnapshot = () => this.snapshot;
-  subscribe = (listener: () => void) => {
+  public getSnapshot = (): LogicalChatSnapshot => this.snapshot;
+  public subscribe = (listener: () => void): (() => void) => {
     this.listeners.add(listener);
-    return () => {
+    return (): void => {
       this.listeners.delete(listener);
     };
   };
 
-  setBranches(branches: readonly LogicalBranch[]) {
+  public setBranches(branches: readonly LogicalBranch[]): void {
     this.branches = branches.toSorted(
-      (a, b) =>
-        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime() ||
-        (a.responseGroupIndex ?? 0) - (b.responseGroupIndex ?? 0) ||
-        a.id.localeCompare(b.id)
+      (leftBranch, rightBranch) =>
+        new Date(leftBranch.createdAt).getTime() -
+          new Date(rightBranch.createdAt).getTime() ||
+        (leftBranch.responseGroupIndex ?? 0) -
+          (rightBranch.responseGroupIndex ?? 0) ||
+        leftBranch.id.localeCompare(rightBranch.id)
     );
     this.publish();
   }
 
-  observe(conversationId: string, agent: NativeChatAgent) {
+  public observe(conversationId: string, agent: NativeChatAgent): void {
     const previous = this.agents.get(conversationId);
     if (
       previous?.data === agent.data &&
@@ -148,24 +264,28 @@ export class LogicalChat {
     this.publish();
   }
 
-  setVisible(visible: boolean) {
+  public setVisible(visible: boolean): void {
     if (this.visible && !visible) {
       this.leave();
     }
     this.visible = visible;
   }
 
-  leave() {
+  public leave(): void {
     this.hydrateLatest = false;
     this.follow = false;
     this.pendingSelection = undefined;
   }
 
-  selectBranch(conversationId: string) {
+  public selectBranch(conversationId: string): void {
     this.hydrateLatest = false;
     this.follow = true;
     const path = this.snapshot.paths.get(conversationId);
-    if (path?.length && this.snapshot.readyBranches.has(conversationId)) {
+    if (
+      path !== undefined &&
+      path.length > 0 &&
+      this.snapshot.readyBranches.has(conversationId)
+    ) {
       this.pendingSelection = undefined;
       this.selected = conversationId;
       this.cursor = path.at(-1) ?? null;
@@ -175,16 +295,16 @@ export class LogicalChat {
     this.publish();
   }
 
-  selectNode(id: string) {
+  public selectNode(id: string): void {
     this.hydrateLatest = false;
     let node = this.snapshot.nodes.get(id);
     if (!node) {
       return;
     }
-    let last = this.snapshot.children.get(node.id)?.at(-1);
-    while (last) {
+    let last = (this.snapshot.children.get(node.id) ?? []).at(-1);
+    while (isNonEmptyString(last)) {
       node = this.snapshot.nodes.get(last) ?? node;
-      last = this.snapshot.children.get(node.id)?.at(-1);
+      last = (this.snapshot.children.get(node.id) ?? []).at(-1);
     }
     this.pendingSelection = undefined;
     this.selected = node.conversationId;
@@ -195,19 +315,83 @@ export class LogicalChat {
     this.publish();
   }
 
-  logicalId(conversationId: string, nativeId: string) {
+  public logicalId(
+    conversationId: string,
+    nativeId: string
+  ): string | undefined {
     return this.snapshot.aliases.get(aliasKey(conversationId, nativeId));
   }
 
-  siblings(conversationId: string, nativeId: string) {
+  public siblings(
+    conversationId: string,
+    nativeId: string
+  ): { ids: readonly string[]; index: number } {
     const id = this.logicalId(conversationId, nativeId);
-    const node = id ? this.snapshot.nodes.get(id) : undefined;
-    const ids = node ? (this.snapshot.children.get(node.parentId) ?? []) : [];
-    return { ids, index: id ? ids.indexOf(id) : -1 };
+    if (!isNonEmptyString(id)) {
+      return { ids: [], index: -1 };
+    }
+    const node = this.snapshot.nodes.get(id);
+    if (!node) {
+      return { ids: [], index: -1 };
+    }
+    const ids = this.snapshot.children.get(node.parentId) ?? [];
+    return { ids, index: ids.indexOf(id) };
   }
 
-  // oxlint-disable-next-line eslint/complexity -- Atomically publish topology, aliases and selection after ordered projection.
-  private publish() {
+  private selectHydratedBranch(
+    paths: ReadonlyMap<string, readonly string[]>
+  ): void {
+    if (
+      this.hydrateLatest &&
+      paths.size === this.branches.length &&
+      this.branches.every(
+        (branch) => this.agents.get(branch.id)?.status !== "resuming"
+      )
+    ) {
+      this.hydrateLatest = false;
+      const newest = this.branches
+        .toSorted(
+          (left, right) =>
+            latestMessageTime(this.agents.get(left.id), left.createdAt) -
+            latestMessageTime(this.agents.get(right.id), right.createdAt)
+        )
+        .at(-1);
+      if (newest) {
+        this.selected = newest.id;
+      }
+    }
+  }
+
+  private selectReadyBranch(
+    paths: ReadonlyMap<string, readonly string[]>,
+    readyBranches: ReadonlySet<string>
+  ): void {
+    const { pendingSelection } = this;
+    const pendingPath = isNonEmptyString(pendingSelection)
+      ? paths.get(pendingSelection)
+      : pendingSelection;
+    if (
+      pendingPath !== undefined &&
+      pendingPath.length > 0 &&
+      isNonEmptyString(this.pendingSelection) &&
+      readyBranches.has(this.pendingSelection)
+    ) {
+      this.selected = this.pendingSelection;
+      this.pendingSelection = undefined;
+      this.cursor = pendingPath.at(-1) ?? null;
+    }
+  }
+
+  private followSelectedBranch(
+    paths: ReadonlyMap<string, readonly string[]>
+  ): void {
+    const selectedPath = paths.get(this.selected);
+    if (this.follow || !isNonEmptyString(this.cursor)) {
+      this.cursor = (selectedPath ?? []).at(-1) ?? this.cursor;
+    }
+  }
+
+  private publish(): void {
     const nodes = new Map<string, LogicalNode>();
     const paths = new Map<string, string[]>();
     const readyBranches = new Set<string>();
@@ -216,30 +400,28 @@ export class LogicalChat {
     const waiting = new Map(this.branches.map((branch) => [branch.id, branch]));
     let error: string | undefined;
     // Parents must be reduced before descendants, regardless of stream arrival.
-    while (waiting.size) {
+    while (waiting.size > 0) {
       let progressed = false;
       for (const [id, branch] of waiting) {
         if (
-          branch.parentConversationId &&
+          isNonEmptyString(branch.parentConversationId) &&
           !paths.has(branch.parentConversationId)
         ) {
           continue;
         }
         const agent = this.agents.get(id);
-        if (!agent?.data.messages.length) {
+        if (agent === undefined || agent.data.messages.length === 0) {
           continue;
         }
         try {
           const stagedNodes = new Map(nodes);
           const stagedAliases = new Map(aliases);
-          // oxlint-disable-next-line eslint/no-use-before-define -- Projection helpers are kept below the public controller.
           const projection = projectBranch(
             branch,
             agent,
-            paths,
             stagedNodes,
             stagedAliases,
-            this.agents.get(branch.parentConversationId ?? "")
+            paths
           );
           for (const [key, node] of stagedNodes) {
             nodes.set(key, node);
@@ -270,40 +452,9 @@ export class LogicalChat {
       siblings.push(node.id);
       children.set(node.parentId, siblings);
     }
-    if (
-      this.hydrateLatest &&
-      paths.size === this.branches.length &&
-      this.branches.every(
-        (branch) => this.agents.get(branch.id)?.status !== "resuming"
-      )
-    ) {
-      this.hydrateLatest = false;
-      const newest = this.branches
-        .toSorted(
-          (left, right) =>
-            latestMessageTime(this.agents.get(left.id), left.createdAt) -
-            latestMessageTime(this.agents.get(right.id), right.createdAt)
-        )
-        .at(-1);
-      if (newest) {
-        this.selected = newest.id;
-      }
-    }
-    const pendingPath =
-      this.pendingSelection && paths.get(this.pendingSelection);
-    if (
-      pendingPath?.length &&
-      this.pendingSelection &&
-      readyBranches.has(this.pendingSelection)
-    ) {
-      this.selected = this.pendingSelection;
-      this.pendingSelection = undefined;
-      this.cursor = pendingPath.at(-1) ?? null;
-    }
-    const selectedPath = paths.get(this.selected);
-    if (this.follow || !this.cursor) {
-      this.cursor = selectedPath?.at(-1) ?? this.cursor;
-    }
+    this.selectHydratedBranch(paths);
+    this.selectReadyBranch(paths, readyBranches);
+    this.followSelectedBranch(paths);
     this.snapshot = {
       agents: new Map(this.agents),
       aliases,
@@ -323,117 +474,8 @@ export class LogicalChat {
   }
 }
 
-const sourcePrefix = (
-  branch: LogicalBranch,
-  source: readonly string[],
-  aliases: ReadonlyMap<string, string>,
-  sourceAgent?: NativeChatAgent
-) => {
-  if (!branch.parentConversationId) {
-    return { prefix: [], replaced: undefined };
-  }
-  const sourceId = branch.parentConversationId;
-  const boundaryId = branch.forkMessageId
-    ? aliases.get(aliasKey(sourceId, branch.forkMessageId))
-    : aliases.get(
-        aliasKey(
-          sourceId,
-          sourceAgent?.data.messages.find(
-            (message) =>
-              message.role === "user" &&
-              message.metadata?.turnId === branch.forkTurnId
-          )?.id ?? ""
-        )
-      );
-  const index = boundaryId ? source.indexOf(boundaryId) : -1;
-  // Named idle checkpoints have no following user yet: the entire source is inherited.
-  if (index < 0 && branch.forkKind === "comparison") {
-    return { prefix: [...source], replaced: undefined };
-  }
-  if (index < 0) {
-    throw new Error(
-      "The saved fork boundary is not available yet. Reconnect to restore its source."
-    );
-  }
-  return { prefix: source.slice(0, index), replaced: boundaryId };
-};
+const logicalChatBusy = (snapshot: LogicalChatSnapshot): boolean =>
+  [...snapshot.agents.values()].some((agent) => busy(agent));
 
-// oxlint-disable-next-line eslint/complexity -- Prefix aliases, regenerated users and new native nodes share a single ordered pass.
-const projectBranch = (
-  branch: LogicalBranch,
-  agent: NativeChatAgent,
-  paths: ReadonlyMap<string, string[]>,
-  nodes: Map<string, LogicalNode>,
-  aliases: Map<string, string>,
-  sourceAgent?: NativeChatAgent
-) => {
-  const source = paths.get(branch.parentConversationId ?? "") ?? [];
-  const { prefix, replaced } = sourcePrefix(
-    branch,
-    source,
-    aliases,
-    sourceAgent
-  );
-  const messages = agent.data.messages.filter(
-    (message) =>
-      !(message.metadata?.optimistic && message.metadata.status === "failed")
-  );
-  if (messages.length < prefix.length) {
-    throw new Error("Restoring inherited messages…");
-  }
-  const path: string[] = [];
-  for (const [index, message] of messages.entries()) {
-    let id = prefix[index];
-    if (id) {
-      const origin = nodes.get(id);
-      if (!origin || origin.message.role !== message.role) {
-        throw new Error(
-          "Inherited message identities do not match the saved fork."
-        );
-      }
-      // Both native checkpoints and imported user-boundary forks preserve the
-      // retained prefix IDs. Never guess a new alias from position or text.
-      if (message.id !== origin.message.id) {
-        const inherited = aliases.get(
-          aliasKey(branch.parentConversationId ?? "", message.id)
-        );
-        if (inherited !== id) {
-          throw new Error("Unknown inherited message identity.");
-        }
-      }
-    } else {
-      const firstUser = index === prefix.length && message.role === "user";
-      if (firstUser && branch.forkKind === "regenerate" && replaced) {
-        id = replaced;
-      } else if (firstUser && branch.responseGroupId) {
-        id = `group:${branch.responseGroupId}:user`;
-      } else {
-        id = logicalNativeId(branch.sessionId ?? branch.id, message);
-      }
-      if (!nodes.has(id)) {
-        nodes.set(id, {
-          conversationId: branch.id,
-          id,
-          message,
-          parentId: path.at(-1) ?? null,
-        });
-      }
-    }
-    aliases.set(aliasKey(branch.id, message.id), id);
-    if (!path.includes(id)) {
-      path.push(id);
-    }
-  }
-  const needsResponse =
-    branch.forkKind === "regenerate" ||
-    (!!branch.responseGroupId && branch.forkKind !== "edit");
-  const hasLocalMessage = needsResponse
-    ? messages
-        .slice(prefix.length)
-        .some((message) => message.role === "assistant")
-    : messages.length > prefix.length;
-  return { hasLocalMessage, path };
-};
-
-export const logicalChatBusy = (snapshot: LogicalChatSnapshot) =>
-  [...snapshot.agents.values()].some(busy);
+export { LogicalChat, logicalChatBusy };
+export type { LogicalBranch, LogicalChatSnapshot, NativeChatAgent };

@@ -1,7 +1,9 @@
+import React from "react";
+
 import { WithSkeleton } from "@/components/with-skeleton";
 
-const Loading = () => (
-  <WithSkeleton className="h-full w-full" isLoading={true}>
+const Loading = (): React.JSX.Element => (
+  <WithSkeleton className="h-full w-full" isLoading>
     <div className="flex h-dvh w-full" />
   </WithSkeleton>
 );

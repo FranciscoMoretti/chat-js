@@ -1,17 +1,29 @@
 import { existsSync, statSync } from "node:fs";
+import type { Plugin } from "vitest/config";
+import { defineConfig } from "vitest/config";
+
 import path from "node:path";
 
-import { uiverifyPlugin } from "@uiverify/vitest/plugin";
 import { playwright } from "@vitest/browser-playwright";
-import { defineConfig } from "vitest/config";
-import type { Plugin } from "vitest/config";
+import { uiverifyPlugin } from "@uiverify/vitest/plugin";
 
 const root = import.meta.dirname;
 const dist = path.join(root, "dist");
 
 const serveBuiltDocs = (): Plugin => ({
-  configureServer(server) {
-    server.middlewares.use((request, _response, next) => {
+  configureServer(
+    server: Readonly<{
+      middlewares: Readonly<{
+        use: Parameters<
+          Extract<
+            NonNullable<Plugin["configureServer"]>,
+            (...args: readonly never[]) => unknown
+          >
+        >["0"]["middlewares"]["use"];
+      }>;
+    }>
+  ) {
+    server.middlewares.use((request, _response: unknown, next) => {
       const [pathname = "/", query] = (request.url ?? "/").split("?");
 
       if (pathname === "/docs" || pathname.startsWith("/docs/")) {
@@ -22,7 +34,8 @@ const serveBuiltDocs = (): Plugin => ({
           publicPath = `${publicPath.replace(/\/$/u, "")}/index.html`;
         }
 
-        request.url = `${publicPath}${query ? `?${query}` : ""}`;
+        const querySuffix = query && `?${query}`;
+        request.url = `${publicPath}${querySuffix ?? ""}`;
       }
 
       next();

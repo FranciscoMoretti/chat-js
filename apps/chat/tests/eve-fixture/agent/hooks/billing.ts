@@ -5,9 +5,22 @@ import { recordEveUsage } from "../../../../lib/db/eve-billing";
 // This worker uses only the local mock model, whose provider cost is known to be zero.
 export default defineHook({
   events: {
-    "step.completed": async (event, context) => {
+    "step.completed": async (
+      event: {
+        readonly meta: { readonly id: string };
+        readonly data: { readonly turnId: string };
+      },
+      context: {
+        readonly session: {
+          readonly id: string;
+          readonly auth: {
+            readonly initiator: { readonly principalId: string } | null;
+          };
+        };
+      }
+    ) => {
       const ownerId = context.session.auth.initiator?.principalId;
-      if (!ownerId) {
+      if (ownerId === undefined || ownerId === null || ownerId === "") {
         throw new Error("Missing fixture owner.");
       }
       await recordEveUsage({

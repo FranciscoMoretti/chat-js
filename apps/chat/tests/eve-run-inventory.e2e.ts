@@ -1,12 +1,13 @@
-/* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
-/* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
 import postgres from "postgres";
+import type { TransactionSql } from "postgres";
 import { afterAll, expect, test } from "vitest";
 
 import {
   readEvePostgresRunInventory,
   readEvePostgresRunInventoryInTransaction,
-} from "../lib/db/eve-run-inventory";
+} from "@/lib/eve/lifecycle/postgres/eve-run-inventory";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+
 import { env } from "../lib/env";
 
 if (!["localhost", "127.0.0.1"].includes(new URL(env.DATABASE_URL).hostname)) {
@@ -16,19 +17,19 @@ const query = postgres(env.DATABASE_URL, { max: 1 });
 const ids: string[] = [];
 const streamIds: string[] = [];
 afterAll(async () => {
-  if (streamIds.length) {
+  if (streamIds.length > 0) {
     await query`delete from workflow.workflow_stream_chunks where stream_id in ${query(streamIds)}`;
   }
-  if (ids.length) {
+  if (ids.length > 0) {
     await query`delete from workflow.workflow_runs where id in ${query(ids)}`;
   }
   await query.end();
 });
 
-async function run(
-  attributes: Record<string, string> = {},
+const run = async (
+  attributes: Readonly<Record<string, string>> = {},
   status = "completed"
-) {
+): Promise<string> => {
   const id = crypto.randomUUID();
   ids.push(id);
   await query`
@@ -37,9 +38,12 @@ async function run(
       ${query.json(attributes)}, ${query.json({ secret: "must not be loaded" })})
   `;
   return id;
-}
+};
 
-async function stream(runId: string | null, existingId?: string) {
+const stream = async (
+  runId: string | null,
+  existingId?: string
+): Promise<string> => {
   const id = existingId ?? crypto.randomUUID();
   streamIds.push(id);
   await query`
@@ -47,8 +51,7 @@ async function stream(runId: string | null, existingId?: string) {
     values (${crypto.randomUUID()}, ${id}, ${runId}, ${Buffer.from("private payload")}, false)
   `;
   return id;
-}
-
+};
 test("inventories native descendants and collectors without returning payloads or unrelated runs", async () => {
   const collector = await run();
   const root = await run({ "$eve.activity_collector": collector });
@@ -136,8 +139,10 @@ test("retains missing queue-discovered seeds as incomplete ownership", async () 
   const missing = crypto.randomUUID();
   const inventory = await query.begin(
     "isolation level repeatable read read only",
-    async (transaction) =>
-      readEvePostgresRunInventoryInTransaction(transaction, root, [missing])
+    async (transaction: ReadonlyNativeSurface<TransactionSql>) =>
+      await readEvePostgresRunInventoryInTransaction(transaction, root, [
+        missing,
+      ])
   );
   expect(inventory.missingRunIds).toEqual([missing]);
   expect(inventory.runs.map((row) => row.id)).toEqual([root]);

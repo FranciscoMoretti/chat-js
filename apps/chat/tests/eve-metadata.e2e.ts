@@ -1,5 +1,3 @@
-/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
-/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import { mkdir } from "node:fs/promises";
 
 import { expect, test } from "@playwright/test";
@@ -18,13 +16,15 @@ test("rename and pin persist, preserve input, and reject another owner's changes
   page,
   browser,
 }) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   const [owner] = await db
     .select()
     .from(user)
     .where(eq(user.email, "dev@localhost"));
-  if (!owner) {
+  if (owner === undefined) {
     throw new Error("Missing development user");
   }
   const ids = [crypto.randomUUID(), crypto.randomUUID(), crypto.randomUUID()];
@@ -83,16 +83,14 @@ test("rename and pin persist, preserve input, and reject another owner's changes
     await renamedRow.getByRole("button", { exact: true, name: "More" }).click();
     await page.getByRole("menuitem", { exact: true, name: "Pin" }).click();
     await expect
-      .poll(
-        async () =>
-          (
-            await db
-              .select({ isPinned: eveChat.isPinned })
-              .from(eveConversation)
-              .innerJoin(eveChat, eq(eveChat.id, eveConversation.chatId))
-              .where(eq(eveConversation.id, ids[0]))
-          )?.[0]?.isPinned
-      )
+      .poll(async () => {
+        const conversationRows = await db
+          .select({ isPinned: eveChat.isPinned })
+          .from(eveConversation)
+          .innerJoin(eveChat, eq(eveChat.id, eveConversation.chatId))
+          .where(eq(eveConversation.id, ids[0]));
+        return conversationRows?.[0]?.isPinned;
+      })
       .toBe(true);
     await page.reload();
     await expect(
@@ -115,28 +113,28 @@ test("rename and pin persist, preserve input, and reject another owner's changes
     });
     await page.getByRole("menuitem", { exact: true, name: "Unpin" }).click();
     await expect
-      .poll(
-        async () =>
-          (
-            await db
-              .select({ isPinned: eveChat.isPinned })
-              .from(eveConversation)
-              .innerJoin(eveChat, eq(eveChat.id, eveConversation.chatId))
-              .where(eq(eveConversation.id, ids[0]))
-          )?.[0]?.isPinned
-      )
+      .poll(async () => {
+        const conversationRows = await db
+          .select({ isPinned: eveChat.isPinned })
+          .from(eveConversation)
+          .innerJoin(eveChat, eq(eveChat.id, eveConversation.chatId))
+          .where(eq(eveConversation.id, ids[0]));
+        return conversationRows?.[0]?.isPinned;
+      })
       .toBe(false);
     await page.reload();
     await expect(conversationLinks.first()).toHaveText(secondTitle);
-    for (const { procedure, input } of [
-      { input: { id: ids[2], title: "intrusion" }, procedure: "rename" },
-      { input: { id: ids[2], isPinned: true }, procedure: "pin" },
-    ]) {
-      const response = await page.request.post(`/api/trpc/eve.${procedure}`, {
-        data: { json: input },
-      });
-      expect(response.status()).toBe(404);
-    }
+    await Promise.all(
+      [
+        { input: { id: ids[2], title: "intrusion" }, procedure: "rename" },
+        { input: { id: ids[2], isPinned: true }, procedure: "pin" },
+      ].map(async ({ procedure, input }) => {
+        const response = await page.request.post(`/api/trpc/eve.${procedure}`, {
+          data: { json: input },
+        });
+        expect(response.status()).toBe(404);
+      })
+    );
     const invalid = await page.request.post("/api/trpc/eve.rename", {
       data: { json: { id: ids[0], title: "  " } },
     });

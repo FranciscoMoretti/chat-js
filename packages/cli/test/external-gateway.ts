@@ -1,11 +1,12 @@
+import { builtInGateways } from "#cli/registry/gateways";
 import { readFileSync } from "node:fs";
-
-import { builtInGateways } from "../src/registry/gateways";
 
 /** An independently hosted registry with a name, credentials and file layout unknown to the CLI. */
 export const externalGatewayFixture = () => {
   const openAiCompatibleGateway = builtInGateways.find(
-    (item) => item.meta.chatjs.id === "openai-compatible"
+    (item: {
+      readonly meta: { readonly chatjs: { readonly id: string } };
+    }): boolean => item.meta.chatjs.id === "openai-compatible"
   );
   if (!openAiCompatibleGateway) {
     throw new Error("Missing OpenAI-compatible gateway fixture");
@@ -27,7 +28,7 @@ export const externalGatewayFixture = () => {
         {
           content: adapter,
           path: "adapter.ts",
-          target: "~/lib/ai/gateway/adapter.ts",
+          target: "~/chatjs/providers/gateway/adapter.ts",
           type: "registry:file",
         },
       ],
@@ -40,7 +41,7 @@ export const externalGatewayFixture = () => {
         {
           content: 'export { Gateway } from "./gateway/adapter";\n',
           path: "gateway.ts",
-          target: "~/lib/ai/gateway.ts",
+          target: "~/chatjs/providers/gateway.ts",
           type: "registry:file",
         },
       ],

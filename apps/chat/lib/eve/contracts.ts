@@ -1,55 +1,70 @@
-/* oxlint-disable eslint/sort-keys -- Schema order defines persisted admission hashes; retain the original wire representation. */
+import { projectSelectionAvailable } from "./project-creation";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import { eveMessageInput } from "./message-input";
+import { frontendToolsSchema } from "@/lib/ai/types";
 import { z } from "zod";
 
-import { frontendToolsSchema } from "../ai/types";
-import { eveMessageInput } from "./message-input";
+const MIN_IDENTIFIER_LENGTH = 1;
+const MAX_MODEL_IDENTIFIER_LENGTH = 200;
 
-export const eveForkInput = z.union([
-  z
-    .object({
-      conversationId: z.uuid(),
-      checkpointId: z.uuid().optional(),
-      beforeTurnId: z
-        .string()
-        .max(64)
-        .regex(/^turn_(?<turnIndex>0|[1-9][0-9]*)$/u),
-      beforeMessageId: z.never().optional(),
-    })
-    .strict(),
-  z
-    .object({
-      conversationId: z.uuid(),
-      beforeMessageId: z
-        .string()
-        .regex(/^seed_message_(?<messageIndex>0|[1-9][0-9]{0,3})$/u),
-      beforeTurnId: z.never().optional(),
-      checkpointId: z.never().optional(),
-    })
-    .strict(),
-]);
-export type EveForkInput = z.infer<typeof eveForkInput>;
+const eveForkInput = z.strictObject({
+  conversationId: z.uuid(),
+  beforeMessageId: z.string().min(1).max(512).optional(),
+});
 
-export const eveForkKind = z.enum(["edit", "regenerate", "comparison"]);
-export type EveForkKind = z.infer<typeof eveForkKind>;
+type EveForkInput = z.infer<typeof eveForkInput>;
 
-export const createConversationInput = z
+const eveForkKind = z.enum(["edit", "regenerate", "comparison"]);
+
+type EveForkKind = z.infer<typeof eveForkKind>;
+
+const createConversationBase = z
   .object({
     operationId: z.uuid(),
-    modelId: z.string().min(1).max(200).optional(),
+    modelId: z
+      .string()
+      .min(MIN_IDENTIFIER_LENGTH)
+      .max(MAX_MODEL_IDENTIFIER_LENGTH)
+      .optional(),
     message: eveMessageInput,
     selectedTool: frontendToolsSchema.optional(),
     fork: eveForkInput.optional(),
     forkKind: eveForkKind.optional(),
     projectId: z.uuid().optional(),
   })
-  .strict()
-  .refine((input) => !(input.fork && input.projectId), {
-    message: "Forks inherit their source conversation project.",
-  })
-  .refine((input) => !input.forkKind || input.fork, {
-    message: "Fork intent requires a source conversation.",
-  });
-export const conversationBinding = z.object({
+  .strict();
+
+type CreateConversationInput = z.output<typeof createConversationBase>;
+
+const createConversationInput = createConversationBase
+  .refine(
+    (input) => projectSelectionAvailable(input.projectId),
+    "Projects plugin is not installed."
+  )
+  .refine(
+    (input: ReadonlyNativeSurface<CreateConversationInput>) =>
+      !(input.fork !== undefined && input.projectId !== undefined),
+    { message: "Forks inherit their source project." }
+  )
+  .refine(
+    (input: ReadonlyNativeSurface<CreateConversationInput>) =>
+      !(
+        typeof input.forkKind === "string" &&
+        input.forkKind.length >= MIN_IDENTIFIER_LENGTH &&
+        typeof input.fork !== "object"
+      ),
+    {
+      message: "Fork intent requires a source conversation.",
+    }
+  );
+const conversationBinding = z.object({
   id: z.uuid(),
-  sessionId: z.string().min(1),
+  sessionId: z.string().min(MIN_IDENTIFIER_LENGTH),
 });
+export {
+  conversationBinding,
+  createConversationInput,
+  eveForkInput,
+  eveForkKind,
+};
+export type { EveForkInput, EveForkKind };

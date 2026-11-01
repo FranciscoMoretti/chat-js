@@ -1,10 +1,9 @@
 "use client";
-
-import Image from "next/image";
-import { z } from "zod";
-
-import InteractiveChart from "./interactive-charts";
 import type { BaseChart } from "./interactive-charts";
+import Image from "next/image";
+import InteractiveChart from "./interactive-charts";
+import React from "react";
+import { z } from "zod";
 
 const chartLabels = {
   title: z.string().default(""),
@@ -44,12 +43,17 @@ const chartSchema = z.discriminatedUnion("type", [
     type: z.literal("bar"),
   }),
 ]);
+const MIN_PNG_BASE64_LENGTH = 1;
 const pngSchema = z.object({
-  base64: z.string().min(1),
+  base64: z.string().min(MIN_PNG_BASE64_LENGTH),
   format: z.literal("png"),
 });
 
-export const CodeExecutionChart = ({ value }: { value: unknown }) => {
+export const CodeExecutionChart = ({
+  value,
+}: {
+  readonly value: unknown;
+}): React.JSX.Element => {
   const parsedChart = chartSchema.safeParse(value);
   const chart: BaseChart | null = parsedChart.success ? parsedChart.data : null;
   const parsedPng = pngSchema.safeParse(value);

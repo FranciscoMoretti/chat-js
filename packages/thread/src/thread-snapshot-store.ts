@@ -1,16 +1,25 @@
+import type { AbstractThread } from "./abstract-thread";
 import type { UIMessage } from "ai";
 
-import type { AbstractThread } from "./abstract-thread";
+const DISABLED_THROTTLE_WAIT_MS = 0;
 
-export class SnapshotStore<TMessage extends UIMessage> {
+const ABSENT_VALUE = globalThis.undefined;
+
+type SnapshotSource<TMessage extends UIMessage> = Readonly<
+  Pick<AbstractThread<TMessage>, "getSnapshot" | "subscribe">
+>;
+
+class SnapshotStore<TMessage extends UIMessage> {
   #snapshot: ReturnType<AbstractThread<TMessage>["getSnapshot"]>;
-  readonly thread: AbstractThread<TMessage>;
-  readonly throttleWaitMs: number | undefined;
+  public readonly thread: SnapshotSource<TMessage>;
+  public readonly throttleWaitMs: number | undefined;
 
-  readonly getSnapshot = () => this.#snapshot;
+  public readonly getSnapshot = (): ReturnType<
+    AbstractThread<TMessage>["getSnapshot"]
+  > => this.#snapshot;
 
-  constructor(
-    thread: AbstractThread<TMessage>,
+  public constructor(
+    thread: SnapshotSource<TMessage>,
     throttleWaitMs: number | undefined
   ) {
     this.thread = thread;
@@ -18,20 +27,27 @@ export class SnapshotStore<TMessage extends UIMessage> {
     this.#snapshot = thread.getSnapshot();
   }
 
-  subscribe = (listener: () => void) => {
+  public subscribe = (listener: () => void): (() => void) => {
     this.#snapshot = this.thread.getSnapshot();
     const { throttleWaitMs } = this;
-    const publish = () => {
+    const publish = (): void => {
       this.#snapshot = this.thread.getSnapshot();
       listener();
     };
-    if (!throttleWaitMs) {
+    if (
+      !(
+        throttleWaitMs !== null &&
+        throttleWaitMs !== ABSENT_VALUE &&
+        throttleWaitMs !== DISABLED_THROTTLE_WAIT_MS &&
+        !Number.isNaN(throttleWaitMs)
+      )
+    ) {
       return this.thread.subscribe(publish);
     }
 
     let lastCall = 0;
-    let timeout: ReturnType<typeof setTimeout> | undefined;
-    const notify = () => {
+    let timeout: ReturnType<typeof setTimeout> | undefined = ABSENT_VALUE;
+    const notify = (): void => {
       const elapsed = Date.now() - lastCall;
       if (elapsed >= throttleWaitMs) {
         lastCall = Date.now();
@@ -41,15 +57,15 @@ export class SnapshotStore<TMessage extends UIMessage> {
       if (timeout) {
         return;
       }
-      timeout = setTimeout(() => {
-        timeout = undefined;
+      timeout = setTimeout((): void => {
+        timeout = ABSENT_VALUE;
         lastCall = Date.now();
         publish();
       }, throttleWaitMs - elapsed);
     };
 
     const unsubscribe = this.thread.subscribe(notify);
-    return () => {
+    return (): void => {
       unsubscribe();
       if (timeout) {
         clearTimeout(timeout);
@@ -57,3 +73,5 @@ export class SnapshotStore<TMessage extends UIMessage> {
     };
   };
 }
+
+export { SnapshotStore };

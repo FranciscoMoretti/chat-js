@@ -1,9 +1,11 @@
 import { useSyncExternalStore } from "react";
 
-const unsubscribe = () => null;
-const subscribe = () => unsubscribe;
-const getSnapshot = () => true;
-const getServerSnapshot = () => false;
+const unsubscribe = (): null => null;
 
-export const useMounted = () =>
+const subscribe = (): (() => null) => unsubscribe;
+
+const getSnapshot = (): boolean => true;
+
+const getServerSnapshot = (): boolean => false;
+export const useMounted = (): boolean =>
   useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);

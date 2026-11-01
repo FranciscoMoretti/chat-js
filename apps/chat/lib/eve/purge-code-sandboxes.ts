@@ -1,60 +1,79 @@
-import { tools } from "../../tools/chatjs/tools";
-import { getCodeSandboxCleanup } from "../ai/installed-tool-capabilities";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import { getSandboxProvider } from "@/lib/sandbox/runtime";
+
 import {
   listEveCodeSandboxesForDeletion,
   recordEveCodeSandboxDeletion,
 } from "../db/eve-code-sandboxes";
 import { eveCodeSandboxName } from "./code-sandbox-name";
 
-/** Native work must already be retired. Never infer a failed create from provider absence. */
+const NO_RESOURCES = 0;
+type CodeSandboxCleanupSession = ReturnType<typeof getSandboxProvider>;
+
+type CodeSandboxDeletionResource = Awaited<
+  ReturnType<typeof listEveCodeSandboxesForDeletion>
+>[number];
+
+const assertNoUncertainCodeSandboxes = (
+  resources: readonly CodeSandboxDeletionResource[]
+): void => {
+  if (resources.length > NO_RESOURCES) {
+    throw new Error(
+      "Resolve uncertain code sandbox creation before completing deletion."
+    );
+  }
+};
+
+const purgeConfirmedCodeSandbox = async (
+  ownerId: string,
+  resource: Readonly<
+    Awaited<ReturnType<typeof listEveCodeSandboxesForDeletion>>[number]
+  >,
+  cleanup: ReadonlyNativeSurface<CodeSandboxCleanupSession>
+): Promise<void> => {
+  if (
+    eveCodeSandboxName({
+      callId: resource.callId,
+      ownerId,
+      provider: cleanup.scope,
+      sessionId: resource.sessionId ?? undefined,
+    }) !== resource.name
+  ) {
+    throw new Error(
+      "Code sandbox provider scope does not match its allocation intent."
+    );
+  }
+  await cleanup.deleteAndConfirmAbsent(resource.name);
+  await recordEveCodeSandboxDeletion(
+    ownerId,
+    resource.conversationId,
+    resource.name
+  );
+};
+
+/**
+ * Delete confirmed family sandboxes and release ownership only after confirmed absence.
+ * Native work must already be retired. Uncertain creation intents prevent completion.
+ * @param {string} ownerId - Authorized owner used to read and retire durable sandbox allocations.
+ * @param {string} rootId - Conversation-family root whose sandbox allocations are being purged.
+ */
 export const purgeEveFamilyCodeSandboxes = async (
   ownerId: string,
   rootId: string
-) => {
+): Promise<void> => {
   const resources = await listEveCodeSandboxesForDeletion(ownerId, rootId);
   const confirmedResources = resources.filter(
     (resource) => resource.creationConfirmed
   );
-  if (confirmedResources.length === 0) {
-    if (resources.length > 0) {
-      throw new Error(
-        "Resolve uncertain code sandbox creation before completing deletion."
-      );
-    }
+  if (confirmedResources.length === NO_RESOURCES) {
+    assertNoUncertainCodeSandboxes(resources);
     return;
   }
-  const capability = getCodeSandboxCleanup(
-    Object.entries(tools).find(([name]) => name === "codeExecution")?.[1]
-  );
-  if (!capability) {
-    throw new Error(
-      "Install the code execution tool to clean up its durable sandbox resources."
-    );
-  }
-  const cleanup = capability.createCleanupSession();
+  const cleanup = getSandboxProvider();
   for (const resource of confirmedResources) {
-    if (
-      eveCodeSandboxName({
-        callId: resource.callId,
-        ownerId,
-        provider: cleanup.provider,
-        sessionId: resource.sessionId ?? undefined,
-      }) !== resource.name
-    ) {
-      throw new Error(
-        "Code sandbox provider scope does not match its allocation intent."
-      );
-    }
-    // Cleanup and absence confirmation form one ordered provider transaction.
-    // eslint-disable-next-line no-await-in-loop
-    await cleanup.deleteAndConfirmAbsent(resource.name);
-    // Release durable ownership only after provider absence is confirmed.
-    // eslint-disable-next-line no-await-in-loop
-    await recordEveCodeSandboxDeletion(
-      ownerId,
-      resource.conversationId,
-      resource.name
-    );
+    // Keep identity verification, provider absence, and durable release as one ordered unit per resource.
+    // oxlint-disable-next-line eslint/no-await-in-loop -- The shared provider cleanup session verifies identity, proves absence, and durably releases one resource before the next; a failed resource must retain later ownership.
+    await purgeConfirmedCodeSandbox(ownerId, resource, cleanup);
   }
   if (resources.some((resource) => !resource.creationConfirmed)) {
     throw new Error(

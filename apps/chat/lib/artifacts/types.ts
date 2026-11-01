@@ -1,18 +1,19 @@
 import type { ArtifactKind } from "@/lib/artifacts/artifact-kind";
 
-export type ArtifactMetadata = object | null;
+type ArtifactMetadata = object | null;
 
-export interface UIArtifact {
-  content: string;
-  conversationId?: string;
-  followLive?: boolean;
-  previewCallId?: string;
-  date?: string;
-  documentId: string;
-  isVisible: boolean;
-  kind: ArtifactKind;
-  messageId: string;
-  revisionId?: string;
-  status: "streaming" | "idle";
-  title: string;
+interface UIArtifact {
+  readonly content: string;
+  readonly conversationId?: string;
+  readonly followLive?: boolean;
+  readonly previewCallId?: string;
+  readonly date?: string;
+  readonly documentId: string;
+  readonly isVisible: boolean;
+  readonly kind: ArtifactKind;
+  readonly messageId: string;
+  readonly revisionId?: string;
+  readonly status: "streaming" | "idle";
+  readonly title: string;
 }
+export type { ArtifactMetadata, UIArtifact };

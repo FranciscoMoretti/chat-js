@@ -1,10 +1,15 @@
 import { ArrowUpRight } from "lucide-react";
+import React from "react";
 
 import { siteLinks } from "@/lib/site-config";
 
 /* ── Platform logo icons ──────────────────────────────────────────── */
 
-const AppleLogo = ({ className }: { className?: string }) => (
+const AppleLogo = ({
+  className,
+}: {
+  readonly className?: string;
+}): React.JSX.Element => (
   <svg
     aria-hidden="true"
     className={className}
@@ -15,7 +20,11 @@ const AppleLogo = ({ className }: { className?: string }) => (
   </svg>
 );
 
-const WindowsLogo = ({ className }: { className?: string }) => (
+const WindowsLogo = ({
+  className,
+}: {
+  readonly className?: string;
+}): React.JSX.Element => (
   <svg
     aria-hidden="true"
     className={className}
@@ -26,7 +35,11 @@ const WindowsLogo = ({ className }: { className?: string }) => (
   </svg>
 );
 
-const LinuxLogo = ({ className }: { className?: string }) => (
+const LinuxLogo = ({
+  className,
+}: {
+  readonly className?: string;
+}): React.JSX.Element => (
   <svg
     aria-hidden="true"
     className={className}
@@ -37,7 +50,11 @@ const LinuxLogo = ({ className }: { className?: string }) => (
   </svg>
 );
 
-const BrowserFrame = ({ className }: { className?: string }) => (
+const BrowserFrame = ({
+  className,
+}: {
+  readonly className?: string;
+}): React.JSX.Element => (
   <svg
     aria-hidden="true"
     className={className}
@@ -80,7 +97,7 @@ const BrowserFrame = ({ className }: { className?: string }) => (
 
 /* ── Main Component ───────────────────────────────────────────────── */
 
-export const Platforms = () => (
+export const Platforms = (): React.JSX.Element => (
   <section
     aria-labelledby="platforms-heading"
     className="relative overflow-hidden py-28 sm:py-36"

@@ -1,22 +1,37 @@
-import { expect, test } from "bun:test";
 import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import path from "node:path";
-
+import { expect, test } from "bun:test";
 import {
   shouldCopyChatAppFile,
   shouldCopyElectronFile,
 } from "./scaffold-content";
+import path from "node:path";
+import { tmpdir } from "node:os";
 
 test.each([
   {
     excluded: [
+      "chatjs/installed-source.json",
+      "chatjs/installed-dependencies.json",
+      "chatjs/retained-plugin-schemas.json",
+      "chatjs/removed-plugins/prior/source.ts.bak",
+      "chatjs/replaced-prior/config.ts",
       "evals/my-eval.eval.ts",
+      "components/ui/control-defaults-visual-fixture.tsx",
       "tests/visual/eve-tool-results.browser.tsx",
       "tests/visual/sandbox.css",
+      "tests/layout-primitives.visual.css",
+      "tests/visual/pages/chat.browser.tsx",
       "lib/db/eve-subagents.test.ts",
+      "lib/db/eve-guest-rate.test.ts",
+      "lib/db/eve-query-lookups.test.ts",
+      "lib/db/mcp-oauth-lock.test.ts",
+      "app/api/mcp/oauth/callback/route.test.ts",
       "lib/eve/research-availability.test.ts",
+      "lib/eve/tool-usage.test.ts",
+      "lib/eve/model-runtime.test.ts",
       "tests/native-research-runtime.ts",
+      "tests/fixtures/eve-oauth-mcp-server.ts",
+      "tests/fixtures/eve-oauth-mcp-server.test.ts",
       "scripts/db-branch-create.sh",
       "scripts/db-branch-delete.sh",
       "scripts/db-branch-use.sh",
@@ -26,7 +41,11 @@ test.each([
     name: "ChatJS",
   },
   {
-    excluded: ["release/app.zip", "branding.json"],
+    excluded: [
+      "release/app.zip",
+      "out/ChatJS.app/Contents/Resources/app.asar",
+      "branding.json",
+    ],
     filter: shouldCopyElectronFile,
     name: "Electron",
   },
@@ -46,6 +65,8 @@ test.each([
       "nested/custom.tsbuildinfo",
       ".devtools/session.json",
       ".next/cache.json",
+      "uiverify-archive/snapshots/capture.json",
+      "nested/uiverify-archive/resources/asset.png",
       ".vercel/project.json",
       "guest/.vercel/output/config.json",
       ...excluded,
@@ -55,6 +76,11 @@ test.each([
       "nested/.env.example",
       "app/page.tsx",
       "lib/eve/message-delivery.test.ts",
+      "chatjs/generated/tools.ts",
+      "chatjs/core/ui/slots.tsx",
+      "chatjs/plugins/example/client-plugin.ts",
+      "chatjs/tools/example/tool.ts",
+      "chatjs/providers/gateway.ts",
     ];
     try {
       await Promise.all(
@@ -69,14 +95,14 @@ test.each([
         recursive: true,
       });
       const privateCopies = await Promise.all(
-        privateFiles.map((file) =>
-          Bun.file(path.join(destination, file)).exists()
+        privateFiles.map(
+          async (file) => await Bun.file(path.join(destination, file)).exists()
         )
       );
       expect(privateCopies).toEqual(privateFiles.map(() => false));
       const retainedCopies = await Promise.all(
-        retainedFiles.map((file) =>
-          readFile(path.join(destination, file), "utf-8")
+        retainedFiles.map(
+          async (file) => await readFile(path.join(destination, file), "utf-8")
         )
       );
       expect(retainedCopies).toEqual(

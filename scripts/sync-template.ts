@@ -1,18 +1,26 @@
 #!/usr/bin/env bun
 import { cp, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import path from "node:path";
-
-import { resolvePackageDirectory } from "../packages/cli/src/helpers/resolve-package-directory";
 import {
+  normalizeScaffoldContent,
   shouldCopyChatAppFile,
   shouldCopyElectronFile,
-  normalizeScaffoldContent,
 } from "../packages/cli/src/helpers/scaffold-content";
-import { vendorPatchedPackage } from "../packages/cli/src/helpers/vendor-patched-package";
 import { collectSnapshot } from "./sync-template-snapshot";
+import { copyDevelopmentSupervisor } from "../packages/cli/src/helpers/copy-development-supervisor";
+import { parseJsonObject } from "../packages/cli/src/helpers/json-object";
+import { parsePackageJson } from "../packages/cli/src/helpers/package-manifest";
+import path from "node:path";
+import { resolvePackageDirectory } from "../packages/cli/src/helpers/resolve-package-directory";
+import { tmpdir } from "node:os";
+import { vendorPatchedPackage } from "../packages/cli/src/helpers/vendor-patched-package";
 
-const { join, relative, resolve } = path;
+const join = (...segments: readonly string[]): string => path.join(...segments);
+const relative = (from: string, to: string): string => path.relative(from, to);
+const resolve = (...segments: readonly string[]): string =>
+  path.resolve(...segments);
+const MANIFEST_INDENT_SPACES = 2;
+const EMPTY_IMPORT_LIST_LENGTH = 0;
+const FAILURE_EXIT_STATUS = 1;
 const rootDir = resolve(import.meta.dir, "..");
 const isCheck = process.argv.includes("--check");
 const rootPackageJsonPath = join(rootDir, "package.json");
@@ -43,7 +51,7 @@ const TEMPLATE_REMOVED_FILES = [
   // This reference-app test requires both built-in tools, which scaffolds may omit.
   "components/part/tool-part.test.tsx",
   // This test covers the reference app's Vercel adapter; scaffolds select their own.
-  "lib/storage-provider.test.ts",
+  "chatjs/providers/storage.test.ts",
 ];
 
 /** Import lines stripped from template files after copying. */
@@ -52,18 +60,16 @@ const TEMPLATE_STRIPPED_IMPORTS = [
   'import { GitHubLink } from "@/components/github-link";',
 ];
 
-const applyTemplateTransforms = async (destination: string): Promise<void> => {
-  await normalizeScaffoldContent(destination);
-
+const removeTemplateReferences = async (destination: string): Promise<void> => {
   // Delete excluded files
   await Promise.all(
-    TEMPLATE_REMOVED_FILES.map((file) =>
-      rm(join(destination, file), { force: true })
-    )
+    TEMPLATE_REMOVED_FILES.map(async (file): Promise<void> => {
+      await rm(join(destination, file), { force: true });
+    })
   );
 
   // Strip imports that reference removed files
-  if (TEMPLATE_STRIPPED_IMPORTS.length > 0) {
+  if (TEMPLATE_STRIPPED_IMPORTS.length > EMPTY_IMPORT_LIST_LENGTH) {
     const headerPath = join(destination, "components", "header-actions.tsx");
     let content = await readFile(headerPath, "utf-8");
     for (const imp of TEMPLATE_STRIPPED_IMPORTS) {
@@ -74,22 +80,40 @@ const applyTemplateTransforms = async (destination: string): Promise<void> => {
     content = content.replaceAll(/\s*<GitHubLink \/>/gu, "");
     await writeFile(headerPath, content);
   }
+};
 
-  // Replace monorepo-aware @source paths with single-app path in globals.css
-  const globalsCssPath = join(destination, "app", "globals.css");
+const rewriteTemplateStyles = async (destination: string): Promise<void> => {
+  // Replace monorepo-aware @source paths with single-app path in chatjs.css
+  const globalsCssPath = join(destination, "app", "chatjs.css");
   let globalsCss = await readFile(globalsCssPath, "utf-8");
   globalsCss = globalsCss.replace(
     /@source "\.\.\/node_modules\/streamdown\/dist\/\*\.js";\n@source "\.\.\/\.\.\/\.\.\/node_modules\/streamdown\/dist\/\*\.js";/u,
     '@source "../node_modules/streamdown/dist/*.js";'
   );
   await writeFile(globalsCssPath, globalsCss);
+};
 
-  await vendorPatchedPackage({
-    destination,
-    packageDir: await resolvePackageDirectory("@ai-sdk/mcp", sourceDir),
-    packageName: "@ai-sdk/mcp",
-    patchPath: join(rootDir, "patches", "ai-sdk-mcp@2.0.52.patch"),
-  });
+const stampTemplateManifest = async (destination: string): Promise<void> => {
+  const rootPackageJson = parsePackageJson(
+    await readFile(rootPackageJsonPath, "utf-8")
+  );
+  const packageJsonPath = join(destination, "package.json");
+  const packageJson = parseJsonObject(
+    await readFile(packageJsonPath, "utf-8"),
+    "Template package.json"
+  );
+  packageJson.packageManager = rootPackageJson.packageManager;
+  await writeFile(
+    packageJsonPath,
+    `${JSON.stringify(packageJson, null, MANIFEST_INDENT_SPACES)}\n`
+  );
+};
+
+const applyTemplateTransforms = async (destination: string): Promise<void> => {
+  await copyDevelopmentSupervisor(rootDir, destination);
+  await normalizeScaffoldContent(destination);
+  await removeTemplateReferences(destination);
+  await rewriteTemplateStyles(destination);
   await vendorPatchedPackage({
     destination,
     packageDir: await resolvePackageDirectory(
@@ -103,29 +127,33 @@ const applyTemplateTransforms = async (destination: string): Promise<void> => {
       "workflow-world-postgres@5.0.0-beta.40.patch"
     ),
   });
+  await vendorPatchedPackage({
+    destination,
+    dependencyName: "eve",
+    packageDir: await resolvePackageDirectory("eve", sourceDir, "@chat-js/eve"),
+    packageName: "@chat-js/eve",
+    patchPath: join(rootDir, "patches", "@chat-js%2Feve@0.80.1-chatjs.4.patch"),
+  });
 
-  // Stamp the template with the monorepo-controlled Bun version at build time.
-  const rootPackageJson = JSON.parse(
-    await readFile(rootPackageJsonPath, "utf-8")
-  ) as { packageManager?: string };
-  const packageJsonPath = join(destination, "package.json");
-  const packageJson = JSON.parse(await readFile(packageJsonPath, "utf-8")) as {
-    packageManager?: string;
-  };
-  packageJson.packageManager = rootPackageJson.packageManager;
-  await writeFile(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`);
+  await stampTemplateManifest(destination);
 };
 
 const applyElectronTemplateTransforms = async (
   destination: string
 ): Promise<void> => {
-  // tsconfig.json: rewrite monorepo-specific @/ alias to single-app path
-  const tsconfigPath = join(destination, "tsconfig.json");
-  let tsconfig = await readFile(tsconfigPath, "utf-8");
-  tsconfig = tsconfig.replace(/"\.\.\/chat\/\*"/u, '"../*"');
-  await writeFile(tsconfigPath, tsconfig);
+  const brandingScript = join(destination, "scripts/write-branding.ts");
+  const source = await readFile(brandingScript, "utf-8");
+  await writeFile(
+    brandingScript,
+    source
+      .replace('"../../chat/lib/config"', '"../../lib/config"')
+      .replace(
+        '"../../chat/chatjs/plugins/desktop/protocol"',
+        '"../../chatjs/plugins/desktop/protocol"'
+      )
+  );
 
-  // package.json: replace hardcoded package name and repository
+  // The package.json transform replaces the hardcoded package name and repository.
   const packageJsonPath = join(destination, "package.json");
   let packageJson = await readFile(packageJsonPath, "utf-8");
   packageJson = packageJson.replace(
@@ -138,16 +166,15 @@ const applyElectronTemplateTransforms = async (
   );
   await writeFile(packageJsonPath, packageJson);
 };
-
 const copyElectronTemplate = async (destination: string): Promise<void> => {
   await rm(destination, { force: true, recursive: true });
   await cp(electronSourceDir, destination, {
-    filter: (file) => shouldCopyElectronFile(relative(electronSourceDir, file)),
+    filter: (file): boolean =>
+      shouldCopyElectronFile(relative(electronSourceDir, file)),
     recursive: true,
   });
   await applyElectronTemplateTransforms(destination);
 };
-
 const copyTemplate = async (destination: string): Promise<void> => {
   await rm(destination, { force: true, recursive: true });
   await cp(sourceDir, destination, {
@@ -156,6 +183,33 @@ const copyTemplate = async (destination: string): Promise<void> => {
   });
   await applyTemplateTransforms(destination);
 };
+const reportSnapshotParity = (
+  label: string,
+  expectedSnapshot: Readonly<Pick<Map<string, string>, "entries">>,
+  actualSnapshot: Readonly<Pick<Map<string, string>, "entries">>
+): boolean => {
+  const expectedEntries = [...expectedSnapshot.entries()].toSorted(
+    (
+      [leftPath]: readonly [string, string],
+      [rightPath]: readonly [string, string]
+    ): number => leftPath.localeCompare(rightPath)
+  );
+  const actualEntries = [...actualSnapshot.entries()].toSorted(
+    (
+      [leftPath]: readonly [string, string],
+      [rightPath]: readonly [string, string]
+    ): number => leftPath.localeCompare(rightPath)
+  );
+
+  if (JSON.stringify(expectedEntries) !== JSON.stringify(actualEntries)) {
+    console.error(
+      `${label}: template drift detected. Run \`bun template:sync\`.`
+    );
+    return false;
+  }
+  console.log(`${label}: template is synced.`);
+  return true;
+};
 
 const assertSynced = async (
   label: string,
@@ -163,7 +217,7 @@ const assertSynced = async (
   copyFn: (dest: string) => Promise<void>
 ): Promise<boolean> => {
   const templateStats = await stat(actualDir).catch(() => null);
-  if (!templateStats?.isDirectory()) {
+  if (!templateStats || !templateStats.isDirectory()) {
     console.error(
       `${label}: template folder missing. Run \`bun template:sync\`.`
     );
@@ -181,21 +235,7 @@ const assertSynced = async (
 
   await rm(tempParent, { force: true, recursive: true });
 
-  const expectedEntries = [...expectedSnapshot.entries()].toSorted((a, b) =>
-    a[0].localeCompare(b[0])
-  );
-  const actualEntries = [...actualSnapshot.entries()].toSorted((a, b) =>
-    a[0].localeCompare(b[0])
-  );
-
-  if (JSON.stringify(expectedEntries) !== JSON.stringify(actualEntries)) {
-    console.error(
-      `${label}: template drift detected. Run \`bun template:sync\`.`
-    );
-    return false;
-  }
-  console.log(`${label}: template is synced.`);
-  return true;
+  return reportSnapshotParity(label, expectedSnapshot, actualSnapshot);
 };
 
 if (isCheck) {
@@ -203,8 +243,8 @@ if (isCheck) {
     assertSynced("chat-app", templateDir, copyTemplate),
     assertSynced("electron", electronTemplateDir, copyElectronTemplate),
   ]);
-  if (results.some((ok) => !ok)) {
-    process.exit(1);
+  if (results.some((ok): boolean => !ok)) {
+    process.exit(FAILURE_EXIT_STATUS);
   }
 } else {
   await copyTemplate(templateDir);

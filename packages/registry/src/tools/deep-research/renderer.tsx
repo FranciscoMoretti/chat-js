@@ -1,16 +1,23 @@
 "use client";
-
-import { EveDocumentTool } from "@/components/eve/eve-document-tool";
-import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
-import { ResearchUpdateSchema } from "@/tools/platform/research-updates-schema";
-
-import { ReasonSearchResearchProgress } from "./progress";
 import { researchInput, researchOutput } from "./schemas";
+import { EveDocumentTool } from "@/components/eve/eve-document-tool";
+import React from "react";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import { ReasonSearchResearchProgress } from "./progress";
+import { ResearchUpdateSchema } from "@/tools/platform/research-updates-schema";
+import type { ToolRendererProps } from "@/chatjs/core/tools/define-renderer";
+import { defineToolRenderer } from "@/chatjs/core/tools/define-renderer";
 
 export const DeepResearchRenderer = defineToolRenderer({
   inputSchema: researchInput,
   outputSchema: researchOutput,
-  render: ({ tool, messageId, isReadonly }) => {
+  render: ({
+    tool,
+    messageId,
+    isReadonly,
+  }: ReadonlyNativeSurface<
+    ToolRendererProps<typeof researchInput, typeof researchOutput>
+  >) => {
     const result = tool.state === "output-available" ? tool.output : undefined;
     let content = <output>Researching…</output>;
     if (result && "format" in result) {

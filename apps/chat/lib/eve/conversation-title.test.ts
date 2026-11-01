@@ -1,10 +1,12 @@
 import { beforeEach, expect, it, vi } from "vitest";
 
 import {
-  EVE_TITLE_MAX_LENGTH,
-  eveConversationTitleFallback,
   generateEveConversationTitleResult,
   persistGeneratedEveConversationTitle,
+} from "@/chatjs/plugins/ai-titles/generate-title";
+import {
+  EVE_TITLE_MAX_LENGTH,
+  eveConversationTitleFallback,
 } from "./conversation-title";
 
 const mocks = vi.hoisted(() => ({
@@ -21,9 +23,11 @@ vi.mock("@/lib/ai/telemetry", () => ({ chatTelemetry: "telemetry" }));
 vi.mock("@/lib/config", () => ({
   config: { ai: { workflows: { title: "openai/gpt-5-nano" } } },
 }));
-vi.mock("@/lib/db/eve-queries", () => ({
+vi.mock("@/chatjs/plugins/ai-titles/title-queries", () => ({
   isEveRootTitlePending: mocks.pending,
   replaceEveRootFallbackTitle: mocks.replace,
+}));
+vi.mock("@/lib/db/eve-title", () => ({
   settleEveRootFallbackTitle: mocks.settle,
 }));
 vi.mock("@/lib/logger", () => ({
@@ -56,7 +60,6 @@ it("uses the configured ChatJS title model for a concise title", async () => {
     })
   );
 });
-
 it("keeps a compact fallback when the provider is unavailable", async () => {
   mocks.generate.mockRejectedValue(new Error("provider unavailable"));
   const message =
@@ -74,7 +77,6 @@ it("keeps a compact fallback when the provider is unavailable", async () => {
     title: eveConversationTitleFallback(message),
   });
 });
-
 it("normalizes overlong provider output before persisting it", async () => {
   mocks.generate.mockResolvedValue({
     text: '"A Very Long Generated Title That Cannot Fit In The Conversation List"',
@@ -85,7 +87,6 @@ it("normalizes overlong provider output before persisting it", async () => {
   expect(title.length).toBeLessThanOrEqual(EVE_TITLE_MAX_LENGTH);
   expect(title).not.toMatch(/["']|[,:;.?!]$/u);
 });
-
 it("writes only a successful generated title through the canonical root update", async () => {
   mocks.generate.mockResolvedValue({ text: "Compare Server Rendering" });
 
@@ -106,7 +107,6 @@ it("writes only a successful generated title through the canonical root update",
     "Compare Server Rendering"
   );
 });
-
 it("does not mark a fallback as generated when the provider fails", async () => {
   mocks.generate.mockRejectedValue(new Error("provider unavailable"));
 
@@ -123,7 +123,6 @@ it("does not mark a fallback as generated when the provider fails", async () => 
     "A message that stays a fallback title"
   );
 });
-
 it("contains persistence failures after a title has been generated", async () => {
   mocks.generate.mockResolvedValue({ text: "Generated Title" });
   mocks.replace.mockRejectedValue(new Error("database unavailable"));
@@ -136,7 +135,6 @@ it("contains persistence failures after a title has been generated", async () =>
     })
   ).resolves.toEqual({ source: "generated", title: "Generated Title" });
 });
-
 it("does not spend a title generation after the canonical title settles", async () => {
   mocks.pending.mockResolvedValue(false);
 

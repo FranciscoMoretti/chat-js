@@ -1,63 +1,50 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
-import { createContext, useCallback, useContext, useMemo } from "react";
-import type { ReactNode } from "react";
-
-import type { AppModelId } from "@/lib/ai/app-model-id";
-import { getDefaultEnabledModels } from "@/lib/ai/app-models";
+import React, { createContext, useCallback, useContext, useMemo } from "react";
 import type { AppModelDefinition } from "@/lib/ai/app-models";
-import { useSession } from "@/providers/session-provider";
-import { useTRPC } from "@/trpc/react";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
+import { useModelVisibility } from "@/integrations/chat/model-visibility";
+import { getDefaultEnabledModels } from "@/lib/ai/app-models";
 
 interface ChatModelsContextType {
-  allModels: AppModelDefinition[];
-  getModelById: (modelId: string) => AppModelDefinition | undefined;
-  models: AppModelDefinition[];
+  readonly allModels: readonly ReadonlyNativeSurface<AppModelDefinition>[];
+  readonly getModelById: (
+    modelId: string
+  ) => ReadonlyNativeSurface<AppModelDefinition> | undefined;
+  readonly models: readonly ReadonlyNativeSurface<AppModelDefinition>[];
 }
 
 const ChatModelsContext = createContext<ChatModelsContextType | undefined>(
   undefined
 );
 
-export const ChatModelsProvider = ({
+const ChatModelsProvider = ({
   children,
   models,
 }: {
-  children: ReactNode;
-  models: AppModelDefinition[];
-}) => {
-  const trpc = useTRPC();
-  const { data: session } = useSession();
-  const isAuthenticated = !!session?.user;
-
-  const { data: preferences } = useQuery({
-    ...trpc.settings.getModelPreferences.queryOptions(),
-    enabled: isAuthenticated,
-  });
-
+  readonly children: ReadonlyReactNode;
+  readonly models: readonly ReadonlyNativeSurface<AppModelDefinition>[];
+}): React.JSX.Element => {
   const allModelsMap = useMemo(() => {
-    const map = new Map<string, AppModelDefinition>();
+    const map = new Map<string, ReadonlyNativeSurface<AppModelDefinition>>();
     for (const model of models) {
       map.set(model.id, model);
     }
     return map;
   }, [models]);
 
-  const enabledModelsSet = useMemo(() => {
-    const enabled = getDefaultEnabledModels(models);
-    for (const pref of preferences ?? []) {
-      if (pref.enabled) {
-        enabled.add(pref.modelId as AppModelId);
-      } else {
-        enabled.delete(pref.modelId as AppModelId);
-      }
-    }
-    return enabled;
-  }, [models, preferences]);
+  const defaultEnabledIds = useMemo(
+    () => getDefaultEnabledModels(models),
+    [models]
+  );
+  const enabledModelsSet = useModelVisibility(defaultEnabledIds);
 
   const filteredModels = useMemo(
-    () => models.filter((model) => enabledModelsSet.has(model.id)),
+    () =>
+      models.filter((model: Readonly<Pick<AppModelDefinition, "id">>) =>
+        enabledModelsSet.has(model.id)
+      ),
     [models, enabledModelsSet]
   );
 
@@ -77,10 +64,11 @@ export const ChatModelsProvider = ({
   );
 };
 
-export const useChatModels = () => {
+const useChatModels = (): ChatModelsContextType => {
   const context = useContext(ChatModelsContext);
   if (context === undefined) {
     throw new Error("useChatModels must be used within a ChatModelsProvider");
   }
   return context;
 };
+export { ChatModelsProvider, useChatModels };

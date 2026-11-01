@@ -1,5 +1,5 @@
-/* oxlint-disable unicorn/no-await-expression-member -- Awaited browser responses stay beside their assertions. */
 import { expect, test } from "@playwright/test";
+import type { TestInfo } from "@playwright/test";
 import { z } from "zod";
 
 const captureStyle =
@@ -7,9 +7,11 @@ const captureStyle =
 
 test("logical header metadata is optimistic, rolls back, and preserves project and mobile context", async ({
   page,
-}, testInfo) => {
+}, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
   test.setTimeout(180_000);
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   await page.request.post("/api/chat-model", {
     data: { model: "openai/gpt-5-nano" },
@@ -28,13 +30,10 @@ test("logical header metadata is optimistic, rolls back, and preserves project a
   });
   const id = new URL(page.url()).pathname.split("/").at(-1);
   const title = `Header parity ${crypto.randomUUID().slice(0, 8)}`;
-  expect(
-    (
-      await page.request.post("/api/trpc/eve.rename", {
-        data: { json: { id, title } },
-      })
-    ).ok()
-  ).toBe(true);
+  const renameResponse = await page.request.post("/api/trpc/eve.rename", {
+    data: { json: { id, title } },
+  });
+  expect(renameResponse.ok()).toBe(true);
   await page.reload();
   const menu = () =>
     page.getByRole("button", { exact: true, name: `Chat menu: ${title}` });
@@ -115,13 +114,13 @@ test("logical header metadata is optimistic, rolls back, and preserves project a
       }),
     })
     .parse(await created.json());
-  expect(
-    (
-      await page.request.post("/api/trpc/eve.assignProject", {
-        data: { json: { conversationId: id, projectId: project.id } },
-      })
-    ).ok()
-  ).toBe(true);
+  const projectAssignmentResponse = await page.request.post(
+    "/api/trpc/project.assign",
+    {
+      data: { json: { conversationId: id, projectId: project.id } },
+    }
+  );
+  expect(projectAssignmentResponse.ok()).toBe(true);
   await page.reload();
   await expect(
     page

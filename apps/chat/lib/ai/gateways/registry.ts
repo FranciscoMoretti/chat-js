@@ -1,31 +1,40 @@
+import type { generatedForGateway, models } from "@/lib/ai/models.generated";
+import type { createGateway } from "@/integrations/providers/gateway";
 import type { GatewayProvider as GatewayProviderBase } from "@chat-js/gateways/gateway-provider";
+import type {
+  ConfigMediaModelId,
+  StrictLiterals,
+} from "@chat-js/gateways/provider-types";
+import type { gatewayType } from "@/chatjs/providers/gateway-defaults";
 
-import type { Gateway } from "../gateway";
-import type { gatewayType } from "../gateway-model-defaults";
-import type { generatedForGateway, models } from "../models.generated";
+type InstalledGateway = ReturnType<typeof createGateway>;
 
-export type InstalledGateway = InstanceType<typeof Gateway>;
-export type GatewayType = typeof gatewayType;
-export type GatewayProvider = GatewayProviderBase<
-  GatewayType,
-  Parameters<InstalledGateway["createLanguageModel"]>[0],
-  Parameters<InstalledGateway["createImageModel"]>[0],
-  Parameters<InstalledGateway["createVideoModel"]>[0]
->;
+type GatewayType = typeof gatewayType;
 
-export type GatewayModelIdMap = Record<
-  GatewayType,
-  Parameters<InstalledGateway["createLanguageModel"]>[0]
->;
+const MODEL_ID_PARAMETER_INDEX = 0;
 
-// Helper: check if tuple T contains element E
-type TupleIncludes<T extends readonly unknown[], E> = T extends readonly [
-  infer H,
-  ...infer R,
+type GatewayProvider = GatewayProviderBase<GatewayType>;
+
+// Runtime SDK factories accept new provider IDs. Configuration keeps curated
+// literal suggestions where the SDK supplies them; open adapters keep strings.
+type RuntimeLanguageModelId = Parameters<
+  InstalledGateway["createLanguageModel"]
+>[typeof MODEL_ID_PARAMETER_INDEX];
+type ConfigLanguageModelId = [StrictLiterals<RuntimeLanguageModelId>] extends [
+  never,
 ]
-  ? H extends E
+  ? RuntimeLanguageModelId
+  : StrictLiterals<RuntimeLanguageModelId>;
+type GatewayModelIdMap = Record<GatewayType, ConfigLanguageModelId>;
+
+// Helper: check whether a model tag tuple contains the requested tag.
+type TupleIncludes<
+  Tags extends readonly unknown[],
+  Tag,
+> = Tags extends readonly [infer FirstTag, ...infer RemainingTags]
+  ? FirstTag extends Tag
     ? true
-    : TupleIncludes<R, E>
+    : TupleIncludes<RemainingTags, Tag>
   : false;
 
 // Extract language models with "image-generation" tag from the snapshot
@@ -33,21 +42,30 @@ type MultimodalImageModel =
   Extract<
     (typeof models)[number],
     { type: "language"; tags: readonly string[] }
-  > extends infer M
-    ? M extends { id: infer Id; tags: infer Tags extends readonly string[] }
+  > extends infer Model
+    ? Model extends { id: infer Id; tags: infer Tags extends readonly string[] }
       ? TupleIncludes<Tags, "image-generation"> extends true
         ? Id
         : never
       : never
     : never;
 
-export type GatewayImageModelIdMap = {
-  [K in GatewayType]:
-    | Parameters<InstalledGateway["createImageModel"]>[0]
-    | (K extends typeof generatedForGateway ? MultimodalImageModel : never);
+type GatewayImageModelIdMap = {
+  [SelectedGateway in GatewayType]:
+    | ConfigMediaModelId<InstalledGateway["createImageModel"]>
+    | (SelectedGateway extends typeof generatedForGateway
+        ? MultimodalImageModel
+        : never);
 };
 
-export type GatewayVideoModelIdMap = Record<
+type GatewayVideoModelIdMap = Record<
   GatewayType,
-  Parameters<InstalledGateway["createVideoModel"]>[0]
+  ConfigMediaModelId<InstalledGateway["createVideoModel"]>
 >;
+export type {
+  GatewayImageModelIdMap,
+  GatewayModelIdMap,
+  GatewayProvider,
+  GatewayType,
+  GatewayVideoModelIdMap,
+};

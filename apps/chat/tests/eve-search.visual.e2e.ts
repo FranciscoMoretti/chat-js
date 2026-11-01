@@ -1,9 +1,22 @@
 import { execFileSync } from "node:child_process";
 
+import type {
+  ConsoleMessage,
+  Request,
+  Route,
+  TestInfo,
+} from "@playwright/test";
 import { expect, test } from "@playwright/test";
 import { serialize } from "superjson";
+import { z } from "zod";
 
-test("search states", async ({ page }, testInfo) => {
+const searchBatchSchema = z.object({
+  "0": z.object({ json: z.object({ search: z.string() }) }),
+});
+
+test("search states", async ({ page }, testInfo: Readonly<
+  Pick<TestInfo, "outputPath">
+>) => {
   const script = execFileSync(
     "bun",
     [
@@ -20,12 +33,12 @@ test("search states", async ({ page }, testInfo) => {
     ],
     { encoding: "utf-8", maxBuffer: 20 * 1024 * 1024 }
   );
-  await page.route("**/search-fixture", (route) =>
-    route.fulfill({
+  await page.route("**/search-fixture", async (route) => {
+    await route.fulfill({
       body: `<!doctype html><html><head><style>${css}</style></head><body class="bg-background text-foreground"><div id="root"></div></body></html>`,
       contentType: "text/html",
-    })
-  );
+    });
+  });
   await page.setViewportSize({ height: 1100, width: 1100 });
   await page.goto("/search-fixture");
   await page.addScriptTag({ content: script, type: "module" });
@@ -45,12 +58,14 @@ test("search states", async ({ page }, testInfo) => {
 
 test("debounces requests, hides obsolete results, and navigates to the matching branch", async ({
   page,
-}, testInfo) => {
+}, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
   const searches: string[] = [];
   const delayed = Promise.withResolvers<boolean>();
-  await page.route("**/api/trpc/eve.search*", async (route) => {
-    const input = JSON.parse(
-      new URL(route.request().url()).searchParams.get("input") ?? "{}"
+  await page.route("**/api/trpc/search.query*", async (route: Route) => {
+    const input = searchBatchSchema.parse(
+      JSON.parse(
+        new URL(route.request().url()).searchParams.get("input") ?? "{}"
+      )
     );
     const { search } = input["0"].json;
     searches.push(search);
@@ -116,23 +131,31 @@ test("does not publish a response for text superseded during the debounce window
   const requests: string[] = [];
   const aborted: string[] = [];
   const searchErrors: string[] = [];
-  page.on("console", (message) => {
-    if (message.type() === "error" && message.text().includes("eve.search")) {
-      searchErrors.push(message.text());
+  page.on(
+    "console",
+    (message: Readonly<Pick<ConsoleMessage, "type" | "text">>) => {
+      if (
+        message.type() === "error" &&
+        message.text().includes("search.query")
+      ) {
+        searchErrors.push(message.text());
+      }
     }
-  });
-  page.on("requestfailed", (request) => {
-    if (request.url().includes("/api/trpc/eve.search")) {
-      const input = JSON.parse(
-        new URL(request.url()).searchParams.get("input") ?? "{}"
+  );
+  page.on("requestfailed", (request: Readonly<Pick<Request, "url">>) => {
+    if (request.url().includes("/api/trpc/search.query")) {
+      const input = searchBatchSchema.parse(
+        JSON.parse(new URL(request.url()).searchParams.get("input") ?? "{}")
       );
       aborted.push(input["0"].json.search);
     }
   });
   const intermediate = Promise.withResolvers<boolean>();
-  await page.route("**/api/trpc/eve.search*", async (route) => {
-    const input = JSON.parse(
-      new URL(route.request().url()).searchParams.get("input") ?? "{}"
+  await page.route("**/api/trpc/search.query*", async (route: Route) => {
+    const input = searchBatchSchema.parse(
+      JSON.parse(
+        new URL(route.request().url()).searchParams.get("input") ?? "{}"
+      )
     );
     const { search } = input["0"].json;
     requests.push(search);
@@ -204,13 +227,13 @@ test("does not publish a response for text superseded during the debounce window
 
 test("recent-chat skeletons reserve the loaded dialog height", async ({
   page,
-}, testInfo) => {
+}, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
   const recent = Promise.withResolvers<boolean>();
   await page.route(
-    (url) =>
+    (url: Readonly<Pick<URL, "pathname">>) =>
       url.pathname.startsWith("/api/trpc/") &&
       url.pathname.slice("/api/trpc/".length).split(",").includes("eve.list"),
-    async (route) => {
+    async (route: Route) => {
       const procedures = new URL(route.request().url()).pathname
         .slice("/api/trpc/".length)
         .split(",");
@@ -220,26 +243,28 @@ test("recent-chat skeletons reserve the loaded dialog height", async ({
       if (!Array.isArray(data)) {
         throw new TypeError("Expected a tRPC batch response");
       }
+      const batchResults: readonly unknown[] = data;
       await recent.promise;
       await route.fulfill({
-        json: procedures.map((procedure, procedureIndex) =>
-          procedure === "eve.list"
-            ? {
-                result: {
-                  data: serialize({
-                    items: Array.from({ length: 8 }, (_, index) => ({
-                      conversationId: `branch-${index}`,
-                      createdAt: "2026-09-25T10:00:00Z",
-                      id: `chat-${index}`,
-                      state: "bound",
-                      title: `Recent conversation ${index + 1}`,
-                    })),
-                    nextCursor: null,
-                  }),
-                },
-              }
-            : data[procedureIndex]
-        ),
+        json: procedures.map((procedure, procedureIndex) => {
+          if (procedure === "eve.list") {
+            return {
+              result: {
+                data: serialize({
+                  items: Array.from({ length: 8 }, (_, index) => ({
+                    conversationId: `branch-${index}`,
+                    createdAt: "2026-09-25T10:00:00Z",
+                    id: `chat-${index}`,
+                    state: "bound",
+                    title: `Recent conversation ${index + 1}`,
+                  })),
+                  nextCursor: null,
+                }),
+              },
+            };
+          }
+          return batchResults[procedureIndex];
+        }),
         response,
       });
     }
@@ -253,7 +278,7 @@ test("recent-chat skeletons reserve the loaded dialog height", async ({
   await expect(dialog.locator('[data-slot="skeleton"]')).toHaveCount(13);
   const background = await dialog
     .locator("[cmdk-root]")
-    .evaluate((element) => getComputedStyle(element).backgroundColor);
+    .evaluate((element: Element) => getComputedStyle(element).backgroundColor);
   await expect(dialog.locator('[data-slot="skeleton"]').first()).not.toHaveCSS(
     "background-color",
     background
@@ -282,7 +307,8 @@ test("recent-chat skeletons reserve the loaded dialog height", async ({
     const response = await fetch(
       `/api/trpc/project.list,eve.list?batch=1&input=${input}`
     );
-    return await response.json();
+    const responseBody: unknown = await response.json();
+    return responseBody;
   });
   expect(batch).toMatchObject([
     { result: { data: { json: expect.any(Array) } } },

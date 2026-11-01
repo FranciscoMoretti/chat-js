@@ -1,6 +1,8 @@
 import { expect, test } from "@playwright/test";
+import type { Browser, Page, Route } from "@playwright/test";
 import { eq } from "drizzle-orm";
 import { Client } from "eve/client";
+import type { MessageStreamEvent } from "eve/client";
 import { z } from "zod";
 
 import { db } from "../lib/db/client";
@@ -16,12 +18,34 @@ import { keyFromFileUrl } from "../lib/file-url";
 import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(env.DATABASE_URL);
+type ImageActionResultEvent = Extract<
+  MessageStreamEvent,
+  { type: "action.result" }
+>;
+type ImageEventReader =
+  | (Omit<ImageActionResultEvent, "data"> & {
+      readonly data: Readonly<
+        Omit<ImageActionResultEvent["data"], "result">
+      > & {
+        readonly result: Readonly<ImageActionResultEvent["data"]["result"]>;
+      };
+    })
+  | {
+      readonly type: Exclude<MessageStreamEvent["type"], "action.result">;
+      readonly data?: unknown;
+    };
+
 test("native image generation, editing and sharing preserve stored results", async ({
   page,
   browser,
+}: {
+  page: Page;
+  browser: Browser;
 }) => {
   test.setTimeout(300_000);
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route: Route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   const created = await page.request.post("/api/agent-conversations", {
     data: {
@@ -40,11 +64,12 @@ test("native image generation, editing and sharing preserve stored results", asy
   const image = page.locator('img[src*="/api/files/"]').first();
   await expect(image).toBeVisible({ timeout: 150_000 });
   await expect
-    .poll(() =>
-      image.evaluate(
-        (element) =>
-          element instanceof HTMLImageElement && element.naturalWidth > 0
-      )
+    .poll(
+      async () =>
+        await image.evaluate(
+          (element: unknown) =>
+            element instanceof HTMLImageElement && element.naturalWidth > 0
+        )
     )
     .toBe(true);
   const src = await image.getAttribute("src");
@@ -52,11 +77,12 @@ test("native image generation, editing and sharing preserve stored results", asy
   await expect(image).toHaveAttribute("src", src ?? "");
   await expect(image).toBeVisible();
   await expect
-    .poll(() =>
-      image.evaluate(
-        (element) =>
-          element instanceof HTMLImageElement && element.naturalWidth > 0
-      )
+    .poll(
+      async () =>
+        await image.evaluate(
+          (element: unknown) =>
+            element instanceof HTMLImageElement && element.naturalWidth > 0
+        )
     )
     .toBe(true);
   const [conversation] = await db
@@ -68,7 +94,7 @@ test("native image generation, editing and sharing preserve stored results", asy
     .attach(binding.sessionId)
     .snapshot({ signal: AbortSignal.timeout(15_000) });
   const results = snapshot.events.filter(
-    (event) =>
+    (event: ImageEventReader) =>
       event.type === "action.result" &&
       event.data.result.kind === "tool-result" &&
       event.data.result.toolName === "generateImage"
@@ -99,11 +125,12 @@ test("native image generation, editing and sharing preserve stored results", asy
   await expect(images).toHaveCount(2, { timeout: 150_000 });
   const edited = images.nth(1);
   await expect
-    .poll(() =>
-      edited.evaluate(
-        (element) =>
-          element instanceof HTMLImageElement && element.naturalWidth > 0
-      )
+    .poll(
+      async () =>
+        await edited.evaluate(
+          (element: unknown) =>
+            element instanceof HTMLImageElement && element.naturalWidth > 0
+        )
     )
     .toBe(true);
   const editedSrc = await edited.getAttribute("src");
@@ -116,11 +143,12 @@ test("native image generation, editing and sharing preserve stored results", asy
   await expect(images.nth(0)).toHaveAttribute("src", src ?? "");
   await expect(images.nth(1)).toHaveAttribute("src", editedSrc ?? "");
   await expect
-    .poll(() =>
-      edited.evaluate(
-        (element) =>
-          element instanceof HTMLImageElement && element.naturalWidth > 0
-      )
+    .poll(
+      async () =>
+        await edited.evaluate(
+          (element: unknown) =>
+            element instanceof HTMLImageElement && element.naturalWidth > 0
+        )
     )
     .toBe(true);
   await edited.screenshot({
@@ -131,7 +159,7 @@ test("native image generation, editing and sharing preserve stored results", asy
     .attach(binding.sessionId)
     .snapshot({ signal: AbortSignal.timeout(15_000) });
   const imageResults = afterEdit.events.filter(
-    (event) =>
+    (event: ImageEventReader) =>
       event.type === "action.result" &&
       event.data.result.kind === "tool-result" &&
       event.data.result.toolName === "generateImage"
@@ -142,8 +170,16 @@ test("native image generation, editing and sharing preserve stored results", asy
     .from(eveFileReference)
     .innerJoin(eveStoredFile, eq(eveStoredFile.key, eveFileReference.key))
     .where(eq(eveFileReference.conversationId, binding.id));
-  expect(registered.map((file) => file.key).toSorted()).toEqual(
-    [keyFromFileUrl(src ?? ""), keyFromFileUrl(editedSrc ?? "")].toSorted()
+  expect(
+    registered
+      .map((file) => file.key)
+      .toSorted((left, right) => Number(left > right) - Number(left < right))
+  ).toEqual(
+    [keyFromFileUrl(src ?? ""), keyFromFileUrl(editedSrc ?? "")].toSorted(
+      (left, right) =>
+        Number(String(left) > String(right)) -
+        Number(String(left) < String(right))
+    )
   );
   expect(
     registered.every((file) => file.ownerId === conversation.ownerId)
@@ -167,20 +203,24 @@ test("native image generation, editing and sharing preserve stored results", asy
   const anonymous = await browser.newContext();
   try {
     const shared = await anonymous.newPage();
-    await shared.route("https://unpkg.com/react-scan/**", (route) =>
-      route.abort()
+    await shared.route(
+      "https://unpkg.com/react-scan/**",
+      async (route: Route) => {
+        await route.abort();
+      }
     );
     await shared.goto(new URL(`/share/${binding.id}`, page.url()).href);
     const sharedImages = shared.locator('img[src*="/api/files/"]');
     await expect(sharedImages).toHaveCount(2);
     await expect
-      .poll(() =>
-        sharedImages.evaluateAll((elements) =>
-          elements.every(
-            (element) =>
-              element instanceof HTMLImageElement && element.naturalWidth > 0
+      .poll(
+        async () =>
+          await sharedImages.evaluateAll((elements: readonly unknown[]) =>
+            elements.every(
+              (element: unknown) =>
+                element instanceof HTMLImageElement && element.naturalWidth > 0
+            )
           )
-        )
       )
       .toBe(true);
     await expect(shared.getByTestId("multimodal-input")).toHaveCount(0);

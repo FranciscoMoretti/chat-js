@@ -16,7 +16,6 @@ test("old guest cookies no longer authorize application history", async () => {
     )
   ).toBeNull();
 });
-
 test("registered ownership is unchanged", async () => {
   session.mockResolvedValue({ user: { id: "registered-owner" } });
   expect(await resolveEvePrincipal(new Headers())).toEqual({

@@ -1,18 +1,53 @@
+import type {
+  EveMessage,
+  EveMessagePart,
+  MessageStreamEvent,
+} from "eve/client";
+import type {
+  ReadonlyEveMessage,
+  ReadonlyEveMessageMetadata,
+  ReadonlyEveMessagePart,
+} from "@/lib/eve/readonly-message-types";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { defaultMessageReducer } from "eve/client";
-import type { EveMessagePart, MessageStreamEvent } from "eve/client";
-
 import { eveMessageTool, eveToolMetadata } from "./message-tool-selection";
+import { hasEveToolReceipt, toolOutputSchema } from "./tool-result";
+import { projectEveMessageDisplay } from "./message-display";
+import type { EveMessageDisplayReceipt } from "./message-display";
 import { responseModelReferences } from "./response-model";
-import { toolOutputSchema, hasEveToolReceipt } from "./tool-result";
 
-/** Keep visible tool content, never the owner's approval or runtime identities. */
+interface SharedEveMessage {
+  id: string;
+  parts: EveMessagePart[];
+  role: EveMessage["role"];
+  metadata?:
+    | { custom: ReturnType<typeof eveToolMetadata>; modelId?: undefined }
+    | { modelId: string; custom?: undefined };
+}
+
+const sharedModelId = (
+  message: Pick<EveMessage, "role"> & {
+    readonly metadata?: Pick<ReadonlyEveMessageMetadata, "modelId" | "turnId">;
+  },
+  models: Readonly<Pick<ReadonlyMap<string, string>, "get">>
+): string => {
+  if (message.role !== "assistant") {
+    return "";
+  }
+  const turnId = message.metadata?.turnId ?? "";
+  if (turnId === "") {
+    return message.metadata?.modelId ?? "";
+  }
+  return models.get(turnId) ?? "";
+};
+
+/**
+ * Keep visible tool content, never the owner's approval or runtime identities.
+ * @param {ReadonlyNativeSurface<EveDynamicToolPart>} part Native tool state whose display content may be shared.
+ * @returns {EveMessagePart} A display part with approval IDs and receipt-only identities removed.
+ */
 const sharedTool = (
-  part: Extract<
-    EveMessagePart,
-    {
-      type: "dynamic-tool";
-    }
-  >
+  part: Extract<ReadonlyEveMessagePart, { type: "dynamic-tool" }>
 ): EveMessagePart => {
   const base: Pick<typeof part, "type" | "toolCallId" | "toolName" | "input"> =
     {
@@ -93,7 +128,9 @@ const sharedTool = (
   }
 };
 
-export const sharedEvePart = (part: EveMessagePart): EveMessagePart[] => {
+const sharedEvePart = (
+  part: ReadonlyNativeSurface<ReadonlyEveMessagePart>
+): EveMessagePart[] => {
   if (part.type === "text" || part.type === "reasoning") {
     return [{ state: part.state, text: part.text, type: part.type }];
   }
@@ -114,7 +151,7 @@ export const sharedEvePart = (part: EveMessagePart): EveMessagePart[] => {
     const response = part.toolMetadata?.eve?.inputResponse;
     if (request) {
       parts.push({ text: request.prompt, type: "text" });
-      if (request.options?.length) {
+      if (request.options && request.options.length > 0) {
         parts.push({
           text: request.options.map((option) => option.label).join(" · "),
           type: "text",
@@ -125,7 +162,7 @@ export const sharedEvePart = (part: EveMessagePart): EveMessagePart[] => {
       response?.text ??
       request?.options?.find((option) => option.id === response?.optionId)
         ?.label;
-    if (answer) {
+    if (typeof answer === "string" && answer !== "") {
       parts.push({ text: `Response: ${answer}`, type: "text" });
     }
     return parts;
@@ -137,28 +174,31 @@ export const sharedEvePart = (part: EveMessagePart): EveMessagePart[] => {
   return [{ text: "An account connection was requested.", type: "text" }];
 };
 
-export const sharedEveMessages = (events: readonly MessageStreamEvent[]) => {
+const sharedEveMessages = (
+  events: readonly MessageStreamEvent[],
+  receipts: readonly EveMessageDisplayReceipt[] = []
+): SharedEveMessage[] => {
   const reducer = defaultMessageReducer();
-  // oxlint-disable-next-line unicorn/no-array-reduce -- Use EVE’s native event reducer and initial state for this projection.
-  const state = events.reduce(reducer.reduce, reducer.initial());
+  const reduceEvent = reducer.reduce.bind(reducer);
+  let state = reducer.initial();
+  for (const event of events) {
+    state = reduceEvent(state, event);
+  }
+  state = projectEveMessageDisplay(state, events, receipts);
   const models = responseModelReferences(events);
-  return state.messages.map((message) => {
-    let modelId: string | undefined;
-    if (message.role === "assistant") {
-      modelId = message.metadata?.turnId
-        ? models.get(message.metadata.turnId)
-        : message.metadata?.modelId;
-    }
+  return state.messages.map((message: ReadonlyEveMessage): SharedEveMessage => {
+    const modelId = sharedModelId(message, models);
     const selectedTool =
-      message.role === "user" ? eveMessageTool(message) : null;
+      message.role === "user" ? (eveMessageTool(message) ?? "") : "";
     return {
-      ...(selectedTool
-        ? { metadata: { custom: eveToolMetadata(selectedTool) } }
-        : {}),
-      ...(modelId ? { metadata: { modelId } } : {}),
+      ...(selectedTool === ""
+        ? {}
+        : { metadata: { custom: eveToolMetadata(selectedTool) } }),
+      ...(modelId === "" ? {} : { metadata: { modelId } }),
       id: message.id,
       parts: message.parts.flatMap(sharedEvePart),
       role: message.role,
     };
   });
 };
+export { sharedEveMessages, sharedEvePart };

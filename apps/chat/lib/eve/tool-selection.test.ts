@@ -1,3 +1,5 @@
+import { isNonEmptyString } from "@/lib/is-non-empty-string";
+
 import {
   ContextContainer,
   contextStorage,
@@ -8,12 +10,16 @@ import {
 } from "@eve-test/dist/src/context/serialize.js";
 import { expect, it, vi } from "vitest";
 
+import type {
+  installedDocumentKinds,
+  installedToolNames,
+} from "@/integrations/tools/catalog";
+
 import selectionHook from "../../agent/hooks/tool-selection";
 import { frontendToolsSchema } from "../ai/types";
-import { config } from "../config";
 import { eveCreationContentHash } from "./creation-content-hash";
 import {
-  moveRejectedProjectCreation,
+  moveRejectedContextCreation,
   prepareSelectedCreation,
   readCreationRequest,
 } from "./pending-create";
@@ -24,12 +30,20 @@ import {
   filterEveTools,
 } from "./turn-tools";
 
-vi.mock("../types/anonymous", () => ({
-  ANONYMOUS_LIMITS: { AVAILABLE_TOOLS: ["webSearch"] },
-}));
+const mocks = vi.hoisted(() => ({ kinds: new Set<string>() }));
+vi.mock("@/integrations/tools/catalog", async (importOriginal) => {
+  const actual = await importOriginal<{
+    installedDocumentKinds: typeof installedDocumentKinds;
+    installedToolNames: typeof installedToolNames;
+  }>();
+  for (const kind of actual.installedDocumentKinds) {
+    mocks.kinds.add(kind);
+  }
+  return { ...actual, installedDocumentKinds: mocks.kinds };
+});
 
-const startTurn = (selectedTool?: string, principalType = "user") =>
-  selectionHook.events?.["turn.started"]?.(
+const startTurn = async (selectedTool?: string, principalType = "user") =>
+  await selectionHook.events?.["turn.started"]?.(
     {
       data: { sequence: 1, turnId: "turn_1" },
       meta: { at: "2026-09-12T12:00:00Z", id: "event_1" },
@@ -38,26 +52,29 @@ const startTurn = (selectedTool?: string, principalType = "user") =>
     {
       agent: { name: "chatjs" },
       channel: {},
+      cancel: (): never => {
+        throw new Error("Unexpected cancellation");
+      },
       getSandbox: () => {
         throw new Error("Unexpected sandbox access");
-      },
-      getSkill: () => {
-        throw new Error("Unexpected skill access");
       },
       session: {
         auth: {
           current: {
             attributes: {
-              ...(selectedTool ? { selectedTool } : {}),
+              ...(isNonEmptyString(selectedTool) ? { selectedTool } : {}),
               ...(principalType === "guest" ? { chatjsGuest: "true" } : {}),
             },
-            authenticator: "gateway",
+            authenticator: "chatjs-gateway",
             principalId: "owner",
             principalType: "user",
           },
           initiator: {
             attributes: { selectedTool: "webSearch" },
-            authenticator: "gateway",
+            authenticator:
+              principalType === "guest"
+                ? "chatjs-disposable-guest"
+                : "chatjs-gateway",
             principalId: "owner",
             principalType: "user",
           },
@@ -78,23 +95,47 @@ it("limits every toolbox and resets a later automatic turn instead of inheriting
       webSearch: {},
       wordCount: {},
     };
-    expect(Object.keys(filterEveTools(tools))).toEqual(["webSearch"]);
+    const available = filterEveTools(tools);
+    expect(Object.keys(available)).toEqual(["webSearch"]);
+    expect(available.webSearch).toBe(tools.webSearch);
+    expect(Object.keys(tools)).toEqual([
+      "confirm_note",
+      "deepResearch",
+      "server__echo",
+      "webSearch",
+      "wordCount",
+    ]);
     expect(eveTurnTool.get()).toBe("webSearch");
     await startTurn();
-    expect(filterEveTools(tools)).toEqual(tools);
+    const automatic = filterEveTools(tools);
+    expect(automatic).toEqual(tools);
+    expect(automatic).not.toBe(tools);
+    expect(automatic.confirm_note).toBe(tools.confirm_note);
   });
 });
-
 it("includes document revision reads without leaking unrelated tools", () => {
-  expect(selectedEveTools("createTextDocument")).toEqual([
-    "createTextDocument",
+  expect(selectedEveTools("createTextDocument")?.toSorted()).toEqual(
+    [
+      "createTextDocument",
+      "createCodeDocument",
+      "createSheetDocument",
+      "editTextDocument",
+      "editCodeDocument",
+      "editSheetDocument",
+      "readDocument",
+    ].toSorted()
+  );
+  for (const tool of [
     "createCodeDocument",
     "createSheetDocument",
     "editTextDocument",
     "editCodeDocument",
     "editSheetDocument",
-    "readDocument",
-  ]);
+  ] as const) {
+    expect(selectedEveTools(tool)).toEqual(
+      selectedEveTools("createTextDocument")
+    );
+  }
   expect(selectedEveTools("generateVideo")).toEqual(["generateVideo"]);
 });
 
@@ -116,27 +157,32 @@ it("includes tool selection in creation identity while preserving existing autom
 
 it.each([["model-a"], ["model-a", "model-b"]])(
   "retains exact selected tools through retry and rejected-project recovery: %j",
-  (...modelIds) => {
+  (...modelIds: Readonly<[string, string] | [string]>) => {
     const entries = new Map<string, string>();
     const storage = {
       getItem: (key: string) => entries.get(key) ?? null,
-      removeItem: (key: string) => {
+      removeItem: (key: string): void => {
         entries.delete(key);
       },
-      setItem: (key: string, value: string) => {
+      setItem: (key: string, value: string): void => {
         entries.set(key, value);
       },
     };
     const projectId = crypto.randomUUID();
+    const context = {
+      key: `project:${projectId}`,
+      label: "project",
+    };
     const original = prepareSelectedCreation(
       storage,
       "owner",
       "hello",
       modelIds,
-      { projectId },
-      "webSearch"
+      { context },
+      "webSearch",
+      { projectId }
     );
-    expect(readCreationRequest(storage, "owner", { projectId })).toEqual(
+    expect(readCreationRequest(storage, "owner", { context })).toEqual(
       original
     );
     expect(
@@ -145,14 +191,14 @@ it.each([["model-a"], ["model-a", "model-b"]])(
         "owner",
         "changed",
         modelIds,
-        { projectId },
+        { context },
         "deepResearch"
       )
     ).toEqual(original);
-    const moved = moveRejectedProjectCreation(
+    const moved = moveRejectedContextCreation(
       storage,
       "owner",
-      projectId,
+      context,
       original.operationId
     );
     expect(moved.selectedTool).toBe("webSearch");
@@ -167,8 +213,7 @@ it("restores the selected capability from Eve serialized context before a resume
     return serializeContext(original);
   });
   expect(saved["chatjs.turn-tool"]).toBe("createTextDocument");
-  // oxlint-disable-next-line unicorn/prefer-structured-clone -- Exercise the JSON wire representation; structuredClone preserves values JSON drops.
-  const resumed = await deserializeContext(JSON.parse(JSON.stringify(saved)));
+  const resumed = await deserializeContext(saved);
   await contextStorage.run(resumed, async () => {
     expect(
       Object.keys(
@@ -183,7 +228,6 @@ it("restores the selected capability from Eve serialized context before a resume
     expect(eveTurnTool.get()).toBeNull();
   });
 });
-
 it("guest automatic and explicit turns retain only configured anonymous tools", async () => {
   await contextStorage.run(new ContextContainer(), async () => {
     const tools = {
@@ -193,7 +237,7 @@ it("guest automatic and explicit turns retain only configured anonymous tools", 
       webSearch: {},
     };
     await startTurn(undefined, "guest");
-    expect(Object.keys(filterEveTools(tools))).toEqual(["webSearch"]);
+    expect(Object.keys(filterEveTools(tools))).toEqual([]);
     await startTurn("deepResearch", "guest");
     expect(filterEveTools(tools)).toEqual({});
     await startTurn();
@@ -201,19 +245,21 @@ it("guest automatic and explicit turns retain only configured anonymous tools", 
   });
 });
 
-it("withholds readDocument when every document kind is disabled", () => {
-  const original = structuredClone(config.ai.tools.documents);
+it("withholds removed document writes while preserving installed revision reads", () => {
+  const original = new Set(mocks.kinds);
+  const installed = mocks.kinds;
   try {
-    config.ai.tools.documents.enabled = true;
-    config.ai.tools.documents.types = {
-      code: false,
-      sheet: false,
-      text: false,
-    };
-    expect(eveInstalledToolEnabled("readDocument")).toBe(false);
-    config.ai.tools.documents.types.text = true;
+    installed.clear();
     expect(eveInstalledToolEnabled("readDocument")).toBe(true);
+    expect(eveInstalledToolEnabled("createTextDocument")).toBe(false);
+    installed.add("text");
+    expect(eveInstalledToolEnabled("readDocument")).toBe(true);
+    expect(eveInstalledToolEnabled("createTextDocument")).toBe(true);
+    expect(eveInstalledToolEnabled("createCodeDocument")).toBe(false);
   } finally {
-    config.ai.tools.documents = original;
+    installed.clear();
+    for (const kind of original) {
+      installed.add(kind);
+    }
   }
 });

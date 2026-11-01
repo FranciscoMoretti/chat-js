@@ -1,0 +1,9 @@
+{
+  "availabilityExport": "deleteDocumentAvailable",
+  "envRequirements": [],
+  "id": "delete-document",
+  "kind": "tool",
+  "requiresTools": ["readDocument"],
+  "tools": [{ "toolExport": "deleteDocument" }],
+  "contractVersion": 1
+}

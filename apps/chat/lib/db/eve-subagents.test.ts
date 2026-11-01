@@ -1,9 +1,10 @@
-/* oxlint-disable eslint/no-await-in-loop -- Apply real migrations and verify ordered durable billing operations. */
 import { readFile } from "node:fs/promises";
 
 import { PGlite } from "@electric-sql/pglite";
 import { drizzle } from "drizzle-orm/pglite";
-import { afterAll, beforeAll, expect, it, vi } from "vitest";
+import type { MessageStreamEvent } from "eve/client";
+import { afterAll, beforeAll, expect, expectTypeOf, it, vi } from "vitest";
+import { z } from "zod";
 
 const postgres = new PGlite();
 vi.mock("./client", () => ({ db: drizzle(postgres) }));
@@ -17,43 +18,56 @@ const {
 const { ingestEveUsage } = await import("../eve/usage");
 const conversationId = "00000000-0000-4000-8000-000000000001";
 const otherId = "00000000-0000-4000-8000-000000000002";
+const MIGRATION_FIXTURE_SETUP_TIMEOUT_MS = 30_000;
 beforeAll(async () => {
-  const journal = JSON.parse(
-    await readFile(
-      new URL("migrations/meta/_journal.json", import.meta.url),
-      "utf-8"
-    )
-  );
-  for (const entry of journal.entries) {
-    await postgres.exec(
-      await readFile(
-        new URL(`migrations/${entry.tag}.sql`, import.meta.url),
-        "utf-8"
+  const journal = z
+    .object({ entries: z.array(z.object({ tag: z.string() })) })
+    .parse(
+      JSON.parse(
+        await readFile(
+          new URL("migrations/meta/_journal.json", import.meta.url),
+          "utf-8"
+        )
       )
     );
+  const migrations = await Promise.all(
+    journal.entries.map(
+      async (entry) =>
+        await readFile(
+          new URL(`migrations/${entry.tag}.sql`, import.meta.url),
+          "utf-8"
+        )
+    )
+  );
+  for (const migration of migrations) {
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Migration SQL and user/chat/conversation foreign-key fixtures require predecessor completion; billing fixtures intentionally replay receipts in order before asserting the ledger.
+    await postgres.exec(migration);
   }
-  for (const [id, owner, session] of [
-    [conversationId, "owner", "root"],
-    [otherId, "other", "foreign-root"],
-  ]) {
-    await postgres.query(
-      'insert into "user" (id,name,email) values ($1,$1,$1)',
-      [owner]
-    );
-    await postgres.query(
-      'insert into "EveChat" (id,"ownerId",title) values ($1,$2,\'Research\')',
-      [id, owner]
-    );
-    await postgres.query(
-      'insert into "EveConversation" (id,"chatId","ownerId","operationId","firstMessage","sessionId",state) values ($1,$1,$2,$1,\'Research\',$3,\'bound\')',
-      [id, owner, session]
-    );
-  }
-}, 30_000);
-afterAll(() => postgres.close());
+  await postgres.exec(
+    `insert into "user" (id,name,email) values ('owner','owner','owner'), ('other','other','other')`
+  );
+  await postgres.query(
+    `insert into "EveChat" (id,"ownerId",title) values ($1,'owner','Research'), ($2,'other','Research')`,
+    [conversationId, otherId]
+  );
+  await postgres.query(
+    `insert into "EveWorkspace" (id,"ownerId") values ($1,'owner'), ($2,'other')`,
+    [conversationId, otherId]
+  );
+  await postgres.query(
+    `insert into "EveConversation" ("workspaceId",id,"chatId","ownerId","operationId","firstMessage","sessionId",state) values ($1,$1,$1,'owner',$1,'Research','root','bound'), ($2,$2,$2,'other',$2,'Research','foreign-root','bound')`,
+    [conversationId, otherId]
+  );
+}, MIGRATION_FIXTURE_SETUP_TIMEOUT_MS);
+afterAll(async () => {
+  await postgres.close();
+});
 
 it("binds descendants idempotently and rejects foreign parents or identity changes", async () => {
   const child = await registerEveSubagent("owner", "root", "child", "turn_1");
+  const missing = await getEveSubagent("owner", "unknown");
+  expectTypeOf(missing).toEqualTypeOf<typeof child | null>();
+  expect(missing).toBeNull();
   expect(child).toMatchObject({
     conversationId,
     rootSessionId: "root",
@@ -71,12 +85,11 @@ it("binds descendants idempotently and rejects foreign parents or identity chang
   await expect(
     registerEveSubagent("other", "foreign-root", "child", "turn_1")
   ).rejects.toThrow("ownership changed");
-  expect(await getEveSubagent("other", "child")).toBeUndefined();
+  expect(await getEveSubagent("other", "child")).toBeNull();
   await expect(
     registerEveSubagent("owner", "root", "child", "turn_2")
   ).rejects.toThrow("fresh child");
 });
-
 it("advances child cursors monotonically and revokes stream access when the root is deleted", async () => {
   await registerEveSubagent("owner", "root", "cursor-child", "turn_1");
   await advanceEveSubagentUsageCursor("owner", "cursor-child", 20);
@@ -93,7 +106,7 @@ it("advances child cursors monotonically and revokes stream access when the root
   await postgres.exec(
     "update \"EveConversation\" set state='deleted' where \"sessionId\"='root'"
   );
-  expect(await getEveSubagent("owner", "cursor-child")).toBeUndefined();
+  expect(await getEveSubagent("owner", "cursor-child")).toBeNull();
   await postgres.exec(
     "update \"EveConversation\" set state='bound' where \"sessionId\"='root'"
   );
@@ -102,33 +115,30 @@ it("advances child cursors monotonically and revokes stream access when the root
 it("charges native child receipts once and rounds their combined cost on the root turn", async () => {
   const attribution = { sessionId: "root", turnId: "turn_3" };
   for (const sessionId of ["paid-one", "paid-two", "paid-one"]) {
-    await ingestEveUsage(
-      "owner",
-      sessionId,
-      {
-        data: {
-          result: {
-            callId: "search",
-            kind: "tool-result",
-            output: {
-              kind: "chatjs.tool-result",
-              output: { answer: "Evidence" },
-              status: "success",
-              usage: { costUsd: 0.001 },
-              version: 1,
-            },
-            toolName: "webSearch",
+    const event = {
+      data: {
+        result: {
+          callId: "search",
+          kind: "tool-result",
+          output: {
+            kind: "chatjs.tool-result",
+            output: { answer: "Evidence" },
+            status: "success",
+            usage: { costUsd: 0.001 },
+            version: 1,
           },
-          sequence: 0,
-          status: "completed",
-          stepIndex: 0,
-          turnId: "turn_0",
+          toolName: "webSearch",
         },
-        meta: { at: "2026-09-28T00:00:00Z", id: "same-event-name" },
-        type: "action.result",
+        sequence: 0,
+        status: "completed",
+        stepIndex: 0,
+        turnId: "turn_0",
       },
-      attribution
-    );
+      meta: { at: "2026-09-28T00:00:00Z", id: "same-event-name" },
+      type: "action.result",
+    } satisfies MessageStreamEvent;
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Migration SQL and user/chat/conversation foreign-key fixtures require predecessor completion; billing fixtures intentionally replay receipts in order before asserting the ledger.
+    await ingestEveUsage("owner", sessionId, event, attribution);
   }
   const rows = await postgres.query<{
     count: number;

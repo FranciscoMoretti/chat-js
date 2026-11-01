@@ -1,45 +1,58 @@
 "use client";
 
-import type { Route } from "next";
+import type {
+  ComponentProps as ReactComponentProps,
+  MouseEventHandler as ReactMouseEventHandler,
+} from "react";
+
 import Link from "next/link";
+import React from "react";
+
+import type { Route } from "next";
+
+import { handleModifiedNavigation } from "@/integrations/navigation";
+
 import { useRouter } from "next/navigation";
-import type * as React from "react";
 
-import { isElectronRenderer } from "@/lib/electron-auth";
+const PRIMARY_MOUSE_BUTTON = 0;
+const AUXILIARY_MOUSE_BUTTON = 1;
 
-type InternalLinkProps = Omit<React.ComponentProps<typeof Link>, "href"> & {
-  href: React.ComponentProps<typeof Link>["href"] | string;
+export type InternalLinkProps<T extends string> = Omit<
+  ReactComponentProps<typeof Link>,
+  "href" | "as"
+> & {
+  href: Route<T>;
   onNavigate?: () => void;
 };
 
-export const InternalLink = ({
+export const InternalLink = <T extends string>({
   onAuxClick,
   onClick,
   onNavigate,
   href,
   ...props
-}: InternalLinkProps) => {
+}: InternalLinkProps<T>): React.JSX.Element => {
   const router = useRouter();
-  const isElectron = isElectronRenderer();
+  const captureModifiedNavigation = handleModifiedNavigation();
 
-  const navigate = (event: React.MouseEvent<HTMLAnchorElement>) => {
+  const navigate = (): void => {
     onNavigate?.();
-    const targetHref = event.currentTarget.getAttribute("href");
-    if (targetHref) {
-      router.push(targetHref as Route);
-    }
+    router.push(href);
   };
 
-  const handleClick: React.MouseEventHandler<HTMLAnchorElement> = (event) => {
+  const handleClick: ReactMouseEventHandler<HTMLAnchorElement> = (event) => {
     onClick?.(event);
 
-    if (event.defaultPrevented || event.button !== 0) {
+    if (event.defaultPrevented || event.button !== PRIMARY_MOUSE_BUTTON) {
       return;
     }
 
-    if (isElectron && (event.metaKey || event.ctrlKey || event.shiftKey)) {
+    if (
+      captureModifiedNavigation &&
+      (event.metaKey || event.ctrlKey || event.shiftKey)
+    ) {
       event.preventDefault();
-      navigate(event);
+      navigate();
       return;
     }
 
@@ -50,23 +63,25 @@ export const InternalLink = ({
     onNavigate?.();
   };
 
-  const handleAuxClick: React.MouseEventHandler<HTMLAnchorElement> = (
-    event
-  ) => {
+  const handleAuxClick: ReactMouseEventHandler<HTMLAnchorElement> = (event) => {
     onAuxClick?.(event);
 
-    if (event.defaultPrevented || event.button !== 1 || !isElectron) {
+    if (
+      event.defaultPrevented ||
+      event.button !== AUXILIARY_MOUSE_BUTTON ||
+      !captureModifiedNavigation
+    ) {
       return;
     }
 
     event.preventDefault();
-    navigate(event);
+    navigate();
   };
 
   return (
     <Link
       {...props}
-      href={href as Route}
+      href={href}
       onAuxClick={handleAuxClick}
       onClick={handleClick}
     />

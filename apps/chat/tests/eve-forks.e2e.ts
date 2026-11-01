@@ -1,10 +1,11 @@
-/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
+import { userCredit } from "@/chatjs/plugins/credits/credits-schema";
 import { expect, test } from "@playwright/test";
+
 import { eq, sql } from "drizzle-orm";
 import { z } from "zod";
 
 import { db } from "../lib/db/client";
-import { eveConversation, eveUsage, user, userCredit } from "../lib/db/schema";
+import { eveConversation, eveUsage, user } from "../lib/db/schema";
 import { conversationBinding } from "../lib/eve/contracts";
 import { insertEveConversationFixtures } from "./eve-conversation-fixture";
 import { assertEveTestDatabase } from "./eve-test-database";
@@ -21,22 +22,23 @@ test("fork API preserves native history in ChatJS and rejects changed retries an
   let bodyFailed = false;
   let cleanupFailure: { error: unknown } | undefined;
   try {
-    await page.route("https://unpkg.com/react-scan/**", (route) =>
-      route.abort()
-    );
+    await page.route("https://unpkg.com/react-scan/**", async (route) => {
+      await route.abort();
+    });
     await page.goto("/api/dev-login");
     await page.request.post("/api/chat-model", {
       data: { model: modelId },
     });
+    const authSessionResponse = await page.request.get("/api/auth/get-session");
     const session = z
       .object({ user: z.object({ id: z.string() }) })
-      .parse(await (await page.request.get("/api/auth/get-session")).json());
+      .parse(await authSessionResponse.json());
     // The guarded test database uses virtual application credits for paid-tool tests.
     await db
       .insert(userCredit)
-      .values({ credits: 1000, userId: session.user.id })
+      .values({ balanceCents: 1000, userId: session.user.id })
       .onConflictDoUpdate({
-        set: { credits: sql`greatest(${userCredit.credits}, 1000)` },
+        set: { balanceCents: sql`greatest(${userCredit.balanceCents}, 1000)` },
         target: userCredit.userId,
       });
 
@@ -62,18 +64,17 @@ test("fork API preserves native history in ChatJS and rejects changed retries an
       .fill("Reply with original-second-response. Do not call tools.");
     await page.getByRole("button", { exact: true, name: "Send" }).click();
     await expect(
-      page.getByRole("log").locator(".is-user").last()
+      page.getByRole("log").locator('[data-role="user"]').last()
     ).toContainText("Reply with original-second-response. Do not call tools.");
-    await expect(page.getByRole("log").locator(".is-assistant")).toHaveCount(
-      2,
-      {
-        timeout: 90_000,
-      }
-    );
+    await expect(
+      page.getByRole("log").locator('[data-role="assistant"]')
+    ).toHaveCount(2, {
+      timeout: 90_000,
+    });
     await expect(page.getByText("Ready", { exact: true })).toBeVisible();
 
     const operation = {
-      fork: { beforeTurnId: "turn_1", conversationId: source.id },
+      fork: { conversationId: source.id },
       message:
         "What token did I ask you to remember? Reply only with the token. Do not call tools.",
       modelId,
@@ -87,24 +88,27 @@ test("fork API preserves native history in ChatJS and rejects changed retries an
     const branch = conversationBinding.parse(await forked.json());
     expect(branch.sessionId).not.toBe(source.sessionId);
     await page.goto(`/chat/${branch.id}`);
-    await expect(page.getByRole("log").locator(".is-assistant")).toHaveCount(
-      2,
-      {
-        timeout: 90_000,
-      }
-    );
     await expect(
-      page.getByRole("log").locator(".is-assistant").last()
+      page.getByRole("log").locator('[data-role="assistant"]')
+    ).toHaveCount(3, {
+      timeout: 90_000,
+    });
+    await expect(
+      page.getByRole("log").locator('[data-role="assistant"]').last()
     ).toContainText("CEDAR-PINE", { timeout: 90_000 });
     await expect(page.getByText("Ready", { exact: true })).toBeVisible();
-    await expect(page.getByRole("log").locator(".is-user")).toHaveCount(2);
-    await expect(page.getByRole("log")).not.toContainText(
+    await expect(
+      page.getByRole("log").locator('[data-role="user"]')
+    ).toHaveCount(3);
+    await expect(page.getByRole("log")).toContainText(
       "original-second-response"
     );
     await page.reload();
-    await expect(page.getByRole("log").locator(".is-user")).toHaveCount(2);
     await expect(
-      page.getByRole("log").locator(".is-assistant").last()
+      page.getByRole("log").locator('[data-role="user"]')
+    ).toHaveCount(3);
+    await expect(
+      page.getByRole("log").locator('[data-role="assistant"]').last()
     ).toContainText("CEDAR-PINE");
     const replay = await page.request.post("/api/agent-conversations", {
       data: operation,
@@ -115,7 +119,7 @@ test("fork API preserves native history in ChatJS and rejects changed retries an
     const changed = await page.request.post("/api/agent-conversations", {
       data: {
         ...operation,
-        fork: { ...operation.fork, beforeTurnId: "turn_0" },
+        message: "A different copied prompt.",
       },
       headers,
     });
@@ -126,11 +130,14 @@ test("fork API preserves native history in ChatJS and rejects changed retries an
       .where(eq(eveUsage.sessionId, branch.sessionId));
     // Follow-up suggestions have independent hook-model receipts. Only the new
     // branch turn may be billed; copied ancestor turns must not be charged again.
-    expect(new Set(usage.map((entry) => entry.turnId))).toEqual(
-      new Set(["turn_1"])
-    );
     expect(
-      usage.filter((entry) => !entry.eventId.includes(":model-call:"))
+      new Set(usage.map((entry: { readonly turnId: string }) => entry.turnId))
+    ).toEqual(new Set(["turn_0"]));
+    expect(
+      usage.filter(
+        (entry: { readonly eventId: string }) =>
+          !entry.eventId.includes(":model-call:")
+      )
     ).toHaveLength(1);
     const [stored] = await db
       .select()
@@ -172,7 +179,7 @@ test("fork API preserves native history in ChatJS and rejects changed retries an
       const raw = await page.request.post("/api/agent-conversations", {
         data: {
           ...operation,
-          fork: { beforeTurnId: "turn_1", sessionId: source.sessionId },
+          fork: { sessionId: source.sessionId },
         },
         headers,
       });
@@ -196,7 +203,11 @@ test("fork API preserves native history in ChatJS and rejects changed retries an
               const response = await page.request
                 .delete(url, { headers, timeout: 30_000 })
                 .catch(() => null);
-              return response?.status() === 200 ? response.json() : null;
+              if (response?.status() !== 200) {
+                return null;
+              }
+              const responseBody: unknown = await response.json();
+              return responseBody;
             },
             { intervals: [1000, 2000, 5000], timeout: 90_000 }
           )

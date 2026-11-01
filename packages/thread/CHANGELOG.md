@@ -1,5 +1,11 @@
 # @chat-js/thread
 
+## Unreleased
+
+### Changed
+
+- Normalize thread and hook message results to AI SDK's canonical metadata, data-part, and tool shape. Arbitrary required top-level extensions, narrower IDs or roles, and fixed part tuples are no longer falsely guaranteed. Existing SDK message specializations and default constructors retain their types and runtime behavior.
+
 ## 0.1.0
 
 ### Minor Changes

@@ -1,16 +1,16 @@
 "use client";
-
-import { useQuery } from "@tanstack/react-query";
-import dynamic from "next/dynamic";
-
-import { DocumentSkeleton } from "@/components/document-skeleton";
 import { Button } from "@/components/ui/button";
+import { DocumentSkeleton } from "@/components/document-skeleton";
+import React from "react";
+import dynamic from "next/dynamic";
+import { useQuery } from "@tanstack/react-query";
 import { useTRPC } from "@/trpc/react";
 
 const DiffView = dynamic(
-  // next/dynamic requires a promise projection for named exports.
-  // oxlint-disable-next-line promise/prefer-await-to-then
-  () => import("./diffview").then((module) => module.DiffView),
+  async () => {
+    const { DiffView: Comparison } = await import("./diffview");
+    return Comparison;
+  },
   {
     loading: () => <DocumentSkeleton artifactKind="text" />,
     ssr: false,
@@ -24,12 +24,12 @@ export const EveDocumentComparison = ({
   content,
   version,
 }: {
-  conversationId: string;
-  documentId: string;
-  previousRevisionId: string;
-  content: string;
-  version: number;
-}) => {
+  readonly conversationId: string;
+  readonly documentId: string;
+  readonly previousRevisionId: string;
+  readonly content: string;
+  readonly version: number;
+}): React.JSX.Element => {
   const trpc = useTRPC();
   const previous = useQuery(
     trpc.eve.document.queryOptions({
@@ -50,7 +50,13 @@ export const EveDocumentComparison = ({
       {previous.isError && (
         <div className="space-y-2" role="alert">
           <p>The previous version could not be loaded.</p>
-          <Button onClick={() => previous.refetch()} variant="outline">
+          {}
+          <Button
+            onClick={(): void => {
+              void previous.refetch();
+            }}
+            variant="outline"
+          >
             Retry comparison
           </Button>
         </div>

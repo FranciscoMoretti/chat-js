@@ -5,7 +5,7 @@ import { useCallback, useSyncExternalStore } from "react";
 import type { LogicalCommands } from "@/lib/eve/logical-commands";
 
 export const useLogicalCommands = (
-  commands: LogicalCommands,
+  commands: Readonly<Pick<LogicalCommands, "get" | "subscribe">>,
   conversationId: string
 ) => {
   const getSnapshot = useCallback(

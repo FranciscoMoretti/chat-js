@@ -71,6 +71,10 @@ jobs:
             name="$(node -p "require('./${workspace_dir}/package.json').name")"
             version="$(node -p "require('./${workspace_dir}/package.json').version")"
             tag="${name}@${version}"
+            if [[ "${version%%+*}" == *-* ]]; then
+              echo "::error::Publish audited prereleases explicitly with --tag beta; the stable fallback cannot publish ${tag}."
+              return 1
+            fi
 
             local lookup
             if lookup="$(npm view "${name}@${version}" version --json)"; then

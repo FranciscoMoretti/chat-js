@@ -1,9 +1,13 @@
+import { z } from "zod";
 import { expect, test } from "@playwright/test";
+import type { TestInfo } from "@playwright/test";
 
 test("restoring a saved chat shows a loader without runtime wording", async ({
   page,
-}, testInfo) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+}, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   const response = await page.request.post("/api/agent-conversations", {
     data: {
@@ -14,8 +18,11 @@ test("restoring a saved chat shows a loader without runtime wording", async ({
     headers: { origin: new URL(page.url()).origin },
   });
   expect(response.ok()).toBe(true);
-  const binding = await response.json();
-  const gate = Promise.withResolvers<undefined>();
+
+  const binding = z
+    .looseObject({ id: z.string() })
+    .parse(await response.json());
+  const gate: PromiseWithResolvers<void> = Promise.withResolvers();
   await page.route("**/api/trpc/*", async (route) => {
     if (route.request().url().includes("eve.branches")) {
       await gate.promise;
@@ -37,7 +44,7 @@ test("restoring a saved chat shows a loader without runtime wording", async ({
         "nextjs-portal, #react-scan-toolbar, #react-scan-root { visibility:hidden !important; }",
     });
   } finally {
-    gate.resolve(undefined);
+    gate.resolve();
   }
   await expect(
     page.getByRole("textbox", { exact: true, name: "Message" })

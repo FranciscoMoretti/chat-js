@@ -72,10 +72,11 @@ test("document migration backfills owned attachments and retention from existing
     await tx.execute(
       sql`INSERT INTO "EveDocumentRevision" VALUES ('with-files', 'chat', 'owner', ${content}), ('empty', 'chat', 'owner', 'No attachments')`
     );
+    /* oxlint-disable eslint/no-await-in-loop -- Migration statements share a transaction and depend on earlier schema statements. */
     for (const statement of migration.split("--> statement-breakpoint")) {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Run migration statements in their declared order.
       await tx.execute(sql.raw(statement));
     }
+    /* oxlint-enable eslint/no-await-in-loop */
     const revisions = await tx.execute(
       sql`SELECT "id", "fileIds" FROM "EveDocumentRevision" ORDER BY "id"`
     );

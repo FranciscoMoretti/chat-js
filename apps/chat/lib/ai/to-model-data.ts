@@ -2,8 +2,36 @@ import type { AiGatewayModel } from "@chat-js/gateways/models";
 
 import type { ModelData } from "./model-data";
 
-export const toModelData = (model: AiGatewayModel): ModelData => {
+type ReadonlyAiGatewayPricing = Readonly<
+  Omit<
+    AiGatewayModel["pricing"],
+    "input_cache_read_tiers" | "input_tiers" | "output_tiers"
+  >
+> & {
+  readonly input_cache_read_tiers?: readonly Readonly<
+    NonNullable<AiGatewayModel["pricing"]["input_cache_read_tiers"]>[number]
+  >[];
+  readonly input_tiers?: readonly Readonly<
+    NonNullable<AiGatewayModel["pricing"]["input_tiers"]>[number]
+  >[];
+  readonly output_tiers?: readonly Readonly<
+    NonNullable<AiGatewayModel["pricing"]["output_tiers"]>[number]
+  >[];
+};
+
+export type ReadonlyAiGatewayModel = Readonly<
+  Omit<AiGatewayModel, "pricing" | "tags"> & {
+    readonly pricing: ReadonlyAiGatewayPricing;
+    readonly tags?: readonly string[];
+  }
+>;
+
+export const toModelData = (
+  model: Readonly<ReadonlyAiGatewayModel>
+): ModelData => {
   const tags = model.tags ?? [];
+  // A missing positive tag does not establish that a language model rejects tools.
+  const toolCall = tags.includes("tool-use") ? true : undefined;
 
   return {
     context_window: model.context_window,
@@ -29,7 +57,7 @@ export const toModelData = (model: AiGatewayModel): ModelData => {
     pricing: model.pricing,
     reasoning: tags.includes("reasoning"),
     tags: model.tags,
-    toolCall: tags.includes("tool-use"),
+    toolCall: model.type === "language" ? toolCall : false,
     type: model.type,
   };
 };

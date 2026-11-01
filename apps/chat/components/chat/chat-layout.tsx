@@ -1,15 +1,21 @@
 "use client";
 
-import type { ComponentProps } from "react";
-import { createContext, useContext, useMemo } from "react";
+import type { ComponentProps, JSX as ReactJSX } from "react";
+import React, { createContext, useContext, useMemo } from "react";
 
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
-import { useSidebar } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
+
+import { useSidebar } from "@/components/ui/sidebar";
+
+const MAIN_PANEL_DEFAULT_PERCENT = "65%";
+const MAIN_PANEL_MIN_PERCENT = "40%";
+const SECONDARY_PANEL_DEFAULT_PERCENT = "35%";
+const SECONDARY_PANEL_MIN_PERCENT = "25%";
 
 interface ChatLayoutContextValue {
   isSecondaryPanelVisible: boolean;
@@ -17,7 +23,7 @@ interface ChatLayoutContextValue {
 
 const ChatLayoutContext = createContext<ChatLayoutContextValue | null>(null);
 
-const useChatLayoutContext = () => {
+const useChatLayoutContext = (): ChatLayoutContextValue => {
   const context = useContext(ChatLayoutContext);
   if (!context) {
     throw new Error("ChatLayout components must be used within <ChatLayout />");
@@ -27,17 +33,17 @@ const useChatLayoutContext = () => {
 
 type ChatLayoutProps = Omit<
   ComponentProps<typeof ResizablePanelGroup>,
-  "direction"
+  "orientation"
 > & {
   isSecondaryPanelVisible?: boolean;
 };
 
-export const ChatLayout = ({
+const ChatLayout = ({
   className,
   children,
   isSecondaryPanelVisible = false,
   ...props
-}: ChatLayoutProps) => {
+}: ChatLayoutProps): ReactJSX.Element => {
   const { state: sidebarState } = useSidebar();
   const contextValue = useMemo(
     () => ({ isSecondaryPanelVisible }),
@@ -50,9 +56,12 @@ export const ChatLayout = ({
         className={cn(
           "bg-background @container flex h-dvh max-h-dvh w-full max-w-screen min-w-0 flex-col md:max-w-[calc(100vw-var(--sidebar-width))]",
           sidebarState === "collapsed" && "md:max-w-screen",
+          // Panel v4 puts className on its inner wrapper; hide the outer flex item.
+          isSecondaryPanelVisible &&
+            "max-md:[&>[data-chat-layout-main]]:hidden!",
           className
         )}
-        direction="horizontal"
+        orientation="horizontal"
         {...props}
       >
         {children}
@@ -63,31 +72,28 @@ export const ChatLayout = ({
 
 type ChatLayoutMainProps = ComponentProps<typeof ResizablePanel>;
 
-export const ChatLayoutMain = ({
+const ChatLayoutMain = ({
   className,
-  defaultSize = 65,
-  minSize = 40,
+  defaultSize = MAIN_PANEL_DEFAULT_PERCENT,
+  minSize = MAIN_PANEL_MIN_PERCENT,
   ...props
-}: ChatLayoutMainProps) => {
-  const { isSecondaryPanelVisible } = useChatLayoutContext();
-
-  return (
-    <ResizablePanel
-      className={cn(isSecondaryPanelVisible && "hidden md:block", className)}
-      defaultSize={defaultSize}
-      minSize={minSize}
-      {...props}
-    />
-  );
-};
+}: ChatLayoutMainProps): React.JSX.Element => (
+  <ResizablePanel
+    data-chat-layout-main=""
+    className={className}
+    defaultSize={defaultSize}
+    minSize={minSize}
+    {...props}
+  />
+);
 
 type ChatLayoutSecondaryProps = ComponentProps<typeof ResizablePanel>;
 
-export const ChatLayoutSecondary = ({
-  defaultSize = 35,
-  minSize = 25,
+const ChatLayoutSecondary = ({
+  defaultSize = SECONDARY_PANEL_DEFAULT_PERCENT,
+  minSize = SECONDARY_PANEL_MIN_PERCENT,
   ...props
-}: ChatLayoutSecondaryProps) => {
+}: ChatLayoutSecondaryProps): React.JSX.Element | null => {
   const { isSecondaryPanelVisible } = useChatLayoutContext();
 
   if (!isSecondaryPanelVisible) {
@@ -101,11 +107,11 @@ export const ChatLayoutSecondary = ({
 
 type ChatLayoutHandleProps = ComponentProps<typeof ResizableHandle>;
 
-export const ChatLayoutHandle = ({
+const ChatLayoutHandle = ({
   className,
   withHandle = true,
   ...props
-}: ChatLayoutHandleProps) => {
+}: ChatLayoutHandleProps): React.JSX.Element | null => {
   const { isSecondaryPanelVisible } = useChatLayoutContext();
 
   if (!isSecondaryPanelVisible) {
@@ -120,3 +126,4 @@ export const ChatLayoutHandle = ({
     />
   );
 };
+export { ChatLayout, ChatLayoutHandle, ChatLayoutMain, ChatLayoutSecondary };

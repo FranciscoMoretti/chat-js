@@ -1,19 +1,17 @@
-import assert from "node:assert/strict";
-
-import { describe, it, vi } from "vitest";
-
-import { createFileContentResponse } from "./file-content-response";
 import { createFileId, uploadFileAtKey } from "./file-storage";
+import { describe, it, vi } from "vitest";
+import assert from "node:assert/strict";
+import { createFileContentResponse } from "./file-content-response";
 import { keyFromFileUrl } from "./file-url";
 
 vi.mock("@/lib/config", () => ({
   config: { appPrefix: "file-response-test" },
 }));
 
-vi.mock("./storage-provider", async () => {
+vi.mock("@/chatjs/providers/storage", async () => {
   const { memory } = await import("files-sdk/memory");
   return {
-    createStorageAdapter: () => memory(),
+    createStorageAdapter: (): ReturnType<typeof memory> => memory(),
   };
 });
 
@@ -26,7 +24,7 @@ describe("file content response", () => {
       "text/plain"
     );
     const key = keyFromFileUrl(uploaded.url);
-    assert.ok(key);
+    assert.ok(typeof key === "string" && key !== "");
     const url = new URL(uploaded.url, "https://chat.example");
     url.searchParams.set("dpl", "dpl_test");
 
@@ -37,7 +35,6 @@ describe("file content response", () => {
     assert.equal(response.status, 200);
     assert.equal(await response.text(), "hello");
   });
-
   it("serves byte ranges", async () => {
     const uploaded = await uploadFileAtKey(
       createFileId(),
@@ -47,7 +44,7 @@ describe("file content response", () => {
     );
 
     const key = keyFromFileUrl(uploaded.url);
-    assert.ok(key);
+    assert.ok(typeof key === "string" && key !== "");
     const response = await createFileContentResponse(
       new Request(new URL(uploaded.url, "https://chat.example"), {
         headers: { Range: "bytes=1-3" },
@@ -67,7 +64,29 @@ describe("file content response", () => {
     assert.equal(suffixResponse.status, 206);
     assert.equal(await suffixResponse.text(), "lo");
   });
-
+  it.each(["bytes=2-", "bytes=2-99"])(
+    "clamps range %s to the stored file",
+    async (range) => {
+      const uploaded = await uploadFileAtKey(
+        createFileId(),
+        "hello.txt",
+        "hello",
+        "text/plain"
+      );
+      const key = keyFromFileUrl(uploaded.url);
+      assert.ok(typeof key === "string" && key !== "");
+      const response = await createFileContentResponse(
+        new Request(new URL(uploaded.url, "https://chat.example"), {
+          headers: { Range: range },
+        }),
+        key,
+        { allowRedirect: false }
+      );
+      assert.equal(response.status, 206);
+      assert.equal(response.headers.get("content-range"), "bytes 2-4/5");
+      assert.equal(await response.text(), "llo");
+    }
+  );
   it("rejects unsatisfiable ranges", async () => {
     const uploaded = await uploadFileAtKey(
       createFileId(),
@@ -77,7 +96,7 @@ describe("file content response", () => {
     );
 
     const key = keyFromFileUrl(uploaded.url);
-    assert.ok(key);
+    assert.ok(typeof key === "string" && key !== "");
     const response = await createFileContentResponse(
       new Request(new URL(uploaded.url, "https://chat.example"), {
         headers: { Range: "bytes=5-8" },
@@ -91,9 +110,7 @@ describe("file content response", () => {
 });
 
 vi.mock("./db/file-storage-keys", () => ({
-  fileIdsForStorageKeys: (keys: string[]) =>
-    Promise.resolve(
-      new Map(keys.map((key) => [key, key.slice("objects/".length)]))
-    ),
-  storageKeyForFile: (id: string) => Promise.resolve(`objects/${id}`),
+  // oxlint-disable-next-line typescript/promise-function-async -- This DB fixture derives the requested file storage key; its Promise-only API has no work to await under eslint/require-await.
+  storageKeyForFile: (id: string): Promise<string> =>
+    Promise.resolve(`objects/${id}`),
 }));

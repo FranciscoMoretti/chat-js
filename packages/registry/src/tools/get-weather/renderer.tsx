@@ -1,14 +1,15 @@
 "use client";
 
+import { toolDefinition } from "./definition";
 import { format, isWithinInterval } from "date-fns";
-import type { z } from "zod";
-
-import { useIsMobile } from "@/hooks/use-mobile";
-import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
-import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
+import type { weatherInput, weatherResult } from "./schemas";
+import React from "react";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import type { ToolRendererProps } from "@/chatjs/core/tools/define-renderer";
 import { cn } from "@/lib/utils";
-
-import { weatherInput, weatherResult } from "./schemas";
+import { defineToolRenderer } from "@/chatjs/core/tools/define-renderer";
+import { useIsMobile } from "@/hooks/use-mobile";
+import type { z } from "zod";
 
 type WeatherAtLocation = z.output<typeof weatherResult>;
 
@@ -172,13 +173,13 @@ const SAMPLE = {
   utc_offset_seconds: 0,
 };
 
-const n = (num: number): number => Math.ceil(num);
+const roundUp = (num: number): number => Math.ceil(num);
 
 const WeatherCard = ({
   weatherAtLocation,
-}: {
+}: ReadonlyNativeSurface<{
   weatherAtLocation: WeatherAtLocation;
-}) => {
+}>): React.JSX.Element => {
   const currentHigh = Math.max(
     ...weatherAtLocation.hourly.temperature_2m.slice(0, 24)
   );
@@ -194,7 +195,8 @@ const WeatherCard = ({
   const isMobile = useIsMobile();
   const hoursToShow = isMobile ? 5 : 6;
   const currentTimeIndex = weatherAtLocation.hourly.time.findIndex(
-    (time) => new Date(time) >= new Date(weatherAtLocation.current.time)
+    (time): boolean =>
+      new Date(time) >= new Date(weatherAtLocation.current.time)
   );
   const displayStartIndex =
     currentTimeIndex === -1
@@ -227,12 +229,12 @@ const WeatherCard = ({
             )}
           />
           <div className="text-4xl font-medium text-blue-50">
-            {n(weatherAtLocation.current.temperature_2m)}
+            {roundUp(weatherAtLocation.current.temperature_2m)}
             {weatherAtLocation.current_units.temperature_2m}
           </div>
         </div>
 
-        <div className="text-blue-50">{`H:${n(currentHigh)}° L:${n(currentLow)}°`}</div>
+        <div className="text-blue-50">{`H:${roundUp(currentHigh)}° L:${roundUp(currentLow)}°`}</div>
       </div>
 
       <div className="flex flex-row justify-between">
@@ -249,7 +251,7 @@ const WeatherCard = ({
               )}
             />
             <div className="text-sm text-blue-50">
-              {n(displayTemperatures[index])}
+              {roundUp(displayTemperatures[index])}
               {weatherAtLocation.hourly_units.temperature_2m}
             </div>
           </div>
@@ -261,11 +263,11 @@ const WeatherCard = ({
 
 const GetWeatherView = ({
   tool,
-}: {
+}: ReadonlyNativeSurface<{
   tool: GetWeatherRendererTool;
   messageId: string;
   isReadonly: boolean;
-}) => {
+}>): React.JSX.Element => {
   if (tool.state !== "output-available") {
     return (
       <div className="skeleton" key={tool.toolCallId}>
@@ -274,7 +276,7 @@ const GetWeatherView = ({
     );
   }
 
-  if (!tool.output) {
+  if (tool.output === undefined) {
     return <WeatherCard weatherAtLocation={SAMPLE} />;
   }
 
@@ -282,7 +284,7 @@ const GetWeatherView = ({
 };
 
 export const GetWeatherRenderer = defineToolRenderer({
-  inputSchema: weatherInput,
-  outputSchema: weatherResult,
+  inputSchema: toolDefinition.inputSchema,
+  outputSchema: toolDefinition.outputSchema,
   render: GetWeatherView,
 });

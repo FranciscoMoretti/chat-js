@@ -1,11 +1,13 @@
+import React from "react";
+
 import { config } from "@/lib/config";
 
 const getPlanTypesLabel = ({
   hasFree,
   hasPro,
 }: {
-  hasFree: boolean;
-  hasPro: boolean;
+  readonly hasFree: boolean;
+  readonly hasPro: boolean;
 }): string => {
   if (hasFree && hasPro) {
     return "free and paid";
@@ -24,13 +26,13 @@ const PricingSection = ({
   currencySymbol,
   paymentProcessors,
 }: {
-  hasAnyPlan: boolean;
-  planTypesLabel: string;
-  hasFree: boolean;
-  hasPro: boolean;
-  currencySymbol: string;
-  paymentProcessors: string[];
-}) => {
+  readonly hasAnyPlan: boolean;
+  readonly planTypesLabel: string;
+  readonly hasFree: boolean;
+  readonly hasPro: boolean;
+  readonly currencySymbol: string;
+  readonly paymentProcessors: readonly string[];
+}): React.JSX.Element => {
   if (!hasAnyPlan) {
     return (
       <>
@@ -92,7 +94,7 @@ const PricingSection = ({
   );
 };
 
-const TermsPage = () => {
+const TermsPage = (): React.JSX.Element => {
   const currencySymbolMap: Record<string, string> = {
     EUR: "€",
     GBP: "£",
@@ -100,9 +102,10 @@ const TermsPage = () => {
   };
 
   const currencyCode = config.pricing?.currency;
-  const currencySymbol = currencyCode
-    ? (currencySymbolMap[currencyCode] ?? currencyCode)
-    : "";
+  const currencySymbol =
+    typeof currencyCode === "string" && currencyCode !== ""
+      ? (currencySymbolMap[currencyCode] ?? currencyCode)
+      : "";
   const hasFree = Boolean(config.pricing?.free);
   const hasPro = Boolean(config.pricing?.pro);
   const hasAnyPlan = hasFree || hasPro;
@@ -114,7 +117,7 @@ const TermsPage = () => {
   return (
     <main className="prose dark:prose-invert container mx-auto max-w-3xl py-10">
       <h1>{config.policies.terms.title}</h1>
-      {config.policies.terms.lastUpdated ? (
+      {(config.policies.terms.lastUpdated ?? "").length > 0 ? (
         <p>
           <strong>Last updated:</strong> {config.policies.terms.lastUpdated}
         </p>

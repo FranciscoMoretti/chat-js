@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const generateImageInput = z.object({
+const generateImageInput = z.object({
   prompt: z
     .string()
     .describe(
@@ -8,8 +8,9 @@ export const generateImageInput = z.object({
     ),
 });
 
-export const generateImageResult = z.object({
+const generateImageResult = z.object({
   fileId: z.string().optional(),
   imageUrl: z.string(),
   prompt: z.string(),
 });
+export { generateImageInput, generateImageResult };

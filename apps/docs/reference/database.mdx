@@ -160,6 +160,25 @@ Test schema changes against an isolated database before applying them to product
 
 The app build runs migrations with `--deployment`, preserving the existing production-only Vercel behavior. Preview and local builds skip automatic migrations. On other hosts, run `bun db:migrate` as an explicit deployment step before starting the updated app.
 
+### Migration history and existing data
+
+The migration runner accepts an empty database or an applied migration history that exactly matches a prefix of the app's available migrations, including hashes and timestamps. It stops before applying migrations if it finds older or modified history, unknown migrations, or ChatJS tables without a baseline record.
+
+For a database from before the EVE-only baseline, back it up and provision a fresh empty database for the current app. Point both `DATABASE_URL` and `DATABASE_MIGRATION_URL` at the new database before running `bun db:migrate`. Keep the original database and the Git revision that created it available if you need to export its data. Do not rewrite `drizzle.__drizzle_migrations` or drop the old database to bypass the history check.
+
+### Guest balance removal in migration 0021
+
+If your app's migration history includes `0021_glorious_chameleon`, it removes four guest balance columns still used by older app and worker versions. An existing database that has not applied it requires a coordinated rollout. The migration runner blocks pending migrations until you explicitly pass `--coordinated`. An empty database can initialize normally, and the flag is unnecessary after 0021 has been applied.
+
+Before applying 0021 to an existing database:
+
+1. Prepare the matching app and worker revision and back up the database.
+2. Stop incoming traffic and drain older app and worker processes.
+3. Run `bun db:migrate --coordinated` explicitly against that database.
+4. Deploy the matching app and worker revision, then restore traffic.
+
+Do not restart older versions against the migrated schema. Keep preview databases isolated from production. Adding or removing a plugin does not authorize applying migrations or retiring stored data.
+
 ## Optional Neon development
 
 Normal `bun dev` and `bun db:migrate` use your configured URLs. They do not read `.neon-branch`. To use the branch selected by the Neon helper scripts, run `bun dev:neon` or `bun db:migrate:neon`. The wrapper overrides both runtime and migration URLs so a main-database migration URL cannot leak into a branch session.

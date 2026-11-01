@@ -3,8 +3,11 @@ import { beforeEach, expect, test, vi } from "vitest";
 import { deleteLocalEveConversationFamily } from "./delete-local-conversation";
 
 const mocks = vi.hoisted(() => ({
-  complete: vi.fn(),
-  native: vi.fn(),
+  check: vi.fn(),
+  complete: vi.fn<() => Promise<void>>(),
+  native:
+    vi.fn<(sessionId: string, retire: () => Promise<void>) => Promise<void>>(),
+  provider: vi.fn(),
   resources: vi.fn(),
   retire: vi.fn(),
 }));
@@ -14,8 +17,8 @@ vi.mock("../env", () => ({
 vi.mock("../db/eve-deletion", () => ({
   completeEveConversationDeletion: mocks.complete,
 }));
-vi.mock("../db/eve-native-purge", () => ({
-  purgeEveNativeSession: mocks.native,
+vi.mock("./lifecycle/provider", () => ({
+  createEveLifecycleProvider: mocks.provider,
 }));
 vi.mock("./purge-local-resources", () => ({
   purgeLocalEveFamilyResources: mocks.resources,
@@ -32,35 +35,47 @@ const family = {
 };
 beforeEach(() => {
   vi.resetAllMocks();
+  mocks.provider.mockReturnValue({
+    check: mocks.check,
+    purge: mocks.native,
+    supported: true,
+  });
   mocks.resources.mockResolvedValue(family);
-  mocks.native.mockResolvedValue(undefined);
-  mocks.complete.mockResolvedValue(undefined);
+  mocks.native.mockResolvedValue();
+  mocks.complete.mockResolvedValue();
 });
 
 test("all resources and native family payloads finish before the application tombstone", async () => {
-  const gate = Promise.withResolvers<undefined>();
-  mocks.native.mockImplementationOnce(async (_url, _scope, retire) => {
-    await retire();
-  });
+  const gate: PromiseWithResolvers<void> = Promise.withResolvers();
+  mocks.native.mockImplementationOnce(
+    async (_sessionId: string, retire: () => Promise<void>) => {
+      await retire();
+    }
+  );
   mocks.native.mockReturnValueOnce(gate.promise);
   const deletion = deleteLocalEveConversationFamily(
     "owner",
     "branch",
     "/trusted/app"
   );
-  await vi.waitFor(() => expect(mocks.native).toHaveBeenCalledTimes(2));
+  await vi.waitFor(() => {
+    expect(mocks.native).toHaveBeenCalledTimes(2);
+  });
   expect(mocks.resources).toHaveBeenCalledWith(
     "owner",
     "branch",
     "/trusted/app"
   );
   expect(mocks.retire).toHaveBeenCalledWith("owner", "session-root");
-  expect(mocks.native.mock.calls.map((call) => call[1].sessionId)).toEqual([
-    "session-root",
-    "session-branch",
-  ]);
+
+  expect(
+    mocks.native.mock.calls.map(
+      ([sessionId]: Readonly<(typeof mocks.native.mock.calls)[number]>) =>
+        sessionId
+    )
+  ).toEqual(["session-root", "session-branch"]);
   expect(mocks.complete).not.toHaveBeenCalled();
-  gate.resolve(undefined);
+  gate.resolve();
   expect(await deletion).toEqual({ rootId: "root" });
   expect(mocks.complete).toHaveBeenCalledWith("owner", "root");
 });
@@ -73,10 +88,9 @@ test("resource uncertainty prevents any native payload erasure", async () => {
   expect(mocks.native).not.toHaveBeenCalled();
   expect(mocks.complete).not.toHaveBeenCalled();
 });
-
 test("partial native purge retains pending state and retry runs the full ordering again", async () => {
   mocks.native
-    .mockResolvedValueOnce(undefined)
+    .mockResolvedValueOnce()
     .mockRejectedValueOnce(new Error("branch unavailable"));
   await expect(
     deleteLocalEveConversationFamily("owner", "root", "/app")
@@ -86,7 +100,13 @@ test("partial native purge retains pending state and retry runs the full orderin
     await deleteLocalEveConversationFamily("owner", "root", "/app")
   ).toEqual({ rootId: "root" });
   expect(mocks.resources).toHaveBeenCalledTimes(2);
-  expect(mocks.native.mock.calls.map((call) => call[1].sessionId)).toEqual([
+
+  expect(
+    mocks.native.mock.calls.map(
+      ([sessionId]: Readonly<(typeof mocks.native.mock.calls)[number]>) =>
+        sessionId
+    )
+  ).toEqual([
     "session-root",
     "session-branch",
     "session-root",
@@ -95,7 +115,7 @@ test("partial native purge retains pending state and retry runs the full orderin
 });
 
 test("foreign or missing families cannot erase native or application data", async () => {
-  mocks.resources.mockResolvedValue(undefined);
+  mocks.resources.mockResolvedValue(null);
   expect(
     await deleteLocalEveConversationFamily("foreign", "root", "/app")
   ).toBeUndefined();
@@ -110,4 +130,16 @@ test("an already deleted family is idempotent without resetting native sessions"
   ).toEqual({ rootId: "root" });
   expect(mocks.native).not.toHaveBeenCalled();
   expect(mocks.retire).not.toHaveBeenCalled();
+});
+test("unsupported native lifecycle cannot enter the local resource coordinator", async () => {
+  mocks.provider.mockReturnValue({
+    reason: "unverified erasure",
+    supported: false,
+  });
+  await expect(
+    deleteLocalEveConversationFamily("owner", "root", "/app")
+  ).rejects.toThrow("unverified erasure");
+  expect(mocks.check).not.toHaveBeenCalled();
+  expect(mocks.resources).not.toHaveBeenCalled();
+  expect(mocks.complete).not.toHaveBeenCalled();
 });

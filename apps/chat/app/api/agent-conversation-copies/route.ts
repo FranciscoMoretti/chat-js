@@ -1,47 +1,78 @@
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { auth } from "@/lib/auth";
-import { getEveCreation } from "@/lib/db/eve-queries";
 import { env } from "@/lib/env";
+import { getEveCreation } from "@/lib/db/eve-queries";
 import { eveCopyInput } from "@/lib/eve/copy-input";
 import { EveCopyNotReadyError } from "@/lib/eve/copy-transcript";
 import { sameOrigin } from "@/lib/eve/request-policy";
 import { saveEveCopyOperation } from "@/lib/eve/save-copy-operation";
 
+const MAX_COPY_BODY_BYTES = 2048;
+const COPY_UNAVAILABLE_STATUS = 409;
+const COPY_UNCONFIRMED_STATUS = 503;
+
 const headers = { "cache-control": "no-store" };
 
-const readCopyBody = async (request: Request): Promise<unknown> => {
-  const reader = request.body?.getReader();
-  if (!reader) {
+const readCopyBody = async (
+  request: ReadonlyNativeSurface<Pick<Request, "body">>
+): Promise<unknown> => {
+  const body = request.body?.values();
+  if (!body) {
     return null;
   }
   const chunks: Uint8Array[] = [];
   let length = 0;
   try {
-    while (true) {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Wait for each bounded stream read, readiness attempt, or shared fixture before continuing.
-      const result = await reader.read();
-      if (result.done) {
-        break;
-      }
-      length += result.value.byteLength;
-      if (length > 2048) {
+    // Native iteration releases the reader and cancels on an early return.
+    for await (const chunk of body) {
+      length += chunk.byteLength;
+      if (length > MAX_COPY_BODY_BYTES) {
         return null;
       }
-      chunks.push(result.value);
+      chunks.push(chunk);
     }
     return JSON.parse(Buffer.concat(chunks).toString("utf-8"));
   } catch {
     return null;
-  } finally {
-    try {
-      await reader.cancel();
-    } catch {
-      // Cancellation can reject after the body stream fails.
-    }
-    reader.releaseLock();
   }
 };
 
-export const POST = async (request: Request) => {
+// Map recovery state without rereading the session, request, or input boundary.
+const copyFailureResponse = (
+  error: unknown,
+  existing:
+    | ReadonlyNativeSurface<Awaited<ReturnType<typeof getEveCreation>>>
+    | undefined
+): Response => {
+  const rejected = Boolean(
+    existing &&
+    (existing.creationKind !== "copy" ||
+      ["deleting", "deleted"].includes(existing.state))
+  );
+  let message = "Saving is unconfirmed. Retry to recover the same copy.";
+  if (error instanceof EveCopyNotReadyError) {
+    ({ message } = error);
+  }
+  if (rejected) {
+    message = "This copy is no longer available.";
+  }
+  return Response.json(
+    {
+      conversationId:
+        existing?.creationKind === "copy" ? existing.id : undefined,
+      error: message,
+      retryable: !rejected,
+    },
+    {
+      headers,
+      status: rejected ? COPY_UNAVAILABLE_STATUS : COPY_UNCONFIRMED_STATUS,
+    }
+  );
+};
+
+export const POST = async (
+  request: ReadonlyNativeSurface<Request>
+): Promise<Response> => {
   const session = await auth.api.getSession({ headers: request.headers });
   if (!session?.user) {
     return new Response(null, { headers, status: 401 });
@@ -59,7 +90,7 @@ export const POST = async (request: Request) => {
   }
   try {
     return Response.json(
-      await saveEveCopyOperation(session.user.id, input.data, origin),
+      await saveEveCopyOperation(session.user.id, input.data),
       { headers }
     );
   } catch (error) {
@@ -69,25 +100,6 @@ export const POST = async (request: Request) => {
     } catch {
       existing = undefined;
     }
-    const rejected =
-      existing &&
-      (existing.creationKind !== "copy" ||
-        ["deleting", "deleted"].includes(existing.state));
-    let message = "Saving is unconfirmed. Retry to recover the same copy.";
-    if (error instanceof EveCopyNotReadyError) {
-      ({ message } = error);
-    }
-    if (rejected) {
-      message = "This copy is no longer available.";
-    }
-    return Response.json(
-      {
-        conversationId:
-          existing?.creationKind === "copy" ? existing.id : undefined,
-        error: message,
-        retryable: !rejected,
-      },
-      { headers, status: rejected ? 409 : 503 }
-    );
+    return copyFailureResponse(error, existing);
   }
 };

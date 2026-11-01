@@ -1,20 +1,30 @@
 "use client";
 
-import { useState } from "react";
-
-import { Shimmer } from "@/components/ai-elements/shimmer";
-import { Button } from "@/components/ui/button";
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupButton,
   InputGroupTextarea,
 } from "@/components/ui/input-group";
+import React, { useCallback, useState } from "react";
+import { Button } from "@/components/ui/button";
+import type { JSX as ReactJSX } from "react";
 import { Spinner } from "@/components/ui/spinner";
 
-export const LintControlsVisualFixture = () => {
-  const [actions, setActions] = useState(0);
+const INITIAL_ACTION_COUNT = 0;
+const ACTION_INCREMENT = 1;
+
+export const LintControlsVisualFixture = (): ReactJSX.Element => {
+  const [actions, setActions] = useState(INITIAL_ACTION_COUNT);
   const [inline, setInline] = useState(true);
+  const incrementActions = useCallback(() => {
+    setActions((count) => count + ACTION_INCREMENT);
+  }, []);
+  const changeShimmerElement = useCallback(() => {
+    setInline((value) => !value);
+  }, []);
+
+  const Thinking = inline ? "span" : "p";
 
   return (
     <main
@@ -29,7 +39,7 @@ export const LintControlsVisualFixture = () => {
         />
         <InputGroupAddon align="block-end">
           <span>Focus message</span>
-          <InputGroupButton onClick={() => setActions((count) => count + 1)}>
+          <InputGroupButton onClick={incrementActions}>
             Attachment action
           </InputGroupButton>
         </InputGroupAddon>
@@ -37,9 +47,9 @@ export const LintControlsVisualFixture = () => {
       <p>Actions: {actions}</p>
       <div className="flex items-center gap-2">
         <Spinner aria-label="Saving" />
-        <Shimmer as={inline ? "span" : "p"}>Thinking...</Shimmer>
+        <Thinking className="shimmer text-muted-foreground motion-reduce:shimmer-none">Thinking...</Thinking>
       </div>
-      <Button onClick={() => setInline((value) => !value)} type="button">
+      <Button onClick={changeShimmerElement} type="button">
         Change shimmer element
       </Button>
     </main>

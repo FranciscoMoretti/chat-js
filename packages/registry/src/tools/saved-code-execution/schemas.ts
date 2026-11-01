@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const documentExecutionInput = z.object({
+const documentExecutionInput = z.object({
   documentId: z.uuid(),
   revisionId: z.uuid(),
 });
@@ -10,53 +10,68 @@ const chartLabels = {
   x_label: z.string().optional(),
   y_label: z.string().optional(),
 };
+const point = z.tuple([z.union([z.number(), z.string()]), z.number()]);
 const series = z.object({
   label: z.string(),
-  points: z.array(z.tuple([z.union([z.number(), z.string()]), z.number()])),
+  points: z.array(point),
 });
-const chart = z.discriminatedUnion("type", [
-  z.object({
-    ...chartLabels,
-    elements: z.array(series),
-    type: z.literal("line"),
-    x_scale: z.literal("datetime").nullish(),
-  }),
-  z.object({
-    ...chartLabels,
-    elements: z.array(series),
-    type: z.literal("scatter"),
-    x_scale: z.literal("datetime").nullish(),
-  }),
-  z.object({
-    ...chartLabels,
-    elements: z.array(
-      z.object({ group: z.string(), label: z.string(), value: z.number() })
-    ),
-    type: z.literal("bar"),
-  }),
-]);
+const barElement = z.object({
+  group: z.string(),
+  label: z.string(),
+  value: z.number(),
+});
+const lineChart = z.object({
+  ...chartLabels,
+  elements: z.array(series),
+  type: z.literal("line"),
+  x_scale: z.literal("datetime").nullish(),
+});
+const scatterChart = z.object({
+  ...chartLabels,
+  elements: z.array(series),
+  type: z.literal("scatter"),
+  x_scale: z.literal("datetime").nullish(),
+});
+const barChart = z.object({
+  ...chartLabels,
+  elements: z.array(barElement),
+  type: z.literal("bar"),
+});
+const chart = z.discriminatedUnion("type", [lineChart, scatterChart, barChart]);
+const encodedChart = z.object({ base64: z.string(), format: z.string() });
 
 /** The saved-code runner owns its output contract independently of installed renderers. */
-export const eveCodeExecutionResult = z.object({
-  chart: z.union([
-    z.string(),
-    z.object({ base64: z.string(), format: z.string() }),
-    chart,
-  ]),
+const eveCodeExecutionResult = z.object({
+  chart: z.union([z.string(), encodedChart, chart]),
   message: z.string(),
 });
 
-export const documentExecutionLanguage = (
+const LAST_EXTENSION_INDEX = -1;
+const executionLanguageByExtension: ReadonlyMap<
+  string,
+  "python" | "javascript"
+> = new Map([
+  ["py", "python"],
+  ["js", "javascript"],
+  ["mjs", "javascript"],
+  ["cjs", "javascript"],
+]);
+const documentExecutionLanguage = (
   title: string
 ): "python" | "javascript" | undefined => {
-  const extension = title.includes(".")
-    ? title.split(".").at(-1)?.toLowerCase()
-    : undefined;
-  if (!extension || extension === "py") {
+  if (!title.includes(".")) {
     return "python";
   }
-  if (extension === "js" || extension === "mjs" || extension === "cjs") {
-    return "javascript";
+  const extension = (
+    title.split(".").at(LAST_EXTENSION_INDEX) ?? ""
+  ).toLowerCase();
+  if (!(typeof extension === "string" && extension !== "")) {
+    return "python";
   }
-  return undefined;
+  return executionLanguageByExtension.get(extension);
+};
+export {
+  documentExecutionInput,
+  documentExecutionLanguage,
+  eveCodeExecutionResult,
 };

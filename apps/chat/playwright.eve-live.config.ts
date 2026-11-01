@@ -1,18 +1,18 @@
-import { defineConfig } from "@playwright/test";
-
 import config from "./playwright.eve.config";
+import { defineConfig } from "@playwright/test";
 
 export default defineConfig({
   ...config,
   testMatch: [
+    "eve-shared-workspace-live.e2e.ts",
     "eve-logical-chat.e2e.ts",
+    "eve-branching-regression.e2e.ts",
     "eve-chat-identity.e2e.ts",
     "eve-optimistic-create.e2e.ts",
-    "eve-copy-live.e2e.ts",
     "eve-copy-regeneration-live.e2e.ts",
     "eve-copy-documents-live.e2e.ts",
     "eve-comparison-live.e2e.ts",
-    "eve-idle-checkpoint-live.e2e.ts",
+    "eve-current-copy-live.e2e.ts",
     "eve-deletion-retire.e2e.ts",
     "eve-delete-dialog.e2e.ts",
     "eve-delete-ui.e2e.ts",

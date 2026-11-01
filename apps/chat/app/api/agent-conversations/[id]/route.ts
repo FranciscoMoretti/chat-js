@@ -1,18 +1,28 @@
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { z } from "zod";
-
-import { isUnacceptedEveCopy } from "@/lib/db/eve-copy-journal";
-import { getEveDeletionState } from "@/lib/db/eve-deletion";
-import { env } from "@/lib/env";
 import { deleteLocalEveConversationFamily } from "@/lib/eve/delete-local-conversation";
-import { deleteUnacceptedEveCopy } from "@/lib/eve/delete-unaccepted-copy";
+import { env } from "@/lib/env";
+import { getEveDeletionState } from "@/lib/db/eve-deletion";
 import { localDeletionAvailable } from "@/lib/eve/local-deletion-available";
 import { resolveEvePrincipal } from "@/lib/eve/principal";
 import { sameOrigin } from "@/lib/eve/request-policy";
 
 const headers = { "cache-control": "no-store" };
-type Context = { params: Promise<{ id: string }> };
+interface Context {
+  readonly params: Readonly<Promise<{ id: string }>>;
+}
 
-const authorize = async (request: Request, context: Context) => {
+const authorize = async (
+  request: ReadonlyNativeSurface<Pick<Request, "headers">>,
+  context: Context
+): Promise<
+  | Response
+  | {
+      id: string;
+      ownerId: string;
+      source: NonNullable<Awaited<ReturnType<typeof getEveDeletionState>>>;
+    }
+> => {
   const principal = await resolveEvePrincipal(request.headers);
   if (!principal) {
     return new Response(null, { headers, status: 401 });
@@ -28,7 +38,7 @@ const authorize = async (request: Request, context: Context) => {
   return { id, ownerId: principal.ownerId, source };
 };
 
-const deletionStatus = (state: string) => {
+const deletionStatus = (state: string): "deleted" | "pending" | "active" => {
   if (state === "deleted") {
     return "deleted";
   }
@@ -38,8 +48,16 @@ const deletionStatus = (state: string) => {
   return "active";
 };
 
-/** Status only; reading never resumes deletion or exposes conversation payloads. */
-export const GET = async (request: Request, context: Context) => {
+/**
+ * Returns deletion status without resuming cleanup or exposing conversation payloads.
+ * @param {Request} request Same-origin status request.
+ * @param {Context} context Route parameters containing the conversation ID.
+ * @returns {Promise<Response>} No-store JSON containing the conversation family root and status.
+ */
+const GET = async (
+  request: ReadonlyNativeSurface<Request>,
+  context: Context
+): Promise<Response> => {
   const result = await authorize(request, context);
   if (result instanceof Response) {
     return result;
@@ -52,9 +70,49 @@ export const GET = async (request: Request, context: Context) => {
     { headers }
   );
 };
+// Map the durable state after a failed erasure to the retry/status response.
+const deletionRecoveryResponse = (
+  current: ReadonlyNativeSurface<
+    Awaited<ReturnType<typeof getEveDeletionState>>
+  >
+): Response => {
+  if (current?.state === "deleted") {
+    return Response.json(
+      { rootId: current.rootId, status: "deleted" },
+      { headers }
+    );
+  }
+  if (current?.state === "deleting") {
+    return Response.json(
+      {
+        error: "Deletion is incomplete. Retry to continue cleanup.",
+        retryRequired: true,
+        rootId: current.rootId,
+        status: "pending",
+      },
+      { headers, status: 202 }
+    );
+  }
+  return Response.json(
+    {
+      error: "Resolve pending conversation work before deleting.",
+      status: "not_started",
+    },
+    { headers, status: 409 }
+  );
+};
 
-/** Erases the conversation family through the verified local-provider coordinator. */
-export const DELETE = async (request: Request, context: Context) => {
+/**
+ * Deletes an owned conversation family through the local-provider coordinator.
+ * Unaccepted copies are removed directly; accepted conversations are fenced and erased locally.
+ * @param {Request} request Same-origin deletion request.
+ * @param {Context} context Route parameters containing the conversation or chat ID.
+ * @returns {Promise<Response>} No-store JSON with deletion status, or an error response.
+ */
+const DELETE = async (
+  request: ReadonlyNativeSurface<Request>,
+  context: Context
+): Promise<Response> => {
   if (!sameOrigin(request, new URL(env.APP_URL ?? request.url).origin)) {
     return new Response(null, { headers, status: 403 });
   }
@@ -70,13 +128,6 @@ export const DELETE = async (request: Request, context: Context) => {
     );
   }
   try {
-    if (await isUnacceptedEveCopy(ownerId, id)) {
-      await deleteUnacceptedEveCopy(ownerId, id);
-      return Response.json(
-        { rootId: source.rootId, status: "deleted" },
-        { headers }
-      );
-    }
     // Hosted native erasure is not implemented. Reject before revoking access.
     if (!localDeletionAvailable()) {
       return Response.json(
@@ -98,29 +149,7 @@ export const DELETE = async (request: Request, context: Context) => {
     );
   } catch {
     const current = await getEveDeletionState(ownerId, id);
-    if (current?.state === "deleted") {
-      return Response.json(
-        { rootId: current.rootId, status: "deleted" },
-        { headers }
-      );
-    }
-    if (current?.state === "deleting") {
-      return Response.json(
-        {
-          error: "Deletion is incomplete. Retry to continue cleanup.",
-          retryRequired: true,
-          rootId: current.rootId,
-          status: "pending",
-        },
-        { headers, status: 202 }
-      );
-    }
-    return Response.json(
-      {
-        error: "Resolve pending conversation work before deleting.",
-        status: "not_started",
-      },
-      { headers, status: 409 }
-    );
+    return deletionRecoveryResponse(current);
   }
 };
+export { DELETE, GET };

@@ -1,9 +1,11 @@
-type CommandState = {
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+
+interface CommandState {
   pending: boolean;
   cancelling: boolean;
   cancellation: number;
   failure?: Error;
-};
+}
 const idle: CommandState = {
   cancellation: 0,
   cancelling: false,
@@ -12,22 +14,25 @@ const idle: CommandState = {
 
 /** Command locks belong to the execution session, never the selected view. */
 export class LogicalCommands {
-  private states = new Map<string, CommandState>();
-  private listeners = new Set<() => void>();
-  get = (id: string) => this.states.get(id) ?? idle;
-  subscribe = (listener: () => void) => {
+  private readonly states = new Map<string, CommandState>();
+  private readonly listeners = new Set<() => void>();
+  public get = (id: string): CommandState => this.states.get(id) ?? idle;
+  public subscribe = (listener: () => void): (() => void) => {
     this.listeners.add(listener);
     return () => {
       this.listeners.delete(listener);
     };
   };
-  update(id: string, change: Partial<CommandState>) {
+  public update(
+    id: string,
+    change: ReadonlyNativeSurface<Partial<CommandState>>
+  ): void {
     this.states.set(id, { ...this.get(id), ...change });
     for (const listener of this.listeners) {
       listener();
     }
   }
-  claim(id: string) {
+  public claim(id: string): boolean {
     if (this.get(id).pending) {
       return false;
     }

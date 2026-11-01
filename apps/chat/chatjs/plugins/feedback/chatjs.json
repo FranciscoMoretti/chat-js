@@ -1,0 +1,26 @@
+{
+  "id": "feedback",
+  "kind": "plugin",
+  "files": [
+    "chatjs/plugins/feedback/chat.ts",
+    "chatjs/plugins/feedback/client-plugin.ts",
+    "chatjs/plugins/feedback/feedback-actions.tsx",
+    "chatjs/plugins/feedback/message-vote-actions.tsx",
+    "chatjs/plugins/feedback/feedback-queries.ts",
+    "chatjs/plugins/feedback/router.ts",
+    "chatjs/plugins/feedback/feedback-schema.ts",
+    "chatjs/plugins/feedback/server-plugin.ts",
+    "chatjs/plugins/feedback/vote-message.ts"
+  ],
+  "databaseSchemas": ["chatjs/plugins/feedback/feedback-schema.ts"],
+  "chat": { "export": "feedbackChat" },
+  "server": { "export": "feedback", "routers": ["feedback"] },
+  "client": {
+    "export": "feedbackClient",
+    "composerControls": [],
+    "settingsItems": [],
+    "chat": true
+  },
+  "contractVersion": 2,
+  "uiBase": "base"
+}

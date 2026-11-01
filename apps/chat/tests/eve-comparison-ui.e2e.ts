@@ -1,5 +1,5 @@
-/* oxlint-disable unicorn/no-await-expression-member -- Each response assertion is tied to its awaited browser action. */
 import { expect, test } from "@playwright/test";
+import type { Response, TestInfo } from "@playwright/test";
 
 import { eveResponseGroupResult } from "../lib/eve/response-group-contracts";
 
@@ -7,9 +7,11 @@ const nano = /GPT-5 Nano/iu;
 
 test("nested comparisons retain both groups, duplicate-model slots and retry attempts under one chat URL", async ({
   page,
-}, testInfo) => {
+}, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
   test.setTimeout(240_000);
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   const { origin } = new URL(page.url());
   const response = await page.request.post("/api/agent-response-groups", {
@@ -51,21 +53,9 @@ test("nested comparisons retain both groups, duplicate-model slots and retry att
   await expect(page.getByText("Ready", { exact: true })).toBeVisible({
     timeout: 90_000,
   });
-  const checkpointId = crypto.randomUUID();
-  const checkpoint = await page.request.post(
-    `/api/agent-conversations/${first.conversationId}/checkpoint`,
-    {
-      data: { beforeTurnId: "turn_1", checkpointId },
-      headers: { origin },
-      timeout: 45_000,
-    }
-  );
-  expect(checkpoint.ok(), await checkpoint.text()).toBe(true);
   const later = await page.request.post("/api/agent-response-groups", {
     data: {
       fork: {
-        beforeTurnId: "turn_1",
-        checkpointId,
         conversationId: first.conversationId,
       },
       message: "Do not use tools. Reply with exactly cobalt.",
@@ -87,12 +77,19 @@ test("nested comparisons retain both groups, duplicate-model slots and retry att
     .getByRole("textbox", { exact: true, name: "Message" })
     .fill("");
   const retry = page.waitForResponse(
-    (value) =>
+    (value: Readonly<Pick<Response, "url" | "request">>) =>
       value.url().endsWith("/api/agent-conversations") &&
       value.request().method() === "POST"
   );
-  await page.getByRole("button", { exact: true, name: "Retry" }).last().click();
-  expect((await retry).ok()).toBe(true);
+  await page
+    .getByRole("button", {
+      exact: true,
+      name: "Regenerate response",
+    })
+    .last()
+    .click();
+  const retryResponse = await retry;
+  expect(retryResponse.ok()).toBe(true);
   await expect(page.getByText("Ready", { exact: true })).toBeVisible({
     timeout: 90_000,
   });
@@ -103,7 +100,10 @@ test("nested comparisons retain both groups, duplicate-model slots and retry att
     path: testInfo.outputPath("nested-comparisons.png"),
   });
   await page
-    .getByRole("button", { exact: true, name: "Edit message" })
+    .getByRole("button", {
+      exact: true,
+      name: "Edit message",
+    })
     .last()
     .click();
   const editor = page
@@ -113,7 +113,7 @@ test("nested comparisons retain both groups, duplicate-model slots and retry att
     .getByRole("textbox", { exact: true, name: "Message" })
     .fill("Do not use tools. Reply with exactly jade.");
   const editedGroup = page.waitForResponse(
-    (value) =>
+    (value: Readonly<Pick<Response, "url" | "request">>) =>
       value.url().endsWith("/api/agent-response-groups") &&
       value.request().method() === "POST"
   );
@@ -130,14 +130,16 @@ test("nested comparisons retain both groups, duplicate-model slots and retry att
 
 test("new-chat recovery survives an ambiguous reply and reload without a new operation", async ({
   page,
-}, testInfo) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+}, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   await page.goto("/");
   const submissions: unknown[] = [];
-  await page.route("**/api/agent-conversations", (route) => {
+  await page.route("**/api/agent-conversations", async (route) => {
     submissions.push(route.request().postDataJSON());
-    return route.fulfill({
+    await route.fulfill({
       json: { error: "Temporary transport failure" },
       status: 503,
     });

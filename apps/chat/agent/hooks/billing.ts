@@ -1,16 +1,31 @@
-import { defineHook } from "eve/hooks";
-
+import { isAccountSession } from "../../lib/eve/session-identity";
 import {
   getEveSubagent,
   registerEveSubagent,
 } from "../../lib/db/eve-subagents";
+import type { HookContext } from "eve/hooks";
+import { defineHook } from "eve/hooks";
+
+import { observeEveModelAccounting } from "../../lib/eve/model-accounting";
+
 import { ingestEveUsage } from "../../lib/eve/usage";
 
 export default defineHook({
   events: {
-    "*": async (event, context) => {
+    "*": async (
+      event: Parameters<typeof ingestEveUsage>[2],
+      context: Readonly<{
+        session: Readonly<
+          Pick<HookContext["session"], "id" | "auth" | "parent">
+        >;
+      }>
+    ) => {
+      if (!isAccountSession(context.session)) {
+        return;
+      }
+      observeEveModelAccounting(event, context.session);
       const ownerId = context.session.auth.initiator?.principalId;
-      if (!ownerId) {
+      if (typeof ownerId !== "string" || ownerId === "") {
         throw new Error("Eve billing requires an authenticated owner.");
       }
       const { parent } = context.session;
@@ -26,20 +41,14 @@ export default defineHook({
           parent.turn.id
         );
       }
-      if (
-        ![
-          "step.completed",
-          "step.failed",
-          "compaction.usage",
-          "hook.result",
-          "action.result",
-          "subagent.called",
-        ].includes(event.type)
-      ) {
+      if (!["action.result", "agent.started"].includes(event.type)) {
         return;
       }
       const binding = await getEveSubagent(ownerId, context.session.id);
-      if (!binding?.rootSessionId) {
+      if (
+        typeof binding?.rootSessionId !== "string" ||
+        binding.rootSessionId === ""
+      ) {
         throw new Error("Child usage requires a native owner binding.");
       }
       await ingestEveUsage(ownerId, context.session.id, event, {

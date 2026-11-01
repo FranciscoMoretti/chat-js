@@ -1,11 +1,14 @@
-import { wrapLanguageModel } from "ai";
+import { isAccountSession } from "../lib/eve/session-identity";
+import { requireSessionProfile } from "../lib/eve/session-profile";
 import { defineAgent, defineDynamic } from "eve";
+import { configureWorkflowEnvironment } from "../lib/eve/environment";
 import { defineState } from "eve/context";
 
-import { configureWorkflowEnvironment } from "../lib/eve/environment";
-import { resolveEveModel } from "../lib/eve/model-selection";
+import { resolveAccountedEveModel } from "../lib/eve/model-accounting";
+import type { DynamicResolveContext } from "eve";
 import { installedToolAvailabilityMiddleware } from "../lib/eve/tool-availability";
 import { resolveWorkflowWorld } from "../lib/eve/world-config";
+import { wrapLanguageModel } from "ai";
 
 configureWorkflowEnvironment(process.env);
 
@@ -15,18 +18,37 @@ const selectedModel = defineState<{ modelId?: string }>(
 );
 
 export default defineAgent({
-  build: { externalDependencies: ["pino", "pino-pretty", "thread-stream"] },
+  build: {
+    // Graphile's optional TypeScript config loader should load the compiler only
+    // when needed, instead of retaining its source in the eager worker bundle.
+    externalDependencies: [
+      "pino",
+      "pino-pretty",
+      "thread-stream",
+      "typescript",
+    ],
+  },
   // ChatJS owns tool selection, execution, rendered results, and usage accounting.
   defaultTools: false,
   experimental: { workflow: { world: resolveWorkflowWorld() } },
   model: defineDynamic({
     events: {
-      "step.started": async (_event, context) => {
+      "step.started": async (
+        event: unknown,
+        context: DynamicResolveContext
+      ) => {
+        if (!isAccountSession(context.session)) {
+          return await requireSessionProfile(context.session).resolveModel();
+        }
         const modelId = context.session.auth.current?.attributes.modelId;
         if (typeof modelId === "string") {
           selectedModel.update(() => ({ modelId }));
         }
-        const resolved = await resolveEveModel(selectedModel.get().modelId);
+        const resolved = await resolveAccountedEveModel(
+          selectedModel.get().modelId,
+          event,
+          context
+        );
         return {
           ...resolved,
           model: wrapLanguageModel({

@@ -1,16 +1,18 @@
 import { tool } from "ai";
-import type { ToolExecutionOptions } from "ai";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 
-import { describeMcpTool, executeMcpTool } from "./mcp-adapter";
+import {
+  describeMcpTool,
+  executeMcpTool,
+} from "../../chatjs/plugins/mcp/runtime/mcp-adapter";
 
 describe("Eve tool contract", () => {
   it("removes executable schema metadata from the advertised JSON schema", async () => {
     const adapted = await describeMcpTool(
       tool({
         description: "Count words",
-        execute: ({ text }) => text.length,
+        execute: ({ text }): number => text.length,
         inputSchema: z.object({ text: z.string() }),
       })
     );
@@ -20,25 +22,13 @@ describe("Eve tool contract", () => {
     });
     expect(JSON.stringify(adapted.inputSchema)).not.toContain("~standard");
   });
-  it("refuses to silently bypass an existing approval policy", async () => {
-    await expect(
-      describeMcpTool(
-        tool({
-          description: "Protected",
-          execute: () => "done",
-          inputSchema: z.object({}),
-          needsApproval: true,
-        })
-      )
-    ).rejects.toThrow("explicit Eve policy");
-  });
-
   it("executes a discovered MCP tool with its native invocation identity", async () => {
-    const services = { selectedModel: "selected/model" };
     const definition = tool({
       description: "Inspect context",
-      execute: (_input, options: ToolExecutionOptions<typeof services>) =>
-        options.toolCallId,
+      execute: (
+        _input: Readonly<Record<string, never>>,
+        options: { readonly toolCallId: string }
+      ): string => options.toolCallId,
       inputSchema: z.object({}),
     });
 

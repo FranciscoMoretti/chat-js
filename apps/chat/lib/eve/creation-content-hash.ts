@@ -1,17 +1,20 @@
+import type { ReadonlyEveMessageInput } from "./readonly-message-types";
+import type { UiToolName } from "@/lib/ai/types";
 import { createHash } from "node:crypto";
 
-import type { UiToolName } from "../ai/types";
-import type { EveMessageInput } from "./message-input";
-
 export const eveCreationContentHash = (
-  message: EveMessageInput,
+  message: ReadonlyEveMessageInput,
   selectedTool?: UiToolName
-) => {
+): string | undefined => {
   // Preserve the identity of already-reserved requests with automatic tools.
-  if (!selectedTool && typeof message === "string") {
-    return;
+  if (selectedTool === undefined && typeof message === "string") {
+    return undefined;
   }
   return createHash("sha256")
-    .update(JSON.stringify(selectedTool ? { message, selectedTool } : message))
+    .update(
+      JSON.stringify(
+        selectedTool === undefined ? message : { message, selectedTool }
+      )
+    )
     .digest("hex");
 };

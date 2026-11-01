@@ -1,4 +1,6 @@
-const FAQS = [
+import React from "react";
+
+const FAQS: readonly Readonly<{ answer: string; question: string }>[] = [
   {
     answer:
       "ChatJS is an open-source Next.js AI chat app starter that gives you a production-ready foundation with authentication, streaming UI, tool calling, and support for 120+ models.",
@@ -21,7 +23,7 @@ const FAQS = [
   },
 ];
 
-export const Faq = () => (
+export const Faq = (): React.JSX.Element => (
   <section
     aria-labelledby="faq-heading"
     className="bg-secondary/50 relative py-24 sm:py-32"

@@ -1,5 +1,5 @@
 import { cookies, headers } from "next/headers";
-import { Suspense } from "react";
+import React, { Suspense } from "react";
 
 import { getChatModels } from "@/app/actions/get-chat-models";
 import { AppSidebar } from "@/components/app-sidebar";
@@ -12,22 +12,39 @@ import type { AppModelId } from "@/lib/ai/app-model-id";
 import { config } from "@/lib/config";
 import { isPlaywrightTestEnvironment } from "@/lib/constants";
 import { resolveEvePrincipal } from "@/lib/eve/principal";
-import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
+import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 import { ChatModelsProvider } from "@/providers/chat-models-provider";
 import { DefaultModelProvider } from "@/providers/default-model-provider";
 import { SessionProvider, SessionSeed } from "@/providers/session-provider";
+import { ChatPlugins } from "@/providers/chat-plugins";
 import { TRPCReactProvider } from "@/trpc/react";
-import { getQueryClient, HydrateClient, trpc } from "@/trpc/server";
+import { HydrateClient } from "@/trpc/server";
 
-import { auth } from "../../lib/auth";
+import { auth } from "@/lib/auth";
 
 const sidebarInsetClassName = "[--header-height:calc(var(--spacing)*13)]";
+
+const resolveDefaultModel = (
+  cookieModel: string | undefined,
+  chatModels: readonly { readonly id: string }[]
+): AppModelId => {
+  const configuredModel = config.ai.workflows.chat;
+  let defaultModel: AppModelId = cookieModel ?? configuredModel;
+
+  if (typeof cookieModel === "string" && cookieModel !== "") {
+    const modelExists = chatModels.some((model) => model.id === cookieModel);
+    if (!modelExists) {
+      defaultModel = configuredModel;
+    }
+  }
+  return defaultModel;
+};
 
 const ChatLayoutDynamic = async ({
   children,
 }: {
-  children: React.ReactNode;
-}) => {
+  readonly children: ReadonlyReactNode;
+}): Promise<React.JSX.Element> => {
   const [cookieStore, headersRes, chatModels] = await Promise.all([
     cookies(),
     headers(),
@@ -41,40 +58,8 @@ const ChatLayoutDynamic = async ({
     : await resolveEvePrincipal(headersRes);
 
   const cookieModel = cookieStore.get("chat-model")?.value;
-  const isAnonymous = !session?.user;
 
-  const default_chat_model = config.ai.workflows.chat;
-  let defaultModel: AppModelId =
-    (cookieModel as AppModelId) ?? default_chat_model;
-
-  if (cookieModel) {
-    const modelExists = chatModels.some((m) => m.id === cookieModel);
-    if (!modelExists) {
-      defaultModel = default_chat_model;
-    } else if (isAnonymous) {
-      const isModelAvailable = (
-        ANONYMOUS_LIMITS.AVAILABLE_MODELS as readonly AppModelId[]
-      ).includes(cookieModel as AppModelId);
-      if (!isModelAvailable) {
-        defaultModel = default_chat_model;
-      }
-    }
-  }
-
-  if (isAnonymous) {
-    const anonymousModels =
-      ANONYMOUS_LIMITS.AVAILABLE_MODELS as readonly AppModelId[];
-    if (!anonymousModels.includes(defaultModel)) {
-      defaultModel = anonymousModels[0] ?? default_chat_model;
-    }
-  }
-
-  if (session?.user?.id) {
-    const queryClient = getQueryClient();
-    // "Lazy prefetch": don't await; pending queries are dehydrated + streamed.
-    queryClient.prefetchQuery(trpc.settings.getModelPreferences.queryOptions());
-    queryClient.prefetchQuery(trpc.project.list.queryOptions());
-  }
+  const defaultModel = resolveDefaultModel(cookieModel, chatModels);
 
   return (
     <HydrateClient>
@@ -95,7 +80,11 @@ const ChatLayoutDynamic = async ({
   );
 };
 
-const ChatLayout = async ({ children }: { children: React.ReactNode }) => {
+const ChatLayout = async ({
+  children,
+}: {
+  readonly children: ReadonlyReactNode;
+}): Promise<React.JSX.Element> => {
   const cookieStore = await cookies();
   const defaultOpen = cookieStore.get("sidebar_state")?.value === "true";
 
@@ -113,11 +102,12 @@ const ChatLayout = async ({ children }: { children: React.ReactNode }) => {
     <TRPCReactProvider>
       <SessionProvider>
         <SidebarProvider defaultOpen={defaultOpen}>
-          <EveDeletionProvider>{content}</EveDeletionProvider>
+          <ChatPlugins>
+            <EveDeletionProvider>{content}</EveDeletionProvider>
+          </ChatPlugins>
         </SidebarProvider>
       </SessionProvider>
     </TRPCReactProvider>
   );
 };
-
 export default ChatLayout;

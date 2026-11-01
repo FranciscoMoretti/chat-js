@@ -1,0 +1,199 @@
+import { signOutDesktop } from "@/chatjs/plugins/desktop/sign-out";
+import {
+  ELECTRON_AUTH_CALLBACK_PATH,
+  ELECTRON_AUTH_CLIENT_ID,
+  ELECTRON_AUTH_COOKIE_PREFIX,
+} from "@/chatjs/plugins/desktop/protocol";
+import {
+  ELECTRON_APP_SCHEME,
+  ELECTRON_TRUSTED_ORIGINS,
+  buildSocialAuthRequest,
+} from "@/chatjs/plugins/desktop/electron-auth";
+import { afterEach, expect, it, vi } from "vitest";
+import authClient from "@/chatjs/plugins/desktop/desktop-auth-client";
+import { betterAuth } from "better-auth";
+import { createHash } from "node:crypto";
+import {
+  desktopAuth,
+  electronAuthPlugin,
+} from "@/chatjs/plugins/desktop/auth-server";
+import { z } from "zod";
+
+vi.mock("@/lib/config", () => ({
+  config: { appPrefix: "chatjs" },
+}));
+
+const baseURL = "http://localhost:3999";
+const codeVerifier = "test-verifier-with-enough-entropy-for-a-local-fixture";
+const query = {
+  client_id: ELECTRON_AUTH_CLIENT_ID,
+  code_challenge: createHash("sha256").update(codeVerifier).digest("base64url"),
+  code_challenge_method: "s256",
+  state: "desktop-state",
+};
+
+const createTestAuth = (): Pick<ReturnType<typeof betterAuth>, "handler"> =>
+  betterAuth({
+    advanced: { disableCSRFCheck: false, disableOriginCheck: false },
+    baseURL,
+    emailAndPassword: { enabled: true },
+    plugins: [electronAuthPlugin],
+    secret: "test-only-secret-at-least-thirty-two-characters",
+    trustedOrigins: [baseURL, ...ELECTRON_TRUSTED_ORIGINS],
+  });
+
+it("keeps desktop social callbacks on the session transfer page", () => {
+  const request = buildSocialAuthRequest(query, baseURL);
+  expect(request.callbackURL).toBe(`${baseURL}/device-login`);
+  expect(request.signInOptions).toEqual({
+    disableRedirect: true,
+    errorCallbackURL: `${baseURL}/device-login`,
+    newUserCallbackURL: `${baseURL}/device-login`,
+  });
+  expect(
+    buildSocialAuthRequest({ returnTo: "/chat/current" }, baseURL)
+  ).toEqual({
+    callbackURL: "/chat/current",
+  });
+});
+
+it("transfers a browser login through PKCE and accepts only the current desktop origin", async () => {
+  const auth = createTestAuth();
+  const login = await auth.handler(
+    new Request(`${baseURL}/api/auth/sign-up/email`, {
+      body: JSON.stringify({
+        email: "desktop@example.test",
+        name: "Desktop",
+        password: "test-password-long-enough",
+      }),
+      headers: { "content-type": "application/json", origin: baseURL },
+      method: "POST",
+    })
+  );
+  expect(login.status).toBe(200);
+  const cookie = login.headers
+    .getSetCookie()
+    .map((value) => value.split(";")[0])
+    .join("; ");
+  const transfer = await auth.handler(
+    new Request(
+      `${baseURL}/api/auth/electron/transfer-user?${new URLSearchParams(query)}`,
+      {
+        body: "{}",
+        headers: {
+          "content-type": "application/json",
+          cookie,
+          origin: baseURL,
+        },
+        method: "POST",
+      }
+    )
+  );
+  expect(transfer.status).toBe(200);
+  const { electron_authorization_code: token } = z
+    .object({ electron_authorization_code: z.string() })
+    .parse(await transfer.json());
+  expect(transfer.headers.get("set-cookie")).toContain(
+    `${ELECTRON_AUTH_COOKIE_PREFIX}.${ELECTRON_AUTH_CLIENT_ID}=`
+  );
+  const exchange = async (
+    origin: string,
+    verifier = codeVerifier,
+    state = query.state
+  ): Promise<Response> =>
+    await auth.handler(
+      new Request(`${baseURL}/api/auth/electron/token`, {
+        body: JSON.stringify({ code_verifier: verifier, state, token }),
+        headers: {
+          "content-type": "application/json",
+          "electron-origin": origin,
+        },
+        method: "POST",
+      })
+    );
+  const rejectedOrigin = await exchange(`${ELECTRON_APP_SCHEME}://`);
+  expect(rejectedOrigin.status).toBe(403);
+  const rejectedVerifier = await exchange(
+    `${ELECTRON_APP_SCHEME}:/`,
+    "wrong-verifier"
+  );
+  expect(rejectedVerifier.status).toBe(400);
+  const rejectedState = await exchange(
+    `${ELECTRON_APP_SCHEME}:/`,
+    codeVerifier,
+    "wrong-state"
+  );
+  expect(rejectedState.status).toBe(400);
+  const session = await exchange(`${ELECTRON_APP_SCHEME}:/`);
+  expect(session.status).toBe(200);
+  expect(session.headers.get("set-cookie")).toContain("session_token=");
+  expect(await session.json()).toMatchObject({
+    user: { email: "desktop@example.test" },
+  });
+  const consumedTransfer = await exchange(`${ELECTRON_APP_SCHEME}:/`);
+  expect(consumedTransfer.status).toBe(404);
+});
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+  vi.useRealTimers();
+});
+
+it("the inferred browser client delivers the transfer cookie to the current desktop callback", async () => {
+  vi.useFakeTimers();
+  const replace = vi.fn();
+  vi.stubGlobal("window", { location: { replace } });
+  vi.stubGlobal("document", {
+    cookie: `${ELECTRON_AUTH_COOKIE_PREFIX}.${ELECTRON_AUTH_CLIENT_ID}=transfer-code`,
+  });
+  authClient.ensureElectronRedirect();
+  await vi.advanceTimersByTimeAsync(100);
+  expect(replace).toHaveBeenCalledExactlyOnceWith(
+    `${ELECTRON_APP_SCHEME}:/${ELECTRON_AUTH_CALLBACK_PATH}#token=transfer-code`
+  );
+  await vi.advanceTimersByTimeAsync(100);
+  expect(replace).toHaveBeenCalledOnce();
+});
+
+it.each([
+  ["/login?client_id=electron", true],
+  ["/register?client_id=electron", true],
+  ["/device-login", true],
+  ["/login", false],
+  ["/login?client_id=other", false],
+  ["/device-login/private", false],
+  ["/project/private?client_id=electron", false],
+])("recognizes only desktop authentication routes: %s", (route, expected) => {
+  expect(desktopAuth.isAuthRoute(new URL(route, baseURL))).toBe(expected);
+});
+
+it("defers to web sign-out outside a native renderer", async () => {
+  vi.stubGlobal("window", {});
+  expect(await signOutDesktop()).toBe(false);
+});
+
+it("fails a native sign-out when its bridge is missing", async () => {
+  vi.stubGlobal("window", { requestAuth: vi.fn() });
+  await expect(signOutDesktop()).rejects.toThrow(
+    "Desktop sign-out is unavailable"
+  );
+});
+
+it("keeps successful native sign-out successful when session sync fails", async () => {
+  const signOut = vi.fn<() => Promise<void>>().mockResolvedValue();
+  const syncAuthSession = vi
+    .fn()
+    .mockRejectedValue(new Error("Sync unavailable"));
+  const error = vi.spyOn(console, "error").mockImplementation(() => {
+    /* Silence the expected sync failure. */
+  });
+  vi.stubGlobal("window", {
+    requestAuth: vi.fn(),
+    signOut,
+    electronAPI: { syncAuthSession },
+  });
+  expect(await signOutDesktop()).toBe(true);
+  expect(signOut).toHaveBeenCalledOnce();
+  expect(syncAuthSession).toHaveBeenCalledOnce();
+  expect(error).toHaveBeenCalledOnce();
+});

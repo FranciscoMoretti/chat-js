@@ -1,0 +1,1 @@
+ALTER TABLE "McpConnector" ADD COLUMN "requireApproval" boolean DEFAULT false NOT NULL;

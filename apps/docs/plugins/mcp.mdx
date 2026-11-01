@@ -1,0 +1,138 @@
+---
+title: MCP
+description: Connect Model Context Protocol servers to extend AI capabilities
+---
+
+[Model Context Protocol (MCP)](https://modelcontextprotocol.io) lets you connect external tool servers to your AI. The ChatJS plugin provides connector settings, OAuth authorization, and discovery of tools, resources, and prompts.
+
+## Installation
+
+Install MCP during creation, or add it to an existing app:
+
+```bash
+bunx @chat-js/cli@latest create my-chat --mcp
+# Or, inside an existing app:
+bunx @chat-js/cli@latest add mcp
+```
+
+Installation adds the connector settings pages, OAuth callback, router and composer control. Installed registrations determine availability. You can create an app with `--no-mcp` to omit these files.
+
+### Migrate the database
+
+When adding MCP to an existing app, generate and review the migration before applying it:
+
+```bash
+bun run db:generate
+# Review the generated SQL, then apply it to your database.
+bun run db:migrate
+```
+
+New apps receive a baseline for their selected plugins. See [plugin migrations](../core/plugins#database-migrations) for migration ownership and removal behavior.
+
+### Encryption key
+
+Generate an encryption key (must be exactly 44 characters):
+
+```bash
+openssl rand -base64 32
+```
+
+Set the environment variable:
+
+```bash
+MCP_ENCRYPTION_KEY=your_generated_44_char_key
+```
+
+## Usage
+
+### Create a connector
+
+Add MCP server connectors from the Connectors settings page.
+
+1. Go to Settings → Connectors
+2. Click "New Connector"
+3. Fill in the connector details:
+   - **Name**: A friendly name for your connector (e.g., "My Database Tool")
+   - **URL**: The server endpoint (HTTP or SSE)
+   - **Type**: Choose `http` or `sse` (Server-Sent Events)
+   - **OAuth Credentials** (optional): If the server requires OAuth, provide the client ID and secret
+
+The name you choose becomes the namespace for all tools from that server in the AI.
+
+### Connection types
+
+**HTTP**
+
+Traditional request-response connections. The AI can call tools and fetch resources on demand.
+
+**SSE (Server-Sent Events)**
+
+Persistent streaming connections. Useful for servers that push updates or maintain state.
+
+### OAuth authorization
+
+Some MCP servers require OAuth authorization. If a server supports dynamic client registration, the connector setup handles it automatically. For servers requiring pre-configured credentials:
+
+1. Provide your OAuth client ID and secret during connector creation
+2. On first connection, you may be asked to authorize access
+3. Tokens are securely encrypted and stored in the database
+
+### Tool discovery
+
+When you connect an MCP server:
+
+1. The connector establishes a connection to the server at the URL you provided
+2. The connector discovers the tools, resources, and prompts exposed by the server
+3. During chat, the AI can call any of these tools as needed
+4. The server processes the request and returns the result
+
+Open a connector’s details in Settings → Connectors to inspect its Tools, Resources, and Prompts lists. You can see resource and prompt names there. During chat, the model calls discovered tools. Resource and prompt listings describe server capabilities but do not automatically insert their contents into your conversation.
+
+Sensitive data (server URLs, OAuth tokens, credentials) is encrypted using your `MCP_ENCRYPTION_KEY` before being stored in the database.
+
+### Manage connectors
+
+From the Connectors settings page you can:
+
+- **View** all connected servers and their status
+- **Enable/Disable** individual connectors without deleting them
+- **Require approval** before tools from an owned connection run. This setting defaults to off and is saved per connection. Shared connectors are read-only.
+- **Update** connector settings (name, URL, type, OAuth credentials)
+- **Delete** connectors (removes the connection and all associated data)
+- **Disconnect** OAuth sessions if authentication fails
+
+Each connector is scoped to your account. Global connectors (shared across the app) can only be created by administrators.
+
+## Options
+
+MCP has no enable flag in `chat.config.ts`. Set `MCP_ENCRYPTION_KEY` whenever the plugin is installed, even before adding a connector. It must be a 44-character base64 encoding of 32 random bytes. The plugin validates it during environment checks and runtime discovery.
+
+## Schema
+
+MCP owns its tables in `chatjs/plugins/mcp/db/mcp-schema.ts`. Generated `chatjs/generated/installed-database.ts` composes them with the app's other installed schemas. Adding or syncing MCP does not apply SQL or erase migration history.
+
+Server URLs, OAuth tokens, and credentials are encrypted with `MCP_ENCRYPTION_KEY`. Keep this key in your environment and out of source control.
+
+## Troubleshooting
+
+**Connection Failed**
+
+- Verify the server URL is correct and accessible from your deployment
+- Check that the server supports the connection type you selected (HTTP vs SSE)
+- For Vercel deployments, ensure the server is publicly accessible (no local URLs)
+
+**OAuth Authorization Fails**
+
+- Verify your OAuth client ID and secret are correct
+- Confirm the redirect URI is whitelisted on the server: `https://yourdomain.com/api/mcp/oauth/callback`
+- Check that you authorized the requested scopes
+
+**Tools Not Appearing**
+
+- Verify the connector status is "connected" in the Connectors page
+- Some servers may require additional configuration to expose tools
+- Try disconnecting and reconnecting the server
+
+## Customization
+
+Edit `chatjs/plugins/mcp/` for connector behavior, the router, and browser contributions. The plugin's `mcp-env.ts` owns credential validation and is loaded only when MCP is installed. See [Create a plugin](../cookbook/create-plugin) and the [Plugin API](../reference/plugin-api) for contribution contracts.

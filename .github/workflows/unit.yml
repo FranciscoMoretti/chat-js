@@ -27,7 +27,7 @@ jobs:
         run: |
           set -euo pipefail
           TURBO_VERSION="$(node -p "require('./package.json').devDependencies.turbo")"
-          if npx -y "turbo@${TURBO_VERSION}" query affected --tasks test:unit --exit-code >/tmp/unit-query.json 2>/tmp/unit-query.log; then
+          if npx -y "turbo@${TURBO_VERSION}" query affected --tasks test:unit demo:check --exit-code >/tmp/unit-query.json 2>/tmp/unit-query.log; then
             echo "run=false" >>"$GITHUB_OUTPUT"
           else
             status=$?
@@ -44,18 +44,28 @@ jobs:
           bun-version: 1.3.1
       - name: Test maintainer preview configuration
         run: bun test scripts/vercel-preview-environment.test.ts ./scripts/vercel-preview-build.test.ts ./scripts/cleanup-preview-database.test.ts
-      - name: Test release recovery
-        run: bun test scripts/release-fallback.test.ts
       - uses: actions/cache@v4
         if: steps.affected.outputs.run == 'true'
         with:
           path: ~/.bun/install/cache
           key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
           restore-keys: ${{ runner.os }}-bun-
-      - if: steps.affected.outputs.run == 'true'
-        run: bun install --frozen-lockfile
+      - uses: actions/cache@v4
+        if: steps.affected.outputs.run == 'true'
+        with:
+          path: .turbo
+          key: ${{ runner.os }}-turbo-unit-${{ hashFiles('bun.lock') }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-turbo-unit-${{ hashFiles('bun.lock') }}-
+      - run: bun install --frozen-lockfile
+      - name: Test release safety and recovery
+        run: bun test scripts/release-guard.test.ts scripts/release-fallback.test.ts
+      - name: Test effective lint configuration
+        run: bun test ./scripts/lint-config-policy.test.ts
+      - name: Test hosted cleanup scheduler
+        run: bun run test:hosting
       - if: steps.affected.outputs.run == 'true'
         env:
           TURBO_SCM_BASE: ${{ github.event.pull_request.base.sha }}
           TURBO_SCM_HEAD: ${{ github.event.pull_request.head.sha }}
-        run: bunx turbo run test:unit --affected
+        run: bunx turbo run test:unit demo:check --affected

@@ -1,11 +1,16 @@
-/* oxlint-disable eslint/no-shadow -- Nested callback names mirror the protocol fields and transaction APIs under test. */
-/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
-/* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
-/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
+import { createEveTestSession } from "./eve-native-session.fixture";
+import {
+  eveDispatch,
+  eveConversation,
+  eveResponseGroup,
+  user,
+} from "../lib/db/schema";
 import { eq } from "drizzle-orm";
 import { afterAll, expect, test, vi } from "vitest";
 
 import { db } from "../lib/db/client";
+import { cleanupWorkspaceIfUnused } from "../lib/eve/persistent-sandbox-store";
+import { reconcileEveWorkspaceTurn } from "../lib/eve/reconcile-workspace-turn";
 import { completeEveConversationDeletion } from "../lib/db/eve-deletion";
 import {
   beginEveConversationDeletion,
@@ -18,11 +23,16 @@ import {
   recordEveResponseGroupRejection,
   reserveEveResponseGroup,
 } from "../lib/db/eve-response-groups";
-import { eveConversation, eveResponseGroup, user } from "../lib/db/schema";
 import { env } from "../lib/env";
 import { createEveConversationOperation } from "../lib/eve/create-conversation-operation";
+import { eveMessageTitle } from "../lib/eve/message-input";
 import { createEveResponseGroup } from "../lib/eve/response-group";
+import type { ReadonlyNativeSurface } from "../lib/readonly-native-surface";
 import { assertEveTestDatabase } from "./eve-test-database";
+
+type ReadonlyCreateOperation = ReadonlyNativeSurface<
+  Parameters<typeof createEveConversationOperation>["1"]
+>;
 
 vi.mock("server-only", () => ({}));
 vi.mock("../lib/eve/create-conversation-operation", () => ({
@@ -35,16 +45,10 @@ await db.insert(user).values({
   id: owner,
   name: "Response group test",
 });
+
 afterAll(async () => {
+  await db.delete(eveDispatch).where(eq(eveDispatch.ownerId, owner));
   await db.delete(eveResponseGroup).where(eq(eveResponseGroup.ownerId, owner));
-  // Fork foreign keys require deleting children before roots.
-  const rows = await db
-    .select()
-    .from(eveConversation)
-    .where(eq(eveConversation.ownerId, owner));
-  for (const row of rows.filter((row) => row.parentConversationId)) {
-    await db.delete(eveConversation).where(eq(eveConversation.id, row.id));
-  }
   await db.delete(eveConversation).where(eq(eveConversation.ownerId, owner));
   await db.delete(user).where(eq(user.id, owner));
 });
@@ -72,17 +76,18 @@ test("parallel reservations and partial dispatch retries keep ordered exact iden
   let failSecond = true;
   const nativeCalls: string[] = [];
   vi.mocked(createEveConversationOperation).mockImplementation(
-    async (ownerId, operation) => {
+    async (ownerId, operation: ReadonlyCreateOperation) => {
       if (operation.modelId === "model-b" && failSecond) {
         return Response.json({ error: "Unavailable" }, { status: 503 });
       }
       const binding = await createEveConversation(
         ownerId,
         operation.operationId,
-        String(operation.message),
+        eveMessageTitle(operation.message),
+
         (id) => {
           nativeCalls.push(id);
-          return Promise.resolve(`session-${id}`);
+          return createEveTestSession();
         },
         { fork: operation.fork, initialModelId: operation.modelId }
       );
@@ -98,20 +103,23 @@ test("parallel reservations and partial dispatch retries keep ordered exact iden
   failSecond = false;
   const retried = await createEveResponseGroup(owner, input);
   expect(retried.candidates.map((candidate) => candidate.operationId)).toEqual(
-    left.candidates.map((candidate) => candidate.operationId)
+    left.candidates.map(
+      (candidate: { readonly operationId: string }) => candidate.operationId
+    )
   );
   expect(
     retried.candidates.every((candidate) => candidate.state === "bound")
   ).toBe(true);
   expect(new Set(nativeCalls).size).toBe(3);
   expect(nativeCalls).toHaveLength(3);
-  const root = await getEveCreation(owner, left.candidates[0].operationId);
-  for (const candidate of left.candidates.slice(1)) {
-    const child = await getEveCreation(owner, candidate.operationId);
-    expect(child?.parentConversationId).toBe(root?.id);
-    expect(child?.rootConversationId).toBe(root?.id);
-    expect(child?.forkTurnId).toBe("turn_0");
-  }
+  await Promise.all(
+    left.candidates.slice(1).map(async (candidate) => {
+      const child = await getEveCreation(owner, candidate.operationId);
+      expect(child?.parentConversationId).toBeNull();
+      expect(child?.rootConversationId).toBeNull();
+      expect(child?.forkTurnId).toBeNull();
+    })
+  );
 });
 
 test("unconfirmed initial creation never starts independent secondary roots", async () => {
@@ -131,26 +139,28 @@ test("unconfirmed initial creation never starts independent secondary roots", as
   expect(createEveConversationOperation).toHaveBeenCalledTimes(1);
 });
 
-test("continuation candidates share one source checkpoint and reject inaccessible sources", async () => {
+test("continuation candidates copy the current completed source and reject inaccessible sources", async () => {
   const source = await createEveConversation(
     owner,
     crypto.randomUUID(),
     "Original",
-    (id) => Promise.resolve(`source-${id}`)
+
+    createEveTestSession
   );
   vi.mocked(createEveConversationOperation)
     .mockReset()
-    .mockImplementation(async (ownerId, operation) => {
+    .mockImplementation(async (ownerId, operation: ReadonlyCreateOperation) => {
       const binding = await createEveConversation(
         ownerId,
         operation.operationId,
-        String(operation.message),
-        (id) => Promise.resolve(`continued-${id}`),
+        eveMessageTitle(operation.message),
+
+        createEveTestSession,
         { fork: operation.fork, initialModelId: operation.modelId }
       );
       return Response.json(binding);
     });
-  const fork = { beforeTurnId: "turn_0", conversationId: source.id };
+  const fork = { conversationId: source.id };
   const input = {
     fork,
     message: "Continue",
@@ -161,11 +171,13 @@ test("continuation candidates share one source checkpoint and reject inaccessibl
   expect(
     result.candidates.every((candidate) => candidate.state === "bound")
   ).toBe(true);
-  for (const candidate of result.candidates) {
-    const row = await getEveCreation(owner, candidate.operationId);
-    expect(row?.parentConversationId).toBe(source.id);
-    expect(row?.forkTurnId).toBe(fork.beforeTurnId);
-  }
+  await Promise.all(
+    result.candidates.map(async (candidate) => {
+      const row = await getEveCreation(owner, candidate.operationId);
+      expect(row?.parentConversationId).toBe(source.id);
+      expect(row?.forkTurnId).toBeNull();
+    })
+  );
   await expect(
     createEveResponseGroup(owner, {
       ...input,
@@ -182,11 +194,17 @@ test("definitive rejection is distinct from uncertainty and repeated model choic
     operationId: crypto.randomUUID(),
   };
   const group = await reserveEveResponseGroup(owner, input);
-  expect(group.candidates.map((candidate) => candidate.modelId)).toEqual(
-    input.modelIds
-  );
   expect(
-    new Set(group.candidates.map((candidate) => candidate.operationId)).size
+    group.candidates.map(
+      (candidate: { readonly modelId: string }) => candidate.modelId
+    )
+  ).toEqual(input.modelIds);
+  expect(
+    new Set(
+      group.candidates.map(
+        (candidate: { readonly operationId: string }) => candidate.operationId
+      )
+    ).size
   ).toBe(5);
   vi.mocked(createEveConversationOperation)
     .mockReset()
@@ -219,11 +237,12 @@ test("deleting a partial family erases group payloads and fences unstarted candi
     owner,
     group.candidates[0].operationId,
     input.message,
-    async (id) => `session-${id}`
+
+    createEveTestSession
   );
   const forkInput = {
     ...input,
-    fork: { beforeTurnId: "turn_0", conversationId: root.id },
+    fork: { conversationId: root.id },
     operationId: crypto.randomUUID(),
   };
   const pendingFork = await reserveEveResponseGroup(owner, forkInput);
@@ -231,33 +250,46 @@ test("deleting a partial family erases group payloads and fences unstarted candi
     ...input,
     operationId: crypto.randomUUID(),
   });
+  await reconcileEveWorkspaceTurn(owner, root.id);
   await beginEveConversationDeletion(owner, root.id);
-  await completeEveConversationDeletion(owner, root.id);
-  for (const { saved, original } of [
-    { original: input, saved: group },
-    { original: forkInput, saved: pendingFork },
-  ]) {
-    const [row] = await db
-      .select()
-      .from(eveResponseGroup)
-      .where(eq(eveResponseGroup.id, saved.id));
-    expect(row).toMatchObject({
-      candidateOperationIds: saved.candidateOperationIds,
-      candidates: null,
-      deleted: true,
-      inputHash: null,
-    });
-    await expect(reserveEveResponseGroup(owner, original)).rejects.toThrow(
-      "deleted"
-    );
+  const reservation = await getEveCreation(
+    owner,
+    group.candidates[0].operationId
+  );
+  if (!reservation) {
+    throw new Error("Missing reservation");
   }
+  await cleanupWorkspaceIfUnused(owner, reservation.workspaceId, () => {
+    throw new Error("No resources were allocated");
+  });
+  await completeEveConversationDeletion(owner, root.id);
+  await Promise.all(
+    [
+      { original: input, saved: group },
+      { original: forkInput, saved: pendingFork },
+    ].map(async ({ saved, original }) => {
+      const [row] = await db
+        .select()
+        .from(eveResponseGroup)
+        .where(eq(eveResponseGroup.id, saved.id));
+      expect(row).toMatchObject({
+        candidateOperationIds: saved.candidateOperationIds,
+        candidates: null,
+        deleted: true,
+        inputHash: null,
+      });
+      await expect(reserveEveResponseGroup(owner, original)).rejects.toThrow(
+        "deleted"
+      );
+    })
+  );
   await expect(
     createEveConversation(
       owner,
       group.candidates[1].operationId,
       input.message,
-      async () => "must-not-create",
-      { fork: { beforeTurnId: "turn_0", conversationId: root.id } }
+      vi.fn<() => Promise<string>>().mockResolvedValue("must-not-create"),
+      { fork: { conversationId: root.id } }
     )
   ).rejects.toThrow();
   await expect(
@@ -265,7 +297,7 @@ test("deleting a partial family erases group payloads and fences unstarted candi
       owner,
       group.candidates[1].operationId,
       input.message,
-      async () => "must-not-create-root"
+      vi.fn<() => Promise<string>>().mockResolvedValue("must-not-create-root")
     )
   ).rejects.toThrow("response group has been deleted");
   const [untouched] = await db
@@ -281,10 +313,11 @@ test("group reservation racing retirement cannot leave an active unstarted group
     owner,
     crypto.randomUUID(),
     "Race",
-    async (id) => `session-${id}`
+
+    createEveTestSession
   );
   const input = {
-    fork: { beforeTurnId: "turn_0", conversationId: root.id },
+    fork: { conversationId: root.id },
     message: "Concurrent",
     modelIds: ["model-a", "model-b"],
     operationId: crypto.randomUUID(),
@@ -299,7 +332,13 @@ test("group reservation racing retirement cannot leave an active unstarted group
     .where(eq(eveResponseGroup.operationId, input.operationId));
   expect(
     rows.every(
-      (row) => row.deleted && row.candidates === null && row.inputHash === null
+      (
+        row: Readonly<{
+          candidates: unknown;
+          deleted: boolean;
+          inputHash: string | null;
+        }>
+      ) => row.deleted && row.candidates === null && row.inputHash === null
     )
   ).toBe(true);
   await expect(
@@ -315,10 +354,11 @@ test("pre-contract groups block erasure until an exact replay recovers their sou
     owner,
     crypto.randomUUID(),
     "Old group",
-    async (id) => `session-${id}`
+
+    createEveTestSession
   );
   const input = {
-    fork: { beforeTurnId: "turn_0", conversationId: root.id },
+    fork: { conversationId: root.id },
     message: "Preserved",
     modelIds: ["model-a", "model-b"],
     operationId: crypto.randomUUID(),
@@ -355,7 +395,8 @@ test("owner-only group reads preserve order and rejection recovery without expos
     owner,
     group.candidates[0].operationId,
     input.message,
-    async (id) => `session-${id}`
+
+    createEveTestSession
   );
   await recordEveResponseGroupRejection(
     owner,
@@ -382,9 +423,8 @@ test("owner-only group reads preserve order and rejection recovery without expos
     group.id,
     group.candidates[1].operationId
   );
-  expect(
-    (await getEveResponseGroup(owner, group.id))?.candidates[1].state
-  ).toBe("waiting");
+  const responseCandidates = await getEveResponseGroup(owner, group.id);
+  expect(responseCandidates?.candidates[1].state).toBe("waiting");
   await beginEveConversationDeletion(owner, first.id);
   expect(await getEveResponseGroup(owner, group.id)).toBeUndefined();
   await expect(
@@ -404,29 +444,29 @@ test("an in-flight candidate prevents family erasure until its binding resolves"
     operationId: crypto.randomUUID(),
   };
   const group = await reserveEveResponseGroup(owner, input);
-  const entered = Promise.withResolvers<undefined>();
-  const release = Promise.withResolvers<undefined>();
+  const entered: PromiseWithResolvers<void> = Promise.withResolvers();
+  const release: PromiseWithResolvers<void> = Promise.withResolvers();
   const creation = createEveConversation(
     owner,
     group.candidates[0].operationId,
     input.message,
-    async (id) => {
-      entered.resolve(undefined);
+    async () => {
+      entered.resolve();
       await release.promise;
-      return `session-${id}`;
+      return createEveTestSession();
     }
   );
   await entered.promise;
   try {
     const root = await getEveCreation(owner, group.candidates[0].operationId);
-    if (!root) {
+    if (root === undefined) {
       throw new Error("Missing creating candidate");
     }
     await expect(beginEveConversationDeletion(owner, root.id)).rejects.toThrow(
       "Finish recovering"
     );
   } finally {
-    release.resolve(undefined);
+    release.resolve();
   }
   const root = await creation;
   await beginEveConversationDeletion(owner, root.id);

@@ -12,7 +12,9 @@ test("generated chat identity stays selected across edited branch paths", async 
   page,
 }, testInfo) => {
   test.setTimeout(150_000);
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   const { origin } = new URL(page.url());
   const response = await page.request.post("/api/agent-conversations", {
@@ -56,7 +58,7 @@ test("generated chat identity stays selected across edited branch paths", async 
       )
       .toBe("generated");
     const chat = await readChat();
-    if (!chat) {
+    if (chat === undefined) {
       throw new Error("Missing test chat identity");
     }
     const title = page
@@ -71,7 +73,10 @@ test("generated chat identity stays selected across edited branch paths", async 
     await expect(activeChat).toHaveText(chat.title);
     const chatHref = await activeChat.getAttribute("href");
     await page
-      .getByRole("button", { exact: true, name: "Edit message" })
+      .getByRole("button", {
+        exact: true,
+        name: "Edit message",
+      })
       .click();
     const editor = page
       .getByRole("log")
@@ -103,11 +108,7 @@ test("generated chat identity stays selected across edited branch paths", async 
       animations: "disabled",
       path: testInfo.outputPath("same-chat-edited-branch.png"),
     });
-    await page
-      .getByRole("log")
-      .locator(".is-user")
-      .getByRole("button", { exact: true, name: "Previous version" })
-      .click();
+    await page.goto(`/chat/${source.id}`);
     await expect(page.getByRole("log")).toContainText("trail-ready");
     await expect(activeChat).toHaveAttribute("href", chatHref ?? "");
     await expect(title).toHaveText(chat.title);

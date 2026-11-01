@@ -1,10 +1,12 @@
-export interface MigrationIdentity {
-  createdAt: number;
-  hash: string;
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+
+interface MigrationIdentity {
+  readonly createdAt: number;
+  readonly hash: string;
 }
 
 /** Tables from the EVE-only baseline plus every retired ChatJS table. */
-export const KNOWN_CHATJS_TABLE_NAMES = [
+const KNOWN_CHATJS_TABLE_NAMES = [
   "account",
   "EveChat",
   "EveChatProject",
@@ -47,19 +49,22 @@ export const KNOWN_CHATJS_TABLE_NAMES = [
   "Vote",
 ] as const;
 
-export const getMigrationHistoryProblem = ({
+const NO_RECORDED_MIGRATIONS = 0;
+
+const getMigrationHistoryProblem = ({
   applied,
   available,
   hasChatJsTables,
-}: {
-  applied: MigrationIdentity[];
-  available: MigrationIdentity[];
-  hasChatJsTables: boolean;
-}): string | null => {
-  if (applied.length === 0) {
-    return hasChatJsTables
-      ? "This database contains ChatJS tables but no EVE baseline migration record."
-      : null;
+}: ReadonlyNativeSurface<{
+  readonly applied: MigrationIdentity[];
+  readonly available: MigrationIdentity[];
+  readonly hasChatJsTables: boolean;
+}>): string | null => {
+  if (applied.length === NO_RECORDED_MIGRATIONS) {
+    if (hasChatJsTables) {
+      return "This database contains ChatJS tables but no EVE baseline migration record.";
+    }
+    return null;
   }
 
   if (applied.length > available.length) {
@@ -67,11 +72,38 @@ export const getMigrationHistoryProblem = ({
   }
 
   const matchesAvailablePrefix = applied.every(
-    (recorded, index) =>
+    (recorded: MigrationIdentity, index) =>
       recorded.hash === available[index]?.hash &&
       recorded.createdAt === available[index]?.createdAt
   );
-  return matchesAvailablePrefix
-    ? null
-    : "This database uses a migration history from before the EVE-only baseline.";
+
+  if (matchesAvailablePrefix) {
+    return null;
+  }
+  return "This database uses a migration history from before the EVE-only baseline.";
 };
+// Journal timestamp for 0021_glorious_chameleon: older app/worker versions
+// still read the guest columns it drops. Fresh databases have no old consumers.
+const GUEST_BALANCE_REMOVAL_TIMESTAMP = 1_792_944_480_400;
+const requiresGuestBalanceMigrationRollout = ({
+  applied,
+  available,
+  coordinated = false,
+}: ReadonlyNativeSurface<{
+  readonly applied: MigrationIdentity[];
+  readonly available: MigrationIdentity[];
+  readonly coordinated?: boolean;
+}>): boolean =>
+  !coordinated &&
+  applied.length > NO_RECORDED_MIGRATIONS &&
+  available.some(
+    (entry) => entry.createdAt === GUEST_BALANCE_REMOVAL_TIMESTAMP
+  ) &&
+  !applied.some((entry) => entry.createdAt === GUEST_BALANCE_REMOVAL_TIMESTAMP);
+
+export {
+  getMigrationHistoryProblem,
+  KNOWN_CHATJS_TABLE_NAMES,
+  requiresGuestBalanceMigrationRollout,
+};
+export type { MigrationIdentity };

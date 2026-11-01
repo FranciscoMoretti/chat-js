@@ -1,3 +1,5 @@
+import React from "react";
+
 import {
   Card,
   CardContent,
@@ -7,13 +9,13 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
-type AuthCardSkeletonProps = {
-  title: string;
-  description: string;
-  className?: string;
-  cardClassName?: string;
-  variant?: "form" | "device";
-};
+interface AuthCardSkeletonProps {
+  readonly title: string;
+  readonly description: string;
+  readonly className?: string;
+  readonly cardClassName?: string;
+  readonly variant?: "form" | "device";
+}
 
 export const AuthCardSkeleton = ({
   title,
@@ -21,7 +23,7 @@ export const AuthCardSkeleton = ({
   className,
   cardClassName,
   variant = "form",
-}: AuthCardSkeletonProps) => (
+}: AuthCardSkeletonProps): React.JSX.Element => (
   <div className={cn("flex w-full flex-col gap-6", className)}>
     <Card className={cardClassName}>
       <CardHeader className="text-center">

@@ -1,7 +1,12 @@
 "use client";
 
+import { withTaskCleanup } from "@/components/task-cleanup";
+
+import { hasText } from "@/components/text-value";
+
 import Link from "next/link";
-import { useRef, useState } from "react";
+import type { JSX as ReactJSX } from "react";
+import React, { useRef, useState } from "react";
 
 import { CloneChatButtonView } from "@/components/clone-chat-button-view";
 import { getPrimarySelectedModelId } from "@/lib/ai/types";
@@ -16,13 +21,22 @@ import {
 import { useDefaultModel } from "@/providers/default-model-provider";
 import { useSession } from "@/providers/session-provider";
 
-export const EveCopyButton = ({
+const forgetConfirmedRequest = (ownerId: string, input: EveCopyInput): void => {
+  try {
+    finishPendingEveCopy(sessionStorage, ownerId, input);
+  } catch {
+    // A confirmed binding or rejection remains authoritative when browser storage is unavailable.
+  }
+};
+
+const EveCopyButton = ({
   sourceConversationId,
   recovery,
 }: {
   sourceConversationId: string;
   recovery?: EveCopyInput;
-}) => {
+}): ReactJSX.Element => {
+  const [, startEventAction] = React.useTransition();
   const session = useSession();
   const model = useDefaultModel();
   const lock = useRef(false);
@@ -32,45 +46,13 @@ export const EveCopyButton = ({
   const [destination, setDestination] = useState<string>();
   const ownerId = session.data?.user.id;
 
-  const save = async () => {
-    if (lock.current || !ownerId) {
-      return;
-    }
-    lock.current = true;
-    setBusy(true);
-    setRejected(false);
-    setFailure("");
-    let input = recovery;
-    try {
-      if (!input) {
-        input = preparePendingEveCopy(
-          sessionStorage,
-          ownerId,
-          sourceConversationId,
-          getPrimarySelectedModelId(model) ?? config.ai.workflows.chat
-        );
-      }
-      const result = await requestEveCopy(input);
-      // oxlint-disable-next-line eslint/no-use-before-define -- Storage cleanup is kept with the successful copy transition.
-      forgetConfirmedRequest(ownerId, input);
-      window.location.assign(`/chat/${result.id}`);
-    } catch (error) {
-      // oxlint-disable-next-line eslint/no-use-before-define -- Failure handling is shared by retry and initial copy.
-      showFailure(error, input, ownerId);
-      // oxlint-disable-next-line react/todo -- Preserve lock cleanup while React Compiler lacks finally support.
-    } finally {
-      lock.current = false;
-      setBusy(false);
-    }
-  };
   const showFailure = (
     cause: unknown,
     input: EveCopyInput | undefined,
     accountOwnerId: string
-  ) => {
+  ): void => {
     if (cause instanceof EveCopyRequestError) {
       if (!cause.retryable && input) {
-        // oxlint-disable-next-line eslint/no-use-before-define -- Failed copies must clear their durable request.
         forgetConfirmedRequest(accountOwnerId, input);
       }
       setRejected(!cause.retryable);
@@ -83,7 +65,42 @@ export const EveCopyButton = ({
     );
   };
 
-  if (!(session.isPending || ownerId)) {
+  const save = async (): Promise<void> => {
+    if (lock.current || !hasText(ownerId)) {
+      return;
+    }
+    lock.current = true;
+    setBusy(true);
+    setRejected(false);
+    setFailure("");
+    let input = recovery;
+    await withTaskCleanup(
+      async () => {
+        try {
+          const saved = recovery;
+          input =
+            saved ??
+            preparePendingEveCopy(
+              sessionStorage,
+              ownerId,
+              sourceConversationId,
+              getPrimarySelectedModelId(model) ?? config.ai.workflows.chat
+            );
+          const result = await requestEveCopy(input);
+          forgetConfirmedRequest(ownerId, input);
+          globalThis.location.assign(`/chat/${result.id}`);
+        } catch (error) {
+          showFailure(error, input, ownerId);
+        }
+      },
+      () => {
+        lock.current = false;
+        setBusy(false);
+      }
+    );
+  };
+
+  if (!(session.isPending || hasText(ownerId))) {
     return (
       <p className="p-4 text-center text-sm">
         <Link
@@ -106,6 +123,10 @@ export const EveCopyButton = ({
     <section
       aria-label={recovery ? "Saved copy recovery" : "Save shared conversation"}
     >
+      <p className="text-muted-foreground px-4 pt-4 text-sm">
+        The new branch shares this workspace, including its current files and
+        environment. Conversation history is independent.
+      </p>
       {recovery && (
         <output className="px-4 pt-4 text-sm">
           Saving is unconfirmed. Retry to finish the saved copy.
@@ -116,7 +137,13 @@ export const EveCopyButton = ({
           disabled={session.isPending}
           isPending={busy}
           label={label}
-          onClick={save}
+
+          onClick={() => {
+            const completion = save();
+            startEventAction(async () => {
+              await completion;
+            });
+          }}
         />
       )}
       {failure && (
@@ -124,7 +151,7 @@ export const EveCopyButton = ({
           {failure}
         </p>
       )}
-      {destination && (
+      {hasText(destination) && (
         <p className="pb-4 text-center text-sm">
           <Link className="underline" href={`/chat/${destination}`}>
             Open saved copy recovery
@@ -135,10 +162,4 @@ export const EveCopyButton = ({
   );
 };
 
-const forgetConfirmedRequest = (ownerId: string, input: EveCopyInput) => {
-  try {
-    finishPendingEveCopy(sessionStorage, ownerId, input);
-  } catch {
-    // A confirmed binding or rejection remains authoritative when browser storage is unavailable.
-  }
-};
+export { EveCopyButton };

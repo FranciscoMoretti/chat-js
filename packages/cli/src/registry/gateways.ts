@@ -1,7 +1,10 @@
-import { gatewayDefinitionSchema } from "@chat-js/gateways/definition";
-import type { GatewayDefinition } from "@chat-js/gateways/definition";
-
 import { itemAddress, readItem } from "./shadcn";
+import type { GatewayDefinition } from "@chat-js/gateways/definition";
+import { gatewayDefinitionSchema } from "@chat-js/gateways/definition";
+
+type RegistryFile = NonNullable<
+  Awaited<ReturnType<typeof readItem>>["files"]
+>[number];
 
 export { builtInGateways } from "../../../registry/src/gateways/catalog";
 export interface GatewaySelection {
@@ -17,10 +20,16 @@ export const resolveGateway = async (
   if (item.type !== "registry:item") {
     throw new Error("Selected gateway must have type registry:item.");
   }
-  const definition = gatewayDefinitionSchema.parse(item.meta?.chatjs);
-  if (!item.files?.some((file) => file.target === "~/lib/ai/gateway.ts")) {
+  const { chatjs } = item.meta ?? {};
+  const definition = gatewayDefinitionSchema.parse(chatjs);
+  if (
+    !(item.files ?? []).some(
+      (file: Readonly<RegistryFile>) =>
+        file.target === "~/chatjs/providers/gateway.ts"
+    )
+  ) {
     throw new Error(
-      "Gateway must install lib/ai/gateway.ts exporting Gateway."
+      "Gateway must install chatjs/providers/gateway.ts exporting Gateway."
     );
   }
   return { definition, source: address };

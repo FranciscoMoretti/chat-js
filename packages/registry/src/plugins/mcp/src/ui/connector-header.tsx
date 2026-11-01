@@ -1,0 +1,65 @@
+"use client";
+import { Badge } from "@/components/ui/badge";
+import { Favicon } from "@/components/favicon";
+import { Globe } from "lucide-react";
+import React from "react";
+import { getGoogleFaviconUrl } from "@/components/get-google-favicon-url";
+import { getUrlWithoutParams } from "@/components/get-url-without-params";
+
+export const ConnectorHeader = ({
+  name,
+  url,
+  type,
+  isCustom,
+  statusText,
+}: {
+  readonly name: string;
+  readonly url: string;
+  readonly type: string;
+  readonly isCustom: boolean;
+  readonly statusText?: string;
+}): React.JSX.Element => {
+  const faviconUrl = type === "http" ? getGoogleFaviconUrl(url) : "";
+
+  return (
+    <div className="flex min-w-0 flex-1 items-center gap-3 overflow-hidden">
+      <div className="bg-muted flex size-10 shrink-0 items-center justify-center rounded-lg">
+        {faviconUrl ? (
+          <Favicon
+            className="size-5 rounded-sm"
+            fallback={<Globe className="text-muted-foreground size-5" />}
+            url={faviconUrl}
+          />
+        ) : (
+          <Globe className="text-muted-foreground size-5" />
+        )}
+      </div>
+
+      <div className="min-w-0 flex-1 overflow-hidden">
+        <div className="flex items-center gap-2 overflow-hidden">
+          <span className="truncate text-sm font-medium">{name}</span>
+          {isCustom ? (
+            <Badge
+              className="h-5 shrink-0 px-2 text-[10px]"
+              variant="secondary"
+            >
+              CUSTOM
+            </Badge>
+          ) : (
+            <Badge className="h-5 shrink-0 px-2 text-[10px]" variant="outline">
+              Built-in
+            </Badge>
+          )}
+        </div>
+        <p className="text-muted-foreground mt-0.5 truncate text-xs">
+          {getUrlWithoutParams(url)}
+        </p>
+        {typeof statusText === "string" && statusText !== "" ? (
+          <p className="text-muted-foreground mt-0.5 text-[11px]">
+            {statusText}
+          </p>
+        ) : null}
+      </div>
+    </div>
+  );
+};

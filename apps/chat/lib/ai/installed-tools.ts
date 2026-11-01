@@ -1,9 +1,9 @@
 import type { NativeToolUI } from "@/lib/eve/tool-types";
-import type { tools } from "@/tools/chatjs/tools";
-import type { WorkflowTools } from "@/tools/chatjs/workflow-types";
+import type { WorkflowTools } from "@/chatjs/generated/workflow-types";
+import type { tools } from "@/integrations/tools/execution";
 
 type AllTools = typeof tools & WorkflowTools;
 
 export type InstalledTools = {
-  [K in keyof AllTools]: NativeToolUI<AllTools[K]>;
+  [ToolName in keyof AllTools]: NativeToolUI<AllTools[ToolName]>;
 };

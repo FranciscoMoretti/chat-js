@@ -1,16 +1,19 @@
 "use client";
 
 import { Moon, Sun } from "lucide-react";
+import React from "react";
 import { useTheme } from "next-themes";
 
-export const ThemeToggle = () => {
+export const ThemeToggle = (): React.JSX.Element => {
   const { resolvedTheme, setTheme } = useTheme();
 
   return (
     <button
       aria-label="Toggle theme"
       className="text-foreground/75 hover:bg-secondary hover:text-foreground rounded-md p-2 transition-colors"
-      onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+      onClick={(): void => {
+        setTheme(resolvedTheme === "dark" ? "light" : "dark");
+      }}
       type="button"
     >
       <Sun className="hidden h-5 w-5 dark:block" />

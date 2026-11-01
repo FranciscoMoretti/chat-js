@@ -2,22 +2,25 @@ import { setTimeout } from "node:timers/promises";
 
 import { eq } from "drizzle-orm";
 import { expect, test, vi } from "vitest";
+import { z } from "zod";
 
 import { db } from "../lib/db/client";
 import { createEveConversation, getEveCreation } from "../lib/db/eve-queries";
 import { eveConversation, user } from "../lib/db/schema";
 import { env } from "../lib/env";
 import { createEveConversationOperation } from "../lib/eve/create-conversation-operation";
-import type * as EveServer from "../lib/eve/server";
+import type { eveRequest } from "../lib/eve/server";
 import { assertEveTestDatabase } from "./eve-test-database";
 
 vi.mock("server-only", () => ({}));
 const probe = vi.hoisted(() => ({ beforeResponse: false, dispatches: 0 }));
 vi.mock("../lib/eve/server", async (importOriginal) => {
-  const actual = await importOriginal<typeof EveServer>();
+  const actual = await importOriginal<{ eveRequest: typeof eveRequest }>();
   return {
     ...actual,
-    eveRequest: async (...args: Parameters<typeof actual.eveRequest>) => {
+    eveRequest: async (
+      ...args: Parameters<typeof actual.eveRequest>
+    ): Promise<Response> => {
       const response = await actual.eveRequest(...args);
       if (args[1] !== "/eve/chat/v1/session") {
         return response;
@@ -26,20 +29,24 @@ vi.mock("../lib/eve/server", async (importOriginal) => {
       expect(response.ok).toBe(true);
       // Hold the native response inside the transport: the caller cannot bind.
       const deadline = Date.now() + 25_000;
-      const session = await response.clone().json();
+
+      const session = z
+        .looseObject({ sessionId: z.string() })
+        .parse(await response.clone().json());
+      /* oxlint-disable eslint/no-await-in-loop -- Each poll observes the worker before the next bounded delay and exits when binding completes. */
       while (Date.now() < deadline) {
-        // oxlint-disable-next-line eslint/no-await-in-loop -- Observe the independent real worker while the HTTP caller is held.
         const [row] = await db
           .select()
           .from(eveConversation)
+
           .where(eq(eveConversation.sessionId, session.sessionId));
         if (row?.state === "bound") {
           probe.beforeResponse = true;
           break;
         }
-        // oxlint-disable-next-line eslint/no-await-in-loop -- Bound polling while the worker executes its hook.
         await setTimeout(100);
       }
+      /* oxlint-enable eslint/no-await-in-loop */
       throw new TypeError("Injected lost native response after acceptance");
     },
   };
@@ -80,7 +87,9 @@ test("real native hook binds before a lost response, and retry keeps the accepte
 });
 
 test("native acceptance deduplicates concurrent callers and rejects foreign or forged identity", async () => {
-  const actual = await vi.importActual<typeof EveServer>("../lib/eve/server");
+  const actual = await vi.importActual<{ eveRequest: typeof eveRequest }>(
+    "../lib/eve/server"
+  );
   const owner = crypto.randomUUID();
   await db.insert(user).values({
     email: `${owner}@test.invalid`,
@@ -116,19 +125,27 @@ test("native acceptance deduplicates concurrent callers and rejects foreign or f
       });
       expect(forged.status).toBe(403);
       const responses = await Promise.all(
-        [0, 1].map(() =>
-          actual.eveRequest(
-            owner,
-            "/eve/chat/v1/session",
-            init,
-            "google/gemini-2.5-flash-lite"
-          )
+        [0, 1].map(
+          async () =>
+            await actual.eveRequest(
+              owner,
+              "/eve/chat/v1/session",
+              init,
+              "google/gemini-2.5-flash-lite"
+            )
         )
       );
-      expect(responses.map((response) => response.status)).toEqual([202, 202]);
+      expect(
+        responses.map(
+          (response: Readonly<Pick<Response, "status">>) => response.status
+        )
+      ).toEqual([202, 202]);
       const receipts = await Promise.all(
-        responses.map((response) => response.json())
+        responses.map(async (response: Readonly<Pick<Response, "json">>) =>
+          z.object({ sessionId: z.string() }).parse(await response.json())
+        )
       );
+
       expect(receipts[0].sessionId).toBe(receipts[1].sessionId);
       const ownReceipt = await actual.eveRequest(
         owner,
@@ -142,6 +159,7 @@ test("native acceptance deduplicates concurrent callers and rejects foreign or f
         `/eve/chat/v1/operation/${reservationId}`
       );
       expect(foreignReceipt.status).toBe(404);
+
       return receipts[0].sessionId;
     }
   );

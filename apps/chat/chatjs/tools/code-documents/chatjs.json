@@ -1,0 +1,20 @@
+{
+  "config": { "key": "code" },
+  "documentKind": "code",
+  "envRequirements": [],
+  "id": "code-documents",
+  "kind": "tool",
+  "requiresTools": ["readDocument"],
+  "tools": [
+    {
+      "composer": { "icon": "Edit3", "name": "Canvas", "shortName": "Canvas" },
+      "toolExport": "createCodeDocument"
+    },
+    {
+      "composer": { "icon": "Edit3", "name": "Canvas", "shortName": "Canvas" },
+      "toolExport": "editCodeDocument"
+    }
+  ],
+  "contractVersion": 2,
+  "uiBase": "base"
+}

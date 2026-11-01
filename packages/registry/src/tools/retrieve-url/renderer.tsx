@@ -1,19 +1,19 @@
 "use client";
-
 import { ChevronDown, ExternalLink, Globe, TextIcon } from "lucide-react";
-import ReactMarkdown from "react-markdown";
-
-import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
-import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
-
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { retrievedInput, retrievedResult } from "./schemas";
+import React from "react";
+import ReactMarkdown from "react-markdown";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import type { ToolRendererProps } from "@/chatjs/core/tools/define-renderer";
+import { defineToolRenderer } from "@/chatjs/core/tools/define-renderer";
 
 type RetrieveUrlRendererTool = ToolRendererProps<
   typeof retrievedInput,
   typeof retrievedResult
 >["tool"];
 
-const LoadingState = () => (
+const LoadingState = (): React.JSX.Element => (
   <div className="border-border bg-card my-4 rounded-xl border p-4">
     <div className="flex items-center gap-4">
       <div className="relative h-10 w-10">
@@ -31,37 +31,31 @@ const LoadingState = () => (
   </div>
 );
 
-const ErrorState = ({ errorMessage }: { errorMessage: string | undefined }) => (
-  <div className="my-4 rounded-xl border border-red-200 bg-red-50 p-4 dark:border-red-500 dark:bg-red-950/50">
-    <div className="flex items-center gap-3">
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/50">
-        <Globe className="h-4 w-4 text-red-600 dark:text-red-300" />
-      </div>
-      <div>
-        <div className="text-sm font-medium text-red-700 dark:text-red-300">
-          Error retrieving content
-        </div>
-        <div className="mt-1 text-xs text-red-600/80 dark:text-red-400/80">
-          {errorMessage}
-        </div>
-      </div>
-    </div>
-  </div>
+const ErrorState = ({
+  errorMessage,
+}: Readonly<{ errorMessage: string | undefined }>): React.JSX.Element => (
+  <Alert variant="destructive" className="my-4">
+    <Globe />
+    <AlertTitle>Error retrieving content</AlertTitle>
+    <AlertDescription>{errorMessage}</AlertDescription>
+  </Alert>
 );
 
-const getItemProperty = <T,>(
+const getItemProperty = (
   item: unknown,
   property: string,
-  defaultValue: T
-): T => {
-  if (item && typeof item === "object" && property in item) {
-    const value = (item as Record<string, unknown>)[property];
-    return (value as T) ?? defaultValue;
+  defaultValue: string
+): string => {
+  if (item !== null && typeof item === "object" && property in item) {
+    const value: unknown = Reflect.get(item, property);
+    return typeof value === "string" ? value : defaultValue;
   }
   return defaultValue;
 };
 
-const RetrievedContentHeader = ({ firstItem }: { firstItem: unknown }) => {
+const RetrievedContentHeader = ({
+  firstItem,
+}: Readonly<{ firstItem: unknown }>): React.JSX.Element => {
   const url = getItemProperty(firstItem, "url", "");
   const title = getItemProperty(firstItem, "title", "Retrieved Content");
   const description = getItemProperty(
@@ -105,7 +99,9 @@ const RetrievedContentHeader = ({ firstItem }: { firstItem: unknown }) => {
   );
 };
 
-const RetrievedContentDetails = ({ firstItem }: { firstItem: unknown }) => {
+const RetrievedContentDetails = ({
+  firstItem,
+}: Readonly<{ firstItem: unknown }>): React.JSX.Element => {
   const content = getItemProperty(firstItem, "content", "No content available");
 
   return (
@@ -130,13 +126,14 @@ const RetrievedContentDetails = ({ firstItem }: { firstItem: unknown }) => {
 
 const getFirstItem = (result: unknown): unknown => {
   if (
-    result &&
+    result !== null &&
     typeof result === "object" &&
     "results" in result &&
     Array.isArray(result.results)
   ) {
     return result.results[0];
   }
+  return undefined;
 };
 
 const getErrorMessage = (
@@ -144,12 +141,18 @@ const getErrorMessage = (
   firstItem: unknown
 ): string | null => {
   const topLevelError =
-    result && typeof result === "object" && "error" in result
-      ? (result.error as string)
+    result !== null &&
+    typeof result === "object" &&
+    "error" in result &&
+    typeof result.error === "string"
+      ? result.error
       : undefined;
   const firstItemError =
-    firstItem && typeof firstItem === "object" && "error" in firstItem
-      ? (firstItem.error as string)
+    firstItem !== null &&
+    typeof firstItem === "object" &&
+    "error" in firstItem &&
+    typeof firstItem.error === "string"
+      ? firstItem.error
       : undefined;
 
   return topLevelError ?? firstItemError ?? null;
@@ -157,11 +160,11 @@ const getErrorMessage = (
 
 const RetrieveUrlView = ({
   tool,
-}: {
+}: ReadonlyNativeSurface<{
   tool: RetrieveUrlRendererTool;
   messageId: string;
   isReadonly: boolean;
-}) => {
+}>): React.JSX.Element | null => {
   if (tool.state === "input-available" || tool.state === "input-streaming") {
     return <LoadingState />;
   }
@@ -170,7 +173,7 @@ const RetrieveUrlView = ({
     return null;
   }
 
-  if (!tool.output) {
+  if (tool.output === undefined) {
     return null;
   }
 
@@ -178,7 +181,7 @@ const RetrieveUrlView = ({
   const firstItem = getFirstItem(result);
   const errorMessage = getErrorMessage(result, firstItem);
 
-  if (errorMessage) {
+  if (typeof errorMessage === "string" && errorMessage !== "") {
     return <ErrorState errorMessage={errorMessage} />;
   }
 

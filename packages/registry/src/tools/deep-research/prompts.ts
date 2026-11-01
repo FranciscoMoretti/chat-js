@@ -1,10 +1,10 @@
-export const clarifyWithUserInstructions = ({
+const clarifyWithUserInstructions = ({
   messages,
   date,
-}: {
+}: Readonly<{
   messages: string;
   date: string;
-}): string =>
+}>): string =>
   `These are the messages that have been exchanged so far from the user asking for the report:
 <Messages>
 ${messages}
@@ -43,13 +43,13 @@ For the verification message when no clarification is needed:
 - Confirm that you will now begin the research process
 - Keep the message concise and professional`;
 
-export const transformMessagesIntoResearchTopicPrompt = ({
+const transformMessagesIntoResearchTopicPrompt = ({
   messages,
   date,
-}: {
+}: Readonly<{
   messages: string;
   date: string;
-}): string =>
+}>): string =>
   `You will be given a set of messages that have been exchanged so far between yourself and the user.
 Your job is to translate these messages into a more detailed and concrete research question that will be used to guide the research.
 
@@ -84,13 +84,13 @@ Guidelines:
 - For people, try linking directly to their LinkedIn profile, or their personal website if they have one.
 - If the query is in a specific language, prioritize sources published in that language.`;
 
-export const leadResearcherPrompt = ({
+const leadResearcherPrompt = ({
   date,
   max_concurrent_research_units,
-}: {
+}: Readonly<{
   date: string;
   max_concurrent_research_units: number;
-}): string =>
+}>): string =>
   `You are a research supervisor. Today's date is ${date}.
 You receive a research brief and findings from all completed topics. Decide whether the evidence is sufficient for a comprehensive report or identify specific gaps requiring follow-up research.
 
@@ -104,15 +104,15 @@ Return JSON with complete (boolean) and topics (array of strings).
 - Match depth to the user's request. Detailed or comprehensive requests warrant more follow-up than broad overviews.
 - As research accumulates, require a stronger reason to request additional work. Finish when the findings adequately answer the brief. Do not repeat topics with minor rephrasing.`;
 
-export const researchSystemPrompt = ({
+const researchSystemPrompt = ({
   date,
   mcp_prompt,
   max_search_queries,
-}: {
+}: Readonly<{
   date: string;
   mcp_prompt: string;
   max_search_queries: number;
-}): string =>
+}>): string =>
   `You are a research assistant conducting deep research on the user's input topic. Use the tools and search methods provided to research the user's input topic. For context, today's date is ${date}.
 
 <Task>
@@ -133,7 +133,7 @@ You can use any of the tools provided to you to find resources that can help ans
 
 <Criteria for Finishing Research>
 - The user will give you a sense of how much effort you should put into the research. This does not translate ~directly~ to the number of tool calls you should make, but it does give you a sense of the depth of the research you should conduct.
-- Once you have enough evidence, stop searching and call final_output with your findings, including source URLs, citations, uncertainties, and conflicting evidence.
+- Once you have enough evidence, stop searching and call eve__reply with your findings, including source URLs, citations, uncertainties, and conflicting evidence.
 - One case where you should stop is if your previous tool calls have stopped yielding useful information.
 </Criteria for Finishing Research>
 
@@ -145,14 +145,12 @@ You can use any of the tools provided to you to find resources that can help ans
 
 <Critical Reminders>
 - You MUST conduct research using web search or a different tool before finishing! You cannot finish without conducting research first!
-- The caller needs your findings, not just your search activity. Always finish by calling final_output with the collected evidence; a separate agent will compress it and write the user-facing report.
+- The caller needs your findings, not just your search activity. Always finish by calling eve__reply with the collected evidence; a separate agent will compress it and write the user-facing report.
 </Critical Reminders>`;
 
-export const compressResearchSystemPrompt = ({
+const compressResearchSystemPrompt = ({
   date,
-}: {
-  date: string;
-}): string =>
+}: Readonly<{ date: string }>): string =>
   `You are a research assistant that has conducted research on a topic by calling several tools and web searches. Your job is now to clean up the findings, but preserve all of the relevant statements and information that the researcher has gathered. For context, today's date is ${date}.
 
 <Task>
@@ -190,30 +188,11 @@ The report should be structured like this:
 
 Critical Reminder: It is extremely important that any information that is even remotely relevant to the user's research topic is preserved verbatim (e.g. don't rewrite it, don't summarize it, don't paraphrase it).`;
 
-export const compressResearchSimpleHumanMessage = `All above messages are about research conducted by an AI Researcher. Please clean up these findings.
+const compressResearchSimpleHumanMessage = `All above messages are about research conducted by an AI Researcher. Please clean up these findings.
 
 DO NOT summarize the information. I want the raw information returned, just in a cleaner format. Make sure all relevant information is preserved - you can rewrite findings verbatim.`;
 
-export const finalReportGenerationPrompt = ({
-  research_brief,
-  date,
-  findings,
-}: {
-  research_brief: string;
-  date: string;
-  findings: string;
-}): string =>
-  `Based on all the research conducted, create a comprehensive, well-structured answer to the overall research brief:
-<Research Brief>
-${research_brief}
-</Research Brief>
-
-Today's date is ${date}.
-
-Here are the findings from the research that you conducted:
-<Findings>
-${findings}
-</Findings>
+const FINAL_REPORT_INSTRUCTIONS = `
 
 Please create a detailed answer to the overall research brief that:
 1. Is well-organized with proper headings (# for title, ## for sections, ### for subsections)
@@ -269,3 +248,33 @@ Format the report in clear markdown with proper structure and include source ref
   [2] Source Title: URL
 - Citations are extremely important. Make sure to include these, and pay a lot of attention to getting these right. Users will often use these citations to look into more information.
 </Citation Rules>`;
+
+const finalReportGenerationPrompt = ({
+  research_brief,
+  date,
+  findings,
+}: Readonly<{
+  research_brief: string;
+  date: string;
+  findings: string;
+}>): string =>
+  `Based on all the research conducted, create a comprehensive, well-structured answer to the overall research brief:
+<Research Brief>
+${research_brief}
+</Research Brief>
+
+Today's date is ${date}.
+
+Here are the findings from the research that you conducted:
+<Findings>
+${findings}
+</Findings>${FINAL_REPORT_INSTRUCTIONS}`;
+export {
+  clarifyWithUserInstructions,
+  compressResearchSimpleHumanMessage,
+  compressResearchSystemPrompt,
+  finalReportGenerationPrompt,
+  leadResearcherPrompt,
+  researchSystemPrompt,
+  transformMessagesIntoResearchTopicPrompt,
+};

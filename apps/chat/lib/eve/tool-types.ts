@@ -1,30 +1,35 @@
-import type { WorkflowToolDefinition, ToolDefinition } from "eve/tools";
+import type { ToolDefinition, WorkflowToolDefinition } from "eve/tools";
 
 import type { ToolOutput, ToolResult } from "./tool-result";
 
-type ToolUI<I, O> = {
-  input: I;
-  output: O extends ToolResult<ToolOutput>
-    ? Extract<O, { status: "success" }>["output"]
-    : O;
-};
+interface ToolUI<Input, Output> {
+  input: Input;
+  output: Output extends ToolResult<ToolOutput>
+    ? Extract<Output, { status: "success" }>["output"]
+    : Output;
+}
 
-export type NativeToolUI<T> =
-  T extends ToolDefinition<infer I, infer O>
-    ? ToolUI<I, O>
-    : T extends WorkflowToolDefinition<infer I, infer O>
-      ? ToolUI<I, O>
+export type NativeToolUI<Definition> =
+  Definition extends ToolDefinition<infer Input, infer Output>
+    ? ToolUI<Input, Output>
+    : Definition extends WorkflowToolDefinition<infer Input, infer Output>
+      ? ToolUI<Input, Output>
       : never;
 
 /** Validate each declared EVE definition without widening its input/output types.
  * The pinned EVE DynamicToolSet erases generics and incorrectly fixes approval input to Record<string, unknown>.
+ * @param {Definitions & { [Name in keyof Definitions]: Definitions[Name] extends ToolDefinition< infer Input, infer Output > ? [Output] extends [ToolOutput] ? ToolDefinition<Input, Output> : never : never; }} tools EVE tool definitions whose successful outputs satisfy the application ToolOutput contract.
+ * @returns {Definitions} The same definition set, retaining each tool's exact input and output types.
  */
-export const defineToolSet = <T>(
-  tools: T & {
-    [K in keyof T]: T[K] extends ToolDefinition<infer I, infer O>
-      ? [O] extends [ToolOutput]
-        ? ToolDefinition<I, O>
+export const defineToolSet = <Definitions>(
+  tools: Definitions & {
+    [Name in keyof Definitions]: Definitions[Name] extends ToolDefinition<
+      infer Input,
+      infer Output
+    >
+      ? [Output] extends [ToolOutput]
+        ? ToolDefinition<Input, Output>
         : never
       : never;
   }
-): T => tools;
+): Definitions => tools;

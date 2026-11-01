@@ -6,15 +6,15 @@
  * TL;DR - This is where all the tRPC server stuff is created and plugged in. The pieces you will
  * need to use are documented accordingly near the end.
  */
-
-import { setTimeout as sleep } from "node:timers/promises";
-
-import { initTRPC, TRPCError } from "@trpc/server";
+import { TRPCError, initTRPC } from "@trpc/server";
+import type { TRPCDefaultErrorShape } from "@trpc/server";
 import { headers } from "next/headers";
 import { cache } from "react";
+import { setTimeout as sleep } from "node:timers/promises";
 import superjson from "superjson";
-import { ZodError } from "zod";
+import { ZodError, flattenError } from "zod";
 
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { auth } from "@/lib/auth";
 
 /**
@@ -29,14 +29,13 @@ import { auth } from "@/lib/auth";
  *
  * @see https://trpc.io/docs/server/context
  */
-export const createTRPCContext = cache(async () => {
+const createTRPCContext = cache(async () => {
   const session = await auth.api.getSession({ headers: await headers() });
   return {
     user: session?.user,
   };
 });
-
-export type Context = Awaited<ReturnType<typeof createTRPCContext>>;
+type Context = Awaited<ReturnType<typeof createTRPCContext>>;
 
 /**
  * 2. INITIALIZATION
@@ -45,14 +44,20 @@ export type Context = Awaited<ReturnType<typeof createTRPCContext>>;
  * ZodErrors so that you get typesafety on the frontend if your procedure fails due to validation
  * errors on the backend.
  */
-const t = initTRPC.context<typeof createTRPCContext>().create({
-  errorFormatter({ shape, error }) {
+const trpc = initTRPC.context<typeof createTRPCContext>().create({
+  errorFormatter({
+    shape,
+    error,
+  }: {
+    readonly shape: ReadonlyNativeSurface<TRPCDefaultErrorShape>;
+    readonly error: { readonly cause?: unknown };
+  }) {
     return {
       ...shape,
       data: {
         ...shape.data,
         zodError:
-          error.cause instanceof ZodError ? error.cause.flatten() : null,
+          error.cause instanceof ZodError ? flattenError(error.cause) : null,
       },
     };
   },
@@ -64,7 +69,7 @@ const t = initTRPC.context<typeof createTRPCContext>().create({
  *
  * @see https://trpc.io/docs/server/server-side-calls
  */
-export const { createCallerFactory } = t;
+const { createCallerFactory } = trpc;
 
 /**
  * 3. ROUTER & PROCEDURE (THE IMPORTANT BIT)
@@ -78,7 +83,10 @@ export const { createCallerFactory } = t;
  *
  * @see https://trpc.io/docs/router
  */
-export const createTRPCRouter = t.router;
+const createTRPCRouter = trpc.router;
+
+const MIN_DEVELOPMENT_DELAY_MS = 100;
+const DEVELOPMENT_DELAY_RANGE_MS = 400;
 
 /**
  * Middleware for timing procedure execution and adding an artificial delay in development.
@@ -86,22 +94,34 @@ export const createTRPCRouter = t.router;
  * You can remove this if you don't like it, but it can help catch unwanted waterfalls by simulating
  * network latency that would occur in production but not in local development.
  */
-const timingMiddleware = t.middleware(async ({ next: runNext, path }) => {
-  const start = Date.now();
+const timingMiddleware = trpc.middleware(
+  async ({
+    next: runNext,
+    path,
+  }: ReadonlyNativeSurface<
+    Pick<
+      Parameters<ReturnType<typeof trpc.middleware>["_middlewares"][0]>[0],
+      "next" | "path"
+    >
+  >) => {
+    const start = Date.now();
 
-  if (t._config.isDev) {
-    // artificial delay in dev
-    const waitMs = Math.floor(Math.random() * 400) + 100;
-    await sleep(waitMs);
+    if (trpc._config.isDev) {
+      // Add an artificial delay in development.
+      const waitMs =
+        Math.floor(Math.random() * DEVELOPMENT_DELAY_RANGE_MS) +
+        MIN_DEVELOPMENT_DELAY_MS;
+      await sleep(waitMs);
+    }
+
+    const result = await runNext();
+
+    const end = Date.now();
+    console.log(`[TRPC] ${path} took ${end - start}ms to execute`);
+
+    return result;
   }
-
-  const result = await runNext();
-
-  const end = Date.now();
-  console.log(`[TRPC] ${path} took ${end - start}ms to execute`);
-
-  return result;
-});
+);
 
 /**
  * Public (unauthenticated) procedure
@@ -110,7 +130,7 @@ const timingMiddleware = t.middleware(async ({ next: runNext, path }) => {
  * guarantee that a user querying is authorized, but you can still access user session data if they
  * are logged in.
  */
-export const publicProcedure = t.procedure.use(timingMiddleware);
+const publicProcedure = trpc.procedure.use(timingMiddleware);
 
 /**
  * Protected (authenticated) procedure
@@ -120,19 +140,34 @@ export const publicProcedure = t.procedure.use(timingMiddleware);
  *
  * @see https://trpc.io/docs/procedures
  */
-export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
-  if (!ctx.user) {
-    throw new TRPCError({ code: "UNAUTHORIZED" });
+const protectedProcedure = trpc.procedure.use(
+  async ({
+    ctx,
+    next,
+  }: ReadonlyNativeSurface<
+    Parameters<ReturnType<typeof trpc.middleware>["_middlewares"][0]>[0]
+  >) => {
+    if (!ctx.user) {
+      throw new TRPCError({ code: "UNAUTHORIZED" });
+    }
+    const { id, ...rest } = ctx.user;
+    if (!id) {
+      console.error("User ID missing in session callback");
+      throw new TRPCError({ code: "UNAUTHORIZED" });
+    }
+    return await next({
+      ctx: {
+        // This narrows `session` to a non-nullable type.
+        user: { id, ...rest },
+      },
+    });
   }
-  const { id, ...rest } = ctx.user;
-  if (!id) {
-    console.error("User ID missing in session callback");
-    throw new TRPCError({ code: "UNAUTHORIZED" });
-  }
-  return next({
-    ctx: {
-      // infers the `session` as non-nullable
-      user: { id, ...rest },
-    },
-  });
-});
+);
+export {
+  createCallerFactory,
+  createTRPCContext,
+  createTRPCRouter,
+  protectedProcedure,
+  publicProcedure,
+};
+export type { Context };

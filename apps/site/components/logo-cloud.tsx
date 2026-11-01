@@ -1,6 +1,8 @@
+import React from "react";
+
 const PROVIDERS = ["OpenAI", "Anthropic", "Google", "xAI", "Meta"];
 
-export const LogoCloud = () => (
+export const LogoCloud = (): React.JSX.Element => (
   <section className="border-border/30 border-y py-12">
     <div className="mx-auto max-w-6xl px-6">
       <p className="text-foreground/75 text-center text-sm tracking-wide uppercase">

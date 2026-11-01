@@ -1,0 +1,47 @@
+import type { FileUIPart } from "ai";
+import { downloadFile } from "@/lib/file-storage";
+import { getBaseUrl } from "@/lib/url";
+import { keyFromFileUrl } from "@/lib/file-url";
+
+const INLINE_IMAGE =
+  /^data:image\/(?:png|jpeg|webp|gif);base64,(?<base64>[A-Za-z0-9+/=]+)$/u;
+
+const fetchImageBuffer = async (value: string): Promise<Buffer> => {
+  // Inline images do not initiate a network request.
+  const { groups } = INLINE_IMAGE.exec(value) ?? {};
+  if (groups && typeof groups.base64 === "string" && groups.base64 !== "") {
+    return Buffer.from(groups.base64, "base64");
+  }
+  const url = new URL(value, getBaseUrl());
+  const { origin } = new URL(getBaseUrl());
+  const key = keyFromFileUrl(value);
+  if (
+    url.origin !== origin ||
+    url.username !== "" ||
+    url.password !== "" ||
+    !(typeof key === "string" && key !== "")
+  ) {
+    throw new Error(
+      "Image editing only accepts uploaded ChatJS files or inline images."
+    );
+  }
+  // Read the configured storage directly. Never follow user-supplied URLs or redirects.
+  const file = await downloadFile(key);
+  return Buffer.from(await file.arrayBuffer());
+};
+const collectEditImages = async ({
+  imageParts,
+  lastGeneratedImage,
+}: Readonly<{
+  imageParts: readonly Readonly<Pick<FileUIPart, "url">>[];
+  lastGeneratedImage: Readonly<{ imageUrl: string }> | null;
+}>): Promise<Buffer[]> =>
+  await Promise.all([
+    ...(lastGeneratedImage
+      ? [fetchImageBuffer(lastGeneratedImage.imageUrl)]
+      : []),
+    ...imageParts.map(
+      async (imagePart) => await fetchImageBuffer(imagePart.url)
+    ),
+  ]);
+export { collectEditImages };

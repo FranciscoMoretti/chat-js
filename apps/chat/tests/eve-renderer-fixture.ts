@@ -1,7 +1,8 @@
-/* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
 import type { EveMessagePart } from "eve/client";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
+
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 import { EveToolResult } from "../components/eve/eve-tool-result";
 
@@ -143,17 +144,18 @@ const content = renderToStaticMarkup(
   createElement(
     "main",
     { className: "mx-auto max-w-3xl space-y-6 p-6" },
-    states.map(({ label, part }) =>
-      createElement(
-        "section",
-        { className: "space-y-2", key: label },
-        createElement("h2", { className: "font-semibold" }, label),
-        createElement(EveToolResult, {
-          isReadonly: true,
-          messageId: "fixture",
-          part,
-        })
-      )
+    states.map(
+      ({ label, part }: ReadonlyNativeSurface<(typeof states)[number]>) =>
+        createElement(
+          "section",
+          { className: "space-y-2", key: label },
+          createElement("h2", { className: "font-semibold" }, label),
+          createElement(EveToolResult, {
+            isReadonly: true,
+            messageId: "fixture",
+            part,
+          })
+        )
     )
   )
 );

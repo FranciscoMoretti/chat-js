@@ -1,38 +1,35 @@
+import { builtInStorageProviders } from "./providers";
+import { getStorageEnvironmentRequirements } from "./environment";
 import { readFileSync } from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-
-import { getProvider, PROVIDER_NAMES } from "files-sdk/providers";
+import { storageDefinitionSchema } from "../../metadata";
 import { z } from "zod";
 
-import { storageDefinitionSchema } from "../../metadata";
-import { getStorageEnvironmentRequirements } from "./environment";
+const sdkPackageSchema = z.object({
+  peerDependencies: z.record(z.string(), z.string()),
+  version: z.string(),
+});
+const sdkPackagePath = new URL(
+  "../package.json",
+  import.meta.resolve("files-sdk")
+);
+const sdkPackageContents = readFileSync(sdkPackagePath, "utf-8");
+const sdkPackage = sdkPackageSchema.parse(JSON.parse(sdkPackageContents));
 
-const sdkPackage = z
-  .object({
-    peerDependencies: z.record(z.string(), z.string()),
-    version: z.string(),
-  })
-  .parse(
-    JSON.parse(
-      readFileSync(
-        path.join(
-          path.dirname(fileURLToPath(import.meta.resolve("files-sdk"))),
-          "../package.json"
-        ),
-        "utf-8"
-      )
-    )
-  );
-
-const unsupported = new Set(["box", "bun-s3", "convex", "fs"]);
-export const builtInStorage = PROVIDER_NAMES.filter(
-  (id) => !unsupported.has(id)
-).map((id) => {
-  const provider = getProvider(id);
-  if (!provider) {
-    throw new Error(`Missing Files SDK provider: ${id}`);
+const getOptionalEnvironmentKeys = (
+  variables: readonly Readonly<{ key: string }>[] | undefined
+): string[] => {
+  if (!variables) {
+    return [];
   }
+  return variables.map(({ key }: Readonly<{ key: string }>) => key) ?? [];
+};
+
+type StorageEnvironmentRequirementReader = Readonly<{
+  description: string;
+  options: readonly (readonly Readonly<{ key: string }>[])[];
+}>;
+export const builtInStorage = builtInStorageProviders.map((provider) => {
+  const id = provider.slug;
   return {
     dependencies: [
       `files-sdk@${sdkPackage.version}`,
@@ -48,16 +45,17 @@ export const builtInStorage = PROVIDER_NAMES.filter(
     files: [
       {
         path: `src/storage/${id}/storage-provider.ts`,
-        target: "~/lib/storage-provider.ts",
+        target: "~/chatjs/providers/storage.ts",
         type: "registry:file" as const,
       },
     ],
     meta: {
       chatjs: storageDefinitionSchema.parse({
-        configKeys: provider.env.config ?? [],
+        // Memory accepts an optional initial seed; it needs no adapter options.
+        configKeys: id === "memory" ? [] : (provider.env.config ?? []),
         contractVersion: 1,
         envRequirements: getStorageEnvironmentRequirements(id).map(
-          (requirement) => ({
+          (requirement: StorageEnvironmentRequirementReader) => ({
             description: requirement.description,
             options: requirement.options.map((option) =>
               option.map(({ key }) => key)
@@ -66,7 +64,7 @@ export const builtInStorage = PROVIDER_NAMES.filter(
         ),
         id,
         kind: "storage",
-        optionalEnv: provider.env.optional?.map(({ key }) => key) ?? [],
+        optionalEnv: getOptionalEnvironmentKeys(provider.env.optional),
       }),
     },
     name: `${id}-storage`,

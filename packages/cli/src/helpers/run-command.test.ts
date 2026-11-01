@@ -1,9 +1,12 @@
-import { expect, it } from "bun:test";
+import { it } from "bun:test";
+import assert from "node:assert/strict";
 
 import { run } from "../../test/run-command";
 
+const descendantsHoldPipesTimeoutMs = 250;
+
 it("reports command timeouts even when descendants keep the pipes open", async () => {
-  await expect(
+  await assert.rejects(
     run(
       process.cwd(),
       [
@@ -15,7 +18,8 @@ spawn(process.execPath, ["-e", "setTimeout(() => {}, 30000)"], { stdio: ["ignore
 setTimeout(() => {}, 30000);
 `,
       ],
-      250
-    )
-  ).rejects.toThrow("timed out after 250ms");
+      descendantsHoldPipesTimeoutMs
+    ),
+    new RegExp(`timed out after ${descendantsHoldPipesTimeoutMs}ms`, "u")
+  );
 });

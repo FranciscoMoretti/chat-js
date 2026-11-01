@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
+import type { JSX as ReactJSX } from "react";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
@@ -13,7 +14,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-export type EveDeletionPhase =
+type EveDeletionPhase =
   | "confirm"
   | "deleting"
   | "pending"
@@ -21,87 +22,31 @@ export type EveDeletionPhase =
   | "checking"
   | "unavailable"
   | "not_started";
+
 const resultSchema = z.object({
   rootId: z.uuid(),
   status: z.enum(["active", "pending", "deleted"]),
 });
 
-export const EveDeleteDialog = ({
-  conversation,
-  onClose,
-  onChanged,
-}: {
-  conversation: { id: string; title: string; state: string };
-  onClose: () => void;
-  onChanged: (rootId: string) => Promise<void>;
-}) => {
-  const [phase, setPhase] = useState<EveDeletionPhase>(
-    conversation.state === "deleting" ? "pending" : "confirm"
-  );
-  const request = async (method: "GET" | "DELETE") => {
-    setPhase(method === "GET" ? "checking" : "deleting");
-    /* oxlint-disable react/todo -- Preserve the unconfirmed deletion recovery catch. */
-    try {
-      const response = await fetch(
-        `/api/agent-conversations/${conversation.id}`,
-        { method, signal: AbortSignal.timeout(60_000) }
-      );
-      if (response.status === 503) {
-        setPhase("unavailable");
-        return;
-      }
-      if (response.status === 409) {
-        setPhase("not_started");
-        return;
-      }
-      if (!response.ok) {
-        // oxlint-disable-next-line react/todo -- Preserve the explicit unconfirmed deletion error.
-        throw new Error("Deletion unconfirmed");
-      }
-      const result = resultSchema.parse(await response.json());
-      if (result.status === "active") {
-        setPhase("confirm");
-        return;
-      }
-      if (result.status === "deleted") {
-        await onChanged(result.rootId).catch(() => null);
-        onClose();
-        return;
-      }
-      setPhase("pending");
-      await onChanged(result.rootId).catch(() => null);
-    } catch {
-      setPhase("unconfirmed");
-    }
-    /* oxlint-enable react/todo */
-  };
-  return (
-    <>
-      {/* oxlint-disable-next-line eslint/no-use-before-define -- The controller stays above the reusable presentational view. */}
-      <EveDeleteDialogView
-        onCheck={() => request("GET")}
-        onClose={onClose}
-        onDelete={() => request("DELETE")}
-        phase={phase}
-        title={conversation.title}
-      />
-    </>
-  );
-};
-
-export const EveDeleteDialogView = ({
+const EveDeleteDialogView = ({
   title,
+  scope = "group",
   phase,
   onClose,
   onDelete,
   onCheck,
 }: {
   title: string;
+  scope?: "conversation" | "group";
   phase: EveDeletionPhase;
   onClose: () => void;
   onDelete: () => void;
   onCheck: () => void;
-}) => {
+}): ReactJSX.Element => {
+  const deleteLabel =
+    scope === "conversation"
+      ? "Delete conversation"
+      : "Delete conversation and branches";
   const busy = phase === "deleting" || phase === "checking";
   return (
     <Dialog
@@ -115,12 +60,16 @@ export const EveDeleteDialogView = ({
       <DialogContent showCloseButton={!busy}>
         <DialogHeader>
           <DialogTitle className="mr-6">
-            Delete conversation and branches?
+            {scope === "conversation"
+              ? "Delete this conversation?"
+              : "Delete conversation and branches?"}
           </DialogTitle>
           <DialogDescription>
-            “{title}” belongs to a conversation family. Deleting it permanently
-            removes the original conversation, all its branches, and their
-            files. This cannot be undone.
+            {scope === "conversation"
+              ? `Permanently delete this conversation in “${title}”. Other branches keep their history and shared workspace.`
+              : `Permanently delete “${title}” and all its branches.`}{" "}
+            The workspace is deleted only when its last conversation is removed.
+            This cannot be undone.
           </DialogDescription>
         </DialogHeader>
         {phase === "not_started" && (
@@ -129,9 +78,7 @@ export const EveDeleteDialogView = ({
             creation, then retry.
           </p>
         )}
-        {phase === "deleting" && (
-          <output>Deleting conversation and branches…</output>
-        )}
+        {phase === "deleting" && <output>Deleting conversation…</output>}
         {phase === "checking" && <output>Checking deletion status…</output>}
         {phase === "pending" && (
           <output>
@@ -165,9 +112,7 @@ export const EveDeleteDialogView = ({
             phase === "pending" ||
             phase === "deleting") && (
             <Button disabled={busy} onClick={onDelete} variant="destructive">
-              {phase === "pending"
-                ? "Retry deletion"
-                : "Delete conversation and branches"}
+              {phase === "pending" ? "Retry deletion" : deleteLabel}
             </Button>
           )}
         </DialogFooter>
@@ -175,3 +120,76 @@ export const EveDeleteDialogView = ({
     </Dialog>
   );
 };
+
+const EveDeleteDialog = ({
+  conversation,
+  onClose,
+  onChanged,
+}: {
+  readonly conversation: {
+    readonly id: string;
+    readonly title: string;
+    readonly state: string;
+    readonly scope?: "conversation" | "group";
+  };
+  readonly onClose: () => void;
+  readonly onChanged: (rootId: string) => Promise<void>;
+}): ReactJSX.Element => {
+  const [phase, setPhase] = useState<EveDeletionPhase>(
+    conversation.state === "deleting" ? "pending" : "confirm"
+  );
+  const request = async (method: "GET" | "DELETE"): Promise<void> => {
+    setPhase(method === "GET" ? "checking" : "deleting");
+
+    try {
+      const response = await fetch(
+        `/api/agent-conversations/${conversation.id}`,
+        { method, signal: AbortSignal.timeout(60_000) }
+      );
+      if (response.status === 503) {
+        setPhase("unavailable");
+        return;
+      }
+      if (response.status === 409) {
+        setPhase("not_started");
+        return;
+      }
+      if (!response.ok) {
+        setPhase("unconfirmed");
+        return;
+      }
+      const result = resultSchema.parse(await response.json());
+      if (result.status === "active") {
+        setPhase("confirm");
+        return;
+      }
+      if (result.status === "deleted") {
+        await onChanged(result.rootId).catch(() => null);
+        onClose();
+        return;
+      }
+      setPhase("pending");
+      await onChanged(result.rootId).catch(() => null);
+    } catch {
+      setPhase("unconfirmed");
+    }
+  };
+  return (
+    <EveDeleteDialogView
+      onCheck={() => {
+        void request("GET");
+      }}
+      onClose={onClose}
+
+      onDelete={() => {
+        void request("DELETE");
+      }}
+      phase={phase}
+      title={conversation.title}
+      scope={conversation.scope}
+    />
+  );
+};
+
+export { EveDeleteDialog, EveDeleteDialogView };
+export type { EveDeletionPhase };

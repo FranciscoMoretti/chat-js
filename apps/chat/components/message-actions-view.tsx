@@ -1,15 +1,27 @@
 "use client";
 
 import { Copy, Pencil, PencilOff } from "lucide-react";
-import type { ReactNode } from "react";
+import { MessageAction } from "@/components/message-action";
+import { cn } from "@/lib/utils";
 
-import {
-  MessageAction,
-  MessageActions,
-} from "@/components/ai-elements/message";
-import { useIsMobile } from "@/hooks/use-mobile";
+import React from "react";
 
-/** Shared message toolbar; each runtime supplies its actions and version state. */
+import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
+
+/**
+ * Shared message toolbar; each runtime supplies its actions and version state.
+ *
+ * @param {string} role Author role used to reveal the toolbar.
+ * @param {boolean | undefined} isLoading Whether generation is active.
+ * @param {boolean | undefined} isEditing Whether the inline editor is active.
+ * @param {boolean | undefined} editDisabled Disables the edit action.
+ * @param {(() => void) | undefined} onStartEdit Opens the inline editor.
+ * @param {(() => void) | undefined} onCancelEdit Closes the inline editor.
+ * @param {() => void} onCopy Copies the message using the runtime callback.
+ * @param {ReadonlyReactNode | undefined} siblings Version navigation controls.
+ * @param {ReadonlyReactNode | undefined} feedback Response feedback controls.
+ * @returns {React.JSX.Element} The composed message interface.
+ */
 export const MessageActionsView = ({
   role,
   isLoading = false,
@@ -21,52 +33,42 @@ export const MessageActionsView = ({
   siblings,
   feedback,
 }: {
-  role: string;
-  isLoading?: boolean;
-  isEditing?: boolean;
-  editDisabled?: boolean;
-  onStartEdit?: () => void;
-  onCancelEdit?: () => void;
-  onCopy: () => void;
-  siblings?: ReactNode;
-  feedback?: ReactNode;
-}) => {
-  const isMobile = useIsMobile();
+  readonly role: string;
+  readonly isLoading?: boolean;
+  readonly isEditing?: boolean;
+  readonly editDisabled?: boolean;
+  readonly onStartEdit?: () => void;
+  readonly onCancelEdit?: () => void;
+  readonly onCopy: () => void;
+  readonly siblings?: ReadonlyReactNode;
+  readonly feedback?: ReadonlyReactNode;
+}): React.JSX.Element => {
   if (isLoading) {
     return <div className="h-7" />;
   }
-  const showActions = isMobile || isEditing || role === "assistant";
+  const showActions = isEditing || role === "assistant";
   return (
-    <MessageActions
-      className={
-        showActions
-          ? ""
-          : "opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-hover/message:opacity-100 focus-within:opacity-100 hover:opacity-100"
-      }
+    <div
+      className={cn(
+        "flex items-center gap-1",
+        !showActions &&
+          "transition-opacity group-hover/message:opacity-100 focus-within:opacity-100 hover:opacity-100 md:opacity-0"
+      )}
     >
       {role === "user" && onStartEdit && (
         <MessageAction
-          className="text-muted-foreground hover:bg-accent hover:text-accent-foreground h-7 w-7 p-0"
           disabled={editDisabled}
           onClick={isEditing ? onCancelEdit : onStartEdit}
           tooltip={isEditing ? "Cancel edit" : "Edit message"}
         >
-          {isEditing ? (
-            <PencilOff className="h-3.5 w-3.5" />
-          ) : (
-            <Pencil className="h-3.5 w-3.5" />
-          )}
+          {isEditing ? <PencilOff /> : <Pencil />}
         </MessageAction>
       )}
       {siblings}
-      <MessageAction
-        className="text-muted-foreground hover:bg-accent hover:text-accent-foreground h-7 w-7 p-0"
-        onClick={onCopy}
-        tooltip="Copy"
-      >
-        <Copy size={14} />
+      <MessageAction onClick={onCopy} tooltip="Copy">
+        <Copy />
       </MessageAction>
       {feedback}
-    </MessageActions>
+    </div>
   );
 };

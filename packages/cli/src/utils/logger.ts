@@ -1,22 +1,22 @@
 import { highlighter } from "./highlighter";
 
 export const logger = {
-  break() {
+  break(): void {
     console.log("");
   },
-  error(...args: unknown[]) {
-    console.log(highlighter.error(String(args.join(" "))));
+  error(...args: readonly unknown[]): void {
+    console.log(highlighter.error(args.join(" ")));
   },
-  info(...args: unknown[]) {
-    console.log(highlighter.info(String(args.join(" "))));
+  info(...args: readonly unknown[]): void {
+    console.log(highlighter.info(args.join(" ")));
   },
-  log(...args: unknown[]) {
+  log(...args: readonly unknown[]): void {
     console.log(args.join(" "));
   },
-  success(...args: unknown[]) {
-    console.log(highlighter.success(String(args.join(" "))));
+  success(...args: readonly unknown[]): void {
+    console.log(highlighter.success(args.join(" ")));
   },
-  warn(...args: unknown[]) {
-    console.log(highlighter.warn(String(args.join(" "))));
+  warn(...args: readonly unknown[]): void {
+    console.log(highlighter.warn(args.join(" ")));
   },
 };

@@ -1,36 +1,36 @@
-import type { ToolContext } from "eve/tools";
-import type { z } from "zod";
-
-import { config } from "@/lib/config";
 import {
   getEveDocumentRevision,
   removeEveDocumentFromConversation,
 } from "@/lib/db/eve-documents";
-import { resolveEveConversationScope } from "@/lib/eve/conversation-scope";
-
+import type { ToolContext } from "eve/tools";
 import { deleteDocumentAvailable } from "./availability";
 import { deleteDocumentInput } from "./schemas";
+import { installedDocumentKinds } from "@/integrations/tools/catalog";
+import { resolveEveConversationScope } from "@/lib/eve/conversation-scope";
+import type { z } from "zod";
 
-type Context = Pick<
-  ToolContext,
-  "session" | "callId" | "abortSignal" | "approval"
+type Context = Readonly<
+  Pick<ToolContext, "session" | "callId" | "approval"> & {
+    abortSignal: Readonly<AbortSignal>;
+  }
 >;
 
-const scopeFor = async (context: Context) => {
+const scopeFor = async (
+  context: Context
+): ReturnType<typeof resolveEveConversationScope> => {
   if (!deleteDocumentAvailable(context.session)) {
     throw new Error("Document deletion is unavailable.");
   }
   return await resolveEveConversationScope(
-    context.session.auth.initiator?.principalId,
+    (context.session.auth.initiator ?? {}).principalId,
     context.session.id,
     context.abortSignal
   );
 };
-
-export const requestDocumentDeletion = async (
+const requestDocumentDeletion = async (
   value: unknown,
   context: Context
-) => {
+): Promise<"user-approval"> => {
   const input = deleteDocumentInput.parse(value);
   const scope = await scopeFor(context);
   const revision = await getEveDocumentRevision(
@@ -38,7 +38,7 @@ export const requestDocumentDeletion = async (
     scope.conversationId,
     input.documentId
   );
-  if (!revision || !config.ai.tools.documents.types[revision.kind]) {
+  if (!revision || !installedDocumentKinds.has(revision.kind)) {
     throw new Error("Document not found.");
   }
   if (
@@ -52,13 +52,13 @@ export const requestDocumentDeletion = async (
   context.abortSignal.throwIfAborted();
   return "user-approval" as const;
 };
-
-export const executeDocumentDeletion = async (
-  input: z.infer<typeof deleteDocumentInput>,
+const executeDocumentDeletion = async (
+  input: Readonly<z.infer<typeof deleteDocumentInput>>,
   context: Context
-) => {
+): ReturnType<typeof removeEveDocumentFromConversation> => {
   const scope = await scopeFor(context);
-  if (context.approval?.responder.principalId !== scope.ownerId) {
+  const { approval } = context;
+  if (!approval || approval.responder.principalId !== scope.ownerId) {
     throw new Error("Document deletion requires the owner's approval.");
   }
   const revision = await getEveDocumentRevision(
@@ -66,7 +66,7 @@ export const executeDocumentDeletion = async (
     scope.conversationId,
     input.documentId
   );
-  if (revision && !config.ai.tools.documents.types[revision.kind]) {
+  if (revision && !installedDocumentKinds.has(revision.kind)) {
     throw new Error("Document tools are disabled for this kind.");
   }
   return await removeEveDocumentFromConversation(
@@ -75,3 +75,4 @@ export const executeDocumentDeletion = async (
     context.abortSignal
   );
 };
+export { executeDocumentDeletion, requestDocumentDeletion };

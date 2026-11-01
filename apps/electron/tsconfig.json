@@ -1,18 +1,24 @@
 {
   "compilerOptions": {
+    "allowJs": true,
     "target": "ES2022",
-    "module": "CommonJS",
-    "lib": ["ES2022"],
+    "module": "Preserve",
+    "moduleResolution": "bundler",
+    "lib": ["ES2023", "DOM"],
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
+    "noEmit": true,
     "outDir": "dist",
-    "types": ["node"],
-    "paths": {
-      "@/*": ["../chat/*"]
-    }
+    "rootDir": "..",
+    "types": ["bun", "node"]
   },
-  "include": ["src/**/*.ts", "scripts/**/*.ts"],
+  "include": [
+    "src/**/*.ts",
+    "scripts/**/*.ts",
+    "scripts/**/*.js",
+    "scripts/**/*.cjs"
+  ],
   "exclude": ["node_modules", "dist"]
 }

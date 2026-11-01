@@ -1,8 +1,7 @@
+import { describe, expect, it } from "vitest";
+import { authSessionOptions } from "./auth-session-options";
 import { betterAuth } from "better-auth";
 import { memoryAdapter } from "better-auth/adapters/memory";
-import { describe, expect, it } from "vitest";
-
-import { authSessionOptions } from "./auth-session-options";
 
 const local = {
   baseUrl: "http://localhost:3000",
@@ -57,10 +56,10 @@ const makeApp = (baseUrl: string, databaseUrl: string) => {
 };
 
 const signup = async (
-  auth: ReturnType<typeof makeApp>["auth"],
+  auth: Readonly<Pick<ReturnType<typeof makeApp>["auth"], "handler">>,
   origin: string,
   name: string
-) => {
+): Promise<string> => {
   const response = await auth.handler(
     new Request(`${origin}/api/auth/sign-up/email`, {
       body: JSON.stringify({

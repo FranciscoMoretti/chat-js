@@ -1,6 +1,5 @@
-import { defineConfig } from "@playwright/test";
-
 import config from "./playwright.eve.config";
+import { defineConfig } from "@playwright/test";
 
 // Run against the normal application with an unauthenticated browser.
 export default defineConfig({

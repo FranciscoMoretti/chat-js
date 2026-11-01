@@ -1,7 +1,7 @@
-/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import { expect, test } from "@playwright/test";
 import { eq } from "drizzle-orm";
 import { Client } from "eve/client";
+import type { MessageStreamEvent } from "eve/client";
 import { z } from "zod";
 
 import { db } from "../lib/db/client";
@@ -12,21 +12,38 @@ import { reconcileEveUsage } from "../lib/eve/reconcile-usage";
 import { toolResultSchema } from "../lib/eve/tool-result";
 import { assertEveTestDatabase } from "./eve-test-database";
 
+type CodeExecutionEventReader =
+  | {
+      readonly type: "action.result";
+      readonly data: Readonly<{
+        result: Readonly<{ kind: string; toolName?: string }>;
+      }>;
+    }
+  | {
+      readonly type: Exclude<MessageStreamEvent["type"], "action.result">;
+      readonly data?: unknown;
+    };
+
 assertEveTestDatabase(env.DATABASE_URL);
 
 test("native code execution renders real output and reconciles its fixed charge once", async ({
   page,
 }) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   const created = await page.evaluate(
-    async (data) => {
+    async (
+      data: Readonly<{ message: string; modelId: string; operationId: string }>
+    ) => {
       const response = await fetch("/api/agent-conversations", {
         body: JSON.stringify(data),
         headers: { "Content-Type": "application/json" },
         method: "POST",
       });
-      return { body: await response.json(), ok: response.ok };
+      const body: unknown = await response.json();
+      return { body, ok: response.ok };
     },
     {
       message:
@@ -56,7 +73,7 @@ test("native code execution renders real output and reconciles its fixed charge 
     .attach(binding.sessionId)
     .snapshot({ signal: AbortSignal.timeout(15_000) });
   const result = snapshot.events.find(
-    (event) =>
+    (event: CodeExecutionEventReader) =>
       event.type === "action.result" &&
       event.data.result.kind === "tool-result" &&
       event.data.result.toolName === "codeExecution"
@@ -95,18 +112,23 @@ test("Python results render an interactive chart and survive reload", async ({
   page,
 }) => {
   test.setTimeout(180_000);
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   const code =
     'chart = {"type": "bar", "title": "Counts", "elements": [{"label": "A", "group": "Series", "value": 2}, {"label": "B", "group": "Series", "value": 3}]}\nprint("chart-ready")';
   const created = await page.evaluate(
-    async (data) => {
+    async (
+      data: Readonly<{ message: string; modelId: string; operationId: string }>
+    ) => {
       const response = await fetch("/api/agent-conversations", {
         body: JSON.stringify(data),
         headers: { "Content-Type": "application/json" },
         method: "POST",
       });
-      return { body: await response.json(), ok: response.ok };
+      const body: unknown = await response.json();
+      return { body, ok: response.ok };
     },
     {
       message: `Use the codeExecution tool exactly once with language python and title "Python chart". Execute this exact code, then report its output. Use no other tool:\n${code}`,
@@ -129,10 +151,16 @@ test("Python results render an interactive chart and survive reload", async ({
   await page.setViewportSize({ height: 844, width: 390 });
   await expect(page.locator("canvas")).toBeVisible();
   await expect
-    .poll(async () => (await page.locator("canvas").boundingBox())?.width)
+    .poll(async () => {
+      const boundingBox = await page.locator("canvas").boundingBox();
+      return boundingBox?.width;
+    })
     .toBeLessThan(390);
   await expect
-    .poll(async () => (await page.locator("canvas").boundingBox())?.x)
+    .poll(async () => {
+      const boundingBox = await page.locator("canvas").boundingBox();
+      return boundingBox?.x;
+    })
     .toBeGreaterThanOrEqual(0);
   await page.locator("canvas").screenshot({
     animations: "disabled",

@@ -1,12 +1,18 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { Suspense } from "react";
+import React, { Suspense } from "react";
+import type { JSX as ReactJSX } from "react";
+import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 
 import { SettingsHeader } from "@/components/settings/settings-header";
 import { SettingsNav } from "@/components/settings/settings-nav";
 import { auth } from "@/lib/auth";
 
-const SettingsLayoutShell = ({ children }: { children?: React.ReactNode }) => (
+const SettingsLayoutShell = ({
+  children,
+}: {
+  readonly children?: ReadonlyReactNode;
+}): React.JSX.Element => (
   <div className="mx-auto flex h-dvh max-h-dvh w-full max-w-4xl flex-1 flex-col px-2 py-2 md:px-4">
     <SettingsHeader />
     <div className="mb-4 md:hidden">
@@ -24,8 +30,8 @@ const SettingsLayoutShell = ({ children }: { children?: React.ReactNode }) => (
 const SettingsLayoutContent = async ({
   children,
 }: {
-  children: React.ReactNode;
-}) => {
+  readonly children: ReadonlyReactNode;
+}): Promise<ReactJSX.Element> => {
   const session = await auth.api.getSession({ headers: await headers() });
 
   if (!session?.user) {
@@ -35,10 +41,13 @@ const SettingsLayoutContent = async ({
   return <SettingsLayoutShell>{children}</SettingsLayoutShell>;
 };
 
-const SettingsLayout = ({ children }: { children: React.ReactNode }) => (
+const SettingsLayout = ({
+  children,
+}: {
+  readonly children: ReadonlyReactNode;
+}): React.JSX.Element => (
   <Suspense fallback={<SettingsLayoutShell />}>
     <SettingsLayoutContent>{children}</SettingsLayoutContent>
   </Suspense>
 );
-
 export default SettingsLayout;

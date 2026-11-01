@@ -1,7 +1,8 @@
 import { takeSnapshot } from "@uiverify/vitest";
-import { act } from "react";
+import { renderRoot, unmountRoot } from "./primitive-mount";
 import { createRoot } from "react-dom/client";
 import { expect, test } from "vitest";
+import { page } from "vitest/browser";
 
 import { EveChatError } from "@/components/eve/eve-chat-error";
 
@@ -19,22 +20,21 @@ test("chat alerts retain error details and fit narrow and wide composers", async
   document.body.append(container);
   const root = createRoot(container);
   try {
-    await act(() =>
-      root.render(
-        <div className="flex flex-col gap-6">
-          {(["light", "dark"] as const).map((theme) => (
-            <section className={theme} key={theme}>
-              <div className="bg-background flex flex-col gap-4 p-4">
-                {messages.map((message, index) => (
-                  <div key={message} style={{ width: index === 0 ? 700 : 300 }}>
-                    <EveChatError message={message} />
-                  </div>
-                ))}
-              </div>
-            </section>
-          ))}
-        </div>
-      )
+    await renderRoot(
+      root,
+      <div className="flex flex-col gap-6">
+        {(["light", "dark"] as const).map((theme) => (
+          <section className={theme} key={theme}>
+            <div className="bg-background flex flex-col gap-4 p-4">
+              {messages.map((message, index) => (
+                <div key={message} style={{ width: index === 0 ? 700 : 300 }}>
+                  <EveChatError message={message} />
+                </div>
+              ))}
+            </div>
+          </section>
+        ))}
+      </div>
     );
     const alerts = [...container.querySelectorAll('[role="alert"]')];
     expect(alerts).toHaveLength(4);
@@ -45,8 +45,9 @@ test("chat alerts retain error details and fit narrow and wide composers", async
     expect(container.textContent).toContain(messages[0]);
     expect(container.textContent).toContain(messages[1]);
     await takeSnapshot("chat-error-alerts");
+    await page.screenshot({ path: "__screenshots__/chat-error-alerts.png" });
   } finally {
-    await act(() => root.unmount());
+    await unmountRoot(root);
     container.remove();
   }
 });

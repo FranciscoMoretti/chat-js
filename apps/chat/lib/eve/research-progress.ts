@@ -1,27 +1,31 @@
 import type { ToolContext } from "eve/tools";
 
-import type { ResearchUpdate } from "../../tools/platform/research-updates-schema";
-import type { ToolProgressWriter } from "../ai/tool-context";
-import type { ToolOutput } from "./tool-result";
-import { executeWithToolProgress } from "./tool-usage";
-import type { ToolUsage } from "./tool-usage";
+import type { ToolProgressWriter } from "@/lib/ai/tool-context";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import type { ResearchUpdate } from "@/tools/platform/research-updates-schema";
 
-export const executeWithResearchProgress = <T extends ToolOutput>(
-  context: Pick<ToolContext, "abortSignal">,
-  execute: (options: {
-    abortSignal: AbortSignal;
-    usage: ToolUsage;
-    dataStream: ToolProgressWriter;
-  }) => Promise<T>
-) =>
-  executeWithToolProgress<T | { searches: [] }>(
+import type { ToolOutput, ToolResult } from "./tool-result";
+import type { ToolUsage } from "./tool-usage";
+import { executeWithToolProgress } from "./tool-usage";
+
+export const executeWithResearchProgress = <Output extends ToolOutput>(
+  context: ReadonlyNativeSurface<Pick<ToolContext, "abortSignal">>,
+  execute: (
+    options: ReadonlyNativeSurface<{
+      abortSignal: AbortSignal;
+      usage: ToolUsage;
+      dataStream: ToolProgressWriter;
+    }>
+  ) => Promise<Output>
+): AsyncGenerator<ToolResult<Output | { searches: [] }>, void> =>
+  executeWithToolProgress<Output | { searches: [] }>(
     context,
-    ({ abortSignal, usage, publish }) => {
-      const updates = new Map<string, ResearchUpdate>();
-      return execute({
+    async ({ abortSignal, usage, publish }) => {
+      const updates = new Map<string, ReadonlyNativeSurface<ResearchUpdate>>();
+      return await execute({
         abortSignal,
         dataStream: {
-          write(part) {
+          write(part): void {
             updates.set(part.id ?? `update-${updates.size}`, part.data);
             publish({ searches: [] }, [...updates.values()]);
           },

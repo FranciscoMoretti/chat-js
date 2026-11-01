@@ -1,42 +1,48 @@
 import { beforeEach, expect, it, vi } from "vitest";
+import {
+  documentAssistantActions,
+  documentAssistantRequest,
+} from "./document-assistant-actions";
 
-import { documentAssistantActions } from "./document-assistant-actions";
-
-const documents = vi.hoisted(() => ({
-  enabled: true,
-  types: { code: true, sheet: true, text: true },
-}));
-vi.mock("../config", () => ({
-  config: {
-    ai: {
-      tools: {
-        code: { edits: "code-model" },
-        documents,
-        sheet: { analyze: "analysis-model", format: "format-model" },
-        text: { polish: "polish-model" },
-      },
+const kinds = vi.hoisted(() => new Set(["diagram"]));
+vi.mock("@/integrations/documents/ui", () => ({
+  documents: {
+    diagram: {
+      assistantActions: () => [
+        {
+          instruction: "Improve the diagram.",
+          label: "Improve",
+          modelId: "diagram-model",
+        },
+      ],
     },
   },
 }));
-
+vi.mock("@/integrations/tools/catalog", () => ({
+  installedDocumentKinds: kinds,
+}));
 beforeEach(() => {
-  documents.enabled = true;
-  documents.types.code = true;
-  documents.types.sheet = true;
+  kinds.clear();
+  kinds.add("diagram");
 });
 
-it("does not offer spreadsheet analysis without its code-document destination", () => {
-  expect(documentAssistantActions("sheet")).toHaveLength(2);
-  documents.types.code = false;
+it("hides actions when their definition is absent and restores them on reinstall", () => {
+  expect(documentAssistantActions("diagram")).toHaveLength(1);
+  kinds.delete("diagram");
+  expect(documentAssistantActions("diagram")).toEqual([]);
+  expect(documentAssistantActions("unknown")).toEqual([]);
+  kinds.add("diagram");
+  expect(documentAssistantActions("diagram")).toHaveLength(1);
+});
+it("returns bundle actions without taking ownership of their policy", () => {
+  const actions = documentAssistantActions("diagram");
   expect(
-    documentAssistantActions("sheet").map((action) => action.label)
-  ).toEqual(["Format and clean data"]);
-  expect(documentAssistantActions("code")).toEqual([]);
-});
-
-it("hides actions when their source type or documents are disabled", () => {
-  documents.types.sheet = false;
-  expect(documentAssistantActions("sheet")).toEqual([]);
-  documents.enabled = false;
-  expect(documentAssistantActions("text")).toEqual([]);
+    documentAssistantRequest(actions[0], "document-id", "revision-id")
+  ).toEqual({
+    message:
+      "Improve the diagram.\n\nTarget document: document-id. Selected revision: revision-id. Use readDocument to read this document, then use the document tools to apply the requested changes.",
+    modelId: "diagram-model",
+  });
+  actions[0].label = "App label";
+  expect(documentAssistantActions("diagram")[0].label).toBe("Improve");
 });

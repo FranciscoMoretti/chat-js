@@ -1,0 +1,106 @@
+import { Client } from "eve/client";
+import { ResearchUpdateSchema } from "@/tools/platform/research-updates-schema";
+import type { WebSearchUpdate } from "@/tools/platform/research-updates-schema";
+import type { WorkflowToolContext } from "eve/tools";
+import { getEveConnectionOptions } from "@/lib/eve/connection-options";
+import { toolOutputSchema } from "@/lib/eve/tool-result";
+
+type Context = Readonly<
+  Omit<WorkflowToolContext, "abortSignal"> & {
+    abortSignal: Readonly<AbortSignal>;
+  }
+>;
+
+type Snapshot = Awaited<
+  ReturnType<ReturnType<Client["sessions"]["attach"]>["snapshot"]>
+>;
+type StreamEvent = Snapshot["events"][number];
+type InvocationData = Extract<StreamEvent, { type: "agent.started" }>["data"];
+type InvocationEventView =
+  | Readonly<{
+      type: "agent.started";
+      data: Readonly<
+        Pick<InvocationData, "callId" | "sessionId" | "name" | "turnId"> & {
+          remote?: Readonly<NonNullable<InvocationData["remote"]>>;
+        }
+      >;
+    }>
+  | Readonly<{ type: Exclude<StreamEvent["type"], "agent.started"> }>;
+type ActionResult = Extract<
+  StreamEvent,
+  { type: "action.result" }
+>["data"]["result"];
+type ActionEventView =
+  | Readonly<{
+      type: "action.result";
+      data: Readonly<{
+        result:
+          | Readonly<{ kind: "tool-result"; output: unknown }>
+          | Readonly<{ kind: Exclude<ActionResult["kind"], "tool-result"> }>;
+      }>;
+    }>
+  | Readonly<{ type: Exclude<StreamEvent["type"], "action.result"> }>;
+type SnapshotView = Readonly<{ events: readonly ActionEventView[] }>;
+
+const readResearchSnapshots = async (
+  client: Readonly<{ sessions: Readonly<Pick<Client["sessions"], "attach">> }>,
+  sessionIds: readonly string[],
+  options: Readonly<{ signal: Readonly<AbortSignal> }>
+): Promise<Snapshot[]> => {
+  const requests: Promise<Snapshot>[] = [];
+  for (const sessionId of sessionIds) {
+    requests.push(client.sessions.attach(sessionId).snapshot(options));
+  }
+  return await Promise.all(requests);
+};
+// oxlint-disable-next-line eslint/func-style -- EVE 0.61 authored-workflow-directives rejects const-bound steps; record owned child search snapshots so replay never rereads live evidence.
+export async function researchSearchUpdates(
+  context: Context
+): Promise<WebSearchUpdate[]> {
+  "use step";
+  const owner = context.session.auth.initiator;
+  if (!owner) {
+    throw new Error("Research progress requires an authenticated owner.");
+  }
+  const client = new Client(getEveConnectionOptions(owner.principalId));
+  const options = { signal: context.abortSignal };
+  const root = await client.sessions
+    .attach(context.session.id)
+    .snapshot(options);
+  const children = root.events.flatMap((event: InvocationEventView) => {
+    if (
+      event.type === "agent.started" &&
+      !event.data.remote &&
+      event.data.name === "researcher" &&
+      event.data.turnId === context.session.turn.id &&
+      // Native agent.started carries the exact owning workflow tool call ID.
+      event.data.callId === context.callId
+    ) {
+      return [event.data.sessionId];
+    }
+    return [];
+  });
+  const snapshots = await readResearchSnapshots(client, children, options);
+  return snapshots.flatMap((snapshot: SnapshotView) =>
+    snapshot.events.flatMap((event) => {
+      if (
+        event.type !== "action.result" ||
+        event.data.result.kind !== "tool-result"
+      ) {
+        return [];
+      }
+      const receipt = toolOutputSchema.safeParse(event.data.result.output);
+      if (!receipt.success) {
+        return [];
+      }
+      return (receipt.data.updates ?? []).flatMap((value: unknown) => {
+        const update = ResearchUpdateSchema.safeParse(value);
+
+        if (update.success && update.data.type === "web") {
+          return [update.data];
+        }
+        return [];
+      });
+    })
+  );
+}

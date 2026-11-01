@@ -16,7 +16,7 @@ describe("isSocialAuthProvider", () => {
   it("rejects unknown provider ids", () => {
     expect(isSocialAuthProvider("discord")).toBe(false);
     expect(isSocialAuthProvider(null)).toBe(false);
-    expect(isSocialAuthProvider(undefined)).toBe(false);
+    expect(isSocialAuthProvider()).toBe(false);
   });
 });
 
@@ -29,14 +29,28 @@ describe("sortSocialAuthProvidersByLastUsed", () => {
 
   it("moves the remembered provider to the front", () => {
     expect(
-      sortSocialAuthProvidersByLastUsed(providers, "github").map(({ id }) => id)
+      sortSocialAuthProvidersByLastUsed(providers, "github").map(
+        ({
+          id,
+        }: Readonly<
+          | { id: "google"; label: string }
+          | { id: "github"; label: string }
+          | { id: "vercel"; label: string }
+        >) => id
+      )
     ).toEqual(["github", "google", "vercel"]);
   });
 
   it("keeps the original order for unknown remembered providers", () => {
     expect(
       sortSocialAuthProvidersByLastUsed(providers, "discord").map(
-        ({ id }) => id
+        ({
+          id,
+        }: Readonly<
+          | { id: "google"; label: string }
+          | { id: "github"; label: string }
+          | { id: "vercel"; label: string }
+        >) => id
       )
     ).toEqual(["google", "github", "vercel"]);
   });

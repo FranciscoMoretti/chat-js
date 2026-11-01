@@ -1,4 +1,5 @@
 import { headers } from "next/headers";
+import React from "react";
 
 import { listEveConversations } from "@/lib/db/eve-queries";
 import { resolveEvePrincipal } from "@/lib/eve/principal";
@@ -11,7 +12,7 @@ export const EveHistory = async () => {
     return null;
   }
   const current = await listEveConversations(principal.ownerId, {
-    projectId: null,
+    surface: "sidebar",
     search: "",
   });
   return (

@@ -1,8 +1,7 @@
-import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 import { auth } from "@/lib/auth";
-import { config as appConfig } from "@/lib/config";
+import { authentication } from "@/integrations/auth/server";
 import { isPlaywrightTestEnvironment } from "@/lib/constants";
 
 const EVE_CHAT_PAGE = /^\/chat\/[^/]+$/u;
@@ -35,51 +34,79 @@ const isPublicPage = (pathname: string): boolean => {
   );
 };
 
-const isDeviceLoginPage = (pathname: string): boolean =>
-  appConfig.desktopApp.enabled && pathname.startsWith("/device-login");
-
 const isAuthPage = (pathname: string): boolean =>
-  pathname.startsWith("/login") ||
-  pathname.startsWith("/register") ||
-  isDeviceLoginPage(pathname);
+  pathname.startsWith("/login") || pathname.startsWith("/register");
 
-const getSafeReturnTo = (url: URL): string | null => {
+const getSafeReturnTo = (
+  url: Readonly<{ searchParams: Readonly<{ get: URLSearchParams["get"] }> }>
+): string => {
   const returnTo = url.searchParams.get("returnTo");
-  if (!returnTo?.startsWith("/") || returnTo.startsWith("//")) {
-    return null;
+  if (returnTo?.startsWith("/") !== true || returnTo.startsWith("//")) {
+    return "/";
   }
   return returnTo;
 };
+type ReadonlyRedirectUrl = Readonly<
+  Omit<URL, "searchParams"> & { searchParams: Readonly<URLSearchParams> }
+>;
 
-export const proxy = async (req: NextRequest) => {
-  const url = req.nextUrl;
-  const { pathname } = url;
-
-  if (isPublicApiRoute(pathname) || isMetadataRoute(pathname)) {
-    return;
+const resolvePageResponse = ({
+  isPluginAuthRoute,
+  isLoggedIn,
+  pathname,
+  returnTo,
+  url,
+}: {
+  readonly isPluginAuthRoute: boolean;
+  readonly isLoggedIn: boolean;
+  readonly pathname: string;
+  readonly returnTo: string;
+  readonly url: ReadonlyRedirectUrl;
+}): NextResponse | undefined => {
+  if (isLoggedIn && isAuthPage(pathname) && !isPluginAuthRoute) {
+    return NextResponse.redirect(new URL(returnTo, url));
   }
 
-  if (isPlaywrightTestEnvironment) {
-    // Playwright CI runs the app anonymously and should never reach session I/O.
-    return;
-  }
-
-  const session = await auth.api.getSession({ headers: req.headers });
-  const isLoggedIn = !!session?.user;
-  const isDeviceLoginRoute = isDeviceLoginPage(pathname);
-  const returnTo = getSafeReturnTo(url);
-
-  if (isLoggedIn && isAuthPage(pathname) && !isDeviceLoginRoute) {
-    return NextResponse.redirect(new URL(returnTo ?? "/", url));
-  }
-
-  if (isAuthPage(pathname) || isPublicPage(pathname)) {
-    return;
+  if (isPluginAuthRoute || isAuthPage(pathname) || isPublicPage(pathname)) {
+    return undefined;
   }
 
   if (!isLoggedIn) {
     return NextResponse.redirect(new URL("/login", url));
   }
+  return undefined;
+};
+
+export const proxy = async (
+  req: Readonly<{
+    headers: Readonly<Headers>;
+    nextUrl: ReadonlyRedirectUrl;
+  }>
+): Promise<NextResponse | undefined> => {
+  const url = req.nextUrl;
+  const { pathname } = url;
+
+  if (
+    isPublicApiRoute(pathname) ||
+    isMetadataRoute(pathname) ||
+    isPlaywrightTestEnvironment
+  ) {
+    // API/metadata and anonymous Playwright requests never reach session I/O.
+    return undefined;
+  }
+
+  const session = await auth.api.getSession({ headers: req.headers });
+  const isLoggedIn = Boolean(session?.user);
+  const isPluginAuthRoute = authentication.isAuthRoute(url);
+  const returnTo = getSafeReturnTo(url);
+
+  return resolvePageResponse({
+    isPluginAuthRoute,
+    isLoggedIn,
+    pathname,
+    returnTo,
+    url,
+  });
 };
 
 export const config = {
@@ -96,6 +123,6 @@ export const config = {
      * - compare
      * - docs (Blume documentation)
      */
-    "/((?!api|docs|_next/static|_next/image|favicon.ico|opengraph-image|manifest|models|compare|privacy|terms|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|json|webmanifest)$).*)",
+    "/((?!api|docs|_next/static|_next/image|favicon.ico|opengraph-image|manifest|models|compare|privacy|terms|.*[.](?:svg|png|jpg|jpeg|gif|webp|ico|json|webmanifest)$).*)",
   ],
 };

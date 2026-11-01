@@ -1,9 +1,8 @@
-/* oxlint-disable jsx-a11y/prefer-tag-over-role -- The fixture preserves the production-compatible role markup used by its visual contract. */
-import { useState } from "react";
+import React, { useState } from "react";
 import { createRoot } from "react-dom/client";
 
-import { EveResponseGroupCards } from "../components/eve/eve-response-group-cards";
 import type { EveResponseCardCandidate } from "../components/eve/eve-response-group-cards";
+import { EveResponseGroupCards } from "../components/eve/eve-response-group-cards";
 import { ResponseChoiceCards } from "../components/response-choice-cards";
 
 const candidates: EveResponseCardCandidate[] = [
@@ -57,7 +56,7 @@ const candidates: EveResponseCardCandidate[] = [
     status: "awaiting-input",
   },
 ];
-const Fixture = () => {
+const Fixture = (): React.JSX.Element => {
   const [selected, setSelected] = useState<string | null>("ready");
   return (
     <main className="mx-auto max-w-3xl space-y-6 p-4">
@@ -67,7 +66,9 @@ const Fixture = () => {
         <ResponseChoiceCards
           slots={[
             {
-              handleSelect: () => setSelected("legacy1"),
+              handleSelect: (): void => {
+                setSelected("legacy1");
+              },
               id: "legacy1",
               loading: false,
               modelName: "GPT-5",
@@ -75,7 +76,9 @@ const Fixture = () => {
               statusLabel: "Selected",
             },
             {
-              handleSelect: () => setSelected("legacy2"),
+              handleSelect: (): void => {
+                setSelected("legacy2");
+              },
               id: "legacy2",
               loading: true,
               modelName: "Claude Sonnet 4.5",
@@ -93,7 +96,7 @@ const Fixture = () => {
           selectedOperationId={selected}
         />
       </section>
-      <p role="status">Selected operation: {selected}</p>
+      <output className="block">Selected operation: {selected}</output>
       <section aria-label="Single candidate">
         <EveResponseGroupCards
           candidates={candidates.slice(0, 1)}

@@ -1,16 +1,16 @@
-/* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
 import { build } from "bun";
 
 const imageImport = /^next\/image$/u;
 const navigationImport = /^next\/navigation$/u;
 const replacedModule =
-  /\/(?<module>chat-models-provider|session-provider|eve-artifact-layout|eve-conversation|chat-welcome-view|internal-link|connectors-dropdown)\.tsx$/u;
+  /\/(?<module>chat-models-provider|session-provider|eve-artifact-layout|eve-conversation|chat-welcome-view|internal-link|plugins\/mcp\/composer)\.tsx$/u;
 
 const mocks = `${process.cwd()}/tests/eve-comparison-ui.mocks.tsx`;
+/** @type {Record<string, string>} */
 const replacements = {
   "chat-models-provider.tsx": "useChatModels",
   "chat-welcome-view.tsx": "ChatWelcomeView",
-  "connectors-dropdown.tsx": "ConnectorsDropdown",
+  "composer.tsx": "ConnectorsControl",
   "eve-artifact-layout.tsx": "EveArtifactLayout",
   "eve-conversation.tsx": "EveConversation",
   "internal-link.tsx": "InternalLink",
@@ -53,6 +53,10 @@ const result = await build({
           {
             filter: replacedModule,
           },
+          /**
+           * @param {Readonly<{path: string}>} args Resolved module path used to select a fixture replacement.
+           * @returns {{contents: string, loader: "tsx"}} Source that re-exports the matching fixture mock.
+           */
           (args) => {
             const name = replacements[args.path.split("/").at(-1) ?? ""];
             if (!name) {
@@ -69,7 +73,19 @@ const result = await build({
   ],
   target: "browser",
 });
+
 if (!result.success) {
-  throw new Error(String(result.logs));
+  throw new Error(
+    result.logs
+      .map(
+        /**
+         * @param {Readonly<{message: string}>} entry Build diagnostic to include in the failure output.
+         * @returns {string} Diagnostic message displayed in the build error.
+         */
+        (entry) => entry.message
+      )
+      .join("\n")
+  );
 }
+
 process.stdout.write(await result.outputs[0].text());

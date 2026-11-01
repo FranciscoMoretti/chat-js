@@ -1,21 +1,24 @@
 "use client";
-
-import { ImageOffIcon } from "lucide-react";
-import { useState } from "react";
-
 import { ImageActions, ImageModal } from "@/components/image-modal";
-import { useImageLoadError } from "@/hooks/use-image-load-error";
-import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
-import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
-
+import React, { useState } from "react";
 import { generateImageInput, generateImageResult } from "./schemas";
+import Image from "next/image";
+import { ImageOffIcon } from "lucide-react";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import type { ToolRendererProps } from "@/chatjs/core/tools/define-renderer";
+import { defineToolRenderer } from "@/chatjs/core/tools/define-renderer";
+import { useImageLoadError } from "@/hooks/use-image-load-error";
 
 type GenerateImageTool = ToolRendererProps<
   typeof generateImageInput,
   typeof generateImageResult
 >["tool"];
 
-const GenerateImageView = ({ tool }: { tool: GenerateImageTool }) => {
+const GenerateImageView = ({
+  tool,
+}: ReadonlyNativeSurface<{
+  tool: GenerateImageTool;
+}>): React.JSX.Element | null => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const imageUrl = tool.output?.imageUrl;
   const { handleImageError, imageUnavailable } = useImageLoadError(imageUrl);
@@ -25,14 +28,15 @@ const GenerateImageView = ({ tool }: { tool: GenerateImageTool }) => {
       <div className="flex w-full flex-col items-center justify-center gap-4 rounded-lg border p-8">
         <div className="bg-muted-foreground/20 h-64 w-full animate-pulse rounded-lg" />
         <div className="text-muted-foreground">
-          Generating image: &quot;{tool.input?.prompt ?? "Preparing prompt…"}
+          Generating image: &quot;
+          {tool.input?.prompt ?? "Preparing prompt…"}
           &quot;
         </div>
       </div>
     );
   }
   const { output } = tool;
-  if (!output) {
+  if (output === undefined) {
     return null;
   }
 
@@ -49,13 +53,15 @@ const GenerateImageView = ({ tool }: { tool: GenerateImageTool }) => {
             <>
               <button
                 className="w-full cursor-pointer text-left"
-                onClick={() => setDialogOpen(true)}
+                onClick={(): void => {
+                  setDialogOpen(true);
+                }}
                 type="button"
               >
-                {/* Generated media uses original URLs and the shared image error handler. */}
-                {/* oxlint-disable-next-line next/no-img-element */}
-                <img
+                <Image
                   alt={output.prompt}
+                  loading="eager"
+                  unoptimized
                   className="h-auto w-full max-w-full"
                   height={512}
                   onError={handleImageError}
@@ -81,7 +87,9 @@ const GenerateImageView = ({ tool }: { tool: GenerateImageTool }) => {
         imageName={output.prompt}
         imageUrl={output.imageUrl}
         isOpen={dialogOpen}
-        onClose={() => setDialogOpen(false)}
+        onClose={(): void => {
+          setDialogOpen(false);
+        }}
       />
     </>
   );

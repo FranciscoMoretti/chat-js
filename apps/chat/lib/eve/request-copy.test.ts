@@ -1,15 +1,18 @@
-import { expect, it } from "vitest";
-
-import { finishPendingEveCopy, preparePendingEveCopy } from "./request-copy";
+import { afterEach, expect, it, vi } from "vitest";
+import {
+  finishPendingEveCopy,
+  preparePendingEveCopy,
+  requestEveCopy,
+} from "./request-copy";
 
 it("retains the original operation and model across reload, isolates owners, and clears only matching confirmations", () => {
   const values = new Map<string, string>();
   const storage = {
-    getItem: (key: string) => values.get(key) ?? null,
-    removeItem: (key: string) => {
+    getItem: (key: string): string | null => values.get(key) ?? null,
+    removeItem: (key: string): void => {
       values.delete(key);
     },
-    setItem: (key: string, value: string) => {
+    setItem: (key: string, value: string): void => {
       values.set(key, value);
     },
   };
@@ -39,4 +42,54 @@ it("retains the original operation and model across reload, isolates owners, and
     preparePendingEveCopy(storage, "owner", source, "different-model")
       .operationId
   ).not.toBe(first.operationId);
+});
+
+const copyInput = {
+  modelId: "test/model",
+  operationId: crypto.randomUUID(),
+  sourceConversationId: crypto.randomUUID(),
+};
+
+afterEach((): void => {
+  vi.restoreAllMocks();
+});
+
+it("preserves a server rejection's recovery identity and retryability", async () => {
+  const conversationId = crypto.randomUUID();
+  const response = Response.json(
+    {
+      conversationId,
+      error: "Copy rejected",
+      retryable: false,
+    },
+    { status: 400 }
+  );
+  vi.spyOn(globalThis, "fetch").mockResolvedValue(response);
+  await expect(requestEveCopy(copyInput)).rejects.toMatchObject({
+    conversationId,
+    message: "Copy rejected",
+    retryable: false,
+  });
+});
+it("keeps malformed server failures retryable", async () => {
+  vi.spyOn(globalThis, "fetch").mockResolvedValue(
+    new Response("invalid JSON", { status: 500 })
+  );
+  await expect(requestEveCopy(copyInput)).rejects.toMatchObject({
+    message: "Unable to save. Sign in and retry the same copy.",
+    retryable: true,
+  });
+});
+it("distinguishes an expired request from a network failure", async () => {
+  vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("network failure"));
+  await expect(requestEveCopy(copyInput)).rejects.toMatchObject({
+    message: "Saving is unconfirmed. Retry to recover the same copy.",
+  });
+  const controller = new AbortController();
+  controller.abort();
+  vi.spyOn(AbortSignal, "timeout").mockReturnValue(controller.signal);
+  await expect(requestEveCopy(copyInput)).rejects.toMatchObject({
+    message:
+      "Saving is taking longer than expected. Retry to recover the same copy.",
+  });
 });

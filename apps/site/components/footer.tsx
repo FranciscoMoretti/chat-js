@@ -1,8 +1,11 @@
 import Link from "next/link";
+import React from "react";
 
 import { siteLinks } from "@/lib/site-config";
 
-const PRODUCT_LINKS = [
+const COPYRIGHT_YEAR = new Date().getFullYear();
+
+const PRODUCT_LINKS: readonly Readonly<{ href: string; label: string }>[] = [
   { href: siteLinks.threads, label: "Threads" },
   { href: siteLinks.demo, label: "Demo" },
   { href: siteLinks.desktop, label: "Desktop App" },
@@ -10,7 +13,7 @@ const PRODUCT_LINKS = [
   { href: siteLinks.docsGettingStarted, label: "Getting Started" },
 ];
 
-const COMMUNITY_LINKS = [
+const COMMUNITY_LINKS: readonly Readonly<{ href: string; label: string }>[] = [
   {
     href: siteLinks.github,
     label: "GitHub",
@@ -18,7 +21,7 @@ const COMMUNITY_LINKS = [
   { href: "https://x.com/franmoretti_", label: "X / Twitter" },
 ];
 
-export const Footer = () => (
+export const Footer = (): React.JSX.Element => (
   <footer className="border-border/40 border-t">
     <div className="mx-auto max-w-6xl px-6 py-12 sm:py-16">
       <div className="flex flex-col gap-10 sm:flex-row sm:justify-between">
@@ -102,8 +105,8 @@ export const Footer = () => (
       {/* Bottom bar */}
       <div className="border-border/40 mt-12 border-t pt-6">
         <p className="text-foreground/65 text-sm">
-          &copy; {new Date().getFullYear()} ChatJS. Open source under the Apache
-          2.0 license.
+          &copy; {COPYRIGHT_YEAR} ChatJS. Open source under the Apache 2.0
+          license.
         </p>
       </div>
     </div>

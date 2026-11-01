@@ -1,12 +1,12 @@
 import type { ChatTransport, UIMessage } from "ai";
 
-import { AbstractThread } from "../../src/abstract-thread";
-import type { ThreadState } from "../../src/types";
+import { AbstractThread } from "#thread-source/abstract-thread";
+import type { ThreadState } from "#thread-source/types";
 
-export class StateBackedThread extends AbstractThread<UIMessage> {
-  constructor(
-    state: ThreadState<UIMessage>,
-    transport?: ChatTransport<UIMessage>
+export class StateBackedThread extends AbstractThread {
+  public constructor(
+    state: Readonly<ThreadState>,
+    transport?: Readonly<ChatTransport<UIMessage>>
   ) {
     super({ state, transport });
   }

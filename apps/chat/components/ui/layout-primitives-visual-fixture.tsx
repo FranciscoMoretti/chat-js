@@ -1,7 +1,5 @@
 "use client";
 
-import { InboxIcon } from "lucide-react";
-
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,7 +11,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardAction,
@@ -47,8 +44,11 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
+import { InboxIcon } from "lucide-react";
+import React from "react";
 
-export const LayoutPrimitivesVisualFixture = () => (
+export const LayoutPrimitivesVisualFixture = (): React.JSX.Element => (
   <main
     className="grid max-w-3xl gap-8 p-8"
     data-testid="layout-primitives-fixture"
@@ -82,9 +82,7 @@ export const LayoutPrimitivesVisualFixture = () => (
 
     <section className="flex flex-wrap gap-3">
       <AlertDialog>
-        <AlertDialogTrigger asChild>
-          <Button>Open alert</Button>
-        </AlertDialogTrigger>
+        <AlertDialogTrigger  render={<Button>Open alert</Button>} />
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete project?</AlertDialogTitle>
@@ -99,9 +97,7 @@ export const LayoutPrimitivesVisualFixture = () => (
         </AlertDialogContent>
       </AlertDialog>
       <Dialog>
-        <DialogTrigger asChild>
-          <Button variant="outline">Open dialog</Button>
-        </DialogTrigger>
+        <DialogTrigger render={<Button variant="outline" />}>Open dialog</DialogTrigger>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Project settings</DialogTitle>
@@ -110,9 +106,7 @@ export const LayoutPrimitivesVisualFixture = () => (
         </DialogContent>
       </Dialog>
       <Sheet>
-        <SheetTrigger asChild>
-          <Button variant="secondary">Open sheet</Button>
-        </SheetTrigger>
+        <SheetTrigger render={<Button variant="secondary" />}>Open sheet</SheetTrigger>
         <SheetContent>
           <SheetHeader>
             <SheetTitle>Inspector</SheetTitle>

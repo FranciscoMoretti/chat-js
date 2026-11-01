@@ -1,32 +1,37 @@
 import type { WorkflowToolContext } from "eve/tools";
-import { beforeEach, expect, it, vi } from "vitest";
+import type { executeEveDocumentTool } from "./document-tools";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 import {
   prepareResearch,
   saveResearchReport,
-} from "@/tools/chatjs/deep-research/steps";
+} from "@/chatjs/tools/deep-research/steps";
 
 import { testToolContext } from "../../tests/helpers/eve-tool-context";
 
 const mocks = vi.hoisted(() => ({
-  features: {
-    deepResearch: { enabled: true },
-    documents: { enabled: true, types: { text: true } },
-    webSearch: { enabled: true },
-  },
-  save: vi.fn(),
+  research: true,
+  save: vi.fn<typeof executeEveDocumentTool>(),
   selected: vi.fn(),
   snapshot: vi.fn(),
+  text: true,
+  tools: { webSearch: {} },
 }));
+
 vi.mock("./turn-tools", () => ({
-  eveToolAllowed: () => true,
+  eveTurnAccount: { get: (): boolean => true },
   eveTurnTool: { get: mocks.selected },
 }));
-vi.mock("../config", () => ({ config: { ai: { tools: mocks.features } } }));
-vi.mock("../../tools/chatjs/providers", () => ({
-  providers: { webSearch: {} },
+
+vi.mock("@/integrations/tools/catalog", () => ({
+  installedDocumentKinds: { has: (): boolean => mocks.text },
+  installedToolNames: { has: (): boolean => mocks.research },
 }));
-vi.mock("@/tools/chatjs/deep-research/configuration", () => ({
+
+vi.mock("../../integrations/tools/providers", () => ({
+  toolProviders: mocks.tools,
+}));
+vi.mock("@/chatjs/tools/deep-research/configuration", () => ({
   getDeepResearchConfig: () => ({}),
 }));
 vi.mock("./connection-options", () => ({
@@ -35,7 +40,7 @@ vi.mock("./connection-options", () => ({
 vi.mock("./document-tools", () => ({ executeEveDocumentTool: mocks.save }));
 vi.mock("eve/client", () => ({
   Client: class {
-    sessions = { attach: () => ({ snapshot: mocks.snapshot }) };
+    public sessions = { attach: () => ({ snapshot: mocks.snapshot }) };
   },
 }));
 vi.mock("./shared-messages", () => ({
@@ -55,7 +60,7 @@ vi.mock("./shared-messages", () => ({
 }));
 const owner = {
   attributes: {},
-  authenticator: "test",
+  authenticator: "chatjs-gateway",
   principalId: "owner",
   principalType: "user",
 };
@@ -72,12 +77,16 @@ const context = (): WorkflowToolContext => ({
   agents: {},
   ask: vi.fn(),
 });
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 beforeEach(() => {
   vi.clearAllMocks();
+  mocks.save.mockReset();
   mocks.selected.mockReturnValue(null);
-  mocks.features.deepResearch.enabled = true;
-  mocks.features.documents.types.text = true;
-  mocks.features.webSearch.enabled = true;
+  mocks.research = true;
+  mocks.text = true;
+  mocks.tools.webSearch = {};
   mocks.snapshot.mockResolvedValue({ events: [] });
 });
 
@@ -88,27 +97,26 @@ it("uses the owned native transcript without feeding the live research invocatio
   expect(prepared.timestamp).toBeGreaterThan(0);
 });
 
-it("rejects disabled research and text documents before reading the transcript", async () => {
-  mocks.features.deepResearch.enabled = false;
+it("rejects absent research and text documents before reading the transcript", async () => {
+  mocks.research = false;
   await expect(prepareResearch(context())).rejects.toThrow(
-    "enabled text documents"
+    "installed text documents"
   );
-  mocks.features.deepResearch.enabled = true;
-  mocks.features.documents.types.text = false;
+  mocks.research = true;
+  mocks.text = false;
   await expect(prepareResearch(context())).rejects.toThrow(
-    "enabled text documents"
+    "installed text documents"
   );
 
   expect(mocks.snapshot).not.toHaveBeenCalled();
 });
-
-it("allows installed research search when standalone search is disabled", async () => {
-  mocks.features.webSearch.enabled = false;
-  await expect(prepareResearch(context())).resolves.toMatchObject({
-    messages: expect.stringContaining("Research this"),
-  });
+it("rejects research without an installed search provider", async () => {
+  Reflect.deleteProperty(mocks.tools, "webSearch");
+  await expect(prepareResearch(context())).rejects.toThrow(
+    "installed webSearch"
+  );
+  expect(mocks.snapshot).not.toHaveBeenCalled();
 });
-
 it("rejects guest and incompatible selected-tool invocations", async () => {
   const ctx = context();
   await expect(
@@ -118,7 +126,7 @@ it("rejects guest and incompatible selected-tool invocations", async () => {
         ...ctx.session,
         auth: {
           current: owner,
-          initiator: { ...owner, attributes: { chatjsGuest: "true" } },
+          initiator: { ...owner, authenticator: "chatjs-disposable-guest" },
         },
       },
     })
@@ -138,7 +146,6 @@ it("rejects guest and incompatible selected-tool invocations", async () => {
   ).rejects.toThrow("authenticated owner");
   expect(mocks.snapshot).not.toHaveBeenCalled();
 });
-
 it("does not save after cancellation and retains the root operation identity on success", async () => {
   const ctx = context();
   const abort = new AbortController();
@@ -165,4 +172,46 @@ it("does not save after cancellation and retains the root operation identity on 
     { content: "Content", fileIds: [], title: "Report" },
     ctx
   );
+});
+
+it("the durable save records completion only after the document write resolves", async () => {
+  const write =
+    Promise.withResolvers<Awaited<ReturnType<typeof executeEveDocumentTool>>>();
+  mocks.save.mockReturnValue(write.promise);
+  const now = vi.spyOn(Date, "now").mockReturnValue(100);
+  const ctx = context();
+  const report = { content: "# Evidence", title: "Report" };
+  const pending = saveResearchReport(ctx, report);
+  expect(now).not.toHaveBeenCalled();
+  expect(mocks.save).toHaveBeenCalledExactlyOnceWith(
+    "createTextDocument",
+    { ...report, fileIds: [] },
+    ctx
+  );
+  const document: Awaited<ReturnType<typeof saveResearchReport>>["document"] = {
+    date: "2026-10-13",
+    documentId: crypto.randomUUID(),
+    kind: "text",
+    result: "Saved",
+    revisionId: crypto.randomUUID(),
+    status: "success",
+    title: "Report",
+  };
+  now.mockReturnValue(200);
+  write.resolve(document);
+  expect(await pending).toEqual({ document, completedAt: 200 });
+  expect(now).toHaveBeenCalledOnce();
+});
+
+it("a failed save cannot record successful research completion", async () => {
+  const error = new Error("Storage unavailable");
+  mocks.save.mockRejectedValue(error);
+  const now = vi.spyOn(Date, "now");
+  await expect(
+    saveResearchReport(context(), {
+      content: "Evidence",
+      title: "Report",
+    })
+  ).rejects.toBe(error);
+  expect(now).not.toHaveBeenCalled();
 });

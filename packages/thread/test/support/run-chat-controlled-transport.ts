@@ -1,40 +1,82 @@
 import type { ChatTransport, UIMessage, UIMessageChunk } from "ai";
 
-const reconnectToNoStream: ChatTransport<UIMessage>["reconnectToStream"] = () =>
-  Promise.resolve(null);
+import type { ReadonlyDeep } from "./readonly-types";
+
+const reconnectToNoStream: ChatTransport<UIMessage>["reconnectToStream"] =
+  Promise.resolve.bind<typeof Promise, [null], [], Promise<null>>(
+    Promise,
+    null
+  );
+
+const SDK_PARAMETER_INDEX = 0;
+const LAST_REQUEST_INDEX = -1;
 
 export class ControlledTransport implements ChatTransport<UIMessage> {
-  readonly requests: {
+  public readonly requests: {
     controller: ReadableStreamDefaultController<UIMessageChunk>;
-    options: Parameters<ChatTransport<UIMessage>["sendMessages"]>[0];
+    options: ReadonlyDeep<
+      Parameters<
+        ChatTransport<UIMessage>["sendMessages"]
+      >[typeof SDK_PARAMETER_INDEX]
+    >;
   }[] = [];
 
-  get request() {
-    return this.requests.at(-1)?.options;
+  public get request():
+    | ReadonlyDeep<
+        Parameters<
+          ChatTransport<UIMessage>["sendMessages"]
+        >[typeof SDK_PARAMETER_INDEX]
+      >
+    | undefined {
+    const request =
+      this.requests.at(LAST_REQUEST_INDEX) ?? globalThis.undefined;
+    if (request === globalThis.undefined) {
+      return globalThis.undefined;
+    }
+    return request.options;
   }
 
-  sendMessages: ChatTransport<UIMessage>["sendMessages"] = (options) =>
-    Promise.resolve(
+  public sendMessages: ChatTransport<UIMessage>["sendMessages"] = async (
+    options: ReadonlyDeep<
+      Parameters<
+        ChatTransport<UIMessage>["sendMessages"]
+      >[typeof SDK_PARAMETER_INDEX]
+    >
+  ): ReturnType<ChatTransport<UIMessage>["sendMessages"]> =>
+    await Promise.resolve(
       new ReadableStream({
-        start: (controller) => {
+        start: (
+          controller: Readonly<ReadableStreamDefaultController<UIMessageChunk>>
+        ): void => {
           this.requests.push({ controller, options });
         },
       })
     );
+  public reconnectToStream = reconnectToNoStream;
 
-  reconnectToStream = reconnectToNoStream;
-
-  emit(...chunks: UIMessageChunk[]) {
+  public emit(...chunks: readonly ReadonlyDeep<UIMessageChunk>[]): void {
     for (const chunk of chunks) {
-      this.requests.at(-1)?.controller.enqueue(chunk);
+      const request =
+        this.requests.at(LAST_REQUEST_INDEX) ?? globalThis.undefined;
+      if (request !== globalThis.undefined) {
+        request.controller.enqueue(chunk);
+      }
     }
   }
 
-  finish() {
-    this.requests.at(-1)?.controller.close();
+  public finish(): void {
+    const request =
+      this.requests.at(LAST_REQUEST_INDEX) ?? globalThis.undefined;
+    if (request !== globalThis.undefined) {
+      request.controller.close();
+    }
   }
 
-  fail(error: Error) {
-    this.requests.at(-1)?.controller.error(error);
+  public fail(error: Readonly<Error>): void {
+    const request =
+      this.requests.at(LAST_REQUEST_INDEX) ?? globalThis.undefined;
+    if (request !== globalThis.undefined) {
+      request.controller.error(error);
+    }
   }
 }

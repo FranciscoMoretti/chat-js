@@ -1,4 +1,6 @@
-const GeneralSettingsPage = () => (
+import React from "react";
+
+const GeneralSettingsPage = (): React.JSX.Element => (
   <div className="space-y-6">
     <div>
       <h2 className="text-lg font-semibold">General</h2>

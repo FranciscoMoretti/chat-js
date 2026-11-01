@@ -1,15 +1,15 @@
-import type { Metadata } from "next";
-import { Suspense } from "react";
+import React, { Suspense } from "react";
 
 import { AuthCardSkeleton } from "@/components/auth-card-skeleton";
+import type { Metadata } from "next";
 import { SignupForm } from "@/components/signup-form";
 
-export const metadata: Metadata = {
+const metadata: Metadata = {
   description: "Create an account to get started.",
   title: "Create an account",
 };
 
-const RegisterPage = () => (
+const RegisterPage = (): React.JSX.Element => (
   <div className="container m-auto flex h-dvh w-screen flex-col items-center justify-center px-4">
     <div className="mx-auto w-full sm:w-[480px]">
       <Suspense
@@ -26,4 +26,5 @@ const RegisterPage = () => (
   </div>
 );
 
+export { metadata };
 export default RegisterPage;

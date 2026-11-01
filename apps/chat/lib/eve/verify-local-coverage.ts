@@ -1,121 +1,83 @@
-import { createHash } from "node:crypto";
-import { constants } from "node:fs";
-import { open, realpath } from "node:fs/promises";
-import nodePath from "node:path";
-import { isDeepStrictEqual } from "node:util";
-
+import { getPersistentSandboxProvider } from "../sandbox/runtime";
+import {
+  readPersistentIdentity,
+  resolvePersistentIdentity,
+  retirePersistentSession,
+  cleanupPersistentSession,
+} from "./persistent-sandbox-store";
+import { realpath } from "node:fs/promises";
 import postgres from "postgres";
-import { z } from "zod";
-
-import { verifyEveSandboxCoverage } from "../db/eve-sandbox-coverage-proof";
-import { env } from "../env";
+import { env } from "@/lib/env";
+import { verifyEveSandboxCoverage } from "./lifecycle/postgres/eve-sandbox-coverage-proof";
 import { assertEveConfigured } from "./server";
 
-const identitySchema = z.strictObject({
-  appRoot: z.string().min(1),
-  backendName: z.literal("microsandbox"),
-  sessionId: z.string().min(1),
-  version: z.literal(1),
-});
-const receiptSchema = z.strictObject({
-  local: identitySchema,
-  sessionId: z.string().min(1),
-  snapshotVersion: z.literal(2),
-  version: z.literal(1),
-});
+/** Retire or delete the exact app-owned resources after native writer fencing. */
+export const manageEveLocalResources = async (
+  ownerId: string,
+  scope: { readonly sessionId: string; readonly rootSessionId: string },
+  action: "retire" | "purge"
+): Promise<void> => {
+  const saved = await readPersistentIdentity(scope.sessionId);
+  const identity =
+    saved ?? (await resolvePersistentIdentity({ ...scope, ownerId }));
+  if (
+    identity.ownerId !== ownerId ||
+    identity.rootSessionId !== scope.rootSessionId
+  ) {
+    throw new Error("App-owned persistent sandbox coverage is unavailable.");
+  }
+  await retirePersistentSession(identity);
+  if (action === "purge") {
+    await cleanupPersistentSession(identity, getPersistentSandboxProvider);
+  }
+};
 
-/** Called only after family authorization, retirement and native/local fences. */
+/**
+ * Cover every sandbox-owning native session and retire its app-owned resources.
+ * @param {string} ownerId Owner of the deleting family.
+ * @param {string} appRoot Expected worker application root.
+ * @param {readonly { sessionId: string; runIds: readonly string[] }[]} inventories Complete native inventories retained under writer fences.
+ * @returns {Promise<{ appRoot: string; sessions: { sessionId: string; rootSessionId: string }[] }>} Verified session inventory for subsequent removal; incomplete coverage rejects.
+ */
 export const verifyLocalEveFamilyCoverage = async (
   ownerId: string,
   appRoot: string,
-  inventories: {
-    sessionId: string;
-    runIds: string[];
+  inventories: readonly {
+    readonly sessionId: string;
+    readonly runIds: readonly string[];
   }[]
-) => {
+): Promise<{
+  appRoot: string;
+  sessions: { sessionId: string; rootSessionId: string }[];
+}> => {
   assertEveConfigured();
   const canonicalRoot = await realpath(appRoot);
   const connection = postgres(env.WORKFLOW_POSTGRES_URL ?? "", { max: 1 });
+  const sessions: { sessionId: string; rootSessionId: string }[] = [];
   try {
     for (const inventory of inventories) {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Process one resource at a time so fencing and cleanup stay ordered and bounded.
-      await verifyEveSandboxCoverage(
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Each proof owns a transaction on the single native connection.
+      const ids = await verifyEveSandboxCoverage(
         connection,
         { ...inventory, appRoot: canonicalRoot },
         async (sessionId) => {
-          const response = await fetch(
-            new URL(
-              `/eve/chat/v1/session/${encodeURIComponent(sessionId)}/sandbox-identity`,
-              env.EVE_INTERNAL_ORIGIN
-            ),
-            {
-              cache: "no-store",
-              headers: {
-                authorization: `Bearer ${env.EVE_GATEWAY_SECRET}`,
-                "x-chatjs-deletion": "1",
-                "x-chatjs-deletion-root": inventory.sessionId,
-                "x-chatjs-owner": ownerId,
-              },
-              redirect: "error",
-              signal: AbortSignal.timeout(15_000),
-            }
+          await manageEveLocalResources(
+            ownerId,
+            { sessionId, rootSessionId: inventory.sessionId },
+            "retire"
           );
-          if (!response.ok) {
-            throw new Error(
-              "Native sandbox ownership evidence is unavailable."
-            );
-          }
-          const receipt = receiptSchema.parse(await response.json());
-          const expected = {
-            appRoot: canonicalRoot,
-            backendName: "microsandbox",
-            sessionId,
-            version: 1,
-          };
-          if (
-            receipt.sessionId !== sessionId ||
-            !isDeepStrictEqual(receipt.local, expected)
-          ) {
-            throw new Error(
-              "Native sandbox ownership does not match this worker."
-            );
-          }
-          const directory = nodePath.join(
-            canonicalRoot,
-            ".eve",
-            "sandbox-identities"
-          );
-          if ((await realpath(directory)) !== directory) {
-            throw new Error(
-              "Sandbox identity directory must not be redirected."
-            );
-          }
-          const file = await open(
-            nodePath.join(
-              directory,
-              `${createHash("sha256").update(sessionId).digest("hex")}.json`
-            ),
-            constants.O_NOFOLLOW
-          );
-          try {
-            const stat = await file.stat();
-            if (!stat.isFile() || stat.size > 16_384) {
-              throw new Error("Invalid sandbox identity file.");
-            }
-            const local = identitySchema.parse(
-              JSON.parse(await file.readFile("utf-8"))
-            );
-            if (!isDeepStrictEqual(local, expected)) {
-              throw new Error(
-                "Local sandbox ownership does not match native evidence."
-              );
-            }
-          } finally {
-            await file.close();
-          }
         }
       );
+      for (const sessionId of ids) {
+        sessions.push({ sessionId, rootSessionId: inventory.sessionId });
+      }
     }
+    // Retained workflow coverage does not replace current app ownership checks.
+    for (const scope of sessions) {
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Serialize local owner locks and finish all retirement before removal.
+      await manageEveLocalResources(ownerId, scope, "retire");
+    }
+    return { appRoot: canonicalRoot, sessions };
   } finally {
     await connection.end();
   }

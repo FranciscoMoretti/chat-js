@@ -1,17 +1,35 @@
-import { and, eq, inArray, lt, notExists, sql } from "drizzle-orm";
+import {
+  eveWorkspace,
+  eveWorkspaceAttachment,
+  eveFileReference,
+  eveStoredFile,
+} from "./schema";
+import { and, eq, inArray, lt, notExists, ne } from "drizzle-orm";
 
 import { db } from "./client";
-import { eveFileReference, eveStoredFile } from "./schema";
+import { lockEveFamilies } from "./eve-family-lock";
 
-/** Storage inventory is only a candidate list; durable ownership and references decide deletion. */
+const MAX_ORPHAN_PURGE_BATCH_SIZE = 100;
+const EMPTY_RESULT_COUNT = 0;
+
+type OrphanPurgeTransaction = Readonly<
+  Pick<typeof db, "select" | "execute" | "update">
+>;
+
+/**
+ * Storage inventory is only a candidate list; durable ownership and references decide deletion.
+ * @param {readonly string[]} keys Inventoried storage keys to recheck against durable ownership and references.
+ * @param {Readonly<Date>} cutoff Only files created before this instant are eligible for fencing.
+ * @returns {Promise<{ key: string; ownerId: string }[]>} Owner-scoped keys fenced as deleting while their family lock is held; referenced or newer files are excluded.
+ */
 export const prepareEveOrphanedFilePurge = async (
-  keys: string[],
-  cutoff: Date
-) => {
-  if (!keys.length) {
+  keys: readonly string[],
+  cutoff: Readonly<Date>
+): Promise<{ key: string; ownerId: string }[]> => {
+  if (keys.length === EMPTY_RESULT_COUNT) {
     return [];
   }
-  if (keys.length > 100) {
+  if (keys.length > MAX_ORPHAN_PURGE_BATCH_SIZE) {
     throw new Error("File cleanup batch is too large.");
   }
   const candidates = await db
@@ -20,43 +38,47 @@ export const prepareEveOrphanedFilePurge = async (
     .where(
       and(inArray(eveStoredFile.key, keys), lt(eveStoredFile.createdAt, cutoff))
     );
-  const files: {
-    key: string;
-    ownerId: string;
-  }[] = [];
-  for (const ownerId of [
-    ...new Set(candidates.map((file) => file.ownerId)),
-  ].toSorted()) {
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Process one resource at a time so fencing and cleanup stay ordered and bounded.
-    files.push(
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Keep ordered reads and bounded cleanup sequential.
-      ...(await db.transaction(async (tx) => {
-        await tx.execute(
-          sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
-        );
-        const references = tx
-          .select({ key: eveFileReference.key })
-          .from(eveFileReference)
-          .where(eq(eveFileReference.key, eveStoredFile.key));
-        // Include tombstones: a provider can finish an uncertain write after an
-        // earlier deletion. A later inventory pass must remove that object again.
-        return await tx
-          .update(eveStoredFile)
-          .set({ state: "deleting" })
-          .where(
-            and(
-              eq(eveStoredFile.ownerId, ownerId),
-              inArray(eveStoredFile.key, keys),
-              lt(eveStoredFile.createdAt, cutoff),
-              notExists(references)
-            )
-          )
-          .returning({
-            key: eveStoredFile.key,
-            ownerId: eveStoredFile.ownerId,
-          });
-      }))
-    );
+  const owners = [...new Set(candidates.map((file) => file.ownerId))];
+  if (owners.length === EMPTY_RESULT_COUNT) {
+    return [];
   }
-  return files;
+  return await db.transaction(async (tx: OrphanPurgeTransaction) => {
+    // Copy and cleanup must acquire every family lock in the same owner order.
+    await lockEveFamilies(tx, owners);
+    const references = tx
+      .select({ key: eveFileReference.key })
+      .from(eveFileReference)
+      .where(eq(eveFileReference.key, eveStoredFile.key));
+    const workspaceReferences = tx
+      .select({ key: eveWorkspaceAttachment.fileKey })
+      .from(eveWorkspaceAttachment)
+      .innerJoin(
+        eveWorkspace,
+        eq(eveWorkspace.id, eveWorkspaceAttachment.workspaceId)
+      )
+      .where(
+        and(
+          eq(eveWorkspaceAttachment.fileKey, eveStoredFile.key),
+          ne(eveWorkspace.state, "deleted")
+        )
+      );
+    // Include tombstones: a provider can finish an uncertain write after an
+    // earlier deletion. A later inventory pass must remove that object again.
+    return await tx
+      .update(eveStoredFile)
+      .set({ state: "deleting" })
+      .where(
+        and(
+          inArray(eveStoredFile.ownerId, owners),
+          inArray(eveStoredFile.key, keys),
+          lt(eveStoredFile.createdAt, cutoff),
+          notExists(references),
+          notExists(workspaceReferences)
+        )
+      )
+      .returning({
+        key: eveStoredFile.key,
+        ownerId: eveStoredFile.ownerId,
+      });
+  });
 };

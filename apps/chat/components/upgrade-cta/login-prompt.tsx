@@ -1,21 +1,23 @@
 "use client";
 
 import { ArrowRight } from "lucide-react";
-
 import { InternalLink } from "@/components/internal-link";
+
+import React from "react";
+
 import { cn } from "@/lib/utils";
 
 interface LoginPromptProps {
-  className?: string;
-  description: string;
-  title: string;
+  readonly className?: string;
+  readonly description: string;
+  readonly title: string;
 }
 
 export const LoginPrompt = ({
   title,
   description,
   className,
-}: LoginPromptProps) => (
+}: LoginPromptProps): React.JSX.Element => (
   <div className={cn("space-y-3 p-4", className)}>
     <div className="flex items-center gap-2">
       <ArrowRight className="text-muted-foreground h-4 w-4" />

@@ -1,12 +1,12 @@
 import type { AuthenticationConfig } from "./config-schema";
 
-export type SocialAuthSignInOptions = {
+interface SocialAuthSignInOptions {
   disableRedirect?: boolean;
   errorCallbackURL?: string;
   newUserCallbackURL?: string;
-};
+}
 
-export type SocialAuthProvider = keyof AuthenticationConfig;
+type SocialAuthProvider = keyof AuthenticationConfig;
 
 // Keep the sign-in buttons in product order, independent of config key order.
 const SOCIAL_AUTH_PROVIDER_ORDER: Record<SocialAuthProvider, number> = {
@@ -15,23 +15,25 @@ const SOCIAL_AUTH_PROVIDER_ORDER: Record<SocialAuthProvider, number> = {
   vercel: 2,
 };
 
-export const isSocialAuthProvider = (
-  value: string | null | undefined
+const isSocialAuthProvider = (
+  value?: string | null
 ): value is SocialAuthProvider =>
   typeof value === "string" && Object.hasOwn(SOCIAL_AUTH_PROVIDER_ORDER, value);
 
 const SOCIAL_AUTH_PROVIDER_IDS = Object.keys(SOCIAL_AUTH_PROVIDER_ORDER)
-  .filter(isSocialAuthProvider)
+  .filter((provider) => isSocialAuthProvider(provider))
   .toSorted(
-    (a, b) => SOCIAL_AUTH_PROVIDER_ORDER[a] - SOCIAL_AUTH_PROVIDER_ORDER[b]
+    (leftProvider, rightProvider) =>
+      SOCIAL_AUTH_PROVIDER_ORDER[leftProvider] -
+      SOCIAL_AUTH_PROVIDER_ORDER[rightProvider]
   );
 
-export const getEnabledSocialAuthProviders = (
+const getEnabledSocialAuthProviders = (
   authentication: AuthenticationConfig
 ): SocialAuthProvider[] =>
   SOCIAL_AUTH_PROVIDER_IDS.filter((provider) => authentication[provider]);
 
-export const sortSocialAuthProvidersByLastUsed = <
+const sortSocialAuthProvidersByLastUsed = <
   TProvider extends { id: SocialAuthProvider },
 >(
   providers: readonly TProvider[],
@@ -46,3 +48,10 @@ export const sortSocialAuthProvidersByLastUsed = <
     ...providers.filter(({ id }) => id !== lastUsedProvider),
   ];
 };
+
+export {
+  isSocialAuthProvider,
+  getEnabledSocialAuthProviders,
+  sortSocialAuthProvidersByLastUsed,
+};
+export type { SocialAuthSignInOptions, SocialAuthProvider };

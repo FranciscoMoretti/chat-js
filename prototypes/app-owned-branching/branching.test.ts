@@ -1,12 +1,5 @@
-import { execFileSync } from "node:child_process";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import path from "node:path";
-
-import postgres from "postgres";
 import { afterAll, beforeAll, beforeEach, expect, test } from "vitest";
 
-import { mockProvider } from "./mock-provider";
 import {
   append,
   beginWriter,
@@ -16,12 +9,21 @@ import {
   fork,
   history,
   modelHistory,
-  reserve,
   removeBranch,
+  reserve,
   validatePrefix,
   writeFile,
 } from "./model";
+
+import { mkdtemp, readFile, rm } from "node:fs/promises";
+
 import type { Message } from "./model";
+import { execFileSync } from "node:child_process";
+
+import { mockProvider } from "./mock-provider";
+import path from "node:path";
+import postgres from "postgres";
+import { tmpdir } from "node:os";
 
 let directory: string;
 let sql: ReturnType<typeof postgres>;
@@ -103,19 +105,27 @@ beforeEach(async () => {
   await sql`insert into provider_vm (id,files) values ('original','{"work.txt":"v1"}')`;
   await sql`insert into branch (id,owner,sandbox,documents) values ('root','alice','original','{"doc":"revision-1"}')`;
 });
+type AppendInput =
+  Parameters<typeof append> extends [unknown, infer Input] ? Input : never;
 
-const add = (
+const add = async (
   id: string,
   expectedHead: string | null,
-  branch = "root",
-  value = text(id)
-) => append(sql, { branch, expectedHead, id, message: value, owner });
-const checkpoint = async () => {
+  {
+    branch = "root",
+    message: value = text(id),
+  }: Readonly<{
+    branch?: string;
+    message?: AppendInput["message"];
+  }> = {}
+): Promise<void> => {
+  await append(sql, { branch, expectedHead, id, message: value, owner });
+};
+const checkpoint = async (): Promise<void> => {
   await reserve(sql, capture);
   await complete(sql, mockProvider(sql), owner, capture.id);
 };
-
-const write = async (branch: string, bytes: string) => {
+const write = async (branch: string, bytes: string): Promise<void> => {
   await beginWriter(sql, owner, branch, "file-writer", "sandbox-process");
   await writeFile(sql, {
     branch,
@@ -126,18 +136,19 @@ const write = async (branch: string, bytes: string) => {
   });
   await endWriter(sql, owner, branch, "file-writer");
 };
-
 test("shared immutable prefix, attachment references and annotations survive nested branches without duplicate messages", async () => {
-  await add("m1", null, "root", {
-    annotation: { selectedTool: "read" },
-    parts: [
-      {
-        mediaType: "application/pdf",
-        object: "owned/immutable-attachment",
-        type: "file",
-      },
-    ],
-    role: "user",
+  await add("m1", null, {
+    message: {
+      annotation: { selectedTool: "read" },
+      parts: [
+        {
+          mediaType: "application/pdf",
+          object: "owned/immutable-attachment",
+          type: "file",
+        },
+      ],
+      role: "user",
+    },
   });
   await checkpoint();
   await fork(sql, mockProvider(sql), {
@@ -145,7 +156,7 @@ test("shared immutable prefix, attachment references and annotations survive nes
     child: "child",
     owner,
   });
-  await add("m2", "m1", "child");
+  await add("m2", "m1", { branch: "child" });
   await reserve(sql, { id: "nested", intent: "idle", owner, source: "child" });
   await complete(sql, mockProvider(sql), owner, "nested");
   await fork(sql, mockProvider(sql), {
@@ -197,7 +208,7 @@ test("stopping snapshot restores parent and independent child; later document an
     await sql`select files from provider_vm where id='parent:boundary'`;
   expect(rows5[0]?.files).toEqual({ "work.txt": "parent-v2" });
   await add("parent-next", "m1");
-  await add("child-next", "m1", "child");
+  await add("child-next", "m1", { branch: "child" });
 });
 
 test.each([
@@ -229,7 +240,10 @@ test("concurrent writer admission and capture serialize: exactly one is admitted
     beginWriter(sql, owner, "root", "race", "tool"),
   ]);
   expect(
-    results.filter((result) => result.status === "fulfilled")
+    results.filter(
+      (result: Readonly<PromiseSettledResult<void>>) =>
+        result.status === "fulfilled"
+    )
   ).toHaveLength(1);
 });
 
@@ -240,11 +254,11 @@ test("lost snapshot response remains fenced; recovery reuses original receipt an
     complete(
       sql,
       {
-        ...provider,
         async capture(key, vm) {
           await provider.capture(key, vm);
           throw new Error("lost provider reply");
         },
+        restore: provider.restore,
       },
       owner,
       capture.id
@@ -288,7 +302,12 @@ test("pending checkpoint after process death is recoverable; changed intent and 
     })
   ).rejects.toThrow("checkpoint not ready");
   await expect(
-    reserve(sql, { ...capture, intent: "different-boundary" })
+    reserve(sql, {
+      id: capture.id,
+      intent: "different-boundary",
+      owner: capture.owner,
+      source: capture.source,
+    })
   ).rejects.toThrow("conflicting operation");
   await expect(
     complete(sql, mockProvider(sql), "bob", capture.id)
@@ -303,7 +322,6 @@ test("pending checkpoint after process death is recoverable; changed intent and 
     })
   ).rejects.toThrow("not owned");
 });
-
 test("child creation is idempotent through lost replies, including after child continuation", async () => {
   await checkpoint();
   const request = { checkpoint: capture.id, child: "child", owner };
@@ -312,7 +330,7 @@ test("child creation is idempotent through lost replies, including after child c
     fork(
       sql,
       {
-        ...provider,
+        capture: provider.capture,
         async restore(key, vm) {
           await provider.restore(key, vm);
           throw new Error("lost restore reply");
@@ -322,23 +340,34 @@ test("child creation is idempotent through lost replies, including after child c
     )
   ).rejects.toThrow("lost restore reply");
   await fork(sql, provider, request);
-  await add("child-1", null, "child");
+  await add("child-1", null, { branch: "child" });
   await fork(sql, provider, request);
   const rows9 = await sql`select head from branch where id='child'`;
   expect(rows9[0]?.head).toBe("child-1");
-  await reserve(sql, { ...capture, id: "other" });
+  await reserve(sql, {
+    id: "other",
+    intent: capture.intent,
+    owner: capture.owner,
+    source: capture.source,
+  });
   await complete(sql, provider, owner, "other");
   await expect(
-    fork(sql, provider, { ...request, checkpoint: "other" })
+    fork(sql, provider, {
+      checkpoint: "other",
+      child: request.child,
+      owner: request.owner,
+    })
   ).rejects.toThrow("conflicting child");
 });
 
 test("historical edit/regenerate uses the prior boundary, excludes suffix, retains original model annotation", async () => {
   await add("question-1", null);
-  await add("answer-1", "question-1", "root", {
-    annotation: { model: "original-model" },
-    parts: [{ text: "first answer", type: "text" }],
-    role: "assistant",
+  await add("answer-1", "question-1", {
+    message: {
+      annotation: { model: "original-model" },
+      parts: [{ text: "first answer", type: "text" }],
+      role: "assistant",
+    },
   });
   await checkpoint();
   await add("question-2", "answer-1");
@@ -348,7 +377,7 @@ test("historical edit/regenerate uses the prior boundary, excludes suffix, retai
     child: "edit",
     owner,
   });
-  await add("replacement-question", "answer-1", "edit");
+  await add("replacement-question", "answer-1", { branch: "edit" });
   const selected = await history(sql, owner, "replacement-question");
   expect(selected).toHaveLength(3);
   expect(selected[1]?.annotation?.model).toBe("original-model");
@@ -361,50 +390,59 @@ test("tool pairs and bounded input fail closed; incomplete cancelled/failed turn
     parts: [{ id: "c", input: "{}", name: "read", type: "call" }],
     role: "assistant",
   };
-  await add("call", null, "root", call);
+  await add("call", null, { message: call });
   await expect(reserve(sql, capture)).rejects.toThrow("unresolved tool");
   const result: Message = {
     parts: [{ id: "c", output: "done", type: "result" }],
     role: "tool",
   };
-  await add("result", "call", "root", result);
+  await add("result", "call", { message: result });
   await checkpoint();
-  expect(() => validatePrefix([result])).toThrow("unpaired");
-  expect(() => validatePrefix([call, call, result])).toThrow(
-    "invalid tool call"
-  );
-  expect(() => validatePrefix([text("x".repeat(1_000_001))])).toThrow(
-    "prefix too large"
-  );
+  expect(() => {
+    validatePrefix([result]);
+  }).toThrow("unpaired");
+  expect(() => {
+    validatePrefix([call, call, result]);
+  }).toThrow("invalid tool call");
+  expect(() => {
+    validatePrefix([text("x".repeat(1_000_001))]);
+  }).toThrow("prefix too large");
 });
 
 test("optimistic branch head compare prevents concurrent appends from losing messages", async () => {
   const results = await Promise.allSettled([add("a", null), add("b", null)]);
   expect(
-    results.filter((result) => result.status === "fulfilled")
+    results.filter(
+      (result: Readonly<PromiseSettledResult<void>>) =>
+        result.status === "fulfilled"
+    )
   ).toHaveLength(1);
   expect(await sql`select id from node`).toHaveLength(1);
 });
 
 test("resource grants are owner checked and retained after source branch removal", async () => {
   await expect(
-    add("foreign-file", null, "root", {
-      parts: [{ mediaType: "text/plain", object: "foreign", type: "file" }],
-      role: "user",
+    add("foreign-file", null, {
+      message: {
+        parts: [{ mediaType: "text/plain", object: "foreign", type: "file" }],
+        role: "user",
+      },
     })
   ).rejects.toThrow("resource not owned");
   await expect(
     editDocument(sql, owner, "root", { doc: "foreign" })
   ).rejects.toThrow("resource not owned");
-  await add("attachment", null, "root", {
-    parts: [
-      {
-        mediaType: "application/pdf",
-        object: "owned/immutable-attachment",
-        type: "file",
-      },
-    ],
-    role: "user",
+  await add("attachment", null, {
+    message: {
+      parts: [
+        {
+          mediaType: "application/pdf",
+          object: "owned/immutable-attachment",
+          type: "file",
+        },
+      ],
+      role: "user",
+    },
   });
   await checkpoint();
   await fork(sql, mockProvider(sql), {
@@ -416,13 +454,18 @@ test("resource grants are owner checked and retained after source branch removal
   expect(await history(sql, owner, "attachment")).toHaveLength(1);
   const resources = await sql`select id from resource where owner='alice'`;
   expect(resources).toHaveLength(3);
-  await add("after-deletion", "attachment", "child");
+  await add("after-deletion", "attachment", { branch: "child" });
 });
 
 test("separate idle captures retain manual edits even when transcript head is unchanged", async () => {
   await checkpoint();
   await editDocument(sql, owner, "root", { doc: "revision-2" });
-  await reserve(sql, { ...capture, id: "later", intent: "before-next-turn" });
+  await reserve(sql, {
+    id: "later",
+    intent: "before-next-turn",
+    owner: capture.owner,
+    source: capture.source,
+  });
   await complete(sql, mockProvider(sql), owner, "later");
   await fork(sql, mockProvider(sql), {
     checkpoint: "boundary",
@@ -434,8 +477,9 @@ test("separate idle captures retain manual edits even when transcript head is un
     child: "late",
     owner,
   });
-  const rows =
-    await sql`select documents from branch where id in ('early','late') order by id`;
+  const rows = await sql<
+    readonly { readonly documents: Readonly<Record<string, string>> }[]
+  >`select documents from branch where id in ('early','late') order by id`;
   expect(rows.map((row) => row.documents)).toEqual([
     { doc: "revision-1" },
     { doc: "revision-2" },
@@ -458,7 +502,6 @@ test("fork cannot reuse an unrelated branch or resurrect a deleted child", async
     "conflicting child"
   );
 });
-
 test("deletion during child restore fences publication", async () => {
   await checkpoint();
   const request = { checkpoint: "boundary", child: "child", owner };
@@ -468,7 +511,7 @@ test("deletion during child restore fences publication", async () => {
     fork(
       sql,
       {
-        ...provider,
+        capture: provider.capture,
         async restore(key, vm) {
           await provider.restore(key, vm);
           await removeBranch(sql, owner, "child");
@@ -482,10 +525,12 @@ test("deletion during child restore fences publication", async () => {
 });
 
 test("app annotations are separate records and excluded from model history", async () => {
-  await add("annotated", null, "root", {
-    annotation: { model: "original", selectedTool: null },
-    parts: [{ text: "answer", type: "text" }],
-    role: "assistant",
+  await add("annotated", null, {
+    message: {
+      annotation: { model: "original", selectedTool: null },
+      parts: [{ text: "answer", type: "text" }],
+      role: "assistant",
+    },
   });
   const rows = await sql`select payload from node where id='annotated'`;
   expect(rows[0]?.payload).not.toHaveProperty("annotation");

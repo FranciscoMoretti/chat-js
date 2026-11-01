@@ -1,28 +1,42 @@
 import { builtInGateways } from "./registry/gateways";
 
-export type PackageManager = "bun" | "npm" | "pnpm" | "yarn";
-export const GATEWAYS = builtInGateways.map((item) => item.meta.chatjs.id);
-export type Gateway = string;
+type PackageManager = "bun" | "npm" | "pnpm" | "yarn";
 
-export const AUTH_PROVIDERS = ["google", "github", "vercel"] as const;
+const GATEWAYS = builtInGateways.map(
+  (
+    item: Readonly<{
+      meta: Readonly<{
+        chatjs: Readonly<{
+          id: (typeof builtInGateways)[number]["meta"]["chatjs"]["id"];
+        }>;
+      }>;
+    }>
+  ) => item.meta.chatjs.id
+);
 
-export type AuthProvider = (typeof AUTH_PROVIDERS)[number];
+type Gateway = string;
 
-export const CORE_FEATURE_KEYS = [
+const AUTH_PROVIDERS = ["google", "github", "vercel"] as const;
+
+type AuthProvider = (typeof AUTH_PROVIDERS)[number];
+
+const CORE_FEATURE_KEYS = [
   "attachments",
   "parallelResponses",
   "documents",
   "mcp",
+  "projects",
+  "feedback",
   "followupSuggestions",
 ] as const;
 
-export type CoreFeatureKey = (typeof CORE_FEATURE_KEYS)[number];
+type CoreFeatureKey = (typeof CORE_FEATURE_KEYS)[number];
 
-export const DOCUMENT_TYPE_KEYS = ["text", "code", "sheet"] as const;
+const DOCUMENT_TYPE_KEYS = ["text", "code", "sheet"] as const;
 
-export type DocumentTypeKey = (typeof DOCUMENT_TYPE_KEYS)[number];
+type DocumentTypeKey = (typeof DOCUMENT_TYPE_KEYS)[number];
 
-export const BUILT_IN_TOOL_KEYS = [
+const BUILT_IN_TOOL_KEYS = [
   "webSearch",
   "urlRetrieval",
   "deepResearch",
@@ -31,4 +45,19 @@ export const BUILT_IN_TOOL_KEYS = [
   "videoGeneration",
 ] as const;
 
-export type BuiltInToolKey = (typeof BUILT_IN_TOOL_KEYS)[number];
+type BuiltInToolKey = (typeof BUILT_IN_TOOL_KEYS)[number];
+export {
+  AUTH_PROVIDERS,
+  BUILT_IN_TOOL_KEYS,
+  CORE_FEATURE_KEYS,
+  DOCUMENT_TYPE_KEYS,
+  GATEWAYS,
+};
+export type {
+  AuthProvider,
+  BuiltInToolKey,
+  CoreFeatureKey,
+  DocumentTypeKey,
+  Gateway,
+  PackageManager,
+};

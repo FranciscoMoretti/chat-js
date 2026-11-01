@@ -1,11 +1,31 @@
 "use client";
 
-import type { ReactNode } from "react";
+import React from "react";
+import { EditableBubble } from "./editable-bubble";
 
-import { Message, MessageContent } from "@/components/ai-elements/message";
-import { cn } from "@/lib/utils";
+import {
+  Message,
+  MessageContent,
+  MessageFooter,
+} from "@/components/ui/message";
+import { ChatMessageView } from "./chat-message-view";
+import { Bubble } from "@/components/ui/bubble";
+import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
+import { hasCustomContent } from "@/components/custom-content";
 
-/** Inline editing and message chrome shared by the legacy and EVE controllers. */
+/**
+ * Inline editing and message chrome for EVE messages.
+ *
+ * @param {string} text Visible user message text.
+ * @param {ReadonlyReactNode | undefined} attachments Attached files for this message.
+ * @param {ReadonlyReactNode} actions Message action controls.
+ * @param {ReadonlyReactNode | undefined} responses Additional response content below the message.
+ * @param {ReadonlyReactNode | undefined} editor Inline editor content.
+ * @param {(() => void) | undefined} onEdit Opens the inline editor on double click.
+ * @param {boolean | undefined} editDisabled Disables inline editing.
+ * @param {string | undefined} messageId Stable message identity.
+ * @returns {React.JSX.Element} The composed message interface.
+ */
 export const UserMessageView = ({
   text,
   attachments,
@@ -16,64 +36,57 @@ export const UserMessageView = ({
   editDisabled = false,
   messageId,
 }: {
-  text: string;
-  attachments?: ReactNode;
-  actions: ReactNode;
-  responses?: ReactNode;
-  editor?: ReactNode;
-  onEdit?: () => void;
-  editDisabled?: boolean;
-  messageId?: string;
-}) => (
-  <Message
-    className={cn(editor ? "max-w-full [&>div]:max-w-full" : undefined, "py-1")}
-    data-message-id={messageId}
-    from="user"
+  readonly text: string;
+  readonly attachments?: ReadonlyReactNode;
+  readonly actions: ReadonlyReactNode;
+  readonly responses?: ReadonlyReactNode;
+  readonly editor?: ReadonlyReactNode;
+  readonly onEdit?: () => void;
+  readonly editDisabled?: boolean;
+  readonly messageId?: string;
+}): React.JSX.Element => (
+  <ChatMessageView
+    author="user"
+    primitives={{ Message, MessageContent }}
+    messageId={messageId}
+    actions={<MessageFooter>{actions}</MessageFooter>}
   >
-    <div className={cn("flex w-full flex-col gap-2", !editor && "items-end")}>
-      {!editor && responses}
-      {!editor &&
-        (onEdit ? (
-          <button
-            aria-disabled={editDisabled}
-            className="block cursor-pointer text-left transition-opacity select-text hover:opacity-80"
-            data-testid="message-content"
-            onClick={(event) => {
-              if (editDisabled) {
-                return;
-              }
-              const selection = window.getSelection();
-              if (
-                selection?.toString() &&
-                event.currentTarget.contains(selection.anchorNode)
-              ) {
-                return;
-              }
-              onEdit();
-            }}
-            type="button"
-          >
-            <MessageContent
-              className="group-[.is-user]:bg-card text-left group-[.is-user]:max-w-none"
-              data-testid="message-content"
-            >
-              {attachments}
-              <pre className="font-sans whitespace-pre-wrap">{text}</pre>
-            </MessageContent>
-          </button>
-        ) : (
-          <MessageContent
-            className="group-[.is-user]:bg-card text-left"
-            data-testid="message-content"
-          >
-            {attachments}
-            <pre className="font-sans whitespace-pre-wrap">{text}</pre>
-          </MessageContent>
-        ))}
-      {editor && (
-        <div className="flex flex-row items-start gap-2">{editor}</div>
-      )}
-      <div className="self-end">{actions}</div>
-    </div>
-  </Message>
+    {!hasCustomContent(editor) && responses}
+    {!hasCustomContent(editor) && hasCustomContent(attachments) && (
+      <div className="max-w-full self-end">{attachments}</div>
+    )}
+    {!hasCustomContent(editor) && text && (
+      <Bubble align="end" variant="muted">
+        <EditableBubble
+          button={
+            onEdit
+              ? {
+                  "aria-disabled": editDisabled,
+                  "aria-label": text,
+                  className: "cursor-pointer select-text",
+                  onClick: (event) => {
+                    if (editDisabled) {
+                      return;
+                    }
+                    const selection = globalThis.getSelection();
+                    if (
+                      selection !== null &&
+                      selection.toString() !== "" &&
+                      event.currentTarget.contains(selection.anchorNode)
+                    ) {
+                      return;
+                    }
+                    onEdit();
+                  },
+                  type: "button",
+                }
+              : undefined
+          }
+        >
+          <pre className="font-sans whitespace-pre-wrap">{text}</pre>
+        </EditableBubble>
+      </Bubble>
+    )}
+    {hasCustomContent(editor) ? <div className="w-full">{editor}</div> : editor}
+  </ChatMessageView>
 );

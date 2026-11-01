@@ -1,6 +1,12 @@
+import React from "react";
+
 import { siteLinks } from "@/lib/site-config";
 
-const USE_CASES = [
+const USE_CASES: readonly Readonly<{
+  description: string;
+  number: string;
+  title: string;
+}>[] = [
   {
     description:
       "Start from a working Next.js AI chat app starter instead of wiring authentication, model routing, and streaming from scratch.",
@@ -21,7 +27,7 @@ const USE_CASES = [
   },
 ];
 
-export const UseCases = () => (
+export const UseCases = (): React.JSX.Element => (
   <section
     aria-labelledby="use-cases-heading"
     className="relative overflow-hidden py-24 sm:py-32"

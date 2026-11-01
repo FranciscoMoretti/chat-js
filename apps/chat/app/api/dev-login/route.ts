@@ -1,25 +1,61 @@
 import { eq } from "drizzle-orm";
 
 import { auth } from "@/lib/auth";
-import { db } from "@/lib/db/client";
 import { session, user } from "@/lib/db/schema";
+import { db } from "@/lib/db/client";
 import { env } from "@/lib/env";
+
+const DEV_SESSION_DURATION_MS = 2_592_000_000;
+const FIRST_CHARACTER_INDEX = 0;
+const AFTER_FIRST_CHARACTER_INDEX = 1;
+
+interface CookieAttributes {
+  readonly path?: string;
+  readonly httpOnly?: boolean;
+  readonly sameSite?: string;
+  readonly secure?: boolean;
+  readonly expires?: Readonly<Pick<Date, "toUTCString">>;
+}
+
+const formatSignedCookie = (
+  name: string,
+  signedValue: string,
+  opt: CookieAttributes
+): string => {
+  let cookie = `${name}=${signedValue}`;
+  const hasPath = Boolean(opt.path);
+  if (hasPath) {
+    cookie += `; Path=${opt.path}`;
+  }
+  if (opt.expires) {
+    cookie += `; Expires=${opt.expires.toUTCString()}`;
+  }
+  const isHttpOnly = Boolean(opt.httpOnly);
+  if (isHttpOnly) {
+    cookie += "; HttpOnly";
+  }
+  const isSecure = Boolean(opt.secure);
+  if (isSecure) {
+    cookie += "; Secure";
+  }
+  const { sameSite } = opt;
+  if (typeof sameSite === "string" && sameSite.length > 0) {
+    cookie += `; SameSite=${sameSite.charAt(FIRST_CHARACTER_INDEX).toUpperCase() + sameSite.slice(AFTER_FIRST_CHARACTER_INDEX)}`;
+  }
+  return cookie;
+};
 
 const serializeSignedCookie = async (
   name: string,
   value: string,
-  secret: string,
-  opt: {
-    path?: string;
-    httpOnly?: boolean;
-    sameSite?: string;
-    secure?: boolean;
-    expires?: Date;
+  configuration: {
+    readonly secret: string;
+    readonly settings: CookieAttributes;
   }
 ): Promise<string> => {
   const key = await crypto.subtle.importKey(
     "raw",
-    new TextEncoder().encode(secret),
+    new TextEncoder().encode(configuration.secret),
     { hash: "SHA-256", name: "HMAC" },
     false,
     ["sign"]
@@ -32,26 +68,10 @@ const serializeSignedCookie = async (
   const base64Sig = btoa(String.fromCodePoint(...new Uint8Array(signature)));
   const signedValue = encodeURIComponent(`${value}.${base64Sig}`);
 
-  let cookie = `${name}=${signedValue}`;
-  if (opt.path) {
-    cookie += `; Path=${opt.path}`;
-  }
-  if (opt.expires) {
-    cookie += `; Expires=${opt.expires.toUTCString()}`;
-  }
-  if (opt.httpOnly) {
-    cookie += "; HttpOnly";
-  }
-  if (opt.secure) {
-    cookie += "; Secure";
-  }
-  if (opt.sameSite) {
-    cookie += `; SameSite=${opt.sameSite.charAt(0).toUpperCase() + opt.sameSite.slice(1)}`;
-  }
-  return cookie;
+  return formatSignedCookie(name, signedValue, configuration.settings);
 };
 
-export const GET = async () => {
+export const GET = async (): Promise<Response> => {
   if (process.env.NODE_ENV !== "development") {
     return new Response("Not found", { status: 404 });
   }
@@ -59,7 +79,8 @@ export const GET = async () => {
   const devEmail = "dev@localhost";
   let [devUser] = await db.select().from(user).where(eq(user.email, devEmail));
 
-  if (!devUser) {
+  const userExists = Boolean(devUser);
+  if (!userExists) {
     const id = crypto.randomUUID();
     [devUser] = await db
       .insert(user)
@@ -71,18 +92,20 @@ export const GET = async () => {
       })
       .onConflictDoNothing({ target: user.email })
       .returning();
-    if (!devUser) {
+    const createdUserExists = Boolean(devUser);
+    if (!createdUserExists) {
       [devUser] = await db.select().from(user).where(eq(user.email, devEmail));
     }
   }
 
-  if (!devUser) {
+  const sessionUserExists = Boolean(devUser);
+  if (!sessionUserExists) {
     throw new Error("Failed to create development user");
   }
 
   const token = crypto.randomUUID();
   const now = new Date();
-  const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+  const expiresAt = new Date(Date.now() + DEV_SESSION_DURATION_MS);
 
   await db.insert(session).values({
     createdAt: now,
@@ -97,13 +120,15 @@ export const GET = async () => {
   const signedSessionCookie = await serializeSignedCookie(
     authCookies.sessionToken.name,
     token,
-    env.AUTH_SECRET,
     {
-      expires: expiresAt,
-      httpOnly: true,
-      path: "/",
-      sameSite: "lax",
-      secure: authCookies.sessionToken.attributes.secure,
+      secret: env.AUTH_SECRET,
+      settings: {
+        expires: expiresAt,
+        httpOnly: true,
+        path: "/",
+        sameSite: "lax",
+        secure: authCookies.sessionToken.attributes.secure,
+      },
     }
   );
 

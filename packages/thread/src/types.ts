@@ -6,50 +6,102 @@ import type {
   UIMessage,
 } from "ai";
 
-export type ThreadRun = {
+type MessageMetadata<TMessage extends UIMessage> =
+  TMessage extends UIMessage<infer Metadata, infer _Data, infer _Tools>
+    ? Metadata
+    : never;
+type MessageData<TMessage extends UIMessage> =
+  TMessage extends UIMessage<infer _Metadata, infer Data, infer _Tools>
+    ? Data
+    : never;
+type MessageTools<TMessage extends UIMessage> =
+  TMessage extends UIMessage<infer _Metadata, infer _Data, infer Tools>
+    ? Tools
+    : never;
+
+// Thread construction follows the SDK message shape, preserving metadata, data,
+// and tools without promising arbitrary extensions the SDK cannot construct.
+type CanonicalMessage<TMessage extends UIMessage> = UIMessage<
+  MessageMetadata<TMessage>,
+  MessageData<TMessage>,
+  MessageTools<TMessage>
+>;
+
+const FIRST_PARAMETER_INDEX = 0;
+const TREE_SNAPSHOT_VERSION = 1;
+
+// Keep exported aliases closed and implicitly assignable to dictionary readers.
+// Pick copies the private interface shape without exposing declaration merging.
+interface ThreadRunShape {
   error: Error | undefined;
   id: string;
   status: ChatStatus;
-};
+}
 
-export type ThreadRunHandle = {
+type ThreadRun = Pick<ThreadRunShape, keyof ThreadRunShape>;
+
+interface ThreadRunHandleShape {
   readonly finished: Promise<void>;
   readonly id: string;
   getSnapshot: () => ThreadRun | undefined;
   stop: () => Promise<void>;
-};
+}
 
-export type TreeSendOptions = ChatRequestOptions & {
+type ThreadRunHandle = Pick<ThreadRunHandleShape, keyof ThreadRunHandleShape>;
+
+type TreeSendOptions = ChatRequestOptions & {
   tree?: {
     follow?: boolean;
     from?: string | null;
   };
 };
 
-export type ThreadStartRunOptions<TMessage extends UIMessage = UIMessage> = {
+interface ThreadStartRunOptionsShape<TMessage extends UIMessage> {
   follow?: boolean;
   from?: string | null;
-  message?: Parameters<AbstractChat<TMessage>["sendMessage"]>[0];
+  message?: Parameters<
+    AbstractChat<TMessage>["sendMessage"]
+  >[typeof FIRST_PARAMETER_INDEX];
   request?: ChatRequestOptions;
-};
+}
 
-export type ThreadConcurrency = {
+type ThreadStartRunOptions<TMessage extends UIMessage = UIMessage> = Pick<
+  ThreadStartRunOptionsShape<TMessage>,
+  keyof ThreadStartRunOptionsShape<TMessage>
+>;
+
+interface ThreadConcurrencyShape {
   maxActiveRuns?: number;
   maxActiveRunsPerMessage?: number;
-};
+}
 
-export type MessageTreeNode<TMessage extends UIMessage = UIMessage> = {
+type ThreadConcurrency = Pick<
+  ThreadConcurrencyShape,
+  keyof ThreadConcurrencyShape
+>;
+
+interface MessageTreeNodeShape<TMessage extends UIMessage> {
   message: TMessage;
   parentId: string | null;
-};
+}
 
-export type MessageTreeSnapshot<TMessage extends UIMessage = UIMessage> = {
+type MessageTreeNode<TMessage extends UIMessage = UIMessage> = Pick<
+  MessageTreeNodeShape<TMessage>,
+  keyof MessageTreeNodeShape<TMessage>
+>;
+
+interface MessageTreeSnapshotShape<TMessage extends UIMessage> {
   cursorId: string | null;
   nodes: MessageTreeNode<TMessage>[];
-  version: 1;
-};
+  version: typeof TREE_SNAPSHOT_VERSION;
+}
 
-export type ThreadStateSnapshot<TMessage extends UIMessage = UIMessage> =
+type MessageTreeSnapshot<TMessage extends UIMessage = UIMessage> = Pick<
+  MessageTreeSnapshotShape<TMessage>,
+  keyof MessageTreeSnapshotShape<TMessage>
+>;
+
+type ThreadStateSnapshot<TMessage extends UIMessage = UIMessage> =
   MessageTreeSnapshot<TMessage> & {
     activeRuns: ThreadRun[];
     childrenByParentId: Record<string, string[]>;
@@ -63,7 +115,7 @@ export type ThreadStateSnapshot<TMessage extends UIMessage = UIMessage> =
     treeStatus: ChatStatus;
   };
 
-export interface ThreadState<TMessage extends UIMessage = UIMessage> {
+interface ThreadState<TMessage extends UIMessage = UIMessage> {
   getSnapshot: () => ThreadStateSnapshot<TMessage>;
   subscribe: (listener: () => void) => () => void;
   /**
@@ -81,9 +133,27 @@ type ThreadInitialState<TMessage extends UIMessage> =
   | { initialTree: MessageTreeSnapshot<TMessage>; messages?: never }
   | { initialTree?: never; messages?: TMessage[] };
 
-export type ThreadInit<TMessage extends UIMessage = UIMessage> = Omit<
-  ChatInit<TMessage>,
+type ThreadInit<TMessage extends UIMessage = UIMessage> = Omit<
+  ChatInit<CanonicalMessage<TMessage>>,
   "messages"
 > & {
   concurrency?: ThreadConcurrency;
-} & ThreadInitialState<TMessage>;
+} & ThreadInitialState<CanonicalMessage<TMessage>> &
+  ThreadInitialState<TMessage>;
+
+export type {
+  CanonicalMessage,
+  MessageMetadata,
+  MessageData,
+  MessageTools,
+  ThreadRun,
+  ThreadRunHandle,
+  TreeSendOptions,
+  ThreadStartRunOptions,
+  ThreadConcurrency,
+  MessageTreeNode,
+  MessageTreeSnapshot,
+  ThreadStateSnapshot,
+  ThreadState,
+  ThreadInit,
+};

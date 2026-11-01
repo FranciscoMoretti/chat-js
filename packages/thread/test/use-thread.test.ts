@@ -1,26 +1,73 @@
-import { describe, expect, mock, test } from "bun:test";
+import type {
+  UseThreadHelpers,
+  UseThreadOptions,
+} from "#thread-source/use-thread";
+import { act, createElement } from "react";
+import {
+  afterAll,
+  afterEach,
+  describe,
+  expect,
+  mock,
+  spyOn,
+  test,
+} from "bun:test";
 
-import type { UIMessage } from "ai";
-import { createElement } from "react";
-import { act, create } from "react-test-renderer";
-import type { ReactTestRenderer } from "react-test-renderer";
-
-import { getMessageText } from "../src/message-utils";
-import { Thread } from "../src/thread";
-import { MemoryThreadState } from "../src/thread-state";
-import { useThread } from "../src/use-thread";
-import type { UseThreadHelpers, UseThreadOptions } from "../src/use-thread";
 import { ControlledTransport } from "./support/hook-controlled-transport";
+import { MemoryThreadState } from "#thread-source/thread-state";
+import type { ReadonlyMessageValue } from "#thread-source/message-utils";
 import { RejectingTransport } from "./support/rejecting-transport";
 import { ResumeTransport } from "./support/resume-transport";
+import type { Root } from "react-dom/client";
 import { StateBackedThread } from "./support/state-backed-thread";
+import { Thread } from "#thread-source/thread";
+import type { UIMessage } from "ai";
+import { createHookDom } from "./support/hook-dom";
+import { createRoot } from "react-dom/client";
+import { getMessageText } from "#thread-source/message-utils";
 
 declare global {
   var IS_REACT_ACT_ENVIRONMENT: boolean | undefined;
 }
 
-globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+// Install the DOM before loading the hook so its isomorphic effect uses the
+// browser commit lifecycle. Restore globals after this suite, including act.
+const dom = createHookDom();
+const { useThread } = await import("#thread-source/use-thread");
+const roots = new Set<Root>();
+const NO_ERRORS = 0;
 
+// Use React's asynchronous act path even for synchronous actions. The microtask
+// boundary lets act flush effects and any updates scheduled by the commit.
+const commit = async (action: () => void): Promise<void> => {
+  await act(async (): Promise<void> => {
+    action();
+    await Promise.resolve();
+  });
+};
+afterEach(async (): Promise<void> => {
+  try {
+    await commit((): void => {
+      const errors: unknown[] = [];
+      for (const root of roots) {
+        try {
+          root.unmount();
+        } catch (error) {
+          errors.push(error);
+        }
+      }
+      if (errors.length > NO_ERRORS) {
+        throw new AggregateError(errors, "Failed to unmount hook test roots");
+      }
+    });
+  } finally {
+    roots.clear();
+    globalThis.document.body.replaceChildren();
+  }
+});
+afterAll(async (): Promise<void> => {
+  await dom.close();
+});
 const user = (id: string): UIMessage => ({
   id,
   parts: [{ text: id, type: "text" }],
@@ -33,39 +80,63 @@ const assistant = (id: string): UIMessage => ({
   role: "assistant",
 });
 
+type TreeCollectionKeys =
+  | "activeRuns"
+  | "childrenByParentId"
+  | "messagesById"
+  | "parentById"
+  | "rootIds"
+  | "runs";
+type HookResultReader = Readonly<
+  Omit<UseThreadHelpers, "messages" | "error" | "tree">
+> &
+  ReadonlyMessageValue<Pick<UseThreadHelpers, "messages" | "error">> & {
+    readonly tree: Readonly<
+      Omit<UseThreadHelpers["tree"], TreeCollectionKeys>
+    > &
+      ReadonlyMessageValue<Pick<UseThreadHelpers["tree"], TreeCollectionKeys>>;
+  };
+
 const HookHarness = ({
   onCommit,
   onRender,
   options,
-}: {
+}: Readonly<{
   onCommit?: (setMessages: UseThreadHelpers["setMessages"]) => void;
-  onRender: (helpers: UseThreadHelpers) => void;
-  options: UseThreadOptions;
-}) => {
+  onRender: (helpers: HookResultReader) => void;
+  options: Readonly<UseThreadOptions>;
+}>) => {
   const helpers = useThread(options);
   onRender(helpers);
   return createElement("div", {
-    ref: () => onCommit?.(helpers.setMessages),
+    ref: () => {
+      if (onCommit) {
+        onCommit(helpers.setMessages);
+      }
+    },
   });
 };
 
-const renderUseThread = (
-  initialOptions: UseThreadOptions,
+const renderUseThread = async (
+  initialOptions: Readonly<UseThreadOptions>,
   onCommit?: (setMessages: UseThreadHelpers["setMessages"]) => void
 ) => {
-  let current: UseThreadHelpers | undefined;
-  let renderer: ReactTestRenderer | undefined;
-  const render = (options: UseThreadOptions) =>
+  let current: HookResultReader | undefined;
+  const container = globalThis.document.createElement("div");
+  globalThis.document.body.append(container);
+  const renderer = createRoot(container);
+  roots.add(renderer);
+  const render = (options: Readonly<UseThreadOptions>) =>
     createElement(HookHarness, {
       onCommit,
-      onRender: (helpers) => {
+      onRender: (helpers): void => {
         current = helpers;
       },
       options,
     });
 
-  act(() => {
-    renderer = create(render(initialOptions));
+  await commit((): void => {
+    renderer.render(render(initialOptions));
   });
 
   return {
@@ -75,16 +146,28 @@ const renderUseThread = (
       }
       return current;
     },
-    unmount() {
-      act(() => renderer?.unmount());
+    async unmount(): Promise<void> {
+      try {
+        await commit((): void => {
+          renderer.unmount();
+        });
+      } finally {
+        roots.delete(renderer);
+        container.remove();
+      }
     },
-    update(options: UseThreadOptions) {
-      act(() => renderer?.update(render(options)));
+    async update(options: Readonly<UseThreadOptions>): Promise<void> {
+      await commit((): void => {
+        renderer.render(render(options));
+      });
     },
   };
 };
 
-const waitFor = async (predicate: () => boolean, attemptsRemaining = 500) => {
+const waitFor = async (
+  predicate: () => boolean,
+  attemptsRemaining = 500
+): Promise<void> => {
   if (predicate()) {
     return;
   }
@@ -92,36 +175,96 @@ const waitFor = async (predicate: () => boolean, attemptsRemaining = 500) => {
     throw new Error("Timed out waiting for condition");
   }
   await Bun.sleep(1);
-  return waitFor(predicate, attemptsRemaining - 1);
+  await waitFor(predicate, attemptsRemaining - 1);
 };
 
-describe("useThread", () => {
-  test("observes messages sent through a custom state-backed AbstractThread", async () => {
+const trackSubscriptions = (
+  thread: Readonly<Pick<Thread, "subscribe">>
+): Set<() => void> => {
+  const listeners = new Set<() => void>();
+  const { subscribe } = thread;
+  Object.defineProperty(thread, "subscribe", {
+    value: (listener: () => void): (() => void) => {
+      listeners.add(listener);
+      const unsubscribe = subscribe(listener);
+      return (): void => {
+        listeners.delete(listener);
+        unsubscribe();
+      };
+    },
+  });
+  return listeners;
+};
+
+describe("useThread", (): void => {
+  test("applies client tool output through the current SDK helper", async (): Promise<void> => {
+    const thread = new Thread({
+      messages: [
+        user("user-1"),
+        {
+          id: "assistant-1",
+          parts: [
+            {
+              input: {},
+              state: "input-available",
+              toolCallId: "lookup-1",
+              toolName: "lookup",
+              type: "dynamic-tool",
+            },
+          ],
+          role: "assistant",
+        },
+      ],
+    });
+    const hook = await renderUseThread({ thread });
+    await act(async (): Promise<void> => {
+      await hook.current.addToolOutput({
+        output: "found",
+        tool: "lookup",
+        toolCallId: "lookup-1",
+      });
+    });
+    expect(hook.current.messages.at(-1)?.parts).toMatchObject([
+      {
+        output: "found",
+        state: "output-available",
+        toolCallId: "lookup-1",
+      },
+    ]);
+    await hook.unmount();
+  });
+
+  test("observes messages sent through a custom state-backed AbstractThread", async (): Promise<void> => {
     const state = new MemoryThreadState<UIMessage>({
       messages: [user("user-1")],
     });
     const transport = new ControlledTransport();
     const thread = new StateBackedThread(state, transport);
-    const hook = renderUseThread({ thread });
+    const hook = await renderUseThread({ thread });
 
-    expect(hook.current.messages.map(({ id }) => id)).toEqual(["user-1"]);
+    expect(
+      hook.current.messages.map(
+        ({ id }: Readonly<Pick<UIMessage, "id">>): string => id
+      )
+    ).toEqual(["user-1"]);
 
-    act(() => {
+    await commit((): void => {
       thread.addMessage(user("user-2"), "user-1");
       thread.setCursor("user-2");
     });
 
-    expect(hook.current.messages.map(({ id }) => id)).toEqual([
-      "user-1",
-      "user-2",
-    ]);
+    expect(
+      hook.current.messages.map(
+        ({ id }: Readonly<Pick<UIMessage, "id">>): string => id
+      )
+    ).toEqual(["user-1", "user-2"]);
 
     let send: Promise<void> | undefined;
-    await act(async () => {
+    await act(async (): Promise<void> => {
       send = hook.current.sendMessage({ text: "user-3" });
-      await waitFor(() => transport.requests.length === 1);
+      await waitFor((): boolean => transport.requests.length === 1);
     });
-    await act(async () => {
+    await act(async (): Promise<void> => {
       transport.emit(0, { messageId: "assistant-1", type: "start" });
       transport.emit(0, { id: "text", type: "text-start" });
       transport.emit(0, {
@@ -134,25 +277,25 @@ describe("useThread", () => {
       await send;
     });
 
-    expect(hook.current.messages.map(({ id }) => id)).toEqual([
-      "user-1",
-      "user-2",
-      expect.any(String),
-      "assistant-1",
-    ]);
+    const messageIds = hook.current.messages.map(
+      ({ id }: Readonly<Pick<UIMessage, "id">>): string => id
+    );
+    expect(messageIds).toHaveLength(4);
+    expect(messageIds.slice(0, 2)).toEqual(["user-1", "user-2"]);
+    expect(typeof messageIds[2]).toBe("string");
+    expect(messageIds[3]).toBe("assistant-1");
     const response = hook.current.messages.at(-1);
     if (!response) {
       throw new Error("Expected a response message");
     }
     expect(getMessageText(response)).toBe("reply");
-    hook.unmount();
+    await hook.unmount();
   });
-
-  test("forwards setters called by an initial commit ref", () => {
+  test("forwards setters called by an initial commit ref", async (): Promise<void> => {
     let isFirstCommit = true;
-    const hook = renderUseThread(
+    const hook = await renderUseThread(
       { messages: [user("user-a")] },
-      (setMessages) => {
+      (setMessages): void => {
         if (isFirstCommit) {
           isFirstCommit = false;
           setMessages([user("user-b")]);
@@ -160,26 +303,34 @@ describe("useThread", () => {
       }
     );
 
-    expect(hook.current.messages.map(({ id }) => id)).toEqual(["user-b"]);
-    hook.unmount();
+    expect(
+      hook.current.messages.map(
+        ({ id }: Readonly<Pick<UIMessage, "id">>): string => id
+      )
+    ).toEqual(["user-b"]);
+    await hook.unmount();
   });
-  test("uses current callbacks without replacing the chat transport", async () => {
+  test("uses current callbacks without replacing the chat transport", async (): Promise<void> => {
     const firstTransport = new RejectingTransport();
     const secondTransport = new RejectingTransport();
-    const firstError = mock(() => {});
-    const secondError = mock(() => {});
-    const hook = renderUseThread({
+    const firstError = mock((): void => {
+      /* Ignore transport errors while checking callback replacement. */
+    });
+    const secondError = mock((): void => {
+      /* Ignore transport errors while checking callback replacement. */
+    });
+    const hook = await renderUseThread({
       id: "thread-1",
       onError: firstError,
       transport: firstTransport,
     });
 
-    hook.update({
+    await hook.update({
       id: "thread-1",
       onError: secondError,
       transport: secondTransport,
     });
-    await act(async () => {
+    await act(async (): Promise<void> => {
       await hook.current.sendMessage({ text: "first request" });
     });
 
@@ -188,68 +339,99 @@ describe("useThread", () => {
     expect(firstError).not.toHaveBeenCalled();
     expect(secondError).toHaveBeenCalledTimes(1);
 
-    hook.update({
+    await hook.update({
       id: "thread-2",
       messages: [user("user-2")],
       onError: secondError,
       transport: secondTransport,
     });
     expect(hook.current.id).toBe("thread-2");
-    expect(hook.current.messages.map(({ id }) => id)).toEqual(["user-2"]);
-    await act(async () => {
+    expect(
+      hook.current.messages.map(
+        ({ id }: Readonly<Pick<UIMessage, "id">>): string => id
+      )
+    ).toEqual(["user-2"]);
+    await act(async (): Promise<void> => {
       await hook.current.sendMessage({ text: "second request" });
     });
 
     expect(secondTransport.requests).toBe(1);
-    hook.unmount();
+    await hook.unmount();
   });
-
-  test("resubscribes when the supplied thread changes", () => {
+  test("resubscribes when the supplied thread changes", async (): Promise<void> => {
     const first = new Thread({ messages: [user("user-a")] });
     const second = new Thread({ messages: [user("user-b")] });
-    const hook = renderUseThread({ thread: first });
+    const firstListeners = trackSubscriptions(first);
+    const secondListeners = trackSubscriptions(second);
+    const hook = await renderUseThread({ thread: first });
 
-    expect(hook.current.messages.map(({ id }) => id)).toEqual(["user-a"]);
-    hook.update({ thread: second });
-    expect(hook.current.messages.map(({ id }) => id)).toEqual(["user-b"]);
-    hook.unmount();
+    expect(firstListeners.size).toBeGreaterThan(0);
+    expect(secondListeners.size).toBe(0);
+    expect(
+      hook.current.messages.map(
+        ({ id }: Readonly<Pick<UIMessage, "id">>): string => id
+      )
+    ).toEqual(["user-a"]);
+    await hook.update({ thread: second });
+    expect(firstListeners.size).toBe(0);
+    expect(secondListeners.size).toBeGreaterThan(0);
+    expect(
+      hook.current.messages.map(
+        ({ id }: Readonly<Pick<UIMessage, "id">>): string => id
+      )
+    ).toEqual(["user-b"]);
+    await commit((): void => {
+      first.setMessages([user("old-thread-update")]);
+      second.setMessages([user("new-thread-update")]);
+    });
+    expect(
+      hook.current.messages.map(
+        ({ id }: Readonly<Pick<UIMessage, "id">>): string => id
+      )
+    ).toEqual(["new-thread-update"]);
+    await hook.unmount();
+    expect(firstListeners.size).toBe(0);
+    expect(secondListeners.size).toBe(0);
   });
-
-  test("forwards a retained setter to the replacement supplied thread", () => {
+  test("forwards a retained setter to the replacement supplied thread", async (): Promise<void> => {
     const first = new Thread({ messages: [user("user-a")] });
     const second = new Thread({ messages: [user("user-b")] });
-    const hook = renderUseThread({ thread: first });
+    const hook = await renderUseThread({ thread: first });
     const { setMessages } = hook.current;
 
-    hook.update({ thread: second });
-    act(() => {
+    await hook.update({ thread: second });
+    await commit((): void => {
       setMessages([user("user-c")]);
     });
 
-    expect(first.getSnapshot().messages.map(({ id }) => id)).toEqual([
-      "user-a",
-    ]);
-    expect(hook.current.messages.map(({ id }) => id)).toEqual(["user-c"]);
-    hook.unmount();
+    expect(
+      first
+        .getSnapshot()
+        .messages.map(({ id }: Readonly<Pick<UIMessage, "id">>): string => id)
+    ).toEqual(["user-a"]);
+    expect(
+      hook.current.messages.map(
+        ({ id }: Readonly<Pick<UIMessage, "id">>): string => id
+      )
+    ).toEqual(["user-c"]);
+    await hook.unmount();
   });
-
-  test("automatically resumes the supplied thread", async () => {
+  test("automatically resumes the supplied thread", async (): Promise<void> => {
     const transport = new ResumeTransport();
     const thread = new Thread({
       messages: [user("user-1"), assistant("assistant-1")],
       transport,
     });
-    const hook = renderUseThread({ resume: true, thread });
+    const hook = await renderUseThread({ resume: true, thread });
 
-    await act(async () => {
+    await act(async (): Promise<void> => {
       await Bun.sleep(0);
     });
 
     expect(transport.reconnects).toBe(1);
-    hook.unmount();
+    await hook.unmount();
   });
-
-  test("resumes a replacement supplied thread while resume remains enabled", async () => {
+  test("resumes a replacement supplied thread while resume remains enabled", async (): Promise<void> => {
     const firstTransport = new ResumeTransport();
     const secondTransport = new ResumeTransport();
     const first = new Thread({
@@ -260,46 +442,48 @@ describe("useThread", () => {
       messages: [user("user-2"), assistant("assistant-2")],
       transport: secondTransport,
     });
-    const hook = renderUseThread({ resume: true, thread: first });
+    const hook = await renderUseThread({ resume: true, thread: first });
 
-    await act(async () => {
+    await act(async (): Promise<void> => {
       await Bun.sleep(0);
     });
-    hook.update({ resume: true, thread: second });
-    await act(async () => {
+    await hook.update({ resume: true, thread: second });
+    await act(async (): Promise<void> => {
       await Bun.sleep(0);
     });
 
     expect(firstTransport.reconnects).toBe(1);
     expect(secondTransport.reconnects).toBe(1);
-    expect(hook.current.messages.map(({ id }) => id)).toEqual([
-      "user-2",
-      "assistant-2",
-    ]);
-    hook.unmount();
+    expect(
+      hook.current.messages.map(
+        ({ id }: Readonly<Pick<UIMessage, "id">>): string => id
+      )
+    ).toEqual(["user-2", "assistant-2"]);
+    await hook.unmount();
   });
-
-  test("keeps status immediate while throttling message snapshots", async () => {
+  test("keeps status immediate while throttling message snapshots", async (): Promise<void> => {
     const transport = new ControlledTransport();
-    const hook = renderUseThread({
+    const hook = await renderUseThread({
       experimental_throttle: 100,
       messages: [user("user-1")],
       transport,
     });
 
-    act(() => hook.current.tree.setCursor("user-1"));
+    await commit((): void => {
+      hook.current.tree.setCursor("user-1");
+    });
 
     let run:
       | Awaited<ReturnType<UseThreadHelpers["tree"]["startRun"]>>
       | undefined;
-    await act(async () => {
+    await act(async (): Promise<void> => {
       run = await hook.current.tree.startRun({ from: "user-1" });
-      await waitFor(() => transport.requests.length === 1);
+      await waitFor((): boolean => transport.requests.length === 1);
     });
     expect(hook.current.status).toBe("submitted");
     expect(hook.current.tree.status).toBe("submitted");
 
-    await act(async () => {
+    await act(async (): Promise<void> => {
       transport.emit(0, { messageId: "assistant-1", type: "start" });
       transport.emit(0, { id: "text", type: "text-start" });
       transport.emit(0, {
@@ -311,23 +495,76 @@ describe("useThread", () => {
     });
     expect(hook.current.status).toBe("streaming");
     expect(hook.current.tree.status).toBe("streaming");
-    expect(hook.current.messages.map(({ id }) => id)).toEqual(["user-1"]);
+    expect(
+      hook.current.messages.map(
+        ({ id }: Readonly<Pick<UIMessage, "id">>): string => id
+      )
+    ).toEqual(["user-1"]);
 
-    await act(async () => {
+    await act(async (): Promise<void> => {
       await Bun.sleep(110);
     });
     expect(
       getMessageText(
-        hook.current.messages.find(({ id }) => id === "assistant-1") ??
+        hook.current.messages.find(({ id }): boolean => id === "assistant-1") ??
           assistant("missing")
       )
     ).toBe("streaming");
 
-    await act(async () => {
+    await act(async (): Promise<void> => {
       transport.finish(0);
-      await run?.finished;
+      if (!run) {
+        throw new TypeError("Expected startRun to return a run");
+      }
+      await run.finished;
     });
     expect(hook.current.status).toBe("ready");
-    hook.unmount();
+    await hook.unmount();
+  });
+  test("cancels pending throttled notifications on unmount", async (): Promise<void> => {
+    const thread = new Thread({ messages: [user("user-a")] });
+    const listeners = trackSubscriptions(thread);
+    const getSnapshot = mock(thread.getSnapshot);
+    thread.getSnapshot = getSnapshot;
+    const hook = await renderUseThread({ experimental_throttle: 100, thread });
+
+    const now = spyOn(Date, "now").mockReturnValue(1000);
+    try {
+      await commit((): void => {
+        thread.setMessages([user("user-b")]);
+      });
+      expect(
+        hook.current.messages.map(
+          ({ id }: Readonly<Pick<UIMessage, "id">>): string => id
+        )
+      ).toEqual(["user-b"]);
+      await act(async (): Promise<void> => {
+        // Freeze elapsed time and unmount before yielding so a slow runner
+        // cannot publish the second snapshot or run its pending timer first.
+        thread.setMessages([user("user-c")]);
+        expect(
+          hook.current.messages.map(
+            ({ id }: Readonly<Pick<UIMessage, "id">>): string => id
+          )
+        ).toEqual(["user-b"]);
+        await hook.unmount();
+      });
+    } finally {
+      now.mockRestore();
+    }
+    expect(listeners.size).toBe(0);
+    getSnapshot.mockClear();
+
+    await act(async (): Promise<void> => {
+      thread.setMessages([user("after-unmount")]);
+      await Bun.sleep(110);
+    });
+    // A leaked throttle timer would read the snapshot even after unsubscribing.
+    expect(getSnapshot).not.toHaveBeenCalled();
+    expect(
+      hook.current.messages.map(
+        ({ id }: Readonly<Pick<UIMessage, "id">>): string => id
+      )
+    ).toEqual(["user-b"]);
   });
 });

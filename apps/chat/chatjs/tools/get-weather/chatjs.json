@@ -1,0 +1,14 @@
+{
+  "envRequirements": [],
+  "id": "get-weather",
+  "kind": "tool",
+  "requiresTools": [],
+  "tools": [
+    {
+      "rendererExport": "GetWeatherRenderer",
+      "definitionExport": "toolDefinition",
+      "toolExport": "getWeather"
+    }
+  ],
+  "contractVersion": 1
+}

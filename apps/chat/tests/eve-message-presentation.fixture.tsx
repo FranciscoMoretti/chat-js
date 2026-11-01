@@ -1,14 +1,15 @@
-import type { EveMessage } from "eve/client";
-import { useMemo, useState } from "react";
+import { MessageScrollerProvider } from "@/components/ui/message-scroller";
+import React, { useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
+
+import type { ReadonlyEveMessage } from "@/lib/eve/readonly-message-types";
 
 import { ControlledChatComposer } from "../components/controlled-chat-composer";
 import { EveMessages } from "../components/eve/eve-messages";
 import { MessageSiblingsView } from "../components/message-siblings-view";
 import { ResponseChoiceCards } from "../components/response-choice-cards";
-import { LegacyUserMessageReference } from "./eve-message-presentation.legacy";
 
-const messages: readonly EveMessage[] = [
+const messages: readonly ReadonlyEveMessage[] = [
   {
     id: "user-1",
     metadata: { status: "complete", turnId: "turn_0" },
@@ -60,7 +61,11 @@ const inlineResponseCards = (
   </div>
 );
 
-const Editor = ({ onSubmit }: { onSubmit?: (value: string) => void }) => {
+const Editor = ({
+  onSubmit,
+}: {
+  readonly onSubmit?: (value: string) => void;
+}): React.JSX.Element => {
   const [draft, setDraft] = useState("First user message");
   return (
     <div className="w-full space-y-2" data-testid="inline-editor">
@@ -84,8 +89,8 @@ const VersionControls = ({
   message,
   onLog,
 }: {
-  message: EveMessage;
-  onLog: (value: string) => void;
+  readonly message: ReadonlyEveMessage;
+  readonly onLog: (value: string) => void;
 }) => {
   if (message.role !== "user") {
     return null;
@@ -95,8 +100,12 @@ const VersionControls = ({
     <MessageSiblingsView
       count={isFirst ? 3 : 2}
       index={1}
-      onNext={() => onLog(`next:${message.id}`)}
-      onPrevious={() => onLog(`prev:${message.id}`)}
+      onNext={() => {
+        onLog(`next:${message.id}`);
+      }}
+      onPrevious={() => {
+        onLog(`prev:${message.id}`);
+      }}
     />
   );
 };
@@ -107,101 +116,90 @@ const Transcript = ({
   onLog,
   title,
 }: {
-  isReadonly: boolean;
-  loading: boolean;
-  onLog: (value: string) => void;
-  title: string;
-}) => {
+  readonly isReadonly: boolean;
+  readonly loading: boolean;
+  readonly onLog: (value: string) => void;
+  readonly title: string;
+}): React.JSX.Element => {
   const [editingId, setEditingId] = useState<string>();
-  const edit = useMemo(
-    () =>
-      editingId
-        ? {
-            content: <Editor onSubmit={(value) => onLog(`submit:${value}`)} />,
-            disabled: false,
-            messageId: editingId,
-            onCancel: () => setEditingId(undefined),
-          }
-        : undefined,
-    [editingId, onLog]
-  );
+  const edit = useMemo(():
+    | {
+        content: React.JSX.Element;
+        disabled: boolean;
+        messageId: string;
+        onCancel: () => void;
+      }
+    | undefined => {
+    if (editingId !== undefined && editingId !== null && editingId !== "") {
+      return {
+        content: (
+          <Editor
+            onSubmit={(value) => {
+              onLog(`submit:${value}`);
+            }}
+          />
+        ),
+        disabled: false,
+        messageId: editingId,
+        onCancel: (): void => {
+          setEditingId(undefined);
+        },
+      };
+    }
+    return undefined;
+  }, [editingId, onLog]);
   return (
     <section
       aria-label={title}
       data-testid={isReadonly ? "readonly-transcript" : "editable-transcript"}
     >
       <h2 className="mb-2 text-lg font-medium">{title}</h2>
-      <EveMessages
-        actionsDisabled={loading}
-        disabled={loading}
-        editor={edit}
-        isReadonly={isReadonly}
-        messages={messages}
-        modelForMessage={(message) => message.metadata?.modelId}
-        onEdit={(message) => {
-          setEditingId(message.id);
-          onLog(`edit:${message.id}`);
-        }}
-        onRegenerate={(user, response) =>
-          onLog(`retry:${user.id}->${response.id}`)
-        }
-        renderResponses={(message) =>
-          message.id === "user-1" ? inlineResponseCards : null
-        }
-        renderVersions={(message) => (
-          <VersionControls message={message} onLog={onLog} />
-        )}
-        respond={() => onLog("respond")}
-      />
-    </section>
-  );
-};
-
-const LegacyReference = ({
-  isReadonly,
-  loading,
-  title,
-}: {
-  isReadonly: boolean;
-  loading: boolean;
-  title: string;
-}) => {
-  const [versionIndex, setVersionIndex] = useState(1);
-  let testId = "legacy-reference";
-  if (isReadonly) {
-    testId = "legacy-readonly";
-  } else if (loading) {
-    testId = "legacy-pending";
-  }
-  return (
-    <section aria-label={title} className="space-y-2" data-testid={testId}>
-      <h2 className="text-lg font-medium">{title}</h2>
-      <LegacyUserMessageReference
-        editor={<Editor />}
-        isLoading={loading}
-        isReadonly={isReadonly}
-        messageId="legacy-user-1"
-        responses={inlineResponseCards}
-        siblings={
-          <MessageSiblingsView
-            count={3}
-            index={versionIndex}
-            onNext={() => setVersionIndex((index) => Math.min(index + 1, 2))}
-            onPrevious={() =>
-              setVersionIndex((index) => Math.max(index - 1, 0))
+      <MessageScrollerProvider>
+        <EveMessages
+          actionsDisabled={loading}
+          disabled={loading}
+          editor={edit}
+          isReadonly={isReadonly}
+          messages={messages}
+          modelForMessage={(message: {
+            readonly metadata?:
+              | { readonly modelId?: string | undefined }
+              | undefined;
+          }) => message.metadata?.modelId}
+          onEdit={(message: { readonly id: string }) => {
+            setEditingId(message.id);
+            onLog(`edit:${message.id}`);
+          }}
+          onRegenerate={(
+            user: { readonly id: string },
+            response: { readonly id: string }
+          ) => {
+            onLog(`retry:${user.id}->${response.id}`);
+          }}
+          renderResponses={(message: { readonly id: string }) => {
+            if (message.id === "user-1") {
+              return inlineResponseCards;
             }
-          />
-        }
-        text="First user message"
-      />
+            return null;
+          }}
+          renderVersions={(message) => (
+            <VersionControls message={message} onLog={onLog} />
+          )}
+          respond={() => {
+            onLog("respond");
+          }}
+        />
+      </MessageScrollerProvider>
     </section>
   );
 };
 
-const Fixture = () => {
+const Fixture = (): React.JSX.Element => {
   const [log, setLog] = useState<string[]>([]);
   const [selected, setSelected] = useState("comparison-a");
-  const append = (value: string) => setLog((current) => [...current, value]);
+  const append = (value: string): void => {
+    setLog((current: readonly string[]) => [...current, value]);
+  };
   return (
     <main className="mx-auto max-w-4xl space-y-8 p-4">
       <h1 className="text-xl font-semibold">EVE message presentation</h1>
@@ -211,21 +209,11 @@ const Fixture = () => {
         onLog={append}
         title="Restored EVE — ready"
       />
-      <LegacyReference
-        isReadonly={false}
-        loading={false}
-        title="Original main — ready"
-      />
       <Transcript
         isReadonly
         loading={false}
         onLog={append}
         title="Restored EVE — readonly"
-      />
-      <LegacyReference
-        isReadonly
-        loading={false}
-        title="Original main — readonly"
       />
       <Transcript
         isReadonly={false}
@@ -236,11 +224,24 @@ const Fixture = () => {
       <section aria-label="Comparison cards" data-testid="comparison-cards">
         <h2 className="text-lg font-medium">Comparison cards</h2>
         <ResponseChoiceCards
-          slots={comparisonSlots.map((slot) => ({
-            ...slot,
-            handleSelect: () => setSelected(slot.id),
-            selected: selected === slot.id,
-          }))}
+          slots={comparisonSlots.map(
+            (
+              slot: Readonly<{
+                handleSelect: () => null;
+                id: string;
+                loading: boolean;
+                modelName: string;
+                selected: boolean;
+                statusLabel: string;
+              }>
+            ) => ({
+              ...slot,
+              handleSelect: (): void => {
+                setSelected(slot.id);
+              },
+              selected: selected === slot.id,
+            })
+          )}
         />
       </section>
       <output aria-label="Interaction log" data-testid="interaction-log">

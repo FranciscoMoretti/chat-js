@@ -3,14 +3,14 @@ title: Tool Part
 description: Render native EVE tool results with validated schema-inferred props
 ---
 
-A registry tool can include a client renderer for its loading and result states. Put the implementation in `tools/chatjs/<id>/tool.ts`, shared schemas in `schemas.ts`, and the renderer in `renderer.tsx`.
+A registry tool can include a client renderer for its loading and result states. Put the implementation in `chatjs/tools/<id>/tool.ts`, shared schemas in `schemas.ts`, and the renderer in `renderer.tsx`.
 
 Define the server tool with EVE's `defineTool()`. Export a renderer with `defineToolRenderer` and reference its export in `chatjs.json`. The CLI generates the server and renderer registrations when you install or sync the item.
 
-```tsx title="tools/chatjs/word-count/renderer.tsx"
+```tsx title="chatjs/tools/word-count/renderer.tsx"
 "use client";
 
-import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
+import { defineToolRenderer } from "@/chatjs/core/tools/define-renderer";
 import { wordCountInput, wordCountResult } from "./schemas";
 
 export const WordCountRenderer = defineToolRenderer({
@@ -35,6 +35,6 @@ The schemas determine the renderer's TypeScript props and validate persisted dat
 
 The shared renderer handles invalid data, pending approvals, denied requests, and execution errors. If the tool returns a ChatJS cost receipt, `EveToolResult` validates and unwraps it before passing visible output to the renderer.
 
-For an extracted view component, use `ToolRendererProps<typeof wordCountInput, typeof wordCountResult>` from `@/lib/ai/define-tool-renderer`. The props still come from the schemas used for runtime validation.
+For an extracted view component, use `ToolRendererProps<typeof wordCountInput, typeof wordCountResult>` from `@/chatjs/core/tools/define-renderer`. The props still come from the schemas used for runtime validation.
 
 See [Authoring Tools](../tools/authoring) for native execution, receipts, descriptor metadata, and registration.

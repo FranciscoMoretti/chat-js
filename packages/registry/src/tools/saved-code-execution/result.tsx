@@ -1,16 +1,16 @@
 "use client";
 import type { EveMessagePart } from "eve/client";
-
-import { toolOutputSchema } from "@/lib/eve/tool-result";
-import { CodeExecutionChart } from "@/tools/chatjs/_shared/code-execution/code-execution-chart";
-
+import React from "react";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { eveCodeExecutionResult } from "./schemas";
+import { toolOutputSchema } from "@/lib/eve/tool-result";
+import { CodeExecutionChart } from "@/chatjs/tools/_shared/code-execution/code-execution-chart";
 
 export const EveDocumentRunResult = ({
   part,
-}: {
+}: ReadonlyNativeSurface<{
   part: Extract<EveMessagePart, { type: "dynamic-tool" }>;
-}) => {
+}>): React.JSX.Element => {
   if (part.state === "output-error") {
     return <p role="alert">{part.errorText}</p>;
   }
@@ -28,12 +28,13 @@ export const EveDocumentRunResult = ({
     return <p role="alert">{result.data.error}</p>;
   }
   const output = eveCodeExecutionResult.safeParse(result.data.output);
-  return output.success ? (
-    <div className="space-y-3">
-      <p>{output.data.message}</p>
-      <CodeExecutionChart value={output.data.chart} />
-    </div>
-  ) : (
-    <p role="alert">This saved-code result could not be displayed.</p>
-  );
+  if (output.success) {
+    return (
+      <div className="space-y-3">
+        <p>{output.data.message}</p>
+        <CodeExecutionChart value={output.data.chart} />
+      </div>
+    );
+  }
+  return <p role="alert">This saved-code result could not be displayed.</p>;
 };

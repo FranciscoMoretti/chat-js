@@ -1,8 +1,11 @@
 import { execFileSync } from "node:child_process";
 
 import { expect, test } from "@playwright/test";
+import type { TestInfo } from "@playwright/test";
 
-test("deletion dialog state gallery", async ({ page }, testInfo) => {
+test("deletion dialog state gallery", async ({ page }, testInfo: Readonly<
+  Pick<TestInfo, "outputPath">
+>) => {
   const script = execFileSync(
     "bun",
     [
@@ -19,12 +22,12 @@ test("deletion dialog state gallery", async ({ page }, testInfo) => {
     ],
     { encoding: "utf-8", maxBuffer: 20 * 1024 * 1024 }
   );
-  await page.route("http://eve-delete-dialog.test/", (route) =>
-    route.fulfill({
+  await page.route("http://eve-delete-dialog.test/", async (route) => {
+    await route.fulfill({
       body: `<!doctype html><html class="dark"><head><style>${css} body{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;padding:16px} #root{display:contents} [data-slot="dialog-overlay"],[data-radix-focus-guard]{display:none!important} [data-slot="dialog-content"]{position:relative!important;inset:auto!important;transform:none!important;translate:none!important;max-width:none!important;animation:none!important;align-self:start}</style></head><body class="bg-background text-foreground"><div id="root"></div></body></html>`,
       contentType: "text/html",
-    })
-  );
+    });
+  });
   await page.goto("http://eve-delete-dialog.test/");
   await page.addScriptTag({ content: script, type: "module" });
   await expect(page.locator('[data-slot="dialog-content"]')).toHaveCount(7);

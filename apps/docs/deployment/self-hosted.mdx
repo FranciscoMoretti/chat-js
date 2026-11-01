@@ -1,35 +1,52 @@
 ---
 title: Self-Hosted
-description: Deploy ChatJS on any platform
+description: Candidate deployment topology and ChatJS release acceptance requirements
 ---
 
-ChatJS can be deployed to any platform that supports Next.js.
+ChatJS needs a Node 24+ Next.js server, EVE execution, PostgreSQL and persistent files for installed uploads/media. A platform supporting Next.js alone does not establish a working ChatJS deployment.
 
 <Callout type="warning">
-  Hosted provider deletion and guest-hosting validation are still release gates
-  for the EVE-only app. This page does not certify a self-hosted deployment.
+  The profiles below are acceptance targets. Hosted deletion, guest retention,
+  restart/resume and provider resource cleanup need lifecycle evidence before a
+  profile is certified. Generated-app typechecks do not provide that evidence.
 </Callout>
 
-## Getting Started
+## Reference and candidate profiles
 
-Follow the [Quickstart](/quickstart) to scaffold your project and get it running locally. Then deploy to your platform of choice.
+| Profile | App and execution | Data and files | Workflow world |
+| --- | --- | --- | --- |
+| Vercel reference | Vercel Next.js deployment and managed execution | PostgreSQL and private Vercel Blob | Managed Vercel Workflow |
+| Render + Supabase candidate | Render Node 24+ web service with an explicitly supervised EVE worker lifecycle | Supabase PostgreSQL and Supabase Storage | PostgreSQL Workflow |
+| Portable self-hosted candidate | Node 24+ server and supervised worker | PostgreSQL and S3-compatible storage | PostgreSQL Workflow |
 
-## Environment Variables
+Render documents [server-side Next.js as a Node web service](https://render.com/docs/deploy-nextjs-app). ChatJS requires server-side routes and execution, so static export is insufficient. Supabase supplies the database and file services in the candidate profile. Better Auth remains the authentication implementation.
 
-See the [Quickstart](/quickstart#2-configure-environment-variables) for required environment variables.
+## Connections and environment
 
-## Database Migrations
+Start with the generated `.env.example` and installed provider requirements:
 
-For production deployments, use tracked migrations instead of `db:push`:
+- `DATABASE_URL` connects application data. `DATABASE_MIGRATION_URL` optionally selects a migration connection.
+- `WORKFLOW_POSTGRES_URL` selects local/self-hosted workflow storage and falls back to `DATABASE_URL`. Verify a direct/session connection, schema permissions and worker concurrency. Use a separate workflow database if the data service cannot meet those requirements.
+- `EVE_GATEWAY_SECRET` must be independently generated and shared by the appropriate app/worker processes. `EVE_INTERNAL_ORIGIN` must reach the application gateway over HTTPS except on loopback.
+- `APP_URL`, OAuth callbacks and proxy settings must describe the public deployment.
+- Storage credentials belong to the selected adapter. Use `chat-js add --storage-provider supabase --replace` to replace an existing file provider, with non-secret adapter options where required.
+
+Supabase distinguishes direct, session-pooler and transaction-pooler connections. Direct connections suit persistent backends when reachable, while session mode supports IPv4-only networks. Transaction mode does not support prepared statements and must not be assumed suitable for durable workflow requirements. See [Supabase connection modes](https://supabase.com/docs/guides/database/connecting-to-postgres).
+
+Use tracked application migrations for a provisioned environment:
 
 ```bash
+bun run check-env
+bun run db:connect
 bun run db:migrate
 ```
 
-## Platform Guides
+These commands do not certify worker lifecycle or hosted erasure. The final Render worker start command, supervision/restart behavior, workflow privileges and scheduler configuration remain acceptance evidence to capture. Do not treat a local loopback `eve:start` command as a hosted worker recipe.
 
-<Callout type="note">
-  Detailed deployment guides for specific platforms coming soon.
-</Callout>
+## Evidence required before certification
 
-For the simplest setup, we recommend deploying to [Vercel](/deployment/vercel). For containerized deployments, see [Docker](/deployment/docker).
+Record the exact commit, dependency versions, generated selection, setup commands and environment variable names without secrets. For each representative profile, verify fresh installation and startup, OAuth, streaming/cancel/reload/resume, ownership isolation, selected tools and file access, deletion with retry/late-write fencing, guest expiration, and restart recovery.
+
+Search must be replaceable in both directions for direct chat and research. Sandbox replacement must also work for saved-code execution and prove provider-owned cleanup. A hosted non-Vercel app that still calls Vercel Sandbox does not demonstrate an independent sandbox provider.
+
+Label results as source-only, generated/typechecked, local lifecycle or hosted lifecycle. The storage adapter catalog is broader than the certified deployment matrix. See [Configuration](../core/configuration), [Database](../reference/database), [Vercel](./vercel) and [Docker](./docker).

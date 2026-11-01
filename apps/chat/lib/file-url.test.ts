@@ -1,12 +1,10 @@
-import assert from "node:assert/strict";
-
 import { describe, it } from "vitest";
-
 import {
   getFileImageProps,
   isFileStorageKey,
   keyFromFileUrl,
 } from "./file-url";
+import assert from "node:assert/strict";
 
 describe("keyFromFileUrl", () => {
   const key = "l_u0a2bkphKLFKsBI4q5Tue9.png";

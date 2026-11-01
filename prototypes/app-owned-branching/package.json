@@ -1,0 +1,10 @@
+{
+  "name": "@chatjs/prototype-app-owned-branching",
+  "private": true,
+  "devDependencies": {
+    "@types/node": "22.8.6",
+    "postgres": "^3.4.4",
+    "vitest": "^4.1.11",
+    "zod": "^4.3.6"
+  }
+}

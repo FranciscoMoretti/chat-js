@@ -1,5 +1,4 @@
-import { describe, expect, it } from "vitest";
-
+import { describe, expect, it, vi } from "vitest";
 import { createConversationInput } from "./contracts";
 import { prepareCreation } from "./pending-create";
 import {
@@ -105,11 +104,11 @@ describe("Eve command recovery", () => {
   it("validates before retaining intent and isolates pending intents by account", () => {
     const data = new Map<string, string>();
     const storage = {
-      getItem: (key: string) => data.get(key) ?? null,
-      removeItem: (key: string) => {
+      getItem: (key: string): string | null => data.get(key) ?? null,
+      removeItem: (key: string): void => {
         data.delete(key);
       },
-      setItem: (key: string, value: string) => {
+      setItem: (key: string, value: string): void => {
         data.set(key, value);
       },
     };
@@ -127,58 +126,50 @@ describe("Eve command recovery", () => {
     expect(prepareCreation(storage, "bob", "other").message).toBe("other");
   });
   it("surfaces callback-only failures and catches up after cancellation", async () => {
-    let replayed = 0;
+    const resume = vi.fn<() => Promise<void>>().mockResolvedValue();
     await expect(
       sendCommand(
-        () => Promise.resolve(),
-        () => {
-          replayed += 1;
-          return Promise.resolve();
-        },
+        vi.fn<() => Promise<void>>().mockResolvedValue(),
+        resume,
         true,
         () => new Error("failed")
       )
     ).rejects.toThrow("failed");
-    expect(replayed).toBe(0);
+    expect(resume).toHaveBeenCalledTimes(0);
     await sendCommand(
-      () => Promise.resolve(),
-      () => {
-        replayed += 1;
-        return Promise.resolve();
-      },
+      vi.fn<() => Promise<void>>().mockResolvedValue(),
+      resume,
       true,
-      () => {}
+      () => {
+        // This test verifies replay without an additional side effect.
+      }
     );
-    expect(replayed).toBe(1);
+    expect(resume).toHaveBeenCalledTimes(1);
   });
 });
 
 it("waits for authoritative acceptance after cancellation without submitting twice", async () => {
-  let submissions = 0;
-  let snapshots = 0;
+  const send = vi.fn<() => Promise<void>>().mockResolvedValue();
+  const resume = vi.fn<() => Promise<void>>().mockResolvedValue();
   await sendCommand(
-    () => {
-      submissions += 1;
-      return Promise.resolve();
-    },
-    () => {
-      snapshots += 1;
-      return Promise.resolve();
-    },
+    send,
+    resume,
     true,
-    () => {},
-    () => snapshots >= 2
+    () => {
+      // This test verifies cancellation without an additional side effect.
+    },
+    () => resume.mock.calls.length >= 2
   );
-  expect(submissions).toBe(1);
-  expect(snapshots).toBe(2);
+  expect(send).toHaveBeenCalledTimes(1);
+  expect(resume).toHaveBeenCalledTimes(2);
 });
 
-it("accepts conversation-based forks and rejects raw native identities or invalid turns", () => {
+it("accepts current conversation copies and rejects native identities or historical turns", () => {
   const input = { message: "replacement", operationId: crypto.randomUUID() };
   expect(
     createConversationInput.safeParse({
       ...input,
-      fork: { beforeTurnId: "turn_1", conversationId: crypto.randomUUID() },
+      fork: { conversationId: crypto.randomUUID() },
     }).success
   ).toBe(true);
   expect(
@@ -199,7 +190,7 @@ it("accepts conversation-based forks and rejects raw native identities or invali
   expect(
     createConversationInput.safeParse({
       ...input,
-      fork: { beforeTurnId: "turn_1", conversationId: crypto.randomUUID() },
+      fork: { conversationId: crypto.randomUUID() },
       forkKind: "regenerate",
     }).success
   ).toBe(true);
@@ -224,22 +215,28 @@ it("allows a project for new conversations while forks inherit their existing pr
   ).toBe(false);
 });
 
-it("accepts exactly one canonical imported fork boundary", () => {
+it("accepts message edit boundaries but rejects historical runtime checkpoints", () => {
   const input = {
     fork: {
-      beforeMessageId: "seed_message_2",
       conversationId: crypto.randomUUID(),
     },
     message: "Replacement question",
     operationId: crypto.randomUUID(),
   };
   expect(createConversationInput.parse(input)).toEqual(input);
+  for (const beforeMessageId of ["seed_message_0", "evt_native:user"]) {
+    const edit = {
+      ...input,
+      forkKind: "edit",
+      fork: { ...input.fork, beforeMessageId },
+    };
+    expect(createConversationInput.parse(edit)).toEqual(edit);
+  }
   for (const fork of [
     { ...input.fork, beforeTurnId: "turn_0" },
     { ...input.fork, checkpointId: crypto.randomUUID() },
-    { ...input.fork, beforeMessageId: "seed_message_02" },
-    { ...input.fork, beforeMessageId: "seed_message_10000" },
-    { ...input.fork, beforeMessageId: "message_2" },
+    { ...input.fork, beforeMessageId: "" },
+    { ...input.fork, beforeMessageId: "x".repeat(513) },
   ]) {
     expect(createConversationInput.safeParse({ ...input, fork }).success).toBe(
       false

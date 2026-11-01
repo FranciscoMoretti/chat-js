@@ -1,12 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { z } from "zod";
-
-import { getEveRuntimeEnvOptions } from "../env-schema";
 import {
   configureWorkflowEnvironment,
   resolveEveEnvironment,
   resolveWorkflowDatabaseUrl,
 } from "./environment";
+import { getEveRuntimeEnvOptions } from "@/lib/env-schema";
+import { z } from "zod";
 
 const base = {
   AUTH_SECRET: "existing-application-secret-at-least-32-characters",
@@ -164,7 +163,11 @@ describe("EVE environment defaults", () => {
       };
       const worker: Record<string, string | undefined> = { ...source };
       configureWorkflowEnvironment(worker);
-      expect(worker.WORKFLOW_POSTGRES_URL).toBe(DATABASE_URL || undefined);
+      if (typeof DATABASE_URL === "string" && DATABASE_URL !== "") {
+        expect(worker.WORKFLOW_POSTGRES_URL).toBe(DATABASE_URL);
+      } else {
+        expect(worker.WORKFLOW_POSTGRES_URL).toBeUndefined();
+      }
       expect(schema.safeParse(resolveEveEnvironment(source)).success).toBe(
         false
       );
@@ -223,7 +226,7 @@ it("the application env resolves defaults with an explicit gateway secret", asyn
   vi.stubEnv("VERCEL", "");
   vi.stubEnv("DATABASE_URL", base.DATABASE_URL);
   vi.stubEnv("VERCEL_URL", "deployment.vercel.app");
-  const { env } = await import("../env");
+  const { env } = await import("@/lib/env");
   expect(env.EVE_GATEWAY_SECRET).toBe(
     resolveEveEnvironment(base).EVE_GATEWAY_SECRET
   );
@@ -236,7 +239,7 @@ it("does not expose server credentials to client components", async () => {
   vi.stubEnv("AUTH_SECRET", base.AUTH_SECRET);
   vi.stubEnv("EVE_GATEWAY_SECRET", base.EVE_GATEWAY_SECRET);
   vi.stubEnv("VERCEL", "");
-  const { env } = await import("../env");
+  const { env } = await import("@/lib/env");
   expect(() => env.EVE_GATEWAY_SECRET).toThrow();
   expect(() => env.WORKFLOW_POSTGRES_URL).toThrow();
 });
@@ -245,8 +248,10 @@ it("normalizes the schema's Playwright fallback URL", async () => {
   vi.stubEnv("PLAYWRIGHT", "True");
   vi.stubEnv("PLAYWRIGHT_TEST_BASE_URL", "http://[::1]:3110/chat?test=1#chat");
   vi.resetModules();
-  const { serverEnvSchema } = await import("../env-schema");
-  expect(serverEnvSchema.EVE_INTERNAL_ORIGIN.parse(undefined)).toBe(
-    "http://[::1]:3110"
-  );
+  const { serverEnvSchema } = await import("@/lib/env-schema");
+  expect(
+    z
+      .object({ EVE_INTERNAL_ORIGIN: serverEnvSchema.EVE_INTERNAL_ORIGIN })
+      .parse({}).EVE_INTERNAL_ORIGIN
+  ).toBe("http://[::1]:3110");
 });

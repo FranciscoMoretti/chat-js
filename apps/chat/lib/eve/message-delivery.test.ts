@@ -1,39 +1,49 @@
-import type { MessageStreamEvent } from "eve/client";
 import { describe, expect, it } from "vitest";
 
-import {
-  eveMessageDelivery,
-  eveMessageDeliveryMetadata,
-} from "./message-delivery";
+import { eveMessageDelivery } from "./message-delivery";
 
 const memoryStorage = () => {
   const values = new Map<string, string>();
   return {
     getItem: (key: string) => values.get(key) ?? null,
-    removeItem: (key: string) => {
+    removeItem: (key: string): void => {
       values.delete(key);
     },
-    setItem: (key: string, value: string) => {
+    setItem: (key: string, value: string): void => {
       values.set(key, value);
     },
   };
 };
 
-const received = (
-  message: string,
-  operationId: string
-): MessageStreamEvent => ({
-  data: {
-    message,
-    metadata: eveMessageDeliveryMetadata(operationId, null),
-    sequence: 1,
-    turnId: "turn_1",
-  },
-  meta: { at: "2026-09-13T00:00:00.000Z", id: crypto.randomUUID() },
-  type: "message.received",
+const received = (_message: string, operationId: string) => ({
+  sessionId: "session",
+  operationId,
+  deliveryId: `native-${operationId}`,
 });
 
 describe("Eve message delivery recovery", () => {
+  it("preserves pending delivery data when its selected tool is no longer installed", () => {
+    const storage = memoryStorage();
+    const pending = eveMessageDelivery.begin(storage, "session", {
+      attachments: [
+        {
+          contentType: "image/png",
+          digest: "digest",
+          name: "image.png",
+          url: "/api/files/abcdefghijklmnopqrstuvwx.png",
+        },
+      ],
+      message: "Keep this message after removing its tool",
+      modelId: "model",
+      selectedTool: "removedPluginTool",
+    });
+
+    expect(eveMessageDelivery.read(storage, "session")).toEqual(pending);
+    expect(
+      storage.getItem("chatjs.eve.pending-message:session")
+    ).not.toBeNull();
+  });
+
   it("retains a lost response across reload until the exact operation is acknowledged", () => {
     const storage = memoryStorage();
     const pending = eveMessageDelivery.begin(storage, "session", {
@@ -73,7 +83,7 @@ describe("Eve message delivery recovery", () => {
     ).toBe(true);
     expect(eveMessageDelivery.read(storage, "session")).toBeNull();
 
-    // Replayed stream events are harmless after the first acknowledgement.
+    // Repeated positive receipts are harmless after the first acknowledgement.
     expect(
       eveMessageDelivery.acknowledge(
         storage,
@@ -128,14 +138,17 @@ it("retries a busy saved delivery with its original identity and clears rejectio
   });
   eveMessageDelivery.reject(storage, "session", original, "Busy", true);
   const reloaded = eveMessageDelivery.read(storage, "session");
-  expect(reloaded?.retryable).toBe(true);
   if (!reloaded) {
     throw new Error("Missing saved delivery");
   }
+  expect(reloaded.retryable).toBe(true);
   const retry = eveMessageDelivery.retry(storage, "session", reloaded);
-  expect(retry?.operationId).toBe(original.operationId);
-  expect(retry?.rejection).toBeUndefined();
-  expect(retry?.retryable).toBeUndefined();
+  if (!retry) {
+    throw new Error("Missing retried delivery");
+  }
+  expect(retry.operationId).toBe(original.operationId);
+  expect(retry.rejection).toBeUndefined();
+  expect(retry.retryable).toBeUndefined();
   // An ambiguous failed retry must never remain automatically replayable.
   expect(
     eveMessageDelivery.retry(storage, "session", original)

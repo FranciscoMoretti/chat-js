@@ -1,7 +1,9 @@
-/* oxlint-disable eslint/sort-keys -- Property order is part of persisted EVE request and transcript hashes; keep the original wire representation. */
+import { projectSelectionAvailable } from "./project-creation";
+
 import { z } from "zod";
 
-import { frontendToolsSchema } from "../ai/types";
+import { frontendToolsSchema } from "@/lib/ai/types";
+
 import { eveForkInput } from "./contracts";
 import { eveMessageInput } from "./message-input";
 
@@ -17,11 +19,18 @@ export const eveResponseGroupInput = z
   })
   .strict()
   .refine(
-    (input) => !(input.fork && input.projectId),
+    (input) => !(input.fork !== undefined && input.projectId !== undefined),
     "Forks inherit their source project."
   )
   .refine(
-    (input) => !input.forkKind || input.fork,
+    (input) => projectSelectionAvailable(input.projectId),
+    "Projects plugin is not installed."
+  )
+  .refine(
+    (input: {
+      readonly forkKind?: "edit" | "comparison";
+      readonly fork?: z.infer<typeof eveForkInput>;
+    }) => !input.forkKind || input.fork !== undefined,
     "Fork intent requires a source conversation."
   )
   .transform((input) => ({

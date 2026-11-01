@@ -1,10 +1,16 @@
+import type { FtpAdapter, FtpAdapterOptions } from "files-sdk/ftp";
 import { ftp } from "files-sdk/ftp";
 
+const getSecureDefault = (): true | "implicit" => {
+  if (process.env.FTP_SECURE === "implicit") {
+    return "implicit";
+  }
+  return true;
+};
+
 export const createStorageAdapter = (
-  options: Parameters<typeof ftp>[0] = {}
-) => {
-  const secure =
-    options.secure ??
-    (process.env.FTP_SECURE === "implicit" ? "implicit" : true);
+  options: Readonly<FtpAdapterOptions> = {}
+): FtpAdapter => {
+  const secure = options.secure ?? getSecureDefault();
   return ftp({ ...options, secure });
 };

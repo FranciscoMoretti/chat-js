@@ -1,17 +1,26 @@
-import { readFile, writeFile } from "node:fs/promises";
+import type { ReadonlyInput } from "./readonly-input";
+import type { StorageSelection } from "#cli/registry/storage";
+import { builtInStorage } from "../../../registry/src/storage/catalog";
+import { generatedRegistrationSource } from "#cli/utils/generated-registration-source";
 import path from "node:path";
-
+import { preflight } from "#cli/utils/preflight";
+import { updateEnvironmentExample } from "#cli/utils/environment-example";
+import { mkdir, writeFile } from "node:fs/promises";
 import { z } from "zod";
 
-import { builtInStorage } from "../../../registry/src/storage/catalog";
-import type { StorageSelection } from "../registry/storage";
-import { preflight } from "../utils/preflight";
+const CONFIG_JSON_INDENTATION_SPACES = 2;
 
-export const INSTALLABLE_STORAGE_PROVIDERS = builtInStorage.filter(
-  (item) => item.meta.chatjs.id !== "memory"
+const serializedConfigValue = (
+  value: unknown
+): ReturnType<typeof JSON.stringify> =>
+  JSON.stringify(value, null, CONFIG_JSON_INDENTATION_SPACES);
+
+const INSTALLABLE_STORAGE_PROVIDERS = builtInStorage.filter(
+  (item: ReadonlyInput<(typeof builtInStorage)[number]>) =>
+    item.meta.chatjs.id !== "memory"
 );
 
-export const parseStorageOptions = (value: string): Record<string, unknown> => {
+const parseStorageOptions = (value: string): Record<string, unknown> => {
   try {
     return z.record(z.string(), z.unknown()).parse(JSON.parse(value));
   } catch {
@@ -19,49 +28,43 @@ export const parseStorageOptions = (value: string): Record<string, unknown> => {
   }
 };
 
-/** Configure the installed source without evaluating it or editing dependencies. */
-export const configureStorageProvider = async (
+const storageConfigurationTargets = [
+  "chatjs/providers/storage-options.ts",
+  ".env.example",
+];
+
+/**
+ * Configure the installed source without evaluating it or editing dependencies.
+ * @param {string} destination Project root receiving storage-options.ts and its env block.
+ * @param {ReadonlyInput<StorageSelection>} selection Resolved descriptor and non-secret native storage options.
+ */
+const configureStorageProvider = async (
   destination: string,
-  selection: StorageSelection
+  selection: ReadonlyInput<StorageSelection>
 ): Promise<void> => {
-  await preflight(destination, ["lib/storage-options.ts", ".env.example"]);
+  await preflight(destination, storageConfigurationTargets);
+  await mkdir(path.join(destination, "chatjs/providers"), { recursive: true });
   const { definition, options } = selection;
   await writeFile(
-    path.join(destination, "lib/storage-options.ts"),
-    `import type { EnvRequirement } from "./config-requirements";
-import type { createStorageAdapter } from "./storage-provider";
+    path.join(destination, "chatjs/providers/storage-options.ts"),
+    generatedRegistrationSource(`import type { EnvRequirement } from "@/lib/config-requirements";
+import type { createStorageAdapter } from "@/chatjs/providers/storage";
 
-export const storageOptions = ${JSON.stringify(options, null, 2)} satisfies Parameters<typeof createStorageAdapter>[0];
-export const storageId = ${JSON.stringify(definition.id)};
-export const storageEnvRequirements: EnvRequirement[] = ${JSON.stringify(definition.envRequirements, null, 2)};
-`
+export const storageOptions = ${serializedConfigValue(options)} satisfies Parameters<typeof createStorageAdapter>[0];
+export const storageId = ${serializedConfigValue(definition.id)};
+export const storageEnvRequirements: EnvRequirement[] = ${serializedConfigValue(definition.envRequirements)};
+`)
   );
-  const examplePath = path.join(destination, ".env.example");
-  let env = await readFile(examplePath, "utf-8").catch((error) => {
-    if (error.code === "ENOENT") {
-      return "";
-    }
-    throw error;
-  });
-  const start = "# <chatjs-storage-provider>";
-  const end = "# </chatjs-storage-provider>";
-  const from = env.indexOf(start);
-  const to = env.indexOf(end);
-  if (from !== -1 && to >= from) {
-    env = env.slice(0, from) + env.slice(to + end.length);
-  }
-  const variables = [
-    ...new Set(definition.envRequirements.flatMap((r) => r.options.flat())),
-  ];
-  env += `\n${start}\n# ${definition.id} storage\n`;
-  for (const key of variables) {
-    if (!new RegExp(`^${key}=`, "mu").test(env)) {
-      env += `${key}=\n`;
-    }
-  }
-  for (const key of definition.optionalEnv) {
-    env += `# ${key}=\n`;
-  }
-  env += `${end}\n`;
-  await writeFile(examplePath, env);
+  await updateEnvironmentExample(destination, "storage-provider", [
+    ...definition.envRequirements.flatMap((requirement) =>
+      requirement.options.flat()
+    ),
+    ...definition.optionalEnv,
+  ]);
+};
+export {
+  configureStorageProvider,
+  storageConfigurationTargets,
+  INSTALLABLE_STORAGE_PROVIDERS,
+  parseStorageOptions,
 };

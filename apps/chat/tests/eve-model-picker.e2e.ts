@@ -1,11 +1,12 @@
-/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
+import { userCredit } from "@/chatjs/plugins/credits/credits-schema";
 import { expect, test } from "@playwright/test";
 import { eq, sql } from "drizzle-orm";
 import { Client } from "eve/client";
+import type { MessageStreamEvent } from "eve/client";
 import { z } from "zod";
 
 import { db } from "../lib/db/client";
-import { eveConversation, userCredit } from "../lib/db/schema";
+import { eveConversation } from "../lib/db/schema";
 import { env } from "../lib/env";
 import { getEveConnectionOptions } from "../lib/eve/connection-options";
 import { assertEveTestDatabase } from "./eve-test-database";
@@ -25,19 +26,20 @@ test("the single-model picker dispatches and retains the selected native model",
   let conversationId: string | undefined;
   let origin: string | undefined;
   try {
-    await page.route("https://unpkg.com/react-scan/**", (route) =>
-      route.abort()
-    );
+    await page.route("https://unpkg.com/react-scan/**", async (route) => {
+      await route.abort();
+    });
     await page.goto("/api/dev-login");
     ({ origin } = new URL(page.url()));
+    const authSessionResponse = await page.request.get("/api/auth/get-session");
     const { user } = z
       .object({ user: z.object({ id: z.string() }) })
-      .parse(await (await page.request.get("/api/auth/get-session")).json());
+      .parse(await authSessionResponse.json());
     await db
       .insert(userCredit)
-      .values({ credits: 1000, userId: user.id })
+      .values({ balanceCents: 1000, userId: user.id })
       .onConflictDoUpdate({
-        set: { credits: sql`greatest(${userCredit.credits}, 1000)` },
+        set: { balanceCents: sql`greatest(${userCredit.balanceCents}, 1000)` },
         target: userCredit.userId,
       });
     await page.goto("/");
@@ -80,13 +82,19 @@ test("the single-model picker dispatches and retains the selected native model",
       .from(eveConversation)
       .where(eq(eveConversation.id, conversationId));
     expect(conversation?.initialModelId).toBe(modelId);
-    if (!conversation?.sessionId) {
+    if (
+      conversation === undefined ||
+      conversation === null ||
+      conversation.sessionId === undefined ||
+      conversation.sessionId === null ||
+      conversation.sessionId === ""
+    ) {
       throw new Error("Missing native session binding.");
     }
 
     await expect(page).toHaveURL(new RegExp(`/chat/${conversationId}$`, "u"));
     await expect(
-      page.getByRole("log").locator(".is-assistant").last()
+      page.getByRole("log").locator('[data-role="assistant"]').last()
     ).toContainText(marker, { timeout: 90_000 });
     await expect(page.getByText("Ready", { exact: true })).toBeVisible();
     const client = new Client(getEveConnectionOptions(user.id));
@@ -94,30 +102,38 @@ test("the single-model picker dispatches and retains the selected native model",
       .attach(conversation.sessionId)
       .snapshot();
     const modelStep = snapshot.events.find(
-      (event) => event.type === "step.started"
+      (
+        event: Readonly<Pick<MessageStreamEvent, "type">>
+      ): event is Extract<MessageStreamEvent, { type: "step.started" }> =>
+        event.type === "step.started"
     );
     expect(modelStep?.data.modelId).toBe(`gateway/${modelId}`);
     await page.reload();
     await expect(picker).toContainText(modelName);
     await expect(
-      page.getByRole("log").locator(".is-assistant").last()
+      page.getByRole("log").locator('[data-role="assistant"]').last()
     ).toContainText(marker);
   } finally {
     testInfo.setTimeout(testInfo.timeout + 60_000);
-    if (conversationId && origin) {
+    if (
+      conversationId !== undefined &&
+      conversationId !== null &&
+      conversationId !== "" &&
+      origin !== undefined &&
+      origin !== null &&
+      origin !== ""
+    ) {
       const url = `/api/agent-conversations/${conversationId}`;
       const headers = { origin };
       await expect
         .poll(
-          async () =>
-            [200, 404].includes(
-              (
-                await page.request.delete(url, {
-                  headers,
-                  timeout: 15_000,
-                })
-              ).status()
-            ),
+          async () => {
+            const deletionResponse = await page.request.delete(url, {
+              headers,
+              timeout: 15_000,
+            });
+            return [200, 404].includes(deletionResponse.status());
+          },
           { intervals: [1000, 2000, 5000], timeout: 60_000 }
         )
         .toBe(true);

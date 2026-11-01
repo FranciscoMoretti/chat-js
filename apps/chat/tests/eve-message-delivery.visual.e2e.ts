@@ -1,12 +1,13 @@
 import { execFileSync } from "node:child_process";
 
 import { expect, test } from "@playwright/test";
+import type { TestInfo } from "@playwright/test";
 
 test("pending delivery survives reload and clears only for its operation", async ({
   page,
-}, testInfo) => {
+}, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
   const errors: string[] = [];
-  page.on("pageerror", (error) => errors.push(error.message));
+  page.on("pageerror", (error: Readonly<Error>) => errors.push(error.message));
   const script = execFileSync(
     "bun",
     [
@@ -23,13 +24,13 @@ test("pending delivery survives reload and clears only for its operation", async
     ],
     { encoding: "utf-8", maxBuffer: 20 * 1024 * 1024 }
   );
-  await page.route("http://localhost:39799/delivery-fixture", (route) =>
-    route.fulfill({
+  await page.route("http://localhost:39799/delivery-fixture", async (route) => {
+    await route.fulfill({
       body: `<!doctype html><html class="dark"><head><style>${css}</style></head><body class="bg-background text-foreground"><div id="root"></div></body></html>`,
       contentType: "text/html",
-    })
-  );
-  const mount = async () => {
+    });
+  });
+  const mount = async (): Promise<void> => {
     await page.goto("http://localhost:39799/delivery-fixture");
     await page.addScriptTag({ content: script, type: "module" });
     await expect(page.getByRole("heading")).toBeVisible();

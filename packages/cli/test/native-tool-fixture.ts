@@ -3,6 +3,8 @@ import path from "node:path";
 
 import { run } from "./run-command";
 
+const NATIVE_RUNTIME_TIMEOUT_MS = 180_000;
+
 const definition = {
   contractVersion: 1,
   id: "paid-counter",
@@ -15,13 +17,13 @@ const definition = {
   ],
 };
 
-export const nativeToolFixture = {
+const nativeToolFixture = {
   dependencies: ["zod"],
   files: [
     {
       content: JSON.stringify(definition),
       path: "chatjs.json",
-      target: "~/tools/chatjs/paid-counter/chatjs.json",
+      target: "~/chatjs/tools/paid-counter/chatjs.json",
       type: "registry:file",
     },
     {
@@ -41,20 +43,20 @@ export const externalPaidCounter = defineTool({
   toModelOutput: toolResultToModelOutput,
 });`,
       path: "tool.ts",
-      target: "~/tools/chatjs/paid-counter/tool.ts",
+      target: "~/chatjs/tools/paid-counter/tool.ts",
       type: "registry:file",
     },
     {
       content: `"use client";
 import { z } from "zod";
-import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
+import { defineToolRenderer } from "@/chatjs/core/tools/define-renderer";
 export const PaidCounterRenderer = defineToolRenderer({
   inputSchema: z.object({ fail: z.boolean() }),
   outputSchema: z.object({ answer: z.number() }),
   render: ({ tool }) => <p>{tool.state === "output-available" ? tool.output.answer : "Working"}</p>,
 });`,
       path: "renderer.tsx",
-      target: "~/tools/chatjs/paid-counter/renderer.tsx",
+      target: "~/chatjs/tools/paid-counter/renderer.tsx",
       type: "registry:file",
     },
   ],
@@ -64,11 +66,24 @@ export const PaidCounterRenderer = defineToolRenderer({
 };
 
 /** Run the installed app's registration through a real, isolated EVE worker. */
-export const verifyNativeToolRuntime = async (cwd: string) => {
+const verifyNativeToolRuntime = async (cwd: string) => {
   const fixture = path.join(cwd, "native-runtime");
   await mkdir(path.join(fixture, "agent/tools"), { recursive: true });
+  await mkdir(path.join(fixture, "agent/hooks"), { recursive: true });
+  await mkdir(path.join(fixture, "agent/channels"), { recursive: true });
   await mkdir(path.join(fixture, "evals"), { recursive: true });
   await Promise.all([
+    writeFile(
+      path.join(fixture, "agent/hooks/tool-selection.ts"),
+      'export { default } from "../../../agent/hooks/tool-selection";\n'
+    ),
+    writeFile(
+      path.join(fixture, "agent/channels/eve.ts"),
+      `import { eveChannel } from "eve/channels/eve";
+export default eveChannel({
+  auth: () => ({ principalId: "fixture", principalType: "user", authenticator: "chatjs-gateway", attributes: {} }),
+});\n`
+    ),
     writeFile(
       path.join(fixture, "agent/instructions.md"),
       "Execute the requested tool once and report its result.\n"
@@ -154,6 +169,7 @@ export default ["words", "success", "failure", "exception"].map((scenario) => de
       "--timeout",
       "60000",
     ],
-    180_000
+    NATIVE_RUNTIME_TIMEOUT_MS
   );
 };
+export { nativeToolFixture, verifyNativeToolRuntime };

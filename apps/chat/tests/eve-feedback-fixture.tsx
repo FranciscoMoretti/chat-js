@@ -1,7 +1,7 @@
+import React from "react";
 import { createRoot } from "react-dom/client";
 
-import { MessageActions } from "../components/ai-elements/message";
-import { MessageVoteActions } from "../components/message-vote-actions";
+import { MessageVoteActions } from "../chatjs/plugins/feedback/message-vote-actions";
 
 const states: {
   label: string;
@@ -17,22 +17,31 @@ const root = document.querySelector("#fixture");
 if (!root) {
   throw new Error("Missing fixture root");
 }
+
 createRoot(root).render(
   <main className="mx-auto max-w-xl space-y-6 p-6">
     <h1>Shared ChatJS feedback controls</h1>
-    {states.map((state) => (
-      <section className="space-y-2" key={state.label}>
-        <h2>{state.label}</h2>
-        <MessageActions>
-          <MessageVoteActions
-            disabled={state.disabled}
-            onVote={async () => {
-              /* empty */
-            }}
-            vote={state.vote}
-          />
-        </MessageActions>
-      </section>
-    ))}
+    {states.map(
+      (
+        state: Readonly<{
+          label: string;
+          vote?: Readonly<{ isUpvoted: boolean }>;
+          disabled?: boolean;
+        }>
+      ) => (
+        <section className="space-y-2" key={state.label}>
+          <h2>{state.label}</h2>
+          <div className="flex items-center gap-1">
+            <MessageVoteActions
+              disabled={state.disabled}
+              onVote={async () => {
+                /* This static fixture does not submit a vote. */
+              }}
+              vote={state.vote}
+            />
+          </div>
+        </section>
+      )
+    )}
   </main>
 );

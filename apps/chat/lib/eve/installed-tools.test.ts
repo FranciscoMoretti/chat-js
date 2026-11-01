@@ -1,28 +1,32 @@
-import type { ModelMessage } from "ai";
 import { expect, test, vi } from "vitest";
-
-import installed from "../../agent/tools/installed";
+import type { ModelMessage } from "ai";
 import type { eveImageContext } from "./image-context";
+import installed from "@/agent/tools/installed";
 
 const state = vi.hoisted(() => ({
   update: vi.fn<(update: () => ReturnType<typeof eveImageContext>) => void>(),
 }));
 vi.mock("./tool-image-context", () => ({ eveToolImageContext: state }));
+
 const definitions = await vi.hoisted(async () => {
   const { defineTool } = await import("eve/tools");
-  const { z } = await import("zod");
+  const { z: zod } = await import("zod");
   return {
     customEcho: defineTool({
       approval: () => "user-approval",
       description: "Custom echo",
-      execute: ({ text }) => text,
-      inputSchema: z.object({ text: z.string() }),
+      execute: ({ text }): string => text,
+      inputSchema: zod.object({ text: zod.string() }),
       toModelOutput: (text) => ({ type: "text" as const, value: text }),
     }),
   };
 });
-vi.mock("../../tools/chatjs/tools", () => ({ tools: definitions }));
-vi.mock("./turn-tools", () => ({ filterEveTools: <T>(tools: T) => tools }));
+vi.mock("../../integrations/tools/execution", () => ({ tools: definitions }));
+
+vi.mock("./turn-tools", () => ({
+  filterEveTools: <Tools>(tools: Tools): Tools => tools,
+}));
+
 test("installed and custom definitions retain their native policies and concrete definitions", async () => {
   const resolve = installed.events["step.started"];
   if (!resolve) {
@@ -34,7 +38,18 @@ test("installed and custom definitions retain their native policies and concrete
       channel: {},
       messages: [],
       model: null,
-      session: { auth: { current: null, initiator: null }, id: "test" },
+      session: {
+        auth: {
+          current: null,
+          initiator: {
+            authenticator: "chatjs-gateway",
+            attributes: {},
+            principalId: "owner",
+            principalType: "user",
+          },
+        },
+        id: "test",
+      },
     }
   );
   expect(Object.values(result)[0]).toBe(definitions.customEcho);
@@ -73,7 +88,18 @@ test("steps retain only current image inputs, not the conversation history", asy
     channel: {},
     messages,
     model: null,
-    session: { auth: { current: null, initiator: null }, id: "test" },
+    session: {
+      auth: {
+        current: null,
+        initiator: {
+          authenticator: "chatjs-gateway",
+          attributes: {},
+          principalId: "owner",
+          principalType: "user",
+        },
+      },
+      id: "test",
+    },
   };
   await resolve({}, context);
   const initial = state.update.mock.lastCall?.[0]();
@@ -107,4 +133,30 @@ test("steps retain only current image inputs, not the conversation history", asy
     attachments: [],
     lastGeneratedImage: next?.lastGeneratedImage,
   });
+});
+
+test.each([
+  null,
+  {
+    authenticator: "removed-profile",
+    attributes: {},
+    principalId: "visitor",
+    principalType: "user",
+  },
+])("unknown identities receive no installed tools: %o", async (initiator) => {
+  const resolve = installed.events["step.started"];
+  if (!resolve) {
+    throw new Error("Missing tool resolver");
+  }
+  expect(
+    await resolve(
+      {},
+      {
+        channel: {},
+        messages: [],
+        model: null,
+        session: { auth: { current: null, initiator }, id: "session" },
+      }
+    )
+  ).toEqual({});
 });

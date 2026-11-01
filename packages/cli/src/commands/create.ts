@@ -1,54 +1,62 @@
-import { readFile, writeFile } from "node:fs/promises";
-import path from "node:path";
-
+import { optionalDirectoryFiles } from "#cli/utils/installation-files";
+import { recordInstalledSource } from "#cli/utils/source-receipt";
+import { scaffoldNativeProject } from "#cli/helpers/native-scaffold";
+import { createStagedProject } from "#cli/helpers/staged-project";
+import { generateBaseline } from "#cli/utils/generate-baseline";
+import { planSandboxInstallation } from "#cli/helpers/sandbox-installation";
+import { configureSandboxProvider } from "#cli/helpers/sandbox-provider";
+import type { resolveSandbox } from "#cli/registry/sandboxes";
+import { installPlan, plannedSourceTargets } from "#cli/utils/install-plan";
 import { intro, outro } from "@clack/prompts";
-import { Command } from "commander";
-import { z } from "zod";
-
-import { toolDefinitionSchema } from "../../../registry/metadata";
-import { buildConfigTs } from "../helpers/config-builder";
-import { ensureTargetEmpty } from "../helpers/ensure-target";
-import { collectEnvChecklist } from "../helpers/env-checklist";
-import type { EnvVarEntry } from "../helpers/env-checklist";
-import { configureGatewayProvider } from "../helpers/gateway-provider";
+import { itemAddress, listTools, readItem } from "#cli/registry/shadcn";
 import {
   promptAssistantTools,
   promptAuth,
+  promptCodeExecutionTool,
+  promptSandbox,
   promptCoreFeatures,
   promptDocumentTypes,
   promptElectron,
   promptGateway,
-  promptProjectName,
-  promptStorage,
-  promptSearchTool,
-  promptUrlRetrievalTool,
   promptImageGenerationTool,
+  promptObservability,
+  promptProjectName,
+  promptSearchTool,
+  promptStorage,
+  promptUrlRetrievalTool,
   promptVideoGenerationTool,
-  promptCodeExecutionTool,
-} from "../helpers/prompts";
+} from "#cli/helpers/prompts";
+import { readFile, writeFile } from "node:fs/promises";
+import { scaffoldElectron, scaffoldFromGit } from "#cli/helpers/scaffold";
+import { Command } from "commander";
+import type { EnvVarEntry } from "#cli/helpers/env-checklist";
+import type { PackageManager } from "#cli/types";
+import type { ReadonlyInput } from "#cli/helpers/readonly-input";
+import { buildConfigTs } from "#cli/helpers/config-builder";
+import { collectEnvChecklist } from "#cli/helpers/env-checklist";
+import { configureGatewayProvider } from "#cli/helpers/gateway-provider";
+import { configureStorageProvider } from "#cli/helpers/storage-provider";
+import { ensureTargetEmpty } from "#cli/helpers/ensure-target";
 import {
-  scaffoldElectron,
-  scaffoldFromGit,
-  scaffoldFromTemplate,
-} from "../helpers/scaffold";
-import { configureStorageProvider } from "../helpers/storage-provider";
-import { resolveGateway } from "../registry/gateways";
-import {
-  installItems,
-  itemAddress,
-  listTools,
-  readItem,
-} from "../registry/shadcn";
-import { resolveStorage } from "../registry/storage";
-import type { PackageManager } from "../types";
-import { launcherPackageManager } from "../utils/get-package-manager";
-import { handleError } from "../utils/handle-error";
-import { highlighter } from "../utils/highlighter";
-import { planToolInstallation } from "../utils/installation-plan";
-import { logger } from "../utils/logger";
-import { runCommand } from "../utils/run-command";
-import { spinner } from "../utils/spinner";
-import { syncTools } from "../utils/sync-tools";
+  assertCreateShadcnReady,
+  createShadcnArguments,
+} from "#cli/helpers/create-shadcn-arguments";
+import { handleError } from "#cli/utils/handle-error";
+import { highlighter } from "#cli/utils/highlighter";
+import { launcherPackageManager } from "#cli/utils/get-package-manager";
+import { logger } from "#cli/utils/logger";
+import { observabilityItems } from "../../../registry/src/plugins/observability";
+import { parseJsonObject } from "#cli/helpers/json-object";
+import path from "node:path";
+import { planInstallation } from "#cli/utils/installation-plan";
+import { resolveGateway } from "#cli/registry/gateways";
+import { resolveStorage } from "#cli/registry/storage";
+import { runCommand } from "#cli/utils/run-command";
+import { spinner } from "#cli/utils/spinner";
+import { syncPlugins } from "#cli/utils/sync-plugins";
+import { syncTools } from "#cli/utils/sync-tools";
+import { toolDefinitionSchema } from "../../../registry/metadata";
+import { z } from "zod";
 
 const resolveCreateTarget = (
   targetArg: string | undefined
@@ -57,7 +65,7 @@ const resolveCreateTarget = (
   targetDir: string;
   displayPath: string;
 } => {
-  if (!targetArg) {
+  if (!(typeof targetArg === "string" && targetArg !== "")) {
     const projectName = "my-chat-app";
     return {
       displayPath: projectName,
@@ -77,41 +85,84 @@ const resolveCreateTarget = (
   };
 };
 
-const printEnvChecklist = (entries: EnvVarEntry[]): void => {
+const NEXT_ENTRY = 1;
+const FIRST_ENTRY = 0;
+const JSON_INDENT = 2;
+const FIRST_CHARACTER = 0;
+const NEXT_CHARACTER = 1;
+const EMPTY_SELECTION_COUNT = 0;
+
+const printEnvGroup = (
+  entries: readonly Readonly<EnvVarEntry>[],
+  entry: Readonly<EnvVarEntry>,
+  firstIndex: number
+): number => {
+  logger.log(`  ${highlighter.warn("*")} ${highlighter.dim("One of:")}`);
+  let entryIndex = firstIndex;
+  while (
+    entryIndex < entries.length &&
+    entries[entryIndex].oneOfGroup === entry.oneOfGroup
+  ) {
+    const option = entries[entryIndex];
+    logger.log(
+      `    ${highlighter.warn("*")} ${highlighter.warn(option.vars)} ${highlighter.dim(`- ${option.description}`)}`
+    );
+    entryIndex += NEXT_ENTRY;
+  }
+  return entryIndex - NEXT_ENTRY;
+};
+
+const printEnvChecklist = (entries: readonly Readonly<EnvVarEntry>[]): void => {
   logger.info("Required for your configuration:");
   logger.break();
-
-  for (let i = 0; i < entries.length; i += 1) {
-    const entry = entries[i];
-
-    if (!entry.oneOfGroup) {
+  for (
+    let entryIndex = FIRST_ENTRY;
+    entryIndex < entries.length;
+    entryIndex += NEXT_ENTRY
+  ) {
+    const entry = entries[entryIndex];
+    if (typeof entry.oneOfGroup === "string" && entry.oneOfGroup !== "") {
+      entryIndex = printEnvGroup(entries, entry, entryIndex);
+    } else {
       logger.log(
         `  ${highlighter.warn("*")} ${highlighter.warn(entry.vars)} ${highlighter.dim(`- ${entry.description}`)}`
       );
-      continue;
     }
-
-    logger.log(`  ${highlighter.warn("*")} ${highlighter.dim("One of:")}`);
-    while (i < entries.length && entries[i].oneOfGroup === entry.oneOfGroup) {
-      const option = entries[i];
-      logger.log(
-        `    ${highlighter.warn("*")} ${highlighter.warn(option.vars)} ${highlighter.dim(`- ${option.description}`)}`
-      );
-      i += 1;
-    }
-    i -= 1;
   }
 };
 
 const createOptionsSchema = z.object({
+  attachments: z.boolean().optional(),
   codeExecutionTool: z.string().optional(),
+  documents: z.boolean().optional(),
   electron: z.boolean().optional(),
   fromGit: z.string().optional(),
   gateway: z.string().optional(),
   imageGenerationTool: z.string().optional(),
+  mcp: z.boolean().optional(),
+  projects: z.boolean().optional(),
+  observability: z
+    .string()
+    .refine(
+      (value): boolean =>
+        value
+          .split(",")
+          .map((id): string => id.trim())
+          .filter(Boolean)
+          .every((id): boolean =>
+            observabilityItems.some(
+              (
+                item: ReadonlyInput<(typeof observabilityItems)[number]>
+              ): boolean => item.name === id
+            )
+          ),
+      "Observability must select vercel-analytics, vercel-speed-insights or langfuse."
+    )
+    .optional(),
   searchTool: z.string().optional(),
   storageConfig: z.string().optional(),
   storageProvider: z.string().optional(),
+  sandboxProvider: z.string().optional(),
   target: z.string().optional(),
   urlRetrievalTool: z.string().optional(),
   videoGenerationTool: z.string().optional(),
@@ -120,6 +171,21 @@ const createOptionsSchema = z.object({
 
 type CreateOptions = z.infer<typeof createOptionsSchema>;
 type AssistantTools = Awaited<ReturnType<typeof promptAssistantTools>>;
+
+interface CreateSetup {
+  assistantTools: AssistantTools;
+  auth: Awaited<ReturnType<typeof promptAuth>>;
+  coreFeatures: Awaited<ReturnType<typeof promptCoreFeatures>>;
+  documentTypes: Awaited<ReturnType<typeof promptDocumentTypes>>;
+  gateway: Awaited<ReturnType<typeof resolveGateway>>["definition"]["id"];
+  gatewaySelection: Awaited<ReturnType<typeof resolveGateway>>;
+  observability: Awaited<ReturnType<typeof promptObservability>>;
+  plan: Awaited<ReturnType<typeof planInstallation>>;
+  storage: Awaited<ReturnType<typeof promptStorage>>;
+  sandbox: Awaited<ReturnType<typeof resolveSandbox>> | undefined;
+  usesStorage: boolean;
+  withElectron: boolean;
+}
 
 interface ProjectTarget {
   appName: string;
@@ -131,11 +197,11 @@ interface ProjectTarget {
 }
 
 const collectToolSources = async (
-  options: CreateOptions,
+  options: Readonly<CreateOptions>,
   assistantTools: AssistantTools,
   targetDir: string
 ): Promise<string[]> => {
-  const toolSources = assistantTools.installableTools.map((tool) =>
+  const toolSources = assistantTools.installableTools.map((tool): string =>
     itemAddress(tool, "tool")
   );
   if (assistantTools.builtInTools.deepResearch) {
@@ -143,31 +209,31 @@ const collectToolSources = async (
   }
   const selections = [
     {
-      feature: "videoGeneration",
+      plugin: "videoGeneration",
       prompt: promptVideoGenerationTool,
       slot: "generateVideo",
       source: options.videoGenerationTool,
     },
     {
-      feature: "imageGeneration",
+      plugin: "imageGeneration",
       prompt: promptImageGenerationTool,
       slot: "generateImage",
       source: options.imageGenerationTool,
     },
     {
-      feature: "webSearch",
+      plugin: "webSearch",
       prompt: promptSearchTool,
       slot: "webSearch",
       source: options.searchTool,
     },
     {
-      feature: "codeExecution",
+      plugin: "codeExecution",
       prompt: promptCodeExecutionTool,
       slot: "codeExecution",
       source: options.codeExecutionTool,
     },
     {
-      feature: "urlRetrieval",
+      plugin: "urlRetrieval",
       prompt: promptUrlRetrievalTool,
       slot: "retrieveUrl",
       source: options.urlRetrievalTool,
@@ -175,14 +241,14 @@ const collectToolSources = async (
   ] as const;
 
   const addSelection = async (index: number): Promise<void> => {
-    const selection = selections[index];
-    if (!selection) {
+    if (index >= selections.length) {
       return;
     }
-    if (selection.source) {
-      assistantTools.builtInTools[selection.feature] = true;
+    const selection = selections[index];
+    if (typeof selection.source === "string" && selection.source !== "") {
+      assistantTools.builtInTools[selection.plugin] = true;
     }
-    if (assistantTools.builtInTools[selection.feature]) {
+    if (assistantTools.builtInTools[selection.plugin]) {
       const source = itemAddress(
         selection.source ?? (await selection.prompt(options.yes)),
         "tool"
@@ -196,28 +262,35 @@ const collectToolSources = async (
       }
       toolSources.push(source);
     }
-    await addSelection(index + 1);
+    await addSelection(index + NEXT_ENTRY);
   };
 
-  await addSelection(0);
+  await addSelection(FIRST_ENTRY);
   return toolSources;
 };
 
 const promptProjectTarget = async (
-  options: CreateOptions
+  options: Readonly<CreateOptions>
 ): Promise<ProjectTarget> => {
   const initialTarget = resolveCreateTarget(options.target);
   const projectName = await promptProjectName(
     initialTarget.projectName,
     options.yes
   );
-  const targetDir = options.target
-    ? initialTarget.targetDir
-    : path.resolve(process.cwd(), projectName);
-  const displayPath = options.target ? initialTarget.displayPath : projectName;
+  const targetDir =
+    typeof options.target === "string" && options.target !== ""
+      ? initialTarget.targetDir
+      : path.resolve(process.cwd(), projectName);
+  const displayPath =
+    typeof options.target === "string" && options.target !== ""
+      ? initialTarget.displayPath
+      : projectName;
   const appName = projectName
     .split("-")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .map(
+      (word): string =>
+        word.charAt(FIRST_CHARACTER).toUpperCase() + word.slice(NEXT_CHARACTER)
+    )
     .join(" ");
 
   return {
@@ -231,7 +304,7 @@ const promptProjectTarget = async (
 };
 
 const loadInstallableTools = async (
-  options: CreateOptions,
+  options: Readonly<CreateOptions>,
   targetDir: string
 ): Promise<Awaited<ReturnType<typeof listTools>>> => {
   if (options.yes) {
@@ -253,18 +326,63 @@ const loadInstallableTools = async (
     return [];
   }
 };
+const addDocumentToolSources = (
+  toolSources: string[],
+  coreFeatures: ReadonlyInput<CreateSetup["coreFeatures"]>,
+  documentTypes: ReadonlyInput<CreateSetup["documentTypes"]>,
+  assistantTools: ReadonlyInput<AssistantTools>,
+  selectedTools: readonly ReadonlyInput<z.output<typeof toolDefinitionSchema>>[]
+): void => {
+  for (const kind of ["text", "code", "sheet"] as const) {
+    if (coreFeatures.documents && documentTypes[kind]) {
+      const source = itemAddress(`${kind}-documents`, "tool");
+      if (!toolSources.includes(source)) {
+        toolSources.push(source);
+      }
+    }
+  }
+  if (assistantTools.builtInTools.deepResearch) {
+    toolSources.push(itemAddress("deep-research", "tool"));
+  }
+  if (
+    coreFeatures.documents &&
+    documentTypes.code &&
+    selectedTools.some(
+      (tool: ReadonlyInput<z.output<typeof toolDefinitionSchema>>) =>
+        tool.slot === "codeExecution" &&
+        typeof tool.codeExecutorExport === "string" &&
+        tool.codeExecutorExport !== ""
+    )
+  ) {
+    toolSources.push(itemAddress("saved-code-execution", "tool"));
+  }
+};
 
-const promptCreateSetup = async (options: CreateOptions, targetDir: string) => {
+const promptCreateSetup = async (
+  options: Readonly<CreateOptions>,
+  targetDir: string
+): Promise<CreateSetup> => {
   const gatewaySource = options.gateway ?? (await promptGateway(options.yes));
   const gatewaySelection = await resolveGateway(gatewaySource, targetDir);
   const coreFeatures = await promptCoreFeatures(
     options.yes,
-    gatewaySelection.definition
+    options.mcp,
+    options.projects
   );
+  if (options.attachments !== undefined) {
+    coreFeatures.attachments = options.attachments;
+  }
+  const observability =
+    options.observability === undefined
+      ? await promptObservability(options.yes)
+      : options.observability
+          .split(",")
+          .map((id): string => id.trim())
+          .filter(Boolean);
+  coreFeatures.documents = options.documents ?? coreFeatures.documents;
   const documentTypes = await promptDocumentTypes(
     options.yes,
-    coreFeatures.documents,
-    gatewaySelection.definition
+    coreFeatures.documents
   );
   const registryItems = await loadInstallableTools(options, targetDir);
   const assistantTools = await promptAssistantTools(
@@ -287,28 +405,19 @@ const promptCreateSetup = async (options: CreateOptions, targetDir: string) => {
       return toolDefinitionSchema.parse(item.meta?.chatjs);
     })
   );
-  for (const kind of ["text", "code", "sheet"] as const) {
-    if (coreFeatures.documents && documentTypes[kind]) {
-      const source = itemAddress(`${kind}-documents`, "tool");
-      if (!toolSources.includes(source)) {
-        toolSources.push(source);
-      }
-    }
-  }
-  if (assistantTools.builtInTools.deepResearch) {
-    toolSources.push(itemAddress("deep-research", "tool"));
-  }
-  if (
-    coreFeatures.documents &&
-    documentTypes.code &&
-    selectedTools.some(
-      (tool) => tool.slot === "codeExecution" && tool.codeExecutorExport
-    )
-  ) {
-    toolSources.push(itemAddress("saved-code-execution", "tool"));
-  }
+  addDocumentToolSources(
+    toolSources,
+    coreFeatures,
+    documentTypes,
+    assistantTools,
+    selectedTools
+  );
   const usesStorage =
     coreFeatures.attachments ||
+    selectedTools.some(
+      (tool: ReadonlyInput<z.output<typeof toolDefinitionSchema>>) =>
+        tool.requiresStorage === true
+    ) ||
     assistantTools.builtInTools.imageGeneration ||
     assistantTools.builtInTools.videoGeneration ||
     options.storageProvider !== undefined ||
@@ -324,6 +433,31 @@ const promptCreateSetup = async (options: CreateOptions, targetDir: string) => {
   const auth = await promptAuth(options.yes);
   const withElectron = await promptElectron(options.yes, options.electron);
 
+  const { plan, sandbox } = await planSandboxInstallation(
+    targetDir,
+    {
+      plugins: [
+        ...observability,
+        ...(withElectron ? ["desktop"] : []),
+        ...(coreFeatures.mcp ? ["mcp"] : []),
+        ...(coreFeatures.projects ? ["projects"] : []),
+        ...(coreFeatures.feedback ? ["feedback"] : []),
+        ...(coreFeatures.followupSuggestions ? ["followup-suggestions"] : []),
+        ...(coreFeatures.attachments ? ["attachment-uploads"] : []),
+      ],
+      gateway: gatewaySelection.source,
+      storage: {
+        options: storage.options,
+        source: storage.source,
+      },
+      tools: toolSources,
+    },
+    { documents: options.documents, fresh: true },
+    async (required, persistent) =>
+      options.sandboxProvider ??
+      (await promptSandbox(options.yes, required, persistent))
+  );
+
   return {
     assistantTools,
     auth,
@@ -331,19 +465,22 @@ const promptCreateSetup = async (options: CreateOptions, targetDir: string) => {
     documentTypes,
     gateway: gatewaySelection.definition.id,
     gatewaySelection,
+    observability,
+    plan,
     storage,
-    toolSources,
+    sandbox,
     usesStorage,
     withElectron,
   };
 };
 
 const scaffoldProject = async (
-  project: ProjectTarget,
+  project: Readonly<ProjectTarget>,
   packageManager: PackageManager,
-  withElectron: boolean
+  withElectron: boolean,
+  shadcnArgs: readonly string[]
 ): Promise<void> => {
-  await scaffoldFromTemplate(project.targetDir, { packageManager });
+  await scaffoldNativeProject(project.targetDir, packageManager, shadcnArgs);
   if (withElectron) {
     await scaffoldElectron(project.targetDir, {
       packageManager,
@@ -351,23 +488,21 @@ const scaffoldProject = async (
     });
   }
 };
-
 const writeConfiguration = async (
-  project: ProjectTarget,
-  setup: Awaited<ReturnType<typeof promptCreateSetup>>
+  project: Readonly<ProjectTarget>,
+  setup: ReadonlyInput<Awaited<ReturnType<typeof promptCreateSetup>>>
 ): Promise<void> => {
   const configSpinner = spinner("Writing configuration...").start();
   try {
     const packageJsonPath = path.join(project.targetDir, "package.json");
-    const packageJson = JSON.parse(
-      await readFile(packageJsonPath, "utf-8")
-    ) as {
-      name?: string;
-    };
+    const packageJson = parseJsonObject(
+      await readFile(packageJsonPath, "utf-8"),
+      "Scaffold package.json"
+    );
     packageJson.name = project.projectName;
     await writeFile(
       packageJsonPath,
-      `${JSON.stringify(packageJson, null, 2)}\n`
+      `${JSON.stringify(packageJson, null, JSON_INDENT)}\n`
     );
     await writeFile(
       path.join(project.targetDir, "chat.config.ts"),
@@ -376,12 +511,9 @@ const writeConfiguration = async (
         appPrefix: project.appPrefix,
         appUrl: project.appUrl,
         auth: setup.auth,
-        builtInTools: setup.assistantTools.builtInTools,
         coreFeatures: setup.coreFeatures,
-        documentTypes: setup.documentTypes,
         gateway: setup.gateway,
         gatewayDefaults: setup.gatewaySelection.definition.defaults,
-        withElectron: setup.withElectron,
       })
     );
     configSpinner.succeed("Configuration written.");
@@ -403,32 +535,61 @@ const oxfmtCommandFor = (packageManager: PackageManager): string[] => {
 
 const installRegistryItems = async (
   packageManager: PackageManager,
-  project: ProjectTarget,
-  setup: Awaited<ReturnType<typeof promptCreateSetup>>
+  project: Readonly<ProjectTarget>,
+  setup: ReadonlyInput<Awaited<ReturnType<typeof promptCreateSetup>>>
 ): Promise<Awaited<ReturnType<typeof syncTools>>> => {
   const installSpinner = spinner(
     "Installing selected registry items..."
   ).start();
   try {
-    const plan = await planToolInstallation(
+    const { plan } = setup;
+    let installedTools: Awaited<ReturnType<typeof syncTools>> = [];
+    await installPlan(
       project.targetDir,
-      setup.toolSources
+      plan,
+      { fresh: true, managedTargets: ["chatjs/providers/sandbox/options.ts"] },
+      async (): Promise<void> => {
+        await configureGatewayProvider(
+          project.targetDir,
+          setup.gatewaySelection
+        );
+        await configureStorageProvider(project.targetDir, setup.storage);
+        if (setup.sandbox) {
+          await configureSandboxProvider(project.targetDir, setup.sandbox);
+        }
+        installedTools = await syncTools(project.targetDir, {
+          expected: plan.expected,
+        });
+        await syncPlugins(project.targetDir, {
+          expected: plan.plugins.map((plugin) => plugin.id),
+        });
+      }
     );
-    await installItems(
-      [setup.gatewaySelection.source, setup.storage.source, ...plan.sources],
-      project.targetDir
-    );
-    await configureGatewayProvider(project.targetDir, setup.gatewaySelection);
-    await configureStorageProvider(project.targetDir, setup.storage);
-    const installedTools = await syncTools(project.targetDir, {
-      expected: plan.expected,
-    });
     await runCommand(packageManager, ["install"], project.targetDir);
+    await generateBaseline(project.targetDir, packageManager);
     await runCommand(
       packageManager,
-      [...oxfmtCommandFor(packageManager), "oxfmt", "--write", "."],
+      [
+        ...oxfmtCommandFor(packageManager),
+        "oxfmt",
+        "--write",
+        ".",
+        "package.json",
+        "chatjs/installed-dependencies.json",
+      ],
       project.targetDir
     );
+    await recordInstalledSource(project.targetDir, [
+      ...plannedSourceTargets(plan),
+      ...(await optionalDirectoryFiles(project.targetDir, "chatjs/core")),
+      ...(await optionalDirectoryFiles(project.targetDir, "chatjs/providers")),
+      "chat.config.ts",
+      "chatjs/providers/gateway-defaults.ts",
+      "lib/ai/models.generated.ts",
+      "chatjs/providers/storage-options.ts",
+      "chatjs/providers/sandbox/options.ts",
+      ".env.example",
+    ]);
     installSpinner.succeed("Registry items installed and configured.");
     return installedTools;
   } catch (error) {
@@ -441,9 +602,9 @@ const installRegistryItems = async (
 
 const printNextSteps = (
   packageManager: PackageManager,
-  project: ProjectTarget,
-  setup: Awaited<ReturnType<typeof promptCreateSetup>>,
-  installedTools: Awaited<ReturnType<typeof syncTools>>
+  project: Readonly<ProjectTarget>,
+  setup: ReadonlyInput<Awaited<ReturnType<typeof promptCreateSetup>>>,
+  installedTools: ReadonlyInput<Awaited<ReturnType<typeof syncTools>>>
 ): void => {
   const envEntries = collectEnvChecklist({
     auth: setup.auth,
@@ -453,7 +614,17 @@ const printNextSteps = (
     gatewayRequirements: setup.gatewaySelection.definition.envRequirements,
     installableToolEnvRequirements: [
       ...installedTools.flatMap((tool) => tool.envRequirements),
+      ...observabilityItems
+        .filter(
+          (item: ReadonlyInput<(typeof observabilityItems)[number]>): boolean =>
+            setup.observability.includes(item.name)
+        )
+        .flatMap(
+          (item: ReadonlyInput<(typeof observabilityItems)[number]>) =>
+            item.meta.chatjs.envRequirements ?? []
+        ),
       ...(setup.usesStorage ? setup.storage.definition.envRequirements : []),
+      ...(setup.sandbox?.definition.envRequirements ?? []),
     ],
   });
 
@@ -490,19 +661,22 @@ const printNextSteps = (
   );
 };
 
-const createProject = async (options: CreateOptions): Promise<void> => {
+const createProject = async (
+  options: Readonly<CreateOptions>,
+  shadcnArgs: readonly string[]
+): Promise<void> => {
   const packageManager = launcherPackageManager();
   if (!options.yes) {
     intro("Create ChatJS App");
   }
   const project = await promptProjectTarget(options);
   await ensureTargetEmpty(project.targetDir);
-  if (options.fromGit) {
+  if (typeof options.fromGit === "string" && options.fromGit !== "") {
     const selectionOptions = Object.entries(options).filter(
-      ([key, value]) =>
+      ([key, value]: readonly [string, unknown]): boolean =>
         !["target", "fromGit", "yes"].includes(key) && value !== undefined
     );
-    if (selectionOptions.length > 0) {
+    if (selectionOptions.length > EMPTY_SELECTION_COUNT) {
       throw new Error(
         "--from-git preserves the cloned application. Use chat-js add after cloning to change installed tools; selection flags apply only to fresh scaffolds."
       );
@@ -518,12 +692,24 @@ const createProject = async (options: CreateOptions): Promise<void> => {
   }
   const setup = await promptCreateSetup(options, project.targetDir);
   logger.break();
-  await scaffoldProject(project, packageManager, setup.withElectron);
-  await writeConfiguration(project, setup);
-  const installedTools = await installRegistryItems(
-    packageManager,
-    project,
-    setup
+  const installedTools = await createStagedProject(
+    project.targetDir,
+    async (stage) => {
+      const stagedProject = { ...project, targetDir: stage };
+      await scaffoldProject(
+        stagedProject,
+        packageManager,
+        setup.withElectron,
+        shadcnArgs
+      );
+      // Resolve only after native init has selected the actual library.
+      setup.plan = await planInstallation(stage, setup.plan.selection, {
+        documents: options.documents,
+        fresh: true,
+      });
+      await writeConfiguration(stagedProject, setup);
+      return await installRegistryItems(packageManager, stagedProject, setup);
+    }
   );
   printNextSteps(packageManager, project, setup, installedTools);
 };
@@ -549,16 +735,39 @@ export const create = new Command()
   )
   .description("scaffold a new ChatJS chat application")
   .argument("[directory]", "target directory for the project")
+  .argument("[shadcn-options...]", "native shadcn options after --")
   .option(
     "--gateway <gateway>",
     "gateway name, registry item URL, or local JSON path"
   )
   .option("-y, --yes", "skip prompts and use defaults", false)
+  .option(
+    "--attachments",
+    "install attachment picker, camera, paste/drop and upload endpoint"
+  )
+  .option("--no-attachments", "omit user attachment uploads")
+  .option(
+    "--observability <items>",
+    "comma-separated vercel-analytics, vercel-speed-insights, langfuse (default: none)"
+  )
+  .option("--documents", "install text, code and sheet documents")
+  .option("--no-documents", "omit document tools from the new app")
+  .option(
+    "--projects",
+    "install Projects pages, chat organization, and shared instructions"
+  )
+  .option("--no-projects", "omit Projects from the new app")
+  .option("--mcp", "install MCP connectors, pages and OAuth callback")
+  .option("--no-mcp", "omit MCP from the new app")
   .option("--electron", "include the Electron desktop app")
   .option("--no-electron", "do not include the Electron desktop app")
   .option(
     "--from-git <url>",
     "clone from a git repository instead of the built-in scaffold"
+  )
+  .option(
+    "--sandbox-provider <item>",
+    "optional sandbox provider: vercel, daytona or registry address"
   )
   .option(
     "--storage-provider <item>",
@@ -568,12 +777,20 @@ export const create = new Command()
     "--storage-config <json>",
     "non-secret JSON options for the storage adapter; credentials use env vars"
   )
-  .action(async (directory, opts) => {
-    try {
-      await createProject(
-        createOptionsSchema.parse({ target: directory, ...opts })
-      );
-    } catch (error) {
-      handleError(error);
+  .action(
+    async (
+      _directory: unknown,
+      _shadcnOptions: unknown,
+      opts: Readonly<Record<string, unknown>>,
+      command: Readonly<Command>
+    ): Promise<void> => {
+      try {
+        const { target, shadcnArgs } = createShadcnArguments(command);
+        const options = createOptionsSchema.parse({ target, ...opts });
+        assertCreateShadcnReady(shadcnArgs, options.fromGit);
+        await createProject(options, shadcnArgs);
+      } catch (error) {
+        handleError(error);
+      }
     }
-  });
+  );

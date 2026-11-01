@@ -1,4 +1,4 @@
-export const systemPrompt = () => `You are a friendly assistant!
+export const systemPrompt = (): string => `You are a friendly assistant!
 
 ## Your Goals
 - Stay concious and aware of the guidelines.

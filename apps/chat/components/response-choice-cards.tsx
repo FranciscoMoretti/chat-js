@@ -1,11 +1,13 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import { LoaderCircle } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import React from "react";
+
 import { cn } from "@/lib/utils";
 
-export type ResponseChoiceSlot = {
+export interface ResponseChoiceSlot {
   id: string;
   modelName: string;
   selected: boolean;
@@ -13,20 +15,25 @@ export type ResponseChoiceSlot = {
   statusLabel: string;
   disabled?: boolean;
   handleSelect: () => void;
-};
+}
 
-/** Layout only: controllers own ordering, lifecycle, and selection. */
+/**
+ * Layout only: controllers own ordering, lifecycle, and selection.
+ * @param {{ readonly slots: readonly Readonly<ResponseChoiceSlot>[]; }} props Response-card layout inputs.
+ * @param {readonly Readonly<ResponseChoiceSlot>[]} props.slots Controller-owned ordered choices and selection callbacks.
+ * @returns {React.JSX.Element | null} Choice buttons, or null when the controller provides no slots.
+ */
 export const ResponseChoiceCards = ({
   slots,
 }: {
-  slots: readonly ResponseChoiceSlot[];
-}) => {
+  readonly slots: readonly Readonly<ResponseChoiceSlot>[];
+}): React.JSX.Element | null => {
   if (slots.length === 0) {
     return null;
   }
   return (
     <div className="mt-3 flex flex-wrap justify-end gap-2">
-      {slots.map((slot) => (
+      {slots.map((slot): React.JSX.Element => (
         <Button
           aria-pressed={slot.selected}
           className={cn(

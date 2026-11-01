@@ -9,25 +9,23 @@ const TaskUpdateSchema = BaseStreamUpdateSchema.extend({
   status: z.enum(["running", "completed"]),
 });
 
+const SearchResultItemSchema = z.object({
+  content: z.string(),
+  source: z.enum(["web", "academic", "x"]),
+  title: z.string(),
+  // Optional `tweetId` field, currently disabled.
+  url: z.string(),
+});
+
 const WebSearchSchema = TaskUpdateSchema.extend({
   queries: z.array(z.string()),
-  results: z
-    .array(
-      z.object({
-        content: z.string(),
-        source: z.enum(["web", "academic", "x"]),
-        title: z.string(),
-        // tweetId: z.string().optional(),
-        url: z.string(),
-      })
-    )
-    .optional(),
+  results: z.array(SearchResultItemSchema).optional(),
   type: z.literal("web"),
 });
 
-export type WebSearchUpdate = z.infer<typeof WebSearchSchema>;
+type WebSearchUpdate = z.infer<typeof WebSearchSchema>;
 
-export type SearchResultItem = NonNullable<WebSearchUpdate["results"]>[number];
+type SearchResultItem = NonNullable<WebSearchUpdate["results"]>[number];
 
 const StartedSchema = BaseStreamUpdateSchema.extend({
   timestamp: z.number(),
@@ -49,7 +47,7 @@ const WritingSchema = TaskUpdateSchema.extend({
   type: z.literal("writing"),
 });
 
-export const ResearchUpdateSchema = z.discriminatedUnion("type", [
+const ResearchUpdateSchema = z.discriminatedUnion("type", [
   WebSearchSchema,
   StartedSchema,
   CompletedSchema,
@@ -57,4 +55,6 @@ export const ResearchUpdateSchema = z.discriminatedUnion("type", [
   WritingSchema,
 ]);
 
-export type ResearchUpdate = z.infer<typeof ResearchUpdateSchema>;
+type ResearchUpdate = z.infer<typeof ResearchUpdateSchema>;
+export { ResearchUpdateSchema };
+export type { ResearchUpdate, SearchResultItem, WebSearchUpdate };

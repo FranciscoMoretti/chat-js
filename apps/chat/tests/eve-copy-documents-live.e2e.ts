@@ -1,6 +1,9 @@
 import { expect, test } from "@playwright/test";
+import type { TestInfo } from "@playwright/test";
 import { eq } from "drizzle-orm";
 import { Client } from "eve/client";
+import type { MessageStreamEvent } from "eve/client";
+
 import { z } from "zod";
 
 import { db } from "../lib/db/client";
@@ -20,12 +23,37 @@ import {
 import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(env.DATABASE_URL);
+type HistorySeedEventReader =
+  | Readonly<{
+      type: "history.seeded";
+      data: Readonly<{
+        messages: readonly unknown[];
+      }>;
+    }>
+  | Readonly<{
+      type: Exclude<MessageStreamEvent["type"], "history.seeded">;
+      data?: unknown;
+    }>;
+type ActionResultEventReader =
+  | Readonly<{
+      type: "action.result";
+      data: Readonly<{
+        result: Readonly<{ kind: string; toolName?: string }>;
+      }>;
+    }>
+  | Readonly<{
+      type: Exclude<MessageStreamEvent["type"], "action.result">;
+      data?: unknown;
+    }>;
 const modelId = "google/gemini-2.5-flash";
 const boundaryReply = /^boundary-ready\.?$/u;
 
 test("copied document history survives source deletion and supports native editing", async ({
   page,
-}, testInfo) => {
+}, testInfo: Readonly<{
+  project: Readonly<{ use: Readonly<{ baseURL?: string | undefined }> }>;
+  outputPath: TestInfo["outputPath"];
+}>) => {
   test.setTimeout(240_000);
   page.setDefaultTimeout(20_000);
   page.setDefaultNavigationTimeout(60_000);
@@ -37,7 +65,9 @@ test("copied document history survives source deletion and supports native editi
       document.head.append(style);
     });
   });
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.request.get("/api/dev-login", { maxRedirects: 0 });
   await page.request.post("/api/chat-model", { data: { model: modelId } });
   const { origin } = new URL(z.url().parse(testInfo.project.use.baseURL));
@@ -128,18 +158,25 @@ test("copied document history survives source deletion and supports native editi
     .poll(
       async () => {
         idle = await copiedSession.snapshot();
-        return idle.events.some((event) => event.type === "history.seeded");
+        return idle.events.some(
+          (
+            event: HistorySeedEventReader
+          ): event is Extract<MessageStreamEvent, { type: "history.seeded" }> =>
+            event.type === "history.seeded"
+        );
       },
       { intervals: [250, 500, 1000], timeout: 20_000 }
     )
     .toBe(true);
   expect(
     idle.events.some(
-      (event) =>
+      (event: Readonly<Pick<MessageStreamEvent, "type">>) =>
         event.type === "turn.started" || event.type === "actions.requested"
     )
   ).toBe(false);
-  const latest = revisions.find((revision) => revision.id === head.revisionId);
+  const latest = revisions.find(
+    (revision: Readonly<{ id: string }>) => revision.id === head.revisionId
+  );
   expect(latest?.content).toBe("# Orchard\n\nCobalt pears.");
   expect(
     await db
@@ -152,20 +189,16 @@ test("copied document history survives source deletion and supports native editi
       .where(
         eq(eveImportedDocumentCheckpointEntry.conversationId, destination.id)
       )
-  ).toEqual([
-    {
-      documentId: head.documentId,
-      messageIndex: 2,
-      revisionId: head.revisionId,
-    },
-  ]);
+  ).toEqual([]);
   expect(
-    revisions.find((revision) => revision.id === latest?.parentRevisionId)
-      ?.content
+    revisions.find(
+      (revision: Readonly<{ id: string }>) =>
+        revision.id === latest?.parentRevisionId
+    )?.content
   ).toBe(original.content);
   expect(
     revisions.every(
-      (revision) =>
+      (revision: Readonly<{ documentId: string; id: string }>) =>
         revision.id !== original.id && revision.documentId === head.documentId
     )
   ).toBe(true);
@@ -227,17 +260,22 @@ test("copied document history survives source deletion and supports native editi
     .snapshot();
   expect(
     snapshot.events.some(
-      (event) =>
+      (event: ActionResultEventReader) =>
         event.type === "action.result" &&
         event.data.result.kind === "tool-result" &&
         event.data.result.toolName === "readDocument"
     )
   ).toBe(true);
   await page
-    .getByRole("button", { exact: true, name: "Edit message" })
+    .getByRole("button", {
+      exact: true,
+      name: "Edit message",
+    })
     .nth(1)
     .click();
-  const editor = page.getByRole("dialog");
+  const editor = page
+    .getByRole("log")
+    .getByRole("group", { name: "Message composer" });
   await editor
     .getByRole("textbox", { exact: true, name: "Message" })
     .fill(
@@ -266,16 +304,20 @@ test("copied document history survives source deletion and supports native editi
   );
   await editor.getByRole("button", { exact: true, name: "Send" }).click();
   const { input: forkInput, binding: forked } = await forkReply.promise;
-  expect(forkInput.fork).toEqual({
-    beforeMessageId: "seed_message_2",
+  expect(forkInput.fork).toMatchObject({
     conversationId: destination.id,
+    beforeMessageId: expect.any(String),
   });
-  await expect(page).toHaveURL(new RegExp(`/chat/${forked.id}$`, "u"));
+  await expect(page).toHaveURL(new RegExp(`/chat/${destination.id}$`, "u"));
   const [forkHead] = await db
     .select()
     .from(eveDocumentHead)
     .where(eq(eveDocumentHead.conversationId, forked.id));
-  expect(forkHead.revisionId).toBe(head.revisionId);
+  const [currentSourceHead] = await db
+    .select()
+    .from(eveDocumentHead)
+    .where(eq(eveDocumentHead.conversationId, destination.id));
+  expect(forkHead.revisionId).toBe(currentSourceHead.revisionId);
   await page.goto(`/chat/${forked.id}`);
   await expect(page.getByText("Ready", { exact: true })).toBeVisible({
     timeout: 45_000,
@@ -284,12 +326,21 @@ test("copied document history survives source deletion and supports native editi
     .attach(forked.sessionId)
     .snapshot();
   const seed = forkSnapshot.events.find(
-    (event) => event.type === "history.seeded"
+    (
+      event: HistorySeedEventReader
+    ): event is Extract<MessageStreamEvent, { type: "history.seeded" }> =>
+      event.type === "history.seeded"
   );
   expect(seed?.data.messages).toHaveLength(2);
+  expect(seed?.data.messages.map((message) => message.role)).toEqual([
+    "user",
+    "assistant",
+  ]);
+  expect(JSON.stringify(seed?.data.messages)).toContain("Amber apples.");
+  expect(JSON.stringify(seed?.data.messages)).not.toContain("Silver plums.");
   expect(
     forkSnapshot.events.some(
-      (event) =>
+      (event: ActionResultEventReader) =>
         event.type === "action.result" &&
         event.data.result.kind === "tool-result" &&
         event.data.result.toolName === "readDocument"
@@ -303,7 +354,7 @@ test("copied document history survives source deletion and supports native editi
   const changed = await page.request.post("/api/agent-conversations", {
     data: {
       ...forkInput,
-      fork: { ...forkInput.fork, beforeMessageId: "seed_message_0" },
+      message: "A different copied prompt.",
     },
     headers: { origin },
   });

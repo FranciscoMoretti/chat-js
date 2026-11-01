@@ -1,3 +1,5 @@
 uiverify-archive/
-visual/__screenshots__/
+# Vitest browser writes per-test screenshots next to each visual test; they are
+# generated artifacts uploaded to UI Verify, never committed.
+**/__screenshots__/
 .vitest-attachments/

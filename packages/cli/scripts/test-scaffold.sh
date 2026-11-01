@@ -3,14 +3,47 @@ set -euo pipefail
 
 cli_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-# Verify local contracts before publication, including external registry installs.
-bun run --cwd "$cli_root" test:gateways
+# CI selects one matrix case; no arguments retains the full local suite.
+if [ "$#" -ne 0 ]; then
+  if [ "$#" -ne 2 ] && [ "$#" -ne 4 ]; then
+    echo "Usage: $0 [bun|npm|pnpm|yarn true|false [prepared-gateway-archive prepared-sandbox-archive]]" >&2
+    exit 1
+  fi
+  case "$1" in
+    bun|npm|pnpm|yarn) ;;
+    *) echo "Unsupported package manager: $1" >&2; exit 1 ;;
+  esac
+  case "$2" in
+    true|false) ;;
+    *) echo "Unsupported Electron flag: $2" >&2; exit 1 ;;
+  esac
+fi
+
+# CI consumes inputs only after the shared preparation job has verified them.
+if [ "$#" -eq 4 ]; then
+  if [ ! -f "$3" ] || [ ! -f "$4" ] || [ ! -f "$cli_root/dist/index.js" ] || [ ! -d "$cli_root/templates/chat-app" ] || [ ! -d "$cli_root/../registry/dist/r" ]; then
+    echo "Prepared scaffold inputs are missing." >&2
+    exit 1
+  fi
+else
+  # Local runs retain the shared contract verification and build.
+  bun run --cwd "$cli_root" test:gateways
+  bun run --cwd "$cli_root/../gateways" build
+  bun run --cwd "$cli_root/../sandboxes" build
+fi
 gateway_archive_dir="$(mktemp -d /tmp/chat-js-gateway-package-XXXXXX)"
-trap 'kill "${registry_pid:-}" 2>/dev/null || true; rm -rf "$gateway_archive_dir"' EXIT
-gateway_archive="$gateway_archive_dir/gateways.tgz"
-bun run --cwd "$cli_root/../gateways" build
-bun pm --cwd "$cli_root/../gateways" pack --filename "$gateway_archive"
-bun "$cli_root/test/serve-registry.ts" "$gateway_archive" "$gateway_archive_dir/address" &
+cp "$cli_root/templates/chat-app/package.json" "$gateway_archive_dir/template-package.json"
+trap 'cp "$gateway_archive_dir/template-package.json" "$cli_root/templates/chat-app/package.json"; kill "${registry_pid:-}" 2>/dev/null || true; rm -rf "$gateway_archive_dir"' EXIT
+if [ "$#" -eq 4 ]; then
+  gateway_archive="$3"
+  sandbox_archive="$4"
+else
+  gateway_archive="$gateway_archive_dir/gateways.tgz"
+  bun pm --cwd "$cli_root/../gateways" pack --filename "$gateway_archive"
+  sandbox_archive="$gateway_archive_dir/sandboxes.tgz"
+  bun pm --cwd "$cli_root/../sandboxes" pack --filename "$sandbox_archive"
+fi
+bun "$cli_root/test/serve-registry.ts" "$gateway_archive" "$sandbox_archive" "$gateway_archive_dir/address" &
 registry_pid=$!
 for attempt in {1..100}; do
   test -f "$gateway_archive_dir/address" && break
@@ -73,9 +106,11 @@ run_case() (
   node --input-type=module -e '
 import { createRequire } from "node:module";
 const require = createRequire(process.cwd() + "/package.json");
-const manifest = require("@chat-js/gateways/package.json");
-for (const key of Object.keys(manifest.exports)) {
-  if (key !== "./package.json") await import("@chat-js/gateways" + key.slice(1));
+for (const name of ["@chat-js/gateways", "@chat-js/sandboxes"]) {
+  const manifest = require(name + "/package.json");
+  for (const key of Object.keys(manifest.exports)) {
+    if (key !== "./package.json") await import(name + key.slice(1));
+  }
 }'
   popd >/dev/null
 
@@ -98,7 +133,11 @@ for (const key of Object.keys(manifest.exports)) {
 
 )
 
-for package_manager in bun npm pnpm yarn; do
-  run_case "$package_manager" false
-  run_case "$package_manager" true
-done
+if [ "$#" -ge 2 ]; then
+  run_case "$1" "$2"
+else
+  for package_manager in bun npm pnpm yarn; do
+    run_case "$package_manager" false
+    run_case "$package_manager" true
+  done
+fi

@@ -6,7 +6,9 @@ import { toolResultSchema } from "@/lib/eve/tool-result";
 
 import { wordCount } from "./tool";
 
-const unexpected = () => {
+const ZERO_COST_USD = 0;
+
+const unexpected = (): never => {
   throw new Error("Word count must not acquire external resources");
 };
 
@@ -15,7 +17,7 @@ test("word count source handles empty text and whitespace without phantom words"
     abortSignal: new AbortController().signal,
     callId: "test",
     getSandbox: unexpected,
-    getSkill: unexpected,
+    messages: [],
     getToken: unexpected,
     requireAuth: unexpected,
     session: {
@@ -37,7 +39,7 @@ test("word count source handles empty text and whitespace without phantom words"
   const result = toolResultSchema.parse(
     await wordCount.execute({ text: "One two three." }, options)
   );
-  expect(result.usage.costUsd).toBe(0);
+  expect(result.usage.costUsd).toBe(ZERO_COST_USD);
   expect(result.output).toEqual({
     characters: 14,
     charactersNoSpaces: 12,

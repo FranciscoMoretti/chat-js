@@ -1,0 +1,18 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "types": ["node", "next", "bun"]
+  },
+  "include": [
+    "demo-*.ts",
+    "installation-*.ts",
+    "validation-*.ts",
+    "../test/installation-validation.test.ts",
+    "registry-mirror/**/*.ts",
+    "ownership.ts",
+    "../test/demo-check.test.ts",
+    "../src/registry-mirror.test.ts",
+    "../src/demo-turbo.test.ts"
+  ],
+  "exclude": ["node_modules", "dist"]
+}

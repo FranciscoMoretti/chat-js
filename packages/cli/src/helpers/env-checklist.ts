@@ -1,10 +1,14 @@
-import { BUILT_IN_TOOL_KEYS, CORE_FEATURE_KEYS } from "../types";
+import {
+  AUTH_PROVIDERS,
+  BUILT_IN_TOOL_KEYS,
+  CORE_FEATURE_KEYS,
+} from "#cli/types";
 import type {
   AuthProvider,
   BuiltInToolKey,
   CoreFeatureKey,
   Gateway,
-} from "../types";
+} from "#cli/types";
 import {
   authEnvRequirements,
   builtInToolEnvRequirements,
@@ -13,130 +17,142 @@ import {
   gatewayEnvRequirements,
 } from "./config-requirements";
 
-type EnvRequirementLike = {
-  description?: string;
-  options: string[][];
-};
+interface EnvRequirementLike {
+  readonly description?: string;
+  readonly options: readonly (readonly string[])[];
+}
 
-export type EnvVarEntry = {
+interface EnvVarEntry {
   /** The env var name(s), e.g. "AI_GATEWAY_API_KEY" or "AUTH_GOOGLE_ID + AUTH_GOOGLE_SECRET" */
   vars: string;
   /** Human-readable description derived from the Zod schema */
   description: string;
   /** Group key used to render "one of" alternatives together */
   oneOfGroup?: string;
-};
+}
 
 const envDescriptions = new Map(Object.entries(envVarDescriptions));
+const singleAlternative = 1;
 
-type EnvChecklistInput = {
-  gateway: Gateway;
-  gatewayRequirements?: EnvRequirementLike[];
-  coreFeatures: Record<CoreFeatureKey, boolean>;
-  builtInTools: Record<BuiltInToolKey, boolean>;
-  auth: Record<AuthProvider, boolean>;
-  installableToolEnvRequirements?: EnvRequirementLike[];
-};
+interface EnvChecklistInput {
+  readonly gateway: Gateway;
+  readonly gatewayRequirements?: readonly EnvRequirementLike[];
+  readonly coreFeatures: Readonly<Record<CoreFeatureKey, boolean>>;
+  readonly builtInTools: Readonly<Record<BuiltInToolKey, boolean>>;
+  readonly auth: Readonly<Record<AuthProvider, boolean>>;
+  readonly installableToolEnvRequirements?: readonly EnvRequirementLike[];
+}
 
 /**
  * Expand an EnvRequirement into one or more EnvVarEntries, pulling
  * descriptions from the Zod schema.
+ * @param {EnvRequirementLike} requirement The alternatives to expand without modifying their catalog.
+ * @returns {EnvVarEntry[]} One checklist entry per credential alternative.
  */
 const requirementToEntries = (
   requirement: EnvRequirementLike
 ): EnvVarEntry[] => {
-  const oneOfGroup =
-    requirement.options.length > 1
-      ? requirement.options
-          .map((group) => group.map(String).join("+"))
-          .join("|")
-      : undefined;
+  let oneOfGroup: string | undefined = undefined;
+  if (requirement.options.length > singleAlternative) {
+    oneOfGroup = requirement.options
+      .map((group) => group.map(String).join("+"))
+      .join("|");
+  }
 
   return requirement.options.map((group) => {
-    const description = group
-      .map((v) => {
-        const varName = String(v);
-        return envDescriptions.get(varName) ?? varName;
-      })
+    let description = group
+      .map((variableName) => envDescriptions.get(variableName) ?? variableName)
       .join(", ");
 
+    if (description === "") {
+      const fallbackDescription = requirement.description;
+      description = "Required environment variable";
+      if (
+        typeof fallbackDescription === "string" &&
+        fallbackDescription !== ""
+      ) {
+        description = fallbackDescription;
+      }
+    }
     return {
-      description:
-        description ||
-        requirement.description ||
-        "Required environment variable",
+      description,
       oneOfGroup,
       vars: group.map(String).join(" + "),
     };
   });
 };
 
-const addRequirementEntries = (
-  entries: EnvVarEntry[],
-  requirement: EnvRequirementLike | undefined,
-  seen: Set<string>,
-  dedupeKey: string | undefined = requirement?.description
-): void => {
-  if (!requirement || dedupeKey === undefined || seen.has(dedupeKey)) {
-    return;
-  }
+interface RequirementCollector {
+  readonly entries: EnvVarEntry[];
+  readonly add: (requirement: EnvRequirementLike | undefined) => void;
+}
 
-  seen.add(dedupeKey);
-  entries.push(...requirementToEntries(requirement));
+const requirementCollector = (): RequirementCollector => {
+  const entries: EnvVarEntry[] = [];
+  const seen = new Set<string>();
+  const add = (requirement: EnvRequirementLike | undefined): void => {
+    if (!requirement) {
+      return;
+    }
+    const dedupeKey = JSON.stringify(
+      requirement.options
+        .map((group) => group.toSorted())
+        .toSorted(
+          (leftEntry: readonly string[], rightEntry: readonly string[]) =>
+            JSON.stringify(leftEntry).localeCompare(JSON.stringify(rightEntry))
+        )
+    );
+    if (!seen.has(dedupeKey)) {
+      seen.add(dedupeKey);
+      entries.push(...requirementToEntries(requirement));
+    }
+  };
+  return { add, entries };
+};
+
+const collectCoreFeatureEntries = (
+  input: EnvChecklistInput,
+  add: RequirementCollector["add"]
+): void => {
+  for (const plugin of CORE_FEATURE_KEYS) {
+    if (input.coreFeatures[plugin]) {
+      for (const requirement of coreFeatureEnvRequirements[plugin] ?? []) {
+        add(requirement);
+      }
+    }
+  }
 };
 
 const collectFeatureEntries = (input: EnvChecklistInput): EnvVarEntry[] => {
-  const featureItems: EnvVarEntry[] = [];
-  const seen = new Set<string>();
-
-  for (const feature of CORE_FEATURE_KEYS) {
-    if (!input.coreFeatures[feature]) {
-      continue;
-    }
-
-    addRequirementEntries(
-      featureItems,
-      coreFeatureEnvRequirements[
-        feature as keyof typeof coreFeatureEnvRequirements
-      ],
-      seen
-    );
-  }
-
+  const collector = requirementCollector();
+  collectCoreFeatureEntries(input, collector.add);
   for (const tool of BUILT_IN_TOOL_KEYS) {
     if (
-      tool === "webSearch" ||
-      tool === "urlRetrieval" ||
-      tool === "deepResearch" ||
-      tool === "codeExecution" ||
-      !input.builtInTools[tool]
+      tool !== "webSearch" &&
+      tool !== "urlRetrieval" &&
+      tool !== "deepResearch" &&
+      tool !== "codeExecution" &&
+      input.builtInTools[tool]
     ) {
-      continue;
+      collector.add(builtInToolEnvRequirements[tool]);
     }
-
-    addRequirementEntries(
-      featureItems,
-      builtInToolEnvRequirements[
-        tool as keyof typeof builtInToolEnvRequirements
-      ],
-      seen
-    );
   }
-
   for (const requirement of input.installableToolEnvRequirements ?? []) {
-    const dedupeKey =
-      requirement.description ??
-      requirement.options.map((option) => option.join("+")).join("|");
-    addRequirementEntries(featureItems, requirement, seen, dedupeKey);
+    collector.add(requirement);
   }
-
-  return featureItems;
+  return collector.entries;
 };
 
 const collectAuthEntries = (input: EnvChecklistInput): EnvVarEntry[] => {
   const authItems: EnvVarEntry[] = [];
 
-  for (const provider of Object.keys(authEnvRequirements) as AuthProvider[]) {
+  // Filtering preserves Object.keys insertion order while narrowing the closed
+  // provider contract without assuming Object.keys returns that union.
+  const providers = Object.keys(authEnvRequirements).filter(
+    (provider): provider is AuthProvider =>
+      AUTH_PROVIDERS.some((candidate) => candidate === provider)
+  );
+  for (const provider of providers) {
     if (input.auth[provider]) {
       authItems.push(...requirementToEntries(authEnvRequirements[provider]));
     }
@@ -145,9 +161,7 @@ const collectAuthEntries = (input: EnvChecklistInput): EnvVarEntry[] => {
   return authItems;
 };
 
-export const collectEnvChecklist = (
-  input: EnvChecklistInput
-): EnvVarEntry[] => {
+const collectEnvChecklist = (input: EnvChecklistInput): EnvVarEntry[] => {
   const entries: EnvVarEntry[] = [
     {
       description: envDescriptions.get("AUTH_SECRET") ?? "AUTH_SECRET",
@@ -163,8 +177,10 @@ export const collectEnvChecklist = (
     input.gatewayRequirements ?? gatewayEnvRequirements[input.gateway] ?? [];
   return [
     ...entries,
-    ...gwReq.flatMap(requirementToEntries),
+    ...gwReq.flatMap((requirement) => requirementToEntries(requirement)),
     ...collectFeatureEntries(input),
     ...collectAuthEntries(input),
   ];
 };
+export { collectEnvChecklist };
+export type { EnvVarEntry };

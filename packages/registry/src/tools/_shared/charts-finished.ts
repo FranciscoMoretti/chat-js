@@ -1,0 +1,16 @@
+import { getInstanceByDom } from "echarts";
+
+export const chartsFinished = (
+  container: Readonly<Pick<HTMLElement, "querySelectorAll">>
+): boolean => {
+  const charts = container.querySelectorAll<HTMLElement>(
+    "[_echarts_instance_]"
+  );
+  return (
+    charts.length > 0 &&
+    [...charts].every(
+      (element) =>
+        getInstanceByDom(element)?.getZr().animation.isFinished() === true
+    )
+  );
+};

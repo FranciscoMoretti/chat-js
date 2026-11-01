@@ -1,5 +1,6 @@
 import { eq, inArray } from "drizzle-orm";
 import { afterAll, expect, test, vi } from "vitest";
+import { z } from "zod";
 
 import { db } from "../lib/db/client";
 import {
@@ -11,10 +12,14 @@ import { eveChat, eveConversation, user } from "../lib/db/schema";
 import { env } from "../lib/env";
 import { resolveEveConversationScope } from "../lib/eve/conversation-scope";
 import { createEveConversationOperation } from "../lib/eve/create-conversation-operation";
+import type { getEvePostgresStreamPositions } from "../lib/eve/lifecycle/postgres/eve-stream-positions";
 import { insertEveConversationFixtures } from "./eve-conversation-fixture";
 import { assertEveTestDatabase } from "./eve-test-database";
 
-const native = vi.hoisted(() => ({ positions: vi.fn(), request: vi.fn() }));
+const native = vi.hoisted(() => ({
+  positions: vi.fn<typeof getEvePostgresStreamPositions>(),
+  request: vi.fn(),
+}));
 vi.mock("server-only", () => ({}));
 vi.mock("../lib/eve/server", () => ({
   assertEveConfigured: vi.fn(),
@@ -23,14 +28,19 @@ vi.mock("../lib/eve/server", () => ({
 vi.mock("../lib/eve/model-selection", () => ({
   loadEveModelDefinition: vi.fn(),
 }));
-vi.mock("../lib/eve/prepare-message", () => ({
-  prepareEveMessage: (message: string) => Promise.resolve(message),
-}));
+
 vi.mock("../lib/eve/conversation-title", () => ({
-  eveConversationTitleFallback: () => "Recovery",
+  eveConversationTitleFallback: (): string => "Recovery",
 }));
-vi.mock("../lib/db/credits", () => ({ canSpend: () => Promise.resolve(true) }));
-vi.mock("../lib/db/eve-stream-positions", () => ({
+
+vi.mock("../integrations/billing", () => ({
+  billing: {
+    canSpend: vi.fn<() => Promise<boolean>>().mockResolvedValue(true),
+    debit: undefined,
+  },
+}));
+
+vi.mock("@/lib/eve/lifecycle/postgres/eve-stream-positions", () => ({
   getEvePostgresStreamPositions: native.positions,
 }));
 
@@ -56,20 +66,30 @@ test.each(["before-dispatch", "lost-response"])(
     const allocations: string[] = [];
     let fail = true;
     native.request.mockImplementation(
-      (_owner: string, path: string, init: RequestInit) => {
+      (_owner: string, path: string, init: Readonly<{ body?: unknown }>) => {
         if (path.startsWith("/eve/chat/v1/operation/")) {
           const sessionId = receipts.get(path.split("/").at(-1) ?? "");
-          return sessionId
-            ? Response.json({ sessionId })
-            : Response.json(
-                { code: "eve_operation_not_found" },
-                { status: 404 }
-              );
+          if (
+            sessionId !== undefined &&
+            sessionId !== null &&
+            sessionId !== ""
+          ) {
+            return Response.json({ sessionId });
+          }
+          return Response.json(
+            { code: "eve_operation_not_found" },
+            { status: 404 }
+          );
         }
         if (fail && failure === "before-dispatch") {
           throw new TypeError("connection refused");
         }
-        const command = JSON.parse(String(init.body));
+        if (typeof init.body !== "string") {
+          throw new TypeError("Expected a JSON creation request body");
+        }
+        const command = z
+          .object({ operationId: z.string() })
+          .parse(JSON.parse(init.body));
         const sessionId = `wrun_${command.operationId}`;
         receipts.set(command.operationId, sessionId);
         allocations.push(command.operationId);
@@ -78,9 +98,6 @@ test.each(["before-dispatch", "lost-response"])(
         }
         return Response.json({ sessionId });
       }
-    );
-    native.positions.mockImplementation((_url: string, sessions: string[]) =>
-      Promise.resolve(new Map(sessions.map((id) => [id, 0])))
     );
     const command = {
       message: "original message",
@@ -94,6 +111,9 @@ test.each(["before-dispatch", "lost-response"])(
     );
     expect(interruptedResponse.status).toBe(409);
     const interrupted = await getEveCreation(owner, command.operationId);
+    if (interrupted === undefined) {
+      throw new Error("Missing interrupted creation");
+    }
     expect(interrupted?.state).toBe("uncertain");
     expect(interrupted?.initialRequest).toEqual(command);
 
@@ -114,6 +134,9 @@ test.each(["before-dispatch", "lost-response"])(
       expect(retained?.initialRequest).toEqual(command);
     }
     fail = false;
+    native.positions.mockResolvedValue(
+      new Map([[`wrun_${interrupted.id}`, 0]])
+    );
     const next = await createEveConversationOperation(owner, {
       ...command,
       message: "new tab",
@@ -201,17 +224,26 @@ test("concurrent bindings cannot claim one native session for two branches", asy
   );
   const sessionId = `wrun_${crypto.randomUUID()}`;
   const outcomes = await Promise.allSettled(
-    rows.map((row) => bindAcceptedEveConversation(owner, row.id, sessionId))
+    rows.map(
+      async (row: Readonly<{ id: string }>) =>
+        await bindAcceptedEveConversation(owner, row.id, sessionId)
+    )
   );
   expect(
-    outcomes.filter((result) => result.status === "fulfilled")
+    outcomes.filter(
+      (result: Readonly<{ status: "fulfilled" | "rejected" }>) =>
+        result.status === "fulfilled"
+    )
   ).toHaveLength(1);
-  expect(outcomes.find((result) => result.status === "rejected")).toMatchObject(
-    {
-      reason: { code: "binding_conflict" },
-      status: "rejected",
-    }
-  );
+  expect(
+    outcomes.find(
+      (result: Readonly<{ status: "fulfilled" | "rejected" }>) =>
+        result.status === "rejected"
+    )
+  ).toMatchObject({
+    reason: { code: "binding_conflict" },
+    status: "rejected",
+  });
 });
 
 test("mapping rejects deletion, foreign ownership and inherited subagent identity without rebinding", async () => {

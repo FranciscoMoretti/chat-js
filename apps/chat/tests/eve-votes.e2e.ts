@@ -1,9 +1,9 @@
-/* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
-/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
-/* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
+import { setSharing } from "../chatjs/plugins/sharing/queries";
+import { eveVote } from "../chatjs/plugins/feedback/feedback-schema";
+import { createEveTestSession } from "./eve-native-session.fixture";
+
 import { eq } from "drizzle-orm";
-import type * as EveClient from "eve/client";
-import type { MessageStreamEvent } from "eve/client";
+import type { Client, MessageStreamEvent } from "eve/client";
 import { afterAll, beforeEach, expect, test, vi } from "vitest";
 
 import { db } from "../lib/db/client";
@@ -11,23 +11,21 @@ import { completeEveConversationDeletion } from "../lib/db/eve-deletion";
 import {
   beginEveConversationDeletion,
   createEveConversation,
-  updateEveConversationMetadata,
 } from "../lib/db/eve-queries";
-import { getEveMessageVotes } from "../lib/db/queries";
-import { eveConversation, eveVote, user } from "../lib/db/schema";
+import { getEveMessageVotes } from "../chatjs/plugins/feedback/feedback-queries";
+import { eveConversation, user } from "../lib/db/schema";
 import { env } from "../lib/env";
-import { voteEveMessage } from "../lib/eve/vote-message";
+import { voteEveMessage } from "../chatjs/plugins/feedback/vote-message";
 import { assertEveTestDatabase } from "./eve-test-database";
 
 vi.mock("server-only", () => ({}));
 const native = vi.hoisted(() => ({ attach: vi.fn(), snapshot: vi.fn() }));
 vi.mock("eve/client", async (original) => ({
-  ...(await original<typeof EveClient>()),
+  ...(await original<{ Client: typeof Client }>()),
   Client: class {
-    sessions = { attach: native.attach };
+    public sessions = { attach: native.attach };
   },
 }));
-
 assertEveTestDatabase(env.DATABASE_URL);
 const owner = crypto.randomUUID();
 await db.insert(user).values({
@@ -61,14 +59,13 @@ beforeEach(() => {
   native.attach.mockReset().mockReturnValue({ snapshot: native.snapshot });
   native.snapshot.mockReset().mockResolvedValue({ events });
 });
-async function conversation() {
-  return await createEveConversation(
+const conversation = async () =>
+  await createEveConversation(
     owner,
     crypto.randomUUID(),
     "Question",
-    async () => crypto.randomUUID()
+    createEveTestSession
   );
-}
 
 test("native assistant feedback persists, replaces a vote and stays private when shared", async () => {
   const row = await conversation();
@@ -86,7 +83,7 @@ test("native assistant feedback persists, replaces a vote and stays private when
   expect(await getEveMessageVotes(owner, row.id)).toEqual([
     { isUpvoted: false, messageId: input.messageId },
   ]);
-  await updateEveConversationMetadata(owner, row.id, { visibility: "public" });
+  await setSharing(owner, row.id, "public");
   expect(await getEveMessageVotes("stranger", row.id)).toEqual([]);
   native.attach.mockClear();
   expect(await voteEveMessage("stranger", input)).toBeNull();
@@ -95,18 +92,19 @@ test("native assistant feedback persists, replaces a vote and stays private when
 
 test("unknown messages and native user messages cannot receive feedback", async () => {
   const row = await conversation();
-  for (const messageId of ["turn_0:user", "turn_99:assistant"]) {
-    expect(
-      await voteEveMessage(owner, {
-        conversationId: row.id,
-        messageId,
-        type: "up",
-      })
-    ).toBeNull();
-  }
+  await Promise.all(
+    ["turn_0:user", "turn_99:assistant"].map(async (messageId) => {
+      expect(
+        await voteEveMessage(owner, {
+          conversationId: row.id,
+          messageId,
+          type: "up",
+        })
+      ).toBeNull();
+    })
+  );
   expect(await getEveMessageVotes(owner, row.id)).toEqual([]);
 });
-
 test("deletion erases existing feedback and rejects a vote whose snapshot finishes after deletion", async () => {
   const row = await conversation();
   const input: Parameters<typeof voteEveMessage>[1] = {

@@ -1,45 +1,502 @@
-import { access } from "node:fs/promises";
-import path from "node:path";
-
-import { confirm, isCancel } from "@clack/prompts";
+import {
+  installationActivation,
+  formatActivation,
+} from "#cli/utils/installation-activation";
+import { existsSync } from "node:fs";
+import { scaffoldElectron } from "#cli/helpers/scaffold";
+import { assertUiCompatibility } from "#cli/utils/ui-compatibility";
+import { readInstalledPlugins } from "#cli/utils/installed-plugins";
+import {
+  configureSandboxProvider,
+  sandboxProviderTargets,
+} from "#cli/helpers/sandbox-provider";
+import { resolveSandbox } from "#cli/registry/sandboxes";
+import { access, writeFile } from "node:fs/promises";
+import { syncPlugins } from "#cli/utils/sync-plugins";
+import {
+  configureStorageProvider,
+  parseStorageOptions,
+} from "#cli/helpers/storage-provider";
+import { confirm, isCancel, log } from "@clack/prompts";
 import { Command } from "commander";
+import { configureGatewayProvider } from "#cli/helpers/gateway-provider";
+import { gatewayConfigEdit } from "#cli/utils/provider-config";
+import { handleError } from "#cli/utils/handle-error";
+import { inferPackageManager } from "#cli/utils/get-package-manager";
+import { installPlan } from "#cli/utils/install-plan";
+import path from "node:path";
+import { planInstallation } from "#cli/utils/installation-plan";
+import { resolveGateway } from "#cli/registry/gateways";
+import { resolveStorage } from "#cli/registry/storage";
+import { runCommand } from "#cli/utils/run-command";
+import { readInstalledTools, syncTools } from "#cli/utils/sync-tools";
+import { itemAddress } from "#cli/registry/shadcn";
+import { exportManualInstallation } from "#cli/utils/manual-installation";
 
-import { installItems } from "../registry/shadcn";
-import { handleError } from "../utils/handle-error";
-import { planToolInstallation } from "../utils/installation-plan";
-import { syncTools } from "../utils/sync-tools";
+type ReadonlyNative<Value> = Value extends (
+  ...args: readonly never[]
+) => unknown
+  ? Value
+  : Value extends object
+    ? { readonly [Key in keyof Value]: ReadonlyNative<Value[Key]> }
+    : Value;
+
+type InstallationPlan = Awaited<ReturnType<typeof planInstallation>>;
+type RegistryItemInput = ReadonlyNative<InstallationPlan["items"][number]>;
+type ProviderChangeInput = ReadonlyNative<
+  InstallationPlan["providerChanges"][number]
+>;
+type PluginInput = ReadonlyNative<InstallationPlan["plugins"][number]>;
+
+interface AddOptions {
+  readonly gateway?: string;
+  readonly sandboxProvider?: string;
+  readonly storageProvider?: string;
+  readonly storageConfig?: string;
+  readonly replace?: boolean;
+}
+interface AddCommandOptions extends AddOptions {
+  readonly cwd: string;
+  readonly yes: boolean;
+  readonly overwrite: boolean;
+  readonly filesOnly: boolean;
+  readonly dryRun: boolean;
+}
+
+interface AddSetup {
+  configEdit: string | undefined;
+  gatewayChange: boolean;
+  keepStorageOptions: boolean;
+  plan: InstallationPlan;
+  selectedSandbox: Awaited<ReturnType<typeof resolveSandbox>> | undefined;
+  selectedGateway: Awaited<ReturnType<typeof resolveGateway>> | undefined;
+  selectedStorage: Awaited<ReturnType<typeof resolveStorage>> | undefined;
+}
+
+const EMPTY_SELECTION_COUNT = 0;
+
+const hasProviderKind = (
+  metadata: unknown,
+  kind: "gateway" | "storage" | "sandbox"
+): boolean =>
+  typeof metadata === "object" &&
+  metadata !== null &&
+  "kind" in metadata &&
+  metadata.kind === kind;
+
+const hasNonEmptyValue = (value: string | null | undefined): value is string =>
+  typeof value === "string" && value !== "";
+
+const selectedSandboxForPlan = async (
+  cwd: string,
+  plan: ReadonlyNative<InstallationPlan>,
+  sandbox: Awaited<ReturnType<typeof resolveSandbox>> | undefined
+) => {
+  const sandboxItem = plan.items.find((item: RegistryItemInput) =>
+    hasProviderKind(item.meta?.chatjs, "sandbox")
+  );
+  const selectedSandbox =
+    sandbox ??
+    (sandboxItem
+      ? await resolveSandbox(plan.sources[plan.items.indexOf(sandboxItem)], cwd)
+      : undefined);
+  return selectedSandbox;
+};
+
+const validateAddSelection = (
+  items: readonly string[],
+  options: AddOptions
+): void => {
+  if (
+    items.length === EMPTY_SELECTION_COUNT &&
+    !hasNonEmptyValue(options.gateway) &&
+    !hasNonEmptyValue(options.sandboxProvider) &&
+    !hasNonEmptyValue(options.storageProvider)
+  ) {
+    throw new Error(
+      "Select at least one tool, plugin, gateway, sandbox or storage provider."
+    );
+  }
+  if (
+    hasNonEmptyValue(options.storageConfig) &&
+    !hasNonEmptyValue(options.storageProvider)
+  ) {
+    throw new Error("--storage-config requires --storage-provider.");
+  }
+};
+
+const prepareAdd = async (
+  cwd: string,
+  items: readonly string[],
+  options: AddOptions
+): Promise<AddSetup> => {
+  validateAddSelection(items, options);
+  const sandbox = hasNonEmptyValue(options.sandboxProvider)
+    ? await resolveSandbox(options.sandboxProvider, cwd)
+    : undefined;
+  const gateway = hasNonEmptyValue(options.gateway)
+    ? await resolveGateway(options.gateway, cwd)
+    : undefined;
+  const storage = hasNonEmptyValue(options.storageProvider)
+    ? await resolveStorage(options.storageProvider, cwd)
+    : undefined;
+  if (storage && hasNonEmptyValue(options.storageConfig)) {
+    storage.options = parseStorageOptions(options.storageConfig);
+  }
+  const plan = await planInstallation(
+    cwd,
+    {
+      plugins: [],
+      gateway: gateway?.source,
+      sandbox: sandbox?.source,
+      storage: storage
+        ? { options: storage.options, source: storage.source }
+        : undefined,
+      tools: items,
+    },
+    { replace: options.replace }
+  );
+  // Provider registry URLs supplied positionally still receive normal ChatJS configuration.
+  const gatewayItem = plan.items.find((item: RegistryItemInput): boolean =>
+    hasProviderKind(item.meta?.chatjs, "gateway")
+  );
+  const storageItem = plan.items.find((item: RegistryItemInput): boolean =>
+    hasProviderKind(item.meta?.chatjs, "storage")
+  );
+  const selectedSandbox = await selectedSandboxForPlan(cwd, plan, sandbox);
+  const selectedGateway =
+    gateway ??
+    (gatewayItem
+      ? await resolveGateway(plan.sources[plan.items.indexOf(gatewayItem)], cwd)
+      : undefined);
+  const selectedStorage =
+    storage ??
+    (storageItem
+      ? await resolveStorage(plan.sources[plan.items.indexOf(storageItem)], cwd)
+      : undefined);
+  const gatewayChange = plan.providerChanges.some(
+    ({ kind, previous, next }: ProviderChangeInput) =>
+      kind === "gateway" && hasNonEmptyValue(previous) && previous !== next
+  );
+  const keepStorageOptions =
+    !hasNonEmptyValue(options.storageConfig) &&
+    plan.providerChanges.some(
+      ({
+        kind,
+        previous,
+        next,
+      }: ReadonlyNative<
+        InstallationPlan["providerChanges"][number]
+      >): boolean => kind === "storage" && previous === next
+    );
+  const configEdit =
+    gatewayChange && selectedGateway
+      ? await gatewayConfigEdit(cwd, selectedGateway)
+      : undefined;
+
+  return {
+    configEdit,
+    gatewayChange,
+    keepStorageOptions,
+    plan,
+    selectedGateway,
+    selectedSandbox,
+    selectedStorage,
+  };
+};
+
+const printSetupRequirements = (setup: ReadonlyNative<AddSetup>): void => {
+  const { plan, selectedGateway, selectedStorage, selectedSandbox } = setup;
+  if (plan.plugins.some((plugin: PluginInput) => plugin.id === "mcp")) {
+    log.info(
+      "Set MCP_ENCRYPTION_KEY before starting the app, even if no connectors are configured."
+    );
+  }
+  const requirements = [
+    ...plan.expected.flatMap(
+      (item: ReadonlyNative<AddSetup["plan"]["expected"][number]>) =>
+        item.envRequirements
+    ),
+    ...plan.plugins.flatMap(
+      (plugin: PluginInput) => plugin.envRequirements ?? []
+    ),
+    ...(selectedGateway?.definition.envRequirements ?? []),
+    ...(selectedSandbox?.definition.envRequirements ?? []),
+    ...(selectedStorage?.definition.envRequirements ?? []),
+  ];
+  for (const requirement of requirements) {
+    log.info(
+      `Required: ${requirement.options.map((option: readonly string[]): string => option.join(" + ")).join(" or ")}`
+    );
+  }
+  if (
+    plan.plugins.some(
+      (plugin: PluginInput): boolean =>
+        (plugin.databaseSchemas?.length ?? 0) > 0
+    )
+  ) {
+    log.info(
+      "Database schema added. Run your db:generate script and review the SQL before running setup or db:migrate."
+    );
+  }
+};
+
+const scaffoldDesktopCompanion = async (
+  cwd: string,
+  plan: ReadonlyNative<InstallationPlan>
+): Promise<void> => {
+  if (plan.plugins.some((plugin: PluginInput) => plugin.id === "desktop")) {
+    if (!existsSync(path.join(cwd, "electron"))) {
+      await scaffoldElectron(cwd, {
+        packageManager: inferPackageManager(cwd),
+        projectName: path.basename(cwd),
+      });
+    }
+    log.info(
+      `Run the web app first, then: cd electron && ${inferPackageManager(cwd)} install && ${inferPackageManager(cwd)} run dev`
+    );
+  }
+};
+
+const exportAddSelection = async (
+  cwd: string,
+  items: readonly string[],
+  options: AddCommandOptions
+): Promise<void> => {
+  validateAddSelection(items, options);
+  if (
+    options.overwrite ||
+    options.replace === true ||
+    hasNonEmptyValue(options.storageConfig)
+  ) {
+    throw new Error(
+      "--files-only does not replace source or configure providers. Omit --overwrite, --replace and --storage-config; configure the exported source manually."
+    );
+  }
+  const sources = [
+    ...items.map((item) => itemAddress(item, "tool")),
+    ...(hasNonEmptyValue(options.gateway)
+      ? [itemAddress(options.gateway, "gateway")]
+      : []),
+    ...(hasNonEmptyValue(options.sandboxProvider)
+      ? [itemAddress(options.sandboxProvider, "sandbox")]
+      : []),
+    ...(hasNonEmptyValue(options.storageProvider)
+      ? [itemAddress(options.storageProvider, "storage")]
+      : []),
+  ];
+  const output = await exportManualInstallation(cwd, sources);
+  log.success(`Source exported to ${output}`);
+  log.info(
+    "Nothing was installed or registered. Follow the bundle's README.md and manifest.json to connect the source manually."
+  );
+};
+
+const reportAddError = (error: unknown, filesOnly: boolean): never => {
+  if (!filesOnly) {
+    log.info(
+      "For manual connection, retry the same selection with --files-only (omit --replace, --overwrite and --storage-config). This exports source and instructions without changing app code or generated registrations."
+    );
+  }
+  handleError(error);
+};
+
+const logReplacementPlan = ({
+  plan,
+  gatewayChange,
+}: Readonly<AddSetup>): void => {
+  for (const { previous, next } of plan.replacements) {
+    log.info(
+      `Replace ${previous.slot ?? previous.documentKind}: ${previous.id} → ${next.id}. Retire only ${previous.id}'s source; retain unrelated installations and editable UI order.`
+    );
+  }
+  for (const { kind, previous, next } of plan.providerChanges) {
+    if (hasNonEmptyValue(previous) && previous !== next) {
+      log.info(
+        `Replace ${kind}: ${previous} → ${next}. Update provider source and environment requirements.`
+      );
+    }
+  }
+  if (gatewayChange) {
+    log.info(
+      "Preserving model IDs and other runtime configuration in chat.config.ts. Review model IDs for the new gateway, then run setup/fetch:models."
+    );
+  }
+};
+
+const logInstallationActivation = (
+  items: readonly RegistryItemInput[]
+): void => {
+  for (const item of items) {
+    const explicitPaths = (item.files ?? []).flatMap((file) =>
+      file.target?.startsWith("~/") === true ? [file.target.slice(2)] : []
+    );
+    const inventory = installationActivation(item.meta?.chatjs, explicitPaths);
+    log.info(`${item.name}:\n${formatActivation(inventory)}`);
+    const inferred = (item.files ?? []).filter(
+      (file) => file.target?.startsWith("~/") !== true
+    );
+    if (inferred.length) {
+      log.info(
+        `  Destinations resolved by shadcn (not classified here): ${inferred.map((file) => file.path).join(", ")}`
+      );
+    }
+  }
+  log.info(
+    "Native entry points follow framework path conventions. Composition files are preserved; schema registration does not apply migrations."
+  );
+};
 
 export const add = new Command("add")
   .description(
-    "install registry tools and regenerate their ChatJS registrations"
+    "install registry tools/plugins/providers and compose their ChatJS registrations"
   )
-  .argument("<tools...>", "tool names or standard shadcn registry addresses")
-  .option("-y, --yes", "skip confirmation", false)
-  .option("-o, --overwrite", "overwrite existing installed source files", false)
+  .argument(
+    "[items...]",
+    "tool/plugin names or native shadcn registry addresses"
+  )
+  .option(
+    "-y, --yes",
+    "skip installation confirmation; does not authorize replacement/overwrite",
+    false
+  )
+  .option("--replace", "explicitly replace an exclusive provider", false)
+  .option(
+    "--files-only",
+    "export source and connection instructions to a temporary directory without installing or registering",
+    false
+  )
+  .option(
+    "-o, --overwrite",
+    "authorize overwriting modified or untracked installed source",
+    false
+  )
+  .option(
+    "--sandbox-provider <item>",
+    "install or replace optional sandbox infrastructure"
+  )
+  .option("--gateway <item>", "install or replace the AI gateway")
+  .option("--storage-provider <item>", "install or replace file storage")
+  .option("--storage-config <json>", "non-secret storage adapter options")
+  .option(
+    "--dry-run",
+    "inspect installation wiring and native entry points without installing",
+    false
+  )
   .option("-c, --cwd <cwd>", "project directory", process.cwd())
-  .action(async (tools: string[], options) => {
-    try {
-      const cwd = path.resolve(options.cwd);
-      await access(path.join(cwd, "chat.config.ts"));
-      const plan = await planToolInstallation(cwd, tools);
-      if (!options.yes) {
-        const answer = await confirm({
-          message: `Install ${tools.join(", ")}?`,
-        });
-        if (isCancel(answer) || !answer) {
+  .action(
+    async (
+      items: readonly string[],
+      options: AddCommandOptions
+    ): Promise<void> => {
+      try {
+        const cwd = path.resolve(options.cwd);
+        if (options.filesOnly && options.dryRun) {
+          throw new Error("Choose --files-only or --dry-run.");
+        }
+        if (options.filesOnly) {
+          await exportAddSelection(cwd, items, options);
           return;
         }
-      }
-      await installItems(plan.sources, cwd, options.overwrite);
-      try {
-        await syncTools(cwd, { expected: plan.expected });
-      } catch (error) {
-        throw new Error(
-          `Source installation completed, but registration failed. Fix the problem and run chat-js sync. ${error instanceof Error ? error.message : error}`,
-          { cause: error }
+        await access(path.join(cwd, "chat.config.ts"));
+        await assertUiCompatibility(cwd, [
+          ...(await readInstalledPlugins(cwd)),
+          ...(await readInstalledTools(cwd)),
+        ]);
+        const setup = await prepareAdd(cwd, items, options);
+        const {
+          plan,
+          selectedGateway,
+          selectedSandbox,
+          selectedStorage,
+          configEdit,
+          keepStorageOptions,
+        } = setup;
+        logReplacementPlan(setup);
+        logInstallationActivation(plan.items);
+        if (options.dryRun) {
+          return;
+        }
+        if (!options.yes) {
+          const answer = await confirm({
+            message: `Install ${plan.sources.join(", ")}?`,
+          });
+          if (isCancel(answer) || !answer) {
+            return;
+          }
+        }
+        await installPlan(
+          cwd,
+          plan,
+          {
+            finalize: async (): Promise<void> => {
+              const manager = inferPackageManager(cwd);
+              await runCommand(manager, ["install"], cwd);
+              const formatter = {
+                bun: ["run"],
+                npm: ["exec", "--"],
+                pnpm: ["exec"],
+                yarn: ["run"],
+              }[manager];
+              await runCommand(
+                manager,
+                [
+                  ...formatter,
+                  "oxfmt",
+                  "--write",
+                  "package.json",
+                  "chatjs/installed-dependencies.json",
+                  ...(selectedSandbox
+                    ? ["chatjs/providers/sandbox/options.ts"]
+                    : []),
+                ],
+                cwd
+              );
+            },
+            managedTargets: [
+              ...(selectedGateway
+                ? ["chatjs/providers/gateway-defaults.ts"]
+                : []),
+              ...sandboxProviderTargets(selectedSandbox),
+              ...(selectedStorage && !keepStorageOptions
+                ? ["chatjs/providers/storage-options.ts"]
+                : []),
+            ],
+            overwrite: options.overwrite,
+            rollbackTargets: [
+              ...(selectedGateway ? ["lib/ai/models.generated.ts"] : []),
+              ...(hasNonEmptyValue(configEdit) ? ["chat.config.ts"] : []),
+              ...(selectedGateway || selectedStorage || selectedSandbox
+                ? [".env.example"]
+                : []),
+            ],
+          },
+          async (): Promise<void> => {
+            if (selectedSandbox) {
+              await configureSandboxProvider(cwd, selectedSandbox);
+            }
+            if (selectedGateway) {
+              await configureGatewayProvider(cwd, selectedGateway);
+            }
+            if (selectedStorage && !keepStorageOptions) {
+              await configureStorageProvider(cwd, selectedStorage);
+            }
+            if (hasNonEmptyValue(configEdit)) {
+              await writeFile(path.join(cwd, "chat.config.ts"), configEdit);
+            }
+            await syncTools(cwd, { expected: plan.expected });
+            await syncPlugins(cwd, {
+              expected: plan.plugins.map((plugin) => plugin.id),
+            });
+          }
         );
+        await scaffoldDesktopCompanion(cwd, plan);
+        printSetupRequirements(setup);
+        log.success(
+          "Installed and registered. Review .env.local, then run setup."
+        );
+      } catch (error) {
+        reportAddError(error, options.filesOnly);
       }
-    } catch (error) {
-      handleError(error);
     }
-  });
+  );

@@ -1,6 +1,9 @@
 import { z } from "zod";
 
-export const generateVideoInput = z.object({
+const MINIMUM_VIDEO_DURATION_SECONDS = 1;
+const MAXIMUM_VIDEO_DURATION_SECONDS = 10;
+
+const generateVideoInput = z.object({
   aspectRatio: z
     .enum(["16:9", "9:16", "1:1"])
     .optional()
@@ -8,8 +11,8 @@ export const generateVideoInput = z.object({
   durationSeconds: z
     .number()
     .int()
-    .min(1)
-    .max(10)
+    .min(MINIMUM_VIDEO_DURATION_SECONDS)
+    .max(MAXIMUM_VIDEO_DURATION_SECONDS)
     .optional()
     .describe("Optional video duration in seconds. Defaults to 5."),
   prompt: z
@@ -17,8 +20,9 @@ export const generateVideoInput = z.object({
     .describe("A descriptive prompt for the video to generate."),
 });
 
-export const generateVideoResult = z.object({
+const generateVideoResult = z.object({
   fileId: z.string().optional(),
   prompt: z.string(),
   videoUrl: z.string(),
 });
+export { generateVideoInput, generateVideoResult };

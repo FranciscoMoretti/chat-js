@@ -1,16 +1,29 @@
-/* oxlint-disable eslint/no-promise-executor-return -- These Promise executors directly register callback APIs whose return values are ignored. */
-/* oxlint-disable promise/avoid-new -- These fixtures adapt callback, timer, stream, or browser event APIs into awaited Promises. */
-/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
-/* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
-/* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
-/* oxlint-disable unicorn/consistent-function-scoping -- One-off helpers stay beside the scenario state they coordinate. */
-/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
+import { userCredit } from "@/chatjs/plugins/credits/credits-schema";
+import {
+  getPublicEveConversation,
+  setSharing,
+} from "@/chatjs/plugins/sharing/queries";
+import { createEveTestSession } from "./eve-native-session.fixture";
+import { cleanupWorkspaceIfUnused } from "../lib/eve/persistent-sandbox-store";
+import { reconcileEveWorkspaceTurn } from "../lib/eve/reconcile-workspace-turn";
+import { EveWorkspaceBusyError } from "../lib/db/eve-workspace-turns";
+import { dispatchEveOnce } from "../lib/db/eve-dispatch";
+import {
+  eveDispatch,
+  eveChat,
+  eveConversation,
+  eveUsage,
+  user,
+} from "../lib/db/schema";
+import { setTimeout as delay } from "node:timers/promises";
+
 import { eq, sql } from "drizzle-orm";
 import type { MessageStreamEvent } from "eve/client";
 import { afterAll, expect, test, vi } from "vitest";
 
 import { db } from "../lib/db/client";
 import { recordEveUsage } from "../lib/db/eve-billing";
+import { eveModelLedger } from "../lib/db/eve-model-ledger";
 import { completeEveConversationDeletion } from "../lib/db/eve-deletion";
 import {
   beginEveConversationDeletion,
@@ -18,7 +31,6 @@ import {
   getDeletingEveConversationForSession,
   getEveConversation,
   getEveCreation,
-  getPublicEveConversation,
   listEveConversationBranches,
   listEveConversations,
   listEveOwnerBindings,
@@ -26,13 +38,6 @@ import {
   recordEveConversationActivity,
   updateEveConversationMetadata,
 } from "../lib/db/eve-queries";
-import {
-  eveChat,
-  eveConversation,
-  eveUsage,
-  user,
-  userCredit,
-} from "../lib/db/schema";
 import { env } from "../lib/env";
 import { createToolResult } from "../lib/eve/tool-result";
 import { ingestEveUsage } from "../lib/eve/usage";
@@ -41,10 +46,12 @@ import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(env.DATABASE_URL);
 const owner = crypto.randomUUID();
+
 await db
   .insert(user)
   .values({ email: `${owner}@test.invalid`, id: owner, name: "Eve test" });
 afterAll(async () => {
+  await db.delete(eveDispatch).where(eq(eveDispatch.ownerId, owner));
   await db.delete(eveUsage).where(eq(eveUsage.ownerId, owner));
   await db.delete(eveConversation).where(eq(eveConversation.ownerId, owner));
   await db.delete(user).where(eq(user.id, owner));
@@ -53,7 +60,7 @@ afterAll(async () => {
 test("billing replay is atomic, rounds per turn and preserves unknown costs", async () => {
   await db
     .insert(userCredit)
-    .values({ credits: 50, userId: owner })
+    .values({ balanceCents: 50, userId: owner })
     .onConflictDoNothing();
   const sessionId = crypto.randomUUID();
   const eventId = crypto.randomUUID();
@@ -64,13 +71,15 @@ test("billing replay is atomic, rounds per turn and preserves unknown costs", as
     sessionId,
     turnId: "turn_0",
   };
-  await Promise.all(Array.from({ length: 8 }, () => recordEveUsage(entry)));
+  await Promise.all(
+    Array.from({ length: 8 }, async () => await recordEveUsage(entry))
+  );
   await recordEveUsage({ ...entry, eventId: crypto.randomUUID() });
   let [balance] = await db
     .select()
     .from(userCredit)
     .where(eq(userCredit.userId, owner));
-  expect(balance?.credits).toBe(49);
+  expect(balance?.balanceCents).toBe(49);
   const unknown = {
     ...entry,
     costUsd: undefined,
@@ -89,7 +98,7 @@ test("billing replay is atomic, rounds per turn and preserves unknown costs", as
     .select()
     .from(userCredit)
     .where(eq(userCredit.userId, owner));
-  expect(balance?.credits).toBe(47);
+  expect(balance?.balanceCents).toBe(47);
   expect(await recordEveUsage(unknown)).toBe(true);
   await expect(recordEveUsage({ ...entry, costUsd: 0.5 })).rejects.toThrow(
     "amount changed"
@@ -103,22 +112,27 @@ test("billing replay is atomic, rounds per turn and preserves unknown costs", as
   await recordEveUsage(precise);
   await recordEveUsage(precise);
 });
+
 test("concurrent retry reserves once and cannot cross owners", async () => {
   const operation = crypto.randomUUID();
   let starts = 0;
-  const start = async () => {
+  const start = async (): Promise<string> => {
     starts += 1;
-    await new Promise((resolve) => setTimeout(resolve, 50));
+    await delay(50);
     return `test-${crypto.randomUUID()}`;
   };
   const results = await Promise.allSettled(
-    Array.from({ length: 8 }, () =>
-      createEveConversation(owner, operation, "hello", start)
+    Array.from(
+      { length: 8 },
+      async () => await createEveConversation(owner, operation, "hello", start)
     )
   );
   expect(starts).toBe(1);
   expect(
-    results.filter((result) => result.status === "fulfilled").length
+    results.filter(
+      (result: Readonly<{ status: "fulfilled" | "rejected" }>) =>
+        result.status === "fulfilled"
+    ).length
   ).toBeGreaterThan(0);
   const bound = await createEveConversation(owner, operation, "hello", start);
   await expect(
@@ -133,31 +147,21 @@ test("concurrent retry reserves once and cannot cross owners", async () => {
     createEveConversation(owner, operation, "changed", start)
   ).rejects.toThrow("different");
 });
-test("a lost create reply is recovered through the same native operation", async () => {
+
+test("a lost create reply stays unresolved and never redispatches", async () => {
   const operation = crypto.randomUUID();
-  const dispatched: string[] = [];
-  const nativeSession = `test-${crypto.randomUUID()}`;
-  const start = (id: string) => {
-    dispatched.push(id);
-    return dispatched.length === 1
-      ? Promise.reject(new Error("lost reply"))
-      : Promise.resolve(nativeSession);
-  };
+  const start = vi
+    .fn<() => Promise<string>>()
+    .mockRejectedValue(new Error("lost reply"));
   await expect(
     createEveConversation(owner, operation, "uncertain", start)
   ).rejects.toThrow("lost reply");
-  const recovered = await createEveConversation(
-    owner,
-    operation,
-    "uncertain",
-    start
-  );
-  expect(recovered.sessionId).toBe(nativeSession);
-  expect(dispatched).toEqual([recovered.id, recovered.id]);
-  expect(
-    await createEveConversation(owner, operation, "uncertain", start)
-  ).toEqual(recovered);
-  expect(dispatched).toHaveLength(2);
+  await expect(
+    createEveConversation(owner, operation, "uncertain", start)
+  ).rejects.toThrow("outcome is unknown");
+  expect(start).toHaveBeenCalledTimes(1);
+  const unresolved = await getEveCreation(owner, operation);
+  expect(unresolved?.state).toBe("uncertain");
 });
 
 test("a stopped creator's reservation can be resumed without changing its identity", async () => {
@@ -171,7 +175,8 @@ test("a stopped creator's reservation can be resumed without changing its identi
     owner,
     operation,
     "process stopped",
-    (id) => Promise.resolve(`test-${id}`)
+
+    (id) => `test-${id}`
   );
   expect(bound).toEqual({
     id: reservation.id,
@@ -184,14 +189,16 @@ test("activity projection is owner-scoped, monotonic, and independent of metadat
     owner,
     crypto.randomUUID(),
     "activity",
-    async () => crypto.randomUUID()
+    createEveTestSession
   );
   const before = await getEveConversation(owner, bound.id);
   const activityAt = new Date(Date.now() + 60_000);
   await recordEveConversationActivity("other", bound.sessionId, activityAt);
-  expect((await getEveConversation(owner, bound.id))?.updatedAt).toEqual(
-    before?.updatedAt
+  const conversationBeforeOwnerActivity = await getEveConversation(
+    owner,
+    bound.id
   );
+  expect(conversationBeforeOwnerActivity?.updatedAt).toEqual(before?.updatedAt);
   await recordEveConversationActivity(owner, bound.sessionId, activityAt);
   await recordEveConversationActivity(
     owner,
@@ -202,24 +209,28 @@ test("activity projection is owner-scoped, monotonic, and independent of metadat
     isPinned: true,
     title: "renamed",
   });
-  expect((await getEveConversation(owner, bound.id))?.updatedAt).toEqual(
-    activityAt
+  const conversationAfterOwnerActivity = await getEveConversation(
+    owner,
+    bound.id
   );
+  expect(conversationAfterOwnerActivity?.updatedAt).toEqual(activityAt);
   expect(
     await updateEveConversationMetadata("other", bound.id, {
       title: "intrusion",
     })
   ).toBeUndefined();
-  expect((await getEveConversation(owner, bound.id))?.firstMessage).toBe(
-    "activity"
+  const conversationAfterMetadataEdit = await getEveConversation(
+    owner,
+    bound.id
   );
+  expect(conversationAfterMetadataEdit?.firstMessage).toBe("activity");
 });
 
 test("fork reservations retain ancestry and reject changed sources on retry", async () => {
   let starts = 0;
-  const start = () => {
+  const start = (): string => {
     starts += 1;
-    return Promise.resolve(crypto.randomUUID());
+    return createEveTestSession();
   };
   const root = await createEveConversation(
     owner,
@@ -228,7 +239,7 @@ test("fork reservations retain ancestry and reject changed sources on retry", as
     start
   );
   const operation = crypto.randomUUID();
-  const fork = { beforeTurnId: "turn_1", conversationId: root.id };
+  const fork = { conversationId: root.id };
   const branch = await createEveConversation(
     owner,
     operation,
@@ -244,12 +255,12 @@ test("fork reservations retain ancestry and reject changed sources on retry", as
   expect(starts).toBe(2);
   await expect(
     createEveConversation(owner, operation, "replacement", start, {
-      fork: { ...fork, beforeTurnId: "turn_2" },
+      fork: { conversationId: crypto.randomUUID() },
     })
-  ).rejects.toThrow("source turn");
+  ).rejects.toThrow("source conversation");
   await expect(
     createEveConversation(owner, operation, "replacement", start)
-  ).rejects.toThrow("source turn");
+  ).rejects.toThrow("source conversation");
   expect(starts).toBe(2);
 
   const nested = await createEveConversation(
@@ -257,20 +268,18 @@ test("fork reservations retain ancestry and reject changed sources on retry", as
     crypto.randomUUID(),
     "nested replacement",
     start,
-    { fork: { beforeTurnId: "turn_2", conversationId: branch.id } }
+    { fork: { conversationId: branch.id } }
   );
   const row = await getEveConversation(owner, nested.id);
   expect(row?.rootConversationId).toBe(root.id);
   expect(row?.parentConversationId).toBe(branch.id);
-  expect(row?.forkTurnId).toBe("turn_2");
+  expect(row?.forkTurnId).toBeNull();
   expect(row?.visibility).toBe("private");
   const family = await listEveConversationBranches(owner, nested.id);
   expect(family?.rootId).toBe(root.id);
-  expect(family?.branches.map((item) => item.id)).toEqual([
-    root.id,
-    branch.id,
-    nested.id,
-  ]);
+  expect(
+    family?.branches.map((item: Readonly<{ id: string }>) => item.id)
+  ).toEqual([root.id, branch.id, nested.id]);
   expect(
     await listEveConversationBranches("not-owner", nested.id)
   ).toBeUndefined();
@@ -287,7 +296,7 @@ test("database constraints reject partial and cross-owner branch ancestry", asyn
     owner,
     crypto.randomUUID(),
     "constraint root",
-    () => Promise.resolve(crypto.randomUUID())
+    createEveTestSession
   );
   await expect(
     insertEveConversationFixtures({
@@ -327,31 +336,33 @@ test.each(["codeExecution", "webSearch"])(
   async (toolName) => {
     const sessionId = crypto.randomUUID();
     const callId = crypto.randomUUID();
-    const event: MessageStreamEvent = {
+    const result = createToolResult({ message: "42", chart: "" }, 0.05);
+    expect(JSON.stringify(result)).not.toContain('"updates"');
+    const event = {
       data: {
         result: {
           callId,
           kind: "tool-result",
-          // oxlint-disable-next-line unicorn/prefer-structured-clone -- The event carries persisted JSON, not in-memory optional undefined fields.
-          output: JSON.parse(
-            JSON.stringify(createToolResult({ message: "42", chart: "" }, 0.05))
-          ),
+
+          output: result,
           toolName,
         },
-        sequence: 0,
         status: "completed",
-        stepIndex: 0,
         turnId: "tool-receipt",
       },
       meta: { at: new Date().toISOString(), id: crypto.randomUUID() },
       type: "action.result",
+    } satisfies Parameters<typeof ingestEveUsage>[2] & {
+      data: { result: { toolName: string } };
     };
     await Promise.all(
-      Array.from({ length: 8 }, () =>
-        ingestEveUsage(owner, sessionId, {
-          ...event,
-          meta: { ...event.meta, id: crypto.randomUUID() },
-        })
+      Array.from(
+        { length: 8 },
+        async () =>
+          await ingestEveUsage(owner, sessionId, {
+            ...event,
+            meta: { ...event.meta, id: crypto.randomUUID() },
+          })
       )
     );
     const [row] = await db
@@ -367,7 +378,7 @@ test.each(["codeExecution", "webSearch"])(
         result: {
           ...event.data.result,
           callId: crypto.randomUUID(),
-          output: "result lost its receipt",
+          output: { ...result, usage: {} },
         },
       },
     };
@@ -391,9 +402,9 @@ test.each(["deleting", "deleted"] as const)(
   async (state) => {
     const operation = crypto.randomUUID();
     let starts = 0;
-    const start = () => {
+    const start = (): string => {
       starts += 1;
-      return Promise.resolve(crypto.randomUUID());
+      return crypto.randomUUID();
     };
     const bound = await createEveConversation(
       owner,
@@ -410,7 +421,7 @@ test.each(["deleting", "deleted"] as const)(
       .select({ updatedAt: eveChat.updatedAt })
       .from(eveChat)
       .where(eq(eveChat.id, creation?.chatId ?? ""));
-    expect(await getEveConversation(owner, bound.id)).toBeUndefined();
+    expect(await getEveConversation(owner, bound.id)).toBeNull();
     expect(await getPublicEveConversation(bound.id)).toBeUndefined();
     expect(await ownsEveSession(owner, bound.sessionId)).toBe(false);
     expect(
@@ -420,10 +431,12 @@ test.each(["deleting", "deleted"] as const)(
     ).toBe(state === "deleting");
     expect(
       await getDeletingEveConversationForSession("other", bound.sessionId)
-    ).toBeUndefined();
+    ).toBeNull();
 
-    const recoveryRow = (await listEveConversations(owner)).items.find(
-      (row) => row.conversationId === bound.id
+    const recoveryConversations = await listEveConversations(owner);
+    const recoveryRow = recoveryConversations.items.find(
+      (row: Readonly<{ conversationId: string }>) =>
+        row.conversationId === bound.id
     );
     // Pending deletion remains discoverable so its owner can resume cleanup.
     // The transcript and native access above remain fenced throughout.
@@ -440,7 +453,6 @@ test.each(["deleting", "deleted"] as const)(
     expect(
       await updateEveConversationMetadata(owner, bound.id, {
         title: "resurrected",
-        visibility: "public",
       })
     ).toBeUndefined();
     await recordEveConversationActivity(
@@ -458,12 +470,13 @@ test.each(["deleting", "deleted"] as const)(
     ).rejects.toThrow("can no longer be created");
     await expect(
       createEveConversation(owner, crypto.randomUUID(), "fork", start, {
-        fork: { beforeTurnId: "turn_0", conversationId: bound.id },
+        fork: { conversationId: bound.id },
       })
     ).rejects.toThrow("not available");
     expect(starts).toBe(1);
+    const ownerBindingsAfterDeletion = await listEveOwnerBindings(owner);
     expect(
-      (await listEveOwnerBindings(owner)).some(
+      ownerBindingsAfterDeletion.some(
         (row) => row.sessionId === bound.sessionId
       )
     ).toBe(state === "deleting");
@@ -471,32 +484,36 @@ test.each(["deleting", "deleted"] as const)(
 );
 
 test("deletion fences the entire owned family and is retryable", async () => {
-  const start = () => Promise.resolve(crypto.randomUUID());
   const root = await createEveConversation(
     owner,
     crypto.randomUUID(),
     "delete family",
-    start
+    createEveTestSession
   );
   const child = await createEveConversation(
     owner,
     crypto.randomUUID(),
     "child",
-    start,
-    { fork: { beforeTurnId: "turn_0", conversationId: root.id } }
+    createEveTestSession,
+    { fork: { conversationId: root.id } }
   );
-  await updateEveConversationMetadata(owner, root.id, { visibility: "public" });
-  expect(await beginEveConversationDeletion("other", root.id)).toBeUndefined();
+  await setSharing(owner, root.id, "public");
+  expect(await beginEveConversationDeletion("other", root.id)).toBeNull();
   expect(await getPublicEveConversation(root.id)).toBeDefined();
   const rootCreation = await getEveConversation(owner, root.id);
-  const deletion = await beginEveConversationDeletion(owner, child.id);
+  const deletion = await beginEveConversationDeletion(
+    owner,
+    rootCreation?.chatId ?? "missing"
+  );
   expect(deletion?.rootId).toBe(rootCreation?.chatId);
   expect(deletion?.conversations.map((row) => row.id)).toEqual(
     [root.id, child.id].toSorted()
   );
   expect(await getPublicEveConversation(root.id)).toBeUndefined();
   expect(await ownsEveSession(owner, child.sessionId)).toBe(false);
-  expect(await beginEveConversationDeletion(owner, root.id)).toEqual(deletion);
+  expect(
+    await beginEveConversationDeletion(owner, rootCreation?.chatId ?? "missing")
+  ).toEqual(deletion);
 });
 
 test("deletion waits for document commits and fences a concurrent fork", async () => {
@@ -504,15 +521,15 @@ test("deletion waits for document commits and fences a concurrent fork", async (
     owner,
     crypto.randomUUID(),
     "concurrent deletion",
-    () => Promise.resolve(crypto.randomUUID())
+    createEveTestSession
   );
-  const locked = Promise.withResolvers<undefined>();
-  const release = Promise.withResolvers<undefined>();
+  const locked: PromiseWithResolvers<void> = Promise.withResolvers();
+  const release: PromiseWithResolvers<void> = Promise.withResolvers();
   const documentWrite = db.transaction(async (tx) => {
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-document:${root.id}`}, 0))`
     );
-    locked.resolve(undefined);
+    locked.resolve();
     await release.promise;
   });
   await locked.promise;
@@ -528,22 +545,22 @@ test("deletion waits for document commits and fences a concurrent fork", async (
       expect(available).toBe(false);
     });
     expect(await getEveConversation(owner, root.id)).toBeDefined();
-    const start = vi.fn(() => Promise.resolve(crypto.randomUUID()));
+    const start = vi.fn(createEveTestSession);
     const fork = createEveConversation(
       owner,
       crypto.randomUUID(),
       "late fork",
       start,
-      { fork: { beforeTurnId: "turn_0", conversationId: root.id } }
+      { fork: { conversationId: root.id } }
     );
     const rejected = expect(fork).rejects.toThrow("not available");
-    release.resolve(undefined);
+    release.resolve();
     await documentWrite;
     await deletion;
     await rejected;
     expect(start).not.toHaveBeenCalled();
   } finally {
-    release.resolve(undefined);
+    release.resolve();
     await documentWrite;
     await deletion;
   }
@@ -554,26 +571,27 @@ test("unresolved creation prevents a partial family deletion", async () => {
     owner,
     crypto.randomUUID(),
     "recover first",
-    () => Promise.resolve(crypto.randomUUID())
+    createEveTestSession
   );
   await expect(
     createEveConversation(
       owner,
       crypto.randomUUID(),
       "uncertain child",
-      () => Promise.reject(new Error("offline")),
-      { fork: { beforeTurnId: "turn_0", conversationId: root.id } }
+      vi.fn<() => Promise<string>>().mockRejectedValue(new Error("offline")),
+      { fork: { conversationId: root.id } }
     )
   ).rejects.toThrow("offline");
-  await expect(beginEveConversationDeletion(owner, root.id)).rejects.toThrow(
-    "Finish recovering"
-  );
+  const rootCreation = await getEveConversation(owner, root.id);
+  await expect(
+    beginEveConversationDeletion(owner, rootCreation?.chatId ?? "missing")
+  ).rejects.toThrow("Finish recovering");
   expect(await ownsEveSession(owner, root.sessionId)).toBe(true);
 });
 
 test("final application deletion erases family content, preserves accounting and rejects old creation replay", async () => {
   const operation = crypto.randomUUID();
-  const start = vi.fn(async () => crypto.randomUUID());
+  const start = vi.fn(createEveTestSession);
   const root = await createEveConversation(
     owner,
     operation,
@@ -586,7 +604,7 @@ test("final application deletion erases family content, preserves accounting and
     crypto.randomUUID(),
     "Child text",
     start,
-    { fork: { beforeTurnId: "turn_0", conversationId: root.id } }
+    { fork: { conversationId: root.id } }
   );
   const unrelated = await createEveConversation(
     owner,
@@ -597,8 +615,8 @@ test("final application deletion erases family content, preserves accounting and
   await updateEveConversationMetadata(owner, root.id, {
     isPinned: true,
     title: "Private title",
-    visibility: "public",
   });
+  await setSharing(owner, root.id, "public");
   await db.insert(eveUsage).values({
     chargedCents: 1,
     costUsd: "0.01",
@@ -614,34 +632,48 @@ test("final application deletion erases family content, preserves accounting and
   await expect(completeEveConversationDeletion(owner, root.id)).rejects.toThrow(
     "pending deletion"
   );
-  await beginEveConversationDeletion(owner, child.id);
+  const family = await getEveConversation(owner, root.id);
+  const chatId = family?.chatId ?? "missing";
+  await reconcileEveWorkspaceTurn(owner, root.id);
+  await beginEveConversationDeletion(owner, chatId);
+  await expect(completeEveConversationDeletion(owner, chatId)).rejects.toThrow(
+    "Workspace cleanup is incomplete"
+  );
+  await cleanupWorkspaceIfUnused(
+    owner,
+    family?.workspaceId ?? "missing",
+    () => {
+      throw new Error("Text-only fixture must not allocate a sandbox");
+    }
+  );
   await expect(
     completeEveConversationDeletion("other", root.id)
   ).rejects.toThrow("Conversation identity is unavailable");
-  // Any branch route resolves to its logical chat and retires the same family.
-  await completeEveConversationDeletion(owner, child.id);
-  await completeEveConversationDeletion(owner, root.id);
-  await completeEveConversationDeletion(owner, root.id);
-  for (const id of [root.id, child.id]) {
-    const [row] = await db
-      .select()
-      .from(eveConversation)
-      .where(eq(eveConversation.id, id));
-    expect(row).toMatchObject({
-      firstMessage: "",
-      initialContentHash: null,
-      initialModelId: null,
-      initialRequest: null,
-      state: "deleted",
-      visibility: "private",
-    });
-    expect(row.sessionId).toBe(
-      id === root.id ? root.sessionId : child.sessionId
-    );
-    expect(await getEveConversation(owner, id)).toBeUndefined();
-  }
+  // Explicit chat deletion retires the family; conversation deletion is scoped.
+  await completeEveConversationDeletion(owner, chatId);
+  await completeEveConversationDeletion(owner, chatId);
+  await Promise.all(
+    [root.id, child.id].map(async (id) => {
+      const [row] = await db
+        .select()
+        .from(eveConversation)
+        .where(eq(eveConversation.id, id));
+      expect(row).toMatchObject({
+        firstMessage: "",
+        initialContentHash: null,
+        initialModelId: null,
+        initialRequest: null,
+        state: "deleted",
+        visibility: "private",
+      });
+      expect(row.sessionId).toBe(
+        id === root.id ? root.sessionId : child.sessionId
+      );
+      expect(await getEveConversation(owner, id)).toBeNull();
+    })
+  );
   const deletedCreation = await getEveCreation(owner, operation);
-  if (!deletedCreation) {
+  if (deletedCreation === undefined) {
     throw new Error("Missing retained creation tombstone");
   }
   const [deletedChat] = await db
@@ -653,10 +685,10 @@ test("final application deletion erases family content, preserves accounting and
     isPinned: false,
     activeConversationId: null,
   });
-  expect((await getEveCreation(owner, operation))?.operationId).toBe(operation);
-  expect((await getEveConversation(owner, unrelated.id))?.firstMessage).toBe(
-    "Keep this"
-  );
+  const tombstonedCreationReplay = await getEveCreation(owner, operation);
+  expect(tombstonedCreationReplay?.operationId).toBe(operation);
+  const unrelatedConversation = await getEveConversation(owner, unrelated.id);
+  expect(unrelatedConversation?.firstMessage).toBe("Keep this");
   expect(
     await db
       .select()
@@ -677,6 +709,7 @@ const copyReservationStates: (typeof eveConversation.$inferSelect.state)[] = [
   "uncertain",
   "bound",
 ];
+
 test.each(copyReservationStates)(
   "ordinary creation cannot consume a %s copy reservation",
   async (state) => {
@@ -690,7 +723,7 @@ test.each(copyReservationStates)(
       sessionId,
       state,
     });
-    const create = vi.fn(() => Promise.resolve(crypto.randomUUID()));
+    const create = vi.fn(createEveTestSession);
     await expect(
       createEveConversation(owner, operationId, "Same visible title", create)
     ).rejects.toThrow("different");
@@ -704,25 +737,26 @@ test.each(copyReservationStates)(
   }
 );
 
-test("copy reservations must be fresh roots and creation kinds are enforced by PostgreSQL", async () => {
+test("copy reservations retain shared ancestry and creation kinds are enforced by PostgreSQL", async () => {
   const sourceOperation = crypto.randomUUID();
   const source = await createEveConversation(
     owner,
     sourceOperation,
     "Source",
-    () => Promise.resolve(crypto.randomUUID())
+    createEveTestSession
   );
-  await expect(
-    insertEveConversationFixtures({
-      creationKind: "copy",
-      firstMessage: "Invalid copy fork",
-      forkTurnId: "turn_0",
-      operationId: crypto.randomUUID(),
-      ownerId: owner,
-      parentConversationId: source.id,
-      rootConversationId: source.id,
-    })
-  ).rejects.toThrow();
+  const [copy] = await insertEveConversationFixtures({
+    creationKind: "copy",
+    firstMessage: "Shared-workspace copy",
+    forkTurnId: "turn_0",
+    operationId: crypto.randomUUID(),
+    ownerId: owner,
+    parentConversationId: source.id,
+    rootConversationId: source.id,
+  });
+  const sourceRow = await getEveConversation(owner, source.id);
+  expect(copy.parentConversationId).toBe(source.id);
+  expect(copy.workspaceId).toBe(sourceRow?.workspaceId);
   await expect(
     db.execute(sql`insert into "EveConversation" ("ownerId", "operationId", "firstMessage", "creationKind")
     values (${owner}, ${crypto.randomUUID()}, 'Invalid kind', 'unrecognized')`)
@@ -732,30 +766,144 @@ test("copy reservations must be fresh roots and creation kinds are enforced by P
   });
 });
 
-test("auxiliary model calls settle once per actual attempt even without a valid annotation", async () => {
-  const sessionId = crypto.randomUUID();
+test("auxiliary model calls settle once per actual attempt independently of completion events", async () => {
+  const conversation = await createEveConversation(
+    owner,
+    crypto.randomUUID(),
+    "Followup billing",
+    createEveTestSession
+  );
+  const { sessionId } = conversation;
+  if (!sessionId) {
+    throw new Error("Missing bound session");
+  }
+  await Promise.all(
+    [0.002, 0.003].map(async (cost) => {
+      const attempt = {
+        eventId: crypto.randomUUID(),
+        modelId: "mock-followup-model",
+        provider: "mock",
+        ownerId: owner,
+        sessionId,
+        turnId: "turn_0",
+      };
+      await eveModelLedger.begin(attempt);
+      await Promise.all(
+        Array.from({ length: 4 }, async () => {
+          await eveModelLedger.finish(attempt, {
+            usage: {
+              inputTokens: {
+                total: 1,
+                noCache: 1,
+                cacheRead: 0,
+                cacheWrite: 0,
+              },
+              outputTokens: { total: 1, text: 1, reasoning: 0 },
+            },
+            providerMetadata: { gateway: { cost: String(cost) } },
+          });
+        })
+      );
+    })
+  );
   const event: MessageStreamEvent = {
     data: {
-      hookId: "followup-suggestions",
-      modelCalls: [
-        { modelId: "google/gemini-2.5-flash-lite", usage: { costUsd: 0.002 } },
-        { modelId: "google/gemini-2.5-flash-lite", usage: { costUsd: 0.003 } },
-      ],
+      sequence: 0,
       turnId: "turn_0",
     },
     meta: { at: new Date().toISOString(), id: crypto.randomUUID() },
-    type: "hook.result",
+    type: "turn.completed",
   };
   await Promise.all(
-    Array.from({ length: 4 }, () => ingestEveUsage(owner, sessionId, event))
+    Array.from(
+      { length: 4 },
+      async () => await ingestEveUsage(owner, sessionId, event)
+    )
   );
   const entries = await db
     .select()
     .from(eveUsage)
     .where(eq(eveUsage.sessionId, sessionId));
   expect(entries).toHaveLength(2);
-  expect(entries.reduce((sum, entry) => sum + Number(entry.costUsd), 0)).toBe(
-    0.005
+  expect(
+    entries.reduce(
+      (sum, entry: { readonly costUsd: string | null }) =>
+        sum + Number(entry.costUsd),
+      0
+    )
+  ).toBe(0.005);
+  expect(
+    entries.reduce(
+      (sum, entry: { readonly chargedCents: number }) =>
+        sum + entry.chargedCents,
+      0
+    )
+  ).toBe(1);
+});
+
+test("completed-copy capture fences a concurrent send and admits only one workspace operation", async () => {
+  const source = await createEveConversation(
+    owner,
+    crypto.randomUUID(),
+    "Source",
+    createEveTestSession
   );
-  expect(entries.reduce((sum, entry) => sum + entry.chargedCents, 0)).toBe(1);
+  const { readCompletedEveCopyTranscript } =
+    await import("../lib/eve/completed-copy-source");
+  const entered = Promise.withResolvers<null>();
+  const release = Promise.withResolvers<null>();
+  vi.mocked(readCompletedEveCopyTranscript).mockImplementationOnce(async () => {
+    entered.resolve(null);
+    await release.promise;
+    return {
+      seed: {
+        messages: [
+          {
+            role: "user",
+            parts: [{ type: "text", text: "Captured before send" }],
+          },
+        ],
+      },
+      projectionHash: "captured",
+      resources: { fileKeys: [], documentIds: [], revisionIds: [] },
+    };
+  });
+  const copyDispatch = vi.fn(createEveTestSession);
+  const copying = createEveConversation(
+    owner,
+    crypto.randomUUID(),
+    "Copy",
+    copyDispatch,
+    { fork: { conversationId: source.id } }
+  );
+  await entered.promise;
+  const send = vi
+    .fn<() => Promise<{ sessionId: string; deliveryId: string }>>()
+    .mockResolvedValue({
+      sessionId: source.sessionId,
+      deliveryId: crypto.randomUUID(),
+    });
+  const sending = dispatchEveOnce(
+    {
+      ownerId: owner,
+      operationId: crypto.randomUUID(),
+      conversationId: source.id,
+      kind: "send",
+      intent: { message: "Concurrent" },
+    },
+    send
+  );
+  try {
+    await delay(30);
+    expect(send).not.toHaveBeenCalled();
+  } finally {
+    release.resolve(null);
+  }
+  const outcomes = await Promise.allSettled([copying, sending]);
+  expect(
+    outcomes.filter((outcome) => outcome.status === "fulfilled")
+  ).toHaveLength(1);
+  const rejected = outcomes.find((outcome) => outcome.status === "rejected");
+  expect(rejected?.reason).toBeInstanceOf(EveWorkspaceBusyError);
+  expect(copyDispatch.mock.calls.length + send.mock.calls.length).toBe(1);
 });

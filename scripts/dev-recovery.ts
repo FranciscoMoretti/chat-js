@@ -1,16 +1,38 @@
-/** Allow cold compilation and brief resource contention to finish before replacing a live runtime. */
-export const shouldRestartAfterReadinessFailures = (
-  consecutiveFailures: number,
-  unreadyForMs: number,
-  hasBeenReady: boolean,
-  failedStartups = 0
-) => {
+const MAX_STARTUP_GRACE_MS = 600_000;
+const INITIAL_STARTUP_GRACE_MS = 180_000;
+const BACKOFF_MULTIPLIER = 2;
+const MAX_BACKOFF_EXPONENT = 2;
+const READY_FAILURE_GRACE_MS = 120_000;
+const MIN_READINESS_FAILURES = 3;
+const NO_PREVIOUS_START_FAILURES = 0;
+
+/**
+ * Allow cold compilation and brief resource contention before replacing a runtime.
+ * @param {object} options - Readiness-failure counts and elapsed time used to select the grace period.
+ * @param {number} options.consecutiveFailures - Number of consecutive failed readiness probes.
+ * @param {number} options.unreadyForMs - Time since readiness was lost or startup began.
+ * @param {boolean} options.hasBeenReady - Whether this runtime has ever completed startup.
+ * @param {number} [options.failedStartups] - Earlier failed starts used to increase startup grace; omitted values default to zero.
+ * @returns {boolean} Whether the failure count and applicable grace period require restart.
+ */
+export const shouldRestartAfterReadinessFailures = ({
+  consecutiveFailures,
+  unreadyForMs,
+  hasBeenReady,
+  failedStartups = NO_PREVIOUS_START_FAILURES,
+}: {
+  readonly consecutiveFailures: number;
+  readonly unreadyForMs: number;
+  readonly hasBeenReady: boolean;
+  readonly failedStartups?: number | undefined;
+}): boolean => {
   const startupGraceMs = Math.min(
-    600_000,
-    180_000 * 2 ** Math.min(2, failedStartups)
+    MAX_STARTUP_GRACE_MS,
+    INITIAL_STARTUP_GRACE_MS *
+      BACKOFF_MULTIPLIER ** Math.min(MAX_BACKOFF_EXPONENT, failedStartups)
   );
   return (
-    consecutiveFailures >= 3 &&
-    unreadyForMs >= (hasBeenReady ? 120_000 : startupGraceMs)
+    consecutiveFailures >= MIN_READINESS_FAILURES &&
+    unreadyForMs >= (hasBeenReady ? READY_FAILURE_GRACE_MS : startupGraceMs)
   );
 };

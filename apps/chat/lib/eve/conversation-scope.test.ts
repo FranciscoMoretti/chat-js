@@ -13,8 +13,13 @@ vi.mock("../db/eve-queries", () => ({
 }));
 vi.mock("./server", () => ({ eveRequest: mocks.request }));
 const reservationId = "01912345-1234-7123-8123-123456789abc";
-const resolve = (id: unknown = reservationId) =>
-  resolveEveConversationScope("owner", "native", AbortSignal.timeout(1000), id);
+const resolve = async (id: unknown = reservationId) =>
+  await resolveEveConversationScope(
+    "owner",
+    "native",
+    AbortSignal.timeout(1000),
+    id
+  );
 beforeEach(() => {
   vi.resetAllMocks();
   mocks.read.mockResolvedValue({
@@ -40,7 +45,7 @@ it("rejects a subagent inheriting its parent's reservation attribute", async () 
   expect(mocks.bind).not.toHaveBeenCalled();
 });
 it.each([
-  [undefined, "identity_missing"],
+  [null, "identity_missing"],
   [{ ownerId: "foreign", state: "creating" }, "owner_mismatch"],
   [{ ownerId: "owner", state: "deleted" }, "identity_deleted"],
   [{ ownerId: "owner", state: "deleting" }, "identity_deleted"],
@@ -49,12 +54,23 @@ it.each([
     "binding_conflict",
   ],
   [{ ownerId: "owner", sessionId: null, state: "bound" }, "binding_conflict"],
-])("rejects inconsistent or retired mapping %j", async (row, code) => {
-  mocks.read.mockResolvedValue(row);
-  await expect(resolve()).rejects.toMatchObject({ code });
-  expect(mocks.request).not.toHaveBeenCalled();
-  expect(mocks.bind).not.toHaveBeenCalled();
-});
+])(
+  "rejects inconsistent or retired mapping %j",
+  async (
+    row: Readonly<
+      | { ownerId: string; state: string }
+      | { ownerId: string; sessionId: string; state: string }
+      | { ownerId: string; sessionId: null; state: string }
+      | null
+    >,
+    code
+  ) => {
+    mocks.read.mockResolvedValue(row);
+    await expect(resolve()).rejects.toMatchObject({ code });
+    expect(mocks.request).not.toHaveBeenCalled();
+    expect(mocks.bind).not.toHaveBeenCalled();
+  }
+);
 it("uses the existing reverse binding for sessions created before the attribute existed", async () => {
   mocks.read.mockResolvedValue({
     id: reservationId,
@@ -72,17 +88,24 @@ it("uses the existing reverse binding for sessions created before the attribute 
   expect(mocks.request).not.toHaveBeenCalled();
 });
 it.each([
-  [404, { code: "eve_operation_not_found" }, "receipt_pending"],
+  [409, { code: "eve_operation_unresolved" }, "receipt_unavailable"],
   [503, {}, "receipt_unavailable"],
   [200, {}, "receipt_unavailable"],
 ])(
   "keeps receipt availability separate from corruption (%s)",
-  async (status, body, code) => {
+  async (status, body: unknown, code) => {
     mocks.request.mockResolvedValue(Response.json(body, { status }));
     await expect(resolve()).rejects.toMatchObject({ code });
     expect(mocks.bind).not.toHaveBeenCalled();
   }
 );
+it("treats malformed native JSON as unavailable without binding the session", async (): Promise<void> => {
+  mocks.request.mockResolvedValue(new Response("{"));
+  await expect(resolve()).rejects.toMatchObject({
+    code: "receipt_unavailable",
+  });
+  expect(mocks.bind).not.toHaveBeenCalled();
+});
 it("leaves pending copies to their resource journal", async () => {
   mocks.read.mockResolvedValue({
     creationKind: "copy",
@@ -94,9 +117,8 @@ it("leaves pending copies to their resource journal", async () => {
   expect(mocks.bind).not.toHaveBeenCalled();
   expect(mocks.request).not.toHaveBeenCalled();
 });
-
 it("does not call missing pre-attribute identity corruption", async () => {
-  mocks.read.mockResolvedValue(undefined);
+  mocks.read.mockResolvedValue(null);
   await expect(
     resolveEveConversationScope("owner", "native", AbortSignal.timeout(1000))
   ).rejects.toMatchObject({ code: "identity_pending" });
@@ -109,7 +131,6 @@ it("classifies a transport outage without treating the mapping as corrupt", asyn
   });
   expect(mocks.bind).not.toHaveBeenCalled();
 });
-
 it("rejects malformed context and missing authentication before reading storage", async () => {
   await expect(resolve("not-a-reservation")).rejects.toMatchObject({
     code: "binding_conflict",

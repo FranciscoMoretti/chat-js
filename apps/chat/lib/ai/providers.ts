@@ -1,25 +1,17 @@
-import { devToolsMiddleware } from "@ai-sdk/devtools";
-import { getModelProviderOptions as modelProviderOptions } from "@chat-js/gateways/provider-options";
-import { extractReasoningMiddleware, wrapLanguageModel } from "ai";
 import type { LanguageModelMiddleware } from "ai";
+import type { LanguageModelV4 } from "@ai-sdk/provider";
+import { extractReasoningMiddleware, wrapLanguageModel } from "ai";
+import type { AppModelId } from "./app-model-id";
 
+import { devToolsMiddleware } from "@ai-sdk/devtools";
 import { getActiveGateway } from "./active-gateway";
-import type { AppModelId } from "./app-models";
-import { getAppModelDefinition } from "./app-models";
-import type { InstalledGateway } from "./gateways/registry";
+import { loadEveModelDefinition } from "../eve/model-selection";
 
-type ActiveGatewayModelId = Parameters<
-  InstalledGateway["createLanguageModel"]
->[0];
-type ActiveGatewayImageModelId = Parameters<
-  InstalledGateway["createImageModel"]
->[0];
-type ActiveGatewayVideoModelId = Parameters<
-  InstalledGateway["createVideoModel"]
->[0];
-
-export const getLanguageModel = async (modelId: AppModelId) => {
-  const model = await getAppModelDefinition(modelId);
+const getLanguageModel = async (
+  modelId: AppModelId
+): Promise<LanguageModelV4> => {
+  // This provider is also loaded by authored EVE modules outside Next.js.
+  const model = await loadEveModelDefinition(modelId);
   const languageProvider = getActiveGateway().createLanguageModel(
     model.apiModelId
   );
@@ -46,31 +38,4 @@ export const getLanguageModel = async (modelId: AppModelId) => {
   });
 };
 
-export const getImageModel = (modelId: ActiveGatewayImageModelId) => {
-  const imageModel = getActiveGateway().createImageModel(modelId);
-  if (!imageModel) {
-    throw new Error(
-      `Gateway '${getActiveGateway().type}' does not support dedicated image models. Use a multimodal language model instead.`
-    );
-  }
-  return imageModel;
-};
-
-export const getVideoModel = (modelId: ActiveGatewayVideoModelId) => {
-  const videoModel = getActiveGateway().createVideoModel(modelId);
-  if (!videoModel) {
-    throw new Error(
-      `Gateway '${getActiveGateway().type}' does not support video models.`
-    );
-  }
-  return videoModel;
-};
-
-// Get a multimodal language model that can generate images via generateText
-export const getMultimodalImageModel = (modelId: ActiveGatewayModelId) =>
-  getActiveGateway().createLanguageModel(modelId);
-
-// Model aliases removed - use getLanguageModel directly with specific model IDs
-
-export const getModelProviderOptions = async (providerModelId: AppModelId) =>
-  modelProviderOptions(await getAppModelDefinition(providerModelId));
+export { getLanguageModel };

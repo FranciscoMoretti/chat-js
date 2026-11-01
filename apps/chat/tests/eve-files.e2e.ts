@@ -1,8 +1,15 @@
-/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
-/* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
+import {
+  eveDispatch,
+  eveConversation,
+  eveFileReference,
+  eveStoredFile,
+  user,
+} from "../lib/db/schema";
+import { createEveTestSession } from "./eve-native-session.fixture";
+
 import { eq, inArray, sql } from "drizzle-orm";
 import postgres from "postgres";
-import { afterAll, expect, test } from "vitest";
+import { afterAll, expect, test, vi } from "vitest";
 
 import { db } from "../lib/db/client";
 import { completeEveConversationDeletion } from "../lib/db/eve-deletion";
@@ -26,12 +33,6 @@ import {
   beginEveConversationDeletion,
   createEveConversation,
 } from "../lib/db/eve-queries";
-import {
-  eveConversation,
-  eveFileReference,
-  eveStoredFile,
-  user,
-} from "../lib/db/schema";
 import { env } from "../lib/env";
 import { insertEveConversationFixtures } from "./eve-conversation-fixture";
 
@@ -49,6 +50,9 @@ await db.insert(user).values(
 );
 afterAll(async () => {
   await db
+    .delete(eveDispatch)
+    .where(inArray(eveDispatch.ownerId, [owner, stranger]));
+  await db
     .delete(eveFileReference)
     .where(inArray(eveFileReference.ownerId, [owner, stranger]));
   await db
@@ -59,7 +63,6 @@ afterAll(async () => {
     .where(inArray(eveStoredFile.ownerId, [owner, stranger]));
   await db.delete(user).where(inArray(user.id, [owner, stranger]));
 });
-
 test("server-created file ownership is retryable but cannot be reassigned", async () => {
   const key = `${crypto.randomUUID().replaceAll("-", "").slice(0, 24)}.png`;
   await registerEveStoredFile(owner, key);
@@ -76,16 +79,15 @@ test("server-created file ownership is retryable but cannot be reassigned", asyn
 });
 
 test("registration rejects URLs and invalid storage keys", async () => {
-  for (const key of [
-    "../file",
-    "https://example.com/file.png",
-    "",
-    "a".repeat(25),
-  ]) {
-    await expect(registerEveStoredFile(owner, key)).rejects.toThrow(
-      "Invalid file ownership"
-    );
-  }
+  await Promise.all(
+    ["../file", "https://example.com/file.png", "", "a".repeat(25)].map(
+      async (key) => {
+        await expect(registerEveStoredFile(owner, key)).rejects.toThrow(
+          "Invalid file ownership"
+        );
+      }
+    )
+  );
 });
 
 test("references reject foreign files and become immutable behind the deletion fence", async () => {
@@ -132,7 +134,7 @@ test("fork reservation retains the source file references before dispatch", asyn
     owner,
     crypto.randomUUID(),
     "source",
-    async () => crypto.randomUUID()
+    createEveTestSession
   );
   const key = crypto.randomUUID().replaceAll("-", "").slice(0, 24);
   await registerEveStoredFile(owner, key);
@@ -152,7 +154,7 @@ test("fork reservation retains the source file references before dispatch", asyn
       dispatched = true;
       return crypto.randomUUID();
     },
-    { fork: { beforeTurnId: "turn_0", conversationId: root.id } }
+    { fork: { conversationId: root.id } }
   );
   expect(dispatched).toBe(true);
   expect(
@@ -174,9 +176,12 @@ test("attachment creation commits references before dispatch with a single appli
       crypto.randomUUID(),
       "attached",
       async (id) => {
-        const references =
-          await worker`select key from "EveFileReference" where "conversationId" = ${id}`;
-        expect(references.map((row) => row.key)).toEqual([key]);
+        const references = await worker<
+          { key: string }[]
+        >`select key from "EveFileReference" where "conversationId" = ${id}`;
+        expect(
+          references.map((row: Readonly<{ key: string }>) => row.key)
+        ).toEqual([key]);
         return crypto.randomUUID();
       },
       { fileKeys: [key], initialContentHash: "attachment-fixture" }
@@ -192,13 +197,18 @@ test("generated file reservations survive storage failure and cannot write after
     owner,
     crypto.randomUUID(),
     "generated",
-    async () => crypto.randomUUID()
+    createEveTestSession
   );
   const key = crypto.randomUUID().replaceAll("-", "").slice(0, 24);
   await reserveEveGeneratedFile(owner, conversation.id, key);
   await expect(
-    writeEveGeneratedFile(owner, conversation.id, key, () =>
-      Promise.reject(new Error("storage failed"))
+    writeEveGeneratedFile(
+      owner,
+      conversation.id,
+      key,
+      vi
+        .fn<() => Promise<void>>()
+        .mockRejectedValue(new Error("storage failed"))
     )
   ).rejects.toThrow("storage failed");
   expect(
@@ -208,14 +218,11 @@ test("generated file reservations survive storage failure and cannot write after
       .where(eq(eveFileReference.conversationId, conversation.id))
   ).toEqual([{ key }]);
   await beginEveConversationDeletion(owner, conversation.id);
-  let wrote = false;
+  const write = vi.fn<() => Promise<void>>().mockResolvedValue();
   await expect(
-    writeEveGeneratedFile(owner, conversation.id, key, () => {
-      wrote = true;
-      return Promise.resolve();
-    })
+    writeEveGeneratedFile(owner, conversation.id, key, write)
   ).rejects.toThrow("unavailable");
-  expect(wrote).toBe(false);
+  expect(write).not.toHaveBeenCalled();
   await expect(
     reserveEveGeneratedFile(owner, conversation.id, "abcdefghijklmnopqrstuvwx")
   ).rejects.toThrow("unavailable");
@@ -226,18 +233,18 @@ test("deletion waits for an admitted generated-file write before fencing the fam
     owner,
     crypto.randomUUID(),
     "writing",
-    async () => crypto.randomUUID()
+    createEveTestSession
   );
   const key = crypto.randomUUID().replaceAll("-", "").slice(0, 24);
   await reserveEveGeneratedFile(owner, conversation.id, key);
-  const entered = Promise.withResolvers<undefined>();
-  const release = Promise.withResolvers<undefined>();
+  const entered: PromiseWithResolvers<void> = Promise.withResolvers();
+  const release: PromiseWithResolvers<void> = Promise.withResolvers();
   const writing = writeEveGeneratedFile(
     owner,
     conversation.id,
     key,
     async () => {
-      entered.resolve(undefined);
+      entered.resolve();
       await release.promise;
       return "stored";
     }
@@ -254,7 +261,7 @@ test("deletion waits for an admitted generated-file write before fencing the fam
       })
       .toBe(true);
   } finally {
-    release.resolve(undefined);
+    release.resolve();
     await writing;
     await deletion;
   }
@@ -270,13 +277,13 @@ test("file purge preserves outside references and keeps durable progress across 
     owner,
     crypto.randomUUID(),
     "purge",
-    async () => crypto.randomUUID()
+    createEveTestSession
   );
   const survivor = await createEveConversation(
     owner,
     crypto.randomUUID(),
     "survivor",
-    async () => crypto.randomUUID()
+    createEveTestSession
   );
   const [targetRow] = await db
     .select({ chatId: eveConversation.chatId })
@@ -319,13 +326,13 @@ test("concurrent family cleanup cannot abandon a shared file", async () => {
     owner,
     crypto.randomUUID(),
     "first",
-    async () => crypto.randomUUID()
+    createEveTestSession
   );
   const second = await createEveConversation(
     owner,
     crypto.randomUUID(),
     "second",
-    async () => crypto.randomUUID()
+    createEveTestSession
   );
   const [firstRow] = await db
     .select({ chatId: eveConversation.chatId })
@@ -351,10 +358,16 @@ test("concurrent family cleanup cannot abandon a shared file", async () => {
     releaseEveFamilyFileReferences(owner, secondRow.chatId),
   ]);
   expect(
-    outcomes.filter((result) => result.status === "fulfilled")
+    outcomes.filter(
+      (result: { readonly status: "rejected" | "fulfilled" }) =>
+        result.status === "fulfilled"
+    )
   ).toHaveLength(1);
   expect(
-    outcomes.filter((result) => result.status === "rejected")
+    outcomes.filter(
+      (result: { readonly status: "rejected" | "fulfilled" }) =>
+        result.status === "rejected"
+    )
   ).toHaveLength(1);
   const references = await db
     .select()
@@ -424,27 +437,34 @@ test("orphan cleanup retains references and young uploads and retries reappearin
     owner,
     crypto.randomUUID(),
     "retained reference",
-    async () => crypto.randomUUID()
+    createEveTestSession
   );
   await referenceEveFiles(owner, conversation.id, [referenced]);
   const cutoff = new Date("2026-01-01");
   const fenced = await prepareEveOrphanedFilePurge(keys, cutoff);
-  expect(fenced.map((file) => file.key).toSorted()).toEqual(
-    [orphan, foreign].toSorted()
-  );
-  expect(fenced.find((file) => file.key === foreign)?.ownerId).toBe(stranger);
-  expect(fenced.some((file) => file.key === legacy)).toBe(false);
+  expect(
+    fenced
+      .map((file: Readonly<{ key: string; ownerId: string }>) => file.key)
+      .toSorted()
+  ).toEqual([orphan, foreign].toSorted());
+  expect(
+    fenced.find(
+      (file: Readonly<{ key: string; ownerId: string }>) => file.key === foreign
+    )?.ownerId
+  ).toBe(stranger);
+  expect(
+    fenced.some(
+      (file: Readonly<{ key: string; ownerId: string }>) => file.key === legacy
+    )
+  ).toBe(false);
   await expect(
     referenceEveFiles(owner, conversation.id, [orphan])
   ).rejects.toThrow("not owned");
-  let wrote = false;
-  await expect(
-    writeEveUpload(owner, orphan, () => {
-      wrote = true;
-      return Promise.resolve();
-    })
-  ).rejects.toThrow("unavailable");
-  expect(wrote).toBe(false);
+  const write = vi.fn<() => Promise<void>>().mockResolvedValue();
+  await expect(writeEveUpload(owner, orphan, write)).rejects.toThrow(
+    "unavailable"
+  );
+  expect(write).not.toHaveBeenCalled();
   expect(await isEveFileUnavailable(orphan)).toBe(true);
   expect(await isEveFileUnavailable(referenced)).toBe(false);
   expect(await isEveFileUnavailable(legacy)).toBe(false);
@@ -462,10 +482,10 @@ test("orphan cleanup waits for an admitted upload before committing its fence", 
     .update(eveStoredFile)
     .set({ createdAt: new Date("2025-01-01") })
     .where(eq(eveStoredFile.key, key));
-  const entered = Promise.withResolvers<undefined>();
-  const release = Promise.withResolvers<undefined>();
+  const entered: PromiseWithResolvers<void> = Promise.withResolvers();
+  const release: PromiseWithResolvers<void> = Promise.withResolvers();
   const writing = writeEveUpload(owner, key, async () => {
-    entered.resolve(undefined);
+    entered.resolve();
     await release.promise;
     return "stored";
   });
@@ -481,7 +501,7 @@ test("orphan cleanup waits for an admitted upload before committing its fence", 
       })
       .toBe(true);
   } finally {
-    release.resolve(undefined);
+    release.resolve();
     await writing;
     await cleanup;
   }

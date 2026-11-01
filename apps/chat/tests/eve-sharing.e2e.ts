@@ -1,6 +1,8 @@
 import { expect, test } from "@playwright/test";
+
 import { eq } from "drizzle-orm";
 import { Client } from "eve/client";
+import type { MessageStreamEvent } from "eve/client";
 import { z } from "zod";
 
 import { db } from "../lib/db/client";
@@ -10,12 +12,26 @@ import { insertEveConversationFixtures } from "./eve-conversation-fixture";
 import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
+type SharingEventReader =
+  | {
+      readonly type: "message.completed";
+      readonly data: {
+        readonly finishReason: string;
+        readonly message?: string | null;
+      };
+    }
+  | {
+      readonly type: Exclude<MessageStreamEvent["type"], "message.completed">;
+      readonly data?: unknown;
+    };
 
 test("sharing exposes only a read-only transcript, enforces ownership and revokes the link", async ({
   page,
   browser,
 }) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   const created = await page.request.post("/api/agent-conversations", {
     data: {
@@ -32,9 +48,9 @@ test("sharing exposes only a read-only transcript, enforces ownership and revoke
     .parse(await created.json());
   const anonymous = await browser.newContext();
   const publicPage = await anonymous.newPage();
-  await publicPage.route("https://unpkg.com/react-scan/**", (route) =>
-    route.abort()
-  );
+  await publicPage.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   const foreignId = crypto.randomUUID();
   const foreignChat = crypto.randomUUID();
   await db.insert(user).values({
@@ -55,7 +71,7 @@ test("sharing exposes only a read-only transcript, enforces ownership and revoke
       publicPage.getByRole("heading", { exact: true, name: "404" })
     ).toBeVisible();
     await page.goto(`/chat/${binding.id}`);
-    await expect(page.locator(".is-assistant")).toContainText(
+    await expect(page.locator('[data-role="assistant"]')).toContainText(
       "share-fixture-ok",
       { timeout: 90_000 }
     );
@@ -63,7 +79,7 @@ test("sharing exposes only a read-only transcript, enforces ownership and revoke
       .select({ id: eveConversation.ownerId })
       .from(eveConversation)
       .where(eq(eveConversation.id, binding.id));
-    if (!owner) {
+    if (owner === undefined) {
       throw new Error("Missing fixture owner.");
     }
     const native = new Client(
@@ -77,7 +93,7 @@ test("sharing exposes only a read-only transcript, enforces ownership and revoke
             signal: AbortSignal.timeout(10_000),
           });
           return snapshot.events.some(
-            (event) =>
+            (event: SharingEventReader) =>
               event.type === "message.completed" &&
               event.data.finishReason === "stop" &&
               event.data.message?.trim() === "share-fixture-ok"
@@ -111,11 +127,11 @@ test("sharing exposes only a read-only transcript, enforces ownership and revoke
       path: "tests/eve-results/screenshots/eve-shared-transcript.png",
     });
     const forbidden = await publicPage.request.post(
-      `${base}/api/trpc/eve.setVisibility`,
+      `${base}/api/trpc/sharing.setVisibility`,
       { data: { json: { id: binding.id, visibility: "private" } } }
     );
     expect(forbidden.status()).toBe(401);
-    const foreign = await page.request.post("/api/trpc/eve.setVisibility", {
+    const foreign = await page.request.post("/api/trpc/sharing.setVisibility", {
       data: { json: { id: foreignChat, visibility: "public" } },
     });
     expect(foreign.status()).toBe(404);

@@ -1,61 +1,94 @@
 import { spawn } from "node:child_process";
 
+const COMMAND_EXECUTABLE_INDEX = 0;
+const COMMAND_ARGUMENTS_START_INDEX = 1;
+const EMPTY_CHILD_PROCESS_ID = 0;
+const DEFAULT_TIMEOUT_MS = 180_000;
+const KILL_ESCALATION_DELAY_MS = 1000;
+const SUCCESS_EXIT_CODE = 0;
+
 /** Bound the entire operation, including pipes inherited by descendants. */
 export const run = async (
   cwd: string,
-  command: string[],
-  timeoutMs = 180_000
+  command: readonly string[],
+  timeoutMs = DEFAULT_TIMEOUT_MS
 ): Promise<void> => {
   const { promise, resolve, reject } = Promise.withResolvers<undefined>();
+  const started = Date.now();
+  const trace = process.env.CHATJS_TEST_TRACE === "1";
+  if (trace) {
+    process.stderr.write(`[start] ${cwd}: ${command.join(" ")}\n`);
+  }
   const grouped = process.platform !== "win32";
-  const child = spawn(command[0], command.slice(1), {
-    cwd,
-    detached: grouped,
-    stdio: ["ignore", "pipe", "pipe"],
-  });
+  const child = spawn(
+    command[COMMAND_EXECUTABLE_INDEX],
+    command.slice(COMMAND_ARGUMENTS_START_INDEX),
+    {
+      cwd,
+      detached: grouped,
+      stdio: ["ignore", "pipe", "pipe"],
+    }
+  );
   let stdout = "";
   let stderr = "";
   let timedOut = false;
-  const signal = (value: NodeJS.Signals) => {
+  const signal = (value: NodeJS.Signals): void => {
     try {
-      if (grouped && child.pid) {
+      if (
+        grouped &&
+        child.pid !== null &&
+        child.pid !== undefined &&
+        child.pid !== EMPTY_CHILD_PROCESS_ID &&
+        !Number.isNaN(child.pid)
+      ) {
         process.kill(-child.pid, value);
       } else {
         child.kill(value);
       }
     } catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== "ESRCH") {
+      if (
+        !(error instanceof Error && "code" in error && error.code === "ESRCH")
+      ) {
         reject(error);
       }
     }
   };
-  child.stdout.on("data", (chunk) => {
+  child.stdout.on("data", (chunk): void => {
     stdout += chunk;
   });
-  child.stderr.on("data", (chunk) => {
+  child.stderr.on("data", (chunk): void => {
     stderr += chunk;
   });
-  const timer = setTimeout(() => {
+  const timer = setTimeout((): void => {
     timedOut = true;
     signal("SIGTERM");
-    setTimeout(() => signal("SIGKILL"), 1000).unref();
+    setTimeout((): void => {
+      signal("SIGKILL");
+    }, KILL_ESCALATION_DELAY_MS).unref();
     child.stdout.destroy();
     child.stderr.destroy();
     reject(
-      new Error(`${command.join(" ")} timed out after ${timeoutMs}ms in ${cwd}`)
+      new Error(
+        `${command.join(" ")} timed out after ${timeoutMs}ms in ${cwd}:\n${stdout}\n${stderr}`
+      )
     );
   }, timeoutMs);
-  child.on("error", (error) => {
+  child.on("error", (error: Readonly<Error>): void => {
     clearTimeout(timer);
     reject(error);
   });
-  child.on("close", (code) => {
+  child.on("close", (code): void => {
     clearTimeout(timer);
     if (timedOut) {
       return;
     }
-    if (code === 0) {
-      resolve(undefined);
+    if (trace) {
+      process.stderr.write(
+        `[finish ${Date.now() - started}ms, exit ${code}] ${command.join(" ")}\n`
+      );
+    }
+    if (code === SUCCESS_EXIT_CODE) {
+      resolve();
     } else {
       reject(
         new Error(

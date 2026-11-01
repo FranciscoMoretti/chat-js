@@ -1,21 +1,22 @@
-// hooks/use-media-query.ts
 import { useCallback, useSyncExternalStore } from "react";
 
-const getServerSnapshot = () => false;
+const getServerSnapshot = (): boolean => false;
 
-export const useMediaQuery = (query: string) => {
+export const useMediaQuery = (query: string): boolean => {
   const subscribe = useCallback(
-    (onStoreChange: () => void) => {
-      const mediaQueryList = window.matchMedia(query);
+    (onStoreChange: () => void): (() => void) => {
+      const mediaQueryList = globalThis.matchMedia(query);
       mediaQueryList.addEventListener("change", onStoreChange);
 
-      return () => mediaQueryList.removeEventListener("change", onStoreChange);
+      return () => {
+        mediaQueryList.removeEventListener("change", onStoreChange);
+      };
     },
     [query]
   );
 
   const getSnapshot = useCallback(
-    () => window.matchMedia(query).matches,
+    (): boolean => globalThis.matchMedia(query).matches,
     [query]
   );
 

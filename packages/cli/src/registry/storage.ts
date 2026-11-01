@@ -1,6 +1,10 @@
-import { storageDefinitionSchema } from "../../../registry/metadata";
-import type { StorageDefinition } from "../../../registry/metadata";
 import { itemAddress, readItem } from "./shadcn";
+import type { StorageDefinition } from "../../../registry/metadata";
+import { storageDefinitionSchema } from "../../../registry/metadata";
+
+type RegistryFile = NonNullable<
+  Awaited<ReturnType<typeof readItem>>["files"]
+>[number];
 
 export interface StorageSelection {
   source: string;
@@ -17,12 +21,16 @@ export const resolveStorage = async (
   if (item.type !== "registry:item") {
     throw new Error("Selected storage must have type registry:item.");
   }
-  const definition = storageDefinitionSchema.parse(item.meta?.chatjs);
+  const { chatjs } = item.meta ?? {};
+  const definition = storageDefinitionSchema.parse(chatjs);
   if (
-    !item.files?.some((file) => file.target === "~/lib/storage-provider.ts")
+    !(item.files ?? []).some(
+      (file: Readonly<RegistryFile>) =>
+        file.target === "~/chatjs/providers/storage.ts"
+    )
   ) {
     throw new Error(
-      "Storage must install lib/storage-provider.ts exporting createStorageAdapter."
+      "Storage must install chatjs/providers/storage.ts exporting createStorageAdapter."
     );
   }
   return { definition, options: {}, source: address };

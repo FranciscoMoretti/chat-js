@@ -3,43 +3,57 @@ import type {
   QueryClient,
   QueryKey,
 } from "@tanstack/react-query";
-
 import type {
   getEveChatIdentity,
   listEveConversations,
 } from "@/lib/db/eve-queries";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 type Identity = Awaited<ReturnType<typeof getEveChatIdentity>>;
 type History = InfiniteData<Awaited<ReturnType<typeof listEveConversations>>>;
-type Metadata = { title: string; isPinned: boolean };
+interface Metadata {
+  title: string;
+  isPinned: boolean;
+}
 
-/** Background title refreshes defer to the last metadata mutation's reconciliation. */
-export const pendingEveMetadataMutations = (cache: QueryClient) =>
+/**
+ * Background title refreshes defer to the last metadata mutation's reconciliation.
+ * @param {Readonly<Pick<QueryClient, "isMutating">>} cache Query client whose active mutations share the chat metadata flag.
+ * @returns {number} Number of active mutations tagged with eveMetadata, across chat branches.
+ */
+const pendingEveMetadataMutations = (
+  cache: Readonly<Pick<QueryClient, "isMutating">>
+): number =>
   cache.isMutating({
-    predicate: (mutation) => mutation.options.meta?.eveMetadata === true,
+    predicate: (mutation: {
+      readonly options: { readonly meta?: { readonly eveMetadata?: unknown } };
+    }): boolean => mutation.options.meta?.eveMetadata === true,
   });
 
-const rollbackFields = <T extends Metadata>(
-  current: T,
-  previous: Metadata,
-  patch: Partial<Metadata>
-): T => ({
+const rollbackFields = <Value extends Metadata>(
+  current: Value,
+  previous: Readonly<Metadata>,
+  patch: Readonly<Partial<Metadata>>
+): Value => ({
   ...current,
-  ...(patch.title !== undefined && current.title === patch.title
+  ...(patch.title !== globalThis.undefined && current.title === patch.title
     ? { title: previous.title }
     : {}),
-  ...(patch.isPinned !== undefined && current.isPinned === patch.isPinned
+  ...(patch.isPinned !== globalThis.undefined &&
+  current.isPinned === patch.isPinned
     ? { isPinned: previous.isPinned }
     : {}),
 });
 
-export const optimisticEveMetadata = async (
-  cache: QueryClient,
+const optimisticEveMetadata = async (
+  cache: Readonly<
+    Pick<QueryClient, "cancelQueries" | "getQueriesData" | "setQueryData">
+  >,
   listKey: QueryKey,
   detailKey: QueryKey,
   id: string,
-  patch: Partial<Metadata>
-) => {
+  patch: Readonly<Partial<Metadata>>
+): Promise<() => void> => {
   await Promise.all([
     cache.cancelQueries({ queryKey: listKey }),
     cache.cancelQueries({ queryKey: detailKey }),
@@ -50,12 +64,23 @@ export const optimisticEveMetadata = async (
     if (data) {
       cache.setQueryData(key, {
         ...data,
-        pages: data.pages.map((page) => ({
-          ...page,
-          items: page.items.map((item) =>
-            item.id === id ? { ...item, ...patch } : item
-          ),
-        })),
+        pages: data.pages.map(
+          (page: ReadonlyNativeSurface<History["pages"][number]>) => ({
+            ...page,
+            items: page.items.map(
+              (
+                item: ReadonlyNativeSurface<
+                  History["pages"][number]["items"][number]
+                >
+              ) => {
+                if (item.id === id) {
+                  return { ...item, ...patch };
+                }
+                return item;
+              }
+            ),
+          })
+        ),
       });
     }
   }
@@ -65,37 +90,50 @@ export const optimisticEveMetadata = async (
     }
   }
   // Only restore the affected field; another chat or pin mutation may be in flight.
-  return () => {
+  return (): void => {
     for (const [key, previous] of lists) {
       const before = previous?.pages
-        .flatMap((page) => page.items)
-        .find((item) => item.id === id);
-      if (!before) {
-        continue;
-      }
-      cache.setQueryData<History>(
-        key,
-        (current) =>
-          current && {
-            ...current,
-            pages: current.pages.map((page) => ({
-              ...page,
-              items: page.items.map((item) =>
-                item.id === id ? rollbackFields(item, before, patch) : item
+        .flatMap(
+          (page: ReadonlyNativeSurface<History["pages"][number]>) => page.items
+        )
+        .find((item: { readonly id: string }) => item.id === id);
+      if (before) {
+        cache.setQueryData<History>(
+          key,
+          (current) =>
+            current && {
+              ...current,
+              pages: current.pages.map(
+                (page: ReadonlyNativeSurface<History["pages"][number]>) => ({
+                  ...page,
+                  items: page.items.map(
+                    (
+                      item: ReadonlyNativeSurface<
+                        History["pages"][number]["items"][number]
+                      >
+                    ) => {
+                      if (item.id === id) {
+                        return rollbackFields(item, before, patch);
+                      }
+                      return item;
+                    }
+                  ),
+                })
               ),
-            })),
-          }
-      );
+            }
+        );
+      }
     }
     for (const [key, previous] of details) {
-      if (previous?.chatId !== id) {
-        continue;
+      if (previous?.chatId === id) {
+        cache.setQueryData<Identity>(key, (current) => {
+          if (current?.chatId === id) {
+            return rollbackFields(current, previous, patch);
+          }
+          return current;
+        });
       }
-      cache.setQueryData<Identity>(key, (current) =>
-        current?.chatId === id
-          ? rollbackFields(current, previous, patch)
-          : current
-      );
     }
   };
 };
+export { optimisticEveMetadata, pendingEveMetadataMutations };

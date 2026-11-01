@@ -1,4 +1,3 @@
-import type { LucideIcon } from "lucide-react";
 import {
   BrainCircuit,
   Code,
@@ -13,15 +12,21 @@ import {
   Search,
   Video,
 } from "lucide-react";
+import type { LucideProps } from "lucide-react";
+import React from "react";
+
+type FeatureIcon = (
+  props: Readonly<Pick<LucideProps, "className">>
+) => React.ReactNode;
 
 interface Feature {
-  description: string;
-  icon: LucideIcon;
-  title: string;
+  readonly description: string;
+  readonly icon: FeatureIcon;
+  readonly title: string;
 }
 
 /* ── Platform ─────────────────────────────────────────────────────── */
-const PLATFORM_FEATURES: Feature[] = [
+const PLATFORM_FEATURES: readonly Feature[] = [
   {
     description:
       "Claude, GPT, Gemini, Grok, Llama — one unified interface. Switch providers mid-conversation without losing context.",
@@ -61,7 +66,7 @@ const PLATFORM_FEATURES: Feature[] = [
 ];
 
 /* ── Built-in Tools ───────────────────────────────────────────────── */
-const TOOLS: Feature[] = [
+const TOOLS: readonly Feature[] = [
   {
     description:
       "Multi-step research agent that synthesizes the web into comprehensive reports.",
@@ -101,7 +106,11 @@ const TOOLS: Feature[] = [
 
 /* ── Shared card component ────────────────────────────────────────── */
 
-const FeatureCard = ({ feature }: { feature: Feature }) => (
+const FeatureCard = ({
+  feature,
+}: {
+  readonly feature: Feature;
+}): React.JSX.Element => (
   <div className="group border-border/50 bg-card hover:border-border hover:shadow-foreground/3 relative overflow-hidden rounded-2xl border p-6 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg">
     <div className="bg-foreground/2 pointer-events-none absolute -top-24 -left-24 h-48 w-48 rounded-full opacity-0 blur-3xl transition-opacity duration-500 group-hover:opacity-100" />
     <div className="relative flex h-full flex-col">
@@ -118,7 +127,11 @@ const FeatureCard = ({ feature }: { feature: Feature }) => (
   </div>
 );
 
-const SectionLabel = ({ children }: { children: React.ReactNode }) => (
+const SectionLabel = ({
+  children,
+}: {
+  readonly children: string;
+}): React.JSX.Element => (
   <div className="mb-8 flex items-center gap-4">
     <span className="text-foreground/70 font-mono text-xs tracking-[0.2em] uppercase">
       {children}
@@ -129,7 +142,7 @@ const SectionLabel = ({ children }: { children: React.ReactNode }) => (
 
 /* ── Main component ───────────────────────────────────────────────── */
 
-export const Features = () => (
+export const Features = (): React.JSX.Element => (
   <section className="relative overflow-hidden py-24 sm:py-32">
     {/* Subtle atmosphere to differentiate from TechStack grid below */}
     <div className="pointer-events-none absolute inset-0">
@@ -148,8 +161,8 @@ export const Features = () => (
       <div className="mt-20">
         <SectionLabel>Platform</SectionLabel>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {PLATFORM_FEATURES.map((f) => (
-            <FeatureCard feature={f} key={f.title} />
+          {PLATFORM_FEATURES.map((feature) => (
+            <FeatureCard feature={feature} key={feature.title} />
           ))}
         </div>
       </div>
@@ -158,8 +171,8 @@ export const Features = () => (
       <div className="mt-16">
         <SectionLabel>Built-in Tools</SectionLabel>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {TOOLS.map((f) => (
-            <FeatureCard feature={f} key={f.title} />
+          {TOOLS.map((feature) => (
+            <FeatureCard feature={feature} key={feature.title} />
           ))}
         </div>
       </div>

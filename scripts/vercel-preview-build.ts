@@ -1,29 +1,34 @@
-import { createRequire } from "node:module";
-import { fileURLToPath } from "node:url";
-
-import type postgresType from "../apps/chat/node_modules/postgres";
 import {
   PreviewConfigurationError,
   resolveMaintainerPreviewDatabase,
 } from "./vercel-preview-environment";
+import { fileURLToPath } from "node:url";
 
-type BuildOperations = {
+const EMPTY_MESSAGE_LENGTH = 0;
+const POSTGRES_CONNECT_TIMEOUT_SECONDS = 10;
+const POSTGRES_IDLE_TIMEOUT_SECONDS = 0;
+const SINGLE_POSTGRES_CONNECTION = 1;
+const POSTGRES_MAX_LIFETIME_SECONDS = 0;
+const POSTGRES_CLOSE_TIMEOUT_SECONDS = 5;
+const SUBPROCESS_SUCCESS_EXIT_CODE = 0;
+
+interface BuildOperations {
   openDatabase: (url: string) => {
-    close: () => Promise<void>;
+    close: () => void | Promise<void>;
     execute: (query: string) => Promise<void>;
   };
   run: (
     command: "db:migrate" | "build",
-    env: NodeJS.ProcessEnv
-  ) => Promise<void>;
-};
+    env: Readonly<NodeJS.ProcessEnv>
+  ) => void | Promise<void>;
+}
 
-const formatBuildFailure = (phase: string, error: unknown) => {
+const formatBuildFailure = (phase: string, error: unknown): string => {
   if (phase === "validation" && error instanceof PreviewConfigurationError) {
     return `Maintainer build failed during validation: ${error.message}`;
   }
   const code =
-    error && typeof error === "object" && "code" in error
+    error !== null && typeof error === "object" && "code" in error
       ? error.code
       : undefined;
   // Only known code formats are safe to log; provider messages may contain URLs.
@@ -35,10 +40,10 @@ const formatBuildFailure = (phase: string, error: unknown) => {
   return `Maintainer build failed during ${phase}${safeCode ? ` (${code})` : ""}.`;
 };
 
-export const runMaintainerBuild = async (
-  source: NodeJS.ProcessEnv,
-  operations: BuildOperations
-) => {
+const runMaintainerBuild = async (
+  source: Readonly<NodeJS.ProcessEnv>,
+  operations: Readonly<BuildOperations>
+): Promise<void> => {
   let phase = "validation";
   let failureMessage: string | undefined;
   try {
@@ -71,7 +76,10 @@ export const runMaintainerBuild = async (
         }
       }
     }
-    if (!failureMessage) {
+    if (
+      typeof failureMessage !== "string" ||
+      failureMessage.length === EMPTY_MESSAGE_LENGTH
+    ) {
       phase = "build";
       await operations.run("build", env);
     }
@@ -79,34 +87,35 @@ export const runMaintainerBuild = async (
     // Never attach provider errors as a cause: they can contain credentials.
     failureMessage = formatBuildFailure(phase, error);
   }
-  if (failureMessage) {
+  if (
+    typeof failureMessage === "string" &&
+    failureMessage.length > EMPTY_MESSAGE_LENGTH
+  ) {
     throw new Error(failureMessage);
   }
 };
 
 if (import.meta.main) {
   try {
-    const require = createRequire(
-      new URL("../apps/chat/package.json", import.meta.url)
-    );
-    const { default: postgres }: { default: typeof postgresType } =
-      await import(require.resolve("postgres"));
+    const { default: postgres } = await import("postgres");
     await runMaintainerBuild(process.env, {
       openDatabase: (url) => {
         const connection = postgres(url, {
-          connect_timeout: 10,
-          idle_timeout: 0,
-          max: 1,
-          max_lifetime: 0,
+          connect_timeout: POSTGRES_CONNECT_TIMEOUT_SECONDS,
+          idle_timeout: POSTGRES_IDLE_TIMEOUT_SECONDS,
+          max: SINGLE_POSTGRES_CONNECTION,
+          max_lifetime: POSTGRES_MAX_LIFETIME_SECONDS,
         });
         return {
-          close: () => connection.end({ timeout: 5 }),
-          execute: async (query) => {
+          close: async (): Promise<void> => {
+            await connection.end({ timeout: POSTGRES_CLOSE_TIMEOUT_SECONDS });
+          },
+          execute: async (query): Promise<void> => {
             await connection.unsafe(query);
           },
         };
       },
-      run: async (command, env) => {
+      run: async (command, env: Readonly<NodeJS.ProcessEnv>): Promise<void> => {
         const child = Bun.spawn(["bun", "run", command], {
           cwd: fileURLToPath(new URL("../apps/chat/", import.meta.url)),
           env,
@@ -115,7 +124,7 @@ if (import.meta.main) {
           stdout: "inherit",
         });
         const exitCode = await child.exited;
-        if (exitCode !== 0) {
+        if (exitCode !== SUBPROCESS_SUCCESS_EXIT_CODE) {
           throw Object.assign(new Error("Command failed"), {
             code: `SUBPROCESS_EXIT_${exitCode}`,
           });
@@ -132,3 +141,4 @@ if (import.meta.main) {
     process.exitCode = 1;
   }
 }
+export { runMaintainerBuild };

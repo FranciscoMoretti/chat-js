@@ -1,10 +1,12 @@
 import { Composition, registerRoot } from "remotion";
+import { DURATION, FPS, script } from "./story";
 
 import { BrandExample } from "./brand-example";
-import { DURATION, FPS, script } from "./story";
+import React from "react";
+
 import { ThreadsLaunch } from "./threads-launch";
 
-const Root = () => (
+const Root = (): React.JSX.Element => (
   <>
     <Composition
       id="BrandExample"

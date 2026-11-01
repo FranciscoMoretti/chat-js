@@ -1,12 +1,12 @@
 import type { AiGatewayModel } from "@chat-js/gateways/models";
-import { unstable_cache } from "next/cache";
+import type { ModelData } from "./model-data";
+import type { ReadonlyAiGatewayModel } from "./to-model-data";
 
 import { config } from "@/lib/config";
 import { createModuleLogger } from "@/lib/logger";
-
 import { getActiveGateway } from "./active-gateway";
-import type { ModelData } from "./model-data";
 import { toModelData } from "./to-model-data";
+import { unstable_cache } from "next/cache";
 
 const log = createModuleLogger("ai/models");
 
@@ -34,7 +34,7 @@ const fetchModelsRaw = async (): Promise<AiGatewayModel[]> => {
 export const fetchModels = unstable_cache(
   async (): Promise<ModelData[]> => {
     const models = await fetchModelsRaw();
-    return models.map(toModelData);
+    return models.map((model: ReadonlyAiGatewayModel) => toModelData(model));
   },
   [`ai-gateway-models-${config.ai.gateway}`],
   {

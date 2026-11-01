@@ -2,39 +2,47 @@ import type { HookContext, HookEvent } from "eve/hooks";
 import { beforeEach, expect, it, vi } from "vitest";
 
 import search from "../../agent/hooks/search";
-import type { EveSearchText } from "./search-text";
+import type { EveSearchText } from "@/chatjs/plugins/search/search-text";
 
 const mocks = vi.hoisted(() => {
   const state: EveSearchText[] = [];
   return {
     index: vi.fn(),
-    recover: vi.fn(),
+    recover: vi.fn<() => Promise<void>>(),
     recovery: false,
     resolve: vi.fn(),
     state,
   };
 });
-vi.mock("eve/hooks", () => ({ defineHook: <T>(value: T) => value }));
-vi.mock("eve/context", () => ({
-  defineState: (name: string) =>
-    name === "chatjs.search-recovery"
-      ? {
-          get: () => mocks.recovery,
-          update: (update: (current: boolean) => boolean) => {
-            mocks.recovery = update(mocks.recovery);
-          },
-        }
-      : {
-          get: () => mocks.state,
-          update: (update: (current: EveSearchText[]) => EveSearchText[]) => {
-            mocks.state = update(mocks.state);
-          },
-        },
+vi.mock("eve/hooks", () => ({
+  defineHook: <Value>(value: Value): Value => value,
 }));
-vi.mock("./search-backfill", () => ({
+vi.mock("eve/context", () => ({
+  defineState: (name: string) => {
+    if (name === "chatjs.search-recovery") {
+      return {
+        get: (): boolean => mocks.recovery,
+        update: (update: (current: boolean) => boolean): void => {
+          mocks.recovery = update(mocks.recovery);
+        },
+      };
+    }
+    return {
+      get: () => mocks.state,
+      update: (
+        update: (current: Readonly<EveSearchText[]>) => EveSearchText[]
+      ): void => {
+        mocks.state = update(mocks.state);
+      },
+    };
+  },
+}));
+vi.mock("@/chatjs/plugins/search/search-backfill", () => ({
   backfillEveSearchConversation: mocks.recover,
 }));
-vi.mock("../db/eve-search", () => ({ indexEveSearchText: mocks.index }));
+vi.mock("@/chatjs/plugins/search/search-queries", () => ({
+  indexEveSearchText: mocks.index,
+}));
 vi.mock("./conversation-scope", () => ({
   resolveEveConversationScope: mocks.resolve,
 }));
@@ -42,18 +50,18 @@ vi.mock("./conversation-scope", () => ({
 const context: HookContext = {
   agent: { name: "chatjs" },
   channel: {},
+  cancel: (): never => {
+    throw new Error("Unexpected cancellation");
+  },
   getSandbox: () => {
     throw new Error("Unexpected sandbox access");
-  },
-  getSkill: () => {
-    throw new Error("Unexpected skill access");
   },
   session: {
     auth: {
       current: null,
       initiator: {
         attributes: { chatjsReservationId: "reservation" },
-        authenticator: "test",
+        authenticator: "chatjs-gateway",
         principalId: "owner",
         principalType: "user",
       },
@@ -80,11 +88,15 @@ const started: HookEvent = {
   meta: restored.meta,
   type: "turn.started",
 };
-const dispatch = (event: HookEvent, hookContext = context) =>
-  search.events?.["*"]?.(event, hookContext);
+const dispatch = async (
+  event: Readonly<HookEvent>,
+  hookContext: Readonly<HookContext> = context
+) => await search.events?.["*"]?.(event, hookContext);
 beforeEach(() => {
   vi.resetAllMocks();
-  vi.spyOn(console, "error").mockImplementation(() => {});
+  vi.spyOn(console, "error").mockImplementation(() => {
+    // Keep expected console output out of the test log.
+  });
   mocks.state = [];
   mocks.recovery = false;
   mocks.resolve.mockResolvedValue({
@@ -120,13 +132,11 @@ it("never indexes subagent-private text into the parent chat", async () => {
   expect(mocks.state).toEqual([]);
   expect(mocks.resolve).not.toHaveBeenCalled();
 });
-
 it("does no scope or database work on a turn with no pending text", async () => {
   await dispatch(started);
   expect(mocks.resolve).not.toHaveBeenCalled();
   expect(mocks.index).not.toHaveBeenCalled();
 });
-
 it("retains newly received text when scope resolution fails and retries it", async () => {
   mocks.resolve.mockRejectedValueOnce(new Error("mapping unavailable"));
   await expect(
@@ -143,12 +153,11 @@ it("retains newly received text when scope resolution fails and retries it", asy
   ]);
   expect(mocks.state).toEqual([]);
 });
-
 it("bounds failed retries by entry count and records how omitted events can be recovered", async () => {
   mocks.index.mockRejectedValue(new Error("offline"));
   mocks.recover.mockRejectedValue(new Error("offline"));
   for (let index = 0; index < 300; index += 1) {
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Exercise successive events during an outage.
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Dispatch 300 successive outage events against one recovery buffer to prove it stays bounded; parallel dispatch would test simultaneous writers instead.
     await dispatch({
       data: { message: "retry text", sequence: index, turnId: "turn_1" },
       meta: { ...restored.meta, id: String(index) },
@@ -161,7 +170,7 @@ it("bounds failed retries by entry count and records how omitted events can be r
     { omitted: 1, sessionId: "session" }
   );
   expect(mocks.recovery).toBe(true);
-  mocks.recover.mockResolvedValue(undefined);
+  mocks.recover.mockResolvedValue();
   await dispatch(started);
   expect(mocks.recover).toHaveBeenLastCalledWith("owner", "branch", "session");
   expect(mocks.state).toEqual([]);

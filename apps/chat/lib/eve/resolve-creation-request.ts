@@ -1,65 +1,37 @@
-import { z } from "zod";
-
-import {
-  CheckpointRejectedError,
-  checkpointRejectionReason,
-} from "./checkpoint-rejection";
-import {
-  CreationRejectedError,
-  requestConversation,
-} from "./create-conversation";
+import { requestConversation } from "./create-conversation";
+import { finishCreation, readCreationRequest } from "./pending-create";
 import {
   requestResponseGroup,
   retainResponseGroupDraft,
 } from "./create-response-group";
-import { finishCreation, readCreationRequest } from "./pending-create";
 import type { CreationScope } from "./pending-create";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
-/** Resolve one saved operation; ambiguous outcomes never release its draft. */
+/**
+ * Resolve one saved operation; ambiguous outcomes never release its draft.
+ *
+ * @param {Pick<Storage, "getItem" | "setItem" | "removeItem">} storage Storage containing the pending creation request and retained comparison draft.
+ * @param {string} ownerId Owner used to locate and finish the saved request.
+ * @param {NonNullable<ReturnType<typeof readCreationRequest>>} operation Saved conversation or comparison operation whose identities are reused on retry.
+ * @param {CreationScope} scope Optional creation scope used to locate the pending request and retain its draft.
+ * @returns {Promise<Awaited<ReturnType<typeof requestConversation>> & { group: undefined } | { group: Awaited<ReturnType<typeof requestResponseGroup>>; id: string; sessionId: string }>} The confirmed conversation binding and comparison result when applicable; unconfirmed creation or checkpoint state rejects.
+ */
 export const resolveCreationRequest = async (
   storage: Pick<Storage, "getItem" | "setItem" | "removeItem">,
   ownerId: string,
-  operation: NonNullable<ReturnType<typeof readCreationRequest>>,
-  scope?: CreationScope
-) => {
-  if ("modelIds" in operation) {
-    if (operation.fork?.checkpointId) {
-      const { conversationId, checkpointId, beforeTurnId } = operation.fork;
-      const response = await fetch(
-        `/api/agent-conversations/${conversationId}/checkpoint`,
-        {
-          body: JSON.stringify({ beforeTurnId, checkpointId }),
-          headers: { "content-type": "application/json" },
-          method: "POST",
-          signal: AbortSignal.timeout(35_000),
-        }
-      );
-      if (!response.ok) {
-        const rejection = z
-          .object({
-            beforeTurnId: z.literal(beforeTurnId),
-            checkpointId: z.literal(checkpointId),
-            checkpointRejected: z.literal(true),
-            conversationId: z.literal(conversationId),
-            reason: checkpointRejectionReason,
-          })
-          .safeParse(await response.json().catch(() => null));
-        if (response.status === 409 && rejection.success) {
-          throw new CreationRejectedError(
-            new CheckpointRejectedError(rejection.data.reason).message
-          );
-        }
-        throw new Error(
-          "The comparison's saved conversation state is unconfirmed. Retry the saved request."
-        );
-      }
-      z.object({
-        beforeTurnId: z.literal(beforeTurnId),
-        checkpointId: z.literal(checkpointId),
-        conversationId: z.literal(conversationId),
-        ready: z.literal(true),
-      }).parse(await response.json());
+  operation: ReadonlyNativeSurface<
+    NonNullable<ReturnType<typeof readCreationRequest>>
+  >,
+  scope?: ReadonlyNativeSurface<CreationScope>
+): Promise<
+  | {
+      group: Awaited<ReturnType<typeof requestResponseGroup>>;
+      id: string;
+      sessionId: string;
     }
+  | (Awaited<ReturnType<typeof requestConversation>> & { group: undefined })
+> => {
+  if ("modelIds" in operation) {
     const result = await requestResponseGroup(operation);
     const bound = result.candidates.find(
       (candidate) => candidate.state === "bound"

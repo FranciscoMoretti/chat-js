@@ -1,27 +1,41 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+
+import { useRouter } from "next/navigation";
 
 import { useSidebar } from "@/components/ui/sidebar";
 
-export const KeyboardShortcuts = () => {
+const KeyboardShortcuts = (): null => {
   const router = useRouter();
   const { setOpenMobile } = useSidebar();
 
   // Keyboard shortcut for new chat
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.shiftKey && e.key === "O" && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault();
+    const handleKeyDown = (
+      event: Readonly<
+        Pick<
+          KeyboardEvent,
+          "shiftKey" | "key" | "metaKey" | "ctrlKey" | "preventDefault"
+        >
+      >
+    ): void => {
+      if (
+        event.shiftKey &&
+        event.key === "O" &&
+        (event.metaKey || event.ctrlKey)
+      ) {
+        event.preventDefault();
         setOpenMobile(false);
-        window.dispatchEvent(new Event("chatjs:new-chat"));
+        globalThis.dispatchEvent(new Event("chatjs:new-chat"));
         router.push("/");
       }
     };
 
     document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
+    return (): void => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
   }, [setOpenMobile, router]);
 
   // This component only handles keyboard events
@@ -29,11 +43,16 @@ export const KeyboardShortcuts = () => {
 };
 
 // Helper function to get platform-specific shortcut text
-export const getNewChatShortcutText = () => {
+const getNewChatShortcutText = (): "Ctrl+Shift+O" | "Cmd+Shift+O" => {
   if (typeof window === "undefined") {
     return "Ctrl+Shift+O";
   }
 
   const isMac = navigator.platform.toUpperCase().includes("MAC");
-  return isMac ? "Cmd+Shift+O" : "Ctrl+Shift+O";
+  if (isMac) {
+    return "Cmd+Shift+O";
+  }
+  return "Ctrl+Shift+O";
 };
+
+export { getNewChatShortcutText, KeyboardShortcuts };

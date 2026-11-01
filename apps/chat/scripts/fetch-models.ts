@@ -1,14 +1,16 @@
-import { writeFileSync } from "node:fs";
+import { getActiveGateway } from "@/lib/ai/active-gateway";
+import { writeFile } from "node:fs/promises";
 
-import { getActiveGateway } from "../lib/ai/active-gateway";
+const EMPTY_MODEL_COUNT = 0;
+const GENERATED_JSON_INDENT_SPACES = 2;
 
-const fetchAndSaveModels = async () => {
+const fetchAndSaveModels = async (): Promise<void> => {
   const gateway = getActiveGateway();
 
   console.log(`Fetching models from '${gateway.type}' gateway...`);
   const models = await gateway.fetchModels();
 
-  if (!models || models.length === 0) {
+  if (models.length === EMPTY_MODEL_COUNT) {
     throw new Error("No models returned from gateway");
   }
 
@@ -16,13 +18,13 @@ const fetchAndSaveModels = async () => {
 
 export const generatedForGateway = "${gateway.type}";
 
-export const models = ${JSON.stringify(models, null, 2)} as const satisfies readonly AiGatewayModel[];
+export const models = ${JSON.stringify(models, null, GENERATED_JSON_INDENT_SPACES)} as const satisfies readonly AiGatewayModel[];
 `;
 
-  writeFileSync("lib/ai/models.generated.ts", fileContent);
+  await writeFile("lib/ai/models.generated.ts", fileContent);
   console.log(
     `Wrote ${models.length} models from '${gateway.type}' gateway to lib/ai/models.generated.ts`
   );
 };
 
-fetchAndSaveModels();
+await fetchAndSaveModels();

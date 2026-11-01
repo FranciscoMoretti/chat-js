@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
-import { z } from "zod";
-
 import { getEveRuntimeEnvOptions } from "./env-schema";
+
+import { z } from "zod";
 
 const schema = z.object(getEveRuntimeEnvOptions({}));
 const valid = {
@@ -57,9 +57,18 @@ describe("EVE runtime environment", () => {
     { ...valid, WORKFLOW_POSTGRES_URL: "not-a-url" },
     { ...valid, EVE_INTERNAL_ORIGIN: "postgresql://localhost/eve" },
     { ...valid, WORKFLOW_POSTGRES_URL: "https://localhost/eve" },
-  ])("rejects malformed runtime configuration", (value) => {
-    expect(schema.safeParse(value).success).toBe(false);
-  });
+  ])(
+    "rejects malformed runtime configuration",
+    (
+      value: Readonly<{
+        EVE_GATEWAY_SECRET: string;
+        EVE_INTERNAL_ORIGIN: string;
+        WORKFLOW_POSTGRES_URL: string;
+      }>
+    ) => {
+      expect(schema.safeParse(value).success).toBe(false);
+    }
+  );
 });
 
 test.each(["preview", "production"])(
@@ -79,3 +88,20 @@ test.each(["preview", "production"])(
     expect(schema.safeParse(credentials).success).toBe(false);
   }
 );
+
+test("core environment ignores credentials owned by absent integrations", async () => {
+  const { serverEnvSchema } = await import("./env-schema");
+  const parsed = z.object(serverEnvSchema).parse({
+    ...valid,
+    AUTH_SECRET: "test-auth-secret",
+    DATABASE_URL: "postgresql://localhost/chatjs",
+    MCP_ENCRYPTION_KEY: "invalid-unused-key",
+    LITELLM_BASE_URL: "invalid-unused-url",
+    OPENAI_COMPATIBLE_BASE_URL: "invalid-unused-url",
+    VERCEL_SANDBOX_IMAGE_PYTHON: "",
+  });
+  expect(parsed).not.toHaveProperty("MCP_ENCRYPTION_KEY");
+  expect(parsed).not.toHaveProperty("LITELLM_BASE_URL");
+  expect(parsed).not.toHaveProperty("OPENAI_COMPATIBLE_BASE_URL");
+  expect(parsed).not.toHaveProperty("VERCEL_SANDBOX_IMAGE_PYTHON");
+});

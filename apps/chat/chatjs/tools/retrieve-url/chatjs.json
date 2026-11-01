@@ -1,0 +1,11 @@
+{
+  "envRequirements": [{ "options": [["FIRECRAWL_API_KEY"]] }],
+  "id": "retrieve-url",
+  "kind": "tool",
+  "requiresTools": [],
+  "slot": "retrieveUrl",
+  "tools": [
+    { "rendererExport": "RetrieveUrlRenderer", "toolExport": "retrieveUrl" }
+  ],
+  "contractVersion": 1
+}

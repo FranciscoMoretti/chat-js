@@ -1,4 +1,3 @@
-/* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
 import { QueryClient } from "@tanstack/react-query";
 import { createTRPCClient, httpBatchLink } from "@trpc/client";
 import type { inferRouterOutputs } from "@trpc/server";
@@ -7,26 +6,38 @@ import { z } from "zod";
 
 import type { AppRouter } from "../trpc/routers/_app";
 
-export const conversationId = "00000000-0000-4000-8000-000000000010";
-export const existingId = "00000000-0000-4000-8000-000000000003";
+const conversationId = "00000000-0000-4000-8000-000000000010";
+
+const existingId = "00000000-0000-4000-8000-000000000003";
+
 const inputSchema = z.object({
   conversationId: z.literal(conversationId),
   documentId: z.enum([existingId, "00000000-0000-4000-8000-000000000001"]),
   revisionId: z.uuid().optional(),
 });
-export const queryClient = new QueryClient({
+
+const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: false } },
 });
+
 const olderId = "00000000-0000-4000-8000-000000000005";
 const restoredId = "00000000-0000-4000-8000-000000000006";
 let restoredContent: string | undefined;
-export const trpcClient = createTRPCClient<AppRouter>({
+
+const trpcClient = createTRPCClient<AppRouter>({
   links: [
     httpBatchLink({
-      fetch(input, init) {
+      /* oxlint-disable typescript/promise-function-async -- TRPC requires Promise-returning fetch; this in-memory fixture validates routes/revisions and returns fresh response bodies without I/O. An immediate async callback violates eslint/require-await. */
+      fetch(
+        input: string | URL | Request,
+        init: { readonly body?: unknown } | undefined
+      ): Promise<Response> {
         const url = new URL(input instanceof Request ? input.url : input);
         if (url.pathname === "/api/trpc/eve.saveDocument") {
-          const body = JSON.parse(String(init?.body));
+          if (typeof init?.body !== "string") {
+            throw new TypeError("Expected a JSON document batch body");
+          }
+          const body = z.array(z.unknown()).parse(JSON.parse(init.body));
           const saved = z
             .object({
               conversationId: z.literal(conversationId),
@@ -79,7 +90,9 @@ export const trpcClient = createTRPCClient<AppRouter>({
                   ? restoredId
                   : latestId);
               if (
-                request.revisionId &&
+                request.revisionId !== undefined &&
+                request.revisionId !== null &&
+                request.revisionId !== "" &&
                 ![latestId, olderId, restoredId].includes(request.revisionId)
               ) {
                 throw new Error("Wrong revision selected");
@@ -145,8 +158,11 @@ export const trpcClient = createTRPCClient<AppRouter>({
           )
         );
       },
+      /* oxlint-enable typescript/promise-function-async */
       transformer: SuperJSON,
       url: "http://fixture.invalid/api/trpc",
     }),
   ],
 });
+
+export { conversationId, existingId, queryClient, trpcClient };

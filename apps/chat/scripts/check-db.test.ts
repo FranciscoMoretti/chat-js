@@ -1,10 +1,11 @@
-import { execFileSync } from "node:child_process";
-import { mkdtempSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-
 import { expect, it } from "vitest";
+import { mkdtempSync, rmSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
+import path from "node:path";
+import { tmpdir } from "node:os";
+
+const FAILURE_EXIT_STATUS = 1;
 
 it("reports failed endpoint names without exposing connection credentials", () => {
   const cwd = mkdtempSync(path.join(tmpdir(), "chatjs-check-db-"));
@@ -34,7 +35,7 @@ it("reports failed endpoint names without exposing connection credentials", () =
       if (!(error instanceof Error && "stderr" in error && "status" in error)) {
         throw error;
       }
-      expect(error.status).toBe(1);
+      expect(error.status).toBe(FAILURE_EXIT_STATUS);
       const output = String(error.stderr);
       expect(output).toContain("runtime: connection failed");
       expect(output).toContain("DATABASE_MIGRATION_URL");

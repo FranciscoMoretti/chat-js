@@ -7,6 +7,7 @@ const contentSections = [
   "customization",
   "deployment",
   "features",
+  "plugins",
   "gateways",
   "platforms",
   "reference",
@@ -73,6 +74,7 @@ export default defineConfig({
           items: [
             "/core/architecture",
             "/core/configuration",
+            "/core/plugins",
             "/core/authentication",
             "/core/multi-model",
             "/core/syntax-highlighting",
@@ -113,6 +115,8 @@ export default defineConfig({
             "/registry",
             "/registry/namespaces",
             "/registry/authoring",
+            "/registry/mirror",
+            "/registry/validation",
             "/registry/testing",
           ],
           label: "Registry",
@@ -126,17 +130,33 @@ export default defineConfig({
             "/features/code-execution",
             "/features/image-generation",
             "/features/video-generation",
-            "/features/attachments",
-            "/features/mcp",
             "/features/canvas",
             "/features/reasoning",
-            "/features/sharing",
             "/features/branching",
             "/features/parallel-responses",
-            "/features/projects",
-            "/features/follow-up-suggestions",
           ],
           label: "Features",
+        },
+        {
+          label: "Plugins",
+          items: [
+            "/plugins/overview",
+            "/plugins/projects",
+            "/plugins/feedback",
+            "/plugins/search",
+            "/plugins/model-preferences",
+            "/plugins/ai-titles",
+            "/plugins/credits",
+            "/plugins/guest-chat",
+            "/plugins/desktop",
+            "/plugins/sharing",
+            "/plugins/followup-suggestions",
+            "/plugins/mcp",
+            "/plugins/attachments",
+            "/plugins/vercel-analytics",
+            "/plugins/vercel-speed-insights",
+            "/plugins/langfuse",
+          ],
         },
         {
           items: [
@@ -161,7 +181,13 @@ export default defineConfig({
           label: "Platforms",
         },
         {
-          items: ["/cli", "/cli/create", "/cli/add", "/cli/config"],
+          items: [
+            "/cli",
+            "/cli/create",
+            "/cli/add",
+            "/cli/config",
+            "/cli/status",
+          ],
           label: "CLI",
         },
         {
@@ -169,6 +195,7 @@ export default defineConfig({
             "/project-structure",
             "/reference/cli",
             "/reference/config",
+            "/reference/plugin-api",
             "/reference/env-vars",
             "/reference/database",
             "/reference/routing",
@@ -180,6 +207,8 @@ export default defineConfig({
         {
           items: [
             "/cookbook",
+            "/cookbook/create-plugin",
+            "/cookbook/customize-integrations",
             "/cookbook/resumable-streams",
             "/cookbook/stop-resumable-streams",
             "/cookbook/tool-part",
@@ -200,13 +229,21 @@ export default defineConfig({
       ],
     },
     tabs: [
-      // href keeps the tab on the declared route (1.2) instead of falling back
+      // The href keeps the tab on the declared route (1.2) instead of falling back
       // to the section's first content page when path isn't a standalone page.
       { href: "/", label: "Docs", path: "/" },
       { href: "/cookbook", label: "Cookbook", path: "/cookbook" },
     ],
   },
   redirects: [
+    { from: "/features/sharing", to: "/plugins/sharing" },
+    { from: "/plugins/authoring", to: "/cookbook/create-plugin" },
+    { from: "/plugins/integration-points", to: "/reference/plugin-api" },
+    { from: "/features/projects", to: "/plugins/projects" },
+    {
+      from: "/features/follow-up-suggestions",
+      to: "/plugins/followup-suggestions",
+    },
     { from: "/core/use-thread", to: "/threads" },
     { from: "/core/file-storage", to: "/storage" },
     { from: "/core/registry", to: "/registry" },

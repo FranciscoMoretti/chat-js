@@ -1,19 +1,18 @@
-import { describe, expect, it } from "bun:test";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import pathModule from "node:path";
-
-import { storageDefinitionSchema } from "../../../registry/metadata";
-import { builtInStorage } from "../../../registry/src/storage/catalog";
-import { getStorageEnvironmentRequirements } from "../../../registry/src/storage/environment";
-import { itemAddress } from "../registry/shadcn";
-import { resolveStorage } from "../registry/storage";
 import {
   configureStorageProvider,
   parseStorageOptions,
 } from "./storage-provider";
+import { describe, expect, it } from "bun:test";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { builtInStorage } from "../../../registry/src/storage/catalog";
+import { getStorageEnvironmentRequirements } from "../../../registry/src/storage/environment";
+import { itemAddress } from "#cli/registry/shadcn";
+import pathModule from "node:path";
+import { resolveStorage } from "#cli/registry/storage";
+import { storageDefinitionSchema } from "../../../registry/metadata";
+import { tmpdir } from "node:os";
 
-const { join } = pathModule;
+const firstRequirementIndex = 0;
 
 describe("storage registry integration", () => {
   it("resolves every built-in provider ID to its published item name", () => {
@@ -31,9 +30,12 @@ describe("storage registry integration", () => {
     expect(getStorageEnvironmentRequirements("r2", { binding: {} })).toEqual(
       []
     );
+    const firstRequirement =
+      getStorageEnvironmentRequirements("vercel-blob")[firstRequirementIndex];
     expect(
-      getStorageEnvironmentRequirements("vercel-blob")[0]?.options.map(
-        (option) => option.map((v) => v.key)
+      firstRequirement.options.map(
+        (option: readonly { readonly key: string }[]) =>
+          option.map((provider: { readonly key: string }) => provider.key)
       )
     ).toEqual([
       ["BLOB_READ_WRITE_TOKEN"],
@@ -48,20 +50,22 @@ describe("storage registry integration", () => {
   it("accepts external storage and configures it without touching source or dependencies", async () => {
     const cwd = await mkdtemp(pathModule.join(tmpdir(), "chatjs-storage-"));
     try {
-      await mkdir(join(cwd, "lib"));
+      await mkdir(pathModule.join(cwd, "chatjs/providers"), {
+        recursive: true,
+      });
       const definition = storageDefinitionSchema.parse({
         contractVersion: 1,
         envRequirements: [{ options: [["ACME_TOKEN"]] }],
         id: "acme",
         kind: "storage",
       });
-      const source = join(cwd, "custom.json");
+      const source = pathModule.join(cwd, "custom.json");
       const item = {
         files: [
           {
             content: "throw new Error('must not execute during configuration')",
             path: "provider.ts",
-            target: "~/lib/storage-provider.ts",
+            target: "~/chatjs/providers/storage.ts",
             type: "registry:file",
           },
         ],
@@ -73,21 +77,29 @@ describe("storage registry integration", () => {
       const selection = await resolveStorage(source, cwd);
       selection.options = { bucket: "uploads" };
       await writeFile(
-        join(cwd, "lib/storage-provider.ts"),
+        pathModule.join(cwd, "chatjs/providers/storage.ts"),
         "// installed custom source"
       );
-      await writeFile(join(cwd, "package.json"), "{}");
+      await writeFile(pathModule.join(cwd, "package.json"), "{}");
       await configureStorageProvider(cwd, selection);
       expect(
-        await readFile(join(cwd, "lib/storage-provider.ts"), "utf-8")
+        await readFile(
+          pathModule.join(cwd, "chatjs/providers/storage.ts"),
+          "utf-8"
+        )
       ).toBe("// installed custom source");
-      expect(await readFile(join(cwd, "package.json"), "utf-8")).toBe("{}");
       expect(
-        await readFile(join(cwd, "lib/storage-options.ts"), "utf-8")
+        await readFile(pathModule.join(cwd, "package.json"), "utf-8")
+      ).toBe("{}");
+      expect(
+        await readFile(
+          pathModule.join(cwd, "chatjs/providers/storage-options.ts"),
+          "utf-8"
+        )
       ).toContain('"bucket": "uploads"');
-      expect(await readFile(join(cwd, ".env.example"), "utf-8")).toContain(
-        "ACME_TOKEN="
-      );
+      expect(
+        await readFile(pathModule.join(cwd, ".env.example"), "utf-8")
+      ).toContain("ACME_TOKEN=");
       await writeFile(
         source,
         JSON.stringify({
@@ -95,10 +107,10 @@ describe("storage registry integration", () => {
           meta: { chatjs: { ...definition, contractVersion: 999 } },
         })
       );
-      await expect(resolveStorage(source, cwd)).rejects.toThrow();
+      expect(resolveStorage(source, cwd)).rejects.toThrow();
       await writeFile(source, JSON.stringify({ ...item, files: [] }));
-      await expect(resolveStorage(source, cwd)).rejects.toThrow(
-        "storage-provider.ts"
+      expect(resolveStorage(source, cwd)).rejects.toThrow(
+        "chatjs/providers/storage.ts"
       );
     } finally {
       await rm(cwd, { force: true, recursive: true });

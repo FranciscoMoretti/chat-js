@@ -1,37 +1,47 @@
-import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
-import type {
-  Experimental_VideoModelV4,
-  LanguageModelV4,
-} from "@ai-sdk/provider";
-import type { GatewayProvider } from "@chat-js/gateways/gateway-provider";
+import type { LanguageModelV4 } from "@ai-sdk/provider";
+
 import type { AiGatewayModel } from "@chat-js/gateways/models";
+
+import type { GatewayProvider } from "@chat-js/gateways/gateway-provider";
+
 import { GatewayRuntime } from "@chat-js/gateways/runtime";
+
 import type { ImageModel } from "ai";
+import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import { z } from "zod";
 
+const MODEL_DISCOVERY_TIMEOUT_MS = 10_000;
 const TRAILING_SLASHES_REGEX = /\/+$/u;
 
+const litellmModelSchema = z.object({
+  created: z.number().optional(),
+  id: z.string(),
+  object: z.string().optional(),
+  owned_by: z.string().optional(),
+});
 const litellmModelsResponseSchema = z.object({
-  data: z.array(
-    z.object({
-      created: z.number().optional(),
-      id: z.string(),
-      object: z.string().optional(),
-      owned_by: z.string().optional(),
-    })
-  ),
+  data: z.array(litellmModelSchema),
 });
 
 type LiteLLMModelResponse = z.infer<
   typeof litellmModelsResponseSchema
 >["data"][number];
 
+const getModelsUrl = (baseURL: string): string => {
+  const normalizedBaseURL = baseURL.replace(TRAILING_SLASHES_REGEX, "");
+  if (normalizedBaseURL.endsWith("/v1")) {
+    return `${normalizedBaseURL}/models`;
+  }
+  return `${normalizedBaseURL}/v1/models`;
+};
+
+const UNKNOWN_MODEL_LIMIT = 0;
 const toAiGatewayModel = (model: LiteLLMModelResponse): AiGatewayModel => ({
-  context_window: 0,
-  created: model.created ?? 0,
+  context_window: UNKNOWN_MODEL_LIMIT,
+  created: model.created ?? UNKNOWN_MODEL_LIMIT,
   description: "",
   id: model.id,
-  max_tokens: 0,
+  max_tokens: UNKNOWN_MODEL_LIMIT,
   name: model.id,
   object: "model",
   owned_by: model.owned_by ?? "litellm",
@@ -39,16 +49,16 @@ const toAiGatewayModel = (model: LiteLLMModelResponse): AiGatewayModel => ({
   type: "language",
 });
 
-export class LiteLLMGateway
+class LiteLLMGateway
   extends GatewayRuntime
-  implements GatewayProvider<"litellm", string, string, never>
+  implements GatewayProvider<"litellm">
 {
-  readonly type = "litellm" as const;
+  public readonly type = "litellm" as const;
 
-  private getProvider() {
+  private getProvider(): ReturnType<typeof createOpenAICompatible> {
     const apiKey = this.getApiKey();
     const baseURL = this.getBaseURL();
-    if (!baseURL) {
+    if (!(typeof baseURL === "string" && baseURL !== "")) {
       throw new Error("LITELLM_BASE_URL is not configured");
     }
     return createOpenAICompatible({
@@ -58,63 +68,53 @@ export class LiteLLMGateway
     });
   }
 
-  createLanguageModel(modelId: string): LanguageModelV4 {
+  public createLanguageModel(modelId: string): LanguageModelV4 {
     const provider = this.getProvider();
     return provider(modelId);
   }
 
-  createImageModel(modelId: string): ImageModel {
+  public createImageModel(modelId: string): ImageModel {
     const provider = this.getProvider();
     return provider.imageModel(modelId);
   }
 
-  // The gateway interface requires a video factory even when unsupported.
-  // eslint-disable-next-line class-methods-use-this
-  createVideoModel(_modelId: never): Experimental_VideoModelV4 | null {
-    return null;
-  }
+  public readonly createVideoModel = null;
 
   private getApiKey(): string | undefined {
     return this.env.LITELLM_API_KEY;
   }
 
   private getBaseURL(): string | undefined {
-    return this.env.LITELLM_BASE_URL;
-  }
-
-  // The URL shape is provider-defined and independent of instance state.
-  // eslint-disable-next-line class-methods-use-this
-  private getModelsUrl(baseURL: string): string {
-    const normalizedBaseURL = baseURL.replace(TRAILING_SLASHES_REGEX, "");
-    if (normalizedBaseURL.endsWith("/v1")) {
-      return `${normalizedBaseURL}/models`;
+    const baseURL = this.env.LITELLM_BASE_URL;
+    if (baseURL === undefined || baseURL === "") {
+      return undefined;
     }
-    return `${normalizedBaseURL}/v1/models`;
+    return z.url().parse(baseURL);
   }
 
-  async fetchModels(): Promise<AiGatewayModel[]> {
+  public async fetchModels(): Promise<AiGatewayModel[]> {
     const apiKey = this.getApiKey();
     const baseURL = this.getBaseURL();
 
-    if (!baseURL) {
+    if (!(typeof baseURL === "string" && baseURL !== "")) {
       this.log.warn("No LITELLM_BASE_URL found, using fallback models");
       return [...this.getFallbackModels(this.type)];
     }
 
-    const url = this.getModelsUrl(baseURL);
+    const url = getModelsUrl(baseURL);
     this.log.debug({ url }, "Fetching models from LiteLLM proxy");
 
     try {
       const headers: Record<string, string> = {
         "Content-Type": "application/json",
       };
-      if (apiKey) {
+      if (typeof apiKey === "string" && apiKey !== "") {
         headers.Authorization = `Bearer ${apiKey}`;
       }
 
       const response = await this.fetch(url, {
         headers,
-        signal: AbortSignal.timeout(10_000),
+        signal: AbortSignal.timeout(MODEL_DISCOVERY_TIMEOUT_MS),
       });
 
       if (!response.ok) {
@@ -127,7 +127,7 @@ export class LiteLLMGateway
 
       const body = litellmModelsResponseSchema.parse(await response.json());
       const models = body.data;
-      const result = models.map(toAiGatewayModel);
+      const result = models.map((model) => toAiGatewayModel(model));
 
       this.log.info(
         { modelCount: result.length },
@@ -143,5 +143,4 @@ export class LiteLLMGateway
     }
   }
 }
-
-export { LiteLLMGateway as Gateway };
+export { LiteLLMGateway as Gateway, LiteLLMGateway };

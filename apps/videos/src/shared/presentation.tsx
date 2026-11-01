@@ -1,19 +1,25 @@
-import type { ReactNode } from "react";
-
 import "./presentation.css";
+import React from "react";
 
-export const Caption = ({
+const Caption = ({
   children,
   opacity,
 }: {
-  children: ReactNode;
-  opacity: number;
-}) => (
+  readonly children: string;
+  readonly opacity: number;
+}): React.JSX.Element => (
   <div className="captionPause" style={{ opacity }}>
     <span>{children}</span>
   </div>
 );
-export const Pointer = ({ x, y }: { x: number; y: number }) => (
+
+const Pointer = ({
+  x,
+  y,
+}: {
+  readonly x: number;
+  readonly y: number;
+}): React.JSX.Element => (
   <svg
     aria-hidden="true"
     className="cursor"
@@ -28,23 +34,30 @@ export const Pointer = ({ x, y }: { x: number; y: number }) => (
     />
   </svg>
 );
-export const ClickPulse = ({
+
+const ClickPulse = ({
   age,
   x,
   y,
 }: {
-  age: number;
-  x: number;
-  y: number;
-}) =>
-  age >= 0 && age < 0.5 ? (
-    <div
-      className="clickPulse"
-      style={{
-        left: x,
-        opacity: 1 - age / 0.5,
-        top: y,
-        transform: `translate(-50%,-50%) scale(${0.6 + age * 3})`,
-      }}
-    />
-  ) : null;
+  readonly age: number;
+  readonly x: number;
+  readonly y: number;
+}): React.JSX.Element | null => {
+  if (age >= 0 && age < 0.5) {
+    return (
+      <div
+        className="clickPulse"
+        style={{
+          left: x,
+          opacity: 1 - age / 0.5,
+          top: y,
+          transform: `translate(-50%,-50%) scale(${0.6 + age * 3})`,
+        }}
+      />
+    );
+  }
+  return null;
+};
+
+export { Caption, ClickPulse, Pointer };

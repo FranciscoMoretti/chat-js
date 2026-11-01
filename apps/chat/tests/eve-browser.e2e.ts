@@ -1,18 +1,14 @@
-/* oxlint-disable eslint/no-promise-executor-return -- These Promise executors directly register callback APIs whose return values are ignored. */
-/* oxlint-disable eslint/no-shadow -- Nested callback names mirror the protocol fields and transaction APIs under test. */
-/* oxlint-disable promise/avoid-new -- These fixtures adapt callback, timer, stream, or browser event APIs into awaited Promises. */
-/* oxlint-disable unicorn/prefer-ternary -- Explicit branches make stateful route behavior and cleanup order visible. */
-/* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
-/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
-/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
+import { userCredit } from "@/chatjs/plugins/credits/credits-schema";
+import { setTimeout as delay } from "node:timers/promises";
 import { mkdir } from "node:fs/promises";
 
+import type { Page, Request, Response } from "@playwright/test";
+
 import { expect, test } from "@playwright/test";
-import type { Page } from "@playwright/test";
 import { eq } from "drizzle-orm";
 
 import { db } from "../lib/db/client";
-import { eveConversation, eveUsage, user, userCredit } from "../lib/db/schema";
+import { eveConversation, eveUsage, user } from "../lib/db/schema";
 import { env } from "../lib/env";
 import { assertEveTestDatabase } from "./eve-test-database";
 
@@ -22,7 +18,10 @@ const conversationUrl = /\/chat\/[^/]+$/u;
 const failureMessage = /failure|failed/iu;
 const connectionFailure = /fetch|failed/iu;
 
-async function capture(page: Page, name: string) {
+const capture = async (
+  page: Readonly<Pick<Page, "screenshot">>,
+  name: string
+): Promise<void> => {
   await mkdir("tests/eve-results/screenshots", { recursive: true });
   await page.screenshot({
     animations: "disabled",
@@ -30,10 +29,12 @@ async function capture(page: Page, name: string) {
     style:
       "nextjs-portal, #react-scan-toolbar, #react-scan-root { visibility: hidden !important; }",
   });
-}
+};
 
 test.beforeEach(async ({ page }) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   await page.goto("/");
   await expect(
@@ -41,13 +42,13 @@ test.beforeEach(async ({ page }) => {
   ).toBeVisible();
 });
 
-async function create(page: Page, message: string) {
+const create = async (page: Page, message: string): Promise<void> => {
   await page
     .getByRole("textbox", { exact: true, name: "Message" })
     .fill(message);
   await page.getByRole("button", { exact: true, name: "Send" }).click();
   await expect(page).toHaveURL(conversationUrl);
-}
+};
 
 test("native transcript survives reload; streaming preserves the next draft; cancellation permits another send", async ({
   page,
@@ -79,11 +80,13 @@ test("native transcript survives reload; streaming preserves the next draft; can
   await expect(
     page.getByRole("button", { exact: true, name: "Stop" })
   ).toBeEnabled();
-  const cancellation = page.waitForResponse((response) =>
-    response.url().endsWith("/cancel")
+  const cancellation = page.waitForResponse(
+    (response: Readonly<Pick<Response, "url">>) =>
+      response.url().endsWith("/cancel")
   );
   await page.getByRole("button", { exact: true, name: "Stop" }).click();
-  expect(await (await cancellation).json()).toMatchObject({
+  const cancellationResponse = await cancellation;
+  expect(await cancellationResponse.json()).toMatchObject({
     ok: true,
     status: "accepted",
   });
@@ -253,20 +256,20 @@ test("exhausted credits block new messages but permit rejecting an approval", as
     .select()
     .from(user)
     .where(eq(user.email, "dev@localhost"));
-  if (!owner) {
+  if (owner === undefined) {
     throw new Error("Missing development user.");
   }
   const [balance] = await db
     .select()
     .from(userCredit)
     .where(eq(userCredit.userId, owner.id));
-  if (!balance) {
+  if (balance === undefined) {
     throw new Error("Missing credit balance.");
   }
   try {
     await db
       .update(userCredit)
-      .set({ credits: 0 })
+      .set({ balanceCents: 0 })
       .where(eq(userCredit.userId, owner.id));
     await page.reload();
     await page.getByRole("button", { exact: true, name: "Cancel" }).click();
@@ -278,16 +281,17 @@ test("exhausted credits block new messages but permit rejecting an approval", as
       .getByRole("textbox", { exact: true, name: "Message" })
       .fill("cannot start");
     const rejected = page.waitForResponse(
-      (response) =>
+      (response: Readonly<Pick<Response, "request" | "url">>) =>
         response.url().includes("/api/eve/v1/session/") &&
         response.request().method() === "POST"
     );
     await page.getByRole("button", { exact: true, name: "Send" }).click();
-    expect((await rejected).status()).toBe(402);
+    const creditRejectionResponse = await rejected;
+    expect(creditRejectionResponse.status()).toBe(402);
   } finally {
     await db
       .update(userCredit)
-      .set({ credits: balance.credits })
+      .set({ balanceCents: balance.balanceCents })
       .where(eq(userCredit.userId, owner.id));
   }
 });
@@ -301,21 +305,27 @@ test("unknown completed usage prevents new admission until its cost is reconcile
     page.getByText("Verified: known zero-cost fixture", { exact: true })
   ).toBeVisible();
   const id = new URL(page.url()).pathname.split("/").at(-1);
-  if (!id) {
+  if (id === undefined || id === null || id === "") {
     throw new Error("Missing conversation identity.");
   }
   const [conversation] = await db
     .select()
     .from(eveConversation)
     .where(eq(eveConversation.id, id));
-  if (!conversation?.sessionId) {
+  if (
+    conversation === undefined ||
+    conversation === null ||
+    conversation.sessionId === undefined ||
+    conversation.sessionId === null ||
+    conversation.sessionId === ""
+  ) {
     throw new Error("Missing session binding.");
   }
   const [usage] = await db
     .select()
     .from(eveUsage)
     .where(eq(eveUsage.sessionId, conversation.sessionId));
-  if (!usage) {
+  if (usage === undefined) {
     throw new Error("Missing fixture usage.");
   }
   try {
@@ -347,7 +357,7 @@ test("normal navigation and sidebar search use Eve without sending to the old ch
   page,
 }) => {
   const legacyRequests: string[] = [];
-  page.on("request", (request) => {
+  page.on("request", (request: Readonly<Pick<Request, "method" | "url">>) => {
     if (
       new URL(request.url()).pathname === "/api/chat" &&
       request.method() === "POST"
@@ -370,13 +380,11 @@ test("normal navigation and sidebar search use Eve without sending to the old ch
       exact: true,
       name: "Expand sidebar",
     });
-    if (await expand.isVisible()) {
-      await expand.click();
-    } else {
-      await page
-        .getByRole("button", { exact: true, name: "Toggle Sidebar" })
-        .click();
-    }
+
+    const sidebarControl = (await expand.isVisible())
+      ? expand
+      : page.getByRole("button", { exact: true, name: "Toggle Sidebar" });
+    await sidebarControl.click();
   }
   await search.fill("sidebar migration check");
   await capture(page, "sidebar-search");
@@ -395,30 +403,34 @@ test("unknown conversations and removed legacy APIs are unavailable", async ({
   page,
 }) => {
   const id = crypto.randomUUID();
+  /* oxlint-disable eslint/no-await-in-loop -- Navigate and inspect each 404 on the same browser page before the next navigation. */
   for (const path of [`/chat/${id}`, `/share/${id}`]) {
     await page.goto(path);
     await expect(page.getByRole("heading", { name: "404" })).toBeVisible();
   }
+  /* oxlint-enable eslint/no-await-in-loop */
   const legacySend = await page.request.post("/api/chat", { data: {} });
   expect(legacySend.status()).toBe(404);
-  for (const procedure of [
-    "getChatById",
-    "getChatMessages",
-    "getPublicChat",
-    "getPublicChatMessages",
-  ]) {
-    const response = await page.request.get(`/api/trpc/chat.${procedure}`, {
-      params: { input: JSON.stringify({ json: { chatId: id } }) },
-    });
-    expect(response.status()).toBe(404);
-  }
+  await Promise.all(
+    [
+      "getChatById",
+      "getChatMessages",
+      "getPublicChat",
+      "getPublicChatMessages",
+    ].map(async (procedure) => {
+      const response = await page.request.get(`/api/trpc/chat.${procedure}`, {
+        params: { input: JSON.stringify({ json: { chatId: id } }) },
+      });
+      expect(response.status()).toBe(404);
+    })
+  );
 });
 
 test("ChatJS editor supports Enter, multiline drafts and composition", async ({
   page,
 }) => {
   const errors: string[] = [];
-  page.on("pageerror", (error) => errors.push(error.message));
+  page.on("pageerror", (error: Readonly<Error>) => errors.push(error.message));
   const composer = page.getByRole("textbox", { exact: true, name: "Message" });
   await composer.fill("keyboard");
   await composer.press("Shift+Enter");
@@ -444,14 +456,12 @@ test("stalled creation releases the composer and retries the retained operation"
 }) => {
   test.setTimeout(90_000);
   const attempts: unknown[] = [];
-  let release: (() => void) | undefined;
-  const stalled = new Promise<void>((resolve) => {
-    release = resolve;
-  });
+  const stalled: { promise: Promise<void>; resolve: () => void } =
+    Promise.withResolvers();
   await page.route("**/api/agent-conversations", async (route) => {
     attempts.push(route.request().postDataJSON());
     if (attempts.length === 1) {
-      await stalled;
+      await stalled.promise;
       await route.abort().catch(() => {
         // The browser may have already closed this request after its timeout.
       });
@@ -475,7 +485,7 @@ test("stalled creation releases the composer and retries the retained operation"
     await expect(composer).toBeEditable();
     await expect(composer).toHaveText("retained timeout message");
     await capture(page, "creation-timeout");
-    release?.();
+    stalled.resolve();
     await page.getByRole("button", { exact: true, name: "Send" }).click();
     await expect(
       page.getByRole("alert").filter({ hasText: "Worker is unavailable" })
@@ -483,7 +493,7 @@ test("stalled creation releases the composer and retries the retained operation"
     expect(attempts).toHaveLength(2);
     expect(attempts[1]).toEqual(attempts[0]);
   } finally {
-    release?.();
+    stalled.resolve();
   }
 });
 
@@ -495,7 +505,7 @@ test("reload during an accepted turn restores the user message and follows the r
     page.getByText("Verified: hello", { exact: true })
   ).toBeVisible();
   const accepted = page.waitForResponse(
-    (response) =>
+    (response: Readonly<Pick<Response, "request" | "url">>) =>
       response.request().method() === "POST" &&
       response.url().includes("/api/eve/v1/session/")
   );
@@ -503,7 +513,8 @@ test("reload during an accepted turn restores the user message and follows the r
     .getByRole("textbox", { exact: true, name: "Message" })
     .fill("slow reload recovery");
   await page.getByRole("button", { exact: true, name: "Send" }).click();
-  expect((await accepted).ok()).toBe(true);
+  const acceptedTurnResponse = await accepted;
+  expect(acceptedTurnResponse.ok()).toBe(true);
   await page.reload();
   await expect(page.getByRole("log")).toContainText("slow reload recovery");
   await expect(
@@ -519,7 +530,7 @@ test("reload before acceptance recovers a late message without resending", async
     page.getByText("Verified: hello", { exact: true })
   ).toBeVisible();
   const dispatched = page.waitForRequest(
-    (request) =>
+    (request: Readonly<Pick<Request, "method" | "url">>) =>
       request.method() === "POST" &&
       request.url().includes("/api/eve/v1/session/")
   );
@@ -552,9 +563,9 @@ test("reload retains text when the send never reaches the server", async ({
   ).toBeVisible();
   await page.route("**/api/eve/v1/session/**", async (route) => {
     if (route.request().method() === "POST") {
-      await new Promise((resolve) => setTimeout(resolve, 5000));
+      await delay(5000);
       await route.abort().catch(() => {
-        /* empty */
+        /* Ignore abort errors when the route has already completed. */
       });
     } else {
       await route.continue();

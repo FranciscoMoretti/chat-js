@@ -1,7 +1,8 @@
-import { env } from "../env";
+import { env } from "@/lib/env";
+
 import { resolveWorkflowWorld } from "./world-config";
 
-export const localDeletionAvailable = () => {
+export const localDeletionAvailable = (): boolean => {
   if (resolveWorkflowWorld(env) === "vercel") {
     return false;
   }

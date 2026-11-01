@@ -12,16 +12,22 @@ flowchart LR
     Event[EVE event] --> Hook[agent/hooks/billing.ts]
     Hook --> Usage[lib/eve/usage.ts]
     Usage --> Ledger[Eve billing ledger]
-    Ledger --> Credits[Credit availability]
+    Ledger --> Credits[Optional Credits debit]
     Stream[Authoritative EVE stream] --> Reconcile[lib/eve/reconcile-usage.ts]
     Reconcile --> Ledger
 ```
 
 `lib/eve/usage.ts` records model calls, completed steps, compaction usage, and supported platform-tool results. Each record uses an event-derived identity, so replaying an event does not charge it twice.
 
-`lib/eve/reconcile-usage.ts` reads only the unprocessed suffix of the native stream and advances a durable cursor after successful reconciliation. If a completed provider cost cannot be resolved, admission stops until the evidence is reconciled.
+`lib/eve/reconcile-usage.ts` reads only the unprocessed suffix of the native stream and advances a durable cursor after successful reconciliation. Missing tool receipts remain eligible for replay without themselves blocking admission. Reconciliation failures can still prevent new work.
 
-`lib/db/credits.ts` owns credit storage and availability checks, including `canSpend`. The usage ledger is evidence for those decisions. A positive balance gate does not reserve a concurrent budget for work that has already started.
+[Credits](../plugins/credits) owns balance storage. `chatjs/plugins/credits/credits-queries.ts` reads registered-user balances through `getBalanceCents`. The TypeScript field and tRPC response use `balanceCents`, while the existing database column remains `UserCredit.credits` to preserve stored balances.
+
+Both new-conversation and follow-up-message admission call `canStartPaidTurn` in `lib/eve/spending-admission.ts`. It reconciles usage before reading the balance. Reconciliation failures propagate to the request's existing recovery response. A positive balance gate does not reserve a concurrent budget for work that has already started.
+
+Without Credits, core still deduplicates and reconciles usage evidence, but does not create or debit balances. The installed policy commits debits in the same transaction as usage evidence and settlement markers.
+
+The sidebar distinguishes a pending read and a failed read from a real zero balance. Completed, failed, and cancelled turns invalidate the balance query. Guests use separate rate limits and input-size limits, with no monetary or message-credit balance.
 
 ## Related
 

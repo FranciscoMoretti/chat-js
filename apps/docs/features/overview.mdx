@@ -3,7 +3,7 @@ title: "Features"
 description: "Tools and capabilities that extend what the AI can do"
 ---
 
-ChatJS ships with production-ready features. Toggle them in `chat.config.ts`.
+ChatJS combines core conversation features, installable tools, and [plugins](../plugins/overview). Configure runtime preferences in `chat.config.ts`. Install optional implementations with the CLI.
 
 <CardGroup cols={2}>
   <Card title="Web Search" icon="globe" href="/features/web-search">
@@ -21,7 +21,7 @@ ChatJS ships with production-ready features. Toggle them in `chat.config.ts`.
     Generate and edit images with dedicated models or multimodal LLMs. Iterative
     editing without re-uploading.
   </Card>
-  <Card title="MCP" icon="plug" href="/features/mcp">
+  <Card title="MCP" icon="plug" href="/plugins/mcp">
     Model Context Protocol support. Extend capabilities with external tools.
   </Card>
   <Card title="Canvas" icon="pen-tool" href="/features/canvas">
@@ -31,11 +31,11 @@ ChatJS ships with production-ready features. Toggle them in `chat.config.ts`.
     Extended thinking for complex questions. Automatic model splitting with
     collapsible chain-of-thought UI.
   </Card>
-  <Card title="Attachments" icon="paperclip" href="/features/attachments">
+  <Card title="Attachments" icon="paperclip" href="/plugins/attachments">
     Drag and drop images, PDFs, and documents. Multimodal conversations out of
     the box.
   </Card>
-  <Card title="Sharing" icon="share" href="/features/sharing">
+  <Card title="Sharing" icon="share" href="/plugins/sharing">
     Share conversations with public links. Control visibility per chat.
   </Card>
   <Card title="Branching" icon="git-branch" href="/features/branching">
@@ -52,7 +52,7 @@ ChatJS ships with production-ready features. Toggle them in `chat.config.ts`.
   <Card
     title="Follow-up Suggestions"
     icon="messages-square"
-    href="/features/follow-up-suggestions"
+    href="/plugins/followup-suggestions"
   >
     AI-generated contextual follow-up questions after responses. Click to
     continue the conversation.
@@ -62,7 +62,7 @@ ChatJS ships with production-ready features. Toggle them in `chat.config.ts`.
 ## Organization
 
 <CardGroup cols={2}>
-  <Card title="Projects" icon="folder" href="/features/projects">
+  <Card title="Projects" icon="folder" href="/plugins/projects">
     Organize chats into workspaces with custom instructions, icons, and colors.
   </Card>
 </CardGroup>

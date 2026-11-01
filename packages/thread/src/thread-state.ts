@@ -1,26 +1,24 @@
+import type { ThreadState, ThreadStateSnapshot } from "./types";
+import { MessageTree } from "./message-tree";
+import type { SnapshotInput } from "./message-tree-readers";
 import type { UIMessage } from "ai";
 
-import { MessageTree } from "./message-tree";
-import type {
-  MessageTreeSnapshot,
-  ThreadState,
-  ThreadStateSnapshot,
-} from "./types";
+const NO_THREAD_ERROR = globalThis.undefined;
 
-export const createThreadStateSnapshot = <TMessage extends UIMessage>({
+const createThreadStateSnapshot = <TMessage extends UIMessage>({
   initialTree,
   messages,
-}: {
-  initialTree?: MessageTreeSnapshot<TMessage>;
-  messages?: TMessage[];
-}): ThreadStateSnapshot<TMessage> => {
+}: Readonly<{
+  initialTree?: SnapshotInput<TMessage>;
+  messages?: readonly TMessage[];
+}>): ThreadStateSnapshot<TMessage> => {
   const tree = new MessageTree({ messages, snapshot: initialTree });
 
   return {
     ...tree.getSnapshot(),
     ...tree.getIndexes(),
     activeRuns: [],
-    error: undefined,
+    error: NO_THREAD_ERROR,
     messages: tree.getPath(),
     runs: [],
     status: "ready",
@@ -28,34 +26,36 @@ export const createThreadStateSnapshot = <TMessage extends UIMessage>({
   };
 };
 
-export class MemoryThreadState<
+class MemoryThreadState<
   TMessage extends UIMessage = UIMessage,
 > implements ThreadState<TMessage> {
   readonly #listeners = new Set<() => void>();
   #snapshot: ThreadStateSnapshot<TMessage>;
 
-  constructor(
-    options: {
-      initialTree?: MessageTreeSnapshot<TMessage>;
-      messages?: TMessage[];
-    } = {}
+  public constructor(
+    options: Readonly<{
+      initialTree?: SnapshotInput<TMessage>;
+      messages?: readonly TMessage[];
+    }> = {}
   ) {
     this.#snapshot = createThreadStateSnapshot(options);
   }
 
-  getSnapshot = () => this.#snapshot;
+  public getSnapshot = (): ThreadStateSnapshot<TMessage> => this.#snapshot;
 
-  subscribe = (listener: () => void) => {
+  public subscribe = (listener: () => void): (() => void) => {
     this.#listeners.add(listener);
-    return () => {
+    return (): void => {
       this.#listeners.delete(listener);
     };
   };
 
-  update: ThreadState<TMessage>["update"] = (updater) => {
+  public update: ThreadState<TMessage>["update"] = (updater): void => {
     this.#snapshot = updater(this.#snapshot);
     for (const listener of this.#listeners) {
       listener();
     }
   };
 }
+
+export { createThreadStateSnapshot, MemoryThreadState };

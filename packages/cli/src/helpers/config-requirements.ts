@@ -1,36 +1,50 @@
-import { builtInGateways } from "../registry/gateways";
-import type { AuthProvider, BuiltInToolKey, CoreFeatureKey } from "../types";
+import type { AuthProvider, BuiltInToolKey, CoreFeatureKey } from "#cli/types";
+import type { ReadonlyInput } from "./readonly-input";
+import { builtInGateways } from "#cli/registry/gateways";
+import { mcpDefinition } from "../../../registry/src/plugins/mcp/manifest";
 
 type EnvVarName = string;
 
-export interface EnvRequirement {
-  description: string;
-  options: EnvVarName[][];
+interface EnvRequirement {
+  readonly description: string;
+  readonly options: readonly (readonly EnvVarName[])[];
 }
 
-export const gatewayEnvRequirements: Record<string, EnvRequirement[]> =
+const gatewayEnvRequirements: Record<string, EnvRequirement[]> =
   Object.fromEntries(
-    builtInGateways.map((item) => [
-      item.meta.chatjs.id,
-      item.meta.chatjs.envRequirements.map((requirement) => ({
-        ...requirement,
-        description:
-          requirement.description ??
-          requirement.options.map((option) => option.join(" + ")).join(" or "),
-      })),
-    ])
+    builtInGateways.map(
+      (item: ReadonlyInput<(typeof builtInGateways)[number]>) => [
+        item.meta.chatjs.id,
+        item.meta.chatjs.envRequirements.map((requirement) => ({
+          ...requirement,
+          description:
+            requirement.description ??
+            requirement.options
+              .map((option) => option.join(" + "))
+              .join(" or "),
+        })),
+      ]
+    )
   );
 
-export const coreFeatureEnvRequirements: Partial<
-  Record<CoreFeatureKey, EnvRequirement>
+const coreFeatureEnvRequirements: Partial<
+  Record<CoreFeatureKey, EnvRequirement[]>
 > = {
-  mcp: {
-    description: "MCP_ENCRYPTION_KEY",
-    options: [["MCP_ENCRYPTION_KEY"]],
-  },
+  mcp: (mcpDefinition.envRequirements ?? []).map(
+    (
+      requirement: ReadonlyInput<
+        NonNullable<typeof mcpDefinition.envRequirements>[number]
+      >
+    ) => ({
+      ...requirement,
+      description:
+        requirement.description ??
+        requirement.options.map((group) => group.join(" + ")).join(" or "),
+    })
+  ),
 };
 
-export const builtInToolEnvRequirements: Record<
+const builtInToolEnvRequirements: Record<
   BuiltInToolKey,
   EnvRequirement | undefined
 > = {
@@ -48,7 +62,7 @@ export const builtInToolEnvRequirements: Record<
   },
 };
 
-export const authEnvRequirements: Record<AuthProvider, EnvRequirement> = {
+const authEnvRequirements: Record<AuthProvider, EnvRequirement> = {
   github: {
     description: "AUTH_GITHUB_ID + AUTH_GITHUB_SECRET",
     options: [["AUTH_GITHUB_ID", "AUTH_GITHUB_SECRET"]],
@@ -63,7 +77,7 @@ export const authEnvRequirements: Record<AuthProvider, EnvRequirement> = {
   },
 };
 
-export const envVarDescriptions: Record<string, string> = {
+const envVarDescriptions: Record<string, string> = {
   AI_GATEWAY_API_KEY: "Vercel AI Gateway API key",
   AUTH_GITHUB_ID: "GitHub OAuth client id",
   AUTH_GITHUB_SECRET: "GitHub OAuth client secret",
@@ -87,3 +101,11 @@ export const envVarDescriptions: Record<string, string> = {
   VERCEL_TEAM_ID: "Vercel team id for sandbox execution",
   VERCEL_TOKEN: "Vercel token for sandbox execution",
 };
+export {
+  authEnvRequirements,
+  builtInToolEnvRequirements,
+  coreFeatureEnvRequirements,
+  envVarDescriptions,
+  gatewayEnvRequirements,
+};
+export type { EnvRequirement };

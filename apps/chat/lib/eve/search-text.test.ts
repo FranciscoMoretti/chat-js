@@ -1,7 +1,7 @@
 import type { MessageStreamEvent } from "eve/client";
 import { expect, it } from "vitest";
 
-import { eveEventSearchText } from "./search-text";
+import { eveEventSearchText } from "@/chatjs/plugins/search/search-text";
 
 const received: MessageStreamEvent = {
   data: {
@@ -24,29 +24,25 @@ const completed: MessageStreamEvent = {
   meta: { at: "2026-09-25T10:00:01Z", id: "assistant-1" },
   type: "message.completed",
 };
-it("projects visible text with stable keys for live events and restored history", () => {
-  const restored: MessageStreamEvent = {
-    data: {
-      beforeTurnId: "turn_1",
-      events: [received, completed],
-      sourceSessionId: "source",
-    },
-    meta: { at: received.meta.at, id: "history" },
-    type: "history.restored",
-  };
-  expect(eveEventSearchText(restored)).toEqual([
-    ...eveEventSearchText(received),
-    ...eveEventSearchText(completed),
+it("projects visible text with stable keys for live events", () => {
+  expect(eveEventSearchText(completed)).toEqual([
+    { key: "event:assistant-1", text: "Toast the saffron." },
   ]);
   expect(eveEventSearchText(received)).toEqual([
     { key: "event:user-1", text: "saffron rice" },
   ]);
 });
-it("indexes seeded display text while excluding reasoning, tools and system-authored input", () => {
+it("indexes seeded display text while excluding reasoning, tools and model lifecycle events", () => {
   expect(
     eveEventSearchText({
-      ...received,
-      data: { ...received.data, kind: "execution.background_task" },
+      type: "step.started",
+      data: {
+        turnId: "turn_0",
+        stepIndex: 0,
+        sequence: 0,
+        modelId: "gateway/private-model",
+      },
+      meta: received.meta,
     })
   ).toEqual([]);
   expect(
@@ -65,6 +61,6 @@ it("indexes seeded display text while excluding reasoning, tools and system-auth
       },
       meta: received.meta,
       type: "history.seeded",
-    })
+    } satisfies MessageStreamEvent)
   ).toEqual([{ key: "seed:0", text: "visible answer" }]);
 });

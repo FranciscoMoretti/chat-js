@@ -1,13 +1,14 @@
 import { execFileSync } from "node:child_process";
 
+import type { Page, Route, TestInfo } from "@playwright/test";
 import { expect, test } from "@playwright/test";
 
 // Dense state gallery uses the real application CSS and components, without a server or database.
 test("response cards preserve layout and select native candidates on desktop and mobile", async ({
   page,
-}, testInfo) => {
+}: { page: Page }, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
   const errors: string[] = [];
-  page.on("pageerror", (error) => errors.push(error.message));
+  page.on("pageerror", (error: Readonly<Error>) => errors.push(error.message));
   const script = execFileSync(
     "bun",
     [
@@ -24,12 +25,12 @@ test("response cards preserve layout and select native candidates on desktop and
     ],
     { encoding: "utf-8", maxBuffer: 20 * 1024 * 1024 }
   );
-  await page.route("http://eve-cards.test/", (route) =>
-    route.fulfill({
+  await page.route("http://eve-cards.test/", async (route: Route) => {
+    await route.fulfill({
       body: `<!doctype html><html class="dark"><head><style>${css}</style></head><body class="bg-background text-foreground"><div id="root"></div></body></html>`,
       contentType: "text/html",
-    })
-  );
+    });
+  });
   await page.goto("http://eve-cards.test/");
   await page.addScriptTag({ content: script, type: "module" });
   const cards = page.getByRole("region", { name: "Eve response states" });

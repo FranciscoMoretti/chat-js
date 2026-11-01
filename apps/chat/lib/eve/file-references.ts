@@ -1,7 +1,11 @@
-import { keyFromFileUrl } from "../file-url";
 import type { EveMessageInput } from "./message-input";
+import { keyFromFileUrl } from "@/lib/file-url";
 
-export const eveMessageFileKeys = (message: EveMessageInput) => {
+export const eveMessageFileKeys = (
+  message:
+    | string
+    | readonly Readonly<Exclude<EveMessageInput, string>[number]>[]
+): string[] => {
   if (typeof message === "string") {
     return [];
   }
@@ -10,7 +14,7 @@ export const eveMessageFileKeys = (message: EveMessageInput) => {
       return [];
     }
     const key = keyFromFileUrl(part.data);
-    if (!key) {
+    if (key === null || key === "") {
       throw new Error("Invalid attachment reference.");
     }
     return [key];

@@ -1,12 +1,13 @@
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { canReadEveFile } from "@/lib/db/eve-files";
 import { resolveEvePrincipal } from "@/lib/eve/principal";
 import { createFileContentResponse } from "@/lib/file-content-response";
 import { isFileStorageKey } from "@/lib/file-url";
 
 export const GET = async (
-  request: Request,
-  { params }: { params: Promise<{ key: string }> }
-) => {
+  request: ReadonlyNativeSurface<Request>,
+  { params }: { readonly params: Readonly<Promise<{ readonly key: string }>> }
+): Promise<Response> => {
   const { key } = await params;
   if (!isFileStorageKey(key)) {
     return new Response("Invalid file key", { status: 400 });

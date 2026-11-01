@@ -1,5 +1,14 @@
 "use client";
 
+// Markdown delimiters occur in opening/closing pairs. Derive offsets from their
+// spelling so code-point and UTF-16 scans keep their existing boundary behavior.
+const delimitersPerPair = 2;
+const textStartOffset = 0;
+const unmatchedDelimiterCount = 1;
+const inlineCodeMarker = "`";
+const doubleCodeMarker = "``";
+const codeFenceMarker = "```";
+
 const incompleteLinkOrImagePattern = /(?<marker>!?\[)[^\]]*$/u;
 const incompleteBoldPattern = /\*\*[^*]*$/u;
 const incompleteItalicPattern = /__[^_]*$/u;
@@ -10,48 +19,27 @@ const incompleteStrikethroughPattern = /~~[^~]*$/u;
 const boldPattern = /\*\*/gu;
 const italicPattern = /__/gu;
 const tripleBacktickPattern = /```/gu;
+const inlineCodePattern = /`/gu;
+const standaloneAsteriskPattern = /(?<!\*)\*(?!\*)/gu;
+const standaloneUnderscorePattern = /(?<!_)_(?!_)/gu;
 const strikethroughPattern = /~~/gu;
 
-const countMatches = (value: string, pattern: RegExp): number =>
-  value.match(pattern)?.length ?? 0;
+const countMatches = (value: string, pattern: Readonly<RegExp>): number =>
+  [...value.matchAll(pattern)].length;
 
-const countStandaloneMarkers = (value: string, marker: string): number => {
-  const characters = [...value];
-  let count = 0;
-
-  for (let index = 0; index < characters.length; index += 1) {
-    if (
-      characters[index] === marker &&
-      characters[index - 1] !== marker &&
-      characters[index + 1] !== marker
-    ) {
-      count += 1;
-    }
-  }
-
-  return count;
-};
-
-const countStandaloneBackticks = (value: string): number => {
-  let count = 0;
-
-  for (let index = 0; index < value.length; index += 1) {
-    if (value[index] !== "`") {
-      continue;
-    }
-
-    const isPartOfTripleBacktick =
-      value.slice(index, index + 3) === "```" ||
-      value.slice(index - 1, index + 2) === "```" ||
-      value.slice(index - 2, index + 1) === "```";
-
-    if (!isPartOfTripleBacktick) {
-      count += 1;
-    }
-  }
-
-  return count;
-};
+const countStandaloneBackticks = (value: string): number =>
+  [...value.matchAll(inlineCodePattern)].filter(
+    ({ index }: { readonly index: number }) =>
+      value.slice(index, index + codeFenceMarker.length) !== codeFenceMarker &&
+      value.slice(
+        index - inlineCodeMarker.length,
+        index + doubleCodeMarker.length
+      ) !== codeFenceMarker &&
+      value.slice(
+        index - doubleCodeMarker.length,
+        index + inlineCodeMarker.length
+      ) !== codeFenceMarker
+  ).length;
 
 const appendClosingMarker = ({
   closingMarker,
@@ -59,14 +47,15 @@ const appendClosingMarker = ({
   markerPattern,
   value,
 }: {
-  closingMarker: string;
-  incompletePattern: RegExp;
-  markerPattern: RegExp;
-  value: string;
+  readonly closingMarker: string;
+  readonly incompletePattern: Readonly<RegExp>;
+  readonly markerPattern: Readonly<RegExp>;
+  readonly value: string;
 }): string => {
   if (
     incompletePattern.test(value) &&
-    countMatches(value, markerPattern) % 2 === 1
+    countMatches(value, markerPattern) % delimitersPerPair ===
+      unmatchedDelimiterCount
   ) {
     return `${value}${closingMarker}`;
   }
@@ -74,33 +63,16 @@ const appendClosingMarker = ({
   return value;
 };
 
-const appendClosingStandaloneMarker = ({
-  incompletePattern,
-  marker,
-  value,
-}: {
-  incompletePattern: RegExp;
-  marker: string;
-  value: string;
-}): string => {
-  if (
-    incompletePattern.test(value) &&
-    countStandaloneMarkers(value, marker) % 2 === 1
-  ) {
-    return `${value}${marker}`;
-  }
-
-  return value;
-};
-
 const completeInlineCode = (value: string): string => {
   const isInsideIncompleteCodeBlock =
-    countMatches(value, tripleBacktickPattern) % 2 === 1;
+    countMatches(value, tripleBacktickPattern) % delimitersPerPair ===
+    unmatchedDelimiterCount;
 
   if (
     incompleteInlineCodePattern.test(value) &&
     !isInsideIncompleteCodeBlock &&
-    countStandaloneBackticks(value) % 2 === 1
+    countStandaloneBackticks(value) % delimitersPerPair ===
+      unmatchedDelimiterCount
   ) {
     return `${value}\``;
   }
@@ -108,19 +80,28 @@ const completeInlineCode = (value: string): string => {
   return value;
 };
 
+const removeIncompleteLinkOrImage = (text: string): string => {
+  const match = incompleteLinkOrImagePattern.exec(text);
+  const groups = match && match.groups;
+  const marker = groups && groups.marker;
+  if (typeof marker === "string" && marker !== "") {
+    return text.slice(textStartOffset, text.lastIndexOf(marker));
+  }
+  return text;
+};
+
 /**
  * Parses markdown text and removes incomplete tokens to prevent partial rendering
  * of links, images, bold, and italic formatting during streaming.
+ * @param {string} text Streamed Markdown text.
+ * @returns {string} Text with unfinished links removed and unmatched delimiters closed.
  */
 export const parseIncompleteMarkdown = (text: string): string => {
-  if (!text || typeof text !== "string") {
+  if (text === "" || typeof text !== "string") {
     return text;
   }
 
-  const linkMatch = text.match(incompleteLinkOrImagePattern);
-  let result = linkMatch?.groups?.marker
-    ? text.slice(0, text.lastIndexOf(linkMatch.groups.marker))
-    : text;
+  let result = removeIncompleteLinkOrImage(text);
 
   result = appendClosingMarker({
     closingMarker: "**",
@@ -134,14 +115,16 @@ export const parseIncompleteMarkdown = (text: string): string => {
     markerPattern: italicPattern,
     value: result,
   });
-  result = appendClosingStandaloneMarker({
+  result = appendClosingMarker({
+    closingMarker: "*",
     incompletePattern: incompleteSingleAsteriskPattern,
-    marker: "*",
+    markerPattern: standaloneAsteriskPattern,
     value: result,
   });
-  result = appendClosingStandaloneMarker({
+  result = appendClosingMarker({
+    closingMarker: "_",
     incompletePattern: incompleteSingleUnderscorePattern,
-    marker: "_",
+    markerPattern: standaloneUnderscorePattern,
     value: result,
   });
   result = completeInlineCode(result);

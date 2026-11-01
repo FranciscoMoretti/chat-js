@@ -9,6 +9,9 @@
     "EVE_INTERNAL_ORIGIN",
     "EVE_GATEWAY_SECRET",
     "WORKFLOW_POSTGRES_URL",
+    "MSB_BACKEND",
+    "MSB_HOME",
+    "CHATJS_SANDBOX_DEV_RUN_ID",
     "AUTH_SECRET",
     "BLOB_READ_WRITE_TOKEN",
     "AUTH_GOOGLE_ID",
@@ -27,11 +30,16 @@
     "TAVILY_API_KEY",
     "EXA_API_KEY",
     "FIRECRAWL_API_KEY",
+    "LANGFUSE_PUBLIC_KEY",
+    "LANGFUSE_SECRET_KEY",
+    "LANGFUSE_BASE_URL",
+    "LANGFUSE_DEBUG",
     "MCP_ENCRYPTION_KEY",
     "VERCEL_TEAM_ID",
     "VERCEL_PROJECT_ID",
     "VERCEL_TOKEN",
-    "VERCEL_SANDBOX_RUNTIME",
+    "VERCEL_SANDBOX_IMAGE_JAVASCRIPT",
+    "VERCEL_SANDBOX_IMAGE_PYTHON",
     "APP_URL",
     "ELECTRON_APP_URL",
     "PORT",
@@ -42,7 +50,9 @@
     "PLAYWRIGHT",
     "CI_PLAYWRIGHT",
     "PLAYWRIGHT_TEST_BASE_URL",
-    "TRUSTED_CLIENT_IP_HEADER"
+    "TRUSTED_CLIENT_IP_HEADER",
+    "DAYTONA_API_KEY",
+    "DAYTONA_ORGANIZATION_ID"
   ],
   "tasks": {
     "dev": {
@@ -76,7 +86,7 @@
     "fetch:models": {
       "cache": false
     },
-    "test:e2e": {
+    "@chatjs/chat#test:e2e": {
       "dependsOn": ["^build"],
       "cache": false
     },
@@ -110,15 +120,18 @@
         "$TURBO_ROOT$/apps/chat/**",
         "$TURBO_ROOT$/apps/electron/**",
         "$TURBO_ROOT$/scripts/sync-template.ts",
+        "$TURBO_ROOT$/scripts/{dev-supervisor,dev-process-tree,dev-health,dev-recovery,persistent-sandbox-cleanup}.ts",
         "$TURBO_ROOT$/patches/*.patch",
         "$TURBO_ROOT$/scripts/sync-template-snapshot.ts",
         "$TURBO_ROOT$/package.json",
         "!$TURBO_ROOT$/apps/{chat,electron}/**/{node_modules,.next,.eve,.output,.turbo,build,dist,release,out,playwright,playwright-report,test-results,eve-results,blob-report}/**",
         "!$TURBO_ROOT$/apps/{chat,electron}/**/{.env,.env.*.local,.env.local,.DS_Store,*.tsbuildinfo,bun.lock,bun.lockb}",
         "!$TURBO_ROOT$/apps/electron/branding.json",
-        "$TURBO_ROOT$/packages/registry/{registry.ts,metadata.ts,package.json}",
+        "$TURBO_ROOT$/packages/registry/*.{ts,json}",
         "$TURBO_ROOT$/packages/registry/src/**",
-        "$TURBO_ROOT$/packages/registry/build.ts"
+        "$TURBO_ROOT$/packages/registry/build.ts",
+        "$TURBO_ROOT$/packages/registry-validation/src/**",
+        "$TURBO_ROOT$/packages/registry-validation/package.json"
       ],
       "outputs": ["dist/**", "templates/**"]
     },
@@ -130,15 +143,18 @@
         "$TURBO_ROOT$/apps/chat/**",
         "$TURBO_ROOT$/apps/electron/**",
         "$TURBO_ROOT$/scripts/sync-template.ts",
+        "$TURBO_ROOT$/scripts/{dev-supervisor,dev-process-tree,dev-health,dev-recovery,persistent-sandbox-cleanup}.ts",
         "$TURBO_ROOT$/patches/*.patch",
         "$TURBO_ROOT$/scripts/sync-template-snapshot.ts",
         "$TURBO_ROOT$/package.json",
         "!$TURBO_ROOT$/apps/{chat,electron}/**/{node_modules,.next,.eve,.output,.turbo,build,dist,release,out,playwright,playwright-report,test-results,eve-results,blob-report}/**",
         "!$TURBO_ROOT$/apps/{chat,electron}/**/{.env,.env.*.local,.env.local,.DS_Store,*.tsbuildinfo,bun.lock,bun.lockb}",
         "!$TURBO_ROOT$/apps/electron/branding.json",
-        "$TURBO_ROOT$/packages/registry/{registry.ts,metadata.ts,package.json}",
+        "$TURBO_ROOT$/packages/registry/*.{ts,json}",
         "$TURBO_ROOT$/packages/registry/src/**",
-        "$TURBO_ROOT$/packages/registry/build.ts"
+        "$TURBO_ROOT$/packages/registry/build.ts",
+        "$TURBO_ROOT$/packages/registry-validation/src/**",
+        "$TURBO_ROOT$/packages/registry-validation/package.json"
       ]
     },
     "@chat-js/cli#test:scaffold": {
@@ -147,25 +163,39 @@
       "inputs": [
         "$TURBO_DEFAULT$",
         "$TURBO_ROOT$/.github/workflows/cli-scaffold.yml",
-        "$TURBO_ROOT$/bun.lock"
+        "$TURBO_ROOT$/packages/registry/scripts/**",
+        "$TURBO_ROOT$/packages/registry/test/**",
+        "$TURBO_ROOT$/bun.lock",
+        "$TURBO_ROOT$/packages/registry-validation/src/**",
+        "$TURBO_ROOT$/packages/registry-validation/package.json"
       ]
     },
     "@chat-js/registry#test:unit": {
-      "dependsOn": ["^test:unit"],
+      "dependsOn": ["^test:unit", "demo:check"],
       "inputs": [
         "$TURBO_DEFAULT$",
         "$TURBO_ROOT$/apps/chat/**",
         "!$TURBO_ROOT$/apps/chat/**/{node_modules,.next,.eve,.output,.turbo,playwright-report,test-results,eve-results}/**",
-        "!$TURBO_ROOT$/apps/chat/**/{.env*,*.tsbuildinfo}"
+        "!$TURBO_ROOT$/apps/chat/**/{.env*,*.tsbuildinfo}",
+        "$TURBO_ROOT$/packages/registry-validation/src/**",
+        "$TURBO_ROOT$/packages/registry-validation/package.json"
       ]
     },
     "@chat-js/registry#test:types": {
       "dependsOn": ["^test:types"],
       "inputs": [
         "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/packages/cli/src/**",
+        "$TURBO_ROOT$/packages/cli/package.json",
+        "$TURBO_ROOT$/packages/gateways/src/**",
+        "$TURBO_ROOT$/packages/gateways/package.json",
+        "$TURBO_ROOT$/packages/sandboxes/src/**",
+        "$TURBO_ROOT$/packages/sandboxes/package.json",
         "$TURBO_ROOT$/apps/chat/**",
         "!$TURBO_ROOT$/apps/chat/**/{node_modules,.next,.eve,.output,.turbo,playwright-report,test-results,eve-results}/**",
-        "!$TURBO_ROOT$/apps/chat/**/{.env*,*.tsbuildinfo}"
+        "!$TURBO_ROOT$/apps/chat/**/{.env*,*.tsbuildinfo}",
+        "$TURBO_ROOT$/packages/registry-validation/src/**",
+        "$TURBO_ROOT$/packages/registry-validation/package.json"
       ]
     },
     "@chat-js/cli#test:types": {
@@ -175,18 +205,56 @@
         "$TURBO_ROOT$/apps/chat/**",
         "$TURBO_ROOT$/apps/electron/**",
         "$TURBO_ROOT$/scripts/sync-template.ts",
+        "$TURBO_ROOT$/scripts/{dev-supervisor,dev-process-tree,dev-health,dev-recovery,persistent-sandbox-cleanup}.ts",
         "$TURBO_ROOT$/patches/*.patch",
         "$TURBO_ROOT$/scripts/sync-template-snapshot.ts",
         "$TURBO_ROOT$/package.json",
         "!$TURBO_ROOT$/apps/{chat,electron}/**/{node_modules,.next,.eve,.output,.turbo,build,dist,release,out,playwright,playwright-report,test-results,eve-results,blob-report}/**",
         "!$TURBO_ROOT$/apps/{chat,electron}/**/{.env,.env.*.local,.env.local,.DS_Store,*.tsbuildinfo,bun.lock,bun.lockb}",
         "!$TURBO_ROOT$/apps/electron/branding.json",
-        "$TURBO_ROOT$/packages/registry/{registry.ts,metadata.ts,package.json}",
+        "$TURBO_ROOT$/packages/registry/*.{ts,json}",
         "$TURBO_ROOT$/packages/registry/src/**",
-        "$TURBO_ROOT$/packages/registry/build.ts"
+        "$TURBO_ROOT$/packages/registry/build.ts",
+        "$TURBO_ROOT$/packages/registry-validation/src/**",
+        "$TURBO_ROOT$/packages/registry-validation/package.json"
       ]
     },
     "@chat-js/thread#test:types": {
+      "dependsOn": ["^test:types"],
+      "outputs": ["dist/**"]
+    },
+    "@chat-js/registry#demo:check": {
+      "cache": true,
+      "dependsOn": [],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/packages/cli/src/**",
+        "$TURBO_ROOT$/packages/cli/package.json",
+        "$TURBO_ROOT$/packages/gateways/src/**",
+        "$TURBO_ROOT$/packages/gateways/package.json",
+        "$TURBO_ROOT$/packages/sandboxes/src/**",
+        "$TURBO_ROOT$/packages/sandboxes/package.json",
+        "$TURBO_ROOT$/package.json",
+        "$TURBO_ROOT$/bun.lock",
+        "$TURBO_ROOT$/patches/**",
+        "$TURBO_ROOT$/oxfmt.config.ts",
+        "$TURBO_ROOT$/apps/chat/**",
+        "!$TURBO_ROOT$/apps/chat/**/{node_modules,.next,.eve,.output,.turbo,build,dist,playwright,playwright-report,test-results,eve-results,blob-report}/**",
+        "!$TURBO_ROOT$/apps/chat/**/{.env*,*.tsbuildinfo,.DS_Store,bun.lock,bun.lockb}",
+        "$TURBO_ROOT$/packages/registry-validation/src/**",
+        "$TURBO_ROOT$/packages/registry-validation/package.json"
+      ],
+      "outputs": []
+    },
+    "@chat-js/registry#demo:sync": {
+      "cache": false,
+      "outputs": []
+    },
+    "@chat-js/sandboxes#test:types": {
+      "dependsOn": ["^test:types"],
+      "outputs": ["dist/**"]
+    },
+    "@chat-js/gateways#test:types": {
       "dependsOn": ["^test:types"],
       "outputs": ["dist/**"]
     }

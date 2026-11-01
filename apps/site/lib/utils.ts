@@ -1,5 +1,15 @@
 import { clsx } from "clsx";
-import type { ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
-export const cn = (...inputs: ClassValue[]) => twMerge(clsx(inputs));
+type ReadonlyClassValue =
+  | string
+  | number
+  | bigint
+  | boolean
+  | null
+  | undefined
+  | Readonly<Record<string, unknown>>
+  | readonly ReadonlyClassValue[];
+
+export const cn = (...inputs: readonly ReadonlyClassValue[]): string =>
+  twMerge(clsx(inputs));

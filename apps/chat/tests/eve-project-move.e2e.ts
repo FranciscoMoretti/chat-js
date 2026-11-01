@@ -1,5 +1,3 @@
-/* oxlint-disable promise/avoid-new -- These fixtures adapt callback, timer, stream, or browser event APIs into awaited Promises. */
-/* oxlint-disable unicorn/consistent-function-scoping -- One-off helpers stay beside the scenario state they coordinate. */
 import { expect, test } from "@playwright/test";
 import { z } from "zod";
 
@@ -9,12 +7,16 @@ assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
 test.use({ actionTimeout: 20_000 });
 const screenshotStyle =
   'nextjs-portal, [aria-label="Open Tanstack query devtools"] { display: none !important; }';
+const projectsRoute = (url: Readonly<Pick<URL, "pathname">>): boolean =>
+  url.pathname.includes("project.list");
 
 test("moves native conversations from sidebar and project rows with recoverable failures", async ({
   page,
 }, testInfo) => {
   test.setTimeout(180_000);
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   const response = await page.request.post("/api/trpc/project.create", {
     data: { json: { name: "Move target fixture" } },
@@ -39,19 +41,13 @@ test("moves native conversations from sidebar and project rows with recoverable 
     expect(created.ok(), await created.text()).toBe(true);
     const { id } = z.object({ id: z.uuid() }).parse(await created.json());
     await page.goto(`/chat/${id}`);
-    await expect(page.locator(".is-assistant")).toContainText(
+    await expect(page.locator('[data-role="assistant"]')).toContainText(
       "move-fixture-ok",
       { timeout: 90_000 }
     );
-    const projectsRoute = (url: URL) => url.pathname.includes("project.list");
-    let releaseProjects: () => void = () => {
-      /* empty */
-    };
-    const projectsGate = new Promise<void>((resolve) => {
-      releaseProjects = resolve;
-    });
+    const projectsGate: PromiseWithResolvers<void> = Promise.withResolvers();
     await page.route(projectsRoute, async (route) => {
-      await projectsGate;
+      await projectsGate.promise;
       await route.fulfill({
         body: "{}",
         contentType: "application/json",
@@ -81,7 +77,7 @@ test("moves native conversations from sidebar and project rows with recoverable 
       path: testInfo.outputPath("move-loading.png"),
       style: screenshotStyle,
     });
-    releaseProjects();
+    projectsGate.resolve();
     await expect(dialog.getByRole("alert")).toContainText(
       "Could not load projects."
     );
@@ -91,19 +87,25 @@ test("moves native conversations from sidebar and project rows with recoverable 
       style: screenshotStyle,
     });
     await page.unroute(projectsRoute);
-    await dialog.getByRole("button", { exact: true, name: "Retry" }).click();
+    await dialog
+      .getByRole("button", {
+        exact: true,
+        name: "Regenerate response",
+      })
+      .click();
     await expect(
       dialog.getByRole("combobox", { exact: true, name: "Project" })
     ).toBeEnabled();
     await dialog.getByRole("combobox").selectOption(projectId);
     await page.route(
-      (url) => url.pathname.includes("eve.assignProject"),
-      (route) =>
-        route.fulfill({
+      (url) => url.pathname.includes("project.assign"),
+      async (route) => {
+        await route.fulfill({
           body: "{}",
           contentType: "application/json",
           status: 500,
-        }),
+        });
+      },
       { times: 1 }
     );
     await dialog.getByRole("button", { exact: true, name: "Move" }).click();
@@ -116,16 +118,11 @@ test("moves native conversations from sidebar and project rows with recoverable 
       path: testInfo.outputPath("move-save-error.png"),
       style: screenshotStyle,
     });
-    let releaseMove: () => void = () => {
-      /* empty */
-    };
-    const moveGate = new Promise<void>((resolve) => {
-      releaseMove = resolve;
-    });
+    const moveGate: PromiseWithResolvers<void> = Promise.withResolvers();
     await page.route(
-      (url) => url.pathname.includes("eve.assignProject"),
+      (url) => url.pathname.includes("project.assign"),
       async (route) => {
-        await moveGate;
+        await moveGate.promise;
         await route.continue();
       },
       { times: 1 }
@@ -139,7 +136,7 @@ test("moves native conversations from sidebar and project rows with recoverable 
       path: testInfo.outputPath("move-pending.png"),
       style: screenshotStyle,
     });
-    releaseMove();
+    moveGate.resolve();
     await expect(dialog).not.toBeVisible();
     await expect(
       page.locator(`a[href="/project/${projectId}/chat/${id}"]`)
@@ -164,7 +161,7 @@ test("moves native conversations from sidebar and project rows with recoverable 
     await expect(dialog).not.toBeVisible();
     await expect(projectRow).toHaveCount(0);
     await page.goto(`/chat/${id}`);
-    await expect(page.locator(".is-assistant")).toContainText(
+    await expect(page.locator('[data-role="assistant"]')).toContainText(
       "move-fixture-ok"
     );
   } finally {

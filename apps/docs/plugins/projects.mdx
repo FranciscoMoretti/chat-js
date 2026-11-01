@@ -1,0 +1,68 @@
+---
+title: Projects
+description: Organize conversations and share instructions across related chats
+---
+
+Projects adds named workspaces with icons, colors, shared instructions, and a list of related chats.
+
+## Installation
+
+### Add the plugin
+
+Run this command in your ChatJS app:
+
+```bash
+bunx @chat-js/cli@latest add projects
+```
+
+The CLI registers the server router, sidebar UI, project routes, and native EVE hooks.
+
+### Migrate the database
+
+```bash
+bun run db:generate
+# Review the generated SQL, then apply it to your database.
+bun run db:migrate
+```
+
+See [plugin migrations](../core/plugins#database-migrations) for how this fits into your app's migration history.
+
+## Usage
+
+### Create a project
+
+1. Click **New project** in the sidebar.
+2. Enter a name and optionally choose an icon and color.
+3. Click **Create**, then open the project to start a chat.
+
+### Set instructions
+
+Open the project, click **Instructions**, enter your instructions, and save. They apply to new turns in that project. Existing chat history remains unchanged. If instruction lookup fails, the turn stops rather than continuing without your instructions.
+
+### Move and manage chats
+
+Use **Move to project** to change an existing chat's assignment. Forks and multiple model responses share their logical chat's project. Retrying an interrupted creation completes the original request and does not move the chat.
+
+Use the project's menu to edit its name, icon, or color, or to delete it. Deleting a project keeps its chats and removes their project association.
+
+## Routes
+
+| Route | Purpose |
+| --- | --- |
+| `/project/:projectId` | Project home, new-chat composer, and chat history |
+| `/project/:projectId/chat/:chatId` | A chat in the project |
+
+## Schema
+
+| Table            | Purpose                                           |
+| ---------------- | ------------------------------------------------- |
+| `Project`        | Project owner, name, appearance, and instructions |
+| `EveChatProject` | Membership between a logical chat and its project |
+
+Creation validates ownership and inserts membership in the same transaction as the chat reservation. Existing table names and data are preserved when extracting this capability from the reference app.
+
+## Customization
+
+Edit `chatjs/plugins/projects/` for the implementation. Route adapters live in `app/(chat)/project/`, with native adapters in `agent/hooks/` and `agent/instructions/`.
+
+The plugin contributes the `project` tRPC router, history filtering, navigation links, sidebar content, chat actions, and breadcrumbs. See the [Plugin API](../reference/plugin-api) for lifecycle and UI contracts.

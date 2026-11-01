@@ -2,27 +2,40 @@ import { ClientError } from "eve/client";
 
 import { EveUsageReconciliationBusyError } from "./usage-reconciliation-busy";
 
-export const isEveAdmissionBusy = (error: unknown) =>
+const ADMISSION_RETRY_WINDOW_MS = 30_000;
+const ADMISSION_RETRY_DELAY_MS = 2000;
+
+const isEveAdmissionBusy = (error: unknown): boolean =>
   error instanceof EveUsageReconciliationBusyError ||
   (error instanceof ClientError && error.code === "usage_reconciliation_busy");
 
-/** Replay only a server-certified undispatched admission, retaining its closure/ID. */
-export const retryEveAdmission = async <T>(
-  admit: () => Promise<T>
-): Promise<T> => {
-  const deadline = Date.now() + 30_000;
+/**
+ * Replay only a server-certified undispatched admission, retaining its closure/ID.
+ * @param {() => Promise<AdmissionResult>} admit Replays the caller's admission closure after certified backpressure.
+ * @returns {Promise<AdmissionResult>} The first successful admission result.
+ */
+const retryEveAdmission = async <AdmissionResult>(
+  admit: () => Promise<AdmissionResult>
+): Promise<AdmissionResult> => {
+  const deadline = Date.now() + ADMISSION_RETRY_WINDOW_MS;
   for (;;) {
     try {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Retry only explicit admission backpressure, never an ambiguous send.
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Only the preceding admission's certified busy error permits a retry; complete its delay and recheck the deadline before attempting admission again.
       return await admit();
     } catch (error) {
-      if (!isEveAdmissionBusy(error) || Date.now() + 2000 >= deadline) {
+      if (
+        !isEveAdmissionBusy(error) ||
+        Date.now() + ADMISSION_RETRY_DELAY_MS >= deadline
+      ) {
         throw error;
       }
-      // oxlint-disable-next-line eslint/no-await-in-loop, promise/avoid-new -- Yield between retryable admissions without holding a server connection.
-      await new Promise<void>((resolve) => {
-        setTimeout(resolve, 2000);
-      });
+      const retryDelay: { promise: Promise<void>; resolve: () => void } =
+        Promise.withResolvers();
+      setTimeout(retryDelay.resolve, ADMISSION_RETRY_DELAY_MS);
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Await the delay before retrying the same certified undispatched admission.
+      await retryDelay.promise;
     }
   }
 };
+
+export { isEveAdmissionBusy, retryEveAdmission };

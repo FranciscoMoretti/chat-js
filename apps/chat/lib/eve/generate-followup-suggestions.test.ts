@@ -1,98 +1,103 @@
-import type { LanguageModelUsage, ProviderMetadata } from "ai";
 import { beforeEach, expect, it, vi } from "vitest";
-
-import { generateEveFollowupSuggestions } from "./generate-followup-suggestions";
+import { generateEveFollowupSuggestions } from "@/chatjs/plugins/followup-suggestions/generate-suggestions";
 
 const mocks = vi.hoisted(() => ({
-  feature: { default: "google/gemini-2.5-flash-lite", enabled: true },
+  feature: { default: "mock", enabled: true },
   generate: vi.fn(),
   model: vi.fn(),
+  account: vi.fn(),
+  logError: vi.fn(),
+  claim: vi.fn(),
+  finishSuggestions: vi.fn(),
+}));
+vi.mock("@/chatjs/plugins/followup-suggestions/followup-queries", () => ({
+  claimEveFollowup: mocks.claim,
+  finishEveFollowup: mocks.finishSuggestions,
 }));
 vi.mock("ai", () => ({
   Output: { object: vi.fn() },
   generateText: mocks.generate,
 }));
 vi.mock("./model-selection", () => ({ resolveEveModel: mocks.model }));
+vi.mock("./model-accounting", () => ({ accountEveModel: mocks.account }));
+vi.mock("../logger", () => ({
+  createModuleLogger: () => ({ error: mocks.logError }),
+}));
 vi.mock("../config", () => ({
   config: { ai: { tools: { followupSuggestions: mocks.feature } } },
 }));
-
-const evidence: {
-  usage: Partial<LanguageModelUsage>;
-  providerMetadata: ProviderMetadata;
-} = {
-  providerMetadata: {
-    gateway: { cost: "0.00002", generationId: "generation" },
-  },
-  usage: { inputTokens: 10, outputTokens: 20 },
-};
 const exchange = {
   assistant: "Rain is liquid precipitation.",
   user: "What is rain?",
+};
+const scope = {
+  ownerId: "owner",
+  sessionId: "session",
+  turnId: "turn",
+  eventId: "completion",
 };
 const suggestions = [
   "How do clouds form?",
   "Why do raindrops fall?",
   "How is rainfall measured?",
 ];
-
 beforeEach(() => {
   vi.clearAllMocks();
+  mocks.claim.mockResolvedValue("chat");
+  mocks.finishSuggestions.mockResolvedValue(null);
   mocks.feature.enabled = true;
-  mocks.model.mockResolvedValue({
-    model: { specificationVersion: "v3" },
-    modelOptions: {},
-  });
+  mocks.model.mockResolvedValue({ model: "unwrapped" });
+  mocks.account.mockReturnValue({ model: "accounted", modelOptions: {} });
 });
-
-it("retains paid usage when structured output cannot be read", async () => {
-  mocks.generate.mockImplementation(({ onStepFinish }) => {
-    onStepFinish(evidence);
-    return {
-      get output() {
-        throw new Error("Malformed suggestions");
-      },
-    };
-  });
-  const result = await generateEveFollowupSuggestions(exchange);
-  expect(result?.responseMetadata).toBeUndefined();
-  expect(result?.modelCalls).toEqual([
-    { modelId: mocks.feature.default, ...evidence },
-  ]);
+it("persists suggestions under the exact completion and uses owned accounting", async () => {
+  mocks.generate.mockResolvedValue({ output: { suggestions } });
+  await generateEveFollowupSuggestions(exchange, scope);
+  expect(mocks.finishSuggestions).toHaveBeenCalledWith(
+    "owner",
+    "chat",
+    "completion",
+    suggestions
+  );
+  expect(mocks.account).toHaveBeenCalledWith({ model: "unwrapped" }, scope);
   expect(mocks.generate).toHaveBeenCalledWith(
-    expect.objectContaining({ maxOutputTokens: 512, maxRetries: 0 })
+    expect.objectContaining({ model: "accounted", maxRetries: 0 })
   );
 });
-
-it("returns valid suggestions and records the configured auxiliary model", async () => {
-  mocks.generate.mockImplementation(({ onStepFinish }) => {
-    onStepFinish(evidence);
-    return { output: { suggestions } };
-  });
-  expect(await generateEveFollowupSuggestions(exchange)).toEqual({
-    modelCalls: [{ modelId: mocks.feature.default, ...evidence }],
-    responseMetadata: { suggestions },
-  });
-  expect(mocks.model).toHaveBeenCalledWith(mocks.feature.default);
-});
-
-it("records a failed attempt without turning an optional feature error into answer failure", async () => {
+it("reports auxiliary failure without failing the answer or logging provider details", async () => {
   mocks.generate.mockRejectedValue(new Error("Provider unavailable"));
-  expect(await generateEveFollowupSuggestions(exchange)).toEqual({
-    modelCalls: [{ failed: true, modelId: mocks.feature.default }],
+  await generateEveFollowupSuggestions(exchange, scope);
+  expect(mocks.logError).toHaveBeenCalledWith(
+    {
+      errorType: "Error",
+      sessionId: "session",
+      turnId: "turn",
+      eventId: "completion",
+    },
+    "Follow-up generation or storage failed"
+  );
+});
+it("does not call a provider when disabled, empty, or accounting binding fails", async () => {
+  mocks.feature.enabled = false;
+  await generateEveFollowupSuggestions(exchange, scope);
+  mocks.feature.enabled = true;
+  await generateEveFollowupSuggestions({ ...exchange, assistant: "" }, scope);
+  mocks.account.mockImplementation(() => {
+    throw new Error("unprepared");
   });
+  await generateEveFollowupSuggestions(exchange, scope);
+  expect(mocks.generate).not.toHaveBeenCalled();
 });
 
-it("does not spend when disabled, without an answer, or before model resolution succeeds", async () => {
-  mocks.feature.enabled = false;
-  expect(await generateEveFollowupSuggestions(exchange)).toBeUndefined();
-  mocks.feature.enabled = true;
-  expect(
-    await generateEveFollowupSuggestions({ ...exchange, assistant: "" })
-  ).toBeUndefined();
-  mocks.model.mockRejectedValue(new Error("Model configuration unavailable"));
-  expect(await generateEveFollowupSuggestions(exchange)).toEqual({
-    modelCalls: [],
-  });
+it("does not generate again after a durable claim, including an interrupted attempt", async () => {
+  mocks.claim.mockResolvedValueOnce(null);
+  await generateEveFollowupSuggestions(exchange, scope);
   expect(mocks.generate).not.toHaveBeenCalled();
+  expect(mocks.model).not.toHaveBeenCalled();
+});
+
+it("does not make a paid call when the durable claim cannot be written", async () => {
+  mocks.claim.mockRejectedValueOnce(new Error("database unavailable"));
+  await generateEveFollowupSuggestions(exchange, scope);
+  expect(mocks.generate).not.toHaveBeenCalled();
+  expect(mocks.logError).toHaveBeenCalledOnce();
 });

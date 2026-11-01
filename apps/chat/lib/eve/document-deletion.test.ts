@@ -1,19 +1,20 @@
 import { beforeEach, expect, it, vi } from "vitest";
 
-import { testToolContext } from "../../tests/helpers/eve-tool-context";
 import {
   executeDocumentDeletion,
   requestDocumentDeletion,
-} from "../../tools/chatjs/delete-document/execute";
+} from "../../chatjs/tools/delete-document/execute";
+import { deleteDocument } from "../../chatjs/tools/delete-document/tool";
+import { testToolContext } from "../../tests/helpers/eve-tool-context";
 
 const mocks = vi.hoisted(() => ({
-  documents: { enabled: true, types: { code: true, text: true } },
+  kinds: new Set(["code", "text"]),
   read: vi.fn(),
   remove: vi.fn(),
   resolve: vi.fn(),
 }));
-vi.mock("../config", () => ({
-  config: { ai: { tools: { documents: mocks.documents } } },
+vi.mock("@/integrations/tools/catalog", () => ({
+  installedDocumentKinds: mocks.kinds,
 }));
 vi.mock("../db/eve-documents", () => ({
   getEveDocumentRevision: mocks.read,
@@ -29,7 +30,11 @@ const input = {
   title: "Orchard notes",
 };
 const identity = {
-  authenticator: "test",
+  attributes: {},
+  getToken: () => {
+    throw new Error("Unexpected receipt credential access");
+  },
+  authenticator: "chatjs-gateway",
   principalId: "owner",
   principalType: "user",
 };
@@ -43,8 +48,9 @@ const context = testToolContext({
 
 beforeEach(() => {
   vi.resetAllMocks();
-  mocks.documents.enabled = true;
-  mocks.documents.types.text = true;
+  mocks.kinds.clear();
+  mocks.kinds.add("code");
+  mocks.kinds.add("text");
   mocks.resolve.mockResolvedValue({
     conversationId: "conversation",
     ownerId: "owner",
@@ -73,7 +79,7 @@ it("requests native approval only for the current owned title and revision", asy
   await expect(
     requestDocumentDeletion({ ...input, title: "Misleading title" }, context)
   ).rejects.toThrow("Document changed");
-  mocks.read.mockResolvedValue(undefined);
+  mocks.read.mockResolvedValue(null);
   await expect(requestDocumentDeletion(input, context)).rejects.toThrow(
     "Document not found"
   );
@@ -88,7 +94,6 @@ it("requires an owner receipt before performing the conditional deletion", async
     executeDocumentDeletion(input, {
       ...context,
       approval: {
-        requestId: "approval",
         responder: { ...identity, principalId: "other" },
       },
     })
@@ -96,7 +101,7 @@ it("requires an owner receipt before performing the conditional deletion", async
   expect(mocks.remove).not.toHaveBeenCalled();
   await executeDocumentDeletion(input, {
     ...context,
-    approval: { requestId: "approval", responder: identity },
+    approval: { responder: identity },
   });
   expect(mocks.remove).toHaveBeenCalledExactlyOnceWith(
     input,
@@ -104,9 +109,8 @@ it("requires an owner receipt before performing the conditional deletion", async
     context.abortSignal
   );
 });
-
-it("rejects disabled documents before requesting approval or executing", async () => {
-  mocks.documents.enabled = false;
+it("rejects absent document implementations before requesting approval or executing", async () => {
+  mocks.kinds.clear();
   await expect(requestDocumentDeletion(input, context)).rejects.toThrow(
     "unavailable"
   );
@@ -115,14 +119,76 @@ it("rejects disabled documents before requesting approval or executing", async (
   );
   expect(mocks.remove).not.toHaveBeenCalled();
 });
-
 it("rechecks kind availability after approval", async () => {
-  mocks.documents.types.text = false;
+  mocks.kinds.delete("text");
+  await expect(requestDocumentDeletion(input, context)).rejects.toThrow(
+    "Document not found."
+  );
   await expect(
     executeDocumentDeletion(input, {
       ...context,
-      approval: { requestId: "approval", responder: identity },
+      approval: { responder: identity },
     })
   ).rejects.toThrow("disabled for this kind");
   expect(mocks.remove).not.toHaveBeenCalled();
 });
+
+it("authorizes native deletion responses from the current owner principal only", async () => {
+  const { approval } = deleteDocument;
+  if (!approval || typeof approval === "function" || !approval.response) {
+    throw new Error("Missing deletion response policy");
+  }
+  const principal = { ...identity, attributes: {} };
+  const response = {
+    auth: {
+      getToken: vi.fn(),
+      requireAuth: () => {
+        throw new Error("Unexpected approval credential access");
+      },
+    },
+    request: {
+      callId: "call",
+      requestId: "approval",
+      principal,
+      toolName: "deleteDocument",
+      toolInput: input,
+    },
+    response: { decision: "approve", principal },
+    session: {
+      id: context.session.id,
+      initiator: principal,
+      turn: context.session.turn,
+    },
+  } satisfies Parameters<typeof approval.response>[0];
+  expect(await approval.response(response)).toEqual({ status: "allowed" });
+  expect(
+    await approval.response({
+      ...response,
+      response: {
+        decision: "approve",
+        principal: { ...principal, principalId: "other" },
+      },
+    })
+  ).toMatchObject({ status: "rejected" });
+  expect(mocks.remove).not.toHaveBeenCalled();
+});
+
+it.each(["chatjs-disposable-guest", "unknown-plugin"])(
+  "rejects %s even when reconnect authentication is an account",
+  async (authenticator) => {
+    await expect(
+      requestDocumentDeletion(input, {
+        ...context,
+        session: {
+          ...context.session,
+          auth: {
+            current: identity,
+            initiator: { ...identity, authenticator },
+          },
+        },
+      })
+    ).rejects.toThrow("Document deletion is unavailable");
+    expect(mocks.resolve).not.toHaveBeenCalled();
+    expect(mocks.read).not.toHaveBeenCalled();
+  }
+);

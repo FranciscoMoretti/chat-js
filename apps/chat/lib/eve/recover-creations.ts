@@ -1,27 +1,37 @@
+import { getEveCreation, listPendingEveCreations } from "@/lib/db/eve-queries";
+import { EveCreationRecoveryError } from "./creation-recovery-error";
+import { createConversationInput } from "./contracts";
 import { setTimeout as delay } from "node:timers/promises";
-
+import { executeEveConversationCreation } from "./execute-conversation-creation";
 import { z } from "zod";
 
-import { getEveCreation, listPendingEveCreations } from "../db/eve-queries";
-import { createConversationInput } from "./contracts";
-import { EveCreationRecoveryError } from "./creation-recovery-error";
-import { executeEveConversationCreation } from "./execute-conversation-creation";
-
-/** Only wait for an explicitly identified lock contender; never retry dispatch here. */
+const MAX_CONCURRENT_BINDING_POLLS = 8;
+const CONCURRENT_BINDING_POLL_DELAY_MS = 250;
+const POLL_INCREMENT = 1;
+/**
+ * Wait for an identified lock contender without dispatching the command again.
+ * @param {string} ownerId Owner whose durable creation state is polled.
+ * @param {string} operationId Exact operation held by the concurrent request.
+ * @returns {Promise<boolean>} Whether the operation binds with a session before the bounded wait ends; absent or retiring rows stop the wait.
+ */
 const waitForConcurrentBinding = async (
   ownerId: string,
   operationId: string
-) => {
-  for (let attempt = 0; attempt < 8; attempt += 1) {
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Bound the wait for the request that already owns this creation.
-    await delay(250);
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Re-read durable state after each bounded wait.
+): Promise<boolean> => {
+  for (
+    let attempt = 0;
+    attempt < MAX_CONCURRENT_BINDING_POLLS;
+    attempt += POLL_INCREMENT
+  ) {
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Recover admitted commands in order and poll only after the previous 250ms delay/read; stop on ambiguous conflict so accounting cannot admit new work.
+    await delay(CONCURRENT_BINDING_POLL_DELAY_MS);
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Recover admitted commands in order and poll only after the previous 250ms delay/read; stop on ambiguous conflict so accounting cannot admit new work.
     const current = await getEveCreation(ownerId, operationId);
-    if (current?.state === "bound" && current.sessionId) {
+    if (current?.state === "bound" && current.sessionId !== "") {
       return true;
     }
     if (
-      !current ||
+      typeof current !== "object" ||
       current.state === "deleted" ||
       current.state === "deleting"
     ) {
@@ -31,8 +41,14 @@ const waitForConcurrentBinding = async (
   return false;
 };
 
-/** Finish admitted commands before accounting for their native usage or admitting more work. */
-export const recoverEveCreations = async (ownerId: string) => {
+const HTTP_CONFLICT = 409;
+
+/**
+ * Finish admitted commands before accounting for native usage or admitting more work.
+ * @param {string} ownerId Owner whose pending commands are recovered in order.
+ * @returns {Promise<void>} Completion after every pending command succeeds or its identified lock contender binds; uncertain recovery throws.
+ */
+export const recoverEveCreations = async (ownerId: string): Promise<void> => {
   const pending = await listPendingEveCreations(ownerId);
   for (const row of pending) {
     const command = createConversationInput.safeParse(row.initialRequest);
@@ -41,26 +57,27 @@ export const recoverEveCreations = async (ownerId: string) => {
     }
     // Sequential recovery bounds load. The existing transaction lock arbitrates
     // concurrent browser retries and other reconciliation requests.
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Recover admitted commands in order before admitting new work.
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Recover admitted commands in order and poll only after the previous 250ms delay/read; stop on ambiguous conflict so accounting cannot admit new work.
     const response = await executeEveConversationCreation(
       ownerId,
       command.data
     );
     if (!response.ok) {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Decode only the failed operation before continuing the recovery loop.
-      const body = await response.json().catch(() => null);
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Recover admitted commands in order and poll only after the previous 250ms delay/read; stop on ambiguous conflict so accounting cannot admit new work.
+      const body: unknown = await response.json().catch((): void => {
+        // The conflict schema below rejects an absent JSON body.
+      });
       const conflict = z
         .object({ code: z.literal("creation_in_progress") })
         .safeParse(body);
-      if (
-        response.status === 409 &&
+      const boundByConcurrentRequest =
+        response.status === HTTP_CONFLICT &&
         conflict.success &&
-        // oxlint-disable-next-line eslint/no-await-in-loop -- Accounting may continue only after the concurrent operation binds.
-        (await waitForConcurrentBinding(ownerId, row.operationId))
-      ) {
-        continue;
+        // oxlint-disable-next-line eslint/no-await-in-loop -- Recover admitted commands in order and poll only after the previous 250ms delay/read; stop on ambiguous conflict so accounting cannot admit new work.
+        (await waitForConcurrentBinding(ownerId, row.operationId));
+      if (!boundByConcurrentRequest) {
+        throw new EveCreationRecoveryError();
       }
-      throw new EveCreationRecoveryError();
     }
   }
 };

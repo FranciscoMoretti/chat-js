@@ -1,0 +1,22 @@
+{
+  "config": { "key": "image" },
+  "envRequirements": [],
+  "id": "generate-image",
+  "kind": "tool",
+  "requiresGateway": ["image"],
+  "requiresStorage": true,
+  "requiresTools": [],
+  "slot": "generateImage",
+  "tools": [
+    {
+      "composer": {
+        "icon": "Images",
+        "name": "Create an image",
+        "shortName": "Image"
+      },
+      "rendererExport": "GenerateImageRenderer",
+      "toolExport": "generateImageTool"
+    }
+  ],
+  "contractVersion": 1
+}

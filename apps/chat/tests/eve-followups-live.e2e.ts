@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import type { TestInfo } from "@playwright/test";
 import { eq } from "drizzle-orm";
 
 import { db } from "../lib/db/client";
@@ -12,8 +13,10 @@ const RAINBOW_EXPLANATION =
 
 test("native follow-ups survive reload, submit normally and preserve unsent composer content", async ({
   page,
-}, testInfo) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+}, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   const { origin } = new URL(page.url());
   await page.request.post("/api/chat-model", {
@@ -38,7 +41,7 @@ test("native follow-ups survive reload, submit normally and preserve unsent comp
   await expect(
     page
       .getByRole("log")
-      .locator(".is-assistant")
+      .locator('[data-role="assistant"]')
       .first()
       .locator(":scope > div")
       .first()
@@ -57,10 +60,12 @@ test("native follow-ups survive reload, submit normally and preserve unsent comp
   }
   await nextQuestion.click();
   await expect(composer).toHaveText("Keep this unsent draft.");
-  await expect(page.getByRole("log").locator(".is-user").last()).toContainText(
-    submittedText
-  );
-  await expect(page.getByRole("log").locator(".is-assistant")).toHaveCount(2);
+  await expect(
+    page.getByRole("log").locator('[data-role="user"]').last()
+  ).toContainText(submittedText);
+  await expect(
+    page.getByRole("log").locator('[data-role="assistant"]')
+  ).toHaveCount(2);
   await expect(page.getByText("Ready", { exact: true })).toBeVisible({
     timeout: 60_000,
   });
@@ -104,7 +109,9 @@ test("native follow-ups survive reload, submit normally and preserve unsent comp
   await expect(composer).toHaveText(retainedQuestion);
   await expect(page.getByText("Ready", { exact: true })).toBeVisible();
   await expect(related).toBeVisible();
-  await expect(page.getByRole("log").locator(".is-assistant")).toHaveCount(2);
+  await expect(
+    page.getByRole("log").locator('[data-role="assistant"]')
+  ).toHaveCount(2);
   await page.screenshot({
     animations: "disabled",
     path: testInfo.outputPath("followups-integrated.png"),

@@ -1,20 +1,30 @@
 import type { ToolContext } from "eve/tools";
 
-import { createToolResult, createToolError } from "./tool-result";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+
 import type { ToolOutput, ToolResult } from "./tool-result";
+import { createToolError, createToolResult } from "./tool-result";
 
 /** Only an explicitly reported domain failure becomes an error receipt. */
 class ExpectedToolFailureError extends Error {
-  override name = "ExpectedToolFailureError";
+  public override name = "ExpectedToolFailureError";
 }
 
-/** Unknown pricing is sticky: a known subtotal must never masquerade as a complete charge. */
-export const createToolUsage = () => {
+/** Unknown pricing is sticky: a known subtotal must never masquerade as a complete charge.
+ * @returns {ToolUsage} An accounting session whose incomplete/failed charges keep the settled total absent, and whose explicit fail method produces a domain error receipt.
+ */
+const createToolUsage = (): {
+  addCostUsd: (cost: number) => void;
+  addDeferredCost: (resolve: () => Promise<number>) => void;
+  fail: () => never;
+  markUnknown: () => void;
+  totalUsd: () => Promise<number | undefined>;
+} => {
   let reported = false;
   let unknown = false;
   let total = 0;
   const pending: (() => Promise<number>)[] = [];
-  const addCostUsd = (cost: number) => {
+  const addCostUsd = (cost: number): void => {
     if (!Number.isFinite(cost) || cost < 0 || !Number.isFinite(total + cost)) {
       unknown = true;
       throw new Error("Tool cost must be finite and nonnegative.");
@@ -24,16 +34,16 @@ export const createToolUsage = () => {
   };
   return {
     addCostUsd,
-    addDeferredCost: (resolve: () => Promise<number>) => {
+    addDeferredCost: (resolve: () => Promise<number>): void => {
       pending.push(resolve);
     },
     fail: (): never => {
       throw new ExpectedToolFailureError("The tool did not complete.");
     },
-    markUnknown: () => {
+    markUnknown: (): void => {
       unknown = true;
     },
-    async totalUsd() {
+    async totalUsd(): Promise<number | undefined> {
       await Promise.all(
         pending.splice(0).map(async (resolve) => {
           try {
@@ -43,16 +53,25 @@ export const createToolUsage = () => {
           }
         })
       );
-      return reported && !unknown ? total : undefined;
+      if (reported && !unknown) {
+        return total;
+      }
+      return undefined;
     },
   };
 };
-export type ToolUsage = ReturnType<typeof createToolUsage>;
 
-export const executeWithToolUsage = async <T extends ToolOutput>(
-  context: Pick<ToolContext, "abortSignal">,
-  execute: (usage: ToolUsage) => T | Promise<T>
-): Promise<ToolResult<T>> => {
+type ToolUsage = ReturnType<typeof createToolUsage>;
+type ToolProgressOptions<Output extends ToolOutput> = ReadonlyNativeSurface<{
+  usage: ToolUsage;
+  abortSignal: AbortSignal;
+  publish: (output: Output, updates?: readonly ToolOutput[]) => void;
+}>;
+
+const executeWithToolUsage = async <Output extends ToolOutput>(
+  context: ReadonlyNativeSurface<Pick<ToolContext, "abortSignal">>,
+  execute: (usage: ReadonlyNativeSurface<ToolUsage>) => Output | Promise<Output>
+): Promise<ToolResult<Output>> => {
   context.abortSignal.throwIfAborted();
   const usage = createToolUsage();
   try {
@@ -63,7 +82,11 @@ export const executeWithToolUsage = async <T extends ToolOutput>(
   } catch (error) {
     context.abortSignal.throwIfAborted();
     if (!(error instanceof ExpectedToolFailureError)) {
-      throw error;
+      if (error instanceof Error) {
+        throw error;
+      }
+      // Provider rejection values are diagnostics, not domain receipts or control flow.
+      throw new Error("Unexpected tool failure.", { cause: error });
     }
     const costUsd = await usage.totalUsd();
     context.abortSignal.throwIfAborted();
@@ -72,41 +95,45 @@ export const executeWithToolUsage = async <T extends ToolOutput>(
 };
 
 /** Streaming alone needs a queue; accounting is shared.
- * @yields {object} Progress snapshots followed by the final usage receipt.
+ * @param {ReadonlyNativeSurface<Pick<ToolContext, "abortSignal">>} context Native cancellation capability checked before execution and while settling usage.
+ * @param {(options: ReadonlyNativeSurface<{usage: ToolUsage; abortSignal: AbortSignal; publish: (output: Output, updates?: readonly ToolOutput[]) => void}>) => Promise<Output>} execute Executor that publishes exact output/update references and resolves the final result under the provided usage/cancellation session.
+ * @yields {ToolResult<Output>} Progress snapshots followed by the final settled usage receipt.
  */
-export const executeWithToolProgress = async function* executeWithToolProgress<
-  T extends ToolOutput,
+const executeWithToolProgress = async function* executeWithToolProgress<
+  Output extends ToolOutput,
 >(
-  context: Pick<ToolContext, "abortSignal">,
-  execute: (options: {
-    usage: ToolUsage;
-    abortSignal: AbortSignal;
-    publish: (output: T, updates?: ToolOutput[]) => void;
-  }) => Promise<T>
-): AsyncGenerator<ToolResult<T>> {
+  context: ReadonlyNativeSurface<Pick<ToolContext, "abortSignal">>,
+  execute: (options: ToolProgressOptions<Output>) => Promise<Output>
+): AsyncGenerator<ToolResult<Output>, void> {
   context.abortSignal.throwIfAborted();
   const cancellation = new AbortController();
   const abortSignal = AbortSignal.any([
     context.abortSignal,
     cancellation.signal,
   ]);
-  let updates: ToolOutput[] | undefined;
+  let updates: readonly ToolOutput[] | undefined;
   let cancelled = false;
-  const stream = new ReadableStream<ToolResult<T>>({
-    cancel() {
+  const stream = new ReadableStream<ToolResult<Output>>({
+    cancel(): void {
       cancelled = true;
       cancellation.abort();
     },
-    async start(controller) {
-      const publish = (output: T, nextUpdates?: ToolOutput[]) => {
+    async start(
+      controller: Readonly<ReadableStreamDefaultController<ToolResult<Output>>>
+    ): Promise<void> {
+      const publish = (
+        output: Output,
+        nextUpdates?: readonly ToolOutput[]
+      ): void => {
         updates = nextUpdates;
         if (!cancelled) {
           controller.enqueue(createToolResult(output, undefined, updates));
         }
       };
       try {
-        const result = await executeWithToolUsage({ abortSignal }, (usage) =>
-          execute({ abortSignal, publish, usage })
+        const result = await executeWithToolUsage(
+          { abortSignal },
+          async (usage) => await execute({ abortSignal, publish, usage })
         );
         if (!cancelled) {
           controller.enqueue({ ...result, updates });
@@ -121,3 +148,5 @@ export const executeWithToolProgress = async function* executeWithToolProgress<
   });
   yield* stream;
 };
+export { createToolUsage, executeWithToolProgress, executeWithToolUsage };
+export type { ToolUsage };

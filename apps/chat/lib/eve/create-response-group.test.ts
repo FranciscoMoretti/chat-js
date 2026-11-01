@@ -2,12 +2,14 @@ import { afterEach, expect, test, vi } from "vitest";
 
 import { CreationRejectedError } from "./create-conversation";
 import {
+  advanceWaitingResponseGroup,
+  canAutomaticallyProgressResponseGroup,
   readResponseGroupDraft,
   requestResponseGroup,
   retainResponseGroupDraft,
 } from "./create-response-group";
 import {
-  moveRejectedProjectCreation,
+  moveRejectedContextCreation,
   prepareCreation,
   prepareResponseGroupCreation,
   prepareSelectedCreation,
@@ -21,10 +23,10 @@ const fixture = () => {
   const entries = new Map<string, string>();
   const storage = {
     getItem: (key: string) => entries.get(key) ?? null,
-    removeItem: (key: string) => {
+    removeItem: (key: string): void => {
       entries.delete(key);
     },
-    setItem: (key: string, value: string) => {
+    setItem: (key: string, value: string): void => {
       entries.set(key, value);
     },
   };
@@ -35,17 +37,18 @@ const fixture = () => {
     ["model-a", "model-a", "model-b"]
   );
   const result: EveResponseGroupResult = {
-    candidates: operation.modelIds.map((modelId, index) =>
-      index === 0
-        ? {
-            conversationId: crypto.randomUUID(),
-            modelId,
-            operationId: crypto.randomUUID(),
-            sessionId: "native-first",
-            state: "bound",
-          }
-        : { modelId, operationId: crypto.randomUUID(), state: "unresolved" }
-    ),
+    candidates: operation.modelIds.map((modelId, index) => {
+      if (index === 0) {
+        return {
+          conversationId: crypto.randomUUID(),
+          modelId,
+          operationId: crypto.randomUUID(),
+          sessionId: "native-first",
+          state: "bound",
+        };
+      }
+      return { modelId, operationId: crypto.randomUUID(), state: "unresolved" };
+    }),
     id: crypto.randomUUID(),
   };
   return { operation, result, storage };
@@ -53,7 +56,9 @@ const fixture = () => {
 
 test("lost creation replies retain the exact ordered operation across changed composer choices", async () => {
   const { storage, operation } = fixture();
-  const fetcher = vi.fn().mockRejectedValue(new Error("Lost reply"));
+  const fetcher = vi
+    .fn<typeof fetch>()
+    .mockRejectedValue(new Error("Lost reply"));
   vi.stubGlobal("fetch", fetcher);
   await expect(
     resolveCreationRequest(storage, "owner", operation)
@@ -64,7 +69,7 @@ test("lost creation replies retain the exact ordered operation across changed co
     ])
   ).toEqual(operation);
   expect(readCreationRequest(storage, "owner")).toEqual(operation);
-  expect(fetcher.mock.calls[0][1].body).toBe(JSON.stringify(operation));
+  expect(fetcher.mock.calls[0][1]?.body).toBe(JSON.stringify(operation));
   expect(() => prepareCreation(storage, "owner", "Another request")).toThrow(
     "saved comparison"
   );
@@ -104,9 +109,9 @@ test("storage failure cannot release an unresolved request", () => {
       throw new Error("Storage full");
     },
   };
-  expect(() =>
-    retainResponseGroupDraft(failing, "owner", operation, result)
-  ).toThrow("Storage full");
+  expect(() => {
+    retainResponseGroupDraft(failing, "owner", operation, result);
+  }).toThrow("Storage full");
   expect(readCreationRequest(storage, "owner")).toEqual(operation);
 });
 
@@ -140,11 +145,12 @@ test("rejected secondary candidates retain the original request for their retry"
   const { storage, operation, result } = fixture();
   const rejected: EveResponseGroupResult = {
     ...result,
-    candidates: result.candidates.map((candidate) =>
-      candidate.state === "bound"
-        ? candidate
-        : { ...candidate, error: "Model unavailable", state: "rejected" }
-    ),
+    candidates: result.candidates.map((candidate) => {
+      if (candidate.state === "bound") {
+        return candidate;
+      }
+      return { ...candidate, error: "Model unavailable", state: "rejected" };
+    }),
   };
   retainResponseGroupDraft(storage, "owner", operation, rejected);
   expect(readResponseGroupDraft(storage, "owner", result.id)).toEqual(
@@ -155,17 +161,23 @@ test("rejected secondary candidates retain the original request for their retry"
 test("moving a definitively rejected project comparison preserves all repeated models", () => {
   const { storage } = fixture();
   const projectId = crypto.randomUUID();
+  const context = {
+    key: `project:${projectId}`,
+    label: "project",
+  };
   const original = prepareResponseGroupCreation(
     storage,
     "project-owner",
     "Project message",
     ["model-a", "model-a"],
+    { context },
+    undefined,
     { projectId }
   );
-  const moved = moveRejectedProjectCreation(
+  const moved = moveRejectedContextCreation(
     storage,
     "project-owner",
-    projectId,
+    context,
     original.operationId
   );
   expect(moved).toMatchObject({
@@ -175,139 +187,82 @@ test("moving a definitively rejected project comparison preserves all repeated m
   expect(moved.operationId).not.toBe(original.operationId);
   expect(moved.projectId).toBeUndefined();
   expect(
-    readCreationRequest(storage, "project-owner", { projectId })
+    readCreationRequest(storage, "project-owner", { context })
   ).toBeUndefined();
 });
 
-test("follow-up retries recover the saved checkpoint before dispatch", async () => {
-  const { storage, result } = fixture();
-  const conversationId = crypto.randomUUID();
-  const scope = { conversationId };
-  const fork = {
-    beforeTurnId: "turn_3",
-    checkpointId: crypto.randomUUID(),
-    conversationId,
+test("certified waiting progresses with immutable input and stops after binding", async () => {
+  const { storage, operation, result } = fixture();
+  const waiting: EveResponseGroupResult = {
+    ...result,
+    candidates: result.candidates.map((candidate) =>
+      candidate.state === "bound"
+        ? candidate
+        : { ...candidate, state: "waiting" }
+    ),
   };
-  const operation = prepareResponseGroupCreation(
-    storage,
-    "owner",
-    "Follow up",
-    ["model-a", "model-b"],
-    { ...scope, fork }
-  );
+  retainResponseGroupDraft(storage, "owner", operation, waiting);
+  expect(
+    canAutomaticallyProgressResponseGroup(storage, "owner", result.id)
+  ).toBe(true);
+  expect(
+    canAutomaticallyProgressResponseGroup(storage, "stranger", result.id)
+  ).toBe(false);
+  const complete: EveResponseGroupResult = {
+    ...result,
+    candidates: result.candidates.map((candidate) => ({
+      ...candidate,
+      conversationId: crypto.randomUUID(),
+      sessionId: `native-${candidate.operationId}`,
+      state: "bound",
+    })),
+  };
   const fetcher = vi
-    .fn()
-    .mockResolvedValueOnce(new Response("Lost capture reply", { status: 409 }));
+    .fn<typeof fetch>()
+    .mockResolvedValue(Response.json(complete));
+  vi.stubGlobal("fetch", fetcher);
+  const completion = advanceWaitingResponseGroup(storage, "owner", result.id);
+  expect(
+    canAutomaticallyProgressResponseGroup(storage, "owner", result.id)
+  ).toBe(false);
+  await expect(completion).resolves.toEqual(complete);
+  expect(fetcher.mock.calls[0][1]?.body).toBe(JSON.stringify(operation));
+  expect(readResponseGroupDraft(storage, "owner", result.id)).toBeUndefined();
+  expect(
+    canAutomaticallyProgressResponseGroup(storage, "owner", result.id)
+  ).toBe(false);
+});
+
+test("uncertain results and lost progress replies never automatically redispatch", async () => {
+  const { storage, operation, result } = fixture();
+  retainResponseGroupDraft(storage, "owner", operation, result);
+  const fetcher = vi
+    .fn<typeof fetch>()
+    .mockRejectedValue(new Error("Lost progress reply"));
   vi.stubGlobal("fetch", fetcher);
   await expect(
-    resolveCreationRequest(storage, "owner", operation, scope)
-  ).rejects.toThrow("saved conversation state is unconfirmed");
-  expect(fetcher).toHaveBeenCalledTimes(1);
-  expect(readCreationRequest(storage, "owner", scope)).toEqual(operation);
-  expect(() =>
-    prepareCreation(storage, "owner", "Edit instead", "model-a", scope)
-  ).toThrow("saved comparison");
-  const recovered = prepareResponseGroupCreation(
-    storage,
-    "owner",
-    "Changed draft",
-    ["model-b", "model-b"],
-    {
-      ...scope,
-      fork: {
-        ...fork,
-        beforeTurnId: "turn_4",
-        checkpointId: crypto.randomUUID(),
-      },
-    }
-  );
-  expect(recovered).toEqual(operation);
-  fetcher
-    .mockResolvedValueOnce(Response.json({ ready: true, ...fork }))
-    .mockResolvedValueOnce(Response.json(result));
-  await resolveCreationRequest(storage, "owner", recovered, scope);
-  expect(fetcher.mock.calls[1][0]).toEqual(fetcher.mock.calls[0][0]);
-  expect(fetcher.mock.calls[1][1].body).toEqual(fetcher.mock.calls[0][1].body);
-  expect(JSON.parse(fetcher.mock.calls[2][1].body)).toEqual(operation);
-  expect(readCreationRequest(storage, "owner", scope)).toBeUndefined();
+    advanceWaitingResponseGroup(storage, "owner", result.id)
+  ).resolves.toBeUndefined();
+  expect(fetcher).not.toHaveBeenCalled();
+  retainResponseGroupDraft(storage, "owner", operation, {
+    ...result,
+    candidates: result.candidates.map((candidate) =>
+      candidate.state === "bound"
+        ? candidate
+        : { ...candidate, state: "waiting" }
+    ),
+  });
+  await expect(
+    advanceWaitingResponseGroup(storage, "owner", result.id)
+  ).rejects.toThrow("Lost progress reply");
   expect(readResponseGroupDraft(storage, "owner", result.id)).toEqual(
     operation
   );
-});
-
-test("a checkpoint receipt for different history cannot dispatch a comparison", async () => {
-  const { storage } = fixture();
-  const conversationId = crypto.randomUUID();
-  const fork = {
-    beforeTurnId: "turn_1",
-    checkpointId: crypto.randomUUID(),
-    conversationId,
-  };
-  const operation = prepareResponseGroupCreation(
-    storage,
-    "owner",
-    "Follow up",
-    ["a", "b"],
-    { conversationId, fork }
-  );
-  const fetcher = vi
-    .fn()
-    .mockResolvedValue(
-      Response.json({ ready: true, ...fork, checkpointId: crypto.randomUUID() })
-    );
-  vi.stubGlobal("fetch", fetcher);
+  expect(
+    canAutomaticallyProgressResponseGroup(storage, "owner", result.id)
+  ).toBe(false);
   await expect(
-    resolveCreationRequest(storage, "owner", operation, { conversationId })
-  ).rejects.toThrow();
+    advanceWaitingResponseGroup(storage, "owner", result.id)
+  ).resolves.toBeUndefined();
   expect(fetcher).toHaveBeenCalledTimes(1);
-  expect(readCreationRequest(storage, "owner", { conversationId })).toEqual(
-    operation
-  );
-});
-
-test("only an exact durable checkpoint rejection releases a comparison for editing", async () => {
-  const { storage } = fixture();
-  const conversationId = crypto.randomUUID();
-  const fork = {
-    beforeTurnId: "turn_1",
-    checkpointId: crypto.randomUUID(),
-    conversationId,
-  };
-  const scope = { conversationId };
-  const operation = prepareResponseGroupCreation(
-    storage,
-    "owner",
-    "Keep this draft",
-    ["a", "b"],
-    { ...scope, fork }
-  );
-  const rejection = {
-    checkpointRejected: true,
-    reason: "source_advanced",
-    ...fork,
-  };
-  const fetcher = vi.fn();
-  vi.stubGlobal("fetch", fetcher);
-  for (const body of [
-    { ...rejection, checkpointId: crypto.randomUUID() },
-    { ...rejection, beforeTurnId: "turn_2" },
-    { ...rejection, conversationId: crypto.randomUUID() },
-    { ...rejection, reason: "unknown" },
-  ]) {
-    fetcher.mockResolvedValueOnce(Response.json(body, { status: 409 }));
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Each case completes before the shared fixture or mock state is reused.
-    await expect(
-      resolveCreationRequest(storage, "owner", operation, scope)
-    ).rejects.not.toBeInstanceOf(CreationRejectedError);
-    expect(readCreationRequest(storage, "owner", scope)).toEqual(operation);
-  }
-  fetcher.mockResolvedValueOnce(Response.json(rejection, { status: 409 }));
-  await expect(
-    resolveCreationRequest(storage, "owner", operation, scope)
-  ).rejects.toBeInstanceOf(CreationRejectedError);
-  expect(fetcher.mock.calls.every(([url]) => url.endsWith("/checkpoint"))).toBe(
-    true
-  );
-  // The UI owns releasing the matching pending request; the original draft is never erased here.
-  expect(readCreationRequest(storage, "owner", scope)).toEqual(operation);
 });

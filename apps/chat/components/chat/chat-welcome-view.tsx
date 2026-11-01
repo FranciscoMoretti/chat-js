@@ -1,8 +1,9 @@
-import type { ReactNode } from "react";
+import React from "react";
 
-import { cn } from "@/lib/utils";
+import type { ReadonlyReactNode } from "../../lib/readonly-react-node";
+import { cn } from "cn";
 
-const WelcomeMessage = () => (
+const WelcomeMessage = (): React.JSX.Element => (
   <div className="pointer-events-none text-center">
     <h1 className="text-foreground text-2xl font-normal sm:text-3xl">
       How can I help you today?
@@ -14,9 +15,9 @@ export const ChatWelcomeView = ({
   children,
   className,
 }: {
-  children: ReactNode;
-  className?: string;
-}) => (
+  readonly children: ReadonlyReactNode;
+  readonly className?: string;
+}): React.JSX.Element => (
   <div
     className={cn(
       "flex min-h-0 flex-1 flex-col justify-end md:justify-center",

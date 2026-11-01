@@ -1,19 +1,31 @@
-import type { EveMessage } from "eve/client";
 import { z } from "zod";
 
-import { frontendToolsSchema } from "../ai/types";
-import type { UiToolName } from "../ai/types";
+import type { UiToolName } from "@/lib/ai/types";
+import { toolNameSchema } from "@/lib/ai/types";
 
-const selection = z.object({ selectedTool: frontendToolsSchema.nullable() });
+import type { ReadonlyEveMessageMetadata } from "./readonly-message-types";
 
-/** Only app-owned, display-safe metadata belongs in shared messages and copies. */
-export const eveToolMetadata = (
+const selection = z.object({ selectedTool: toolNameSchema.nullable() });
+
+/**
+ * Only app-owned, display-safe metadata belongs in shared messages and copies.
+ * @param {UiToolName | null | undefined} selectedTool UI tool selection, with an absent selection represented by null in stored metadata.
+ * @returns {{ chatjs: z.infer<typeof selection> }} The app namespace containing the selection, without owner or runtime identities.
+ */
+const eveToolMetadata = (
   selectedTool: UiToolName | null | undefined
-) => ({ chatjs: { selectedTool: selectedTool ?? null } });
+): { chatjs: z.infer<typeof selection> } => ({
+  chatjs: { selectedTool: selectedTool ?? null },
+});
 
-export const eveMessageTool = (
-  message: Pick<EveMessage, "metadata">
-): UiToolName | null => {
+const eveMessageTool = (message: {
+  readonly metadata?: ReadonlyEveMessageMetadata;
+}): UiToolName | null => {
   const value = message.metadata?.custom?.chatjs;
-  return value === undefined ? null : selection.parse(value).selectedTool;
+
+  if (value === undefined) {
+    return null;
+  }
+  return selection.parse(value).selectedTool;
 };
+export { eveMessageTool, eveToolMetadata };

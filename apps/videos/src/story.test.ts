@@ -35,9 +35,9 @@ describe("Two-path story", () => {
     expect(stateAt(44, content).editText).toBe("Explore Rome.");
   });
   it("is seekable without stale follow-ups", () => {
-    const a = stateAt(8);
+    const initialState = stateAt(8);
     stateAt(38);
-    expect(stateAt(8)).toEqual(a);
+    expect(stateAt(8)).toEqual(initialState);
   });
   it("holds for reading without accelerating the following actions", () => {
     expect(presentationAt(8.5).demoTime).toBe(10);

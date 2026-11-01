@@ -1,5 +1,9 @@
 "use client";
 
+import { hasText } from "@/components/text-value";
+
+import React from "react";
+import type { JSX as ReactJSX } from "react";
 import { z } from "zod";
 
 import { Sources } from "@/components/sources";
@@ -23,9 +27,9 @@ const webSearchOutput = z.object({
 export const WebSearch = ({
   part,
 }: {
-  messageId: string;
-  part: { state: string; output?: unknown };
-}) => {
+  readonly messageId: string;
+  readonly part: { readonly state: string; readonly output?: unknown };
+}): ReactJSX.Element => {
   if (part.state === "output-error") {
     return <p role="alert">Search failed.</p>;
   }
@@ -36,15 +40,35 @@ export const WebSearch = ({
   if (!result.success) {
     return <p role="alert">This search result could not be displayed.</p>;
   }
-  const sources = result.data.searches.flatMap((search) =>
-    search.results.map((source) => ({ ...source, source: "web" as const }))
+  const sources = result.data.searches.flatMap(
+    (
+      search: Readonly<{
+        results: readonly Readonly<{
+          content: string;
+          title: string;
+          url: string;
+        }>[];
+      }>
+    ) => search.results.map((source) => ({ ...source, source: "web" as const }))
   );
   const uniqueSources = [
-    ...new Map(sources.map((source) => [source.url, source])).values(),
+    ...new Map(
+      sources.map(
+        (
+          source: Readonly<{
+            source: "web";
+            content: string;
+            title: string;
+            url: string;
+          }>
+        ) => [source.url, source]
+      )
+    ).values(),
   ];
   return (
     <div className="space-y-3">
-      {result.data.error && <p role="alert">{result.data.error}</p>}
+      {}
+      {hasText(result.data.error) && <p role="alert">{result.data.error}</p>}
       {uniqueSources.length > 0 && <Sources sources={uniqueSources} />}
     </div>
   );

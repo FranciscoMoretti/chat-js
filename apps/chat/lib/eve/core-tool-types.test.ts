@@ -1,35 +1,23 @@
 import { beforeEach, expect, expectTypeOf, test, vi } from "vitest";
-
-import type research from "../../agent/tools/deepResearch";
-import { testToolContext } from "../../tests/helpers/eve-tool-context";
-import type { readDocument } from "../../tools/chatjs/read-document/tool";
-import type { runCodeDocument } from "../../tools/chatjs/saved-code-execution/tool";
-import { createTextDocument } from "../../tools/chatjs/text-documents/tool";
-import type { editTextDocument } from "../../tools/chatjs/text-documents/tool";
 import type { NativeToolUI } from "./tool-types";
+import { createTextDocument } from "@/chatjs/tools/text-documents/tool";
+import type { editTextDocument } from "@/chatjs/tools/text-documents/tool";
+import type { readDocument } from "@/chatjs/tools/read-document/tool";
+import type research from "@/agent/tools/deepResearch";
+import type { runCodeDocument } from "@/chatjs/tools/saved-code-execution/tool";
+import { testToolContext } from "@/tests/helpers/eve-tool-context";
 
 const mocks = vi.hoisted(() => ({
-  documents: { enabled: true, types: { code: true, sheet: true, text: true } },
   execute: vi.fn(),
-  execution: { enabled: true },
-}));
-vi.mock("../config", () => ({
-  config: {
-    ai: {
-      tools: { codeExecution: mocks.execution, documents: mocks.documents },
-    },
-  },
 }));
 vi.mock("./document-tools", () => ({ executeEveDocumentTool: mocks.execute }));
+
 vi.mock("./turn-tools", () => ({
-  filterEveTools: <T>(tools: T): Partial<T> => ({ ...tools }),
+  filterEveTools: <Tools>(tools: Tools): Partial<Tools> => ({ ...tools }),
 }));
 
 beforeEach(() => {
   vi.resetAllMocks();
-  mocks.documents.enabled = true;
-  mocks.documents.types = { code: true, sheet: true, text: true };
-  mocks.execution.enabled = true;
 });
 
 test("document definitions retain distinct create, edit, and read contracts", () => {
@@ -66,7 +54,6 @@ test("document output is validated before crossing the native result boundary", 
     )
   ).rejects.toThrow();
 });
-
 test("native workflow outputs retain the report revision and clarification contracts", () => {
   type Research = NativeToolUI<typeof research>;
   expectTypeOf<

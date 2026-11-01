@@ -1,0 +1,53 @@
+@import "../components/composer/editor.css";
+
+.lexical-editor {
+  outline: none;
+}
+
+.cm-editor,
+.cm-gutters {
+  @apply bg-card! outline-hidden! selection:bg-zinc-900!;
+}
+
+.ͼo.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground,
+.ͼo.cm-selectionBackground,
+.ͼo.cm-content::selection {
+  @apply bg-accent!;
+}
+
+.cm-activeLine,
+.cm-activeLineGutter {
+  @apply bg-transparent!;
+}
+
+.cm-activeLine {
+  @apply rounded-r-sm!;
+}
+
+.cm-lineNumbers {
+  @apply min-w-7;
+}
+
+.cm-foldGutter {
+  @apply min-w-3;
+}
+
+.cm-lineNumbers .cm-activeLineGutter {
+  @apply rounded-l-sm!;
+}
+
+.suggestion-highlight {
+  @apply bg-accent text-accent-foreground hover:bg-accent/80;
+}
+
+.editor-container {
+  position: relative;
+  max-width: 600px;
+  margin: 20px auto 20px auto;
+  font-weight: 400;
+  line-height: 20px;
+  color: #000;
+  text-align: left;
+  background: #fff;
+  border-radius: 2px;
+}

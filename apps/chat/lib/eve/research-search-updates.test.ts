@@ -1,7 +1,7 @@
 import type { WorkflowToolContext } from "eve/tools";
 import { expect, it, vi } from "vitest";
 
-import { researchSearchUpdates } from "@/tools/chatjs/deep-research/search-updates";
+import { researchSearchUpdates } from "@/chatjs/tools/deep-research/search-updates";
 
 import { testToolContext } from "../../tests/helpers/eve-tool-context";
 import { createToolResult } from "./tool-result";
@@ -12,13 +12,13 @@ vi.mock("./connection-options", () => ({
 }));
 vi.mock("eve/client", () => ({
   Client: class {
-    sessions = { attach: mocks.attach };
+    public sessions = { attach: mocks.attach };
   },
 }));
 
 const child = (callId: string, turnId = "turn", name = "researcher") => ({
-  data: { callId, childSessionId: callId, name, turnId },
-  type: "subagent.called",
+  data: { callId, sessionId: "child", name, turnId },
+  type: "agent.started",
 });
 
 it("restores actual search evidence only from researchers owned by this call and turn", async () => {
@@ -62,10 +62,18 @@ it("restores actual search evidence only from researchers owned by this call and
   mocks.snapshot
     .mockResolvedValueOnce({
       events: [
-        child("research:one"),
+        child("research"),
         child("other:two"),
-        child("research:old", "old-turn"),
-        child("research:planner", "turn", "researchPlanner"),
+        child("research", "old-turn"),
+        child("research", "turn", "researchPlanner"),
+        child("research:prefix-lookalike"),
+        {
+          ...child("research"),
+          data: {
+            ...child("research").data,
+            remote: { url: "https://remote.test" },
+          },
+        },
       ],
     })
     .mockResolvedValueOnce({
@@ -83,5 +91,5 @@ it("restores actual search evidence only from researchers owned by this call and
       ],
     });
   await expect(researchSearchUpdates(context)).resolves.toEqual([update]);
-  expect(mocks.attach.mock.calls).toEqual([["root"], ["research:one"]]);
+  expect(mocks.attach.mock.calls).toEqual([["root"], ["child"]]);
 });

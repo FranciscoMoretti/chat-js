@@ -1,12 +1,14 @@
 import type { RegistryItem } from "shadcn/schema";
-
-import { toolDefinitionSchema } from "../../metadata";
 import registryPackage from "../../package.json";
+import { toolDefinitionSchema } from "../../metadata";
 
-const documentFiles = (id: string, files: string[]) =>
+const documentFiles = (
+  id: string,
+  files: readonly string[]
+): { path: string; target: string; type: "registry:file" }[] =>
   files.map((file) => ({
     path: `src/tools/${id}/${file}`,
-    target: `~/tools/chatjs/${id}/${file}`,
+    target: `~/chatjs/tools/${id}/${file}`,
     type: "registry:file" as const,
   }));
 
@@ -21,6 +23,7 @@ const bundles = [
       "@lexical/rich-text",
       "lexical",
       "diff",
+      "@tanstack/react-query",
     ],
     files: ["comparison.tsx", "diffview.tsx", "editor-config.ts"],
     kind: "text",
@@ -40,14 +43,19 @@ const bundles = [
     title: "Code",
   },
   {
-    dependencies: ["papaparse", "@types/papaparse", "react-data-grid"],
+    dependencies: [
+      "papaparse",
+      "@types/papaparse",
+      "react-data-grid",
+      "next-themes",
+    ],
     files: [],
     kind: "sheet",
     title: "Sheet",
   },
 ] as const;
 
-export const documentItems: RegistryItem[] = [
+const documentItems: RegistryItem[] = [
   {
     description:
       "Remove a document from this conversation with explicit owner approval",
@@ -89,26 +97,37 @@ export const documentItems: RegistryItem[] = [
   },
   ...bundles.map(({ kind, title, files, dependencies }) => ({
     dependencies: dependencies.map(
-      (name) => `${name}@${registryPackage.devDependencies[name]}`
+      (name): string => `${name}@${registryPackage.devDependencies[name]}`
     ),
     description: `Create and edit ${kind} documents with their editor UI`,
     files: documentFiles(`${kind}-documents`, [
       "tool.ts",
+      "definition.ts",
       "guidelines.ts",
+      "configuration-schema.ts",
+      "assistant-actions.ts",
       "document.tsx",
       "editor.tsx",
       ...files,
     ]),
     meta: {
       chatjs: toolDefinitionSchema.parse({
-        contractVersion: 1,
+        contractVersion: 2,
+        uiBase: "base",
         documentKind: kind,
+        config: { key: kind },
         id: `${kind}-documents`,
         kind: "tool",
         requiresTools: ["readDocument"],
         tools: [
-          { toolExport: `create${title}Document` },
-          { toolExport: `edit${title}Document` },
+          {
+            composer: { icon: "Edit3", name: "Canvas", shortName: "Canvas" },
+            toolExport: `create${title}Document`,
+          },
+          {
+            composer: { icon: "Edit3", name: "Canvas", shortName: "Canvas" },
+            toolExport: `edit${title}Document`,
+          },
         ],
       }),
     },
@@ -118,7 +137,8 @@ export const documentItems: RegistryItem[] = [
   })),
 ];
 
-export const savedCodeExecutionItem: RegistryItem = {
+const savedCodeExecutionItem: RegistryItem = {
+  dependencies: ["lucide-react"],
   description: "Run saved code revisions with a compatible installed executor",
   files: documentFiles("saved-code-execution", [
     "tool.ts",
@@ -131,7 +151,8 @@ export const savedCodeExecutionItem: RegistryItem = {
   ]),
   meta: {
     chatjs: toolDefinitionSchema.parse({
-      contractVersion: 1,
+      contractVersion: 2,
+      uiBase: "base",
       documentRunExport: "EveDocumentRun",
       id: "saved-code-execution",
       kind: "tool",
@@ -146,8 +167,8 @@ export const savedCodeExecutionItem: RegistryItem = {
   type: "registry:item",
 };
 
-export const codeExecutionUiItem: RegistryItem = {
-  dependencies: ["echarts", "echarts-for-react", "motion"],
+const codeExecutionUiItem: RegistryItem = {
+  dependencies: ["echarts", "echarts-for-react", "motion", "next-themes"],
   description: "Shared chart renderer for installed code execution tools",
   files: [
     "code-execution-chart.tsx",
@@ -155,9 +176,10 @@ export const codeExecutionUiItem: RegistryItem = {
     "interactive-chart-impl.tsx",
   ].map((file) => ({
     path: `src/ui/code-execution/${file}`,
-    target: `~/tools/chatjs/_shared/code-execution/${file}`,
+    target: `~/chatjs/tools/_shared/code-execution/${file}`,
     type: "registry:file",
   })),
   name: "code-execution-ui",
   type: "registry:item",
 };
+export { codeExecutionUiItem, documentItems, savedCodeExecutionItem };

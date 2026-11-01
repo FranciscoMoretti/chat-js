@@ -1,5 +1,5 @@
-import { withEve } from "eve/next";
 import type { NextConfig } from "next";
+import { withEve } from "eve/next";
 
 const nextConfig: NextConfig = {
   cacheComponents: true,
@@ -37,12 +37,12 @@ const nextConfig: NextConfig = {
     ],
   },
   partialPrefetching: true,
-  serverExternalPackages: ["pino", "pino-pretty", "microsandbox"],
+  serverExternalPackages: ["pino", "pino-pretty"],
   transpilePackages: ["@chat-js/gateways"],
   typedRoutes: true,
 };
 
 export default withEve(nextConfig, {
-  agents: { chat: ".", guest: "./guest" },
+  agents: { chat: "." },
   devServerTimeoutMs: 600_000,
 });

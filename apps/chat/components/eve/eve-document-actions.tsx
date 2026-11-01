@@ -1,17 +1,14 @@
 "use client";
 
+import { Hint } from "@/components/hint";
 import { Copy, History, Redo2, Undo2 } from "lucide-react";
-import type { ReactNode } from "react";
+import React from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Toggle } from "@/components/ui/toggle";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { documentUi } from "@/tools/chatjs/document-ui";
+import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
+import { documents } from "@/integrations/documents/ui";
 
 export const EveDocumentActions = ({
   kind,
@@ -26,45 +23,38 @@ export const EveDocumentActions = ({
   disabled,
   run,
 }: {
-  kind: "text" | "code" | "sheet";
-  content: string;
-  canCompare: boolean;
-  comparing: boolean;
-  onCompare: () => void;
-  onPrevious: () => void;
-  onNext: () => void;
-  previousDisabled: boolean;
-  nextDisabled: boolean;
-  disabled: boolean;
-  run: ReactNode;
-}) => {
-  const copy = async () => {
+  readonly kind: string;
+  readonly content: string;
+  readonly canCompare: boolean;
+  readonly comparing: boolean;
+  readonly onCompare: () => void;
+  readonly onPrevious: () => void;
+  readonly onNext: () => void;
+  readonly previousDisabled: boolean;
+  readonly nextDisabled: boolean;
+  readonly disabled: boolean;
+  readonly run: ReadonlyReactNode;
+}): React.JSX.Element => {
+  const document = documents[kind];
+  const copy = async (): Promise<void> => {
     try {
-      const copied = documentUi[kind]?.copyContent?.(content) ?? content;
+      const copied = documents[kind]?.copyContent?.(content) ?? content;
       await navigator.clipboard.writeText(copied);
-      toast.success(
-        kind === "sheet" ? "Copied csv to clipboard!" : "Copied to clipboard!"
-      );
+      toast.success(document?.copySuccessMessage ?? "Copied to clipboard!");
     } catch {
       toast.error(
         "Could not copy. Check your browser's clipboard permissions."
       );
     }
   };
-  let copyLabel = "Copy to clipboard";
-  if (kind === "code") {
-    copyLabel = "Copy code to clipboard";
-  }
-  if (kind === "sheet") {
-    copyLabel = "Copy as .csv";
-  }
+  const copyLabel = document?.copyLabel ?? "Copy to clipboard";
   const buttonClass = "hover:bg-accent h-fit p-2 [&_svg]:size-[18px]";
   return (
     <div className="flex shrink-0 flex-row gap-1">
       {run}
-      {kind === "text" && (
-        <Tooltip>
-          <TooltipTrigger asChild>
+      {document?.supportsComparison === true && (
+        <Hint
+          trigger={
             <div>
               <Toggle
                 aria-label="View changes"
@@ -76,12 +66,13 @@ export const EveDocumentActions = ({
                 <History size={18} />
               </Toggle>
             </div>
-          </TooltipTrigger>
-          <TooltipContent>View changes</TooltipContent>
-        </Tooltip>
+          }
+        >
+          View changes
+        </Hint>
       )}
-      <Tooltip>
-        <TooltipTrigger asChild>
+      <Hint
+        trigger={
           <Button
             aria-label="View Previous version"
             className={buttonClass}
@@ -91,11 +82,12 @@ export const EveDocumentActions = ({
           >
             <Undo2 size={18} />
           </Button>
-        </TooltipTrigger>
-        <TooltipContent>View Previous version</TooltipContent>
-      </Tooltip>
-      <Tooltip>
-        <TooltipTrigger asChild>
+        }
+      >
+        View Previous version
+      </Hint>
+      <Hint
+        trigger={
           <Button
             aria-label="View Next version"
             className={buttonClass}
@@ -105,25 +97,28 @@ export const EveDocumentActions = ({
           >
             <Redo2 size={18} />
           </Button>
-        </TooltipTrigger>
-        <TooltipContent>View Next version</TooltipContent>
-      </Tooltip>
-      <Tooltip>
-        <TooltipTrigger asChild>
+        }
+      >
+        View Next version
+      </Hint>
+      <Hint
+        trigger={
           <Button
             aria-label={copyLabel}
-            className={
-              kind === "sheet" ? "hover:bg-accent h-fit p-2" : buttonClass
-            }
+            className={document?.copyButtonClassName ?? buttonClass}
             variant="outline"
             disabled={disabled}
-            onClick={copy}
+
+            onClick={(): void => {
+              void copy();
+            }}
           >
-            <Copy size={kind === "sheet" ? 16 : 18} />
+            <Copy size={document?.copyIconSize ?? 18} />
           </Button>
-        </TooltipTrigger>
-        <TooltipContent>{copyLabel}</TooltipContent>
-      </Tooltip>
+        }
+      >
+        {copyLabel}
+      </Hint>
     </div>
   );
 };

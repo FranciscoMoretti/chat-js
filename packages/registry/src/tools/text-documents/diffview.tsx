@@ -1,14 +1,15 @@
-import { LexicalComposer } from "@lexical/react/LexicalComposer";
-import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { ContentEditable } from "@lexical/react/LexicalContentEditable";
-import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
-import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
-import { diffWords } from "diff";
 import { $createParagraphNode, $getRoot, TextNode } from "lexical";
 import type { EditorConfig, LexicalEditor, SerializedTextNode } from "lexical";
-import { useEffect } from "react";
-
+import React, { useEffect } from "react";
+import type { ChangeObject } from "diff";
+import { ContentEditable } from "@lexical/react/LexicalContentEditable";
+import { LexicalComposer } from "@lexical/react/LexicalComposer";
+import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { createEditorConfig } from "./editor-config";
+import { diffWords } from "diff";
+import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 
 const DiffType = {
   Deleted: -1,
@@ -26,19 +27,23 @@ type SerializedDiffTextNode = SerializedTextNode & {
 
 // Custom diff text node that supports styling
 class DiffTextNode extends TextNode {
-  __diffType?: DiffTypeValue;
+  public __diffType?: DiffTypeValue;
 
-  static getType(): string {
+  public static getType(): string {
     return "diff-text";
   }
 
-  static clone(node: DiffTextNode): DiffTextNode {
+  public static clone(
+    node: Readonly<Pick<DiffTextNode, "__text" | "__key" | "__diffType">>
+  ): DiffTextNode {
     const newNode = new DiffTextNode(node.__text, node.__key);
     newNode.__diffType = node.__diffType;
     return newNode;
   }
 
-  static importJSON(serializedNode: SerializedDiffTextNode): DiffTextNode {
+  public static importJSON(
+    serializedNode: ReadonlyNativeSurface<SerializedDiffTextNode>
+  ): DiffTextNode {
     const { text, diffType } = serializedNode;
     const node = new DiffTextNode(text);
     if (diffType !== undefined) {
@@ -47,7 +52,7 @@ class DiffTextNode extends TextNode {
     return node;
   }
 
-  exportJSON(): SerializedDiffTextNode {
+  public exportJSON(): SerializedDiffTextNode {
     return {
       ...super.exportJSON(),
       diffType: this.__diffType,
@@ -56,20 +61,25 @@ class DiffTextNode extends TextNode {
     };
   }
 
-  setDiffType(diffType: DiffTypeValue): void {
+  public setDiffType(diffType: DiffTypeValue): void {
     const writable = this.getWritable();
     writable.__diffType = diffType;
   }
 
-  getDiffType(): DiffTypeValue | undefined {
+  public getDiffType(): DiffTypeValue | undefined {
     return this.__diffType;
   }
 
-  createDOM(config: EditorConfig, editor?: LexicalEditor): HTMLElement {
+  public createDOM(config: EditorConfig, editor?: LexicalEditor): HTMLElement {
     const element = super.createDOM(config, editor);
     const diffType = this.getDiffType();
 
-    if (diffType) {
+    if (
+      diffType !== null &&
+      diffType !== undefined &&
+      diffType !== 0 &&
+      !Number.isNaN(diffType)
+    ) {
       let className = "";
       switch (diffType) {
         case DiffType.Inserted: {
@@ -92,8 +102,8 @@ class DiffTextNode extends TextNode {
     return element;
   }
 
-  updateDOM(
-    prevNode: DiffTextNode,
+  public updateDOM(
+    prevNode: this,
     dom: HTMLElement,
     config: EditorConfig
   ): boolean {
@@ -106,15 +116,18 @@ class DiffTextNode extends TextNode {
       return true;
     }
 
-    return super.updateDOM(prevNode as this, dom, config);
+    return super.updateDOM(prevNode, dom, config);
   }
 }
 
 // Proper diff computation using the diff library
-const computeProperDiff = (oldText: string, newText: string) => {
+const computeProperDiff = (
+  oldText: string,
+  newText: string
+): { text: string; type: number }[] => {
   const changes = diffWords(oldText, newText);
 
-  return changes.map((change) => {
+  return changes.map((change: Readonly<ChangeObject<string>>) => {
     let type: DiffTypeValue;
     if (change.added) {
       type = DiffType.Inserted;
@@ -134,14 +147,14 @@ const computeProperDiff = (oldText: string, newText: string) => {
 const DiffContentPlugin = ({
   oldContent,
   newContent,
-}: {
+}: ReadonlyNativeSurface<{
   oldContent: string;
   newContent: string;
-}) => {
+}>): null => {
   const [editor] = useLexicalComposerContext();
 
-  useEffect(() => {
-    editor.update(() => {
+  useEffect((): void => {
+    editor.update((): void => {
       const root = $getRoot();
 
       // Clear existing content
@@ -174,7 +187,10 @@ interface DiffEditorProps {
   oldContent: string;
 }
 
-export const DiffView = ({ oldContent, newContent }: DiffEditorProps) => {
+export const DiffView = ({
+  oldContent,
+  newContent,
+}: ReadonlyNativeSurface<DiffEditorProps>): React.JSX.Element => {
   const initialConfig = {
     ...createEditorConfig(),
     editable: false,

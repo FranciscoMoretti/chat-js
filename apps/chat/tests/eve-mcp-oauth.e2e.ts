@@ -1,13 +1,16 @@
-/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
+import { userCredit } from "@/chatjs/plugins/credits/credits-schema";
 import { expect, test } from "@playwright/test";
 import { eq, sql } from "drizzle-orm";
 import { z } from "zod";
 
-import { MCPClient } from "../lib/ai/mcp/mcp-client";
+import { MCPClient } from "../chatjs/plugins/mcp/oauth/mcp-client";
 import { db } from "../lib/db/client";
-import { mcpConnector, mcpOAuthSession, userCredit } from "../lib/db/schema";
+import {
+  mcpConnector,
+  mcpOAuthSession,
+} from "@/chatjs/plugins/mcp/db/mcp-schema";
 import { conversationBinding } from "../lib/eve/contracts";
-import { discoverEveMcpTools } from "../lib/eve/mcp-tools";
+import { discoverEveMcpTools } from "../chatjs/plugins/mcp/runtime/mcp-tools";
 import { assertEveTestDatabase } from "./eve-test-database";
 import { startEveOAuthMcpServer } from "./fixtures/eve-oauth-mcp-server";
 
@@ -23,19 +26,20 @@ test("MCP OAuth callback persists credentials for fresh Eve clients and native e
   let conversationId: string | undefined;
   let origin: string | undefined;
   try {
-    await page.route("https://unpkg.com/react-scan/**", (route) =>
-      route.abort()
-    );
+    await page.route("https://unpkg.com/react-scan/**", async (route) => {
+      await route.abort();
+    });
     await page.goto("/api/dev-login");
     ({ origin } = new URL(page.url()));
+    const authSessionResponse = await page.request.get("/api/auth/get-session");
     const { user: owner } = z
       .object({ user: z.object({ id: z.string() }) })
-      .parse(await (await page.request.get("/api/auth/get-session")).json());
+      .parse(await authSessionResponse.json());
     await db
       .insert(userCredit)
-      .values({ credits: 1000, userId: owner.id })
+      .values({ balanceCents: 1000, userId: owner.id })
       .onConflictDoUpdate({
-        set: { credits: sql`greatest(${userCredit.credits}, 1000)` },
+        set: { balanceCents: sql`greatest(${userCredit.balanceCents}, 1000)` },
         target: userCredit.userId,
       });
     await db.insert(mcpConnector).values({
@@ -43,6 +47,7 @@ test("MCP OAuth callback persists credentials for fresh Eve clients and native e
       id: connectorId,
       name: "Local OAuth fixture",
       nameId,
+      requireApproval: true,
       type: "http",
       url: fixture.mcpUrl,
       userId: owner.id,
@@ -70,18 +75,24 @@ test("MCP OAuth callback persists credentials for fresh Eve clients and native e
       .select({ tokens: mcpOAuthSession.tokens })
       .from(mcpOAuthSession)
       .where(eq(mcpOAuthSession.mcpConnectorId, connectorId));
-    expect(saved.some((row) => row.tokens !== null)).toBe(true);
+    expect(
+      saved.some((row: Readonly<{ tokens: unknown }>) => row.tokens !== null)
+    ).toBe(true);
     expect(fixture.counters.tokenExchanges).toBe(1);
     await page.goto("/");
-    const discover = () =>
-      discoverEveMcpTools(owner.id, AbortSignal.timeout(15_000));
-    expect((await discover()).map((tool) => tool.name)).toContain(
-      `${nameId}__read_token`
-    );
+    const discover = async () =>
+      await discoverEveMcpTools(owner.id, AbortSignal.timeout(15_000));
+    const toolsAfterOAuthCallback = await discover();
+    expect(
+      toolsAfterOAuthCallback.map(
+        (tool: { readonly name: string }) => tool.name
+      )
+    ).toContain(`${nameId}__read_token`);
     fixture.invalidateAccessTokens();
-    expect((await discover()).map((tool) => tool.name)).toContain(
-      `${nameId}__read_token`
-    );
+    const toolsAfterTokenRefresh = await discover();
+    expect(
+      toolsAfterTokenRefresh.map((tool: { readonly name: string }) => tool.name)
+    ).toContain(`${nameId}__read_token`);
     expect(fixture.counters.refreshes).toBe(1);
     expect(fixture.counters.authorizations).toBe(1);
     expect(fixture.counters.toolCalls).toBe(0);
@@ -95,27 +106,42 @@ test("MCP OAuth callback persists credentials for fresh Eve clients and native e
     );
     try {
       await Promise.allSettled(
-        clients.map((client) =>
-          client.connect(undefined, AbortSignal.timeout(15_000))
-        )
+        clients.map(async (client: Readonly<Pick<MCPClient, "connect">>) => {
+          await client.connect({ abortSignal: AbortSignal.timeout(15_000) });
+        })
       );
-      expect(clients.map((client) => client.status)).toEqual([
-        "connected",
-        "connected",
-      ]);
+      expect(
+        clients.map(
+          (client: Readonly<Pick<MCPClient, "status">>) => client.status
+        )
+      ).toEqual(["connected", "connected"]);
       expect(fixture.counters.refreshes).toBe(2);
       fixture.invalidateAccessTokens();
-      const tools = await Promise.all(clients.map((client) => client.tools()));
+      const tools = await Promise.all(
+        clients.map(
+          async (client: Readonly<Pick<MCPClient, "tools">>) =>
+            await client.tools()
+        )
+      );
       expect(
-        tools.every((definitions) => Object.hasOwn(definitions, "read_token"))
+        tools.every((definitions: Readonly<Record<string, unknown>>) =>
+          Object.hasOwn(definitions, "read_token")
+        )
       ).toBe(true);
       expect(fixture.counters.refreshes).toBe(3);
     } finally {
-      await Promise.all(clients.map((client) => client.close()));
+      await Promise.all(
+        clients.map(async (client: Readonly<Pick<MCPClient, "close">>) => {
+          await client.close();
+        })
+      );
     }
-    expect((await discover()).map((tool) => tool.name)).toContain(
-      `${nameId}__read_token`
-    );
+    const toolsAfterSecondTokenRefresh = await discover();
+    expect(
+      toolsAfterSecondTokenRefresh.map(
+        (tool: { readonly name: string }) => tool.name
+      )
+    ).toContain(`${nameId}__read_token`);
 
     const created = await page.request.post("/api/agent-conversations", {
       data: {
@@ -129,6 +155,13 @@ test("MCP OAuth callback persists credentials for fresh Eve clients and native e
     const binding = conversationBinding.parse(await created.json());
     conversationId = binding.id;
     await page.goto(`/chat/${binding.id}`);
+    const approve = page.getByRole("button", { exact: true, name: "Approve" });
+    await expect(approve).toBeVisible({ timeout: 90_000 });
+    expect(fixture.counters.toolCalls).toBe(0);
+    await page.reload();
+    await expect(approve).toBeVisible();
+    expect(fixture.counters.toolCalls).toBe(0);
+    await approve.click();
     await expect(page.getByText("Ready", { exact: true })).toBeVisible({
       timeout: 90_000,
     });
@@ -141,20 +174,25 @@ test("MCP OAuth callback persists credentials for fresh Eve clients and native e
   } finally {
     testInfo.setTimeout(testInfo.timeout + 60_000);
     try {
-      if (conversationId && origin) {
+      if (
+        conversationId !== undefined &&
+        conversationId !== null &&
+        conversationId !== "" &&
+        origin !== undefined &&
+        origin !== null &&
+        origin !== ""
+      ) {
         const requestOrigin = origin;
         const url = `/api/agent-conversations/${conversationId}`;
         await expect
           .poll(
-            async () =>
-              [200, 404].includes(
-                (
-                  await page.request.delete(url, {
-                    headers: { origin: requestOrigin },
-                    timeout: 15_000,
-                  })
-                ).status()
-              ),
+            async () => {
+              const deletionResponse = await page.request.delete(url, {
+                headers: { origin: requestOrigin },
+                timeout: 15_000,
+              });
+              return [200, 404].includes(deletionResponse.status());
+            },
             { intervals: [1000, 2000, 5000], timeout: 60_000 }
           )
           .toBe(true);

@@ -9,10 +9,10 @@ const mocks = vi.hoisted(() => ({
   selected: false,
 }));
 vi.mock("eve/tools", () => ({
-  defineDynamic: <T>(value: T) => value,
-  defineTool: <T>(value: T) => value,
+  defineDynamic: <Value>(value: Value): Value => value,
+  defineTool: <Value>(value: Value): Value => value,
 }));
-vi.mock("./mcp-tools", () => ({
+vi.mock("../../chatjs/plugins/mcp/runtime/mcp-tools", () => ({
   discoverEveMcpTools: mocks.discover,
   executeEveMcpTool: mocks.execute,
 }));
@@ -38,7 +38,7 @@ it("discovers for the session owner and preserves namespaced tool definitions", 
           current: null,
           initiator: {
             attributes: {},
-            authenticator: "test",
+            authenticator: "chatjs-gateway",
             principalId: "owner",
             principalType: "user",
           },
@@ -76,8 +76,15 @@ it("continues ordinary chat when MCP discovery times out", async () => {
 });
 
 vi.mock("./turn-tools", () => ({
-  eveTurnGuest: { get: () => mocks.guest },
-  eveTurnTool: { get: () => (mocks.selected ? "webSearch" : null) },
+  eveTurnAccount: { get: (): boolean => !mocks.guest },
+  eveTurnTool: {
+    get: () => {
+      if (mocks.selected) {
+        return "webSearch";
+      }
+      return null;
+    },
+  },
 }));
 
 it("does not discover remote tools for an explicitly selected local capability", async () => {

@@ -1,12 +1,7 @@
-/* oxlint-disable eslint/no-shadow -- Nested callback names mirror the protocol fields and transaction APIs under test. */
-/* oxlint-disable promise/avoid-new -- These fixtures adapt callback, timer, stream, or browser event APIs into awaited Promises. */
-/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
-/* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
-/* oxlint-disable unicorn/consistent-function-scoping -- One-off helpers stay beside the scenario state they coordinate. */
-/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import { expect, test } from "@playwright/test";
 import { Client } from "eve/client";
 import { z } from "zod";
+import { vi } from "vitest";
 
 import { createEveConversation, getEveCreation } from "../lib/db/eve-queries";
 import { env } from "../lib/env";
@@ -20,11 +15,14 @@ test("a lost native creation reply recovers the same session from the retained c
   page,
 }) => {
   test.setTimeout(120_000);
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
+  const authSessionResponse = await page.request.get("/api/auth/get-session");
   const session = z
     .object({ user: z.object({ id: z.string() }) })
-    .parse(await (await page.request.get("/api/auth/get-session")).json());
+    .parse(await authSessionResponse.json());
   const operation = {
     message: "Reply only with creation-recovered-73.",
     modelId: "openai/gpt-4.1-mini-fast",
@@ -38,33 +36,36 @@ test("a lost native creation reply recovers the same session from the retained c
       operation.message,
       async (id) => {
         const results = await Promise.all(
-          [0, 1].map(() =>
-            eveRequest(
-              session.user.id,
-              "/eve/chat/v1/session",
-              {
-                body: JSON.stringify({
-                  operationId: id,
-                  message: operation.message,
-                }),
-                method: "POST",
-                signal: AbortSignal.timeout(30_000),
-              },
-              operation.modelId
-            )
+          [0, 1].map(
+            async () =>
+              await eveRequest(
+                session.user.id,
+                "/eve/chat/v1/session",
+                {
+                  body: JSON.stringify({
+                    operationId: id,
+                    message: operation.message,
+                  }),
+                  method: "POST",
+                  signal: AbortSignal.timeout(30_000),
+                },
+                operation.modelId
+              )
           )
         );
         const sessionIds: string[] = [];
-        for (const result of results) {
-          expect(result.ok).toBe(true);
-          const response = z
-            .object({ sessionId: z.string() })
-            .parse(await result.json());
-          sessionIds.push(response.sessionId);
-          expect(result.headers.get("x-eve-session-id")).toBe(
-            response.sessionId
-          );
-        }
+        await Promise.all(
+          results.map(async (result) => {
+            expect(result.ok).toBe(true);
+            const response = z
+              .object({ sessionId: z.string() })
+              .parse(await result.json());
+            sessionIds.push(response.sessionId);
+            expect(result.headers.get("x-eve-session-id")).toBe(
+              response.sessionId
+            );
+          })
+        );
         expect(new Set(sessionIds).size).toBe(1);
         [nativeSessionId] = sessionIds;
         throw new Error("Simulated lost native reply before app binding");
@@ -133,11 +134,14 @@ test("a lost native creation reply recovers the same session from the retained c
 test("an unresolved project conversation recovers after its project is deleted", async ({
   page,
 }, testInfo) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
+  const authSessionResponse = await page.request.get("/api/auth/get-session");
   const session = z
     .object({ user: z.object({ id: z.string() }) })
-    .parse(await (await page.request.get("/api/auth/get-session")).json());
+    .parse(await authSessionResponse.json());
   const response = await page.request.post("/api/trpc/project.create", {
     data: { json: { name: "Recovery project fixture" } },
   });
@@ -160,8 +164,13 @@ test("an unresolved project conversation recovers after its project is deleted",
       session.user.id,
       operation.operationId,
       operation.message,
-      () => Promise.reject(new Error("Simulated dispatch interruption")),
-      { initialModelId: operation.modelId, initialProjectId: projectId }
+      vi
+        .fn<() => Promise<string>>()
+        .mockRejectedValue(new Error("Simulated dispatch interruption")),
+      {
+        initialModelId: operation.modelId,
+        initialRequest: operation,
+      }
     )
   ).rejects.toThrow("Simulated dispatch interruption");
   const reservation = await getEveCreation(
@@ -175,7 +184,9 @@ test("an unresolved project conversation recovers after its project is deleted",
   expect(removed.ok()).toBe(true);
   const storageKey = `chatjs.eve.pending:${session.user.id}:project:${projectId}`;
   await page.evaluate(
-    ({ key, pending }) => sessionStorage.setItem(key, JSON.stringify(pending)),
+    ({ key, pending }) => {
+      sessionStorage.setItem(key, JSON.stringify(pending));
+    },
     {
       key: storageKey,
       pending: { ...operation, operationId: crypto.randomUUID() },
@@ -191,19 +202,22 @@ test("an unresolved project conversation recovers after its project is deleted",
     path: testInfo.outputPath("recovery-missing.png"),
   });
   await page.evaluate(
-    ({ key, pending }) => sessionStorage.setItem(key, JSON.stringify(pending)),
+    ({ key, pending }) => {
+      sessionStorage.setItem(key, JSON.stringify(pending));
+    },
     { key: storageKey, pending: operation }
   );
   await page.reload();
   await expect(recovery).toContainText(operation.message);
   await page.route(
     "**/api/agent-conversations",
-    (route) =>
-      route.fulfill({
+    async (route) => {
+      await route.fulfill({
         body: JSON.stringify({ error: "Temporary recovery failure" }),
         contentType: "application/json",
         status: 503,
-      }),
+      });
+    },
     { times: 1 }
   );
   await recovery.getByRole("button", { name: "Retry creation" }).click();
@@ -212,7 +226,7 @@ test("an unresolved project conversation recovers after its project is deleted",
   );
   expect(
     await page.evaluate(
-      (key) => JSON.parse(sessionStorage.getItem(key) ?? "null"),
+      (key): unknown => JSON.parse(sessionStorage.getItem(key) ?? "null"),
       storageKey
     )
   ).toEqual(operation);
@@ -220,16 +234,11 @@ test("an unresolved project conversation recovers after its project is deleted",
   await recovery.screenshot({
     path: testInfo.outputPath("recovery-error-mobile.png"),
   });
-  let releaseRetry: () => void = () => {
-    /* empty */
-  };
-  const retryGate = new Promise<void>((resolve) => {
-    releaseRetry = resolve;
-  });
+  const retryGate: PromiseWithResolvers<void> = Promise.withResolvers();
   await page.route(
     "**/api/agent-conversations",
     async (route) => {
-      await retryGate;
+      await retryGate.promise;
       await route.continue();
     },
     { times: 1 }
@@ -241,8 +250,8 @@ test("an unresolved project conversation recovers after its project is deleted",
   await recovery.screenshot({
     path: testInfo.outputPath("recovery-pending-mobile.png"),
   });
-  releaseRetry();
-  await expect(page.locator(".is-assistant")).toContainText(
+  retryGate.resolve();
+  await expect(page.locator('[data-role="assistant"]')).toContainText(
     "project-recovery-ok",
     { timeout: 90_000 }
   );
@@ -253,8 +262,8 @@ test("an unresolved project conversation recovers after its project is deleted",
     await page.evaluate((key) => sessionStorage.getItem(key), storageKey)
   ).toBeNull();
   await page.reload();
-  await expect(page.locator(".is-user")).toHaveCount(1);
-  await expect(page.locator(".is-assistant")).toContainText(
+  await expect(page.locator('[data-role="user"]')).toHaveCount(1);
+  await expect(page.locator('[data-role="assistant"]')).toContainText(
     "project-recovery-ok"
   );
 });
@@ -262,11 +271,14 @@ test("an unresolved project conversation recovers after its project is deleted",
 test("a missing project preserves an unreserved request until definitive rejection", async ({
   page,
 }, testInfo) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
+  const authSessionResponse = await page.request.get("/api/auth/get-session");
   const session = z
     .object({ user: z.object({ id: z.string() }) })
-    .parse(await (await page.request.get("/api/auth/get-session")).json());
+    .parse(await authSessionResponse.json());
   const projectId = crypto.randomUUID();
   const operation = {
     message: "Preserve my missing project draft",
@@ -276,8 +288,12 @@ test("a missing project preserves an unreserved request until definitive rejecti
   };
   const key = `chatjs.eve.pending:${session.user.id}:project:${projectId}`;
   await page.evaluate(
-    ({ key, operation }) =>
-      sessionStorage.setItem(key, JSON.stringify(operation)),
+    ({ key: pendingStorageKey, operation: pendingOperation }) => {
+      sessionStorage.setItem(
+        pendingStorageKey,
+        JSON.stringify(pendingOperation)
+      );
+    },
     { key, operation }
   );
   await page.goto(`/project/${projectId}`);
@@ -337,11 +353,14 @@ test("a missing project preserves an unreserved request until definitive rejecti
     operation.message
   );
   const saved = await page.evaluate(
-    ({ key, ownerId }) => ({
+    ({
+      key: savedStorageKey,
+      ownerId,
+    }): { next: unknown; old: string | null } => ({
       next: JSON.parse(
         sessionStorage.getItem(`chatjs.eve.pending:${ownerId}`) ?? "null"
       ),
-      old: sessionStorage.getItem(key),
+      old: sessionStorage.getItem(savedStorageKey),
     }),
     { key, ownerId: session.user.id }
   );
@@ -350,18 +369,28 @@ test("a missing project preserves an unreserved request until definitive rejecti
     message: operation.message,
     modelId: operation.modelId,
   });
-  expect(saved.next.operationId).not.toBe(operation.operationId);
-  expect(saved.next.projectId).toBeUndefined();
+
+  expect(
+    z.looseObject({ operationId: z.string() }).parse(saved.next).operationId
+  ).not.toBe(operation.operationId);
+
+  expect(
+    z.looseObject({ projectId: z.unknown().optional() }).parse(saved.next)
+      .projectId
+  ).toBeUndefined();
 });
 
 test("a rejected project composer retains its request across project deletion", async ({
   page,
 }, testInfo) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
+  const authSessionResponse = await page.request.get("/api/auth/get-session");
   const session = z
     .object({ user: z.object({ id: z.string() }) })
-    .parse(await (await page.request.get("/api/auth/get-session")).json());
+    .parse(await authSessionResponse.json());
   const created = await page.request.post("/api/trpc/project.create", {
     data: { json: { name: "Rejected creation fixture" } },
   });
@@ -377,8 +406,8 @@ test("a rejected project composer retains its request across project deletion", 
   await page
     .locator('[aria-label="Message"]')
     .fill("Preserve rejected composer");
-  await page.route("**/api/agent-conversations", (route) =>
-    route.fulfill({
+  await page.route("**/api/agent-conversations", async (route) => {
+    await route.fulfill({
       body: JSON.stringify({
         error: "Project not found",
         creationRejected: true,
@@ -386,8 +415,8 @@ test("a rejected project composer retains its request across project deletion", 
       }),
       contentType: "application/json",
       status: 404,
-    })
-  );
+    });
+  });
   await page.getByRole("button", { exact: true, name: "Send" }).click();
   const recovery = page.getByRole("region", { name: "Conversation recovery" });
   await expect(
@@ -395,7 +424,7 @@ test("a rejected project composer retains its request across project deletion", 
   ).toBeVisible();
   const key = `chatjs.eve.pending:${session.user.id}:project:${projectId}`;
   const retained = await page.evaluate(
-    (key) => sessionStorage.getItem(key),
+    (storageKeyArgument) => sessionStorage.getItem(storageKeyArgument),
     key
   );
   expect(retained).not.toBeNull();
@@ -408,7 +437,10 @@ test("a rejected project composer retains its request across project deletion", 
   expect(removed.ok()).toBe(true);
   await page.reload();
   await expect(recovery).toContainText("Preserve rejected composer");
-  expect(await page.evaluate((key) => sessionStorage.getItem(key), key)).toBe(
-    retained
-  );
+  expect(
+    await page.evaluate(
+      (storageKeyArgument) => sessionStorage.getItem(storageKeyArgument),
+      key
+    )
+  ).toBe(retained);
 });

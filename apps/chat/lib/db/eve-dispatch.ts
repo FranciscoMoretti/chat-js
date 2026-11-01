@@ -1,0 +1,290 @@
+import { isNonEmptyString } from "@/lib/is-non-empty-string";
+import { isDeepStrictEqual } from "node:util";
+import { and, eq, inArray, isNull, sql } from "drizzle-orm";
+import { db } from "./client";
+import { eveConversation, eveDispatch, eveWorkspace } from "./schema";
+import { EveWorkspaceBusyError, lockEveWorkspace } from "./eve-workspace-turns";
+import { reconcileEveWorkspaceTurn } from "../eve/reconcile-workspace-turn";
+import { z } from "zod";
+import { frontendToolsSchema } from "@/lib/ai/types";
+import type { EveMessageDisplayReceipt } from "@/lib/eve/message-display";
+import { eveMessageInput } from "@/lib/eve/message-input";
+
+const hasRow: (row: unknown) => boolean = Boolean;
+
+/** Display-only fields from known message bindings; unknown and foreign bindings are omitted. */
+export const getEveMessageDisplayReceipts = async (
+  ownerId: string,
+  sessionId: string,
+  database: Pick<typeof db, "select"> = db
+): Promise<EveMessageDisplayReceipt[]> => {
+  const rows = await database
+    .select({
+      kind: eveDispatch.kind,
+      deliveryId: eveDispatch.deliveryId,
+      intent: eveDispatch.intent,
+    })
+    .from(eveDispatch)
+    .innerJoin(
+      eveConversation,
+      and(
+        eq(eveDispatch.conversationId, eveConversation.id),
+        eq(eveDispatch.ownerId, eveConversation.ownerId)
+      )
+    )
+    .where(
+      and(
+        eq(eveDispatch.ownerId, ownerId),
+        eq(eveDispatch.sessionId, sessionId),
+        inArray(eveDispatch.kind, ["create", "send"]),
+        eq(eveConversation.sessionId, sessionId),
+        eq(eveConversation.state, "bound")
+      )
+    );
+  return rows.flatMap((row): EveMessageDisplayReceipt[] => {
+    const intent = z
+      .object({ selectedTool: frontendToolsSchema.nullish() })
+      .safeParse(row.intent);
+    if (!intent.success) {
+      return [];
+    }
+    const selectedTool = intent.data.selectedTool ?? null;
+    if (row.kind === "create") {
+      return z.object({ message: eveMessageInput }).safeParse(row.intent)
+        .success
+        ? [{ kind: "initial", selectedTool }]
+        : [];
+    }
+    return isNonEmptyString(row.deliveryId)
+      ? [{ kind: "send", deliveryId: row.deliveryId, selectedTool }]
+      : [];
+  });
+};
+
+export class EveDispatchUnknownError extends Error {
+  constructor() {
+    super(
+      "This operation may have been accepted. Its outcome is unknown; it will not be sent again."
+    );
+    this.name = "EveDispatchUnknownError";
+  }
+}
+
+/** Reads the app journal without dispatching; a missing binding remains unknown. */
+const readEveDispatch = async (input: {
+  readonly ownerId: string;
+  readonly operationId: string;
+  readonly conversationId: string;
+  readonly kind: "create" | "copy" | "send";
+  readonly intent: unknown;
+}): Promise<{ sessionId: string; deliveryId?: string } | undefined> => {
+  const [existing] = await db
+    .select()
+    .from(eveDispatch)
+    .where(
+      and(
+        eq(eveDispatch.ownerId, input.ownerId),
+        eq(eveDispatch.operationId, input.operationId)
+      )
+    );
+  if (!hasRow(existing)) {
+    return undefined;
+  }
+  // oxlint-disable-next-line unicorn/prefer-structured-clone -- Match JSON persistence semantics, including omission of undefined object fields.
+  const intent: unknown = JSON.parse(JSON.stringify(input.intent));
+  if (
+    existing.conversationId !== input.conversationId ||
+    existing.kind !== input.kind ||
+    !isDeepStrictEqual(existing.intent, intent)
+  ) {
+    throw new Error("This operation already has different intent.");
+  }
+  if (!isNonEmptyString(existing.sessionId)) {
+    throw new EveDispatchUnknownError();
+  }
+  return {
+    sessionId: existing.sessionId,
+    ...(isNonEmptyString(existing.deliveryId)
+      ? { deliveryId: existing.deliveryId }
+      : {}),
+  };
+};
+
+/** Commits intent before the one allowed dispatch; worker failure leaves it unknown. */
+export const dispatchEveOnce = async (
+  input: {
+    readonly ownerId: string;
+    readonly operationId: string;
+    readonly conversationId: string;
+    readonly kind: "create" | "copy" | "send";
+    readonly intent: unknown;
+  },
+  dispatch: () => Promise<{ sessionId: string; deliveryId?: string }>
+): Promise<{ sessionId: string; deliveryId?: string }> => {
+  const replay = await readEveDispatch(input);
+  if (replay) {
+    return replay;
+  }
+  await reconcileEveWorkspaceTurn(input.ownerId, input.conversationId);
+  const [conversation] = await db
+    .select({
+      id: eveConversation.id,
+      workspaceId: eveConversation.workspaceId,
+    })
+    .from(eveConversation)
+    .where(
+      and(
+        eq(eveConversation.id, input.conversationId),
+        eq(eveConversation.ownerId, input.ownerId)
+      )
+    );
+  if (!hasRow(conversation)) {
+    throw new Error("Conversation not found.");
+  }
+  // oxlint-disable-next-line unicorn/prefer-structured-clone -- Match JSON persistence semantics, including omission of undefined object fields.
+  const intent: unknown = JSON.parse(JSON.stringify(input.intent));
+  const [claimed] = await db.transaction(async (tx) => {
+    // Copy capture holds this same lock while reading the native transcript and documents.
+    await tx.execute(
+      sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${input.ownerId}`}, 0))`
+    );
+    const workspace = await lockEveWorkspace(
+      tx,
+      input.ownerId,
+      conversation.workspaceId
+    );
+    // Recheck under the workspace lock: another process may have claimed this exact
+    // operation since the read above. Its replay must not dispatch again.
+    const [existing] = await tx
+      .select()
+      .from(eveDispatch)
+      .where(
+        and(
+          eq(eveDispatch.ownerId, input.ownerId),
+          eq(eveDispatch.operationId, input.operationId)
+        )
+      );
+    if (hasRow(existing)) {
+      return [];
+    }
+    if (workspace.activeOperationId !== null) {
+      throw new EveWorkspaceBusyError();
+    }
+    const [current] = await tx
+      .select({ state: eveConversation.state })
+      .from(eveConversation)
+      .where(
+        and(
+          eq(eveConversation.id, input.conversationId),
+          eq(eveConversation.ownerId, input.ownerId),
+          eq(eveConversation.workspaceId, workspace.id)
+        )
+      );
+    if (
+      !hasRow(current) ||
+      current.state === "deleted" ||
+      current.state === "deleting"
+    ) {
+      throw new Error("Conversation is unavailable.");
+    }
+    const inserted = await tx
+      .insert(eveDispatch)
+      .values({ ...input, intent })
+      .onConflictDoNothing()
+      .returning();
+    if (inserted.length > 0) {
+      await tx
+        .update(eveWorkspace)
+        .set({ activeOperationId: input.operationId })
+        .where(eq(eveWorkspace.id, workspace.id));
+    }
+    return inserted;
+  });
+  const identity = and(
+    eq(eveDispatch.ownerId, input.ownerId),
+    eq(eveDispatch.operationId, input.operationId)
+  );
+  if (!hasRow(claimed)) {
+    const existing = await readEveDispatch(input);
+    if (existing) {
+      return existing;
+    }
+    throw new EveDispatchUnknownError();
+  }
+  const binding = await dispatch();
+  if (
+    !isNonEmptyString(binding.sessionId) ||
+    (input.kind === "send" && !isNonEmptyString(binding.deliveryId))
+  ) {
+    throw new EveDispatchUnknownError();
+  }
+  const [saved] = await db
+    .update(eveDispatch)
+    .set(binding)
+    .where(and(identity, isNull(eveDispatch.sessionId)))
+    .returning();
+  if (!hasRow(saved)) {
+    throw new EveDispatchUnknownError();
+  }
+  return binding;
+};
+
+/** Returns only a positively bound send receipt owned by the current principal. */
+export const getEveSendReceipt = async (
+  ownerId: string,
+  sessionId: string,
+  operationId: string
+): Promise<{
+  sessionId: string;
+  operationId: string;
+  deliveryId: string;
+} | null> => {
+  const [row] = await db
+    .select({
+      sessionId: eveDispatch.sessionId,
+      operationId: eveDispatch.operationId,
+      deliveryId: eveDispatch.deliveryId,
+    })
+    .from(eveDispatch)
+    .innerJoin(
+      eveConversation,
+      and(
+        eq(eveDispatch.conversationId, eveConversation.id),
+        eq(eveDispatch.ownerId, eveConversation.ownerId)
+      )
+    )
+    .where(
+      and(
+        eq(eveDispatch.ownerId, ownerId),
+        eq(eveDispatch.operationId, operationId),
+        eq(eveDispatch.kind, "send"),
+        eq(eveDispatch.sessionId, sessionId),
+        eq(eveConversation.sessionId, sessionId),
+        eq(eveConversation.state, "bound")
+      )
+    );
+  if (
+    !hasRow(row) ||
+    !isNonEmptyString(row.sessionId) ||
+    !isNonEmptyString(row.deliveryId)
+  ) {
+    return null;
+  }
+  return {
+    sessionId: row.sessionId,
+    operationId: row.operationId,
+    deliveryId: row.deliveryId,
+  };
+};
+
+/** Serialize short native controls against completed-conversation capture. */
+export const withEveCopyCaptureFence = async <Result>(
+  ownerId: string,
+  action: () => Promise<Result>
+): Promise<Result> =>
+  await db.transaction(async (tx) => {
+    await tx.execute(
+      sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
+    );
+    return await action();
+  });

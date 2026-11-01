@@ -1,16 +1,18 @@
 "use client";
 
-import type { EveMessagePart } from "eve/client";
-import { useEffect, useRef } from "react";
+import { documentDefinitions } from "@/integrations/documents/definitions";
+
+import { hasText } from "@/components/text-value";
+
+import type { JSX as ReactJSX } from "react";
+import React, { useEffect, useRef } from "react";
 import { useIsClient } from "usehooks-ts";
 import { z } from "zod";
 
 import { DocumentToolResult } from "@/components/part/document-common";
 import { useArtifact } from "@/hooks/use-artifact";
-import {
-  eveDocumentOperations,
-  eveDocumentResult,
-} from "@/lib/eve/document-contracts";
+import { eveDocumentResult } from "@/chatjs/core/documents/contracts";
+import type { ReadonlyEveMessagePart } from "@/lib/eve/readonly-message-types";
 
 import {
   useDocumentConversation,
@@ -30,24 +32,26 @@ export const EveDocumentTool = ({
   isReadonly,
   preview = false,
 }: {
-  part: Extract<EveMessagePart, { type: "dynamic-tool" }>;
-  messageId: string;
-  isReadonly: boolean;
-  preview?: boolean;
-}) => {
+  readonly part: Extract<
+    ReadonlyEveMessagePart,
+    { readonly type: "dynamic-tool" }
+  >;
+  readonly messageId: string;
+  readonly isReadonly: boolean;
+  readonly preview?: boolean;
+}): ReactJSX.Element => {
   const isClient = useIsClient();
   const replaying = useDocumentReplaying();
   const conversationId = useDocumentConversation();
   const { setArtifact } = useArtifact();
+  // oxlint-disable-next-line unicorn/no-useless-undefined -- React requires an initial ref value; undefined represents the uninitialized state.
   const pendingCall = useRef<string | undefined>(undefined);
   useEffect(() => {
     if (replaying) {
       pendingCall.current = undefined;
       return;
     }
-    const operation = Object.entries(eveDocumentOperations).find(
-      ([name]) => name === part.toolName
-    )?.[1];
+    const operation = documentDefinitions.operations.get(part.toolName);
     if (part.state === "input-streaming" || part.state === "input-available") {
       pendingCall.current = part.toolCallId;
       const input = partialDocument.safeParse(part.input);
@@ -101,15 +105,16 @@ export const EveDocumentTool = ({
         ? eveDocumentResult.safeParse(part.output)
         : undefined;
     setArtifact((current) => {
-      if (!completed?.success) {
-        return current.previewCallId === part.toolCallId
-          ? {
-              ...current,
-              isVisible: current.documentId !== "init",
-              previewCallId: undefined,
-              status: "idle",
-            }
-          : current;
+      if (!(completed?.success === true)) {
+        if (current.previewCallId === part.toolCallId) {
+          return {
+            ...current,
+            isVisible: current.documentId !== "init",
+            previewCallId: undefined,
+            status: "idle",
+          };
+        }
+        return current;
       }
       if (
         current.isVisible &&
@@ -153,8 +158,13 @@ export const EveDocumentTool = ({
   if (!result.success) {
     return <p role="alert">This document result could not be displayed.</p>;
   }
-  const writeAction = part.toolName.startsWith("create") ? "create" : "update";
-  if (preview && conversationId) {
+  const completedOperation = documentDefinitions.operations.get(part.toolName);
+  const writeAction =
+    completedOperation?.edit === false ||
+    (!completedOperation && part.toolName.startsWith("create"))
+      ? "create"
+      : "update";
+  if (preview && hasText(conversationId)) {
     return (
       <EveDocumentPreview
         isReadonly={isReadonly}

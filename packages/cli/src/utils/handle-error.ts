@@ -1,33 +1,29 @@
 import { z } from "zod";
 
 import { highlighter } from "./highlighter";
+
 import { logger } from "./logger";
+
+const failureExitCode = 1;
 
 export const handleError: (error: unknown) => never = (error) => {
   logger.break();
 
   if (typeof error === "string") {
     logger.error(error);
-    logger.break();
-    process.exit(1);
-  }
-
-  if (error instanceof z.ZodError) {
+  } else if (error instanceof z.ZodError) {
     logger.error("Validation failed:");
-    for (const [key, value] of Object.entries(error.flatten().fieldErrors)) {
-      logger.error(`- ${highlighter.info(key)}: ${value}`);
+    for (const [key, value] of Object.entries(
+      z.flattenError(error).fieldErrors
+    )) {
+      logger.error(`- ${highlighter.info(key)}: ${String(value)}`);
     }
-    logger.break();
-    process.exit(1);
-  }
-
-  if (error instanceof Error) {
+  } else if (error instanceof Error) {
     logger.error(error.message);
-    logger.break();
-    process.exit(1);
+  } else {
+    logger.error("An unknown error occurred.");
   }
 
-  logger.error("An unknown error occurred.");
   logger.break();
-  process.exit(1);
+  process.exit(failureExitCode);
 };

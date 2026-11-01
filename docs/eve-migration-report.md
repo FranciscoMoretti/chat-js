@@ -50,7 +50,7 @@ Key entry points: [agent](../apps/chat/agent/agent.ts), [gateway](../apps/chat/a
 
 | Area | Implemented behavior | Important boundary |
 | --- | --- | --- |
-| App integration | `/`, `/chat/[id]`, project chats, sidebar, composer and artifacts use EVE; `/agent` redirects into the normal app | There is no legacy runtime fallback |
+| App integration | `/`, `/chat/[id]`, project chats, sidebar, composer and artifacts use EVE; retired `/agent` URLs are no longer served | There is no legacy runtime fallback |
 | Sending and recovery | Immediate composer clearing on accepted send; retained intent for uncertain delivery; reload/retry with stable operation identity; explicit rejection restores editable input | A lost response is not treated as proof that creation failed |
 | Streaming and lifecycle | Durable reload/resume, checkpoints, native pending input, approval continuation and cancellation | Worker/provider availability is still required; local supervision is not hosted availability |
 | Models | Existing model picker, validated per-turn model selection, durable response provenance, regeneration with original model | The available catalog and credentials still govern usable models |

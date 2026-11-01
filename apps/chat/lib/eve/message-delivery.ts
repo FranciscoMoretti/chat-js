@@ -1,12 +1,19 @@
-import type { MessageStreamEvent } from "eve/client";
+import { isNonEmptyString } from "@/lib/is-non-empty-string";
+
 import { z } from "zod";
 
-import { frontendToolsSchema } from "../ai/types";
-import type { UiToolName } from "../ai/types";
-import { draftAttachment } from "./draft";
-import { eveToolMetadata } from "./message-tool-selection";
+import { toolNameSchema } from "@/lib/ai/types";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
-export const EVE_MESSAGE_OPERATION_HEADER = "x-chatjs-message-operation";
+import { draftAttachment } from "./draft";
+
+type DeliveryReceipt = Readonly<{
+  sessionId: string;
+  operationId: string;
+  deliveryId: string;
+}>;
+
+const EVE_MESSAGE_OPERATION_HEADER = "x-chatjs-message-operation";
 
 const pendingMessage = z.object({
   attachments: z.array(draftAttachment).default([]),
@@ -15,38 +22,39 @@ const pendingMessage = z.object({
   operationId: z.uuid().optional(),
   rejection: z.string().optional(),
   retryable: z.boolean().optional(),
-  selectedTool: frontendToolsSchema.optional(),
+  selectedTool: toolNameSchema.optional(),
 });
 
-const deliveryMetadata = z.object({
-  chatjs: z.object({ operationId: z.uuid() }),
-});
+type PendingEveMessage = ReadonlyNativeSurface<z.infer<typeof pendingMessage>>;
 
-export type PendingEveMessage = z.infer<typeof pendingMessage>;
-export type ActivePendingEveMessage = PendingEveMessage & {
+type ActivePendingEveMessage = PendingEveMessage & {
   operationId: string;
 };
+
 type NewPendingEveMessage = Omit<
   PendingEveMessage,
   "operationId" | "rejection"
 >;
 type DeliveryStorage = Pick<Storage, "getItem" | "removeItem" | "setItem">;
 
-const storageKey = (sessionId: string) =>
+const storageKey = (sessionId: string): string =>
   `chatjs.eve.pending-message:${sessionId}`;
 
 const write = <T extends PendingEveMessage>(
   storage: DeliveryStorage,
   sessionId: string,
   value: T
-) => {
+): T => {
   storage.setItem(storageKey(sessionId), JSON.stringify(value));
   return value;
 };
 
-const read = (storage: DeliveryStorage, sessionId: string) => {
+const read = (
+  storage: DeliveryStorage,
+  sessionId: string
+): PendingEveMessage | null => {
   const stored = storage.getItem(storageKey(sessionId));
-  if (!stored) {
+  if (!isNonEmptyString(stored)) {
     return null;
   }
   try {
@@ -62,18 +70,18 @@ const read = (storage: DeliveryStorage, sessionId: string) => {
 };
 
 /** One durable client contract for sending, reloading, rejecting, and acknowledging a message. */
-export const eveMessageDelivery = {
+const eveMessageDelivery = {
   acknowledge: (
     storage: DeliveryStorage,
     sessionId: string,
-    pending: PendingEveMessage,
-    event: MessageStreamEvent
-  ) => {
+    pending: ReadonlyNativeSurface<PendingEveMessage>,
+    receipt: DeliveryReceipt
+  ): boolean => {
     if (
-      event.type !== "message.received" ||
-      !pending.operationId ||
-      deliveryMetadata.safeParse(event.data.metadata).data?.chatjs
-        .operationId !== pending.operationId
+      receipt.sessionId !== sessionId ||
+      !isNonEmptyString(receipt.deliveryId) ||
+      !isNonEmptyString(pending.operationId) ||
+      receipt.operationId !== pending.operationId
     ) {
       return false;
     }
@@ -86,7 +94,7 @@ export const eveMessageDelivery = {
   begin: (
     storage: DeliveryStorage,
     sessionId: string,
-    input: NewPendingEveMessage
+    input: ReadonlyNativeSurface<NewPendingEveMessage>
   ): ActivePendingEveMessage =>
     write(storage, sessionId, {
       ...input,
@@ -96,7 +104,7 @@ export const eveMessageDelivery = {
     storage: DeliveryStorage,
     sessionId: string,
     operationId: string | undefined
-  ) => {
+  ): void => {
     const stored = read(storage, sessionId);
     if (stored && stored.operationId === operationId) {
       storage.removeItem(storageKey(sessionId));
@@ -106,22 +114,23 @@ export const eveMessageDelivery = {
   reject: (
     storage: DeliveryStorage,
     sessionId: string,
-    pending: PendingEveMessage,
+    pending: ReadonlyNativeSurface<PendingEveMessage>,
     rejection: string,
     retryable = false
-  ) => write(storage, sessionId, { ...pending, rejection, retryable }),
+  ): PendingEveMessage & { rejection: string; retryable: boolean } =>
+    write(storage, sessionId, { ...pending, rejection, retryable }),
   retry: (
     storage: DeliveryStorage,
     sessionId: string,
-    pending: PendingEveMessage
+    pending: ReadonlyNativeSurface<PendingEveMessage>
   ): ActivePendingEveMessage | undefined => {
     const current = read(storage, sessionId);
     if (
-      !pending.operationId ||
-      !current?.retryable ||
+      !isNonEmptyString(pending.operationId) ||
+      !(current?.retryable === true) ||
       current.operationId !== pending.operationId
     ) {
-      return;
+      return undefined;
     }
     return write(storage, sessionId, {
       ...current,
@@ -132,18 +141,5 @@ export const eveMessageDelivery = {
   },
 };
 
-/** The proxy owns this metadata so caller input cannot forge an acknowledgement. */
-export const eveMessageDeliveryMetadata = (
-  operationId: string,
-  selectedTool: UiToolName | null | undefined
-) => ({
-  chatjs: {
-    ...eveToolMetadata(selectedTool).chatjs,
-    operationId: z.uuid().parse(operationId),
-  },
-});
-
-export const eveMessageOperationId = (event: MessageStreamEvent) =>
-  event.type === "message.received"
-    ? deliveryMetadata.safeParse(event.data.metadata).data?.chatjs.operationId
-    : undefined;
+export { EVE_MESSAGE_OPERATION_HEADER, eveMessageDelivery };
+export type { ActivePendingEveMessage, PendingEveMessage, DeliveryReceipt };

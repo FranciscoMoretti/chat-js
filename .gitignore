@@ -88,3 +88,15 @@ apps/chat/tests/eve-fixture/.output/
 apps/chat/tests/eve-results/
 # Generated shadcn source manifest
 packages/registry/registry.json
+
+packages/chat-visual-tests/uiverify-archive/
+packages/chat-visual-tests/**/__screenshots__/
+apps/chat/tests/visual/**/__screenshots__/
+
+apps/chat/guest/.eve/
+apps/chat/guest/.output/
+
+# Checkout-local registry-mirror coordination locks
+packages/registry/mirror-manifest.json*.lock
+
+packages/chat-visual-tests/.vitest-attachments/

@@ -62,6 +62,6 @@ test("closing the native iterator cancels provider work", async () => {
     }
   );
   await iterator.next();
-  await iterator.return(undefined);
+  await iterator.return();
   expect(cancelled).toHaveBeenCalledOnce();
 });

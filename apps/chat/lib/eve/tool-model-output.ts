@@ -1,9 +1,15 @@
+import type { ToolModelOutput } from "eve/tools";
 import { toolOutput } from "eve/tools";
 
 import type { ToolOutput, ToolResult } from "./tool-result";
 
-/** One projection for every metered tool; billing and progress stay out of model context. */
-export const toolResultToModelOutput = (result: ToolResult<ToolOutput>) =>
+/** One projection for every metered tool; billing and progress stay out of model context.
+ * @param {ToolResult<ToolOutput>} result Tool receipt whose completed output is projected into model context.
+ * @returns {ToolModelOutput} JSON output or the tool's error, excluding billing and progress metadata.
+ */
+export const toolResultToModelOutput = (
+  result: ToolResult<ToolOutput>
+): ToolModelOutput =>
   toolOutput.json(
     result.status === "error" ? { error: result.error } : result.output
   );

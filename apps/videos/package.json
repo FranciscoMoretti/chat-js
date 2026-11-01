@@ -10,7 +10,7 @@
     "test:types": "tsc --noEmit",
     "render:brand": "remotion render src/index.tsx BrandExample out/brand-example.mp4 --codec=h264 --crf=18 --image-format=png --concurrency=4",
     "stills": "bun scripts/stills.ts",
-    "test:unit": "bun test src/story.test.ts"
+    "test:unit": "bun test src/story.test.ts scripts/webpack.test.ts"
   },
   "devDependencies": {
     "@remotion/bundler": "4.0.523",

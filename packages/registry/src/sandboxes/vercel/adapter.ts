@@ -1,0 +1,232 @@
+import type { SandboxProvider } from "@chat-js/sandboxes/provider";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import { getVercelOidcTokenSync } from "@vercel/oidc";
+import { APIError, Sandbox } from "@vercel/sandbox";
+import {
+  readSandboxEnvironment,
+  readSandboxImageEnvironment,
+} from "./vercel-sandbox-env";
+import { createModuleLogger } from "@/lib/logger";
+
+type SupportedExecutionLanguage = "python" | "javascript";
+
+const JWT_PART_COUNT = 3;
+const JWT_PAYLOAD_INDEX = 1;
+const SANDBOX_VCPUS = 2;
+const SANDBOX_TIMEOUT_MS = 300_000;
+const CLEANUP_TIMEOUT_MS = 30_000;
+const LOOKUP_TIMEOUT_MS = 15_000;
+const NOT_FOUND_STATUS = 404;
+
+interface SandboxAuth {
+  projectId: string;
+  teamId: string;
+  token: string;
+}
+
+const tokenClaims = (
+  token: string
+): { projectId: string; teamId: string } | undefined => {
+  const parts = token.split(".");
+  if (parts.length !== JWT_PART_COUNT) {
+    return undefined;
+  }
+  let payload: unknown;
+  try {
+    payload = JSON.parse(
+      Buffer.from(parts[JWT_PAYLOAD_INDEX] ?? "", "base64url").toString("utf-8")
+    );
+  } catch {
+    throw new Error("Sandbox provider identity is unavailable.");
+  }
+  if (
+    !(
+      payload !== null &&
+      typeof payload === "object" &&
+      "owner_id" in payload &&
+      "project_id" in payload
+    )
+  ) {
+    throw new Error("Sandbox provider identity is unavailable.");
+  }
+  if (
+    typeof payload.owner_id !== "string" ||
+    !payload.owner_id ||
+    typeof payload.project_id !== "string" ||
+    !payload.project_id
+  ) {
+    throw new Error("Sandbox provider identity is unavailable.");
+  }
+  return { projectId: payload.project_id, teamId: payload.owner_id };
+};
+
+const getTokenAuth = (): Partial<SandboxAuth> => {
+  const { VERCEL_TEAM_ID, VERCEL_PROJECT_ID, VERCEL_TOKEN } =
+    readSandboxEnvironment();
+  if (
+    typeof VERCEL_TEAM_ID === "string" &&
+    VERCEL_TEAM_ID !== "" &&
+    typeof VERCEL_PROJECT_ID === "string" &&
+    VERCEL_PROJECT_ID !== "" &&
+    typeof VERCEL_TOKEN === "string" &&
+    VERCEL_TOKEN !== ""
+  ) {
+    return {
+      projectId: VERCEL_PROJECT_ID,
+      teamId: VERCEL_TEAM_ID,
+      token: VERCEL_TOKEN,
+    };
+  }
+  return {};
+};
+
+/**
+ * Resolve the exact provider scope before a durable allocation is reserved.
+ * @returns {SandboxAuth} Provider credentials bound to one project and team.
+ */
+const resolveSandboxAuth = (): SandboxAuth => {
+  const configured = getTokenAuth();
+  if (
+    typeof configured.projectId === "string" &&
+    configured.projectId !== "" &&
+    typeof configured.teamId === "string" &&
+    configured.teamId !== "" &&
+    typeof configured.token === "string" &&
+    configured.token !== ""
+  ) {
+    const identity = tokenClaims(configured.token);
+    if (
+      identity &&
+      (identity.projectId !== configured.projectId ||
+        identity.teamId !== configured.teamId)
+    ) {
+      throw new Error(
+        "Sandbox token and configured provider scope do not match."
+      );
+    }
+    return {
+      projectId: configured.projectId,
+      teamId: configured.teamId,
+      token: configured.token,
+    };
+  }
+  // Vercel supplies production tokens through the current request context.
+  let token: string;
+  try {
+    token = getVercelOidcTokenSync();
+  } catch {
+    throw new Error("Sandbox provider identity is unavailable.");
+  }
+  const identity = token ? tokenClaims(token) : undefined;
+  if (!(identity && token)) {
+    throw new Error("Sandbox provider identity is unavailable.");
+  }
+  return { ...identity, token };
+};
+
+const getSandboxImage = (language: SupportedExecutionLanguage): string => {
+  const images = readSandboxImageEnvironment();
+  if (language === "javascript") {
+    return images.VERCEL_SANDBOX_IMAGE_JAVASCRIPT ?? "vercel/sandbox/node:22";
+  }
+
+  return images.VERCEL_SANDBOX_IMAGE_PYTHON ?? "vercel/sandbox/python:3.14";
+};
+
+const createSandbox = async (
+  image: string,
+  signal?: ReadonlyNativeSurface<AbortSignal>,
+  name?: string,
+  auth?: Readonly<SandboxAuth>
+): Promise<Sandbox> =>
+  await Sandbox.create({
+    name,
+    persistent: false,
+    resources: { vcpus: SANDBOX_VCPUS },
+    image,
+    signal,
+    timeout: SANDBOX_TIMEOUT_MS,
+    ...(auth ?? getTokenAuth()),
+  });
+
+const cleanupSandbox = async (
+  sandbox: Pick<Sandbox, "delete" | "stop"> | undefined,
+  log: Pick<ReturnType<typeof createModuleLogger>, "info" | "warn">,
+  requestId: string
+): Promise<void> => {
+  if (!sandbox) {
+    return;
+  }
+  try {
+    try {
+      await sandbox.stop({ signal: AbortSignal.timeout(CLEANUP_TIMEOUT_MS) });
+    } finally {
+      await sandbox.delete({
+        deleteOrphanSnapshots: true,
+        signal: AbortSignal.timeout(CLEANUP_TIMEOUT_MS),
+      });
+    }
+    log.info({ requestId }, "sandbox closed");
+  } catch (closeError) {
+    log.warn({ closeError, requestId }, "failed to close sandbox");
+    throw closeError;
+  }
+};
+
+const findSandboxForCleanup = async (
+  name: string,
+  auth: Readonly<SandboxAuth>
+): Promise<Sandbox | undefined> => {
+  try {
+    return await Sandbox.get({
+      name,
+      resume: false,
+      signal: AbortSignal.timeout(LOOKUP_TIMEOUT_MS),
+      ...auth,
+    });
+  } catch (error) {
+    if (
+      error instanceof APIError &&
+      error.response.status === NOT_FOUND_STATUS
+    ) {
+      return undefined;
+    }
+    throw error;
+  }
+};
+
+const createCleanupSession = (
+  auth: SandboxAuth = resolveSandboxAuth()
+): {
+  deleteAndConfirmAbsent: SandboxProvider["deleteAndConfirmAbsent"];
+  provider: SandboxAuth;
+} => {
+  const log = createModuleLogger("eve-code-sandbox-cleanup");
+  return {
+    async deleteAndConfirmAbsent(name): Promise<void> {
+      const sandbox = await findSandboxForCleanup(name, auth);
+      if (sandbox) {
+        if (sandbox.name !== name || sandbox.persistent) {
+          throw new Error(
+            "Code sandbox identity or persistence needs reconciliation."
+          );
+        }
+        await cleanupSandbox(sandbox, log, name);
+        if (await findSandboxForCleanup(name, auth)) {
+          throw new Error("Code sandbox remains available after deletion.");
+        }
+      }
+    },
+    provider: auth,
+  };
+};
+
+export {
+  cleanupSandbox,
+  createCleanupSession,
+  createSandbox,
+  getSandboxImage,
+  getTokenAuth,
+  resolveSandboxAuth,
+};
+export type { SandboxAuth };

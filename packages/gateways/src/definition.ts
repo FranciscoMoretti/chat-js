@@ -1,82 +1,75 @@
 import { z } from "zod";
 
-const model = z.string().min(1);
-const toggle = z.object({ enabled: z.boolean() });
-const media = z.discriminatedUnion("enabled", [
-  z.object({ default: model, enabled: z.literal(true) }),
-  z.object({ default: model.optional(), enabled: z.literal(false) }),
-]);
+const GATEWAY_CONTRACT_VERSION = 1;
+const MIN_REQUIRED_COUNT = 1;
+const model = z.string().min(MIN_REQUIRED_COUNT);
+const roles = z.object({
+  fast: model,
+  balanced: model,
+  smart: model,
+  image: model.optional(),
+  video: model.optional(),
+});
+const workflows = z.object({
+  chat: model,
+  chatImageCompatible: model,
+  pdf: model,
+  title: model,
+});
+const defaults = z.object({
+  curatedDefaults: z.array(model),
+  disabledModels: z.array(model),
+  providerOrder: z.array(z.string()),
+  roles,
+  workflows,
+});
+const envName = z.string().regex(/^[A-Z_][A-Z0-9_]*$/u);
+const envAlternative = z.array(envName).min(MIN_REQUIRED_COUNT);
+const envRequirement = z.object({
+  description: z.string().optional(),
+  options: z.array(envAlternative).min(MIN_REQUIRED_COUNT),
+});
+
+interface CapabilityDefinition {
+  readonly capabilities: Readonly<{ image: boolean; video: boolean }>;
+  readonly defaults: {
+    readonly roles: { readonly image?: string; readonly video?: string };
+  };
+}
 
 /** Serializable installation contract. Adapter behavior is checked by TypeScript and contract tests. */
-export const gatewayDefinitionSchema = z
+const gatewayDefinitionSchema = z
   .object({
     capabilities: z.object({ image: z.boolean(), video: z.boolean() }),
-    contractVersion: z.literal(1),
-    defaults: z.object({
-      anonymousModels: z.array(model),
-      curatedDefaults: z.array(model),
-      disabledModels: z.array(model),
-      providerOrder: z.array(z.string()),
-      tools: z.object({
-        code: z.object({ edits: model }),
-        codeExecution: toggle,
-        deepResearch: toggle.extend({
-          allowClarification: z.boolean(),
-          defaultModel: model,
-          finalReportModel: model,
-          maxConcurrentResearchUnits: z.number().int().min(1).max(20),
-          maxResearcherIterations: z.number().int().min(1).max(10),
-          maxSearchQueries: z.number().int().min(1).max(10),
-        }),
-        documents: toggle.extend({
-          types: z.object({
-            code: z.boolean(),
-            sheet: z.boolean(),
-            text: z.boolean(),
-          }),
-        }),
-        followupSuggestions: toggle.extend({ default: model }),
-        image: media,
-        mcp: toggle,
-        sheet: z.object({ analyze: model, format: model }),
-        text: z.object({ polish: model }),
-        urlRetrieval: toggle,
-        video: media,
-        webSearch: toggle,
-      }),
-      workflows: z.object({
-        chat: model,
-        chatImageCompatible: model,
-        pdf: model,
-        title: model,
-      }),
-    }),
-    envRequirements: z.array(
-      z.object({
-        description: z.string().optional(),
-        options: z
-          .array(z.array(z.string().regex(/^[A-Z_][A-Z0-9_]*$/u)).min(1))
-          .min(1),
-      })
-    ),
+    contractVersion: z.literal(GATEWAY_CONTRACT_VERSION),
+    defaults,
+    envRequirements: z.array(envRequirement),
     id: z.string().regex(/^[a-z][a-z0-9-]*$/u),
     kind: z.literal("gateway"),
-    optionalEnv: z.array(z.string().regex(/^[A-Z_][A-Z0-9_]*$/u)).default([]),
+    optionalEnv: z.array(envName).default([]),
   })
-  .superRefine((definition, ctx) => {
-    for (const kind of ["image", "video"] as const) {
-      if (
-        (definition.defaults.tools[kind].enabled ||
-          definition.defaults.tools[kind].default !== undefined) &&
-        !definition.capabilities[kind]
-      ) {
-        ctx.addIssue({
-          code: "custom",
-          message: `Gateway does not support ${kind} generation.`,
-          path: ["defaults", "tools", kind],
-        });
+  .superRefine(
+    (
+      definition: CapabilityDefinition,
+      ctx: Readonly<Pick<z.RefinementCtx, "addIssue">>
+    ) => {
+      for (const kind of ["image", "video"] as const) {
+        if (
+          typeof definition.defaults.roles[kind] === "string" &&
+          !definition.capabilities[kind]
+        ) {
+          ctx.addIssue({
+            code: "custom",
+            message: `Gateway does not support ${kind} generation.`,
+            path: ["defaults", "roles", kind],
+          });
+        }
       }
     }
-  });
+  );
 
-export type GatewayDefinition = z.infer<typeof gatewayDefinitionSchema>;
+type GatewayDefinition = z.infer<typeof gatewayDefinitionSchema>;
+
+export { gatewayDefinitionSchema };
+
+export type { GatewayDefinition };

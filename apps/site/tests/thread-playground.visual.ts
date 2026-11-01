@@ -1,9 +1,8 @@
+import type { Locator, Page } from "playwright";
 import assert from "node:assert/strict";
-import { mkdir } from "node:fs/promises";
-import { fileURLToPath } from "node:url";
-
 import { chromium } from "playwright";
-import type { Page } from "playwright";
+import { fileURLToPath } from "node:url";
+import { mkdir } from "node:fs/promises";
 
 // Run through `bun test:visual:site` with `bun dev:site` already running.
 // Frozen time and reduced motion make stream states and captures repeatable.
@@ -14,7 +13,10 @@ const output = fileURLToPath(
 await mkdir(output, { recursive: true });
 const errors: string[] = [];
 
-const capture = async (page: Page, name: string) => {
+const capture = async (
+  page: Readonly<Pick<Page, "getByTestId">>,
+  name: string
+): Promise<void> => {
   await page.getByTestId("thread-playground").screenshot({
     animations: "disabled",
     path: `${output}${name}.png`,
@@ -28,11 +30,13 @@ try {
     reducedMotion: "reduce",
     viewport: { height: 1200, width: 1440 },
   });
-  page.on("pageerror", (error) => errors.push(error.message));
+  page.on("pageerror", (error: Readonly<Pick<Error, "message">>): number =>
+    errors.push(error.message)
+  );
   await page.clock.install({ time: new Date("2026-01-01T00:00:00Z") });
   await page.goto(`http://localhost:${process.env.PORT}/threads`);
   await page.getByTestId("thread-playground").waitFor();
-  await page.evaluate(() => document.fonts.ready);
+  await page.evaluate(async () => await document.fonts.ready);
   await page.clock.pauseAt(new Date("2026-01-01T00:01:00Z"));
   const intro = page.locator("main > section").first();
   assert.match(
@@ -47,7 +51,10 @@ try {
   assert.equal(await docsLinks.count(), 2);
   const links = await docsLinks.all();
   const hrefs = await Promise.all(
-    links.map((link) => link.getAttribute("href"))
+    links.map(
+      async (link: Pick<Locator, "getAttribute">) =>
+        await link.getAttribute("href")
+    )
   );
   for (const href of hrefs) {
     assert.equal(href, "https://chatjs.dev/docs/threads");
@@ -72,20 +79,32 @@ try {
   });
   const initialHeight = await page
     .getByTestId("thread-playground")
-    .evaluate((element) => element.clientHeight);
+    .evaluate(
+      (element: Pick<HTMLElement, "clientHeight">): number =>
+        element.clientHeight
+    );
   assert.equal(
     await page
       .locator("article")
       .filter({ hasText: "You" })
       .first()
-      .evaluate((user) => {
-        const assistant = user.nextElementSibling;
-        return (
-          assistant !== null &&
-          user.getBoundingClientRect().left >
-            assistant.getBoundingClientRect().left + 40
-        );
-      }),
+      .evaluate(
+        (
+          user: Pick<HTMLElement, "getBoundingClientRect"> & {
+            readonly nextElementSibling: Pick<
+              Element,
+              "getBoundingClientRect"
+            > | null;
+          }
+        ): boolean => {
+          const assistant = user.nextElementSibling;
+          return (
+            assistant !== null &&
+            user.getBoundingClientRect().left >
+              assistant.getBoundingClientRect().left + 40
+          );
+        }
+      ),
     true,
     "User bubbles are visibly inset from assistant replies"
   );
@@ -94,7 +113,7 @@ try {
   await page.getByRole("button", { name: "Run 3 replies" }).click();
   const monitor = page.locator("aside");
   await page.waitForFunction(
-    () =>
+    (): boolean =>
       document.querySelectorAll('[data-node-id][data-state="streaming"]')
         .length === 3
   );
@@ -102,7 +121,10 @@ try {
   assert.equal(
     await page
       .getByTestId("thread-playground")
-      .evaluate((element) => element.clientHeight),
+      .evaluate(
+        (element: Pick<HTMLElement, "clientHeight">): number =>
+          element.clientHeight
+      ),
     initialHeight,
     "Starting three replies does not shift the map or conversation"
   );
@@ -139,23 +161,31 @@ try {
     0
   );
   assert.equal(
-    await page.locator("aside").evaluate((panel) => {
-      const viewport =
-        panel.querySelector("[data-node-id]")?.parentElement?.parentElement;
-      if (!viewport) {
-        return false;
-      }
-      const bounds = viewport.getBoundingClientRect();
-      return [...panel.querySelectorAll("[data-node-id]")].every((node) => {
-        const box = node.getBoundingClientRect();
-        return (
-          box.left >= bounds.left &&
-          box.right <= bounds.right &&
-          box.top >= bounds.top &&
-          box.bottom <= bounds.bottom
-        );
-      });
-    }),
+    await page
+      .locator("aside")
+      .evaluate(
+        (
+          panel: Pick<HTMLElement, "querySelector" | "querySelectorAll">
+        ): boolean => {
+          const viewport =
+            panel.querySelector("[data-node-id]")?.parentElement?.parentElement;
+          if (!viewport) {
+            return false;
+          }
+          const bounds = viewport.getBoundingClientRect();
+          return [...panel.querySelectorAll("[data-node-id]")].every(
+            (node: Pick<Element, "getBoundingClientRect">): boolean => {
+              const box = node.getBoundingClientRect();
+              return (
+                box.left >= bounds.left &&
+                box.right <= bounds.right &&
+                box.top >= bounds.top &&
+                box.bottom <= bounds.bottom
+              );
+            }
+          );
+        }
+      ),
     true,
     "Every node fits inside the map viewport"
   );
@@ -195,12 +225,13 @@ try {
     .last()
     .click();
   await page.waitForFunction(
-    (count) => document.querySelectorAll("[data-node-id]").length === count + 2,
+    (count): boolean =>
+      document.querySelectorAll("[data-node-id]").length === count + 2,
     originalCount
   );
   await page.getByRole("button", { name: "Stop all responses" }).click();
   await page.waitForFunction(
-    () =>
+    (): boolean =>
       document.querySelectorAll('[data-node-id][data-state="streaming"]')
         .length === 0
   );
@@ -215,18 +246,22 @@ try {
   assert.equal(await page.locator("[data-node-id]").count(), 7);
   await page.getByRole("button", { name: "Run 3 replies" }).click();
   await page.waitForFunction(
-    () =>
+    (): boolean =>
       document.querySelectorAll('[data-node-id][data-state="streaming"]')
         .length === 3
   );
   await page.clock.runFor(1800);
-  await page.evaluate(() => document.documentElement.classList.add("dark"));
+  await page.evaluate((): void => {
+    document.documentElement.classList.add("dark");
+  });
   await capture(page, "threads-dark-live");
   await page.setViewportSize({ height: 844, width: 390 });
-  await page.evaluate(() => document.documentElement.classList.remove("dark"));
+  await page.evaluate((): void => {
+    document.documentElement.classList.remove("dark");
+  });
   assert.equal(
     await page.evaluate(
-      () => document.documentElement.scrollWidth <= window.innerWidth
+      (): boolean => document.documentElement.scrollWidth <= window.innerWidth
     ),
     true,
     "No page-level horizontal overflow on mobile"
@@ -237,7 +272,8 @@ try {
   await mobileBranch.scrollIntoViewIfNeeded();
   assert.ok(
     await mobileBranch.evaluate(
-      (element) => element.getBoundingClientRect().width >= 100
+      (element: Pick<HTMLElement, "getBoundingClientRect">): boolean =>
+        element.getBoundingClientRect().width >= 100
     ),
     "Mobile branch targets remain readable"
   );

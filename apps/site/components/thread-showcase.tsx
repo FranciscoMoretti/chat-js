@@ -1,7 +1,7 @@
 "use client";
 
+import type { ThreadInit, ThreadRun, ThreadRunHandle } from "@chat-js/thread";
 import { getMessageText } from "@chat-js/thread";
-import type { ThreadRunHandle } from "@chat-js/thread";
 import { useThread } from "@chat-js/thread/react";
 import {
   Check,
@@ -16,16 +16,16 @@ import {
   Sparkles,
   Square,
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import type {
+  PlaygroundMessage,
+  PlaygroundChat as ThreadChat,
+} from "./thread-playground-model";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 
 import {
   buildTreeLayout,
-  initialTree,
   createPlaygroundTransport,
-} from "./thread-playground-model";
-import type {
-  PlaygroundChat as ThreadChat,
-  PlaygroundMessage,
+  initialTree,
 } from "./thread-playground-model";
 
 import styles from "./thread-showcase.module.css";
@@ -35,33 +35,65 @@ const MAX_ACTIVE_RUNS = 8;
 
 type PlaygroundChat = ThreadChat & { stoppedIds: ReadonlySet<string> };
 
-const responseState = (chat: PlaygroundChat, message: PlaygroundMessage) => {
-  if (message.role !== "assistant") {
-    return "complete";
-  }
-  const status = chat.tree.getRunForMessage(message.id)?.status;
+type PlaygroundChatView = Readonly<{
+  messages: readonly PlaygroundMessageReader[];
+  status: PlaygroundChat["status"];
+  stop: PlaygroundChat["stop"];
+  stoppedIds: Readonly<Pick<ReadonlySet<string>, "has">>;
+  tree: Readonly<{
+    activeRuns: Readonly<{ length: number }>;
+    childrenByParentId: Readonly<Record<string, readonly string[]>>;
+    cursorId: string | null;
+    getLeaves: (id?: string | null) => readonly PlaygroundMessageReader[];
+    getRunForMessage: (
+      id: string
+    ) => Readonly<Pick<ThreadRun, "status">> | undefined;
+    getSiblings: (id: string) => readonly PlaygroundMessageReader[];
+    messagesById: Readonly<Record<string, PlaygroundMessageReader>>;
+    rootIds: readonly string[];
+    setCursor: PlaygroundChat["tree"]["setCursor"];
+    stopAll: PlaygroundChat["tree"]["stopAll"];
+  }>;
+}>;
+type ReadonlyStringIterable = Readonly<{
+  [Symbol.iterator]: () => Readonly<{
+    next: () => Readonly<IteratorResult<string>>;
+  }>;
+}>;
+
+type ThreadFinishEvent = Parameters<
+  NonNullable<ThreadInit<PlaygroundMessage>["onFinish"]>
+>["0"];
+type PlaygroundMessageReader = Parameters<typeof getMessageText>[0] &
+  Readonly<Pick<PlaygroundMessage, "metadata">>;
+
+const responseState = (
+  status: ThreadRun["status"] | undefined,
+  isStopped: boolean
+): "complete" | "error" | "stopped" | "streaming" | "submitted" => {
   if (status === "streaming" || status === "submitted") {
     return status;
   }
   if (status === "error") {
     return "error";
   }
-  if (chat.stoppedIds.has(message.id)) {
+  if (isStopped) {
     return "stopped";
   }
   return "complete";
 };
 
 const ResponseStatus = ({
-  chat,
-  message,
+  isAssistant,
+  state,
+  text,
 }: {
-  chat: PlaygroundChat;
-  message: PlaygroundMessage;
-}) => {
-  const state = responseState(chat, message);
+  readonly isAssistant: boolean;
+  readonly state: ReturnType<typeof responseState>;
+  readonly text: string;
+}): React.JSX.Element => {
   const live = state === "streaming" || state === "submitted";
-  const tokens = Math.ceil(getMessageText(message).length / 4);
+  const tokens = Math.ceil(text.length / 4);
   return (
     <span className={styles.responseStatus} data-state={state}>
       <span
@@ -73,7 +105,7 @@ const ResponseStatus = ({
           ? "Starting"
           : state.charAt(0).toUpperCase() + state.slice(1)}
       </span>
-      {message.role === "assistant" && (
+      {isAssistant && (
         <span
           className={styles.tokens}
           title="Estimated tokens: text length divided by four"
@@ -85,19 +117,20 @@ const ResponseStatus = ({
   );
 };
 
-export const ThreadInstallCommand = () => {
+const ThreadInstallCommand = (): React.JSX.Element => {
   const [copied, setCopied] = useState(false);
 
-  const copyCommand = async () => {
+  const copyCommand = async (): Promise<void> => {
     try {
       await navigator.clipboard.writeText(INSTALL_COMMAND);
       setCopied(true);
-      window.setTimeout(() => setCopied(false), 1600);
+      globalThis.setTimeout((): void => {
+        setCopied(false);
+      }, 1600);
     } catch {
       setCopied(false);
     }
   };
-
   return (
     <div className="border-border bg-card mt-8 max-w-3xl border">
       <div className="border-border flex items-center justify-between border-b px-3 py-2">
@@ -108,7 +141,9 @@ export const ThreadInstallCommand = () => {
         <button
           aria-label="Copy installation command"
           className="text-muted-foreground hover:bg-secondary hover:text-foreground grid size-8 place-items-center transition-colors"
-          onClick={copyCommand}
+          onClick={(): void => {
+            void copyCommand();
+          }}
           type="button"
         >
           {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
@@ -134,36 +169,39 @@ const Conversation = ({
   playgroundError,
   responseCount,
 }: {
-  chat: PlaygroundChat;
-  draft: string;
-  onBranch: (messageId: string) => Promise<void>;
-  onDraftChange: (draft: string) => void;
-  onResponseCountChange: (count: number) => void;
-  onSend: () => Promise<void>;
-  playgroundError: string | null;
-  responseCount: number;
-}) => {
+  readonly chat: PlaygroundChatView;
+  readonly draft: string;
+  readonly onBranch: (messageId: string) => Promise<void>;
+  readonly onDraftChange: (draft: string) => void;
+  readonly onResponseCountChange: (count: number) => void;
+  readonly onSend: () => Promise<void>;
+  readonly playgroundError: string | null;
+  readonly responseCount: number;
+}): React.JSX.Element => {
   const transcript = useRef<HTMLDivElement>(null);
   const followTranscript = useRef(true);
-  useEffect(() => {
+  useEffect((): (() => void) | undefined => {
     const element = transcript.current;
     if (!element) {
-      return;
+      return undefined;
     }
-    const observer = new ResizeObserver(() => {
+    const observer = new ResizeObserver((): void => {
       if (followTranscript.current) {
         element.scrollTop = element.scrollHeight;
       }
     });
     observer.observe(element);
-    return () => observer.disconnect();
+    return (): void => {
+      observer.disconnect();
+    };
   }, []);
   const { cursorId } = chat.tree;
   const textLength = chat.messages.reduce(
-    (length, message) => length + getMessageText(message).length,
+    (length, message: PlaygroundMessageReader): number =>
+      length + getMessageText(message).length,
     0
   );
-  useEffect(() => {
+  useEffect((): void => {
     if (textLength && followTranscript.current) {
       transcript.current?.scrollTo({
         behavior: "instant",
@@ -171,9 +209,9 @@ const Conversation = ({
       });
     }
   }, [textLength]);
-  useEffect(() => {
+  useEffect((): void => {
     followTranscript.current = true;
-    if (cursorId) {
+    if (typeof cursorId === "string" && cursorId !== "") {
       transcript.current?.scrollTo({
         behavior: "instant",
         top: transcript.current.scrollHeight,
@@ -198,7 +236,14 @@ const Conversation = ({
 
       <div
         className={styles.transcript}
-        onScroll={(event) => {
+        onScroll={(
+          event: Readonly<{
+            currentTarget: Pick<
+              HTMLDivElement,
+              "clientHeight" | "scrollHeight" | "scrollTop"
+            >;
+          }>
+        ): void => {
           const element = event.currentTarget;
           followTranscript.current =
             element.scrollHeight - element.scrollTop - element.clientHeight <
@@ -206,17 +251,25 @@ const Conversation = ({
         }}
         ref={transcript}
       >
-        {chat.messages.map((message) => {
+        {chat.messages.map((message: PlaygroundMessageReader) => {
           const isUser = message.role === "user";
+          let state: ReturnType<typeof responseState> = "complete";
+          if (message.role === "assistant") {
+            state = responseState(
+              chat.tree.getRunForMessage(message.id)?.status,
+              chat.stoppedIds.has(message.id)
+            );
+          }
           const siblings = chat.tree.getSiblings(message.id);
           const siblingIndex = siblings.findIndex(
-            (sibling) => sibling.id === message.id
+            (sibling: Readonly<Pick<PlaygroundMessage, "id">>): boolean =>
+              sibling.id === message.id
           );
           const hasSiblings = siblings.length > 1 && siblingIndex !== -1;
 
-          const navigateToSibling = (nextIndex: number) => {
+          const navigateToSibling = (nextIndex: number): void => {
             const sibling = siblings[nextIndex];
-            if (!sibling) {
+            if (sibling === undefined) {
               return;
             }
             const leaf = chat.tree.getLeaves(sibling.id).at(-1);
@@ -245,13 +298,19 @@ const Conversation = ({
                   {getMessageText(message) || "Streaming..."}
                 </p>
               </div>
-              {!isUser && <ResponseStatus chat={chat} message={message} />}
+              {!isUser && (
+                <ResponseStatus
+                  isAssistant={message.role === "assistant"}
+                  state={state}
+                  text={getMessageText(message)}
+                />
+              )}
               <div className={styles.messageActions}>
                 <button
                   className={styles.branchButton}
                   disabled={chat.tree.activeRuns.length >= MAX_ACTIVE_RUNS}
-                  onClick={async () => {
-                    await onBranch(message.id);
+                  onClick={(): void => {
+                    void onBranch(message.id);
                   }}
                   type="button"
                 >
@@ -267,7 +326,9 @@ const Conversation = ({
                       aria-label={`Previous branch for ${message.id}`}
                       className="hover:bg-background/10 grid size-7 place-items-center disabled:opacity-30"
                       disabled={siblingIndex === 0}
-                      onClick={() => navigateToSibling(siblingIndex - 1)}
+                      onClick={(): void => {
+                        navigateToSibling(siblingIndex - 1);
+                      }}
                       title="Previous version"
                       type="button"
                     >
@@ -280,7 +341,9 @@ const Conversation = ({
                       aria-label={`Next branch for ${message.id}`}
                       className="hover:bg-background/10 grid size-7 place-items-center disabled:opacity-30"
                       disabled={siblingIndex === siblings.length - 1}
-                      onClick={() => navigateToSibling(siblingIndex + 1)}
+                      onClick={(): void => {
+                        navigateToSibling(siblingIndex + 1);
+                      }}
                       title="Next version"
                       type="button"
                     >
@@ -296,9 +359,11 @@ const Conversation = ({
 
       <form
         className="border-border border-t p-3"
-        onSubmit={async (event) => {
+        onSubmit={(
+          event: Readonly<Pick<React.FormEvent, "preventDefault">>
+        ): void => {
           event.preventDefault();
-          await onSend();
+          void onSend();
         }}
       >
         <p className={styles.composerContext}>
@@ -312,7 +377,13 @@ const Conversation = ({
           <textarea
             aria-label="Message this branch"
             className="block min-h-16 w-full resize-none bg-transparent px-3 py-3 text-sm outline-none"
-            onChange={(event) => onDraftChange(event.target.value)}
+            onChange={(
+              event: Readonly<{
+                target: Pick<HTMLTextAreaElement, "value">;
+              }>
+            ): void => {
+              onDraftChange(event.target.value);
+            }}
             placeholder="Message this branch…"
             rows={2}
             value={draft}
@@ -324,9 +395,13 @@ const Conversation = ({
               <select
                 aria-label="Number of responses"
                 className="text-foreground bg-transparent font-mono outline-none"
-                onChange={(event) =>
-                  onResponseCountChange(Number(event.target.value))
-                }
+                onChange={(
+                  event: Readonly<{
+                    target: Pick<HTMLSelectElement, "value">;
+                  }>
+                ): void => {
+                  onResponseCountChange(Number(event.target.value));
+                }}
                 value={responseCount}
               >
                 {[1, 2, 3, 4].map((count) => (
@@ -343,7 +418,9 @@ const Conversation = ({
                 disabled={
                   chat.status !== "submitted" && chat.status !== "streaming"
                 }
-                onClick={() => chat.stop()}
+                onClick={(): void => {
+                  void chat.stop();
+                }}
                 title="Stop selected response"
                 type="button"
               >
@@ -353,7 +430,9 @@ const Conversation = ({
                 aria-label="Stop all responses"
                 className="text-muted-foreground hover:bg-secondary hover:text-foreground grid size-8 place-items-center disabled:opacity-30"
                 disabled={chat.tree.activeRuns.length === 0}
-                onClick={() => chat.tree.stopAll()}
+                onClick={(): void => {
+                  void chat.tree.stopAll();
+                }}
                 title="Stop all responses"
                 type="button"
               >
@@ -387,7 +466,11 @@ const Conversation = ({
   );
 };
 
-const TreeCanvas = ({ chat }: { chat: PlaygroundChat }) => {
+const TreeCanvas = ({
+  chat,
+}: {
+  readonly chat: PlaygroundChatView;
+}): React.JSX.Element => {
   const layout = useMemo(
     () =>
       buildTreeLayout({
@@ -396,22 +479,28 @@ const TreeCanvas = ({ chat }: { chat: PlaygroundChat }) => {
       }),
     [chat.tree.childrenByParentId, chat.tree.rootIds]
   );
-  const activeIds = new Set(chat.messages.map((message) => message.id));
+  const activeIds = new Set(
+    chat.messages.map(
+      (message: Readonly<Pick<PlaygroundMessage, "id">>): string => message.id
+    )
+  );
   const canvas = useRef<HTMLDivElement>(null);
   const [viewportSize, setViewportSize] = useState({ height: 0, width: 0 });
-  useEffect(() => {
+  useEffect((): (() => void) | undefined => {
     const viewport = canvas.current;
     if (!viewport) {
-      return;
+      return undefined;
     }
-    const observer = new ResizeObserver(() =>
+    const observer = new ResizeObserver((): void => {
       setViewportSize({
         height: viewport.clientHeight,
         width: viewport.clientWidth,
-      })
-    );
+      });
+    });
     observer.observe(viewport);
-    return () => observer.disconnect();
+    return (): void => {
+      observer.disconnect();
+    };
   }, []);
   const scale = viewportSize.width
     ? Math.max(
@@ -474,12 +563,18 @@ const TreeCanvas = ({ chat }: { chat: PlaygroundChat }) => {
 
           {layout.nodes.map((node) => {
             const message = chat.tree.messagesById[node.id];
-            if (!message) {
+            if (message === undefined) {
               return null;
             }
             const isActive = activeIds.has(node.id);
             const isCursor = chat.tree.cursorId === node.id;
-            const state = responseState(chat, message);
+            let state: ReturnType<typeof responseState> = "complete";
+            if (message.role === "assistant") {
+              state = responseState(
+                chat.tree.getRunForMessage(message.id)?.status,
+                chat.stoppedIds.has(message.id)
+              );
+            }
 
             return (
               <button
@@ -489,7 +584,9 @@ const TreeCanvas = ({ chat }: { chat: PlaygroundChat }) => {
                 data-path={isActive}
                 data-state={state}
                 key={node.id}
-                onClick={() => chat.tree.setCursor(node.id)}
+                onClick={(): void => {
+                  chat.tree.setCursor(node.id);
+                }}
                 style={{ left: node.x, top: node.y }}
                 type="button"
               >
@@ -510,10 +607,15 @@ const TreeCanvas = ({ chat }: { chat: PlaygroundChat }) => {
                   {getMessageText(message) || "Waiting for first token…"}
                 </span>
                 {message.role === "assistant" ? (
-                  <ResponseStatus chat={chat} message={message} />
+                  <ResponseStatus
+                    isAssistant={message.role === "assistant"}
+                    state={state}
+                    text={getMessageText(message)}
+                  />
                 ) : (
                   <span className={styles.promptLabel}>
-                    Prompt{isActive ? " · on selected path" : ""}
+                    Prompt
+                    {isActive ? " · on selected path" : ""}
                   </span>
                 )}
               </button>
@@ -525,7 +627,19 @@ const TreeCanvas = ({ chat }: { chat: PlaygroundChat }) => {
   );
 };
 
-const messageInput = (text: string, title: string, messageId?: string) => ({
+const messageInput = (
+  text: string,
+  title: string,
+  messageId?: string
+): {
+  messageId: string | undefined;
+  metadata: {
+    activeStreamId: null;
+    createdAt: string;
+    title: string;
+  };
+  text: string;
+} => ({
   messageId,
   metadata: {
     activeStreamId: null,
@@ -535,13 +649,13 @@ const messageInput = (text: string, title: string, messageId?: string) => ({
   text,
 });
 
-const PlaygroundSession = () => {
+const PlaygroundSession = (): React.JSX.Element => {
   const [draft, setDraft] = useState("");
   const [playgroundError, setPlaygroundError] = useState<string | null>(null);
   const [responseCount, setResponseCount] = useState(1);
   const idCounter = useRef(100);
 
-  const generateMessageId = () => {
+  const generateMessageId = (): string => {
     idCounter.current += 1;
     return `msg_${idCounter.current}`;
   };
@@ -551,16 +665,28 @@ const PlaygroundSession = () => {
     concurrency: { maxActiveRuns: MAX_ACTIVE_RUNS },
     generateId: generateMessageId,
     initialTree,
-    onFinish: ({ message, isAbort }) => {
+    onFinish: ({
+      message,
+      isAbort,
+    }: Readonly<{
+      message: Readonly<Pick<ThreadFinishEvent["message"], "id">>;
+      isAbort: boolean;
+    }>): void => {
       if (isAbort) {
-        setStoppedIds((previous) => new Set([...previous, message.id]));
+        setStoppedIds(
+          (previous: ReadonlyStringIterable) =>
+            new Set([...previous, message.id])
+        );
       }
     },
     transport: createPlaygroundTransport(),
   });
   const chat: PlaygroundChat = { ...thread, stoppedIds };
 
-  const sendDraft = async (input?: string, count = responseCount) => {
+  const sendDraft = async (
+    input?: string,
+    count = responseCount
+  ): Promise<void> => {
     const text = input ?? draft.trim();
     if (!text) {
       return;
@@ -580,22 +706,24 @@ const PlaygroundSession = () => {
       setDraft("");
 
       const siblingRuns: ThreadRunHandle[] = await Promise.all(
-        Array.from({ length: count - 1 }, (_, index) =>
-          chat.tree.startRun({
-            follow: false,
-            from: userMessageId,
-            request: {
-              body: {
-                responseLabel: `Response ${index + 2} of ${count}`,
+        Array.from(
+          { length: count - 1 },
+          async (_, index) =>
+            await chat.tree.startRun({
+              follow: false,
+              from: userMessageId,
+              request: {
+                body: {
+                  responseLabel: `Response ${index + 2} of ${count}`,
+                },
               },
-            },
-          })
+            })
         )
       );
-      const completions = [
-        primaryRun.finished,
-        ...siblingRuns.map((run) => run.finished),
-      ];
+      const completions = [primaryRun.finished];
+      for (const siblingRun of siblingRuns) {
+        completions.push(siblingRun.finished);
+      }
       await Promise.all(completions);
     } catch (error) {
       setPlaygroundError(
@@ -603,12 +731,11 @@ const PlaygroundSession = () => {
       );
     }
   };
-
-  const branchFrom = async (messageId: string) => {
+  const branchFrom = async (messageId: string): Promise<void> => {
     setPlaygroundError(null);
     try {
       const message = chat.tree.messagesById[messageId];
-      if (!message) {
+      if (message === undefined) {
         return;
       }
       chat.tree.setCursor(messageId);
@@ -631,7 +758,6 @@ const PlaygroundSession = () => {
       );
     }
   };
-
   return (
     <div className={styles.playground} data-testid="thread-playground">
       <div className="border-border flex min-h-16 flex-wrap items-center justify-between gap-3 border-b px-4 py-3">
@@ -647,7 +773,9 @@ const PlaygroundSession = () => {
         <button
           className={styles.demoButton}
           disabled={chat.tree.activeRuns.length + 3 > MAX_ACTIVE_RUNS}
-          onClick={() => sendDraft("How should we launch this?", 3)}
+          onClick={(): void => {
+            void sendDraft("How should we launch this?", 3);
+          }}
           type="button"
         >
           <Play fill="currentColor" size={13} /> Run 3 replies
@@ -661,7 +789,7 @@ const PlaygroundSession = () => {
           onBranch={branchFrom}
           onDraftChange={setDraft}
           onResponseCountChange={setResponseCount}
-          onSend={() => sendDraft()}
+          onSend={sendDraft}
           playgroundError={playgroundError}
           responseCount={responseCount}
         />
@@ -699,7 +827,7 @@ const PlaygroundSession = () => {
   );
 };
 
-export const ThreadPlayground = () => {
+const ThreadPlayground = (): React.JSX.Element => {
   const [session, setSession] = useState(0);
   return (
     <div>
@@ -708,7 +836,12 @@ export const ThreadPlayground = () => {
         <span>
           Local simulation · ≈ token counts are estimates, not provider usage
         </span>
-        <button onClick={() => setSession((value) => value + 1)} type="button">
+        <button
+          onClick={(): void => {
+            setSession((value): number => value + 1);
+          }}
+          type="button"
+        >
           <RotateCcw size={12} /> Reset demo
         </button>
       </div>
@@ -716,9 +849,11 @@ export const ThreadPlayground = () => {
   );
 };
 
-export const ThreadShowcase = () => (
+const ThreadShowcase = (): React.JSX.Element => (
   <>
     <ThreadPlayground />
     <ThreadInstallCommand />
   </>
 );
+
+export { ThreadInstallCommand, ThreadPlayground, ThreadShowcase };

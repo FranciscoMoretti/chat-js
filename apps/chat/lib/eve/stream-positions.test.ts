@@ -11,7 +11,7 @@ const mocks = vi.hoisted(() => ({
   positions: vi.fn(),
 }));
 vi.mock("../env", () => ({ env: mocks.env }));
-vi.mock("../db/eve-stream-positions", () => ({
+vi.mock("@/lib/eve/lifecycle/postgres/eve-stream-positions", () => ({
   getEvePostgresStreamPositions: mocks.positions,
 }));
 
@@ -33,6 +33,14 @@ it("uses PostgreSQL locally and propagates lookup failures", async () => {
   await expect(getEveStreamPositions(["session"])).rejects.toThrow(
     "database unavailable"
   );
+});
+
+it("rejects an empty local workflow URL before loading PostgreSQL", async () => {
+  mocks.env.WORKFLOW_POSTGRES_URL = "";
+  await expect(getEveStreamPositions(["session"])).rejects.toThrow(
+    "Configure WORKFLOW_POSTGRES_URL for local workflows."
+  );
+  expect(mocks.positions).not.toHaveBeenCalled();
 });
 
 it("never queries PostgreSQL on Vercel, including when a stale URL remains", async () => {

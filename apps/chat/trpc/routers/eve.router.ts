@@ -1,3 +1,7 @@
+import {
+  getEveSendReceipt,
+  getEveMessageDisplayReceipts,
+} from "@/lib/db/eve-dispatch";
 import { TRPCError } from "@trpc/server";
 import { headers } from "next/headers";
 import { z } from "zod";
@@ -9,68 +13,60 @@ import {
   listEveConversations,
   updateEveConversationMetadata,
 } from "@/lib/db/eve-queries";
-import { searchEveConversations } from "@/lib/db/eve-search";
-import {
-  assignEveConversationProject,
-  getEveMessageVotes,
-} from "@/lib/db/queries";
-import { eveManualDocumentInput } from "@/lib/eve/document-contracts";
 import { eveHistoryInput } from "@/lib/eve/history-input";
+import { eveManualDocumentInput } from "@/chatjs/core/documents/contracts";
+
 import { resolveEvePrincipal } from "@/lib/eve/principal";
+import { restoreMessageAttachments } from "@/lib/eve/restore-message-attachments";
 import { saveManualEveDocument } from "@/lib/eve/save-document";
-import { MAX_SEARCH_QUERY_LENGTH } from "@/lib/eve/search-text";
-import { voteEveMessage } from "@/lib/eve/vote-message";
-import {
-  createTRPCRouter,
-  protectedProcedure,
-  publicProcedure,
-} from "@/trpc/init";
 
-const eveProcedure = protectedProcedure;
+import { eveOwnedProcedure } from "@/trpc/eve-owned-procedure";
 
-const eveOwnedProcedure = publicProcedure.use(async ({ ctx, next }) => {
-  let ownerId = ctx.user?.id;
-  if (!ownerId) {
-    const principal = await resolveEvePrincipal(await headers());
-    ownerId = principal?.ownerId;
-  }
-  if (!ownerId) {
-    throw new TRPCError({ code: "UNAUTHORIZED" });
-  }
-  return next({ ctx: { eveOwnerId: ownerId } });
-});
+import { createTRPCRouter, publicProcedure } from "@/trpc/init";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+
+const MAX_CONVERSATION_TITLE_LENGTH = 255;
+const MAX_MESSAGE_ID_LENGTH = 512;
 
 export const eveRouter = createTRPCRouter({
-  assignProject: eveProcedure
+  messageDisplay: eveOwnedProcedure
+    .input(z.object({ sessionId: z.string().min(1).max(200) }))
+    .query(
+      async ({ ctx, input }) =>
+        await getEveMessageDisplayReceipts(ctx.eveOwnerId, input.sessionId)
+    ),
+  sendReceipt: eveOwnedProcedure
     .input(
-      z.object({ conversationId: z.uuid(), projectId: z.uuid().nullable() })
+      z.object({ sessionId: z.string().min(1).max(200), operationId: z.uuid() })
     )
-    .mutation(async ({ ctx, input }) => {
-      const assigned = await assignEveConversationProject(
-        ctx.user.id,
-        input.conversationId,
-        input.projectId
-      );
-      if (!assigned) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Conversation or project not found.",
-        });
-      }
-      return assigned;
-    }),
+    .query(
+      async ({ ctx, input }) =>
+        await getEveSendReceipt(
+          ctx.eveOwnerId,
+          input.sessionId,
+          input.operationId
+        )
+    ),
   branches: eveOwnedProcedure
     .input(z.object({ id: z.uuid() }))
-    .query(async ({ ctx, input }) => {
-      const family = await listEveConversationBranches(
-        ctx.eveOwnerId,
-        input.id
-      );
-      if (!family) {
-        throw new TRPCError({ code: "NOT_FOUND" });
+    .query(
+      async ({
+        ctx,
+        input,
+      }: {
+        readonly ctx: { readonly eveOwnerId: string };
+        readonly input: { readonly id: string };
+      }) => {
+        const family = await listEveConversationBranches(
+          ctx.eveOwnerId,
+          input.id
+        );
+        if (!family) {
+          throw new TRPCError({ code: "NOT_FOUND" });
+        }
+        return family;
       }
-      return family;
-    }),
+    ),
   document: publicProcedure
     .input(
       z.object({
@@ -79,69 +75,161 @@ export const eveRouter = createTRPCRouter({
         revisionId: z.uuid().optional(),
       })
     )
-    .query(async ({ ctx, input }) => {
-      let ownerId = ctx.user?.id;
-      if (!ownerId) {
-        const principal = await resolveEvePrincipal(await headers());
-        ownerId = principal?.ownerId;
+    .query(
+      async ({
+        ctx,
+        input,
+      }: {
+        readonly ctx: { readonly user?: { readonly id: string } };
+        readonly input: ReadonlyNativeSurface<{
+          conversationId: string;
+          documentId: string;
+          revisionId?: string | undefined;
+        }>;
+      }) => {
+        let ownerId = ctx.user?.id;
+        if (typeof ownerId !== "string" || ownerId === "") {
+          const principal = await resolveEvePrincipal(await headers());
+          ownerId = principal?.ownerId;
+        }
+        const document = await getAccessibleEveDocument(
+          ownerId,
+          input.conversationId,
+          input.documentId,
+          input.revisionId
+        );
+        if (!document) {
+          throw new TRPCError({ code: "NOT_FOUND" });
+        }
+        return document;
       }
-      const document = await getAccessibleEveDocument(
-        ownerId,
-        input.conversationId,
-        input.documentId,
-        input.revisionId
-      );
-      if (!document) {
-        throw new TRPCError({ code: "NOT_FOUND" });
-      }
-      return document;
-    }),
+    ),
   get: eveOwnedProcedure
     .input(z.object({ id: z.uuid() }))
-    .query(async ({ ctx, input }) => {
-      const row = await getEveChatIdentity(ctx.eveOwnerId, input.id);
-      if (!row) {
-        throw new TRPCError({ code: "NOT_FOUND" });
+    .query(
+      async ({
+        ctx,
+        input,
+      }: {
+        readonly ctx: { readonly eveOwnerId: string };
+        readonly input: { readonly id: string };
+      }) => {
+        const row = await getEveChatIdentity(ctx.eveOwnerId, input.id);
+        if (row === undefined) {
+          throw new TRPCError({ code: "NOT_FOUND" });
+        }
+        return row;
       }
-      return row;
-    }),
-  list: eveOwnedProcedure
-    .input(eveHistoryInput)
-    .query(async ({ ctx, input }) => {
-      if (input.ownerScope && input.ownerScope !== ctx.eveOwnerId) {
+    ),
+  list: eveOwnedProcedure.input(eveHistoryInput).query(
+    async ({
+      ctx,
+      input,
+    }: {
+      readonly ctx: { readonly eveOwnerId: string };
+      readonly input: ReadonlyNativeSurface<{
+        search: string;
+        cursor?:
+          | { id: string; isPinned: boolean; updatedAt: string }
+          | null
+          | undefined;
+        ownerScope?: string | undefined;
+        surface?: "sidebar" | "all" | undefined;
+      }>;
+    }) => {
+      const { ownerScope } = input;
+      if (
+        typeof ownerScope === "string" &&
+        ownerScope !== "" &&
+        input.ownerScope !== ctx.eveOwnerId
+      ) {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
       return await listEveConversations(ctx.eveOwnerId, input);
-    }),
+    }
+  ),
   pin: eveOwnedProcedure
     .input(z.object({ id: z.uuid(), isPinned: z.boolean() }))
-    .mutation(async ({ ctx, input }) => {
-      const updated = await updateEveConversationMetadata(
-        ctx.eveOwnerId,
-        input.id,
-        { isPinned: input.isPinned }
-      );
-      if (!updated) {
-        throw new TRPCError({ code: "NOT_FOUND" });
+    .mutation(
+      async ({
+        ctx,
+        input,
+      }: {
+        readonly ctx: { readonly eveOwnerId: string };
+        readonly input: { readonly id: string; readonly isPinned: boolean };
+      }) => {
+        const updated = await updateEveConversationMetadata(
+          ctx.eveOwnerId,
+          input.id,
+          { isPinned: input.isPinned }
+        );
+        if (updated === undefined) {
+          throw new TRPCError({ code: "NOT_FOUND" });
+        }
+        return updated;
       }
-      return updated;
-    }),
+    ),
   rename: eveOwnedProcedure
-    .input(z.object({ id: z.uuid(), title: z.string().trim().min(1).max(255) }))
-    .mutation(async ({ ctx, input }) => {
-      const updated = await updateEveConversationMetadata(
-        ctx.eveOwnerId,
-        input.id,
-        { title: input.title }
-      );
-      if (!updated) {
-        throw new TRPCError({ code: "NOT_FOUND" });
+    .input(
+      z.object({
+        id: z.uuid(),
+        title: z.string().trim().nonempty().max(MAX_CONVERSATION_TITLE_LENGTH),
+      })
+    )
+    .mutation(
+      async ({
+        ctx,
+        input,
+      }: {
+        readonly ctx: { readonly eveOwnerId: string };
+        readonly input: { readonly id: string; readonly title: string };
+      }) => {
+        const updated = await updateEveConversationMetadata(
+          ctx.eveOwnerId,
+          input.id,
+          { title: input.title }
+        );
+        if (updated === undefined) {
+          throw new TRPCError({ code: "NOT_FOUND" });
+        }
+        return updated;
       }
-      return updated;
-    }),
-  saveDocument: eveOwnedProcedure
-    .input(eveManualDocumentInput)
-    .mutation(async ({ ctx, input }) => {
+    ),
+  restoreAttachments: eveOwnedProcedure
+    .input(
+      z.object({
+        conversationId: z.uuid(),
+        messageId: z.string().nonempty().max(MAX_MESSAGE_ID_LENGTH),
+      })
+    )
+    .mutation(
+      async ({
+        ctx,
+        input,
+      }: {
+        readonly ctx: { readonly eveOwnerId: string };
+        readonly input: ReadonlyNativeSurface<{
+          conversationId: string;
+          messageId: string;
+        }>;
+      }) => await restoreMessageAttachments(ctx.eveOwnerId, input)
+    ),
+  saveDocument: eveOwnedProcedure.input(eveManualDocumentInput).mutation(
+    async ({
+      ctx,
+      input,
+    }: {
+      readonly ctx: { readonly eveOwnerId: string };
+      readonly input: ReadonlyNativeSurface<{
+        content: string;
+        title: string;
+        documentId: string;
+        expectedRevisionId: string;
+        conversationId: string;
+        fileIds: string[];
+        operationId: string;
+      }>;
+    }) => {
       try {
         return await saveManualEveDocument(ctx.eveOwnerId, input);
       } catch (error) {
@@ -154,62 +242,6 @@ export const eveRouter = createTRPCRouter({
               : "Document could not be saved.",
         });
       }
-    }),
-  search: eveOwnedProcedure
-    .input(
-      z.object({
-        cursor: z
-          .object({
-            id: z.uuid(),
-            rank: z.number().finite().nonnegative(),
-            updatedAt: z.iso.datetime(),
-          })
-          .nullish(),
-        ownerScope: z.string().min(1).max(128),
-        search: z.string().trim().min(1).max(MAX_SEARCH_QUERY_LENGTH),
-      })
-    )
-    .query(async ({ ctx, input }) => {
-      if (input.ownerScope !== ctx.eveOwnerId) {
-        throw new TRPCError({ code: "FORBIDDEN" });
-      }
-      return await searchEveConversations(ctx.eveOwnerId, input);
-    }),
-  setVisibility: eveProcedure
-    .input(
-      z.object({ id: z.uuid(), visibility: z.enum(["private", "public"]) })
-    )
-    .mutation(async ({ ctx, input }) => {
-      const row = await updateEveConversationMetadata(ctx.user.id, input.id, {
-        visibility: input.visibility,
-      });
-      if (!row) {
-        throw new TRPCError({ code: "NOT_FOUND" });
-      }
-      return row;
-    }),
-  vote: eveOwnedProcedure
-    .input(
-      z.object({
-        conversationId: z.uuid(),
-        messageId: z.string().min(1).max(512),
-        type: z.enum(["up", "down"]),
-      })
-    )
-    .mutation(async ({ ctx, input }) => {
-      const saved = await voteEveMessage(ctx.eveOwnerId, input);
-      if (!saved) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Assistant message not found.",
-        });
-      }
-      return saved;
-    }),
-  votes: eveOwnedProcedure
-    .input(z.object({ conversationId: z.uuid() }))
-    .query(
-      async ({ ctx, input }) =>
-        await getEveMessageVotes(ctx.eveOwnerId, input.conversationId)
-    ),
+    }
+  ),
 });

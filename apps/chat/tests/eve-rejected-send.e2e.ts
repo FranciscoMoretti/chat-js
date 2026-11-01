@@ -1,8 +1,10 @@
+import { userCredit } from "@/chatjs/plugins/credits/credits-schema";
 import { expect, test } from "@playwright/test";
+import type { Request, Response, TestInfo } from "@playwright/test";
 import { eq } from "drizzle-orm";
 
 import { db } from "../lib/db/client";
-import { eveConversation, userCredit } from "../lib/db/schema";
+import { eveConversation } from "../lib/db/schema";
 import { env } from "../lib/env";
 import { conversationBinding } from "../lib/eve/contracts";
 import { assertEveTestDatabase } from "./eve-test-database";
@@ -11,9 +13,11 @@ assertEveTestDatabase(env.DATABASE_URL);
 
 test("rejected send survives reload as an unsent draft and can be restored and sent once", async ({
   page,
-}, testInfo) => {
+}, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
   test.setTimeout(210_000);
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   const created = await page.request.post("/api/agent-conversations", {
     data: {
@@ -43,11 +47,11 @@ test("rejected send survives reload as an unsent draft and can be restored and s
   try {
     await db
       .update(userCredit)
-      .set({ credits: 0 })
+      .set({ balanceCents: 0 })
       .where(eq(userCredit.userId, conversation.ownerId));
     await composer.fill(unsent);
     const rejected = page.waitForResponse(
-      (response) =>
+      (response: Readonly<Pick<Response, "request" | "url">>) =>
         response.request().method() === "POST" &&
         response.url().includes(`/api/eve/v1/session/${binding.sessionId}`)
     );
@@ -90,7 +94,7 @@ test("rejected send survives reload as an unsent draft and can be restored and s
   } finally {
     await db
       .update(userCredit)
-      .set({ credits: balance.credits })
+      .set({ balanceCents: balance.balanceCents })
       .where(eq(userCredit.userId, conversation.ownerId));
   }
   await page.getByRole("button", { exact: true, name: "Send" }).click();
@@ -112,9 +116,9 @@ test("rejected send survives reload as an unsent draft and can be restored and s
     page.url()
   ).href;
   const operationIds: string[] = [];
-  await page.route(commandUrl, (route) => {
+  await page.route(commandUrl, async (route) => {
     operationIds.push(route.request().headers()["x-chatjs-message-operation"]);
-    return route.fulfill({
+    await route.fulfill({
       body: JSON.stringify({
         code: "usage_reconciliation_busy",
         error: "Usage reconciliation is busy.",
@@ -144,7 +148,8 @@ test("rejected send survives reload as an unsent draft and can be restored and s
   });
   await page.unroute(commandUrl);
   const retriedRequest = page.waitForRequest(
-    (request) => request.method() === "POST" && request.url() === commandUrl
+    (request: Readonly<Pick<Request, "method" | "url">>) =>
+      request.method() === "POST" && request.url() === commandUrl
   );
   await retryButton.click();
   const retryRequest = await retriedRequest;
@@ -160,13 +165,13 @@ test("rejected send survives reload as an unsent draft and can be restored and s
   await expect(retryButton).toHaveCount(0);
 
   // An unmarked upstream error is ambiguous even when its HTTP status is 4xx.
-  await page.route(commandUrl, (route) =>
-    route.fulfill({
+  await page.route(commandUrl, async (route) => {
+    await route.fulfill({
       body: JSON.stringify({ error: "Upstream response failed" }),
       contentType: "application/json",
       status: 400,
-    })
-  );
+    });
+  });
   await composer.fill("Retain ambiguous delivery");
   await page.getByRole("button", { exact: true, name: "Send" }).click();
   await expect(

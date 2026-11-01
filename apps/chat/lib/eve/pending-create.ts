@@ -1,10 +1,16 @@
+import type { ChatCreationScope } from "@/chatjs/core/chat/contracts";
+import { projectCreationScope } from "./project-creation";
+import { isNonEmptyString } from "@/lib/is-non-empty-string";
+
+import type { EveForkInput, EveForkKind } from "./contracts";
+import type { ReadonlyEveMessageInput } from "./readonly-message-types";
+import type { UiToolName } from "@/lib/ai/types";
+import { createConversationInput } from "./contracts";
+import { eveResponseGroupInput } from "./response-group-input";
 import { z } from "zod";
 
-import type { UiToolName } from "../ai/types";
-import { createConversationInput } from "./contracts";
-import type { EveForkInput, EveForkKind } from "./contracts";
-import type { EveMessageInput } from "./message-input";
-import { eveResponseGroupInput } from "./response-group-input";
+const SINGLE_MODEL_COUNT = 1;
+const FIRST_MODEL_INDEX = 0;
 
 const creationRequest = z.union([
   createConversationInput,
@@ -12,39 +18,58 @@ const creationRequest = z.union([
 ]);
 
 type StorageAccess = Pick<Storage, "getItem" | "setItem" | "removeItem">;
-export type CreationScope =
-  | { conversationId: string; projectId?: never }
-  | { projectId: string; conversationId?: never };
-const keyFor = (ownerId: string, scope?: CreationScope) => {
+
+type CreationScope =
+  | { conversationId: string; context?: never }
+  | { context: ChatCreationScope; conversationId?: never };
+
+const keyFor = (ownerId: string, scope?: Readonly<CreationScope>): string => {
   let suffix = "";
-  if (scope?.conversationId) {
+
+  if (scope && isNonEmptyString(scope.conversationId)) {
     suffix = `:fork:${scope.conversationId}`;
-  } else if (scope?.projectId) {
-    suffix = `:project:${scope.projectId}`;
+  } else if (scope?.context) {
+    suffix = `:${scope.context.key}`;
   }
   return `chatjs.eve.pending:${ownerId}${suffix}`;
 };
 
-export const readCreationRequest = (
+const hasPendingCreation = (
   storage: StorageAccess,
   ownerId: string,
-  scope?: CreationScope
-) => {
+  scope?: Readonly<CreationScope>
+): boolean => {
   const stored = storage.getItem(keyFor(ownerId, scope));
-  return stored ? creationRequest.parse(JSON.parse(stored)) : undefined;
+  return stored !== null && stored !== "";
 };
 
-export const prepareResponseGroupCreation = (
+const readCreationRequest = (
   storage: StorageAccess,
   ownerId: string,
-  message: EveMessageInput,
-  modelIds: string[],
-  context?: CreationScope & {
-    fork?: EveForkInput;
-    forkKind?: Extract<EveForkKind, "comparison" | "edit">;
-  },
-  selectedTool?: UiToolName
-) => {
+  scope?: Readonly<CreationScope>
+): z.output<typeof creationRequest> | undefined => {
+  const stored = storage.getItem(keyFor(ownerId, scope));
+
+  if (stored !== null && stored !== "") {
+    return creationRequest.parse(JSON.parse(stored));
+  }
+  return undefined;
+};
+
+const prepareResponseGroupCreation = (
+  storage: StorageAccess,
+  ownerId: string,
+  message: ReadonlyEveMessageInput,
+  modelIds: readonly string[],
+  context?: Readonly<
+    CreationScope & {
+      fork?: Readonly<EveForkInput>;
+      forkKind?: Extract<EveForkKind, "comparison" | "edit">;
+    }
+  >,
+  selectedTool?: UiToolName,
+  creationInput: Readonly<{ projectId?: string }> = {}
+): z.output<typeof eveResponseGroupInput> => {
   const saved = readCreationRequest(storage, ownerId, context);
   if (saved) {
     if (!("modelIds" in saved)) {
@@ -60,18 +85,18 @@ export const prepareResponseGroupCreation = (
     message,
     modelIds,
     operationId: crypto.randomUUID(),
-    projectId: context?.projectId,
+    projectId: creationInput.projectId,
     selectedTool,
   });
   storage.setItem(keyFor(ownerId, context), JSON.stringify(request));
   return request;
 };
 
-export const readCreation = (
+const readCreation = (
   storage: StorageAccess,
   ownerId: string,
-  scope?: CreationScope
-) => {
+  scope?: Readonly<CreationScope>
+): z.output<typeof createConversationInput> | undefined => {
   const request = readCreationRequest(storage, ownerId, scope);
   if (request && "modelIds" in request) {
     throw new Error(
@@ -81,17 +106,20 @@ export const readCreation = (
   return request;
 };
 
-export const prepareCreation = (
+const prepareCreation = (
   storage: StorageAccess,
   ownerId: string,
-  draft: EveMessageInput,
+  draft: ReadonlyEveMessageInput,
   modelId?: string,
-  context?: CreationScope & {
-    fork?: EveForkInput;
-    forkKind?: EveForkKind;
-  },
-  selectedTool?: UiToolName
-) => {
+  context?: Readonly<
+    CreationScope & {
+      fork?: Readonly<EveForkInput>;
+      forkKind?: EveForkKind;
+    }
+  >,
+  selectedTool?: UiToolName,
+  creationInput: Readonly<{ projectId?: string }> = {}
+): z.output<typeof createConversationInput> => {
   const key = keyFor(ownerId, context);
   const stored = readCreation(storage, ownerId, context);
   if (stored) {
@@ -103,7 +131,7 @@ export const prepareCreation = (
     message: draft,
     modelId,
     operationId: crypto.randomUUID(),
-    projectId: context?.projectId,
+    projectId: creationInput.projectId,
     selectedTool,
   });
   if (!pending.success) {
@@ -113,54 +141,70 @@ export const prepareCreation = (
   return pending.data;
 };
 
-export const prepareSelectedCreation = (
+const prepareSelectedCreation = (
   storage: StorageAccess,
   ownerId: string,
-  draft: EveMessageInput,
-  modelIds: string[],
-  scope?: CreationScope,
-  selectedTool?: UiToolName
-) => {
+  draft: ReadonlyEveMessageInput,
+  modelIds: readonly string[],
+  scope?: Readonly<CreationScope>,
+  selectedTool?: UiToolName,
+  creationInput: Readonly<{ projectId?: string }> = {}
+): z.output<typeof creationRequest> => {
   const saved = readCreationRequest(storage, ownerId, scope);
   if (saved) {
     return saved;
   }
-  return modelIds.length > 1
-    ? prepareResponseGroupCreation(
-        storage,
-        ownerId,
-        draft,
-        modelIds,
-        scope,
-        selectedTool
-      )
-    : prepareCreation(
-        storage,
-        ownerId,
-        draft,
-        modelIds[0],
-        scope,
-        selectedTool
-      );
+
+  if (modelIds.length > SINGLE_MODEL_COUNT) {
+    return prepareResponseGroupCreation(
+      storage,
+      ownerId,
+      draft,
+      modelIds,
+      scope,
+      selectedTool,
+      creationInput
+    );
+  }
+  return prepareCreation(
+    storage,
+    ownerId,
+    draft,
+    modelIds[FIRST_MODEL_INDEX],
+    scope,
+    selectedTool,
+    creationInput
+  );
 };
-export const finishCreation = (
+
+const finishCreation = (
   storage: StorageAccess,
   ownerId: string,
-  scope?: CreationScope
-) => {
+  scope?: Readonly<CreationScope>
+): void => {
   storage.removeItem(keyFor(ownerId, scope));
 };
 
-/** Only call after the server definitively rejected the original operation. */
-export const moveRejectedProjectCreation = (
+/**
+ * Moves a definitively rejected project request into New Chat under a fresh operation.
+ * @param {StorageAccess} storage Browser storage holding the original project draft and any New Chat draft.
+ * @param {string} ownerId Owner whose pending draft namespace must be preserved.
+ * @param {string} context Original plugin scope containing the rejected request.
+ * @param {string} operationId Original operation checked before moving or deleting its stored draft.
+ * @returns {z.output<typeof creationRequest>} A fresh request with the original message/model selection; changed or conflicting drafts throw.
+ */
+const moveRejectedContextCreation = (
   storage: StorageAccess,
   ownerId: string,
-  projectId: string,
+  context: ChatCreationScope,
   operationId: string
-) => {
-  const scope = { projectId };
+): z.output<typeof creationRequest> => {
+  const scope = { context };
   const pending = readCreationRequest(storage, ownerId, scope);
-  if (pending?.operationId !== operationId || pending.projectId !== projectId) {
+  if (
+    pending?.operationId !== operationId ||
+    projectCreationScope(pending)?.key !== context.key
+  ) {
     throw new Error("The saved request changed. Reload before continuing.");
   }
   if (readCreationRequest(storage, ownerId)) {
@@ -189,3 +233,14 @@ export const moveRejectedProjectCreation = (
   finishCreation(storage, ownerId, scope);
   return next;
 };
+export {
+  hasPendingCreation,
+  finishCreation,
+  moveRejectedContextCreation,
+  prepareCreation,
+  prepareResponseGroupCreation,
+  prepareSelectedCreation,
+  readCreation,
+  readCreationRequest,
+};
+export type { CreationScope };

@@ -1,5 +1,6 @@
 import { ArrowRight } from "lucide-react";
 import Image from "next/image";
+import React from "react";
 
 import { siteLinks } from "@/lib/site-config";
 
@@ -7,9 +8,9 @@ const Sparkle = ({
   className,
   size = 24,
 }: {
-  className?: string;
-  size?: number;
-}) => (
+  readonly className?: string;
+  readonly size?: number;
+}): React.JSX.Element => (
   <svg
     aria-hidden="true"
     className={className}
@@ -22,7 +23,7 @@ const Sparkle = ({
   </svg>
 );
 
-export const Hero = () => (
+export const Hero = (): React.JSX.Element => (
   <section className="relative overflow-hidden">
     {/* Background atmosphere — layered organic gradients */}
     <div className="pointer-events-none absolute inset-0">

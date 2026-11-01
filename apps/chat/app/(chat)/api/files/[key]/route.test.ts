@@ -2,6 +2,12 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import { GET as getPathFile } from "./route";
 
+const HTTP_STATUS = {
+  badRequest: 400,
+  notFound: 404,
+  ok: 200,
+};
+
 const mocks = vi.hoisted(() => ({
   access: vi.fn(),
   principal: vi.fn(),
@@ -26,24 +32,27 @@ describe("file route", () => {
   const request = new Request(
     `http://localhost/api/files/${key}?dpl=dpl_test&other=ignored`
   );
-  const getFile = () =>
-    getPathFile(request, { params: Promise.resolve({ key }) });
+  const getFile: () => ReturnType<typeof getPathFile> = async () =>
+    await getPathFile(request, { params: Promise.resolve({ key }) });
 
   test("a deletion fence denies storage redirects and bytes", async () => {
     mocks.access.mockResolvedValue({ allowed: false, managed: true });
     const response = await getFile();
-    expect(response.status).toBe(404);
+    expect(response.status).toBe(HTTP_STATUS.notFound);
     expect(response.headers.get("cache-control")).toBe("private, no-store");
     expect(mocks.access).toHaveBeenCalledWith(key, "owner");
     expect(mocks.serve).not.toHaveBeenCalled();
   });
-
   test.each([true, false])(
     "authorized managed=%s files use the correct storage access",
     async (managed) => {
       mocks.access.mockResolvedValue({ allowed: true, managed });
       const response = await getFile();
-      expect(response.status).toBe(managed ? 200 : 404);
+      if (managed) {
+        expect(response.status).toBe(HTTP_STATUS.ok);
+      } else {
+        expect(response.status).toBe(HTTP_STATUS.notFound);
+      }
       if (!managed) {
         expect(mocks.serve).not.toHaveBeenCalled();
         return;
@@ -63,7 +72,7 @@ test("invalid path keys are rejected before authorization", async () => {
       params: Promise.resolve({ key: "invalid" }),
     }
   );
-  expect(pathResponse.status).toBe(400);
+  expect(pathResponse.status).toBe(HTTP_STATUS.badRequest);
   expect(mocks.access).not.toHaveBeenCalled();
   expect(mocks.serve).not.toHaveBeenCalled();
 });

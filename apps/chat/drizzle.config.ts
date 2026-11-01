@@ -1,7 +1,7 @@
+import { databaseSchemas } from "./integrations/database";
 import { config } from "dotenv";
-import { defineConfig } from "drizzle-kit";
-
 import { databaseConnection } from "./lib/db/connection";
+import { defineConfig } from "drizzle-kit";
 
 config({
   path: ".env.local",
@@ -19,5 +19,5 @@ export default defineConfig({
   },
   dialect: "postgresql",
   out: "./lib/db/migrations",
-  schema: "./lib/db/schema.ts",
+  schema: ["./lib/db/schema.ts", ...databaseSchemas],
 });

@@ -1,14 +1,12 @@
-import { createElement } from "react";
-import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it } from "vitest";
-
 import {
   Context,
   ContextCacheUsage,
   ContextReasoningUsage,
 } from "@/components/ai-elements/context";
-
+import { describe, expect, it } from "vitest";
+import { createElement } from "react";
 import { getUsageTokenDetails } from "./usage-token-details";
+import { renderToStaticMarkup } from "react-dom/server";
 
 describe("persisted token usage", () => {
   it("renders legacy usage counts without requiring nested SDK 7 objects", () => {

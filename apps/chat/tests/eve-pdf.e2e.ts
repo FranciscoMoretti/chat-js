@@ -1,6 +1,7 @@
 import { execFileSync } from "node:child_process";
 
 import { expect, test } from "@playwright/test";
+import type { Response } from "@playwright/test";
 import { z } from "zod";
 
 import { textPdf } from "./eve-attachment-fixtures";
@@ -16,14 +17,16 @@ test("a PDF uploaded through the composer reaches the model and opens after relo
   page,
 }) => {
   test.setTimeout(240_000);
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   await page.request.post("/api/chat-model", {
     data: { model: "openai/gpt-5-mini" },
   });
   await page.goto("/");
   const uploaded = page.waitForResponse(
-    (response) =>
+    (response: Readonly<Pick<Response, "request" | "url">>) =>
       response.url().endsWith("/api/files/upload") &&
       response.request().method() === "POST"
   );
@@ -55,9 +58,12 @@ test("a PDF uploaded through the composer reaches the model and opens after relo
       });
     await page.getByRole("button", { exact: true, name: "Send" }).click();
     await expect(page).toHaveURL(chatUrl, { timeout: 35_000 });
-    await expect(page.locator(".is-assistant")).toContainText("CEDAR-4827", {
-      timeout: 90_000,
-    });
+    await expect(page.locator('[data-role="assistant"]')).toContainText(
+      "CEDAR-4827",
+      {
+        timeout: 90_000,
+      }
+    );
     await expect(page.getByText("Ready", { exact: true })).toBeVisible();
     const sourceUrl = page.url();
     const composer = page.getByRole("group", {
@@ -68,14 +74,17 @@ test("a PDF uploaded through the composer reaches the model and opens after relo
       .getByRole("textbox", { exact: true, name: "Message" })
       .fill("Repeat the document code.");
     await composer.getByRole("button", { exact: true, name: "Send" }).click();
-    await expect(page.locator(".is-assistant")).toHaveCount(2, {
+    await expect(page.locator('[data-role="assistant"]')).toHaveCount(2, {
       timeout: 90_000,
     });
     await expect(page.getByText("Ready", { exact: true })).toBeVisible({
       timeout: 90_000,
     });
     await page
-      .getByRole("button", { exact: true, name: "Edit message" })
+      .getByRole("button", {
+        exact: true,
+        name: "Edit message",
+      })
       .nth(1)
       .click();
     const editor = page.getByRole("dialog");
@@ -89,10 +98,10 @@ test("a PDF uploaded through the composer reaches the model and opens after relo
     await expect(page.getByText("Ready", { exact: true })).toBeVisible({
       timeout: 90_000,
     });
-    await expect(page.locator(".is-assistant").last()).toContainText(
+    await expect(page.locator('[data-role="assistant"]').last()).toContainText(
       "CEDAR-4827"
     );
-    await expect(page.locator(".is-user").last()).toContainText(
+    await expect(page.locator('[data-role="user"]').last()).toContainText(
       "Read the earlier attached PDF"
     );
     await page.reload();
@@ -106,10 +115,10 @@ test("a PDF uploaded through the composer reaches the model and opens after relo
     await expect(preview).toHaveURL(blobUrl);
     await preview.close();
     await page.goto(sourceUrl);
-    await expect(page.locator(".is-user").last()).toContainText(
+    await expect(page.locator('[data-role="user"]').last()).toContainText(
       "Repeat the document code."
     );
-    await expect(page.locator(".is-user")).toHaveCount(2);
+    await expect(page.locator('[data-role="user"]')).toHaveCount(2);
   } finally {
     execFileSync("bun", [
       "-e",

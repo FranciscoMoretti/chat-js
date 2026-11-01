@@ -1,8 +1,9 @@
 "use client";
 
 import { Copy, Loader2 } from "lucide-react";
-
 import { Button } from "@/components/ui/button";
+
+import React from "react";
 
 export const CloneChatButtonView = ({
   isPending,
@@ -11,12 +12,12 @@ export const CloneChatButtonView = ({
   label = "Save to your chats",
   disabled = false,
 }: {
-  isPending: boolean;
-  onClick: () => void;
-  className?: string;
-  label?: string;
-  disabled?: boolean;
-}) => (
+  readonly isPending: boolean;
+  readonly onClick: () => void;
+  readonly className?: string;
+  readonly label?: string;
+  readonly disabled?: boolean;
+}): React.JSX.Element => (
   <div className="m-auto flex w-fit items-center justify-center px-4 py-10">
     <Button
       className={className}

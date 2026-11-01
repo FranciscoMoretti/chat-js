@@ -1,21 +1,25 @@
+import { MemoryThreadState } from "#thread-source/thread-state";
+
+import type { ThreadState } from "#thread-source/types";
 import type { UIMessage } from "ai";
 
-import { MemoryThreadState } from "../../src/thread-state";
-import type { ThreadState } from "../../src/types";
+const ZERO_COUNT = 0;
+const COUNT_INCREMENT = 1;
+export class RecordingThreadState implements ThreadState {
+  readonly #state: MemoryThreadState;
+  public updateCount = ZERO_COUNT;
 
-export class RecordingThreadState implements ThreadState<UIMessage> {
-  readonly #state: MemoryThreadState<UIMessage>;
-  updateCount = 0;
-
-  constructor(messages: UIMessage[]) {
+  public constructor(messages: readonly Readonly<UIMessage>[]) {
     this.#state = new MemoryThreadState({ messages });
   }
 
-  getSnapshot = () => this.#state.getSnapshot();
-  subscribe = (listener: () => void) => this.#state.subscribe(listener);
+  public getSnapshot = (): ReturnType<ThreadState["getSnapshot"]> =>
+    this.#state.getSnapshot();
+  public subscribe = (listener: () => void): (() => void) =>
+    this.#state.subscribe(listener);
 
-  update: ThreadState<UIMessage>["update"] = (updater) => {
-    this.updateCount += 1;
+  public update: ThreadState["update"] = (updater): void => {
+    this.updateCount += COUNT_INCREMENT;
     this.#state.update(updater);
   };
 }

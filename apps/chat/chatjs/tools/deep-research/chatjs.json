@@ -1,0 +1,21 @@
+{
+  "config": { "key": "deepResearch" },
+  "availabilityExport": "researchAvailable",
+  "envRequirements": [],
+  "id": "deep-research",
+  "kind": "tool",
+  "requiresTools": ["createTextDocument", "readDocument", "webSearch"],
+  "tools": [
+    {
+      "composer": {
+        "icon": "Telescope",
+        "name": "Deep Research",
+        "shortName": "Research"
+      },
+      "rendererExport": "DeepResearchRenderer",
+      "toolExport": "deepResearch",
+      "workflow": true
+    }
+  ],
+  "contractVersion": 1
+}

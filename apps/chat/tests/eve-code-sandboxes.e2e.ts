@@ -1,5 +1,5 @@
-/* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
-/* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
+import { createEveTestSession } from "./eve-native-session.fixture";
+
 import { eq } from "drizzle-orm";
 import { afterAll, expect, test, vi } from "vitest";
 
@@ -21,7 +21,11 @@ import { assertEveTestDatabase } from "./eve-test-database";
 
 vi.mock("server-only", () => ({}));
 assertEveTestDatabase(env.DATABASE_URL);
-const provider = { projectId: "fixture-project", teamId: "fixture-team" };
+const provider = {
+  providerId: "vercel",
+  scopeId: "fixture-project",
+  accountId: "fixture-team",
+};
 const owner = crypto.randomUUID();
 await db.insert(user).values({
   email: `${owner}@test.invalid`,
@@ -33,14 +37,13 @@ afterAll(async () => {
   await db.delete(eveConversation).where(eq(eveConversation.ownerId, owner));
   await db.delete(user).where(eq(user.id, owner));
 });
-async function conversation() {
-  return await createEveConversation(
+const conversation = async () =>
+  await createEveConversation(
     owner,
     crypto.randomUUID(),
     "Sandbox fixture",
-    async () => crypto.randomUUID()
+    createEveTestSession
   );
-}
 
 test("unresolved allocation blocks final deletion until confirmed cleanup; retries retain the tombstone", async () => {
   const row = await conversation();
@@ -51,7 +54,7 @@ test("unresolved allocation blocks final deletion until confirmed cleanup; retri
   await expect(
     reserveEveCodeSandbox(owner, row.id, "call-1", {
       ...provider,
-      projectId: "other-project",
+      scopeId: "other-project",
     })
   ).rejects.toThrow("Reconcile");
   await beginEveConversationDeletion(owner, row.id);
@@ -85,7 +88,6 @@ test("foreign owners cannot reserve or resolve resources, and completed calls ca
     reserveEveCodeSandbox(owner, row.id, "call", provider)
   ).rejects.toThrow("Reconcile");
 });
-
 test("concurrent allocation and deletion cannot leave an untracked admitted resource", async () => {
   const row = await conversation();
   const [allocation] = await Promise.allSettled([
@@ -106,7 +108,6 @@ test("concurrent allocation and deletion cannot leave an untracked admitted reso
     ).toEqual([]);
   }
 });
-
 test("only a retired owned family can inventory confirmed creation", async () => {
   const row = await conversation();
   const name = await reserveEveCodeSandbox(

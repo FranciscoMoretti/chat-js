@@ -1,83 +1,55 @@
+import type { SessionAuthentication } from "@/chatjs/core/session/contracts";
+import { isNonEmptyString } from "@/lib/is-non-empty-string";
+
 import { timingSafeEqual } from "node:crypto";
 
 import { z } from "zod";
 
-import { frontendToolsSchema } from "../ai/types";
-import { readEveGuestOwner } from "../db/eve-guests";
+import { frontendToolsSchema } from "@/lib/ai/types";
 import {
   getDeletingEveConversationForSession,
   ownsEveSession,
   readEveSessionMapping,
-} from "../db/eve-queries";
-import { isFencedEveDescendant } from "../db/eve-sandbox-coverage-proof";
-import { getEveSubagent } from "../db/eve-subagents";
-import { env } from "../env";
-import { ANONYMOUS_LIMITS } from "../types/anonymous";
+} from "@/lib/db/eve-queries";
+import { getEveSubagent } from "@/lib/db/eve-subagents";
+import { env } from "@/lib/env";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+
 import { parseDeletionSessionRequest } from "./deletion-policy";
 import { loadEveModelDefinition } from "./model-selection";
 import { parseSessionRequest } from "./request-policy";
-import { resolveWorkflowWorld } from "./world-config";
 
-const checkpointLookupPath =
-  /^\/eve\/v1\/session\/(?<sessionId>[A-Za-z0-9_-]+)\/checkpoint$/u;
-
-const namedCheckpointLookupPath =
-  /^\/eve\/v1\/session\/(?<sessionId>[A-Za-z0-9_-]+)\/checkpoint\/[0-9a-f-]{36}$/iu;
-
-const operationLookupPath = /^\/eve\/v1\/operation\/[A-Za-z0-9_-]+$/u;
 const compactionPath =
   /^\/eve\/v1\/session\/(?<sessionId>[A-Za-z0-9_-]+)\/compact$/u;
 
 const authorizeDeletionRequest = async (
-  request: Request,
+  request: ReadonlyNativeSurface<Request>,
   owner: string,
   path: string
-) => {
+): Promise<boolean> => {
   const sessionId = parseDeletionSessionRequest(path, request.method);
-  if (!sessionId) {
+  if (sessionId === null) {
     return false;
   }
-  const rootSessionId = request.headers.get("x-chatjs-deletion-root");
-  if (!rootSessionId) {
-    return Boolean(
-      await getDeletingEveConversationForSession(owner, sessionId)
-    );
-  }
-  if (
-    !(
-      path.endsWith("/sandbox-identity") &&
-      request.method === "GET" &&
-      resolveWorkflowWorld(env) === "@workflow/world-postgres" &&
-      env.WORKFLOW_POSTGRES_URL &&
-      (await getDeletingEveConversationForSession(owner, rootSessionId))
-    )
-  ) {
-    return false;
-  }
-  return await isFencedEveDescendant(
-    env.WORKFLOW_POSTGRES_URL,
-    rootSessionId,
-    sessionId
-  );
+  return Boolean(await getDeletingEveConversationForSession(owner, sessionId));
 };
 
-const gatewaySessionPolicy = (path: string, method: string) => {
-  const compactionSession = method === "POST" && compactionPath.exec(path)?.[1];
-  if (compactionSession) {
+const gatewaySessionPolicy = (
+  path: string,
+  method: string
+): ReturnType<typeof parseSessionRequest> | { sessionId: string } => {
+  const compactionSession =
+    method === "POST" && (compactionPath.exec(path) ?? [])[1];
+  if (typeof compactionSession === "string" && compactionSession.length > 0) {
     return { sessionId: compactionSession };
   }
-  const ordinaryCheckpoint =
-    (method === "GET" || method === "POST") &&
-    checkpointLookupPath.exec(path)?.[1];
-  const namedCheckpoint =
-    method === "GET" && namedCheckpointLookupPath.exec(path)?.[1];
-  const checkpointSession = ordinaryCheckpoint || namedCheckpoint;
-  return checkpointSession
-    ? { sessionId: checkpointSession }
-    : parseSessionRequest(path, method);
+  return parseSessionRequest(path, method);
 };
 
-const readCreationReservation = async (request: Request, owner: string) => {
+const readCreationReservation = async (
+  request: ReadonlyNativeSurface<Request>,
+  owner: string
+): Promise<string | null> => {
   const command = z
     .object({ operationId: z.uuid(), seed: z.boolean().optional() })
     .safeParse(
@@ -93,20 +65,26 @@ const readCreationReservation = async (request: Request, owner: string) => {
     reservationId: command.data.operationId,
   });
   if (
-    !reservation ||
+    reservation === null ||
     reservation.ownerId !== owner ||
     reservation.state === "deleting" ||
     reservation.state === "deleted" ||
-    (command.data.seed === true) !== (reservation.creationKind === "copy")
+    (reservation.creationKind === "copy" && command.data.seed !== true) ||
+    (command.data.seed === true &&
+      reservation.creationKind !== "copy" &&
+      !isNonEmptyString(reservation.parentConversationId))
   ) {
     return null;
   }
   return reservation.id;
 };
 
-const readGatewayAttributes = async (request: Request, owner: string) => {
+const readGatewayAttributes = async (
+  request: ReadonlyNativeSurface<Request>,
+  owner: string
+): Promise<Record<string, string> | null> => {
   const modelId = request.headers.get("x-chatjs-model") ?? undefined;
-  if (modelId) {
+  if (isNonEmptyString(modelId)) {
     await loadEveModelDefinition(modelId);
   }
   const toolHeader = request.headers.get("x-chatjs-tool");
@@ -117,10 +95,10 @@ const readGatewayAttributes = async (request: Request, owner: string) => {
     return null;
   }
   const attributes: Record<string, string> = {};
-  if (selectedTool.data) {
+  if (selectedTool.data !== undefined) {
     attributes.selectedTool = selectedTool.data;
   }
-  if (modelId) {
+  if (isNonEmptyString(modelId)) {
     attributes.modelId = modelId;
   }
   if (
@@ -128,7 +106,7 @@ const readGatewayAttributes = async (request: Request, owner: string) => {
     request.method === "POST"
   ) {
     const reservationId = await readCreationReservation(request, owner);
-    if (!reservationId) {
+    if (!isNonEmptyString(reservationId)) {
       return null;
     }
     // Derive this from the authenticated command and durable reservation, never a header.
@@ -137,28 +115,12 @@ const readGatewayAttributes = async (request: Request, owner: string) => {
   return attributes;
 };
 
-const guestAttributesAllowed = (
-  expiresAt: Date,
-  attributes: Record<string, string>,
-  requiresModel: boolean
-) =>
-  expiresAt > new Date() &&
-  (!requiresModel || !!attributes.modelId) &&
-  (!attributes.modelId ||
-    ANONYMOUS_LIMITS.AVAILABLE_MODELS.some(
-      (model) => model === attributes.modelId
-    )) &&
-  (!attributes.selectedTool ||
-    ANONYMOUS_LIMITS.AVAILABLE_TOOLS.some(
-      (tool) => tool === attributes.selectedTool
-    ));
-
 const ownsGatewaySession = async (
   owner: string,
   sessionId: string,
   path: string,
   method: string
-) => {
+): Promise<boolean> => {
   if (await ownsEveSession(owner, sessionId)) {
     return true;
   }
@@ -169,7 +131,9 @@ const ownsGatewaySession = async (
   return Boolean(await getEveSubagent(owner, sessionId));
 };
 
-export const authenticateEveGateway = async (request: Request) => {
+export const authenticateEveGateway = async (
+  request: ReadonlyNativeSurface<Request>
+): Promise<SessionAuthentication | null> => {
   if (!env.EVE_GATEWAY_SECRET) {
     return null;
   }
@@ -179,7 +143,7 @@ export const authenticateEveGateway = async (request: Request) => {
     return null;
   }
   const owner = request.headers.get("x-chatjs-owner");
-  if (!owner) {
+  if (!isNonEmptyString(owner)) {
     return null;
   }
   const path = new URL(request.url).pathname;
@@ -187,12 +151,7 @@ export const authenticateEveGateway = async (request: Request) => {
     if (!(await authorizeDeletionRequest(request, owner, path))) {
       return null;
     }
-  } else if (
-    !(
-      (path === "/eve/v1/session" && request.method === "POST") ||
-      (operationLookupPath.test(path) && request.method === "GET")
-    )
-  ) {
+  } else if (!(path === "/eve/v1/session" && request.method === "POST")) {
     const policy = gatewaySessionPolicy(path, request.method);
     if (
       !(
@@ -211,21 +170,6 @@ export const authenticateEveGateway = async (request: Request) => {
   const attributes = await readGatewayAttributes(request, owner);
   if (!attributes) {
     return null;
-  }
-  const guest = await readEveGuestOwner(owner);
-  if (
-    guest &&
-    request.headers.get("x-chatjs-deletion") !== "1" &&
-    !guestAttributesAllowed(
-      guest.expiresAt,
-      attributes,
-      path === "/eve/v1/session"
-    )
-  ) {
-    return null;
-  }
-  if (guest) {
-    attributes.chatjsGuest = "true";
   }
   return {
     attributes,

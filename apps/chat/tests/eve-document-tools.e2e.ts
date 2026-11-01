@@ -1,8 +1,8 @@
-/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
-/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
+import { userCredit } from "@/chatjs/plugins/credits/credits-schema";
 import { execFileSync } from "node:child_process";
 
 import { expect, test } from "@playwright/test";
+import type { Request, TestInfo } from "@playwright/test";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 
@@ -13,7 +13,6 @@ import {
   eveDocumentCheckpoint,
   eveDocumentCheckpointEntry,
   eveDocumentRevision,
-  userCredit,
 } from "../lib/db/schema";
 import { conversationBinding } from "../lib/eve/contracts";
 import { assertEveTestDatabase } from "./eve-test-database";
@@ -22,13 +21,20 @@ assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
 
 test("document tool states remain readable on desktop and mobile", async ({
   page,
-}, testInfo) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+}, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   await page.goto("/");
   const styles = await page
     .locator('link[rel="stylesheet"]')
-    .evaluateAll((links) => links.map((link) => link.outerHTML).join(""));
+    .evaluateAll(
+      (links: readonly Readonly<Pick<HTMLLinkElement, "outerHTML">>[]) =>
+        links
+          .map((link: { readonly outerHTML: string }) => link.outerHTML)
+          .join("")
+    );
   const content = execFileSync(
     "bun",
     ["tests/eve-document-renderer-fixture.ts"],
@@ -39,6 +45,7 @@ test("document tool states remain readable on desktop and mobile", async ({
   );
   await expect(page.getByRole("status")).toHaveCount(2);
   await expect(page.getByRole("alert")).toHaveCount(2);
+  /* oxlint-disable eslint/no-await-in-loop -- Viewport changes and screenshots operate on the same browser page. */
   for (const width of [1100, 390]) {
     await page.setViewportSize({ height: 850, width });
     expect(
@@ -50,12 +57,13 @@ test("document tool states remain readable on desktop and mobile", async ({
       path: testInfo.outputPath(`states-${width}.png`),
     });
   }
+  /* oxlint-enable eslint/no-await-in-loop */
 });
 
 test("native documents open in ChatJS, retain versions after reload, and honor shared access", async ({
   page,
   browser,
-}, testInfo) => {
+}, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
   test.setTimeout(240_000);
   page.setDefaultTimeout(20_000);
   // Keep the development-only floating query inspector out of product controls and captures.
@@ -67,7 +75,9 @@ test("native documents open in ChatJS, retain versions after reload, and honor s
       document.head.append(style);
     });
   });
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   await page.context().addCookies([
     {
@@ -79,14 +89,15 @@ test("native documents open in ChatJS, retain versions after reload, and honor s
   await page.context().grantPermissions(["clipboard-read", "clipboard-write"], {
     origin: new URL(page.url()).origin,
   });
+  const authSessionResponse = await page.request.get("/api/auth/get-session");
   const session = z
     .object({ user: z.object({ id: z.string() }) })
-    .parse(await (await page.request.get("/api/auth/get-session")).json());
+    .parse(await authSessionResponse.json());
   await db
     .insert(userCredit)
-    .values({ credits: 1000, userId: session.user.id })
+    .values({ balanceCents: 1000, userId: session.user.id })
     .onConflictDoUpdate({
-      set: { credits: sql`greatest(${userCredit.credits}, 1000)` },
+      set: { balanceCents: sql`greatest(${userCredit.balanceCents}, 1000)` },
       target: userCredit.userId,
     });
   const created = await page.request.post("/api/agent-conversations", {
@@ -101,12 +112,15 @@ test("native documents open in ChatJS, retain versions after reload, and honor s
   expect(created.ok(), await created.text()).toBe(true);
   const binding = conversationBinding.parse(await created.json());
   await page.goto(`/chat/${binding.id}`);
-  for (const title of ["Artifact notes", "orchard.py", "Harvest"]) {
-    await expect(
-      page.getByRole("button", { exact: true, name: `Created "${title}"` })
-    ).toBeVisible({ timeout: 90_000 });
-  }
+  await Promise.all(
+    ["Artifact notes", "orchard.py", "Harvest"].map(async (title) => {
+      await expect(
+        page.getByRole("button", { exact: true, name: `Created "${title}"` })
+      ).toBeVisible({ timeout: 90_000 });
+    })
+  );
   await expect(page.getByText("Ready", { exact: true })).toBeVisible();
+  /* oxlint-disable eslint/no-await-in-loop -- Each document interaction reuses the artifact panel and clipboard; finish copying and closing before opening the next document. */
   for (const [title, content, copyLabel] of [
     ["Artifact notes", "Amber apples.", "Copy to clipboard"],
     ["orchard.py", "print(42)", "Copy code to clipboard"],
@@ -123,9 +137,9 @@ test("native documents open in ChatJS, retain versions after reload, and honor s
         name: copyLabel,
       })
       .click();
-    expect(await page.evaluate(() => navigator.clipboard.readText())).toContain(
-      content
-    );
+    expect(
+      await page.evaluate(async () => await navigator.clipboard.readText())
+    ).toContain(content);
     if (title === "Artifact notes") {
       await expect(
         panel.getByRole("button", { exact: true, name: "View changes" })
@@ -147,13 +161,16 @@ test("native documents open in ChatJS, retain versions after reload, and honor s
     });
     await panel.getByRole("button", { exact: true, name: "Close" }).click();
   }
+  /* oxlint-enable eslint/no-await-in-loop */
   await page
     .getByRole("button", { exact: true, name: 'Created "Artifact notes"' })
     .click();
   await expect(page.getByTestId("artifact")).toContainText("Version 1 of 1");
   await page.evaluate(() => {
-    navigator.clipboard.writeText = () =>
-      Promise.reject(new Error("Clipboard denied for test"));
+    navigator.clipboard.writeText =
+      /* oxlint-disable typescript/promise-function-async -- The browser clipboard API rejects on permission denial; this rejection fixture has no real clipboard work to await, and eslint/require-await rejects an immediate async failure. */
+      () => Promise.reject(new Error("Clipboard denied for test"));
+    /* oxlint-enable typescript/promise-function-async */
   });
   await page
     .getByTestId("artifact")
@@ -188,13 +205,12 @@ test("native documents open in ChatJS, retain versions after reload, and honor s
     .from(eveDocumentCheckpoint)
     .where(eq(eveDocumentCheckpoint.conversationId, binding.id))
     .orderBy(eveDocumentCheckpoint.turnIndex);
-  expect(checkpoints.map((checkpoint) => checkpoint.turnIndex)).toEqual([0, 1]);
+  expect(checkpoints).toEqual([]);
   const checkpointEntries = await db
     .select()
     .from(eveDocumentCheckpointEntry)
     .where(eq(eveDocumentCheckpointEntry.conversationId, binding.id));
-  expect(checkpointEntries).toHaveLength(3);
-  expect(checkpointEntries.every((entry) => entry.turnIndex === 1)).toBe(true);
+  expect(checkpointEntries).toEqual([]);
   await page.reload();
   await page
     .getByRole("button", { exact: true, name: 'Updated "Artifact notes"' })
@@ -203,7 +219,9 @@ test("native documents open in ChatJS, retain versions after reload, and honor s
   await expect(panel).toContainText("Cobalt pears.");
   // Rich previews may have read the previous revision. Make its cache stale before testing a failed refetch.
   await page.clock.setFixedTime(new Date(Date.now() + 120_000));
-  await page.route("**/api/trpc/eve.document*", (route) => route.abort());
+  await page.route("**/api/trpc/eve.document*", async (route) => {
+    await route.abort();
+  });
   await panel
     .getByRole("button", { exact: true, name: "View changes" })
     .click();
@@ -274,12 +292,14 @@ test("native documents open in ChatJS, retain versions after reload, and honor s
     operationId: crypto.randomUUID(),
     title: latest.title,
   };
+  /* oxlint-disable eslint/no-await-in-loop -- Replay the exact save twice in order to verify the completed write is idempotent. */
   for (let attempt = 0; attempt < 2; attempt += 1) {
     const saved = await page.request.post("/api/trpc/eve.saveDocument", {
       data: { json: manualInput },
     });
     expect(saved.ok(), await saved.text()).toBe(true);
   }
+  /* oxlint-enable eslint/no-await-in-loop */
   const conflict = await page.request.post("/api/trpc/eve.saveDocument", {
     data: {
       json: {
@@ -301,7 +321,9 @@ test("native documents open in ChatJS, retain versions after reload, and honor s
   await expect(panel).toContainText("Version 3 of 3");
   const editor = panel.locator(".lexical-editor");
   await expect(editor).toHaveAttribute("contenteditable", "true");
-  await page.route("**/api/trpc/eve.saveDocument*", (route) => route.abort());
+  await page.route("**/api/trpc/eve.saveDocument*", async (route) => {
+    await route.abort();
+  });
   await editor.fill("Retained manual draft");
   await expect(panel.getByRole("button", { name: "Retry save" })).toBeVisible();
   await panel.screenshot({
@@ -346,13 +368,13 @@ test("native documents open in ChatJS, retain versions after reload, and honor s
   await expect(editor).toHaveAttribute("contenteditable", "true");
   await editor.fill("Final manual text");
   await expect(panel).toContainText("Version 6 of 6");
-  const accepted = Promise.withResolvers<undefined>();
-  const release = Promise.withResolvers<undefined>();
+  const accepted: PromiseWithResolvers<void> = Promise.withResolvers();
+  const release: PromiseWithResolvers<void> = Promise.withResolvers();
   await page.route(
     "**/api/trpc/eve.saveDocument*",
     async (route) => {
       const response = await route.fetch();
-      accepted.resolve(undefined);
+      accepted.resolve();
       await release.promise;
       await route.fulfill({ response });
     },
@@ -363,7 +385,7 @@ test("native documents open in ChatJS, retain versions after reload, and honor s
     await accepted.promise;
     await editor.fill("Newer queued content");
   } finally {
-    release.resolve(undefined);
+    release.resolve();
   }
   await expect(panel).toContainText("Version 8 of 8");
   await expect(editor).toHaveText("Newer queued content");
@@ -399,7 +421,7 @@ test("native documents open in ChatJS, retain versions after reload, and honor s
   const composer = page.getByRole("textbox", { exact: true, name: "Message" });
   await composer.fill("Keep this composer draft.");
   const actionRequest = page.waitForRequest(
-    (request) =>
+    (request: Readonly<Pick<Request, "method" | "url">>) =>
       request.method() === "POST" &&
       request.url().includes("/api/eve/v1/session/")
   );
@@ -407,7 +429,8 @@ test("native documents open in ChatJS, retain versions after reload, and honor s
   await panel
     .getByRole("button", { exact: true, name: "Add comments" })
     .click();
-  expect((await actionRequest).headers()["x-chatjs-selected-model"]).toBe(
+  const actionResponse = await actionRequest;
+  expect(actionResponse.headers()["x-chatjs-selected-model"]).toBe(
     config.ai.tools.code.edits
   );
   await expect(

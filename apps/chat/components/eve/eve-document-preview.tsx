@@ -1,12 +1,14 @@
 "use client";
+
 import { useQuery } from "@tanstack/react-query";
 import { File, Maximize, Pencil } from "lucide-react";
-import type { ReactNode } from "react";
+import type { JSX as ReactJSX, ReactNode } from "react";
+import React from "react";
 import type { z } from "zod";
 
 import { DocumentToolResult } from "@/components/part/document-common";
 import { useArtifact } from "@/hooks/use-artifact";
-import type { eveDocumentResult } from "@/lib/eve/document-contracts";
+import type { eveDocumentResult } from "@/chatjs/core/documents/contracts";
 import { useTRPC } from "@/trpc/react";
 
 import { DocumentBody } from "./eve-document-body";
@@ -18,12 +20,12 @@ export const EveDocumentPreview = ({
   action,
   isReadonly,
 }: {
-  isReadonly: boolean;
-  action: "create" | "update" | "read";
-  conversationId: string;
-  result: z.infer<typeof eveDocumentResult>;
-  messageId: string;
-}) => {
+  readonly isReadonly: boolean;
+  readonly action: "create" | "update" | "read";
+  readonly conversationId: string;
+  readonly result: z.infer<typeof eveDocumentResult>;
+  readonly messageId: string;
+}): ReactJSX.Element => {
   const trpc = useTRPC();
   const { artifact, setArtifact } = useArtifact();
   const document = useQuery(
@@ -106,7 +108,7 @@ export const EveDocumentPreview = ({
         className="focus-visible:outline-ring absolute inset-0 cursor-pointer rounded-2xl focus-visible:outline-2"
         aria-label={`${actionText} "${result.title}"`}
         title="Expand document"
-        onClick={() =>
+        onClick={() => {
           setArtifact({
             content: "",
             conversationId,
@@ -118,8 +120,8 @@ export const EveDocumentPreview = ({
             revisionId: isLatest ? undefined : result.revisionId,
             status: "idle",
             title: result.title,
-          })
-        }
+          });
+        }}
       />
     </div>
   );

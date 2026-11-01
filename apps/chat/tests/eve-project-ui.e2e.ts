@@ -1,5 +1,5 @@
-/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 import { expect, test } from "@playwright/test";
+import type { Request } from "@playwright/test";
 import { z } from "zod";
 
 import { assertEveTestDatabase } from "./eve-test-database";
@@ -16,7 +16,9 @@ test("project UI edits instructions, creates a native conversation and lists it 
   page,
 }, testInfo) => {
   test.setTimeout(180_000);
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   if (
     await page
@@ -38,13 +40,15 @@ test("project UI edits instructions, creates a native conversation and lists it 
     .getByPlaceholder("Project name")
     .fill("Project UI fixture");
   await page.route(
-    (url) => url.pathname.includes("project.create"),
-    (route) =>
-      route.fulfill({
+    (url: Readonly<Pick<URL, "pathname">>) =>
+      url.pathname.includes("project.create"),
+    async (route) => {
+      await route.fulfill({
         body: "{}",
         contentType: "application/json",
         status: 500,
-      }),
+      });
+    },
     { times: 1 }
   );
   await createDialog
@@ -74,7 +78,7 @@ test("project UI edits instructions, creates a native conversation and lists it 
   let cleanupFailure: { error: unknown } | undefined;
   try {
     const invalidIdentityRequests: string[] = [];
-    page.on("request", (request) => {
+    page.on("request", (request: Readonly<Pick<Request, "url">>) => {
       if (
         request.url().includes("eve.get") &&
         decodeURIComponent(request.url()).includes(projectId)
@@ -109,6 +113,7 @@ test("project UI edits instructions, creates a native conversation and lists it 
         animations: "disabled",
         path: testInfo.outputPath("sidebar-projects.png"),
       });
+    /* oxlint-disable eslint/no-await-in-loop -- Viewport changes and screenshots operate on the same browser page. */
     for (const width of [1100, 390]) {
       await page.setViewportSize({ height: 850, width });
       await expect(
@@ -131,6 +136,7 @@ test("project UI edits instructions, creates a native conversation and lists it 
             'nextjs-portal, [aria-label="Open Tanstack query devtools"] { display: none !important; }',
         });
     }
+    /* oxlint-enable eslint/no-await-in-loop */
     await page.setViewportSize({ height: 850, width: 1100 });
     await page
       .getByRole("button", { exact: true, name: "Instructions" })
@@ -140,13 +146,15 @@ test("project UI edits instructions, creates a native conversation and lists it 
       .getByRole("textbox", { name: "Project instructions" })
       .fill("Reply with exactly PROJECT_UI_7238 and nothing else.");
     await page.route(
-      (url) => url.pathname.includes("project.setInstructions"),
-      (route) =>
-        route.fulfill({
+      (url: Readonly<Pick<URL, "pathname">>) =>
+        url.pathname.includes("project.setInstructions"),
+      async (route) => {
+        await route.fulfill({
           body: "{}",
           contentType: "application/json",
           status: 500,
-        }),
+        });
+      },
       { times: 1 }
     );
     await instructionDialog
@@ -174,7 +182,8 @@ test("project UI edits instructions, creates a native conversation and lists it 
     const { promise: renameGate, resolve: rejectRename } =
       Promise.withResolvers<boolean>();
     await page.route(
-      (url) => url.pathname.includes("project.update"),
+      (url: Readonly<Pick<URL, "pathname">>) =>
+        url.pathname.includes("project.update"),
       async (route) => {
         await renameGate;
         await route.fulfill({
@@ -238,7 +247,7 @@ test("project UI edits instructions, creates a native conversation and lists it 
     await page.getByRole("button", { exact: true, name: "Send" }).click();
     await expect(page).toHaveURL(conversationUrl);
     conversationId = page.url().split("/").at(-1);
-    await expect(page.locator(".is-assistant")).toContainText(
+    await expect(page.locator('[data-role="assistant"]')).toContainText(
       "PROJECT_UI_7238",
       { timeout: 90_000 }
     );
@@ -289,13 +298,15 @@ test("project UI edits instructions, creates a native conversation and lists it 
     await page.getByRole("menuitem", { exact: true, name: "Delete" }).click();
     const deleteDialog = page.getByRole("alertdialog");
     await page.route(
-      (url) => url.pathname.includes("project.remove"),
-      (route) =>
-        route.fulfill({
+      (url: Readonly<Pick<URL, "pathname">>) =>
+        url.pathname.includes("project.remove"),
+      async (route) => {
+        await route.fulfill({
           body: "{}",
           contentType: "application/json",
           status: 500,
-        }),
+        });
+      },
       { times: 1 }
     );
     await deleteDialog
@@ -317,7 +328,7 @@ test("project UI edits instructions, creates a native conversation and lists it 
     const surviving = page.locator(`a[href="/chat/${conversationId}"]`);
     await expect(surviving).toHaveAttribute("href", `/chat/${conversationId}`);
     await surviving.click();
-    await expect(page.locator(".is-assistant")).toContainText(
+    await expect(page.locator('[data-role="assistant"]')).toContainText(
       "PROJECT_UI_7238"
     );
   } catch (error) {
@@ -334,7 +345,11 @@ test("project UI edits instructions, creates a native conversation and lists it 
           expect(removed.ok(), await removed.text()).toBe(true);
         }
       } finally {
-        if (conversationId) {
+        if (
+          conversationId !== undefined &&
+          conversationId !== null &&
+          conversationId !== ""
+        ) {
           const url = `/api/agent-conversations/${conversationId}`;
           await expect
             .poll(
@@ -342,7 +357,11 @@ test("project UI edits instructions, creates a native conversation and lists it 
                 const response = await page.request
                   .delete(url, { headers: { origin }, timeout: 30_000 })
                   .catch(() => null);
-                return response?.status() === 200 ? response.json() : null;
+                if (response?.status() !== 200) {
+                  return null;
+                }
+                const responseBody: unknown = await response.json();
+                return responseBody;
               },
               { intervals: [1000, 2000, 5000], timeout: 90_000 }
             )

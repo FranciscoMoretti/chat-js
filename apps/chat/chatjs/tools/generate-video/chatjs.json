@@ -1,0 +1,22 @@
+{
+  "config": { "key": "video" },
+  "envRequirements": [],
+  "id": "generate-video",
+  "kind": "tool",
+  "requiresGateway": ["video"],
+  "requiresStorage": true,
+  "requiresTools": [],
+  "slot": "generateVideo",
+  "tools": [
+    {
+      "composer": {
+        "icon": "Video",
+        "name": "Create a video",
+        "shortName": "Video"
+      },
+      "rendererExport": "GenerateVideoRenderer",
+      "toolExport": "generateVideoTool"
+    }
+  ],
+  "contractVersion": 1
+}

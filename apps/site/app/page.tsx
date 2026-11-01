@@ -1,18 +1,18 @@
-import type { Metadata } from "next";
-
+import { siteConfig, siteLinks } from "@/lib/site-config";
 import { Faq } from "@/components/faq";
 import { Features } from "@/components/features";
 import { Footer } from "@/components/footer";
 import { GetStarted } from "@/components/get-started";
 import { Hero } from "@/components/hero";
 import { LogoCloud } from "@/components/logo-cloud";
+import type { Metadata } from "next";
 import { Navbar } from "@/components/navbar";
 import { Platforms } from "@/components/platforms";
+import React from "react";
 import { TechStack } from "@/components/tech-stack";
 import { UseCases } from "@/components/use-cases";
-import { siteConfig, siteLinks } from "@/lib/site-config";
 
-export const metadata: Metadata = {
+const metadata: Metadata = {
   alternates: {
     canonical: siteLinks.home,
   },
@@ -63,7 +63,7 @@ const structuredData = {
   ],
 };
 
-const HomePage = () => (
+const HomePage = (): React.JSX.Element => (
   <div className="flex min-h-screen flex-col">
     <script type="application/ld+json">{JSON.stringify(structuredData)}</script>
     <Navbar />
@@ -81,4 +81,5 @@ const HomePage = () => (
   </div>
 );
 
+export { metadata };
 export default HomePage;

@@ -1,24 +1,57 @@
-import { Client } from "eve/client";
-import type { z } from "zod";
-
-import { config } from "../config";
 import {
   getEveDocumentRevision,
   saveEveDocumentRevision,
-} from "../db/eve-documents";
-import { getEveConversation } from "../db/eve-queries";
-import { getEveConnectionOptions } from "./connection-options";
-import { eveManualDocumentInput } from "./document-contracts";
-import { documentHistoryTurns } from "./document-history";
-import { assertEveConfigured } from "./server";
+} from "@/lib/db/eve-documents";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import { eveManualDocumentInput } from "@/chatjs/core/documents/contracts";
+import { getEveConversation } from "@/lib/db/eve-queries";
+import { documentDefinitions } from "@/integrations/documents/definitions";
+import type { z } from "zod";
 
-export const saveManualEveDocument = async (
+type SavedDocumentReceipt = Pick<
+  Awaited<ReturnType<typeof saveEveDocumentRevision>>,
+  "content" | "createdAt" | "documentId" | "id" | "kind" | "title"
+>;
+
+const savedDocumentReceipt = (
+  saved: ReadonlyNativeSurface<SavedDocumentReceipt>
+): SavedDocumentReceipt => ({
+  content: saved.content,
+  createdAt: saved.createdAt,
+  documentId: saved.documentId,
+  id: saved.id,
+  kind: saved.kind,
+  title: saved.title,
+});
+
+type BoundManualConversation = ReadonlyNativeSurface<
+  NonNullable<Awaited<ReturnType<typeof getEveConversation>>>
+> & { readonly sessionId: string; readonly state: "bound" };
+
+interface ManualDocumentContext {
+  readonly conversation: BoundManualConversation;
+  readonly previous: NonNullable<
+    Awaited<ReturnType<typeof getEveDocumentRevision>>
+  >;
+}
+
+const isBoundManualConversation = (
+  conversation: ReadonlyNativeSurface<
+    Awaited<ReturnType<typeof getEveConversation>>
+  >
+): conversation is BoundManualConversation =>
+  !(
+    !conversation ||
+    (conversation.sessionId ?? "") === "" ||
+    conversation.state !== "bound"
+  );
+
+const resolveManualDocumentContext = async (
   ownerId: string,
-  value: z.input<typeof eveManualDocumentInput>
-) => {
-  const input = eveManualDocumentInput.parse(value);
+  input: ReadonlyNativeSurface<z.output<typeof eveManualDocumentInput>>
+): Promise<ManualDocumentContext> => {
   const conversation = await getEveConversation(ownerId, input.conversationId);
-  if (!(conversation?.sessionId && conversation.state === "bound")) {
+  if (!isBoundManualConversation(conversation)) {
     throw new Error("Conversation not found.");
   }
   const previous = await getEveDocumentRevision(
@@ -27,39 +60,28 @@ export const saveManualEveDocument = async (
     input.documentId,
     input.expectedRevisionId
   );
-  if (
-    !(
-      previous &&
-      config.ai.tools.documents.enabled &&
-      config.ai.tools.documents.types[previous.kind]
-    )
-  ) {
+  if (!(previous && documentDefinitions.kinds.has(previous.kind))) {
     throw new Error("Document not found.");
   }
-  assertEveConfigured();
-  const client = new Client(getEveConnectionOptions(ownerId));
-  const snapshot = await client.sessions
-    .attach(conversation.sessionId)
-    .snapshot({ signal: AbortSignal.timeout(15_000) });
-  const turns = documentHistoryTurns(snapshot.events);
-  const saved = await saveEveDocumentRevision(
-    {
-      ...input,
-      fileIds: [...new Set([...previous.fileIds, ...input.fileIds])],
-      kind: previous.kind,
-      operationId: `manual:${input.operationId}`,
-      ownerId,
-      turnIndex: null,
-    },
-    undefined,
-    turns
-  );
-  return {
-    content: saved.content,
-    createdAt: saved.createdAt,
-    documentId: saved.documentId,
-    id: saved.id,
-    kind: saved.kind,
-    title: saved.title,
-  };
+  return { conversation, previous };
+};
+
+export const saveManualEveDocument = async (
+  ownerId: string,
+  value: ReadonlyNativeSurface<z.input<typeof eveManualDocumentInput>>
+): Promise<SavedDocumentReceipt> => {
+  const input = eveManualDocumentInput.parse(value);
+  const { previous } = await resolveManualDocumentContext(ownerId, input);
+  const saved = await saveEveDocumentRevision({
+    ...input,
+    content: documentDefinitions
+      .require(previous.kind)
+      .contentSchema.parse(input.content),
+    fileIds: [...new Set([...previous.fileIds, ...input.fileIds])],
+    kind: previous.kind,
+    operationId: `manual:${input.operationId}`,
+    ownerId,
+    turnIndex: null,
+  });
+  return savedDocumentReceipt(saved);
 };

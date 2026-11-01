@@ -1,12 +1,14 @@
 /** Transient admission backpressure, never a rejected or dispatched command. */
-export class EveUsageReconciliationBusyError extends Error {
-  constructor() {
+class EveUsageReconciliationBusyError extends Error {
+  public constructor() {
     super("Usage reconciliation is busy. Retry the same operation shortly.");
     this.name = "EveUsageReconciliationBusyError";
   }
 }
 
-export const eveUsageBusyResponse = (error: EveUsageReconciliationBusyError) =>
+const eveUsageBusyResponse = (
+  error: Readonly<EveUsageReconciliationBusyError>
+): Response =>
   Response.json(
     {
       code: "usage_reconciliation_busy",
@@ -15,3 +17,4 @@ export const eveUsageBusyResponse = (error: EveUsageReconciliationBusyError) =>
     },
     { headers: { "Retry-After": "2" }, status: 503 }
   );
+export { eveUsageBusyResponse, EveUsageReconciliationBusyError };

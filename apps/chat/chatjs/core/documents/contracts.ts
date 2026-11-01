@@ -1,0 +1,91 @@
+import { isFileStorageKey } from "@/lib/file-url";
+import { z } from "zod";
+import { artifactKind } from "@/lib/artifacts/artifact-kind";
+
+interface DocumentAssistantRequest {
+  readonly message: string;
+  readonly modelId: string;
+}
+
+const maximumDocumentFileCount = 256;
+const maximumDocumentContentLength = 2_000_000;
+const minimumDocumentTitleLength = 1;
+const maximumDocumentTitleLength = 1000;
+
+const documentFileIds = z
+  .array(z.string().refine(isFileStorageKey))
+  .max(maximumDocumentFileCount)
+  .transform((ids: readonly string[]) => [...new Set(ids)].toSorted())
+  .describe(
+    "Stable file IDs used by this document, including embedded images. Provide the complete list on every save, or [] for no attachments; never include presigned URLs."
+  );
+
+const documentContent = z.object({
+  content: z.string().max(maximumDocumentContentLength),
+  fileIds: documentFileIds,
+  title: z
+    .string()
+    .min(minimumDocumentTitleLength)
+    .max(maximumDocumentTitleLength),
+});
+
+const eveDocumentCreateInput = documentContent;
+
+const eveDocumentEditInput = documentContent.extend({
+  documentId: z.uuid(),
+  expectedRevisionId: z
+    .uuid()
+    .describe(
+      "The revision ID returned by readDocument. Read again after a conflict."
+    ),
+});
+
+const eveDocumentReadInput = z.object({ documentId: z.uuid() });
+
+const eveManualDocumentInput = eveDocumentEditInput.extend({
+  conversationId: z.uuid(),
+  // Manual editors preserve the previous revision's IDs in saveManualEveDocument.
+  fileIds: documentFileIds.default([]),
+  operationId: z.uuid(),
+});
+
+const eveDocumentResult = z.object({
+  date: z.string(),
+  documentId: z.uuid(),
+  kind: artifactKind,
+  revisionId: z.uuid(),
+  status: z.literal("success"),
+  title: z.string(),
+});
+
+const eveDocumentWriteResult = eveDocumentResult.extend({
+  result: z.string(),
+});
+
+const eveDocumentReadResult = eveDocumentResult.extend({
+  content: z.string(),
+  fileIds: z.array(z.string()),
+});
+export {
+  documentFileIds,
+  eveDocumentCreateInput,
+  eveDocumentEditInput,
+  eveDocumentReadInput,
+  eveDocumentReadResult,
+  eveDocumentResult,
+  eveDocumentWriteResult,
+  eveManualDocumentInput,
+};
+export type { DocumentAssistantRequest };
+
+interface DocumentAssistantAction {
+  instruction: string;
+  label: string;
+  modelId: string;
+}
+export type { DocumentAssistantAction };
+
+/** Persisted document receipts remain recognizable after their editor is removed. */
+export const isDocumentResult = (value: unknown): boolean =>
+  eveDocumentWriteResult.safeParse(value).success ||
+  eveDocumentReadResult.safeParse(value).success;

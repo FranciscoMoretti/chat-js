@@ -1,38 +1,43 @@
-import { createOpenAI } from "@ai-sdk/openai";
-import type {
-  Experimental_VideoModelV4,
-  LanguageModelV4,
-} from "@ai-sdk/provider";
-import type { GatewayProvider } from "@chat-js/gateways/gateway-provider";
-import type { AiGatewayModel } from "@chat-js/gateways/models";
+import type { LanguageModelV4 } from "@ai-sdk/provider";
+
 import type {
   ExtractImageModelIdFromProvider,
   ExtractModelIdFromProvider,
-  StrictLiterals,
 } from "@chat-js/gateways/provider-types";
+
+import type { AiGatewayModel } from "@chat-js/gateways/models";
+
+import type { GatewayProvider } from "@chat-js/gateways/gateway-provider";
+
 import { GatewayRuntime } from "@chat-js/gateways/runtime";
+
 import type { ImageModel } from "ai";
+import { createOpenAI } from "@ai-sdk/openai";
+import { z } from "zod";
 
-type OpenaiLanguageModelId = StrictLiterals<
-  ExtractModelIdFromProvider<typeof createOpenAI>
->;
-type OpenaiImageModelId = StrictLiterals<
-  ExtractImageModelIdFromProvider<typeof createOpenAI>
->;
+type OpenaiImageModelId = ExtractImageModelIdFromProvider<typeof createOpenAI>;
 
-interface OpenAIModelResponse {
-  created: number;
-  id: string;
-  object: string;
-  owned_by: string;
-}
+const providerModelSchema = z.object({
+  created: z.number().nullish(),
+  id: z.string(),
+  owned_by: z.string().nullish(),
+});
+type OpenAIModelResponse = z.output<typeof providerModelSchema>;
+const providerModelListSchema = z.object({
+  data: z.array(z.unknown()),
+});
 
-const toAiGatewayModel = (model: OpenAIModelResponse): AiGatewayModel => ({
-  context_window: 0,
-  created: model.created ?? 0,
+const EMPTY_MODEL_COUNT = 0;
+const UNKNOWN_MODEL_LIMIT = 0;
+const UNKNOWN_MODEL_TIMESTAMP = 0;
+const toAiGatewayModel = (
+  model: Readonly<OpenAIModelResponse>
+): AiGatewayModel => ({
+  context_window: UNKNOWN_MODEL_LIMIT,
+  created: model.created ?? UNKNOWN_MODEL_TIMESTAMP,
   description: "",
   id: model.id,
-  max_tokens: 0,
+  max_tokens: UNKNOWN_MODEL_LIMIT,
   name: model.id,
   object: "model",
   owned_by:
@@ -41,45 +46,62 @@ const toAiGatewayModel = (model: OpenAIModelResponse): AiGatewayModel => ({
   type: "language",
 });
 
-export class OpenAIGateway
-  extends GatewayRuntime
-  implements
-    GatewayProvider<"openai", OpenaiLanguageModelId, OpenaiImageModelId, never>
-{
-  readonly type = "openai" as const;
+// Validate the wire envelope separately from each model so valid neighbors survive.
+const parseProviderModels = (value: unknown): AiGatewayModel[] => {
+  const body = providerModelListSchema.parse(value);
+  const result = body.data.flatMap((entry): AiGatewayModel[] => {
+    const model = providerModelSchema.safeParse(entry);
+    if (!model.success) {
+      return [];
+    }
+    return [toAiGatewayModel(model.data)];
+  });
+  // A genuinely empty catalog is valid; a nonempty unparseable catalog is not.
+  if (
+    body.data.length > EMPTY_MODEL_COUNT &&
+    result.length === EMPTY_MODEL_COUNT
+  ) {
+    throw new Error("Provider catalog contains no valid models.");
+  }
+  return result;
+};
 
-  private getProvider() {
+class OpenAIGateway
+  extends GatewayRuntime
+  implements GatewayProvider<"openai">
+{
+  public readonly type = "openai" as const;
+
+  private getProvider(): ReturnType<typeof createOpenAI> {
     const apiKey = this.getApiKey();
-    if (!apiKey) {
+    if (!(typeof apiKey === "string" && apiKey !== "")) {
       throw new Error("OPENAI_API_KEY is not configured");
     }
     return createOpenAI({ apiKey });
   }
 
-  createLanguageModel(modelId: OpenaiLanguageModelId): LanguageModelV4 {
+  public createLanguageModel(
+    modelId: ExtractModelIdFromProvider<typeof createOpenAI>
+  ): LanguageModelV4 {
     const provider = this.getProvider();
     return provider(modelId);
   }
 
-  createImageModel(modelId: OpenaiImageModelId): ImageModel {
+  public createImageModel(modelId: OpenaiImageModelId): ImageModel {
     const provider = this.getProvider();
     return provider.image(modelId);
   }
 
-  // The gateway interface requires a video factory even when unsupported.
-  // eslint-disable-next-line class-methods-use-this
-  createVideoModel(_modelId: never): Experimental_VideoModelV4 | null {
-    return null;
-  }
+  public readonly createVideoModel = null;
 
   private getApiKey(): string | undefined {
     return this.env.OPENAI_API_KEY;
   }
 
-  async fetchModels(): Promise<AiGatewayModel[]> {
+  public async fetchModels(): Promise<AiGatewayModel[]> {
     const apiKey = this.getApiKey();
 
-    if (!apiKey) {
+    if (!(typeof apiKey === "string" && apiKey !== "")) {
       this.log.warn("No OPENAI_API_KEY found, using fallback models");
       return [...this.getFallbackModels(this.type)];
     }
@@ -103,9 +125,7 @@ export class OpenAIGateway
         throw new Error(`Failed to fetch models: ${response.statusText}`);
       }
 
-      const body = await response.json();
-      const models = (body.data ?? []) as OpenAIModelResponse[];
-      const result = models.map(toAiGatewayModel);
+      const result = parseProviderModels(await response.json());
 
       this.log.info(
         { modelCount: result.length },
@@ -121,5 +141,4 @@ export class OpenAIGateway
     }
   }
 }
-
-export { OpenAIGateway as Gateway };
+export { OpenAIGateway as Gateway, OpenAIGateway };

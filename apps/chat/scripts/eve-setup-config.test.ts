@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import { resolveEveSetup } from "./eve-setup-config";
 
 const world = "@workflow/world-postgres";
+const missingDatabaseMessage =
+  "Set WORKFLOW_POSTGRES_URL to a direct or session PostgreSQL runtime URL, or provide DATABASE_URL as the fallback.";
 
 describe("EVE setup selection", () => {
   it("skips PostgreSQL provisioning on Vercel even with a stale URL", () => {
@@ -19,10 +21,12 @@ describe("EVE setup selection", () => {
     );
   });
 
-  it.each([undefined, ""])("explains missing database fallbacks: %s", (url) => {
-    expect(() => resolveEveSetup(world, url)).toThrow(
-      "Set WORKFLOW_POSTGRES_URL to a direct or session PostgreSQL runtime URL, or provide DATABASE_URL as the fallback."
-    );
+  it("explains the missing database fallback when URL is omitted", () => {
+    expect(() => resolveEveSetup(world)).toThrow(missingDatabaseMessage);
+  });
+
+  it("explains the missing database fallback for an empty URL", () => {
+    expect(() => resolveEveSetup(world, "")).toThrow(missingDatabaseMessage);
   });
 
   it.each(["postgres://%", "https://example.com"])(
@@ -50,6 +54,15 @@ describe("EVE setup selection", () => {
     }
   );
 });
+
+it.each(["postgres://db", "postgres://db/"])(
+  "rejects a PostgreSQL URL without a database path: %s",
+  (url) => {
+    expect(() => resolveEveSetup(world, url)).toThrow(
+      "Set WORKFLOW_POSTGRES_URL to a PostgreSQL connection URL."
+    );
+  }
+);
 
 it.each([
   "postgres://db/workflows?pool_mode=transaction",

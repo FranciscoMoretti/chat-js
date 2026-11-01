@@ -8,10 +8,10 @@ describe("multipart draft recovery", () => {
     const values = new Map<string, string>();
     const storage = {
       getItem: (key: string) => values.get(key) ?? null,
-      removeItem: (key: string) => {
+      removeItem: (key: string): void => {
         values.delete(key);
       },
-      setItem: (key: string, value: string) => {
+      setItem: (key: string, value: string): void => {
         values.set(key, value);
       },
     };

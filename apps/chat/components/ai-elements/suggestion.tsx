@@ -1,32 +1,28 @@
 "use client";
 
-import type { ComponentProps } from "react";
-
+import type { ComponentProps, JSX as ReactJSX } from "react";
 import { Button } from "@/components/ui/button";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import React from "react";
 import { cn } from "@/lib/utils";
 
-export type SuggestionsProps = ComponentProps<typeof ScrollArea>;
+type SuggestionsProps = (Omit<ComponentProps<"div">, "className"> & { className?: string });
 
-export const Suggestions = ({
+const Suggestions = ({
   className,
   children,
   ...props
-}: SuggestionsProps) => (
-  <ScrollArea className="w-full overflow-x-auto whitespace-nowrap" {...props}>
-    <div className={cn("flex w-max flex-nowrap items-center gap-2", className)}>
-      {children}
-    </div>
-    <ScrollBar className="hidden" orientation="horizontal" />
-  </ScrollArea>
+}: SuggestionsProps): React.JSX.Element => (
+  <div className={cn("flex w-full gap-2 overflow-x-auto overscroll-x-contain scroll-fade-x scrollbar-none", className)} {...props}>
+    {children}
+  </div>
 );
 
-export type SuggestionProps = Omit<ComponentProps<typeof Button>, "onClick"> & {
+type SuggestionProps = Omit<(Omit<ComponentProps<typeof Button>, "className"> & { className?: string }), "onClick"> & {
   suggestion: string;
   onClick?: (suggestion: string) => void;
 };
 
-export const Suggestion = ({
+const Suggestion = ({
   suggestion,
   onClick,
   className,
@@ -34,21 +30,30 @@ export const Suggestion = ({
   size = "sm",
   children,
   ...props
-}: SuggestionProps) => {
-  const handleClick = () => {
-    onClick?.(suggestion);
-  };
+}: SuggestionProps): ReactJSX.Element => {
+  const handleClick = React.useCallback((): void => {
+    if (onClick) {
+      onClick(suggestion);
+    }
+  }, [onClick, suggestion]);
 
+  let content: React.ReactNode = suggestion;
+  const hasChildren = Boolean(children);
+  if (hasChildren) {
+    content = children;
+  }
   return (
     <Button
-      className={cn("cursor-pointer rounded-full px-4", className)}
+      className={cn("shrink-0", className)}
       onClick={handleClick}
       size={size}
       type="button"
       variant={variant}
       {...props}
     >
-      {children || suggestion}
+      {content}
     </Button>
   );
 };
+export { Suggestion, Suggestions };
+export type { SuggestionProps, SuggestionsProps };

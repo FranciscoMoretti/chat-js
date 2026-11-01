@@ -134,6 +134,6 @@ it("accepts equivalent default ports and percent-encoded credentials", () => {
     resolveMaintainerPreviewDatabase({
       ...preview,
       DATABASE_URL_UNPOOLED: direct,
-    })?.DATABASE_MIGRATION_URL
-  ).toBe(direct);
+    })
+  ).toHaveProperty("DATABASE_MIGRATION_URL", direct);
 });

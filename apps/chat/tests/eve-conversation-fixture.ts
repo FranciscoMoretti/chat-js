@@ -1,42 +1,67 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import type { SQL } from "drizzle-orm";
 
 import { db } from "../lib/db/client";
-import { eveChat, eveConversation } from "../lib/db/schema";
+import { eveChat, eveConversation, eveWorkspace } from "../lib/db/schema";
 
-type ConversationFixture = Omit<
-  typeof eveConversation.$inferInsert,
-  "chatId" | "updatedAt"
+type ConversationFixture = Readonly<
+  Omit<
+    typeof eveConversation.$inferInsert,
+    "chatId" | "updatedAt" | "workspaceId"
+  >
 > & {
-  chatId?: string;
-  isPinned?: boolean;
-  title?: string;
-  updatedAt?: Date | SQL;
+  readonly chatId?: string;
+  readonly workspaceId?: string;
+  readonly isPinned?: boolean;
+  readonly title?: string;
+  readonly updatedAt?: Date | SQL;
 };
 
-/** Seed metadata and session membership together, including parent-first batches. */
-export const insertEveConversationFixtures = (
-  input: ConversationFixture | ConversationFixture[]
+/**
+ * Inserts conversation fixture rows and their chat metadata in one transaction.
+ * Parent-first batches inherit their parent's chat ID; other fixtures receive a new chat ID.
+ * @param {ConversationFixture | ConversationFixture[]} input One fixture or an ordered batch of fixtures.
+ * @returns {Promise<(typeof eveConversation.$inferSelect)[]>} The inserted conversation rows in input order.
+ */
+export const insertEveConversationFixtures = async (
+  input: Readonly<ConversationFixture> | Readonly<ConversationFixture>[]
 ) =>
-  db.transaction(async (tx) => {
+  await db.transaction(async (tx) => {
     const inserted: (typeof eveConversation.$inferSelect)[] = [];
+    /* oxlint-disable eslint/no-await-in-loop -- Parent-first transaction batches may reference chats and conversations inserted by earlier fixture rows. */
     for (const fixture of Array.isArray(input) ? input : [input]) {
       const {
         chatId: requestedChatId,
+        workspaceId: requestedWorkspaceId,
         isPinned,
         title,
         updatedAt,
         ...conversation
       } = fixture;
-      const [parent] = conversation.parentConversationId
-        ? // oxlint-disable-next-line eslint/no-await-in-loop -- Later fixture rows may depend on a parent inserted earlier in this transaction.
-          await tx
-            .select({ chatId: eveConversation.chatId })
-            .from(eveConversation)
-            .where(eq(eveConversation.id, conversation.parentConversationId))
-        : [];
+      const [parent] =
+        conversation.parentConversationId === undefined ||
+        conversation.parentConversationId === null ||
+        conversation.parentConversationId === ""
+          ? []
+          : await tx
+              .select({
+                chatId: eveConversation.chatId,
+                workspaceId: eveConversation.workspaceId,
+              })
+              .from(eveConversation)
+              .where(
+                and(
+                  eq(eveConversation.id, conversation.parentConversationId),
+                  eq(eveConversation.ownerId, conversation.ownerId)
+                )
+              );
+      const workspaceId =
+        requestedWorkspaceId ?? parent?.workspaceId ?? crypto.randomUUID();
+      await tx
+        .insert(eveWorkspace)
+        .values({ id: workspaceId, ownerId: conversation.ownerId })
+        .onConflictDoNothing();
       const chatId = requestedChatId ?? parent?.chatId ?? crypto.randomUUID();
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Membership requires metadata to exist before the session row.
       await tx
         .insert(eveChat)
         .values({
@@ -44,16 +69,19 @@ export const insertEveConversationFixtures = (
           isPinned,
           ownerId: conversation.ownerId,
           title: title ?? conversation.firstMessage,
-          titleStatus: title ? "manual" : "fallback",
+          titleStatus:
+            title === undefined || title === null || title === ""
+              ? "fallback"
+              : "manual",
           updatedAt,
         })
         .onConflictDoNothing();
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Preserve parent-before-child insertion order and return the actual session rows.
       const [row] = await tx
         .insert(eveConversation)
-        .values({ ...conversation, chatId })
+        .values({ ...conversation, chatId, workspaceId })
         .returning();
       inserted.push(row);
     }
+    /* oxlint-enable eslint/no-await-in-loop */
     return inserted;
   });

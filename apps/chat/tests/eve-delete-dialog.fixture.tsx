@@ -1,3 +1,4 @@
+import React from "react";
 import { createRoot } from "react-dom/client";
 
 import { EveDeleteDialogView } from "../components/eve/eve-delete-dialog";
@@ -21,13 +22,13 @@ createRoot(root).render(
     <EveDeleteDialogView
       key={phase}
       onCheck={() => {
-        /* empty */
+        /* This static fixture does not run the check action. */
       }}
       onClose={() => {
-        /* empty */
+        /* This static fixture does not close the dialog. */
       }}
       onDelete={() => {
-        /* empty */
+        /* This static fixture does not delete the conversation. */
       }}
       phase={phase}
       title={`Example conversation — ${phase}`}

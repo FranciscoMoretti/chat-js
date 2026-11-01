@@ -1,8 +1,9 @@
 import { AbsoluteFill } from "remotion";
 
 import { Logo } from "./shared/brand";
+import React from "react";
 
-export const BrandExample = () => (
+export const BrandExample = (): React.JSX.Element => (
   <AbsoluteFill
     style={{
       alignItems: "center",

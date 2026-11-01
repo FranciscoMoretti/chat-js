@@ -1,9 +1,15 @@
 "use client";
 
-import { ModelSelector } from "@/components/model-selector";
 import type { AppModelDefinition } from "@/lib/ai/app-models";
-import { gatewayModelDefaults } from "@/lib/ai/gateway-model-defaults";
+
+import { ModelSelector } from "@/components/model-selector";
 import { ChatModelsProvider } from "@/providers/chat-models-provider";
+
+import React from "react";
+
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+
+import { gatewayModelDefaults } from "@/chatjs/providers/gateway-defaults";
 
 const defaultModelOptions: Pick<AppModelDefinition, "reasoning" | "toolCall"> =
   {
@@ -52,14 +58,10 @@ const primaryFixtureModel = createModel(
 );
 
 const alternativeFixtureModels = [
-  createModel(
-    gatewayModelDefaults.tools.code.edits,
-    "Reasoning fixture model",
-    {
-      reasoning: true,
-      toolCall: true,
-    }
-  ),
+  createModel(gatewayModelDefaults.roles.balanced, "Reasoning fixture model", {
+    reasoning: true,
+    toolCall: true,
+  }),
   createModel(
     gatewayModelDefaults.workflows.chatImageCompatible,
     "Alternative fixture model",
@@ -70,13 +72,21 @@ const alternativeFixtureModels = [
 const fixtureModels = [
   primaryFixtureModel,
   ...alternativeFixtureModels.filter(
-    (model, index, models) =>
+    (
+      model: Readonly<Pick<AppModelDefinition, "id">>,
+      index,
+      models: readonly ReadonlyNativeSurface<AppModelDefinition>[]
+    ) =>
       model.id !== primaryFixtureModel.id &&
       models.findIndex(({ id }) => id === model.id) === index
   ),
 ];
 
-export const ModelToolbarVisualFixture = () => (
+const ignoreModelSelectionChange = (): void => {
+  // This fixture has no selection-change subscription to clean up.
+};
+
+export const ModelToolbarVisualFixture = (): React.JSX.Element => (
   <ChatModelsProvider models={fixtureModels}>
     <main
       className="h-[32rem] w-[48rem] p-8"
@@ -89,7 +99,8 @@ export const ModelToolbarVisualFixture = () => (
           data.
         </p>
         <ModelSelector
-          onModelSelectionChangeAction={() => null}
+          allowMultiple
+          onModelSelectionChangeAction={ignoreModelSelectionChange}
           selectedModelId={primaryFixtureModel.id}
           selectedModelSelection={primaryFixtureModel.id}
         />

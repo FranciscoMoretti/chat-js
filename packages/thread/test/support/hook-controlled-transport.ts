@@ -1,27 +1,45 @@
 import type { ChatTransport, UIMessage, UIMessageChunk } from "ai";
 
-const reconnectToNoStream: ChatTransport<UIMessage>["reconnectToStream"] = () =>
-  Promise.resolve(null);
+import type { ReadonlyDeep } from "./readonly-types";
+
+const reconnectToNoStream: ChatTransport<UIMessage>["reconnectToStream"] =
+  Promise.resolve.bind<typeof Promise, [null], [], Promise<null>>(
+    Promise,
+    null
+  );
 
 export class ControlledTransport implements ChatTransport<UIMessage> {
-  readonly requests: ReadableStreamDefaultController<UIMessageChunk>[] = [];
+  public readonly requests: ReadableStreamDefaultController<UIMessageChunk>[] =
+    [];
 
-  sendMessages: ChatTransport<UIMessage>["sendMessages"] = () =>
-    Promise.resolve(
-      new ReadableStream({
-        start: (controller) => {
-          this.requests.push(controller);
-        },
-      })
-    );
+  public sendMessages: ChatTransport<UIMessage>["sendMessages"] =
+    async (): ReturnType<ChatTransport<UIMessage>["sendMessages"]> =>
+      await Promise.resolve(
+        new ReadableStream({
+          start: (
+            controller: Readonly<
+              ReadableStreamDefaultController<UIMessageChunk>
+            >
+          ): void => {
+            this.requests.push(controller);
+          },
+        })
+      );
+  public reconnectToStream = reconnectToNoStream;
 
-  reconnectToStream = reconnectToNoStream;
-
-  emit(requestIndex: number, chunk: UIMessageChunk) {
-    this.requests[requestIndex]?.enqueue(chunk);
+  public emit(requestIndex: number, chunk: ReadonlyDeep<UIMessageChunk>): void {
+    const controller = this.requests[requestIndex] ?? globalThis.undefined;
+    if (controller === globalThis.undefined) {
+      return;
+    }
+    controller.enqueue(chunk);
   }
 
-  finish(requestIndex: number) {
-    this.requests[requestIndex]?.close();
+  public finish(requestIndex: number): void {
+    const controller = this.requests[requestIndex] ?? globalThis.undefined;
+    if (controller === globalThis.undefined) {
+      return;
+    }
+    controller.close();
   }
 }

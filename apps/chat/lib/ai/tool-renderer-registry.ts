@@ -1,52 +1,71 @@
-import type { ToolUIPart } from "ai";
-import { createElement } from "react";
-import type { ComponentType } from "react";
-
-import { ui } from "@/tools/chatjs/ui";
-
-import { isValidatedToolRenderer } from "./define-tool-renderer";
+import type { ComponentType, FunctionComponent } from "react";
 import type { InstalledTools } from "./installed-tools";
+import type { ToolUIPart } from "ai";
 
-export type InstalledToolName = keyof InstalledTools;
-export type InstalledToolType = `tool-${InstalledToolName & string}`;
-export type InstalledToolUIPart = ToolUIPart<InstalledTools>;
+import { isValidatedToolRenderer } from "@/chatjs/core/tools/define-renderer";
+import { ui } from "@/integrations/tools/ui";
 
-export type InstalledToolPart<T extends InstalledToolType> = Extract<
+type InstalledToolName = keyof InstalledTools;
+
+type InstalledToolType = `tool-${InstalledToolName}`;
+
+type InstalledToolUIPart = ToolUIPart<InstalledTools>;
+
+type InstalledToolPart<ToolType extends InstalledToolType> = Extract<
   InstalledToolUIPart,
-  { type: T }
+  { type: ToolType }
 >;
 
-export type ToolRendererProps<T extends InstalledToolType> = {
-  tool: InstalledToolPart<T>;
+interface ToolRendererProps<ToolType extends InstalledToolType> {
+  tool: InstalledToolPart<ToolType>;
   messageId: string;
   isReadonly: boolean;
+}
+
+type ToolRendererRegistry = {
+  [ToolType in InstalledToolType]?: ComponentType<ToolRendererProps<ToolType>>;
 };
 
-export type ToolRendererRegistry = {
-  [K in InstalledToolType]?: ComponentType<ToolRendererProps<K>>;
-};
+const toolRendererRegistry: ToolRendererRegistry = ui;
 
-export const toolRendererRegistry: ToolRendererRegistry = ui;
-
-export const isInstalledToolType = (
+const isInstalledToolType = (
   type: string
 ): type is keyof typeof toolRendererRegistry =>
   Object.hasOwn(toolRendererRegistry, type);
 
-/** EVE only invokes renderers that validate persisted input and output themselves. */
-export const getEveInstalledToolRenderer = (type: string) => {
+/** Resolve only installed function renderers marked as validating their persisted input/output.
+ * @param {string} type Installed tool discriminator used to read the native renderer registry.
+ * @returns {(FunctionComponent<{isReadonly: boolean; messageId: string; tool: unknown}> & {validatedToolRenderer: true}) | undefined} The original marked renderer, or undefined for unknown and unvalidated entries.
+ */
+const getEveInstalledToolRenderer = (
+  type: string
+):
+  | (FunctionComponent<{
+      isReadonly: boolean;
+      messageId: string;
+      tool: unknown;
+    }> & { validatedToolRenderer: true })
+  | undefined => {
   if (!isInstalledToolType(type)) {
-    return;
+    return undefined;
   }
   const renderer = toolRendererRegistry[type];
-  return isValidatedToolRenderer(renderer) ? renderer : undefined;
+  if (isValidatedToolRenderer(renderer)) {
+    return renderer;
+  }
+  return undefined;
 };
 
-/** Keep the installed part discriminator correlated with its renderer props. */
-export const renderInstalledTool = <T extends InstalledToolType>(
-  type: T,
-  props: ToolRendererProps<T>
-) => {
-  const Renderer = toolRendererRegistry[type];
-  return Renderer ? createElement(Renderer, props) : null;
+export {
+  getEveInstalledToolRenderer,
+  isInstalledToolType,
+  toolRendererRegistry,
+};
+export type {
+  InstalledToolName,
+  InstalledToolPart,
+  InstalledToolType,
+  InstalledToolUIPart,
+  ToolRendererProps,
+  ToolRendererRegistry,
 };

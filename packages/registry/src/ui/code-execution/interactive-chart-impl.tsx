@@ -1,11 +1,15 @@
 "use client";
-
+import type {
+  BarSeriesOption,
+  EChartsOption,
+  LineSeriesOption,
+  ScatterSeriesOption,
+} from "echarts";
+import { Card } from "@/components/ui/card";
+import React from "react";
 import ReactECharts from "echarts-for-react/lib/index";
-import type { EChartsOption } from "echarts-for-react/lib/types";
 import { motion } from "motion/react";
 import { useTheme } from "next-themes";
-
-import { Card } from "@/components/ui/card";
 
 const CHART_COLORS = [
   "#22c55e",
@@ -19,43 +23,47 @@ const CHART_COLORS = [
 ];
 
 interface LineScatterElement {
-  label: string;
-  points: [number | string, number][];
+  readonly label: string;
+  readonly points: readonly (readonly [number | string, number])[];
 }
 
 interface BarElement {
-  group: string;
-  label: string;
-  value: number;
+  readonly group: string;
+  readonly label: string;
+  readonly value: number;
 }
 
 interface BaseChartCommon {
-  title: string;
-  x_label?: string;
-  y_label?: string;
+  readonly title: string;
+  readonly x_label?: string;
+  readonly y_label?: string;
 }
 
-export type LineChart = BaseChartCommon & {
-  type: "line";
-  x_scale?: "datetime";
-  elements: LineScatterElement[];
+type LineChart = BaseChartCommon & {
+  readonly type: "line";
+  readonly x_scale?: "datetime";
+  readonly elements: readonly LineScatterElement[];
 };
 
-export type ScatterChart = BaseChartCommon & {
-  type: "scatter";
-  x_scale?: "datetime";
-  elements: LineScatterElement[];
+type ScatterChart = BaseChartCommon & {
+  readonly type: "scatter";
+  readonly x_scale?: "datetime";
+  readonly elements: readonly LineScatterElement[];
 };
 
-export type BarChart = BaseChartCommon & {
-  type: "bar";
-  x_scale?: undefined;
-  elements: BarElement[];
+type BarChart = BaseChartCommon & {
+  readonly type: "bar";
+  readonly x_scale?: undefined;
+  readonly elements: readonly BarElement[];
 };
 
-export type BaseChart = LineChart | ScatterChart | BarChart;
+type BaseChart = LineChart | ScatterChart | BarChart;
 
-const InteractiveChart = ({ chart }: { chart: BaseChart }) => {
+const InteractiveChart = ({
+  chart,
+}: {
+  readonly chart: BaseChart;
+}): React.JSX.Element => {
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
   const textColor = isDark ? "#e5e5e5" : "#262626";
@@ -112,46 +120,52 @@ const InteractiveChart = ({ chart }: { chart: BaseChart }) => {
         lineStyle: { color: gridColor, type: "dashed" },
         show: true,
       },
-    };
+    } satisfies NonNullable<EChartsOption["xAxis"]>;
 
     if (chart.type === "line" || chart.type === "scatter") {
-      const series = chart.elements.map((e, index) => ({
-        areaStyle:
-          chart.type === "line"
-            ? {
-                color: {
-                  colorStops: [
-                    {
-                      color: `${CHART_COLORS[index % CHART_COLORS.length]}15`,
-                      offset: 0,
-                    },
-                    { color: "rgba(23, 23, 23, 0)", offset: 1 },
-                  ],
-                  type: "linear",
-                  x: 0,
-                  x2: 0,
-                  y: 0,
-                  y2: 1,
-                },
-              }
-            : undefined,
-        data: e.points.map((p: [number | string, number]) => {
-          const x =
-            chart.x_scale === "datetime" ? new Date(p[0]).getTime() : p[0];
-          return [x, p[1]];
-        }),
-        itemStyle: {
-          color: CHART_COLORS[index % CHART_COLORS.length],
-        },
-        lineStyle: {
-          color: CHART_COLORS[index % CHART_COLORS.length],
-          width: 2,
-        },
-        name: e.label,
-        smooth: true,
-        symbolSize: chart.type === "scatter" ? 10 : 0,
-        type: chart.type,
-      }));
+      const series = chart.elements.map(
+        (element, index): LineSeriesOption | ScatterSeriesOption => ({
+          areaStyle:
+            chart.type === "line"
+              ? {
+                  color: {
+                    colorStops: [
+                      {
+                        color: `${CHART_COLORS[index % CHART_COLORS.length]}15`,
+                        offset: 0,
+                      },
+                      { color: "rgba(23, 23, 23, 0)", offset: 1 },
+                    ],
+                    type: "linear",
+                    x: 0,
+                    x2: 0,
+                    y: 0,
+                    y2: 1,
+                  },
+                }
+              : undefined,
+          data: element.points.map(
+            (point: readonly [number | string, number]) => {
+              const horizontalValue =
+                chart.x_scale === "datetime"
+                  ? new Date(point[0]).getTime()
+                  : point[0];
+              return [horizontalValue, point[1]];
+            }
+          ),
+          itemStyle: {
+            color: CHART_COLORS[index % CHART_COLORS.length],
+          },
+          lineStyle: {
+            color: CHART_COLORS[index % CHART_COLORS.length],
+            width: 2,
+          },
+          name: element.label,
+          smooth: true,
+          symbolSize: chart.type === "scatter" ? 10 : 0,
+          type: chart.type,
+        })
+      );
 
       return {
         ...sharedOptions,
@@ -167,7 +181,7 @@ const InteractiveChart = ({ chart }: { chart: BaseChart }) => {
             ...defaultAxisOptions.axisLabel,
             formatter:
               chart.x_scale === "datetime"
-                ? (value: number) => {
+                ? (value: number): string => {
                     const date = new Date(value);
                     return date.toLocaleDateString("en-US", {
                       month: "short",
@@ -192,27 +206,36 @@ const InteractiveChart = ({ chart }: { chart: BaseChart }) => {
     if (chart.type === "bar") {
       const data: Record<string, BarElement[]> = {};
       for (const item of chart.elements) {
-        if (!data[item.group]) {
+        const existingGroup = data[item.group];
+        if (existingGroup === undefined) {
           data[item.group] = [];
         }
         data[item.group].push(item);
       }
 
-      const series = Object.entries(data).map(([group, elements], index) => ({
-        data: elements?.map((e) => [e.label, e.value]),
-        emphasis: {
-          itemStyle: {
-            shadowBlur: 10,
-            shadowColor: "rgba(0,0,0,0.3)",
+      const series = Object.entries(data).map(
+        (
+          [group, elements]: readonly [string, readonly BarElement[]],
+          index
+        ): BarSeriesOption => ({
+          data: elements.map((element: Readonly<BarElement>) => [
+            element.label,
+            element.value,
+          ]),
+          emphasis: {
+            itemStyle: {
+              shadowBlur: 10,
+              shadowColor: "rgba(0,0,0,0.3)",
+            },
           },
-        },
-        itemStyle: {
-          color: CHART_COLORS[index % CHART_COLORS.length],
-        },
-        name: group,
-        stack: "total",
-        type: "bar",
-      }));
+          itemStyle: {
+            color: CHART_COLORS[index % CHART_COLORS.length],
+          },
+          name: group,
+          stack: "total",
+          type: "bar",
+        })
+      );
 
       return {
         ...sharedOptions,
@@ -252,7 +275,7 @@ const InteractiveChart = ({ chart }: { chart: BaseChart }) => {
             </h3>
           )}
           <ReactECharts
-            notMerge={true}
+            notMerge
             option={getChartOptions()}
             style={{ height: "400px", width: "100%" }}
             theme={resolvedTheme === "dark" ? "dark" : undefined}
@@ -263,4 +286,5 @@ const InteractiveChart = ({ chart }: { chart: BaseChart }) => {
   );
 };
 
+export type { BarChart, BaseChart, LineChart, ScatterChart };
 export default InteractiveChart;

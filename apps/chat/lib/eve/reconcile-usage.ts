@@ -1,98 +1,43 @@
-/* oxlint-disable eslint/no-await-in-loop -- Settle evidence and advance durable cursors in stream order. */
+import { reconcileEveSubagentUsage } from "./reconcile-subagent-usage";
+import { requireEveDeletionLifecycle } from "./deletion-lifecycle";
+import { retireEveSessionForDeletion } from "./retire-session";
 import { Client } from "eve/client";
-import type { MessageStreamEvent } from "eve/client";
-
+import { listEveSubagents } from "@/lib/db/eve-subagents";
 import {
   advanceEveUsageCursor,
   getEveUsageCursor,
   withManagedUsageReconciliation,
-} from "../db/eve-billing";
-import { listEveOwnerBindings } from "../db/eve-queries";
-import {
-  advanceEveSubagentUsageCursor,
-  getEveSubagent,
-  listEveSubagents,
-} from "../db/eve-subagents";
-import { env } from "../env";
-import { ingestEveActivity } from "./activity";
-import { getEveConnectionOptions } from "./connection-options";
-import { recoverEveCreations } from "./recover-creations";
+} from "@/lib/db/eve-billing";
+import type { MessageStreamEvent } from "eve/client";
 import { assertEveConfigured } from "./server";
+import { env } from "@/lib/env";
+import { getEveConnectionOptions } from "./connection-options";
 import { getEveStreamPositions } from "./stream-positions";
+import { ingestEveActivity } from "./activity";
 import { ingestEveUsage } from "./usage";
+import { listEveOwnerBindings } from "@/lib/db/eve-queries";
+import { recoverEveCreations } from "./recover-creations";
 import { resolveWorkflowWorld } from "./world-config";
+import { tryEveAccountingWrite } from "./accounting-log";
 
-/** Settle native descendants before admission or erasing a root session. */
-export const reconcileEveSubagentUsage = async (
+const INITIAL_STREAM_INDEX = 0;
+const STREAM_EVENT_INCREMENT = 1;
+const STREAM_READ_TIMEOUT_MS = 15_000;
+const MAX_CONCURRENT_USAGE_READS = 4;
+
+/**
+ * Repair missed usage/activity hooks from Eve's authoritative stream.
+ * @param {string} ownerId - Owner whose root and descendant usage will be ingested.
+ * @param {string} sessionId - Root session whose cursor advances only after reconciliation succeeds.
+ * @param {boolean} replayUnpriced - Replay the root and descendants from the beginning to retry pricing. */
+const reconcileEveUsage = async (
   ownerId: string,
   sessionId: string,
   replayUnpriced = false
-) => {
-  const client = new Client(getEveConnectionOptions(ownerId));
-  let unresolved = false;
-  const descendants = await listEveSubagents(ownerId, sessionId);
-  const discovered = new Set(descendants.map((child) => child.sessionId));
-  const positions = await getEveStreamPositions(
-    descendants.map((child) => child.sessionId)
-  );
-  for (const child of descendants) {
-    const start = replayUnpriced ? 0 : child.usageStreamIndex;
-    const length = positions.get(child.sessionId);
-    if (length !== undefined && length < child.usageStreamIndex) {
-      throw new Error(
-        "Eve child stream is shorter than its durable billing cursor."
-      );
-    }
-    if (!replayUnpriced && length === start) {
-      continue;
-    }
-    let childIndex = start;
-    let childUnresolved = false;
-    for await (const event of client.sessions.attach(child.sessionId).stream({
-      follow: false,
-      signal: AbortSignal.timeout(15_000),
-      startIndex: start,
-    })) {
-      childIndex += 1;
-      if (
-        (await ingestEveUsage(ownerId, child.sessionId, event, {
-          sessionId,
-          turnId: child.rootTurnId,
-        })) === false
-      ) {
-        childUnresolved = true;
-      }
-      if (
-        event.type === "subagent.called" &&
-        !event.data.remote &&
-        !discovered.has(event.data.childSessionId)
-      ) {
-        const nested = await getEveSubagent(ownerId, event.data.childSessionId);
-        if (!nested || nested.rootSessionId !== sessionId) {
-          throw new Error("Delegated usage requires an owned root binding.");
-        }
-        discovered.add(nested.sessionId);
-        descendants.push(nested);
-      }
-    }
-    if (childUnresolved) {
-      unresolved = true;
-    } else if (childIndex > start) {
-      await advanceEveSubagentUsageCursor(ownerId, child.sessionId, childIndex);
-    }
-  }
-  return !unresolved;
-};
-
-/** Repair missed hooks from the unread suffix of Eve's authoritative stream. */
-export const reconcileEveUsage = async (
-  ownerId: string,
-  sessionId: string,
-  replayUnpriced = false
-) => {
+): Promise<void> => {
   assertEveConfigured();
   const startIndex = replayUnpriced
-    ? 0
+    ? INITIAL_STREAM_INDEX
     : await getEveUsageCursor(ownerId, sessionId);
   const client = new Client(getEveConnectionOptions(ownerId));
   const session = client.sessions.attach(sessionId);
@@ -101,10 +46,10 @@ export const reconcileEveUsage = async (
   let latestActivity: MessageStreamEvent | undefined;
   for await (const event of session.stream({
     follow: false,
-    signal: AbortSignal.timeout(15_000),
+    signal: AbortSignal.timeout(STREAM_READ_TIMEOUT_MS),
     startIndex,
   })) {
-    streamIndex += 1;
+    streamIndex += STREAM_EVENT_INCREMENT;
     if (
       event.type === "message.received" ||
       event.type === "message.completed"
@@ -112,53 +57,82 @@ export const reconcileEveUsage = async (
       latestActivity = event;
     }
     const priced = await ingestEveUsage(ownerId, sessionId, event);
-    if (
-      (event.type === "step.completed" ||
-        event.type === "compaction.usage" ||
-        event.type === "hook.result" ||
-        event.type === "action.result") &&
-      priced === false
-    ) {
+    if (!priced) {
       unresolved = true;
     }
   }
-  if (
-    (await reconcileEveSubagentUsage(ownerId, sessionId, replayUnpriced)) ===
-    false
-  ) {
+  if (!(await reconcileEveSubagentUsage(ownerId, sessionId, replayUnpriced))) {
     unresolved = true;
   }
   if (latestActivity) {
     await ingestEveActivity(ownerId, sessionId, latestActivity);
   }
   if (unresolved) {
-    throw new Error(
-      "Completed usage needs provider cost reconciliation before starting more work."
-    );
+    // Keep replay available for missing tool receipts without blocking admission.
+    return;
   }
   if (streamIndex > startIndex) {
-    await advanceEveUsageCursor(ownerId, sessionId, streamIndex);
+    await tryEveAccountingWrite({ ownerId, sessionId }, "cursor", async () => {
+      await advanceEveUsageCursor(ownerId, sessionId, streamIndex);
+    });
   }
 };
 
 const reconcileAllOwnerUsage = async (
   ownerId: string,
-  unpricedSessions = new Set<string>()
-) => {
-  const bindings = await listEveOwnerBindings(ownerId);
-  if (bindings.some((row) => row.state !== "bound" || !row.sessionId)) {
+  unpricedSessions: Readonly<ReadonlySet<string>> = new Set<string>()
+): Promise<void> => {
+  const ownerBindings = await listEveOwnerBindings(ownerId);
+  if (
+    ownerBindings.some(
+      (row) =>
+        (row.state !== "bound" && row.state !== "deleting") ||
+        typeof row.sessionId !== "string" ||
+        row.sessionId === ""
+    )
+  ) {
     throw new Error(
       "Resolve uncertain session creation before starting more work."
     );
   }
   assertEveConfigured();
-  const children = await listEveSubagents(ownerId);
+  const deletingSessions = new Set(
+    ownerBindings.flatMap((row) =>
+      row.state === "deleting" && typeof row.sessionId === "string"
+        ? [row.sessionId]
+        : []
+    )
+  );
+  if (deletingSessions.size > 0) {
+    // Reuse durable settlement receipts: partial cleanup may already have erased
+    // native streams. Never skip deleting usage merely because access is revoked.
+    await requireEveDeletionLifecycle().retire(
+      [...deletingSessions],
+      async (id) => {
+        await retireEveSessionForDeletion(ownerId, id);
+      }
+    );
+  }
+  const bindings = ownerBindings.filter((row) => row.state === "bound");
+  const ownerChildren = await listEveSubagents(ownerId);
+  const children = ownerChildren.filter(
+    (child) =>
+      child.rootSessionId === null || !deletingSessions.has(child.rootSessionId)
+  );
   const positions = await getEveStreamPositions([
-    ...bindings.flatMap((row) => (row.sessionId ? [row.sessionId] : [])),
+    ...bindings.flatMap((row) => {
+      if (typeof row.sessionId === "string" && row.sessionId !== "") {
+        return [row.sessionId];
+      }
+      return [];
+    }),
     ...children.map((child) => child.sessionId),
   ]);
   for (const row of bindings) {
-    const length = row.sessionId ? positions.get(row.sessionId) : undefined;
+    const length =
+      typeof row.sessionId === "string" && row.sessionId !== ""
+        ? positions.get(row.sessionId)
+        : undefined;
     if (length !== undefined && length < row.usageStreamIndex) {
       throw new Error("Eve stream is shorter than its durable billing cursor.");
     }
@@ -173,7 +147,7 @@ const reconcileAllOwnerUsage = async (
         "Eve child stream is shorter than its durable billing cursor."
       );
     }
-    if (!child.rootSessionId) {
+    if (typeof child.rootSessionId !== "string" || child.rootSessionId === "") {
       throw new Error("Native child has no owned root session.");
     }
     if (length !== child.usageStreamIndex) {
@@ -183,7 +157,8 @@ const reconcileAllOwnerUsage = async (
   const pending = bindings
     .filter(
       (row) =>
-        !row.sessionId ||
+        typeof row.sessionId !== "string" ||
+        row.sessionId === "" ||
         unpricedSessions.has(row.sessionId) ||
         rootsWithPendingChildren.has(row.sessionId) ||
         positions.get(row.sessionId) !== row.usageStreamIndex
@@ -196,15 +171,18 @@ const reconcileAllOwnerUsage = async (
     | undefined;
   // A slow stream occupies only its own slot. On failure, drain existing reads
   // before returning so a retry cannot overlap billing work left by this call.
-  const worker = async () => {
+  const worker = async (): Promise<void> => {
     while (!failure) {
       const next = pending.next();
-      if (next.done) {
+      if (next.done === true) {
         return;
       }
       try {
-        if (next.value.sessionId) {
-          // oxlint-disable-next-line eslint/no-await-in-loop -- Advance durable evidence in order without skipping unresolved work.
+        if (
+          typeof next.value.sessionId === "string" &&
+          next.value.sessionId !== ""
+        ) {
+          // oxlint-disable-next-line eslint/no-await-in-loop -- Discover and settle descendants before their durable cursor advances; each of four workers must finish its read and observe shared failure before scheduling another.
           await reconcileEveUsage(
             ownerId,
             next.value.sessionId,
@@ -217,34 +195,43 @@ const reconcileAllOwnerUsage = async (
     }
   };
   await Promise.all(
-    Array.from({ length: Math.min(4, bindings.length) }, worker)
+    Array.from(
+      { length: Math.min(MAX_CONCURRENT_USAGE_READS, bindings.length) },
+      worker
+    )
   );
   if (failure) {
     throw failure.cause;
   }
 };
 
-export const reconcileEveOwnerUsage = async (
+const reconcileEveOwnerUsage = async (
   ownerId: string,
   sessionId?: string
-) => {
+): Promise<void> => {
   await recoverEveCreations(ownerId);
   if (resolveWorkflowWorld(env) !== "vercel") {
-    return await reconcileAllOwnerUsage(ownerId);
+    await reconcileAllOwnerUsage(ownerId);
+    return;
   }
   // Hooks handle normal billing. Rate-limit the missed-hook fallback durably:
   // settled history must not be streamed on every message or new conversation.
   await withManagedUsageReconciliation(
     ownerId,
-    async (sweepDue, unpricedSessions) => {
-      if (sweepDue || unpricedSessions.size > 0) {
-        // Older cursors can have passed failed attempts before their explicit
-        // zero-charge classification; replay that evidence rather than strand it.
+    async (sweepDue, unpricedSessions: Readonly<ReadonlySet<string>>) => {
+      if (sweepDue) {
+        // Retry missing tool receipts at the durable sweep interval.
         await reconcileAllOwnerUsage(ownerId, unpricedSessions);
-      } else if (sessionId) {
-        // The conversation receiving new work is never covered by the cooldown.
+      } else if (
+        typeof sessionId === "string" &&
+        sessionId !== "" &&
+        !unpricedSessions.has(sessionId)
+      ) {
+        // Fresh tails remain eligible; unresolved history waits for the next sweep.
         await reconcileEveUsage(ownerId, sessionId);
       }
     }
   );
 };
+
+export { reconcileEveOwnerUsage, reconcileEveUsage };

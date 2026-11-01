@@ -1,0 +1,43 @@
+import { guardedFetch } from "guarded-fetch";
+
+type ReadonlyNativeSurface<Value> = Value extends
+  | string
+  | number
+  | bigint
+  | boolean
+  | symbol
+  | null
+  | undefined
+  ? Value
+  : Value extends (...parameters: readonly never[]) => unknown
+    ? Value
+    : Value extends abstract new (...parameters: readonly never[]) => unknown
+      ? Value
+      : Value extends object
+        ? {
+            readonly [Property in keyof Value]: ReadonlyNativeSurface<
+              Value[Property]
+            >;
+          }
+        : Value;
+const MCP_NETWORK_TIMEOUT_MS = 30_000;
+
+/** Covers transport, discovery and OAuth requests with the same network policy.
+ * @param {string | ReadonlyNativeSurface<URL | Request>} input - Native URL or request to protect with the MCP network policy.
+ * @param {Readonly<RequestInit> | undefined} init - Native request overrides applied by the Request constructor.
+ * @returns {Promise<Response>} The response from the guarded transport.
+ */
+export const mcpFetch = async (
+  input: string | ReadonlyNativeSurface<URL | Request>,
+  init?: Readonly<RequestInit>
+): Promise<Response> => {
+  const request = new Request(input, init);
+  return await guardedFetch(request.url, {
+    ...(request.body ? { body: await request.arrayBuffer() } : {}),
+    headers: request.headers,
+    method: request.method,
+    opaqueErrors: true,
+    signal: request.signal,
+    timeoutMs: MCP_NETWORK_TIMEOUT_MS,
+  });
+};

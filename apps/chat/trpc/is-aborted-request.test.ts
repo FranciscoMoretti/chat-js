@@ -1,5 +1,5 @@
-import { TRPCClientError } from "@trpc/client";
 import { expect, it } from "vitest";
+import { TRPCClientError } from "@trpc/client";
 
 import { isAbortedRequest } from "./is-aborted-request";
 

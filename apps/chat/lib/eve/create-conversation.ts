@@ -1,25 +1,32 @@
 import { z } from "zod";
 
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+
 import { retryEveAdmission } from "./admission-retry";
 import { conversationBinding } from "./contracts";
 import type { createConversationInput } from "./contracts";
 import { EveUsageReconciliationBusyError } from "./usage-reconciliation-busy";
 
-export class CreationRejectedError extends Error {
-  readonly projectUnavailable: boolean;
-  constructor(message: string, projectUnavailable = false) {
+class CreationRejectedError extends Error {
+  public readonly code: string | undefined;
+  public constructor(message: string, code?: string) {
     super(message);
     this.name = "CreationRejectedError";
-    this.projectUnavailable = projectUnavailable;
+    this.code = code;
   }
 }
 
-/** A timeout is ambiguous: callers must retain the operation until it is bound. */
-export const requestConversation = async (
-  operation: z.infer<typeof createConversationInput>
-) => {
+/** A timeout is ambiguous: callers must retain the operation until it is bound.
+ * @param {z.infer<typeof createConversationInput>} operation Immutable creation intent reused for admission and recovery retries.
+ * @returns {Promise<z.infer<typeof conversationBinding>>} The conversation and native session identities accepted for this operation.
+ */
+const requestConversation = async (
+  operation: ReadonlyNativeSurface<z.infer<typeof createConversationInput>>
+): Promise<z.infer<typeof conversationBinding>> => {
   const controller = new AbortController();
-  const deadline = setTimeout(() => controller.abort(), 30_000);
+  const deadline = setTimeout(() => {
+    controller.abort();
+  }, 30_000);
   try {
     return await retryEveAdmission(async () => {
       const response = await fetch("/api/agent-conversations", {
@@ -47,10 +54,7 @@ export const requestConversation = async (
           (response.status === 400 || response.status === 404) &&
           failure.creationRejected === true
         ) {
-          throw new CreationRejectedError(
-            failure.error,
-            failure.code === "project_not_found"
-          );
+          throw new CreationRejectedError(failure.error, failure.code);
         }
         throw new Error(failure.error);
       }
@@ -68,3 +72,4 @@ export const requestConversation = async (
     clearTimeout(deadline);
   }
 };
+export { CreationRejectedError, requestConversation };

@@ -1,4 +1,6 @@
-export const ThinkingMessage = () => {
+import React from "react";
+
+export const ThinkingMessage = (): React.JSX.Element => {
   const role = "assistant";
 
   return (

@@ -1,5 +1,5 @@
 export class EveCreationRecoveryError extends Error {
-  constructor() {
+  public constructor() {
     super(
       "A previous conversation is still being recovered. Retry shortly; your request has been saved."
     );

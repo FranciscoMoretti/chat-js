@@ -1,12 +1,12 @@
-import { spawn } from "node:child_process";
+import { Command } from "commander";
+import type { PackageManager } from "#cli/types";
+import { handleError } from "#cli/utils/handle-error";
+import { inferPackageManager } from "#cli/utils/get-package-manager";
 import { once } from "node:events";
 import path from "node:path";
+import { spawn } from "node:child_process";
 
-import { Command } from "commander";
-
-import type { PackageManager } from "../types";
-import { inferPackageManager } from "../utils/get-package-manager";
-import { handleError } from "../utils/handle-error";
+const EXIT_SUCCESS = 0;
 
 const EVAL_SCRIPT = `
 import userConfig from "./chat.config.ts";
@@ -25,10 +25,12 @@ const getTsEvalCommand = (pm: PackageManager): [string, string[]] => {
     case "yarn": {
       return ["yarn", ["dlx", "tsx", "--eval", EVAL_SCRIPT]];
     }
-    default: {
+    case "npm": {
       return ["npx", ["tsx", "--eval", EVAL_SCRIPT]];
     }
+    // No default
   }
+  return ["npx", ["tsx", "--eval", EVAL_SCRIPT]];
 };
 
 export const config = new Command()
@@ -41,7 +43,7 @@ export const config = new Command()
     "the working directory (defaults to current directory)",
     process.cwd()
   )
-  .action(async (opts) => {
+  .action(async (opts: { readonly cwd: string }) => {
     try {
       const cwd = path.resolve(opts.cwd);
 
@@ -54,11 +56,13 @@ export const config = new Command()
       });
 
       const stderr: string[] = [];
-      child.stderr?.on("data", (data) => stderr.push(String(data)));
+      child.stderr.on("data", (data): void => {
+        stderr.push(String(data));
+      });
 
-      let code: number | null;
+      let closeEvent: readonly unknown[];
       try {
-        [code] = await once(child, "close");
+        closeEvent = await once(child, "close");
       } catch (error) {
         throw new Error(
           `Could not spawn ${cmd}. Make sure ${pm} is installed. ${error instanceof Error ? error.message : String(error)}`,
@@ -68,7 +72,8 @@ export const config = new Command()
         );
       }
 
-      if (code !== 0) {
+      const [code] = closeEvent;
+      if (code !== EXIT_SUCCESS) {
         throw new Error(`Failed to resolve config:\n${stderr.join("").trim()}`);
       }
     } catch (error) {

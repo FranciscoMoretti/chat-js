@@ -1,19 +1,27 @@
 "use client";
 
-import { LogIn, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { useState } from "react";
+import { LogIn, X } from "lucide-react";
+import React, { useState } from "react";
 
 import { InternalLink } from "@/components/internal-link";
 import { Button } from "@/components/ui/button";
+
+import type { JSX as ReactJSX } from "react";
+
 import { cn } from "@/lib/utils";
 
+const BANNER_ANIMATE = { height: "auto", opacity: 1 };
+const BANNER_EXIT = { height: 0, opacity: 0 };
+const BANNER_INITIAL = { height: 0, opacity: 0 };
+const BANNER_TRANSITION = { duration: 0.2 };
+
 interface LoginCtaBannerProps {
-  className?: string;
-  compact?: boolean;
-  dismissible?: boolean;
-  message: string;
-  variant?: "default" | "amber" | "red";
+  readonly className?: string;
+  readonly compact?: boolean;
+  readonly dismissible?: boolean;
+  readonly message: string;
+  readonly variant?: "default" | "amber" | "red";
 }
 
 export const LoginCtaBanner = ({
@@ -22,7 +30,7 @@ export const LoginCtaBanner = ({
   variant = "default",
   dismissible = false,
   compact = false,
-}: LoginCtaBannerProps) => {
+}: LoginCtaBannerProps): ReactJSX.Element | null => {
   const [dismissed, setDismissed] = useState(false);
 
   if (dismissed) {
@@ -54,11 +62,11 @@ export const LoginCtaBanner = ({
   return (
     <AnimatePresence>
       <motion.div
-        animate={{ height: "auto", opacity: 1 }}
+        animate={BANNER_ANIMATE}
         className="w-full"
-        exit={{ height: 0, opacity: 0 }}
-        initial={{ height: 0, opacity: 0 }}
-        transition={{ duration: 0.2 }}
+        exit={BANNER_EXIT}
+        initial={BANNER_INITIAL}
+        transition={BANNER_TRANSITION}
       >
         <div
           className={cn(
@@ -88,7 +96,9 @@ export const LoginCtaBanner = ({
           {dismissible && (
             <Button
               className="h-6 w-6 p-0 opacity-70 hover:bg-transparent hover:opacity-100"
-              onClick={() => setDismissed(true)}
+              onClick={() => {
+                setDismissed(true);
+              }}
               size="sm"
               variant="ghost"
             >

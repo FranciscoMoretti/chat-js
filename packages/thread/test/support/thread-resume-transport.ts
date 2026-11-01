@@ -1,19 +1,32 @@
 import type { ChatTransport, UIMessage, UIMessageChunk } from "ai";
 
 import { ControlledTransport } from "./thread-controlled-transport";
+import type { ReadonlyDeep } from "./readonly-types";
+
+const SDK_PARAMETER_INDEX = 0;
 
 export class ResumeTransport extends ControlledTransport {
-  lastReconnectOptions:
-    | Parameters<ChatTransport<UIMessage>["reconnectToStream"]>[0]
+  public lastReconnectOptions:
+    | ReadonlyDeep<
+        Parameters<
+          ChatTransport<UIMessage>["reconnectToStream"]
+        >[typeof SDK_PARAMETER_INDEX]
+      >
     | undefined;
 
-  override reconnectToStream = (
-    options: Parameters<ChatTransport<UIMessage>["reconnectToStream"]>[0]
-  ) => {
+  public override reconnectToStream = async (
+    options: ReadonlyDeep<
+      Parameters<
+        ChatTransport<UIMessage>["reconnectToStream"]
+      >[typeof SDK_PARAMETER_INDEX]
+    >
+  ): Promise<ReadableStream<UIMessageChunk>> => {
     this.lastReconnectOptions = options;
-    return Promise.resolve(
+    return await Promise.resolve(
       new ReadableStream<UIMessageChunk>({
-        start(controller) {
+        start(
+          controller: Readonly<ReadableStreamDefaultController<UIMessageChunk>>
+        ): void {
           controller.enqueue({ id: "text", type: "text-start" });
           controller.enqueue({
             delta: "resumed",

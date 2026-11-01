@@ -1,7 +1,6 @@
-import { ClientError } from "eve/client";
 import { expect, it } from "vitest";
-
 import { isEveCommandRejection, rejectEveCommand } from "./command-rejection";
+import { ClientError } from "eve/client";
 
 it("recognizes an explicit local refusal without treating a failed connection as rejection", async () => {
   const response = rejectEveCommand("Insufficient credits", 402);
@@ -18,14 +17,11 @@ it("recognizes an explicit local refusal without treating a failed connection as
       new ClientError(502, '{"error":"Connection interrupted"}')
     )
   ).toBe(false);
-  expect(
-    isEveCommandRejection(
-      new ClientError(
-        503,
-        JSON.stringify({ code: "usage_reconciliation_busy", error: "Busy" })
-      )
-    )
-  ).toBe(true);
+  const busyError = new ClientError(
+    503,
+    JSON.stringify({ code: "usage_reconciliation_busy", error: "Busy" })
+  );
+  expect(isEveCommandRejection(busyError)).toBe(true);
   expect(isEveCommandRejection(new Error("Network request failed"))).toBe(
     false
   );

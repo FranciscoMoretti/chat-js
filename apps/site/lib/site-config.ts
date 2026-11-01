@@ -1,4 +1,4 @@
-export const siteConfig = {
+const siteConfig = {
   creator: "@franmoretti_",
   demoUrl: "https://demo.chatjs.dev",
   description:
@@ -22,7 +22,7 @@ export const siteConfig = {
   url: "https://chatjs.dev",
 } as const;
 
-export const siteLinks = {
+const siteLinks = {
   demo: siteConfig.demoUrl,
   desktop: siteConfig.desktopUrl,
   docs: siteConfig.docsUrl,
@@ -38,4 +38,5 @@ export const siteLinks = {
   threads: `${siteConfig.url}/threads`,
 } as const;
 
-export const siteLastModified = new Date("2025-03-28T16:14:00.000Z");
+const siteLastModified = new Date("2025-03-28T16:14:00.000Z");
+export { siteConfig, siteLastModified, siteLinks };

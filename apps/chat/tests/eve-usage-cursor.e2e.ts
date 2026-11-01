@@ -1,6 +1,6 @@
-/* oxlint-disable eslint/func-names -- Anonymous spies expose their behavior through the owning test variable. */
-/* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
-/* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
+import { userCredit } from "@/chatjs/plugins/credits/credits-schema";
+import { createEveTestSession } from "./eve-native-session.fixture";
+
 import { eq } from "drizzle-orm";
 import { afterAll, beforeEach, expect, test, vi } from "vitest";
 
@@ -9,19 +9,32 @@ import {
   advanceEveUsageCursor,
   getEveUsageCursor,
   recordEveUsage,
+  withManagedUsageReconciliation,
 } from "../lib/db/eve-billing";
 import { createEveConversation } from "../lib/db/eve-queries";
-import { eveConversation, eveUsage, user, userCredit } from "../lib/db/schema";
+import { eveConversation, eveUsage, user } from "../lib/db/schema";
 import { env } from "../lib/env";
+import { eveModelLedger } from "../lib/db/eve-model-ledger";
+import { createToolResult } from "../lib/eve/tool-result";
 import { reconcileEveUsage } from "../lib/eve/reconcile-usage";
 import { assertEveTestDatabase } from "./eve-test-database";
 
 vi.mock("server-only", () => ({}));
 vi.mock("../lib/eve/server", () => ({ assertEveConfigured: vi.fn() }));
-const transport = vi.hoisted(() => ({ stream: vi.fn() }));
+
+const transport = vi.hoisted(() => ({
+  stream:
+    vi.fn<
+      (options: {
+        readonly startIndex?: number;
+        readonly follow?: boolean;
+      }) => Iterable<unknown>
+    >(),
+}));
+
 vi.mock("eve/client", () => ({
   Client: class {
-    sessions = { attach: () => ({ stream: transport.stream }) };
+    public sessions = { attach: () => ({ stream: transport.stream }) };
   },
 }));
 assertEveTestDatabase(env.DATABASE_URL);
@@ -38,31 +51,40 @@ afterAll(async () => {
 beforeEach(() => {
   transport.stream.mockReset();
 });
-async function session() {
+const session = async (): Promise<string> => {
   const row = await createEveConversation(
     owner,
     crypto.randomUUID(),
     "Cursor fixture",
-    async () => crypto.randomUUID()
+    createEveTestSession
   );
   if (!row.sessionId) {
     throw new Error("Missing test session");
   }
   return row.sessionId;
-}
-function step(costUsd: number | undefined) {
-  return {
-    data: { turnId: "turn_0", usage: { costUsd } },
-    meta: { id: crypto.randomUUID() },
-    type: "step.completed",
-  };
-}
+};
+const tool = (costUsd?: number) => ({
+  data: {
+    turnId: "turn_0",
+    status: "completed",
+    result: {
+      kind: "tool-result",
+      callId: crypto.randomUUID(),
+      output: createToolResult("result", costUsd),
+    },
+  },
+  meta: { id: crypto.randomUUID() },
+  type: "action.result",
+});
 
 test("settled prefixes are not downloaded again and appended charges are ingested", async () => {
   const id = await session();
-  const events = [step(0.05)];
+  const events = [tool(0.05)];
   const delivered: string[] = [];
-  transport.stream.mockImplementation(function* ({ startIndex, follow }) {
+  transport.stream.mockImplementation(function* streamUsageEventsFromCursor({
+    startIndex,
+    follow,
+  }) {
     expect(follow).toBe(false);
     for (const event of events.slice(startIndex)) {
       delivered.push(event.meta.id);
@@ -71,30 +93,45 @@ test("settled prefixes are not downloaded again and appended charges are ingeste
   });
   await reconcileEveUsage(owner, id);
   await reconcileEveUsage(owner, id);
-  events.push(step(0.02));
+  events.push(tool(0.02));
   await reconcileEveUsage(owner, id);
   expect(
-    transport.stream.mock.calls.map(([options]) => options.startIndex)
+    transport.stream.mock.calls.map(
+      ([options]: readonly [
+        options: { readonly startIndex?: number; readonly follow?: boolean },
+      ]) => options.startIndex
+    )
   ).toEqual([0, 1, 1]);
-  expect(delivered).toEqual(events.map((event) => event.meta.id));
+  expect(delivered).toEqual(
+    events.map(
+      (event: Readonly<{ meta: Readonly<{ id: string }> }>) => event.meta.id
+    )
+  );
   expect(await getEveUsageCursor(owner, id)).toBe(2);
   const rows = await db
     .select()
     .from(eveUsage)
     .where(eq(eveUsage.sessionId, id));
-  expect(rows.reduce((sum, row) => sum + row.chargedCents, 0)).toBe(7);
+  expect(
+    rows.reduce(
+      (sum, row: { readonly chargedCents: number }) => sum + row.chargedCents,
+      0
+    )
+  ).toBe(7);
 });
 
 test("a transport failure after a debit retains the cursor and retry does not charge twice", async () => {
   const id = await session();
-  const event = step(0.05);
-  transport.stream.mockImplementationOnce(function* () {
+  const event = tool(0.05);
+  transport.stream.mockImplementationOnce(function* streamThenFailAfterYield() {
     yield event;
     throw new Error("lost tail");
   });
   await expect(reconcileEveUsage(owner, id)).rejects.toThrow("lost tail");
   expect(await getEveUsageCursor(owner, id)).toBe(0);
-  transport.stream.mockImplementation(function* ({ startIndex }) {
+  transport.stream.mockImplementation(function* retryStreamFromCursor({
+    startIndex,
+  }) {
     if (startIndex === 0) {
       yield event;
     }
@@ -112,51 +149,31 @@ test("a transport failure after a debit retains the cursor and retry does not ch
   expect(rows[0].chargedCents).toBe(5);
 });
 
-test.each(["step.completed", "compaction.usage"])(
-  "missing %s cost blocks cursor advancement until durable provider reconciliation",
-  async (type) => {
-    const id = await session();
-    const event = { ...step(undefined), type };
-    transport.stream.mockImplementation(function* ({ startIndex }) {
-      if (startIndex === 0) {
-        yield event;
-      }
-    });
-    await expect(reconcileEveUsage(owner, id)).rejects.toThrow(
-      "provider cost reconciliation"
-    );
-    expect(await getEveUsageCursor(owner, id)).toBe(0);
-    await recordEveUsage({
-      costUsd: 0.03,
-      eventId: event.meta.id,
-      ownerId: owner,
-      sessionId: id,
-      turnId: "turn_0",
-    });
-    await reconcileEveUsage(owner, id);
-    expect(await getEveUsageCursor(owner, id)).toBe(1);
-  }
-);
-
-test("compaction attempts share per-turn rounding and replay does not double-charge", async () => {
+test("missing tool cost blocks cursor advancement until its exact receipt is reconciled", async () => {
   const id = await session();
-  const events = [
-    step(0.004),
-    { ...step(0.003), type: "compaction.usage" },
-    { ...step(0.004), type: "compaction.usage" },
-  ];
-  transport.stream.mockImplementation(function* ({ startIndex }) {
-    yield* events.slice(startIndex);
+  const event = tool();
+  transport.stream.mockImplementation(function* streamMissingCostEvent({
+    startIndex,
+  }) {
+    if (startIndex === 0) {
+      yield event;
+    }
+  });
+  await expect(reconcileEveUsage(owner, id)).resolves.toBeUndefined();
+  await withManagedUsageReconciliation(owner, async (_due, unpriced) => {
+    expect(unpriced.has(id)).toBe(true);
+    await Promise.resolve();
+  });
+  expect(await getEveUsageCursor(owner, id)).toBe(0);
+  await recordEveUsage({
+    costUsd: 0.03,
+    eventId: `eve-tool:${id}:${event.data.result.callId}`,
+    ownerId: owner,
+    sessionId: id,
+    turnId: "turn_0",
   });
   await reconcileEveUsage(owner, id);
-  await reconcileEveUsage(owner, id);
-  const rows = await db
-    .select()
-    .from(eveUsage)
-    .where(eq(eveUsage.sessionId, id));
-  expect(rows).toHaveLength(3);
-  expect(rows.reduce((sum, row) => sum + row.chargedCents, 0)).toBe(2);
-  expect(await getEveUsageCursor(owner, id)).toBe(3);
+  expect(await getEveUsageCursor(owner, id)).toBe(1);
 });
 
 test("cursor writes are monotonic, owner scoped, and fenced after retirement", async () => {
@@ -183,33 +200,51 @@ test("cursor writes are monotonic, owner scoped, and fenced after retirement", a
   );
 });
 
-test("unpriced auxiliary usage retains the unread cursor until its exact attempt is reconciled", async () => {
+test("unpriced model attempts remain durable while later work continues", async () => {
   const id = await session();
-  const event = {
-    data: {
-      hookId: "followup-suggestions",
-      modelCalls: [{ modelId: "model" }],
-      turnId: "turn_0",
-    },
-    meta: { at: new Date().toISOString(), id: crypto.randomUUID() },
-    type: "hook.result",
-  };
-  transport.stream.mockImplementation(function* ({ startIndex }) {
-    if (startIndex === 0) {
-      yield event;
-    }
-  });
-  await expect(reconcileEveUsage(owner, id)).rejects.toThrow(
-    "provider cost reconciliation"
-  );
-  expect(await getEveUsageCursor(owner, id)).toBe(0);
-  await recordEveUsage({
-    costUsd: 0.001,
-    eventId: `${event.meta.id}:model-call:0`,
+  const attempt = {
+    eventId: crypto.randomUUID(),
+    modelId: "model",
+    provider: "mock",
     ownerId: owner,
     sessionId: id,
     turnId: "turn_0",
+  };
+  await eveModelLedger.begin(attempt);
+  transport.stream.mockImplementation(function* streamCompletion() {
+    yield {
+      data: { sequence: 0, turnId: "turn_0" },
+      meta: { at: new Date().toISOString(), id: crypto.randomUUID() },
+      type: "turn.completed",
+    };
   });
   await reconcileEveUsage(owner, id);
   expect(await getEveUsageCursor(owner, id)).toBe(1);
+  await eveModelLedger.begin({
+    ...attempt,
+    eventId: crypto.randomUUID(),
+    turnId: "turn_1",
+  });
+  const [unpriced] = await db
+    .select()
+    .from(eveUsage)
+    .where(eq(eveUsage.eventId, attempt.eventId));
+  expect(unpriced.costUsd).toBeNull();
+  await withManagedUsageReconciliation(owner, async (_due, toolSessions) => {
+    // Runtime replay can repair tool receipts, not application-owned model intents.
+    expect(toolSessions.has(id)).toBe(false);
+    await Promise.resolve();
+  });
+  await eveModelLedger.finish(attempt, {
+    usage: {
+      inputTokens: { total: 1, noCache: 1, cacheRead: 0, cacheWrite: 0 },
+      outputTokens: { total: 1, text: 1, reasoning: 0 },
+    },
+    providerMetadata: { gateway: { cost: "0.001" } },
+  });
+  const [settled] = await db
+    .select()
+    .from(eveUsage)
+    .where(eq(eveUsage.eventId, attempt.eventId));
+  expect(settled.costUsd).toBe("0.001000000000");
 });

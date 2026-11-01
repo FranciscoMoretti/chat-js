@@ -1,3 +1,4 @@
+import { presentationFonts } from "./presentation-fonts";
 import { execFileSync } from "node:child_process";
 
 import { expect, test } from "@playwright/test";
@@ -21,14 +22,21 @@ test("submitted and streaming have distinct visuals and both permit stopping", a
     ],
     { encoding: "utf-8", maxBuffer: 20 * 1024 * 1024 }
   );
-  await page.route("http://composer.test/", (route) =>
-    route.fulfill({
-      body: `<!doctype html><html class="dark"><head><style>${css}</style></head><body class="bg-background text-foreground"><div id="root"></div></body></html>`,
+  await page.route("http://composer.test/", async (route) => {
+    await route.fulfill({
+      body: `<!doctype html><html class="dark"><head><style>${css} ${presentationFonts}</style></head><body class="bg-background text-foreground"><div id="root"></div></body></html>`,
       contentType: "text/html",
-    })
-  );
+    });
+  });
   await page.goto("http://composer.test/");
   await page.addScriptTag({ content: script, type: "module" });
+  await page.evaluate(async () => {
+    await document.fonts.load('16px "Geist"');
+    await document.fonts.ready;
+    if (!document.fonts.check('16px "Geist"')) {
+      throw new Error("Presentation font failed to load");
+    }
+  });
   const submitted = page.getByRole("region", {
     exact: true,
     name: "Submitted",

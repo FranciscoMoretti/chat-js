@@ -1,16 +1,15 @@
 "use client";
 
-import {
+import React, {
   createContext,
   useCallback,
   useContext,
   useMemo,
   useState,
 } from "react";
-import type { ReactNode } from "react";
-import { toast } from "sonner";
-
 import type { AppModelId } from "@/lib/ai/app-models";
+import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
+import { toast } from "sonner";
 
 interface DefaultModelContextType {
   changeModel: (modelId: AppModelId) => Promise<void>;
@@ -22,14 +21,14 @@ const DefaultModelContext = createContext<DefaultModelContextType | undefined>(
 );
 
 interface DefaultModelClientProviderProps {
-  children: ReactNode;
-  defaultModel: AppModelId;
+  readonly children: ReadonlyReactNode;
+  readonly defaultModel: AppModelId;
 }
 
-export const DefaultModelProvider = ({
+const DefaultModelProvider = ({
   children,
   defaultModel: initialModel,
-}: DefaultModelClientProviderProps) => {
+}: DefaultModelClientProviderProps): React.JSX.Element => {
   const [currentModel, setCurrentModel] = useState<AppModelId>(initialModel);
 
   const changeModel = useCallback(
@@ -55,7 +54,6 @@ export const DefaultModelProvider = ({
     },
     [initialModel]
   );
-
   const value = useMemo(
     () => ({
       changeModel,
@@ -71,7 +69,7 @@ export const DefaultModelProvider = ({
   );
 };
 
-export const useDefaultModel = () => {
+const useDefaultModel = (): AppModelId => {
   const context = useContext(DefaultModelContext);
   if (context === undefined) {
     throw new Error(
@@ -81,7 +79,7 @@ export const useDefaultModel = () => {
   return context.defaultModel;
 };
 
-export const useModelChange = () => {
+const useModelChange = (): DefaultModelContextType["changeModel"] => {
   const context = useContext(DefaultModelContext);
   if (context === undefined) {
     throw new Error(
@@ -90,3 +88,4 @@ export const useModelChange = () => {
   }
   return context.changeModel;
 };
+export { DefaultModelProvider, useDefaultModel, useModelChange };

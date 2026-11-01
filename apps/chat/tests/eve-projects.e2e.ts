@@ -1,7 +1,6 @@
-/* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
-/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
-/* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
-/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
+import { eveDispatch, eveConversation, user } from "../lib/db/schema";
+import { createEveTestSession } from "./eve-native-session.fixture";
+
 import { eq, inArray } from "drizzle-orm";
 import { afterAll, expect, test, vi } from "vitest";
 
@@ -11,17 +10,17 @@ import {
   beginEveConversationDeletion,
   createEveConversation,
   getEveConversation,
-  getEveConversationProject,
   getEveCreation,
   listEveConversations,
 } from "../lib/db/eve-queries";
-import { assignEveConversationProject } from "../lib/db/queries";
 import {
-  eveConversation,
-  eveChatProject,
+  assignEveConversationProject,
+  getEveConversationProject,
+} from "@/chatjs/plugins/projects/db/project-queries";
+import {
   project,
-  user,
-} from "../lib/db/schema";
+  eveChatProject,
+} from "@/chatjs/plugins/projects/db/project-schema";
 import { env } from "../lib/env";
 import { assertEveTestDatabase } from "./eve-test-database";
 
@@ -41,6 +40,8 @@ await db.insert(user).values(
 await db.insert(project).values([
   {
     id: ownProject,
+    icon: "folder",
+    iconColor: "gray",
     instructions: "Owner-only instructions",
     name: "Owner project",
     userId: owner,
@@ -54,19 +55,21 @@ await db.insert(project).values([
 ]);
 afterAll(async () => {
   await db
+    .delete(eveDispatch)
+    .where(inArray(eveDispatch.ownerId, [owner, stranger]));
+  await db
     .delete(eveConversation)
     .where(inArray(eveConversation.ownerId, [owner, stranger]));
   await db.delete(project).where(inArray(project.userId, [owner, stranger]));
   await db.delete(user).where(inArray(user.id, [owner, stranger]));
 });
-async function conversation() {
-  return await createEveConversation(
+const conversation = async () =>
+  await createEveConversation(
     owner,
     crypto.randomUUID(),
     "Project fixture",
-    async () => crypto.randomUUID()
+    createEveTestSession
   );
-}
 
 test("assignment, filtered history and removal retain native identity", async () => {
   const row = await conversation();
@@ -75,23 +78,32 @@ test("assignment, filtered history and removal retain native identity", async ()
   );
   expect(await getEveConversationProject(owner, row.id)).toEqual({
     id: ownProject,
+    icon: "folder",
+    iconColor: "gray",
     instructions: "Owner-only instructions",
     name: "Owner project",
   });
+  const conversationsInProject = await listEveConversations(owner, {
+    projectId: ownProject,
+    search: "",
+  });
+  expect(conversationsInProject.items).toEqual([
+    expect.objectContaining({ conversationId: row.id }),
+  ]);
+  const conversationsWithoutProject = await listEveConversations(owner, {
+    projectId: null,
+    search: "",
+  });
   expect(
-    (await listEveConversations(owner, { projectId: ownProject, search: "" }))
-      .items
-  ).toEqual([expect.objectContaining({ id: row.id, projectId: ownProject })]);
-  expect(
-    (
-      await listEveConversations(owner, { projectId: null, search: "" })
-    ).items.some((item) => item.conversationId === row.id)
+    conversationsWithoutProject.items.some(
+      (item: Readonly<{ conversationId: string }>) =>
+        item.conversationId === row.id
+    )
   ).toBe(false);
   await assignEveConversationProject(owner, row.id, null);
   expect(await getEveConversationProject(owner, row.id)).toBeNull();
-  expect((await getEveConversation(owner, row.id))?.sessionId).toBe(
-    row.sessionId
-  );
+  const detachedConversation = await getEveConversation(owner, row.id);
+  expect(detachedConversation?.sessionId).toBe(row.sessionId);
 });
 
 test("both application checks and database constraints reject cross-owner assignment", async () => {
@@ -105,14 +117,11 @@ test("both application checks and database constraints reject cross-owner assign
   ).toBeNull();
   expect(await assignEveConversationProject(stranger, row.id, null)).toBeNull();
   expect(await getEveConversationProject(stranger, row.id)).toBeNull();
-  expect(
-    (
-      await listEveConversations(stranger, {
-        projectId: ownProject,
-        search: "",
-      })
-    ).items
-  ).toEqual([]);
+  const strangerProjectConversations = await listEveConversations(stranger, {
+    projectId: ownProject,
+    search: "",
+  });
+  expect(strangerProjectConversations.items).toEqual([]);
   await expect(
     db
       .update(eveChatProject)
@@ -127,7 +136,8 @@ test("both application checks and database constraints reject cross-owner assign
         )
       )
   ).rejects.toThrow();
-  expect((await getEveConversationProject(owner, row.id))?.id).toBe(ownProject);
+  const existingProject = await getEveConversationProject(owner, row.id);
+  expect(existingProject?.id).toBe(ownProject);
 });
 
 test("deleting a project detaches its Eve conversations without erasing their sessions", async () => {
@@ -139,13 +149,17 @@ test("deleting a project detaches its Eve conversations without erasing their se
   await assignEveConversationProject(owner, row.id, projectId);
   await db.delete(project).where(eq(project.id, projectId));
   expect(await getEveConversationProject(owner, row.id)).toBeNull();
-  expect((await getEveConversation(owner, row.id))?.sessionId).toBe(
-    row.sessionId
-  );
+  const detachedConversation = await getEveConversation(owner, row.id);
+  expect(detachedConversation?.sessionId).toBe(row.sessionId);
+  const conversationsWithoutProject = await listEveConversations(owner, {
+    projectId: null,
+    search: "",
+  });
   expect(
-    (
-      await listEveConversations(owner, { projectId: null, search: "" })
-    ).items.some((item) => item.conversationId === row.id)
+    conversationsWithoutProject.items.some(
+      (item: Readonly<{ conversationId: string }>) =>
+        item.conversationId === row.id
+    )
   ).toBe(true);
   expect(
     await assignEveConversationProject(owner, row.id, projectId)
@@ -185,20 +199,20 @@ test("fork paths share their chat project and retry cannot restore an old assign
   const source = await conversation();
   await assignEveConversationProject(owner, source.id, ownProject);
   const operationId = crypto.randomUUID();
-  const createFork = () =>
-    createEveConversation(
+  const createFork = async () =>
+    await createEveConversation(
       owner,
       operationId,
       "Fork fixture",
-      async () => crypto.randomUUID(),
-      { fork: { beforeTurnId: "turn_0", conversationId: source.id } }
+      createEveTestSession,
+      { fork: { conversationId: source.id } }
     );
   const fork = await createFork();
-  expect((await getEveConversationProject(owner, fork.id))?.id).toBe(
-    ownProject
-  );
+  const forkProject = await getEveConversationProject(owner, fork.id);
+  expect(forkProject?.id).toBe(ownProject);
   await assignEveConversationProject(owner, source.id, null);
-  expect((await createFork()).id).toBe(fork.id);
+  const repeatedFork = await createFork();
+  expect(repeatedFork.id).toBe(fork.id);
   expect(await getEveConversationProject(owner, fork.id)).toBeNull();
   await beginEveConversationDeletion(owner, source.id);
   await completeEveConversationDeletion(owner, source.id);
@@ -218,7 +232,7 @@ test("fork paths share their chat project and retry cannot restore an old assign
   ).toEqual([]);
 });
 
-test("an unresolved fork retains its project route for creation recovery", async () => {
+test("an unresolved copy follows changes to its chat project", async () => {
   const source = await conversation();
   await assignEveConversationProject(owner, source.id, ownProject);
   const operationId = crypto.randomUUID();
@@ -227,21 +241,22 @@ test("an unresolved fork retains its project route for creation recovery", async
       owner,
       operationId,
       "Uncertain fork",
-      () => Promise.reject(new Error("Lost creation reply")),
-      { fork: { beforeTurnId: "turn_0", conversationId: source.id } }
+      vi
+        .fn<() => Promise<string>>()
+        .mockRejectedValue(new Error("Lost creation reply")),
+      { fork: { conversationId: source.id } }
     )
   ).rejects.toThrow("Lost creation reply");
   const pending = await getEveCreation(owner, operationId);
   expect(pending?.state).toBe("uncertain");
-  if (!pending) {
+  if (pending === undefined) {
     throw new Error("Missing unresolved fork");
   }
-  expect((await getEveConversationProject(owner, pending.id))?.id).toBe(
-    ownProject
-  );
+  const pendingProject = await getEveConversationProject(owner, pending.id);
+  expect(pendingProject?.id).toBe(ownProject);
   expect(
     await assignEveConversationProject(owner, pending.id, null)
-  ).toBeNull();
+  ).toMatchObject({ conversationId: pending.id, projectId: null });
 });
 
 test("project creation binds before dispatch and preserves its initial intent through moves and deletion", async () => {
@@ -260,38 +275,46 @@ test("project creation binds before dispatch and preserves its initial intent th
     });
     return crypto.randomUUID();
   });
-  const create = (requestedProject: string | undefined) =>
-    createEveConversation(owner, operationId, "Project creation", dispatch, {
-      fileKeys: [],
-      initialProjectId: requestedProject,
-    });
+  const create = async (requestedProject?: string) =>
+    await createEveConversation(
+      owner,
+      operationId,
+      "Project creation",
+      dispatch,
+      {
+        fileKeys: [],
+        initialRequest: { projectId: requestedProject },
+      }
+    );
   const binding = await create(projectId);
   await assignEveConversationProject(owner, binding.id, ownProject);
   expect(await create(projectId)).toEqual(binding);
   expect(await getEveConversationProject(owner, binding.id)).toMatchObject({
     id: ownProject,
   });
-  await expect(create(ownProject)).rejects.toThrow("different");
-  await expect(create(undefined)).rejects.toThrow("different");
+  expect(await create(ownProject)).toEqual(binding);
+  expect(await create()).toEqual(binding);
   await db.delete(project).where(eq(project.id, projectId));
   expect(await create(projectId)).toEqual(binding);
   expect(dispatch).toHaveBeenCalledTimes(1);
 });
 
 test("missing and foreign projects reject creation without leaving a reservation or dispatching", async () => {
-  const dispatch = vi.fn(async () => crypto.randomUUID());
-  for (const projectId of [foreignProject, crypto.randomUUID()]) {
-    const operationId = crypto.randomUUID();
-    await expect(
-      createEveConversation(
-        owner,
-        operationId,
-        "Unauthorized project",
-        dispatch,
-        { fileKeys: [], initialProjectId: projectId }
-      )
-    ).rejects.toThrow("Project not found");
-    expect(await getEveCreation(owner, operationId)).toBeUndefined();
-  }
+  const dispatch = vi.fn(createEveTestSession);
+  await Promise.all(
+    [foreignProject, crypto.randomUUID()].map(async (projectId) => {
+      const operationId = crypto.randomUUID();
+      await expect(
+        createEveConversation(
+          owner,
+          operationId,
+          "Unauthorized project",
+          dispatch,
+          { fileKeys: [], initialRequest: { projectId } }
+        )
+      ).rejects.toThrow("Project not found");
+      expect(await getEveCreation(owner, operationId)).toBeUndefined();
+    })
+  );
   expect(dispatch).not.toHaveBeenCalled();
 });

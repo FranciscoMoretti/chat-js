@@ -1,0 +1,21 @@
+{
+  "codeExecutionCapabilities": {
+    "cancellation": "terminate",
+    "cleanup": "durable-allocation",
+    "files": "ephemeral",
+    "languages": ["python", "javascript"],
+    "timeout": "bounded",
+    "usage": "single-receipt"
+  },
+  "codeExecutorExport": "executeCode",
+  "envRequirements": [],
+  "id": "code-execution",
+  "kind": "tool",
+  "requiresSandbox": true,
+  "requiresTools": [],
+  "slot": "codeExecution",
+  "tools": [
+    { "rendererExport": "CodeExecution", "toolExport": "codeExecution" }
+  ],
+  "contractVersion": 1
+}

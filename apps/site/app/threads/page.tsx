@@ -11,7 +11,9 @@ import {
   Route,
   Workflow,
 } from "lucide-react";
+import type { LucideProps } from "lucide-react";
 import type { Metadata } from "next";
+import React from "react";
 
 import { Footer } from "@/components/footer";
 import { Navbar } from "@/components/navbar";
@@ -25,7 +27,7 @@ const THREADS_TITLE = "useThread — Branching Chats for AI SDK";
 const THREADS_DESCRIPTION =
   "Keep the useChat interface and add message trees, branch navigation, and concurrent AI SDK response streams.";
 
-export const metadata: Metadata = {
+const metadata: Metadata = {
   alternates: {
     canonical: siteLinks.threads,
   },
@@ -57,7 +59,15 @@ const compatibility = [
   "ChatTransport",
 ] as const;
 
-const additions = [
+type AdditionIcon = (
+  props: Readonly<Pick<LucideProps, "className">>
+) => React.ReactNode;
+
+const additions: readonly Readonly<{
+  description: string;
+  icon: AdditionIcon;
+  title: string;
+}>[] = [
   {
     description:
       "Select any message and expose its root-to-node path as chat.messages.",
@@ -82,7 +92,7 @@ const additions = [
     icon: Layers3,
     title: "Parallel responses",
   },
-] as const;
+];
 
 const architectureRows = [
   {
@@ -105,7 +115,7 @@ const architectureRows = [
   },
 ] as const;
 
-const ThreadsPage = () => (
+const ThreadsPage = (): React.JSX.Element => (
   <div className="flex min-h-screen flex-col">
     <Navbar />
     <main className="flex-1">
@@ -349,4 +359,5 @@ const ThreadsPage = () => (
   </div>
 );
 
+export { metadata };
 export default ThreadsPage;

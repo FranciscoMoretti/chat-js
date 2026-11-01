@@ -1,21 +1,25 @@
+import { renderRoot, unmountRoot } from "./primitive-mount";
 import { takeSnapshot } from "@uiverify/vitest";
-import { act } from "react";
+import React from "react";
 import { createRoot } from "react-dom/client";
 import { expect, test, vi } from "vitest";
+import { page } from "vitest/browser";
 
 import { EveToolResult } from "@/components/eve/eve-tool-result";
 import { createToolError, createToolResult } from "@/lib/eve/tool-result";
-import { EveDocumentRunResult } from "@/tools/chatjs/saved-code-execution/result";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import { EveDocumentRunResult } from "@/chatjs/tools/saved-code-execution/result";
 
-import { chartsFinished } from "../../../../packages/registry/visual/charts-finished";
+import { chartsFinished } from "../../../../packages/registry/src/tools/_shared/charts-finished";
 
 import "./sandbox.css";
 
 vi.mock(
-  "@/tools/chatjs/_shared/code-execution/interactive-charts",
-  () =>
-    import("../../tools/chatjs/_shared/code-execution/interactive-chart-impl")
+  "@/chatjs/tools/_shared/code-execution/interactive-charts",
+  async () =>
+    await import("../../chatjs/tools/_shared/code-execution/interactive-chart-impl")
 );
+
 // Report documents are outside this error-receipt fixture.
 vi.mock("@/components/eve/eve-document-tool", () => ({
   EveDocumentTool: () => null,
@@ -50,25 +54,38 @@ test("saved-code results display interactive and PNG charts with text fallback",
   drawing.fillRect(260, 20, 160, 180);
   const charts = [
     {
-      elements: [
-        { group: "Counts", label: "A", value: 3 },
-        { group: "Counts", label: "B", value: 5 },
-      ],
-      title: "Saved analysis",
-      type: "bar",
+      chart: {
+        elements: [
+          { group: "Counts", label: "A", value: 3 },
+          { group: "Counts", label: "B", value: 5 },
+        ],
+        title: "Saved analysis",
+        type: "bar",
+      },
+      id: "bar-chart",
     },
     {
-      base64: canvas.toDataURL().split(",")[1],
-      format: "png",
+      chart: {
+        base64: canvas.toDataURL().split(",")[1],
+        format: "png",
+      },
+      id: "png-chart",
     },
-    "",
+    {
+      chart: "",
+      id: "text-fallback",
+    },
   ];
   try {
-    await act(() =>
-      root.render(
-        <div className="grid grid-cols-2 gap-6">
-          {charts.map((chart, index) => (
-            <section key={index}>
+    await renderRoot(
+      root,
+      <div className="grid grid-cols-2 gap-6">
+        {charts.map(
+          (
+            { chart, id }: ReadonlyNativeSurface<(typeof charts)[number]>,
+            index
+          ): React.JSX.Element => (
+            <section key={id}>
               <EveDocumentRunResult
                 part={{
                   ...common,
@@ -80,9 +97,9 @@ test("saved-code results display interactive and PNG charts with text fallback",
                 }}
               />
             </section>
-          ))}
-        </div>
-      )
+          )
+        )}
+      </div>
     );
     await expect.poll(() => container.querySelector("canvas")).not.toBeNull();
     expect(container.querySelector('img[alt="Chart output"]')).not.toBeNull();
@@ -101,8 +118,9 @@ test("saved-code results display interactive and PNG charts with text fallback",
     }
     await image.decode();
     await takeSnapshot("saved-code-charts");
+    await page.elementLocator(document.body).screenshot();
   } finally {
-    await act(() => root.unmount());
+    await unmountRoot(root);
     container.remove();
   }
 });
@@ -114,27 +132,26 @@ test("failed research keeps validated progress alongside its error", async () =>
   document.body.append(container);
   const root = createRoot(container);
   try {
-    await act(() =>
-      root.render(
-        <EveToolResult
-          isReadonly
-          messageId="research"
-          part={{
-            ...common,
-            output: createToolError(0.05, [
-              {
-                queries: ["test evidence"],
-                status: "completed",
-                title: "Search completed before failure",
-                toolCallId: "fixture",
-                type: "web",
-              },
-              { title: "Untrusted update", type: "invalid" },
-            ]),
-            toolName: "deepResearch",
-          }}
-        />
-      )
+    await renderRoot(
+      root,
+      <EveToolResult
+        isReadonly
+        messageId="research"
+        part={{
+          ...common,
+          output: createToolError(0.05, [
+            {
+              queries: ["test evidence"],
+              status: "completed",
+              title: "Search completed before failure",
+              toolCallId: "fixture",
+              type: "web",
+            },
+            { title: "Untrusted update", type: "invalid" },
+          ]),
+          toolName: "deepResearch",
+        }}
+      />
     );
     expect(container.querySelector('[role="alert"]')?.textContent).toBe(
       "The tool did not complete."
@@ -143,7 +160,7 @@ test("failed research keeps validated progress alongside its error", async () =>
     expect(container.textContent).not.toContain("Untrusted update");
     await takeSnapshot("failed-research-progress");
   } finally {
-    await act(() => root.unmount());
+    await unmountRoot(root);
     container.remove();
   }
 });
@@ -159,44 +176,43 @@ test("installed saved-code transcript covers loading, completion and failure", a
     revisionId: "663ccf42-10c9-453f-b9da-ebf684a6da97",
   };
   try {
-    await act(() =>
-      root.render(
-        <div className="grid gap-6">
-          <EveToolResult
-            isReadonly
-            messageId="saved-code"
-            part={{
-              ...common,
-              input,
-              state: "input-available",
-              toolName: "runCodeDocument",
-            }}
-          />
-          <EveToolResult
-            isReadonly
-            messageId="saved-code"
-            part={{
-              ...common,
-              input,
-              output: createToolResult(
-                { ...input, chart: "", message: "Saved revision completed" },
-                0
-              ),
-              toolName: "runCodeDocument",
-            }}
-          />
-          <EveToolResult
-            isReadonly
-            messageId="saved-code"
-            part={{
-              ...common,
-              input,
-              output: createToolError(0),
-              toolName: "runCodeDocument",
-            }}
-          />
-        </div>
-      )
+    await renderRoot(
+      root,
+      <div className="grid gap-6">
+        <EveToolResult
+          isReadonly
+          messageId="saved-code"
+          part={{
+            ...common,
+            input,
+            state: "input-available",
+            toolName: "runCodeDocument",
+          }}
+        />
+        <EveToolResult
+          isReadonly
+          messageId="saved-code"
+          part={{
+            ...common,
+            input,
+            output: createToolResult(
+              { ...input, chart: "", message: "Saved revision completed" },
+              0
+            ),
+            toolName: "runCodeDocument",
+          }}
+        />
+        <EveToolResult
+          isReadonly
+          messageId="saved-code"
+          part={{
+            ...common,
+            input,
+            output: createToolError(0),
+            toolName: "runCodeDocument",
+          }}
+        />
+      </div>
     );
     expect(container.textContent).toContain("Running saved code");
     expect(container.textContent).toContain("Saved revision completed");
@@ -205,7 +221,7 @@ test("installed saved-code transcript covers loading, completion and failure", a
     );
     await takeSnapshot("installed-saved-code-transcript");
   } finally {
-    await act(() => root.unmount());
+    await unmountRoot(root);
     container.remove();
   }
 });

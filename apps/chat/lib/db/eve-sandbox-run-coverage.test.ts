@@ -2,12 +2,20 @@ import { expect, it } from "vitest";
 
 import { classifyEveSandboxRuns } from "./eve-sandbox-run-coverage";
 
+const DEEP_FAMILY_RUN_COUNT = 10_000;
+const FIRST_CHILD_RUN_INDEX = 1;
+
 const run = (
   id: string,
   kind: string,
   parentId: string | null = null,
   eveParentId: string | null = null
-) => ({ eveParentId, id, parentId, workflowName: `workflow//eve//${kind}` });
+): {
+  eveParentId: string | null;
+  id: string;
+  parentId: string | null;
+  workflowName: string;
+} => ({ eveParentId, id, parentId, workflowName: `workflow//eve//${kind}` });
 it("identifies independent child receipts and covers ordinary work", () => {
   expect(
     classifyEveSandboxRuns([
@@ -74,8 +82,14 @@ it.each(["0.52.2", "0.61.0"])(
 );
 it("handles deep families without recursive stack growth", () => {
   const runs = [run("0", "workflowEntry")];
-  for (let index = 1; index < 10_000; index += 1) {
-    runs.push(run(String(index), "turnWorkflow", String(index - 1)));
+  for (
+    let index = FIRST_CHILD_RUN_INDEX;
+    index < DEEP_FAMILY_RUN_COUNT;
+    index += FIRST_CHILD_RUN_INDEX
+  ) {
+    runs.push(
+      run(String(index), "turnWorkflow", String(index - FIRST_CHILD_RUN_INDEX))
+    );
   }
   expect(classifyEveSandboxRuns(runs).unresolvedRunIds).toEqual([]);
 });

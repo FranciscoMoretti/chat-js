@@ -1,20 +1,23 @@
 import { spawn } from "node:child_process";
 
+const EXIT_SUCCESS = 0;
+
 export const runCommand = async (
   command: string,
-  args: string[],
+  args: readonly string[],
   cwd: string
 ): Promise<void> => {
-  const { promise, resolve, reject } = Promise.withResolvers<undefined>();
+  const { promise, resolve, reject }: PromiseWithResolvers<void> =
+    Promise.withResolvers();
   const child = spawn(command, args, { cwd, stdio: "pipe" });
   const stderr: string[] = [];
-  child.stderr?.on("data", (data) => {
+  child.stderr.on("data", (data) => {
     stderr.push(String(data));
   });
   child.on("error", reject);
   child.on("close", (code) => {
-    if (code === 0) {
-      resolve(undefined);
+    if (code === EXIT_SUCCESS) {
+      resolve();
     } else {
       reject(
         new Error(

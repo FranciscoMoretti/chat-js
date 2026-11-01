@@ -24,7 +24,19 @@ const result = await build({
   ],
   target: "browser",
 });
+
 if (!result.success) {
-  throw new Error(String(result.logs));
+  throw new Error(
+    result.logs
+      .map(
+        /**
+         * @param {Readonly<{message: string}>} entry Build diagnostic to include in the failure output.
+         * @returns {string} Diagnostic message displayed in the build error.
+         */
+        (entry) => entry.message
+      )
+      .join("\n")
+  );
 }
+
 process.stdout.write(await result.outputs[0].text());

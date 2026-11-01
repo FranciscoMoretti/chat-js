@@ -1,25 +1,26 @@
 "use client";
 
-import type { EveMessagePart } from "eve/client";
-import { useEffect, useState } from "react";
+import type { JSX as ReactJSX } from "react";
+import React, { useEffect, useState } from "react";
 
 import { AttachmentList } from "@/components/attachment-list";
+import type { ReadonlyEveMessagePart } from "@/lib/eve/readonly-message-types";
 
 export const EveAttachment = ({
   part,
 }: {
-  part: Extract<EveMessagePart, { type: "file" }>;
-}) => {
+  readonly part: Extract<ReadonlyEveMessagePart, { readonly type: "file" }>;
+}): ReactJSX.Element => {
   const [resolved, setResolved] = useState<{ source: string; url: string }>();
   const source = part.url;
-  useEffect(() => {
-    if (!source?.startsWith("data:")) {
-      return;
+  useEffect((): (() => void) | undefined => {
+    if (!(source?.startsWith("data:") === true)) {
+      return undefined;
     }
     let disposed = false;
     let objectUrl: string | undefined;
     // Browsers block top-level data URLs. Give the shared Open action a Blob URL.
-    const resolveAttachment = async () => {
+    const resolveAttachment = async (): Promise<void> => {
       try {
         const response = await fetch(source);
         const blob = await response.blob();
@@ -32,28 +33,30 @@ export const EveAttachment = ({
       }
     };
     void resolveAttachment();
-    return () => {
+
+    return (): void => {
       disposed = true;
-      if (objectUrl) {
+      if (typeof objectUrl === "string" && objectUrl !== "") {
         URL.revokeObjectURL(objectUrl);
       }
     };
   }, [source]);
   let url = source;
-  if (source?.startsWith("data:")) {
+  if (source?.startsWith("data:") === true) {
     url = resolved?.source === source ? resolved.url : undefined;
   }
-  return url ? (
-    <AttachmentList
-      attachments={[
-        {
-          contentType: part.mediaType,
-          name: part.filename ?? "Attachment",
-          url,
-        },
-      ]}
-    />
-  ) : (
-    <p>{part.filename ?? "Attachment"}</p>
-  );
+  if (typeof url === "string" && url !== "") {
+    return (
+      <AttachmentList
+        attachments={[
+          {
+            contentType: part.mediaType,
+            name: part.filename ?? "Attachment",
+            url,
+          },
+        ]}
+      />
+    );
+  }
+  return <p>{part.filename ?? "Attachment"}</p>;
 };

@@ -1,9 +1,11 @@
+import { project } from "@/chatjs/plugins/projects/db/project-schema";
 import { expect, test } from "@playwright/test";
+import type { TestInfo } from "@playwright/test";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 
 import { db } from "../lib/db/client";
-import { eveChat, eveConversation, project } from "../lib/db/schema";
+import { eveChat, eveConversation } from "../lib/db/schema";
 import { insertEveConversationFixtures } from "./eve-conversation-fixture";
 import { assertEveTestDatabase } from "./eve-test-database";
 
@@ -12,8 +14,10 @@ assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
 test("assigned Eve conversations resolve through project URLs and remain accessible after project deletion", async ({
   page,
   browser,
-}, testInfo) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+}, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   const createdProject = await page.request.post("/api/trpc/project.create", {
     data: { json: { name: "Eve routing fixture" } },
@@ -40,18 +44,18 @@ test("assigned Eve conversations resolve through project URLs and remain accessi
     });
     expect(created.ok(), await created.text()).toBe(true);
     const binding = z.object({ id: z.uuid() }).parse(await created.json());
-    const assignment = await page.request.post("/api/trpc/eve.assignProject", {
+    const assignment = await page.request.post("/api/trpc/project.assign", {
       data: { json: { conversationId: binding.id, projectId } },
     });
     expect(assignment.ok(), await assignment.text()).toBe(true);
     const forbidden = await anonymous.request.post(
-      `${new URL(page.url()).origin}/api/trpc/eve.assignProject`,
+      `${new URL(page.url()).origin}/api/trpc/project.assign`,
       { data: { json: { conversationId: binding.id, projectId: null } } }
     );
     expect(forbidden.status()).toBe(401);
     await page.goto(`/project/${projectId}/chat/${binding.id}`);
     await expect(page).toHaveURL(new RegExp(`/chat/${binding.id}$`, "u"));
-    await expect(page.locator(".is-assistant")).toContainText(
+    await expect(page.locator('[data-role="assistant"]')).toContainText(
       "project-route-fixture-ok",
       { timeout: 90_000 }
     );
@@ -67,7 +71,7 @@ test("assigned Eve conversations resolve through project URLs and remain accessi
       .select()
       .from(eveConversation)
       .where(eq(eveConversation.id, binding.id));
-    if (!root) {
+    if (root === undefined) {
       throw new Error("Missing project conversation");
     }
     await insertEveConversationFixtures({
@@ -98,14 +102,14 @@ test("assigned Eve conversations resolve through project URLs and remain accessi
     });
     expect(removed.ok(), await removed.text()).toBe(true);
     await page.goto(`/chat/${binding.id}`);
-    await expect(page.locator(".is-assistant")).toContainText(
+    await expect(page.locator('[data-role="assistant"]')).toContainText(
       "project-route-fixture-ok"
     );
     const [chat] = await db
       .select({ title: eveChat.title })
       .from(eveChat)
       .where(eq(eveChat.id, root.chatId));
-    if (!chat) {
+    if (chat === undefined) {
       throw new Error("Missing project chat title");
     }
     const query = await page.request.get(

@@ -1,10 +1,7 @@
-import { createGateway } from "@ai-sdk/gateway";
-import type { gateway } from "@ai-sdk/gateway";
 import type {
   Experimental_VideoModelV4,
   LanguageModelV4,
 } from "@ai-sdk/provider";
-import type { GatewayProvider } from "@chat-js/gateways/gateway-provider";
 import {
   aiGatewayModelDiscriminatorSchema,
   aiGatewayModelSchema,
@@ -12,57 +9,67 @@ import {
   isAiGatewayModelType,
 } from "@chat-js/gateways/models";
 import type { AiGatewayModel } from "@chat-js/gateways/models";
-import type { StrictLiterals } from "@chat-js/gateways/provider-types";
+import type { GatewayProvider } from "@chat-js/gateways/gateway-provider";
 import { GatewayRuntime } from "@chat-js/gateways/runtime";
 import type { ImageModel } from "ai";
 
-type VercelImageModelId = Parameters<(typeof gateway)["imageModel"]>[0];
-type VercelVideoModelId = Parameters<(typeof gateway)["videoModel"]>[0];
-type VercelLanguageModelId = StrictLiterals<
-  Parameters<(typeof gateway)["languageModel"]>[0]
->;
+import { createGateway } from "@ai-sdk/gateway";
+import type { gateway } from "@ai-sdk/gateway";
 
-export class VercelGateway
+const MODEL_ID_PARAMETER_INDEX = 0;
+type VercelImageModelId = Parameters<
+  (typeof gateway)["imageModel"]
+>[typeof MODEL_ID_PARAMETER_INDEX];
+type VercelVideoModelId = Parameters<
+  (typeof gateway)["videoModel"]
+>[typeof MODEL_ID_PARAMETER_INDEX];
+
+const EMPTY_MODEL_TYPE_COUNT = 0;
+
+class VercelGateway
   extends GatewayRuntime
-  implements
-    GatewayProvider<
-      "vercel",
-      VercelLanguageModelId,
-      VercelImageModelId,
-      VercelVideoModelId
-    >
+  implements GatewayProvider<"vercel">
 {
-  readonly type = "vercel" as const;
+  public readonly type = "vercel" as const;
 
-  createLanguageModel(modelId: VercelLanguageModelId): LanguageModelV4 {
+  public createLanguageModel(
+    modelId: Parameters<
+      (typeof gateway)["languageModel"]
+    >[typeof MODEL_ID_PARAMETER_INDEX]
+  ): LanguageModelV4 {
     return this.getProvider()(modelId);
   }
 
-  createImageModel(modelId: VercelImageModelId): ImageModel {
+  public createImageModel(modelId: VercelImageModelId): ImageModel {
     return this.getProvider().imageModel(modelId);
   }
 
-  createVideoModel(modelId: VercelVideoModelId): Experimental_VideoModelV4 {
+  public createVideoModel(
+    modelId: VercelVideoModelId
+  ): Experimental_VideoModelV4 {
     return this.getProvider().videoModel(modelId);
   }
 
   private provider?: ReturnType<typeof createGateway>;
 
-  private getProvider() {
+  private getProvider(): ReturnType<typeof createGateway> {
     this.provider ??= createGateway({ apiKey: this.env.AI_GATEWAY_API_KEY });
     return this.provider;
   }
 
   private getApiKey(): string | undefined {
-    return this.env.AI_GATEWAY_API_KEY || this.env.VERCEL_OIDC_TOKEN;
+    const apiKey = this.env.AI_GATEWAY_API_KEY;
+
+    if (typeof apiKey === "string" && apiKey !== "") {
+      return apiKey;
+    }
+    return this.env.VERCEL_OIDC_TOKEN;
   }
 
-  // The models endpoint is fixed by the provider contract.
-  // eslint-disable-next-line class-methods-use-this
-  async fetchModels(): Promise<AiGatewayModel[]> {
+  public async fetchModels(): Promise<AiGatewayModel[]> {
     const apiKey = this.getApiKey();
 
-    if (!apiKey) {
+    if (!(typeof apiKey === "string" && apiKey !== "")) {
       this.log.warn("No AI gateway API key found, using fallback models");
       return [...this.getFallbackModels(this.type)];
     }
@@ -86,22 +93,22 @@ export class VercelGateway
         throw new Error(`Failed to fetch models: ${response.statusText}`);
       }
 
-      const bodyRaw = await response.json();
+      const bodyRaw: unknown = await response.json();
       const body = aiGatewayModelsEnvelopeSchema.parse(bodyRaw);
       const unsupportedTypes = new Set<string>();
       const models: AiGatewayModel[] = [];
 
       for (const candidate of body.data) {
         const { type } = aiGatewayModelDiscriminatorSchema.parse(candidate);
-        if (!isAiGatewayModelType(type)) {
+        if (isAiGatewayModelType(type)) {
+          const model = aiGatewayModelSchema.parse(candidate);
+          models.push({ ...model, type });
+        } else {
           unsupportedTypes.add(type);
-          continue;
         }
-        const model = aiGatewayModelSchema.parse(candidate);
-        models.push({ ...model, type });
       }
 
-      if (unsupportedTypes.size > 0) {
+      if (unsupportedTypes.size > EMPTY_MODEL_TYPE_COUNT) {
         this.log.warn(
           {
             modelCount: body.data.length,
@@ -126,5 +133,4 @@ export class VercelGateway
     }
   }
 }
-
-export { VercelGateway as Gateway };
+export { VercelGateway as Gateway, VercelGateway };

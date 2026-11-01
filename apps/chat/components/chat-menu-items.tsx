@@ -1,18 +1,16 @@
 "use client";
 
-import { FolderInput, Pencil, PinIcon, Trash2 } from "lucide-react";
-
+import { Pencil, PinIcon, Trash2 } from "lucide-react";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
-import { ShareMenuItem } from "@/components/upgrade-cta/share-menu-item";
+
+import React from "react";
 
 interface ChatMenuItemsProps {
-  isPinned: boolean;
-  onDelete?: () => void;
-  onMoveProject?: () => void;
-  onRename: () => void;
-  onShare?: () => void;
-  onTogglePin: () => void;
-  showShare?: boolean;
+  readonly isPinned: boolean;
+  readonly onDelete?: () => void;
+  readonly pluginActions?: React.ReactNode;
+  readonly onRename: () => void;
+  readonly onTogglePin: () => void;
 }
 
 export const ChatMenuItems = ({
@@ -20,10 +18,8 @@ export const ChatMenuItems = ({
   onRename,
   onTogglePin,
   onDelete,
-  onMoveProject,
-  onShare,
-  showShare = true,
-}: ChatMenuItemsProps) => (
+  pluginActions,
+}: ChatMenuItemsProps): React.JSX.Element => (
   <>
     <DropdownMenuItem className="cursor-pointer" onClick={onRename}>
       <Pencil size={16} />
@@ -35,20 +31,10 @@ export const ChatMenuItems = ({
       <span>{isPinned ? "Unpin" : "Pin"}</span>
     </DropdownMenuItem>
 
-    {onMoveProject && (
-      <DropdownMenuItem onClick={onMoveProject}>
-        <FolderInput size={16} />
-        <span>Move to project</span>
-      </DropdownMenuItem>
-    )}
-
-    {showShare && onShare && <ShareMenuItem onShare={onShare} />}
+    {pluginActions}
 
     {onDelete && (
-      <DropdownMenuItem
-        className="text-destructive focus:bg-destructive/15 focus:text-destructive cursor-pointer"
-        onSelect={onDelete}
-      >
+      <DropdownMenuItem variant="destructive" onClick={onDelete}>
         <Trash2 size={16} />
         <span>Delete</span>
       </DropdownMenuItem>

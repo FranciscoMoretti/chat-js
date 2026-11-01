@@ -1,27 +1,35 @@
 "use client";
+import { pluginRoute } from "@/lib/plugin-route";
+
+import { withTaskCleanup } from "@/components/task-cleanup";
+
+import { hasText } from "@/components/text-value";
 
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { createContext, useCallback, useContext, useState } from "react";
-import type { ReactNode } from "react";
+import React, { createContext, useCallback, useContext, useState } from "react";
+import type { JSX as ReactJSX } from "react";
 
 import { useSidebar } from "@/components/ui/sidebar";
 import { useCurrentChatRoute } from "@/lib/chat-route";
+import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 import { useTRPC } from "@/trpc/react";
 
 import { EveDeleteDialog } from "./eve-delete-dialog";
 
-type Conversation = {
-  id: string;
-  title: string;
-  state: string;
-  projectId?: string | null;
-};
+interface Conversation {
+  readonly id: string;
+  readonly title: string;
+  readonly state: string;
+  readonly scope?: "conversation" | "group";
+  readonly parentHref?: string;
+}
+
 const DeletionContext = createContext<
   ((conversation: Conversation) => void) | null
 >(null);
 
-export const useEveDeletion = () => {
+const useEveDeletion = () => {
   const open = useContext(DeletionContext);
   if (!open) {
     throw new Error("Eve deletion requires its layout provider");
@@ -29,7 +37,11 @@ export const useEveDeletion = () => {
   return open;
 };
 
-export const EveDeletionProvider = ({ children }: { children: ReactNode }) => {
+const EveDeletionProvider = ({
+  children,
+}: {
+  readonly children: ReadonlyReactNode;
+}): ReactJSX.Element => {
   const [conversation, setConversation] = useState<Conversation>();
   const route = useCurrentChatRoute();
   const router = useRouter();
@@ -43,27 +55,38 @@ export const EveDeletionProvider = ({ children }: { children: ReactNode }) => {
     },
     [setOpenMobile]
   );
-  const changed = async (rootId: string) => {
-    /* oxlint-disable react/todo -- Preserve cache invalidation in finally after route changes. */
-    try {
-      if (route.id && (route.type === "chat" || route.type === "projectChat")) {
-        const response = await fetch(`/api/agent-conversations/${route.id}`, {
-          signal: AbortSignal.timeout(10_000),
-        });
-        const status = await response.json();
-        if (response.ok && status.rootId === rootId) {
-          const projectId =
-            conversation?.projectId ??
-            (route.source === "project" ? route.projectId : undefined);
-          router.replace(projectId ? `/project/${projectId}` : "/");
+  const changed = async (rootId: string): Promise<void> => {
+    await withTaskCleanup(
+      async () => {
+        if (
+          hasText(route.id) &&
+          (route.type === "chat" || route.type === "pluginChat")
+        ) {
+          const response = await fetch(`/api/agent-conversations/${route.id}`, {
+            signal: AbortSignal.timeout(10_000),
+          });
+          const status: unknown = await response.json();
+          if (
+            response.ok &&
+            typeof status === "object" &&
+            status !== null &&
+            "rootId" in status &&
+            status.rootId === rootId
+          ) {
+            router.replace(
+              pluginRoute(conversation?.parentHref ?? route.parentHref)
+            );
+          }
         }
+      },
+      async () => {
+        await cache.invalidateQueries({ queryKey: trpc.eve.list.pathKey() });
+        await cache.invalidateQueries({
+          queryKey: trpc.eve.branches.pathKey(),
+        });
+        router.refresh();
       }
-      // oxlint-disable-next-line react/todo -- React Compiler cannot analyze required cache cleanup in finally.
-    } finally {
-      await cache.invalidateQueries({ queryKey: trpc.eve.list.pathKey() });
-      router.refresh();
-    }
-    /* oxlint-enable react/todo */
+    );
   };
   return (
     <DeletionContext.Provider value={openConversation}>
@@ -73,9 +96,13 @@ export const EveDeletionProvider = ({ children }: { children: ReactNode }) => {
           conversation={conversation}
           key={conversation.id}
           onChanged={changed}
-          onClose={() => setConversation(undefined)}
+          onClose={() => {
+            setConversation(undefined);
+          }}
         />
       )}
     </DeletionContext.Provider>
   );
 };
+
+export { EveDeletionProvider, useEveDeletion };

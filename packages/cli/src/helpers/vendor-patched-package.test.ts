@@ -1,9 +1,11 @@
+import { parsePackageJson } from "./package-manifest";
+import { requireJsonObject } from "./json-object";
 import { expect, it } from "bun:test";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
 import { existsSync } from "node:fs";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
 import nodePath from "node:path";
+import { tmpdir } from "node:os";
 
 import { vendorPatchedPackage } from "./vendor-patched-package";
 
@@ -30,7 +32,7 @@ it("refuses to distribute a stale installed runtime", async () => {
       patchPath,
       "diff --git a/runtime.js b/runtime.js\n--- a/runtime.js\n+++ b/runtime.js\n@@ -1 +1 @@\n-original\n+patched\n"
     );
-    await expect(
+    expect(
       vendorPatchedPackage({
         destination,
         packageDir,
@@ -93,10 +95,14 @@ it.each([
         packageName: name,
         patchPath,
       });
-      const manifest = JSON.parse(
+      const manifest = parsePackageJson(
         await readFile(nodePath.join(destination, "package.json"), "utf-8")
       );
-      expect(manifest.dependencies[name]).toBe(`file:vendor/${archiveName}`);
+      const dependencies = requireJsonObject(
+        manifest.dependencies,
+        "dependencies"
+      );
+      expect(dependencies[name]).toBe(`file:vendor/${archiveName}`);
       const archive = nodePath.join(destination, "vendor", archiveName);
       const metadata = execFileSync("tar", [
         "-xOf",

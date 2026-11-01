@@ -1,6 +1,5 @@
-/* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
-/* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
-/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
+import { createEveTestSession } from "./eve-native-session.fixture";
+
 import { eq } from "drizzle-orm";
 import { expect, test } from "vitest";
 
@@ -34,7 +33,7 @@ if (!["localhost", "127.0.0.1"].includes(new URL(env.DATABASE_URL).hostname)) {
 test("storage purge removes files and recovers a lost deletion acknowledgement and an unwritten reservation", async () => {
   const owner = crypto.randomUUID();
   const keys = Array.from({ length: 3 }, () => createFileId());
-  const urls = keys.map(createFileUrl);
+  const urls = keys.map((key) => createFileUrl(key));
   await db.insert(user).values({
     email: `${owner}@test.invalid`,
     id: owner,
@@ -45,20 +44,25 @@ test("storage purge removes files and recovers a lost deletion acknowledgement a
       owner,
       crypto.randomUUID(),
       "storage purge",
-      async () => crypto.randomUUID()
+      createEveTestSession
     );
-    for (const key of keys) {
-      await reserveEveGeneratedFile(owner, conversation.id, key);
-    }
-    for (const key of keys.slice(0, 2)) {
-      await uploadFileAtKey(
-        key,
-        "purge.txt",
-        "test-owned removal fixture",
-        "text/plain"
-      );
-      expect((await getFileMetadata(key)).size).toBe(26);
-    }
+    await Promise.all(
+      keys.map(async (key) => {
+        await reserveEveGeneratedFile(owner, conversation.id, key);
+      })
+    );
+    await Promise.all(
+      keys.slice(0, 2).map(async (key) => {
+        await uploadFileAtKey(
+          key,
+          "purge.txt",
+          "test-owned removal fixture",
+          "text/plain"
+        );
+        const purgedFileMetadata = await getFileMetadata(key);
+        expect(purgedFileMetadata.size).toBe(26);
+      })
+    );
     await beginEveConversationDeletion(owner, conversation.id);
     expect(await prepareEveFamilyFilePurge(owner, conversation.id)).toEqual(
       [...keys].toSorted()
@@ -67,12 +71,14 @@ test("storage purge removes files and recovers a lost deletion acknowledgement a
     await deleteFilesByUrls([urls[0]]);
     await purgeEveFamilyFiles(owner, conversation.id);
     await purgeEveFamilyFiles(owner, conversation.id);
-    for (const key of keys) {
-      // The current adapter classifies BlobNotFoundError as Provider.
-      await expect(getFileMetadata(key)).rejects.toThrow(
-        "The requested blob does not exist"
-      );
-    }
+    await Promise.all(
+      keys.map(async (key) => {
+        // The current adapter classifies BlobNotFoundError as Provider.
+        await expect(getFileMetadata(key)).rejects.toThrow(
+          "The requested blob does not exist"
+        );
+      })
+    );
     const rows = await db
       .select({ state: eveStoredFile.state })
       .from(eveStoredFile)

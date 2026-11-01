@@ -24,9 +24,17 @@ OPENAI_COMPATIBLE_BASE_URL=http://localhost:11434/v1  # Ollama example
 OPENAI_COMPATIBLE_API_KEY=                             # Optional, depends on provider
 ```
 
-2. Set the gateway in your config:
+2. Install the gateway source (add `--replace` when another gateway is installed):
+
+```bash
+bunx @chat-js/cli@latest add --gateway openai-compatible
+```
+
+Then configure runtime model overrides for that installation:
 
 ```typescript title="chat.config.ts"
+import type { ConfigInput } from "@/lib/config-schema";
+
 const config: ConfigInput = {
   ai: {
     gateway: "openai-compatible",

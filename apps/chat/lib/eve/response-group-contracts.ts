@@ -12,7 +12,7 @@ export const eveResponseGroupResult = z.object({
       candidate.extend({ state: z.literal("unresolved") }),
       candidate.extend({ state: z.literal("waiting") }),
       candidate.extend({
-        code: z.literal("project_not_found").optional(),
+        code: z.string().optional(),
         error: z.string(),
         state: z.literal("rejected"),
       }),

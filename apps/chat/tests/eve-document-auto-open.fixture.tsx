@@ -1,6 +1,6 @@
 import { QueryClientProvider } from "@tanstack/react-query";
 import type { EveMessagePart } from "eve/client";
-import { useState } from "react";
+import React, { useState } from "react";
 import { createRoot } from "react-dom/client";
 
 import { EveArtifactLayout } from "../components/eve/eve-artifact-layout";
@@ -31,17 +31,18 @@ const completed: Part = {
   toolName: "createTextDocument",
   type: "dynamic-tool",
 };
+
 const Fixture = ({
   switchBranch,
   startBackground,
   startReplay,
   finishReplay,
 }: {
-  switchBranch: () => void;
-  startBackground: () => void;
-  startReplay: () => void;
-  finishReplay: () => void;
-}) => {
+  readonly switchBranch: () => void;
+  readonly startBackground: () => void;
+  readonly startReplay: () => void;
+  readonly finishReplay: () => void;
+}): React.JSX.Element => {
   const { artifact, setArtifact } = useArtifact();
   const [part, setPart] = useState<Part>(completed);
   const [readOnly, setReadOnly] = useState(false);
@@ -78,7 +79,7 @@ const Fixture = ({
           Switch branch
         </button>
         <button
-          onClick={() =>
+          onClick={() => {
             setPart({
               input: {
                 content:
@@ -89,14 +90,14 @@ const Fixture = ({
               toolCallId: "write-1",
               toolName: "createTextDocument",
               type: "dynamic-tool",
-            })
-          }
+            });
+          }}
           type="button"
         >
           Start write
         </button>
         <button
-          onClick={() =>
+          onClick={() => {
             setPart({
               errorText: "Document cancelled.",
               input: {},
@@ -104,26 +105,38 @@ const Fixture = ({
               toolCallId: "write-1",
               toolName: "createTextDocument",
               type: "dynamic-tool",
-            })
-          }
+            });
+          }}
           type="button"
         >
           Fail write
         </button>
-        <button onClick={() => setPart({ ...completed })} type="button">
+        <button
+          onClick={() => {
+            setPart({ ...completed });
+          }}
+          type="button"
+        >
           Complete write
         </button>
         <button
-          onClick={() => setPart({ ...completed, toolName: "readDocument" })}
+          onClick={() => {
+            setPart({ ...completed, toolName: "readDocument" });
+          }}
           type="button"
         >
           Complete read
         </button>
-        <button onClick={() => setReadOnly((value) => !value)} type="button">
+        <button
+          onClick={() => {
+            setReadOnly((value) => !value);
+          }}
+          type="button"
+        >
           Toggle readonly
         </button>
         <button
-          onClick={() =>
+          onClick={() => {
             setArtifact({
               ...artifact,
               conversationId,
@@ -132,8 +145,8 @@ const Fixture = ({
               isVisible: true,
               revisionId: undefined,
               title: "Existing draft",
-            })
-          }
+            });
+          }}
           type="button"
         >
           Open existing
@@ -144,7 +157,8 @@ const Fixture = ({
     </main>
   );
 };
-const App = () => {
+
+const App = (): React.JSX.Element => {
   const [branch, setBranch] = useState(conversationId);
   const [replaying, setReplaying] = useState(false);
   const [busy, setBusy] = useState<boolean>();
@@ -162,19 +176,27 @@ const App = () => {
         onStopExecution={(id) => {
           setStopped(id);
           setBusy(false);
-          return Promise.resolve();
         }}
       >
         <Fixture
-          startReplay={() => setReplaying(true)}
-          finishReplay={() => setReplaying(false)}
-          startBackground={() => setBusy(true)}
-          switchBranch={() => setBranch("00000000-0000-4000-8000-000000000099")}
+          startReplay={() => {
+            setReplaying(true);
+          }}
+          finishReplay={() => {
+            setReplaying(false);
+          }}
+          startBackground={() => {
+            setBusy(true);
+          }}
+          switchBranch={() => {
+            setBranch("00000000-0000-4000-8000-000000000099");
+          }}
         />
       </EveArtifactLayout>
     </>
   );
 };
+
 const root = document.querySelector("#root");
 if (!root) {
   throw new Error("Missing fixture root");

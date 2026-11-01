@@ -1,24 +1,28 @@
-import type { UIMessage } from "ai";
-
+import type { CanonicalMessage, ThreadInit } from "./types";
 import { AbstractThread } from "./abstract-thread";
 import { MemoryThreadState } from "./thread-state";
-import type { ThreadInit } from "./types";
+import type { UIMessage } from "ai";
 
-export class Thread<
+class Thread<
   TMessage extends UIMessage = UIMessage,
 > extends AbstractThread<TMessage> {
-  constructor({
+  public constructor({
     initialTree,
     messages,
     ...options
   }: ThreadInit<TMessage> = {}) {
     super({
       ...options,
-      state: new MemoryThreadState({ initialTree, messages }),
+      state: new MemoryThreadState<CanonicalMessage<TMessage>>({
+        initialTree,
+        messages,
+      }),
     });
   }
 }
 
-export const createThread = <TMessage extends UIMessage = UIMessage>(
+const createThread = <TMessage extends UIMessage = UIMessage>(
   options: ThreadInit<TMessage> = {}
-) => new Thread(options);
+): Thread<TMessage> => new Thread(options);
+
+export { Thread, createThread };

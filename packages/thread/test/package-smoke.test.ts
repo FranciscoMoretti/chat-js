@@ -7,17 +7,15 @@ import {
   symlink,
   writeFile,
 } from "node:fs/promises";
-import { tmpdir } from "node:os";
 import path from "node:path";
-
-const { dirname, join, resolve } = path;
+import { tmpdir } from "node:os";
 
 const smokeTimeout = 180_000;
-const packageDirectory = resolve(import.meta.dir, "..");
+const packageDirectory = path.resolve(import.meta.dir, "..");
 
-const run = (command: string[], cwd: string) => {
+const run = (command: readonly string[], cwd: string): void => {
   const result = Bun.spawnSync({
-    cmd: command,
+    cmd: [...command],
     cwd,
     killSignal: "SIGKILL",
     stderr: "pipe",
@@ -37,9 +35,9 @@ const run = (command: string[], cwd: string) => {
 
 test(
   "the packed package loads its core and React entry points",
-  async () => {
+  async (): Promise<void> => {
     const temporaryDirectory = await mkdtemp(
-      join(tmpdir(), "chatjs-thread-package-")
+      path.join(tmpdir(), "chatjs-thread-package-")
     );
 
     try {
@@ -50,21 +48,21 @@ test(
           "pm",
           "pack",
           "--filename",
-          join(temporaryDirectory, "thread.tgz"),
+          path.join(temporaryDirectory, "thread.tgz"),
           "--ignore-scripts",
           "--quiet",
         ],
         packageDirectory
       );
 
-      const installedPackage = join(
+      const installedPackage = path.join(
         temporaryDirectory,
         "node_modules",
         "@chat-js",
         "thread"
       );
       await writeFile(
-        join(temporaryDirectory, "package.json"),
+        path.join(temporaryDirectory, "package.json"),
         JSON.stringify({
           dependencies: {
             "@chat-js/thread": "file:./thread.tgz",
@@ -80,25 +78,27 @@ test(
         [
           "tar",
           "-xzf",
-          join(temporaryDirectory, "thread.tgz"),
+          path.join(temporaryDirectory, "thread.tgz"),
           "--strip-components=1",
           "-C",
           installedPackage,
         ],
         temporaryDirectory
       );
-      const linkDependency = async (name: string) => {
-        const destination = join(temporaryDirectory, "node_modules", name);
-        await mkdir(dirname(destination), { recursive: true });
+      const linkDependency = async (name: string): Promise<void> => {
+        const destination = path.join(temporaryDirectory, "node_modules", name);
+        await mkdir(path.dirname(destination), { recursive: true });
         await symlink(
-          dirname(Bun.resolveSync(`${name}/package.json`, packageDirectory)),
+          path.dirname(
+            Bun.resolveSync(`${name}/package.json`, packageDirectory)
+          ),
           destination,
           "dir"
         );
       };
       await linkDependency("ai");
 
-      const coreConsumerPath = join(temporaryDirectory, "core.mjs");
+      const coreConsumerPath = path.join(temporaryDirectory, "core.mjs");
       await writeFile(
         coreConsumerPath,
         `
@@ -113,28 +113,40 @@ assert.throws(() => import.meta.resolve("@ai-sdk/react"), { code: "ERR_MODULE_NO
       run(["node", coreConsumerPath], temporaryDirectory);
       await Promise.all(
         ["react", "@ai-sdk/react", "@types/react", "typescript"].map(
-          linkDependency
+          async (name): Promise<void> => {
+            await linkDependency(name);
+          }
         )
       );
 
       const indexSource = await readFile(
-        join(installedPackage, "dist/index.js"),
+        path.join(installedPackage, "dist/index.js"),
         "utf-8"
       );
       const reactSource = await readFile(
-        join(installedPackage, "dist/react.js"),
+        path.join(installedPackage, "dist/react.js"),
         "utf-8"
       );
-      const packageMetadata = await Bun.file(
-        join(installedPackage, "package.json")
+
+      const packageMetadata: unknown = await Bun.file(
+        path.join(installedPackage, "package.json")
       ).json();
-      const indexChunk = indexSource.match(
-        /from "(?<chunk>\.\/chunk-[^"]+\.js)"/u
+      const indexChunk = /from "(?<chunk>\.\/chunk-[^"]+\.js)"/u.exec(
+        indexSource
       )?.groups?.chunk;
-      const reactChunk = reactSource.match(
-        /from "(?<chunk>\.\/chunk-[^"]+\.js)"/u
+      const reactChunk = /from "(?<chunk>\.\/chunk-[^"]+\.js)"/u.exec(
+        reactSource
       )?.groups?.chunk;
 
+      if (
+        typeof packageMetadata !== "object" ||
+        !packageMetadata ||
+        !("peerDependenciesMeta" in packageMetadata)
+      ) {
+        throw new Error(
+          "Installed package must declare optional peer metadata"
+        );
+      }
       expect(packageMetadata.peerDependenciesMeta).toEqual({
         react: { optional: true },
       });
@@ -143,10 +155,10 @@ assert.throws(() => import.meta.resolve("@ai-sdk/react"), { code: "ERR_MODULE_NO
       expect(indexChunk).toBeDefined();
       expect(reactChunk).toBe(indexChunk);
       expect(reactSource).not.toContain("class Thread");
-      if (!reactChunk) {
+      if (!(typeof reactChunk === "string" && reactChunk !== "")) {
         throw new Error("Expected a shared package chunk");
       }
-      const coreChunkPath = resolve(installedPackage, "dist", reactChunk);
+      const coreChunkPath = path.resolve(installedPackage, "dist", reactChunk);
       expect(await Bun.file(coreChunkPath).exists()).toBeTrue();
       const coreChunkSource = await readFile(coreChunkPath, "utf-8");
       expect(indexSource).not.toContain('from "react"');
@@ -162,7 +174,10 @@ if (typeof chat.id !== "string" || typeof useThread !== "function") {
   throw new Error("Package exports did not load");
 }
 `;
-      const resolutionConsumerPath = join(temporaryDirectory, "resolution.mjs");
+      const resolutionConsumerPath = path.join(
+        temporaryDirectory,
+        "resolution.mjs"
+      );
       await writeFile(
         resolutionConsumerPath,
         `
@@ -173,18 +188,68 @@ for (const [specifier, file] of [["@chat-js/thread", "index.js"], ["@chat-js/thr
 `
       );
       run(["node", resolutionConsumerPath], temporaryDirectory);
-      const runtimeConsumerPath = join(temporaryDirectory, "consumer.mjs");
-      const typeConsumerPath = join(temporaryDirectory, "consumer.ts");
+      const runtimeConsumerPath = path.join(temporaryDirectory, "consumer.mjs");
+      const typeConsumerPath = path.join(temporaryDirectory, "consumer.ts");
       await Promise.all([
         writeFile(runtimeConsumerPath, consumerSource),
-        writeFile(typeConsumerPath, consumerSource),
+        writeFile(
+          typeConsumerPath,
+          `${consumerSource}
+import type { UIMessage } from "ai";
+import { createThread } from "@chat-js/thread";
+import type { ThreadInit } from "@chat-js/thread";
+
+type LabeledMessage = UIMessage<{ threadLabel: string }>;
+const labeledThread = new Thread<LabeledMessage>();
+const createdThread = createThread<LabeledMessage>();
+const threadLabel: string | undefined = labeledThread.getSnapshot().messages[0]?.metadata?.threadLabel;
+const createdLabel: string | undefined = createdThread.getSnapshot().messages[0]?.metadata?.threadLabel;
+// @ts-expect-error Thread metadata must retain its specialized shape.
+labeledThread.getSnapshot().messages[0]?.metadata?.absentProperty;
+// @ts-expect-error createThread metadata must retain its specialized shape.
+createdThread.getSnapshot().messages[0]?.metadata?.absentProperty;
+
+type UnsupportedMessage = LabeledMessage & {
+  tenant: string;
+  id: "custom-id";
+  role: "user";
+  parts: [{ type: "text"; text: string }];
+};
+declare const constructorFinishEvent: Parameters<NonNullable<ThreadInit<UnsupportedMessage>["onFinish"]>>[0];
+// @ts-expect-error Constructor callbacks also receive canonical SDK messages.
+constructorFinishEvent.message.tenant;
+const [normalized] = new Thread<UnsupportedMessage>().getSnapshot().messages;
+// @ts-expect-error The SDK cannot guarantee arbitrary required message fields.
+normalized.tenant;
+// @ts-expect-error Generated IDs keep the SDK string contract.
+const unsupportedId: "custom-id" = normalized.id;
+// @ts-expect-error Streaming also constructs assistant messages.
+const unsupportedRole: "user" = normalized.role;
+// @ts-expect-error Streaming cannot guarantee a fixed text-part tuple.
+const unsupportedParts: [{ type: "text"; text: string }] = normalized.parts;
+
+// This function is only type-checked, never passed to the runtime consumer.
+function checkHookInference() {
+  const helpers = useThread({ thread: labeledThread });
+  const hookLabel: string | undefined = helpers.messages[0]?.metadata?.threadLabel;
+  // @ts-expect-error useThread must infer the supplied thread's metadata shape.
+  helpers.messages[0]?.metadata?.absentProperty;
+  return hookLabel;
+}
+function checkNormalizedHook() {
+  const helpers = useThread({ thread: new Thread<UnsupportedMessage>() });
+  // @ts-expect-error Hook messages cannot reintroduce unsupported fields.
+  helpers.messages[0]?.tenant;
+}
+`
+        ),
       ]);
 
       run(["node", runtimeConsumerPath], temporaryDirectory);
       run(
         [
           "node",
-          join(temporaryDirectory, "node_modules/typescript/bin/tsc"),
+          path.join(temporaryDirectory, "node_modules/typescript/bin/tsc"),
           "--ignoreConfig",
           "--noEmit",
           "--strict",

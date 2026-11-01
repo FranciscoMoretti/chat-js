@@ -1,21 +1,69 @@
+import { rejects } from "node:assert/strict";
 import { afterEach, expect, test } from "bun:test";
-import { mkdir, mkdtemp, rm, writeFile, readFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+
 import path from "node:path";
+import { tmpdir } from "node:os";
 
 import { toolDefinitionSchema } from "../../../registry/metadata";
-import { planToolInstallation } from "./installation-plan";
 
-const { join } = path;
+import { planInstallation } from "./installation-plan";
+
 const roots: string[] = [];
-afterEach(async () => {
+afterEach(async (): Promise<void> => {
   await Promise.all(
-    roots.splice(0).map((root) => rm(root, { force: true, recursive: true }))
+    roots.splice(0).map(async (root): Promise<void> => {
+      await rm(root, { force: true, recursive: true });
+    })
   );
 });
 
-test("plans transitive dependencies and repairs against the complete resulting installation without writing", async () => {
-  const root = await mkdtemp(join(tmpdir(), "chatjs-plan-"));
+test("requested plugins can repair incomplete installations while unrelated installs still reject them", async (): Promise<void> => {
+  const root = await mkdtemp(path.join(tmpdir(), "chatjs-plugin-repair-"));
+  roots.push(root);
+  const directory = path.join(root, "chatjs/plugins/team-notes");
+  await mkdir(directory, { recursive: true });
+  const definition = {
+    contractVersion: 1,
+    id: "team-notes",
+    kind: "plugin",
+    server: { export: "teamNotes", routers: ["notes"] },
+  };
+  await writeFile(
+    path.join(directory, "chatjs.json"),
+    JSON.stringify(definition)
+  );
+  const server = Bun.serve({
+    fetch(): Response {
+      return Response.json({
+        meta: { chatjs: definition },
+        name: "team-notes",
+        type: "registry:item",
+      });
+    },
+    hostname: "127.0.0.1",
+    port: 0,
+  });
+  try {
+    await rejects(
+      planInstallation(root, { plugins: [], tools: [] }),
+      /installation is incomplete/u
+    );
+    const plan = await planInstallation(root, {
+      plugins: [`http://127.0.0.1:${server.port}/team-notes.json`],
+      tools: [],
+    });
+    expect(plan.plugins.map((plugin) => plugin.id)).toEqual(["team-notes"]);
+    expect(
+      await Bun.file(path.join(directory, "server-plugin.ts")).exists()
+    ).toBe(false);
+  } finally {
+    await server.stop(true);
+  }
+});
+
+test("plans transitive dependencies and repairs against the complete resulting installation without writing", async (): Promise<void> => {
+  const root = await mkdtemp(path.join(tmpdir(), "chatjs-plan-"));
   roots.push(root);
   const reader = toolDefinitionSchema.parse({
     contractVersion: 1,
@@ -25,13 +73,14 @@ test("plans transitive dependencies and repairs against the complete resulting i
   });
   const documents = toolDefinitionSchema.parse({
     contractVersion: 1,
+    documentKind: "text",
     id: "text-documents",
     kind: "tool",
     requiresTools: ["readDocument"],
     tools: [{ toolExport: "createTextDocument" }],
   });
   const server = Bun.serve({
-    fetch(request): Response {
+    fetch(request: Readonly<Pick<Request, "url">>): Response {
       const isReader = new URL(request.url).pathname.includes("read-document");
       const definition = isReader ? reader : documents;
       return Response.json({
@@ -48,85 +97,170 @@ test("plans transitive dependencies and repairs against the complete resulting i
   });
   try {
     const source = `http://127.0.0.1:${server.port}`;
-    const first = await planToolInstallation(root, [
-      `${source}/text-documents.json`,
-    ]);
-    expect(first.expected.map((item) => item.id).toSorted()).toEqual([
-      "read-document",
-      "text-documents",
-    ]);
-    expect(await Bun.file(join(root, "tools/chatjs/tools.ts")).exists()).toBe(
+
+    await rejects(
+      planInstallation(
+        root,
+        {
+          plugins: [],
+          tools: [`${source}/text-documents.json`],
+        },
+        { documents: false, fresh: true }
+      ),
+      (reason: unknown) => {
+        expect(() => {
+          throw reason;
+        }).toThrow("--no-documents");
+        return true;
+      }
+    );
+    expect(await Bun.file(path.join(root, "package.json")).exists()).toBe(
       false
     );
-    const dir = join(root, "tools/chatjs/text-documents");
+    const first = await planInstallation(root, {
+      plugins: [],
+      tools: [`${source}/text-documents.json`],
+    });
+    expect(
+      first.expected
+        .map((item: { readonly id: string }): string => item.id)
+        .toSorted()
+    ).toEqual(["read-document", "text-documents"]);
+    expect(
+      await Bun.file(path.join(root, "chatjs/generated/tools.ts")).exists()
+    ).toBe(false);
+    const dir = path.join(root, "chatjs/tools/text-documents");
     await mkdir(dir, { recursive: true });
-    await writeFile(join(dir, "chatjs.json"), JSON.stringify(documents));
+    await writeFile(path.join(dir, "chatjs.json"), JSON.stringify(documents));
     await writeFile(
-      join(dir, "tool.ts"),
+      path.join(dir, "document.tsx"),
+      "export const documentUi = {};\n"
+    );
+    await writeFile(
+      path.join(dir, "tool.ts"),
       "export const createTextDocument = {};\n"
     );
-    await expect(planToolInstallation(root, [])).rejects.toThrow(
-      "requires installed tools: readDocument"
+    await rejects(
+      planInstallation(root, { plugins: [], tools: [] }),
+      (reason: unknown) => {
+        expect(() => {
+          throw reason;
+        }).toThrow("requires installed tools: readDocument");
+        return true;
+      }
     );
-    const repair = await planToolInstallation(root, [
-      `${source}/read-document.json`,
-    ]);
+    const repair = await planInstallation(root, {
+      plugins: [],
+      tools: [`${source}/read-document.json`],
+    });
     expect(repair.expected).toEqual([reader]);
-    expect(await readFile(join(dir, "tool.ts"), "utf-8")).toContain(
+    expect(await readFile(path.join(dir, "tool.ts"), "utf-8")).toContain(
       "createTextDocument"
     );
   } finally {
-    server.stop(true);
+    await server.stop(true);
   }
 });
 
-const definition = (id: string) =>
-  toolDefinitionSchema.parse({
-    contractVersion: 1,
-    id,
-    kind: "tool",
-    slot: "codeExecution",
-    tools: [{ toolExport: "executeCode" }],
-  });
-
-test("rejects conflicting provider selections and permits reinstalling the selected provider", async () => {
-  const root = await mkdtemp(join(tmpdir(), "chatjs-plan-provider-"));
+test("validates plugin dependencies and exclusive storage slots before writing", async (): Promise<void> => {
+  const root = await mkdtemp(path.join(tmpdir(), "chatjs-plan-plugin-"));
   roots.push(root);
-  const directory = join(root, "tools/chatjs/first");
-  await mkdir(directory, { recursive: true });
-  await writeFile(
-    join(directory, "chatjs.json"),
-    JSON.stringify(definition("first"))
-  );
-  await writeFile(
-    join(directory, "tool.ts"),
-    "export const executeCode = {};\n"
-  );
   const server = Bun.serve({
-    fetch(request): Response {
-      const id = new URL(request.url).pathname.includes("second")
-        ? "second"
-        : "first";
+    fetch(request: Readonly<Pick<Request, "url">>): Response {
+      const name = new URL(request.url).pathname.slice(1).replace(".json", "");
+      const chatjs =
+        name === "langfuse"
+          ? {
+              contractVersion: 1,
+              id: "langfuse",
+              kind: "plugin",
+              requiresPlugins: ["mcp"],
+            }
+          : {
+              contractVersion: 1,
+              id: name,
+              kind: name === "mcp" ? "plugin" : "storage",
+            };
       return Response.json({
-        meta: { chatjs: definition(id) },
-        name: id,
+        meta: { chatjs },
+        name,
+        registryDependencies:
+          name === "first"
+            ? [`http://127.0.0.1:${server.port}/second.json`]
+            : [],
         type: "registry:item",
       });
     },
     hostname: "127.0.0.1",
     port: 0,
   });
+  const source = `http://127.0.0.1:${server.port}`;
   try {
-    await expect(
-      planToolInstallation(root, [
-        `http://127.0.0.1:${server.port}/second.json`,
-      ])
-    ).rejects.toThrow("Only one codeExecution");
-    const reinstall = await planToolInstallation(root, [
-      `http://127.0.0.1:${server.port}/first.json`,
-    ]);
-    expect(reinstall.expected).toEqual([definition("first")]);
+    await rejects(
+      planInstallation(root, {
+        plugins: [`${source}/langfuse.json`],
+        tools: [],
+      }),
+      (reason: unknown) => {
+        expect(() => {
+          throw reason;
+        }).toThrow("requires installed plugins: mcp");
+        return true;
+      }
+    );
+    const plan = await planInstallation(root, {
+      plugins: [`${source}/mcp.json`, `${source}/langfuse.json`],
+      tools: [],
+    });
+    expect(
+      plan.plugins
+        .map((plugin: { readonly id: string }): string => plugin.id)
+        .toSorted()
+    ).toEqual(["langfuse", "mcp"]);
+    await rejects(
+      planInstallation(root, {
+        plugins: [`${source}/mcp.json`],
+        gateway: `${source}/mcp.json`,
+        tools: [],
+      }),
+      (reason: unknown) => {
+        expect(() => {
+          throw reason;
+        }).toThrow("Selected gateway item has incompatible ChatJS metadata");
+        return true;
+      }
+    );
+    const dir = path.join(root, "chatjs/plugins/mcp");
+    await mkdir(dir, { recursive: true });
+    await writeFile(
+      path.join(dir, "chatjs.json"),
+      JSON.stringify({ contractVersion: 1, id: "mcp", kind: "plugin" })
+    );
+    expect(
+      await planInstallation(root, {
+        plugins: [`${source}/langfuse.json`],
+        tools: [],
+      })
+    ).toMatchObject({ plugins: [{ id: "langfuse" }] });
+    await rejects(
+      planInstallation(root, {
+        plugins: [],
+        storage: { options: {}, source: `${source}/first.json` },
+        tools: [],
+      }),
+      (reason: unknown) => {
+        expect(() => {
+          throw reason;
+        }).toThrow("Only one storage provider");
+        return true;
+      }
+    );
+    expect(
+      await Bun.file(
+        path.join(root, "chatjs/generated/installed-routers.ts")
+      ).exists()
+    ).toBe(false);
   } finally {
-    server.stop(true);
+    await server.stop(true);
   }
 });

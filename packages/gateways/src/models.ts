@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-// Known tags for IDE hints (accepts any string for forward compatibility)
+// Known tags provide IDE hints; providers may introduce other string tags.
 type KnownTag =
   | "reasoning"
   | "tool-use"
@@ -9,16 +9,18 @@ type KnownTag =
   | "image-generation"
   | "implicit-caching";
 
-const tagSchema = z.string() as z.ZodType<KnownTag>;
+type ModelTag = KnownTag | (string & Record<never, never>);
 
-export const supportedAiGatewayModelTypes = [
+const tagSchema: z.ZodType<ModelTag> = z.string();
+
+const supportedAiGatewayModelTypes = [
   "language",
   "embedding",
   "image",
   "video",
 ] as const;
 
-export type AiGatewayModelType = (typeof supportedAiGatewayModelTypes)[number];
+type AiGatewayModelType = (typeof supportedAiGatewayModelTypes)[number];
 
 const aiGatewayModelTypeSchema = z.union([
   z.literal("language"),
@@ -31,14 +33,16 @@ const aiGatewayModelTypeInputSchema = z.union([
   z.string(),
 ]);
 
+const MIN_PRICING_TIER_BOUND = 0;
+
 const pricingTierSchema = z.object({
   cost: z.string(),
   max: z.number().optional(),
-  min: z.number().default(0),
+  min: z.number().default(MIN_PRICING_TIER_BOUND),
 });
 
 // Single model schema
-export const aiGatewayModelSchema = z.object({
+const aiGatewayModelSchema = z.object({
   context_window: z.number(),
   created: z.number(),
   description: z.string(),
@@ -64,21 +68,29 @@ export const aiGatewayModelSchema = z.object({
 
 type ParsedAiGatewayModel = z.infer<typeof aiGatewayModelSchema>;
 
-export type AiGatewayModel = Omit<ParsedAiGatewayModel, "type"> & {
+type AiGatewayModel = Omit<ParsedAiGatewayModel, "type"> & {
   type: AiGatewayModelType;
 };
 
-export const isAiGatewayModelType = (
-  type: string
-): type is AiGatewayModelType =>
-  supportedAiGatewayModelTypes.includes(type as AiGatewayModelType);
+const isAiGatewayModelType = (type: string): type is AiGatewayModelType =>
+  supportedAiGatewayModelTypes.some((supportedType) => supportedType === type);
 
-export const aiGatewayModelDiscriminatorSchema = z.object({
+const aiGatewayModelDiscriminatorSchema = z.object({
   type: z.string(),
 });
 
 // Parse the response envelope before validating individual supported models.
-export const aiGatewayModelsEnvelopeSchema = z.object({
+const aiGatewayModelsEnvelopeSchema = z.object({
   data: z.array(z.unknown()),
   object: z.literal("list"),
 });
+
+export {
+  supportedAiGatewayModelTypes,
+  aiGatewayModelSchema,
+  isAiGatewayModelType,
+  aiGatewayModelDiscriminatorSchema,
+  aiGatewayModelsEnvelopeSchema,
+};
+
+export type { AiGatewayModelType, AiGatewayModel };

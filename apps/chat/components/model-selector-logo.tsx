@@ -1,6 +1,9 @@
 "use client";
+
 import Image from "next/image";
-import { useMemo } from "react";
+import React, { useMemo } from "react";
+
+import type { JSX as ReactJSX } from "react";
 
 import { cn } from "@/lib/utils";
 import { useChatModels } from "@/providers/chat-models-provider";
@@ -9,9 +12,9 @@ export const ModelSelectorLogo = ({
   modelId,
   className,
 }: {
-  modelId: string;
-  className?: string;
-}) => {
+  readonly modelId: string;
+  readonly className?: string;
+}): ReactJSX.Element | null => {
   const { getModelById } = useChatModels();
   const provider = useMemo(() => {
     const model = getModelById(modelId);

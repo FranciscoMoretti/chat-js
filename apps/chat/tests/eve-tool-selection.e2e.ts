@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 
 import { expect, test } from "@playwright/test";
+import type { TestInfo } from "@playwright/test";
 import { z } from "zod";
 
 import { conversationBinding } from "../lib/eve/contracts";
@@ -43,8 +44,10 @@ test("compiled ChatJS tools exclude optional Eve defaults that bypass applicatio
 
 test("Canvas selection survives native history and edits while later turns reset to automatic", async ({
   page,
-}, testInfo) => {
-  await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
+}, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
   await page.goto("/api/dev-login");
   const { origin } = new URL(page.url());
   const intended = {
@@ -57,8 +60,12 @@ test("Canvas selection survives native history and edits while later turns reset
     data: { model: intended.modelId },
   });
   await page.goto("/");
-  await page.getByTitle("Select Tools", { exact: true }).click();
-  await page.getByRole("menuitem", { exact: true, name: "Canvas" }).click();
+  await page
+    .getByRole("button", { exact: true, name: "Composer options" })
+    .click();
+  await page
+    .getByRole("menuitemcheckbox", { exact: true, name: "Canvas" })
+    .click();
   await page
     .getByRole("textbox", { exact: true, name: "Message" })
     .fill(intended.message);
@@ -74,7 +81,14 @@ test("Canvas selection survives native history and edits while later turns reset
   await page.route(
     "**/api/agent-conversations",
     async (route) => {
-      operation = route.request().postDataJSON();
+      operation = z
+        .looseObject({
+          operationId: z.string(),
+          modelId: z.string(),
+          selectedTool: z.string(),
+          message: z.string(),
+        })
+        .parse(route.request().postDataJSON());
       const response = await route.fetch();
       expect(response.status()).toBe(200);
       binding = conversationBinding.parse(await response.json());
@@ -90,8 +104,8 @@ test("Canvas selection survives native history and edits while later turns reset
   expect(operation).toMatchObject(intended);
   await expect(page).toHaveURL(new RegExp(`/chat/${binding.id}$`, "u"));
   await expect(
-    page.getByRole("button", { exact: true, name: "Clear Canvas tool" })
-  ).toHaveCount(0);
+    page.getByRole("button", { exact: true, name: "Composer options" })
+  ).not.toContainText("Canvas");
   await expect(
     page.getByRole("button", {
       exact: true,
@@ -131,17 +145,26 @@ test("Canvas selection survives native history and edits while later turns reset
   await expect(
     composer.getByRole("textbox", { exact: true, name: "Message" })
   ).toHaveText("");
-  await expect(page.getByRole("log").locator(".is-user")).toHaveCount(2);
-  await expect(page.getByRole("log").locator(".is-assistant")).toHaveCount(2);
+  await expect(page.getByRole("log").locator('[data-role="user"]')).toHaveCount(
+    2
+  );
+  await expect(
+    page.getByRole("log").locator('[data-role="assistant"]')
+  ).toHaveCount(2);
   await expect(page.getByText("Ready", { exact: true })).toBeVisible({
     timeout: 90_000,
   });
   await page.reload();
   await page
-    .getByRole("button", { exact: true, name: "Edit message" })
+    .getByRole("button", {
+      exact: true,
+      name: "Edit message",
+    })
     .first()
     .click();
-  const editor = page.getByRole("dialog");
+  const editor = page
+    .getByRole("log")
+    .getByRole("group", { name: "Message composer" });
   await expect(
     editor.getByRole("button", { exact: true, name: "Clear Canvas tool" })
   ).toBeVisible();

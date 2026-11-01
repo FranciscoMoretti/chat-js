@@ -1,22 +1,15 @@
-import type { MessageStreamEvent } from "eve/client";
-import { useState } from "react";
+import React, { useState } from "react";
 import { createRoot } from "react-dom/client";
 
 import { useEveMessageDelivery } from "../components/eve/use-eve-message-delivery";
-import { eveMessageDeliveryMetadata } from "../lib/eve/message-delivery";
 
-const event = (operationId: string): MessageStreamEvent => ({
-  data: {
-    message: "same text",
-    metadata: eveMessageDeliveryMetadata(operationId, null),
-    sequence: 1,
-    turnId: "turn_1",
-  },
-  meta: { at: "2026-09-13T00:00:00.000Z", id: crypto.randomUUID() },
-  type: "message.received",
+const event = (operationId: string) => ({
+  sessionId: "fixture-session",
+  operationId,
+  deliveryId: `native-${operationId}`,
 });
 
-const Fixture = () => {
+const Fixture = (): React.JSX.Element => {
   const delivery = useEveMessageDelivery("fixture-session");
   const [draft, setDraft] = useState("");
 
@@ -28,7 +21,11 @@ const Fixture = () => {
         <textarea
           aria-label="Message"
           className="min-h-24 w-full rounded-md border p-3"
-          onChange={(change) => setDraft(change.currentTarget.value)}
+          onChange={(change: {
+            readonly currentTarget: { readonly value: string };
+          }) => {
+            setDraft(change.currentTarget.value);
+          }}
           value={draft}
         />
       </label>
@@ -48,18 +45,28 @@ const Fixture = () => {
           Send
         </button>
         <button
-          onClick={() =>
-            delivery.accept(event("00000000-0000-4000-8000-000000000002"))
-          }
+          onClick={() => {
+            delivery.accept(event("00000000-0000-4000-8000-000000000002"));
+          }}
           type="button"
         >
           Acknowledge another operation
         </button>
         <button
-          disabled={!delivery.pending?.operationId}
+          disabled={
+            delivery.pending === undefined ||
+            delivery.pending === null ||
+            delivery.pending.operationId === undefined ||
+            delivery.pending.operationId === null ||
+            delivery.pending.operationId === ""
+          }
           onClick={() => {
             const operationId = delivery.pending?.operationId;
-            if (operationId) {
+            if (
+              operationId !== undefined &&
+              operationId !== null &&
+              operationId !== ""
+            ) {
               delivery.accept(event(operationId));
             }
           }}
@@ -101,11 +108,13 @@ const Fixture = () => {
             >
               {delivery.pending.operationId}
             </span>
-            {delivery.pending.rejection && (
-              <span className="block">
-                Rejected: {delivery.pending.rejection}
-              </span>
-            )}
+            {delivery.pending.rejection !== undefined &&
+              delivery.pending.rejection !== null &&
+              delivery.pending.rejection !== "" && (
+                <span className="block">
+                  Rejected: {delivery.pending.rejection}
+                </span>
+              )}
           </div>
         ) : (
           "No pending message"

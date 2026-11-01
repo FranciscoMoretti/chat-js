@@ -1,73 +1,68 @@
+import type { HookContext } from "eve/hooks";
 import { beforeEach, expect, test, vi } from "vitest";
 
-import conversation from "../../agent/hooks/conversation";
-import followups from "../../agent/hooks/followup-suggestions";
-import instructions from "../../agent/instructions/project";
+import conversation from "@/chatjs/plugins/projects/conversation-hook";
+import followups from "@/agent/hooks/followup-suggestions";
+import instructions from "@/chatjs/plugins/projects/instructions";
 
 const mocks = vi.hoisted(() => {
   const state: { content: string | null } = { content: null };
   return {
-    checkpoint: vi.fn(),
     followups: vi.fn(),
-    namedCheckpoint: vi.fn(),
     project: vi.fn(),
     resolve: vi.fn(),
     state,
   };
 });
-vi.mock("./generate-followup-suggestions", () => ({
+vi.mock("@/chatjs/plugins/followup-suggestions/generate-suggestions", () => ({
   generateEveFollowupSuggestions: mocks.followups,
 }));
 vi.mock("eve/context", () => ({
-  defineState: <T>(_name: string, initial: () => T) => ({ get: initial }),
+  defineState: <Value>(
+    _name: string,
+    initial: () => Value
+  ): { get: () => Value } => ({ get: initial }),
 }));
-vi.mock("eve/hooks", () => ({ defineHook: <T>(value: T) => value }));
+vi.mock("eve/hooks", () => ({
+  defineHook: <Value>(value: Value): Value => value,
+}));
 vi.mock("eve/instructions", () => ({
-  defineDynamic: <T>(value: T) => value,
-  defineInstructions: <T>(value: T) => value,
+  defineDynamic: <Value>(value: Value): Value => value,
+  defineInstructions: <Value>(value: Value): Value => value,
 }));
-vi.mock("./project-instructions", () => ({
+vi.mock("@/chatjs/plugins/projects/instructions-state", () => ({
   projectInstructions: {
-    get: () => mocks.state,
-    update: (update: () => { content: string | null }) => {
+    get: (): typeof mocks.state => mocks.state,
+    update: (update: () => { content: string | null }): void => {
       mocks.state = update();
     },
   },
 }));
-vi.mock("./conversation-scope", () => ({
+vi.mock("@/lib/eve/conversation-scope", () => ({
   resolveEveConversationScope: mocks.resolve,
 }));
-vi.mock("../db/eve-queries", () => ({
+vi.mock("@/chatjs/plugins/projects/db/project-queries", () => ({
   getEveConversationProject: mocks.project,
-}));
-vi.mock("../db/eve-documents", () => ({
-  captureEveDocumentCheckpoint: mocks.checkpoint,
-  captureEveNamedDocumentCheckpoint: mocks.namedCheckpoint,
 }));
 
 const hookContext = (
   sequence: number,
-  parent?: {
-    callId: string;
-    rootSessionId: string;
-    sessionId: string;
-    turn: { id: string; sequence: number };
-  }
-) => ({
+  parent?: HookContext["session"]["parent"]
+): HookContext => ({
   agent: { name: "chatjs" },
   channel: {},
-  getSandbox: () => {
-    throw new Error("Unexpected sandbox access");
+  cancel: (): never => {
+    throw new Error("Unexpected cancellation");
   },
-  getSkill: () => {
-    throw new Error("Unexpected skill access");
+  getSandbox: (): never => {
+    throw new Error("Unexpected sandbox access");
   },
   session: {
     auth: {
       current: null,
       initiator: {
         attributes: { chatjsReservationId: "inherited-reservation" },
-        authenticator: "test",
+        authenticator: "chatjs-gateway",
         principalId: "owner",
         principalType: "user",
       },
@@ -78,11 +73,11 @@ const hookContext = (
   },
 });
 
-const startTurn = (
+const startTurn = async (
   sequence: number,
-  parent?: Parameters<typeof hookContext>[1]
+  parent?: HookContext["session"]["parent"]
 ) =>
-  conversation.events?.["turn.started"]?.(
+  await conversation.events?.["turn.started"]?.(
     {
       data: { sequence, turnId: `turn_${sequence}` },
       meta: { at: "2026-09-11T12:00:00Z", id: `event_${sequence}` },
@@ -91,7 +86,9 @@ const startTurn = (
     hookContext(sequence, parent)
   );
 
-const readInstructions = () =>
+const readInstructions = ():
+  | ReturnType<NonNullable<(typeof instructions.events)["turn.started"]>>
+  | undefined =>
   instructions.events["turn.started"]?.(
     {},
     {
@@ -99,7 +96,15 @@ const readInstructions = () =>
       messages: [],
       model: null,
       session: {
-        auth: { current: null, initiator: null },
+        auth: {
+          current: null,
+          initiator: {
+            authenticator: "chatjs-gateway",
+            attributes: {},
+            principalId: "owner",
+            principalType: "user",
+          },
+        },
         id: "native-session",
       },
     }
@@ -127,7 +132,6 @@ test("refreshes project instructions for each turn and clears them after detachm
   expect(readInstructions()).toEqual({
     content: "Project instructions:\nFirst instruction",
   });
-  expect(mocks.checkpoint).toHaveBeenCalledWith("owner", "conversation", 0);
   mocks.project.mockResolvedValueOnce({ instructions: "Edited instruction" });
   await startTurn(1);
   expect(readInstructions()).toEqual({
@@ -142,7 +146,6 @@ test("propagates required context failures and removes the previous turn's instr
   mocks.state.content = "Stale instructions";
   mocks.project.mockRejectedValueOnce(new Error("Database unavailable"));
   await expect(startTurn(1)).rejects.toThrow("Database unavailable");
-  expect(mocks.checkpoint).not.toHaveBeenCalled();
   expect(readInstructions()).toBeNull();
   mocks.resolve.mockRejectedValueOnce(new Error("Unbound session"));
   await expect(startTurn(2)).rejects.toThrow("Unbound session");
@@ -150,7 +153,7 @@ test("propagates required context failures and removes the previous turn's instr
 });
 
 // A nested child must use the root branch, not the immediate parent's session.
-test("loads root project context for descendants without writing child checkpoints", async () => {
+test("loads root project context for descendants", async () => {
   mocks.project.mockResolvedValueOnce({
     instructions: "Root project instruction",
   });
@@ -169,33 +172,6 @@ test("loads root project context for descendants without writing child checkpoin
   expect(readInstructions()).toEqual({
     content: "Project instructions:\nRoot project instruction",
   });
-  expect(mocks.checkpoint).not.toHaveBeenCalled();
-});
-
-test("does not project a child's waiting checkpoint into the root branch", async () => {
-  const waiting = {
-    data: {
-      checkpoint: { beforeTurnId: "turn_1", checkpointId: "child-checkpoint" },
-      continuationToken: "continuation",
-    },
-    meta: { at: "2026-09-11T12:00:00Z", id: "waiting-event" },
-    type: "session.waiting",
-  };
-  await conversation.events?.["session.waiting"]?.(
-    {
-      ...waiting,
-      data: { ...waiting.data, wait: "next-user-message" },
-      type: "session.waiting",
-    },
-    hookContext(0, {
-      callId: "child-call",
-      rootSessionId: "root-native",
-      sessionId: "root-native",
-      turn: { id: "turn_7", sequence: 7 },
-    })
-  );
-  expect(mocks.resolve).not.toHaveBeenCalled();
-  expect(mocks.namedCheckpoint).not.toHaveBeenCalled();
 });
 
 test("generates user follow-up suggestions only for the root session", async () => {

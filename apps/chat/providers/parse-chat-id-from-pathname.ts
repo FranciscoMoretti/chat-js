@@ -1,82 +1,51 @@
-export type ChatRouteSource = "chat" | "home" | "project" | "share";
+import { installedPlugins } from "@/integrations/plugin-catalog";
 
-export type ParsedChatIdFromPathname =
-  | {
-      type: "home";
-      id: null;
-      source: "home";
-      projectId: null;
-    }
-  | {
-      type: "projectHome";
-      id: null;
-      source: "project";
-      projectId: string;
-    }
-  | {
-      type: "chat";
-      id: string;
-      source: "chat";
-      projectId: null;
-    }
-  | {
-      type: "projectChat";
-      id: string;
-      source: "project";
-      projectId: string;
-    }
-  | {
-      type: "share";
-      id: string;
-      source: "share";
-      projectId: null;
-    }
-  | {
-      type: "passthrough";
-      id: null;
-      source: null;
-      projectId: null;
-    };
-
-const SHARE_ROUTE_PATTERN = /^\/share\/(?<shareId>[^/]+)$/u;
+type ChatRouteSource = "chat" | "home" | "plugin" | "share";
+interface ParsedChatIdFromPathname {
+  readonly type:
+    | "home"
+    | "chat"
+    | "pluginHome"
+    | "pluginChat"
+    | "share"
+    | "passthrough";
+  readonly id: string | null;
+  readonly source: ChatRouteSource | null;
+  readonly contextId: string | null;
+  readonly pluginId: string | null;
+  readonly parentHref: string;
+}
+const SHARE_ROUTE_PATTERN = /^\/share\/(?<id>[^/]+)$/u;
 const PROJECT_ROUTE_PATTERN =
   /^\/project\/(?<projectId>[^/]+)(?:\/chat\/(?<chatId>[^/]+))?$/u;
-const CHAT_ROUTE_PATTERN = /^\/chat\/(?<chatId>[^/]+)$/u;
-
-/**
- * Parse a Next.js pathname into the chat route shape.
- * Unknown paths are passthrough routes and must not become draft chats.
- */
-export const parseChatIdFromPathname = (
+const CHAT_ROUTE_PATTERN = /^\/chat\/(?<id>[^/]+)$/u;
+const parseChatIdFromPathname = (
   pathname: string | null
 ): ParsedChatIdFromPathname => {
-  const shareId = pathname?.match(SHARE_ROUTE_PATTERN)?.groups?.shareId;
-  if (shareId) {
+  const base = { contextId: null, pluginId: null, parentHref: "/" as const };
+  const shareId = pathname?.match(SHARE_ROUTE_PATTERN)?.groups?.id;
+  if (shareId !== undefined) {
+    return { ...base, id: shareId, source: "share", type: "share" };
+  }
+  const project = pathname?.match(PROJECT_ROUTE_PATTERN)?.groups;
+  if (installedPlugins.has("projects") && project?.projectId !== undefined) {
     return {
-      id: shareId,
-      projectId: null,
-      source: "share",
-      type: "share",
+      id: project.chatId ?? null,
+      contextId: project.projectId,
+      parentHref: `/project/${project.projectId}`,
+      pluginId: "projects",
+      source: "plugin",
+      type: project.chatId === undefined ? "pluginHome" : "pluginChat",
     };
   }
-
-  const projectGroups = pathname?.match(PROJECT_ROUTE_PATTERN)?.groups;
-  if (projectGroups?.projectId) {
-    const { chatId, projectId } = projectGroups;
-    if (chatId) {
-      return { id: chatId, projectId, source: "project", type: "projectChat" };
-    }
-    return { id: null, projectId, source: "project", type: "projectHome" };
+  const chatId = pathname?.match(CHAT_ROUTE_PATTERN)?.groups?.id;
+  if (chatId !== undefined) {
+    return { ...base, id: chatId, source: "chat", type: "chat" };
   }
-
-  const chatId = pathname?.match(CHAT_ROUTE_PATTERN)?.groups?.chatId;
-  if (chatId) {
-    return { id: chatId, projectId: null, source: "chat", type: "chat" };
-  }
-
   if (pathname === "/") {
-    return { id: null, projectId: null, source: "home", type: "home" };
+    return { ...base, id: null, source: "home", type: "home" };
   }
-
-  return { id: null, projectId: null, source: null, type: "passthrough" };
+  return { ...base, id: null, source: null, type: "passthrough" };
 };
+export { parseChatIdFromPathname };
+export type { ChatRouteSource, ParsedChatIdFromPathname };

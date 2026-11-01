@@ -1,10 +1,10 @@
-import { createEnv } from "@t3-oss/env-nextjs";
-
-import { gatewayEnvVariables } from "./ai/gateway-model-defaults";
 import { clientEnvSchema, serverEnvSchema } from "./env-schema";
+
+import { createEnv } from "@t3-oss/env-nextjs";
+import { gatewayEnvVariables } from "@/chatjs/providers/gateway-defaults";
 import { resolveEveEnvironment } from "./eve/environment";
 
-export const env = createEnv({
+const env = createEnv({
   client: clientEnvSchema,
   experimental__runtimeEnv: {
     ...(typeof window === "undefined"
@@ -18,6 +18,7 @@ export const env = createEnv({
 });
 
 // Registry gateways declare their environment independently of the app schema.
-export const gatewayEnv = Object.fromEntries(
+const gatewayEnv = Object.fromEntries(
   gatewayEnvVariables.map((name) => [name, process.env[name]])
 );
+export { env, gatewayEnv };

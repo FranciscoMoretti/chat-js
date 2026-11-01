@@ -1,0 +1,249 @@
+---
+title: Plugin API
+description: Typed server and client contracts for optional ChatJS capabilities
+---
+
+Plugins own optional behavior, storage, and UI. Core owns authentication, chat identity, lifecycle coordination, dispatch, and recovery. Core can name a capability such as Projects and declare its optional input fields without importing its implementation.
+
+Start with [Create a plugin](../cookbook/create-plugin) for installation and packaging. Use [Customize plugin integrations](../cookbook/customize-integrations) to add app-owned chat and billing behavior that survives later installation. Installed source lives in `chatjs/plugins/<id>/`, with thin framework adapters under `app/` and `agent/`.
+
+## Entry points
+
+Keep server and browser import graphs separate:
+
+| Entry point | Contract | Contributions |
+| --- | --- | --- |
+| `server-plugin.ts` | `ChatPlugin` | tRPC routers, instrumentation |
+| `chat.ts` | `ChatServerIntegration` | Transactional chat integration, safe for EVE and Next.js |
+| `signed-out.tsx` | React component | Optional screen for signed-out chat visitors |
+| `session-profile.ts` | `SessionProfile` | Native authenticator, bounded model, and instructions |
+| `cleanup.ts` | `CleanupTask` | Bounded cleanup with progress and pending inventory |
+| `billing.ts` | `UsageBilling` | Spending admission and transactional debits, safe for EVE and Next.js |
+| `auth-server.ts` | `AuthenticationIntegration` | Better Auth plugins, trusted origins, auth route matching |
+| `navigation.ts` | `() => boolean` | Whether core handles modified links as app navigation |
+| `auth-form.tsx`, `sign-out.ts` | `AuthenticationUi` | Authentication form wrapper and sign-out handler, imported independently |
+| `client-plugin.ts` | `definePlugin` | Typed UI slots, uploads, model visibility |
+
+Keep `chat.ts` and `billing.ts` free of web routers and Next.js request helpers: native EVE loads this entrypoint too.
+
+Factories return concrete types with `satisfies`. Sync generates static imports and registrations from the descriptor without executing server factories during installation.
+
+```ts
+import type { ChatPlugin } from "@/chatjs/core/installation/plugin";
+import { projectRouter } from "@/chatjs/plugins/projects/router";
+
+export const projects = () =>
+  ({
+    id: "projects",
+    routers: { project: projectRouter },
+  }) satisfies ChatPlugin;
+```
+
+## Projects creation and recovery
+
+Core declares optional `projectId` fields in creation and history inputs. Supplying a project when Projects is not installed fails explicitly. Forks cannot specify a new initial project because they share their source logical chat.
+
+`chat.onCreate({ tx, chatId, ownerId, projectId })` runs only when core inserts a new logical chat. Projects validates ownership under a lock and inserts membership using the supplied reservation transaction. Throwing rolls back both the chat reservation and membership. Keep external calls and native dispatch out of this callback.
+
+A retry checks the original message, attachments, model, tool selection, and source. It ignores a changed initial project choice and does not invoke the creation callback again. Moving a chat uses an explicit assignment mutation. Multiple model responses share their logical chat's membership.
+
+The full original request is retained for dispatch and recovery. Its browser storage scope contains only a key and label. Projects uses `project:<id>` to preserve existing saved drafts. Current membership is never used to reconstruct a pending request. Recovering a definitively rejected project request into New Chat preserves the message, tools, and models under a fresh operation ID without the rejected project selection.
+
+These are explicit core contracts. There is no registry of arbitrary creation fields or schema-merging protocol.
+
+## After creation
+
+Use `chat.afterCreate({ ownerId, conversationId, message })` for optional work after a successful root creation response. It runs outside the creation transaction through Next.js `after`, using a bound conversation from the initial chat or response group. Forks do not invoke it.
+
+Recovery requests may invoke the callback again. Make your contribution idempotent and recheck ownership and state before writing. Core catches each contribution's failure so later contributions still run. This callback does not guarantee durable execution. [AI Titles](../plugins/ai-titles) uses it for guarded title enrichment.
+
+## Explicit chat mutations
+
+Use `updateOwnedChat` from `@/lib/db/update-owned-chat` for existing-chat metadata changes. Core resolves a logical chat or legacy conversation ID, verifies ownership and a bound session, and holds the family lock used by deletion. Unavailable chats return `null` before the callback runs.
+
+```ts
+import { eq } from "drizzle-orm";
+import { updateOwnedChat } from "@/lib/db/update-owned-chat";
+import { eveChatProject as membership } from "@/chatjs/plugins/projects/db/project-schema";
+
+// ownerId and chatId come from the authorized procedure.
+await updateOwnedChat({ ownerId, chatId }, async ({ tx, chatId }) => {
+  await tx.delete(membership).where(eq(membership.chatId, chatId));
+  return { chatId };
+});
+```
+
+Use the supplied transaction for plugin validation and writes. A successful result updates the chat timestamp. Return `null` before writing when validation rejects the mutation. Throw on failure to roll back the transaction. Projects owns the project validation and membership writes.
+
+This helper is for logical-chat metadata. Conversation-specific operations that must not touch the chat timestamp need their own appropriate access contract.
+
+## History and navigation
+
+`chat.historyFilter(input, surface)` returns a Drizzle SQL restriction or `undefined`. Core combines it with ownership, search, and cursor predicates before ordering and limiting. Projects excludes assigned chats from the ordinary sidebar and filters project pages by `projectId`. Search can include all chats.
+
+`chat.links(ownerId, chatIds)` returns batched `{ href, parentHref }` entries for authorized chats. Core uses them for history links and navigation after deletion. Ordinary chats use `/chat/<id>` and `/`. Two plugins claiming navigation for the same chat throw rather than depending on installation order.
+
+History predicates combine with AND. Return `undefined` when your restriction does not apply. Filtering an already-fetched page breaks pagination.
+
+## Public reads
+
+`chat.publicReadFilter()` returns a Drizzle predicate over the core conversation table. Installed predicates combine with OR. With no contribution, the result is false. File and document readers combine this grant with ownership, bound state, and their resource-specific checks. This contribution never grants write or workspace access.
+
+[Sharing](../plugins/sharing) contributes the public visibility predicate. Its public transcript route belongs to the plugin and rechecks visibility after reading the native snapshot. Core retains the visibility column and resets it during deletion.
+
+Client actions receive the logical chat `id` and, when available, the exact `conversationId`. Use the latter for branch-specific sharing. Header menus omit it when there is no transcript to share. Plugin actions own their dialogs and preserve the menu while a dialog is open.
+
+## Deletion
+
+| Callback | When it runs | Typical data |
+| --- | --- | --- |
+| `onDeleteConversations(tx, { conversationIds, sessionIds })` | Before selected conversations are tombstoned | Feedback votes and session-owned suggestions |
+| `onDelete(tx, chatId)` | When the final session of a logical chat is deleted | Project membership |
+
+Both callbacks run inside the core deletion transaction under its lifecycle lock. A failure rolls back database cleanup. Use the supplied transaction. Removing a project detaches its chats without deleting their sessions.
+
+## Usage billing
+
+Declare `billing: { export: "creditsBilling" }` in the descriptor and export a `UsageBilling` object from `billing.ts`. Sync allows at most one billing contributor. The generated `installed-billing.ts` contains only the typed `installedBilling` adapter list. App-owned `integrations/billing.ts` selects the policy with `composeBilling`. Callers use `billing.canSpend(ownerId)` and the optional `billing.debit`. Without an adapter, admission resolves to `true`, debit is absent, and core leaves receipts uncharged.
+
+`canSpend(ownerId)` checks admission; it does not reserve funds. `debit(tx, { ownerId, cents })` applies a positive whole-cent debit using the supplied transaction. Core has already locked the registered owner, deduplicated evidence, and calculated the unpaid rounded turn total. A failure rolls back the receipt, debit, and settlement marker together. Do not open another transaction or call external services from `debit`.
+
+Core owns durable usage evidence, per-turn rounding, `chargedCents`, and reconciliation. The plugin owns balance storage and spending policy. Guest Chat sessions do not enter account usage billing. Locking the core user row keeps receipt ingestion serialized even when no billing table exists.
+
+The [Credits plugin](../plugins/credits) uses this contract. Native EVE imports the billing entry directly; keep routers and Next.js request helpers in the server entry. Billing installation does not backfill old usage automatically; newly reconciled receipts can still settle an existing turn's unpaid total.
+
+## Client slots
+
+Declare a client plugin once at module scope. Import typed slot components from `@/components/chat-slots`, and `definePlugin` and `slot` from `@/chatjs/core/ui/slots`:
+
+```tsx
+"use client";
+
+import { ChatActions } from "@/components/chat-slots";
+import { definePlugin, slot } from "@/chatjs/core/ui/slots";
+import { ProjectChatActions } from "./ui/chat-contributions";
+
+export const projectsClient = definePlugin({
+  id: "projects",
+  slots: [slot(ChatActions, ProjectChatActions)],
+});
+```
+
+`slot(SlotComponent, PluginComponent)` creates a binding without changing the slot or rendering the component. The slot reference carries its prop type. A component with incompatible props fails type checking. The application renders `<ChatActions chat={chat} />` where those actions belong. Generated client lists contain references to installed declarations, without invoking factories or patching application JSX.
+
+| Slot | Purpose |
+| --- | --- |
+| `ComposerAttachments` | Attachment controls before app-owned tool controls |
+| `ComposerExtensions` | Additional composer controls after tool controls |
+| `SettingsLinks` | Additional settings navigation links |
+| `ModelSettingsLink` | Model settings shortcuts with `surface: "sidebar"`, `"settings"`, or `"picker"` |
+| `AccountSummary` | Content beneath the signed-in user name |
+| `SidebarSections` | Sidebar content |
+| `SidebarHeaderItems` | Fixed sidebar menu items with server-resolved `ownerId` |
+| `ChatActions` | Menu actions receiving `{ chat: { id, title, state, conversationId? } }` |
+| `ChatHeaderActions` | Header controls receiving the same chat context |
+| `ChatBreadcrumbs` | Context receiving `{ chatId }` |
+| `MessageActions` | Assistant-message actions |
+| `MessageResponses` | Response content associated with user messages |
+| `ChatSuggestions` | Suggestions beneath the last editable message |
+| `LayoutEffects` | No-prop global layout components, from `@/components/layout-slots` |
+
+Plugin components own fetching, mutations, loading, errors, dialogs, and appropriate menu or sidebar markup. Edit the installed component or bind an ordinary wrapper component to add providers, styling, or behavior. Put app-specific JSX beside slots in the layout. No string-based override record is required.
+
+`ChatPlugins` scopes installed chat components to the chat layout. `LayoutPlugins` renders a separate list for global layout behavior. A nested `Plugins` provider replaces the installed UI set for its descendants. Slots without bound components render nothing. Duplicate plugin IDs throw. Keep declarations and wrappers at module scope to preserve component identity.
+
+Lazy components work with `React.lazy` and normal Suspense boundaries. The declaration is imported eagerly, but a dynamic component loader runs when that component renders. Keep expensive dialog content behind its trigger. Client declarations must not import server implementations. Server-rendered children can pass through a client provider, but the slot registry itself is a client API.
+
+The descriptor's client fields still declare installation capabilities. `client.layout: true` selects the global list. Other client declarations enter the chat list. A declaration with both layout and chat UI capabilities enters both lists, so keep its imports appropriate for both scopes. Upload handling and model visibility retain their dedicated generated hooks. Runtime disable switches are not required.
+
+For account summaries, declare `client.accountSummary: true` and bind a component to `AccountSummary`. Set query `meta: { refreshOnTurnEnd: true }` to refresh when a turn completes, fails, or is cancelled. With no bound component, the sidebar renders only the user name.
+
+### Model visibility
+
+Declare `client.modelVisibility: true` in your descriptor and include `useModelVisibility` in your client declaration. Sync installs one hook with the type `(defaultEnabledIds: ReadonlySet<string>) => ReadonlySet<string>`. Core calls it unconditionally from the model provider. Only one plugin can supply this contribution, so two providers fail installation before registrations change.
+
+Your hook owns fetching and applying user preferences. Return a stable set when its inputs are unchanged. Core filters its available catalog against the returned IDs, so an unknown ID cannot add a model. With no provider installed, the generated hook returns core defaults unchanged and performs no preference request. This contribution changes picker visibility, not authorization, capability checks, or guest session policy.
+
+### Message actions
+
+The `MessageActions` slot receives `{ conversationId, messageId, disabled }`. Core renders it for editable assistant messages; each plugin owns its queries and mutations. Feedback uses a conversation-specific write with a lock and state recheck, because voting must not change the logical chat's update timestamp.
+
+### Response content
+
+Declare `client.chat: true` and bind your component with `slot(MessageResponses, YourResponses)` in a `definePlugin` client declaration. Import `MessageResponses` from `@/components/chat-slots`. Like message actions, the component receives `{ conversationId, messageId, disabled }`, typed as `ChatMessageProps`. Return `null` when your contribution does not apply to that user message. Respect `disabled` for interactions and own your fetching and recovery state.
+
+`integrations/chat/ui.ts` composes installed declarations and the local Parallel Responses declaration in display order using the shared `Plugins` provider. Each is additive. Ordinary version navigation and assistant action buttons remain separate placements. Response content runs inside the account transcript's logical-chat context. Public sharing and guest transcripts do not mount this placement.
+
+### Composer and submission composition
+
+`EveComposer` accepts a `modelPicker` React node. Omit it for the default single-model picker. The slot inherits the composer's disabled, read-only, and upload locks. Supply `modelIds` alongside a custom picker so attachment validation checks every selected model. Selection state and model counts belong to the caller. `ComposerAttachments` and `ComposerExtensions` contribute to the Add menu and do not replace the picker.
+
+Guest Chat supplies a disabled single-model picker. Account creation, edits, and follow-up messages supply `ParallelResponseModelPicker`. The shared `ModelSelector` primitive shows its multiple-selection toggle only with `allowMultiple`. The account picker also checks `config.features.parallelResponses`.
+
+`ComposerSubmission` exposes `submit()`, `pending`, `error`, and an optional `preview` React node and `recovery` React element. `NewConversationView` places those nodes without reading saved requests. The submission controller owns operation identity, persistence, dispatch, and recovery. Retry stays inside the recovery implementation because an unconfirmed creation and an unconfirmed message delivery have different retry rules.
+
+These are React composition seams, not global registration hooks for arbitrary submission handlers. Parallel Responses currently uses a local response contribution and still has core response-group persistence and dispatch. It is not yet an independently installable plugin. Extracting those responsibilities requires preserving reservation, replay, and deletion transactions.
+
+### Suggestions
+
+When you contribute to `ChatSuggestions`, it receives `conversationId`, native `events`, `lastMessage?: { role, metadata?: { turnId?: string } }`, `disabled`, and `onSelect`. It renders beneath the last editable message when transcript actions are available. Handle a missing `lastMessage`, `metadata`, or `turnId` without assuming completion identity. Your plugin owns completion matching, storage reads, and polling. The callback returns the selected text to core's existing send/compare flow.
+
+Follow-up Suggestions uses native EVE hooks for generation and the per-conversation cleanup callback for session-owned records. Its claim-before-generation rule and core usage accounting survive extraction; no new event bus or generic mutation wrapper is involved.
+
+## Authentication and desktop navigation
+
+Declare `authentication: { export: "desktopAuth" }` for an `AuthenticationIntegration` exported from `auth-server.ts`. Core adds its Better Auth `plugins` and `trustedOrigins`, and consults `isAuthRoute(url)` before redirecting page requests. Match routes narrowly: this predicate lets unauthenticated visitors reach the page and keeps signed-in users on authentication handoff pages. It does not replace endpoint authentication or authorize data access.
+
+Declare `authenticationUi: { form: "DesktopAuthForm", signOut: "signOutDesktop" }` in the descriptor. Export the form from `auth-form.tsx` and the handler from `sign-out.ts`. Sync imports them independently, so signing out does not load the login form or layout. The form receives `mode: "login" | "register"` and the normal web form as `children`. Render the children when your integration does not apply. The asynchronous sign-out handler returns `true` after handling sign-out, `false` to use core web sign-out, and rejects on failure. Core clears cached account data and navigates only after success.
+
+Declare `navigation: { export: "desktopNavigation" }` for a function exported from `navigation.ts`. Return `true` when core should handle modified internal links as normal app navigation. With no contribution, core preserves browser modifier behavior. Keep this entry independent of auth UI and client declarations to avoid an import cycle through the shared link component.
+
+Each of these slots accepts one provider. Without contributions, generated registrations add no auth plugins or origins, recognize no extra auth routes, render the web form unchanged, and defer to web sign-out. [Desktop](../plugins/desktop) also uses the existing layout contribution for renderer session synchronization. It introduces no plugin database schema.
+
+## Native hooks and instructions
+
+Use the existing EVE hooks, tools, and instruction adapters under `agent/`. Projects resolves the authorized conversation before reading membership and preparing instructions. Lookup failure stops the turn rather than silently omitting instructions. The instruction resolver reads the prepared state.
+
+## Storage and installation
+
+Declare plugin schema paths in `databaseSchemas`. Drizzle composes installed schemas through `installed-database.ts`. Keep table names and migration history when extracting an existing capability. Adding or syncing a plugin generates registrations but does not apply migrations.
+
+```json
+{
+  "contractVersion": 1,
+  "id": "projects",
+  "kind": "plugin",
+  "databaseSchemas": ["chatjs/plugins/projects/db/project-schema.ts"],
+  "server": { "export": "projects", "routers": ["project"] },
+  "chat": { "export": "projectsChat" },
+  "client": { "export": "projectsClient", "chat": true }
+}
+```
+
+The complete descriptor lists every installed file. Use distinctive filenames such as `project-schema.ts` to avoid registry import-rewriting ambiguity with host files.
+
+Generated modules register routers, database schemas, instrumentation, layout, uploads, account summaries, billing, and chat contributions. Edit plugin declarations and descriptors, then run sync. Verify installations both with and without the plugin. Core must not import optional plugin storage or implementation directly.
+
+## Signed-out chat
+
+Declare `signedOut: { export: "GuestChatScreen" }` and export a no-prop component from `signed-out.tsx`. Only one plugin may own this screen. Core renders it at the signed-out chat entrypoint. Without it, core redirects to `/login`.
+
+The screen owns its conversation state and policy. It can reuse core presentation components without making the account model picker or account conversation APIs depend on guest behavior. `EveComposer` is text-only by default. Account callers supply the optional `capabilities` object containing attachment state, selected tool, and tool-change callback; text-only screens do not create those states or mount upload controls.
+
+## Native session profiles
+
+Declare `sessionProfile: { export: "guestSessionProfile", authenticator: "chatjs-disposable-guest" }`. Export a `SessionProfile` from `session-profile.ts`, which must be safe to load in the native EVE graph. It contains `authenticator`, `authenticate(request)`, `resolveModel()`, and `instructions`. Shared `SessionAuthentication` and `SessionModel` types in `chatjs/core/session/contracts.ts` define the returned identity and model settings independently of account implementations. A profile resolves its own model without accepting an account model-selection argument.
+
+The channel composes installed authenticators. Model and instruction selection uses the persisted initiator's authenticator, never reconnect credentials or caller-supplied attributes. Unknown or removed profiles throw. Account hooks, tool execution, billing, and workspace access require the account authenticator explicitly. A profile does not grant those account capabilities.
+
+Authenticator names must be unique and cannot use the reserved account identity `chatjs-gateway`. Generated registration checks the runtime identity against the descriptor. Keep validation and bounds inside the profile, including at the provider call.
+
+## Scheduled cleanup
+
+Declare `cleanup: { export: "guestCleanup", id: "guest-chat" }`. Export a `CleanupTask` with a matching `id` and `run()` from `cleanup.ts`. Task IDs must be unique. Core reserves `orphanedAttachments` for its storage sweep.
+
+A task returns `{ deletedCount, pendingCount?, skipped }` for one bounded sweep. Counts must be nonnegative safe integers. Omit `pendingCount` only when the sweep has no remaining work. Skipped tasks, pending work, invalid counts, and errors make the job unsuccessful. Independent tasks still run, and responses contain safe error messages.
+
+The authenticated cron endpoint and hosted draining script consume this common result. Plugins own inventory and retry policy. Core retains the native deletion fences and purge verification. The cleanup contribution does not add a scheduler framework.
+
+All installed instrumentation registrations start independently. One exporter's failure still propagates to Next.js, but cannot prevent another plugin's local cleanup registration from starting.

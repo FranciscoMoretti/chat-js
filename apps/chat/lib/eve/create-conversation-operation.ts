@@ -1,17 +1,17 @@
 import type { z } from "zod";
 
-import { canSpend } from "../db/credits";
-import { assertEveFilesOwned } from "../db/eve-files";
-import { readEveGuestOwner } from "../db/eve-guests";
-import { getEveCreation } from "../db/eve-queries";
-import { createModuleLogger } from "../logger";
+import { canStartPaidTurn } from "@/lib/eve/spending-admission";
+import { assertEveFilesOwned } from "@/lib/db/eve-files";
+import { getEveCreation } from "@/lib/db/eve-queries";
+import { createModuleLogger } from "@/lib/logger";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+
 import type { createConversationInput } from "./contracts";
 import { EveCreationRecoveryError } from "./creation-recovery-error";
 import { executeEveConversationCreation } from "./execute-conversation-creation";
 import { eveMessageFileKeys } from "./file-references";
 import { loadEveModelDefinition } from "./model-selection";
 import { prepareEveMessage } from "./prepare-message";
-import { reconcileEveOwnerUsage } from "./reconcile-usage";
 import { assertEveConfigured } from "./server";
 import {
   EveUsageReconciliationBusyError,
@@ -22,9 +22,8 @@ const logger = createModuleLogger("eve/admission");
 
 export const createEveConversationOperation = async (
   ownerId: string,
-  input: z.infer<typeof createConversationInput>,
-  guestReservationId?: string
-) => {
+  input: ReadonlyNativeSurface<z.infer<typeof createConversationInput>>
+): Promise<Response> => {
   try {
     assertEveConfigured();
   } catch {
@@ -58,7 +57,7 @@ export const createEveConversationOperation = async (
         { status: 404 }
       );
     }
-    if (!existing) {
+    if (!(existing !== undefined)) {
       try {
         await loadEveModelDefinition(input.modelId);
         await assertEveFilesOwned(ownerId, eveMessageFileKeys(input.message));
@@ -72,14 +71,11 @@ export const createEveConversationOperation = async (
           { status: 400 }
         );
       }
-      if (!(await readEveGuestOwner(ownerId))) {
-        await reconcileEveOwnerUsage(ownerId);
-        if (!(await canSpend(ownerId))) {
-          return Response.json(
-            { error: "Insufficient credits" },
-            { status: 402 }
-          );
-        }
+      if (!(await canStartPaidTurn(ownerId))) {
+        return Response.json(
+          { error: "Insufficient credits" },
+          { status: 402 }
+        );
       }
     }
   } catch (error) {
@@ -107,10 +103,5 @@ export const createEveConversationOperation = async (
       { status: 503 }
     );
   }
-  return executeEveConversationCreation(
-    ownerId,
-    input,
-    guestReservationId,
-    preparedMessage
-  );
+  return await executeEveConversationCreation(ownerId, input, preparedMessage);
 };
