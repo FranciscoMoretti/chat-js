@@ -15,6 +15,7 @@ import {
 
 import {
   history,
+  chatFailure,
   archivedDiagram,
   archivedDiagramTranscript,
   invoicesConversation,
@@ -241,15 +242,22 @@ test("conversation inside a project", async () => {
 test("conversation whose last reply failed", async () => {
   await renderRoute(conversation, {
     ...request,
-    agentError: "The model provider is unavailable. Try again in a moment.",
+    agentError: chatFailure,
   });
   await expect
-    .element(
-      page
-        .getByRole("alert")
-        .getByText("The model provider is unavailable. Try again in a moment.")
-    )
+    .element(page.getByRole("alert").getByText(chatFailure))
     .toBeVisible();
+  await expect
+    .element(page.getByRole("alert").getByText("Chat error", { exact: true }))
+    .toBeVisible();
+  await page.viewport(390, 844);
+  const alert = page
+    .getByRole("alert")
+    .filter({ hasText: chatFailure })
+    .element();
+  expect(alert.scrollWidth).toBeLessThanOrEqual(alert.clientWidth);
+  expect(alert.getBoundingClientRect().right).toBeLessThanOrEqual(390);
+  await page.screenshot({ path: "__screenshots__/conversation-error.png" });
 });
 
 const unconfirmed = {

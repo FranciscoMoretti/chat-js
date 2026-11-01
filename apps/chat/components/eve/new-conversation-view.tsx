@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { EveChatError } from "./eve-chat-error";
 import type { ReactNode } from "react";
 import type { ComposerSubmission } from "@/components/composer/submission";
 import { hasText } from "@/components/text-value";
@@ -29,7 +30,7 @@ export const NewConversationView = ({
   const input = (
     <>
       {composer}
-      {hasText(submission.error) && <p role="alert">{submission.error}</p>}
+      {hasText(submission.error) && <EveChatError message={submission.error} />}
     </>
   );
   if (submission.pending) {
