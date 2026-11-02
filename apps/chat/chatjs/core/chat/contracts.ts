@@ -71,6 +71,7 @@ export interface ChatMessageProps {
   readonly disabled: boolean;
 }
 export interface ChatSuggestionsProps {
+  readonly sessionId: string;
   readonly conversationId: string;
   readonly events: readonly SessionStreamEvent[];
   readonly lastMessage?: {

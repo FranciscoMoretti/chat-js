@@ -1,3 +1,4 @@
+import { followupEventId } from "./followup-completion";
 import { isAccountSession } from "@/lib/eve/session-identity";
 import type { FollowupContext } from "./followup-context";
 import type { HookContext } from "eve/hooks";
@@ -46,7 +47,7 @@ export default defineHook({
         ownerId: hookContext.session.auth.initiator?.principalId ?? "",
         sessionId: hookContext.session.id,
         turnId: event.data.turnId,
-        eventId: `turn:${event.data.turnId}:completed`,
+        eventId: followupEventId(hookContext.session.id, event.data.turnId),
       });
     },
     "turn.started": (event: Parameters<typeof followupContext>[1]) => {

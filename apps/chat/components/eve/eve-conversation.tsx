@@ -871,6 +871,7 @@ const EveConversation = ({
 
                     suggestions={
                       <ChatSuggestions
+                        sessionId={sessionId}
                         conversationId={conversationId}
                         events={agent.events}
                         lastMessage={lastMessage}

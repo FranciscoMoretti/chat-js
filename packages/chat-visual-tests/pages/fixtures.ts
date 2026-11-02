@@ -529,7 +529,8 @@ export const invoicesFollowupTrpc = {
   }) => {
     if (
       input.conversationId !== invoicesConversation.id ||
-      input.eventId !== "turn:turn_0:completed"
+      input.eventId !==
+        JSON.stringify([invoicesConversation.sessionId, "turn_0", "completed"])
     ) {
       return new TrpcFixtureError(
         "NOT_FOUND",

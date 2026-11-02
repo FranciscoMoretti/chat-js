@@ -12,13 +12,14 @@ const MAX_POLLS = 20;
 
 export const useEveFollowups = (
   conversationId: string,
+  sessionId: string,
   events: Parameters<typeof followupCompletion>[0],
   message: ChatSuggestionsProps["lastMessage"]
 ): readonly string[] => {
   const trpc = useTRPC();
   const eventId =
     message?.role === "assistant"
-      ? followupCompletion(events, message.metadata?.turnId)
+      ? followupCompletion(events, message.metadata?.turnId, sessionId)
       : undefined;
   const query = useQuery({
     ...trpc.followupSuggestions.get.queryOptions({
