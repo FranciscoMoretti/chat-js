@@ -3,63 +3,92 @@ import { sharedEveMessages, sharedEvePart } from "./shared-messages";
 import type { EveMessageDisplayReceipt } from "./message-display";
 import type { EveMessagePart, SessionStreamEvent } from "eve/client";
 
+type ToolPart = Extract<EveMessagePart, { type: "tool" }>;
+const tool = {
+  type: "tool",
+  kind: "tool",
+  callId: "display-call",
+  name: "example",
+  label: "Example",
+  stepIndex: 8,
+} as const;
+const meta = (line: number) => ({
+  at: "2026-11-02T00:00:00Z",
+  position: { line, index: 0 },
+  endOfLine: true,
+});
+const input: SessionStreamEvent[] = [
+  { type: "session.started", data: {}, meta: meta(0) },
+  { type: "delivery.admitted", data: { deliveryId: "known" }, meta: meta(1) },
+  {
+    type: "turn.started",
+    data: { turnId: "turn", cause: { deliveryId: "known" }, follows: null },
+    meta: meta(2),
+  },
+  {
+    type: "delivery.consumed",
+    data: {
+      deliveryId: "known",
+      turnId: "turn",
+      parts: [{ kind: "text", text: "Public question" }],
+    },
+    scope: { turnId: "turn" },
+    meta: meta(3),
+  },
+];
 it("shares transcript content without authorization challenges or runtime metadata", () => {
   const messages = sharedEveMessages([
+    ...input,
     {
-      data: { message: "Public question", sequence: 0, turnId: "turn" },
-      meta: { at: "2026-09-10T00:00:00Z", id: "one" },
-      type: "message.received",
-    },
-    {
+      type: "interaction.opened",
+      scope: { turnId: "turn" },
+      meta: meta(4),
       data: {
-        description: "Connect",
-        name: "connection",
-        sequence: 1,
-        stepIndex: 0,
-        turnId: "turn",
-        webhookUrl: "https://private.example/secret-code",
+        interactionId: "secret-request",
+        subject: { turnId: "turn" },
+        request: {
+          kind: "sign-in",
+          prompt: "Connect",
+          signIn: {
+            name: "connection",
+            url: "https://private.example/secret-code",
+          },
+        },
       },
-      meta: { at: "2026-09-10T00:00:01Z", id: "two" },
-      type: "authorization.required",
     },
   ]);
   const json = JSON.stringify(messages);
   expect(json).toContain("Public question");
   expect(json).toContain("An account connection was requested.");
   expect(json).not.toContain("secret-code");
-  expect(json).not.toContain("webhookUrl");
-  expect(
-    messages.every(
-      (message: Readonly<object>) => !Object.hasOwn(message, "metadata")
-    )
-  ).toBe(true);
+  expect(json).not.toContain("secret-request");
+  expect(messages.every((message) => !Object.hasOwn(message, "metadata"))).toBe(
+    true
+  );
 });
-
 it("retains clarification prompts and answers without their response identifiers", () => {
   const parts = sharedEvePart({
+    ...tool,
     input: {},
     output: {},
-    state: "output-available",
-    toolCallId: "call",
-    toolMetadata: {
-      eve: {
-        inputRequest: {
-          kind: "question",
-          options: [{ id: "option-private", label: "Markdown" }],
-          prompt: "Which format?",
-          requestId: "secret-request",
-        },
-        inputResponse: {
-          optionId: "option-private",
-          requestId: "secret-request",
-          text: "Use Markdown with examples",
-        },
-        kind: "tool-call",
-        name: "ask_question",
+    state: "completed",
+    interaction: {
+      interactionId: "secret-request",
+      turnId: "private-turn",
+      stepIndex: 0,
+      status: "settled",
+      outcome: "accepted",
+      request: {
+        kind: "question",
+        options: [{ id: "option-private", label: "Markdown" }],
+        prompt: "Which format?",
+      },
+      answer: {
+        interactionId: "secret-request",
+        optionId: "option-private",
+        text: "Use Markdown with examples",
       },
     },
-    toolName: "ask_question",
-    type: "dynamic-tool",
   });
   const json = JSON.stringify(parts);
   expect(json).toContain("Which format?");
@@ -67,7 +96,6 @@ it("retains clarification prompts and answers without their response identifiers
   expect(json).not.toContain("secret-request");
   expect(json).not.toContain("option-private");
 });
-
 it.each([
   "codeExecution",
   "webSearch",
@@ -76,94 +104,64 @@ it.each([
   "generateImage",
   "deepResearch",
   "externalPaidTool",
-])(
-  "shared %s results retain the output without billing metadata",
-  (toolName) => {
-    const [part] = sharedEvePart({
-      input: { code: "console.log(42)", language: "javascript", title: "Test" },
-      output: {
-        kind: "chatjs.tool-result",
-        output: { chart: "", message: "42" },
-        status: "success",
-        usage: { costUsd: 0.05 },
-        version: 1,
-      },
-      state: "output-available",
-      toolCallId: "call",
-      toolName,
-      type: "dynamic-tool",
-    });
-    expect(JSON.stringify(part)).toContain('"message":"42"');
-    expect(JSON.stringify(part)).not.toContain("costUsd");
-    expect(JSON.stringify(part)).not.toContain("usage");
-  }
-);
-
+])("shared %s results retain the output without billing metadata", (name) => {
+  const [part] = sharedEvePart({
+    ...tool,
+    name,
+    input: { code: "console.log(42)", language: "javascript", title: "Test" },
+    output: {
+      kind: "chatjs.tool-result",
+      output: { chart: "", message: "42" },
+      status: "success",
+      usage: { costUsd: 0.05 },
+      version: 1,
+    },
+    state: "completed",
+  });
+  expect(JSON.stringify(part)).toContain('"message":"42"');
+  expect(JSON.stringify(part)).not.toContain("costUsd");
+  expect(JSON.stringify(part)).not.toContain("usage");
+});
 it("removes owner approval and execution fields while preserving every tool status", () => {
   const base = {
-    approval: { id: "owner-approval-secret", isAutomatic: true },
+    ...tool,
     futureRuntimeToken: "runtime-private",
     input: { question: "Published input" },
-    stepIndex: 8,
-    toolCallId: "display-call",
-    toolName: "example",
+    interaction: {
+      interactionId: "owner-approval-secret",
+      turnId: "private-turn",
+      stepIndex: 8,
+      status: "open" as const,
+      request: { kind: "approval" as const, prompt: "Approve?" },
+    },
   };
-  const cases: Extract<EveMessagePart, { type: "dynamic-tool" }>[] = [
+  const cases: ToolPart[] = [
+    { ...base, output: { answer: "Published result" }, state: "completed" },
     {
       ...base,
-      approval: { ...base.approval, approved: true },
-      output: { answer: "Published result" },
-      state: "output-available",
-      type: "dynamic-tool",
+      error: { code: "failed", message: "Published failure" },
+      state: "failed",
     },
-    {
-      ...base,
-      approval: { ...base.approval, approved: true },
-      errorText: "Published failure",
-      state: "output-error",
-      type: "dynamic-tool",
-    },
-    {
-      ...base,
-      approval: {
-        ...base.approval,
-        approved: false,
-        reason: "Published reason",
-      },
-      state: "output-denied",
-      type: "dynamic-tool",
-    },
-    { ...base, state: "approval-requested", type: "dynamic-tool" },
-    {
-      ...base,
-      approval: { ...base.approval, approved: true },
-      state: "approval-responded",
-      type: "dynamic-tool",
-    },
+    { ...base, state: "rejected" },
+    { ...base, state: "requested" },
+    { ...base, state: "running" },
   ];
   for (const part of cases) {
     const parts = sharedEvePart(part);
     const json = JSON.stringify(parts);
     expect(json).toContain("Published input");
-    expect(parts[0]).toMatchObject({ state: part.state });
+    expect(parts[0]).toMatchObject({ state: part.state, stepIndex: 0 });
     expect(json).not.toContain("owner-approval-secret");
-    expect(json).not.toContain("isAutomatic");
-    expect(json).not.toContain("stepIndex");
+    expect(json).not.toContain("private-turn");
     expect(json).not.toContain("runtime-private");
-    if (part.state === "output-available") {
+    if (part.state === "completed") {
       expect(parts[0]).toMatchObject({ output: part.output });
     }
-    if (part.state === "output-error") {
-      expect(parts[0]).toMatchObject({ errorText: part.errorText });
-    }
-    if (part.state === "output-denied") {
-      expect(parts[0]).toMatchObject({
-        approval: { reason: part.approval.reason },
-      });
+    if (part.state === "failed") {
+      expect(parts[0]).toMatchObject({ error: part.error });
     }
   }
 });
-
 it.each([
   {
     kind: "chatjs.tool-result",
@@ -186,102 +184,81 @@ it.each([
   },
 ])("does not expose malformed platform result envelopes", (output: unknown) => {
   const parts = sharedEvePart({
+    ...tool,
     input: { code: "1 + 1" },
     output,
-    state: "output-available",
-    toolCallId: "call",
-    toolName: "codeExecution",
-    type: "dynamic-tool",
+    state: "completed",
   });
-  expect(parts[0]).toMatchObject({
-    input: { code: "1 + 1" },
-    state: "output-error",
-  });
+  expect(parts[0]).toMatchObject({ input: { code: "1 + 1" }, state: "failed" });
   expect(JSON.stringify(parts)).not.toContain("usage");
   expect(JSON.stringify(parts)).not.toContain("secret");
   expect(JSON.stringify(parts)).not.toContain("99");
 });
-
 it("preserves streaming and partial published tool content without runtime fields", () => {
-  const base = {
-    input: { text: "partial" },
-    stepIndex: 2,
-    toolCallId: "call",
-    toolName: "example",
-  };
-  const parts: Extract<EveMessagePart, { type: "dynamic-tool" }>[] = [
+  const parts: ToolPart[] = [
+    { ...tool, inputText: "partial input", state: "streaming" },
+    { ...tool, input: { text: "partial" }, state: "requested" },
     {
-      ...base,
-      inputText: "partial input",
-      state: "input-streaming",
-      type: "dynamic-tool",
-    },
-    { ...base, state: "input-available", type: "dynamic-tool" },
-    {
-      ...base,
+      ...tool,
+      input: { text: "partial" },
       output: "partial result",
-      partial: true,
-      state: "output-available",
-      type: "dynamic-tool",
+      state: "running",
     },
   ];
   for (const part of parts) {
-    const { stepIndex: _stepIndex, ...expected } = part;
-    expect(sharedEvePart(part)).toEqual([expected]);
+    expect(sharedEvePart(part)).toEqual([{ ...part, stepIndex: 0 }]);
   }
 });
-
 it("projects the original native model without private turn identities", () => {
   const messages = sharedEveMessages([
+    ...input,
     {
-      data: { message: "Question", sequence: 0, turnId: "turn_0" },
-      meta: { at: "2026-09-12T00:00:00Z", id: "q" },
-      type: "message.received",
+      type: "model.requested",
+      data: { runId: "run", owner: { turnId: "turn" } },
+      scope: { turnId: "turn" },
+      meta: meta(4),
     },
     {
+      type: "model.started",
       data: {
         modelId: "gateway/google/gemini-2.5-flash-lite",
-        sequence: 1,
-        stepIndex: 0,
-        turnId: "turn_0",
+        runId: "run",
+        attempt: 0,
       },
-      meta: { at: "2026-09-12T00:00:00Z", id: "s" },
-      type: "step.started",
+      scope: { turnId: "turn" },
+      meta: meta(5),
+    },
+    {
+      type: "content.completed",
+      data: {
+        partId: "reply",
+        runId: "run",
+        kind: "text",
+        phase: "reply",
+        value: "Answer",
+      },
+      scope: { turnId: "turn" },
+      meta: meta(6),
     },
   ]);
   expect(
-    messages.find(
-      (message: { readonly role: string }) => message.role === "assistant"
-    )?.metadata
+    messages.find((message) => message.role === "assistant")?.metadata
   ).toEqual({ modelId: "gateway/google/gemini-2.5-flash-lite" });
   expect(JSON.stringify(messages)).not.toContain('"turnId"');
 });
-
 it("shares display-safe tool selection only through an exact known delivery", () => {
   const receipt = {
     kind: "send",
     deliveryId: "known",
     selectedTool: "webSearch",
   } satisfies EveMessageDisplayReceipt;
-  const events: SessionStreamEvent[] = [
-    {
-      type: "message.received",
-      data: { message: "Search", sequence: 0, turnId: "turn_0" },
-      meta: {
-        id: "received",
-        at: "2026-10-17T00:00:00Z",
-        deliveryIds: ["known"],
-      },
-    },
-  ];
-  expect(sharedEveMessages(events, [receipt])[0]?.metadata).toEqual({
+  expect(sharedEveMessages(input, [receipt])[0]?.metadata).toEqual({
     custom: { chatjs: { selectedTool: "webSearch" } },
   });
   expect(
-    sharedEveMessages(events, [{ ...receipt, deliveryId: "other" }])[0]
-      ?.metadata
+    sharedEveMessages(input, [{ ...receipt, deliveryId: "other" }])[0]?.metadata
   ).toBeUndefined();
-  expect(JSON.stringify(sharedEveMessages(events, [receipt]))).not.toContain(
+  expect(JSON.stringify(sharedEveMessages(input, [receipt]))).not.toContain(
     "deliveryId"
   );
 });

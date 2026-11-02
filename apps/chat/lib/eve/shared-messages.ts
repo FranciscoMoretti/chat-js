@@ -48,24 +48,47 @@ const sharedModelId = (
 const sharedTool = (
   part: Extract<ReadonlyEveMessagePart, { type: "tool" }>
 ): EveMessagePart => {
-  const { interaction: _interaction, ...publicPart } = part;
+  const base = {
+    type: "tool" as const,
+    callId: part.callId,
+    name: part.name,
+    label: part.label,
+    kind: part.kind,
+    stepIndex: 0,
+  };
+  if (part.state === "streaming") {
+    return { ...base, state: "streaming", inputText: part.inputText };
+  }
+  const publicPart = {
+    ...base,
+    state: part.state,
+    input: part.input,
+    output: part.output,
+    error:
+      part.error === undefined
+        ? undefined
+        : {
+            code: part.error.code,
+            message: part.error.message,
+          },
+  };
   if (part.state !== "completed" || !hasEveToolReceipt(part.output)) {
     return publicPart;
   }
   const result = toolOutputSchema.safeParse(part.output);
   if (!result.success) {
     return {
-      type: "text",
-      text: "This tool result is unavailable in the shared conversation.",
+      ...base,
+      input: part.input,
+      state: "failed",
+      error: {
+        code: "unavailable_shared_result",
+        message: "This tool result is unavailable in the shared conversation.",
+      },
     };
   }
   return {
-    type: "tool",
-    callId: part.callId,
-    name: part.name,
-    label: part.label,
-    kind: part.kind,
-    stepIndex: part.stepIndex,
+    ...base,
     input: part.input,
     state: "completed",
     output: result.data,
