@@ -1,4 +1,5 @@
-import type { DynamicContext } from "eve";
+import type { DynamicModelContext } from "eve";
+import { conversationOf } from "eve/client";
 import { beforeEach, expect, it, vi } from "vitest";
 
 import {
@@ -47,10 +48,17 @@ vi.mock("./model-selection", () => ({ resolveEveModel: mocks.resolve }));
 vi.mock("./conversation-scope", () => ({
   resolveEveConversationScope: mocks.scope,
 }));
-const context: DynamicContext = {
-  channel: {},
-  messages: [],
-  model: null,
+const context: DynamicModelContext = {
+  channel: { kind: "http", metadata: {} },
+  messages: async () => await Promise.resolve([]),
+  memo: async (_key, run) =>
+    await run({
+      idempotencyKey: "test",
+      abortSignal: new AbortController().signal,
+    }),
+  view: conversationOf([]).view,
+  now: new Date("2026-11-02T00:00:00Z"),
+  turn: null,
   session: {
     auth: {
       current: null,
@@ -88,7 +96,6 @@ const resolved = {
   modelContextWindowTokens: 1000,
   modelOptions: { providerOptions: {} },
 };
-const step = { data: { turnId: "turn_1" }, type: "step.started" };
 beforeEach(() => {
   vi.resetAllMocks();
   mocks.resolve.mockResolvedValue(resolved);
@@ -103,7 +110,10 @@ it("binds an active turn to its provider attempt", async () => {
     { data: { turnId: "turn_1" }, type: "turn.started" },
     { id: "root" }
   );
-  const active = await resolveAccountedEveModel("selected", step, context);
+  const active = await resolveAccountedEveModel("selected", {
+    ...context,
+    turn: { id: "turn_1", status: "running", input: [] },
+  });
   await active.model.doGenerate({ prompt: [] });
   expect(mocks.begin).toHaveBeenCalledWith(
     expect.objectContaining({
@@ -120,14 +130,13 @@ it("puts manual compaction outside a closed turn in maintenance, never the upcom
     { id: "root" }
   );
   observeEveModelAccounting(
-    { data: { turnId: "turn_1" }, type: "turn.completed" },
+    { data: { turnId: "turn_1" }, type: "turn.settled" },
     { id: "root" }
   );
-  const manual = await resolveAccountedEveModel(
-    "selected",
-    { ...step, data: { turnId: "turn_2" } },
-    context
-  );
+  const manual = await resolveAccountedEveModel("selected", {
+    ...context,
+    turn: { id: "turn_2", status: "running", input: [] },
+  });
   await manual.model.doGenerate({ prompt: [] });
   expect(mocks.begin).toHaveBeenCalledWith(
     expect.objectContaining({ sessionId: "root" })
@@ -144,8 +153,9 @@ it("registers child lineage before invoking the provider", async () => {
     rootSessionId: "root",
     rootTurnId: "turn_7",
   });
-  const child = await resolveAccountedEveModel("research", step, {
+  const child = await resolveAccountedEveModel("research", {
     ...context,
+    turn: { id: "turn_1", status: "running", input: [] },
     session: { ...context.session, id: "child" },
   });
   await child.model.doGenerate({ prompt: [] });
@@ -163,21 +173,21 @@ it("registers child lineage before invoking the provider", async () => {
 
 it("fails closed before resolving a provider when the lifecycle or ownership binding is missing", async () => {
   await expect(
-    resolveAccountedEveModel("selected", step, {
+    resolveAccountedEveModel("selected", {
       ...context,
       session: { ...context.session, id: "unbound" },
     })
   ).rejects.toThrow("lifecycle");
   mocks.scope.mockRejectedValue(new Error("owner mismatch"));
-  await expect(
-    resolveAccountedEveModel("selected", step, context)
-  ).rejects.toThrow("owner mismatch");
+  await expect(resolveAccountedEveModel("selected", context)).rejects.toThrow(
+    "owner mismatch"
+  );
   expect(mocks.resolve).not.toHaveBeenCalled();
   expect(mocks.begin).not.toHaveBeenCalled();
 });
 
 it("authorizes maintenance without querying prior costs", async () => {
-  const manual = await resolveAccountedEveModel("selected", step, context);
+  const manual = await resolveAccountedEveModel("selected", context);
   await manual.model.doGenerate({ prompt: [] });
   expect(mocks.authorize).toHaveBeenCalledOnce();
   expect(mocks.begin).toHaveBeenCalledOnce();

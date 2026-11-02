@@ -10,6 +10,8 @@ export const testToolContext = (
   callId: "test",
   messages: [],
   getSandbox: unexpected,
+  to: unexpected,
+  channel: { kind: "http", metadata: {} },
   getToken: unexpected,
   requireAuth: unexpected,
   session: {

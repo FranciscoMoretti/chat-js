@@ -16,35 +16,39 @@ vi.mock("eve/client", async (original) => ({
 vi.mock("./connection-options", () => ({
   getEveConnectionOptions: () => ({}),
 }));
-const meta = { at: "2026-10-17T00:00:00Z", id: "event" };
+const meta = {
+  at: "2026-10-17T00:00:00Z",
+  position: { line: 0, index: 0 },
+  endOfLine: true,
+};
 const history: SessionStreamEvent = {
-  type: "history.seeded",
+  type: "session.started",
   meta,
   data: {
-    messages: [
-      {
-        id: "seed_message_0",
-        role: "user",
-        parts: [{ type: "text", text: "Question" }],
-      },
-      {
-        id: "seed_message_1",
-        role: "assistant",
-        parts: [{ type: "text", text: "Answer", state: "done" }],
-      },
-    ],
+    transcriptSeed: {
+      messages: [
+        {
+          role: "user",
+          parts: [{ type: "text", text: "Question" }],
+        },
+        {
+          role: "assistant",
+          parts: [{ type: "text", text: "Answer" }],
+        },
+      ],
+    },
   },
 };
-const waiting: SessionStreamEvent = {
-  type: "session.waiting",
-  meta,
-  data: { continuationToken: "idle", wait: "next-user-message" },
+const started: SessionStreamEvent = {
+  type: "turn.started",
+  meta: { ...meta, position: { line: 1, index: 0 } },
+  data: { turnId: "turn_0", follows: null },
 };
 beforeEach(() => {
   snapshot.mockReset();
 });
 it("copies a completed transcript without retaining native identities", async () => {
-  snapshot.mockResolvedValue({ events: [history, waiting] });
+  snapshot.mockResolvedValue({ events: [history] });
   const result = await readCompletedEveCopyTranscript(
     "owner",
     "source",
@@ -67,7 +71,7 @@ it.each([
   }
 );
 it("rejects an accepted send not yet visible in native history", async () => {
-  snapshot.mockResolvedValue({ events: [history, waiting] });
+  snapshot.mockResolvedValue({ events: [history] });
   await expect(
     readCompletedEveCopyTranscript(
       "owner",
@@ -77,23 +81,15 @@ it("rejects an accepted send not yet visible in native history", async () => {
     )
   ).rejects.toThrow(EveCopyNotReadyError);
 });
-it.each(["turn.cancelled", "turn.failed"] as const)(
+it.each(["cancelled", "failed"] as const)(
   "rejects %s even after the session becomes idle",
-  async (type) => {
-    const outcome: SessionStreamEvent =
-      type === "turn.cancelled"
-        ? { type, meta, data: { sequence: 1, turnId: "turn_0" } }
-        : {
-            type,
-            meta,
-            data: {
-              sequence: 1,
-              turnId: "turn_0",
-              code: "failed",
-              message: "Failed",
-            },
-          };
-    snapshot.mockResolvedValue({ events: [history, outcome, waiting] });
+  async (outcome) => {
+    const settled: SessionStreamEvent = {
+      type: "turn.settled",
+      meta: { ...meta, position: { line: 2, index: 0 } },
+      data: { turnId: "turn_0", outcome },
+    };
+    snapshot.mockResolvedValue({ events: [history, started, settled] });
     await expect(
       readCompletedEveCopyTranscript("owner", "source", [], [])
     ).rejects.toThrow(EveCopyNotReadyError);
@@ -103,10 +99,11 @@ it("rejects an open turn parked for approval", async () => {
   snapshot.mockResolvedValue({
     events: [
       history,
+      started,
       {
-        type: "turn.waiting",
-        meta,
-        data: { sequence: 1, turnId: "turn_0", on: "input" },
+        type: "turn.paused",
+        meta: { ...meta, position: { line: 2, index: 0 } },
+        data: { turnId: "turn_0" },
       },
     ],
   });
