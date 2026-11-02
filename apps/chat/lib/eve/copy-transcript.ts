@@ -281,16 +281,27 @@ const copyAssistantSeedMessage = (
     readonly metadata?: ReadonlyEveMessageMetadata;
   },
   importedParts: readonly SeedPart[] = []
-): Seed["messages"][number] => ({
-  role: "assistant",
+): Seed["messages"][number] => {
+  const importedTools = importedParts.filter(
+    (part) => part.type === "dynamic-tool"
+  );
+  let toolIndex = 0;
+  return {
+    role: "assistant",
 
-  ...(isNonEmptyString(message.metadata?.modelId)
-    ? { modelId: message.metadata.modelId }
-    : {}),
-  parts: message.parts.map((part, index) =>
-    completedPart(part, importedParts[index])
-  ),
-});
+    ...(isNonEmptyString(message.metadata?.modelId)
+      ? { modelId: message.metadata.modelId }
+      : {}),
+    parts: message.parts.map((part) => {
+      if (part.type !== "tool") {
+        return completedPart(part);
+      }
+      const imported = importedTools[toolIndex];
+      toolIndex += 1;
+      return completedPart(part, imported);
+    }),
+  };
+};
 
 /**
  * Prepares a sanitized completed transcript without model calls or storage access.

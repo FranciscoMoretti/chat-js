@@ -109,3 +109,23 @@ it("requires positively observed idle state for a seed-only session", () => {
   expect(hasSettledWorkspaceOperation(seed, [session])).toBe(true);
   expect(hasSettledWorkspaceOperation(seed, prefix)).toBe(false);
 });
+
+it("rejects settlement before consumption or for another turn", () => {
+  expect(
+    hasSettledWorkspaceOperation(operation, [
+      session,
+      admitted,
+      started,
+      settled,
+      consumed,
+      handled,
+    ])
+  ).toBe(false);
+  expect(
+    hasSettledWorkspaceOperation(operation, [
+      ...prefix,
+      handled,
+      { ...settled, data: { turnId: "other", outcome: "completed" } },
+    ])
+  ).toBe(false);
+});

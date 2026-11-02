@@ -18,10 +18,12 @@ export const projectEveMessageDisplay = <
 ): Data => {
   const byDelivery = new Map<string, EveMessageDisplayReceipt[]>();
   for (const receipt of receipts) {
-    byDelivery.set(receipt.deliveryId, [
-      ...(byDelivery.get(receipt.deliveryId) ?? []),
-      receipt,
-    ]);
+    const matches = byDelivery.get(receipt.deliveryId);
+    if (matches) {
+      matches.push(receipt);
+    } else {
+      byDelivery.set(receipt.deliveryId, [receipt]);
+    }
   }
   const consumed = new Map<string, number>();
   for (const event of events) {

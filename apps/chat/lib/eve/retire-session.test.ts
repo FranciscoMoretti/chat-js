@@ -78,10 +78,11 @@ it("retires before reading and settling the final snapshot, including retries", 
   expect(mocks.end.mock.invocationCallOrder[0]).toBeLessThan(
     mocks.snapshot.mock.invocationCallOrder[1]
   );
-  mocks.end.mockResolvedValue({ status: "no_active_session" });
+  const endCalls = mocks.end.mock.calls.length;
   await expect(
     retireEveSessionForDeletion("owner", "session")
   ).resolves.toMatchObject({ events: [{ type: "session.ended" }] });
+  expect(mocks.end).toHaveBeenCalledTimes(endCalls);
 });
 
 it("rejects non-deleting or foreign sessions before native access", async () => {

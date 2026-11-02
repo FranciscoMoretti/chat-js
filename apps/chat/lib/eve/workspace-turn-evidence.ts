@@ -32,17 +32,20 @@ export const hasSettledWorkspaceOperation = (
   if (operation.kind === "copy" || operation.seeded) {
     return true;
   }
-  const consumed = events.find(
+  const consumedIndex = events.findIndex(
     (event) =>
       event.type === "delivery.consumed" &&
       event.data.deliveryId === operation.deliveryId
   );
+  const consumed = events[consumedIndex];
   return (
     consumed?.type === "delivery.consumed" &&
-    events.some(
-      (event) =>
-        event.type === "turn.settled" &&
-        event.data.turnId === consumed.data.turnId
-    )
+    events
+      .slice(consumedIndex + 1)
+      .some(
+        (event) =>
+          event.type === "turn.settled" &&
+          event.data.turnId === consumed.data.turnId
+      )
   );
 };

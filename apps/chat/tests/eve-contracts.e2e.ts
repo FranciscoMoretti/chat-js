@@ -332,54 +332,51 @@ test("database constraints reject partial and cross-owner branch ancestry", asyn
   }
 });
 
-test.each(["codeExecution", "webSearch"])(
-  "%s receipts debit once per native call and keep missing cost evidence unresolved",
-  async (_toolName) => {
-    const sessionId = crypto.randomUUID();
-    const callId = crypto.randomUUID();
-    const result = createToolResult({ message: "42", chart: "" }, 0.05);
-    expect(JSON.stringify(result)).not.toContain('"updates"');
-    const { updates: _updates, ...receipt } = result;
-    const event = {
-      data: {
-        callId,
-        outcome: "completed",
-        output: z.json().parse(receipt),
-      },
-      scope: { turnId: "tool-receipt" },
-      type: "call.settled",
-    } satisfies Parameters<typeof ingestEveUsage>[2];
-    await Promise.all(
-      Array.from(
-        { length: 8 },
-        async () => await ingestEveUsage(owner, sessionId, event)
-      )
+test("tool receipts debit once per native call and keep missing cost evidence unresolved", async () => {
+  const sessionId = crypto.randomUUID();
+  const callId = crypto.randomUUID();
+  const result = createToolResult({ message: "42", chart: "" }, 0.05);
+  expect(JSON.stringify(result)).not.toContain('"updates"');
+  const { updates: _updates, ...receipt } = result;
+  const event = {
+    data: {
+      callId,
+      outcome: "completed",
+      output: z.json().parse(receipt),
+    },
+    scope: { turnId: "tool-receipt" },
+    type: "call.settled",
+  } satisfies Parameters<typeof ingestEveUsage>[2];
+  await Promise.all(
+    Array.from(
+      { length: 8 },
+      async () => await ingestEveUsage(owner, sessionId, event)
+    )
+  );
+  const [row] = await db
+    .select()
+    .from(eveUsage)
+    .where(eq(eveUsage.eventId, `eve-tool:${sessionId}:${callId}`));
+  expect(Number(row.costUsd)).toBe(0.05);
+  expect(row.chargedCents).toBe(5);
+  const unknown = {
+    ...event,
+    data: {
+      ...event.data,
+      callId: crypto.randomUUID(),
+      output: z.json().parse({ ...receipt, usage: {} }),
+    },
+  };
+  expect(await ingestEveUsage(owner, sessionId, unknown)).toBe(false);
+  const [unpriced] = await db
+    .select()
+    .from(eveUsage)
+    .where(
+      eq(eveUsage.eventId, `eve-tool:${sessionId}:${unknown.data.callId}`)
     );
-    const [row] = await db
-      .select()
-      .from(eveUsage)
-      .where(eq(eveUsage.eventId, `eve-tool:${sessionId}:${callId}`));
-    expect(Number(row.costUsd)).toBe(0.05);
-    expect(row.chargedCents).toBe(5);
-    const unknown = {
-      ...event,
-      data: {
-        ...event.data,
-        callId: crypto.randomUUID(),
-        output: z.json().parse({ ...receipt, usage: {} }),
-      },
-    };
-    expect(await ingestEveUsage(owner, sessionId, unknown)).toBe(false);
-    const [unpriced] = await db
-      .select()
-      .from(eveUsage)
-      .where(
-        eq(eveUsage.eventId, `eve-tool:${sessionId}:${unknown.data.callId}`)
-      );
-    expect(unpriced.costUsd).toBeNull();
-    expect(unpriced.chargedCents).toBe(0);
-  }
-);
+  expect(unpriced.costUsd).toBeNull();
+  expect(unpriced.chargedCents).toBe(0);
+});
 
 test.each(["deleting", "deleted"] as const)(
   "%s conversations are fenced from access, mutation and creation replay",

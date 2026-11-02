@@ -120,7 +120,9 @@ export const executeEveConversationCreation = async (
         return z
           .object({
             sessionId: z.string().min(MINIMUM_SESSION_IDENTIFIER_LENGTH),
-            deliveryId: z.string().min(1).optional(),
+            deliveryId: input.fork
+              ? z.string().min(1).optional()
+              : z.string().min(1),
           })
           .parse(await result.json());
       },

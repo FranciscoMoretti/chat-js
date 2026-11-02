@@ -1,4 +1,4 @@
-import type { SessionStreamEvent } from "eve/client";
+import type { SessionStreamEvent, SessionEvent } from "eve/client";
 import {
   EveCopyNotReadyError,
   eveCopyResources,
@@ -281,4 +281,92 @@ it("branches before an edited user message and rejects invalid boundaries", () =
   expect(() =>
     prepareEveCopyTranscript([...events, admitted], [], "seed_message_0")
   ).toThrow(EveCopyNotReadyError);
+});
+
+it("copies native completed calls without carrying execution identities", () => {
+  const native: SessionEvent[] = [
+    { type: "session.started", data: {} },
+    { type: "delivery.admitted", data: { deliveryId: "source-user" } },
+    {
+      type: "turn.started",
+      data: {
+        turnId: "private-turn",
+        follows: null,
+        cause: { deliveryId: "source-user" },
+      },
+    },
+    {
+      type: "delivery.consumed",
+      data: {
+        turnId: "private-turn",
+        deliveryId: "source-user",
+        parts: [{ kind: "text", text: "Question" }],
+      },
+    },
+    {
+      type: "model.started",
+      scope: { turnId: "private-turn" },
+      data: { runId: "source-assistant", attempt: 0, modelId: "fixture" },
+    },
+    {
+      type: "call.requested",
+      scope: { turnId: "private-turn", runId: "source-assistant" },
+      data: {
+        callId: "private-call",
+        owner: { runId: "source-assistant" },
+        capability: { kind: "tool", name: "wordCount" },
+        input: { text: "hello" },
+      },
+    },
+    {
+      type: "call.settled",
+      scope: { turnId: "private-turn", runId: "source-assistant" },
+      data: {
+        callId: "private-call",
+        outcome: "completed",
+        output: { words: 1 },
+      },
+    },
+    {
+      type: "delivery.settled",
+      data: {
+        deliveryId: "source-user",
+        turnId: "private-turn",
+        outcome: "handled",
+      },
+    },
+    {
+      type: "turn.settled",
+      data: { turnId: "private-turn", outcome: "completed" },
+    },
+  ];
+  const events = native.map((event, index) => ({
+    ...event,
+    meta: {
+      at: "2026-11-02T00:00:00Z",
+      position: { line: index, index: 0 },
+      endOfLine: true,
+    },
+  }));
+  const copy = prepareEveCopyTranscript(events);
+  expect(copy.seed.messages[1]?.parts).toContainEqual({
+    type: "dynamic-tool",
+    toolName: "wordCount",
+    input: { text: "hello" },
+    state: "output-available",
+    output: { words: 1 },
+  });
+  for (const id of [
+    "source-user",
+    "source-assistant",
+    "private-turn",
+    "private-call",
+  ]) {
+    expect(JSON.stringify(copy.seed)).not.toContain(id);
+  }
+  for (const boundary of [4, 5, 6]) {
+    expect(() => prepareEveCopyTranscript(events.slice(0, boundary))).toThrow(
+      EveCopyNotReadyError
+    );
+  }
 });
