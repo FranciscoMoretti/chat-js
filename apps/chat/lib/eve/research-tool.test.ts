@@ -282,7 +282,7 @@ it("publishes completed searches when a researcher fails without masking the fai
   expect(mocks.save).not.toHaveBeenCalled();
 });
 
-it("rejects failed or cancelled native child turns before saving or starting more work", async () => {
+it("rejects failed or missing-output native child results before saving or starting more work", async () => {
   agent.mockResolvedValue({ research_brief: "Brief", title: "Report" });
   nativeResult.mockReturnValue({
     status: "failed",

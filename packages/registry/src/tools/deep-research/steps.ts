@@ -16,7 +16,7 @@ type Context = Readonly<
 >;
 
 type MessageView = Readonly<{
-  parts: readonly Readonly<{ type: string; toolCallId?: string }>[];
+  parts: readonly Readonly<{ type: string; callId?: string }>[];
   role: string;
 }>;
 
@@ -43,7 +43,7 @@ async function prepareResearch(context: Context): Promise<{
     (message: MessageView) => ({
       parts: message.parts.filter(
         (part): boolean =>
-          part.type !== "dynamic-tool" || part.toolCallId !== context.callId
+          part.type !== "tool" || part.callId !== context.callId
       ),
       role: message.role,
     })
