@@ -57,7 +57,10 @@ const copySeedFile = (
   size: part.size,
 });
 
-const completedPart = (part: ReadonlyEveMessagePart): SeedPart => {
+const completedPart = (
+  part: ReadonlyEveMessagePart,
+  importedPart?: SeedPart
+): SeedPart => {
   if (part.type === "text" || part.type === "reasoning") {
     if (part.state === "streaming") {
       throw new EveCopyNotReadyError();
@@ -80,6 +83,11 @@ const completedPart = (part: ReadonlyEveMessagePart): SeedPart => {
       ...base,
       state: "output-available",
       output: z.json().parse(part.output),
+      ...(importedPart?.type === "dynamic-tool" &&
+      importedPart.state === "output-available" &&
+      importedPart.outputType === "text"
+        ? { outputType: "text" as const }
+        : {}),
     };
   }
   if (part.state === "failed") {
@@ -90,7 +98,15 @@ const completedPart = (part: ReadonlyEveMessagePart): SeedPart => {
     };
   }
   if (part.state === "rejected") {
-    return { ...base, state: "output-denied" };
+    return {
+      ...base,
+      state: "output-denied",
+      ...(importedPart?.type === "dynamic-tool" &&
+      importedPart.state === "output-denied" &&
+      importedPart.reason !== undefined
+        ? { reason: importedPart.reason }
+        : {}),
+    };
   }
   throw new EveCopyNotReadyError();
 };
@@ -259,16 +275,21 @@ const copyUserSeedMessage = (message: {
   };
 };
 
-const copyAssistantSeedMessage = (message: {
-  readonly parts: readonly ReadonlyEveMessagePart[];
-  readonly metadata?: ReadonlyEveMessageMetadata;
-}): Seed["messages"][number] => ({
+const copyAssistantSeedMessage = (
+  message: {
+    readonly parts: readonly ReadonlyEveMessagePart[];
+    readonly metadata?: ReadonlyEveMessageMetadata;
+  },
+  importedParts: readonly SeedPart[] = []
+): Seed["messages"][number] => ({
   role: "assistant",
 
   ...(isNonEmptyString(message.metadata?.modelId)
     ? { modelId: message.metadata.modelId }
     : {}),
-  parts: message.parts.map(completedPart),
+  parts: message.parts.map((part, index) =>
+    completedPart(part, importedParts[index])
+  ),
 });
 
 /**
@@ -297,6 +318,17 @@ const prepareEveCopyTranscript = (
   ) {
     throw new EveCopyNotReadyError();
   }
+  // Native display parts omit imported text encoding and denial reasons. Preserve
+  // these two fields from the authoritative seed, never from client metadata.
+  const importedMessages =
+    events.find((event) => event.type === "session.started")?.data
+      .transcriptSeed?.messages ?? [];
+  const importedParts = new Map(
+    importedMessages.map((message, index) => [
+      `seed_message_${index}`,
+      message.parts.filter((part) => part.type !== "step-start"),
+    ])
+  );
   const transcript = sharedEveMessages(events, receipts);
   const boundaryIndex =
     beforeMessageId === undefined
@@ -312,6 +344,7 @@ const prepareEveCopyTranscript = (
     .slice(0, boundaryIndex)
     .map(
       (message: {
+        readonly id: string;
         readonly role: string;
         readonly parts: readonly ReadonlyEveMessagePart[];
         readonly metadata?: ReadonlyEveMessageMetadata;
@@ -319,7 +352,7 @@ const prepareEveCopyTranscript = (
         if (message.role === "user") {
           return copyUserSeedMessage(message);
         }
-        return copyAssistantSeedMessage(message);
+        return copyAssistantSeedMessage(message, importedParts.get(message.id));
       }
     );
   if (

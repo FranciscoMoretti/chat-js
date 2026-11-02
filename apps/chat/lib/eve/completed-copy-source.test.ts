@@ -26,6 +26,7 @@ const history: SessionStreamEvent = {
   meta,
   data: {
     transcriptSeed: {
+      attachments: "channel",
       messages: [
         {
           role: "user",
@@ -42,7 +43,7 @@ const history: SessionStreamEvent = {
 const started: SessionStreamEvent = {
   type: "turn.started",
   meta: { ...meta, position: { line: 1, index: 0 } },
-  data: { turnId: "turn_0", follows: null },
+  data: { turnId: "turn_0", follows: null, cause: { deliveryId: "delivery" } },
 };
 beforeEach(() => {
   snapshot.mockReset();
@@ -103,7 +104,7 @@ it("rejects an open turn parked for approval", async () => {
       {
         type: "turn.paused",
         meta: { ...meta, position: { line: 2, index: 0 } },
-        data: { turnId: "turn_0" },
+        data: { turnId: "turn_0", awaiting: [{ interactionId: "approval" }] },
       },
     ],
   });
