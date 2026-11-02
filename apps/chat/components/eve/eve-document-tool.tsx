@@ -49,7 +49,11 @@ export const EveDocumentTool = ({
       return;
     }
     const operation = documentDefinitions.operations.get(part.name);
-    if (part.state === "streaming" || part.state === "running") {
+    if (
+      part.state === "streaming" ||
+      part.state === "running" ||
+      part.state === "requested"
+    ) {
       pendingCall.current = part.callId;
       const input = partialDocument.safeParse(part.input);
       if (isReadonly || !operation || !input.success) {

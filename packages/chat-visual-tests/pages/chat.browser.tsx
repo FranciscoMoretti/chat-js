@@ -111,6 +111,26 @@ test("cancelled document and saved-code operations show stopped states", async (
               state: "cancelled",
               input: {},
             },
+            {
+              type: "tool",
+              kind: "tool",
+              stepIndex: 0,
+              callId: "mcp",
+              name: "fixture__search",
+              label: "Search",
+              state: "cancelled",
+              input: {},
+            },
+            {
+              type: "tool",
+              kind: "tool",
+              stepIndex: 0,
+              callId: "blocked",
+              name: "awaitingTool",
+              label: "Awaiting",
+              state: "blocked",
+              input: {},
+            },
           ],
         },
       ],
@@ -120,6 +140,9 @@ test("cancelled document and saved-code operations show stopped states", async (
     .element(page.getByText("Document operation stopped."))
     .toBeVisible();
   await expect.element(page.getByText("Tool stopped.")).toBeVisible();
+  await page.getByRole("button", { name: "search Error", exact: true }).click();
+  await expect.element(page.getByText("MCP tool stopped.")).toBeVisible();
+  await expect.element(page.getByText("Waiting for input.")).toBeVisible();
   await page.screenshot({ path: "__screenshots__/native-stopped.png" });
 });
 
@@ -182,6 +205,16 @@ test("display receipts settle with a fresh native agent wrapper", async () => {
   }
   await renderRoute(conversation, {
     ...request,
+    transcripts: Object.fromEntries(
+      Object.entries(invoicesTranscripts).map(([id, messages]) => [
+        id,
+        messages.map((message) =>
+          message.role === "user"
+            ? { ...message, id: "delivery:user" }
+            : message
+        ),
+      ])
+    ),
     events: {
       [sessionId]: [
         {

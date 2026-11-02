@@ -22,7 +22,7 @@ import { EveToolResult } from "./eve-tool-result";
 const toolStatus = (
   part: Extract<ReadonlyEveMessagePart, { type: "tool" }>
 ): string => {
-  if (part.state === "approval") {
+  if (part.state === "approval" || part.state === "blocked") {
     return "Waiting for input.";
   }
   if (part.state === "rejected") {

@@ -19,14 +19,18 @@ export const EveMcpResult = ({
       ? eveMcpResult.safeParse(part.output)
       : undefined;
   const failed = part.state === "failed" || (result && !result.success);
+  let errorText: string | undefined;
+  if (part.state === "cancelled") {
+    errorText = "MCP tool stopped.";
+  } else if (failed === true) {
+    errorText =
+      "MCP tool failed. Check the connector in settings and try again.";
+  }
   return (
     <McpToolResult
       defaultOpen={defaultOpen}
       part={{
-        errorText:
-          failed === true
-            ? "MCP tool failed. Check the connector in settings and try again."
-            : undefined,
+        errorText,
         input: part.input,
         output: result?.success === true ? result.data.output : undefined,
         state: failed === true ? "output-error" : eveToolUIState(part.state),
