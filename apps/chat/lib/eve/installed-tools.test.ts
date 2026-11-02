@@ -1,9 +1,26 @@
-import { dynamicEvaluate } from "@eve-test/dist/src/dynamic/definition.js";
+import type { DynamicContext } from "eve";
+import { defineDynamic } from "eve/tools";
+import type * as EveTools from "eve/tools";
 import { testDynamicContext } from "../../tests/helpers/eve-dynamic-context";
 import { expect, test, vi } from "vitest";
 import type { ModelMessage } from "ai";
 import type { eveImageContext } from "./image-context";
-import installed from "@/agent/tools/installed";
+import "@/agent/tools/installed";
+
+vi.mock("eve/tools", async (importOriginal) => {
+  const actual = await importOriginal<typeof EveTools>();
+  return { ...actual, defineDynamic: vi.fn(actual.defineDynamic) };
+});
+
+const resolveInstalled = async (context: DynamicContext) => {
+  const { calls } = vi.mocked(defineDynamic).mock;
+  if (calls.length === 0) {
+    throw new Error(
+      "Expected installed tools to register a dynamic definition"
+    );
+  }
+  return await calls[0][0](context);
+};
 
 const state = vi.hoisted(() => ({
   update: vi.fn<(update: () => ReturnType<typeof eveImageContext>) => void>(),
@@ -30,8 +47,7 @@ vi.mock("./turn-tools", () => ({
 }));
 
 test("installed and custom definitions retain their native policies and concrete definitions", async () => {
-  const resolve = dynamicEvaluate(installed);
-  const result = await resolve(
+  const result = await resolveInstalled(
     testDynamicContext({
       session: {
         auth: {
@@ -55,7 +71,6 @@ test("installed and custom definitions retain their native policies and concrete
 });
 
 test("steps retain only current image inputs, not the conversation history", async () => {
-  const resolve = dynamicEvaluate(installed);
   const messages: ModelMessage[] = [
     { content: "Private conversation text", role: "user" },
     {
@@ -94,7 +109,7 @@ test("steps retain only current image inputs, not the conversation history", asy
       id: "test",
     },
   });
-  await resolve(context);
+  await resolveInstalled(context);
   const initial = state.update.mock.lastCall?.[0]();
   expect(initial?.attachments).toHaveLength(1);
   expect(initial?.attachments[0].url).toBe("data:image/png;base64,bmV3");
@@ -112,7 +127,7 @@ test("steps retain only current image inputs, not the conversation history", asy
     ],
     role: "tool",
   });
-  await resolve(context);
+  await resolveInstalled(context);
   const next = state.update.mock.lastCall?.[0]();
   expect(next?.attachments).toEqual(initial?.attachments);
   expect(next?.lastGeneratedImage?.imageUrl).toBe(
@@ -121,7 +136,7 @@ test("steps retain only current image inputs, not the conversation history", asy
   expect(JSON.stringify(next)).not.toContain("Private conversation");
   expect(JSON.stringify(next)).not.toContain("b2xk");
   messages.push({ content: "Edit it", role: "user" });
-  await resolve(context);
+  await resolveInstalled(context);
   expect(state.update.mock.lastCall?.[0]()).toEqual({
     attachments: [],
     lastGeneratedImage: next?.lastGeneratedImage,
@@ -137,9 +152,8 @@ test.each([
     principalType: "user",
   },
 ])("unknown identities receive no installed tools: %o", async (initiator) => {
-  const resolve = dynamicEvaluate(installed);
   expect(
-    await resolve(
+    await resolveInstalled(
       testDynamicContext({
         session: { auth: { current: null, initiator }, id: "session" },
       })
