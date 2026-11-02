@@ -302,7 +302,7 @@ export const invoicesShared: NonNullable<ServerData["transcript"]> = {
 export const invoicesTranscripts = { [invoicesSessionId]: invoicesTranscript };
 
 // Exercises the shared projection through the real observer, store and transcript.
-export const typedToolTranscripts = {
+export const validatedToolTranscripts = {
   [invoicesSessionId]: [
     {
       id: "tool-user",

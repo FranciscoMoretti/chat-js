@@ -1,3 +1,7 @@
+import type { z } from "zod";
+import type { ToolResult } from "@/lib/eve/tool-result";
+import { validateToolOutput } from "@/chatjs/core/tools/validate-output";
+import { generateImageResult } from "./schemas";
 import {
   ABSENT_DIAGNOSTIC_VALUE,
   getErrorDebugInfo,
@@ -125,13 +129,12 @@ const executeImageRequest = async (
 const runImageRequest = async (
   prompt: string,
   context: Readonly<ImageRequestContext>
-): Promise<
-  Awaited<ReturnType<typeof executeWithToolUsage<GeneratedImageResult>>>
-> =>
-  await executeWithToolUsage(
-    context,
-    async (usage: Readonly<ToolUsage>) =>
+): Promise<ToolResult<z.output<typeof generateImageResult>>> =>
+  await executeWithToolUsage(context, async (usage: Readonly<ToolUsage>) =>
+    validateToolOutput(
+      generateImageResult,
       await executeImageRequest(createImageRequest(prompt, context, usage))
+    )
   );
 export { runImageRequest };
 export type { ImageRequestContext };

@@ -2,14 +2,14 @@ import { MessageScrollerProvider } from "@/components/ui/message-scroller";
 import React, { useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 
-import type { ChatMessage } from "@/lib/ai/chat-message";
+import type { ReadonlyEveMessage } from "@/lib/eve/readonly-message-types";
 
 import { ControlledChatComposer } from "../components/controlled-chat-composer";
 import { EveMessages } from "../components/eve/eve-messages";
 import { MessageSiblingsView } from "../components/message-siblings-view";
 import { ResponseChoiceCards } from "../components/response-choice-cards";
 
-const messages: readonly ChatMessage[] = [
+const messages: readonly ReadonlyEveMessage[] = [
   {
     id: "user-1",
     metadata: { status: "complete", turnId: "turn_0" },
@@ -89,7 +89,7 @@ const VersionControls = ({
   message,
   onLog,
 }: {
-  readonly message: ChatMessage;
+  readonly message: ReadonlyEveMessage;
   readonly onLog: (value: string) => void;
 }) => {
   if (message.role !== "user") {

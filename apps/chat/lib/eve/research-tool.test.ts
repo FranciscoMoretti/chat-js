@@ -46,10 +46,10 @@ let controller: AbortController;
 let context: WorkflowToolContext;
 const document: Awaited<ReturnType<typeof saveResearchReport>>["document"] = {
   date: "2026-09-28",
-  documentId: "doc",
+  documentId: "60dbe86a-b2c4-4d32-ae09-a00e90b84e99",
   kind: "text",
   result: "Saved",
-  revisionId: "revision",
+  revisionId: "663ccf42-10c9-453f-b9da-ebf684a6da97",
   status: "success",
   title: "Report",
 };

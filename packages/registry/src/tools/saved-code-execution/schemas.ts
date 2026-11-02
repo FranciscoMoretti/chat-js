@@ -46,6 +46,10 @@ const eveCodeExecutionResult = z.object({
   message: z.string(),
 });
 
+const documentExecutionResult = eveCodeExecutionResult.extend(
+  documentExecutionInput.shape
+);
+
 const LAST_EXTENSION_INDEX = -1;
 const executionLanguageByExtension: ReadonlyMap<
   string,
@@ -72,6 +76,7 @@ const documentExecutionLanguage = (
 };
 export {
   documentExecutionInput,
+  documentExecutionResult,
   documentExecutionLanguage,
   eveCodeExecutionResult,
 };

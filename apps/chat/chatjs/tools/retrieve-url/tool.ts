@@ -1,9 +1,10 @@
+import { validateToolOutput } from "@/chatjs/core/tools/validate-output";
 import FirecrawlApp from "@mendable/firecrawl-js";
 import { defineTool } from "eve/tools";
 import { readToolEnvironment } from "./retrieve-url-env";
 import { createModuleLogger } from "@/lib/logger";
 import { executeWithToolUsage } from "@/lib/eve/tool-usage";
-import { retrievedInput } from "./schemas";
+import { retrievedInput, retrievedResult } from "./schemas";
 import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
 import { z } from "zod";
 
@@ -58,16 +59,16 @@ Avoid:
       try {
         const app = createClient();
         if (!app) {
-          return {
+          return validateToolOutput(retrievedResult, {
             error:
               "Firecrawl is not configured. Set FIRECRAWL_API_KEY to enable retrieval.",
-          };
+          });
         }
         const parsedUrl = parseUrl(url);
         if (!parsedUrl) {
-          return {
+          return validateToolOutput(retrievedResult, {
             error: "Please provide a valid http:// or https:// URL.",
-          };
+          });
         }
 
         const redactedUrl = redactUrl(parsedUrl);
@@ -76,13 +77,13 @@ Avoid:
         usage.markUnknown();
         const content = await app.scrapeUrl(normalizedUrl);
         if (!(content.success && content.metadata)) {
-          return {
+          return validateToolOutput(retrievedResult, {
             results: [
               {
                 error: content.error,
               },
             ],
-          };
+          });
         }
 
         const schema = z.object({
@@ -132,7 +133,7 @@ Avoid:
           }
         }
 
-        return {
+        return validateToolOutput(retrievedResult, {
           results: [
             {
               content: extractedContent ?? "",
@@ -142,7 +143,7 @@ Avoid:
               url: redactedUrl,
             },
           ],
-        };
+        });
       } catch (error) {
         const parsedUrl = parseUrl(url);
         log.error(
@@ -152,7 +153,9 @@ Avoid:
           },
           "Firecrawl API error in retrieveUrl tool"
         );
-        return { error: "Failed to retrieve content" };
+        return validateToolOutput(retrievedResult, {
+          error: "Failed to retrieve content",
+        });
       }
     }),
   inputSchema: retrievedInput,

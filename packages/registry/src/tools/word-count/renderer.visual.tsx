@@ -8,8 +8,7 @@ import { captureChatStory } from "../_shared/visual";
 import { WordCountRenderer } from "./renderer";
 
 // The chat resolves an installed tool's renderer through this registry.
-vi.mock(import("@/lib/ai/tool-renderer-registry"), async (importOriginal) => ({
-  ...(await importOriginal()),
+vi.mock("@/lib/ai/tool-renderer-registry", () => ({
   getEveInstalledToolRenderer: () => WordCountRenderer,
 }));
 
@@ -96,6 +95,20 @@ test("word-count renders every state in the chat", async () => {
               0
             ),
             toolCallId: "word-count-receipt",
+          }}
+        />
+      ),
+    },
+    {
+      label: "Incompatible historical output",
+      ui: (
+        <EveToolResult
+          isReadonly
+          messageId={messageId}
+          part={{
+            ...receipt,
+            output: createToolResult({ words: "old-format" }, 0),
+            toolCallId: "word-count-invalid",
           }}
         />
       ),

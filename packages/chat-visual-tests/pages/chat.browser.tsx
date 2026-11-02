@@ -27,7 +27,7 @@ import {
   invoicesFollowupTrpc,
   launchProject,
   questionTranscripts,
-  typedToolTranscripts,
+  validatedToolTranscripts,
   session,
   signedIn,
 } from "./fixtures";
@@ -67,10 +67,10 @@ test("conversation", async () => {
     .toBeVisible();
 });
 
-test("typed tools preserve receipt results, failures and native fallbacks", async () => {
+test("validated tools preserve receipt results, failures and native fallbacks", async () => {
   await renderRoute(conversation, {
     ...request,
-    transcripts: typedToolTranscripts,
+    transcripts: validatedToolTranscripts,
   });
   await expect.element(page.getByText("Words", { exact: true })).toBeVisible();
   await expect

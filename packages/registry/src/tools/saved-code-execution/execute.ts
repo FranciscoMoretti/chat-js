@@ -1,5 +1,8 @@
+import { validateToolOutput } from "@/chatjs/core/tools/validate-output";
+import type { z } from "zod";
 import {
   documentExecutionInput,
+  documentExecutionResult,
   documentExecutionLanguage,
   eveCodeExecutionResult,
 } from "./schemas";
@@ -30,13 +33,7 @@ type DocumentExecutionResult = {
     Key in keyof Omit<SuccessfulCodeResult, "output">
   ]: SuccessfulCodeResult[Key];
 } & {
-  output: ReturnType<typeof eveCodeExecutionResult.parse> & {
-    code: string;
-    language: "python" | "javascript";
-    title: string;
-    documentId: string;
-    revisionId: string;
-  };
+  output: z.output<typeof documentExecutionResult> & DocumentExecutionSource;
 };
 
 type DocumentExecutionStream = AsyncGenerator<
@@ -58,16 +55,18 @@ const documentResult = (
   return {
     ...result,
     output: {
-      ...(output.success
-        ? output.data
-        : {
-            chart: "",
-            message:
-              "Execution finished, but its output has an unsupported format.",
-          }),
+      ...validateToolOutput(documentExecutionResult, {
+        ...(output.success
+          ? output.data
+          : {
+              chart: "",
+              message:
+                "Execution finished, but its output has an unsupported format.",
+            }),
+        documentId: revision.documentId,
+        revisionId: revision.id,
+      }),
       ...source,
-      documentId: revision.documentId,
-      revisionId: revision.id,
     },
   };
 };

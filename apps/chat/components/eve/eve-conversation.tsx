@@ -36,12 +36,7 @@ import { logicalResponseSlots } from "@/lib/eve/logical-response-slots";
 import type { LogicalChat, LogicalChatSnapshot } from "@/lib/eve/logical-chat";
 import type { ActivePendingEveMessage } from "@/lib/eve/message-delivery";
 import { EVE_MESSAGE_OPERATION_HEADER } from "@/lib/eve/message-delivery";
-import type { ChatMessage } from "@/lib/ai/chat-message";
-import {
-  isChatToolPart,
-  nativeMessage,
-  nativeMessages,
-} from "@/lib/ai/chat-message";
+import type { ReadonlyEveMessage } from "@/lib/eve/readonly-message-types";
 import { responseModelReferences } from "@/lib/eve/response-model";
 import { sendCommand } from "@/lib/eve/send-command";
 import {
@@ -185,11 +180,11 @@ const isExecutionBusy = (status: string | undefined): boolean =>
   status === "streaming" || status === "submitted" || status === "resuming";
 
 const selectedConversationMessages = (
-  messages: readonly ChatMessage[],
+  messages: readonly ReadonlyEveMessage[],
   controller: Readonly<Pick<LogicalChat, "logicalId">>,
   snapshot: Readonly<Pick<LogicalChatSnapshot, "cursorId" | "nodes">>,
   conversationId: string
-): readonly ChatMessage[] => {
+): readonly ReadonlyEveMessage[] => {
   const selectedPath = new Set<string>();
   let selectedNode = hasText(snapshot.cursorId)
     ? snapshot.nodes.get(snapshot.cursorId)
@@ -591,8 +586,7 @@ const EveConversation = ({
   const hasApproval = agent.data.messages.some((message) =>
     message.parts.some(
       (part) =>
-        (part.type === "dynamic-tool" || isChatToolPart(part)) &&
-        part.state === "approval-requested"
+        part.type === "dynamic-tool" && part.state === "approval-requested"
     )
   );
   const run = async (action: () => Promise<unknown>): Promise<void> => {
@@ -733,7 +727,7 @@ const EveConversation = ({
       onStopExecution={cancelExecution}
       logicalChatId={controller.chatId}
       getExecutionMessages={(id) =>
-        nativeMessages(snapshot.agents.get(id)?.data.messages ?? [])
+        snapshot.agents.get(id)?.data.messages ?? []
       }
       isExecutionBusy={(id) => {
         const status = snapshot.agents.get(id)?.status;
@@ -741,7 +735,7 @@ const EveConversation = ({
       }}
       conversationId={conversationId}
       documentActionsDisabled={actionLocks.document}
-      messages={nativeMessages(agent.data.messages)}
+      messages={agent.data.messages}
       onDocumentAction={async ({ message, modelId }) => {
         await run(async () => {
           await submitMessage(message, [], modelId, false);
@@ -842,27 +836,23 @@ const EveConversation = ({
                         groupModels[slot.modelId] =
                           (groupModels[slot.modelId] ?? 0) + 1;
                       }
-                      const completion = fork.begin(
-                        nativeMessage(message),
-                        undefined,
-                        {
-                          events: agent.events,
-                          modelSelection: group ? groupModels : undefined,
-                          response:
-                            response && hasText(modelForMessage(response))
-                              ? nativeMessage(response)
-                              : undefined,
-                        }
-                      );
+                      const completion = fork.begin(message, undefined, {
+                        events: agent.events,
+                        modelSelection: group ? groupModels : undefined,
+                        response:
+                          response && hasText(modelForMessage(response))
+                            ? response
+                            : undefined,
+                      });
                       startEventAction(async () => {
                         await completion;
                       });
                     }}
 
                     onRegenerate={(message, response) => {
-                      void fork.begin(nativeMessage(message), {
+                      void fork.begin(message, {
                         events: agent.events,
-                        response: nativeMessage(response),
+                        response,
                       });
                     }}
 

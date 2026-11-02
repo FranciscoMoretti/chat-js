@@ -1,85 +1,30 @@
-import type { ComponentType, FunctionComponent } from "react";
-import { createElement } from "react";
-import type { InstalledTools } from "./installed-tools";
-import type { ChatMessage } from "./chat-message";
-
+import type { tools } from "@/integrations/tools/execution";
+import type { WorkflowTools } from "@/chatjs/generated/workflow-types";
+import type { ValidatedToolRenderer } from "@/chatjs/core/tools/define-renderer";
 import { isValidatedToolRenderer } from "@/chatjs/core/tools/define-renderer";
 import { ui } from "@/integrations/tools/ui";
 
-type InstalledToolName = keyof InstalledTools;
-
-type InstalledToolType = `tool-${InstalledToolName}`;
-
-type InstalledToolUIPart = Extract<
-  ChatMessage["parts"][number],
-  { type: InstalledToolType }
->;
-
-type InstalledToolPart<ToolType extends InstalledToolType> = Extract<
-  InstalledToolUIPart,
-  { type: ToolType }
->;
-
-interface ToolRendererProps<ToolType extends InstalledToolType> {
-  tool: InstalledToolPart<ToolType>;
-  messageId: string;
-  isReadonly: boolean;
-}
-
+// Execution types constrain registration names only. Each view's payload types
+// come from its shared schemas through defineToolRenderer.
 type ToolRendererRegistry = {
-  [ToolType in InstalledToolType]?: ComponentType<ToolRendererProps<ToolType>>;
+  [
+    Name in keyof typeof tools | keyof WorkflowTools as `tool-${Name}`
+  ]?: ValidatedToolRenderer;
 };
 
-const toolRendererRegistry: ToolRendererRegistry = ui;
+const toolRendererRegistry: Readonly<
+  Partial<Record<string, ValidatedToolRenderer>>
+> = ui;
 
-/** The shared message contract keeps each registered renderer correlated with its part. */
-const renderInstalledTool = <Type extends InstalledToolType>(
-  type: Type,
-  props: ToolRendererProps<Type>
-) => {
-  const Renderer = toolRendererRegistry[type];
-  return Renderer ? createElement(Renderer, props) : null;
-};
-
-const isInstalledToolType = (
-  type: string
-): type is keyof typeof toolRendererRegistry =>
-  Object.hasOwn(toolRendererRegistry, type);
-
-/** Resolve only installed function renderers marked as validating their persisted input/output.
- * @param {string} type Installed tool discriminator used to read the native renderer registry.
- * @returns {(FunctionComponent<{isReadonly: boolean; messageId: string; tool: unknown}> & {validatedToolRenderer: true}) | undefined} The original marked renderer, or undefined for unknown and unvalidated entries.
- */
+/** Dispatch unknown persisted data only through a validating renderer boundary. */
 const getEveInstalledToolRenderer = (
   type: string
-):
-  | (FunctionComponent<{
-      isReadonly: boolean;
-      messageId: string;
-      tool: unknown;
-    }> & { validatedToolRenderer: true })
-  | undefined => {
-  if (!isInstalledToolType(type)) {
-    return undefined;
-  }
-  const renderer = toolRendererRegistry[type];
-  if (isValidatedToolRenderer(renderer)) {
-    return renderer;
-  }
-  return undefined;
+): ValidatedToolRenderer | undefined => {
+  const renderer = Object.hasOwn(toolRendererRegistry, type)
+    ? toolRendererRegistry[type]
+    : undefined;
+  return isValidatedToolRenderer(renderer) ? renderer : undefined;
 };
 
-export {
-  getEveInstalledToolRenderer,
-  isInstalledToolType,
-  renderInstalledTool,
-  toolRendererRegistry,
-};
-export type {
-  InstalledToolName,
-  InstalledToolPart,
-  InstalledToolType,
-  InstalledToolUIPart,
-  ToolRendererProps,
-  ToolRendererRegistry,
-};
+export { getEveInstalledToolRenderer };
+export type { ToolRendererRegistry };
