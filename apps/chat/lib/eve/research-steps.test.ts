@@ -49,9 +49,9 @@ vi.mock("./shared-messages", () => ({
     {
       parts: [
         {
-          toolCallId: "research-call",
-          toolName: "deepResearch",
-          type: "dynamic-tool",
+          callId: "research-call",
+          name: "deepResearch",
+          type: "tool",
         },
       ],
       role: "assistant",

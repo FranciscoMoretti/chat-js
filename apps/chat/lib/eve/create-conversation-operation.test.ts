@@ -72,9 +72,7 @@ beforeEach(() => {
   mocks.prepareMessage.mockResolvedValue("prepared comparison");
   mocks.source.mockResolvedValue({ sessionId: "source", state: "bound" });
   mocks.reserve.mockImplementation(
-    async (_owner, operationId, _title, dispatch) => ({
-      sessionId: await dispatch(operationId),
-    })
+    async (_owner, operationId, _title, dispatch) => await dispatch(operationId)
   );
   mocks.send.mockResolvedValue({ sessionId: "child", deliveryId: "delivery" });
   // oxlint-disable-next-line eslint/require-await -- Each transport mock call needs a fresh consumable response.

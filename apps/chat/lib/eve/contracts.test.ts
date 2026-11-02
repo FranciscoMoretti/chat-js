@@ -13,6 +13,7 @@ describe("Eve request policy", () => {
     for (const path of [
       "/eve/v1/session",
       "/eve/v1/session/a/reset",
+      "/eve/v1/session/a/end",
       "/eve/v1/session/a/compact",
       "/eve/v1/session/a/clear",
       "/eve/v1/session/a/subagents",
@@ -63,7 +64,7 @@ describe("Eve request policy", () => {
     expect(policy?.schema.safeParse({ message: "  " }).success).toBe(false);
     expect(
       policy?.schema.safeParse({
-        inputResponses: [{ optionId: "allow", requestId: "req" }],
+        answers: [{ optionId: "allow", interactionId: "req" }],
       }).success
     ).toBe(true);
     for (const query of [

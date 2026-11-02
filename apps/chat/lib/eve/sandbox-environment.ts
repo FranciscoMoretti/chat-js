@@ -17,6 +17,9 @@ const disabled = defineSandboxProvider({
     prepare: async () => await Promise.resolve(null),
     start: unavailable,
     resume: unavailable,
+    onSessionEnd: async () => {
+      // No sandbox resource exists for this provider.
+    },
   }),
 });
 

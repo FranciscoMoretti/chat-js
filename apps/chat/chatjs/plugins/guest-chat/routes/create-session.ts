@@ -101,7 +101,7 @@ export const POST = async (
     new URL(host).origin
   );
   const response = await fetch(
-    new URL("/eve/chat/v1/session", connection.host),
+    new URL("/eve/chat/v1/session", connection.baseUrl),
     {
       body: JSON.stringify({ operationId: claims.policyId }),
       cache: "no-store",

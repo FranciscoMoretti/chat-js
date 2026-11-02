@@ -160,7 +160,7 @@ test("native acceptance deduplicates concurrent callers and rejects foreign or f
       );
       expect(foreignReceipt.status).toBe(404);
 
-      return receipts[0].sessionId;
+      return receipts[0];
     }
   );
   expect(binding.sessionId).toBeTruthy();

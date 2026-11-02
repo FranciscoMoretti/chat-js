@@ -1,9 +1,10 @@
 "use client";
+import { eveToolUIState } from "@/lib/eve/tool-ui-state";
 
 import { isDocumentResult } from "@/chatjs/core/documents/contracts";
 
 import React from "react";
-import type { InputResponse } from "eve/client";
+import type { Answer } from "eve/events";
 import { Response } from "@/components/ai-elements/response";
 import { ToolInput, ToolOutput } from "@/components/part/tool-data";
 import { ToolActivity } from "@/components/part/tool-activity";
@@ -19,18 +20,18 @@ import { EveMcpResult } from "./eve-mcp-result";
 import { EveToolResult } from "./eve-tool-result";
 
 const toolStatus = (
-  part: Extract<ReadonlyEveMessagePart, { type: "dynamic-tool" }>
+  part: Extract<ReadonlyEveMessagePart, { type: "tool" }>
 ): string => {
-  if (part.state === "approval-requested") {
+  if (part.state === "approval" || part.state === "blocked") {
     return "Waiting for input.";
   }
-  if (part.state === "output-denied") {
+  if (part.state === "rejected") {
     return "Request declined.";
   }
-  if (part.state === "output-error") {
-    return part.errorText;
+  if (part.state === "failed") {
+    return part.error?.message ?? "Tool failed";
   }
-  if (part.state === "output-available") {
+  if (part.state === "completed") {
     return "Tool completed.";
   }
   return "Working…";
@@ -41,30 +42,39 @@ const ToolFallback = ({
   disabled,
   respond,
 }: {
-  readonly part: Extract<ReadonlyEveMessagePart, { type: "dynamic-tool" }>;
+  readonly part: Extract<ReadonlyEveMessagePart, { type: "tool" }>;
   readonly disabled: boolean;
-  readonly respond: (response: InputResponse) => void;
+  readonly respond: (response: Answer) => void;
 }): React.JSX.Element => {
-  const request = part.toolMetadata?.eve?.inputRequest;
+  const request = part.interaction
+    ? {
+        ...part.interaction.request,
+        interactionId: part.interaction.interactionId,
+      }
+    : undefined;
   let content: React.ReactNode = (
     <p className="text-muted-foreground text-sm">{toolStatus(part)}</p>
   );
-  if (part.state === "approval-requested" && request) {
+  if (part.interaction?.status === "open" && request) {
     content = (
       <EvePendingInput
         disabled={disabled}
-        key={request.requestId}
+        key={request.interactionId}
         request={request}
         respond={respond}
       />
     );
-  } else if (part.state === "output-error") {
-    content = <ToolOutput errorText={part.errorText} />;
-  } else if (part.state === "output-available" && part.output !== undefined) {
+  } else if (part.state === "failed") {
+    content = <ToolOutput errorText={part.error?.message ?? "Tool failed"} />;
+  } else if (part.state === "completed" && part.output !== undefined) {
     content = <ToolOutput output={part.output} />;
   }
   return (
-    <ToolActivity title={part.toolName} state={part.state} defaultOpen>
+    <ToolActivity
+      title={part.name}
+      state={eveToolUIState(part.state)}
+      defaultOpen
+    >
       <ToolInput input={part.input} />
       {content}
     </ToolActivity>
@@ -86,7 +96,7 @@ export const EveMessagePart = ({
   readonly isReadonly: boolean;
   readonly part: ReadonlyEveMessagePart;
   readonly inputDisabled: boolean;
-  readonly respond: (response: InputResponse) => void;
+  readonly respond: (response: Answer) => void;
 }): React.JSX.Element | null => {
   if (part.type === "text") {
     return <Response>{part.text}</Response>;
@@ -102,16 +112,19 @@ export const EveMessagePart = ({
       />
     );
   }
-  if (part.type === "step-start") {
-    return null;
+  if (part.type === "interaction") {
+    return part.status === "open" ? (
+      <EvePendingInput
+        request={{ ...part.request, interactionId: part.interactionId }}
+        disabled={inputDisabled || isReadonly}
+        respond={respond}
+      />
+    ) : null;
   }
-  if (part.type !== "dynamic-tool") {
+  if (part.type !== "tool") {
     return <p>Unsupported content in this conversation.</p>;
   }
-  if (
-    part.state === "approval-requested" ||
-    part.state === "approval-responded"
-  ) {
+  if (part.state === "approval" || part.state === "blocked") {
     return (
       <ToolFallback
         part={part}
@@ -120,7 +133,7 @@ export const EveMessagePart = ({
       />
     );
   }
-  if (getEveInstalledToolRenderer(`tool-${part.toolName}`)) {
+  if (getEveInstalledToolRenderer(`tool-${part.name}`)) {
     return (
       <EveToolResult
         isReadonly={isReadonly}
@@ -131,9 +144,9 @@ export const EveMessagePart = ({
   }
 
   if (
-    documentDefinitions.operations.has(part.toolName) ||
-    part.toolName === "readDocument" ||
-    (part.state === "output-available" && isDocumentResult(part.output))
+    documentDefinitions.operations.has(part.name) ||
+    part.name === "readDocument" ||
+    (part.state === "completed" && isDocumentResult(part.output))
   ) {
     return (
       <EveDocumentTool
@@ -144,7 +157,7 @@ export const EveMessagePart = ({
       />
     );
   }
-  if (parseToolId(part.toolName)) {
+  if (parseToolId(part.name)) {
     return <EveMcpResult part={part} />;
   }
   return (

@@ -1,4 +1,4 @@
-import { conversationReducer } from "eve/client";
+import { conversationOf } from "eve/client";
 /// <reference types="@vitest/browser-playwright" />
 import { takeSnapshot } from "@uiverify/vitest";
 import React, { act } from "react";
@@ -21,30 +21,29 @@ const ownerId = "fixture-user";
 test("conversation retains its draft across rerenders and shows delivery recovery after deferred failure", async (): Promise<void> => {
   sessionStorage.clear();
   const pending = Promise.withResolvers<never>();
-  const send = vi
-    .fn<NativeChatAgent["send"]>()
-    .mockReturnValue(pending.promise);
+  const send = vi.fn(async () => await pending.promise);
   const agent: NativeChatAgent = {
     cancel: vi
       .fn<NativeChatAgent["cancel"]>()
       .mockRejectedValue(new Error("Unexpected cancellation")),
-    conversation: conversationReducer.initial(),
-    data: { messages: [] },
+    ...conversationOf([]),
+    clear: async () => await Promise.reject(new Error("Unexpected clear")),
+    compact: async () => await Promise.reject(new Error("Unexpected compact")),
+    end: async () => await Promise.reject(new Error("Unexpected end")),
+    follow: vi.fn<() => void>(),
     error: undefined,
     events: [],
     prewarm: vi
       .fn<NativeChatAgent["prewarm"]>()
       .mockRejectedValue(new Error("Unexpected prewarm")),
-    reset: vi.fn<NativeChatAgent["reset"]>(),
-    respond: vi
-      .fn<NativeChatAgent["respond"]>()
-      .mockRejectedValue(new Error("Unexpected response")),
+    newSession: vi.fn<() => void>(),
+    respond: async () => await Promise.reject(new Error("Unexpected response")),
     resume: vi
       .fn<NativeChatAgent["resume"]>()
       .mockRejectedValue(new Error("Unexpected resume")),
     send,
     session: undefined,
-    status: "ready",
+    status: "idle",
   };
   const controller = new LogicalChat(conversationId, conversationId);
   controller.observe(conversationId, agent);

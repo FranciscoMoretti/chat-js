@@ -30,7 +30,7 @@ const resolveCleanupSession = async (guest: {
     modelId: guest.modelId,
     policyId: guest.id,
   });
-  const response = await fetch(`${connection.host}/v1/session`, {
+  const response = await fetch(`${connection.baseUrl}/v1/session`, {
     method: "POST",
     redirect: "error",
     headers: {
@@ -92,20 +92,27 @@ export const cleanupGuestRuntimeSessions = async (): Promise<{
           })
         );
         const session = client.sessions.attach(sessionId);
-        await session.reset({
+        const current = await session.snapshot({
+          signal: AbortSignal.timeout(RETIRE_TIMEOUT_MS),
+        });
+        if (current.events.some((event) => event.type === "session.ended")) {
+          return;
+        }
+        const retirement = await session.end({
           reason: "Guest retention expired",
           signal: AbortSignal.timeout(RETIRE_TIMEOUT_MS),
         });
+        for await (const event of retirement.stream({
+          signal: AbortSignal.timeout(RETIRE_TIMEOUT_MS),
+        })) {
+          if (event.type === "session.ended") {
+            break;
+          }
+        }
         const snapshot = await session.snapshot({
           signal: AbortSignal.timeout(RETIRE_TIMEOUT_MS),
         });
-        if (
-          !snapshot.events.some(
-            (event) =>
-              event.type === "session.completed" ||
-              event.type === "session.failed"
-          )
-        ) {
+        if (!snapshot.events.some((event) => event.type === "session.ended")) {
           throw new Error("Guest retirement is not terminal. Retry cleanup.");
         }
       });

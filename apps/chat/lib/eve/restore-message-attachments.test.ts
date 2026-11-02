@@ -21,7 +21,7 @@ const mocks = vi.hoisted(() => {
     download: vi.fn(),
     messages,
     metadata: vi.fn(),
-    reduce: vi.fn((state: Readonly<{ messages: readonly unknown[] }>) => state),
+    replay: vi.fn(),
     replayOrder,
     reserve: vi.fn(),
     snapshot: vi.fn(),
@@ -59,18 +59,10 @@ vi.mock("eve/client", () => ({
       }),
     };
   },
-  defaultMessageReducer: (): {
-    initial: () => Pick<typeof mocks, "messages">;
-    reduce: typeof mocks.reduce;
-  } => {
-    mocks.replayOrder.push("factory");
-    return {
-      initial: (): Pick<typeof mocks, "messages"> => {
-        mocks.replayOrder.push("initial");
-        return { messages: mocks.messages };
-      },
-      reduce: mocks.reduce,
-    };
+  conversationOf: (events: readonly unknown[]) => {
+    mocks.replayOrder.push("replay");
+    mocks.replay(events);
+    return { messages: mocks.messages };
   },
 }));
 const input = { conversationId: "conversation", messageId: "message" };
@@ -136,60 +128,17 @@ it("restores exact trusted inline history without an installed upload feature", 
     new Uint8Array([1, 2, 3])
   );
 });
-it("replays ordered snapshot events through the reducer before restoring", async () => {
-  const [first, second] = replayEvents;
+it("passes original snapshot events to native conversation replay", async () => {
   mocks.snapshot.mockResolvedValue({ events: replayEvents });
-  const firstState = {
-    messages: [
-      ...mocks.messages,
-      { id: "replayed-first", parts: [], role: "user" },
-    ],
-  };
-  const finalState = {
-    messages: [
-      ...firstState.messages,
-      { id: "replayed-second", parts: [], role: "assistant" },
-    ],
-  };
-  mocks.reduce
-    .mockImplementationOnce(() => firstState)
-    .mockImplementationOnce(() => finalState);
   await restoreMessageAttachments("owner", input);
-  expect(mocks.reduce.mock.calls).toEqual([
-    [{ messages: mocks.messages }, first],
-    [firstState, second],
-  ]);
-  expect(mocks.reduce.mock.contexts[0]).toBe(mocks.reduce.mock.contexts[1]);
-  expect(mocks.reduce.mock.contexts[0]).toHaveProperty("initial");
-  expect(mocks.reduce.mock.contexts[0]).toHaveProperty("reduce", mocks.reduce);
+  expect(mocks.replay).toHaveBeenCalledExactlyOnceWith(replayEvents);
 });
-it("propagates reducer failures and stops replay", async () => {
-  const [first, second] = replayEvents;
-  const failure = new Error("Reducer failed");
-  mocks.snapshot.mockResolvedValue({ events: replayEvents });
-  mocks.reduce
-    .mockImplementationOnce(() => ({
-      messages: [
-        ...mocks.messages,
-        { id: "replayed-first", parts: [], role: "user" },
-      ],
-    }))
-    .mockImplementationOnce(() => {
-      throw failure;
-    });
+it("propagates native replay failures before allocating attachment copies", async () => {
+  const failure = new Error("Replay failed");
+  mocks.replay.mockImplementationOnce(() => {
+    throw failure;
+  });
   await expect(restoreMessageAttachments("owner", input)).rejects.toBe(failure);
-  expect(mocks.reduce.mock.calls).toEqual([
-    [{ messages: mocks.messages }, first],
-    [
-      {
-        messages: [
-          ...mocks.messages,
-          { id: "replayed-first", parts: [], role: "user" },
-        ],
-      },
-      second,
-    ],
-  ]);
   expect(mocks.reserve).not.toHaveBeenCalled();
 });
 it("requires owned bound history and a native user message before copying", async () => {
@@ -338,7 +287,7 @@ it("admits adjacent inline parts before queued mutations run", async () => {
   expect(reads).toEqual(["first", "second", "queued"]);
 });
 
-it("initializes the reducer before reading original snapshot events", async () => {
+it("reads and replays the snapshot synchronously", async () => {
   mocks.snapshot.mockResolvedValue({
     get events(): never[] {
       mocks.replayOrder.push("events");
@@ -346,7 +295,7 @@ it("initializes the reducer before reading original snapshot events", async () =
     },
   });
   await restoreMessageAttachments("owner", input);
-  expect(mocks.replayOrder).toEqual(["factory", "initial", "events"]);
+  expect(mocks.replayOrder).toEqual(["events", "replay"]);
 });
 
 it("reads original stored history before queued next-part mutations", async () => {

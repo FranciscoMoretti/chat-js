@@ -1,3 +1,4 @@
+import { followupEventId } from "./followup-completion";
 import { isAccountSession } from "@/lib/eve/session-identity";
 import type { FollowupContext } from "./followup-context";
 import type { HookContext } from "eve/hooks";
@@ -14,20 +15,19 @@ const context = defineState<FollowupContext>(
 
 export default defineHook({
   events: {
-    "message.completed": (event: Parameters<typeof followupContext>[1]) => {
+    "content.completed": (event: Parameters<typeof followupContext>[1]) => {
       context.update((current: FollowupContext) =>
         followupContext(current, event)
       );
     },
-    "message.received": (event: Parameters<typeof followupContext>[1]) => {
+    "delivery.consumed": (event: Parameters<typeof followupContext>[1]) => {
       context.update((current: FollowupContext) =>
         followupContext(current, event)
       );
     },
-    "turn.completed": (
+    "turn.settled": (
       event: {
-        readonly data: { readonly turnId: string };
-        readonly meta: { readonly id: string };
+        readonly data: { readonly turnId: string; readonly outcome: string };
       },
       hookContext: {
         readonly session: Readonly<
@@ -37,6 +37,7 @@ export default defineHook({
     ): ReturnType<typeof generateEveFollowupSuggestions> | undefined => {
       // Suggestions are actions for the user-facing branch, not a background task.
       if (
+        event.data.outcome !== "completed" ||
         !isAccountSession(hookContext.session) ||
         hookContext.session.parent
       ) {
@@ -46,7 +47,7 @@ export default defineHook({
         ownerId: hookContext.session.auth.initiator?.principalId ?? "",
         sessionId: hookContext.session.id,
         turnId: event.data.turnId,
-        eventId: event.meta.id,
+        eventId: followupEventId(hookContext.session.id, event.data.turnId),
       });
     },
     "turn.started": (event: Parameters<typeof followupContext>[1]) => {

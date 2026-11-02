@@ -50,7 +50,7 @@ const request = (path: string, method: string, secret = "fixture-secret") =>
   });
 
 it.each([
-  ["/eve/v1/session/session/reset", "POST"],
+  ["/eve/v1/session/session/end", "POST"],
   ["/eve/v1/session/session/stream", "GET"],
 ])(
   "allows authenticated cleanup only for the deleting owner's session: %s",
@@ -68,7 +68,7 @@ it.each([
   ["/eve/v1/session", "POST"],
   ["/eve/v1/session/session", "POST"],
   ["/eve/v1/session/session/cancel", "POST"],
-  ["/eve/v1/session/session/reset", "GET"],
+  ["/eve/v1/session/session/end", "GET"],
   ["/eve/v1/session/session/stream", "POST"],
   ["/eve/v1/session/session/local-resources", "GET"],
   ["/eve/v1/session/session/local-resources", "POST"],
@@ -83,13 +83,13 @@ it.each([
 it("rejects a forged cleanup header before querying ownership", async () => {
   expect(
     await authenticateEveGateway(
-      request("/eve/v1/session/session/reset", "POST", "wrong")
+      request("/eve/v1/session/session/end", "POST", "wrong")
     )
   ).toBeNull();
   expect(mocks.deleting).not.toHaveBeenCalled();
 });
 it("ordinary requests still require a bound session and cannot reset it", async () => {
-  const reset = request("/eve/v1/session/session/reset", "POST");
+  const reset = request("/eve/v1/session/session/end", "POST");
   reset.headers.delete("x-chatjs-deletion");
   mocks.owns.mockResolvedValue(true);
   expect(await authenticateEveGateway(reset)).toBeNull();
@@ -208,7 +208,7 @@ it("authorizes owned child streams without granting child mutation or cross-owne
     principalId: "owner",
   });
   await Promise.all(
-    ["", "/cancel", "/reset"].map(async (suffix) => {
+    ["", "/cancel", "/end", "/reset"].map(async (suffix) => {
       expect(
         await authenticateEveGateway(
           new Request(`http://localhost/eve/v1/session/child${suffix}`, {

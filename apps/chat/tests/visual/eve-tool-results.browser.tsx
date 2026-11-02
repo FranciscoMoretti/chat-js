@@ -29,9 +29,11 @@ vi.mock("next-themes", () => ({ useTheme: () => ({ resolvedTheme: "dark" }) }));
 
 const common = {
   input: {},
-  state: "output-available",
-  toolCallId: "fixture",
-  type: "dynamic-tool",
+  state: "completed",
+  callId: "fixture",
+  type: "tool",
+  kind: "tool",
+  stepIndex: 0,
 } as const;
 
 test("saved-code results display interactive and PNG charts with text fallback", async () => {
@@ -93,7 +95,8 @@ test("saved-code results display interactive and PNG charts with text fallback",
                     { chart, message: `Result ${index + 1}` },
                     0
                   ),
-                  toolName: "runCodeDocument",
+                  name: "runCodeDocument",
+                  label: "runCodeDocument",
                 }}
               />
             </section>
@@ -149,7 +152,8 @@ test("failed research keeps validated progress alongside its error", async () =>
             },
             { title: "Untrusted update", type: "invalid" },
           ]),
-          toolName: "deepResearch",
+          name: "deepResearch",
+          label: "deepResearch",
         }}
       />
     );
@@ -159,6 +163,43 @@ test("failed research keeps validated progress alongside its error", async () =>
     expect(container.textContent).toContain("Search completed before failure");
     expect(container.textContent).not.toContain("Untrusted update");
     await takeSnapshot("failed-research-progress");
+  } finally {
+    await unmountRoot(root);
+    container.remove();
+  }
+});
+
+test("running research displays progress without a completed result", async () => {
+  document.documentElement.classList.add("dark");
+  const container = document.createElement("main");
+  document.body.append(container);
+  const root = createRoot(container);
+  try {
+    await renderRoot(
+      root,
+      <EveToolResult
+        isReadonly
+        messageId="research"
+        part={{
+          ...common,
+          state: "running",
+          name: "deepResearch",
+          label: "deepResearch",
+          output: createToolResult({ searches: [] }, 0, [
+            {
+              type: "web",
+              title: "Searching sources",
+              status: "running",
+              queries: ["evidence"],
+              toolCallId: "fixture",
+            },
+          ]),
+        }}
+      />
+    );
+    expect(container.textContent).toContain("Searching sources");
+    expect(container.querySelector('[role="alert"]')).toBeNull();
+    await takeSnapshot("running-research-progress");
   } finally {
     await unmountRoot(root);
     container.remove();
@@ -181,12 +222,31 @@ test("installed saved-code transcript covers loading, completion and failure", a
       <div className="grid gap-6">
         <EveToolResult
           isReadonly
+          messageId="denied"
+          part={{
+            ...common,
+            state: "rejected",
+            name: "webSearch",
+            label: "Search",
+          }}
+        />
+        <EveDocumentRunResult
+          part={{
+            ...common,
+            state: "cancelled",
+            name: "runCodeDocument",
+            label: "Code",
+          }}
+        />
+        <EveToolResult
+          isReadonly
           messageId="saved-code"
           part={{
             ...common,
             input,
-            state: "input-available",
-            toolName: "runCodeDocument",
+            state: "requested",
+            name: "runCodeDocument",
+            label: "runCodeDocument",
           }}
         />
         <EveToolResult
@@ -199,7 +259,8 @@ test("installed saved-code transcript covers loading, completion and failure", a
               { ...input, chart: "", message: "Saved revision completed" },
               0
             ),
-            toolName: "runCodeDocument",
+            name: "runCodeDocument",
+            label: "runCodeDocument",
           }}
         />
         <EveToolResult
@@ -209,11 +270,14 @@ test("installed saved-code transcript covers loading, completion and failure", a
             ...common,
             input,
             output: createToolError(0),
-            toolName: "runCodeDocument",
+            name: "runCodeDocument",
+            label: "runCodeDocument",
           }}
         />
       </div>
     );
+    expect(container.textContent).toContain("Request declined.");
+    expect(container.textContent).toContain("Document execution stopped.");
     expect(container.textContent).toContain("Running saved code");
     expect(container.textContent).toContain("Saved revision completed");
     expect(container.querySelector('[role="alert"]')?.textContent).toContain(

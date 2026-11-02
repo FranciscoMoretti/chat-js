@@ -7,13 +7,16 @@ import { McpToolResult } from "../components/part/mcp-tool-result";
 
 const common = {
   input: { text: "Hello MCP" },
-  toolCallId: "echo",
-  toolName: "local__echo",
-  type: "dynamic-tool",
+  callId: "echo",
+  name: "local__echo",
+  label: "local__echo",
+  type: "tool",
+  kind: "tool",
+  stepIndex: 0,
 } as const;
-const parts: Extract<EveMessagePart, { type: "dynamic-tool" }>[] = [
-  { ...common, inputText: "", state: "input-streaming" },
-  { ...common, state: "input-available" },
+const parts: Extract<EveMessagePart, { type: "tool" }>[] = [
+  { ...common, input: undefined, inputText: "", state: "streaming" },
+  { ...common, state: "requested" },
   {
     ...common,
     output: {
@@ -21,7 +24,7 @@ const parts: Extract<EveMessagePart, { type: "dynamic-tool" }>[] = [
       modelOutput: { type: "text", value: "Hello MCP" },
       output: { text: "Hello MCP" },
     },
-    state: "output-available",
+    state: "completed",
   },
   ...[false, 0, true, null, ""].map((output, index) => ({
     ...common,
@@ -30,17 +33,22 @@ const parts: Extract<EveMessagePart, { type: "dynamic-tool" }>[] = [
       modelOutput: { type: "json", value: output },
       output,
     },
-    state: "output-available" as const,
-    toolCallId: `value-${index}`,
-    toolName: `local__value_${index}`,
+    state: "completed" as const,
+    callId: `value-${index}`,
+    name: `local__value_${index}`,
+    label: `local__value_${index}`,
   })),
-  { ...common, errorText: "private connector URL", state: "output-error" },
   {
     ...common,
-    approval: { approved: false, id: "fixture" },
-    state: "output-denied",
+    error: { code: "fixture_error", message: "private connector URL" },
+    state: "failed",
   },
-  { ...common, output: { invalid: true }, state: "output-available" },
+  {
+    ...common,
+
+    state: "rejected",
+  },
+  { ...common, output: { invalid: true }, state: "completed" },
 ];
 const root = document.querySelector("#fixture");
 if (!root) {

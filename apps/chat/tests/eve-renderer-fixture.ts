@@ -2,22 +2,23 @@ import type { EveMessagePart } from "eve/client";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
-import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-
 import { EveToolResult } from "../components/eve/eve-tool-result";
 
 const states: {
   label: string;
-  part: Extract<EveMessagePart, { type: "dynamic-tool" }>;
+  part: Extract<EveMessagePart, { type: "tool" }>;
 }[] = [
   {
     label: "Loading",
     part: {
       input: { text: "one two" },
-      state: "input-available",
-      toolCallId: "loading",
-      toolName: "wordCount",
-      type: "dynamic-tool",
+      state: "requested",
+      callId: "loading",
+      name: "wordCount",
+      label: "wordCount",
+      type: "tool",
+      kind: "tool",
+      stepIndex: 0,
     },
   },
   {
@@ -25,10 +26,13 @@ const states: {
     part: {
       input: { text: "one two" },
       output: { characters: 7, charactersNoSpaces: 6, sentences: 1, words: 2 },
-      state: "output-available",
-      toolCallId: "complete",
-      toolName: "wordCount",
-      type: "dynamic-tool",
+      state: "completed",
+      callId: "complete",
+      name: "wordCount",
+      label: "wordCount",
+      type: "tool",
+      kind: "tool",
+      stepIndex: 0,
     },
   },
   {
@@ -36,75 +40,115 @@ const states: {
     part: {
       input: { text: "one two" },
       output: { words: {} },
-      state: "output-available",
-      toolCallId: "invalid",
-      toolName: "wordCount",
-      type: "dynamic-tool",
+      state: "completed",
+      callId: "invalid",
+      name: "wordCount",
+      label: "wordCount",
+      type: "tool",
+      kind: "tool",
+      stepIndex: 0,
     },
   },
   {
     label: "Failed",
     part: {
-      errorText: "Weather service unavailable",
+      error: { code: "fixture_error", message: "Weather service unavailable" },
       input: {},
-      state: "output-error",
-      toolCallId: "failed",
-      toolName: "getWeather",
-      type: "dynamic-tool",
+      state: "failed",
+      callId: "failed",
+      name: "getWeather",
+      label: "getWeather",
+      type: "tool",
+      kind: "tool",
+      stepIndex: 0,
     },
   },
   {
     label: "Declined",
     part: {
-      approval: { approved: false, id: "approval-fixture" },
       input: { text: "one two" },
-      state: "output-denied",
-      toolCallId: "denied",
-      toolName: "wordCount",
-      type: "dynamic-tool",
+      state: "rejected",
+      callId: "denied",
+      name: "wordCount",
+      label: "wordCount",
+      type: "tool",
+      kind: "tool",
+      stepIndex: 0,
+      interaction: {
+        interactionId: "approval-fixture",
+        turnId: "fixture-turn",
+        stepIndex: 0,
+        status: "settled",
+        outcome: "declined",
+        request: { kind: "approval", prompt: "Approve this tool?" },
+      },
     },
   },
   {
     label: "Preparing input",
     part: {
-      input: { text: "one" },
       inputText: '{"text":"one"',
-      state: "input-streaming",
-      toolCallId: "streaming",
-      toolName: "wordCount",
-      type: "dynamic-tool",
+      state: "streaming",
+      callId: "streaming",
+      name: "wordCount",
+      label: "wordCount",
+      type: "tool",
+      kind: "tool",
+      stepIndex: 0,
     },
   },
   {
     label: "Approval pending",
     part: {
-      approval: { id: "approval" },
       input: { text: "one" },
-      state: "approval-requested",
-      toolCallId: "approval",
-      toolName: "wordCount",
-      type: "dynamic-tool",
+      state: "approval",
+      callId: "approval",
+      name: "wordCount",
+      label: "wordCount",
+      type: "tool",
+      kind: "tool",
+      stepIndex: 0,
+      interaction: {
+        interactionId: "approval",
+        turnId: "fixture-turn",
+        stepIndex: 0,
+        status: "open",
+        request: { kind: "approval", prompt: "Approve this tool?" },
+      },
     },
   },
   {
     label: "Approval received",
     part: {
-      approval: { approved: true, id: "approved" },
       input: { text: "one" },
-      state: "approval-responded",
-      toolCallId: "approved",
-      toolName: "wordCount",
-      type: "dynamic-tool",
+      state: "requested",
+      callId: "approved",
+      name: "wordCount",
+      label: "wordCount",
+      type: "tool",
+      kind: "tool",
+      stepIndex: 0,
+      interaction: {
+        interactionId: "approved",
+        turnId: "fixture-turn",
+        stepIndex: 0,
+        status: "settled",
+        outcome: "accepted",
+        request: { kind: "approval", prompt: "Approve this tool?" },
+      },
     },
   },
   {
     label: "Retrieving content",
     part: {
       input: { url: "https://example.com" },
-      state: "input-available",
-      toolCallId: "retrieving",
-      toolName: "retrieveUrl",
-      type: "dynamic-tool",
+      state: "requested",
+      callId: "retrieving",
+      name: "retrieveUrl",
+      label: "retrieveUrl",
+      type: "tool",
+      kind: "tool",
+      stepIndex: 0,
     },
   },
   {
@@ -122,20 +166,26 @@ const states: {
           },
         ],
       },
-      state: "output-available",
-      toolCallId: "retrieved",
-      toolName: "retrieveUrl",
-      type: "dynamic-tool",
+      state: "completed",
+      callId: "retrieved",
+      name: "retrieveUrl",
+      label: "retrieveUrl",
+      type: "tool",
+      kind: "tool",
+      stepIndex: 0,
     },
   },
   {
     label: "Weather loading",
     part: {
       input: { latitude: 0, longitude: 0 },
-      state: "input-available",
-      toolCallId: "weather-loading",
-      toolName: "getWeather",
-      type: "dynamic-tool",
+      state: "requested",
+      callId: "weather-loading",
+      name: "getWeather",
+      label: "getWeather",
+      type: "tool",
+      kind: "tool",
+      stepIndex: 0,
     },
   },
 ];
@@ -144,18 +194,17 @@ const content = renderToStaticMarkup(
   createElement(
     "main",
     { className: "mx-auto max-w-3xl space-y-6 p-6" },
-    states.map(
-      ({ label, part }: ReadonlyNativeSurface<(typeof states)[number]>) =>
-        createElement(
-          "section",
-          { className: "space-y-2", key: label },
-          createElement("h2", { className: "font-semibold" }, label),
-          createElement(EveToolResult, {
-            isReadonly: true,
-            messageId: "fixture",
-            part,
-          })
-        )
+    states.map(({ label, part }: Readonly<(typeof states)[number]>) =>
+      createElement(
+        "section",
+        { className: "space-y-2", key: label },
+        createElement("h2", { className: "font-semibold" }, label),
+        createElement(EveToolResult, {
+          isReadonly: true,
+          messageId: "fixture",
+          part,
+        })
+      )
     )
   )
 );

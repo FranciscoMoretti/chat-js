@@ -1,4 +1,5 @@
-import type { MessageStreamEvent } from "eve/client";
+import { z } from "zod";
+import type { SessionStreamEvent } from "eve/client";
 import { beforeEach, expect, it, vi } from "vitest";
 import type { recordEveUsage } from "../db/eve-billing";
 
@@ -16,14 +17,13 @@ beforeEach(() => {
   record.mockReset();
   register.mockReset();
 });
-it.each(["step.completed", "step.failed", "compaction.completed"] as const)(
-  "never charges model event %s through replay",
-  async (type) => {
+it.each(["completed", "failed"] as const)(
+  "never charges model settlement %s through replay",
+  async (outcome) => {
     await expect(
       ingestEveUsage("owner", "session", {
-        type,
-        meta: { id: "event", at: "2026-10-13T00:00:00Z" },
-        data: { usage: { costUsd: 4 } },
+        type: "model.settled",
+        data: { runId: "run", outcome },
       })
     ).resolves.toBe(true);
     expect(record).not.toHaveBeenCalled();
@@ -31,26 +31,25 @@ it.each(["step.completed", "step.failed", "compaction.completed"] as const)(
 );
 const toolEvent = (
   output: unknown,
-  id = "event-one",
-  status: Extract<
-    MessageStreamEvent,
-    { type: "action.result" }
-  >["data"]["status"] = "completed"
-): Parameters<typeof ingestEveUsage>[2] & {
-  data: { result: { toolName: string } };
-} => ({
+  line = 0,
+  outcome: Extract<
+    SessionStreamEvent,
+    { type: "call.settled" }
+  >["data"]["outcome"] = "completed"
+): SessionStreamEvent => ({
+  type: "call.settled",
   data: {
-    result: {
-      callId: "call-external",
-      kind: "tool-result",
-      output,
-      toolName: "externalPaidTool",
-    },
-    status,
-    turnId: "turn_1",
+    callId: "call-external",
+    outcome,
+    // oxlint-disable-next-line unicorn/prefer-structured-clone -- Match JSON transport: undefined receipt fields are omitted on the wire.
+    output: z.json().parse(JSON.parse(JSON.stringify(output))),
   },
-  meta: { at: "2026-09-27T00:00:00Z", id },
-  type: "action.result",
+  scope: { turnId: "turn_1" },
+  meta: {
+    at: "2026-09-27T00:00:00Z",
+    position: { line, index: 0 },
+    endOfLine: true,
+  },
 });
 
 it("ingests receipts from arbitrary installed names with the same ledger identity after replay", async () => {
@@ -64,7 +63,7 @@ it("ingests receipts from arbitrary installed names with the same ledger identit
   );
   record.mockResolvedValue(true);
   await ingestEveUsage("owner", "session", toolEvent(output));
-  await ingestEveUsage("owner", "session", toolEvent(output, "replayed-event"));
+  await ingestEveUsage("owner", "session", toolEvent(output, 1));
   expect(record).toHaveBeenCalledTimes(2);
   expect(record.mock.calls[0]).toEqual(record.mock.calls[1]);
   expect(record.mock.calls[0][0]).toEqual({
@@ -74,11 +73,7 @@ it("ingests receipts from arbitrary installed names with the same ledger identit
     sessionId: "session",
     turnId: "turn_1",
   });
-  await ingestEveUsage(
-    "owner",
-    "session",
-    toolEvent(output, "rejected-event", "rejected")
-  );
+  await ingestEveUsage("owner", "session", toolEvent(output, 2, "rejected"));
   expect(record.mock.calls[2][0]).toEqual({
     costUsd: 0,
     eventId: "eve-tool:session:call-external",
@@ -199,8 +194,8 @@ it("permits cursor advancement for events without a billable tool receipt", asyn
   ).toBe(true);
   expect(
     await ingestEveUsage("owner", "session", {
-      type: "session.completed",
-      meta: { at: "2026-10-13T00:00:00Z", id: "completion" },
+      type: "session.ended",
+      data: { outcome: "completed" },
     })
   ).toBe(true);
   expect(record).not.toHaveBeenCalled();
@@ -208,9 +203,14 @@ it("permits cursor advancement for events without a billable tool receipt", asyn
 
 it("registers native local child sessions for independent charging and ignores remote sessions", async () => {
   const event = {
-    type: "agent.started",
-    meta: { id: "child-started", at: "2026-10-17T12:00:00Z" },
-    data: { turnId: "turn", sessionId: "child", remote: undefined },
+    type: "child.opened",
+    scope: { turnId: "turn" },
+    data: {
+      sessionId: "child",
+      owner: { callId: "call" },
+      name: "research",
+      stream: "/eve/v1/session/child/stream",
+    },
   } satisfies Parameters<typeof ingestEveUsage>[2];
   await expect(ingestEveUsage("owner", "parent", event)).resolves.toBe(true);
   expect(register).toHaveBeenCalledExactlyOnceWith(
@@ -222,7 +222,7 @@ it("registers native local child sessions for independent charging and ignores r
   await expect(
     ingestEveUsage("owner", "parent", {
       ...event,
-      data: { ...event.data, remote: { url: "https://remote.test" } },
+      data: { ...event.data, stream: "https://remote.test/stream" },
     })
   ).resolves.toBe(true);
   expect(register).toHaveBeenCalledOnce();

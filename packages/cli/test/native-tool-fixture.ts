@@ -1,7 +1,8 @@
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import { run } from "./run-command";
+import { parsePackageJson } from "../src/helpers/package-manifest";
 
 const NATIVE_RUNTIME_TIMEOUT_MS = 180_000;
 
@@ -67,6 +68,9 @@ export const PaidCounterRenderer = defineToolRenderer({
 
 /** Run the installed app's registration through a real, isolated EVE worker. */
 const verifyNativeToolRuntime = async (cwd: string) => {
+  const manifest = parsePackageJson(
+    await readFile(path.join(cwd, "package.json"), "utf-8")
+  );
   const fixture = path.join(cwd, "native-runtime");
   await mkdir(path.join(fixture, "agent/tools"), { recursive: true });
   await mkdir(path.join(fixture, "agent/hooks"), { recursive: true });
@@ -81,7 +85,7 @@ const verifyNativeToolRuntime = async (cwd: string) => {
       path.join(fixture, "agent/channels/eve.ts"),
       `import { eveChannel } from "eve/channels/eve";
 export default eveChannel({
-  auth: () => ({ principalId: "fixture", principalType: "user", authenticator: "chatjs-gateway", attributes: {} }),
+  auth: () => ({ principalId: "fixture", principalType: "local-dev", authenticator: "chatjs-gateway", attributes: {} }),
 });\n`
     ),
     writeFile(
@@ -97,7 +101,7 @@ export default eveChannel({
     writeFile(
       path.join(fixture, "package.json"),
       JSON.stringify({
-        dependencies: { eve: "npm:@chat-js/eve@0.61.0-chatjs.0" },
+        dependencies: { eve: manifest.dependencies?.eve },
         private: true,
         type: "module",
       })
@@ -139,19 +143,21 @@ export default ["words", "success", "failure", "exception"].map((scenario) => de
     turn.succeeded();
     if (!turn.toolCalls.length) t.log(JSON.stringify(turn.events));
     const name = scenario === "words" ? "wordCount" : "externalPaidCounter";
-    const client = new Client({ host: t.target.url });
+    const client = new Client({ baseUrl: t.target.url });
     const snapshot = await client.sessions.attach(turn.sessionId).snapshot();
-    const result = snapshot.events.find((event) => event.type === "action.result" && event.data.result.kind === "tool-result" && event.data.result.toolName === name);
+    const request = snapshot.events.find((event) => event.type === "call.requested" && event.data.capability.kind === "tool" && event.data.capability.name === name);
+    assert.ok(request);
+    const result = snapshot.events.find((event) => event.type === "call.settled" && event.data.callId === request.data.callId);
     if (scenario === "exception") {
-      assert.equal(result?.data.status, "failed");
+      assert.equal(result?.data.outcome, "failed");
       return;
     }
-    assert.equal(result?.data.status, "completed");
+    assert.equal(result?.data.outcome, "completed");
     const receipt = turn.requireToolCall(name).output;
     assert.equal(receipt.usage.costUsd, scenario === "words" ? 0 : 0.02);
     assert.equal(receipt.error, scenario === "failure" ? "The tool did not complete." : undefined);
     assert.deepEqual(receipt.output, scenario === "failure" ? null : scenario === "words" ? { characters: 7, charactersNoSpaces: 6, sentences: 1, words: 2 } : { answer: 42 });
-    assert.deepEqual(result?.data.result.output, receipt);
+    assert.deepEqual(result?.data.output, receipt);
   },
 }));`
     ),

@@ -22,8 +22,6 @@ const confirmNote = defineTool({
   }),
 });
 
-export default defineDynamic({
-  events: {
-    "step.started": () => filterEveTools({ confirm_note: confirmNote }),
-  },
-});
+export default defineDynamic(() =>
+  filterEveTools({ confirm_note: confirmNote })
+);

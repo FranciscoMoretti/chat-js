@@ -1,8 +1,8 @@
+import { nativeToolEvents } from "./helpers/eve-tool-events";
 import { expect, test } from "@playwright/test";
 import type { Browser, Page, Route } from "@playwright/test";
 import { eq } from "drizzle-orm";
 import { Client } from "eve/client";
-import type { MessageStreamEvent } from "eve/client";
 import { z } from "zod";
 
 import { db } from "../lib/db/client";
@@ -18,23 +18,6 @@ import { keyFromFileUrl } from "../lib/file-url";
 import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(env.DATABASE_URL);
-type ImageActionResultEvent = Extract<
-  MessageStreamEvent,
-  { type: "action.result" }
->;
-type ImageEventReader =
-  | (Omit<ImageActionResultEvent, "data"> & {
-      readonly data: Readonly<
-        Omit<ImageActionResultEvent["data"], "result">
-      > & {
-        readonly result: Readonly<ImageActionResultEvent["data"]["result"]>;
-      };
-    })
-  | {
-      readonly type: Exclude<MessageStreamEvent["type"], "action.result">;
-      readonly data?: unknown;
-    };
-
 test("native image generation, editing and sharing preserve stored results", async ({
   page,
   browser,
@@ -93,21 +76,17 @@ test("native image generation, editing and sharing preserve stored results", asy
   const snapshot = await client.sessions
     .attach(binding.sessionId)
     .snapshot({ signal: AbortSignal.timeout(15_000) });
-  const results = snapshot.events.filter(
-    (event: ImageEventReader) =>
-      event.type === "action.result" &&
-      event.data.result.kind === "tool-result" &&
-      event.data.result.toolName === "generateImage"
+  const results = nativeToolEvents(
+    snapshot.events,
+    "generateImage",
+    "call.settled"
   );
   expect(results).toHaveLength(1);
   const [result] = results;
-  if (
-    result.type !== "action.result" ||
-    result.data.result.kind !== "tool-result"
-  ) {
+  if (result.type !== "call.settled") {
     throw new Error("Missing native image result");
   }
-  const receipt = toolResultSchema.parse(result.data.result.output);
+  const receipt = toolResultSchema.parse(result.data.output);
   expect(receipt.output).toMatchObject({ imageUrl: src });
   expect(receipt.usage.costUsd).toBeGreaterThan(0);
   await image.screenshot({
@@ -158,11 +137,10 @@ test("native image generation, editing and sharing preserve stored results", asy
   const afterEdit = await client.sessions
     .attach(binding.sessionId)
     .snapshot({ signal: AbortSignal.timeout(15_000) });
-  const imageResults = afterEdit.events.filter(
-    (event: ImageEventReader) =>
-      event.type === "action.result" &&
-      event.data.result.kind === "tool-result" &&
-      event.data.result.toolName === "generateImage"
+  const imageResults = nativeToolEvents(
+    afterEdit.events,
+    "generateImage",
+    "call.settled"
   );
   expect(imageResults).toHaveLength(2);
   const registered = await db
@@ -185,14 +163,11 @@ test("native image generation, editing and sharing preserve stored results", asy
     registered.every((file) => file.ownerId === conversation.ownerId)
   ).toBe(true);
   for (const event of imageResults) {
-    if (
-      event.type !== "action.result" ||
-      event.data.result.kind !== "tool-result"
-    ) {
+    if (event.type !== "call.settled") {
       throw new Error("Missing image result");
     }
     expect(
-      toolResultSchema.parse(event.data.result.output).usage.costUsd
+      toolResultSchema.parse(event.data.output).usage.costUsd
     ).toBeGreaterThan(0);
   }
   await page.getByRole("button", { exact: true, name: "Share chat" }).click();

@@ -15,7 +15,7 @@ import {
   trpcClient,
 } from "./eve-artifact-query.fixture";
 
-type Part = Extract<EveMessagePart, { type: "dynamic-tool" }>;
+type Part = Extract<EveMessagePart, { type: "tool" }>;
 const completed: Part = {
   input: {},
   output: {
@@ -26,10 +26,13 @@ const completed: Part = {
     status: "success",
     title: "Orchard notes",
   },
-  state: "output-available",
-  toolCallId: "write-1",
-  toolName: "createTextDocument",
-  type: "dynamic-tool",
+  state: "completed",
+  callId: "write-1",
+  name: "createTextDocument",
+  label: "createTextDocument",
+  type: "tool",
+  kind: "tool",
+  stepIndex: 0,
 };
 
 const Fixture = ({
@@ -55,15 +58,14 @@ const Fixture = ({
           onClick={() => {
             startReplay();
             setPart({
-              input: {
-                content: "Replayed historical content",
-                title: "Orchard notes",
-              },
               inputText: "{}",
-              state: "input-streaming",
-              toolCallId: "write-1",
-              toolName: "createTextDocument",
-              type: "dynamic-tool",
+              state: "streaming",
+              callId: "write-1",
+              name: "createTextDocument",
+              label: "createTextDocument",
+              type: "tool",
+              kind: "tool",
+              stepIndex: 0,
             });
           }}
         >
@@ -86,10 +88,13 @@ const Fixture = ({
                   "# Orchard notes\n\nPartial apple planting instructions.",
                 title: "Orchard notes",
               },
-              state: "input-available",
-              toolCallId: "write-1",
-              toolName: "createTextDocument",
-              type: "dynamic-tool",
+              state: "requested",
+              callId: "write-1",
+              name: "createTextDocument",
+              label: "createTextDocument",
+              type: "tool",
+              kind: "tool",
+              stepIndex: 0,
             });
           }}
           type="button"
@@ -99,12 +104,15 @@ const Fixture = ({
         <button
           onClick={() => {
             setPart({
-              errorText: "Document cancelled.",
+              error: { code: "fixture_error", message: "Document cancelled." },
               input: {},
-              state: "output-error",
-              toolCallId: "write-1",
-              toolName: "createTextDocument",
-              type: "dynamic-tool",
+              state: "failed",
+              callId: "write-1",
+              name: "createTextDocument",
+              label: "createTextDocument",
+              type: "tool",
+              kind: "tool",
+              stepIndex: 0,
             });
           }}
           type="button"
@@ -121,7 +129,11 @@ const Fixture = ({
         </button>
         <button
           onClick={() => {
-            setPart({ ...completed, toolName: "readDocument" });
+            setPart({
+              ...completed,
+              name: "readDocument",
+              label: "readDocument",
+            });
           }}
           type="button"
         >

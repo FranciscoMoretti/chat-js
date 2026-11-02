@@ -15,10 +15,47 @@ vi.mock("eve/client", async (importOriginal) => ({
           }
           return {
             events: [
-              { type: "message.received", data: { turnId: "fixture-turn" } },
-              { type: "turn.completed", data: { turnId: "fixture-turn" } },
-              { type: "session.waiting" },
-            ],
+              { type: "session.started", data: {} },
+              {
+                type: "delivery.admitted",
+                data: { deliveryId: `delivery-${sessionId}` },
+              },
+              {
+                type: "turn.started",
+                data: {
+                  turnId: "fixture-turn",
+                  cause: { deliveryId: `delivery-${sessionId}` },
+                  follows: null,
+                },
+              },
+              {
+                type: "delivery.consumed",
+                data: {
+                  deliveryId: `delivery-${sessionId}`,
+                  turnId: "fixture-turn",
+                  parts: [{ kind: "text", text: "Fixture" }],
+                },
+              },
+              {
+                type: "delivery.settled",
+                data: {
+                  deliveryId: `delivery-${sessionId}`,
+                  turnId: "fixture-turn",
+                  outcome: "handled",
+                },
+              },
+              {
+                type: "turn.settled",
+                data: { turnId: "fixture-turn", outcome: "completed" },
+              },
+            ].map((event, line) => ({
+              ...event,
+              meta: {
+                at: "2026-11-02T00:00:00Z",
+                position: { line, index: 0 },
+                endOfLine: true,
+              },
+            })),
           };
         },
       }),
@@ -43,8 +80,11 @@ vi.mock("../lib/eve/completed-copy-source", () => ({
   }),
 }));
 
-export const createEveTestSession = (): string => {
+export const createEveTestSession = async (): Promise<{
+  sessionId: string;
+  deliveryId: string;
+}> => {
   const id = crypto.randomUUID();
   sessions.add(id);
-  return id;
+  return await Promise.resolve({ sessionId: id, deliveryId: `delivery-${id}` });
 };

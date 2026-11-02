@@ -5,7 +5,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { EveToolResult } from "../components/eve/eve-tool-result";
 import { createToolResult } from "../lib/eve/tool-result";
 
-const parts: Extract<EveMessagePart, { type: "dynamic-tool" }>[] = [
+const parts: Extract<EveMessagePart, { type: "tool" }>[] = [
   {
     input: {
       search_queries: [{ query: "example", maxResults: null }],
@@ -13,10 +13,13 @@ const parts: Extract<EveMessagePart, { type: "dynamic-tool" }>[] = [
       searchDepth: null,
       exclude_domains: null,
     },
-    state: "input-available",
-    toolCallId: "loading",
-    toolName: "webSearch",
-    type: "dynamic-tool",
+    state: "requested",
+    callId: "loading",
+    name: "webSearch",
+    label: "webSearch",
+    type: "tool",
+    kind: "tool",
+    stepIndex: 0,
   },
   {
     input: {
@@ -34,24 +37,29 @@ const parts: Extract<EveMessagePart, { type: "dynamic-tool" }>[] = [
         queries: ["example"],
       },
     ]),
-    partial: true,
-    state: "output-available",
-    toolCallId: "progress",
-    toolName: "webSearch",
-    type: "dynamic-tool",
+    state: "running",
+    callId: "progress",
+    name: "webSearch",
+    label: "webSearch",
+    type: "tool",
+    kind: "tool",
+    stepIndex: 0,
   },
   {
-    errorText: "Search interrupted.",
+    error: { code: "fixture_error", message: "Search interrupted." },
     input: {
       search_queries: [{ query: "example", maxResults: null }],
       topics: null,
       searchDepth: null,
       exclude_domains: null,
     },
-    state: "output-error",
-    toolCallId: "failed",
-    toolName: "webSearch",
-    type: "dynamic-tool",
+    state: "failed",
+    callId: "failed",
+    name: "webSearch",
+    label: "webSearch",
+    type: "tool",
+    kind: "tool",
+    stepIndex: 0,
   },
   {
     input: {
@@ -67,10 +75,13 @@ const parts: Extract<EveMessagePart, { type: "dynamic-tool" }>[] = [
       },
       0.05
     ),
-    state: "output-available",
-    toolCallId: "provider",
-    toolName: "webSearch",
-    type: "dynamic-tool",
+    state: "completed",
+    callId: "provider",
+    name: "webSearch",
+    label: "webSearch",
+    type: "tool",
+    kind: "tool",
+    stepIndex: 0,
   },
   {
     input: {
@@ -80,23 +91,36 @@ const parts: Extract<EveMessagePart, { type: "dynamic-tool" }>[] = [
       exclude_domains: null,
     },
     output: {},
-    state: "output-available",
-    toolCallId: "malformed",
-    toolName: "webSearch",
-    type: "dynamic-tool",
+    state: "completed",
+    callId: "malformed",
+    name: "webSearch",
+    label: "webSearch",
+    type: "tool",
+    kind: "tool",
+    stepIndex: 0,
   },
   {
-    approval: { approved: false, id: "declined" },
     input: {
       search_queries: [{ query: "example", maxResults: null }],
       topics: null,
       searchDepth: null,
       exclude_domains: null,
     },
-    state: "output-denied",
-    toolCallId: "denied",
-    toolName: "webSearch",
-    type: "dynamic-tool",
+    state: "rejected",
+    callId: "denied",
+    name: "webSearch",
+    label: "webSearch",
+    type: "tool",
+    kind: "tool",
+    stepIndex: 0,
+    interaction: {
+      interactionId: "declined",
+      turnId: "fixture-turn",
+      stepIndex: 0,
+      status: "settled",
+      outcome: "declined",
+      request: { kind: "approval", prompt: "Approve this tool?" },
+    },
   },
 ];
 process.stdout.write(
@@ -107,7 +131,7 @@ process.stdout.write(
       parts.map((part) =>
         createElement(
           "section",
-          { className: "rounded border p-3", key: part.toolCallId },
+          { className: "rounded border p-3", key: part.callId },
           createElement(EveToolResult, {
             isReadonly: true,
             messageId: "fixture",

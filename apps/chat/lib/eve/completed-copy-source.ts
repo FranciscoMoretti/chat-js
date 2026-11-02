@@ -34,7 +34,7 @@ export const readCompletedEveCopyTranscript = async (
     .snapshot({ signal: AbortSignal.timeout(15_000) });
   const observed = new Set(
     snapshot.events.flatMap((event) =>
-      event.type === "message.received" ? (event.meta.deliveryIds ?? []) : []
+      event.type === "delivery.consumed" ? [event.data.deliveryId] : []
     )
   );
   if (

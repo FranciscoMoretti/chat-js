@@ -29,7 +29,7 @@ export const EveThinkingMessage = ({
       if (part.type === "text") {
         return Boolean(part.text.trim());
       }
-      return part.type !== "step-start";
+      return true;
     });
   if (status === "submitted" || !hasContent) {
     return (

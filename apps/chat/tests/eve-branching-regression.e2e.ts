@@ -11,20 +11,30 @@ assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
 const prompt = (word: string): string =>
   `Reply with exactly ${word}. Do not use tools.`;
 const users = (page: Page) =>
-  page.getByRole("log").locator('[data-role="user"]');
+  page
+    .getByRole("region", { name: "Messages", exact: true })
+    .locator('[data-role="user"]');
 const assistants = (page: Page) =>
-  page.getByRole("log").locator('[data-role="assistant"]');
+  page
+    .getByRole("region", { name: "Messages", exact: true })
+    .locator('[data-role="assistant"]');
 const ready = async (page: Page): Promise<void> => {
-  await expect(page.getByText("Ready", { exact: true })).toBeVisible({
-    timeout: 60_000,
-  });
+  await expect(
+    page.getByRole("button", { name: "Stop", exact: true })
+  ).toHaveCount(0, { timeout: 60_000 });
+  await expect(
+    page.getByRole("button", { name: "Edit message", exact: true }).last()
+  ).toBeEnabled();
   await expect(
     page.getByText("Creating response…", { exact: true })
   ).toHaveCount(0);
 };
 const send = async (page: Page, word: string): Promise<void> => {
   const composer = page
-    .getByRole("group", { name: "Message composer", exact: true })
+    .locator("form")
+    .filter({
+      has: page.getByRole("textbox", { name: "Message", exact: true }),
+    })
     .last();
   await composer
     .getByRole("textbox", { name: "Message", exact: true })
@@ -45,11 +55,14 @@ const edit = async (
     .nth(index)
     .click();
   const editor = page
-    .getByRole("log")
-    .getByRole("group", { name: "Message composer", exact: true });
-  await editor
-    .getByRole("textbox", { name: "Message", exact: true })
-    .fill(prompt(word));
+    .getByRole("region", { name: "Messages", exact: true })
+    .locator("form")
+    .filter({
+      has: page.getByRole("textbox", { name: "Message", exact: true }),
+    });
+  const input = editor.getByRole("textbox", { name: "Message", exact: true });
+  await input.press("ControlOrMeta+a");
+  await input.pressSequentially(prompt(word));
   const accepted = page.waitForResponse(
     (response) =>
       response.url().endsWith("/api/agent-conversations") &&
@@ -95,12 +108,18 @@ test("branch boundaries survive edits, regeneration, reload and multiple tabs wi
   await edit(page, 2, "indigo");
   await expect(users(page)).toHaveCount(3);
   await expect(users(page).nth(1)).toContainText("cobalt");
-  await expect(page.getByRole("log")).not.toContainText("violet");
+  await expect(
+    page.getByRole("region", { name: "Messages", exact: true })
+  ).not.toContainText("violet");
   await edit(page, 1, "jade");
   await expect(users(page)).toHaveCount(2);
   await expect(users(page).first()).toContainText("amber");
-  await expect(page.getByRole("log")).not.toContainText("cobalt");
-  await expect(page.getByRole("log")).not.toContainText("violet");
+  await expect(
+    page.getByRole("region", { name: "Messages", exact: true })
+  ).not.toContainText("cobalt");
+  await expect(
+    page.getByRole("region", { name: "Messages", exact: true })
+  ).not.toContainText("violet");
   await expect(
     users(page)
       .nth(1)
@@ -140,7 +159,9 @@ test("branch boundaries survive edits, regeneration, reload and multiple tabs wi
   await ready(page);
   await edit(page, 0, "saffron");
   await expect(users(page)).toHaveCount(1);
-  await expect(page.getByRole("log")).not.toContainText("amber");
+  await expect(
+    page.getByRole("region", { name: "Messages", exact: true })
+  ).not.toContainText("amber");
   const accepted = await edit(page, 0, "silver");
   const operation = createConversationInput.parse(
     accepted.request().postDataJSON()
@@ -188,11 +209,14 @@ test("branch boundaries survive edits, regeneration, reload and multiple tabs wi
     .first()
     .click();
   const editor = page
-    .getByRole("log")
-    .getByRole("group", { name: "Message composer", exact: true });
-  await editor
-    .getByRole("textbox", { name: "Message", exact: true })
-    .fill(prompt("recovered"));
+    .getByRole("region", { name: "Messages", exact: true })
+    .locator("form")
+    .filter({
+      has: page.getByRole("textbox", { name: "Message", exact: true }),
+    });
+  const input = editor.getByRole("textbox", { name: "Message", exact: true });
+  await input.press("ControlOrMeta+a");
+  await input.pressSequentially(prompt("recovered"));
   let lostBinding: ReturnType<typeof conversationBinding.parse> | undefined;
   await page.route(
     "**/api/agent-conversations",

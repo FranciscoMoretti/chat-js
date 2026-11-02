@@ -1,3 +1,6 @@
+import { dynamicEvaluate } from "@eve-test/dist/src/dynamic/definition.js";
+import { testDynamicContext } from "../../tests/helpers/eve-dynamic-context";
+import { testHookContext } from "../../tests/helpers/eve-hook-context";
 import type { HookContext } from "eve/hooks";
 import { beforeEach, expect, test, vi } from "vitest";
 
@@ -26,10 +29,7 @@ vi.mock("eve/context", () => ({
 vi.mock("eve/hooks", () => ({
   defineHook: <Value>(value: Value): Value => value,
 }));
-vi.mock("eve/instructions", () => ({
-  defineDynamic: <Value>(value: Value): Value => value,
-  defineInstructions: <Value>(value: Value): Value => value,
-}));
+
 vi.mock("@/chatjs/plugins/projects/instructions-state", () => ({
   projectInstructions: {
     get: (): typeof mocks.state => mocks.state,
@@ -48,9 +48,10 @@ vi.mock("@/chatjs/plugins/projects/db/project-queries", () => ({
 const hookContext = (
   sequence: number,
   parent?: HookContext["session"]["parent"]
-): HookContext => ({
+): HookContext<"*"> => ({
+  ...testHookContext(),
   agent: { name: "chatjs" },
-  channel: {},
+  channel: { kind: "http", metadata: {} },
   cancel: (): never => {
     throw new Error("Unexpected cancellation");
   },
@@ -79,35 +80,21 @@ const startTurn = async (
 ) =>
   await conversation.events?.["turn.started"]?.(
     {
-      data: { sequence, turnId: `turn_${sequence}` },
-      meta: { at: "2026-09-11T12:00:00Z", id: `event_${sequence}` },
+      data: {
+        turnId: `turn_${sequence}`,
+        cause: { deliveryId: `delivery_${sequence}` },
+        follows: null,
+      },
       type: "turn.started",
     },
     hookContext(sequence, parent)
   );
 
-const readInstructions = ():
-  | ReturnType<NonNullable<(typeof instructions.events)["turn.started"]>>
-  | undefined =>
-  instructions.events["turn.started"]?.(
-    {},
-    {
-      channel: {},
-      messages: [],
-      model: null,
-      session: {
-        auth: {
-          current: null,
-          initiator: {
-            authenticator: "chatjs-gateway",
-            attributes: {},
-            principalId: "owner",
-            principalType: "user",
-          },
-        },
-        id: "native-session",
-      },
-    }
+const readInstructions = async () =>
+  await dynamicEvaluate(instructions)(
+    testDynamicContext({
+      session: hookContext(0).session,
+    })
   );
 
 beforeEach(() => {
@@ -129,24 +116,24 @@ test("refreshes project instructions for each turn and clears them after detachm
     "inherited-reservation"
   );
   expect(mocks.project).toHaveBeenCalledWith("owner", "conversation");
-  expect(readInstructions()).toEqual({
+  expect(await readInstructions()).toMatchObject({
     content: "Project instructions:\nFirst instruction",
   });
   mocks.project.mockResolvedValueOnce({ instructions: "Edited instruction" });
   await startTurn(1);
-  expect(readInstructions()).toEqual({
+  expect(await readInstructions()).toMatchObject({
     content: "Project instructions:\nEdited instruction",
   });
   mocks.project.mockResolvedValueOnce(null);
   await startTurn(2);
-  expect(readInstructions()).toBeNull();
+  expect(await readInstructions()).toBeNull();
 });
 
 test("propagates required context failures and removes the previous turn's instructions", async () => {
   mocks.state.content = "Stale instructions";
   mocks.project.mockRejectedValueOnce(new Error("Database unavailable"));
   await expect(startTurn(1)).rejects.toThrow("Database unavailable");
-  expect(readInstructions()).toBeNull();
+  expect(await readInstructions()).toBeNull();
   mocks.resolve.mockRejectedValueOnce(new Error("Unbound session"));
   await expect(startTurn(2)).rejects.toThrow("Unbound session");
   expect(mocks.project).toHaveBeenCalledTimes(1);
@@ -169,17 +156,16 @@ test("loads root project context for descendants", async () => {
     expect.any(AbortSignal),
     undefined
   );
-  expect(readInstructions()).toEqual({
+  expect(await readInstructions()).toMatchObject({
     content: "Project instructions:\nRoot project instruction",
   });
 });
 
 test("generates user follow-up suggestions only for the root session", async () => {
-  await followups.events?.["turn.completed"]?.(
+  await followups.events?.["turn.settled"]?.(
     {
-      data: { sequence: 0, turnId: "turn_0" },
-      meta: { at: "2026-09-11T12:00:00Z", id: "completed-child" },
-      type: "turn.completed",
+      data: { turnId: "turn_0", outcome: "completed" },
+      type: "turn.settled",
     },
     hookContext(0, {
       callId: "child-call",
@@ -189,11 +175,10 @@ test("generates user follow-up suggestions only for the root session", async () 
     })
   );
   expect(mocks.followups).not.toHaveBeenCalled();
-  await followups.events?.["turn.completed"]?.(
+  await followups.events?.["turn.settled"]?.(
     {
-      data: { sequence: 0, turnId: "turn_0" },
-      meta: { at: "2026-09-11T12:00:00Z", id: "completed-root" },
-      type: "turn.completed",
+      data: { turnId: "turn_0", outcome: "completed" },
+      type: "turn.settled",
     },
     hookContext(0)
   );

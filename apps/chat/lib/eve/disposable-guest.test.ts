@@ -79,7 +79,7 @@ test("every read, send, cancel and retirement is restricted to the signed sessio
   ).not.toBeNull();
   expect(
     await authenticateDisposableGuest(
-      request(token, "session/session-owned/reset", {})
+      request(token, "session/session-owned/end", {})
     )
   ).not.toBeNull();
   await Promise.all(
@@ -203,7 +203,7 @@ test("cleanup credentials work only for deleting sessions and cannot send messag
   const token = issueGuestCredential(identity);
   expect(
     await authenticateDisposableGuest(
-      request(token, "session/session-owned/reset", {
+      request(token, "session/session-owned/end", {
         reason: "Guest retention expired",
       })
     )
@@ -217,7 +217,7 @@ test("cleanup credentials work only for deleting sessions and cannot send messag
   });
   expect(
     await authenticateDisposableGuest(
-      request(token, "session/session-owned/reset", {
+      request(token, "session/session-owned/end", {
         reason: "Guest retention expired",
       })
     )
@@ -245,7 +245,7 @@ test("cleanup retires old gateway sessions without permitting new messages or ot
   const token = issueGuestCredential(previous);
   expect(
     await authenticateDisposableGuest(
-      request(token, "session/session-owned/reset", {
+      request(token, "session/session-owned/end", {
         reason: "Guest retention expired",
       })
     )
@@ -256,12 +256,12 @@ test("cleanup retires old gateway sessions without permitting new messages or ot
     )
   ).toBeNull();
   expect(
-    await authenticateDisposableGuest(request(token, "session/other/reset", {}))
+    await authenticateDisposableGuest(request(token, "session/other/end", {}))
   ).toBeNull();
   const mismatched = issueGuestCredential({ ...previous, modelId: "wrong" });
   expect(
     await authenticateDisposableGuest(
-      request(mismatched, "session/session-owned/reset", {})
+      request(mismatched, "session/session-owned/end", {})
     )
   ).toBeNull();
 });
