@@ -159,6 +159,9 @@ const toolItems = (
           kind: "tool",
         }),
       },
+      ...(definition.id === "retrieve-url"
+        ? { registryDependencies: ["alert"] }
+        : {}),
       name: definition.id,
       type: "registry:item",
     }) satisfies RegistryItem

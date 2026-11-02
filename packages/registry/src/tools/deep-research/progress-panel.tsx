@@ -1,4 +1,11 @@
-import { Maximize2, Minimize2 } from "lucide-react";
+import {
+  Trace,
+  TraceCollapsible,
+  TraceCollapsibleTrigger,
+  TraceCollapsibleContent,
+  TraceLine,
+  TraceTitle,
+} from "@/components/ui/trace";
 // Type-only imports
 import type {
   ResearchUpdate,
@@ -8,8 +15,6 @@ import React from "react";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { ResearchTask } from "./task";
 import { ResearchTasks } from "./tasks";
-import { UpdateTitle } from "./update-title";
-import { cn } from "@/lib/utils";
 
 // Add the updateName mapping (consider moving to a shared util later)
 const updateName = {
@@ -93,54 +98,24 @@ export const ResearchProgress = ({
   }, [updates, isComplete]);
 
   return (
-    <div className="w-full rounded-lg border p-1">
-      <button
-        className={cn(
-          "flex w-full cursor-pointer items-center justify-between rounded-lg px-3 py-2",
-          "hover:bg-accent hover:text-accent-foreground transition-colors"
-        )}
-        onClick={(): void => {
-          setIsExpanded(!isExpanded);
-        }}
-        type="button"
-      >
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            {isComplete ? (
-              <span className="text-muted-foreground text-xs">{`Researched for ${timeSpent} seconds, ${searchCount} searches, ${sourceCount} sources`}</span>
-            ) : (
-              <UpdateTitle isRunning={!isComplete} title={lastUpdateTitle} />
-            )}
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          {isExpanded ? (
-            <Minimize2
-              aria-hidden="true"
-              className="text-muted-foreground size-4 shrink-0"
-            />
-          ) : (
-            <Maximize2
-              aria-hidden="true"
-              className="text-muted-foreground size-4 shrink-0"
-            />
-          )}
-        </div>
-      </button>
-
-      {isExpanded ? (
-        <div className="px-1 pt-2 pb-1">
+    <Trace>
+      <TraceCollapsible open={isExpanded} onOpenChange={setIsExpanded}>
+        <TraceCollapsibleTrigger>
+          <TraceLine status={isComplete ? undefined : "running"}>
+            <TraceTitle>
+              {isComplete
+                ? `Researched for ${timeSpent} seconds, ${searchCount} searches, ${sourceCount} sources`
+                : lastUpdateTitle}
+            </TraceTitle>
+          </TraceLine>
+        </TraceCollapsibleTrigger>
+        <TraceCollapsibleContent>
           <ResearchTasks updates={updates} />
-        </div>
-      ) : (
-        lastUpdate &&
-        !isComplete && (
-          <div className="px-4 pt-1 pb-3">
-            {/* We only show the running step in this component */}
-            <ResearchTask isRunning minimal update={lastUpdate} />
-          </div>
-        )
+        </TraceCollapsibleContent>
+      </TraceCollapsible>
+      {!isExpanded && lastUpdate && !isComplete && (
+        <ResearchTask update={lastUpdate} />
       )}
-    </div>
+    </Trace>
   );
 };

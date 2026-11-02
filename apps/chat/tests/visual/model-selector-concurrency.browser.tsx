@@ -72,6 +72,7 @@ test("a suspended selection render cannot change the visible count callback", as
   }): React.JSX.Element => (
     <React.Suspense>
       <ModelSelector
+        allowMultiple
         onModelSelectionChangeAction={action}
         selectedModelId={primary}
         selectedModelSelection={value}
@@ -143,6 +144,7 @@ test.each(crossRowCases)(
       }, []);
       return (
         <ModelSelector
+          allowMultiple
           onModelSelectionChangeAction={change}
           selectedModelId={primary}
           selectedModelSelection={value}

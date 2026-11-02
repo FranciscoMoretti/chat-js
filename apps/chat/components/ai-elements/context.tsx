@@ -17,14 +17,8 @@ import { cn } from "@/lib/utils";
 import { getUsageTokenDetails } from "@/lib/ai/usage-token-details";
 
 const PERCENT_MAX = 100;
-const FULL_CIRCLE_MULTIPLIER = 2;
-const COMPLETE_FRACTION = 1;
 const NO_KNOWN_TOKENS = 0;
 const NO_KNOWN_COST = 0;
-const ICON_RADIUS = 10;
-const ICON_VIEWBOX = 24;
-const ICON_CENTER = 12;
-const ICON_STROKE_WIDTH = 2;
 
 type ModelId = string;
 
@@ -68,46 +62,6 @@ const Context = ({
   );
 };
 
-const ContextIcon = (): React.JSX.Element => {
-  const { usedTokens, maxTokens } = useContextValue();
-  const circumference = FULL_CIRCLE_MULTIPLIER * Math.PI * ICON_RADIUS;
-  const usedPercent = usedTokens / maxTokens;
-  const dashOffset = circumference * (COMPLETE_FRACTION - usedPercent);
-
-  return (
-    <svg
-      aria-label="Model context usage"
-      height="20"
-      style={{ color: "currentcolor" }}
-      viewBox={`0 0 ${ICON_VIEWBOX} ${ICON_VIEWBOX}`}
-      width="20"
-    >
-      <circle
-        cx={ICON_CENTER}
-        cy={ICON_CENTER}
-        fill="none"
-        opacity="0.25"
-        r={ICON_RADIUS}
-        stroke="currentColor"
-        strokeWidth={ICON_STROKE_WIDTH}
-      />
-      <circle
-        cx={ICON_CENTER}
-        cy={ICON_CENTER}
-        fill="none"
-        opacity="0.7"
-        r={ICON_RADIUS}
-        stroke="currentColor"
-        strokeDasharray={`${circumference} ${circumference}`}
-        strokeDashoffset={dashOffset}
-        strokeLinecap="round"
-        strokeWidth={ICON_STROKE_WIDTH}
-        style={{ transform: "rotate(-90deg)", transformOrigin: "center" }}
-      />
-    </svg>
-  );
-};
-
 type ContextTriggerProps = ComponentProps<typeof Button>;
 
 const ContextTrigger = ({
@@ -123,8 +77,8 @@ const ContextTrigger = ({
 
   return (
     <ContextHoverTrigger button={
-        <Button type="button" variant="ghost" {...props}>
-          {children ?? <><span className="text-muted-foreground font-medium">{renderedPercent}</span><ContextIcon /></>}
+        <Button type="button" variant="outline" size="sm" {...props}>
+          {children ?? <span>{renderedPercent} context</span>}
         </Button>
     } />
   );
@@ -173,7 +127,7 @@ const ContextContentHeader = ({
             </p>
           </div>
           <div className="space-y-2">
-            <Progress className="bg-muted" value={usedPercent * PERCENT_MAX} />
+            <Progress aria-label="Context used" value={usedPercent * PERCENT_MAX} />
           </div>
         </>
       )}

@@ -1,5 +1,6 @@
 "use client";
 
+import { Item, ItemContent, ItemMedia, ItemTitle } from "@/components/ui/item";
 import { DrawerCloseButton } from "@/components/drawer-close-button";
 import { ArrowRight, FileText } from "lucide-react";
 import {
@@ -37,26 +38,23 @@ const SourcesList = ({
 }: {
   readonly sources: readonly Readonly<SearchResultItem>[] | undefined;
 }): React.JSX.Element => (
-  <div className="space-y-3">
-    {sources?.map((source: Readonly<SearchResultItem>): React.JSX.Element => (
+  <div className="flex flex-col gap-3">
+    {sources?.map((source) => (
       <a
         aria-label={source.title}
-        className="bg-secondary hover:bg-accent block rounded-lg p-4 transition-colors"
         href={source.url}
         key={source.url}
         rel="noopener noreferrer"
         target="_blank"
       >
-        <div className="flex items-start gap-3">
-          <div className="mt-1 shrink-0">
+        <Item variant="muted">
+          <ItemMedia>
             <Favicon url={getFaviconUrl(source)} />
-          </div>
-          <div className="flex flex-col gap-1">
-            <h4 className="text-sm leading-tight font-medium">
-              {source.title}
-            </h4>
-          </div>
-        </div>
+          </ItemMedia>
+          <ItemContent>
+            <ItemTitle>{source.title}</ItemTitle>
+          </ItemContent>
+        </Item>
       </a>
     ))}
   </div>

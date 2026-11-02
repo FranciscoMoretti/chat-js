@@ -35,7 +35,7 @@ const researchAgentDirectories = [
 ];
 
 const researchItem: RegistryItem = {
-  dependencies: ["lucide-react", "motion"],
+  dependencies: ["lucide-react"],
   description:
     "Native EVE research workflow, subagents, prompts, and progress UI",
   files: [
@@ -50,7 +50,6 @@ const researchItem: RegistryItem = {
       "agent.ts",
       "schemas.ts",
       "tasks.tsx",
-      "update-title.tsx",
       "prompts.ts",
       "steps.ts",
       "configuration.ts",
@@ -89,7 +88,7 @@ const researchItem: RegistryItem = {
     }),
   },
   name: "deep-research",
-  registryDependencies: ["@chatjs/text-documents"],
+  registryDependencies: ["@chatjs/text-documents", "trace", "badge"],
   type: "registry:item",
 };
 export { researchAgentDirectories, researchAgentFiles, researchItem };

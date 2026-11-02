@@ -71,6 +71,7 @@ const projectsItem: RegistryItem = {
     "button",
     "dialog",
     "dropdown-menu",
+    "empty",
     "input",
     "label",
     "popover",

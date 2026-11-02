@@ -7,6 +7,7 @@ import type {
   Dispatch,
   JSX as ReactJSX,
   SetStateAction,
+  ReactNode,
 } from "react";
 import React from "react";
 
@@ -15,7 +16,6 @@ import { ComposerMenu } from "@/components/composer/composer-menu";
 import { ContextBar } from "@/components/context-bar";
 import { ControlledChatComposer } from "@/components/controlled-chat-composer";
 import type { UiToolName } from "@/lib/ai/types";
-import { expandSelectedModelValue } from "@/lib/ai/types";
 import type { DraftAttachment } from "@/lib/eve/draft";
 import { useChatModels } from "@/providers/chat-models-provider";
 import { useDefaultModel } from "@/providers/default-model-provider";
@@ -26,17 +26,6 @@ import type { useEveAttachments } from "./use-eve-attachments";
 
 const uploadsOmitted = (): void => {
   // Uploads are omitted from this installation.
-};
-
-const modelSelectionIds = (
-  retained: string | undefined,
-  selection: Parameters<typeof expandSelectedModelValue>[0] | undefined,
-  selected: Parameters<typeof expandSelectedModelValue>[0]
-) => {
-  if (typeof retained === "string" && retained !== "") {
-    return [retained];
-  }
-  return expandSelectedModelValue(selection ?? selected);
 };
 
 const unsupportedAttachments = (
@@ -72,29 +61,25 @@ type ComposerProps = Omit<
   ComponentProps<typeof ControlledChatComposer>,
   "tools" | "attachments" | "hasAttachments" | "onPaste"
 > & {
-  readonly retainedModelId?: string;
-  readonly retainedModelIds?: readonly string[];
-  readonly modelSelection?: ComponentProps<
-    typeof EveModelPicker
-  >["modelSelection"];
+  /** Model IDs used for capability checks; selection state belongs to the caller. */
+  readonly modelIds?: readonly string[];
+  /** Omit to use the default single-model picker. Inherits the composer lock. */
+  readonly modelPicker?: ReactNode;
 };
 
 const CapableComposer = ({
   files,
-  retainedModelId,
-  retainedModelIds,
-  modelSelection,
+  modelIds,
+  modelPicker,
   selectedTool,
   onToolChange,
   ...props
 }: ComposerProps & ComposerCapabilities): ReactJSX.Element => {
   const selected = useDefaultModel();
   const { getModelById } = useChatModels();
-  const models = modelSelectionIds(
-    retainedModelId,
-    modelSelection?.value,
-    selected
-  ).map((modelId) => getModelById(modelId));
+  const models = (modelIds ?? [selected]).map((modelId) =>
+    getModelById(modelId)
+  );
   const unsupported =
     !(props.readOnly === true) &&
     unsupportedAttachments(models, files.attachments);
@@ -149,14 +134,9 @@ const CapableComposer = ({
                 onToolChange(null);
               }}
             />
-            <EveModelPicker
-              disabled={
-                locked || props.readOnly === true || Boolean(retainedModelId)
-              }
-              modelSelection={modelSelection}
-              retainedModelId={retainedModelId}
-              retainedModelIds={retainedModelIds}
-            />
+            <fieldset className="min-w-0" disabled={uploadLocked}>
+              {modelPicker ?? <EveModelPicker />}
+            </fieldset>
           </>
         }
       />
@@ -185,23 +165,18 @@ export const EveComposer = ({
   if (capabilities) {
     return <CapableComposer {...props} {...capabilities} />;
   }
-  const { retainedModelId, retainedModelIds, modelSelection, ...composer } =
-    props;
+  const { modelPicker, modelIds: _modelIds, ...composer } = props;
   return (
     <fieldset className="min-w-0" aria-label="Message composer">
       <ControlledChatComposer
         {...composer}
         tools={
-          <EveModelPicker
-            disabled={
-              composer.disabled ||
-              composer.readOnly === true ||
-              Boolean(retainedModelId)
-            }
-            modelSelection={modelSelection}
-            retainedModelId={retainedModelId}
-            retainedModelIds={retainedModelIds}
-          />
+          <fieldset
+            className="min-w-0"
+            disabled={composer.disabled || composer.readOnly}
+          >
+            {modelPicker ?? <EveModelPicker />}
+          </fieldset>
         }
       />
     </fieldset>

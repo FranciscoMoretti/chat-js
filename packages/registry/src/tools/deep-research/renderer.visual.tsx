@@ -86,39 +86,17 @@ const report = {
   title: "Choosing an espresso grinder",
 };
 
-// Each research step's icon column is content-height (the row stretches it to
-// the step's text) and its dashed connector is `flex-1` inside it. The archive
-// replays this subtree without the stretch that gave the column a definite
-// height, so the connector collapses to nothing. Pin each column to its measured
-// height at the width being captured; source badges wrap differently on mobile.
-const pinStepColumns = async (section: HTMLElement) => {
-  const columns = [
-    ...section.querySelectorAll<HTMLElement>(".border-dashed:not(.hidden)"),
-  ].flatMap((connector) =>
-    connector.parentElement ? [connector.parentElement] : []
-  );
-  await flush(() => {
-    for (const column of columns) {
-      column.style.height = "";
-    }
-  });
-  const heights = columns.map((column) => column.offsetHeight);
-  await flush(() => {
-    for (const [index, column] of columns.entries()) {
-      column.style.height = `${heights[index]}px`;
-    }
-  });
+const assertSourceLayout = (section: HTMLElement) => {
   const sources =
     section.querySelectorAll<HTMLAnchorElement>('a[target="_blank"]');
   expect(sources).toHaveLength(3);
   for (const source of sources) {
-    const badge = source.querySelector('[data-slot="badge"]');
-    const favicon = badge?.querySelector("img");
-    const domain = badge?.querySelector("span");
-    if (!(badge && favicon && domain)) {
+    const favicon = source.querySelector("img");
+    const domain = source.querySelector("span.truncate");
+    if (favicon === null || domain === null) {
       throw new Error("Research source badge must show its favicon and domain");
     }
-    const bounds = badge.getBoundingClientRect();
+    const bounds = source.getBoundingClientRect();
     for (const element of [favicon, domain]) {
       const contentBounds = element.getBoundingClientRect();
       expect(contentBounds.left).toBeGreaterThanOrEqual(bounds.left);
@@ -156,7 +134,7 @@ test("deep-research renders every state in the chat", async () => {
       ),
     },
     {
-      beforeCapture: pinStepColumns,
+      beforeCapture: assertSourceLayout,
       label: "Report written, steps expanded",
       settle: async (section) => {
         const toggle = section.querySelector("button");

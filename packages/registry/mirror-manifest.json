@@ -297,7 +297,6 @@
     "chatjs/tools/deep-research/task.tsx",
     "chatjs/tools/deep-research/tasks.tsx",
     "chatjs/tools/deep-research/tool.ts",
-    "chatjs/tools/deep-research/update-title.tsx",
     "chatjs/tools/delete-document/availability.ts",
     "chatjs/tools/delete-document/chatjs.json",
     "chatjs/tools/delete-document/execute.ts",

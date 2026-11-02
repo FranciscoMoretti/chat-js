@@ -1,11 +1,11 @@
 import { TrpcFixtureError } from "./route";
-import { expect, test } from "vitest";
+import { expect, test, vi } from "vitest";
 import { page } from "vitest/browser";
 
 import ChatLayout from "@/app/(chat)/layout";
 import HomePage from "@/app/(chat)/page";
 
-import { history, signedIn, signedInTrpc } from "./fixtures";
+import { history, signedIn, signedInTrpc, creationFailure } from "./fixtures";
 import { renderRoute } from "./render";
 
 const home = (
@@ -152,4 +152,35 @@ test("signed-in composer options expose uploads with the native menu", async () 
   );
   expect(items[0]).toContain("Attach files");
   await page.screenshot({ path: "__screenshots__/home-upload-menu.png" });
+});
+
+test("account composer supplies parallel model selection", async () => {
+  await renderRoute(home, signedIn);
+  await page.getByTestId("model-selector").click();
+  await page.getByRole("switch", { name: "Use Multiple Models" }).click();
+  await expect
+    .element(page.getByRole("button", { name: "1×", exact: true }))
+    .toBeVisible();
+});
+
+test("home shows a rejected new conversation as a chat alert", async () => {
+  const { fetch } = globalThis;
+  vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
+    if (input === "/api/agent-conversations") {
+      return Response.json(
+        { creationRejected: true, error: creationFailure },
+        { status: 400 }
+      );
+    }
+    return await fetch(input, init);
+  });
+  await renderRoute(home, signedIn);
+  await page.getByRole("textbox", { name: "Message" }).fill("Hello");
+  await page.getByRole("button", { name: "Send", exact: true }).click();
+  const alert = page.getByRole("alert");
+  await expect
+    .element(alert.getByText("Chat error", { exact: true }))
+    .toBeVisible();
+  await expect.element(alert.getByText(creationFailure)).toBeVisible();
+  await page.screenshot({ path: "__screenshots__/new-conversation-error.png" });
 });

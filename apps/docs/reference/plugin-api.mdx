@@ -144,6 +144,7 @@ export const projectsClient = definePlugin({
 | `ChatHeaderActions` | Header controls receiving the same chat context |
 | `ChatBreadcrumbs` | Context receiving `{ chatId }` |
 | `MessageActions` | Assistant-message actions |
+| `MessageResponses` | Response content associated with user messages |
 | `ChatSuggestions` | Suggestions beneath the last editable message |
 | `LayoutEffects` | No-prop global layout components, from `@/components/layout-slots` |
 
@@ -166,6 +167,22 @@ Your hook owns fetching and applying user preferences. Return a stable set when 
 ### Message actions
 
 The `MessageActions` slot receives `{ conversationId, messageId, disabled }`. Core renders it for editable assistant messages; each plugin owns its queries and mutations. Feedback uses a conversation-specific write with a lock and state recheck, because voting must not change the logical chat's update timestamp.
+
+### Response content
+
+Declare `client.chat: true` and bind your component with `slot(MessageResponses, YourResponses)` in a `definePlugin` client declaration. Import `MessageResponses` from `@/components/chat-slots`. Like message actions, the component receives `{ conversationId, messageId, disabled }`, typed as `ChatMessageProps`. Return `null` when your contribution does not apply to that user message. Respect `disabled` for interactions and own your fetching and recovery state.
+
+`integrations/chat/ui.ts` composes installed declarations and the local Parallel Responses declaration in display order using the shared `Plugins` provider. Each is additive. Ordinary version navigation and assistant action buttons remain separate placements. Response content runs inside the account transcript's logical-chat context. Public sharing and guest transcripts do not mount this placement.
+
+### Composer and submission composition
+
+`EveComposer` accepts a `modelPicker` React node. Omit it for the default single-model picker. The slot inherits the composer's disabled, read-only, and upload locks. Supply `modelIds` alongside a custom picker so attachment validation checks every selected model. Selection state and model counts belong to the caller. `ComposerAttachments` and `ComposerExtensions` contribute to the Add menu and do not replace the picker.
+
+Guest Chat supplies a disabled single-model picker. Account creation, edits, and follow-up messages supply `ParallelResponseModelPicker`. The shared `ModelSelector` primitive shows its multiple-selection toggle only with `allowMultiple`. The account picker also checks `config.features.parallelResponses`.
+
+`ComposerSubmission` exposes `submit()`, `pending`, `error`, and an optional `preview` React node and `recovery` React element. `NewConversationView` places those nodes without reading saved requests. The submission controller owns operation identity, persistence, dispatch, and recovery. Retry stays inside the recovery implementation because an unconfirmed creation and an unconfirmed message delivery have different retry rules.
+
+These are React composition seams, not global registration hooks for arbitrary submission handlers. Parallel Responses currently uses a local response contribution and still has core response-group persistence and dispatch. It is not yet an independently installable plugin. Extracting those responsibilities requires preserving reservation, replay, and deletion transactions.
 
 ### Suggestions
 

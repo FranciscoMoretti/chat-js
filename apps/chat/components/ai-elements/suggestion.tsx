@@ -2,23 +2,19 @@
 
 import type { ComponentProps, JSX as ReactJSX } from "react";
 import { Button } from "@/components/ui/button";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import React from "react";
 import { cn } from "@/lib/utils";
 
-type SuggestionsProps = (Omit<ComponentProps<typeof ScrollArea>, "className"> & { className?: string });
+type SuggestionsProps = (Omit<ComponentProps<"div">, "className"> & { className?: string });
 
 const Suggestions = ({
   className,
   children,
   ...props
 }: SuggestionsProps): React.JSX.Element => (
-  <ScrollArea className="w-full overflow-x-auto whitespace-nowrap" {...props}>
-    <div className={cn("flex w-max flex-nowrap items-center gap-2", className)}>
-      {children}
-    </div>
-    <ScrollBar className="hidden" orientation="horizontal" />
-  </ScrollArea>
+  <div className={cn("flex w-full gap-2 overflow-x-auto overscroll-x-contain scroll-fade-x scrollbar-none", className)} {...props}>
+    {children}
+  </div>
 );
 
 type SuggestionProps = Omit<(Omit<ComponentProps<typeof Button>, "className"> & { className?: string }), "onClick"> & {
@@ -48,7 +44,7 @@ const Suggestion = ({
   }
   return (
     <Button
-      className={cn("cursor-pointer rounded-full px-4", className)}
+      className={cn("shrink-0", className)}
       onClick={handleClick}
       size={size}
       type="button"

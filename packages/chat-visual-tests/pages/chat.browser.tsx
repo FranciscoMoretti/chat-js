@@ -15,6 +15,7 @@ import {
 
 import {
   history,
+  chatFailure,
   archivedDiagram,
   archivedDiagramTranscript,
   invoicesConversation,
@@ -25,6 +26,7 @@ import {
   invoicesFollowupEvents,
   invoicesFollowupTrpc,
   launchProject,
+  questionTranscripts,
   session,
   signedIn,
 } from "./fixtures";
@@ -240,15 +242,22 @@ test("conversation inside a project", async () => {
 test("conversation whose last reply failed", async () => {
   await renderRoute(conversation, {
     ...request,
-    agentError: "The model provider is unavailable. Try again in a moment.",
+    agentError: chatFailure,
   });
   await expect
-    .element(
-      page
-        .getByRole("alert")
-        .getByText("The model provider is unavailable. Try again in a moment.")
-    )
+    .element(page.getByRole("alert").getByText(chatFailure))
     .toBeVisible();
+  await expect
+    .element(page.getByRole("alert").getByText("Chat error", { exact: true }))
+    .toBeVisible();
+  await page.viewport(390, 844);
+  const alert = page
+    .getByRole("alert")
+    .filter({ hasText: chatFailure })
+    .element();
+  expect(alert.scrollWidth).toBeLessThanOrEqual(alert.clientWidth);
+  expect(alert.getBoundingClientRect().right).toBeLessThanOrEqual(390);
+  await page.screenshot({ path: "__screenshots__/conversation-error.png" });
 });
 
 const unconfirmed = {
@@ -388,6 +397,36 @@ test("shared conversation, signed in", async () => {
       return action.top >= bounds.top && action.bottom <= bounds.bottom;
     })
     .toBe(true);
+});
+
+test("owner can select or write a question answer while the native turn stays open", async () => {
+  await renderRoute(conversation, {
+    ...request,
+    agentStatus: "streaming",
+    transcripts: questionTranscripts,
+  });
+  await expect
+    .element(page.getByText("Which invoice issue should we investigate?"))
+    .toBeVisible();
+  const choice = page.getByRole("radio", { name: /Query performance/u });
+  await choice.click();
+  await expect.element(choice).toBeChecked();
+  const answer = page.getByRole("textbox", { name: "Your answer" });
+  await answer.fill(
+    "Compare overdue invoices across accounts\nInclude payment terms"
+  );
+  await expect.element(choice).not.toBeChecked();
+  await expect
+    .element(answer)
+    .toHaveValue(
+      "Compare overdue invoices across accounts\nInclude payment terms"
+    );
+  await expect
+    .element(page.getByRole("button", { name: "Submit answer" }))
+    .toBeEnabled();
+  await expect
+    .element(page.getByRole("textbox", { name: "Message", exact: true }))
+    .toBeVisible();
 });
 
 test("owner can answer approval while the native turn stays open", async () => {
