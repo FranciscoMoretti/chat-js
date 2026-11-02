@@ -35,10 +35,14 @@ type ToolState<
               })
   : never;
 
-/** Tool name and lifecycle state jointly discriminate the authored payload types. */
-export type ChatToolPart = {
-  [Name in keyof InstalledTools]: ToolState<Name>;
-}[keyof InstalledTools];
+/** Tool name and lifecycle state jointly discriminate the authored payload types.
+ * Empty scaffolds retain the part shape for consumers, with an uninhabitable name/type.
+ */
+export type ChatToolPart = [keyof InstalledTools] extends [never]
+  ? ToolState<never>
+  : {
+      [Name in keyof InstalledTools]: ToolState<Name>;
+    }[keyof InstalledTools];
 
 /** Native fallback parts retain unknown payloads; only installed tools are enriched. */
 export type ChatMessagePart = ReadonlyEveMessagePart | ChatToolPart;
@@ -59,9 +63,6 @@ export const nativeMessagePart = (
   part: ChatMessagePart
 ): ReadonlyEveMessagePart => (isChatToolPart(part) ? part.native : part);
 
-const isNativeMessage = (message: ChatMessage): message is ReadonlyEveMessage =>
-  !message.parts.some(isChatToolPart);
-
 const nativeViews = new WeakMap<ChatMessage, ReadonlyEveMessage>();
 const nativeLists = new WeakMap<
   readonly ChatMessage[],
@@ -73,9 +74,7 @@ export const nativeMessage = (message: ChatMessage): ReadonlyEveMessage => {
   if (cached) {
     return cached;
   }
-  const native = isNativeMessage(message)
-    ? message
-    : { ...message, parts: message.parts.map(nativeMessagePart) };
+  const native = { ...message, parts: message.parts.map(nativeMessagePart) };
   nativeViews.set(message, native);
   return native;
 };

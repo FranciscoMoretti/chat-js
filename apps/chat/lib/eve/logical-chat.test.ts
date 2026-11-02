@@ -6,7 +6,6 @@ import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 import type { LogicalBranch, NativeChatAgent } from "./logical-chat";
 import { LogicalChat, logicalChatBusy } from "./logical-chat";
-import { createToolResult } from "./tool-result";
 import type { ReadonlyEveMessagePart } from "./readonly-message-types";
 
 const message = (
@@ -73,40 +72,6 @@ const original = [
   message("turn_1:assistant", "assistant", "turn_1"),
 ];
 describe("logical chat over native sessions", () => {
-  it("publishes typed tool messages once without changing the native snapshot", () => {
-    const chat = new LogicalChat("chat", "root");
-    chat.setBranches([branch("root")]);
-    const runtime = agent([
-      message("user", "user", "turn_0"),
-      {
-        id: "assistant",
-        role: "assistant",
-        parts: [
-          {
-            type: "dynamic-tool",
-            toolName: "wordCount",
-            toolCallId: "count",
-            state: "output-available",
-            input: { text: "one two" },
-            output: createToolResult(
-              { words: 2, characters: 7, charactersNoSpaces: 6, sentences: 1 },
-              0
-            ),
-          },
-        ],
-      },
-    ]);
-    const published = vi.fn<() => void>();
-    chat.subscribe(published);
-    chat.observe("root", runtime);
-    const snapshot = chat.getSnapshot();
-    const part = snapshot.agents.get("root")?.data.messages[1].parts[0];
-    expect(part?.type).toBe("tool-wordCount");
-    expect(runtime.data.messages[1].parts[0].type).toBe("dynamic-tool");
-    chat.observe("root", runtime);
-    expect(chat.getSnapshot()).toBe(snapshot);
-    expect(published).toHaveBeenCalledTimes(1);
-  });
   it("keeps complete copied histories independent across replay order", () => {
     const chat = new LogicalChat("chat", "root");
     chat.setBranches([

@@ -1,16 +1,19 @@
-import { expect, expectTypeOf, test } from "vitest";
+import { expect, expectTypeOf, test, vi } from "vitest";
+import { conversationReducer } from "eve/client";
+import { LogicalChat } from "@/lib/eve/logical-chat";
+import type { NativeChatAgent } from "@/lib/eve/logical-chat";
 import { createToolError, createToolResult } from "@/lib/eve/tool-result";
 import type {
   ReadonlyEveMessage,
   ReadonlyEveMessagePart,
 } from "@/lib/eve/readonly-message-types";
-import { nativeMessage, nativeMessages } from "./chat-message";
-import type { ChatMessage, ChatToolPart } from "./chat-message";
+import { nativeMessage, nativeMessages } from "@/lib/ai/chat-message";
+import type { ChatMessage, ChatToolPart } from "@/lib/ai/chat-message";
 import {
   projectChatMessage,
   projectChatMessagePart,
   projectChatMessages,
-} from "./project-chat-messages";
+} from "@/lib/ai/project-chat-messages";
 
 const identity = {
   toolCallId: "count-1",
@@ -181,4 +184,36 @@ test("preserves metadata and native round trips without mutating replay data", (
   expect(nativeMessages(snapshot.messages)).toBe(
     nativeMessages(snapshot.messages)
   );
+});
+
+test("publishes typed tool messages once without changing the native snapshot", () => {
+  const chat = new LogicalChat("chat", "root");
+  const runtime: NativeChatAgent = {
+    cancel: vi
+      .fn<NativeChatAgent["cancel"]>()
+      .mockRejectedValue(new Error("unused")),
+    conversation: conversationReducer.initial(),
+    data: {
+      messages: [{ id: "assistant", role: "assistant", parts: [completed] }],
+    },
+    error: undefined,
+    events: [],
+    prewarm: vi.fn<NativeChatAgent["prewarm"]>().mockResolvedValue(),
+    reset: vi.fn<NativeChatAgent["reset"]>(),
+    respond: vi.fn<NativeChatAgent["respond"]>().mockResolvedValue(),
+    resume: vi.fn<NativeChatAgent["resume"]>().mockResolvedValue(),
+    send: vi.fn<NativeChatAgent["send"]>().mockResolvedValue(),
+    session: undefined,
+    status: "ready",
+  };
+  const published = vi.fn<() => void>();
+  chat.subscribe(published);
+  chat.observe("root", runtime);
+  const snapshot = chat.getSnapshot();
+  const part = snapshot.agents.get("root")?.data.messages[0].parts[0];
+  expect(part?.type).toBe("tool-wordCount");
+  expect(runtime.data.messages[0].parts[0].type).toBe("dynamic-tool");
+  chat.observe("root", runtime);
+  expect(chat.getSnapshot()).toBe(snapshot);
+  expect(published).toHaveBeenCalledTimes(1);
 });

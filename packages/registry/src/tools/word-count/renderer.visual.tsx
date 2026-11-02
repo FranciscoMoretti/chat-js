@@ -8,7 +8,8 @@ import { captureChatStory } from "../_shared/visual";
 import { WordCountRenderer } from "./renderer";
 
 // The chat resolves an installed tool's renderer through this registry.
-vi.mock("@/lib/ai/tool-renderer-registry", () => ({
+vi.mock(import("@/lib/ai/tool-renderer-registry"), async (importOriginal) => ({
+  ...(await importOriginal()),
   getEveInstalledToolRenderer: () => WordCountRenderer,
 }));
 
