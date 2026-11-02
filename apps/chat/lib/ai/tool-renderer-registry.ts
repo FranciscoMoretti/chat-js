@@ -8,7 +8,7 @@ import { ui } from "@/integrations/tools/ui";
 // come from its shared schemas through defineToolRenderer.
 type ToolRendererRegistry = {
   [
-    Name in keyof typeof tools | keyof WorkflowTools as `tool-${Name}`
+    Name in keyof (typeof tools & WorkflowTools) as `tool-${Name}`
   ]?: ValidatedToolRenderer;
 };
 
