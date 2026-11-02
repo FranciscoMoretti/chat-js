@@ -1,4 +1,6 @@
-# Runtime dependency acceptance
+# Historical runtime dependency acceptance
+
+This record preserves the issue #652 acceptance evidence for the earlier 0.61.0 integration. Version numbers, open gates, and publication restrictions below describe that historical task, not the current RC1 release. For the maintained package and release process, see [EVE package development](eve-package-development.md) and [ChatJS #918](https://github.com/FranciscoMoretti/chat-js/pull/918).
 
 This record describes the maintained runtime boundary for ChatJS 1.0 issue #652. Supported upstream releases replace the MCP compiled patch and the private Blob signing extension. The PostgreSQL world patch and EVE dynamic-tool typing compensation remain release work; neither is counted as resolved by repackaging or moving files.
 
