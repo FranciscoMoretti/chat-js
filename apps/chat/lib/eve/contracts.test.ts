@@ -13,6 +13,7 @@ describe("Eve request policy", () => {
     for (const path of [
       "/eve/v1/session",
       "/eve/v1/session/a/reset",
+      "/eve/v1/session/a/end",
       "/eve/v1/session/a/compact",
       "/eve/v1/session/a/clear",
       "/eve/v1/session/a/subagents",

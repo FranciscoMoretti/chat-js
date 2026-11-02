@@ -39,7 +39,7 @@ const retireGuest = async (
   binding: Readonly<Pick<Binding, "sessionId" | "credential">>
 ): Promise<void> => {
   try {
-    await fetch(`/eve/chat/v1/session/${binding.sessionId}/reset`, {
+    await fetch(`/eve/chat/v1/session/${binding.sessionId}/end`, {
       body: "{}",
       headers: {
         authorization: `Bearer ${binding.credential}`,

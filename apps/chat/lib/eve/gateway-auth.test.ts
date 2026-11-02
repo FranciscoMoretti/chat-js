@@ -208,7 +208,7 @@ it("authorizes owned child streams without granting child mutation or cross-owne
     principalId: "owner",
   });
   await Promise.all(
-    ["", "/cancel", "/reset"].map(async (suffix) => {
+    ["", "/cancel", "/end", "/reset"].map(async (suffix) => {
       expect(
         await authenticateEveGateway(
           new Request(`http://localhost/eve/v1/session/child${suffix}`, {
