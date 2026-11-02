@@ -66,7 +66,13 @@ it("shares transcript content without authorization challenges or runtime metada
     true
   );
 });
-it("retains clarification prompts and answers without their response identifiers", () => {
+it.each([
+  {
+    text: "Use Markdown with examples",
+    expected: "Use Markdown with examples",
+  },
+  { text: undefined, expected: "Markdown" },
+])("retains clarification answers: $expected", ({ text, expected }) => {
   const parts = sharedEvePart({
     ...tool,
     input: {},
@@ -86,13 +92,13 @@ it("retains clarification prompts and answers without their response identifiers
       answer: {
         interactionId: "secret-request",
         optionId: "option-private",
-        text: "Use Markdown with examples",
+        ...(text === undefined ? {} : { text }),
       },
     },
   });
   const json = JSON.stringify(parts);
   expect(json).toContain("Which format?");
-  expect(json).toContain("Use Markdown with examples");
+  expect(json).toContain(`Response: ${expected}`);
   expect(json).not.toContain("secret-request");
   expect(json).not.toContain("option-private");
 });

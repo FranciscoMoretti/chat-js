@@ -114,10 +114,16 @@ const sharedEvePart = (part: ReadonlyEveMessagePart): EveMessagePart[] => {
     const parts: EveMessagePart[] = [sharedTool(part)];
     if (part.interaction?.request.kind === "question") {
       parts.push({ type: "text", text: part.interaction.request.prompt });
-      if (part.interaction.answer?.text !== undefined) {
+      const { answer } = part.interaction;
+      const text =
+        answer?.text ??
+        part.interaction.request.options?.find(
+          (option) => option.id === answer?.optionId
+        )?.label;
+      if (text !== undefined) {
         parts.push({
           type: "text",
-          text: `Response: ${part.interaction.answer.text}`,
+          text: `Response: ${text}`,
         });
       }
     }
