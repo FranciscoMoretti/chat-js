@@ -264,7 +264,7 @@ test("seed-only copies hold the workspace until native seed idle and cannot unlo
   await expect(
     dispatchEveOnce(operation(secondConversation), deliver)
   ).rejects.toBeInstanceOf(EveWorkspaceBusyError);
-  snapshots.set("seeded", [session, ...settled("followup")]);
+  snapshots.set("seeded", settled("followup"));
   await dispatchEveOnce(operation(secondConversation), deliver);
   expect(deliver).toHaveBeenCalledTimes(2);
 });

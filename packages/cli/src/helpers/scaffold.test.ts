@@ -288,6 +288,15 @@ describe("scaffoldFromTemplate", (): void => {
     expect(manifest.dependencies.eve).toBe(
       "npm:@chat-js/eve@1.0.0-rc.1-chatjs.0"
     );
+    expect(
+      await Bun.file(
+        pathModule.join(
+          destination,
+          "vendor",
+          "chat-js-eve-0.80.1-chatjs.4.tgz"
+        )
+      ).exists()
+    ).toBe(false);
     const archives = {
       "@workflow/world-postgres": "workflow-world-postgres-5.0.0-beta.40.tgz",
     };

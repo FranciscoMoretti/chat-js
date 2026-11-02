@@ -68,6 +68,9 @@ vi.mock("eve/client", () => ({
             await mocks.read(sessionId);
             state.streamIndex = options.startIndex;
             for (const event of mocks.events.get(sessionId) ?? []) {
+              if (event.meta.position.line < options.startIndex) {
+                continue;
+              }
               state.streamIndex = event.meta.position.line + 1;
               yield event;
             }
