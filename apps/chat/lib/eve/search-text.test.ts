@@ -58,3 +58,12 @@ it("indexes seeded display text while excluding reasoning, tools and model lifec
     })
   ).toEqual([{ key: "seed:0", text: "visible answer" }]);
 });
+
+it("excludes model text preambles from conversation search", () => {
+  expect(
+    eveEventSearchText({
+      ...completed,
+      data: { ...completed.data, phase: "preamble" },
+    })
+  ).toEqual([]);
+});

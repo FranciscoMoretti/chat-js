@@ -48,6 +48,7 @@ const eveEventSearchText = (event: SessionEvent): EveSearchText[] => {
   if (
     event.type === "content.completed" &&
     event.data.kind === "text" &&
+    event.data.phase === "reply" &&
     typeof event.data.value === "string" &&
     event.data.value.trim()
   ) {
