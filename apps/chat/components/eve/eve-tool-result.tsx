@@ -16,6 +16,9 @@ export const EveToolResult = ({
   readonly messageId: string;
   readonly isReadonly: boolean;
 }) => {
+  if (part.state === "rejected") {
+    return createElement("p", null, "Request declined.");
+  }
   const Renderer = getEveInstalledToolRenderer(`tool-${part.name}`);
   if (!Renderer) {
     return null;

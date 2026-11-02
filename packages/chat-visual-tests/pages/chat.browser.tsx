@@ -131,6 +131,16 @@ test("cancelled document and saved-code operations show stopped states", async (
               state: "blocked",
               input: {},
             },
+            {
+              type: "tool",
+              kind: "tool",
+              stepIndex: 0,
+              callId: "declined",
+              name: "webSearch",
+              label: "Search",
+              state: "rejected",
+              input: {},
+            },
           ],
         },
       ],
@@ -143,6 +153,7 @@ test("cancelled document and saved-code operations show stopped states", async (
   await page.getByRole("button", { name: "search Error", exact: true }).click();
   await expect.element(page.getByText("MCP tool stopped.")).toBeVisible();
   await expect.element(page.getByText("Waiting for input.")).toBeVisible();
+  await expect.element(page.getByText("Request declined.")).toBeVisible();
   await page.screenshot({ path: "__screenshots__/native-stopped.png" });
 });
 
