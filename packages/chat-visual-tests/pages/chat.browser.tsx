@@ -27,6 +27,7 @@ import {
   invoicesFollowupTrpc,
   launchProject,
   questionTranscripts,
+  typedToolTranscripts,
   session,
   signedIn,
 } from "./fixtures";
@@ -64,6 +65,28 @@ test("conversation", async () => {
   await expect
     .element(page.getByRole("textbox", { name: "Message" }))
     .toBeVisible();
+});
+
+test("typed tools preserve receipt results, failures and native fallbacks", async () => {
+  await renderRoute(conversation, {
+    ...request,
+    transcripts: typedToolTranscripts,
+  });
+  await expect.element(page.getByText("Words", { exact: true })).toBeVisible();
+  await expect
+    .element(page.getByText("Counting service unavailable."))
+    .toBeVisible();
+  await expect
+    .element(page.getByText("External tool result retained.", { exact: false }))
+    .toBeVisible();
+  await expect
+    .element(
+      page.getByText("Historical text output retained.", { exact: false })
+    )
+    .toBeVisible();
+  await expect
+    .element(page.getByText("This tool result could not be displayed."))
+    .not.toBeInTheDocument();
 });
 
 test("mobile conversation can reveal the transcript below the composer", async () => {

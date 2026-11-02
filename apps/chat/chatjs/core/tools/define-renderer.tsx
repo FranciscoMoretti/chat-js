@@ -20,7 +20,12 @@ const isValidatedToolRenderer = (
 type RenderableTool<TInput, TOutput> = { toolCallId: string } & (
   | { state: "input-streaming"; input?: Partial<TInput>; output?: never }
   | { state: "input-available"; input: TInput; output?: never }
-  | { state: "output-available"; input: TInput; output: TOutput }
+  | {
+      state: "output-available";
+      input: TInput;
+      output: TOutput;
+      partial?: true;
+    }
 );
 
 interface ToolRendererProps<
@@ -36,6 +41,7 @@ const envelope = z.object({
   errorText: z.string().optional(),
   input: z.unknown().optional(),
   output: z.unknown().optional(),
+  partial: z.literal(true).optional(),
   state: z.enum([
     "input-streaming",
     "input-available",
@@ -151,6 +157,7 @@ export const defineToolRenderer = <TInput, TOutput, TUpdate = never>({
           ...identity,
           input: input.data,
           output: output.data,
+          partial: value.partial,
           state: value.state,
         }}
       />

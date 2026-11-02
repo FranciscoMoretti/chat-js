@@ -1,8 +1,10 @@
 import { LogicalCommands } from "./logical-commands";
 import { isNonEmptyString } from "@/lib/is-non-empty-string";
 
-import type { EveMessage, EveMessageData } from "eve/client";
+import type { EveMessageData } from "eve/client";
 import type { UseEveAgentHelpers } from "eve/react";
+import type { ChatMessage, ChatMessageData } from "@/lib/ai/chat-message";
+import { projectChatMessages } from "@/lib/ai/project-chat-messages";
 
 import type { EveForkKind } from "./contracts";
 
@@ -17,6 +19,7 @@ interface EveBranchReference {
 }
 
 type NativeChatAgent = UseEveAgentHelpers<EveMessageData>;
+type ChatAgent = UseEveAgentHelpers<ChatMessageData>;
 
 type LogicalBranch = EveBranchReference & {
   readonly sessionId: string | null;
@@ -39,7 +42,7 @@ interface LogicalNode {
   id: string;
   parentId: string | null;
   conversationId: string;
-  message: EveMessage;
+  message: ChatMessage;
 }
 interface LogicalChatSnapshot {
   readyBranches: ReadonlySet<string>;
@@ -51,17 +54,17 @@ interface LogicalChatSnapshot {
   aliases: ReadonlyMap<string, string>;
   children: ReadonlyMap<string | null, readonly string[]>;
   branches: readonly LogicalBranch[];
-  agents: ReadonlyMap<string, NativeChatAgent>;
+  agents: ReadonlyMap<string, ChatAgent>;
   error?: string;
 }
 
-const logicalNativeId = (sessionId: string, message: EveMessage): string =>
+const logicalNativeId = (sessionId: string, message: ChatMessage): string =>
   JSON.stringify([sessionId, message.id]);
 
 const aliasKey = (branchId: string, messageId: string): string =>
   JSON.stringify([branchId, messageId]);
 
-const busy = (agent?: NativeChatAgent): boolean => {
+const busy = (agent?: ChatAgent): boolean => {
   if (!agent) {
     return false;
   }
@@ -73,7 +76,7 @@ const busy = (agent?: NativeChatAgent): boolean => {
 };
 
 const latestMessageTime = (
-  agent: NativeChatAgent | undefined,
+  agent: ChatAgent | undefined,
   createdAt: string | Date
 ): number => {
   let time = new Date(createdAt).getTime();
@@ -115,7 +118,7 @@ const branchPrefix = (
 };
 
 const inheritedSeedId = (
-  message: EveMessage,
+  message: ChatMessage,
   prefix: readonly string[],
   nodes: ReadonlyMap<string, LogicalNode>
 ): string | undefined => {
@@ -131,7 +134,7 @@ const inheritedSeedId = (
 
 const projectBranch = (
   branch: LogicalBranch,
-  agent: NativeChatAgent,
+  agent: ChatAgent,
   nodes: Map<string, LogicalNode>,
   aliases: Map<string, string>,
   paths: ReadonlyMap<string, readonly string[]>
@@ -197,7 +200,7 @@ const projectBranch = (
 class LogicalChat {
   public readonly commands = new LogicalCommands();
   private branches: LogicalBranch[] = [];
-  private readonly agents = new Map<string, NativeChatAgent>();
+  private readonly agents = new Map<string, ChatAgent>();
   private readonly listeners = new Set<() => void>();
   private selected: string;
   private cursor: string | null = null;
@@ -250,17 +253,21 @@ class LogicalChat {
     this.publish();
   }
 
-  public observe(conversationId: string, agent: NativeChatAgent): void {
+  public observe(
+    conversationId: string,
+    agent: NativeChatAgent | ChatAgent
+  ): void {
+    const data = projectChatMessages(agent.data);
     const previous = this.agents.get(conversationId);
     if (
-      previous?.data === agent.data &&
+      previous?.data === data &&
       previous.events === agent.events &&
       previous.status === agent.status &&
       previous.error === agent.error
     ) {
       return;
     }
-    this.agents.set(conversationId, agent);
+    this.agents.set(conversationId, { ...agent, data });
     this.publish();
   }
 

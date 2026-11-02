@@ -1,6 +1,7 @@
 import type { ComponentType, FunctionComponent } from "react";
+import { createElement } from "react";
 import type { InstalledTools } from "./installed-tools";
-import type { ToolUIPart } from "ai";
+import type { ChatMessage } from "./chat-message";
 
 import { isValidatedToolRenderer } from "@/chatjs/core/tools/define-renderer";
 import { ui } from "@/integrations/tools/ui";
@@ -9,7 +10,10 @@ type InstalledToolName = keyof InstalledTools;
 
 type InstalledToolType = `tool-${InstalledToolName}`;
 
-type InstalledToolUIPart = ToolUIPart<InstalledTools>;
+type InstalledToolUIPart = Extract<
+  ChatMessage["parts"][number],
+  { type: InstalledToolType }
+>;
 
 type InstalledToolPart<ToolType extends InstalledToolType> = Extract<
   InstalledToolUIPart,
@@ -27,6 +31,15 @@ type ToolRendererRegistry = {
 };
 
 const toolRendererRegistry: ToolRendererRegistry = ui;
+
+/** The shared message contract keeps each registered renderer correlated with its part. */
+const renderInstalledTool = <Type extends InstalledToolType>(
+  type: Type,
+  props: ToolRendererProps<Type>
+) => {
+  const Renderer = toolRendererRegistry[type];
+  return Renderer ? createElement(Renderer, props) : null;
+};
 
 const isInstalledToolType = (
   type: string
@@ -59,6 +72,7 @@ const getEveInstalledToolRenderer = (
 export {
   getEveInstalledToolRenderer,
   isInstalledToolType,
+  renderInstalledTool,
   toolRendererRegistry,
 };
 export type {

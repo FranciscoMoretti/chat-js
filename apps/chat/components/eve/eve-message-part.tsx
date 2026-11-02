@@ -10,13 +10,29 @@ import { ToolActivity } from "@/components/part/tool-activity";
 import { ReasoningPart } from "@/components/part/message-reasoning";
 import { EvePendingInput } from "./eve-pending-input";
 import { parseToolId } from "@/lib/ai/mcp-name-id";
-import { getEveInstalledToolRenderer } from "@/lib/ai/tool-renderer-registry";
+import {
+  getEveInstalledToolRenderer,
+  isInstalledToolType,
+} from "@/lib/ai/tool-renderer-registry";
 import { documentDefinitions } from "@/integrations/documents/definitions";
+import { nativeMessagePart, isChatToolPart } from "@/lib/ai/chat-message";
+import type { ChatMessagePart } from "@/lib/ai/chat-message";
 import type { ReadonlyEveMessagePart } from "@/lib/eve/readonly-message-types";
 import { EveAttachment } from "./eve-attachment";
 import { EveDocumentTool } from "./eve-document-tool";
 import { EveMcpResult } from "./eve-mcp-result";
 import { EveToolResult } from "./eve-tool-result";
+
+const hasToolRenderer = (part: ChatMessagePart): boolean => {
+  if (isChatToolPart(part)) {
+    return isInstalledToolType(part.type);
+  }
+  return (
+    part.type === "dynamic-tool" &&
+    !(part.state === "output-available" && part.outputType === "text") &&
+    getEveInstalledToolRenderer(`tool-${part.toolName}`) !== undefined
+  );
+};
 
 const toolStatus = (
   part: Extract<ReadonlyEveMessagePart, { type: "dynamic-tool" }>
@@ -76,7 +92,7 @@ const ToolFallback = ({
 export const EveMessagePart = ({
   messageId,
   isReadonly,
-  part,
+  part: inputPart,
   respond,
   inputDisabled,
   previewDocument = false,
@@ -84,10 +100,11 @@ export const EveMessagePart = ({
   readonly previewDocument?: boolean;
   readonly messageId: string;
   readonly isReadonly: boolean;
-  readonly part: ReadonlyEveMessagePart;
+  readonly part: ChatMessagePart;
   readonly inputDisabled: boolean;
   readonly respond: (response: InputResponse) => void;
 }): React.JSX.Element | null => {
+  const part = nativeMessagePart(inputPart);
   if (part.type === "text") {
     return <Response>{part.text}</Response>;
   }
@@ -120,12 +137,12 @@ export const EveMessagePart = ({
       />
     );
   }
-  if (getEveInstalledToolRenderer(`tool-${part.toolName}`)) {
+  if (hasToolRenderer(inputPart)) {
     return (
       <EveToolResult
         isReadonly={isReadonly}
         messageId={messageId}
-        part={part}
+        part={isChatToolPart(inputPart) ? inputPart : part}
       />
     );
   }

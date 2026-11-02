@@ -8,7 +8,7 @@ import type { EveMessage } from "eve/client";
 import { MessageSiblingsView } from "@/components/message-siblings-view";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { EveMessages } from "@/components/eve/eve-messages";
-import type { ReadonlyEveMessage } from "@/lib/eve/readonly-message-types";
+import type { ChatMessage } from "@/lib/ai/chat-message";
 import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 import { mount, renderRoot, unmount } from "./primitive-mount";
 import "./sandbox.css";
@@ -47,14 +47,12 @@ const messages: EveMessage[] = [
 ];
 
 test("message actions retain their user boundary and readonly behavior", async () => {
-  const edit = vi.fn<(message: ReadonlyEveMessage) => void>();
+  const edit = vi.fn<(message: ChatMessage) => void>();
   const regenerate =
-    vi.fn<
-      (message: ReadonlyEveMessage, response: ReadonlyEveMessage) => void
-    >();
+    vi.fn<(message: ChatMessage, response: ChatMessage) => void>();
   const respond = vi.fn<() => void>();
   const modelForMessage = vi
-    .fn<(message: ReadonlyEveMessage) => string>()
+    .fn<(message: ChatMessage) => string>()
     .mockReturnValue("fixture-model");
   const render = (isReadonly: boolean) => (
     <TooltipProvider>

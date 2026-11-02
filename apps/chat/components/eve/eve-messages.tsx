@@ -16,18 +16,21 @@ import { MessageActionsView } from "@/components/message-actions-view";
 import { RetryButtonView } from "@/components/retry-button-view";
 import { Tag } from "@/components/tag";
 import { UserMessageView } from "@/components/user-message-view";
-import type {
-  ReadonlyEveMessage,
-  ReadonlyEveMessagePart,
-} from "@/lib/eve/readonly-message-types";
+import type { ChatMessage, ChatMessagePart } from "@/lib/ai/chat-message";
 import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
+
+import { isChatToolPart, nativeMessagePart } from "@/lib/ai/chat-message";
+import { projectChatMessage } from "@/lib/ai/project-chat-messages";
 
 import { EveAttachment } from "./eve-attachment";
 import { documentDefinitions } from "@/integrations/documents/definitions";
 import { EveMessagePart } from "./eve-message-part";
 import { MessageActions } from "@/components/chat-slots";
 
-const messagePartIdentity = (part: ReadonlyEveMessagePart): string => {
+const messagePartIdentity = (part: ChatMessagePart): string => {
+  if (isChatToolPart(part)) {
+    return `dynamic-tool:${part.toolCallId}`;
+  }
   switch (part.type) {
     case "text":
     case "reasoning": {
@@ -57,30 +60,25 @@ const messagePartIdentity = (part: ReadonlyEveMessagePart): string => {
 
 interface EveMessagesProps {
   readonly conversationId?: string;
-  readonly messageKey?: (message: ReadonlyEveMessage) => string;
-  readonly messages: readonly ReadonlyEveMessage[];
+  readonly messageKey?: (message: ChatMessage) => string;
+  readonly messages: readonly ChatMessage[];
   readonly isReadonly: boolean;
   readonly actionsDisabled?: boolean;
-  readonly onEdit?: (message: ReadonlyEveMessage) => void;
+  readonly onEdit?: (message: ChatMessage) => void;
   readonly suggestions?: ReadonlyReactNode;
-  readonly onRegenerate?: (
-    message: ReadonlyEveMessage,
-    response: ReadonlyEveMessage
-  ) => void;
+  readonly onRegenerate?: (message: ChatMessage, response: ChatMessage) => void;
   readonly editor?: {
     readonly messageId: string;
     readonly content: ReadonlyReactNode;
     readonly onCancel: () => void;
     readonly disabled: boolean;
   };
-  readonly renderResponses?: (message: ReadonlyEveMessage) => ReactNode;
+  readonly renderResponses?: (message: ChatMessage) => ReactNode;
   readonly renderVersions?: (
-    message: ReadonlyEveMessage,
-    userMessage?: ReadonlyEveMessage
+    message: ChatMessage,
+    userMessage?: ChatMessage
   ) => ReactNode;
-  readonly modelForMessage?: (
-    message: ReadonlyEveMessage
-  ) => string | undefined;
+  readonly modelForMessage?: (message: ChatMessage) => string | undefined;
   readonly disabled: boolean;
   readonly inputDisabled?: boolean;
   readonly respond: (response: InputResponse) => void;
@@ -90,8 +88,8 @@ interface MessageRowProps extends Omit<
   EveMessagesProps,
   "messages" | "messageKey"
 > {
-  readonly message: ReadonlyEveMessage;
-  readonly userMessage: ReadonlyEveMessage | undefined;
+  readonly message: ChatMessage;
+  readonly userMessage: ChatMessage | undefined;
   readonly isLast: boolean;
   readonly latestDocumentCallId: string | undefined;
   readonly actionsDisabled: boolean;
@@ -267,11 +265,11 @@ const EveMessageRow = ({
     !editor &&
     hasText(message.id);
   const text = message.parts
-    .filter((part: ReadonlyEveMessagePart) => part.type === "text")
+    .filter((part: ChatMessagePart) => part.type === "text")
     .map((part) => part.text)
     .join("\n");
   const partOccurrences = new Map<string, number>();
-  const nextPartKey = (part: ReadonlyEveMessagePart): string => {
+  const nextPartKey = (part: ChatMessagePart): string => {
     const identity = messagePartIdentity(part);
     const occurrence = partOccurrences.get(identity) ?? 0;
     partOccurrences.set(identity, occurrence + 1);
@@ -300,7 +298,7 @@ const EveMessageRow = ({
       <UserMessageView
         actions={actions}
         attachments={message.parts
-          .filter((part: ReadonlyEveMessagePart) => part.type === "file")
+          .filter((part: ChatMessagePart) => part.type === "file")
           .map((part): React.JSX.Element => (
             <EveAttachment key={nextPartKey(part)} part={part} />
           ))}
@@ -328,7 +326,7 @@ const EveMessageRow = ({
       followUp={isLast && !isReadonly && !actionsDisabled && suggestions}
     >
       {message.parts
-        .filter((part: ReadonlyEveMessagePart) => part.type !== "step-start")
+        .filter((part: ChatMessagePart) => part.type !== "step-start")
         .map((part): React.JSX.Element => (
           <EveMessagePart
             inputDisabled={responseDisabled(
@@ -342,7 +340,7 @@ const EveMessageRow = ({
             part={part}
             respond={respond}
             previewDocument={
-              part.type === "dynamic-tool" &&
+              (part.type === "dynamic-tool" || isChatToolPart(part)) &&
               part.toolCallId === latestDocumentCallId
             }
           />
@@ -351,28 +349,30 @@ const EveMessageRow = ({
   );
 };
 
-// Parts remain EVE-owned; the message chrome is shared with the original runtime.
+// Shared and guest histories use the same typed display contract as live messages.
 export const EveMessages = ({
-  messages,
+  messages: inputMessages,
   messageKey,
   disabled,
   actionsDisabled = disabled,
   ...props
 }: EveMessagesProps): ReactJSX.Element[] => {
+  const messages = inputMessages.map(projectChatMessage);
   const latestDocumentCallId = messages
     .flatMap(
-      (message: Readonly<{ parts: readonly ReadonlyEveMessagePart[] }>) =>
+      (message: Readonly<{ parts: readonly ChatMessagePart[] }>) =>
         message.parts
     )
-    .filter((part: ReadonlyEveMessagePart) => part.type === "dynamic-tool")
+    .map(nativeMessagePart)
+    .filter((part) => part.type === "dynamic-tool")
     .findLast(
       (part) =>
         documentDefinitions.operations.has(part.toolName) ||
         part.toolName === "readDocument" ||
         (part.state === "output-available" && isDocumentResult(part.output))
     )?.toolCallId;
-  const precedingUsers: (ReadonlyEveMessage | undefined)[] = [];
-  let precedingUser: ReadonlyEveMessage | undefined;
+  const precedingUsers: (ChatMessage | undefined)[] = [];
+  let precedingUser: ChatMessage | undefined;
   for (const message of messages) {
     precedingUsers.push(precedingUser);
     if (message.role === "user") {
