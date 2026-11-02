@@ -219,7 +219,10 @@ export const appSandboxProvider = (): SandboxProviderImplementation<
                 const content = await readFile(filePath);
                 return {
                   location,
-                  path: nodePath.relative(root, filePath),
+                  path: nodePath
+                    .relative(root, filePath)
+                    .split(nodePath.sep)
+                    .join("/"),
                   content: content.toString("base64"),
                 };
               })
