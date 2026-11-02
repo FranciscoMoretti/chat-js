@@ -5,6 +5,7 @@ import { idle } from "eve/events";
 import { hasText } from "@/components/text-value";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { conversationOf } from "eve/client";
 import type { SessionStreamEvent } from "eve/client";
 import { useEveAgent } from "eve/react";
 import { usePathname } from "next/navigation";
@@ -119,10 +120,19 @@ const NativeObserver = ({
   }, [selected, status, resume]);
   // The native hook returns a fresh wrapper on render. Project only when its
   // contents change, otherwise observe() publishes a new snapshot indefinitely.
-  const displayedData = useMemo(
-    () => projectEveMessageDisplay({ messages: agent.messages }, agent.events, display.data ?? []),
-    [agent.messages, agent.events, display.data]
-  );
+  const displayedData = useMemo(() => {
+    // The hook retains local submission IDs after delivery. Branch boundaries
+    // must use the same durable IDs as the server's event projection.
+    const confirmed = conversationOf(agent.events).messages;
+    const pending = agent.messages.filter(
+      (message) => message.metadata?.optimistic
+    );
+    return projectEveMessageDisplay(
+      { messages: [...confirmed, ...pending] },
+      agent.events,
+      display.data ?? []
+    );
+  }, [agent.messages, agent.events, display.data]);
   useEffect(() => {
     controller.observe(conversationId, {
       ...agent,
