@@ -23,13 +23,17 @@ import { getProjectColorName, getProjectIconName } from "../project-icons";
 
 import { EveMoveProjectDialog } from "./eve-move-project-dialog";
 
-export const ProjectsSidebar = (): React.JSX.Element | null => {
+export const ProjectsSidebar = ({
+  conversationId,
+}: {
+  readonly conversationId?: string;
+}): React.JSX.Element | null => {
   const { data: session } = useSession();
   return session?.user ? (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
       <SidebarGroupLabel>Projects</SidebarGroupLabel>
       <SidebarMenu>
-        <SidebarProjects />
+        <SidebarProjects conversationId={conversationId} />
       </SidebarMenu>
     </SidebarGroup>
   ) : null;

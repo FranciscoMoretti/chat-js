@@ -7,7 +7,9 @@ import type {
 } from "@/chatjs/core/chat/contracts";
 import type { ComposerControlProps } from "@/components/composer/control";
 
-export const SidebarSections = defineSlot();
+export const SidebarSections = defineSlot<{
+  readonly conversationId?: string;
+}>();
 export const SidebarHeaderItems = defineSlot<{ readonly ownerId?: string }>();
 export const ChatActions = defineSlot<ChatActionProps>();
 export const ChatBreadcrumbs = defineSlot<{ readonly chatId: string }>();

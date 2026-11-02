@@ -21,7 +21,7 @@ interface SessionContextValue {
   isPending: boolean;
 }
 
-const SessionContext = createContext<SessionContextValue | undefined>(
+export const SessionContext = createContext<SessionContextValue | undefined>(
   undefined
 );
 

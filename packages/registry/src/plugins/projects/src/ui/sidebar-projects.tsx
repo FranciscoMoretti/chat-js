@@ -24,7 +24,11 @@ import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { parseChatIdFromPathname } from "@/providers/parse-chat-id-from-pathname";
 import { useTRPC } from "@/trpc/react";
 
-export const SidebarProjects = (): ReactJSX.Element => {
+export const SidebarProjects = ({
+  conversationId,
+}: {
+  readonly conversationId?: string;
+}): ReactJSX.Element => {
   const pathname = usePathname();
   const router = useRouter();
   const trpc = useTRPC();
@@ -36,10 +40,11 @@ export const SidebarProjects = (): ReactJSX.Element => {
   const [newProjectDialogOpen, setNewProjectDialogOpen] = useState(false);
 
   const route = parseChatIdFromPathname(pathname);
+  const activeConversationId = conversationId ?? route.id;
   const membership = useQuery(
     trpc.project.forChat.queryOptions(
-      { id: route.id ?? "" },
-      { enabled: Boolean(route.id) }
+      { id: activeConversationId ?? "" },
+      { enabled: Boolean(activeConversationId) }
     )
   );
   const currentProjectId =

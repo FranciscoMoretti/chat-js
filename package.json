@@ -67,7 +67,9 @@
     "eve:setup": "dotenv -e .env.worktree.local -e .env.local -- bun run --cwd apps/chat eve:setup",
     "eve:check": "dotenv -e .env.worktree.local -e .env.local -- bun run --cwd apps/chat eve:check",
     "test:tools:live": "dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env chat -- bun --filter=@chatjs/chat run test:tools:live",
-    "test:visual:create:activity": "bun -e 'import { rmSync } from \"node:fs\"; rmSync(\"apps/site/uiverify-archive\", { recursive: true, force: true });' && dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env site -- playwright test --config apps/site/tests/create.playwright.config.mts && bun -e 'import { finalizeArchive } from \"@uiverify/playwright\"; finalizeArchive(\"apps/site/uiverify-archive\");'"
+    "test:visual:create:activity": "bun -e 'import { rmSync } from \"node:fs\"; rmSync(\"apps/site/uiverify-archive\", { recursive: true, force: true });' && dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env site -- playwright test --config apps/site/tests/create.playwright.config.mts && bun -e 'import { finalizeArchive } from \"@uiverify/playwright\"; finalizeArchive(\"apps/site/uiverify-archive\");'",
+    "dev:create-controller": "CHATJS_CREATE_CONTROLLER_PREVIEW=1 PLAYWRIGHT=1 dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env chat -- bun --cwd apps/chat next dev",
+    "test:visual:create-controller": "dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env chat -- playwright test --config apps/chat/tests/create-controller.playwright.config.mts"
   },
   "devDependencies": {
     "@changesets/changelog-github": "^0.5.2",

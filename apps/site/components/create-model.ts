@@ -24,6 +24,7 @@ export const createCommand = (
     args.push("--gateway", selection.gateway);
   }
   args.push(
+    selection.plugins.includes("projects") ? "--projects" : "--no-projects",
     selection.plugins.includes("attachment-uploads")
       ? "--attachments"
       : "--no-attachments"
@@ -50,11 +51,52 @@ export type CreateProvider = Readonly<{
   configKeys?: readonly string[];
 }>;
 
+const readEncodedInstallation = (
+  encoded: string,
+  gateways: readonly CreateProvider[],
+  storageProviders: readonly CreateProvider[]
+): InstallationSelection | null => {
+  try {
+    const parsed = installationSelectionSchema.safeParse(JSON.parse(encoded));
+    if (!parsed.success) {
+      return null;
+    }
+    const selection = parsed.data;
+    const provider = storageProviders.find(
+      (item) => item.id === selection.storage?.source
+    );
+    if (
+      selection.gateway !== undefined &&
+      !gateways.some((item) => item.id === selection.gateway)
+    ) {
+      return null;
+    }
+    if (
+      selection.storage &&
+      (!provider ||
+        Object.entries(selection.storage.options).some(
+          ([key, value]) =>
+            provider.configKeys?.includes(key) !== true ||
+            typeof value !== "string"
+        ))
+    ) {
+      return null;
+    }
+    return selection;
+  } catch {
+    return null;
+  }
+};
+
 export const readInstallationSelection = (
   query: URLSearchParams,
   gateways: readonly CreateProvider[],
   storageProviders: readonly CreateProvider[]
 ) => {
+  const encoded = query.get("installation");
+  if (encoded !== null) {
+    return readEncodedInstallation(encoded, gateways, storageProviders);
+  }
   const gateway = query.get("gateway") ?? startingInstallation.gateway;
   const storage = query.get("storage") ?? startingInstallation.storage?.source;
   const uploads = query.get("uploads") ?? "false";
@@ -89,3 +131,16 @@ export const readInstallationSelection = (
     storage: storageSelection.data,
   });
 };
+
+/** The current CLI has no generic plugin/tool selection flags. Never imply parity. */
+export const unsupportedCreateSelections = (
+  selection: Readonly<InstallationSelection>
+): string[] => [
+  ...selection.plugins
+    .filter((id) => !["projects", "attachment-uploads"].includes(id))
+    .map((id) => `Plugin ${id}: not represented by this command.`),
+  ...selection.tools.map(
+    (id) => `Tool ${id}: not represented by this command.`
+  ),
+  "CLI defaults may install additional tools; this command is not an exact installation manifest.",
+];

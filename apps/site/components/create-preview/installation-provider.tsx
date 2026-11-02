@@ -27,6 +27,7 @@ export const InstallationProvider = ({
   children: ReactNode;
 }>) => {
   const [params, setParams] = useQueryStates({
+    installation: parseAsString,
     gateway: parseAsString,
     storage: parseAsString,
     uploads: parseAsString,
@@ -48,6 +49,7 @@ export const InstallationProvider = ({
       installation,
       update: (selection) => {
         void setParams({
+          installation: JSON.stringify(selection),
           gateway: selection.gateway ?? null,
           storage: selection.storage?.source ?? null,
           uploads: String(selection.plugins.includes("attachment-uploads")),

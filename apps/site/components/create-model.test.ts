@@ -34,7 +34,7 @@ void describe("ChatJS installation handoff", () => {
     };
     assert.equal(
       createCommand(preset, "base", installation),
-      `bunx @chat-js/cli@beta create my-chat --yes --gateway openrouter --attachments --storage-provider s3 --sandbox-provider vercel -- --preset ${encodePreset(preset)} --base base`
+      `bunx @chat-js/cli@beta create my-chat --yes --gateway openrouter --no-projects --attachments --storage-provider s3 --sandbox-provider vercel -- --preset ${encodePreset(preset)} --base base`
     );
   });
   void test("accepts only provider public config and safely quotes native CLI JSON", () => {
@@ -117,6 +117,56 @@ void test("passes Radix through unchanged beside the opaque native preset", () =
     new RegExp(
       `-- --preset ${encodePreset(DEFAULT_PRESET_CONFIG)} --base radix$`,
       "u"
+    )
+  );
+});
+
+void test("full installation URL survives reload independently from preview scenario", () => {
+  const selection = {
+    plugins: ["feedback", "projects"],
+    tools: ["get-weather"],
+    gateway: "openrouter",
+    sandbox: "daytona",
+    storage: { source: "s3", options: { bucket: "public-files" } },
+  };
+  const query = new URLSearchParams({
+    installation: JSON.stringify(selection),
+    scenario: "mutation-error",
+  });
+  assert.deepEqual(
+    readInstallationSelection(query, gateways, storage),
+    selection
+  );
+  query.set("scenario", "ready");
+  assert.deepEqual(
+    readInstallationSelection(query, gateways, storage),
+    selection
+  );
+  query.set("installation", "broken");
+  assert.equal(readInstallationSelection(query, gateways, storage), null);
+});
+
+void test("exports the existing Projects flags and discloses missing Feedback support", async () => {
+  const { unsupportedCreateSelections } = await import("./create-model");
+  const selection = {
+    ...startingInstallation,
+    plugins: ["projects", "feedback"],
+  };
+  assert.match(
+    createCommand(DEFAULT_PRESET_CONFIG, "base", selection),
+    / --projects /u
+  );
+  assert.match(
+    createCommand(DEFAULT_PRESET_CONFIG, "base", startingInstallation),
+    / --no-projects /u
+  );
+  assert.doesNotMatch(
+    createCommand(DEFAULT_PRESET_CONFIG, "base", selection),
+    /--feedback/u
+  );
+  assert.ok(
+    unsupportedCreateSelections(selection).some((warning) =>
+      warning.includes("feedback")
     )
   );
 });
