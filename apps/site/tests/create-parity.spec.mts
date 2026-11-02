@@ -2,7 +2,7 @@
 import { test, expect } from "@uiverify/playwright";
 import { composerDraftCases } from "../../../packages/chat-visual-tests/contracts/composer";
 
-for (const base of ["base", "radix"] as const) {
+for (const base of ["base"] as const) {
   for (const width of [1000, 390]) {
     for (const rtl of [false, true]) {
       test(`${base} app composer and navigation ${width} ${rtl ? "rtl" : "ltr"}`, async ({
@@ -137,11 +137,11 @@ for (const base of ["base", "radix"] as const) {
             page.locator('[data-slot="sidebar"][data-state="collapsed"]')
           ).toBeVisible();
           await expect(
-            page.getByRole("button", { name: "Weekend reading list" })
+            page.getByRole("button", { name: "Building something good" })
           ).toBeHidden();
           await toggle.click();
           await expect(
-            page.getByRole("button", { name: "Weekend reading list" })
+            page.getByRole("button", { name: "Building something good" })
           ).toBeVisible();
         }
         if (width === 390) {

@@ -9,6 +9,7 @@ export default defineConfig({
   testDir: ".",
   testMatch: [
     "create-activity.spec.mts",
+    "create-plugins.spec.mts",
     "create-styles.spec.mts",
     "create-conversation.spec.mts",
     "create-parity.spec.mts",

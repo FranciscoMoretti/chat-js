@@ -44,6 +44,10 @@ test("project with instructions and chats", async () => {
     .element(page.getByText("Press release first draft"))
     .toBeVisible();
   await expect.element(page.getByText("✓")).toBeInTheDocument();
+  // Environment overrides used by Create must not remove app management actions.
+  await expect
+    .element(page.getByRole("button", { name: "New project", exact: true }))
+    .toBeVisible();
   const histories = [...route.queryClients].flatMap((client) =>
     client
       .getQueryCache()

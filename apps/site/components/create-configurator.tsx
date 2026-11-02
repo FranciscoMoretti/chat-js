@@ -90,8 +90,7 @@ const CreateDesigner = () => {
           className="flex min-h-0 flex-1 flex-col gap-(--gap) p-(--gap) pt-[calc(var(--gap)*0.25)] md:flex-row-reverse"
         >
           <PreviewOverrideProvider>
-            {(params.base === "base" || params.base === "radix") &&
-            params.template === "next" ? (
+            {params.base === "base" && params.template === "next" ? (
               <Preview />
             ) : (
               <div
@@ -101,7 +100,7 @@ const CreateDesigner = () => {
                 <h1 className="text-xl font-semibold">
                   This setup is not available yet.
                 </h1>
-                <p>ChatJS creates a Next.js app with Base UI or Radix.</p>
+                <p>This preview uses Next.js and Base UI.</p>
                 <Button
                   onClick={() => {
                     void setParams({ base: "base", template: "next" });

@@ -39,7 +39,7 @@ test("preset history replaces the redo branch", async ({ page, uiVerify }) => {
 
 // Real preview route, captured directly so every tool state remains visible in
 // the archive. The existing Create suite covers its host/iframe handshake.
-for (const base of ["base", "radix"] as const) {
+for (const base of ["base"] as const) {
   test(`native ${base} activity across styles and icon libraries`, async ({
     page,
     uiVerify,
@@ -110,7 +110,7 @@ for (const base of ["base", "radix"] as const) {
   });
 }
 
-for (const base of ["base", "radix"] as const) {
+for (const base of ["base"] as const) {
   for (const mode of ["light", "dark"] as const) {
     for (const width of [1000, 390]) {
       test(`${base === "base" ? "native" : "radix"} tool scene ${width} ${mode}`, async ({
@@ -207,58 +207,30 @@ test("uploads include a persistent sandbox in the installation command", async (
   expect(errors).toEqual([]);
 });
 
-test("library selection preserves the preset, uploads, and native command", async ({
+test("unsupported library links offer a Base UI recovery without losing selections", async ({
   page,
   uiVerify,
 }) => {
   uiVerify.disableAutoSnapshot();
-  const errors: string[] = [];
-  page.on("pageerror", (error) => errors.push(error.message));
-  page.on("console", (message) => {
-    if (message.type() === "error") {
-      errors.push(message.text());
-    }
-  });
-  await page.setViewportSize({ width: 1440, height: 1000 });
-  await page.goto("/create?preset=b27I2r8C&uploads=true");
-  const frame = page.frameLocator("iframe");
-  const preview = frame.getByTestId("chat-preview");
-  await expect(preview).toHaveAttribute("data-base", "base");
+  await page.goto("/create?base=radix&preset=b27I2r8C&uploads=true");
+  await expect(
+    page
+      .getByRole("alert")
+      .filter({ hasText: "This setup is not available yet." })
+  ).toContainText("This preview uses Next.js and Base UI.");
+  await page.getByRole("button", { name: "Use Base UI and Next.js" }).click();
+  await expect(
+    page.frameLocator("iframe").getByTestId("chat-preview")
+  ).toHaveAttribute("data-base", "base");
   await page
     .getByRole("button", { name: "Get Code", exact: true })
     .first()
     .click();
-  const dialog = page.getByRole("dialog", { name: "Create your ChatJS app" });
-  await dialog.getByRole("radio", { name: "Radix UI", exact: true }).check();
-  const command = dialog.getByTestId("create-command");
-  await expect(command).toContainText("--base radix");
-  await expect(command).toContainText("--preset b27I2r8C");
-  await expect(command).toContainText("--sandbox-provider vercel");
-  await expect(page).toHaveURL(/base=radix/u);
-  await page.keyboard.press("Escape");
-  await expect(preview).toHaveAttribute("data-base", "radix");
-  await frame.getByRole("button", { name: "Preview scenario" }).click();
-  await frame
-    .getByRole("menuitemradio", { name: "New chat", exact: true })
-    .click();
-  await expect(
-    frame.getByRole("heading", { name: "How can I help you today?" })
-  ).toBeVisible();
-  await frame.getByRole("button", { name: "Choose preview model" }).click();
-  await frame.getByRole("menuitemradio", { name: "Fast", exact: true }).click();
-  await expect(
-    frame.getByRole("button", { name: "Choose preview model" })
-  ).toContainText("Fast");
-  await page.reload();
-  await expect(preview).toHaveAttribute("data-base", "radix");
-  await page
-    .getByRole("button", { name: "Get Code", exact: true })
-    .first()
-    .click();
-  await expect(command).toContainText("--base radix");
-  await dialog.getByRole("radio", { name: "Base UI", exact: true }).check();
-  await expect(command).toContainText("--base base");
-  await page.keyboard.press("Escape");
-  await expect(preview).toHaveAttribute("data-base", "base");
-  expect(errors).toEqual([]);
+  await expect(page.getByTestId("create-command")).toContainText("--base base");
+  await expect(page.getByTestId("create-command")).toContainText(
+    "--preset b27I2r8C"
+  );
+  await expect(page.getByTestId("create-command")).toContainText(
+    "--sandbox-provider vercel"
+  );
 });

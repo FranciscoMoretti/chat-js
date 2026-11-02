@@ -81,3 +81,13 @@ body:has(.create-chat-preview) {
   height: 100%;
   overflow: hidden;
 }
+
+@source "../../../../chat/chatjs/plugins/feedback";
+@source "../../../../chat/chatjs/plugins/projects/ui";
+@source "../../../../chat/components/message-action.tsx";
+@source "../../../../chat/components/hint.tsx";
+
+/* Portals inherit the same font variables as the main preview. */
+body:has(.create-chat-preview) {
+  font-family: var(--font-sans);
+}

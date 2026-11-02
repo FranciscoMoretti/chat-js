@@ -18,7 +18,54 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*", "../chat/*"],
+      "@/components/ui/button": [
+        "./components/create-preview/ui/base/button.tsx"
+      ],
+      "@/components/ui/sidebar": [
+        "./components/create-preview/ui/base/sidebar.tsx"
+      ],
+      "@/components/ui/dropdown-menu": [
+        "./components/create-preview/ui/base/dropdown-menu.tsx"
+      ],
+      "@/components/ui/tooltip": [
+        "./components/create-preview/ui/base/tooltip.tsx"
+      ],
+      "@/components/ui/input": [
+        "./components/create-preview/ui/base/input.tsx"
+      ],
+      "@/components/ui/separator": [
+        "./components/create-preview/ui/base/separator.tsx"
+      ],
+      "@/components/ui/scroll-area": [
+        "./components/create-preview/ui/base/scroll-area.tsx"
+      ],
+      "@/components/ui/sheet": [
+        "./components/create-preview/ui/base/sheet.tsx"
+      ],
+      "@/components/ui/skeleton": [
+        "./components/create-preview/ui/base/skeleton.tsx"
+      ],
+      "@/components/ui/textarea": [
+        "./components/create-preview/ui/base/textarea.tsx"
+      ],
+      "@/components/ui/dialog": [
+        "./components/create-preview/ui/base/dialog.tsx"
+      ],
+      "@/components/ui/breadcrumb": [
+        "./components/create-preview/ui/base/breadcrumb.tsx"
+      ],
+      "@/components/ui/label": [
+        "./components/create-preview/ui/base/label.tsx"
+      ],
+      "@/components/ui/popover": [
+        "./components/create-preview/ui/base/popover.tsx"
+      ],
+      "@/components/ui/alert-dialog": [
+        "./components/create-preview/ui/base/alert-dialog.tsx"
+      ],
+      "@/trpc/react": ["../chat/trpc/context.tsx"],
+      "@/providers/session-provider": ["../chat/providers/session-context.ts"]
     },
     "strictNullChecks": true,
     "types": ["node"]

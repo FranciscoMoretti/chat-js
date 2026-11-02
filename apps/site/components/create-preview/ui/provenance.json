@@ -9,10 +9,20 @@
     "Restore Radix mobile sidebar focus to the preview trigger on close"
   ],
   "files": {
+    "base/alert-dialog.tsx": {
+      "source": "registry/bases/base/ui/alert-dialog.tsx",
+      "sha256": "86a20c2cae7d8a686dded2ca61b84f8c0bb4c9e56cd5f423eddac87827469caf",
+      "adaptedSha256": "a5aecc57b916c8dcdb20386ddef0f62104d4f635df31223aeaa7e9de763bd625"
+    },
     "base/attachment.tsx": {
       "source": "registry/bases/base/ui/attachment.tsx",
       "sha256": "8990c8ba1b1737acdbaf847aae6360ae544700beac7f3f53e559a57b04a48bfe",
       "adaptedSha256": "3e9bb3ada777ba1b8188cbc905c1389b4141a8daef115e617e94131b3fe5e1d0"
+    },
+    "base/breadcrumb.tsx": {
+      "source": "registry/bases/base/ui/breadcrumb.tsx",
+      "sha256": "006bb74f110ce68ff5a0bc4846616561aada5f1df8dac042a2c8aef80d55ab73",
+      "adaptedSha256": "8d95adb8fec25ae7bda5fb3fd0c4e2e4badb452846345fbb568a649783060b61"
     },
     "base/bubble.tsx": {
       "source": "registry/bases/base/ui/bubble.tsx",
@@ -34,6 +44,11 @@
       "sha256": "ead4349ff7b01d696ef89294a81d18ee1d3f732321398896462c834ab9b9e065",
       "adaptedSha256": "ead4349ff7b01d696ef89294a81d18ee1d3f732321398896462c834ab9b9e065"
     },
+    "base/dialog.tsx": {
+      "source": "registry/bases/base/ui/dialog.tsx",
+      "sha256": "aba6df6cbf51a1edcc22e415a3a46a666fc8cb66729e47b3ed2ecd97f166adff",
+      "adaptedSha256": "0c7fcfa87d1f30667f037089a73827c7c7faddf59d6990cdc56c46da7df2be03"
+    },
     "base/direction.tsx": {
       "source": "registry/bases/base/ui/direction.tsx",
       "sha256": "661ff5b9c0dc26edde1226bfedc0ab50976d84f8bae42ca83a38dc3b478fd4d4",
@@ -54,6 +69,11 @@
       "sha256": "00213ec177e4556e69b6680128c18023d859a8e4eaf4106fbcf6abdc4f2c419b",
       "adaptedSha256": "00213ec177e4556e69b6680128c18023d859a8e4eaf4106fbcf6abdc4f2c419b"
     },
+    "base/label.tsx": {
+      "source": "registry/bases/base/ui/label.tsx",
+      "sha256": "d11f6ddea1304473d829329f36238c164dbee9fe04c038fd169d70d352b75704",
+      "adaptedSha256": "d11f6ddea1304473d829329f36238c164dbee9fe04c038fd169d70d352b75704"
+    },
     "base/message-scroller.tsx": {
       "source": "registry/bases/base/ui/message-scroller.tsx",
       "sha256": "385d9b66036e6fcf4b21997914791121c55749223d4f28f95d72862c4bd724c0",
@@ -63,6 +83,11 @@
       "source": "registry/bases/base/ui/message.tsx",
       "sha256": "b57f3c9921ceb0695cb8164c7be8ce229519f2b485b95923bb980a5e39e11c72",
       "adaptedSha256": "b57f3c9921ceb0695cb8164c7be8ce229519f2b485b95923bb980a5e39e11c72"
+    },
+    "base/popover.tsx": {
+      "source": "registry/bases/base/ui/popover.tsx",
+      "sha256": "935bab728b60fd867384ebc6097d6a46c937423e015503e0251999b686f38bb7",
+      "adaptedSha256": "935bab728b60fd867384ebc6097d6a46c937423e015503e0251999b686f38bb7"
     },
     "base/scroll-area.tsx": {
       "source": "registry/bases/base/ui/scroll-area.tsx",

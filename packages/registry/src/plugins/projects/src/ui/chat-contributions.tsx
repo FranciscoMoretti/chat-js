@@ -25,15 +25,23 @@ import { EveMoveProjectDialog } from "./eve-move-project-dialog";
 
 export const ProjectsSidebar = ({
   conversationId,
+  allowManagement = true,
+  onProjectSelect,
 }: {
   readonly conversationId?: string;
+  readonly allowManagement?: boolean;
+  readonly onProjectSelect?: (id: string) => void;
 }): React.JSX.Element | null => {
   const { data: session } = useSession();
   return session?.user ? (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
       <SidebarGroupLabel>Projects</SidebarGroupLabel>
       <SidebarMenu>
-        <SidebarProjects conversationId={conversationId} />
+        <SidebarProjects
+          conversationId={conversationId}
+          allowManagement={allowManagement}
+          onProjectSelect={onProjectSelect}
+        />
       </SidebarMenu>
     </SidebarGroup>
   ) : null;
@@ -71,8 +79,10 @@ export const ProjectChatActions = ({
 
 export const ProjectBreadcrumb = ({
   chatId,
+  onProjectSelect,
 }: {
   readonly chatId: string;
+  readonly onProjectSelect?: (id: string) => void;
 }): React.JSX.Element | null => {
   const { data: session } = useSession();
   const trpc = useTRPC();
@@ -92,6 +102,12 @@ export const ProjectBreadcrumb = ({
           aria-label={project.name}
           title={project.name}
           href={`/project/${project.id}`}
+          onClick={(event) => {
+            if (onProjectSelect) {
+              event.preventDefault();
+              onProjectSelect(project.id);
+            }
+          }}
         >
           <ProjectIcon
             icon={getProjectIconName(project.icon)}

@@ -7,7 +7,7 @@ import {
 
 // One conversation contains bubbles, attachment, code, activity, scroller and
 // composer. Alternate responsive layouts; the interaction matrix covers all four.
-for (const base of ["base", "radix"] as const) {
+for (const base of ["base"] as const) {
   for (const [index, style] of PRESET_STYLES.entries()) {
     test(`${base} ${style} conversation with attachment`, async ({
       page,

@@ -10,10 +10,12 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { cn } from "cn";
 import { decodePreset } from "shadcn/preset";
 import { copyToClipboardWithMeta } from "@/components/create-preview/copy-clipboard";
-import { createCommand } from "@/components/create-model";
+import {
+  createCommand,
+  unsupportedCreateSelections,
+} from "@/components/create-model";
 import { useInstallation } from "@/components/create-preview/installation-provider";
 import {
-  BASES,
   buildThemeForPreset,
   DEFAULT_CONFIG,
 } from "@/vendor/shadcn-create/registry/config";
@@ -32,15 +34,12 @@ import {
   FieldDescription,
   FieldGroup,
   FieldLabel,
-  FieldLegend,
   FieldSet,
+  FieldLegend,
 } from "@/vendor/shadcn-create/styles/base-nova/ui/field";
 import { Input } from "@/vendor/shadcn-create/styles/base-nova/ui/input";
 import { Switch } from "@/vendor/shadcn-create/styles/base-nova/ui/switch";
-import {
-  RadioGroup,
-  RadioGroupItem,
-} from "@/vendor/shadcn-create/styles/base-nova/ui/radio-group";
+
 import {
   Tabs,
   TabsList,
@@ -67,8 +66,14 @@ const formatCssVarsRule = (
 const publicValue = (value: unknown): string =>
   typeof value === "string" ? value : "";
 const InstallationFields = () => {
-  const { installation, gateways, storageProviders, update } =
-    useInstallation();
+  const {
+    installation,
+    gateways,
+    storageProviders,
+    update,
+    scenario,
+    setScenario,
+  } = useInstallation();
   const storage = storageProviders.find(
     (item) => item.id === installation?.storage?.source
   );
@@ -105,10 +110,57 @@ const InstallationFields = () => {
           onCheckedChange={(checked) => {
             update({
               ...installation,
-              plugins: checked ? ["attachment-uploads"] : [],
+              plugins: checked
+                ? [...installation.plugins, "attachment-uploads"]
+                : installation.plugins.filter(
+                    (id) => id !== "attachment-uploads"
+                  ),
             });
           }}
         />
+      </Field>
+      {["feedback", "projects"].map((id) => (
+        <Field key={id} orientation="horizontal">
+          <FieldContent>
+            <FieldLabel htmlFor={`chatjs-${id}`}>
+              {id === "feedback" ? "Feedback" : "Projects"}
+            </FieldLabel>
+          </FieldContent>
+          <Switch
+            id={`chatjs-${id}`}
+            checked={installation.plugins.includes(id)}
+            onCheckedChange={(checked) => {
+              update({
+                ...installation,
+                plugins: checked
+                  ? [...installation.plugins, id]
+                  : installation.plugins.filter((plugin) => plugin !== id),
+              });
+            }}
+          />
+        </Field>
+      ))}
+      <Field>
+        <FieldLabel htmlFor="preview-scenario">Preview scenario</FieldLabel>
+        <select
+          id="preview-scenario"
+          className="border-input bg-background rounded-md border p-2"
+          value={scenario}
+          onChange={(event) => {
+            setScenario(
+              event.target.value === "mutation-error"
+                ? "mutation-error"
+                : "ready"
+            );
+          }}
+        >
+          <option value="ready">Ready</option>
+          <option value="mutation-error">Mutations fail</option>
+        </select>
+        <FieldDescription>
+          Sample votes and moves reset on reload. Project creation and
+          management are not included in this preview.
+        </FieldDescription>
       </Field>
       <Field>
         <FieldLabel htmlFor="chatjs-storage">Storage provider</FieldLabel>
@@ -180,8 +232,7 @@ const useCreationOutput = (packageManager: PackageManager) => {
       (key) => !publicValue(installation?.storage?.options[key]).trim()
     ) ?? false;
   const { base } = params;
-  const supported =
-    (base === "base" || base === "radix") && params.template === "next";
+  const supported = base === "base" && params.template === "next";
   const command =
     preset && installation && supported
       ? createCommand(preset, base, installation).replace(
@@ -207,7 +258,13 @@ const useCreationOutput = (packageManager: PackageManager) => {
     formatCssVarsRule(":root", theme.cssVars?.light),
     formatCssVarsRule(".dark", theme.cssVars?.dark),
   ].join("\n\n");
-  return { command, missingConfig, supported, themeCss };
+  return {
+    command,
+    missingConfig,
+    supported,
+    themeCss,
+    warnings: installation ? unsupportedCreateSelections(installation) : [],
+  };
 };
 
 export const ProjectForm = ({
@@ -219,7 +276,7 @@ export const ProjectForm = ({
     React.useState<PackageManager>("bun");
   const [activeTab, setActiveTab] = React.useState("new-project");
   const [copied, setCopied] = React.useState(false);
-  const { command, missingConfig, supported, themeCss } =
+  const { command, missingConfig, supported, themeCss, warnings } =
     useCreationOutput(packageManager);
   React.useEffect(() => {
     const timer = setTimeout(() => {
@@ -266,46 +323,15 @@ export const ProjectForm = ({
           <div className="no-scrollbar overflow-y-auto">
             {activeTab === "new-project" ? (
               <FieldGroup className="min-w-0 px-6 py-4">
-                <FieldSet className="gap-3">
-                  <FieldLegend variant="label">Base</FieldLegend>
-                  <RadioGroup
-                    value={params.base}
-                    onValueChange={(value: string) => {
-                      if (value === "base" || value === "radix") {
-                        void setParams({ base: value });
-                      }
-                    }}
-                    aria-label="Base"
-                    className="grid grid-cols-3 gap-2"
-                  >
-                    {BASES.map((base) => (
-                      <FieldLabel key={base.name} htmlFor={`base-${base.name}`}>
-                        <Field orientation="horizontal">
-                          <FieldContent>
-                            {base.title}
-                            {base.name === "aria" && (
-                              <span className="text-muted-foreground text-xs">
-                                Coming later
-                              </span>
-                            )}
-                          </FieldContent>
-                          <RadioGroupItem
-                            disabled={base.name === "aria"}
-                            value={base.name}
-                            id={`base-${base.name}`}
-                          />
-                        </Field>
-                      </FieldLabel>
-                    ))}
-                  </RadioGroup>
-                  <FieldDescription>
-                    ChatJS creates a Next.js app with Base UI or Radix.
-                  </FieldDescription>
-                </FieldSet>
+                <p className="text-muted-foreground text-xs">
+                  Next.js with Base UI. The library picker is omitted for this
+                  preview; native shadcn style and theme options remain
+                  available.
+                </p>
                 {!supported && (
                   <p role="alert" className="text-destructive text-sm">
                     This setup uses an unavailable base or framework. Choose
-                    Base UI or Radix and Next.js to create ChatJS.
+                    Base UI and Next.js to create ChatJS.
                   </p>
                 )}
                 <InstallationFields />
@@ -398,6 +424,16 @@ export const ProjectForm = ({
                       </code>
                     </div>
                   </Tabs>
+                )}
+                {activeTab === "new-project" && (
+                  <ul
+                    className="text-muted-foreground list-disc pl-4 text-xs"
+                    aria-label="CLI limitations"
+                  >
+                    {warnings.map((warning) => (
+                      <li key={warning}>{warning}</li>
+                    ))}
+                  </ul>
                 )}
                 {missingConfig && activeTab === "new-project" && (
                   <output className="text-muted-foreground text-xs">

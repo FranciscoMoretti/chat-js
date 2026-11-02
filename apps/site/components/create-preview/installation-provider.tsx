@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useMemo } from "react";
 import type { ReactNode } from "react";
-import { parseAsString, useQueryStates } from "nuqs";
+import { parseAsString, parseAsStringLiteral, useQueryStates } from "nuqs";
 import { readInstallationSelection } from "../create-model";
 import type { CreateProvider } from "../create-model";
 import type { InstallationSelection } from "../../../../packages/registry/installation";
@@ -11,6 +11,8 @@ type InstallationContextValue = Readonly<{
   gateways: readonly CreateProvider[];
   storageProviders: readonly CreateProvider[];
   installation: InstallationSelection | null;
+  scenario: "ready" | "mutation-error";
+  setScenario: (scenario: "ready" | "mutation-error") => void;
   update: (selection: InstallationSelection) => void;
 }>;
 const InstallationContext = createContext<InstallationContextValue | null>(
@@ -28,6 +30,9 @@ export const InstallationProvider = ({
 }>) => {
   const [params, setParams] = useQueryStates({
     installation: parseAsString,
+    scenario: parseAsStringLiteral(["ready", "mutation-error"]).withDefault(
+      "ready"
+    ),
     gateway: parseAsString,
     storage: parseAsString,
     uploads: parseAsString,
@@ -47,6 +52,10 @@ export const InstallationProvider = ({
       gateways,
       storageProviders,
       installation,
+      scenario: params.scenario,
+      setScenario: (scenario) => {
+        void setParams({ scenario });
+      },
       update: (selection) => {
         void setParams({
           installation: JSON.stringify(selection),
@@ -59,7 +68,7 @@ export const InstallationProvider = ({
         });
       },
     }),
-    [gateways, storageProviders, installation, setParams]
+    [gateways, storageProviders, installation, params.scenario, setParams]
   );
   return <InstallationContext value={value}>{children}</InstallationContext>;
 };

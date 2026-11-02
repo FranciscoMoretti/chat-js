@@ -17,7 +17,6 @@ import { FieldGroup, FieldSeparator } from "@/vendor/shadcn-create/styles/base-n
 import { MenuAccentPicker } from "@/vendor/shadcn-create/components/accent-picker"
 import { ActionMenu } from "@/vendor/shadcn-create/components/action-menu"
 import { BaseColorPicker } from "@/vendor/shadcn-create/components/base-color-picker"
-import { BasePicker } from "@/vendor/shadcn-create/components/base-picker"
 import { ChartColorPicker } from "@/vendor/shadcn-create/components/chart-color-picker"
 import { CopyPreset } from "@/vendor/shadcn-create/components/copy-preset"
 import { FontPicker } from "@/vendor/shadcn-create/components/font-picker"
@@ -110,7 +109,6 @@ export function Customizer({
           <FieldSeparator className="hidden md:block" />
           <MenuColorPicker isMobile={isMobile} anchorRef={anchorRef} />
           <MenuAccentPicker isMobile={isMobile} anchorRef={anchorRef} />
-          {isMobile && <BasePicker isMobile={isMobile} anchorRef={anchorRef} />}
         </FieldGroup>
       </CardContent>
       <CardFooter className="flex min-w-0 gap-2 md:flex-col md:rounded-b-none md:**:[button,a]:w-full">

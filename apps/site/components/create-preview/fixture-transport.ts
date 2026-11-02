@@ -3,7 +3,7 @@ import type { TRPCLink } from "@trpc/client";
 import type { inferRouterOutputs } from "@trpc/server";
 import { observable } from "@trpc/server/observable";
 import { z } from "zod";
-import type { AppRouter } from "@/trpc/routers/_app";
+import type { AppRouter } from "../../../chat/trpc/routers/_app";
 
 export const sampleConversation = {
   id: "00000000-0000-4000-8000-000000000001",
@@ -43,9 +43,7 @@ export const createFixtureTransport = (
   ];
   let assigned: string | null = null;
   let votes: Outputs["feedback"]["votes"] = [];
-  const calls: string[] = [];
   const resolve = (path: string, input: unknown): unknown => {
-    calls.push(path);
     switch (path) {
       case "project.list": {
         return projects;
@@ -114,5 +112,5 @@ export const createFixtureTransport = (
           clearTimeout(timer);
         };
       });
-  return { link, calls };
+  return { link };
 };

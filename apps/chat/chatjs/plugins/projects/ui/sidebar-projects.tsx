@@ -26,8 +26,12 @@ import { useTRPC } from "@/trpc/react";
 
 export const SidebarProjects = ({
   conversationId,
+  allowManagement = true,
+  onProjectSelect,
 }: {
   readonly conversationId?: string;
+  readonly allowManagement?: boolean;
+  readonly onProjectSelect?: (id: string) => void;
 }): ReactJSX.Element => {
   const pathname = usePathname();
   const router = useRouter();
@@ -75,17 +79,19 @@ export const SidebarProjects = ({
   };
   return (
     <>
-      <SidebarMenuItem>
-        <SidebarMenuButton
-          className="cursor-pointer"
-          onClick={() => {
-            setNewProjectDialogOpen(true);
-          }}
-        >
-          <FolderPlus className="size-4" />
-          <span>New project</span>
-        </SidebarMenuButton>
-      </SidebarMenuItem>
+      {allowManagement && (
+        <SidebarMenuItem>
+          <SidebarMenuButton
+            className="cursor-pointer"
+            onClick={() => {
+              setNewProjectDialogOpen(true);
+            }}
+          >
+            <FolderPlus className="size-4" />
+            <span>New project</span>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      )}
       {!isLoading &&
         projects?.map(
           (
@@ -94,6 +100,8 @@ export const SidebarProjects = ({
             const isActive = currentProjectId === project.id;
             return (
               <SidebarProjectItem
+                allowManagement={allowManagement}
+                onSelect={onProjectSelect}
                 isActive={isActive}
                 key={project.id}
                 project={project}
@@ -103,13 +111,15 @@ export const SidebarProjects = ({
           }
         )}
 
-      <ProjectDetailsDialog
-        isLoading={createProjectMutation.isPending}
-        mode="create"
-        onOpenChange={setNewProjectDialogOpen}
-        onSubmit={handleCreateProject}
-        open={newProjectDialogOpen}
-      />
+      {allowManagement && (
+        <ProjectDetailsDialog
+          isLoading={createProjectMutation.isPending}
+          mode="create"
+          onOpenChange={setNewProjectDialogOpen}
+          onSubmit={handleCreateProject}
+          open={newProjectDialogOpen}
+        />
+      )}
     </>
   );
 };

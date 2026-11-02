@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import {
   IconCopy,
+  IconDots,
   IconLayoutSidebar,
   IconX,
   IconCheck,
@@ -27,6 +28,7 @@ import {
 } from "@tabler/icons-react";
 import {
   CopyIcon,
+  DotsThreeIcon,
   SidebarIcon,
   XIcon,
   CheckIcon,
@@ -35,6 +37,7 @@ import {
 } from "@phosphor-icons/react";
 import {
   RiFileCopyLine,
+  RiMoreLine,
   RiSideBarLine,
   RiCloseLine,
   RiCheckLine,
@@ -44,6 +47,7 @@ import {
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Copy01Icon,
+  MoreHorizontalIcon,
   SidebarLeftIcon,
   Cancel01Icon,
   Tick02Icon,
@@ -88,7 +92,8 @@ export const IconPlaceholder = ({
     | "ArrowDownIcon"
     | "CopyIcon"
     | "PanelLeftIcon"
-    | "XIcon";
+    | "XIcon"
+    | "MoreHorizontalIcon";
   tabler: string;
   hugeicons: string;
   phosphor: string;
@@ -97,6 +102,13 @@ export const IconPlaceholder = ({
 }>) => {
   const library = useContext(IconLibraryContext);
   const icons = {
+    MoreHorizontalIcon: {
+      hugeicons: MoreHorizontalIcon,
+      tabler: IconDots,
+      phosphor: DotsThreeIcon,
+      remixicon: RiMoreLine,
+      lucide: MoreHorizontal,
+    },
     PanelLeftIcon: {
       hugeicons: SidebarLeftIcon,
       tabler: IconLayoutSidebar,

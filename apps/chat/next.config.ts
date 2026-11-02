@@ -42,10 +42,7 @@ const nextConfig: NextConfig = {
   typedRoutes: true,
 };
 
-// The bounded Create controller experiment has no EVE operations.
-export default process.env.CHATJS_CREATE_CONTROLLER_PREVIEW === "1"
-  ? () => nextConfig
-  : withEve(nextConfig, {
-      agents: { chat: "." },
-      devServerTimeoutMs: 600_000,
-    });
+export default withEve(nextConfig, {
+  agents: { chat: "." },
+  devServerTimeoutMs: 600_000,
+});

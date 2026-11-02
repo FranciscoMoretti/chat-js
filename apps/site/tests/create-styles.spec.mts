@@ -9,7 +9,7 @@ import {
 
 // Exercise every layout combination. Capture two representative layouts per
 // style/library, with menus and tool states together to avoid redundant shots.
-for (const base of ["base", "radix"] as const) {
+for (const base of ["base"] as const) {
   for (const [index, style] of PRESET_STYLES.entries()) {
     for (const rtl of [false, true]) {
       for (const width of [1000, 390]) {
@@ -100,7 +100,7 @@ for (const base of ["base", "radix"] as const) {
   }
 }
 
-for (const base of ["base", "radix"] as const) {
+for (const base of ["base"] as const) {
   test(`${base} keeps the open menu and draft while the native provider changes appearance`, async ({
     page,
     uiVerify,

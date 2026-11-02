@@ -35,6 +35,13 @@ const names = [
   "trace",
   "code-block",
 ];
+const featureNames = [
+  "dialog",
+  "breadcrumb",
+  "label",
+  "popover",
+  "alert-dialog",
+];
 const styles = ["vega", "nova", "lyra", "maia", "mira", "luma", "sera", "rhea"];
 const bases = ["base", "radix"];
 const hash = (source: string) =>
@@ -82,7 +89,7 @@ const logicalCss = async (source: string) => {
 
 await Promise.all(
   bases.flatMap((base) =>
-    names.map(async (name) => {
+    [...names, ...(base === "base" ? featureNames : [])].map(async (name) => {
       const source = `registry/bases/${base}/ui/${name}.tsx`;
       const original = await fetchSource(source);
       // Radix's controlled Sidebar has no SheetTrigger to restore focus to.

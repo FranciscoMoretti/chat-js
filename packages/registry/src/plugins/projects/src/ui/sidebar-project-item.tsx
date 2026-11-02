@@ -31,9 +31,13 @@ export const SidebarProjectItem = ({
   project,
   isActive,
   setOpenMobile,
+  allowManagement = true,
+  onSelect,
 }: {
   readonly project: ReadonlyNativeSurface<Project>;
   readonly isActive: boolean;
+  readonly allowManagement?: boolean;
+  readonly onSelect?: (id: string) => void;
   readonly setOpenMobile: (open: boolean) => void;
 }): ReactJSX.Element => {
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -62,6 +66,13 @@ export const SidebarProjectItem = ({
         className="cursor-pointer"
         isActive={isActive}
         href={projectHref}
+        onClick={(event) => {
+          if (onSelect) {
+            event.preventDefault();
+            onSelect(project.id);
+            setOpenMobile(false);
+          }
+        }}
         onNavigate={() => {
           setOpenMobile(false);
         }}
@@ -71,41 +82,45 @@ export const SidebarProjectItem = ({
         <span>{project.name}</span>
       </SidebarLink>
 
-      <DropdownMenu modal>
-        <SidebarActionMenu showOnHover={!isActive}>
-          <MoreHorizontal size={16} />
-          <span className="sr-only">More</span>
-        </SidebarActionMenu>
-        <DropdownMenuContent align="end" side="bottom">
-          <DropdownMenuGroup>
-            <ProjectMenuItems
-              onDelete={() => {
-                setShowDeleteDialog(true);
-              }}
-              onRename={() => {
-                setShowEditDialog(true);
-              }}
-            />
-          </DropdownMenuGroup>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      {allowManagement && (
+        <>
+          <DropdownMenu modal>
+            <SidebarActionMenu showOnHover={!isActive}>
+              <MoreHorizontal size={16} />
+              <span className="sr-only">More</span>
+            </SidebarActionMenu>
+            <DropdownMenuContent align="end" side="bottom">
+              <DropdownMenuGroup>
+                <ProjectMenuItems
+                  onDelete={() => {
+                    setShowDeleteDialog(true);
+                  }}
+                  onRename={() => {
+                    setShowEditDialog(true);
+                  }}
+                />
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
-      <ProjectDetailsDialog
-        initialColor={color}
-        initialIcon={icon}
-        initialName={project.name}
-        isLoading={isPending}
-        mode="edit"
-        onOpenChange={setShowEditDialog}
-        onSubmit={handleRename}
-        open={showEditDialog}
-      />
+          <ProjectDetailsDialog
+            initialColor={color}
+            initialIcon={icon}
+            initialName={project.name}
+            isLoading={isPending}
+            mode="edit"
+            onOpenChange={setShowEditDialog}
+            onSubmit={handleRename}
+            open={showEditDialog}
+          />
 
-      <DeleteProjectDialog
-        deleteId={project.id}
-        setShowDeleteDialog={setShowDeleteDialog}
-        showDeleteDialog={showDeleteDialog}
-      />
+          <DeleteProjectDialog
+            deleteId={project.id}
+            setShowDeleteDialog={setShowDeleteDialog}
+            showDeleteDialog={showDeleteDialog}
+          />
+        </>
+      )}
     </SidebarMenuItem>
   );
 };
