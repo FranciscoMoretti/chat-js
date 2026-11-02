@@ -364,7 +364,7 @@ it("copies native completed calls without carrying execution identities", () => 
   ]) {
     expect(JSON.stringify(copy.seed)).not.toContain(id);
   }
-  for (const boundary of [4, 5, 6]) {
+  for (const boundary of [4, 5, 6, 7, 8]) {
     expect(() => prepareEveCopyTranscript(events.slice(0, boundary))).toThrow(
       EveCopyNotReadyError
     );

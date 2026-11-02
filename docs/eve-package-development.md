@@ -22,4 +22,4 @@ Fork prerelease versions do not name upstream sandbox images. Select the sandbox
 
 ## Historical evidence
 
-The original 0.61.0 migration in [#447](https://github.com/FranciscoMoretti/chat-js/pull/447) recorded 9,149 native unit tests, 44 integration tests, 359 focused ChatJS tests and 22 scaffold/vendor tests. Those results apply to that recorded source and artifact, not later releases. The former `pack:chatjs`, `eve:test-package`, `CHATJS.md` and `chatjs-package.yml` instructions no longer describe the maintained 1.0.0-rc.1 source tree.
+The original 0.61.0 migration in [#447](https://github.com/FranciscoMoretti/chat-js/pull/447) recorded 9,149 native unit tests, 44 integration tests, 359 focused ChatJS tests and 22 scaffold/vendor tests. Those results apply to that recorded source and artifact, not later releases. The former `pack:chatjs`, `CHATJS.md` and `chatjs-package.yml` instructions no longer describe the maintained 1.0.0-rc.1 source tree.
