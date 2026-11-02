@@ -41,8 +41,8 @@ export const WordCountRenderer = defineToolRenderer({
 });
 ```
 
-For a separate view component, derive its props with `ToolRendererProps<typeof inputSchema, typeof outputSchema>` from `chatjs/core/tools/define-renderer`. Callbacks cannot widen the schema types. Registry keys are checked against execution names, while registry values must be validating wrappers accepting unknown transport data; view payload types are inferred only from schemas.
+For a separate view component, derive its props with `ToolRendererProps<typeof inputSchema, typeof outputSchema>` from `@/chatjs/core/tools/define-renderer`. Callbacks cannot widen the schema types. Registry keys are checked against execution names, while registry values must be validating wrappers accepting unknown transport data; view payload types are inferred only from schemas.
 
-Streaming input is absent unless the tool supplies a partial-input validator. Preliminary outputs retain `partial: true`; output availability is not final completion. Errors, denials and approvals keep their lifecycle presentation. Malformed persisted inputs/results produce the standard invalid-result fallback without reaching the typed view. Unknown tools and imported text outputs use native generic presentation.
+Streaming input is absent unless the tool supplies a partial-input validator, and input that fails that validator is omitted from the typed view. Preliminary outputs retain `partial: true`; output availability is not final completion. Errors, denials and approvals keep their lifecycle presentation. Malformed complete inputs/results produce the standard invalid-result fallback without reaching the typed view. Unknown tools and imported text outputs use native generic presentation.
 
 No memoization or validation cache is introduced in this version.
