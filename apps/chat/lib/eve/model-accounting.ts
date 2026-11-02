@@ -63,7 +63,7 @@ const accountEveModel = (
 });
 const resolveAccountedEveModel = async (
   requestedId: string | undefined,
-  context: DynamicModelContext
+  context: Pick<DynamicModelContext, "session" | "turn">
 ): Promise<Awaited<ReturnType<typeof resolveEveModel>>> => {
   const state = accounting.get();
   const ownerId = context.session.auth.initiator?.principalId;

@@ -10,7 +10,7 @@ import { sharedEveMessages } from "@/lib/eve/shared-messages";
 import type { z } from "zod";
 
 type Context = Readonly<
-  Omit<WorkflowToolContext, "abortSignal"> & {
+  Pick<WorkflowToolContext, "session" | "callId"> & {
     abortSignal: Readonly<AbortSignal>;
   }
 >;

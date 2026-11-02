@@ -6,7 +6,7 @@ import { getEveConnectionOptions } from "@/lib/eve/connection-options";
 import { toolOutputSchema } from "@/lib/eve/tool-result";
 
 type Context = Readonly<
-  Omit<WorkflowToolContext, "abortSignal"> & {
+  Pick<WorkflowToolContext, "session" | "callId"> & {
     abortSignal: Readonly<AbortSignal>;
   }
 >;
