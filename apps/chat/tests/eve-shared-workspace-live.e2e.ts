@@ -398,8 +398,10 @@ test("existing shared workspace survives supervisor restart and rejects overlapp
   const native = new Client(getEveConnectionOptions(fixture.ownerId));
   const completedCount = async (sessionId: string) => {
     const snapshot = await native.sessions.attach(sessionId).snapshot();
-    return snapshot.events.filter((event) => event.type === "turn.completed")
-      .length;
+    return snapshot.events.filter(
+      (event) =>
+        event.type === "turn.settled" && event.data.outcome === "completed"
+    ).length;
   };
   await page.goto(`/chat/${fixture.fork.id}`);
   await expect(page.getByText("Ready", { exact: true })).toBeVisible({

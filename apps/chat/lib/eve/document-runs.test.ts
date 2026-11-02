@@ -9,7 +9,7 @@ const otherRevision = "82280f81-cb77-496d-b2fa-89878ca29c81";
 
 const run = (toolCallId: string, revision = revisionId): EveMessagePart => ({
   input: { documentId, revisionId: revision },
-  state: "ready",
+  state: "requested",
   callId: toolCallId,
   stepIndex: 0,
   kind: "tool",

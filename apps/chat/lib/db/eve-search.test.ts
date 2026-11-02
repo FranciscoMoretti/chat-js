@@ -218,14 +218,13 @@ it("shows an assistant-only Hello match even when the title also matches", async
     titleBranch,
     eveEventSearchText({
       data: {
-        finishReason: "stop",
-        message: "Hello! How can I help you today?",
-        sequence: 1,
-        stepIndex: 0,
-        turnId: "turn_0",
+        partId: "hello-assistant",
+        runId: "run",
+        kind: "text",
+        phase: "reply",
+        value: "Hello! How can I help you today?",
       },
-      meta: { at: "2026-09-26T10:00:00Z", id: "hello-assistant" },
-      type: "message.completed",
+      type: "content.completed",
     })
   );
   const result = await searchEveConversations("alice", { search: "hello" });

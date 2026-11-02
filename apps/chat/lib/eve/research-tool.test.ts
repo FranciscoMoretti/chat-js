@@ -56,9 +56,10 @@ const document: Awaited<ReturnType<typeof saveResearchReport>>["document"] = {
 beforeEach(() => {
   vi.resetAllMocks();
   nativeResult.mockImplementation((data) => ({
-    status: "waiting",
+    status: "completed",
     data,
-    message: undefined,
+    reply: undefined,
+    sessionEnded: false,
   }));
   controller = new AbortController();
   context = {
@@ -286,7 +287,8 @@ it("rejects failed or cancelled native child turns before saving or starting mor
   nativeResult.mockReturnValue({
     status: "failed",
     data: undefined,
-    message: undefined,
+    reply: undefined,
+    sessionEnded: false,
     error: { message: "Child failed" },
   });
   await expect(Array.fromAsync(researchStream(context))).rejects.toThrow(
@@ -296,9 +298,10 @@ it("rejects failed or cancelled native child turns before saving or starting mor
   expect(mocks.save).not.toHaveBeenCalled();
   agent.mockClear();
   nativeResult.mockReturnValue({
-    status: "waiting",
+    status: "completed",
     data: undefined,
-    message: undefined,
+    reply: undefined,
+    sessionEnded: false,
   });
   await expect(Array.fromAsync(researchStream(context))).rejects.toThrow(
     "without structured output"

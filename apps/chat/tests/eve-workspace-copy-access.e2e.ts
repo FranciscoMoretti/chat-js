@@ -79,7 +79,7 @@ afterAll(async () => {
   await db.delete(user).where(eq(user.id, ownerId));
 });
 
-test.each(["early-message", "later-message"])(
+test.each(["seed_message_0", "seed_message_1"])(
   "a public fork before %s authorizes only attachments in its selected history",
   async (beforeMessageId) => {
     const earlyKey = `${crypto.randomUUID().replaceAll("-", "").slice(0, 24)}.png`;
@@ -113,41 +113,40 @@ test.each(["early-message", "later-message"])(
     );
     const events: SessionStreamEvent[] = [
       {
-        type: "history.seeded",
-        meta: { at: "2026-10-20T00:00:00Z", id: "seed-fixture" },
-        data: {
-          messages: [
-            {
-              id: "early-message",
-              role: "user",
-              parts: [
-                {
-                  type: "file",
-                  url: `http://localhost:3220/api/files/${earlyKey}`,
-                  mediaType: "image/png",
-                },
-              ],
-            },
-            {
-              id: "later-message",
-              role: "user",
-              parts: [
-                {
-                  type: "file",
-                  url: `http://localhost:3220/api/files/${laterKey}`,
-                  mediaType: "application/pdf",
-                },
-              ],
-            },
-          ],
+        type: "session.started",
+        meta: {
+          at: "2026-11-02T00:00:00Z",
+          position: { line: 0, index: 0 },
+          endOfLine: true,
         },
-      },
-      {
-        type: "session.waiting",
-        meta: { at: "2026-10-20T00:00:01Z", id: "idle-fixture" },
         data: {
-          continuationToken: "fixture",
-          wait: "next-user-message",
+          transcriptSeed: {
+            attachments: "channel",
+            messages: [
+              {
+                role: "user",
+                parts: [
+                  {
+                    type: "file",
+                    existingPath: "/workspace/.eve/attachments/fixture",
+                    url: `http://localhost:3220/api/files/${earlyKey}`,
+                    mediaType: "image/png",
+                  },
+                ],
+              },
+              {
+                role: "user",
+                parts: [
+                  {
+                    type: "file",
+                    existingPath: "/workspace/.eve/attachments/fixture",
+                    url: `http://localhost:3220/api/files/${laterKey}`,
+                    mediaType: "application/pdf",
+                  },
+                ],
+              },
+            ],
+          },
         },
       },
     ];
@@ -160,7 +159,7 @@ test.each(["early-message", "later-message"])(
         boundary: string
       ) => await Promise.resolve(prepareEveCopyTranscript(events, [], boundary))
     );
-    const selectedKeys = beforeMessageId === "later-message" ? [earlyKey] : [];
+    const selectedKeys = beforeMessageId === "seed_message_1" ? [earlyKey] : [];
     const fork = await createEveConversation(
       ownerId,
       crypto.randomUUID(),
@@ -171,7 +170,7 @@ test.each(["early-message", "later-message"])(
           .from(eveFileReference)
           .where(eq(eveFileReference.conversationId, reservationId));
         expect(references.map((row) => row.key)).toEqual(selectedKeys);
-        return crypto.randomUUID();
+        return { sessionId: crypto.randomUUID() };
       },
       { fork: { conversationId: source.id, beforeMessageId } }
     );
@@ -270,53 +269,53 @@ test("a public historical fork cannot expose future document revisions or their 
   ]);
   const events: SessionStreamEvent[] = [
     {
-      type: "history.seeded",
-      meta: { id: "documents", at: "2026-10-20T00:00:00Z" },
-      data: {
-        messages: [
-          {
-            id: "request",
-            role: "user",
-            parts: [{ type: "text", text: "Write notes" }],
-          },
-          {
-            id: "answer",
-            role: "assistant",
-            parts: [
-              {
-                type: "dynamic-tool",
-                toolCallId: "document-call",
-                toolName: "createTextDocument",
-                input: {},
-                state: "output-available",
-                output: { documentId, revisionId: earlyId },
-              },
-            ],
-          },
-          {
-            id: "later",
-            role: "user",
-            parts: [{ type: "text", text: "Change them" }],
-          },
-        ],
+      type: "session.started",
+      meta: {
+        at: "2026-11-02T00:00:00Z",
+        position: { line: 0, index: 0 },
+        endOfLine: true,
       },
-    },
-    {
-      type: "session.waiting",
-      meta: { id: "idle-documents", at: "2026-10-20T00:00:01Z" },
-      data: { continuationToken: "fixture", wait: "next-user-message" },
+      data: {
+        transcriptSeed: {
+          attachments: "channel",
+          messages: [
+            {
+              role: "user",
+              parts: [{ type: "text", text: "Write notes" }],
+            },
+            {
+              role: "assistant",
+              parts: [
+                {
+                  type: "dynamic-tool",
+                  toolName: "createTextDocument",
+                  input: {},
+                  state: "output-available",
+                  output: { documentId, revisionId: earlyId },
+                },
+              ],
+            },
+            {
+              role: "user",
+              parts: [{ type: "text", text: "Change them" }],
+            },
+          ],
+        },
+      },
     },
   ];
   native.capture.mockImplementation(
     async () =>
-      await Promise.resolve(prepareEveCopyTranscript(events, [], "later"))
+      await Promise.resolve(
+        prepareEveCopyTranscript(events, [], "seed_message_2")
+      )
   );
   const fork = await createEveConversation(
     ownerId,
     crypto.randomUUID(),
     "Fork",
-    async () => await Promise.resolve(crypto.randomUUID()),
-    { fork: { conversationId: source.id, beforeMessageId: "later" } }
+    async () => await Promise.resolve({ sessionId: crypto.randomUUID() }),
+    { fork: { conversationId: source.id, beforeMessageId: "seed_message_2" } }
   );
   await db
     .update(eveConversation)
@@ -401,7 +400,9 @@ test.each(["retry", "delete"])(
       fork: { conversationId: source.id },
     });
     const [{ operationId }] = group.candidates;
-    const dispatch = vi.fn(() => crypto.randomUUID());
+    const dispatch = vi.fn(
+      async () => await Promise.resolve({ sessionId: crypto.randomUUID() })
+    );
     await expect(
       createEveConversation(ownerId, operationId, "blocked fork", dispatch, {
         fork: { conversationId: source.id },

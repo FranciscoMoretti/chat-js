@@ -1,6 +1,7 @@
+import { reconcileEveWorkspaceTurn } from "../lib/eve/reconcile-workspace-turn";
+import { cleanupWorkspaceIfUnused } from "../lib/eve/persistent-sandbox-store";
 import { setSharing } from "../chatjs/plugins/sharing/queries";
 import { eveVote } from "../chatjs/plugins/feedback/feedback-schema";
-import { createEveTestSession } from "./eve-native-session.fixture";
 
 import { eq } from "drizzle-orm";
 import type { Client, SessionStreamEvent } from "eve/client";
@@ -11,9 +12,10 @@ import { completeEveConversationDeletion } from "../lib/db/eve-deletion";
 import {
   beginEveConversationDeletion,
   createEveConversation,
+  getEveConversation,
 } from "../lib/db/eve-queries";
 import { getEveMessageVotes } from "../chatjs/plugins/feedback/feedback-queries";
-import { eveConversation, user } from "../lib/db/schema";
+import { eveConversation, eveDispatch, user } from "../lib/db/schema";
 import { env } from "../lib/env";
 import { voteEveMessage } from "../chatjs/plugins/feedback/vote-message";
 import { assertEveTestDatabase } from "./eve-test-database";
@@ -34,27 +36,45 @@ await db.insert(user).values({
   name: "Feedback fixture",
 });
 afterAll(async () => {
+  await db.delete(eveDispatch).where(eq(eveDispatch.ownerId, owner));
   await db.delete(eveConversation).where(eq(eveConversation.ownerId, owner));
   await db.delete(user).where(eq(user.id, owner));
 });
 const events: SessionStreamEvent[] = [
   {
-    data: { message: "Question", sequence: 0, turnId: "turn_0" },
-    meta: { at: "2026-09-11T00:00:00Z", id: "received" },
-    type: "message.received",
+    type: "session.started",
+    meta: {
+      at: "2026-11-02T00:00:00Z",
+      position: { line: 0, index: 0 },
+      endOfLine: true,
+    },
+    data: {
+      transcriptSeed: {
+        attachments: "channel",
+        messages: [
+          { role: "user", parts: [{ type: "text", text: "Question" }] },
+          { role: "assistant", parts: [{ type: "text", text: "Answer" }] },
+        ],
+      },
+    },
+  },
+
+  {
+    type: "delivery.consumed",
+    data: {
+      deliveryId: "fixture-delivery",
+      turnId: "fixture-turn",
+      parts: [{ kind: "text", text: "Followup" }],
+    },
+    meta: { at: "2026-11-02T00:00:01Z", position: { line: 1, index: 0 } },
   },
   {
-    data: {
-      finishReason: "stop",
-      message: "Answer",
-      sequence: 1,
-      stepIndex: 0,
-      turnId: "turn_0",
-    },
-    meta: { at: "2026-09-11T00:00:01Z", id: "completed" },
-    type: "message.completed",
+    type: "turn.settled",
+    data: { turnId: "fixture-turn", outcome: "completed" },
+    meta: { at: "2026-11-02T00:00:02Z", position: { line: 2, index: 0 } },
   },
 ];
+
 beforeEach(() => {
   native.attach.mockReset().mockReturnValue({ snapshot: native.snapshot });
   native.snapshot.mockReset().mockResolvedValue({ events });
@@ -64,14 +84,18 @@ const conversation = async () =>
     owner,
     crypto.randomUUID(),
     "Question",
-    createEveTestSession
+    async () =>
+      await Promise.resolve({
+        sessionId: crypto.randomUUID(),
+        deliveryId: "fixture-delivery",
+      })
   );
 
 test("native assistant feedback persists, replaces a vote and stays private when shared", async () => {
   const row = await conversation();
   const input: Parameters<typeof voteEveMessage>[1] = {
     conversationId: row.id,
-    messageId: "turn_0:assistant",
+    messageId: "seed_message_1",
     type: "up",
   };
   expect(await voteEveMessage(owner, input)).toEqual({
@@ -93,7 +117,7 @@ test("native assistant feedback persists, replaces a vote and stays private when
 test("unknown messages and native user messages cannot receive feedback", async () => {
   const row = await conversation();
   await Promise.all(
-    ["turn_0:user", "turn_99:assistant"].map(async (messageId) => {
+    ["seed_message_0", "turn_99:assistant"].map(async (messageId) => {
       expect(
         await voteEveMessage(owner, {
           conversationId: row.id,
@@ -109,12 +133,21 @@ test("deletion erases existing feedback and rejects a vote whose snapshot finish
   const row = await conversation();
   const input: Parameters<typeof voteEveMessage>[1] = {
     conversationId: row.id,
-    messageId: "turn_0:assistant",
+    messageId: "seed_message_1",
     type: "up",
   };
   await voteEveMessage(owner, input);
+  await reconcileEveWorkspaceTurn(owner, row.id);
   native.snapshot.mockImplementationOnce(async () => {
+    const bound = await getEveConversation(owner, row.id);
     await beginEveConversationDeletion(owner, row.id);
+    await cleanupWorkspaceIfUnused(
+      owner,
+      bound?.workspaceId ?? "missing",
+      () => {
+        throw new Error("Text-only fixture must not allocate a sandbox");
+      }
+    );
     await completeEveConversationDeletion(owner, row.id);
     return { events };
   });
@@ -132,17 +165,17 @@ test("the same native message ID in a different conversation has independent fee
   const second = await conversation();
   await voteEveMessage(owner, {
     conversationId: first.id,
-    messageId: "turn_0:assistant",
+    messageId: "seed_message_1",
     type: "up",
   });
   expect(await getEveMessageVotes(owner, second.id)).toEqual([]);
   await voteEveMessage(owner, {
     conversationId: second.id,
-    messageId: "turn_0:assistant",
+    messageId: "seed_message_1",
     type: "down",
   });
   expect(await getEveMessageVotes(owner, first.id)).toEqual([
-    { isUpvoted: true, messageId: "turn_0:assistant" },
+    { isUpvoted: true, messageId: "seed_message_1" },
   ]);
   native.snapshot.mockRejectedValueOnce(
     new Error("Native snapshot unavailable")
@@ -150,11 +183,11 @@ test("the same native message ID in a different conversation has independent fee
   await expect(
     voteEveMessage(owner, {
       conversationId: second.id,
-      messageId: "turn_0:assistant",
+      messageId: "seed_message_1",
       type: "up",
     })
   ).rejects.toThrow("Native snapshot unavailable");
   expect(await getEveMessageVotes(owner, second.id)).toEqual([
-    { isUpvoted: false, messageId: "turn_0:assistant" },
+    { isUpvoted: false, messageId: "seed_message_1" },
   ]);
 });

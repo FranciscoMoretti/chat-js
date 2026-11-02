@@ -22,7 +22,11 @@ it("does not reuse suggestions for a new or unsuccessfully settled turn", () => 
   expect(followupCompletion([], "turn_0")).toBeUndefined();
   const started = {
     type: "turn.started",
-    data: { turnId: "turn_0", follows: null },
+    data: {
+      turnId: "turn_0",
+      follows: null,
+      cause: { deliveryId: "delivery" },
+    },
     meta: { at: "2026-11-02T00:00:01Z", position: { line: 2, index: 0 } },
   } satisfies SessionStreamEvent;
   expect(followupCompletion([completed, started], "turn_0")).toBeUndefined();

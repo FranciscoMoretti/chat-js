@@ -63,7 +63,7 @@ describe("Eve request policy", () => {
     expect(policy?.schema.safeParse({ message: "  " }).success).toBe(false);
     expect(
       policy?.schema.safeParse({
-        inputResponses: [{ optionId: "allow", requestId: "req" }],
+        answers: [{ optionId: "allow", interactionId: "req" }],
       }).success
     ).toBe(true);
     for (const query of [

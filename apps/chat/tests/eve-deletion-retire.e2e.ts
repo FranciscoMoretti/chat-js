@@ -111,8 +111,7 @@ test("internal retirement settles usage after access revocation and is retryable
   const snapshot = await retireEveSessionForDeletion(owner, binding.sessionId);
   expect(
     snapshot.events.some(
-      (event: Readonly<Pick<SessionStreamEvent, "type">>) =>
-        event.type === "session.completed"
+      (event: SessionStreamEvent) => event.type === "session.ended"
     )
   ).toBe(true);
   const [before] = await db

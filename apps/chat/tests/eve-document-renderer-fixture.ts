@@ -5,47 +5,72 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { EveDocumentTool } from "../components/eve/eve-document-tool";
 import { ArtifactProvider } from "../hooks/use-artifact";
 
-const parts: Extract<EveMessagePart, { type: "dynamic-tool" }>[] = [
+const parts: Extract<EveMessagePart, { type: "tool" }>[] = [
   {
     input: {},
-    state: "input-available",
-    toolCallId: "loading",
-    toolName: "createTextDocument",
-    type: "dynamic-tool",
+    state: "requested",
+    callId: "loading",
+    name: "createTextDocument",
+    label: "createTextDocument",
+    type: "tool",
+    kind: "tool",
+    stepIndex: 0,
   },
   {
     input: {},
-    state: "input-available",
-    toolCallId: "reading",
-    toolName: "readDocument",
-    type: "dynamic-tool",
+    state: "requested",
+    callId: "reading",
+    name: "readDocument",
+    label: "readDocument",
+    type: "tool",
+    kind: "tool",
+    stepIndex: 0,
   },
   {
-    errorText: "Document changed. Reload before saving.",
+    error: {
+      code: "fixture_error",
+      message: "Document changed. Reload before saving.",
+    },
     input: {},
-    state: "output-error",
-    toolCallId: "error",
-    toolName: "editTextDocument",
-    type: "dynamic-tool",
+    state: "failed",
+    callId: "error",
+    name: "editTextDocument",
+    label: "editTextDocument",
+    type: "tool",
+    kind: "tool",
+    stepIndex: 0,
   },
   {
     input: {},
     output: {},
-    state: "output-available",
-    toolCallId: "malformed",
-    toolName: "createTextDocument",
-    type: "dynamic-tool",
+    state: "completed",
+    callId: "malformed",
+    name: "createTextDocument",
+    label: "createTextDocument",
+    type: "tool",
+    kind: "tool",
+    stepIndex: 0,
   },
   {
-    approval: { approved: false, id: "declined" },
     input: {},
-    state: "output-denied",
-    toolCallId: "denied",
-    toolName: "editTextDocument",
-    type: "dynamic-tool",
+    state: "rejected",
+    callId: "denied",
+    name: "editTextDocument",
+    label: "editTextDocument",
+    type: "tool",
+    kind: "tool",
+    stepIndex: 0,
+    interaction: {
+      interactionId: "declined",
+      turnId: "fixture-turn",
+      stepIndex: 0,
+      status: "settled",
+      outcome: "declined",
+      request: { kind: "approval", prompt: "Approve this tool?" },
+    },
   },
   ...["createTextDocument", "editCodeDocument", "readDocument"].map(
-    (toolName): Extract<EveMessagePart, { type: "dynamic-tool" }> => ({
+    (toolName): Extract<EveMessagePart, { type: "tool" }> => ({
       input: {},
       output: {
         date: "2026-01-01T00:00:00.000Z",
@@ -55,10 +80,13 @@ const parts: Extract<EveMessagePart, { type: "dynamic-tool" }>[] = [
         status: "success",
         title: "An orchard document with a long descriptive title",
       },
-      state: "output-available",
-      toolCallId: toolName,
-      toolName,
-      type: "dynamic-tool",
+      state: "completed",
+      callId: toolName,
+      type: "tool",
+      kind: "tool",
+      stepIndex: 0,
+      name: toolName,
+      label: toolName,
     })
   ),
 ];
@@ -73,7 +101,7 @@ process.stdout.write(
         parts.map((part) =>
           createElement(
             "section",
-            { className: "rounded border p-3", key: part.toolCallId },
+            { className: "rounded border p-3", key: part.callId },
             createElement(EveDocumentTool, {
               isReadonly: true,
               messageId: "fixture",

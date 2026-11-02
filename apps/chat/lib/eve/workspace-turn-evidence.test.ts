@@ -5,87 +5,107 @@ import {
 } from "./workspace-turn-evidence";
 import type { WorkspaceTurnEvent } from "./workspace-turn-evidence";
 
-const received: WorkspaceTurnEvent = {
-  type: "message.received",
-  data: { turnId: "turn-1" },
-  meta: { deliveryIds: ["exact"] },
+const meta = (line: number) => ({
+  at: "2026-11-02T00:00:00Z",
+  position: { line, index: 0 },
+  endOfLine: true,
+});
+const session: WorkspaceTurnEvent = {
+  type: "session.started",
+  data: {},
+  meta: meta(0),
 };
-const terminal: WorkspaceTurnEvent = {
-  type: "turn.completed",
-  data: { turnId: "turn-1" },
+const admitted: WorkspaceTurnEvent = {
+  type: "delivery.admitted",
+  data: { deliveryId: "exact" },
+  meta: meta(1),
 };
-const waiting: WorkspaceTurnEvent = { type: "session.waiting" };
+const started: WorkspaceTurnEvent = {
+  type: "turn.started",
+  data: { turnId: "turn-1", follows: null, cause: { deliveryId: "exact" } },
+  meta: meta(2),
+};
+const consumed: WorkspaceTurnEvent = {
+  type: "delivery.consumed",
+  data: {
+    turnId: "turn-1",
+    deliveryId: "exact",
+    parts: [{ kind: "text", text: "Question" }],
+  },
+  scope: { turnId: "turn-1" },
+  meta: meta(3),
+};
+const handled: WorkspaceTurnEvent = {
+  type: "delivery.settled",
+  data: { deliveryId: "exact", turnId: "turn-1", outcome: "handled" },
+  meta: meta(4),
+};
+const settled: WorkspaceTurnEvent = {
+  type: "turn.settled",
+  data: { turnId: "turn-1", outcome: "completed" },
+  meta: meta(5),
+};
+const prefix = [session, admitted, started, consumed];
+const completed = [...prefix, handled, settled];
 const operation = { kind: "send", deliveryId: "exact", seeded: false } as const;
 
-it("requires the exact received delivery and its subsequent terminal turn", () => {
+it("requires the exact consumed delivery and its settled turn", () => {
+  expect(hasSettledWorkspaceOperation(operation, completed)).toBe(true);
+  expect(hasSettledWorkspaceOperation(operation, [session])).toBe(false);
   expect(
-    hasSettledWorkspaceOperation(operation, [received, terminal, waiting])
-  ).toBe(true);
-  expect(hasSettledWorkspaceOperation(operation, [terminal, waiting])).toBe(
+    hasSettledWorkspaceOperation(
+      { ...operation, deliveryId: "unknown" },
+      completed
+    )
+  ).toBe(false);
+  expect(hasSettledWorkspaceOperation(operation, [...prefix, handled])).toBe(
     false
   );
-  expect(
-    hasSettledWorkspaceOperation({ ...operation, deliveryId: "unknown" }, [
-      received,
-      terminal,
-      waiting,
-    ])
-  ).toBe(false);
-  expect(
-    hasSettledWorkspaceOperation(operation, [terminal, received, waiting])
-  ).toBe(false);
-  expect(
-    hasSettledWorkspaceOperation(operation, [
-      received,
-      { type: "turn.completed", data: { turnId: "another-turn" } },
-      waiting,
-    ])
-  ).toBe(false);
 });
 
-it("keeps approval, delegated work and a newer turn fenced despite earlier completion", () => {
-  for (const type of [
-    "turn.waiting",
-    "turn.started",
-    "message.received",
-    "step.started",
-  ]) {
-    expect(
-      hasSettledWorkspaceOperation(operation, [
-        received,
-        terminal,
-        waiting,
-        { type },
-      ])
-    ).toBe(false);
-    expect(hasSettledWorkspaceSession([waiting, { type }])).toBe(false);
-  }
+it("keeps paused approvals and later admitted work fenced", () => {
+  const paused: WorkspaceTurnEvent = {
+    type: "turn.paused",
+    data: { turnId: "turn-1", awaiting: [{ interactionId: "approval" }] },
+    meta: meta(4),
+  };
+  expect(hasSettledWorkspaceOperation(operation, [...prefix, paused])).toBe(
+    false
+  );
+  const next: WorkspaceTurnEvent = {
+    type: "delivery.admitted",
+    data: { deliveryId: "next" },
+    meta: meta(6),
+  };
+  expect(hasSettledWorkspaceOperation(operation, [...completed, next])).toBe(
+    false
+  );
+  expect(hasSettledWorkspaceSession([...completed, next])).toBe(false);
 });
 
-it("accepts confirmed cancellation/failure but never cancellation request acknowledgement", () => {
-  for (const type of ["turn.cancelled", "turn.failed"]) {
+it("accepts settled cancellation/failure but not a cancellation command receipt", () => {
+  for (const outcome of ["cancelled", "failed"] as const) {
     expect(
       hasSettledWorkspaceOperation(operation, [
-        received,
-        { type, data: { turnId: "turn-1" } },
-        waiting,
+        ...prefix,
+        handled,
+        { ...settled, data: { turnId: "turn-1", outcome } },
       ])
     ).toBe(true);
   }
-  expect(
-    hasSettledWorkspaceOperation(operation, [
-      received,
-      { type: "cancel.requested" },
-      waiting,
-    ])
-  ).toBe(false);
+  const cancel: WorkspaceTurnEvent = {
+    type: "delivery.admitted",
+    data: { deliveryId: "cancel", source: { control: "cancel" } },
+    meta: meta(4),
+  };
+  expect(hasSettledWorkspaceOperation(operation, [...prefix, cancel])).toBe(
+    false
+  );
 });
 
 it("requires positively observed idle state for a seed-only session", () => {
   const seed = { kind: "copy", deliveryId: null, seeded: true } as const;
   expect(hasSettledWorkspaceOperation(seed, [])).toBe(false);
-  expect(hasSettledWorkspaceOperation(seed, [waiting])).toBe(true);
-  expect(hasSettledWorkspaceOperation(seed, [{ type: "turn.waiting" }])).toBe(
-    false
-  );
+  expect(hasSettledWorkspaceOperation(seed, [session])).toBe(true);
+  expect(hasSettledWorkspaceOperation(seed, prefix)).toBe(false);
 });

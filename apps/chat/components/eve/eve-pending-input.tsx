@@ -55,7 +55,10 @@ const PendingQuestion = ({
         choice &&
         request.options?.some((option) => option.id === choice.value) === true
       ) {
-        respond({ interactionId: request.interactionId, optionId: choice.value });
+        respond({
+          interactionId: request.interactionId,
+          optionId: choice.value,
+        });
         return;
       }
       const answer = new FormData(form).get("answer");
@@ -130,7 +133,10 @@ export const EvePendingInput = (
             variant={option.style === "danger" ? "destructive" : "outline"}
             onClick={() => {
               if (!disabled) {
-                respond({ interactionId: request.interactionId, optionId: option.id });
+                respond({
+                  interactionId: request.interactionId,
+                  optionId: option.id,
+                });
               }
             }}
             type="button"

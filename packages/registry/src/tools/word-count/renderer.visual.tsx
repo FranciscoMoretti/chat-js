@@ -14,9 +14,12 @@ vi.mock("@/lib/ai/tool-renderer-registry", () => ({
 
 const receipt = {
   input: { text: "one two" },
-  state: "output-available",
-  toolName: "wordCount",
-  type: "dynamic-tool",
+  state: "completed",
+  name: "wordCount",
+  type: "tool",
+  kind: "tool",
+  label: "wordCount",
+  stepIndex: 0,
 } as const;
 
 const messageId = "word-count-message";
@@ -94,7 +97,7 @@ test("word-count renders every state in the chat", async () => {
               { characters: 7, charactersNoSpaces: 6, sentences: 1, words: 2 },
               0
             ),
-            toolCallId: "word-count-receipt",
+            callId: "word-count-receipt",
           }}
         />
       ),
@@ -108,7 +111,7 @@ test("word-count renders every state in the chat", async () => {
           part={{
             ...receipt,
             output: createToolError(0.02),
-            toolCallId: "word-count-receipt-error",
+            callId: "word-count-receipt-error",
           }}
         />
       ),

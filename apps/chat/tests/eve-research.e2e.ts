@@ -1,10 +1,10 @@
+import { nativeToolEvents } from "./helpers/eve-tool-events";
 import { userCredit } from "@/chatjs/plugins/credits/credits-schema";
 import { expect, test } from "@playwright/test";
 
 import type { ConsoleMessage, TestInfo } from "@playwright/test";
 import { eq, sql } from "drizzle-orm";
 import { Client } from "eve/client";
-import type { SessionStreamEvent } from "eve/client";
 import { z } from "zod";
 
 import { db } from "../lib/db/client";
@@ -16,28 +16,6 @@ import { reconcileEveUsage } from "../lib/eve/reconcile-usage";
 import { toolResultSchema } from "../lib/eve/tool-result";
 import { ResearchUpdateSchema } from "../tools/platform/research-updates-schema";
 import { assertEveTestDatabase } from "./eve-test-database";
-
-type ResearchEventReader =
-  | {
-      readonly type: "action.result";
-      readonly data: Readonly<
-        Omit<
-          Extract<SessionStreamEvent, { type: "action.result" }>["data"],
-          "result"
-        > & {
-          readonly result: Readonly<
-            Extract<
-              SessionStreamEvent,
-              { type: "action.result" }
-            >["data"]["result"]
-          >;
-        }
-      >;
-    }
-  | {
-      readonly type: Exclude<SessionStreamEvent["type"], "action.result">;
-      readonly data?: unknown;
-    };
 
 assertEveTestDatabase(env.DATABASE_URL);
 const createdReport = /^Created /u;
@@ -170,21 +148,17 @@ test("native deep research saves a reloadable report in ChatJS with a usage rece
   const snapshot = await client.sessions
     .attach(binding.sessionId)
     .snapshot({ signal: AbortSignal.timeout(15_000) });
-  const results = snapshot.events.filter(
-    (event: ResearchEventReader) =>
-      event.type === "action.result" &&
-      event.data.result.kind === "tool-result" &&
-      event.data.result.toolName === "deepResearch"
+  const results = nativeToolEvents(
+    snapshot.events,
+    "deepResearch",
+    "call.settled"
   );
   expect(results).toHaveLength(1);
   const [result] = results;
-  if (
-    result.type !== "action.result" ||
-    result.data.result.kind !== "tool-result"
-  ) {
+  if (result.type !== "call.settled") {
     throw new Error("Missing research result");
   }
-  const receipt = toolResultSchema.parse(result.data.result.output);
+  const receipt = toolResultSchema.parse(result.data.output);
   expect(receipt.output).toMatchObject({
     format: "report",
     revisionId: expect.any(String),

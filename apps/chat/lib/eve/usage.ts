@@ -8,8 +8,6 @@ import {
   tryEveAccountingWrite,
 } from "./accounting-log";
 
-
-
 const NO_USAGE_COST_USD = 0;
 
 const ingestToolUsage = async (

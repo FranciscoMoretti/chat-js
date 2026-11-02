@@ -36,13 +36,13 @@ it("indexes seeded display text while excluding reasoning, tools and model lifec
     eveEventSearchText({
       type: "model.started",
       data: { runId: "run", attempt: 0, modelId: "private/model" },
-      meta: received.meta,
     })
   ).toEqual([]);
   expect(
     eveEventSearchText({
       data: {
         transcriptSeed: {
+          attachments: "channel",
           messages: [
             {
               parts: [
@@ -54,8 +54,7 @@ it("indexes seeded display text while excluding reasoning, tools and model lifec
           ],
         },
       },
-      meta: received.meta,
       type: "session.started",
-    } satisfies SessionStreamEvent)
+    })
   ).toEqual([{ key: "seed:0", text: "visible answer" }]);
 });

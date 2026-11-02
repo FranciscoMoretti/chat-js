@@ -22,7 +22,7 @@ const mocks = vi.hoisted(() => ({
     WORKFLOW_POSTGRES_URL: "postgres://localhost/fixture",
   },
   provider: vi.fn(),
-  reset: vi.fn(),
+  end: vi.fn(),
   retireMany: vi.fn(),
   snapshot: vi.fn(),
   usage: vi.fn(),
@@ -43,7 +43,7 @@ vi.mock("eve/client", () => ({
       mocks.client(options);
     }
     public sessions = {
-      attach: () => ({ reset: mocks.reset, snapshot: mocks.snapshot }),
+      attach: () => ({ end: mocks.end, snapshot: mocks.snapshot }),
     };
   },
 }));
@@ -58,25 +58,30 @@ beforeEach(() => {
     supported: true,
   });
   mocks.deleting.mockResolvedValue({ id: "conversation" });
-  mocks.reset.mockResolvedValue({ status: "reset" });
-  mocks.snapshot.mockResolvedValue({ events: [{ type: "session.completed" }] });
+  mocks.end.mockResolvedValue({
+    async *stream() {
+      yield { type: "session.ended" };
+    },
+  });
+  mocks.snapshot.mockResolvedValue({ events: [{ type: "session.ended" }] });
   mocks.usage.mockResolvedValue(true);
 });
 
 it("retires before reading and settling the final snapshot, including retries", async () => {
+  mocks.snapshot.mockResolvedValueOnce({ events: [] });
   await retireEveSessionForDeletion("owner", "session");
   expect(mocks.client).toHaveBeenCalledWith(
     expect.objectContaining({
       headers: { "x-chatjs-deletion": "1", "x-chatjs-owner": "owner" },
     })
   );
-  expect(mocks.reset.mock.invocationCallOrder[0]).toBeLessThan(
-    mocks.snapshot.mock.invocationCallOrder[0]
+  expect(mocks.end.mock.invocationCallOrder[0]).toBeLessThan(
+    mocks.snapshot.mock.invocationCallOrder[1]
   );
-  mocks.reset.mockResolvedValue({ status: "no_active_session" });
+  mocks.end.mockResolvedValue({ status: "no_active_session" });
   await expect(
     retireEveSessionForDeletion("owner", "session")
-  ).resolves.toMatchObject({ events: [{ type: "session.completed" }] });
+  ).resolves.toMatchObject({ events: [{ type: "session.ended" }] });
 });
 
 it("rejects non-deleting or foreign sessions before native access", async () => {
@@ -84,17 +89,17 @@ it("rejects non-deleting or foreign sessions before native access", async () => 
   await expect(retireEveSessionForDeletion("owner", "session")).rejects.toThrow(
     "not pending deletion"
   );
-  expect(mocks.reset).not.toHaveBeenCalled();
+  expect(mocks.end).not.toHaveBeenCalled();
 });
 
 it("refuses erasure when retirement or cost settlement is incomplete", async () => {
-  mocks.snapshot.mockResolvedValue({ events: [{ type: "step.completed" }] });
+  mocks.snapshot.mockResolvedValue({ events: [{ type: "model.settled" }] });
   await expect(retireEveSessionForDeletion("owner", "session")).rejects.toThrow(
     "retirement has not completed"
   );
   expect(mocks.usage).not.toHaveBeenCalled();
   mocks.snapshot.mockResolvedValue({
-    events: [{ type: "step.completed" }, { type: "session.completed" }],
+    events: [{ type: "model.settled" }, { type: "session.ended" }],
   });
   mocks.usage.mockResolvedValueOnce(false);
   await expect(retireEveSessionForDeletion("owner", "session")).rejects.toThrow(
@@ -144,7 +149,7 @@ it("checks provider compatibility before revoking family access", async () => {
   );
   expect(mocks.begin).not.toHaveBeenCalled();
   expect(mocks.retireMany).not.toHaveBeenCalled();
-  expect(mocks.reset).not.toHaveBeenCalled();
+  expect(mocks.end).not.toHaveBeenCalled();
 });
 
 vi.mock("./reconcile-workspace-turn", () => ({

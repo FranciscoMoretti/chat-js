@@ -5,7 +5,6 @@ import { takeSnapshot } from "@uiverify/vitest";
 import { EvePendingInput } from "@/components/eve/eve-pending-input";
 import type { InteractionRequest, Answer } from "eve/events";
 
-type MessageInteraction = InteractionRequest & { readonly interactionId: string };
 import {
   Context,
   ContextTrigger,
@@ -20,6 +19,10 @@ import { WebSourceBadge } from "@/components/source-badge";
 import { EveSearchResultsView } from "@/chatjs/plugins/search/search-results-view";
 import { mount, unmount } from "./primitive-mount";
 import "./sandbox.css";
+
+type MessageInteraction = InteractionRequest & {
+  readonly interactionId: string;
+};
 
 const question: MessageInteraction = {
   interactionId: "fixture-question",
@@ -38,7 +41,7 @@ const question: MessageInteraction = {
 };
 const approval: MessageInteraction = {
   interactionId: "fixture-approval",
-  kind: "tool-approval",
+  kind: "approval",
   display: "confirmation",
   prompt: "Delete this document?",
   options: [

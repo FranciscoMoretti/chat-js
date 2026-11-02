@@ -29,9 +29,11 @@ vi.mock("next-themes", () => ({ useTheme: () => ({ resolvedTheme: "dark" }) }));
 
 const common = {
   input: {},
-  state: "output-available",
-  toolCallId: "fixture",
-  type: "dynamic-tool",
+  state: "completed",
+  callId: "fixture",
+  type: "tool",
+  kind: "tool",
+  stepIndex: 0,
 } as const;
 
 test("saved-code results display interactive and PNG charts with text fallback", async () => {
@@ -93,7 +95,8 @@ test("saved-code results display interactive and PNG charts with text fallback",
                     { chart, message: `Result ${index + 1}` },
                     0
                   ),
-                  toolName: "runCodeDocument",
+                  name: "runCodeDocument",
+                  label: "runCodeDocument",
                 }}
               />
             </section>
@@ -149,7 +152,8 @@ test("failed research keeps validated progress alongside its error", async () =>
             },
             { title: "Untrusted update", type: "invalid" },
           ]),
-          toolName: "deepResearch",
+          name: "deepResearch",
+          label: "deepResearch",
         }}
       />
     );
@@ -185,8 +189,9 @@ test("installed saved-code transcript covers loading, completion and failure", a
           part={{
             ...common,
             input,
-            state: "input-available",
-            toolName: "runCodeDocument",
+            state: "requested",
+            name: "runCodeDocument",
+            label: "runCodeDocument",
           }}
         />
         <EveToolResult
@@ -199,7 +204,8 @@ test("installed saved-code transcript covers loading, completion and failure", a
               { ...input, chart: "", message: "Saved revision completed" },
               0
             ),
-            toolName: "runCodeDocument",
+            name: "runCodeDocument",
+            label: "runCodeDocument",
           }}
         />
         <EveToolResult
@@ -209,7 +215,8 @@ test("installed saved-code transcript covers loading, completion and failure", a
             ...common,
             input,
             output: createToolError(0),
-            toolName: "runCodeDocument",
+            name: "runCodeDocument",
+            label: "runCodeDocument",
           }}
         />
       </div>

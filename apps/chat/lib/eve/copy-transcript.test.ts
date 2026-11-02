@@ -15,17 +15,32 @@ const history = (messages: EveCopySeed["messages"]): SessionStreamEvent[] => [
     data: {
       transcriptSeed: {
         attachments: "channel",
-        messages: messages.map((message) => ({
-          ...message,
-          parts: message.parts.map((part) =>
-            part.type === "file"
-              ? {
-                  ...part,
-                  existingPath: "/workspace/.eve/attachments/note.pdf",
-                }
-              : part
-          ),
-        })),
+        messages: messages.map((message) => {
+          if (message.role === "user") {
+            return {
+              ...message,
+              parts: message.parts.map((part) =>
+                part.type === "file"
+                  ? {
+                      ...part,
+                      existingPath: "/workspace/.eve/attachments/note.pdf",
+                    }
+                  : part
+              ),
+            };
+          }
+          return {
+            ...message,
+            parts: message.parts.map((part) =>
+              part.type === "file"
+                ? {
+                    ...part,
+                    existingPath: "/workspace/.eve/attachments/note.pdf",
+                  }
+                : part
+            ),
+          };
+        }),
       },
     },
     meta: {

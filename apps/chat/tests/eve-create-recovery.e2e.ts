@@ -121,7 +121,7 @@ test("a lost native creation reply recovers the same session from the retained c
     .attach(nativeSessionId)
     .snapshot({ signal: AbortSignal.timeout(15_000) });
   expect(
-    snapshot.events.filter((event) => event.type === "message.received")
+    snapshot.events.filter((event) => event.type === "delivery.consumed")
   ).toHaveLength(1);
   expect(
     await page.evaluate(
@@ -165,7 +165,7 @@ test("an unresolved project conversation recovers after its project is deleted",
       operation.operationId,
       operation.message,
       vi
-        .fn<() => Promise<string>>()
+        .fn<() => Promise<{ sessionId: string }>>()
         .mockRejectedValue(new Error("Simulated dispatch interruption")),
       {
         initialModelId: operation.modelId,

@@ -8,7 +8,7 @@ const calls = vi.hoisted(() => ({
   pending: vi.fn(),
   check: vi.fn(),
   purge: vi.fn(),
-  reset: vi.fn(),
+  end: vi.fn(),
   snapshot: vi.fn(),
 }));
 vi.mock("@/chatjs/plugins/guest-chat/guest-queries", () => ({
@@ -26,7 +26,7 @@ vi.mock("./deletion-lifecycle", () => ({
 }));
 vi.mock("@/chatjs/plugins/guest-chat/guest-cleanup-auth", () => ({
   getGuestCleanupConnectionOptions: () => ({
-    host: "http://localhost/eve/chat",
+    baseUrl: "http://localhost/eve/chat",
     auth: { bearer: "cleanup-only" },
     headers: {},
   }),
@@ -34,7 +34,7 @@ vi.mock("@/chatjs/plugins/guest-chat/guest-cleanup-auth", () => ({
 vi.mock("eve/client", () => ({
   Client: class {
     sessions = {
-      attach: () => ({ reset: calls.reset, snapshot: calls.snapshot }),
+      attach: () => ({ end: calls.end, snapshot: calls.snapshot }),
     };
   },
 }));
@@ -49,7 +49,14 @@ beforeEach(() => {
   calls.pending.mockResolvedValueOnce(1).mockResolvedValue(0);
   calls.complete.mockResolvedValue(true);
   calls.bind.mockResolvedValue(true);
-  calls.snapshot.mockResolvedValue({ events: [{ type: "session.completed" }] });
+  calls.snapshot
+    .mockResolvedValueOnce({ events: [] })
+    .mockResolvedValue({ events: [{ type: "session.ended" }] });
+  calls.end.mockResolvedValue({
+    async *stream() {
+      yield { type: "session.ended" };
+    },
+  });
   calls.purge.mockImplementation(
     async (_sessionId: string, retire: () => Promise<void>) => {
       await retire();
@@ -69,7 +76,7 @@ test("purges only claimed session and completes policy after native retirement",
     expect.any(Function)
   );
   expect(calls.complete).toHaveBeenCalledWith("policy", "guest-session");
-  expect(calls.reset).toHaveBeenCalledOnce();
+  expect(calls.end).toHaveBeenCalledOnce();
 });
 
 test("failed retirement remains pending without declaring deletion", async () => {

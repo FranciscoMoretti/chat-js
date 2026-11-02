@@ -137,12 +137,12 @@ it("writes before invoking the mock provider, rounds once, and ignores replayed 
     await ingestEveUsage("owner", sessionId, {
       data: { runId: "replayed-model", outcome: "completed" },
       scope: { turnId: "turn_1" },
-      meta: { at: "2026-10-12T00:00:00Z", position: { line: 0, index: 0 } },
+
       type: "model.settled",
     });
     await ingestEveUsage("owner", sessionId, {
       data: { runId: "replayed-maintenance", outcome: "completed" },
-      meta: { at: "2026-10-12T00:00:00Z", position: { line: 1, index: 0 } },
+
       type: "model.settled",
     });
   }
@@ -187,7 +187,7 @@ it("settles each distinct descendant attempt against the root turn and reingests
 
 it("keeps independent tool receipts billable alongside model receipts and replay", async () => {
   /* oxlint-disable no-await-in-loop -- Replay the same call after its first durable charge. */
-  for (const line of [0, 1]) {
+  for (const _line of [0, 1]) {
     await ingestEveUsage("owner", "root", {
       data: {
         callId: "paid-call",
@@ -201,11 +201,6 @@ it("keeps independent tool receipts billable alongside model receipts and replay
         },
       },
       scope: { turnId: "turn_1" },
-      meta: {
-        at: "2026-10-12T00:00:00Z",
-        position: { line, index: 0 },
-        endOfLine: true,
-      },
       type: "call.settled",
     });
   }
@@ -292,7 +287,7 @@ it("separates maintenance and preserves missing or crash-lost receipts without b
       turnId: "turn_2",
       outcome: "completed",
     },
-    meta: { at: "2026-10-12T00:00:00Z", position: { line: 2, index: 0 } },
+
     type: "turn.settled",
   });
 

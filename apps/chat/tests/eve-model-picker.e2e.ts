@@ -103,11 +103,11 @@ test("the single-model picker dispatches and retains the selected native model",
       .snapshot();
     const modelStep = snapshot.events.find(
       (
-        event: Readonly<Pick<SessionStreamEvent, "type">>
-      ): event is Extract<SessionStreamEvent, { type: "step.started" }> =>
-        event.type === "step.started"
+        event: SessionStreamEvent
+      ): event is Extract<SessionStreamEvent, { type: "model.started" }> =>
+        event.type === "model.started"
     );
-    expect(modelStep?.data.modelId).toBe(`gateway/${modelId}`);
+    expect(modelStep?.data.modelId).toBe(modelId);
     await page.reload();
     await expect(picker).toContainText(modelName);
     await expect(

@@ -128,13 +128,16 @@ test("display receipts settle with a fresh native agent wrapper", async () => {
     events: {
       [sessionId]: [
         {
-          type: "message.received",
+          type: "delivery.consumed",
           meta: {
-            id: "received",
+            position: { line: 1, index: 0 },
             at: "2026-10-18T10:00:00Z",
-            deliveryIds: ["delivery"],
           },
-          data: { message: "Question", sequence: 0, turnId: "turn_0" },
+          data: {
+            parts: [{ kind: "text", text: "Question" }],
+            deliveryId: "delivery",
+            turnId: "turn_0",
+          },
         },
       ],
     },
@@ -402,7 +405,7 @@ test("shared conversation, signed in", async () => {
 test("owner can select or write a question answer while the native turn stays open", async () => {
   await renderRoute(conversation, {
     ...request,
-    agentStatus: "streaming",
+    agentStatus: "ready",
     transcripts: questionTranscripts,
   });
   await expect
@@ -432,7 +435,7 @@ test("owner can select or write a question answer while the native turn stays op
 test("owner can answer approval while the native turn stays open", async () => {
   await renderRoute(conversation, {
     ...request,
-    agentStatus: "streaming",
+    agentStatus: "ready",
     transcripts: {
       [invoicesConversation.sessionId ?? ""]: [
         {
@@ -440,27 +443,27 @@ test("owner can answer approval while the native turn stays open", async () => {
           role: "assistant",
           parts: [
             {
-              type: "dynamic-tool",
-              toolName: "createTextDocument",
-              toolCallId: "delete-call",
-              state: "approval-requested",
-              approval: { id: "delete-request" },
+              type: "tool",
+              kind: "tool",
+              stepIndex: 0,
+              name: "createTextDocument",
+              label: "createTextDocument",
+              callId: "delete-call",
+              state: "approval",
               input: { title: "Invoice notes" },
-              toolMetadata: {
-                eve: {
-                  kind: "tool-call",
-                  name: "deleteDocument",
-                  inputRequest: {
-                    requestId: "delete-request",
-                    kind: "tool-approval",
-                    prompt: "Approve Create document?",
-                    allowFreeform: false,
-                    display: "confirmation",
-                    options: [
-                      { id: "approve", label: "Approve" },
-                      { id: "cancel", label: "Cancel" },
-                    ],
-                  },
+              interaction: {
+                interactionId: "delete-request",
+                turnId: "fixture-turn",
+                stepIndex: 0,
+                status: "open",
+                request: {
+                  kind: "approval",
+                  display: "confirmation",
+                  prompt: "Approve this tool?",
+                  options: [
+                    { id: "approve", label: "Approve" },
+                    { id: "deny", label: "Cancel" },
+                  ],
                 },
               },
             },
@@ -842,24 +845,17 @@ test("completed, failed and cancelled turns refresh the displayed credit balance
   await expect.poll(() => route.agentEventHandlers.has(sessionId)).toBe(true);
   const onEvent = route.agentEventHandlers.get(sessionId);
   const event = invoicesFollowupEvents[sessionId]?.find(
-    (candidate) => candidate.type === "turn.completed"
+    (candidate) => candidate.type === "turn.settled"
   );
   if (!onEvent || !event) {
     throw new Error("The runtime must subscribe before completing the turn.");
   }
-  const endings = [
-    event,
-    {
+  const endings = (["completed", "failed", "cancelled"] as const).map(
+    (outcome) => ({
       ...event,
-      type: "turn.failed",
-      data: {
-        ...event.data,
-        code: "provider_error",
-        message: "Fixture failure",
-      },
-    },
-    { ...event, type: "turn.cancelled" },
-  ] as const;
+      data: { ...event.data, outcome },
+    })
+  );
   for (const [index, ending] of endings.entries()) {
     const balanceCents = 420 - index;
     route.trpc["credits.getAvailableCredits"] = { balanceCents };
@@ -920,20 +916,29 @@ test("message activity renders reasoning, tool errors and falsy results in the c
               state: "done",
             },
             {
-              type: "dynamic-tool",
-              toolCallId: "inventory",
-              toolName: "Inventory lookup",
-              state: "output-available",
+              type: "tool",
+              kind: "tool",
+              stepIndex: 0,
+              callId: "inventory",
+              name: "Inventory lookup",
+              label: "Inventory lookup",
+              state: "completed",
               input: { sku: "sample" },
               output: 0,
             },
             {
-              type: "dynamic-tool",
-              toolCallId: "offline",
-              toolName: "Warehouse lookup",
-              state: "output-error",
+              type: "tool",
+              kind: "tool",
+              stepIndex: 0,
+              callId: "offline",
+              name: "Warehouse lookup",
+              label: "Warehouse lookup",
+              state: "failed",
               input: {},
-              errorText: "Warehouse unavailable. Try again.",
+              error: {
+                code: "fixture_error",
+                message: "Warehouse unavailable. Try again.",
+              },
             },
             {
               type: "text",

@@ -1,10 +1,10 @@
+import { nativeToolEvents } from "./helpers/eve-tool-events";
 import { execFileSync } from "node:child_process";
 
 import { expect, test } from "@playwright/test";
 
 import { eq } from "drizzle-orm";
 import { Client } from "eve/client";
-import type { SessionStreamEvent } from "eve/client";
 import { z } from "zod";
 
 import { db } from "../lib/db/client";
@@ -17,30 +17,6 @@ import { ResearchUpdateSchema } from "../tools/platform/research-updates-schema"
 import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(env.DATABASE_URL);
-type SearchResultEvent = Extract<SessionStreamEvent, { type: "action.result" }>;
-type SearchPartialEvent = Extract<
-  SessionStreamEvent,
-  { type: "action.partial" }
->;
-type SearchEventReader =
-  | (Omit<SearchResultEvent, "data"> & {
-      readonly data: Readonly<Omit<SearchResultEvent["data"], "result">> & {
-        readonly result: Readonly<SearchResultEvent["data"]["result"]>;
-      };
-    })
-  | (Omit<SearchPartialEvent, "data"> & {
-      readonly data: Readonly<Omit<SearchPartialEvent["data"], "result">> & {
-        readonly result: Readonly<SearchPartialEvent["data"]["result"]>;
-      };
-    })
-  | {
-      readonly type: Exclude<
-        SessionStreamEvent["type"],
-        "action.result" | "action.partial"
-      >;
-      readonly data?: unknown;
-    };
-
 test("native search retains sources, progress and billing across reload", async ({
   page,
 }) => {
@@ -110,31 +86,18 @@ test("native search retains sources, progress and billing across reload", async 
   const snapshot = await client.sessions
     .attach(binding.sessionId)
     .snapshot({ signal: AbortSignal.timeout(15_000) });
-  const calls = snapshot.events.filter(
-    (event: SearchEventReader) =>
-      event.type === "action.result" &&
-      event.data.result.kind === "tool-result" &&
-      event.data.result.toolName === "webSearch"
-  );
+  const calls = nativeToolEvents(snapshot.events, "webSearch", "call.settled");
   expect(calls).toHaveLength(2);
   expect(
-    snapshot.events.some(
-      (event: SearchEventReader) =>
-        event.type === "action.partial" &&
-        event.data.result.kind === "tool-result" &&
-        event.data.result.toolName === "webSearch"
-    )
+    nativeToolEvents(snapshot.events, "webSearch", "call.progress").length > 0
   ).toBe(true);
   await reconcileEveUsage(conversation.ownerId, binding.sessionId);
   await Promise.all(
     calls.map(async (call) => {
-      if (
-        call.type !== "action.result" ||
-        call.data.result.kind !== "tool-result"
-      ) {
+      if (call.type !== "call.settled") {
         throw new Error("Missing search receipt");
       }
-      const receipt = toolResultSchema.parse(call.data.result.output);
+      const receipt = toolResultSchema.parse(call.data.output);
       expect(receipt.usage.costUsd).toBe(0.05);
       expect(
         receipt.updates?.filter(
@@ -147,7 +110,7 @@ test("native search retains sources, progress and billing across reload", async 
         .where(
           eq(
             eveUsage.eventId,
-            `eve-tool:${binding.sessionId}:${call.data.result.callId}`
+            `eve-tool:${binding.sessionId}:${call.data.callId}`
           )
         );
       expect(rows).toHaveLength(1);

@@ -1,3 +1,4 @@
+import { testHookContext } from "../../tests/helpers/eve-hook-context";
 import type { HookContext, HookEvent } from "eve/hooks";
 import { beforeEach, expect, it, vi } from "vitest";
 
@@ -47,9 +48,10 @@ vi.mock("./conversation-scope", () => ({
   resolveEveConversationScope: mocks.resolve,
 }));
 
-const context: HookContext = {
+const context: HookContext<"*"> = {
+  ...testHookContext(),
   agent: { name: "chatjs" },
-  channel: {},
+  channel: { kind: "http", metadata: {} },
   cancel: (): never => {
     throw new Error("Unexpected cancellation");
   },
@@ -70,27 +72,27 @@ const context: HookContext = {
     turn: { id: "turn_1", sequence: 1 },
   },
 };
-const restored: HookEvent = {
+const restored = {
   data: {
-    messages: [
-      {
-        id: "seed_message_0",
-        parts: [{ text: "inherited text", type: "text" }],
-        role: "user",
-      },
-    ],
+    transcriptSeed: {
+      attachments: "channel",
+      messages: [
+        {
+          parts: [{ text: "inherited text", type: "text" }],
+          role: "user",
+        },
+      ],
+    },
   },
-  meta: { at: "2026-09-25T10:00:00Z", id: "history" },
-  type: "history.seeded",
-};
+  type: "session.started",
+} satisfies HookEvent;
 const started: HookEvent = {
-  data: { sequence: 1, turnId: "turn_1" },
-  meta: restored.meta,
+  data: { turnId: "turn_1", cause: { deliveryId: "delivery" }, follows: null },
   type: "turn.started",
 };
 const dispatch = async (
   event: Readonly<HookEvent>,
-  hookContext: Readonly<HookContext> = context
+  hookContext: Readonly<HookContext<"*">> = context
 ) => await search.events?.["*"]?.(event, hookContext);
 beforeEach(() => {
   vi.resetAllMocks();
@@ -141,15 +143,18 @@ it("retains newly received text when scope resolution fails and retries it", asy
   mocks.resolve.mockRejectedValueOnce(new Error("mapping unavailable"));
   await expect(
     dispatch({
-      data: { message: "new text", sequence: 1, turnId: "turn_1" },
-      meta: { ...restored.meta, id: "received" },
-      type: "message.received",
+      data: {
+        parts: [{ kind: "text", text: "new text" }],
+        deliveryId: "received",
+        turnId: "turn_1",
+      },
+      type: "delivery.consumed",
     })
   ).resolves.toBeUndefined();
-  expect(mocks.state).toEqual([{ key: "event:received", text: "new text" }]);
+  expect(mocks.state).toEqual([{ key: "delivery:received", text: "new text" }]);
   await dispatch(started);
   expect(mocks.index).toHaveBeenLastCalledWith("owner", "branch", [
-    { key: "event:received", text: "new text" },
+    { key: "delivery:received", text: "new text" },
   ]);
   expect(mocks.state).toEqual([]);
 });
@@ -159,9 +164,12 @@ it("bounds failed retries by entry count and records how omitted events can be r
   for (let index = 0; index < 300; index += 1) {
     // oxlint-disable-next-line eslint/no-await-in-loop -- Dispatch 300 successive outage events against one recovery buffer to prove it stays bounded; parallel dispatch would test simultaneous writers instead.
     await dispatch({
-      data: { message: "retry text", sequence: index, turnId: "turn_1" },
-      meta: { ...restored.meta, id: String(index) },
-      type: "message.received",
+      data: {
+        parts: [{ kind: "text", text: "retry text" }],
+        deliveryId: String(index),
+        turnId: "turn_1",
+      },
+      type: "delivery.consumed",
     });
   }
   expect(mocks.state).toHaveLength(256);
@@ -181,13 +189,15 @@ it("bounds pending text size and deduplicates replayed history", async () => {
   const oversized: HookEvent = {
     ...restored,
     data: {
-      messages: [
-        {
-          id: "seed_message_0",
-          parts: [{ text: "x".repeat(256_001), type: "text" }],
-          role: "user",
-        },
-      ],
+      transcriptSeed: {
+        attachments: "channel",
+        messages: [
+          {
+            parts: [{ text: "x".repeat(256_001), type: "text" }],
+            role: "user",
+          },
+        ],
+      },
     },
   };
   await dispatch(oversized);
@@ -205,23 +215,24 @@ it("automatically recovers a large restored history and the next message on a he
   await dispatch({
     ...restored,
     data: {
-      messages: Array.from({ length: 300 }, (_, index) => ({
-        id: `seed_message_${index}`,
-        parts: [{ text: `restored ${index}`, type: "text" }],
-        role: "user",
-      })),
+      transcriptSeed: {
+        attachments: "channel",
+        messages: Array.from({ length: 300 }, (_, index) => ({
+          parts: [{ text: `restored ${index}`, type: "text" }],
+          role: "user",
+        })),
+      },
     },
   });
   expect(mocks.state).toHaveLength(256);
   expect(mocks.recover).not.toHaveBeenCalled();
   await dispatch({
     data: {
-      message: "new message after history",
-      sequence: 1,
+      parts: [{ kind: "text", text: "new message after history" }],
+      deliveryId: "new-message",
       turnId: "turn_1",
     },
-    meta: { ...restored.meta, id: "new-message" },
-    type: "message.received",
+    type: "delivery.consumed",
   });
   expect(mocks.recover).toHaveBeenCalledWith("owner", "branch", "session");
   expect(mocks.state).toEqual([]);
