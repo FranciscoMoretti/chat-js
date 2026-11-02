@@ -274,7 +274,7 @@ describe("scaffoldFromTemplate", (): void => {
       existsSync(pathModule.join(destination, "guest/agent/sandbox.ts"))
     ).toBe(false);
   });
-  it("ships maintained workflow and aliased EVE patches as archives", async (): Promise<void> => {
+  it("ships the workflow patch archive and the published EVE dependency", async (): Promise<void> => {
     const destination = makeTempDir("chat-app-patched-runtimes");
     await scaffoldFromTemplate(destination);
     const manifestSource = await readFile(
@@ -286,10 +286,9 @@ describe("scaffoldFromTemplate", (): void => {
       .object({ dependencies: z.record(z.string(), z.string()) })
       .parse(manifestValue);
     expect(manifest.dependencies.eve).toBe(
-      "file:vendor/chat-js-eve-0.80.1-chatjs.4.tgz"
+      "npm:@chat-js/eve@1.0.0-rc.1-chatjs.0"
     );
     const archives = {
-      eve: "chat-js-eve-0.80.1-chatjs.4.tgz",
       "@workflow/world-postgres": "workflow-world-postgres-5.0.0-beta.40.tgz",
     };
 
@@ -785,7 +784,7 @@ describe("scaffoldFromTemplate", (): void => {
         ).toBe(false);
         expect(packageJson.dependencies["@better-auth/core"]).toBe("1.6.2");
         expect(packageJson.dependencies.eve).toBe(
-          "file:vendor/chat-js-eve-0.80.1-chatjs.4.tgz"
+          "npm:@chat-js/eve@1.0.0-rc.1-chatjs.0"
         );
         expect(packageJson.dependencies["@ai-sdk/mcp"]).toBeUndefined();
         expect(
