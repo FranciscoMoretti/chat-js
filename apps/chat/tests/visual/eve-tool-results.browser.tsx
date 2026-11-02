@@ -169,6 +169,42 @@ test("failed research keeps validated progress alongside its error", async () =>
   }
 });
 
+test("running research displays progress without a completed result", async () => {
+  const container = document.createElement("main");
+  document.body.append(container);
+  const root = createRoot(container);
+  try {
+    await renderRoot(
+      root,
+      <EveToolResult
+        isReadonly
+        messageId="research"
+        part={{
+          ...common,
+          state: "running",
+          name: "deepResearch",
+          label: "deepResearch",
+          output: createToolResult({ searches: [] }, 0, [
+            {
+              type: "web",
+              title: "Searching sources",
+              status: "running",
+              queries: ["evidence"],
+              toolCallId: "fixture",
+            },
+          ]),
+        }}
+      />
+    );
+    expect(container.textContent).toContain("Searching sources");
+    expect(container.querySelector('[role="alert"]')).toBeNull();
+    await takeSnapshot("running-research-progress");
+  } finally {
+    await unmountRoot(root);
+    container.remove();
+  }
+});
+
 test("installed saved-code transcript covers loading, completion and failure", async () => {
   document.documentElement.classList.add("dark");
   const container = document.createElement("main");
@@ -183,6 +219,14 @@ test("installed saved-code transcript covers loading, completion and failure", a
     await renderRoot(
       root,
       <div className="grid gap-6">
+        <EveDocumentRunResult
+          part={{
+            ...common,
+            state: "cancelled",
+            name: "runCodeDocument",
+            label: "Code",
+          }}
+        />
         <EveToolResult
           isReadonly
           messageId="saved-code"
@@ -221,6 +265,7 @@ test("installed saved-code transcript covers loading, completion and failure", a
         />
       </div>
     );
+    expect(container.textContent).toContain("Document execution stopped.");
     expect(container.textContent).toContain("Running saved code");
     expect(container.textContent).toContain("Saved revision completed");
     expect(container.querySelector('[role="alert"]')?.textContent).toContain(

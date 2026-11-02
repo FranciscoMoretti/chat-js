@@ -13,6 +13,9 @@ export const EveDocumentRunResult = ({
   if (part.state === "failed") {
     return <p role="alert">{part.error?.message ?? "Tool failed"}</p>;
   }
+  if (part.state === "cancelled") {
+    return <p>Document execution stopped.</p>;
+  }
   if (part.state === "rejected") {
     return <p>Document execution declined.</p>;
   }

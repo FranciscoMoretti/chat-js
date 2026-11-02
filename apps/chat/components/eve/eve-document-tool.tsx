@@ -86,7 +86,8 @@ export const EveDocumentTool = ({
     if (
       part.state !== "completed" &&
       part.state !== "failed" &&
-      part.state !== "rejected"
+      part.state !== "rejected" &&
+      part.state !== "cancelled"
     ) {
       return;
     }
@@ -136,6 +137,9 @@ export const EveDocumentTool = ({
   }, [part, isReadonly, messageId, setArtifact, conversationId, replaying]);
   if (part.state === "failed") {
     return <p role="alert">{part.error?.message ?? "Tool failed"}</p>;
+  }
+  if (part.state === "cancelled") {
+    return <p>Document operation stopped.</p>;
   }
   if (part.state === "rejected") {
     return <p>Document operation declined.</p>;

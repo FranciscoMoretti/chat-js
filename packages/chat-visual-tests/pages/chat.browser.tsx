@@ -66,6 +66,63 @@ test("conversation", async () => {
     .toBeVisible();
 });
 
+test("active native turn shows thinking before visible content", async () => {
+  await renderRoute(conversation, {
+    ...request,
+    agentStatus: "streaming",
+    transcripts: {
+      [invoicesConversation.sessionId ?? ""]: [
+        { id: "pending", role: "assistant", parts: [] },
+      ],
+    },
+  });
+  await expect
+    .element(page.getByTestId("message-assistant-loading"))
+    .toBeVisible();
+  await page.screenshot({ path: "__screenshots__/native-thinking.png" });
+});
+
+test("cancelled document and saved-code operations show stopped states", async () => {
+  await renderRoute(conversation, {
+    ...request,
+    transcripts: {
+      [invoicesConversation.sessionId ?? ""]: [
+        {
+          id: "cancelled",
+          role: "assistant",
+          parts: [
+            {
+              type: "tool",
+              kind: "tool",
+              stepIndex: 0,
+              callId: "document",
+              name: "createTextDocument",
+              label: "Document",
+              state: "cancelled",
+              input: { title: "Notes" },
+            },
+            {
+              type: "tool",
+              kind: "tool",
+              stepIndex: 0,
+              callId: "code",
+              name: "runCodeDocument",
+              label: "Code",
+              state: "cancelled",
+              input: {},
+            },
+          ],
+        },
+      ],
+    },
+  });
+  await expect
+    .element(page.getByText("Document operation stopped."))
+    .toBeVisible();
+  await expect.element(page.getByText("Tool stopped.")).toBeVisible();
+  await page.screenshot({ path: "__screenshots__/native-stopped.png" });
+});
+
 test("mobile conversation can reveal the transcript below the composer", async () => {
   // The conversation capture already covers both mobile themes.
   await renderRoute(conversation, { ...request, viewports: [] });

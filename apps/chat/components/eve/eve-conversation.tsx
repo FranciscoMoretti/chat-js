@@ -908,7 +908,7 @@ const EveConversation = ({
                   />
                   <EveThinkingMessage
                     messages={messages}
-                    status={agent.status}
+                    status={composerStatus(agent.status)}
                   />
                   {comparison &&
                     shouldAppendEveOptimisticResponseGroup(comparison) && (

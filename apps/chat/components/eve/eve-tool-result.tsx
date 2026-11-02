@@ -25,11 +25,15 @@ export const EveToolResult = ({
     toolCallId: part.callId,
     toolName: part.name,
     state: eveToolUIState(part.state),
-    errorText: part.error?.message,
+    errorText:
+      part.state === "cancelled" ? "Tool stopped." : part.error?.message,
   };
   const platformOutput =
-    part.state === "completed" ? toolOutputSchema.safeParse(part.output) : null;
+    part.state === "completed" || part.state === "running"
+      ? toolOutputSchema.safeParse(part.output)
+      : null;
   if (
+    part.state === "completed" &&
     platformOutput?.success === true &&
     platformOutput.data.status === "error"
   ) {
