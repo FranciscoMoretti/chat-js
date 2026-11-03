@@ -236,6 +236,7 @@ export const claimExpiredGuestRuntimeSession = async () =>
     return { ...guest, state: "deleting" };
   });
 
+// Completes local credential-policy cleanup; this is not a claim of provider payload erasure.
 export const completeGuestRuntimeDeletion = async (
   id: string,
   sessionId: string

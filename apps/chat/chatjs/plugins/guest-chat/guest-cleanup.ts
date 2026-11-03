@@ -9,7 +9,7 @@ import {
   pruneGuestRuntimeRates,
 } from "@/chatjs/plugins/guest-chat/guest-queries";
 import { getGuestCleanupConnectionOptions } from "@/chatjs/plugins/guest-chat/guest-cleanup-auth";
-import { requireEveDeletionLifecycle } from "@/lib/eve/deletion-lifecycle";
+import { getGuestPurgeLifecycle } from "@/chatjs/plugins/guest-chat/guest-retention";
 
 const MAX_CLEANUP_BATCH = 5;
 const RETIRE_TIMEOUT_MS = 30_000;
@@ -57,18 +57,25 @@ const resolveCleanupSession = async (guest: {
 
 export const cleanupGuestRuntimeSessions = async (): Promise<{
   deletedCount: number;
+  retiredCount: number;
   pendingCount: number;
   skipped: boolean;
 }> => {
   if ((await countPendingGuestRuntimeDeletions()) === 0) {
     await pruneGuestRuntimeRates();
-    return { deletedCount: 0, pendingCount: 0, skipped: false };
+    return {
+      deletedCount: 0,
+      retiredCount: 0,
+      pendingCount: 0,
+      skipped: false,
+    };
   }
-  const lifecycle = requireEveDeletionLifecycle();
+  const lifecycle = getGuestPurgeLifecycle();
   // Compatibility checks precede claims or retirement. Missing fences never
   // produce a successful cleanup report or erase the durable retry record.
-  await lifecycle.check();
+  await lifecycle?.check();
   let deletedCount = 0;
+  let retiredCount = 0;
   let pendingCount = 0;
   for (let attempt = 0; attempt < MAX_CLEANUP_BATCH; attempt += 1) {
     // oxlint-disable-next-line eslint/no-await-in-loop -- Claim and purge one session at a time to bound provider connections and work.
@@ -80,9 +87,8 @@ export const cleanupGuestRuntimeSessions = async (): Promise<{
     try {
       // oxlint-disable-next-line eslint/no-await-in-loop -- Reconcile only the current claimed guest before native purge.
       const sessionId = await resolveCleanupSession(guest);
-      phase = "retire-and-purge";
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Native purge serializes durable retirement, fencing, queue drain and payload erasure.
-      await lifecycle.purge(sessionId, async () => {
+      phase = lifecycle ? "retire-and-purge" : "retire";
+      const retire = async (): Promise<void> => {
         const client = new Client(
           getGuestCleanupConnectionOptions({
             ownerId: guest.ownerId,
@@ -115,13 +121,19 @@ export const cleanupGuestRuntimeSessions = async (): Promise<{
         if (!snapshot.events.some((event) => event.type === "session.ended")) {
           throw new Error("Guest retirement is not terminal. Retry cleanup.");
         }
-      });
+      };
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Finish this session before completing its policy; managed payloads follow provider retention.
+      await (lifecycle ? lifecycle.purge(sessionId, retire) : retire());
       phase = "complete-policy";
       // oxlint-disable-next-line eslint/no-await-in-loop -- Mark deleted only after the exact bound native session was purged.
       if (!(await completeGuestRuntimeDeletion(guest.id, sessionId))) {
         throw new Error("Guest deletion binding changed.");
       }
-      deletedCount += 1;
+      if (lifecycle) {
+        deletedCount += 1;
+      } else {
+        retiredCount += 1;
+      }
     } catch {
       pendingCount += 1;
       console.error("Guest runtime cleanup requires retry", {
@@ -135,5 +147,5 @@ export const cleanupGuestRuntimeSessions = async (): Promise<{
     pendingCount,
     await countPendingGuestRuntimeDeletions()
   );
-  return { deletedCount, pendingCount, skipped: false };
+  return { deletedCount, retiredCount, pendingCount, skipped: false };
 };

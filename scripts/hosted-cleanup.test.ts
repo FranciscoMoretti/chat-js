@@ -168,3 +168,27 @@ test("drains an explicitly partial backlog but never reports a stalled sweep as 
   await runHostedCleanup("https://chat.example", "secret");
   expect(request).toHaveBeenCalledTimes(2);
 });
+
+test("drains managed retirement progress without claiming payload deletion", async () => {
+  const request = vi
+    .fn(() => batch(emptyBatch))
+    .mockImplementationOnce(() =>
+      Response.json(
+        {
+          success: false,
+          results: {
+            guestChat: {
+              deletedCount: 0,
+              retiredCount: 5,
+              pendingCount: 1,
+              skipped: false,
+            },
+          },
+        },
+        { status: unavailable }
+      )
+    );
+  vi.stubGlobal("fetch", request);
+  await runHostedCleanup("https://chat.example", "secret");
+  expect(request).toHaveBeenCalledTimes(2);
+});

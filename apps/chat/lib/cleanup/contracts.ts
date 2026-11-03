@@ -1,6 +1,8 @@
 /** Each task reports a bounded sweep. Pending work and skipped sweeps are never success. */
 export interface CleanupResult {
   readonly deletedCount: number;
+  /** Sessions ended with payloads still governed by provider retention. */
+  readonly retiredCount?: number;
   readonly pendingCount?: number;
   readonly skipped: boolean;
 }

@@ -25,6 +25,8 @@ export const runCleanupJob = async () => {
       if (
         !Number.isSafeInteger(result.deletedCount) ||
         result.deletedCount < 0 ||
+        !Number.isSafeInteger(result.retiredCount ?? 0) ||
+        (result.retiredCount ?? 0) < 0 ||
         !Number.isSafeInteger(result.pendingCount ?? 0) ||
         (result.pendingCount ?? 0) < 0 ||
         typeof result.skipped !== "boolean"

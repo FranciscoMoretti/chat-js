@@ -6,6 +6,7 @@ const calls = vi.hoisted(() => ({
   bind: vi.fn(),
   prune: vi.fn(),
   pending: vi.fn(),
+  world: vi.fn(),
   check: vi.fn(),
   purge: vi.fn(),
   end: vi.fn(),
@@ -18,6 +19,8 @@ vi.mock("@/chatjs/plugins/guest-chat/guest-queries", () => ({
   pruneGuestRuntimeRates: calls.prune,
   countPendingGuestRuntimeDeletions: calls.pending,
 }));
+vi.mock("@/lib/env", () => ({ env: {} }));
+vi.mock("./world-config", () => ({ resolveWorkflowWorld: calls.world }));
 vi.mock("./deletion-lifecycle", () => ({
   requireEveDeletionLifecycle: () => ({
     check: calls.check,
@@ -44,6 +47,7 @@ const guest = { id: "policy", ownerId: "owner", sessionId: "guest-session" };
 
 beforeEach(() => {
   vi.resetAllMocks();
+  calls.world.mockReturnValue("@workflow/world-postgres");
   vi.unstubAllGlobals();
   calls.claim.mockResolvedValue(null);
   calls.pending.mockResolvedValueOnce(1).mockResolvedValue(0);
@@ -67,6 +71,7 @@ beforeEach(() => {
 test("purges only claimed session and completes policy after native retirement", async () => {
   calls.claim.mockResolvedValueOnce(guest);
   expect(await cleanupGuestRuntimeSessions()).toEqual({
+    retiredCount: 0,
     deletedCount: 1,
     pendingCount: 0,
     skipped: false,
@@ -120,6 +125,7 @@ test("replays interrupted creation with original operation identity before purge
 test("cooldown-hidden deletion work remains pending even when no claim is available", async () => {
   calls.pending.mockReset().mockResolvedValue(2);
   expect(await cleanupGuestRuntimeSessions()).toEqual({
+    retiredCount: 0,
     deletedCount: 0,
     pendingCount: 2,
     skipped: false,
@@ -130,6 +136,7 @@ test("empty expired inventory needs no provider mutation support", async () => {
   calls.pending.mockReset().mockResolvedValue(0);
   calls.check.mockRejectedValue(new Error("unsupported world"));
   expect(await cleanupGuestRuntimeSessions()).toEqual({
+    retiredCount: 0,
     deletedCount: 0,
     pendingCount: 0,
     skipped: false,
@@ -142,8 +149,35 @@ test("unclaimed expired backlog remains visible after the batch limit", async ()
   calls.pending.mockReset().mockResolvedValueOnce(8).mockResolvedValue(3);
   calls.claim.mockResolvedValue(guest);
   expect(await cleanupGuestRuntimeSessions()).toEqual({
+    retiredCount: 0,
     deletedCount: 5,
     pendingCount: 3,
     skipped: false,
   });
+});
+
+test("managed cleanup ends the session but never reports payload erasure", async () => {
+  calls.world.mockReturnValue("vercel");
+  calls.claim.mockResolvedValueOnce(guest);
+  expect(await cleanupGuestRuntimeSessions()).toEqual({
+    deletedCount: 0,
+    retiredCount: 1,
+    pendingCount: 0,
+    skipped: false,
+  });
+  expect(calls.check).not.toHaveBeenCalled();
+  expect(calls.purge).not.toHaveBeenCalled();
+  expect(calls.end).toHaveBeenCalledOnce();
+  expect(calls.complete).toHaveBeenCalledWith("policy", "guest-session");
+});
+test("managed cleanup keeps failed retirement pending for retry", async () => {
+  calls.world.mockReturnValue("vercel");
+  calls.claim.mockResolvedValueOnce(guest);
+  calls.snapshot.mockResolvedValue({ events: [] });
+  expect(await cleanupGuestRuntimeSessions()).toMatchObject({
+    retiredCount: 0,
+    deletedCount: 0,
+    pendingCount: 1,
+  });
+  expect(calls.complete).not.toHaveBeenCalled();
 });
