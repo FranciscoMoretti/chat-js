@@ -1,4 +1,6 @@
 import { beforeEach, expect, test, vi } from "vitest";
+import { ClientError } from "eve/client";
+import type * as EveClient from "eve/client";
 
 const calls = vi.hoisted(() => ({
   claim: vi.fn(),
@@ -34,7 +36,8 @@ vi.mock("@/chatjs/plugins/guest-chat/guest-cleanup-auth", () => ({
     headers: {},
   }),
 }));
-vi.mock("eve/client", () => ({
+vi.mock("eve/client", async (importOriginal) => ({
+  ...(await importOriginal<typeof EveClient>()),
   Client: class {
     sessions = {
       attach: () => ({ end: calls.end, snapshot: calls.snapshot }),
@@ -181,3 +184,31 @@ test("managed cleanup keeps failed retirement pending for retry", async () => {
   });
   expect(calls.complete).not.toHaveBeenCalled();
 });
+
+test("managed cleanup accepts explicit expired history without claiming erasure", async () => {
+  calls.world.mockReturnValue("vercel");
+  calls.claim.mockResolvedValueOnce(guest);
+  calls.snapshot.mockRejectedValue(
+    new ClientError(410, '{"code":"session_expired"}')
+  );
+  expect(await cleanupGuestRuntimeSessions()).toMatchObject({
+    retiredCount: 1,
+    deletedCount: 0,
+    pendingCount: 0,
+  });
+  expect(calls.complete).toHaveBeenCalledWith("policy", "guest-session");
+});
+test.each([404, 401, 503])(
+  "managed cleanup does not mistake HTTP %i for expiry",
+  async (status) => {
+    calls.world.mockReturnValue("vercel");
+    calls.claim.mockResolvedValueOnce(guest);
+    calls.snapshot.mockRejectedValue(new ClientError(status, "{}"));
+    expect(await cleanupGuestRuntimeSessions()).toMatchObject({
+      retiredCount: 0,
+      deletedCount: 0,
+      pendingCount: 1,
+    });
+    expect(calls.complete).not.toHaveBeenCalled();
+  }
+);

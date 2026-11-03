@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { Client } from "eve/client";
+import { Client, ClientError } from "eve/client";
 
 import {
   bindGuestRuntimeCleanupSession,
@@ -122,10 +122,23 @@ export const cleanupGuestRuntimeSessions = async (): Promise<{
           throw new Error("Guest retirement is not terminal. Retry cleanup.");
         }
       };
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Finish this session before completing its policy; managed payloads follow provider retention.
-      await (lifecycle ? lifecycle.purge(sessionId, retire) : retire());
+      try {
+        // oxlint-disable-next-line eslint/no-await-in-loop -- Finish this session before completing its policy; managed payloads follow provider retention.
+        await (lifecycle ? lifecycle.purge(sessionId, retire) : retire());
+      } catch (error) {
+        // Managed EVE can expire history as soon as end completes. Only its explicit
+        // expiry response is terminal evidence; 404, auth and transport failures retry.
+        if (
+          lifecycle ||
+          !ClientError.is(error) ||
+          error.status !== 410 ||
+          error.code !== "session_expired"
+        ) {
+          throw error;
+        }
+      }
       phase = "complete-policy";
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Mark deleted only after the exact bound native session was purged.
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Complete local policy after verified ending, expiry, or PostgreSQL purge.
       if (!(await completeGuestRuntimeDeletion(guest.id, sessionId))) {
         throw new Error("Guest deletion binding changed.");
       }
