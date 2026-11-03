@@ -45,3 +45,52 @@ test.each([
     expect(mocks.run).toHaveBeenCalledOnce();
   }
 );
+
+test("Vercel cron drains successful retirement batches in the same invocation", async () => {
+  mocks.run
+    .mockResolvedValueOnce({
+      success: false,
+      results: {
+        guests: {
+          deletedCount: 0,
+          retiredCount: 5,
+          pendingCount: 2,
+          skipped: false,
+        },
+      },
+    })
+    .mockResolvedValueOnce({
+      success: true,
+      results: {
+        guests: {
+          deletedCount: 0,
+          retiredCount: 2,
+          pendingCount: 0,
+          skipped: false,
+        },
+      },
+    });
+  const response = await GET({
+    headers: new Headers({ authorization: "Bearer scheduler-secret" }),
+  });
+  expect(response.status).toBe(200);
+  expect(mocks.run).toHaveBeenCalledTimes(2);
+});
+test("Vercel cron bounds a continuously growing backlog", async () => {
+  mocks.run.mockResolvedValue({
+    success: false,
+    results: {
+      guests: {
+        deletedCount: 0,
+        retiredCount: 5,
+        pendingCount: 100,
+        skipped: false,
+      },
+    },
+  });
+  const response = await GET({
+    headers: new Headers({ authorization: "Bearer scheduler-secret" }),
+  });
+  expect(response.status).toBe(503);
+  expect(mocks.run).toHaveBeenCalledTimes(20);
+});

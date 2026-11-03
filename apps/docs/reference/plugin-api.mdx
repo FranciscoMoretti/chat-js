@@ -242,8 +242,8 @@ Authenticator names must be unique and cannot use the reserved account identity 
 
 Declare `cleanup: { export: "guestCleanup", id: "guest-chat" }`. Export a `CleanupTask` with a matching `id` and `run()` from `cleanup.ts`. Task IDs must be unique. Core reserves `orphanedAttachments` for its storage sweep.
 
-A task returns `{ deletedCount, pendingCount?, skipped }` for one bounded sweep. Counts must be nonnegative safe integers. Omit `pendingCount` only when the sweep has no remaining work. Skipped tasks, pending work, invalid counts, and errors make the job unsuccessful. Independent tasks still run, and responses contain safe error messages.
+A task returns `{ deletedCount, retiredCount?, pendingCount?, skipped }` for one bounded sweep. `deletedCount` reports payload deletion; optional `retiredCount` reports ended or expired sessions whose payloads remain under provider retention. Retirement is not proof of erasure. Counts must be nonnegative safe integers. Omit `pendingCount` only when the sweep has no remaining work. Skipped tasks, pending work, invalid counts, and errors make the job unsuccessful. Independent tasks still run, and responses contain safe error messages.
 
-The authenticated cron endpoint and hosted draining script consume this common result. Plugins own inventory and retry policy. Core retains the native deletion fences and purge verification. The cleanup contribution does not add a scheduler framework.
+The authenticated cron endpoint and hosted draining script consume this common result. Plugins own inventory and retry policy. Core retains the native deletion fences and purge verification for providers that support purge. Managed guest retention uses terminal-session evidence instead. The Vercel cron drains progressing batches within a time and batch budget; incomplete work remains retryable. The cleanup contribution does not add a scheduler framework.
 
 All installed instrumentation registrations start independently. One exporter's failure still propagates to Next.js, but cannot prevent another plugin's local cleanup registration from starting.

@@ -5,7 +5,13 @@ import { page } from "vitest/browser";
 import ChatLayout from "@/app/(chat)/layout";
 import HomePage from "@/app/(chat)/page";
 
-import { history, signedIn, signedInTrpc, creationFailure } from "./fixtures";
+import {
+  history,
+  signedIn,
+  signedInTrpc,
+  creationFailure,
+  guestTranscript,
+} from "./fixtures";
 import { renderRoute } from "./render";
 
 const home = (
@@ -183,4 +189,32 @@ test("home shows a rejected new conversation as a chat alert", async () => {
     .toBeVisible();
   await expect.element(alert.getByText(creationFailure)).toBeVisible();
   await page.screenshot({ path: "__screenshots__/new-conversation-error.png" });
+});
+
+test("guest bootstrap reaches a usable conversation without account history", async () => {
+  const { fetch } = globalThis;
+  vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
+    if (input === "/api/eve-guest") {
+      return Response.json({
+        sessionId: "guest-session",
+        credential: "guest-fixture",
+        expiresAt: Date.now() + 3_600_000,
+      });
+    }
+    return await fetch(input, init);
+  });
+  await renderRoute(home, {
+    transcripts: { "guest-session": guestTranscript },
+  });
+  await page.getByRole("textbox", { name: "Message" }).fill("Hello");
+  await page.getByRole("button", { name: "Send", exact: true }).click();
+  await expect
+    .element(
+      page.getByText("Hello! How can I help you today?", { exact: true })
+    )
+    .toBeVisible();
+  await expect
+    .element(page.getByRole("button", { name: /GPT-5 nano/u }))
+    .toBeDisabled();
+  await expect.element(page.getByRole("alert")).not.toBeInTheDocument();
 });
