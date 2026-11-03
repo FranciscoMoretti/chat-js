@@ -27,6 +27,7 @@ import {
   invoicesFollowupTrpc,
   launchProject,
   questionTranscripts,
+  validatedToolTranscripts,
   session,
   signedIn,
 } from "./fixtures";
@@ -64,6 +65,29 @@ test("conversation", async () => {
   await expect
     .element(page.getByRole("textbox", { name: "Message" }))
     .toBeVisible();
+});
+
+test("validated tools preserve receipt results, failures and native fallbacks", async () => {
+  await renderRoute(conversation, {
+    ...request,
+    transcripts: validatedToolTranscripts,
+  });
+  await expect.element(page.getByText("Words", { exact: true })).toBeVisible();
+  await expect
+    .element(page.getByText("Counting service unavailable."))
+    .toBeVisible();
+  await expect
+    .element(page.getByText("External tool result retained.", { exact: false }))
+    .toBeVisible();
+  await expect
+    .element(
+      page.getByText("Historical text output retained.", { exact: false })
+    )
+    .toBeVisible();
+  await expect
+    .element(page.getByText("This tool result could not be displayed."))
+    .not.toBeInTheDocument();
+  await page.screenshot({ path: "__screenshots__/validated-tools.png" });
 });
 
 test("active native turn shows thinking before visible content", async () => {

@@ -1,3 +1,4 @@
+import { validateToolOutput } from "@/chatjs/core/tools/validate-output";
 import type { ToolContext } from "eve/tools";
 import { defineTool } from "eve/tools";
 import { experimental_generateVideo as generateVideo } from "ai";
@@ -9,7 +10,7 @@ import { createModuleLogger } from "@/lib/logger";
 import { eveToolModelProvider } from "@/lib/eve/tool-models";
 import { executeWithToolUsage } from "@/lib/eve/tool-usage";
 
-import { generateVideoInput } from "./schemas";
+import { generateVideoInput, generateVideoResult } from "./schemas";
 import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
 
 // Fixed estimate — not yet available from provider API
@@ -266,10 +267,13 @@ export const generateVideoTool = defineTool({
           prepared.modelProvider,
           prepared.selectedModel
         );
-        return await generateAndStoreVideo(
-          modelId,
-          prepared.options,
-          prepared.integration
+        return validateToolOutput(
+          generateVideoResult,
+          await generateAndStoreVideo(
+            modelId,
+            prepared.options,
+            prepared.integration
+          )
         );
       } catch (error) {
         return throwVideoFailure(

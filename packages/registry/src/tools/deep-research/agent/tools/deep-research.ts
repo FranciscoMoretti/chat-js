@@ -22,12 +22,13 @@ import {
   researchDecision,
   researchFindings,
   researchReport,
+  researchOutput,
 } from "@/chatjs/tools/deep-research/schemas";
 import type { ResearchUpdate } from "@/tools/platform/research-updates-schema";
 import type { ToolResult } from "@/lib/eve/tool-result";
 import type { AgentSession, WorkflowToolContext } from "eve/tools";
 import { createToolResult } from "@/lib/eve/tool-result";
-import type { researchOutput } from "@/chatjs/tools/deep-research/schemas";
+import { validateToolOutput } from "@/chatjs/core/tools/validate-output";
 import { researchSearchUpdates } from "@/chatjs/tools/deep-research/search-updates";
 import { z } from "zod";
 
@@ -92,7 +93,7 @@ export default defineWorkflowTool({
     // Native child events own model/search costs. This orchestration receipt adds no charge.
     const progress = (): ToolResult<ResearchOutput> =>
       createToolResult<ResearchOutput>(
-        { searches: [] },
+        validateToolOutput(researchOutput, { searches: [] }),
         ORCHESTRATION_COST_USD,
         [...updates, ...searchUpdates]
       );
@@ -108,7 +109,10 @@ export default defineWorkflowTool({
       );
       if (clarification.need_clarification) {
         yield createToolResult(
-          { answer: clarification.question, format: "clarifying_questions" },
+          validateToolOutput(researchOutput, {
+            answer: clarification.question,
+            format: "clarifying_questions",
+          }),
           ORCHESTRATION_COST_USD
         );
         return;
@@ -270,7 +274,7 @@ export default defineWorkflowTool({
       type: "completed",
     });
     yield createToolResult(
-      { ...document, format: "report" },
+      validateToolOutput(researchOutput, { ...document, format: "report" }),
       ORCHESTRATION_COST_USD,
       [...updates, ...searchUpdates]
     );

@@ -103,6 +103,20 @@ test("word-count renders every state in the chat", async () => {
       ),
     },
     {
+      label: "Incompatible historical output",
+      ui: (
+        <EveToolResult
+          isReadonly
+          messageId={messageId}
+          part={{
+            ...receipt,
+            output: createToolResult({ words: "old-format" }, 0),
+            callId: "word-count-invalid",
+          }}
+        />
+      ),
+    },
+    {
       label: "Chat receipt, tool failed",
       ui: (
         <EveToolResult

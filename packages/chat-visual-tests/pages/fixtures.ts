@@ -301,6 +301,86 @@ export const invoicesShared: NonNullable<ServerData["transcript"]> = {
 
 export const invoicesTranscripts = { [invoicesSessionId]: invoicesTranscript };
 
+// Exercises the shared projection through the real observer, store and transcript.
+export const validatedToolTranscripts = {
+  [invoicesSessionId]: [
+    {
+      id: "tool-user",
+      role: "user",
+      parts: [
+        { type: "text", text: "Count these words and show the other results." },
+      ],
+    },
+    {
+      id: "tool-answer",
+      role: "assistant",
+      metadata: { status: "complete", turnId: "turn-tools" },
+      parts: [
+        {
+          type: "tool",
+          kind: "tool",
+          stepIndex: 0,
+          name: "wordCount",
+          label: "wordCount",
+          callId: "count-success",
+          state: "completed",
+          input: { text: "one two" },
+          output: {
+            kind: "chatjs.tool-result",
+            version: 1,
+            status: "success",
+            output: {
+              words: 2,
+              characters: 7,
+              charactersNoSpaces: 6,
+              sentences: 1,
+            },
+          },
+        },
+        {
+          type: "tool",
+          kind: "tool",
+          stepIndex: 0,
+          name: "wordCount",
+          label: "wordCount",
+          callId: "count-failure",
+          state: "completed",
+          input: { text: "one two" },
+          output: {
+            kind: "chatjs.tool-result",
+            version: 1,
+            status: "error",
+            output: null,
+            error: "Counting service unavailable.",
+          },
+        },
+        {
+          type: "tool",
+          kind: "tool",
+          stepIndex: 0,
+          name: "externalLookup",
+          label: "externalLookup",
+          callId: "external-result",
+          state: "completed",
+          input: { query: "example" },
+          output: "External tool result retained.",
+        },
+        {
+          type: "tool",
+          kind: "tool",
+          stepIndex: 0,
+          name: "wordCount",
+          label: "wordCount",
+          callId: "imported-result",
+          state: "completed",
+          input: { text: "one two" },
+          output: "Historical text output retained.",
+        },
+      ],
+    },
+  ],
+} satisfies Record<string, EveMessage[]>;
+
 export const questionTranscripts = {
   [invoicesSessionId]: [
     {

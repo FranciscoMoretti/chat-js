@@ -19,6 +19,12 @@ import { EveDocumentTool } from "./eve-document-tool";
 import { EveMcpResult } from "./eve-mcp-result";
 import { EveToolResult } from "./eve-tool-result";
 
+const hasStructuredToolRenderer = (
+  part: Extract<ReadonlyEveMessagePart, { type: "tool" }>
+): boolean =>
+  !(part.state === "completed" && typeof part.output === "string") &&
+  getEveInstalledToolRenderer(`tool-${part.name}`) !== undefined;
+
 const toolStatus = (
   part: Extract<ReadonlyEveMessagePart, { type: "tool" }>
 ): string => {
@@ -133,7 +139,7 @@ export const EveMessagePart = ({
       />
     );
   }
-  if (getEveInstalledToolRenderer(`tool-${part.name}`)) {
+  if (hasStructuredToolRenderer(part)) {
     return (
       <EveToolResult
         isReadonly={isReadonly}

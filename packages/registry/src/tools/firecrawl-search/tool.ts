@@ -9,7 +9,7 @@ import {
   executeMultiQuerySearch,
 } from "@/tools/platform/search-presentation";
 import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
-import { webSearchInput } from "./schemas";
+import { webSearchInput, webSearchResult } from "./schemas";
 import type { z } from "zod";
 
 const FIRECRAWL_COST_CENTS = 5;
@@ -93,7 +93,8 @@ Avoid:
         usage.addCostUsd(FIRECRAWL_COST_CENTS / CENTS_PER_USD);
 
         return result;
-      }
+      },
+      webSearchResult
     ),
   inputSchema: webSearchInput,
   toModelOutput: toolResultToModelOutput,

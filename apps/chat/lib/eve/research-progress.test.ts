@@ -1,6 +1,32 @@
+import { z } from "zod";
 import { expect, test, vi } from "vitest";
 
 import { executeWithResearchProgress } from "./research-progress";
+
+test("validates streamed and final output with the same tool contract before receipts", async () => {
+  const results = executeWithResearchProgress(
+    { abortSignal: new AbortController().signal },
+    async ({ dataStream }) => {
+      dataStream.write({
+        data: {
+          timestamp: 0,
+          title: "Searching",
+          toolCallId: "call",
+          type: "started",
+        },
+        type: "data-researchUpdate",
+      });
+      return await Promise.resolve({ searches: [""] });
+    },
+    z.object({ searches: z.array(z.string().min(1)) })
+  );
+  const first = await results.next();
+  expect(first.value).toMatchObject({
+    status: "success",
+    output: { searches: [] },
+  });
+  await expect(results.next()).rejects.toThrow();
+});
 
 test("progress is durable and an explicitly reported failure preserves known costs", async () => {
   const results = await Array.fromAsync(
@@ -20,7 +46,8 @@ test("progress is durable and an explicitly reported failure preserves known cos
         });
         usage.addCostUsd(0.05);
         return usage.fail();
-      }
+      },
+      z.object({ searches: z.array(z.string()) })
     )
   );
   expect(results[0]).toMatchObject({
@@ -59,7 +86,8 @@ test("closing the native iterator cancels provider work", async () => {
       );
       await pending.promise;
       return { searches: [] };
-    }
+    },
+    z.object({ searches: z.array(z.string()) })
   );
   await iterator.next();
   await iterator.return();
