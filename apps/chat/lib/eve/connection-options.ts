@@ -4,7 +4,7 @@ import { env } from "@/lib/env";
  * Credentials for the app-to-EVE boundary, shared by HTTP and SDK clients.
  * @param {string} ownerId Owner identity sent to the trusted EVE gateway.
  * @param {string} host Gateway URL whose origin determines eligibility for deployment protection bypass.
- * @returns {{ auth: { bearer: string }; headers: Record<string, string>; host: string; redirect: "error"; }} Gateway credentials and owner headers, with deployment bypass restricted to this deployment.
+ * @returns {{ auth: { bearer: string }; headers: Record<string, string>; baseUrl: string; redirect: "error"; }} Gateway credentials and owner headers, with deployment bypass restricted to this deployment.
  */
 export const getEveConnectionOptions = (
   ownerId: string,
@@ -12,7 +12,7 @@ export const getEveConnectionOptions = (
 ): {
   auth: { bearer: string };
   headers: Record<string, string>;
-  host: string;
+  baseUrl: string;
   redirect: "error";
 } => {
   const headers: Record<string, string> = { "x-chatjs-owner": ownerId };
@@ -34,7 +34,7 @@ export const getEveConnectionOptions = (
   return {
     auth: { bearer: env.EVE_GATEWAY_SECRET ?? "" },
     headers,
-    host,
+    baseUrl: host,
     redirect: "error",
   };
 };

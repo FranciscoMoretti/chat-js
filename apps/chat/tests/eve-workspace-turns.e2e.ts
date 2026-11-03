@@ -1,3 +1,4 @@
+import type * as EveClient from "eve/client";
 import { randomUUID } from "node:crypto";
 import postgres from "postgres";
 import { drizzle } from "drizzle-orm/postgres-js";
@@ -25,7 +26,8 @@ vi.mock("../lib/db/client", () => ({ db: drizzle(client) }));
 vi.mock("../lib/eve/connection-options", () => ({
   getEveConnectionOptions: () => ({ host: "http://native.invalid" }),
 }));
-vi.mock("eve/client", () => ({
+vi.mock("eve/client", async (original) => ({
+  ...(await original<typeof EveClient>()),
   Client: class {
     public sessions = {
       attach: (sessionId: string) => ({
@@ -56,15 +58,46 @@ const operation = (conversationId = firstConversation) => ({
   kind: "send" as const,
   intent: { message: "Preserve this intent", modelId: "model" },
 });
-const settled = (deliveryId: string): WorkspaceTurnEvent[] => [
-  { type: "turn.started", data: { turnId: "turn" } },
+const meta = (line: number) => ({
+  at: "2026-11-02T00:00:00Z",
+  position: { line, index: 0 },
+  endOfLine: true,
+});
+const session: WorkspaceTurnEvent = {
+  type: "session.started",
+  meta: meta(0),
+  data: {},
+};
+const active = (deliveryId: string): WorkspaceTurnEvent[] => [
+  session,
+  { type: "delivery.admitted", meta: meta(1), data: { deliveryId } },
   {
-    type: "message.received",
-    data: { turnId: "turn" },
-    meta: { deliveryIds: [deliveryId] },
+    type: "turn.started",
+    meta: meta(2),
+    data: { turnId: "turn", follows: null, cause: { deliveryId } },
   },
-  { type: "turn.completed", data: { turnId: "turn" } },
-  { type: "session.waiting" },
+  {
+    type: "delivery.consumed",
+    meta: meta(3),
+    data: {
+      turnId: "turn",
+      deliveryId,
+      parts: [{ kind: "text", text: "Question" }],
+    },
+  },
+];
+const settled = (deliveryId: string): WorkspaceTurnEvent[] => [
+  ...active(deliveryId),
+  {
+    type: "delivery.settled",
+    meta: meta(4),
+    data: { deliveryId, turnId: "turn", outcome: "handled" },
+  },
+  {
+    type: "turn.settled",
+    meta: meta(5),
+    data: { turnId: "turn", outcome: "completed" },
+  },
 ];
 
 beforeAll(async () => {
@@ -130,15 +163,8 @@ test("known replay and cancellation acknowledgement preserve the gate until exac
   await dispatchEveOnce(input, dispatch);
   expect(await dispatchEveOnce(input, dispatch)).toEqual(binding);
   expect(dispatch).toHaveBeenCalledTimes(1);
-  snapshots.set("native", [
-    {
-      type: "message.received",
-      data: { turnId: "turn" },
-      meta: { deliveryIds: ["exact"] },
-    },
-    { type: "cancel.requested" },
-    { type: "session.waiting" },
-  ]);
+  // A cancel command receipt is not terminal stream evidence.
+  snapshots.set("native", active("exact"));
   await expect(
     dispatchEveOnce(operation(secondConversation), dispatch)
   ).rejects.toBeInstanceOf(EveWorkspaceBusyError);
@@ -175,9 +201,18 @@ test("root terminal waits for its native child subtree and permits a new convers
   );
   snapshots.set("root", [
     ...settled("exact"),
-    { type: "agent.started", data: { sessionId: "child", remote: false } },
+    {
+      type: "child.opened",
+      meta: meta(6),
+      data: {
+        sessionId: "child",
+        owner: { callId: "child-call" },
+        name: "worker",
+        stream: "/eve/v1/session/child/stream",
+      },
+    },
   ]);
-  snapshots.set("child", [{ type: "turn.waiting" }]);
+  snapshots.set("child", active("child-delivery"));
   const dispatch = vi.fn(
     async () => await Promise.resolve({ sessionId: "other", deliveryId: "new" })
   );
@@ -185,7 +220,10 @@ test("root terminal waits for its native child subtree and permits a new convers
     dispatchEveOnce(operation(secondConversation), dispatch)
   ).rejects.toBeInstanceOf(EveWorkspaceBusyError);
   expect(dispatch).not.toHaveBeenCalled();
-  snapshots.set("child", [{ type: "session.completed" }]);
+  snapshots.set("child", [
+    session,
+    { type: "session.ended", meta: meta(7), data: { outcome: "completed" } },
+  ]);
   await dispatchEveOnce(operation(secondConversation), dispatch);
   expect(dispatch).toHaveBeenCalledTimes(1);
 });
@@ -208,7 +246,7 @@ test("seed-only copies hold the workspace until native seed idle and cannot unlo
     async () => await Promise.resolve({ sessionId: "seeded" })
   );
   await dispatchEveOnce(seed, create);
-  snapshots.set("seeded", [{ type: "history.seeded" }]);
+  snapshots.set("seeded", []);
   const send = operation();
   const deliver = vi.fn(
     async () =>
@@ -217,10 +255,7 @@ test("seed-only copies hold the workspace until native seed idle and cannot unlo
   await expect(dispatchEveOnce(send, deliver)).rejects.toBeInstanceOf(
     EveWorkspaceBusyError
   );
-  snapshots.set("seeded", [
-    { type: "history.seeded" },
-    { type: "session.waiting" },
-  ]);
+  snapshots.set("seeded", [session]);
   await dispatchEveOnce(send, deliver);
   expect(deliver).toHaveBeenCalledTimes(1);
   await dispatchEveOnce(seed, create);
@@ -229,11 +264,7 @@ test("seed-only copies hold the workspace until native seed idle and cannot unlo
   await expect(
     dispatchEveOnce(operation(secondConversation), deliver)
   ).rejects.toBeInstanceOf(EveWorkspaceBusyError);
-  snapshots.set("seeded", [
-    { type: "history.seeded" },
-    { type: "session.waiting" },
-    ...settled("followup"),
-  ]);
+  snapshots.set("seeded", settled("followup"));
   await dispatchEveOnce(operation(secondConversation), deliver);
   expect(deliver).toHaveBeenCalledTimes(2);
 });
@@ -250,10 +281,7 @@ test("a known fork seed waits for asynchronous idle publication before its first
   );
   snapshots.set("delayed-seed", []);
   const ready = setTimeout(() => {
-    snapshots.set("delayed-seed", [
-      { type: "history.seeded" },
-      { type: "session.waiting" },
-    ]);
+    snapshots.set("delayed-seed", [session]);
   }, 25);
   try {
     await reconcileEveWorkspaceTurn("owner", firstConversation, {

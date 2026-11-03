@@ -1,4 +1,5 @@
 "use client";
+import { eveToolUIState } from "@/lib/eve/tool-ui-state";
 
 import React from "react";
 
@@ -10,29 +11,30 @@ export const EveMcpResult = ({
   part,
   defaultOpen,
 }: {
-  readonly part: Extract<
-    ReadonlyEveMessagePart,
-    { readonly type: "dynamic-tool" }
-  >;
+  readonly part: Extract<ReadonlyEveMessagePart, { readonly type: "tool" }>;
   readonly defaultOpen?: boolean;
 }): React.JSX.Element => {
   const result =
-    part.state === "output-available"
+    part.state === "completed"
       ? eveMcpResult.safeParse(part.output)
       : undefined;
-  const failed = part.state === "output-error" || (result && !result.success);
+  const failed = part.state === "failed" || (result && !result.success);
+  let errorText: string | undefined;
+  if (part.state === "cancelled") {
+    errorText = "MCP tool stopped.";
+  } else if (failed === true) {
+    errorText =
+      "MCP tool failed. Check the connector in settings and try again.";
+  }
   return (
     <McpToolResult
       defaultOpen={defaultOpen}
       part={{
-        errorText:
-          failed === true
-            ? "MCP tool failed. Check the connector in settings and try again."
-            : undefined,
+        errorText,
         input: part.input,
         output: result?.success === true ? result.data.output : undefined,
-        state: failed === true ? "output-error" : part.state,
-        toolName: part.toolName,
+        state: failed === true ? "output-error" : eveToolUIState(part.state),
+        toolName: part.name,
       }}
     />
   );

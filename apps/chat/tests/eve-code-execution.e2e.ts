@@ -1,7 +1,7 @@
+import { nativeToolEvents } from "./helpers/eve-tool-events";
 import { expect, test } from "@playwright/test";
 import { eq } from "drizzle-orm";
 import { Client } from "eve/client";
-import type { MessageStreamEvent } from "eve/client";
 import { z } from "zod";
 
 import { db } from "../lib/db/client";
@@ -11,18 +11,6 @@ import { getEveConnectionOptions } from "../lib/eve/connection-options";
 import { reconcileEveUsage } from "../lib/eve/reconcile-usage";
 import { toolResultSchema } from "../lib/eve/tool-result";
 import { assertEveTestDatabase } from "./eve-test-database";
-
-type CodeExecutionEventReader =
-  | {
-      readonly type: "action.result";
-      readonly data: Readonly<{
-        result: Readonly<{ kind: string; toolName?: string }>;
-      }>;
-    }
-  | {
-      readonly type: Exclude<MessageStreamEvent["type"], "action.result">;
-      readonly data?: unknown;
-    };
 
 assertEveTestDatabase(env.DATABASE_URL);
 
@@ -72,23 +60,17 @@ test("native code execution renders real output and reconciles its fixed charge 
   const snapshot = await client.sessions
     .attach(binding.sessionId)
     .snapshot({ signal: AbortSignal.timeout(15_000) });
-  const result = snapshot.events.find(
-    (event: CodeExecutionEventReader) =>
-      event.type === "action.result" &&
-      event.data.result.kind === "tool-result" &&
-      event.data.result.toolName === "codeExecution"
+  const [result] = nativeToolEvents(
+    snapshot.events,
+    "codeExecution",
+    "call.settled"
   );
-  if (
-    result?.type !== "action.result" ||
-    result.data.result.kind !== "tool-result"
-  ) {
+  if (result?.type !== "call.settled") {
     throw new Error("Missing native code execution evidence.");
   }
-  expect(toolResultSchema.parse(result.data.result.output).usage.costUsd).toBe(
-    0.05
-  );
+  expect(toolResultSchema.parse(result.data.output).usage.costUsd).toBe(0.05);
   await reconcileEveUsage(conversation.ownerId, binding.sessionId);
-  const evidenceId = `eve-tool:${binding.sessionId}:${result.data.result.callId}`;
+  const evidenceId = `eve-tool:${binding.sessionId}:${result.data.callId}`;
   const before = await db
     .select()
     .from(eveUsage)

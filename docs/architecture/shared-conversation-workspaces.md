@@ -28,7 +28,7 @@ Deleting a conversation ID retires that member only. Deleting the sidebar chat I
 
 Migration 0019 intentionally requires empty conversation/sandbox state. It refuses populated state rather than inventing workspace ownership or importing uncertain deliveries. No live migration was performed.
 
-The app adopts the ordinary `npm:@chat-js/eve@0.80.1-chatjs.4` dependency, built from merged fork commit `df72a62b6da4ce7abba7dc06f47cccd82ec18dd9` (EVE #14/#15). The workflow-identity patch from main is retained. Package archives and captured evidence stay outside this diff. Migration and deployment remain separate from package publication and application merge.
+The app now adopts `npm:@chat-js/eve@1.0.0-rc.1-chatjs.0`, built from fork commit `7f45f90282e4e75b746dd90cd1782a93dcda2d0a` and released with EVE #19. Scoped workflow identity is implemented in the fork source; the compiled EVE patch is removed. The verification history below records earlier artifacts explicitly. Package archives and captured evidence stay outside this diff. Migration and deployment remain separate from package publication and application merge.
 
 ## Verification matrix
 

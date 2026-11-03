@@ -1,124 +1,105 @@
-import { defaultMessageReducer } from "eve/client";
-import type { MessageStreamEvent } from "eve/client";
+import { conversationOf } from "eve/client";
+import type { SessionStreamEvent } from "eve/client";
 import { expect, it } from "vitest";
-import type { EveMessageDisplayReceipt } from "./message-display";
 import { projectEveMessageDisplay } from "./message-display";
 
-const reducer = defaultMessageReducer();
-const fold = reducer.reduce.bind(reducer);
-
-const received = (id: string, deliveryId: string): MessageStreamEvent => ({
-  type: "message.received",
-  meta: { id, at: "2026-10-17T12:00:00Z", deliveryIds: [deliveryId] },
-  data: { message: "Identical text", sequence: 0, turnId: "turn_0" },
+const received = (
+  position: number,
+  deliveryId: string
+): SessionStreamEvent => ({
+  type: "delivery.consumed",
+  scope: { turnId: `turn_${position}` },
+  meta: {
+    endOfLine: true,
+    position: { line: position, index: 0 },
+    at: "2026-10-17T12:00:00Z",
+  },
+  data: {
+    deliveryId,
+    turnId: `turn_${position}`,
+    parts: [{ kind: "text", text: "Identical text" }],
+  },
 });
 
-const started = (deliveryIds: readonly string[]): MessageStreamEvent => ({
-  type: "session.started",
-  data: {},
-  meta: { id: "start", at: "2026-10-17T12:00:00Z", deliveryIds },
-});
-
-it("correlates a bound initial selection through native session-start delivery metadata", () => {
-  const first = received("initial", "initial-delivery");
-  const later = received("later", "later-delivery");
-  const data = fold(fold(reducer.initial(), first), later);
-  const receipt: EveMessageDisplayReceipt = {
-    kind: "initial",
-    selectedTool: "webSearch",
-  };
-  const events = [started(["initial-delivery"]), first, later];
-  expect(
-    projectEveMessageDisplay(data, events, [receipt]).messages[0]?.metadata
-      ?.custom
-  ).toEqual({ chatjs: { selectedTool: "webSearch" } });
-  expect(
-    projectEveMessageDisplay(data, events, [receipt]).messages[1]?.metadata
-      ?.custom
-  ).toBeUndefined();
-  const unproven: MessageStreamEvent[][] = [
-    [first, later],
-    [started([]), first, later],
-    [started(["initial-delivery", "later-delivery"]), first, later],
-    [started(["initial-delivery"]), started(["initial-delivery"]), first],
-    [
-      started(["initial-delivery"]),
-      first,
-      received("coalesced", "initial-delivery"),
-    ],
-    [
-      started(["initial-delivery"]),
+const project = (events: readonly SessionStreamEvent[]) =>
+  conversationOf(
+    events.flatMap((event, index): SessionStreamEvent[] => [
       {
-        ...first,
+        type: "delivery.admitted",
+        data: { deliveryId: index === 0 ? "accepted" : "unknown" },
         meta: {
-          ...first.meta,
-          deliveryIds: ["initial-delivery", "unknown-delivery"],
+          at: "2026-10-17T12:00:00Z",
+          position: { line: index * 3, index: 0 },
+          endOfLine: true,
         },
       },
-    ],
-    [
       {
-        type: "history.seeded",
-        meta: { id: "restored", at: "2026-10-17T12:00:00Z" },
-        data: { messages: data.messages },
+        type: "turn.started",
+        scope: event.scope,
+        meta: {
+          at: "2026-10-17T12:00:00Z",
+          position: { line: index * 3 + 1, index: 0 },
+          endOfLine: true,
+        },
+        data: {
+          turnId: `turn_${index + 1}`,
+          cause: { deliveryId: index === 0 ? "accepted" : "unknown" },
+          follows: index === 0 ? null : `turn_${index}`,
+        },
       },
-      later,
-    ],
-  ];
-  for (const ambiguous of unproven) {
-    expect(projectEveMessageDisplay(data, ambiguous, [receipt])).toBe(data);
-  }
-  expect(projectEveMessageDisplay(data, events, [receipt, receipt])).toBe(data);
-  expect(projectEveMessageDisplay(data, events, [])).toBe(data);
-});
-
-it("projects a known receipt onto the native event identity, never matching text or turn alone", () => {
-  const first = received("first", "accepted");
-  const second = received("second", "unknown");
-  const data = fold(fold(reducer.initial(), first), second);
-  const projected = projectEveMessageDisplay(
-    data,
-    [first, second],
-    [{ kind: "send", deliveryId: "accepted", selectedTool: "webSearch" }]
+      {
+        ...event,
+        meta: { ...event.meta, position: { line: index * 3 + 2, index: 0 } },
+      },
+    ])
   );
+
+it("projects a known receipt by delivery identity, never by identical text", () => {
+  const events = [received(1, "accepted"), received(2, "unknown")];
+  const data = project(events);
+  const projected = projectEveMessageDisplay(data, events, [
+    { kind: "send", deliveryId: "accepted", selectedTool: "webSearch" },
+  ]);
   expect(projected.messages[0]?.metadata?.custom).toEqual({
     chatjs: { selectedTool: "webSearch" },
   });
   expect(projected.messages[1]?.metadata?.custom).toBeUndefined();
   expect(data.messages[0]?.metadata?.custom).toBeUndefined();
-  expect(projectEveMessageDisplay(data, [first, second], [])).toBe(data);
+  expect(projectEveMessageDisplay(data, events, [])).toBe(data);
 });
 
-it("does not decorate ambiguous deliveries or inherited events with a current-session receipt", () => {
-  const first = received("first", "accepted");
-  const data = fold(reducer.initial(), first);
-  const receipts: EveMessageDisplayReceipt[] = [
-    { kind: "send", deliveryId: "accepted", selectedTool: null },
-    { kind: "send", deliveryId: "other", selectedTool: null },
-  ];
+it("requires one receipt and one consumption for the exact delivery", () => {
+  const event = received(1, "accepted");
+  const data = project([event]);
+  const receipt = {
+    kind: "send",
+    deliveryId: "accepted",
+    selectedTool: "webSearch",
+  } as const;
+  expect(projectEveMessageDisplay(data, [event], [receipt, receipt])).toBe(
+    data
+  );
+  expect(projectEveMessageDisplay(data, [event, event], [receipt])).toBe(data);
+  expect(projectEveMessageDisplay(data, [], [receipt])).toBe(data);
   expect(
-    projectEveMessageDisplay(
-      data,
-      [
-        {
-          ...first,
-          meta: { ...first.meta, deliveryIds: ["accepted", "other"] },
-        },
-      ],
-      receipts
-    )
+    projectEveMessageDisplay(data, [received(2, "other")], [receipt])
   ).toBe(data);
-  expect(
-    projectEveMessageDisplay(
-      data,
-      [
-        {
-          type: "history.seeded",
-          meta: { id: "restore", at: "2026-10-17T12:00:00Z" },
-          data: { messages: data.messages },
-        },
-      ],
-      receipts
-    )
-  ).toBe(data);
+});
+
+it("does not decorate pending optimistic messages even when their id matches", () => {
+  const event = received(1, "accepted");
+  const confirmed = project([event]);
+  const data = {
+    ...confirmed,
+    messages: confirmed.messages.map((message) => ({
+      ...message,
+      metadata: { ...message.metadata, optimistic: true as const },
+    })),
+  };
+  const projected = projectEveMessageDisplay(
+    data,
+    [event],
+    [{ kind: "send", deliveryId: "accepted", selectedTool: "webSearch" }]
+  );
+  expect(projected.messages[0]?.metadata?.custom).toBeUndefined();
 });

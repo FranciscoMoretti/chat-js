@@ -221,13 +221,13 @@ test("New Chat discards late bootstrap results and retires their session", async
   await composer.fill("Fresh draft");
   const retired = page.waitForRequest(
     (request: Readonly<Pick<Request, "url">>) =>
-      request.url().endsWith("/discarded-session/reset")
+      request.url().endsWith("/discarded-session/end")
   );
   release.resolve();
   await retired;
   await expect(composer).toHaveText("Fresh draft");
   await expect(page.getByRole("log")).toHaveCount(0);
-  expect(messages).toEqual(["/eve/chat/v1/session/discarded-session/reset"]);
+  expect(messages).toEqual(["/eve/chat/v1/session/discarded-session/end"]);
 });
 
 test("back-forward cache restoration starts a fresh guest chat", async ({

@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { userCredit } from "@/chatjs/plugins/credits/credits-schema";
 import {
   getPublicEveConversation,
@@ -18,7 +19,7 @@ import {
 import { setTimeout as delay } from "node:timers/promises";
 
 import { eq, sql } from "drizzle-orm";
-import type { MessageStreamEvent } from "eve/client";
+import type { SessionStreamEvent } from "eve/client";
 import { afterAll, expect, test, vi } from "vitest";
 
 import { db } from "../lib/db/client";
@@ -116,10 +117,10 @@ test("billing replay is atomic, rounds per turn and preserves unknown costs", as
 test("concurrent retry reserves once and cannot cross owners", async () => {
   const operation = crypto.randomUUID();
   let starts = 0;
-  const start = async (): Promise<string> => {
+  const start = async (): Promise<{ sessionId: string }> => {
     starts += 1;
     await delay(50);
-    return `test-${crypto.randomUUID()}`;
+    return { sessionId: `test-${crypto.randomUUID()}` };
   };
   const results = await Promise.allSettled(
     Array.from(
@@ -151,7 +152,7 @@ test("concurrent retry reserves once and cannot cross owners", async () => {
 test("a lost create reply stays unresolved and never redispatches", async () => {
   const operation = crypto.randomUUID();
   const start = vi
-    .fn<() => Promise<string>>()
+    .fn<() => Promise<{ sessionId: string }>>()
     .mockRejectedValue(new Error("lost reply"));
   await expect(
     createEveConversation(owner, operation, "uncertain", start)
@@ -176,7 +177,7 @@ test("a stopped creator's reservation can be resumed without changing its identi
     operation,
     "process stopped",
 
-    (id) => `test-${id}`
+    async (id) => await Promise.resolve({ sessionId: `test-${id}` })
   );
   expect(bound).toEqual({
     id: reservation.id,
@@ -228,9 +229,9 @@ test("activity projection is owner-scoped, monotonic, and independent of metadat
 
 test("fork reservations retain ancestry and reject changed sources on retry", async () => {
   let starts = 0;
-  const start = (): string => {
+  const start = async (): Promise<{ sessionId: string }> => {
     starts += 1;
-    return createEveTestSession();
+    return await createEveTestSession();
   };
   const root = await createEveConversation(
     owner,
@@ -331,80 +332,60 @@ test("database constraints reject partial and cross-owner branch ancestry", asyn
   }
 });
 
-test.each(["codeExecution", "webSearch"])(
-  "%s receipts debit once per native call and keep missing cost evidence unresolved",
-  async (toolName) => {
-    const sessionId = crypto.randomUUID();
-    const callId = crypto.randomUUID();
-    const result = createToolResult({ message: "42", chart: "" }, 0.05);
-    expect(JSON.stringify(result)).not.toContain('"updates"');
-    const event = {
-      data: {
-        result: {
-          callId,
-          kind: "tool-result",
-
-          output: result,
-          toolName,
-        },
-        status: "completed",
-        turnId: "tool-receipt",
-      },
-      meta: { at: new Date().toISOString(), id: crypto.randomUUID() },
-      type: "action.result",
-    } satisfies Parameters<typeof ingestEveUsage>[2] & {
-      data: { result: { toolName: string } };
-    };
-    await Promise.all(
-      Array.from(
-        { length: 8 },
-        async () =>
-          await ingestEveUsage(owner, sessionId, {
-            ...event,
-            meta: { ...event.meta, id: crypto.randomUUID() },
-          })
-      )
+test("tool receipts debit once per native call and keep missing cost evidence unresolved", async () => {
+  const sessionId = crypto.randomUUID();
+  const callId = crypto.randomUUID();
+  const result = createToolResult({ message: "42", chart: "" }, 0.05);
+  expect(JSON.stringify(result)).not.toContain('"updates"');
+  const { updates: _updates, ...receipt } = result;
+  const event = {
+    data: {
+      callId,
+      outcome: "completed",
+      output: z.json().parse(receipt),
+    },
+    scope: { turnId: "tool-receipt" },
+    type: "call.settled",
+  } satisfies Parameters<typeof ingestEveUsage>[2];
+  await Promise.all(
+    Array.from(
+      { length: 8 },
+      async () => await ingestEveUsage(owner, sessionId, event)
+    )
+  );
+  const [row] = await db
+    .select()
+    .from(eveUsage)
+    .where(eq(eveUsage.eventId, `eve-tool:${sessionId}:${callId}`));
+  expect(Number(row.costUsd)).toBe(0.05);
+  expect(row.chargedCents).toBe(5);
+  const unknown = {
+    ...event,
+    data: {
+      ...event.data,
+      callId: crypto.randomUUID(),
+      output: z.json().parse({ ...receipt, usage: {} }),
+    },
+  };
+  expect(await ingestEveUsage(owner, sessionId, unknown)).toBe(false);
+  const [unpriced] = await db
+    .select()
+    .from(eveUsage)
+    .where(
+      eq(eveUsage.eventId, `eve-tool:${sessionId}:${unknown.data.callId}`)
     );
-    const [row] = await db
-      .select()
-      .from(eveUsage)
-      .where(eq(eveUsage.eventId, `eve-tool:${sessionId}:${callId}`));
-    expect(Number(row.costUsd)).toBe(0.05);
-    expect(row.chargedCents).toBe(5);
-    const unknown = {
-      ...event,
-      data: {
-        ...event.data,
-        result: {
-          ...event.data.result,
-          callId: crypto.randomUUID(),
-          output: { ...result, usage: {} },
-        },
-      },
-    };
-    expect(await ingestEveUsage(owner, sessionId, unknown)).toBe(false);
-    const [unpriced] = await db
-      .select()
-      .from(eveUsage)
-      .where(
-        eq(
-          eveUsage.eventId,
-          `eve-tool:${sessionId}:${unknown.data.result.callId}`
-        )
-      );
-    expect(unpriced.costUsd).toBeNull();
-    expect(unpriced.chargedCents).toBe(0);
-  }
-);
+  expect(unpriced.costUsd).toBeNull();
+  expect(unpriced.chargedCents).toBe(0);
+});
 
 test.each(["deleting", "deleted"] as const)(
   "%s conversations are fenced from access, mutation and creation replay",
   async (state) => {
     const operation = crypto.randomUUID();
     let starts = 0;
-    const start = (): string => {
+    const start = async (): Promise<{ sessionId: string }> => {
       starts += 1;
-      return crypto.randomUUID();
+      return await Promise.resolve({ sessionId: crypto.randomUUID() });
     };
     const bound = await createEveConversation(
       owner,
@@ -578,7 +559,9 @@ test("unresolved creation prevents a partial family deletion", async () => {
       owner,
       crypto.randomUUID(),
       "uncertain child",
-      vi.fn<() => Promise<string>>().mockRejectedValue(new Error("offline")),
+      vi
+        .fn<() => Promise<{ sessionId: string }>>()
+        .mockRejectedValue(new Error("offline")),
       { fork: { conversationId: root.id } }
     )
   ).rejects.toThrow("offline");
@@ -806,13 +789,13 @@ test("auxiliary model calls settle once per actual attempt independently of comp
       );
     })
   );
-  const event: MessageStreamEvent = {
+  const event: SessionStreamEvent = {
     data: {
-      sequence: 0,
+      outcome: "completed",
       turnId: "turn_0",
     },
-    meta: { at: new Date().toISOString(), id: crypto.randomUUID() },
-    type: "turn.completed",
+    meta: { at: new Date().toISOString(), position: { line: 0, index: 0 } },
+    type: "turn.settled",
   };
   await Promise.all(
     Array.from(

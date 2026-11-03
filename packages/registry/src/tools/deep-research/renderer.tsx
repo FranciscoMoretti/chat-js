@@ -31,10 +31,13 @@ export const DeepResearchRenderer = defineToolRenderer({
             part={{
               input: {},
               output: result,
-              state: "output-available",
-              toolCallId: tool.toolCallId,
-              toolName: "createTextDocument",
-              type: "dynamic-tool",
+              state: "completed",
+              callId: tool.toolCallId,
+              kind: "tool",
+              label: "Create document",
+              stepIndex: 0,
+              name: "createTextDocument",
+              type: "tool",
             }}
           />
         );

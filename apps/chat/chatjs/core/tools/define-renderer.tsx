@@ -24,7 +24,6 @@ type RenderableTool<TInput, TOutput> = { toolCallId: string } & (
       state: "output-available";
       input: TInput;
       output: TOutput;
-      partial?: true;
     }
 );
 
@@ -41,7 +40,6 @@ const envelope = z.object({
   errorText: z.string().optional(),
   input: z.unknown().optional(),
   output: z.unknown().optional(),
-  partial: z.literal(true).optional(),
   state: z.enum([
     "input-streaming",
     "input-available",
@@ -152,7 +150,6 @@ export const defineToolRenderer = <TInput, TOutput, TUpdate = never>({
           ...identity,
           input: input.data,
           output: output.data,
-          partial: value.partial,
           state: value.state,
         }}
       />

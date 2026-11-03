@@ -148,7 +148,7 @@ it("authorizes native deletion responses from the current owner principal only",
     },
     request: {
       callId: "call",
-      requestId: "approval",
+      interactionId: "approval",
       principal,
       toolName: "deleteDocument",
       toolInput: input,

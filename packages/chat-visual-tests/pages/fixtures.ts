@@ -317,10 +317,13 @@ export const validatedToolTranscripts = {
       metadata: { status: "complete", turnId: "turn-tools" },
       parts: [
         {
-          type: "dynamic-tool",
-          toolName: "wordCount",
-          toolCallId: "count-success",
-          state: "output-available",
+          type: "tool",
+          kind: "tool",
+          stepIndex: 0,
+          name: "wordCount",
+          label: "wordCount",
+          callId: "count-success",
+          state: "completed",
           input: { text: "one two" },
           output: {
             kind: "chatjs.tool-result",
@@ -335,10 +338,13 @@ export const validatedToolTranscripts = {
           },
         },
         {
-          type: "dynamic-tool",
-          toolName: "wordCount",
-          toolCallId: "count-failure",
-          state: "output-available",
+          type: "tool",
+          kind: "tool",
+          stepIndex: 0,
+          name: "wordCount",
+          label: "wordCount",
+          callId: "count-failure",
+          state: "completed",
           input: { text: "one two" },
           output: {
             kind: "chatjs.tool-result",
@@ -349,19 +355,24 @@ export const validatedToolTranscripts = {
           },
         },
         {
-          type: "dynamic-tool",
-          toolName: "externalLookup",
-          toolCallId: "external-result",
-          state: "output-available",
+          type: "tool",
+          kind: "tool",
+          stepIndex: 0,
+          name: "externalLookup",
+          label: "externalLookup",
+          callId: "external-result",
+          state: "completed",
           input: { query: "example" },
           output: "External tool result retained.",
         },
         {
-          type: "dynamic-tool",
-          toolName: "wordCount",
-          toolCallId: "imported-result",
-          state: "output-available",
-          outputType: "text",
+          type: "tool",
+          kind: "tool",
+          stepIndex: 0,
+          name: "wordCount",
+          label: "wordCount",
+          callId: "imported-result",
+          state: "completed",
           input: { text: "one two" },
           output: "Historical text output retained.",
         },
@@ -378,31 +389,32 @@ export const questionTranscripts = {
       parts: [
         { type: "text", text: "Let’s narrow down the invoice investigation." },
         {
-          type: "dynamic-tool",
-          toolName: "askQuestion",
-          toolCallId: "question-call",
-          state: "approval-requested",
-          approval: { id: "question-request" },
+          type: "tool",
+          kind: "tool",
+          stepIndex: 0,
+          name: "askQuestion",
+          label: "askQuestion",
+          callId: "question-call",
+          state: "approval",
           input: {},
-          toolMetadata: {
-            eve: {
-              kind: "tool-call",
-              name: "askQuestion",
-              inputRequest: {
-                requestId: "question-request",
-                kind: "question",
-                display: "select",
-                prompt: "Which invoice issue should we investigate?",
-                allowFreeform: true,
-                options: [
-                  {
-                    id: "performance",
-                    label: "Query performance",
-                    description: "Find slow queries and missing indexes",
-                  },
-                  { id: "accuracy", label: "Invoice accuracy" },
-                ],
-              },
+          interaction: {
+            interactionId: "question-request",
+            turnId: "fixture-turn",
+            stepIndex: 0,
+            status: "open",
+            request: {
+              kind: "question",
+              display: "select",
+              prompt: "Which invoice issue should we investigate?",
+              allowFreeform: true,
+              options: [
+                {
+                  id: "performance",
+                  label: "Query performance",
+                  description: "Find slow queries and missing indexes",
+                },
+                { id: "accuracy", label: "Invoice accuracy" },
+              ],
             },
           },
         },
@@ -583,9 +595,9 @@ export const launchChats: HistoryPage = {
 export const invoicesFollowupEvents: typeof route.events = {
   [invoicesSessionId]: [
     {
-      type: "turn.completed",
-      data: { turnId: "turn_0", sequence: 2 },
-      meta: { id: "completed-invoices", at: "2026-10-18T10:00:00Z" },
+      type: "turn.settled",
+      data: { turnId: "turn_0", outcome: "completed" },
+      meta: { position: { line: 2, index: 0 }, at: "2026-10-18T10:00:00Z" },
     },
   ],
 };
@@ -597,7 +609,8 @@ export const invoicesFollowupTrpc = {
   }) => {
     if (
       input.conversationId !== invoicesConversation.id ||
-      input.eventId !== "completed-invoices"
+      input.eventId !==
+        JSON.stringify([invoicesConversation.sessionId, "turn_0", "completed"])
     ) {
       return new TrpcFixtureError(
         "NOT_FOUND",
@@ -667,10 +680,13 @@ export const archivedDiagramTranscript: EveMessage[] = [
     metadata: { status: "complete", turnId: "turn_0" },
     parts: [
       {
-        type: "dynamic-tool",
-        toolName: "drawDiagram",
-        toolCallId: "archived-diagram-call",
-        state: "output-available",
+        type: "tool",
+        kind: "tool",
+        stepIndex: 0,
+        name: "drawDiagram",
+        label: "drawDiagram",
+        callId: "archived-diagram-call",
+        state: "completed",
         input: { title: "Deployment flow" },
         output: {
           documentId: archivedDocumentId,

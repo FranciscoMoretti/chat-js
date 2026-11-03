@@ -135,25 +135,15 @@ it("writes before invoking the mock provider, rounds once, and ignores replayed 
   /* oxlint-disable no-await-in-loop -- Replay must follow the first ingestion to exercise cursor-independent deduplication. */
   for (const sessionId of ["root", "root"]) {
     await ingestEveUsage("owner", sessionId, {
-      data: {
-        finishReason: "stop",
-        sequence: 0,
-        turnId: "turn_1",
-        usage: { costUsd: 9 },
-      },
-      meta: { at: "2026-10-12T00:00:00Z", id: "replayed-step" },
-      type: "step.completed",
+      data: { runId: "replayed-model", outcome: "completed" },
+      scope: { turnId: "turn_1" },
+
+      type: "model.settled",
     });
     await ingestEveUsage("owner", sessionId, {
-      data: {
-        modelId: "mock",
-        sequence: 0,
-        sessionId,
-        turnId: "turn_1",
-        usage: { costUsd: 9 },
-      },
-      meta: { at: "2026-10-12T00:00:00Z", id: "replayed-compaction" },
-      type: "compaction.completed",
+      data: { runId: "replayed-maintenance", outcome: "completed" },
+
+      type: "model.settled",
     });
   }
   /* oxlint-enable no-await-in-loop */
@@ -197,25 +187,21 @@ it("settles each distinct descendant attempt against the root turn and reingests
 
 it("keeps independent tool receipts billable alongside model receipts and replay", async () => {
   /* oxlint-disable no-await-in-loop -- Replay the same call after its first durable charge. */
-  for (const eventId of ["tool-live", "tool-replay"]) {
+  for (const _line of [0, 1]) {
     await ingestEveUsage("owner", "root", {
       data: {
-        result: {
-          callId: "paid-call",
-          kind: "tool-result",
-          output: {
-            kind: "chatjs.tool-result",
-            output: "answer",
-            status: "success",
-            usage: { costUsd: 0.02 },
-            version: 1,
-          },
+        callId: "paid-call",
+        outcome: "completed",
+        output: {
+          kind: "chatjs.tool-result",
+          output: "answer",
+          status: "success",
+          usage: { costUsd: 0.02 },
+          version: 1,
         },
-        status: "completed",
-        turnId: "turn_1",
       },
-      meta: { at: "2026-10-12T00:00:00Z", id: eventId },
-      type: "action.result",
+      scope: { turnId: "turn_1" },
+      type: "call.settled",
     });
   }
   /* oxlint-enable no-await-in-loop */
@@ -298,11 +284,11 @@ it("separates maintenance and preserves missing or crash-lost receipts without b
   await eveModelLedger.finish(maintenance, { usage: receipt.usage });
   await ingestEveUsage("owner", "root", {
     data: {
-      sequence: 2,
       turnId: "turn_2",
+      outcome: "completed",
     },
-    meta: { at: "2026-10-12T00:00:00Z", id: "completion" },
-    type: "turn.completed",
+
+    type: "turn.settled",
   });
 
   const rows = await postgres.query(

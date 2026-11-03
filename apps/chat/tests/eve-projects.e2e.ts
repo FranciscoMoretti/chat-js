@@ -242,7 +242,7 @@ test("an unresolved copy follows changes to its chat project", async () => {
       operationId,
       "Uncertain fork",
       vi
-        .fn<() => Promise<string>>()
+        .fn<() => Promise<{ sessionId: string }>>()
         .mockRejectedValue(new Error("Lost creation reply")),
       { fork: { conversationId: source.id } }
     )
@@ -273,7 +273,7 @@ test("project creation binds before dispatch and preserves its initial intent th
       id: projectId,
       instructions: "First turn instructions",
     });
-    return crypto.randomUUID();
+    return { sessionId: crypto.randomUUID() };
   });
   const create = async (requestedProject?: string) =>
     await createEveConversation(

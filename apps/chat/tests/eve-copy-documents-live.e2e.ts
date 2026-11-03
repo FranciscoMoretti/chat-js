@@ -1,8 +1,9 @@
+import { nativeToolEvents } from "./helpers/eve-tool-events";
 import { expect, test } from "@playwright/test";
 import type { TestInfo } from "@playwright/test";
 import { eq } from "drizzle-orm";
 import { Client } from "eve/client";
-import type { MessageStreamEvent } from "eve/client";
+import type { SessionStreamEvent } from "eve/client";
 
 import { z } from "zod";
 
@@ -23,28 +24,6 @@ import {
 import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(env.DATABASE_URL);
-type HistorySeedEventReader =
-  | Readonly<{
-      type: "history.seeded";
-      data: Readonly<{
-        messages: readonly unknown[];
-      }>;
-    }>
-  | Readonly<{
-      type: Exclude<MessageStreamEvent["type"], "history.seeded">;
-      data?: unknown;
-    }>;
-type ActionResultEventReader =
-  | Readonly<{
-      type: "action.result";
-      data: Readonly<{
-        result: Readonly<{ kind: string; toolName?: string }>;
-      }>;
-    }>
-  | Readonly<{
-      type: Exclude<MessageStreamEvent["type"], "action.result">;
-      data?: unknown;
-    }>;
 const modelId = "google/gemini-2.5-flash";
 const boundaryReply = /^boundary-ready\.?$/u;
 
@@ -160,9 +139,11 @@ test("copied document history survives source deletion and supports native editi
         idle = await copiedSession.snapshot();
         return idle.events.some(
           (
-            event: HistorySeedEventReader
-          ): event is Extract<MessageStreamEvent, { type: "history.seeded" }> =>
-            event.type === "history.seeded"
+            event: SessionStreamEvent
+          ): event is Extract<
+            SessionStreamEvent,
+            { type: "session.started" }
+          > => event.type === "session.started"
         );
       },
       { intervals: [250, 500, 1000], timeout: 20_000 }
@@ -170,8 +151,8 @@ test("copied document history survives source deletion and supports native editi
     .toBe(true);
   expect(
     idle.events.some(
-      (event: Readonly<Pick<MessageStreamEvent, "type">>) =>
-        event.type === "turn.started" || event.type === "actions.requested"
+      (event: Readonly<Pick<SessionStreamEvent, "type">>) =>
+        event.type === "turn.started" || event.type === "call.requested"
     )
   ).toBe(false);
   const latest = revisions.find(
@@ -259,12 +240,7 @@ test("copied document history survives source deletion and supports native editi
     .attach(destination.sessionId)
     .snapshot();
   expect(
-    snapshot.events.some(
-      (event: ActionResultEventReader) =>
-        event.type === "action.result" &&
-        event.data.result.kind === "tool-result" &&
-        event.data.result.toolName === "readDocument"
-    )
+    nativeToolEvents(snapshot.events, "readDocument", "call.settled").length > 0
   ).toBe(true);
   await page
     .getByRole("button", {
@@ -327,24 +303,23 @@ test("copied document history survives source deletion and supports native editi
     .snapshot();
   const seed = forkSnapshot.events.find(
     (
-      event: HistorySeedEventReader
-    ): event is Extract<MessageStreamEvent, { type: "history.seeded" }> =>
-      event.type === "history.seeded"
+      event: SessionStreamEvent
+    ): event is Extract<SessionStreamEvent, { type: "session.started" }> =>
+      event.type === "session.started"
   );
-  expect(seed?.data.messages).toHaveLength(2);
-  expect(seed?.data.messages.map((message) => message.role)).toEqual([
-    "user",
-    "assistant",
-  ]);
-  expect(JSON.stringify(seed?.data.messages)).toContain("Amber apples.");
-  expect(JSON.stringify(seed?.data.messages)).not.toContain("Silver plums.");
+  expect(seed?.data.transcriptSeed?.messages).toHaveLength(2);
   expect(
-    forkSnapshot.events.some(
-      (event: ActionResultEventReader) =>
-        event.type === "action.result" &&
-        event.data.result.kind === "tool-result" &&
-        event.data.result.toolName === "readDocument"
-    )
+    seed?.data.transcriptSeed?.messages.map((message) => message.role)
+  ).toEqual(["user", "assistant"]);
+  expect(JSON.stringify(seed?.data.transcriptSeed?.messages)).toContain(
+    "Amber apples."
+  );
+  expect(JSON.stringify(seed?.data.transcriptSeed?.messages)).not.toContain(
+    "Silver plums."
+  );
+  expect(
+    nativeToolEvents(forkSnapshot.events, "readDocument", "call.settled")
+      .length > 0
   ).toBe(true);
   const replay = await page.request.post("/api/agent-conversations", {
     data: forkInput,

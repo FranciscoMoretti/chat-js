@@ -190,7 +190,7 @@ test("a verified native hook binds while dispatch is in flight without conflicti
           reservationId
         )
       ).toEqual({ conversationId: reservationId, ownerId: owner });
-      return nativeSession;
+      return { sessionId: nativeSession };
     },
     { initialRequest: { message: "race", operationId } }
   );

@@ -1,3 +1,4 @@
+import { testHookContext } from "../../tests/helpers/eve-hook-context";
 import { isNonEmptyString } from "@/lib/is-non-empty-string";
 
 import {
@@ -45,13 +46,17 @@ vi.mock("@/integrations/tools/catalog", async (importOriginal) => {
 const startTurn = async (selectedTool?: string, principalType = "user") =>
   await selectionHook.events?.["turn.started"]?.(
     {
-      data: { sequence: 1, turnId: "turn_1" },
-      meta: { at: "2026-09-12T12:00:00Z", id: "event_1" },
+      data: {
+        turnId: "turn_1",
+        cause: { deliveryId: "delivery" },
+        follows: null,
+      },
       type: "turn.started",
     },
     {
+      ...testHookContext(),
       agent: { name: "chatjs" },
-      channel: {},
+      channel: { kind: "http", metadata: {} },
       cancel: (): never => {
         throw new Error("Unexpected cancellation");
       },

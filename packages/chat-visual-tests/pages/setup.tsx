@@ -1,5 +1,6 @@
+import { conversationOf } from "eve/client";
 import { ensureFonts } from "../../registry/src/tools/_shared/visual-fonts";
-import type { EveMessage, MessageStreamEvent } from "eve/client";
+import type * as EveClient from "eve/client";
 import { MotionGlobalConfig } from "motion/react";
 import type { AnchorHTMLAttributes } from "react";
 import superjson, { serialize } from "superjson";
@@ -149,22 +150,43 @@ vi.mock("@/chatjs/plugins/sharing/public-conversation", () => ({
 // A replayed transcript accepts no new turns.
 const idle = () => Promise.resolve();
 
+// Page fixtures supply native projected messages, independently of runtime reducer tests.
+const projections = vi.hoisted(
+  () =>
+    new WeakMap<
+      readonly EveClient.SessionStreamEvent[],
+      readonly EveClient.EveMessage[]
+    >()
+);
+vi.mock("eve/client", async (importOriginal) => {
+  const original = await importOriginal<typeof EveClient>();
+  return {
+    ...original,
+    conversationOf: (events: readonly EveClient.SessionStreamEvent[]) => ({
+      ...original.conversationOf(events),
+      ...(projections.has(events) ? { messages: projections.get(events) } : {}),
+    }),
+  };
+});
+
 // EVE streams a session's events from its server; a page test replays a finished transcript. The
 // native data stays stable between events, but the real hook returns a new wrapper on every render.
 vi.mock("eve/react", () => {
-  let agents = new WeakMap<readonly EveMessage[], object>();
+  let agents = new WeakMap<readonly EveClient.EveMessage[], object>();
   // One empty list per session, so a session with no transcript keeps its own agent across renders.
-  let noTranscripts = new Map<string, readonly EveMessage[]>();
+  let noTranscripts = new Map<string, readonly EveClient.EveMessage[]>();
   beforeEach(() => {
     agents = new WeakMap();
     noTranscripts = new Map();
   });
-  const emptyTranscript = (sessionId: string): readonly EveMessage[] => {
+  const emptyTranscript = (
+    sessionId: string
+  ): readonly EveClient.EveMessage[] => {
     const existing = noTranscripts.get(sessionId);
     if (existing) {
       return existing;
     }
-    const created: readonly EveMessage[] = [];
+    const created: readonly EveClient.EveMessage[] = [];
     noTranscripts.set(sessionId, created);
     return created;
   };
@@ -174,7 +196,7 @@ vi.mock("eve/react", () => {
       onEvent,
     }: {
       initialSession?: { sessionId: string };
-      onEvent?: (event: MessageStreamEvent) => void;
+      onEvent?: (event: EveClient.SessionStreamEvent) => void;
     }) => {
       const sessionId = initialSession?.sessionId ?? "";
       if (onEvent) {
@@ -182,19 +204,30 @@ vi.mock("eve/react", () => {
       }
       const messages =
         route.transcripts[sessionId] ?? emptyTranscript(sessionId);
+      const events = route.events[sessionId] ?? [];
+      projections.set(events, messages);
       const agent = agents.get(messages) ?? {
         cancel: idle,
-        data: { messages },
+        ...conversationOf([]),
+        messages,
         error:
           route.agentError === null ? undefined : new Error(route.agentError),
-        events: route.events[sessionId] ?? [],
+        events,
         prewarm: idle,
-        reset: () => null,
+        newSession: () => {
+          // Replay fixtures never create native sessions.
+        },
+        follow: () => {
+          // Replay fixtures do not attach live streams.
+        },
+        clear: idle,
+        compact: idle,
+        end: idle,
         respond: idle,
         resume: idle,
         send: idle,
         session: initialSession,
-        status: route.agentStatus,
+        status: route.agentStatus === "ready" ? "idle" : "busy",
       };
       agents.set(messages, agent);
       return { ...agent };

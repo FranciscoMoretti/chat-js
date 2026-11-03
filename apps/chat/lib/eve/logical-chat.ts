@@ -1,8 +1,8 @@
 import { LogicalCommands } from "./logical-commands";
 import { isNonEmptyString } from "@/lib/is-non-empty-string";
 
-import type { EveMessage, EveMessageData } from "eve/client";
-import type { UseEveAgentHelpers } from "eve/react";
+import type { EveMessage } from "eve/client";
+import type { UseEveAgentReturn } from "eve/react";
 
 import type { EveForkKind } from "./contracts";
 
@@ -16,7 +16,7 @@ interface EveBranchReference {
   responseGroupIndex?: number | null;
 }
 
-type NativeChatAgent = UseEveAgentHelpers<EveMessageData>;
+type NativeChatAgent = UseEveAgentReturn;
 
 type LogicalBranch = EveBranchReference & {
   readonly sessionId: string | null;
@@ -65,11 +65,7 @@ const busy = (agent?: NativeChatAgent): boolean => {
   if (!agent) {
     return false;
   }
-  return (
-    agent.status === "streaming" ||
-    agent.status === "submitted" ||
-    agent.status === "resuming"
-  );
+  return agent.status === "busy" || agent.status === "resuming";
 };
 
 const latestMessageTime = (
@@ -82,7 +78,7 @@ const latestMessageTime = (
   }
   for (const event of agent.events ?? []) {
     if (
-      (event.type === "message.received" || event.type === "step.started") &&
+      (event.type === "delivery.consumed" || event.type === "model.started") &&
       event.meta?.at
     ) {
       time = Math.max(time, new Date(event.meta.at).getTime());
@@ -136,7 +132,7 @@ const projectBranch = (
   aliases: Map<string, string>,
   paths: ReadonlyMap<string, readonly string[]>
 ): { hasLocalMessage: boolean; path: string[] } => {
-  const messages = agent.data.messages.filter(
+  const messages = agent.messages.filter(
     (message) =>
       !(message.metadata?.optimistic && message.metadata.status === "failed")
   );
@@ -253,7 +249,7 @@ class LogicalChat {
   public observe(conversationId: string, agent: NativeChatAgent): void {
     const previous = this.agents.get(conversationId);
     if (
-      previous?.data === agent.data &&
+      previous?.messages === agent.messages &&
       previous.events === agent.events &&
       previous.status === agent.status &&
       previous.error === agent.error
@@ -410,7 +406,7 @@ class LogicalChat {
           continue;
         }
         const agent = this.agents.get(id);
-        if (agent === undefined || agent.data.messages.length === 0) {
+        if (agent === undefined || agent.messages.length === 0) {
           continue;
         }
         try {

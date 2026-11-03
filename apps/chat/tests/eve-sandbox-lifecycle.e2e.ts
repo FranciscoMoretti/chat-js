@@ -104,7 +104,7 @@ test("native sandbox ownership is durably released after real provider cleanup",
     ownerId,
     crypto.randomUUID(),
     "Ownership fixture",
-    () => crypto.randomUUID()
+    async () => await Promise.resolve({ sessionId: crypto.randomUUID() })
   );
   if (!row.sessionId) {
     throw new Error("Missing native fixture session");

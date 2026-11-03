@@ -8,13 +8,16 @@ import { createToolResult } from "../lib/eve/tool-result";
 
 const common = {
   input: {},
-  toolCallId: "research",
-  toolName: "deepResearch",
-  type: "dynamic-tool",
+  callId: "research",
+  name: "deepResearch",
+  label: "deepResearch",
+  type: "tool",
+  kind: "tool",
+  stepIndex: 0,
 } as const;
-const parts: Extract<EveMessagePart, { type: "dynamic-tool" }>[] = [
-  { ...common, inputText: "", state: "input-streaming" },
-  { ...common, state: "input-available" },
+const parts: Extract<EveMessagePart, { type: "tool" }>[] = [
+  { ...common, input: undefined, inputText: "", state: "streaming" },
+  { ...common, state: "requested" },
   {
     ...common,
     output: createToolResult({ searches: [] }, 0, [
@@ -25,7 +28,7 @@ const parts: Extract<EveMessagePart, { type: "dynamic-tool" }>[] = [
         toolCallId: "research",
       },
     ]),
-    state: "output-available",
+    state: "completed",
   },
   {
     ...common,
@@ -36,7 +39,7 @@ const parts: Extract<EveMessagePart, { type: "dynamic-tool" }>[] = [
       },
       0
     ),
-    state: "output-available",
+    state: "completed",
   },
   {
     ...common,
@@ -53,24 +56,24 @@ const parts: Extract<EveMessagePart, { type: "dynamic-tool" }>[] = [
       },
       0.5
     ),
-    state: "output-available",
+    state: "completed",
   },
   {
     ...common,
-    errorText: "Research provider unavailable",
-    state: "output-error",
+    error: { code: "fixture_error", message: "Research provider unavailable" },
+    state: "failed",
   },
   {
     ...common,
-    approval: { approved: false, id: "fixture" },
-    state: "output-denied",
+
+    state: "rejected",
   },
   {
     ...common,
     output: createToolResult({ error: "Report could not be saved." }, 0.5),
-    state: "output-available",
+    state: "completed",
   },
-  { ...common, output: { invalid: true }, state: "output-available" },
+  { ...common, output: { invalid: true }, state: "completed" },
 ];
 process.stdout.write(
   renderToStaticMarkup(

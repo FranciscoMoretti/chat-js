@@ -33,7 +33,7 @@ test("schema input and output types remain distinct for normalization", () => {
   expect(output.words).toBe(2);
 });
 
-test("views receive parsed schema types and preliminary output state", () => {
+test("views receive parsed schema types only for available outputs", () => {
   const rendered = vi.fn<(value: number) => void>();
   const Renderer = defineToolRenderer({
     inputSchema,
@@ -46,26 +46,27 @@ test("views receive parsed schema types and preliminary output state", () => {
       expectTypeOf(tool.input.text).toEqualTypeOf<string>();
       expectTypeOf(tool.output.words).toEqualTypeOf<number>();
       expectTypeOf(tool.output.label).toEqualTypeOf<string>();
-      expectTypeOf(tool.partial).toEqualTypeOf<true | undefined>();
       rendered(tool.output.words);
-      return (
-        <p>
-          {tool.partial ? "Preliminary" : "Final"}: {tool.output.label}
-        </p>
-      );
+      return <p>{tool.output.label}</p>;
     },
   });
   const props = { isReadonly: true, messageId: "m" };
   const tool = {
     input: { text: "one two" },
     output: { words: 2 },
-    partial: true,
     state: "output-available",
     toolCallId: "count",
   };
+  renderToStaticMarkup(
+    createElement(Renderer, {
+      ...props,
+      tool: { ...tool, state: "input-available" },
+    })
+  );
+  expect(rendered).not.toHaveBeenCalled();
   expect(
     renderToStaticMarkup(createElement(Renderer, { ...props, tool }))
-  ).toContain("Preliminary: Count");
+  ).toContain("Count");
   expect(rendered).toHaveBeenCalledWith(2);
   rendered.mockClear();
   const invalid = renderToStaticMarkup(

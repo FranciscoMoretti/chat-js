@@ -28,7 +28,7 @@ Receipt metadata (usage, errors and progress) belongs to the Eve adapter, not th
 
 ## Frontend
 
-`EveToolResult` unwraps the receipt. `defineToolRenderer` validates the envelope once, then validates the input/output appropriate to the lifecycle state before invoking the typed view:
+`EveToolResult` adapts Eve's native tool states to the renderer presentation states and unwraps the receipt. `defineToolRenderer` validates the envelope once, then validates the input/output appropriate to the lifecycle state before invoking the typed view:
 
 ```tsx
 export const WordCountRenderer = defineToolRenderer({
@@ -43,6 +43,6 @@ export const WordCountRenderer = defineToolRenderer({
 
 For a separate view component, derive its props with `ToolRendererProps<typeof inputSchema, typeof outputSchema>` from `@/chatjs/core/tools/define-renderer`. Callbacks cannot widen the schema types. Registry keys are checked against execution names, while registry values must be validating wrappers accepting unknown transport data; view payload types are inferred only from schemas.
 
-Streaming input is absent unless the tool supplies a partial-input validator, and input that fails that validator is omitted from the typed view. Preliminary outputs retain `partial: true`; output availability is not final completion. Errors, denials and approvals keep their lifecycle presentation. Malformed complete inputs/results produce the standard invalid-result fallback without reaching the typed view. Unknown tools and imported text outputs use native generic presentation.
+Streaming input is absent unless the tool supplies a partial-input validator, and input that fails that validator is omitted from the typed view. Native `running` calls remain in progress, with validated progress updates; only `completed` calls expose final results. Errors, cancellations, denials and approvals keep their lifecycle presentation. Malformed complete inputs/results produce the standard invalid-result fallback without reaching the typed view. Unknown tools and completed plain-text outputs use native generic presentation. Receipt-wrapped outputs, including strings, go through the installed renderer's schema validation.
 
 No memoization or validation cache is introduced in this version.

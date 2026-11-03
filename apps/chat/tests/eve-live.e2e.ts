@@ -4,7 +4,7 @@ import { mkdir } from "node:fs/promises";
 import { expect, test } from "@playwright/test";
 import { eq, getTableColumns } from "drizzle-orm";
 import { Client } from "eve/client";
-import type { MessageStreamEvent } from "eve/client";
+import type { SessionStreamEvent } from "eve/client";
 
 import { getEvePostgresStreamPositions } from "@/lib/eve/lifecycle/postgres/eve-stream-positions";
 
@@ -21,11 +21,11 @@ type TurnStartedEventReader =
   | {
       readonly type: "turn.started";
       readonly data: Readonly<
-        Extract<MessageStreamEvent, { type: "turn.started" }>["data"]
+        Extract<SessionStreamEvent, { type: "turn.started" }>["data"]
       >;
     }
   | {
-      readonly type: Exclude<MessageStreamEvent["type"], "turn.started">;
+      readonly type: Exclude<SessionStreamEvent["type"], "turn.started">;
       readonly data?: unknown;
     };
 
@@ -136,15 +136,18 @@ test("real provider, native application tool and replay-safe usage ledger", asyn
   const client = new Client(getEveConnectionOptions(ownerId));
   const session = client.sessions.attach(sessionId);
   await expect(page.getByText("Ready", { exact: true })).toBeVisible();
-  const compactionResult = await session.compact();
-  expect(compactionResult.status).toBe("accepted");
+  const compaction = await session.compact();
+  const compactionResult = await compaction.result();
+  expect(compactionResult.status).toBe("completed");
   await expect
     .poll(
       async () => {
         const snapshot = await session.snapshot();
         return snapshot.events.some(
-          (event: Readonly<Pick<MessageStreamEvent, "type">>) =>
-            event.type === "compaction.completed"
+          (event: SessionStreamEvent) =>
+            event.type === "context.settled" &&
+            event.data.kind === "compaction" &&
+            event.data.outcome === "completed"
         );
       },
       { intervals: [1000], timeout: 90_000 }
@@ -298,8 +301,8 @@ test("the composer selects models for initial and subsequent durable turns", asy
           .attach(conversation.sessionId ?? "")
           .snapshot();
         return current.events.filter(
-          (event: Readonly<Pick<MessageStreamEvent, "type">>) =>
-            event.type === "turn.completed"
+          (event: SessionStreamEvent) =>
+            event.type === "turn.settled" && event.data.outcome === "completed"
         ).length;
       },
       { timeout: 90_000 }
@@ -315,25 +318,24 @@ test("the composer selects models for initial and subsequent durable turns", asy
     .snapshot();
   const firstStep = snapshot.events.find(
     (
-      event: Readonly<Pick<MessageStreamEvent, "type">>
-    ): event is Extract<MessageStreamEvent, { type: "step.started" }> =>
-      event.type === "step.started"
+      event: SessionStreamEvent
+    ): event is Extract<SessionStreamEvent, { type: "model.started" }> =>
+      event.type === "model.started"
   );
-  expect(firstStep?.data.modelId).toBe("gateway/openai/gpt-4.1-mini-fast");
+  expect(firstStep?.data.modelId).toBe("openai/gpt-4.1-mini-fast");
   await expect(
     page.getByTestId("model-selector").filter({ visible: true })
   ).toContainText("GPT-4.1");
   const lastStep = snapshot.events.findLast(
     (
-      event: Readonly<Pick<MessageStreamEvent, "type">>
-    ): event is Extract<MessageStreamEvent, { type: "step.started" }> =>
-      event.type === "step.started"
+      event: SessionStreamEvent
+    ): event is Extract<SessionStreamEvent, { type: "model.started" }> =>
+      event.type === "model.started"
   );
-  expect(lastStep?.data.modelId).toBe(`gateway/${selected}`);
+  expect(lastStep?.data.modelId).toBe(selected);
   expect(
     snapshot.events.filter(
-      (event: Readonly<Pick<MessageStreamEvent, "type">>) =>
-        event.type === "message.received"
+      (event: SessionStreamEvent) => event.type === "delivery.consumed"
     )
   ).toHaveLength(2);
   await reconcileEveUsage(conversation.ownerId, conversation.sessionId);

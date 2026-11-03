@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises";
 
 import { PGlite } from "@electric-sql/pglite";
 import { drizzle } from "drizzle-orm/pglite";
-import type { MessageStreamEvent } from "eve/client";
+import type { SessionStreamEvent } from "eve/client";
 import { afterAll, beforeAll, expect, expectTypeOf, it, vi } from "vitest";
 import { z } from "zod";
 
@@ -117,26 +117,24 @@ it("charges native child receipts once and rounds their combined cost on the roo
   for (const sessionId of ["paid-one", "paid-two", "paid-one"]) {
     const event = {
       data: {
-        result: {
-          callId: "search",
-          kind: "tool-result",
-          output: {
-            kind: "chatjs.tool-result",
-            output: { answer: "Evidence" },
-            status: "success",
-            usage: { costUsd: 0.001 },
-            version: 1,
-          },
-          toolName: "webSearch",
+        callId: "search",
+        outcome: "completed",
+        output: {
+          kind: "chatjs.tool-result",
+          output: { answer: "Evidence" },
+          status: "success",
+          usage: { costUsd: 0.001 },
+          version: 1,
         },
-        sequence: 0,
-        status: "completed",
-        stepIndex: 0,
-        turnId: "turn_0",
       },
-      meta: { at: "2026-09-28T00:00:00Z", id: "same-event-name" },
-      type: "action.result",
-    } satisfies MessageStreamEvent;
+      scope: { turnId: "turn_0" },
+      meta: {
+        at: "2026-09-28T00:00:00Z",
+        position: { line: 0, index: 0 },
+        endOfLine: true,
+      },
+      type: "call.settled",
+    } satisfies SessionStreamEvent;
     // oxlint-disable-next-line eslint/no-await-in-loop -- Migration SQL and user/chat/conversation foreign-key fixtures require predecessor completion; billing fixtures intentionally replay receipts in order before asserting the ledger.
     await ingestEveUsage("owner", sessionId, event, attribution);
   }

@@ -50,7 +50,7 @@ const eveRequest = async (
   ) {
     headers.set("content-type", "application/json");
   }
-  return await fetch(new URL(path, connection.host), {
+  return await fetch(new URL(path, connection.baseUrl), {
     ...init,
     cache: "no-store",
     headers,

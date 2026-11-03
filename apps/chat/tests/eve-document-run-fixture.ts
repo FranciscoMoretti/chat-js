@@ -2,8 +2,6 @@ import type { EveMessagePart } from "eve/client";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
-import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-
 import { EveDocumentRun } from "../chatjs/tools/saved-code-execution/document";
 
 const input = {
@@ -12,9 +10,12 @@ const input = {
 };
 const base = {
   input,
-  toolCallId: "run",
-  toolName: "runCodeDocument",
-  type: "dynamic-tool" as const,
+  callId: "run",
+  name: "runCodeDocument",
+  label: "runCodeDocument",
+  type: "tool" as const,
+  kind: "tool" as const,
+  stepIndex: 0,
 };
 const states: {
   title: string;
@@ -26,27 +27,27 @@ const states: {
   { disabled: true, title: "Unsaved changes" },
   {
     disabled: true,
-    part: { ...base, state: "input-available" },
+    part: { ...base, state: "requested" },
     title: "Running",
   },
   {
     part: {
       ...base,
-      errorText: "Code document not found.",
-      state: "output-error",
+      error: { code: "fixture_error", message: "Code document not found." },
+      state: "failed",
     },
     title: "Execution error",
   },
   {
     part: {
       ...base,
-      approval: { approved: false, id: "declined" },
-      state: "output-denied",
+
+      state: "rejected",
     },
     title: "Declined",
   },
   {
-    part: { ...base, output: {}, state: "output-available" },
+    part: { ...base, output: {}, state: "completed" },
     readOnly: true,
     title: "Malformed result",
   },
@@ -58,12 +59,7 @@ process.stdout.write(
       "main",
       { className: "mx-auto max-w-3xl space-y-4 p-4" },
       states.map(
-        ({
-          title,
-          part,
-          disabled,
-          readOnly,
-        }: ReadonlyNativeSurface<(typeof states)[number]>) =>
+        ({ title, part, disabled, readOnly }: (typeof states)[number]) =>
           createElement(
             "section",
             { className: "rounded border p-3", key: title },

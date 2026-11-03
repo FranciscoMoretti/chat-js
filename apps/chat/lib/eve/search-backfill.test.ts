@@ -25,17 +25,23 @@ beforeEach(() => {
     events: [
       {
         data: {
-          messages: Array.from({ length: 300 }, (_, index) => ({
-            parts: [{ text: `Restored message ${index}`, type: "text" }],
-            role: "user",
-          })),
+          transcriptSeed: {
+            attachments: "channel",
+            messages: Array.from({ length: 300 }, (_, index) => ({
+              parts: [{ text: `Restored message ${index}`, type: "text" }],
+              role: "user",
+            })),
+          },
         },
-        type: "history.seeded",
+        type: "session.started",
       },
       {
-        data: { message: "Newest message" },
-        meta: { id: "latest" },
-        type: "message.received",
+        data: {
+          parts: [{ kind: "text", text: "Newest message" }],
+          deliveryId: "latest",
+          turnId: "turn",
+        },
+        type: "delivery.consumed",
       },
     ],
   });
@@ -69,9 +75,9 @@ it("recovers every restored entry and the latest message, and can retry after a 
       key: `seed:${index}`,
       text: `Restored message ${index}`,
     })),
-    { key: "event:latest", text: "Newest message" },
+    { key: "delivery:latest", text: "Newest message" },
   ]);
   expect(mocks.index).toHaveBeenLastCalledWith("owner", "branch", [
-    { key: "event:latest", text: "Newest message" },
+    { key: "delivery:latest", text: "Newest message" },
   ]);
 });

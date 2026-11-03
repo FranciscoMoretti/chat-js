@@ -236,7 +236,10 @@ it("exposes only a known send receipt for the exact owner and session", async ()
 it("exposes an initial selection only for a bound nonempty creation", async () => {
   const { createEveConversation } = await import("./eve-queries");
   const operationId = "00000000-0000-4000-8000-000000000071";
-  const create = vi.fn().mockResolvedValue("initial-session");
+  const create = vi.fn().mockResolvedValue({
+    sessionId: "initial-session",
+    deliveryId: "initial-delivery",
+  });
   const options = {
     initialRequest: { message: "Initial message", selectedTool: "webSearch" },
   };
@@ -257,7 +260,9 @@ it("exposes an initial selection only for a bound nonempty creation", async () =
   expect(create).toHaveBeenCalledOnce();
   expect(
     await getEveMessageDisplayReceipts("owner", "initial-session")
-  ).toEqual([{ kind: "initial", selectedTool: "webSearch" }]);
+  ).toEqual([
+    { kind: "send", deliveryId: "initial-delivery", selectedTool: "webSearch" },
+  ]);
   expect(
     await getEveMessageDisplayReceipts("foreign", "initial-session")
   ).toEqual([]);
@@ -271,5 +276,7 @@ it("exposes an initial selection only for a bound nonempty creation", async () =
     async () => await Promise.resolve({ sessionId: "source" })
   );
   const display = await getEveMessageDisplayReceipts("owner", "source");
-  expect(display.filter((receipt) => receipt.kind === "initial")).toEqual([]);
+  expect(
+    display.some((receipt) => receipt.deliveryId === "initial-delivery")
+  ).toBe(false);
 });

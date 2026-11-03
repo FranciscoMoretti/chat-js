@@ -207,7 +207,9 @@ test("Projects assigns atomically and retries never reconsider membership", asyn
     [first, moved]
   );
   const operationId = crypto.randomUUID();
-  const dispatch = vi.fn((id: string): string => `native-${id}`);
+  const dispatch = vi.fn(
+    async (id: string) => await Promise.resolve({ sessionId: `native-${id}` })
+  );
   const create = async (projectId: string) =>
     await createEveConversation(
       "owner",
@@ -236,7 +238,9 @@ test("Projects assigns atomically and retries never reconsider membership", asyn
 test("an invalid initial assignment rolls back the chat reservation", async () => {
   const { createEveConversation } = await import("./eve-queries");
   const operationId = crypto.randomUUID();
-  const dispatch = vi.fn((): string => "should-not-dispatch");
+  const dispatch = vi.fn(
+    async () => await Promise.resolve({ sessionId: "should-not-dispatch" })
+  );
   await expect(
     createEveConversation("owner", operationId, "Missing project", dispatch, {
       initialRequest: { projectId: crypto.randomUUID() },
@@ -254,9 +258,10 @@ test("an unresolved retry uses the saved dispatch intent after a project change"
     [projectId]
   );
   const operationId = crypto.randomUUID();
-  const dispatch = vi.fn((): string => {
-    throw new Error("connection lost");
-  });
+  const dispatch = vi.fn(
+    async (): Promise<{ sessionId: string }> =>
+      await Promise.reject(new Error("connection lost"))
+  );
   await expect(
     createEveConversation("owner", operationId, "Pending", dispatch, {
       initialRequest: { operationId, message: "Pending", projectId },
@@ -364,7 +369,7 @@ test("plugin history filtering preserves ownership and supplies project navigati
     "owner",
     crypto.randomUUID(),
     "History membership",
-    (id) => `native-${id}`,
+    async (id) => await Promise.resolve({ sessionId: `native-${id}` }),
     { initialRequest: { projectId } }
   );
   const reservation = await getEveConversation("owner", chat.id);
@@ -406,7 +411,7 @@ test("owned chat mutations resolve legacy IDs and exclude other owners or unavai
     "owner",
     crypto.randomUUID(),
     "Mutation coordination",
-    (id) => `native-${id}`
+    async (id) => await Promise.resolve({ sessionId: `native-${id}` })
   );
   const reservation = await getEveConversation("owner", bound.id);
   if (!reservation) {
@@ -463,7 +468,7 @@ test("a failed plugin mutation rolls back its writes and the core timestamp", as
     "owner",
     crypto.randomUUID(),
     "Rollback",
-    (id) => `native-${id}`
+    async (id) => await Promise.resolve({ sessionId: `native-${id}` })
   );
   const reservation = await getEveConversation("owner", bound.id);
   if (!reservation) {

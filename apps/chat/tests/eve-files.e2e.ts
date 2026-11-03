@@ -152,7 +152,7 @@ test("fork reservation retains the source file references before dispatch", asyn
           .where(eq(eveFileReference.conversationId, id))
       ).toEqual([{ key }]);
       dispatched = true;
-      return crypto.randomUUID();
+      return { sessionId: crypto.randomUUID() };
     },
     { fork: { conversationId: root.id } }
   );
@@ -182,7 +182,7 @@ test("attachment creation commits references before dispatch with a single appli
         expect(
           references.map((row: Readonly<{ key: string }>) => row.key)
         ).toEqual([key]);
-        return crypto.randomUUID();
+        return { sessionId: crypto.randomUUID() };
       },
       { fileKeys: [key], initialContentHash: "attachment-fixture" }
     );

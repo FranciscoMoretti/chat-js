@@ -69,7 +69,7 @@ export const EveDocumentRun = ({
         </Hint>
       )}
       {run && !buttonOnly && (
-        <details key={run.part.toolCallId} open>
+        <details key={run.part.callId} open>
           <summary className="cursor-pointer text-sm">Execution result</summary>
           <div
             className="max-h-64 overflow-auto pt-2"
