@@ -11,7 +11,9 @@ Guest Chat lets visitors try one inexpensive text model at `/`. The browser keep
 bunx @chat-js/cli add guest-chat
 ```
 
-Before accepting guest traffic, configure the shared EVE runtime and a PostgreSQL deletion lifecycle with verified write and queue fences. Run `bun eve:setup` and apply your generated database migration. Bootstrap returns HTTP 503 when the deployment cannot verify safe deletion.
+Configure the shared EVE runtime and apply your generated database migration. On Vercel, guests use managed workflows: access expires and cleanup ends sessions, while workflow payloads remain subject to Vercel’s retention policy. ChatJS does not promise payload erasure on this backend.
+
+Self-hosted PostgreSQL deployments additionally require the verified deletion lifecycle. Run `bun eve:setup`; bootstrap returns HTTP 503 if its write and queue fences cannot be verified.
 
 On Vercel, admission uses the verified `x-vercel-forwarded-for` header. Elsewhere, set `TRUSTED_CLIENT_IP_HEADER` to a header your reverse proxy overwrites with one validated client IP. Missing or malformed addresses reject admission. Development uses the loopback address.
 
@@ -31,11 +33,11 @@ Guests and accounts use the same EVE agent. The plugin authenticates signed cred
 | Cumulative user input | 24,000 characters |
 | Serialized provider prompt | 24,000 characters |
 | Output | 512 tokens with a bounded stream and timeout |
-| Transcript cleanup target | 24 hours, plus scheduling delay and retries |
+| Session cleanup target | 24 hours, plus scheduling delay and retries |
 
 There is no per-session message-credit balance. Failed or ambiguous sends still consume admission capacity. Guests cannot use tools, files, projects, comparisons, account APIs, or account billing. Provider middleware also rejects non-text inputs and tool output, independently of the UI.
 
-Retirement on unload and New chat is best effort. Scheduled cleanup performs the durable purge through core's verified lifecycle. Minimal policy and deletion metadata remains for retries and late-write prevention. Rate buckets expire after two days. Provider logs and tracing have separate retention policies.
+Retirement on unload and New chat is best effort. Scheduled cleanup ends the native session and revokes its local policy. On PostgreSQL it also performs the durable purge through core's verified lifecycle. On managed Vercel it reports retirement separately from deletion and leaves payload retention to the provider. Minimal policy and deletion metadata remains for retries and late-write prevention. Rate buckets expire after two days. Provider logs and tracing have separate retention policies.
 
 ## Source and customization
 

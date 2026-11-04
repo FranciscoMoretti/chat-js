@@ -236,18 +236,22 @@ export const claimExpiredGuestRuntimeSession = async () =>
     return { ...guest, state: "deleting" };
   });
 
+// Completes local credential-policy cleanup; this is not a claim of provider payload erasure.
 export const completeGuestRuntimeDeletion = async (
   id: string,
   sessionId: string
 ): Promise<boolean> => {
   const rows = await db
     .update(guestRuntimeSession)
-    .set({ state: "deleted", deletedAt: sql`now()` })
+    .set({
+      state: "deleted",
+      deletedAt: sql`coalesce(${guestRuntimeSession.deletedAt}, now())`,
+    })
     .where(
       and(
         eq(guestRuntimeSession.id, id),
         eq(guestRuntimeSession.sessionId, sessionId),
-        eq(guestRuntimeSession.state, "deleting")
+        inArray(guestRuntimeSession.state, ["deleting", "deleted"])
       )
     )
     .returning({ id: guestRuntimeSession.id });

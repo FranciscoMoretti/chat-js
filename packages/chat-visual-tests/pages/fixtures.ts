@@ -705,3 +705,24 @@ export const archivedDiagramTranscript: EveMessage[] = [
 export const chatFailure = `The model provider is unavailable. Request reference: ${"reference".repeat(20)}`;
 export const creationFailure =
   "Unable to start this conversation. Choose another model.";
+
+export const guestTranscript: EveMessage[] = [
+  {
+    id: "guest-question",
+    role: "user",
+    metadata: { status: "complete", turnId: "turn_0" },
+    parts: [{ type: "text", text: "Hello", state: "done" }],
+  },
+  {
+    id: "guest-answer",
+    role: "assistant",
+    metadata: {
+      status: "complete",
+      turnId: "turn_0",
+      modelId: "openai/gpt-5-nano",
+    },
+    parts: [
+      { type: "text", text: "Hello! How can I help you today?", state: "done" },
+    ],
+  },
+];

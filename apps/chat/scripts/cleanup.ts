@@ -5,25 +5,28 @@ const batchStep = 1;
 const isRecord = (value: unknown): value is Readonly<Record<string, unknown>> =>
   typeof value === "object" && value !== null;
 
-const verifiedDeletedCount = (inventory: unknown): number => {
+const verifiedCompletedCount = (inventory: unknown): number => {
   if (
     !isRecord(inventory) ||
     typeof inventory.deletedCount !== "number" ||
     !Number.isSafeInteger(inventory.deletedCount) ||
     inventory.deletedCount < emptyCount ||
+    typeof inventory.retiredCount !== "number" ||
+    !Number.isSafeInteger(inventory.retiredCount) ||
+    inventory.retiredCount < emptyCount ||
     typeof inventory.pendingCount !== "number" ||
     !Number.isSafeInteger(inventory.pendingCount) ||
     inventory.pendingCount < emptyCount ||
     (inventory.pendingCount > emptyCount &&
-      inventory.deletedCount === emptyCount) ||
+      inventory.deletedCount + inventory.retiredCount === emptyCount) ||
     inventory.skipped !== false
   ) {
     throw new Error("Cleanup inventory unavailable; retry required.");
   }
-  return inventory.deletedCount;
+  return inventory.deletedCount + inventory.retiredCount;
 };
 
-const deletedCount = (result: unknown): number => {
+const completedCount = (result: unknown): number => {
   if (
     !isRecord(result) ||
     !isRecord(result.results) ||
@@ -36,9 +39,10 @@ const deletedCount = (result: unknown): number => {
     if (!isRecord(task) || "error" in task) {
       throw new Error("Cleanup failed; retry required.");
     }
-    total += verifiedDeletedCount({
+    total += verifiedCompletedCount({
       ...task,
       pendingCount: task.pendingCount ?? 0,
+      retiredCount: task.retiredCount ?? 0,
     });
   }
   return total;
@@ -57,7 +61,7 @@ const drainCleanup = async (
   if (!response.ok && response.status !== 503) {
     throw new Error("Cleanup incomplete or unavailable; retry required.");
   }
-  if (deletedCount(await response.json()) > emptyCount) {
+  if (completedCount(await response.json()) > emptyCount) {
     await drainCleanup(request, remaining - batchStep);
     return;
   }

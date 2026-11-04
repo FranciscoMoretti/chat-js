@@ -32,6 +32,7 @@ const mocks = vi.hoisted(() => ({
   create: vi.fn(),
   bind: vi.fn(),
   ip: vi.fn(),
+  world: vi.fn(),
   lifecycle: vi.fn(),
   lifecycleCheck: vi.fn(),
 }));
@@ -65,12 +66,17 @@ vi.mock("@/lib/eve/model-selection", () => ({
   loadEveModelDefinition: mocks.model,
 }));
 
+vi.mock("@/lib/eve/world-config", () => ({
+  resolveWorkflowWorld: mocks.world,
+}));
+
 vi.mock("@/lib/eve/deletion-lifecycle", () => ({
   requireEveDeletionLifecycle: mocks.lifecycle,
 }));
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mocks.world.mockReturnValue("@workflow/world-postgres");
   mocks.lifecycle.mockImplementation(() => ({ check: mocks.lifecycleCheck }));
   mocks.lifecycleCheck.mockResolvedValue(null);
   mocks.create.mockResolvedValue({
@@ -199,4 +205,16 @@ test("guest policy creation follows verified lifecycle readiness", async () => {
   expect(mocks.lifecycleCheck.mock.invocationCallOrder[0]).toBeLessThan(
     mocks.create.mock.invocationCallOrder[0]
   );
+});
+
+test("managed Vercel admits guests using provider retention without claiming purge support", async () => {
+  mocks.world.mockReturnValue("vercel");
+  mocks.lifecycle.mockImplementation(() => {
+    throw new Error("no managed purge");
+  });
+  const response = await POST(request({ modelId: "openai/gpt-5-nano" }));
+  expect(response.status).toBe(HTTP_STATUS.ok);
+  expect(mocks.lifecycle).not.toHaveBeenCalled();
+  expect(mocks.create).toHaveBeenCalledOnce();
+  expect(mocks.bind).toHaveBeenCalledOnce();
 });

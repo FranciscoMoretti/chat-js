@@ -116,7 +116,7 @@ test("storage failure does not prevent expired guest cleanup and reports retry",
   });
 });
 
-test("pending guest deletion is retryable failure after attachment cleanup runs", async () => {
+test("progressing guest deletion drains before returning success", async () => {
   mocks.cleanupRuntimeGuests.mockResolvedValueOnce({
     deletedCount: 1,
     pendingCount: 1,
@@ -127,9 +127,9 @@ test("pending guest deletion is retryable failure after attachment cleanup runs"
       headers: { authorization: "Bearer fixture-secret" },
     })
   );
-  expect(response.status).toBe(HTTP_STATUS.serviceUnavailable);
-  expect(mocks.cleanupEve).toHaveBeenCalledOnce();
-  expect(await response.json()).toMatchObject({ success: false });
+  expect(response.status).toBe(HTTP_STATUS.ok);
+  expect(mocks.cleanupEve).toHaveBeenCalledTimes(2);
+  expect(await response.json()).toMatchObject({ success: true });
 });
 
 test("unsupported guest cleanup never reports cron success or an empty backlog", async () => {

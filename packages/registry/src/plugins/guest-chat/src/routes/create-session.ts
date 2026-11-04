@@ -1,4 +1,4 @@
-import { requireEveDeletionLifecycle } from "@/lib/eve/deletion-lifecycle";
+import { getGuestPurgeLifecycle } from "@/chatjs/plugins/guest-chat/guest-retention";
 import { readGuestBody } from "@/chatjs/plugins/guest-chat/guest-body";
 import {
   createGuestRuntimeSession,
@@ -59,8 +59,8 @@ export const POST = async (
     );
   }
   try {
-    // Never admit temporary data unless this deployment can later erase it.
-    await requireEveDeletionLifecycle().check();
+    // PostgreSQL guarantees purge; managed Vercel uses provider payload retention.
+    await getGuestPurgeLifecycle()?.check();
   } catch {
     return Response.json(
       {

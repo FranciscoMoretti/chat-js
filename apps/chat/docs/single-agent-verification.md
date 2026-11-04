@@ -24,11 +24,13 @@ The first run exposed a test-configuration error: `PLAYWRIGHT=True` intentionall
 
 The published EVE fork needed its canonical `workflow//eve//workflowEntry` identity preserved by the workflow transform; the checked-in patch and regression test cover that. Guest model validation now accepts server-generated assistant reasoning history while still denying nontext user input and tools. Registry-owned research/MCP guards live in their canonical sources and synchronize into the app.
 
-## Limits and deployment requirements
+## Historical limits and deployment requirements
 
 This is local integration verification, not Render/Supabase certification or a full regression of every registered tool/provider. The cron endpoint correctly returned 503 because this isolated test environment had no configured attachment-storage credentials; its runtime-guest result independently reported one deletion and zero pending, and database payload deletion was verified. Attachment cleanup was not bypassed or weakened.
 
-Apply migrations 0016 and 0017, run EVE setup to install/verify PostgreSQL lifecycle fences, configure the trusted client-IP header and protected hourly cleanup job, and deploy the single worker. Guest admission fails closed if the selected backend cannot prove cleanup support. Managed/local guest-only backends are not implemented. Existing guest tabs must reload; registered workflow history remains on the same backend.
+The following describes the original PostgreSQL verification, not current deployment instructions. Managed Vercel guest sessions are now supported using provider retention; see [guest sessions](guest-sessions.md) and [cleanup](cleanup.md). Use the full current migration sequence for new deployments.
+
+For that original verification: apply migrations 0016 and 0017, run EVE setup to install/verify PostgreSQL lifecycle fences, configure the trusted client-IP header and protected hourly cleanup job, and deploy the single worker. Guest admission fails closed if the selected backend cannot prove cleanup support. Managed/local guest-only backends were not implemented at that revision. Existing guest tabs must reload; registered workflow history remains on the same backend.
 
 The 24-hour target covers conversation payloads with hourly scheduling and retries, not all operational metadata or provider logs. Policy audit records and deletion fences remain. UI Verify captures passed locally, but remote baseline comparison was unavailable without `UIVERIFY_API_KEY`.
 
