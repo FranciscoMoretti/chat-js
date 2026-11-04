@@ -116,15 +116,31 @@ test("allows an audited alpha before the first stable release", async () => {
         "dist-tags": { alpha: alpha.version },
       })
   );
-  const message = await rejectionMessage(async () => {
-    await assertPrereleasesPublished(
-      [alpha],
-      async () =>
-        await Promise.resolve({
-          version: alpha.version,
-          "dist-tags": { latest: alpha.version, alpha: alpha.version },
-        })
-    );
-  });
-  expect(message).toContain("Refusing ordinary release");
+  await assertPrereleasesPublished(
+    [alpha],
+    async () =>
+      await Promise.resolve({
+        version: alpha.version,
+        "dist-tags": { latest: alpha.version, alpha: alpha.version },
+      })
+  );
 });
+
+for (const entry of [
+  { ...beta, version: "1.0.0-alpha.1" },
+  { ...beta, name: "another-package", version: "1.0.0-alpha.0" },
+]) {
+  test(`rejects unapproved prerelease defaults for ${entry.name}@${entry.version}`, async () => {
+    const message = await rejectionMessage(async () => {
+      await assertPrereleasesPublished(
+        [entry],
+        async () =>
+          await Promise.resolve({
+            version: entry.version,
+            "dist-tags": { latest: entry.version },
+          })
+      );
+    });
+    expect(message).toContain("Refusing ordinary release");
+  });
+}

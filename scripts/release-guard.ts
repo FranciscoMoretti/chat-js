@@ -90,8 +90,11 @@ const queryPublishedPackage = async (
 
 // Changesets defaults to latest even when publishConfig.tag specifies a
 // prerelease channel. It may enter the ordinary release path only after every
-// local prerelease is already
-// published; Changesets then skips those versions instead of publishing them.
+// local prerelease is already published; Changesets then skips those versions.
+// npm requires a latest tag for the transferred CLI. This exact alpha was
+// explicitly approved as its default; future prereleases need a fresh review.
+const approvedPrereleaseDefaults = new Map([["chat-js", "1.0.0-alpha.0"]]);
+
 export const assertPrereleasesPublished = async (
   packages: readonly ReleasePackage[],
   lookup: (entry: ReleasePackage) => Promise<unknown> = queryPublishedPackage
@@ -100,18 +103,21 @@ export const assertPrereleasesPublished = async (
     packages.map(async (entry) => {
       try {
         const published = registryResultSchema.parse(await lookup(entry));
+        const { latest } = published["dist-tags"];
+        const approvedDefault =
+          approvedPrereleaseDefaults.get(entry.name) === entry.version &&
+          latest === entry.version;
         if (
           published.version !== entry.version ||
-          (published["dist-tags"].latest !== undefined &&
-            isPrerelease(published["dist-tags"].latest))
+          (latest !== undefined && isPrerelease(latest) && !approvedDefault)
         ) {
           throw new Error(
-            "The exact version must exist and latest must be absent or stable"
+            "The exact version must exist and latest must be absent, stable, or explicitly approved"
           );
         }
       } catch {
         throw new Error(
-          `Refusing ordinary release for ${entry.name}@${entry.version}. Publish the audited prerelease explicitly first with its prerelease tag, verify the exact version and that latest is absent or stable, then retry. Registry lookup failures also block publication.`
+          `Refusing ordinary release for ${entry.name}@${entry.version}. Publish the audited prerelease explicitly first with its prerelease tag, verify the exact version and that latest is absent, stable, or explicitly approved, then retry. Registry lookup failures also block publication.`
         );
       }
     })
