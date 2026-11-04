@@ -162,6 +162,7 @@
       "name": "@chatjs/docs",
       "devDependencies": {
         "blume": "^1.6.3",
+        "cookie": "2.0.1",
       },
     },
     "apps/electron": {
