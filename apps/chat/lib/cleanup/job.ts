@@ -10,8 +10,7 @@ export const runCleanupJob = async (deadline = Number.POSITIVE_INFINITY) => {
       id: "orphanedAttachments",
       run: async () =>
         await cleanupEveOrphanedFiles(
-          new Date(Date.now() - ORPHANED_ATTACHMENTS_RETENTION_TIME),
-          deadline
+          new Date(Date.now() - ORPHANED_ATTACHMENTS_RETENTION_TIME)
         ),
     },
     ...cleanupTasks,

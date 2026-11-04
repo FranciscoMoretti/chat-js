@@ -66,7 +66,8 @@ export const cleanupGuestRuntimeSessions = async ({
   pendingCount: number;
   skipped: boolean;
 }> => {
-  if ((await countPendingGuestRuntimeDeletions()) === 0) {
+  const initialPendingCount = await countPendingGuestRuntimeDeletions();
+  if (initialPendingCount === 0) {
     await pruneGuestRuntimeRates();
     return {
       deletedCount: 0,
@@ -166,6 +167,19 @@ export const cleanupGuestRuntimeSessions = async ({
         phase,
       });
     }
+  }
+  if (Date.now() >= deadline) {
+    // No new bookkeeping after the deadline; a later sweep establishes completion.
+    return {
+      deletedCount,
+      retiredCount,
+      pendingCount: Math.max(
+        pendingCount,
+        initialPendingCount - deletedCount - retiredCount,
+        1
+      ),
+      skipped: false,
+    };
   }
   await pruneGuestRuntimeRates();
   pendingCount = Math.max(

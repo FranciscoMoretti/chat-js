@@ -8,6 +8,7 @@ export interface CleanupResult {
 }
 export interface CleanupTask {
   readonly id: string;
+  /** Best-effort deadline for new work; does not promise cancellation of database/storage calls. */
   readonly run: (options?: {
     readonly deadline?: number;
   }) => Promise<CleanupResult>;

@@ -222,4 +222,5 @@ test("expired drain budget leaves guests pending without claiming another sessio
   expect(result.pendingCount).toBe(2);
   expect(calls.claim).not.toHaveBeenCalled();
   expect(calls.complete).not.toHaveBeenCalled();
+  expect(calls.prune).not.toHaveBeenCalled();
 });
