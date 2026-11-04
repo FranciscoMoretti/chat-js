@@ -42,7 +42,6 @@ for (const result of [
   { error: { code: "E404" } },
   { version: "0.9.0-beta.0", "dist-tags": { latest: "0.8.0" } },
   { version: beta.version, "dist-tags": { latest: beta.version } },
-  { version: beta.version, "dist-tags": {} },
 ]) {
   test(`refuses unsafe registry state: ${JSON.stringify(result)}`, async () => {
     const message = await rejectionMessage(async () => {
@@ -52,7 +51,7 @@ for (const result of [
       );
     });
     expect(message).toContain(
-      "Publish the audited beta explicitly first with --tag beta"
+      "Publish the audited prerelease explicitly first with its prerelease tag"
     );
   });
 }
@@ -105,4 +104,27 @@ test("discovers public workspace prereleases and retains their configured regist
   } finally {
     await rm(root, { recursive: true, force: true });
   }
+});
+
+test("allows an audited alpha before the first stable release", async () => {
+  const alpha = { ...beta, version: "1.0.0-alpha.0" };
+  await assertPrereleasesPublished(
+    [alpha],
+    async () =>
+      await Promise.resolve({
+        version: alpha.version,
+        "dist-tags": { alpha: alpha.version },
+      })
+  );
+  const message = await rejectionMessage(async () => {
+    await assertPrereleasesPublished(
+      [alpha],
+      async () =>
+        await Promise.resolve({
+          version: alpha.version,
+          "dist-tags": { latest: alpha.version, alpha: alpha.version },
+        })
+    );
+  });
+  expect(message).toContain("Refusing ordinary release");
 });

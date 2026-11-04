@@ -1,5 +1,4 @@
 ---
-"chat-js": minor
 "@chat-js/registry": minor
 "@chat-js/electron": patch
 ---

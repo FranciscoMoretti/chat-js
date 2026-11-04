@@ -5,7 +5,7 @@ import React, { useState } from "react";
 
 import { siteLinks } from "@/lib/site-config";
 
-const command = "npx chat-js@latest create my-app";
+const command = "npx chat-js@alpha create my-app";
 
 export const GetStarted = (): React.JSX.Element => {
   const [copied, setCopied] = useState(false);

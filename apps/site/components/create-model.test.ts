@@ -34,7 +34,7 @@ void describe("ChatJS installation handoff", () => {
     };
     assert.equal(
       createCommand(preset, "base", installation),
-      `bunx chat-js@beta create my-chat --yes --gateway openrouter --attachments --storage-provider s3 --sandbox-provider vercel -- --preset ${encodePreset(preset)} --base base`
+      `bunx chat-js@alpha create my-chat --yes --gateway openrouter --attachments --storage-provider s3 --sandbox-provider vercel -- --preset ${encodePreset(preset)} --base base`
     );
   });
   void test("accepts only provider public config and safely quotes native CLI JSON", () => {

@@ -6,7 +6,7 @@ description: Install and register a tool in an existing ChatJS app
 Start in a ChatJS app containing `chat.config.ts` and `components.json`.
 
 ```bash
-npx chat-js@latest add word-count --yes
+npx chat-js@alpha add word-count --yes
 ```
 
 The CLI validates the item's ChatJS metadata and existing registration outputs. shadcn installs the item, supporting registry files, and npm dependencies using your project's package manager. ChatJS then reads local descriptors and generates typed imports in `chatjs/generated/tools.ts` and `chatjs/generated/ui.ts`.
@@ -30,7 +30,7 @@ Repeat `add` to update an item. Existing files use normal shadcn overwrite behav
 After a direct shadcn install, or a reported registration failure, run:
 
 ```bash
-npx chat-js@latest sync
+npx chat-js@alpha sync
 ```
 
 Sync validates descriptors, duplicate installed descriptor keys, and generated-index integrity before writing registrations. Generated indexes detect collisions with custom registrations when loaded. A missing or mismatched requested descriptor is an error.

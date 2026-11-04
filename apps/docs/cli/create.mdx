@@ -6,8 +6,8 @@ description: Scaffold a new ChatJS application
 This is the default command. You can omit the word `create` and pass the directory directly.
 
 ```bash
-npx chat-js@latest create [directory] [options]
-npx chat-js@latest [directory] [options]
+npx chat-js@alpha create [directory] [options]
+npx chat-js@alpha [directory] [options]
 ```
 
 ## Arguments
@@ -79,31 +79,31 @@ After scaffolding, the CLI prints the exact environment variables required for y
 **Interactive setup (recommended)**
 
 ```bash
-npx chat-js@latest create my-chat-app
+npx chat-js@alpha create my-chat-app
 ```
 
 **Skip prompts, use all defaults**
 
 ```bash
-npx chat-js@latest create my-chat-app --yes
+npx chat-js@alpha create my-chat-app --yes
 ```
 
 **Select a gateway**
 
 ```bash
-npx chat-js@latest create my-chat-app --gateway openrouter
+npx chat-js@alpha create my-chat-app --gateway openrouter
 ```
 
 **Clone from a custom git repository**
 
 ```bash
-npx chat-js@latest create my-chat-app --from-git https://github.com/your-org/your-fork
+npx chat-js@alpha create my-chat-app --from-git https://github.com/your-org/your-fork
 ```
 
 **Configure S3 storage without prompts**
 
 ```bash
-npx chat-js@latest create my-chat-app --yes \
+npx chat-js@alpha create my-chat-app --yes \
   --storage-provider s3 \
   --storage-config '{"bucket":"uploads","region":"us-east-1"}'
 ```
@@ -113,7 +113,7 @@ Keep credentials out of `--storage-config`. The generated `.env.example` and fin
 **Full flow after scaffolding**
 
 ```bash
-npx chat-js@latest create my-chat-app
+npx chat-js@alpha create my-chat-app
 cd my-chat-app
 cp .env.example .env.local
 # Fill in the env vars printed by the CLI
@@ -126,7 +126,7 @@ bun run dev
 Installations determine which tools, document bundles and optional implementations exist. `chat.config.ts` keeps models, attachment size/type parameters, permissions, follow-up suggestions and parallel responses. It does not duplicate installed presence with feature flags. The maintained demo includes uploads, MCP and all three observability integrations.
 
 ```bash
-npx chat-js@latest create my-chat-app --yes --attachments --sandbox-provider vercel --mcp \
+npx chat-js@alpha create my-chat-app --yes --attachments --sandbox-provider vercel --mcp \
   --observability vercel-analytics,vercel-speed-insights,langfuse
 ```
 

@@ -9,7 +9,7 @@ const packageSchema = z.object({
 });
 const registryResultSchema = z.object({
   version: z.string(),
-  "dist-tags": z.object({ latest: z.string() }),
+  "dist-tags": z.object({ latest: z.string().optional() }),
 });
 const isPrerelease = (version: string): boolean =>
   version.split("+")[0].includes("-");
@@ -88,8 +88,9 @@ const queryPublishedPackage = async (
   return JSON.parse(output);
 };
 
-// Changesets defaults to latest even when publishConfig.tag says beta. It may
-// enter the ordinary release path only after every local prerelease is already
+// Changesets defaults to latest even when publishConfig.tag specifies a
+// prerelease channel. It may enter the ordinary release path only after every
+// local prerelease is already
 // published; Changesets then skips those versions instead of publishing them.
 export const assertPrereleasesPublished = async (
   packages: readonly ReleasePackage[],
@@ -101,15 +102,16 @@ export const assertPrereleasesPublished = async (
         const published = registryResultSchema.parse(await lookup(entry));
         if (
           published.version !== entry.version ||
-          isPrerelease(published["dist-tags"].latest)
+          (published["dist-tags"].latest !== undefined &&
+            isPrerelease(published["dist-tags"].latest))
         ) {
           throw new Error(
-            "The exact version must exist and latest must remain stable"
+            "The exact version must exist and latest must be absent or stable"
           );
         }
       } catch {
         throw new Error(
-          `Refusing ordinary release for ${entry.name}@${entry.version}. Publish the audited beta explicitly first with --tag beta, verify the exact version and stable latest tag, then retry. Registry lookup failures also block publication.`
+          `Refusing ordinary release for ${entry.name}@${entry.version}. Publish the audited prerelease explicitly first with its prerelease tag, verify the exact version and that latest is absent or stable, then retry. Registry lookup failures also block publication.`
         );
       }
     })

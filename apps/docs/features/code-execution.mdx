@@ -19,14 +19,14 @@ Execute Python and JavaScript code in a secure sandboxed environment directly fr
 Select the tool when creating an app:
 
 ```bash
-npx chat-js@latest create my-app --yes \
+npx chat-js@alpha create my-app --yes \
   --code-execution-tool code-execution --sandbox-provider vercel
 ```
 
 This installs the generic tool under `chatjs/tools/code-execution/` and the selected provider under `chatjs/providers/sandbox/`. An external sandbox registry item URL is also accepted:
 
 ```bash
-npx chat-js@latest create my-app --yes \
+npx chat-js@alpha create my-app --yes \
   --code-execution-tool code-execution --sandbox-provider https://example.com/r/my-sandbox.json
 ```
 
@@ -35,7 +35,7 @@ The fresh template includes only the selected implementation and dependencies. T
 For an existing app, use `add`. Replace an installed provider explicitly. Modified source requires `--overwrite` after review:
 
 ```bash
-bunx chat-js@latest add --sandbox-provider daytona --replace
+bunx chat-js@alpha add --sandbox-provider daytona --replace
 ```
 
 To install infrastructure without exposing a model tool, use `add --sandbox-provider vercel`. To install both together, use `add code-execution --sandbox-provider daytona`. Replacing the provider leaves the tool unchanged. There is no `enabled` flag or central provider switch. Keep generated registrations intact and use `add` or `sync` to regenerate them. Drain existing sandbox resources before replacing the provider or rotating its credentials.
@@ -43,7 +43,7 @@ To install infrastructure without exposing a model tool, use `add --sandbox-prov
 Saved-code execution requires a compatible executor and code documents. The planner resolves these dependencies and reuses an existing sandbox selection. If none exists, select one explicitly:
 
 ```bash
-bunx chat-js@latest add saved-code-execution --sandbox-provider daytona
+bunx chat-js@alpha add saved-code-execution --sandbox-provider daytona
 ```
 
 ### Daytona credentials
@@ -51,7 +51,7 @@ bunx chat-js@latest add saved-code-execution --sandbox-provider daytona
 To create an app using Daytona:
 
 ```bash
-bunx chat-js@latest create my-app --yes \
+bunx chat-js@alpha create my-app --yes \
   --code-execution-tool code-execution --sandbox-provider daytona
 ```
 

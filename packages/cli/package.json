@@ -1,6 +1,6 @@
 {
   "name": "chat-js",
-  "version": "4.0.0-beta.0",
+  "version": "1.0.0-alpha.0",
   "private": false,
   "description": "CLI for creating and extending ChatJS apps",
   "keywords": [
@@ -33,7 +33,7 @@
   },
   "publishConfig": {
     "access": "public",
-    "tag": "beta"
+    "tag": "alpha"
   },
   "scripts": {
     "start": "bun src/index.ts",

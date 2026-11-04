@@ -276,7 +276,7 @@
     },
     "packages/cli": {
       "name": "chat-js",
-      "version": "4.0.0-beta.0",
+      "version": "1.0.0-alpha.0",
       "bin": {
         "chat-js": "./dist/index.js",
       },

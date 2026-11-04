@@ -19,7 +19,7 @@ bun run --cwd packages/registry test:installation
 Source tests verify implementation behavior. Install the generated JSON into an independent ChatJS app to also check file targets, dependencies, and registration. For a tool published at a test endpoint:
 
 ```bash
-npx chat-js@latest add https://example.com/r/word-count.json
+npx chat-js@alpha add https://example.com/r/word-count.json
 ```
 
 Replace the example URL with the built item's endpoint. Run the receiving app's type checks and environment validation, then exercise the installed item. For gateways, create an app with the selected gateway and send a real message.

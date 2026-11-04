@@ -12,7 +12,7 @@ description: "chat-js command reference"
 No installation is required. Run it directly with `npx`:
 
 ```bash
-npx chat-js@latest create my-app
+npx chat-js@alpha create my-app
 ```
 
 Or install globally:
@@ -29,8 +29,8 @@ chat-js create my-app
 Scaffold a new ChatJS app. This is the default command, so you can omit the word `create` and pass the directory directly.
 
 ```bash
-npx chat-js@latest create [directory] [options]
-npx chat-js@latest [directory] [options]
+npx chat-js@alpha create [directory] [options]
+npx chat-js@alpha [directory] [options]
 ```
 
 **Arguments**
@@ -58,14 +58,14 @@ New apps use the invoking package manager, with Bun as the fallback. The CLI rec
 
 After scaffolding, the CLI prints the exact environment variables required for your chosen configuration.
 
-Use `npx chat-js@latest --version` or `chat-js --version` after a global installation to print the CLI version.
+Use `npx chat-js@alpha --version` or `chat-js --version` after a global installation to print the CLI version.
 
 ---
 
 ### `add`
 
 ```bash
-npx chat-js@latest add [items...] [options]
+npx chat-js@alpha add [items...] [options]
 ```
 
 Install registry tools, optional features or providers into an existing ChatJS project. Namespace configuration lives in `components.json`.
@@ -82,7 +82,7 @@ Install registry tools, optional features or providers into an existing ChatJS p
 | `-c, --cwd <cwd>` | Current directory | Run against another ChatJS project. |
 
 ```bash
-npx chat-js@latest add word-count
+npx chat-js@alpha add word-count
 ```
 
 ---
@@ -92,7 +92,7 @@ npx chat-js@latest add word-count
 Print the fully resolved `chat.config.ts`, including gateway defaults.
 
 ```bash
-npx chat-js@latest config
+npx chat-js@alpha config
 ```
 
 | Flag              | Default           | Description                         |
@@ -129,13 +129,13 @@ my-app/
 **Interactive setup (recommended)**
 
 ```bash
-npx chat-js@latest create my-chat-app
+npx chat-js@alpha create my-chat-app
 ```
 
 **Skip prompts, use all defaults**
 
 ```bash
-npx chat-js@latest create my-chat-app --yes
+npx chat-js@alpha create my-chat-app --yes
 ```
 
 Defaults include Vercel AI Gateway, GitHub OAuth, parallel responses, document tools, no Electron app, and npm when invoked through `npx`.
@@ -143,19 +143,19 @@ Defaults include Vercel AI Gateway, GitHub OAuth, parallel responses, document t
 **Select a gateway**
 
 ```bash
-npx chat-js@latest create my-chat-app --gateway openrouter
+npx chat-js@alpha create my-chat-app --gateway openrouter
 ```
 
 **Clone from a custom git repository**
 
 ```bash
-npx chat-js@latest create my-chat-app --from-git https://github.com/your-org/your-fork
+npx chat-js@alpha create my-chat-app --from-git https://github.com/your-org/your-fork
 ```
 
 **Full flow after scaffolding**
 
 ```bash
-npx chat-js@latest create my-chat-app
+npx chat-js@alpha create my-chat-app
 cd my-chat-app
 cp .env.example .env.local
 # Fill in the env vars printed by the CLI

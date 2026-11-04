@@ -103,7 +103,7 @@ for (const base of ["base", "radix"] as const) {
       ).toBeVisible();
       expect(
         await page.evaluate(async () => await navigator.clipboard.readText())
-      ).toBe("bunx chat-js@beta create my-chat");
+      ).toBe("bunx chat-js@alpha create my-chat");
     }
     expect(glyphs.size).toBe(PRESET_ICON_LIBRARIES.length);
     expect(errors).toEqual([]);

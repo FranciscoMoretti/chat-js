@@ -72,7 +72,7 @@ jobs:
             version="$(node -p "require('./${workspace_dir}/package.json').version")"
             tag="${name}@${version}"
             if [[ "${version%%+*}" == *-* ]]; then
-              echo "::error::Publish audited prereleases explicitly with --tag beta; the stable fallback cannot publish ${tag}."
+              echo "::error::Publish audited prereleases explicitly with their prerelease tag; the stable fallback cannot publish ${tag}."
               return 1
             fi
 
