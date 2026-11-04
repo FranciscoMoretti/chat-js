@@ -78,7 +78,10 @@ test("discovers public workspace prereleases and retains their configured regist
       JSON.stringify({
         name: beta.name,
         version: beta.version,
-        publishConfig: { registry: "https://registry.example.test" },
+        publishConfig: {
+          registry: "https://registry.example.test",
+          tag: "beta",
+        },
       })
     );
     await Bun.write(
@@ -99,6 +102,7 @@ test("discovers public workspace prereleases and retains their configured regist
         version: beta.version,
         directory: path.join(root, "packages/cli"),
         registry: "https://registry.example.test",
+        tag: "beta",
       },
     ]);
   } finally {
@@ -107,7 +111,7 @@ test("discovers public workspace prereleases and retains their configured regist
 });
 
 test("allows an audited alpha before the first stable release", async () => {
-  const alpha = { ...beta, version: "1.0.0-alpha.0" };
+  const alpha = { ...beta, version: "1.0.0-alpha.0", tag: "alpha" };
   await assertPrereleasesPublished(
     [alpha],
     async () =>
@@ -125,6 +129,35 @@ test("allows an audited alpha before the first stable release", async () => {
       })
   );
 });
+
+test("allows a later alpha while latest retains the approved default", async () => {
+  const alpha = { ...beta, version: "1.0.0-alpha.1", tag: "alpha" };
+  await assertPrereleasesPublished(
+    [alpha],
+    async () =>
+      await Promise.resolve({
+        version: alpha.version,
+        "dist-tags": { latest: "1.0.0-alpha.0", alpha: alpha.version },
+      })
+  );
+});
+
+for (const tags of [{}, { alpha: "1.0.0-alpha.0" }]) {
+  test(`rejects a missing or stale configured alpha tag: ${JSON.stringify(tags)}`, async () => {
+    const alpha = { ...beta, version: "1.0.0-alpha.1", tag: "alpha" };
+    const message = await rejectionMessage(async () => {
+      await assertPrereleasesPublished(
+        [alpha],
+        async () =>
+          await Promise.resolve({
+            version: alpha.version,
+            "dist-tags": { latest: "1.0.0-alpha.0", ...tags },
+          })
+      );
+    });
+    expect(message).toContain("configured tag match");
+  });
+}
 
 for (const entry of [
   { ...beta, version: "1.0.0-alpha.1" },

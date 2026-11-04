@@ -5,11 +5,13 @@ const packageSchema = z.object({
   name: z.string(),
   version: z.string().optional(),
   private: z.boolean().optional(),
-  publishConfig: z.object({ registry: z.string().optional() }).optional(),
+  publishConfig: z
+    .object({ registry: z.string().optional(), tag: z.string().optional() })
+    .optional(),
 });
 const registryResultSchema = z.object({
   version: z.string(),
-  "dist-tags": z.object({ latest: z.string().optional() }),
+  "dist-tags": z.record(z.string(), z.string()),
 });
 const isPrerelease = (version: string): boolean =>
   version.split("+")[0].includes("-");
@@ -19,6 +21,7 @@ export interface ReleasePackage {
   readonly version: string;
   readonly directory: string;
   readonly registry?: string;
+  readonly tag?: string;
 }
 
 export const publicPrereleases = async (
@@ -50,6 +53,7 @@ export const publicPrereleases = async (
           version: entry.version,
           directory: path.dirname(path.join(root, file)),
           registry: entry.publishConfig?.registry,
+          tag: entry.publishConfig?.tag,
         },
       ];
     })
@@ -105,19 +109,21 @@ export const assertPrereleasesPublished = async (
         const published = registryResultSchema.parse(await lookup(entry));
         const { latest } = published["dist-tags"];
         const approvedDefault =
-          approvedPrereleaseDefaults.get(entry.name) === entry.version &&
-          latest === entry.version;
+          latest !== undefined &&
+          approvedPrereleaseDefaults.get(entry.name) === latest;
         if (
           published.version !== entry.version ||
+          (entry.tag !== undefined &&
+            published["dist-tags"][entry.tag] !== entry.version) ||
           (latest !== undefined && isPrerelease(latest) && !approvedDefault)
         ) {
           throw new Error(
-            "The exact version must exist and latest must be absent, stable, or explicitly approved"
+            "The exact version and configured tag must match, and latest must be absent, stable, or explicitly approved"
           );
         }
       } catch {
         throw new Error(
-          `Refusing ordinary release for ${entry.name}@${entry.version}. Publish the audited prerelease explicitly first with its prerelease tag, verify the exact version and that latest is absent, stable, or explicitly approved, then retry. Registry lookup failures also block publication.`
+          `Refusing ordinary release for ${entry.name}@${entry.version}. Publish the audited prerelease explicitly first with its prerelease tag, verify the exact version and configured tag match and that latest is absent, stable, or explicitly approved, then retry. Registry lookup failures also block publication.`
         );
       }
     })
