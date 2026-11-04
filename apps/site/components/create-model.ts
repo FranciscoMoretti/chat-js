@@ -19,7 +19,7 @@ export const createCommand = (
   installation: Readonly<InstallationSelection>
 ): string => {
   const selection = installationSelectionSchema.parse(installation);
-  const args = ["bunx", "@chat-js/cli@beta", "create", "my-chat", "--yes"];
+  const args = ["bunx", "chat-js@beta", "create", "my-chat", "--yes"];
   if (selection.gateway !== undefined) {
     args.push("--gateway", selection.gateway);
   }

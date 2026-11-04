@@ -64,13 +64,13 @@ If you are distributing your own fork to end users, see [macOS Distribution Note
 
 ## Scaffold with the CLI
 
-When you run `npx @chat-js/cli@latest create`, the CLI asks:
+When you run `npx chat-js@latest create`, the CLI asks:
 
 ```bash
 Include an Electron desktop app? › No / Yes
 ```
 
-Choosing **Yes** installs the [Desktop plugin](../plugins/desktop) in the web app and copies an `electron/` companion into your project. To add both to an existing app, run `bunx @chat-js/cli@latest add desktop`. An existing companion directory is preserved.
+Choosing **Yes** installs the [Desktop plugin](../plugins/desktop) in the web app and copies an `electron/` companion into your project. To add both to an existing app, run `bunx chat-js@latest add desktop`. An existing companion directory is preserved.
 
 ```text
 my-app/
@@ -214,12 +214,12 @@ The release flow is:
 1. Add a changeset that includes `@chat-js/electron`
 2. Let the Changesets workflow open the version PR
 3. Merge that version PR
-4. The npm release workflow publishes any changed public packages, including `@chat-js/cli`
+4. The npm release workflow publishes any changed public packages, including `chat-js`
 5. The desktop artifact workflow reads the new `apps/electron/package.json` version, builds macOS, Windows, and Linux artifacts, and publishes them to GitHub Releases under the package-scoped tag `@chat-js/electron@<version>`
 
 That keeps versioning, changelogs, and release triggering consistent across the repository. The only difference is the publish destination:
 
-- `@chat-js/cli` publishes to npm
+- `chat-js` publishes to npm
 - `@chat-js/electron` publishes installers to GitHub Releases
 
 For a concrete reference, see the workflow used in this repository:

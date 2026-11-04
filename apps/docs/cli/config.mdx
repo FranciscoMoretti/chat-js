@@ -6,7 +6,7 @@ description: Print the resolved configuration for the current ChatJS project
 Defaults from `applyDefaults` are merged into your `chat.config.ts` and the result is printed as JSON.
 
 ```bash
-npx @chat-js/cli@latest config [options]
+npx chat-js@latest config [options]
 ```
 
 ## Options
@@ -30,7 +30,7 @@ This means the output always reflects the effective configuration your app will 
 The following excerpt shows runtime configuration, including model defaults and behavior settings. Installed implementations are selected separately through the CLI.
 
 ```bash
-npx @chat-js/cli@latest config
+npx chat-js@latest config
 ```
 
 ```json
@@ -54,5 +54,5 @@ npx @chat-js/cli@latest config
 Run from a different directory:
 
 ```bash
-npx @chat-js/cli@latest config --cwd ./apps/chat
+npx chat-js@latest config --cwd ./apps/chat
 ```

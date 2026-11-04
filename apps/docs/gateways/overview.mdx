@@ -30,8 +30,8 @@ Need a provider not listed here? See [Custom Gateway](/gateways/custom).
 Select a gateway during creation or explicitly replace it in an existing app:
 
 ```bash
-bunx @chat-js/cli@latest create my-chat --gateway openrouter
-bunx @chat-js/cli@latest add --gateway openrouter --replace
+bunx chat-js@latest create my-chat --gateway openrouter
+bunx chat-js@latest add --gateway openrouter --replace
 ```
 
 Replacement preserves runtime overrides. Review model IDs for the new provider and its supported media capabilities. Editing only `ai.gateway` cannot install a new implementation. See [Configuration](../core/configuration).

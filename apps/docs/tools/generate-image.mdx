@@ -6,7 +6,7 @@ description: Install image generation and editing through your selected AI gatew
 ## Select during creation
 
 ```bash
-npx @chat-js/cli@latest create my-app --yes --image-generation-tool generate-image
+npx chat-js@latest create my-app --yes --image-generation-tool generate-image
 ```
 
 Interactive creation offers the built-in gateway implementation or an external registry item when you enable image generation. The built-in implementation uses your selected [gateway](../gateways/overview) and durable [file storage](../storage). Configure their credentials and an image-capable default model before running it.
@@ -16,7 +16,7 @@ Interactive creation offers the built-in gateway implementation or an external r
 In an existing ChatJS app with registry-based image tools:
 
 ```bash
-npx @chat-js/cli@latest add generate-image
+npx chat-js@latest add generate-image
 ```
 
 Enable `ai.tools.image.enabled` and set `ai.tools.image.default` in `chat.config.ts`.
@@ -30,7 +30,7 @@ The tool accepts a prompt and returns `{ imageUrl, prompt }`. It supports image 
 ## External implementations
 
 ```bash
-npx @chat-js/cli@latest create my-app --yes \
+npx chat-js@latest create my-app --yes \
   --image-generation-tool https://example.com/r/image-tool.json
 ```
 

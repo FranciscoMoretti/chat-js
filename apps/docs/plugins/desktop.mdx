@@ -10,7 +10,7 @@ Use Desktop to connect your web app to an Electron companion. The plugin owns br
 Choose Electron when creating your app, or add Desktop to an existing app:
 
 ```bash
-bunx @chat-js/cli@latest add desktop
+bunx chat-js@latest add desktop
 ```
 
 The CLI installs `chatjs/plugins/desktop/`, its `/device-login` route, and authentication registrations. It also creates an `electron/` companion directory when one does not already exist. Adding the plugin again preserves an existing companion. Desktop adds no database tables or migrations.

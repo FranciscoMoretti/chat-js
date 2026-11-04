@@ -6,7 +6,7 @@ description: Install and distribute typed ChatJS tools with shadcn registries
 The ChatJS registry distributes editable source code using shadcn. A tool includes server logic, dependencies, and a declarative registration descriptor. Tools can include their own client renderer. Built-in search and code-execution items include renderers for their own output. Installed tools become part of your app's typed tool system. All installed and custom tools use native EVE definitions. Installed registry items use a `contractVersion: 1` descriptor. Custom tools are registered directly in `integrations/tools/execution.ts` without a descriptor.
 
 ```bash
-npx @chat-js/cli@latest add word-count
+npx chat-js@latest add word-count
 ```
 
 shadcn resolves the item and its dependencies, installs packages, and writes the source files. ChatJS then regenerates separate server and client registrations. Existing source follows shadcn's overwrite prompts. Pass `--overwrite` to replace it.
@@ -28,7 +28,7 @@ shadcn resolves the item and its dependencies, installs packages, and writes the
 ## Document deletion with approval
 
 ```bash
-npx @chat-js/cli@latest add delete-document
+npx chat-js@latest add delete-document
 ```
 
 This optional bundle installs `deleteDocument` and its `readDocument` dependency. The agent first calls `readDocument`, then passes the exact title and revision to `deleteDocument` to request owner approval. Rejection leaves the document unchanged. If the document changes before approval, deletion fails and requires a fresh request.
@@ -63,7 +63,7 @@ Configure standard namespaces in `components.json`:
 ```
 
 ```bash
-npx @chat-js/cli@latest add @acme/my-tool
+npx chat-js@latest add @acme/my-tool
 ```
 
 You can also pass a complete registry item URL or local JSON path. Registry requests require HTTPS, with HTTP allowed for local loopback development. `--registry` has been replaced by standard namespace configuration.
@@ -72,7 +72,7 @@ You can also pass a complete registry item URL or local JSON path. Registry requ
 
 ```bash
 npx shadcn@4.21.0 add @chatjs/word-count
-npx @chat-js/cli@latest sync
+npx chat-js@latest sync
 ```
 
 shadcn installs source. `sync` reads installed descriptors and generates ChatJS registrations without evaluating third-party source. `chat-js add` performs both steps. If registration fails after installation, fix the reported issue and run `sync` again. Package installation is not transactional.

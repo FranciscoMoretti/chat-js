@@ -5,7 +5,7 @@ import path from "node:path";
 import { assertPrereleasesPublished, publicPrereleases } from "./release-guard";
 
 const beta = {
-  name: "@chat-js/cli",
+  name: "chat-js",
   version: "0.9.0-beta.1",
   directory: "/unused",
 };

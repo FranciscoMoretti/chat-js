@@ -61,7 +61,7 @@ const getCliPackageRoot = (): string => {
     }
   }
 
-  throw new Error("Could not locate the @chat-js/cli package root.");
+  throw new Error("Could not locate the chat-js package root.");
 };
 
 const getRepoRoot = (): string =>

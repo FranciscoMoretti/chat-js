@@ -1,17 +1,17 @@
-# @chat-js/cli
+# chat-js
 
 CLI to scaffold and extend ChatJS apps.
 
 ## Usage
 
 ```bash
-npx @chat-js/cli@latest
+npx chat-js@latest
 ```
 
 Or with the command alias:
 
 ```bash
-npx @chat-js/cli@latest create
+npx chat-js@latest create
 ```
 
 After install, the binary is:
@@ -28,11 +28,11 @@ chat-js create my-chat --gateway ./acme-gateway.json
 
 The CLI installs only that item's adapter files and declared dependencies. `@chat-js/gateways` supplies shared contracts and utilities, with no gateway implementations. Third-party items declare their own ID, defaults, capabilities, and credentials; the CLI has no fixed gateway enum. See [gateway authoring](https://github.com/FranciscoMoretti/chat-js/blob/main/packages/registry/src/gateways/README.md) for the version 1 contract.
 
-Run `bun --filter @chat-js/cli test:gateways` from the repository root to verify independent installs of all built-ins and an external registry gateway.
+Run `bun --filter chat-js test:gateways` from the repository root to verify independent installs of all built-ins and an external registry gateway.
 
 ## Installation and migration
 
-The `0.9.0-beta.2` release candidate supports Base UI and Radix with matching registry `0.2.0-beta.2`. Use a local build until these candidates are published, then invoke `npx @chat-js/cli@0.9.0-beta.2` for the examples below. The earlier beta.0 releases support Base UI only. Stable `latest` is unchanged.
+The `0.9.0-beta.2` release candidate supports Base UI and Radix with matching registry `0.2.0-beta.2`. Use a local build until these candidates are published, then invoke `npx chat-js@0.9.0-beta.2` for the examples below. The earlier beta.0 releases support Base UI only. Stable `latest` is unchanged.
 
 Pass native shadcn visual options after `--`:
 

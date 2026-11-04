@@ -1,5 +1,5 @@
 ---
-"@chat-js/cli": minor
+"chat-js": minor
 "@chat-js/registry": minor
 "@chat-js/electron": patch
 ---

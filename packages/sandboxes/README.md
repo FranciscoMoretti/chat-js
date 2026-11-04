@@ -13,8 +13,8 @@ The package owns no database, SDK credentials, tool registration, UI or usage bi
 Creation failures can leave uncertain allocations. Their intents survive for reconciliation. Cleanup failures also retain ownership. A missing resource alone does not prove that an uncertain creation cannot still complete. Drain allocations before switching providers or rotating credentials; historical cleanup fails closed when the configured scope differs.
 
 ```bash
-bunx @chat-js/cli add --sandbox-provider daytona
-bunx @chat-js/cli add code-execution
+bunx chat-js add --sandbox-provider daytona
+bunx chat-js add code-execution
 ```
 
 The first command installs infrastructure without a model tool. The second installs a consumer. Both can be combined in one command. Replace an existing provider using `--sandbox-provider vercel --replace`.

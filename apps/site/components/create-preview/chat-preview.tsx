@@ -624,11 +624,11 @@ export const ChatPreview = () => {
                                     <CodeBlockHeader>
                                       <CodeBlockTitle>terminal</CodeBlockTitle>
                                       <CodeBlockActions>
-                                        <CodeBlockCopyButton value="bunx @chat-js/cli@beta create my-chat" />
+                                        <CodeBlockCopyButton value="bunx chat-js@beta create my-chat" />
                                       </CodeBlockActions>
                                     </CodeBlockHeader>
                                     <CodeBlockContent>
-                                      bunx @chat-js/cli@beta create my-chat
+                                      bunx chat-js@beta create my-chat
                                     </CodeBlockContent>
                                   </CodeBlock>
                                   <div className="text-muted-foreground flex items-center gap-2 text-xs">

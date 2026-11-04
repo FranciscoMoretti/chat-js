@@ -19,7 +19,7 @@ Stop rebuilding the same AI chat infrastructure. ChatJS gives you an EVE-native 
 Create a new ChatJS app:
 
 ```bash
-npx @chat-js/cli@latest create my-app
+npx chat-js@latest create my-app
 ```
 
 The CLI walks you through gateway, features, and auth choices, generates `chat.config.ts`, and lists the env vars required by your selections.
@@ -106,8 +106,10 @@ Releases are driven by Changesets for the whole repository.
 
 - Add a changeset for each releasable package you change.
 - Merge the generated version PR from the Changesets workflow.
-- Public packages such as `@chat-js/cli` publish to npm.
+- Public packages such as `chat-js` publish to npm.
 - Desktop installers for `@chat-js/electron` publish to GitHub Releases.
+
+The `chat-js` package uses a GitHub Actions trusted publisher on npm for owner `FranciscoMoretti`, repository `chat-js`, and workflow `release.yml`, without a GitHub environment. Trusted publisher settings are specific to each npm package.
 
 ## License
 

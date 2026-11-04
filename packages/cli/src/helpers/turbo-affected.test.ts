@@ -112,7 +112,7 @@ test.each([
       "--tasks",
       "test:scaffold",
       "--packages",
-      "@chat-js/cli",
+      "chat-js",
       "--base",
       base,
       "--head",
@@ -132,7 +132,7 @@ test.each([
     const taskNames = output.data.affectedTasks.items.map(
       (task: { readonly fullName: string }): string => task.fullName
     );
-    expect(taskNames.includes("@chat-js/cli#test:scaffold")).toBe(affected);
+    expect(taskNames.includes("chat-js#test:scaffold")).toBe(affected);
 
     // CI's execution phase must agree with the pre-install query, including
     // inputs outside the CLI package that package-level --affected would miss.
@@ -154,7 +154,7 @@ test.each([
         (task: { readonly taskId: string }): string => task.taskId
       )
     );
-    expect(plannedTasks.has("@chat-js/cli#test:scaffold")).toBe(affected);
+    expect(plannedTasks.has("chat-js#test:scaffold")).toBe(affected);
     if (
       path.startsWith("apps/chat/") ||
       path.startsWith("apps/site/") ||
@@ -166,7 +166,7 @@ test.each([
       path === "scripts/sync-template-snapshot.ts" ||
       path === "package.json"
     ) {
-      expect(plannedTasks.has("@chat-js/cli#test:unit")).toBe(affected);
+      expect(plannedTasks.has("chat-js#test:unit")).toBe(affected);
     }
   }
 );

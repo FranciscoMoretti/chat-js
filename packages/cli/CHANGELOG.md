@@ -1,4 +1,12 @@
-# @chat-js/cli
+# chat-js
+
+## 4.0.0-beta.0
+
+Republish `@chat-js/cli@0.9.0-beta.2` under the transferred `chat-js` package name and the `beta` tag.
+
+## 3.0.0
+
+Republish the stable `chat-js-cli@0.8.0` CLI as `chat-js`. Version 3 starts a new major version after the unrelated legacy package. Run `npx chat-js@latest create my-app`.
 
 ## 0.9.0-beta.2
 

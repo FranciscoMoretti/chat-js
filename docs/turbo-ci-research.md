@@ -40,7 +40,7 @@ Example selection command (task name illustrative):
 ```sh
 bunx turbo query affected \
   --tasks test:scaffold \
-  --packages @chat-js/cli \
+  --packages chat-js \
   --base "$PR_BASE_SHA" \
   --head "$PR_HEAD_SHA"
 ```
