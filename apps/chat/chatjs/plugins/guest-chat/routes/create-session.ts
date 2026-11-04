@@ -1,4 +1,3 @@
-import { getGuestPurgeLifecycle } from "@/chatjs/plugins/guest-chat/guest-retention";
 import { readGuestBody } from "@/chatjs/plugins/guest-chat/guest-body";
 import {
   createGuestRuntimeSession,
@@ -55,18 +54,6 @@ export const POST = async (
   if (!hasConfiguredHost(host)) {
     return Response.json(
       { error: "Configure APP_URL before starting guest chats." },
-      { status: 503 }
-    );
-  }
-  try {
-    // PostgreSQL guarantees purge; managed Vercel uses provider payload retention.
-    await getGuestPurgeLifecycle()?.check();
-  } catch {
-    return Response.json(
-      {
-        error:
-          "Guest retention is unavailable. Please sign in or try again later.",
-      },
       { status: 503 }
     );
   }

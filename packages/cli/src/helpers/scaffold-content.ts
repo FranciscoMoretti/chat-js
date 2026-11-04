@@ -25,6 +25,7 @@ const REPOSITORY_ONLY_FILES = new Set([
   "app/api/cron/cleanup/route.test.ts",
   "lib/cleanup/job.test.ts",
   "lib/eve/guest-model.test.ts",
+  "lib/eve/guest-retention.test.ts",
   "lib/eve/cleanup-guest-runtime.test.ts",
   "lib/eve/disposable-guest.test.ts",
   "lib/eve/session-policy.test.ts",

@@ -66,7 +66,7 @@ test("every read, send, cancel and retirement is restricted to the signed sessio
     await authenticateDisposableGuest(
       request(token, "session/session-owned/stream")
     )
-  ).toMatchObject({ principalType: "user" });
+  ).toMatchObject({ principalType: "guest" });
   expect(
     await authenticateDisposableGuest(
       request(token, "session/session-owned", { message: "hello" })
