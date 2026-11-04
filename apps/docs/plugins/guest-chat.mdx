@@ -11,13 +11,13 @@ Guest Chat lets visitors try one inexpensive text model at `/`. The browser keep
 bunx chat-js@alpha add guest-chat
 ```
 
-Configure the shared EVE runtime and apply your generated database migration. On Vercel, guests use managed workflows: access expires and cleanup ends sessions, while workflow payloads remain subject to Vercel’s retention policy. ChatJS does not promise payload erasure on this backend.
+Configure the shared EVE runtime and apply your generated database migration. Guests request native EVE retention `0` on every backend. ChatJS expires access and ends sessions; the selected Workflow World owns payload retention. Guest admission does not require PostgreSQL purge fences.
 
-Self-hosted PostgreSQL deployments additionally require the verified deletion lifecycle. Run `bun eve:setup`; bootstrap returns HTTP 503 if its write and queue fences cannot be verified.
+The pinned PostgreSQL World (`5.0.0-beta.40`) accepts retention `0` but does not delete payloads. PostgreSQL guest content remains stored pending provider support or separate operator removal. Vercel enforces its provider retention policy. Successful ChatJS cleanup means session retirement and credential-policy completion, not verified payload erasure.
 
 On Vercel, admission uses the verified `x-vercel-forwarded-for` header. Elsewhere, set `TRUSTED_CLIENT_IP_HEADER` to a header your reverse proxy overwrites with one validated client IP. Missing or malformed addresses reject admission. Development uses the loopback address.
 
-Schedule the protected `/api/cron/cleanup` endpoint and monitor unsuccessful sweeps. `bun cleanup` drains batches that make progress. Local development starts a cleanup timer only for a local PostgreSQL database and a supported local deletion runtime.
+Schedule the protected `/api/cron/cleanup` endpoint and monitor unsuccessful sweeps. `bun cleanup` drains batches that make progress. Local development starts a cleanup timer only for a local PostgreSQL database and a local workflow database and worker.
 
 ## Behavior and limits
 
@@ -37,20 +37,23 @@ Guests and accounts use the same EVE agent. The plugin authenticates signed cred
 
 There is no per-session message-credit balance. Failed or ambiguous sends still consume admission capacity. Guests cannot use tools, files, projects, comparisons, account APIs, or account billing. Provider middleware also rejects non-text inputs and tool output, independently of the UI.
 
-Retirement on unload and New chat is best effort. Scheduled cleanup ends the native session and revokes its local policy. On PostgreSQL it also performs the durable purge through core's verified lifecycle. On managed Vercel it reports retirement separately from deletion and leaves payload retention to the provider. Minimal policy and deletion metadata remains for retries and late-write prevention. Rate buckets expire after two days. Provider logs and tracing have separate retention policies.
+Retirement on unload and New chat is best effort. Scheduled cleanup verifies native session ending or explicit expiry and revokes its local policy. It reports `retiredCount` on both backends and never claims payload deletion. Local policy metadata remains for retries; rate buckets expire after two days. Guest cleanup no longer performs PostgreSQL queue/payload purge or installs late-write fences. Account deletion keeps its existing safeguards.
+
+The plugin installs `agent/instrumentation/guest-retention.ts` to omit guest input/output trace capture, including in development. EVE derives retention `0` from that policy. Non-guest trace policy and retention are unchanged. If you customize EVE instrumentation, keep a single `otel()` declaration and preserve this guest rule; an agent-wide retention override takes precedence.
 
 ## Source and customization
 
-All implementation lives in `chatjs/plugins/guest-chat/`:
+The plugin implementation lives in `chatjs/plugins/guest-chat/`:
 
 | Module | Responsibility |
 | --- | --- |
 | `signed-out.tsx` | Guest screen and memory-only conversation binding |
 | `routes/create-session.ts` | Same-origin bootstrap and session binding |
 | `session-profile.ts` | Native authentication, bounded model, and instructions |
+| `guest-retention.ts` | Guest-only native retention selection through trace policy |
 | `guest-policy.ts` | Model, rate, input, output, and expiry policy |
 | `guest-schema.ts`, `guest-queries.ts` | Durable admission, isolation, and cleanup inventory |
-| `cleanup.ts`, `guest-cleanup.ts` | Bounded cleanup contribution using core deletion safeguards |
+| `cleanup.ts`, `guest-cleanup.ts` | Bounded native session retirement and local policy completion |
 | `server-plugin.ts`, `guest-scheduler.ts` | Local development cleanup registration |
 
 `app/api/eve-guest/route.ts` is a thin adapter. Core imports generated registrations, not this implementation. Account tools and hooks require the registered account authenticator. Unknown or removed session profiles cannot fall back to account capabilities.
@@ -59,7 +62,7 @@ Edit the installed source to change policy. The provider prompt includes assista
 
 ## Without Guest Chat
 
-A new installation without this plugin redirects signed-out chat visitors to `/login`. It has no guest bootstrap route, authenticator, cleanup task, or guest tables. Account chat continues to use the same agent.
+A new installation without this plugin redirects signed-out chat visitors to `/login`. It has no guest bootstrap route, authenticator, cleanup task, retention instrumentation, or guest tables. Account chat continues to use the same agent.
 
 To remove the plugin from an existing deployment, stop guest admission and drain its sessions before removing its cleanup contribution and schema. Removing a plugin does not itself purge existing runtime payloads.
 

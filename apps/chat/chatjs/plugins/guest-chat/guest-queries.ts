@@ -200,8 +200,8 @@ export const reserveGuestRuntimeMessage = async (input: {
   });
 };
 
-// A five-minute cooldown bounds repeated failures. Native purge has its own
-// durable advisory lock and idempotent receipts, so overlapping cron retries are safe.
+// A five-minute cooldown bounds repeated failures. Completion is idempotent
+// for the exact policy/session binding when retries overlap.
 export const claimExpiredGuestRuntimeSession = async () =>
   await db.transaction(async (tx) => {
     const [guest] = await tx

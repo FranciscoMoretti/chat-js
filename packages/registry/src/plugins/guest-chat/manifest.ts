@@ -25,7 +25,11 @@ const guestChatDefinition = pluginDefinitionSchema.parse({
   uiBase: "base",
   id: "guest-chat",
   kind: "plugin",
-  files: [...guestChatFiles, "app/api/eve-guest/route.ts"],
+  files: [
+    ...guestChatFiles,
+    "app/api/eve-guest/route.ts",
+    "agent/instrumentation/guest-retention.ts",
+  ],
   databaseSchemas: ["chatjs/plugins/guest-chat/guest-schema.ts"],
   signedOut: { export: "GuestChatScreen" },
   sessionProfile: {
@@ -47,6 +51,11 @@ const guestChatItem: RegistryItem = {
       target: `~/${file}`,
       type: "registry:file" as const,
     })),
+    {
+      path: "src/plugins/guest-chat/adapters/agent/instrumentation/guest-retention.ts",
+      target: "~/agent/instrumentation/guest-retention.ts",
+      type: "registry:file",
+    },
     {
       path: "src/plugins/guest-chat/adapters/app/api/eve-guest/route.ts",
       target: "~/app/api/eve-guest/route.ts",

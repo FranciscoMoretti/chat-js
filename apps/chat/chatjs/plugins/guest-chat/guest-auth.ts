@@ -151,7 +151,7 @@ export const authenticateDisposableGuest = async (
     authenticator: "chatjs-disposable-guest",
     issuer: "chatjs",
     principalId: claims.ownerId,
-    principalType: "user",
+    principalType: "guest",
     subject: claims.ownerId,
   };
 };

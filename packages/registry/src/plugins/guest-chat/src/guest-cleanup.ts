@@ -9,7 +9,6 @@ import {
   pruneGuestRuntimeRates,
 } from "@/chatjs/plugins/guest-chat/guest-queries";
 import { getGuestCleanupConnectionOptions } from "@/chatjs/plugins/guest-chat/guest-cleanup-auth";
-import { getGuestPurgeLifecycle } from "@/chatjs/plugins/guest-chat/guest-retention";
 
 const MAX_CLEANUP_BATCH = 5;
 const RETIRE_TIMEOUT_MS = 30_000;
@@ -76,11 +75,6 @@ export const cleanupGuestRuntimeSessions = async ({
       skipped: false,
     };
   }
-  const lifecycle = getGuestPurgeLifecycle();
-  // Compatibility checks precede claims or retirement. Missing fences never
-  // produce a successful cleanup report or erase the durable retry record.
-  await lifecycle?.check();
-  let deletedCount = 0;
   let retiredCount = 0;
   let pendingCount = 0;
   for (
@@ -88,7 +82,7 @@ export const cleanupGuestRuntimeSessions = async ({
     attempt < MAX_CLEANUP_BATCH && Date.now() < deadline;
     attempt += 1
   ) {
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Claim and purge one session at a time to bound provider connections and work.
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Claim and retire one session at a time to bound provider connections and work.
     const guest = await claimExpiredGuestRuntimeSession();
     if (!guest) {
       break;
@@ -98,9 +92,9 @@ export const cleanupGuestRuntimeSessions = async ({
       const signal = AbortSignal.timeout(
         Math.max(1, Math.min(RETIRE_TIMEOUT_MS, deadline - Date.now()))
       );
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Reconcile only the current claimed guest before native purge.
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Reconcile only the current claimed guest before retirement.
       const sessionId = await resolveCleanupSession(guest, signal);
-      phase = lifecycle ? "retire-and-purge" : "retire";
+      phase = "retire";
       const retire = async (): Promise<void> => {
         const client = new Client(
           getGuestCleanupConnectionOptions({
@@ -125,7 +119,7 @@ export const cleanupGuestRuntimeSessions = async ({
           signal,
         })) {
           if (event.type === "session.ended") {
-            break;
+            return;
           }
         }
         const snapshot = await session.snapshot({
@@ -136,13 +130,12 @@ export const cleanupGuestRuntimeSessions = async ({
         }
       };
       try {
-        // oxlint-disable-next-line eslint/no-await-in-loop -- Finish this session before completing its policy; managed payloads follow provider retention.
-        await (lifecycle ? lifecycle.purge(sessionId, retire) : retire());
+        // oxlint-disable-next-line eslint/no-await-in-loop -- Finish this session before completing its policy; payloads follow native World retention.
+        await retire();
       } catch (error) {
-        // Managed EVE can expire history as soon as end completes. Only its explicit
+        // EVE can expire history as soon as end completes. Only its explicit
         // expiry response is terminal evidence; 404, auth and transport failures retry.
         if (
-          lifecycle ||
           !ClientError.is(error) ||
           error.status !== 410 ||
           error.code !== "session_expired"
@@ -151,15 +144,11 @@ export const cleanupGuestRuntimeSessions = async ({
         }
       }
       phase = "complete-policy";
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Complete local policy after verified ending, expiry, or PostgreSQL purge.
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Complete local policy after verified ending or expiry.
       if (!(await completeGuestRuntimeDeletion(guest.id, sessionId))) {
         throw new Error("Guest deletion binding changed.");
       }
-      if (lifecycle) {
-        deletedCount += 1;
-      } else {
-        retiredCount += 1;
-      }
+      retiredCount += 1;
     } catch {
       pendingCount += 1;
       console.error("Guest runtime cleanup requires retry", {
@@ -171,11 +160,11 @@ export const cleanupGuestRuntimeSessions = async ({
   if (Date.now() >= deadline) {
     // No new bookkeeping after the deadline; a later sweep establishes completion.
     return {
-      deletedCount,
+      deletedCount: 0,
       retiredCount,
       pendingCount: Math.max(
         pendingCount,
-        initialPendingCount - deletedCount - retiredCount,
+        initialPendingCount - retiredCount,
         1
       ),
       skipped: false,
@@ -186,5 +175,5 @@ export const cleanupGuestRuntimeSessions = async ({
     pendingCount,
     await countPendingGuestRuntimeDeletions()
   );
-  return { deletedCount, retiredCount, pendingCount, skipped: false };
+  return { deletedCount: 0, retiredCount, pendingCount, skipped: false };
 };

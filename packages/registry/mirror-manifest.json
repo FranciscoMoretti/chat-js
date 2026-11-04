@@ -4,6 +4,7 @@
     "agent/hooks/projects.ts",
     "agent/hooks/search.ts",
     "agent/instructions/projects.ts",
+    "agent/instrumentation/guest-retention.ts",
     "agent/subagents/researchCompressor/agent.ts",
     "agent/subagents/researchCompressor/hooks/billing.ts",
     "agent/subagents/researchCompressor/sandbox.ts",

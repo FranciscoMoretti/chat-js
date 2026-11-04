@@ -1,9 +1,8 @@
-import { env } from "@/lib/env";
-import { resolveWorkflowWorld } from "@/lib/eve/world-config";
-import { requireEveDeletionLifecycle } from "@/lib/eve/deletion-lifecycle";
+import type { TraceCapturePolicy } from "eve/instrumentation/otel";
 
-/** Managed Vercel retains workflow payloads under provider policy; only PostgreSQL promises purge. */
-export const getGuestPurgeLifecycle = (): ReturnType<
-  typeof requireEveDeletionLifecycle
-> | null =>
-  resolveWorkflowWorld(env) === "vercel" ? null : requireEveDeletionLifecycle();
+// EVE derives retention 0 from omitted input/output capture. Preserve EVE's
+// default policy for every other principal, including registered users.
+export const guestTracePolicy: TraceCapturePolicy = ({ principalType }) =>
+  principalType === "guest"
+    ? { emit: true, recordInputs: false, recordOutputs: false }
+    : true;

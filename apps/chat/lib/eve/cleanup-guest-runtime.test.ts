@@ -8,9 +8,6 @@ const calls = vi.hoisted(() => ({
   bind: vi.fn(),
   prune: vi.fn(),
   pending: vi.fn(),
-  world: vi.fn(),
-  check: vi.fn(),
-  purge: vi.fn(),
   end: vi.fn(),
   snapshot: vi.fn(),
 }));
@@ -21,14 +18,9 @@ vi.mock("@/chatjs/plugins/guest-chat/guest-queries", () => ({
   pruneGuestRuntimeRates: calls.prune,
   countPendingGuestRuntimeDeletions: calls.pending,
 }));
-vi.mock("@/lib/env", () => ({ env: {} }));
-vi.mock("./world-config", () => ({ resolveWorkflowWorld: calls.world }));
-vi.mock("./deletion-lifecycle", () => ({
-  requireEveDeletionLifecycle: () => ({
-    check: calls.check,
-    purge: calls.purge,
-  }),
-}));
+vi.mock("./deletion-lifecycle", () => {
+  throw new Error("Guest cleanup must not load the account purge lifecycle");
+});
 vi.mock("@/chatjs/plugins/guest-chat/guest-cleanup-auth", () => ({
   getGuestCleanupConnectionOptions: () => ({
     baseUrl: "http://localhost/eve/chat",
@@ -50,7 +42,6 @@ const guest = { id: "policy", ownerId: "owner", sessionId: "guest-session" };
 
 beforeEach(() => {
   vi.resetAllMocks();
-  calls.world.mockReturnValue("@workflow/world-postgres");
   vi.unstubAllGlobals();
   calls.claim.mockResolvedValue(null);
   calls.pending.mockResolvedValueOnce(1).mockResolvedValue(0);
@@ -64,59 +55,49 @@ beforeEach(() => {
       yield { type: "session.ended" };
     },
   });
-  calls.purge.mockImplementation(
-    async (_sessionId: string, retire: () => Promise<void>) => {
-      await retire();
-    }
-  );
 });
 
-test("purges only claimed session and completes policy after native retirement", async () => {
+test("retires only claimed session and completes policy after native retirement", async () => {
   calls.claim.mockResolvedValueOnce(guest);
   expect(await cleanupGuestRuntimeSessions()).toEqual({
-    retiredCount: 0,
-    deletedCount: 1,
+    retiredCount: 1,
+    deletedCount: 0,
     pendingCount: 0,
     skipped: false,
   });
-  expect(calls.purge).toHaveBeenCalledWith(
-    "guest-session",
-    expect.any(Function)
-  );
   expect(calls.complete).toHaveBeenCalledWith("policy", "guest-session");
   expect(calls.end).toHaveBeenCalledOnce();
+  expect(calls.snapshot).toHaveBeenCalledOnce();
 });
 
 test("failed retirement remains pending without declaring deletion", async () => {
   calls.claim.mockResolvedValueOnce(guest);
   calls.snapshot.mockResolvedValue({ events: [] });
+  calls.end.mockResolvedValue({
+    async *stream() {
+      yield { type: "unrelated" };
+    },
+  });
   const result = await cleanupGuestRuntimeSessions();
   expect(result.pendingCount).toBe(1);
   expect(calls.complete).not.toHaveBeenCalled();
 });
 
-test("missing provider fences fail before claims and deletion", async () => {
-  calls.check.mockRejectedValue(new Error("missing fences"));
-  await expect(cleanupGuestRuntimeSessions()).rejects.toThrow("missing fences");
-  expect(calls.claim).not.toHaveBeenCalled();
-  expect(calls.purge).not.toHaveBeenCalled();
-});
-
 test("bounds cleanup to five attempts even with an endless backlog", async () => {
   calls.claim.mockResolvedValue(guest);
   const result = await cleanupGuestRuntimeSessions();
-  expect(result.deletedCount).toBe(5);
+  expect(result.retiredCount).toBe(5);
   expect(calls.claim).toHaveBeenCalledTimes(5);
 });
 
-test("replays interrupted creation with original operation identity before purge", async () => {
+test("replays interrupted creation with original operation identity before retirement", async () => {
   calls.claim.mockResolvedValueOnce({ ...guest, sessionId: null });
   const fetch = vi
     .fn()
     .mockResolvedValue(Response.json({ sessionId: "recovered" }));
   vi.stubGlobal("fetch", fetch);
   const result = await cleanupGuestRuntimeSessions();
-  expect(result.deletedCount).toBe(1);
+  expect(result.retiredCount).toBe(1);
   expect(fetch).toHaveBeenCalledWith(
     "http://localhost/eve/chat/v1/session",
     expect.objectContaining({ body: JSON.stringify({ operationId: "policy" }) })
@@ -137,14 +118,12 @@ test("cooldown-hidden deletion work remains pending even when no claim is availa
 
 test("empty expired inventory needs no provider mutation support", async () => {
   calls.pending.mockReset().mockResolvedValue(0);
-  calls.check.mockRejectedValue(new Error("unsupported world"));
   expect(await cleanupGuestRuntimeSessions()).toEqual({
     retiredCount: 0,
     deletedCount: 0,
     pendingCount: 0,
     skipped: false,
   });
-  expect(calls.check).not.toHaveBeenCalled();
   expect(calls.claim).not.toHaveBeenCalled();
 });
 
@@ -152,15 +131,14 @@ test("unclaimed expired backlog remains visible after the batch limit", async ()
   calls.pending.mockReset().mockResolvedValueOnce(8).mockResolvedValue(3);
   calls.claim.mockResolvedValue(guest);
   expect(await cleanupGuestRuntimeSessions()).toEqual({
-    retiredCount: 0,
-    deletedCount: 5,
+    retiredCount: 5,
+    deletedCount: 0,
     pendingCount: 3,
     skipped: false,
   });
 });
 
-test("managed cleanup ends the session but never reports payload erasure", async () => {
-  calls.world.mockReturnValue("vercel");
+test("cleanup ends the session but never reports payload erasure", async () => {
   calls.claim.mockResolvedValueOnce(guest);
   expect(await cleanupGuestRuntimeSessions()).toEqual({
     deletedCount: 0,
@@ -168,15 +146,17 @@ test("managed cleanup ends the session but never reports payload erasure", async
     pendingCount: 0,
     skipped: false,
   });
-  expect(calls.check).not.toHaveBeenCalled();
-  expect(calls.purge).not.toHaveBeenCalled();
   expect(calls.end).toHaveBeenCalledOnce();
   expect(calls.complete).toHaveBeenCalledWith("policy", "guest-session");
 });
-test("managed cleanup keeps failed retirement pending for retry", async () => {
-  calls.world.mockReturnValue("vercel");
+test("cleanup keeps failed retirement pending for retry", async () => {
   calls.claim.mockResolvedValueOnce(guest);
   calls.snapshot.mockResolvedValue({ events: [] });
+  calls.end.mockResolvedValue({
+    async *stream() {
+      yield { type: "unrelated" };
+    },
+  });
   expect(await cleanupGuestRuntimeSessions()).toMatchObject({
     retiredCount: 0,
     deletedCount: 0,
@@ -185,12 +165,11 @@ test("managed cleanup keeps failed retirement pending for retry", async () => {
   expect(calls.complete).not.toHaveBeenCalled();
 });
 
-test("managed cleanup accepts explicit expired history without claiming erasure", async () => {
-  calls.world.mockReturnValue("vercel");
+test("cleanup accepts explicit expired history without claiming erasure", async () => {
   calls.claim.mockResolvedValueOnce(guest);
-  calls.snapshot.mockRejectedValue(
-    new ClientError(410, '{"code":"session_expired"}')
-  );
+  calls.snapshot
+    .mockReset()
+    .mockRejectedValue(new ClientError(410, '{"code":"session_expired"}'));
   expect(await cleanupGuestRuntimeSessions()).toMatchObject({
     retiredCount: 1,
     deletedCount: 0,
@@ -198,12 +177,11 @@ test("managed cleanup accepts explicit expired history without claiming erasure"
   });
   expect(calls.complete).toHaveBeenCalledWith("policy", "guest-session");
 });
-test.each([404, 401, 503])(
-  "managed cleanup does not mistake HTTP %i for expiry",
+test.each([404, 401, 410, 503])(
+  "cleanup does not mistake HTTP %i for expiry",
   async (status) => {
-    calls.world.mockReturnValue("vercel");
     calls.claim.mockResolvedValueOnce(guest);
-    calls.snapshot.mockRejectedValue(new ClientError(status, "{}"));
+    calls.snapshot.mockReset().mockRejectedValue(new ClientError(status, "{}"));
     expect(await cleanupGuestRuntimeSessions()).toMatchObject({
       retiredCount: 0,
       deletedCount: 0,
@@ -214,7 +192,6 @@ test.each([404, 401, 503])(
 );
 
 test("expired drain budget leaves guests pending without claiming another session", async () => {
-  calls.world.mockReturnValue("vercel");
   calls.pending.mockReset().mockResolvedValue(2);
   const result = await cleanupGuestRuntimeSessions({
     deadline: Date.now() - 1,
