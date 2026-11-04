@@ -222,7 +222,7 @@ That keeps versioning, changelogs, and release triggering consistent for package
 - Shared public packages publish to npm
 - `@chat-js/electron` publishes installers to GitHub Releases
 
-For CLI changes during alpha, publish an audited prerelease manually from `packages/cli` with `bun publish --tag alpha`. Verify that `chat-js@alpha` resolves to that version. Merging a Changesets version PR does not publish those CLI changes.
+For CLI changes during alpha, first update `packages/cli/package.json` to the next unused alpha version, such as `1.0.0-alpha.1`, and run `bun install` to synchronize the lockfile. Then publish the audited prerelease manually from `packages/cli` with `bun publish --tag alpha`. Verify that `chat-js@alpha` resolves to that version. Merging a Changesets version PR does not publish those CLI changes.
 
 For a concrete reference, see the workflow used in this repository:
 
