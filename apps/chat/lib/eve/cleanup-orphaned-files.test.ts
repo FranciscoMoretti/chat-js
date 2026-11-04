@@ -86,3 +86,16 @@ test("a failed batch retains its deletion fence without starving subsequent batc
   ]);
   expect(mocks.complete).toHaveBeenCalledExactlyOnceWith("owner", [keys[100]]);
 });
+
+test("expired drain budget leaves orphan work pending without starting a deletion", async () => {
+  mocks.inventory.mockImplementation(function* fixtureOutput() {
+    yield { pathname: key, uploadedAt: old };
+  });
+  expect(await cleanupEveOrphanedFiles(cutoff, Date.now() - 1)).toEqual({
+    deletedCount: 0,
+    pendingCount: 1,
+    skipped: false,
+  });
+  expect(mocks.prepare).not.toHaveBeenCalled();
+  expect(mocks.remove).not.toHaveBeenCalled();
+});

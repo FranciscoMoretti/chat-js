@@ -4,13 +4,14 @@ import type { CleanupResult, CleanupTask } from "./contracts";
 
 const ORPHANED_ATTACHMENTS_RETENTION_TIME = 14_400_000;
 
-export const runCleanupJob = async () => {
+export const runCleanupJob = async (deadline = Number.POSITIVE_INFINITY) => {
   const tasks: readonly CleanupTask[] = [
     {
       id: "orphanedAttachments",
       run: async () =>
         await cleanupEveOrphanedFiles(
-          new Date(Date.now() - ORPHANED_ATTACHMENTS_RETENTION_TIME)
+          new Date(Date.now() - ORPHANED_ATTACHMENTS_RETENTION_TIME),
+          deadline
         ),
     },
     ...cleanupTasks,
@@ -21,7 +22,7 @@ export const runCleanupJob = async () => {
   const results: Record<string, CleanupResult | { error: string }> = {};
   const settled = await Promise.allSettled(
     tasks.map(async (task) => {
-      const result = await task.run();
+      const result = await task.run({ deadline });
       if (
         !Number.isSafeInteger(result.deletedCount) ||
         result.deletedCount < 0 ||

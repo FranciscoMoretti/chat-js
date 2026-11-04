@@ -8,5 +8,7 @@ export interface CleanupResult {
 }
 export interface CleanupTask {
   readonly id: string;
-  readonly run: () => Promise<CleanupResult>;
+  readonly run: (options?: {
+    readonly deadline?: number;
+  }) => Promise<CleanupResult>;
 }

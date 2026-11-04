@@ -212,3 +212,14 @@ test.each([404, 401, 503])(
     expect(calls.complete).not.toHaveBeenCalled();
   }
 );
+
+test("expired drain budget leaves guests pending without claiming another session", async () => {
+  calls.world.mockReturnValue("vercel");
+  calls.pending.mockReset().mockResolvedValue(2);
+  const result = await cleanupGuestRuntimeSessions({
+    deadline: Date.now() - 1,
+  });
+  expect(result.pendingCount).toBe(2);
+  expect(calls.claim).not.toHaveBeenCalled();
+  expect(calls.complete).not.toHaveBeenCalled();
+});

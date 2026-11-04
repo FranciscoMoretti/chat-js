@@ -181,6 +181,12 @@ test("home shows a rejected new conversation as a chat alert", async () => {
     return await fetch(input, init);
   });
   await renderRoute(home, signedIn);
+  // This capture checks bootstrap and presentation; EVE replies are fixtures.
+  await expect
+    .element(
+      page.getByText("Hello! How can I help you today?", { exact: true })
+    )
+    .not.toBeInTheDocument();
   await page.getByRole("textbox", { name: "Message" }).fill("Hello");
   await page.getByRole("button", { name: "Send", exact: true }).click();
   const alert = page.getByRole("alert");
@@ -191,7 +197,7 @@ test("home shows a rejected new conversation as a chat alert", async () => {
   await page.screenshot({ path: "__screenshots__/new-conversation-error.png" });
 });
 
-test("guest bootstrap reaches a usable conversation without account history", async () => {
+test("guest bootstrap displays a fixture conversation without account history", async () => {
   const { fetch } = globalThis;
   vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
     if (input === "/api/eve-guest") {
@@ -206,6 +212,12 @@ test("guest bootstrap reaches a usable conversation without account history", as
   await renderRoute(home, {
     transcripts: { "guest-session": guestTranscript },
   });
+  // This capture checks bootstrap and presentation; EVE replies are fixtures.
+  await expect
+    .element(
+      page.getByText("Hello! How can I help you today?", { exact: true })
+    )
+    .not.toBeInTheDocument();
   await page.getByRole("textbox", { name: "Message" }).fill("Hello");
   await page.getByRole("button", { name: "Send", exact: true }).click();
   await expect

@@ -11,11 +11,17 @@ type OrphanedFile = Awaited<
 
 /** Only inventoried EVE-owned orphans are eligible; legacy storage is untouched.
  * @param {Readonly<Date>} cutoff Objects uploaded before this time may enter the fenced orphan purge.
+ * @param {number} deadline Stop starting new inventory work after this timestamp.
  * @returns {Promise<{ deletedCount: number; skipped: boolean }>} The number of deleted stored files and whether the sweep was skipped.
  */
 export const cleanupEveOrphanedFiles = async (
-  cutoff: Readonly<Date>
-): Promise<{ deletedCount: number; skipped: boolean }> => {
+  cutoff: Readonly<Date>,
+  deadline = Number.POSITIVE_INFINITY
+): Promise<{
+  deletedCount: number;
+  pendingCount?: number;
+  skipped: boolean;
+}> => {
   let deletedCount = 0;
   let batch: string[] = [];
   const errors: unknown[] = [];
@@ -46,7 +52,13 @@ export const cleanupEveOrphanedFiles = async (
       errors.push(error);
     }
   };
+  if (Date.now() >= deadline) {
+    return { deletedCount, pendingCount: 1, skipped: false };
+  }
   for await (const file of iterateStoredFiles()) {
+    if (Date.now() >= deadline) {
+      return { deletedCount, pendingCount: 1, skipped: false };
+    }
     if (isFileStorageKey(file.pathname) && file.uploadedAt < cutoff) {
       batch.push(file.pathname);
       if (batch.length === MAX_ORPHAN_PURGE_BATCH_SIZE) {
@@ -54,6 +66,9 @@ export const cleanupEveOrphanedFiles = async (
         batch = [];
       }
     }
+  }
+  if (Date.now() >= deadline) {
+    return { deletedCount, pendingCount: 1, skipped: false };
   }
   if (batch.length > 0) {
     await purge(batch);

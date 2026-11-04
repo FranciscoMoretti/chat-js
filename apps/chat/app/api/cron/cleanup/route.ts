@@ -23,7 +23,7 @@ export const GET = async (
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   const deadline = Date.now() + DRAIN_BUDGET_MS;
-  let result = await runCleanupJob();
+  let result = await runCleanupJob(deadline);
   for (
     let batch = 1;
     batch < MAX_BATCHES && !result.success && Date.now() < deadline;
@@ -39,7 +39,7 @@ export const GET = async (
       break;
     }
     // oxlint-disable-next-line eslint/no-await-in-loop -- Drain successful batches serially within the scheduler budget.
-    result = await runCleanupJob();
+    result = await runCleanupJob(deadline);
   }
   return NextResponse.json(result, {
     status: result.success ? HTTP_OK : HTTP_SERVICE_UNAVAILABLE,
