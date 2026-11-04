@@ -109,7 +109,7 @@ Releases are driven by Changesets, except for the CLI during its alpha period.
 - Public packages publish to npm.
 - Desktop installers for `@chat-js/electron` publish to GitHub Releases.
 
-The `chat-js` CLI is excluded from automatic Changesets versioning while its APIs are changing. Publish audited CLI prereleases explicitly with `bun publish --tag alpha` from `packages/cli`; consumers use `npx chat-js@alpha`. npm requires a `latest` tag, so it also points to the explicitly approved `1.0.0-alpha.0`; this does not declare a stable release. The release guard permits only that exact prerelease as the default. Before the stable 1.0 launch, remove `chat-js` from `.changeset/config.json`’s `ignore` list, restore the `latest` publish tag, remove the alpha exception from `scripts/release-guard.ts`, and prepare the stable release.
+The `chat-js` CLI is excluded from automatic Changesets versioning while its APIs are changing. Publish audited CLI prereleases explicitly with `bun publish --tag alpha` from `packages/cli`; consumers use `npx chat-js@alpha`. The `latest` tag intentionally also points to the explicitly approved `1.0.0-alpha.0`; this does not declare a stable release. The release guard permits only that exact prerelease as the default. Before the stable 1.0 launch, remove `chat-js` from `.changeset/config.json`’s `ignore` list, restore the `latest` publish tag, remove the alpha exception from `scripts/release-guard.ts`, and prepare the stable release.
 
 Configure the `chat-js` package’s GitHub Actions trusted publisher on npm for owner `FranciscoMoretti`, repository `chat-js`, and workflow `release.yml`, without a GitHub environment. Trusted publisher settings are specific to each npm package.
 

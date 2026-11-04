@@ -8,7 +8,7 @@ Guest Chat lets visitors try one inexpensive text model at `/`. The browser keep
 ## Installation
 
 ```bash
-bunx chat-js add guest-chat
+bunx chat-js@alpha add guest-chat
 ```
 
 Before accepting guest traffic, configure the shared EVE runtime and a PostgreSQL deletion lifecycle with verified write and queue fences. Run `bun eve:setup` and apply your generated database migration. Bootstrap returns HTTP 503 when the deployment cannot verify safe deletion.

@@ -95,8 +95,8 @@ const queryPublishedPackage = async (
 // Changesets defaults to latest even when publishConfig.tag specifies a
 // prerelease channel. It may enter the ordinary release path only after every
 // local prerelease is already published; Changesets then skips those versions.
-// npm requires a latest tag for the transferred CLI. This exact alpha was
-// explicitly approved as its default; future prereleases need a fresh review.
+// This exact alpha was explicitly approved as the transferred CLI default.
+// Pointing latest to another prerelease needs a fresh review.
 const approvedPrereleaseDefaults = new Map([["chat-js", "1.0.0-alpha.0"]]);
 
 export const assertPrereleasesPublished = async (
