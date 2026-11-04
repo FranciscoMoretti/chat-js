@@ -19,7 +19,7 @@ Enable your AI to search the web in real-time and provide answers with inline ci
 Install the capability in your app:
 
 ```bash
-bunx @chat-js/cli@latest add tavily-search
+bunx chat-js@alpha add tavily-search
 ```
 
 ## Environment Variables
@@ -27,7 +27,7 @@ bunx @chat-js/cli@latest add tavily-search
 Select a search tool when creating the app:
 
 ```bash
-bunx @chat-js/cli create my-app --search-tool tavily-search
+bunx chat-js@alpha create my-app --search-tool tavily-search
 # Or: --search-tool firecrawl-search
 ```
 
@@ -114,7 +114,7 @@ The selected implementation lives in `chatjs/tools/<id>/tool.ts`. Edit its typed
 Replace the exclusive search provider explicitly:
 
 ```bash
-bunx @chat-js/cli@latest add firecrawl-search --replace
+bunx chat-js@alpha add firecrawl-search --replace
 ```
 
 Sync requires exactly one installed search selection when search is used. It generates the registration indexes in `chatjs/generated/tools.ts` and `ui.ts`, and `providers.ts` for the shared chat/research provider. Do not edit generated files. An unused native package can be removed after checking that no other tool uses it. Firecrawl may also be needed by URL retrieval.
@@ -126,7 +126,7 @@ A separate `retrieveUrl` tool is available for fetching structured content from 
 Install URL retrieval separately:
 
 ```bash
-bunx @chat-js/cli@latest add retrieve-url
+bunx chat-js@alpha add retrieve-url
 ```
 
 The tool extracts:

@@ -50,9 +50,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
           NPM_CONFIG_PROVENANCE: true
 
-      # Trusted publishing cannot create a package's first version, and it is
-      # only configured for @chat-js/cli today. Finish any unpublished packages
-      # with the classic token so a partial Changesets publish cannot leave
+      # Configure chat-js on npm to trust this repository and release.yml.
+      # Trusted publishing cannot create a package's first version. Use the
+      # classic token for unpublished packages so a partial publish cannot leave
       # @chat-js/thread (or similar first releases) off npm. Do not publish
       # the old version while Changesets is still preparing a version PR.
       - name: Publish first-time packages
@@ -72,7 +72,7 @@ jobs:
             version="$(node -p "require('./${workspace_dir}/package.json').version")"
             tag="${name}@${version}"
             if [[ "${version%%+*}" == *-* ]]; then
-              echo "::error::Publish audited prereleases explicitly with --tag beta; the stable fallback cannot publish ${tag}."
+              echo "::error::Publish audited prereleases explicitly with their prerelease tag; the stable fallback cannot publish ${tag}."
               return 1
             fi
 

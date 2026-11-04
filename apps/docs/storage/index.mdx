@@ -21,13 +21,13 @@ Durable file storage is required when you enable any of these capabilities:
 The interactive installer asks you to choose a file storage provider when your selected features require one:
 
 ```bash
-npx @chat-js/cli@latest create my-app
+npx chat-js@alpha create my-app
 ```
 
 For a non-interactive installation, pass a provider slug and any non-secret adapter options:
 
 ```bash
-npx @chat-js/cli@latest create my-app \
+npx chat-js@alpha create my-app \
   --storage-provider s3 \
   --storage-config '{"bucket":"uploads","region":"us-east-1"}'
 ```
@@ -46,7 +46,7 @@ The installer omits adapters that are not suitable for its generated production 
 You can also select a third-party registry item with a namespace, HTTPS URL, or local JSON path:
 
 ```bash
-npx @chat-js/cli@latest create my-app --yes \
+npx chat-js@alpha create my-app --yes \
   --storage-provider https://example.com/r/acme-storage.json \
   --storage-config '{"bucket":"uploads"}'
 ```
@@ -124,7 +124,7 @@ See [Environment variables](../reference/env-vars) for the ChatJS-wide rules.
 Vercel Blob is the default durable provider for generated ChatJS apps. Connect a Blob store to your Vercel project to receive `BLOB_READ_WRITE_TOKEN` automatically, or set the token in `.env.local` for local development.
 
 ```bash
-npx @chat-js/cli@latest create my-app \
+npx chat-js@alpha create my-app \
   --storage-provider vercel-blob
 ```
 

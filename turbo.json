@@ -113,7 +113,7 @@
       "cache": false,
       "dependsOn": ["electron:build"]
     },
-    "@chat-js/cli#build": {
+    "chat-js#build": {
       "dependsOn": ["^build"],
       "inputs": [
         "$TURBO_DEFAULT$",
@@ -135,7 +135,7 @@
       ],
       "outputs": ["dist/**", "templates/**"]
     },
-    "@chat-js/cli#test:unit": {
+    "chat-js#test:unit": {
       "dependsOn": ["build"],
       "outputs": ["templates/**"],
       "inputs": [
@@ -157,7 +157,7 @@
         "$TURBO_ROOT$/packages/registry-validation/package.json"
       ]
     },
-    "@chat-js/cli#test:scaffold": {
+    "chat-js#test:scaffold": {
       "dependsOn": ["test:unit"],
       "cache": false,
       "inputs": [
@@ -198,7 +198,7 @@
         "$TURBO_ROOT$/packages/registry-validation/package.json"
       ]
     },
-    "@chat-js/cli#test:types": {
+    "chat-js#test:types": {
       "dependsOn": ["^test:types"],
       "inputs": [
         "$TURBO_DEFAULT$",

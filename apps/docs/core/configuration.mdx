@@ -52,10 +52,10 @@ Model settings do not install their tools. Follow-up suggestions retain an `enab
 Run commands inside your generated app, using the CLI version appropriate to your installation:
 
 ```bash
-bunx @chat-js/cli@latest add tavily-search deep-research
-bunx @chat-js/cli@latest add code-documents saved-code-execution
-bunx @chat-js/cli@latest add attachment-uploads --storage-provider vercel-blob
-bunx @chat-js/cli@latest add mcp
+bunx chat-js@alpha add tavily-search deep-research
+bunx chat-js@alpha add code-documents saved-code-execution
+bunx chat-js@alpha add attachment-uploads --storage-provider vercel-blob
+bunx chat-js@alpha add mcp
 ```
 
 | Installation | Requirements |
@@ -75,9 +75,9 @@ Planning resolves transitive registry dependencies and validates the resulting s
 Gateway selection installs `chatjs/providers/gateway.ts` and its typed defaults. Changing only `ai.gateway` cannot switch providers:
 
 ```bash
-bunx @chat-js/cli@latest add --gateway openai --replace
-bunx @chat-js/cli@latest add firecrawl-search --replace
-bunx @chat-js/cli@latest add tavily-search --replace
+bunx chat-js@alpha add --gateway openai --replace
+bunx chat-js@alpha add firecrawl-search --replace
+bunx chat-js@alpha add tavily-search --replace
 ```
 
 Replacement requires `--replace`. Modified or untracked provider source requires review and explicit `--overwrite`. Keep a version-control checkpoint before replacing customized source. The CLI preserves runtime model overrides, so review their IDs for the selected gateway and run `bun run setup` and `bun run fetch:models` after supplying credentials. Registry addresses can select external providers too. The CLI removes unused dependency entries that its installation receipt owns, and refreshes its marked environment-example sections. It preserves pre-existing dependencies, user-changed versions, dependencies referenced by remaining source and environment entries outside those sections. ChatJS supports new installations rather than upgrades from older templates.
@@ -87,7 +87,7 @@ Search replacement uses the same `webSearch` slot for direct search and research
 A reproducible minimal scaffold omits document tools as well as optional integrations:
 
 ```bash
-bunx @chat-js/cli@latest create minimal-chat --yes --no-documents --no-mcp --no-attachments --no-electron
+bunx chat-js@alpha create minimal-chat --yes --no-documents --no-mcp --no-attachments --no-electron
 ```
 
 ## Runtime policy and credentials

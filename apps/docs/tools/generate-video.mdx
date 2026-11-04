@@ -6,7 +6,7 @@ description: Install video generation using your selected gateway and storage
 ## Select during creation
 
 ```bash
-npx @chat-js/cli@latest create my-app --yes --video-generation-tool generate-video
+npx chat-js@alpha create my-app --yes --video-generation-tool generate-video
 ```
 
 Choose the built-in gateway implementation or an external registry item. The built-in tool needs a [gateway](../gateways/overview) supporting video models, a configured `ai.tools.video.default`, and durable [file storage](../storage).
@@ -16,7 +16,7 @@ Choose the built-in gateway implementation or an external registry item. The bui
 In a ChatJS app with registry-based media tools:
 
 ```bash
-npx @chat-js/cli@latest add generate-video
+npx chat-js@alpha add generate-video
 ```
 
 Enable `ai.tools.video.enabled` and configure its default model in `chat.config.ts`. You receive `chatjs/tools/generate-video/tool.ts`, `renderer.tsx`, and `chatjs.json`. Sync generates registrations and credential requirements. Fresh apps without video generation receive neither the built-in tool nor its renderer.
@@ -30,7 +30,7 @@ The installed tool resolves the selected model through the native tool helpers a
 ## External implementations
 
 ```bash
-npx @chat-js/cli@latest create my-app --yes \
+npx chat-js@alpha create my-app --yes \
   --video-generation-tool https://example.com/r/video-tool.json
 ```
 

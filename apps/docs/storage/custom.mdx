@@ -48,7 +48,7 @@ Declare `files-sdk` and your provider's peer packages under `dependencies`. List
 Publish the generated JSON through your registry, then run:
 
 ```bash
-npx @chat-js/cli@latest create my-app --yes \
+npx chat-js@alpha create my-app --yes \
   --storage-provider https://example.com/r/acme-storage.json \
   --storage-config '{"bucket":"uploads","region":"us-east-1"}'
 ```

@@ -64,13 +64,13 @@ If you are distributing your own fork to end users, see [macOS Distribution Note
 
 ## Scaffold with the CLI
 
-When you run `npx @chat-js/cli@latest create`, the CLI asks:
+When you run `npx chat-js@alpha create`, the CLI asks:
 
 ```bash
 Include an Electron desktop app? › No / Yes
 ```
 
-Choosing **Yes** installs the [Desktop plugin](../plugins/desktop) in the web app and copies an `electron/` companion into your project. To add both to an existing app, run `bunx @chat-js/cli@latest add desktop`. An existing companion directory is preserved.
+Choosing **Yes** installs the [Desktop plugin](../plugins/desktop) in the web app and copies an `electron/` companion into your project. To add both to an existing app, run `bunx chat-js@alpha add desktop`. An existing companion directory is preserved.
 
 ```text
 my-app/
@@ -207,20 +207,22 @@ bun run package
 
 ## Release Flow
 
-In the ChatJS monorepo, Changesets is the only release mechanism for both npm packages and desktop artifacts.
+In the ChatJS monorepo, use Changesets to version npm packages and desktop artifacts. The CLI follows a separate manual release process during its alpha period.
 
 The release flow is:
 
 1. Add a changeset that includes `@chat-js/electron`
 2. Let the Changesets workflow open the version PR
 3. Merge that version PR
-4. The npm release workflow publishes any changed public packages, including `@chat-js/cli`
+4. The npm release workflow publishes the public packages versioned by Changesets. It excludes the `chat-js` CLI during alpha
 5. The desktop artifact workflow reads the new `apps/electron/package.json` version, builds macOS, Windows, and Linux artifacts, and publishes them to GitHub Releases under the package-scoped tag `@chat-js/electron@<version>`
 
-That keeps versioning, changelogs, and release triggering consistent across the repository. The only difference is the publish destination:
+That keeps versioning, changelogs, and release triggering consistent for packages managed by Changesets. The publish destinations are:
 
-- `@chat-js/cli` publishes to npm
+- Shared public packages publish to npm
 - `@chat-js/electron` publishes installers to GitHub Releases
+
+For CLI changes during alpha, first update `packages/cli/package.json` to the next unused alpha version, such as `1.0.0-alpha.1`, and run `bun install` to synchronize the lockfile. Then publish the audited prerelease manually from `packages/cli` with `bun publish --tag alpha`. Verify that `chat-js@alpha` resolves to that version. Merging a Changesets version PR does not publish those CLI changes.
 
 For a concrete reference, see the workflow used in this repository:
 

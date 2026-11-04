@@ -42,6 +42,7 @@ const pages = [
   { name: "generate-image", path: "/docs/tools/generate-image" },
   { name: "generate-video", path: "/docs/tools/generate-video" },
   { name: "quickstart", path: "/docs/quickstart" },
+  { name: "cli", path: "/docs/cli" },
   { name: "changelog", path: "/docs/changelog" },
   { name: "cookbook", path: "/docs/cookbook" },
   { name: "features", path: "/docs/features/overview" },

@@ -39,10 +39,7 @@ const sandboxArchive = nodePath.join(
   `chat-js-sandboxes-${sandboxPackage.version}.tgz`
 );
 const cliDirectory = nodePath.join(import.meta.dir, "..");
-const cliEntry = nodePath.join(
-  root,
-  "cli/node_modules/@chat-js/cli/dist/index.js"
-);
+const cliEntry = nodePath.join(root, "cli/node_modules/chat-js/dist/index.js");
 const archive = nodePath.join(
   root,
   `chat-js-gateways-${gatewayPackage.version}.tgz`
@@ -425,7 +422,7 @@ beforeAll(async () => {
     nodePath.join(root, "cli/package.json"),
     JSON.stringify({
       dependencies: {
-        "@chat-js/cli": `file:${nodePath.join(root, `chat-js-cli-${cliPackage.version}.tgz`)}`,
+        "chat-js": `file:${nodePath.join(root, `chat-js-${cliPackage.version}.tgz`)}`,
       },
       overrides: {
         "@chat-js/gateways": `file:${archive}`,

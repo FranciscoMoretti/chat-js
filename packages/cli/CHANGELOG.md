@@ -1,4 +1,8 @@
-# @chat-js/cli
+# chat-js
+
+## 1.0.0-alpha.0
+
+Start the 1.0 alpha series under the transferred `chat-js` package name, based on the current main branch. Install with `npx chat-js@alpha create my-app`. APIs and generated source remain subject to substantial changes before the stable 1.0 release.
 
 ## 0.9.0-beta.2
 
