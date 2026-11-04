@@ -11,7 +11,7 @@ Guest Chat lets visitors try one inexpensive text model at `/`. The browser keep
 bunx chat-js@alpha add guest-chat
 ```
 
-Configure the shared EVE runtime and apply your generated database migration. Guests request native EVE retention `0` on every backend. ChatJS expires access and ends sessions; the selected Workflow World owns payload retention. Guest admission does not require PostgreSQL purge fences.
+Configure the shared EVE runtime and apply your generated database migration. Guests request native EVE retention `0` on every backend. ChatJS expires access and ends sessions. The selected Workflow World owns payload retention. Guest admission does not require PostgreSQL purge fences.
 
 The pinned PostgreSQL World (`5.0.0-beta.40`) accepts retention `0` but does not delete payloads. PostgreSQL guest content remains stored pending provider support or separate operator removal. Vercel enforces its provider retention policy. Successful ChatJS cleanup means session retirement and credential-policy completion, not verified payload erasure.
 
@@ -37,9 +37,9 @@ Guests and accounts use the same EVE agent. The plugin authenticates signed cred
 
 There is no per-session message-credit balance. Failed or ambiguous sends still consume admission capacity. Guests cannot use tools, files, projects, comparisons, account APIs, or account billing. Provider middleware also rejects non-text inputs and tool output, independently of the UI.
 
-Retirement on unload and New chat is best effort. Scheduled cleanup verifies native session ending or explicit expiry and revokes its local policy. It reports `retiredCount` on both backends and never claims payload deletion. Local policy metadata remains for retries; rate buckets expire after two days. Guest cleanup no longer performs PostgreSQL queue/payload purge or installs late-write fences. Account deletion keeps its existing safeguards.
+Retirement on unload and New chat is best effort. Scheduled cleanup verifies native session ending or explicit expiry and revokes its local policy. It reports `retiredCount` on both backends and never claims payload deletion. Local policy metadata remains for retries. Rate buckets expire after two days. Guest cleanup no longer performs PostgreSQL queue/payload purge or installs late-write fences. Account deletion keeps its existing safeguards.
 
-The plugin installs `agent/instrumentation/guest-retention.ts` to omit guest input/output trace capture, including in development. EVE derives retention `0` from that policy. Non-guest trace policy and retention are unchanged. If you customize EVE instrumentation, keep a single `otel()` declaration and preserve this guest rule; an agent-wide retention override takes precedence.
+The plugin installs `agent/instrumentation/guest-retention.ts` to omit guest input/output trace capture, including in development. EVE derives retention `0` from that policy. Non-guest trace policy and retention are unchanged. If you customize EVE instrumentation, keep a single `otel()` declaration and preserve this guest rule. An agent-wide retention override takes precedence.
 
 ## Source and customization
 
