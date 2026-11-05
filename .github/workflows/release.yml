@@ -16,6 +16,10 @@ jobs:
   release:
     name: Release
     runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+      id-token: write
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -45,11 +49,17 @@ jobs:
       # both versions are on npm.
       - name: Publish matched gateway registry and CLI
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NPM_CONFIG_PROVENANCE: false
+          NPM_CONFIG_PROVENANCE: true
         run: |
           set -euo pipefail
-          printf '//registry.npmjs.org/:_authToken=%s\n' "$NODE_AUTH_TOKEN" > "$HOME/.npmrc"
+          export PATH="$HOME/.npm-global/bin:$PATH"
+          echo "npm $(npm --version) ($(command -v npm))"
+          if [ -n "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ]; then
+            echo "GitHub OIDC token endpoint is available"
+          else
+            echo "::error::GitHub OIDC token endpoint is missing; trusted publishing cannot sign in."
+            exit 1
+          fi
 
           publish_exact() {
             local workspace_dir="$1"
