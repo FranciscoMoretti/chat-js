@@ -45,9 +45,11 @@ jobs:
       # both versions are on npm.
       - name: Publish matched gateway registry and CLI
         env:
-          NPM_CONFIG_PROVENANCE: true
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: false
         run: |
           set -euo pipefail
+          printf '//registry.npmjs.org/:_authToken=%s\n' "$NODE_AUTH_TOKEN" > "$HOME/.npmrc"
 
           publish_exact() {
             local workspace_dir="$1"
