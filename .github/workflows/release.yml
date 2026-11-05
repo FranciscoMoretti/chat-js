@@ -60,22 +60,15 @@ jobs:
               echo "Skipping ${name}; version is ${version}, not ${expected}"
               return 0
             fi
-            if lookup="$(npm view "${name}@${version}" version --json)"; then
+            if lookup="$(npm view "${name}@${version}" version --json 2>&1)"; then
               echo "${name}@${version} already on npm"
-            else
-              if ! printf '%s' "$lookup" | node -e '
-                let input = "";
-                process.stdin.on("data", chunk => input += chunk);
-                process.stdin.on("end", () => {
-                  try { process.exit(JSON.parse(input).error?.code === "E404" ? 0 : 1); }
-                  catch { process.exit(1); }
-                });
-              '; then
-                echo "::error::Could not query npm for ${name}@${version}; refusing to treat a registry/authentication failure as a missing version."
-                return 1
-              fi
+            elif printf '%s' "$lookup" | grep -q 'E404'; then
               echo "Publishing ${name}@${version} on tag ${tag}"
-              npm publish --workspace "${name}" --access public --tag "${tag}"
+              (cd "${workspace_dir}" && npm publish --access public --tag "${tag}")
+            else
+              echo "::error::Could not query npm for ${name}@${version}; refusing to treat a registry/authentication failure as a missing version."
+              printf '%s\n' "$lookup"
+              return 1
             fi
           }
 
