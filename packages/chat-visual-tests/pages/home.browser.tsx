@@ -149,10 +149,20 @@ test("signed-in composer options expose uploads with the native menu", async () 
   await expect
     .element(page.getByText("How can I help you today?"))
     .toBeVisible();
+  // The composer focuses itself on mount and again 120 ms later (useAutoFocus's
+  // fallback); open the menu after both, or the second one pulls focus out of it.
+  await expect
+    .element(page.getByRole("textbox", { name: "Message" }))
+    .toHaveFocus();
+  // oxlint-disable-next-line promise/avoid-new -- setTimeout has no promise form in the browser.
+  await new Promise((resolve) => {
+    setTimeout(resolve, 150);
+  });
   await page.getByRole("button", { name: "Composer options" }).click();
   await expect
     .element(page.getByRole("menuitem", { name: "Attach files" }))
     .toBeVisible();
+  await expect.element(page.getByRole("menu")).toHaveFocus();
   const items = [...document.querySelectorAll('[role="menuitem"]')].map(
     (item) => item.textContent
   );
