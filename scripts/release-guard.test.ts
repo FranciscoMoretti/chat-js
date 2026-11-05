@@ -111,7 +111,7 @@ test("discovers public workspace prereleases and retains their configured regist
 });
 
 test("allows an audited alpha before the first stable release", async () => {
-  const alpha = { ...beta, version: "1.0.0-alpha.0", tag: "alpha" };
+  const alpha = { ...beta, version: "1.0.0-alpha.1", tag: "alpha" };
   await assertPrereleasesPublished(
     [alpha],
     async () =>
@@ -131,27 +131,27 @@ test("allows an audited alpha before the first stable release", async () => {
 });
 
 test("allows a later alpha while latest retains the approved default", async () => {
-  const alpha = { ...beta, version: "1.0.0-alpha.1", tag: "alpha" };
+  const alpha = { ...beta, version: "1.0.0-alpha.2", tag: "alpha" };
   await assertPrereleasesPublished(
     [alpha],
     async () =>
       await Promise.resolve({
         version: alpha.version,
-        "dist-tags": { latest: "1.0.0-alpha.0", alpha: alpha.version },
+        "dist-tags": { latest: "1.0.0-alpha.1", alpha: alpha.version },
       })
   );
 });
 
-for (const tags of [{}, { alpha: "1.0.0-alpha.0" }]) {
+for (const tags of [{}, { alpha: "1.0.0-alpha.1" }]) {
   test(`rejects a missing or stale configured alpha tag: ${JSON.stringify(tags)}`, async () => {
-    const alpha = { ...beta, version: "1.0.0-alpha.1", tag: "alpha" };
+    const alpha = { ...beta, version: "1.0.0-alpha.2", tag: "alpha" };
     const message = await rejectionMessage(async () => {
       await assertPrereleasesPublished(
         [alpha],
         async () =>
           await Promise.resolve({
             version: alpha.version,
-            "dist-tags": { latest: "1.0.0-alpha.0", ...tags },
+            "dist-tags": { latest: "1.0.0-alpha.1", ...tags },
           })
       );
     });
@@ -160,7 +160,7 @@ for (const tags of [{}, { alpha: "1.0.0-alpha.0" }]) {
 }
 
 for (const entry of [
-  { ...beta, version: "1.0.0-alpha.1" },
+  { ...beta, version: "1.0.0-alpha.2" },
   { ...beta, name: "another-package", version: "1.0.0-alpha.0" },
 ]) {
   test(`rejects unapproved prerelease defaults for ${entry.name}@${entry.version}`, async () => {

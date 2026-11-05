@@ -39,6 +39,52 @@ jobs:
           npm install --global npm@latest --prefix ~/.npm-global
           echo "$HOME/.npm-global/bin" >> "$GITHUB_PATH"
 
+      # Local tokens cannot publish these packages. This workflow is the trusted
+      # publisher. Publish the matched pair before Changesets: alpha.0 fetches
+      # registry 0.2.0-beta.2 and rejects every gateway. Remove this step after
+      # both versions are on npm.
+      - name: Publish matched gateway registry and CLI
+        env:
+          NPM_CONFIG_PROVENANCE: true
+        run: |
+          set -euo pipefail
+
+          publish_exact() {
+            local workspace_dir="$1"
+            local expected="$2"
+            local name version tag lookup
+            name="$(node -p "require('./${workspace_dir}/package.json').name")"
+            version="$(node -p "require('./${workspace_dir}/package.json').version")"
+            tag="$(node -p "require('./${workspace_dir}/package.json').publishConfig?.tag ?? 'latest'")"
+            if [ "${version}" != "${expected}" ]; then
+              echo "Skipping ${name}; version is ${version}, not ${expected}"
+              return 0
+            fi
+            if lookup="$(npm view "${name}@${version}" version --json)"; then
+              echo "${name}@${version} already on npm"
+            else
+              if ! printf '%s' "$lookup" | node -e '
+                let input = "";
+                process.stdin.on("data", chunk => input += chunk);
+                process.stdin.on("end", () => {
+                  try { process.exit(JSON.parse(input).error?.code === "E404" ? 0 : 1); }
+                  catch { process.exit(1); }
+                });
+              '; then
+                echo "::error::Could not query npm for ${name}@${version}; refusing to treat a registry/authentication failure as a missing version."
+                return 1
+              fi
+              echo "Publishing ${name}@${version} on tag ${tag}"
+              npm publish --workspace "${name}" --access public --tag "${tag}"
+            fi
+          }
+
+          publish_exact packages/registry 0.2.0-beta.3
+          publish_exact packages/cli 1.0.0-alpha.1
+          if [ "$(node -p "require('./packages/cli/package.json').version")" = "1.0.0-alpha.1" ]; then
+            npm dist-tag add chat-js@1.0.0-alpha.1 latest
+          fi
+
       - name: Create Release Pull Request or Publish
         id: changesets
         uses: changesets/action@v1

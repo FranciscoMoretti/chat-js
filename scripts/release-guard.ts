@@ -95,9 +95,10 @@ const queryPublishedPackage = async (
 // Changesets defaults to latest even when publishConfig.tag specifies a
 // prerelease channel. It may enter the ordinary release path only after every
 // local prerelease is already published; Changesets then skips those versions.
-// This exact alpha was explicitly approved as the transferred CLI default.
-// Pointing latest to another prerelease needs a fresh review.
-const approvedPrereleaseDefaults = new Map([["chat-js", "1.0.0-alpha.0"]]);
+// 1.0.0-alpha.1 is the approved default. 1.0.0-alpha.0 fetches registry
+// 0.2.0-beta.2 and rejects every gateway because those items still install
+// lib/ai/gateway.ts. Pointing latest to another prerelease needs a fresh review.
+const approvedPrereleaseDefaults = new Map([["chat-js", "1.0.0-alpha.1"]]);
 
 export const assertPrereleasesPublished = async (
   packages: readonly ReleasePackage[],
