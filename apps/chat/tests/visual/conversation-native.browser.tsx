@@ -42,6 +42,8 @@ const Transcript = ({
   readonly items: readonly ReadonlyEveMessage[];
 }) => (
   <TooltipProvider>
+    {/* Offscreen rows skip layout (content-visibility: auto) and keep their real height only once painted, which varies; lay every row out. */}
+    <style>{`[data-slot="message-scroller-item"] { content-visibility: visible; }`}</style>
     <div style={{ width: 640, height: 420 }}>
       <MessageScrollerProvider autoScroll>
         <MessageScroller>
@@ -142,6 +144,29 @@ test("native transcript follows streaming, releases manual scroll, and preserves
       .poll(() => Math.abs(existing.getBoundingClientRect().top - anchorTop))
       .toBeLessThan(3);
     expect(fixture.container.contains(existing)).toBe(true);
+    // The pointer is still where "Scroll to end" was clicked, and whether the browser
+    // has moved its hover from the transcript back onto the button varies; put it there.
+    await page.getByRole("button", { name: "Scroll to end" }).hover();
+    // The browser's scroll anchoring and the scroller's own correction land a frame
+    // and a pixel apart, in either order. Let both land, then settle on the anchor.
+    let previous = Number.NaN;
+    let unchanged = 0;
+    await expect
+      .poll(
+        () => {
+          unchanged = viewport.scrollTop === previous ? unchanged + 1 : 0;
+          previous = viewport.scrollTop;
+          return unchanged;
+        },
+        { interval: 50 }
+      )
+      .toBeGreaterThanOrEqual(3);
+    act(() => {
+      viewport.scrollTop += existing.getBoundingClientRect().top - anchorTop;
+    });
+    await expect
+      .poll(() => existing.getBoundingClientRect().top - anchorTop)
+      .toBe(0);
     await takeSnapshot("native-conversation-history-and-streaming");
     await page.elementLocator(fixture.container).screenshot();
 
