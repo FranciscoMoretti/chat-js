@@ -48,6 +48,8 @@ jobs:
       # publisher on both @chat-js/registry and chat-js. Remove this step after
       # 0.2.0-beta.3 and 1.0.0-alpha.1 are on npm.
       - name: Publish matched gateway registry and CLI
+        id: gateway-pair
+        continue-on-error: true
         env:
           NPM_CONFIG_PROVENANCE: true
         run: |
@@ -90,9 +92,10 @@ jobs:
 
       - name: Create Release Pull Request or Publish
         id: changesets
+        if: always()
         uses: changesets/action@v1
         with:
-          publish: bun run release
+          publish: ${{ steps.gateway-pair.outcome == 'success' && 'bun run release' || '' }}
           title: "chore: version releases"
           commit: "chore: version releases"
         env:
