@@ -1,5 +1,11 @@
 # @chat-js/registry
 
+## 0.2.0-beta.3
+
+### Beta Changes
+
+- Install gateway adapters at `chatjs/providers/gateway.ts` to match the ChatJS 1.0-alpha CLI.
+
 ## 0.2.0-beta.2
 
 ### Beta Changes

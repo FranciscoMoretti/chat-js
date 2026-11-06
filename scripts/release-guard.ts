@@ -97,7 +97,7 @@ const queryPublishedPackage = async (
 // local prerelease is already published; Changesets then skips those versions.
 // This exact alpha was explicitly approved as the transferred CLI default.
 // Pointing latest to another prerelease needs a fresh review.
-const approvedPrereleaseDefaults = new Map([["chat-js", "1.0.0-alpha.0"]]);
+const approvedPrereleaseDefaults = new Map([["chat-js", "1.0.0-alpha.1"]]);
 
 export const assertPrereleasesPublished = async (
   packages: readonly ReleasePackage[],

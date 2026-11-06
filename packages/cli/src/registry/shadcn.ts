@@ -9,11 +9,11 @@ import type { Config } from "shadcn/schema";
 import path from "node:path";
 import { optionalFile } from "#cli/utils/installation-files";
 import { resolveNativeProjectConfig } from "#cli/helpers/native-project-config";
+import registryPackage from "../../../registry/package.json";
 
 import { withRegistryTransport } from "./transport";
 
-const registryUrl =
-  "https://unpkg.com/@chat-js/registry@0.2.0-beta.2/dist/r/{name}.json";
+const registryUrl = `https://unpkg.com/${registryPackage.name}@${registryPackage.version}/dist/r/{name}.json`;
 
 const registryConfig = async (
   cwd: string

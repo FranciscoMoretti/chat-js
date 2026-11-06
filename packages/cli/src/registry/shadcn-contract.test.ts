@@ -1,8 +1,21 @@
 import { expect, test } from "bun:test";
-import { installItems, listTools, readItem, registryConfig } from "./shadcn";
+import {
+  installItems,
+  listTools,
+  readItem,
+  registryConfig,
+  registryUrl,
+} from "./shadcn";
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { tmpdir } from "node:os";
+import registryPackage from "../../../registry/package.json";
+
+test("default registry URL uses the checked-in registry release", () => {
+  expect(registryUrl).toBe(
+    `https://unpkg.com/${registryPackage.name}@${registryPackage.version}/dist/r/{name}.json`
+  );
+});
 
 const createConfigFixture = async (registry: unknown): Promise<string> => {
   const root = await mkdtemp(path.join(tmpdir(), "shadcn-metadata-"));
@@ -145,12 +158,12 @@ test("installing an immutable source selection leaves caller ownership intact", 
 const CHILD_EXIT_SUCCESS = 0;
 const registryConfigInProcess = async (
   root: string,
-  registryUrl: string
+  overrideRegistryUrl: string
 ): Promise<unknown> => {
   const modulePath = path.join(import.meta.dir, "shadcn.ts");
   const script = `const { registryConfig } = await import(${JSON.stringify(modulePath)}); console.log(JSON.stringify(await registryConfig(${JSON.stringify(root)})));`;
   const child = Bun.spawn([process.execPath, "-e", script], {
-    env: { CHATJS_REGISTRY_URL: registryUrl },
+    env: { CHATJS_REGISTRY_URL: overrideRegistryUrl },
     stderr: "pipe",
     stdout: "pipe",
   });

@@ -1,0 +1,65 @@
+name: Publish prerelease
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: npm-prerelease
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    name: Publish matched registry and CLI
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.1
+
+      - run: bun install --frozen-lockfile
+      - run: bun lint
+      - run: bun test:types
+      - run: bun run --cwd packages/registry check
+
+      - name: Publish the matching prereleases
+        env:
+          NPM_CONFIG_PROVENANCE: true
+        run: |
+          set -euo pipefail
+
+          publish() {
+            local workspace="$1"
+            local tag="$2"
+            local name version
+            name="$(node -p "require('./${workspace}/package.json').name")"
+            version="$(node -p "require('./${workspace}/package.json').version")"
+
+            if npm view "${name}@${version}" version >/dev/null 2>&1; then
+              echo "${name}@${version} is already published"
+            else
+              npm publish --workspace "${name}" --tag "${tag}" --access public
+            fi
+
+            test "$(npm view "${name}@${version}" version)" = "${version}"
+          }
+
+          publish packages/registry beta
+          publish packages/cli alpha
+
+          cli_version="$(node -p "require('./packages/cli/package.json').version")"
+          npm dist-tag add "chat-js@${cli_version}" latest
