@@ -44,22 +44,10 @@ jobs:
           npm install --global npm@latest --prefix ~/.npm-global
           echo "$HOME/.npm-global/bin" >> "$GITHUB_PATH"
 
-      - name: Create Release Pull Request or Publish
-        id: changesets
-        uses: changesets/action@v1
-        with:
-          publish: bun run release
-          title: "chore: version releases"
-          commit: "chore: version releases"
-        env:
-          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
-          NPM_CONFIG_PROVENANCE: true
-
       # Tokens cannot publish these packages. release.yml must be a trusted
       # publisher on both @chat-js/registry and chat-js. Remove this step after
       # 0.2.0-beta.3 and 1.0.0-alpha.1 are on npm.
       - name: Publish matched gateway registry and CLI
-        if: always() && steps.changesets.outcome == 'success'
         env:
           NPM_CONFIG_PROVENANCE: true
         run: |
@@ -99,6 +87,17 @@ jobs:
           if [ "$(node -p "require('./packages/cli/package.json').version")" = "1.0.0-alpha.1" ]; then
             npm dist-tag add chat-js@1.0.0-alpha.1 latest
           fi
+
+      - name: Create Release Pull Request or Publish
+        id: changesets
+        uses: changesets/action@v1
+        with:
+          publish: bun run release
+          title: "chore: version releases"
+          commit: "chore: version releases"
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+          NPM_CONFIG_PROVENANCE: true
 
       # Configure chat-js on npm to trust this repository and release.yml.
       # Trusted publishing cannot create a package's first version. Use the
