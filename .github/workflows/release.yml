@@ -44,32 +44,50 @@ jobs:
           npm install --global npm@latest --prefix ~/.npm-global
           echo "$HOME/.npm-global/bin" >> "$GITHUB_PATH"
 
-      - name: Create Release Pull Request or Publish
-        id: changesets
-        uses: changesets/action@v1
-        with:
-          publish: bun run release
-          title: "chore: version releases"
-          commit: "chore: version releases"
-        env:
-          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
-          NPM_CONFIG_PROVENANCE: true
-
       # Tokens cannot publish these packages. release.yml must be a trusted
-      # publisher on both @chat-js/registry and chat-js. Remove this step after
-      # 0.2.0-beta.3 and 1.0.0-alpha.1 are on npm.
+      # publisher on both @chat-js/registry and chat-js. Run this before
+      # Changesets: that action rewrites the registry prerelease to the next
+      # stable version in the worktree, and this step must publish the commit
+      # on main. Remove this step after 0.2.0-beta.3 and 1.0.0-alpha.1 are on npm.
       - name: Publish matched gateway registry and CLI
-        if: always() && steps.changesets.outcome == 'success'
+        id: gateway-publish
         env:
           NPM_CONFIG_PROVENANCE: true
         run: |
           set -euo pipefail
           export PATH="$HOME/.npm-global/bin:$PATH"
           echo "npm $(npm --version) ($(command -v npm))"
-          if [ -z "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ]; then
+          if [ -z "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ] || [ -z "${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}" ]; then
             echo "::error::GitHub OIDC token endpoint is missing; trusted publishing cannot sign in."
             exit 1
           fi
+
+          require_trusted_publisher() {
+            local name="$1"
+            local id_json token encoded body_file status message
+            id_json="$(curl -fsS \
+              -H "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" \
+              -H "Accept: application/json" \
+              "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=npm:registry.npmjs.org")"
+            token="$(printf '%s' "$id_json" | node -e 'let s="";process.stdin.on("data",c=>s+=c);process.stdin.on("end",()=>{const v=JSON.parse(s).value; if(!v) process.exit(1); process.stdout.write(v)})')"
+            encoded="$(node -e 'process.stdout.write(encodeURIComponent(process.argv[1]))' "$name")"
+            body_file="$(mktemp)"
+            status="$(curl -sS -o "$body_file" -w "%{http_code}" -X POST \
+              -H "Authorization: Bearer ${token}" \
+              -H "Content-Type: application/json" \
+              "https://registry.npmjs.org/-/npm/v1/oidc/token/exchange/package/${encoded}")"
+            message="$(node -e 'const fs=require("fs"); const raw=fs.readFileSync(process.argv[1],"utf8"); let parsed; try { parsed=JSON.parse(raw) } catch { parsed=null } if (parsed && parsed.token) { console.log("ok"); return } const detail=parsed?.message || parsed?.error || raw; console.log(String(detail).slice(0,300))' "$body_file")"
+            rm -f "$body_file"
+            unset token id_json
+            if [ "$status" != "200" ] && [ "$status" != "201" ]; then
+              echo "::error::npm refused the GitHub OIDC token for ${name} (HTTP ${status}): ${message}"
+              exit 1
+            fi
+            echo "npm trusted publisher accepted ${name}"
+          }
+
+          require_trusted_publisher @chat-js/registry
+          require_trusted_publisher chat-js
 
           publish_exact() {
             local workspace_dir="$1"
@@ -99,6 +117,18 @@ jobs:
           if [ "$(node -p "require('./packages/cli/package.json').version")" = "1.0.0-alpha.1" ]; then
             npm dist-tag add chat-js@1.0.0-alpha.1 latest
           fi
+
+      - name: Create Release Pull Request or Publish
+        id: changesets
+        if: always() && steps.gateway-publish.outcome != 'cancelled'
+        uses: changesets/action@v1
+        with:
+          publish: bun run release
+          title: "chore: version releases"
+          commit: "chore: version releases"
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+          NPM_CONFIG_PROVENANCE: true
 
       # Configure chat-js on npm to trust this repository and release.yml.
       # Trusted publishing cannot create a package's first version. Use the
