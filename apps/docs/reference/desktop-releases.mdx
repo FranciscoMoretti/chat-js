@@ -17,6 +17,8 @@ The release flow is:
 4. The npm release workflow publishes the public packages versioned by Changesets. Its Changesets publish command excludes the `chat-js` CLI during alpha
 5. The desktop artifact workflow reads the new `apps/electron/package.json` version, builds macOS, Windows, and Linux artifacts, and publishes them to GitHub Releases under the package-scoped tag `@chat-js/electron@<version>`
 
+This workflow publishes downloadable installers. Its package-scoped tags are skipped by the default updater's [SemVer release filter](https://github.com/electron/update.electronjs.org/blob/main/src/updates.ts), so these releases do not provide automatic updates through `update.electronjs.org`. For your own app, use compatible tags such as `v1.2.3` and the platform requirements in [Desktop Distribution](../deployment/desktop).
+
 That keeps versioning, changelogs, and release triggering consistent for packages managed by Changesets. The publish destinations are:
 
 - Shared public packages publish to npm

@@ -21,6 +21,8 @@ With npm instead of Bun, use:
 npx chat-js@alpha create my-app
 ```
 
+Creation detects npm from its default `npm/` user-agent prefix. If you override npm's `user-agent` setting, preserve that prefix. An unrecognized launcher falls back to Bun and requires Bun to be installed.
+
 <CardGroup cols={2}>
   <Card title="create" icon="rocket" href="/cli/create">
     Scaffold a new ChatJS application. Walks you through gateway, plugins, and
