@@ -130,6 +130,14 @@ for (const page of pages) {
 
     expect(source.querySelector("main")).not.toBeNull();
 
+    if (page.name === "authentication") {
+      const examples = source.querySelectorAll("main pre code");
+      expect(examples.length).toBeGreaterThan(0);
+      for (const example of examples) {
+        expect(example.textContent).not.toContain("```");
+      }
+    }
+
     const sections = source.querySelectorAll<HTMLDetailsElement>(
       "[data-blume-nav-tree] > ul > li > details"
     );

@@ -21,7 +21,7 @@ Provider toggles in `chat.config.ts` control validation and which sign-in button
 
 To fully disable a provider, set its toggle to `false` and remove its env vars.
 
-Config validation runs at build time via `bun run prebuild`. A missing env var for an enabled provider will fail the build early rather than causing a runtime error.
+Config validation runs at build time via `bun run prebuild`. A missing env var for an enabled provider fails the build. At least one provider must be enabled and fully configured.
 
 ### Required environment variables
 
@@ -56,17 +56,15 @@ openssl rand -base64 32
 1. Go to **GitHub → Settings → Developer Settings → OAuth Apps → New OAuth App**.
 2. Set **Homepage URL** to your app URL (e.g. `https://your-domain.com`).
 3. Set **Authorization callback URL** to:
-   ````text
-   https://your-domain.com/api/auth/callback/github
    ```text
-   ````
+   https://your-domain.com/api/auth/callback/github
+   ```
 4. Copy the **Client ID** and generate a **Client Secret**.
 5. Add to your environment:
-   ````bash
+   ```bash
    AUTH_GITHUB_ID=your_client_id
    AUTH_GITHUB_SECRET=your_client_secret
-   ```text
-   ````
+   ```
 6. Enable in `chat.config.ts`: `authentication: { github: true }`
 
 <Callout type="note">
@@ -81,18 +79,16 @@ openssl rand -base64 32
 1. Go to **[Google Cloud Console](https://console.cloud.google.com/) → APIs & Services → Credentials → Create Credentials → OAuth client ID**.
 2. Choose **Web application**.
 3. Under **Authorized redirect URIs** add:
-   ````text
+   ```text
    https://your-domain.com/api/auth/callback/google
    http://localhost:3000/api/auth/callback/google
-   ```text
-   ````
+   ```
 4. Copy the **Client ID** and **Client Secret**.
 5. Add to your environment:
-   ````bash
+   ```bash
    AUTH_GOOGLE_ID=your_client_id
    AUTH_GOOGLE_SECRET=your_client_secret
-   ```text
-   ````
+   ```
 6. Enable in `chat.config.ts`: `authentication: { google: true }`
 
 <Callout type="note">
@@ -107,22 +103,22 @@ openssl rand -base64 32
 
 1. Create a Vercel App using the **[Sign in with Vercel setup guide](https://vercel.com/docs/sign-in-with-vercel/getting-started)**.
 2. Under **Redirect URL** add:
-   ````text
-   https://your-domain.com/api/auth/callback/vercel
    ```text
-   ````
+   https://your-domain.com/api/auth/callback/vercel
+   ```
 3. Copy the **Client ID** and **Client Secret** from the Vercel App.
 4. Add to your environment:
-   ````bash
+   ```bash
    VERCEL_APP_CLIENT_ID=your_client_id
    VERCEL_APP_CLIENT_SECRET=your_client_secret
-   ```text
-   ````
+   ```
 5. Enable in `chat.config.ts`: `authentication: { vercel: true }`
 
 <Callout type="note">
   The Vercel provider is useful when your users are Vercel teams and you want to
-  authenticate using their Vercel account. It is off by default.
+  authenticate using their Vercel account. New scaffolds disable it by default.
+  The checked-in reference app enables it and requires Vercel credentials unless
+  you disable the provider and remove its environment variables.
 </Callout>
 
 ---
@@ -131,10 +127,11 @@ openssl rand -base64 32
 
 Better Auth supports many OAuth 2.0 / OIDC providers (Discord, Twitter/X, Apple, LinkedIn, and more). To add one:
 
-1. Add it to the Better Auth config in `lib/auth.ts` with credentials from env vars.
-2. Add the new env vars to `lib/env-schema.ts`.
-3. Add a sign-in button to `components/auth-providers.tsx` using the Better Auth client.
-4. Register the OAuth app with the provider, setting the redirect URI to `/api/auth/callback/[provider]`.
-5. Optionally, gate it behind a new flag in `authenticationConfigSchema` in `lib/config-schema.ts`.
+1. Add a provider flag to `authenticationConfigObjectSchema` and `AUTHENTICATION_DEFAULTS` in `lib/config-schema.ts`. Update the `authentication` selections in `chat.config.ts`.
+2. Declare its credentials in `lib/env-schema.ts` and its requirements in `authEnvRequirements` in `lib/config-requirements.ts` so `check-env` validates enabled providers.
+3. Add the provider to the explicit `socialProviders` return type and registration object in `lib/auth.ts`, using those credentials.
+4. Add its ID and order to `SOCIAL_AUTH_PROVIDER_ORDER` in `lib/social-auth.ts`. Add its label and icon to `AUTH_PROVIDER_METADATA` in `components/auth-providers.tsx`. The existing button list then renders it using the Better Auth client.
+5. Register the OAuth app with the provider, setting the redirect URI to `/api/auth/callback/[provider]`.
+6. Run your app's type checks and `bun run check-env`, then verify sign-in and callback handling.
 
 See the [Better Auth OAuth guide](https://better-auth.com/docs/concepts/oauth) for the social-provider configuration model, then choose a provider from the Authentication section of the Better Auth docs for provider-specific options.

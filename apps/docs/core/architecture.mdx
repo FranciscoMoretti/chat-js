@@ -52,6 +52,6 @@ See [Configuration & Extensions](./configuration) for the available extension ty
 
 ## Usage evidence
 
-Core records model and supported tool usage with stable event identifiers and reconciles it against the authoritative EVE stream. Replaying evidence does not duplicate recorded usage. This recording and reconciliation also runs without Credits installed, without creating or debiting balances. Reconciliation failures can prevent new work.
+Core records model usage under unique accounting-wrapper attempt IDs and supported tool usage under session/call IDs. It reconciles tool receipts against the authoritative EVE stream. Replaying evidence with the same identity does not duplicate recorded usage. This recording and reconciliation also runs without Credits installed, without creating or debiting balances. Reconciliation failures can prevent new work.
 
 [Credits](../plugins/credits) owns balance checks and charging policy. Its page explains how recorded usage becomes a debit when the plugin is installed.

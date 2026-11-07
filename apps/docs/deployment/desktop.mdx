@@ -9,7 +9,18 @@ The [ChatJS release history](https://github.com/FranciscoMoretti/chat-js/release
 
 ## Auto-Updates
 
-The desktop integration uses `update-electron-app` with a public GitHub repository. Packaged builds check GitHub Releases for newer versions automatically.
+The desktop integration uses `update-electron-app` with a public GitHub repository. Before packaging, set `repository.url` in `electron/package.json` to your own public release repository, replacing the scaffold's placeholder owner and repository:
+
+```json title="electron/package.json"
+{
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/your-app.git"
+  }
+}
+```
+
+Packaged builds use that repository for update discovery. Publish the required update artifacts alongside your installers.
 
 ## Customization
 
@@ -40,20 +51,41 @@ Use `electron/forge.config.ts` for packaging-specific settings. Keep the app ide
 
 ## Building for Distribution
 
-Build desktop installers from the `electron/` directory:
+Install your project's dependencies and run the matching command from `electron/` on each build host. These are separate platform builds, not three commands to run on one machine. Outputs are written to `electron/out/`.
+
+### macOS
+
+Use a macOS host for the [DMG maker](https://www.electronforge.io/config/makers/dmg). The scaffold includes the required Forge makers. Signing additionally needs the configuration described below.
 
 ```bash
 cd electron
 bun run make:mac
+```
+
+Produces `.dmg` and `.zip` artifacts.
+
+### Windows
+
+Use a Windows host for the scaffold's [Squirrel.Windows maker](https://www.electronforge.io/config/makers/squirrel.windows). Forge also supports Linux cross-builds with Mono and Wine installed.
+
+```bash
+cd electron
 bun run make:win
+```
+
+Produces the `.exe` installer and update artifacts.
+
+### Linux
+
+Use a Linux host. The [Debian maker](https://www.electronforge.io/config/makers/deb) requires `fakeroot` and `dpkg`. The [RPM maker](https://www.electronforge.io/config/makers/rpm) requires `rpm` or `rpm-build`. On Debian or Ubuntu:
+
+```bash
+sudo apt-get install fakeroot dpkg rpm
+cd electron
 bun run make:linux
 ```
 
-Build outputs are written to `electron/out/`.
-
-- **macOS**: `.dmg` and `.zip`
-- **Windows**: `.exe` installer
-- **Linux**: `.deb` and `.rpm`
+Produces `.deb` and `.rpm` packages.
 
 To test the packaged app without an installer, use:
 
@@ -69,7 +101,7 @@ For public macOS distribution outside the App Store, you will usually want:
 - notarization
 - a stable bundle identifier and install path
 
-The generated app includes the hardened runtime entitlements file, but notarization and signing still require your Apple Developer credentials and CI setup.
+The scaffold includes a starter `electron/entitlements.mac.plist`. Configure signing in `electron/forge.config.ts` to use that file. Signing and notarization also require your Apple Developer credentials and CI setup.
 
 ## Release automation
 

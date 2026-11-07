@@ -37,17 +37,20 @@ Core sums provider costs using database decimal arithmetic, rounds up once per t
 
 ```mermaid
 flowchart LR
-    Event[EVE event] --> Hook[agent/hooks/billing.ts]
+    Model[Model call] --> Wrapper[Core accounting wrapper]
+    Wrapper --> ModelLedger[Durable model ledger]
+    Event[Tool completion event] --> Hook[agent/hooks/billing.ts]
     Hook --> Usage[lib/eve/usage.ts]
-    Usage --> Ledger[Eve billing ledger]
-    Ledger --> Credits[Optional Credits debit]
     Stream[Authoritative EVE stream] --> Reconcile[lib/eve/reconcile-usage.ts]
-    Reconcile --> Ledger
+    Reconcile --> Usage
+    Usage --> Ledger[Usage settlement]
+    ModelLedger --> Ledger
+    Ledger --> Credits[Optional Credits debit]
 ```
 
-`lib/eve/usage.ts` records model calls, completed steps, compaction usage, and supported platform-tool results. Each record uses an event-derived identity, so replaying an event does not charge it twice.
+`lib/eve/usage.ts` ingests supported platform-tool receipts and registers native child sessions. Tool receipt identities use the native session and call ID. Model calls are recorded separately through the accounting wrapper in `lib/eve/model-ledger.ts` and the durable ledger in `lib/db/eve-model-ledger.ts`. The wrapper generates a unique attempt ID before each model call. Replaying a receipt for an existing identity does not debit it twice. A new model attempt has a distinct identity.
 
-`lib/eve/reconcile-usage.ts` reads only the unprocessed suffix of the native stream and advances a durable cursor after successful reconciliation. Missing tool receipts remain eligible for replay without themselves blocking admission. Reconciliation failures can still prevent new work.
+`lib/eve/reconcile-usage.ts` normally reads from the durable stream cursor. On the managed backend, scheduled reconciliation retries sessions with unpriced tool receipts from the beginning, including their child sessions. Unresolved pricing keeps replay available without itself blocking admission. An output with no recognized tool receipt is skipped rather than treated as an unpriced receipt. Other reconciliation failures can still prevent new work.
 
 Both new-conversation and follow-up-message admission call `canStartPaidTurn` in `lib/eve/spending-admission.ts`. It reconciles usage before reading the balance. Reconciliation failures propagate to the request's recovery response. A positive balance check does not reserve a concurrent budget for work already running.
 

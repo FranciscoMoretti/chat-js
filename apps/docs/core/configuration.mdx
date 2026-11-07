@@ -75,7 +75,7 @@ bunx chat-js@alpha add mcp
 | --- | --- |
 | `tavily-search` or `firecrawl-search` | Selected provider's credentials. One `webSearch` provider serves chat and research. |
 | `deep-research` | Text documents, document reading and a search provider. Missing search defaults to Tavily. |
-| `saved-code-execution` | Code documents, document reading and a compatible `codeExecution` provider. Missing execution installs the built-in code-execution tool. Select sandbox infrastructure separately. |
+| `saved-code-execution` | Code documents, document reading and a compatible `codeExecution` provider. Missing execution installs the built-in code-execution tool, which requires sandbox infrastructure. Select `--sandbox-provider` if none is installed. |
 | `generate-image` / `generate-video` | Compatible gateway capability, a default media model and persistent storage. Only the built-in Vercel gateway declares video support. |
 | `attachment-uploads` | Persistent storage and a sandbox with persistent-file support. Configure limits separately under `attachments`. |
 | `mcp` | `MCP_ENCRYPTION_KEY`, including installations with no connectors yet. |
