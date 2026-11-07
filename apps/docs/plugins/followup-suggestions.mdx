@@ -23,7 +23,7 @@ bun run db:generate
 bun run db:migrate
 ```
 
-See [plugin migrations](../core/plugins#database-migrations).
+See [plugin migrations](./using-plugins#database-migrations).
 
 ### Enable generation
 
@@ -52,8 +52,25 @@ You store results in the plugin-owned `EveFollowup` table. Each result retains i
 
 A durable claim is written before the model call. Replayed callbacks and interrupted claims do not regenerate paid output. Deleting a native session removes its records transactionally, and late generation cannot recreate a deleted claim.
 
-## Customization
+## Customize generation
 
-Edit `chatjs/plugins/followup-suggestions/` for generation, queries, bounded polling, and rendering. The thin adapter in `agent/hooks/followup-suggestions.ts` registers the native hook.
+1. `agent/hooks/followup-suggestions.ts` registers the plugin's native EVE hook.
+2. `chatjs/plugins/followup-suggestions/followup-hook.ts` collects the current exchange and claims the completed turn before making a model call.
+3. `chatjs/plugins/followup-suggestions/generate-suggestions.ts` generates the questions using the configured model and core usage accounting.
+4. `chatjs/plugins/followup-suggestions/followup-queries.ts` stores the result in `EveFollowup` with its session, turn, and completion-event identity.
 
-When you render suggestions, the `Suggestions` placement receives the conversation ID, native events, last-message identity, disabled state, and selection callback. See the [Plugin API](../reference/plugin-api) and [Follow-up Questions recipe](../cookbook/follow-up-questions).
+Edit the generation prompt to change the style of questions. Keep the durable claim before the paid call, preserve completion identity, and retain model usage accounting. The output schema in `suggestion-output.ts` accepts three to five nonempty suggestions of at most 80 characters each.
+
+## Customize display
+
+`chatjs/plugins/followup-suggestions/use-followups.ts` matches the completed answer and reads stored results with bounded polling. Suggestions are persisted separately from the native transcript and are displayed after generation finishes.
+
+Edit `followup-suggestions-view.tsx` to change their presentation. The plugin's `Suggestions` contribution passes selected text to core's existing send/compare flow. Generated questions become conversation input only when selected.
+
+The `Suggestions` placement receives the conversation ID, native events, last-message identity, disabled state, and selection callback.
+
+## Preserve cleanup
+
+The plugin's `chat.ts` removes results for deleted native sessions inside the existing deletion transaction. Keep this callback when changing storage so deleting one branch preserves surviving results and late generation cannot recreate a deleted claim.
+
+See the [Plugin API](../reference/plugin-api) for the lifecycle and UI contracts.

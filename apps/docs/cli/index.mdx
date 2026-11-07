@@ -9,10 +9,10 @@ description: "chat-js — scaffold and manage ChatJS applications"
   release. Use `chat-js@alpha` to try the current alpha.
 </Callout>
 
-`chat-js` gets you from zero to a running ChatJS app in one command. No installation required — run it directly with `npx`:
+`chat-js` gets you from zero to a running ChatJS app in one command. No installation required — run it directly with `bunx`:
 
 ```bash
-npx chat-js@alpha create my-app
+bunx chat-js@alpha create my-app
 ```
 
 <CardGroup cols={2}>
@@ -28,5 +28,11 @@ npx chat-js@alpha create my-app
   </Card>
   <Card title="status" icon="list" href="/cli/status">
     Inspect plugin-owned files, local edits, and removal dependencies.
+  </Card>
+  <Card title="sync" icon="refresh-cw" href="./sync">
+    Regenerate registrations after descriptor or direct shadcn changes.
+  </Card>
+  <Card title="remove" icon="minus" href="./remove">
+    Disconnect plugins while retaining schema inputs and stored data.
   </Card>
 </CardGroup>

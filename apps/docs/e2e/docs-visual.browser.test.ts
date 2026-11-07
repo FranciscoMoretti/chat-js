@@ -1,9 +1,43 @@
 import { expect, test } from "vitest";
 import { takeSnapshot } from "@uiverify/vitest";
 
+// First frames keep GIFs deterministic and below the archive resource limit.
+const stillFrames: Record<string, string> = {
+  "/docs/images/ai-models.gif": new URL(
+    "fixtures/ai-models.png",
+    import.meta.url
+  ).href,
+  "/docs/images/attachments.gif": new URL(
+    "fixtures/attachments.png",
+    import.meta.url
+  ).href,
+  "/docs/images/branching.gif": new URL(
+    "fixtures/branching.png",
+    import.meta.url
+  ).href,
+  "/docs/images/canvas.gif": new URL("fixtures/canvas.png", import.meta.url)
+    .href,
+  "/docs/images/code-execution.gif": new URL(
+    "fixtures/code-execution.png",
+    import.meta.url
+  ).href,
+  "/docs/images/image-generation.gif": new URL(
+    "fixtures/image-generation.png",
+    import.meta.url
+  ).href,
+  "/docs/images/resumable-streams.gif": new URL(
+    "fixtures/resumable-streams.png",
+    import.meta.url
+  ).href,
+  "/docs/images/web-search.gif": new URL(
+    "fixtures/web-search.png",
+    import.meta.url
+  ).href,
+};
+
 const pages = [
-  { name: "plugin-concept", path: "/docs/core/plugins" },
-  { name: "plugin-authoring", path: "/docs/cookbook/create-plugin" },
+  { name: "using-plugins", path: "/docs/plugins/using-plugins" },
+  { name: "plugin-authoring", path: "/docs/plugins/create-plugin" },
   { name: "mcp-plugin", path: "/docs/plugins/mcp" },
   { name: "attachments-plugin", path: "/docs/plugins/attachments" },
   { name: "analytics-plugin", path: "/docs/plugins/vercel-analytics" },
@@ -12,7 +46,6 @@ const pages = [
     path: "/docs/plugins/vercel-speed-insights",
   },
   { name: "langfuse-plugin", path: "/docs/plugins/langfuse" },
-  { name: "followup-recipe", path: "/docs/cookbook/follow-up-questions" },
   { name: "plugins", path: "/docs/plugins/overview" },
   {
     name: "plugin-api",
@@ -45,7 +78,27 @@ const pages = [
   { name: "cli", path: "/docs/cli" },
   { name: "changelog", path: "/docs/changelog" },
   { name: "cookbook", path: "/docs/cookbook" },
-  { name: "features", path: "/docs/features/overview" },
+  { name: "deployment", path: "/docs/deployment" },
+  { name: "sandboxes", path: "/docs/deployment/sandboxes" },
+  { name: "web-search", path: "/docs/tools/web-search" },
+  { name: "deep-research", path: "/docs/tools/deep-research" },
+  { name: "code-execution", path: "/docs/tools/code-execution" },
+  { name: "canvas", path: "/docs/tools/canvas" },
+  { name: "conversations", path: "/docs/core/conversations" },
+  { name: "architecture", path: "/docs/core/architecture" },
+  { name: "configuration", path: "/docs/core/configuration" },
+  { name: "source-ownership", path: "/docs/core/source-ownership" },
+  { name: "execution", path: "/docs/core/execution" },
+  { name: "tool-calls", path: "/docs/core/tool-calls" },
+  { name: "identity", path: "/docs/core/authentication" },
+  { name: "authentication", path: "/docs/customization/authentication" },
+  { name: "models", path: "/docs/customization/models" },
+  { name: "credits", path: "/docs/plugins/credits" },
+  { name: "desktop-distribution", path: "/docs/deployment/desktop" },
+  { name: "desktop-releases", path: "/docs/reference/desktop-releases" },
+  { name: "cli-sync", path: "/docs/cli/sync" },
+  { name: "cli-remove", path: "/docs/cli/remove" },
+  { name: "reasoning", path: "/docs/core/reasoning" },
 ] as const;
 
 for (const page of pages) {
@@ -76,6 +129,57 @@ for (const page of pages) {
     }
 
     expect(source.querySelector("main")).not.toBeNull();
+
+    const sections = source.querySelectorAll<HTMLDetailsElement>(
+      "[data-blume-nav-tree] > ul > li > details"
+    );
+    expect(
+      [...sections].map((section) =>
+        section.querySelector("summary")?.textContent?.trim()
+      )
+    ).toEqual([
+      "Get Started",
+      "Concepts",
+      "Models & Gateways",
+      "Tools",
+      "Plugins",
+      "Customization",
+      "Deployment",
+      "Guides",
+      "Reference",
+    ]);
+
+    if (page.name === "home") {
+      const deployment = [...sections].find(
+        (section) =>
+          section
+            .querySelector("summary")
+            ?.textContent?.includes("Deployment") === true
+      );
+      expect(deployment?.open).toBe(false);
+      deployment?.querySelector("summary")?.click();
+      expect(deployment?.open).toBe(true);
+      deployment?.querySelector("summary")?.click();
+      expect(deployment?.open).toBe(false);
+    }
+
+    for (const image of source.images) {
+      const still = stillFrames[image.getAttribute("src") ?? ""];
+      if (still) {
+        image.src = still;
+      }
+    }
+
+    // The active page must remain discoverable inside collapsed navigation.
+    const activeLink = source.querySelector("aside a[aria-current='page']");
+    expect(activeLink).not.toBeNull();
+    let ancestor = activeLink?.parentElement;
+    while (ancestor) {
+      if (ancestor.tagName === "DETAILS") {
+        expect(ancestor.hasAttribute("open")).toBe(true);
+      }
+      ancestor = ancestor.parentElement;
+    }
 
     for (const attribute of source.documentElement.attributes) {
       document.documentElement.setAttribute(attribute.name, attribute.value);

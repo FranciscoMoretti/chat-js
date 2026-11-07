@@ -1,9 +1,19 @@
 ---
-title: Canvas
+title: Documents & Canvas
 description: Create and edit text documents, code, and spreadsheets
 ---
 
 Canvas lets you create and edit documents directly in chat. The AI creates text documents, code files, and spreadsheets in a side panel where you can view, edit, and refine them.
+
+## Installation
+
+Install the document bundles you want to expose:
+
+```bash
+bunx chat-js@alpha add text-documents code-documents sheet-documents
+```
+
+Each bundle supplies its document tools and editor. See [Authoring tools](./authoring#document-bundles) to add a custom document kind.
 
 <Frame>
   <img
@@ -12,22 +22,22 @@ Canvas lets you create and edit documents directly in chat. The AI creates text 
   />
 </Frame>
 
-## Canvas types
+## Document bundles
 
 You can create three types of canvas:
 
-| Type | Best for | Features |
+| Bundle | Best for | Features |
 | --- | --- | --- |
-| **Text** | Essays, emails, reports, documentation, and other written content | Markdown support, diff view, version history, direct editing, polish tool |
-| **Code** | Python scripts, JavaScript, TypeScript, and other code files | Syntax highlighting, Python execution (via Pyodide), version history, console output |
-| **Sheet** | Data tables, datasets, and CSV files | Spreadsheet editor, CSV export, data visualization via Python |
+| **Text** (`text-documents`) | Essays, emails, reports, documentation, and other written content | Markdown support, diff view, version history, direct editing, polish tool |
+| **Code** (`code-documents`) | Python scripts, JavaScript, TypeScript, and other code files | Syntax highlighting, version history, optional saved-code execution |
+| **Sheet** (`sheet-documents`) | Data tables, datasets, and CSV files | Spreadsheet editor, CSV export, data visualization via Python |
 
 ## Creating a canvas
 
 When you ask the AI to create something substantial, it automatically creates a canvas with the appropriate type. You can also request specific types:
 
 - **Text documents**: "Write a professional email about..." or "Draft an essay on..."
-- **Code**: "Create a Python script that..." or "Write a React component for..."
+- **Code** (`code-documents`): "Create a Python script that..." or "Write a React component for..."
 - **Spreadsheets**: "Create a spreadsheet with..." or "Build a data table for..."
 
 The AI uses dedicated tools to create documents:
@@ -35,6 +45,24 @@ The AI uses dedicated tools to create documents:
 - `createTextDocument` for markdown text content
 - `createCodeDocument` for code files (filename determines syntax highlighting)
 - `createSheetDocument` for CSV-format spreadsheets
+
+## Reading documents
+
+Install `read-document` to expose `readDocument`. Other document tools can install it as a dependency. It reads saved document content and revision metadata for the current authorized conversation.
+
+```bash
+bunx chat-js@alpha add read-document
+```
+
+## Document deletion with approval
+
+```bash
+npx chat-js@alpha add delete-document
+```
+
+This optional bundle installs `deleteDocument` and its `readDocument` dependency. The agent first calls `readDocument`, then passes the exact title and revision to `deleteDocument` to request owner approval. Rejection leaves the document unchanged. If the document changes before approval, deletion fails and requires a fresh request.
+
+Deletion removes the document from the current conversation. Existing history snapshots and other branches retain their revisions. This is not permanent content erasure. The tool requires signed-in ownership, enabled document tools, and EVE's native approval receipt. It adds no provider credentials or tool usage charge.
 
 ## Editing documents
 
@@ -85,16 +113,13 @@ A floating toolbar appears at the bottom-right of the canvas. Each canvas type h
 
 ## Code execution
 
-Python code can run directly in the browser using Pyodide. Click the **Run** button to execute.
+Install saved-code execution with a compatible [sandbox provider](../deployment/sandboxes):
 
-Execution features:
+```bash
+bunx chat-js@alpha add saved-code-execution --sandbox-provider vercel
+```
 
-- Console output displays below the code editor
-- Matplotlib plots render as images in the console
-- Package imports are loaded automatically
-- Standard library only (no external dependencies)
-
-Code execution is only available for Python files. The run button is disabled for other languages.
+The Run action requests execution of the saved Python or JavaScript revision through EVE. Execution uses the selected sandbox provider and records results against that revision. See [Code Execution](./code-execution) for supported output and accounting.
 
 ## Canvas actions
 
@@ -115,4 +140,4 @@ Each canvas type has action buttons in the header:
 
 ## Configuration
 
-Canvas is built into the chat interface. No additional configuration is required.
+Installed document bundles determine the available kinds. Customize their editors in `integrations/documents/ui.ts` and their definitions in `integrations/documents/definitions.ts`. Removing a bundle preserves saved content and displays a read-only source fallback until that kind is installed again.

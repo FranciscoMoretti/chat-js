@@ -1,0 +1,31 @@
+---
+title: Desktop Release Process
+description: Repository maintainer reference for publishing Electron artifacts
+---
+
+This page describes the ChatJS monorepo release process. Scaffolded apps receive the Electron source and Forge configuration, but do not inherit this release automation. For your own app, start with [Desktop Distribution](../deployment/desktop).
+
+## Release Flow
+
+In the ChatJS monorepo, use Changesets to version npm packages and desktop artifacts. The CLI follows a separate manual release process during its alpha period.
+
+The release flow is:
+
+1. Add a changeset that includes `@chat-js/electron`
+2. Let the Changesets workflow open the version PR
+3. Merge that version PR
+4. The npm release workflow publishes the public packages versioned by Changesets. It excludes the `chat-js` CLI during alpha
+5. The desktop artifact workflow reads the new `apps/electron/package.json` version, builds macOS, Windows, and Linux artifacts, and publishes them to GitHub Releases under the package-scoped tag `@chat-js/electron@<version>`
+
+That keeps versioning, changelogs, and release triggering consistent for packages managed by Changesets. The publish destinations are:
+
+- Shared public packages publish to npm
+- `@chat-js/electron` publishes installers to GitHub Releases
+
+For CLI changes during alpha, first update `packages/cli/package.json` to the next unused alpha version, such as `1.0.0-alpha.2`, and run `bun install` to synchronize the lockfile. Then publish the audited prerelease manually from `packages/cli` with `bun publish --tag alpha`. Verify that `chat-js@alpha` resolves to that version. Merging a Changesets version PR does not publish those CLI changes.
+
+For a concrete reference, see the workflow used in this repository:
+
+- [`.github/workflows/electron-release.yml`](https://github.com/franciscomoretti/chat-js/blob/main/.github/workflows/electron-release.yml)
+
+If you scaffold a new app with the Electron option, you get the desktop app code and Forge config, but not this repository's release automation automatically. Use the workflow above as a starting point if you want the same Changesets-driven versioning flow in your own project.

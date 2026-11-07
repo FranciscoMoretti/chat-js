@@ -74,7 +74,7 @@ await chat.sendMessage({
 });
 ```
 
-See [Branching](./features/branching) for the ChatJS user experience.
+See [Branching](./core/conversations#branching) for the ChatJS user experience.
 
 ## Run parallel responses
 
@@ -102,9 +102,9 @@ await Promise.all([
 ]);
 ```
 
-`follow: false` leaves the cursor unchanged. The sibling appears when the first stream write arrives. ChatJS uses this model for multiple replies from the same model and for comparisons across different models.
+`follow: false` leaves the cursor unchanged. The sibling appears when the first stream write arrives. You can use these independent runs to compare replies in your own AI SDK application. The ChatJS starter implements its branching and parallel responses through EVE, separately from this package.
 
-See [Parallel Responses](./features/parallel-responses) for the product flow.
+See [Parallel Responses](./core/conversations#parallel-responses) for the product flow.
 
 ## Status and controls
 

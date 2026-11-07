@@ -1,0 +1,120 @@
+---
+title: Code Execution
+description: Secure Python and JavaScript sandbox for running code
+---
+
+## Overview
+
+Execute Python and JavaScript code in a secure sandboxed environment directly from chat. The `code-execution` tool uses shared sandbox infrastructure with a five-minute execution deadline. Select Vercel Sandbox or Daytona independently of the tool. Sandboxes are optional. An app using sandbox-backed tools must select exactly one provider. Other tools can reuse the same infrastructure. Ad-hoc and saved-document execution use the selected executor. Saved documents execute their authorized stored revision, not replacement source supplied by the caller.
+
+<Frame>
+  <img
+    src="/docs/images/code-execution.gif"
+    alt="Running Python and JavaScript code in the sandbox from chat"
+  />
+</Frame>
+
+## Installation
+
+Install the tool with a compatible [sandbox provider](../deployment/sandboxes):
+
+```bash
+bunx chat-js@alpha add code-execution --sandbox-provider vercel
+```
+
+Configure provider credentials using the [sandbox setup guide](../deployment/sandboxes). Sandbox selection is shared infrastructure, including persistent EVE session files when the provider supports them.
+
+For saved code documents, install the execution action and its dependencies:
+
+```bash
+bunx chat-js@alpha add saved-code-execution --sandbox-provider vercel
+```
+
+## Pre-installed Packages
+
+Both built-in providers install these packages inside each Python sandbox before executing your code:
+
+- `matplotlib` - Plotting and visualization
+- `pandas` - Data analysis
+- `numpy` - Numerical computing
+- `sympy` - Symbolic mathematics
+- `yfinance` - Yahoo Finance market data
+
+## Installing Additional Packages
+
+Add `!pip install` lines at the top of your code. They are automatically stripped before execution:
+
+```python
+!pip install requests beautifulsoup4
+
+import requests
+from bs4 import BeautifulSoup
+
+response = requests.get("https://example.com")
+print(response.status_code)
+```
+
+## Output
+
+There are two ways to return output:
+
+**1. Use `print()`**
+
+```python
+import pandas as pd
+df = pd.DataFrame({"a": [1, 2], "b": [3, 4]})
+print(df.head())
+```
+
+**2. Assign to `result` or `results`**
+
+The sandbox automatically prints these variables if they exist:
+
+```python
+import numpy as np
+result = np.mean([1, 2, 3, 4, 5])
+```
+
+<Callout type="warning">
+  Implicit REPL output (last expression value) is not captured. Always use
+  `print()` or assign to `result`.
+</Callout>
+
+## Charts
+
+The sandbox supports `matplotlib` charts. No need to call `plt.show()`. The chart is saved automatically:
+
+```python
+import matplotlib.pyplot as plt
+import numpy as np
+
+x = np.linspace(0, 10, 100)
+y = np.sin(x)
+
+plt.figure(figsize=(10, 6))
+plt.plot(x, y)
+plt.title("Sine Wave")
+plt.xlabel("x")
+plt.ylabel("sin(x)")
+```
+
+Supported chart types:
+
+- Line charts
+- Scatter plots
+- Bar charts
+
+<Callout type="note">
+  Matplotlib charts are returned as PNG images. Assign a `chart` dictionary for
+  interactive line, scatter, and bar charts.
+</Callout>
+
+## Customize the tool
+
+The generic tool, renderer, schemas and descriptor live in `chatjs/tools/code-execution/`. Shared Python and JavaScript command wrappers live under `chatjs/tools/_shared/code-execution/`. Generated `chatjs/generated/code-executor.ts` exports the typed executor for ad-hoc and saved-document execution.
+
+See [Sandboxes](../deployment/sandboxes) for provider credentials, runtime images, custom provider contracts, resource cleanup, and provider validation.
+
+## Accounting
+
+The built-in executor records $0.05 of usage cost for a completed execution after output validation and confirmed cleanup. This recorded cost is independent of the provider invoice. When installed, [Credits](../plugins/credits) applies its balance and debit policy. Without a billing adapter, core records the usage without debiting a balance. Infrastructure failures record zero application cost, although provider compute costs can still accrue. See [sandbox lifecycle and accounting](../deployment/sandboxes#lifecycle-and-accounting).

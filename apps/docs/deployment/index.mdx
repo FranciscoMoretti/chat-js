@@ -1,0 +1,33 @@
+---
+title: Deployment
+description: Choose hosting and configure the database, file storage, and sandbox infrastructure for your app
+---
+
+Deploying ChatJS means running the web app and EVE conversation runtime with the services your installation needs. Start with a hosting guide, then configure the database, file storage, and sandboxes for that environment.
+
+## Hosting
+
+- [Vercel](./vercel) covers the Vercel deployment setup.
+- [Docker](./docker) covers running the app in a container.
+- [Self-hosted](./self-hosted) describes other hosting topologies and their current validation requirements.
+- [Desktop](./desktop) covers packaging the desktop companion, which connects to your hosted app.
+
+## Runtime services
+
+| Service | What it provides | Setup |
+| --- | --- | --- |
+| Database | Application data and, for local or self-hosted execution, PostgreSQL workflow storage | [Database](../reference/database) |
+| File storage | Durable uploads and generated media for installed capabilities that need files | [File storage](../storage) |
+| Sandboxes | Code execution and persistent EVE session files when supported by the selected provider | [Sandboxes](./sandboxes) |
+
+Choose these services independently of your hosting platform where their adapters support it. For example, an app hosted outside Vercel can use Vercel Sandbox with explicit credentials. Review the selected adapter's capabilities and lifecycle requirements before replacing it.
+
+## Configure the environment
+
+Use the generated `.env.example` and installed descriptors to find the credentials required by your selections. Configure secrets in your hosting platform, check database connectivity, and apply reviewed migrations before serving traffic.
+
+See [Environment variables](../reference/env-vars) for configuration details and your hosting guide for startup and operational requirements.
+
+## AI services and optional capabilities
+
+Configure inference under [Models & Gateways](../gateways/overview). Install search and other model-facing capabilities from [Tools](../tools/overview), and app integrations from [Plugins](../plugins/overview). Their guides link to the runtime services they require.

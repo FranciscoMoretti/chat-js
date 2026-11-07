@@ -33,6 +33,26 @@ Core sums provider costs using database decimal arithmetic, rounds up once per t
 
 [Guest Chat](./guest-chat) owns disposable visitor sessions and rate limits. Guests do not enter account billing or own monetary balances. Credits does not add payments, subscriptions, top-ups, or an administrative balance editor.
 
+## From usage to a debit
+
+```mermaid
+flowchart LR
+    Event[EVE event] --> Hook[agent/hooks/billing.ts]
+    Hook --> Usage[lib/eve/usage.ts]
+    Usage --> Ledger[Eve billing ledger]
+    Ledger --> Credits[Optional Credits debit]
+    Stream[Authoritative EVE stream] --> Reconcile[lib/eve/reconcile-usage.ts]
+    Reconcile --> Ledger
+```
+
+`lib/eve/usage.ts` records model calls, completed steps, compaction usage, and supported platform-tool results. Each record uses an event-derived identity, so replaying an event does not charge it twice.
+
+`lib/eve/reconcile-usage.ts` reads only the unprocessed suffix of the native stream and advances a durable cursor after successful reconciliation. Missing tool receipts remain eligible for replay without themselves blocking admission. Reconciliation failures can still prevent new work.
+
+Both new-conversation and follow-up-message admission call `canStartPaidTurn` in `lib/eve/spending-admission.ts`. It reconciles usage before reading the balance. Reconciliation failures propagate to the request's recovery response. A positive balance check does not reserve a concurrent budget for work already running.
+
+The installed billing policy commits debits in the same transaction as usage evidence and settlement markers. See [Architecture](../core/architecture#usage-evidence) for the behavior that remains without Credits.
+
 ## Storage
 
 | Table | Fields | Purpose |
@@ -56,4 +76,4 @@ Only one installed plugin can provide billing. Its `billing.ts` entry must load 
 
 A new app without this plugin has no `UserCredit` table, credits router, or balance display. Spending passes the optional monetary gate, while authentication, guest rate and input/output limits, and usage reconciliation still apply.
 
-Adding Credits does not run a historical backfill. However, a later receipt for a previously unbilled turn computes its unpaid total from all recorded evidence for that turn. Decide how to settle existing in-flight turns before enabling billing on an app that previously ran without it. See [Credit Tracking](../cookbook/credit-tracking) for the accounting flow.
+Adding Credits does not run a historical backfill. However, a later receipt for a previously unbilled turn computes its unpaid total from all recorded evidence for that turn. Decide how to settle existing in-flight turns before enabling billing on an app that previously ran without it.

@@ -15,25 +15,19 @@ shadcn resolves the item and its dependencies, installs packages, and writes the
 
 | Tool | Purpose | Credentials |
 | --- | --- | --- |
-| Delete Document (`delete-document`) | Remove a document from the current conversation after owner approval | None |
+| [Delete Document](./canvas#document-deletion-with-approval) (`delete-document`) | Remove a document from the current conversation after owner approval | None |
 | [Word Count](./word-count) | Count words, characters, and sentences | None |
 | [Get Weather](./get-weather) | Fetch weather for coordinates | None |
-| [Tavily Search](../features/web-search) | Search with topic, depth, and domain options | `TAVILY_API_KEY` |
-| [Firecrawl Search](../features/web-search) | Search with page content extraction | `FIRECRAWL_API_KEY` |
-| [Vercel Code Execution](../features/code-execution) | Run Python and JavaScript in Vercel Sandbox | Vercel OIDC or team/project/token |
+| [Tavily Search](../tools/web-search) | Search with topic, depth, and domain options | `TAVILY_API_KEY` |
+| [Firecrawl Search](../tools/web-search) | Search with page content extraction | `FIRECRAWL_API_KEY` |
+| [Code Execution](./code-execution) | Run Python and JavaScript using the selected sandbox provider | Selected sandbox credentials |
+| [Deep Research](./deep-research) | Research a topic and save a report | Selected gateway and search provider |
+| [Read Document](./canvas#reading-documents) (`read-document`) | Read a saved document revision | None |
+| [Saved Code Execution](./canvas#code-execution) (`saved-code-execution`) | Run a saved code revision | Compatible sandbox credentials |
+| [Document bundles](./canvas) | Create and edit text, code, and spreadsheet documents | Depends on installed actions |
 | [Generate Video](./generate-video) | Generate video clips | Selected gateway and file storage |
 | [Generate Image](./generate-image) | Generate and edit images | Selected gateway and file storage |
 | [Retrieve URL](./retrieve-url) | Extract a page through Firecrawl | `FIRECRAWL_API_KEY` |
-
-## Document deletion with approval
-
-```bash
-npx chat-js@alpha add delete-document
-```
-
-This optional bundle installs `deleteDocument` and its `readDocument` dependency. The agent first calls `readDocument`, then passes the exact title and revision to `deleteDocument` to request owner approval. Rejection leaves the document unchanged. If the document changes before approval, deletion fails and requires a fresh request.
-
-Deletion removes the document from the current conversation. Existing history snapshots and other branches retain their revisions. This is not permanent content erasure. The tool requires signed-in ownership, enabled document tools, and EVE's native approval receipt. It adds no provider credentials or tool usage charge.
 
 ## Installed files
 

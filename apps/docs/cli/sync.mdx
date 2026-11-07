@@ -1,0 +1,22 @@
+---
+title: sync
+description: Regenerate typed tool, plugin, and router registrations
+---
+
+Run `sync` after direct shadcn installation or changes to an installed descriptor:
+
+```bash
+bunx chat-js@alpha sync
+```
+
+The command checks installed UI compatibility, then regenerates tool and plugin registrations from local descriptors. It does not fetch new source, apply database migrations, or upgrade an older application template.
+
+| Flag              | Default           | Purpose                   |
+| ----------------- | ----------------- | ------------------------- |
+| `-c, --cwd <cwd>` | Current directory | Select the ChatJS project |
+
+```bash
+bunx chat-js@alpha sync --cwd ./my-app
+```
+
+Keep custom behavior in app-owned integration modules. Do not edit generated lists to install a capability. Use [add](./add) to install source and sync its registrations together. See [Source Ownership](../core/source-ownership) and [Using Plugins](../plugins/using-plugins).
