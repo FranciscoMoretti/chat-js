@@ -1,3 +1,4 @@
+import { defaultToolProviders } from "../../../registry/installation-catalog";
 import { assertCurrentInstallationLayout } from "./installation-layout";
 import { readInstalledPlugins } from "./installed-plugins";
 import { sandboxDefinitionSchema } from "@chat-js/sandboxes/definition";
@@ -229,10 +230,7 @@ export const planInstallation = async (
     ]).values(),
   ];
   // ChatJS's two selectable execution dependencies have concrete default providers.
-  for (const [slot, provider] of [
-    ["codeExecution", "code-execution"],
-    ["webSearch", "tavily-search"],
-  ] as const) {
+  for (const [slot, provider] of Object.entries(defaultToolProviders)) {
     const definitions = target();
     if (
       definitions.some((item: ReadonlyNative<ToolDefinition>): boolean =>

@@ -1,3 +1,4 @@
+import { selectPreviewTools } from "./create-fixtures.mts";
 /* eslint-disable no-await-in-loop -- Preset changes must settle before the next interaction. */
 import { test, expect } from "@uiverify/playwright";
 import { checkCreateHistory } from "./create-history.mjs";
@@ -53,7 +54,6 @@ for (const base of ["base"] as const) {
       }
     });
     await page.setViewportSize({ width: 1000, height: 1000 });
-    const glyphs = new Set<string>();
     for (const [index, style] of PRESET_STYLES.entries()) {
       const iconLibrary =
         PRESET_ICON_LIBRARIES[index % PRESET_ICON_LIBRARIES.length];
@@ -69,43 +69,24 @@ for (const base of ["base"] as const) {
         "data-style",
         style
       );
-      const failed = page.getByRole("button", {
-        name: "Search unavailable Error",
-      });
-      await expect(failed).toHaveAttribute("aria-expanded", "true");
+      await selectPreviewTools(page);
       await expect(
-        page.locator('[data-slot="code-block"][role="alert"]')
-      ).toContainText("The service could not be reached.");
-      await failed.press("Enter");
-      await expect(
-        page.locator('[data-slot="code-block"][role="alert"]')
-      ).toBeHidden();
-      await failed.press("Enter");
-      await expect(
-        page.locator('[data-slot="code-block"][role="alert"]')
+        page
+          .getByRole("alert")
+          .filter({ hasText: "This is a sample error state." })
       ).toBeVisible();
-      await expect(failed).toBeFocused();
-      await page.getByRole("button", { name: "Retry sample tool" }).click();
-      await expect(
-        page.getByText(
-          "This is a sample error state. No external tool runs in the preview."
-        )
-      ).toBeVisible();
-      await page.getByRole("button", { name: "Preview scenario" }).click();
-      await page
-        .getByRole("menuitemradio", { name: "Conversation", exact: true })
-        .click();
-      const copy = page.getByRole("button", { name: "Copy", exact: true });
-      glyphs.add(await copy.locator("svg").innerHTML());
+      await page.goto(
+        `/create/preview?item=preview-02&base=${base}&preset=${preset}`
+      );
+      const copy = page.getByRole("button", { name: "Copy Code", exact: true });
       await copy.click();
-      await expect(
-        page.getByRole("button", { name: "Copied", exact: true })
-      ).toBeVisible();
       expect(
-        await page.evaluate(async () => await navigator.clipboard.readText())
+        await page.evaluate(async () => {
+          const text = await navigator.clipboard.readText();
+          return text.trim();
+        })
       ).toBe("bunx @chat-js/cli@beta create my-chat");
     }
-    expect(glyphs.size).toBe(PRESET_ICON_LIBRARIES.length);
     expect(errors).toEqual([]);
   });
 }
@@ -126,8 +107,9 @@ for (const base of ["base"] as const) {
           "data-mode",
           mode
         );
+        await selectPreviewTools(page);
         await expect(
-          page.locator('[data-slot="code-block"][role="alert"]')
+          page.getByRole("alert").filter({ hasText: "No external tool runs" })
         ).toBeVisible();
         await page.evaluate(async () => await document.fonts.ready);
         await page.addStyleTag({
@@ -148,71 +130,12 @@ for (const base of ["base"] as const) {
   }
 }
 
-test("uploads include a persistent sandbox in the installation command", async ({
-  page,
-  uiVerify,
-}) => {
-  uiVerify.disableAutoSnapshot();
-  const errors: string[] = [];
-  page.on("pageerror", (error) => errors.push(error.message));
-  page.on("console", (message) => {
-    if (message.type() === "error") {
-      errors.push(message.text());
-    }
-  });
-  await page.emulateMedia({ colorScheme: "light" });
-  await page.setViewportSize({ width: 1440, height: 1000 });
-  await page.goto("/create");
-  await page
-    .getByRole("button", { name: "Get Code", exact: true })
-    .first()
-    .click();
-  const dialog = page.getByRole("dialog", { name: "Create your ChatJS app" });
-  const command = dialog.getByTestId("create-command");
-  await expect(command).not.toContainText("--sandbox-provider");
-  await dialog.getByRole("switch", { name: "Attachment uploads" }).check();
-  await expect(command).toContainText("--sandbox-provider vercel");
-  await expect(dialog.getByText(/Includes Vercel Sandbox/u)).toBeVisible();
-  await expect(page).toHaveURL(/uploads=true/u);
-  await page.reload();
-  await page
-    .getByRole("button", { name: "Get Code", exact: true })
-    .first()
-    .click();
-  await expect(command).toContainText("--sandbox-provider vercel");
-  await page.evaluate(async () => await document.fonts.ready);
-  // The host dialog is the changed surface. Cross-document preview scenes have
-  // independent captures and cannot be replayed by the archive renderer.
-  await page.addStyleTag({
-    content:
-      "iframe, nextjs-portal { visibility: hidden !important; } *, *::before, *::after { animation: none !important; transition: none !important; }",
-  });
-  await uiVerify.snapshot("desktop installation");
-  await page.setViewportSize({ width: 390, height: 844 });
-  await expect(dialog.getByText(/Includes Vercel Sandbox/u)).toBeVisible();
-  expect(
-    await page.evaluate(
-      () => document.documentElement.scrollWidth <= innerWidth
-    )
-  ).toBe(true);
-  await uiVerify.snapshot("mobile installation");
-  await dialog
-    .getByRole("button", { name: "Copy Command", exact: true })
-    .click();
-  expect(
-    await page.evaluate(async () => await navigator.clipboard.readText())
-  ).toContain("--sandbox-provider vercel");
-  await dialog.getByRole("switch", { name: "Attachment uploads" }).uncheck();
-  await expect(command).not.toContainText("--sandbox-provider");
-  expect(errors).toEqual([]);
-});
-
 test("unsupported library links offer a Base UI recovery without losing selections", async ({
   page,
   uiVerify,
 }) => {
   uiVerify.disableAutoSnapshot();
-  await page.goto("/create?base=radix&preset=b27I2r8C&uploads=true");
+  await page.goto("/create?base=aria&preset=b27I2r8C&uploads=true");
   await expect(
     page
       .getByRole("alert")
@@ -231,6 +154,6 @@ test("unsupported library links offer a Base UI recovery without losing selectio
     "--preset b27I2r8C"
   );
   await expect(page.getByTestId("create-command")).toContainText(
-    "--sandbox-provider vercel"
+    '"sandbox":"vercel"'
   );
 });

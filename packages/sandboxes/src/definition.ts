@@ -5,6 +5,7 @@ const sandboxDefinitionSchema = z.object({
   kind: z.literal("sandbox"),
   id: z.string().regex(/^[a-z][a-z0-9-]*$/u),
   capabilities: z.object({
+    persistent: z.boolean().optional(),
     runtimes: z
       .array(z.enum(["python", "javascript"]))
       .refine(

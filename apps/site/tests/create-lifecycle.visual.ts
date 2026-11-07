@@ -1,3 +1,4 @@
+import { attachPreviewFile } from "./create-fixtures.mts";
 /* eslint-disable no-await-in-loop -- Scene transitions are deliberately sequential and repeated. */
 import assert from "node:assert/strict";
 import { mkdir } from "node:fs/promises";
@@ -31,43 +32,42 @@ page.on("console", (message) => {
 page.setDefaultTimeout(15_000);
 const frame = page.frameLocator("iframe");
 const scenes = [
-  { label: "New chat", item: "preview", title: "New chat" },
-  { label: "Tools", item: "preview-tools", title: "Tool states" },
-  { label: "Chat", item: "preview-02", title: "Conversation" },
+  { label: "New chat", item: "preview", title: "" },
+  { label: "Tools", item: "preview-tools", title: "Building something good" },
+  { label: "Chat", item: "preview-02", title: "Building something good" },
 ] as const;
 const expectScene = async (scene: (typeof scenes)[number]) => {
   console.log("Checking scene", scene.label, page.url());
   await expect(
     page.getByRole("button", { name: scene.label, exact: true })
-  ).toHaveAttribute("data-active", "true");
+  ).toHaveAttribute("aria-pressed", "true");
   await expect
     .poll(() => new URL(page.url()).searchParams.get("item") ?? "preview-02")
     .toBe(scene.item);
   await expect(page.locator("iframe")).toHaveCount(1);
-  await expect(
-    frame.getByRole("button", { name: "Preview scenario" })
-  ).toHaveText(scene.title, { timeout: 15_000 });
+  await (scene.title
+    ? expect(frame.getByRole("navigation", { name: "breadcrumb" })).toHaveText(
+        scene.title
+      )
+    : expect(
+        frame.getByRole("heading", { name: "How can I help you today?" })
+      ).toBeVisible());
   await expect(frame.getByTestId("chat-preview")).toBeVisible();
-  await expect(
-    frame.getByRole("button", { name: "Attach sample file" })
-  ).toBeVisible();
+  await expect(frame.locator('input[type="file"]')).toBeAttached();
 };
 try {
   await page.goto(`${url}?base=${base}&uploads=true`, {
     waitUntil: "domcontentloaded",
   });
   await expectScene(scenes[2]);
-  // This was red: the iframe changed scenes while the host URL/selection stayed on Chat.
-  await frame.getByRole("button", { name: "Preview scenario" }).click();
-  await frame
-    .getByRole("menuitemradio", { name: "Tool states", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Tools", exact: true }).click();
   await expectScene(scenes[1]);
   await page.goBack({ waitUntil: "domcontentloaded" });
   await expectScene(scenes[2]);
   await page.goForward({ waitUntil: "domcontentloaded" });
   await expectScene(scenes[1]);
 
+  await page.getByRole("tab", { name: "Appearance", exact: true }).click();
   await page.getByRole("button", { name: /^Theme /u }).click();
   await page.getByRole("menuitemradio", { name: "Rose", exact: true }).click();
   await page.keyboard.press("Escape");
@@ -117,14 +117,14 @@ try {
     "data-mode",
     "dark"
   );
-  await frame.getByRole("button", { name: "Attach sample file" }).click();
+  await attachPreviewFile(frame);
   await expect(
-    frame.getByRole("button", { name: "Remove sample attachment" })
+    frame.getByRole("button", { name: "Remove attachment" })
   ).toBeVisible();
   await page.getByRole("button", { name: "New chat", exact: true }).click();
   await expectScene(scenes[0]);
   await expect(
-    frame.getByRole("button", { name: "Remove sample attachment" })
+    frame.getByRole("button", { name: "Remove attachment" })
   ).toHaveCount(0);
   await page.screenshot({
     path: `${output}${base}-create-lifecycle-new-chat.png`,
@@ -155,10 +155,7 @@ try {
     "data-mode",
     "light"
   );
-  await frame.getByRole("button", { name: "Preview scenario" }).click();
-  await frame
-    .getByRole("menuitemradio", { name: "New chat", exact: true })
-    .click();
+  await page.getByRole("button", { name: "New chat", exact: true }).click();
   await expectScene(scenes[0]);
   await expect(frame.getByTestId("chat-preview")).toHaveAttribute(
     "data-mode",

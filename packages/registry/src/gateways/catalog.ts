@@ -68,7 +68,13 @@ export const builtInGateways = Object.entries(gatewayMetadata).map(
         }),
       },
       name: `${id}-gateway`,
-      title: metadata.exportName,
+      title: {
+        vercel: "Vercel AI Gateway",
+        openai: "OpenAI",
+        "openai-compatible": "OpenAI Compatible",
+        openrouter: "OpenRouter",
+        litellm: "LiteLLM",
+      }[id],
       type: "registry:item" as const,
     };
   }

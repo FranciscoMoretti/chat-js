@@ -1,6 +1,7 @@
 "use client";
 
 import { Hint } from "@/components/hint";
+import { ChatHeaderActions } from "./chat/chat-header";
 import { memo } from "react";
 import { Button } from "@/components/ui/button";
 
@@ -21,7 +22,7 @@ const PureHeaderActions = (): ReactJSX.Element => {
   const router = useRouter();
 
   return (
-    <div className="flex items-center gap-2">
+    <ChatHeaderActions>
       {!user && (
         <Hint
           trigger={
@@ -45,7 +46,7 @@ const PureHeaderActions = (): ReactJSX.Element => {
       )}
       <DocsLink />
       <GitHubLink />
-    </div>
+    </ChatHeaderActions>
   );
 };
 

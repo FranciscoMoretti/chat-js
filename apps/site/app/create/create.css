@@ -114,6 +114,8 @@ body:has(.chatjs-create-shell) .dark {
 body:has(.chatjs-create-shell) {
   overscroll-behavior: none;
 }
-body:has(.chatjs-create-shell) * {
-  border-color: var(--border);
+@layer base {
+  body:has(.chatjs-create-shell) * {
+    border-color: var(--border);
+  }
 }

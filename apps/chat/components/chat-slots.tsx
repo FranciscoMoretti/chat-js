@@ -12,7 +12,10 @@ export const SidebarSections = defineSlot<{
   readonly allowManagement?: boolean;
   readonly onProjectSelect?: (id: string) => void;
 }>();
-export const SidebarHeaderItems = defineSlot<{ readonly ownerId?: string }>();
+export const SidebarHeaderItems = defineSlot<{
+  readonly ownerId?: string;
+  readonly onChatSelect?: (id: string) => void;
+}>();
 export const ChatActions = defineSlot<ChatActionProps>();
 export const ChatBreadcrumbs = defineSlot<{
   readonly chatId: string;

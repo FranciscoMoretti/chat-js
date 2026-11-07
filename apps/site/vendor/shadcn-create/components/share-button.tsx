@@ -13,15 +13,14 @@ import { useDesignSystemSearchParams } from "@/vendor/shadcn-create/lib/search-p
 export function ShareButton() {
   const [params] = useDesignSystemSearchParams()
   const presetCode = usePresetCode()
-  const { installation, scenario } = useInstallation()
+  const { installation } = useInstallation()
   const [hasCopied, setHasCopied] = React.useState(false)
 
   const getShareUrl = () => {
     const url = new URL(window.location.href)
     url.searchParams.set("preset", presetCode)
-    url.searchParams.set("scenario", scenario)
     // Only known public setup fields are shared; provider credentials never belong in links.
-    const allowed = ["preset", "base", "item", "rtl", "pointer", "size", "gateway", "uploads", "storage", "storage-config", "installation", "scenario"]
+    const allowed = ["preset", "base", "item", "rtl", "pointer", "size", "gateway", "uploads", "storage", "storage-config", "installation"]
     for (const key of [...url.searchParams.keys()]) if (!allowed.includes(key)) url.searchParams.delete(key)
     url.searchParams.delete("storage-config")
     if (installation) {
@@ -50,7 +49,7 @@ export function ShareButton() {
       },
     })
     setHasCopied(copied)
-  }, [params, presetCode, installation, scenario])
+  }, [params, presetCode, installation])
 
   return (
     <Button variant="outline" className="hidden sm:flex" disabled={!installation} onClick={handleCopy}>

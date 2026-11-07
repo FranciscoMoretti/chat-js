@@ -23,7 +23,7 @@ import { GUEST_POLICY } from "./guest-policy";
 
 import { EveModelPicker } from "@/components/eve/eve-model-picker";
 import { EveComposer } from "@/components/eve/eve-composer";
-import { EveMessages } from "@/components/eve/eve-messages";
+import { ChatTranscript } from "@/components/chat/chat-transcript";
 
 const bindingSchema = z.object({
   credential: z.string(),
@@ -92,7 +92,7 @@ const GuestConversationView = ({
       <MessageScroller className="min-h-0 flex-1">
         <MessageScrollerViewport>
           <MessageScrollerContent className="mx-auto w-full max-w-3xl p-4">
-            <EveMessages
+            <ChatTranscript
               messages={messages}
               isReadonly={false}
               disabled={busy}

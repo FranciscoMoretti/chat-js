@@ -2,7 +2,7 @@ import { MessageScrollerProvider } from "@/components/ui/message-scroller";
 import React, { useState } from "react";
 import { createRoot } from "react-dom/client";
 
-import { EveMessages } from "../components/eve/eve-messages";
+import { ChatTranscript } from "../components/chat/chat-transcript";
 
 import { FollowUpSuggestionsView } from "../chatjs/plugins/followup-suggestions/followup-suggestions-view";
 
@@ -17,7 +17,7 @@ const Fixture = (): React.JSX.Element => {
     <main className="mx-auto max-w-3xl space-y-6 p-4">
       <section aria-label="Completed answer">
         <MessageScrollerProvider>
-          <EveMessages
+          <ChatTranscript
             messages={[
               {
                 id: "completion:assistant",

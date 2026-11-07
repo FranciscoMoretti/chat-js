@@ -65,10 +65,74 @@
         "./components/create-preview/ui/base/alert-dialog.tsx"
       ],
       "@/trpc/react": ["../chat/trpc/context.tsx"],
-      "@/providers/session-provider": ["../chat/providers/session-context.ts"]
+      "@/providers/session-provider": ["../chat/providers/session-context.ts"],
+      "@/components/ui/command": [
+        "./components/create-preview/ui/base/command.tsx"
+      ],
+      "@/components/ui/alert": [
+        "./components/create-preview/ui/base/alert.tsx"
+      ],
+      "@/components/ui/empty": [
+        "./components/create-preview/ui/base/empty.tsx"
+      ],
+      "@/components/ui/direction": [
+        "./components/create-preview/ui/base/direction.tsx"
+      ],
+      "@/components/ui/input-group": [
+        "./components/create-preview/ui/base/input-group.tsx"
+      ],
+      "@/components/ui/bubble": [
+        "./components/create-preview/ui/base/bubble.tsx"
+      ],
+      "@/components/ui/trace": [
+        "./components/create-preview/ui/base/trace.tsx"
+      ],
+      "@/components/ui/code-block": [
+        "./components/create-preview/ui/base/code-block.tsx"
+      ],
+      "@/components/ui/message": [
+        "./components/create-preview/ui/base/message.tsx"
+      ],
+      "@/components/ui/collapsible": [
+        "./components/create-preview/ui/base/collapsible.tsx"
+      ],
+      "@/components/ui/message-scroller": [
+        "./components/create-preview/ui/base/message-scroller.tsx"
+      ],
+      "@/components/ui/attachment": [
+        "./components/create-preview/ui/base/attachment.tsx"
+      ],
+      "@/components/ui/hover-card": [
+        "./components/create-preview/ui/base/hover-card.tsx"
+      ],
+      "@/components/ui/spinner": [
+        "./components/create-preview/ui/base/spinner.tsx"
+      ],
+      "@/components/ui/badge": [
+        "./components/create-preview/ui/base/badge.tsx"
+      ],
+      "@/components/ui/avatar": [
+        "./components/create-preview/ui/base/avatar.tsx"
+      ],
+      "@/components/ui/checkbox": [
+        "./components/create-preview/ui/base/checkbox.tsx"
+      ],
+      "@/components/ui/switch": [
+        "./components/create-preview/ui/base/switch.tsx"
+      ],
+      "@/components/ui/select": [
+        "./components/create-preview/ui/base/select.tsx"
+      ],
+      "@/components/ui/toggle": [
+        "./components/create-preview/ui/base/toggle.tsx"
+      ],
+      "@/components/ui/toggle-group": [
+        "./components/create-preview/ui/base/toggle-group.tsx"
+      ]
     },
     "strictNullChecks": true,
-    "types": ["node"]
+    "types": ["node"],
+    "allowImportingTsExtensions": true
   },
   "include": [
     "next-env.d.ts",

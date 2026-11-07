@@ -5,6 +5,10 @@ import { EveChatError } from "./eve-chat-error";
 import type { ReactNode } from "react";
 import type { ComposerSubmission } from "@/components/composer/submission";
 import { hasText } from "@/components/text-value";
+import {
+  ChatConversationBody,
+  ChatConversationFooter,
+} from "../chat/chat-conversation";
 import { ChatWelcomeView } from "@/components/chat/chat-welcome-view";
 import {
   MessageScroller,
@@ -35,7 +39,7 @@ export const NewConversationView = ({
   );
   if (submission.pending) {
     return (
-      <div className="flex min-h-0 flex-1 flex-col">
+      <ChatConversationBody>
         <MessageScrollerProvider autoScroll>
           <MessageScroller className="flex-1">
             <MessageScrollerViewport>
@@ -47,8 +51,8 @@ export const NewConversationView = ({
             <MessageScrollerButton />
           </MessageScroller>
         </MessageScrollerProvider>
-        <div className="mx-auto w-full max-w-3xl p-4">{input}</div>
-      </div>
+        <ChatConversationFooter>{input}</ChatConversationFooter>
+      </ChatConversationBody>
     );
   }
   return contextual ? input : <ChatWelcomeView>{input}</ChatWelcomeView>;

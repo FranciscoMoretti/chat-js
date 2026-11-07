@@ -1,12 +1,10 @@
 "use client"
 
 import * as React from "react"
-import dynamic from "next/dynamic"
 import { type RegistryItem } from "shadcn/schema"
 
 import { useIsMobile } from "@/vendor/shadcn-create/hooks/use-mobile"
 import { getThemesForBaseColor, STYLES } from "@/vendor/shadcn-create/registry/config"
-import { Button } from "@/vendor/shadcn-create/styles/base-nova/ui/button"
 import {
   Card,
   CardContent,
@@ -32,24 +30,6 @@ import { ThemePicker } from "@/vendor/shadcn-create/components/theme-picker"
 import { FONT_HEADING_OPTIONS, FONTS } from "@/vendor/shadcn-create/lib/fonts"
 import { useDesignSystemSearchParams } from "@/vendor/shadcn-create/lib/search-params"
 
-// Only visible when user clicks "Create Project". Rendered client-only to
-// avoid a useId hydration mismatch on the Base UI dialog trigger. The loading
-// placeholder mirrors the trigger button exactly so there is no layout shift.
-const ProjectForm = dynamic(
-  () =>
-    import("@/components/create-preview/project-form").then(
-      (m) => m.ProjectForm
-    ),
-  {
-    ssr: false,
-    loading: () => (
-      <Button disabled aria-hidden>
-        Get Code
-      </Button>
-    ),
-  }
-)
-
 export function Customizer({
   itemsByBase,
 }: {
@@ -66,7 +46,7 @@ export function Customizer({
 
   return (
     <Card
-      className="dark top-24 right-12 isolate z-10 max-h-full min-h-0 w-full self-start rounded-2xl bg-card/90 backdrop-blur-xl md:w-(--customizer-width)"
+      className="top-24 right-12 isolate z-10 max-h-full min-h-0 w-full self-start rounded-2xl bg-card/90 backdrop-blur-xl md:w-(--customizer-width)"
       ref={anchorRef}
       size="sm"
     >
@@ -111,7 +91,7 @@ export function Customizer({
           <MenuAccentPicker isMobile={isMobile} anchorRef={anchorRef} />
         </FieldGroup>
       </CardContent>
-      <CardFooter className="flex min-w-0 gap-2 md:flex-col md:rounded-b-none md:**:[button,a]:w-full">
+      <CardFooter className="flex min-w-0 gap-2 md:flex-col md:**:[button,a]:w-full">
         <CopyPreset className="min-w-0 flex-1 md:flex-none" />
         <OpenPreset
           className="max-w-20 min-w-0 flex-1 sm:max-w-none md:flex-none"
@@ -120,9 +100,6 @@ export function Customizer({
         <RandomButton className="max-w-20 min-w-0 flex-1 sm:max-w-none md:flex-none" />
         <ActionMenu itemsByBase={itemsByBase} />
         <ResetDialog />
-      </CardFooter>
-      <CardFooter className="-mt-3 hidden min-w-0 gap-2 md:flex md:flex-col md:**:[button,a]:w-full">
-        <ProjectForm />
       </CardFooter>
     </Card>
   )

@@ -41,6 +41,18 @@ const featureNames = [
   "label",
   "popover",
   "alert-dialog",
+  "command",
+  "alert",
+  "empty",
+  "hover-card",
+  "spinner",
+  "badge",
+  "avatar",
+  "checkbox",
+  "switch",
+  "select",
+  "toggle",
+  "toggle-group",
 ];
 const styles = ["vega", "nova", "lyra", "maia", "mira", "luma", "sera", "rhea"];
 const bases = ["base", "radix"];

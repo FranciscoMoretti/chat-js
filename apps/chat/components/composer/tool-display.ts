@@ -6,7 +6,8 @@ import { composerTools } from "@/integrations/tools/composer";
 import { installedToolNames } from "@/integrations/tools/catalog";
 
 export const getToolDisplay = (
-  tool: UiToolName
+  tool: UiToolName,
+  available: ReadonlySet<string> = installedToolNames
 ):
   | {
       icon: LucideIcon;
@@ -14,6 +15,6 @@ export const getToolDisplay = (
       shortName: string;
     }
   | undefined =>
-  installedToolNames.has(tool)
+  available.has(tool)
     ? (composerTools[tool] ?? { icon: Wrench, name: tool, shortName: tool })
     : undefined;

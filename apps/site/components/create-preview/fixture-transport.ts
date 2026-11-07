@@ -1,17 +1,15 @@
+import { sampleConversation } from "./preview-data";
 import { TRPCClientError } from "@trpc/client";
 import type { TRPCLink } from "@trpc/client";
 import type { inferRouterOutputs } from "@trpc/server";
 import { observable } from "@trpc/server/observable";
+import { createDocumentFixtures } from "./preview-documents";
+import { createProjectFixtures } from "./preview-projects";
 import { z } from "zod";
 import type { AppRouter } from "../../../chat/trpc/routers/_app";
 
-export const sampleConversation = {
-  id: "00000000-0000-4000-8000-000000000001",
-  title: "Building something good",
-  state: "bound",
-};
 export const sampleMessageId = "sample-assistant";
-const projectId = "00000000-0000-4000-8000-000000000002";
+export const sampleBalanceCents = 2500;
 const date = new Date("2026-01-01T00:00:00Z");
 type Outputs = inferRouterOutputs<AppRouter>;
 
@@ -20,51 +18,118 @@ const voteInput = z.object({
   messageId: z.literal(sampleMessageId),
   type: z.enum(["up", "down"]),
 });
-const assignmentInput = z.object({
-  conversationId: z.literal(sampleConversation.id),
-  projectId: z.string().nullable(),
-});
-
 /** A bounded terminal transport, not a server implementation. Unsupported calls fail closed. */
 export const createFixtureTransport = (
   scenario: "ready" | "mutation-error"
 ) => {
-  const projects: Outputs["project"]["list"] = [
-    {
-      id: projectId,
-      name: "Launch plan",
-      icon: "rocket",
-      iconColor: "purple",
-      instructions: "Keep the scope small.",
-      userId: "preview-user",
-      createdAt: date,
-      updatedAt: date,
-    },
-  ];
-  let assigned: string | null = null;
+  let deleted = false;
+  let { title } = sampleConversation;
+  let isPinned = false;
+  const updatedAt = new Date().toISOString();
+  const failMutation = () => {
+    if (scenario === "mutation-error") {
+      throw new Error("Sample mutation failure");
+    }
+  };
+
+  const projectFixtures = createProjectFixtures(failMutation);
+  const documentFixtures = createDocumentFixtures(failMutation);
   let votes: Outputs["feedback"]["votes"] = [];
   const resolve = (path: string, input: unknown): unknown => {
+    if (path.startsWith("project.")) {
+      return projectFixtures.resolve(path, input);
+    }
+    if (path === "eve.document" || path === "eve.saveDocument") {
+      return documentFixtures.resolve(path, input);
+    }
     switch (path) {
-      case "project.list": {
-        return projects;
+      case "credits.getAvailableCredits": {
+        return {
+          balanceCents: sampleBalanceCents,
+        } satisfies Outputs["credits"]["getAvailableCredits"];
       }
-      case "project.forChat": {
-        z.object({ id: z.literal(sampleConversation.id) }).parse(input);
-        return projects.find((project) => project.id === assigned) ?? null;
+      case "eve.list": {
+        z.object({ ownerScope: z.literal("preview-user") }).parse(input);
+        return {
+          items: deleted
+            ? []
+            : [
+                {
+                  ...sampleConversation,
+                  title,
+                  state: "bound",
+                  conversationId: sampleConversation.id,
+                  createdAt: date,
+                  updatedAt,
+                  isPinned,
+                  titleStatus: "manual",
+                  href: `/chat/${sampleConversation.id}`,
+                  parentHref: "/",
+                },
+              ],
+          nextCursor: null,
+        } satisfies Outputs["eve"]["list"];
       }
-      case "project.assign": {
-        const data = assignmentInput.parse(input);
-        if (scenario === "mutation-error") {
-          throw new Error("Sample assignment failure");
-        }
-        if (
-          data.projectId !== null &&
-          !projects.some((project) => project.id === data.projectId)
-        ) {
-          throw new Error("Project unavailable");
-        }
-        assigned = data.projectId;
-        return data satisfies Outputs["project"]["assign"];
+      case "eve.get": {
+        return {
+          chatId: sampleConversation.id,
+          title,
+          titleStatus: "manual",
+          isPinned,
+          href: `/chat/${sampleConversation.id}`,
+          parentHref: "/",
+          visibility: "private",
+        } satisfies NonNullable<Outputs["eve"]["get"]>;
+      }
+      case "eve.rename": {
+        failMutation();
+        ({ title } = z
+          .object({ title: z.string().trim().min(1).max(255) })
+          .parse(input));
+        return {
+          id: sampleConversation.id,
+          title,
+          isPinned,
+          titleStatus: "manual",
+        };
+      }
+      case "eve.pin": {
+        failMutation();
+        ({ isPinned } = z.object({ isPinned: z.boolean() }).parse(input));
+        return {
+          id: sampleConversation.id,
+          title,
+          isPinned,
+          titleStatus: "manual",
+        };
+      }
+      case "search.query": {
+        const { search } = z
+          .object({
+            ownerScope: z.literal("preview-user"),
+            search: z.string().trim().min(1),
+          })
+          .parse(input);
+        const text =
+          "Start with one useful conversation. Keep the interface clear.";
+        const matches =
+          !deleted &&
+          `${title} ${text}`.toLowerCase().includes(search.toLowerCase());
+        return {
+          items: matches
+            ? [
+                {
+                  id: sampleConversation.id,
+                  conversationId: sampleConversation.id,
+                  title,
+                  excerpt: text,
+                  updatedAt: date.toISOString(),
+                  rank: 1,
+                },
+              ]
+            : [],
+          nextCursor: null,
+        } satisfies Outputs["search"]["query"];
       }
       case "feedback.votes": {
         z.object({ conversationId: z.literal(sampleConversation.id) }).parse(
@@ -112,5 +177,11 @@ export const createFixtureTransport = (
           clearTimeout(timer);
         };
       });
-  return { link };
+  return {
+    link,
+    deleteConversation: () => {
+      failMutation();
+      deleted = true;
+    },
+  };
 };

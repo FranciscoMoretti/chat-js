@@ -17,14 +17,21 @@ import { HistoryProvider } from "@/vendor/shadcn-create/hooks/use-history";
 import { LocksProvider } from "@/vendor/shadcn-create/hooks/use-locks";
 import { useDesignSystemSearchParams } from "@/vendor/shadcn-create/lib/search-params";
 import { InstallationProvider } from "./create-preview/installation-provider";
-import type { CreateProvider } from "./create-model";
+import type { InstallationCatalogItem } from "../../../packages/registry/installation-catalog";
+import { InstallationPanel } from "./create-preview/installation-panel";
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from "@/vendor/shadcn-create/styles/base-nova/ui/tabs";
 
 const ProjectForm = dynamic(
   async () => {
     const imported = await import("@/components/create-preview/project-form");
     return imported.ProjectForm;
   },
-  { ssr: false }
+  { ssr: false, loading: () => <Button disabled>Get Code</Button> }
 );
 const previewItems = [
   {
@@ -84,13 +91,14 @@ const CreateDesigner = () => {
         <ShareButton />
         <ProjectForm />
       </header>
-      <main className="section-soft relative z-10 flex min-h-0 flex-1 flex-col overflow-hidden [--customizer-width:--spacing(48)] [--gap:--spacing(4)] md:[--gap:--spacing(6)] 2xl:[--customizer-width:--spacing(56)]">
+      <main className="section-soft relative z-10 flex min-h-0 flex-1 flex-col overflow-hidden [--customizer-width:--spacing(80)] [--gap:--spacing(4)] md:[--gap:--spacing(6)]">
         <div
           data-slot="designer"
           className="flex min-h-0 flex-1 flex-col gap-(--gap) p-(--gap) pt-[calc(var(--gap)*0.25)] md:flex-row-reverse"
         >
           <PreviewOverrideProvider>
-            {params.base === "base" && params.template === "next" ? (
+            {(params.base === "base" || params.base === "radix") &&
+            params.template === "next" ? (
               <Preview />
             ) : (
               <div
@@ -110,7 +118,34 @@ const CreateDesigner = () => {
                 </Button>
               </div>
             )}
-            <Customizer itemsByBase={itemsByBase} />
+            <Tabs
+              defaultValue="app"
+              className="h-[46svh] min-h-0 w-full shrink-0 md:h-full md:w-(--customizer-width)"
+              aria-label="Create configuration"
+            >
+              <TabsList
+                aria-label="Configuration category"
+                className="w-full shrink-0"
+              >
+                <TabsTrigger value="app">App</TabsTrigger>
+                <TabsTrigger value="appearance">Appearance</TabsTrigger>
+              </TabsList>
+              <TabsContent
+                value="appearance"
+                className="min-h-0 overflow-hidden md:flex md:flex-col"
+              >
+                <Customizer itemsByBase={itemsByBase} />
+              </TabsContent>
+              <TabsContent value="app" className="min-h-0 overflow-hidden">
+                <InstallationPanel />
+              </TabsContent>
+              <section
+                aria-label="Create app"
+                className="bg-card grid shrink-0 rounded-2xl border p-3"
+              >
+                <ProjectForm />
+              </section>
+            </Tabs>
           </PreviewOverrideProvider>
         </div>
         <PresetHandler />
@@ -120,19 +155,14 @@ const CreateDesigner = () => {
 };
 
 export const CreateConfigurator = ({
-  gateways,
-  storageProviders,
+  catalog,
 }: Readonly<{
-  gateways: readonly CreateProvider[];
-  storageProviders: readonly CreateProvider[];
+  catalog: readonly InstallationCatalogItem[];
 }>) => (
   <Suspense fallback={<CreateSkeleton />}>
     <LocksProvider>
       <HistoryProvider>
-        <InstallationProvider
-          gateways={gateways}
-          storageProviders={storageProviders}
-        >
+        <InstallationProvider catalog={catalog}>
           <CreateDesigner />
         </InstallationProvider>
       </HistoryProvider>

@@ -12,7 +12,7 @@ import {
 import type { ReadonlyEveMessage } from "@/lib/eve/readonly-message-types";
 import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 
-import { EveMessages } from "@/components/eve/eve-messages";
+import { ChatTranscript } from "@/components/chat/chat-transcript";
 
 export const EveSharedMessages = ({
   messages,
@@ -25,7 +25,7 @@ export const EveSharedMessages = ({
     <MessageScroller className="flex-1">
       <MessageScrollerViewport>
         <MessageScrollerContent className="mx-auto w-full max-w-3xl p-4">
-          <EveMessages
+          <ChatTranscript
             disabled
             isReadonly
             messages={messages}

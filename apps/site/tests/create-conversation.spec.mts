@@ -1,3 +1,4 @@
+import { attachPreviewFile } from "./create-fixtures.mts";
 import { test, expect } from "@uiverify/playwright";
 import {
   DEFAULT_PRESET_CONFIG,
@@ -55,9 +56,9 @@ for (const base of ["base"] as const) {
           "nextjs-portal { display: none !important; } *, *::before, *::after { animation: none !important; transition: none !important; }",
       });
       await uiVerify.snapshot("conversation");
-      await page.getByRole("button", { name: "Attach sample file" }).click();
+      await attachPreviewFile(page);
       await expect(
-        page.getByRole("button", { name: "Remove sample attachment" })
+        page.getByRole("button", { name: "Remove attachment" })
       ).toBeVisible();
       await page
         .getByRole("textbox", { name: "Message" })

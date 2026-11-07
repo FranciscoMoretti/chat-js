@@ -15,9 +15,9 @@ interface ChatModelsContextType {
   readonly models: readonly ReadonlyNativeSurface<AppModelDefinition>[];
 }
 
-const ChatModelsContext = createContext<ChatModelsContextType | undefined>(
-  undefined
-);
+export const ChatModelsContext = createContext<
+  ChatModelsContextType | undefined
+>(undefined);
 
 const ChatModelsProvider = ({
   children,

@@ -46,7 +46,9 @@ export function Preview() {
   // Hover previews overlay the committed params without touching the URL —
   // clearing the override re-sends the committed params, reverting the preview.
   const mergedParams = React.useMemo(
-    () => (override ? { ...params, ...override } : params),
+    // The library choice belongs to installation. The shared application preview
+    // uses Base UI for both outputs, without remounting its local runtime.
+    () => ({ ...params, ...override, base: "base" as const }),
     [params, override]
   )
 
@@ -189,27 +191,26 @@ export function Preview() {
     // via a postMessage channel, for it to sync its own history onto the host's.
     return serializeDesignSystemSearchParams(
       `/create/preview`,
-      params
+      { ...params, base: "base" }
     )
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [params.base, params.item])
+  }, [])
 
   return (
-    <div className="relative flex flex-1 flex-col justify-center overflow-hidden rounded-2xl ring ring-foreground/10 md:ring-muted dark:ring-foreground/10">
+    <div className="relative flex min-h-0 flex-1 flex-col justify-center overflow-hidden rounded-2xl ring ring-foreground/10 md:ring-muted dark:ring-foreground/10">
+      <PreviewSwitcher />
       <div className="relative z-0 mx-auto flex w-full flex-1 flex-col overflow-hidden">
         <div className="absolute inset-0 bg-muted dark:bg-muted/30" />
         <iframe
-          key={params.base + params.item}
           ref={iframeRef}
           src={iframeSrc}
           className="z-10 h-full flex-1 bg-background mx-auto transition-[width]"
           style={{ width: params.size === 100 ? "100%" : `${params.size}px`, maxWidth: "100%" }}
           title="Preview"
         />
-        <PreviewRecovery key={"recovery-" + params.base + params.item} iframeRef={iframeRef} />
+        <PreviewRecovery iframeRef={iframeRef} />
       </div>
-      <ChatPreviewSync key={params.base + params.item} iframeRef={iframeRef} />
-      <PreviewSwitcher />
+      <ChatPreviewSync iframeRef={iframeRef} />
     </div>
   )
 }

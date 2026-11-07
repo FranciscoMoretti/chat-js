@@ -14,10 +14,25 @@
       "sha256": "86a20c2cae7d8a686dded2ca61b84f8c0bb4c9e56cd5f423eddac87827469caf",
       "adaptedSha256": "a5aecc57b916c8dcdb20386ddef0f62104d4f635df31223aeaa7e9de763bd625"
     },
+    "base/alert.tsx": {
+      "source": "registry/bases/base/ui/alert.tsx",
+      "sha256": "639c846b57885d8af4dbdf7ddab7b15fd4d392c051f7496c67e811154e7861d9",
+      "adaptedSha256": "639c846b57885d8af4dbdf7ddab7b15fd4d392c051f7496c67e811154e7861d9"
+    },
     "base/attachment.tsx": {
       "source": "registry/bases/base/ui/attachment.tsx",
       "sha256": "8990c8ba1b1737acdbaf847aae6360ae544700beac7f3f53e559a57b04a48bfe",
       "adaptedSha256": "3e9bb3ada777ba1b8188cbc905c1389b4141a8daef115e617e94131b3fe5e1d0"
+    },
+    "base/avatar.tsx": {
+      "source": "registry/bases/base/ui/avatar.tsx",
+      "sha256": "d9850dc6f9aaccf9f7aab3c730c3aef62b42ef8cd9404b2d7133f771e14a6cbd",
+      "adaptedSha256": "6765920ab2038e88fadf3362d6f42d9c86d6cf4d5fe28bac7d861aee00658f42"
+    },
+    "base/badge.tsx": {
+      "source": "registry/bases/base/ui/badge.tsx",
+      "sha256": "cad65ac68df79093dc7e9655a94cc60011a2f82b45fc42a0ad74a6e6323c4389",
+      "adaptedSha256": "cad65ac68df79093dc7e9655a94cc60011a2f82b45fc42a0ad74a6e6323c4389"
     },
     "base/breadcrumb.tsx": {
       "source": "registry/bases/base/ui/breadcrumb.tsx",
@@ -34,6 +49,11 @@
       "sha256": "74f982d7ad7a764e3c95a519fc063a671e66ad758ea31dc89d747838e20c2487",
       "adaptedSha256": "74f982d7ad7a764e3c95a519fc063a671e66ad758ea31dc89d747838e20c2487"
     },
+    "base/checkbox.tsx": {
+      "source": "registry/bases/base/ui/checkbox.tsx",
+      "sha256": "67d7935d6fd74b026cd464acd0c4f60dd8519667364b4ca2c584c0c486c72f3a",
+      "adaptedSha256": "0beff64959d1343dc102ca5886898d6b9bbe5333cb1f5ad0804f0cac55d9e5b4"
+    },
     "base/code-block.tsx": {
       "source": "registry/bases/base/ui/code-block.tsx",
       "sha256": "66ae50e6a08ca54a0ffd8be7f71cb4f60002a0e0cb592910d85e8e2d839cca0a",
@@ -43,6 +63,11 @@
       "source": "registry/bases/base/ui/collapsible.tsx",
       "sha256": "ead4349ff7b01d696ef89294a81d18ee1d3f732321398896462c834ab9b9e065",
       "adaptedSha256": "ead4349ff7b01d696ef89294a81d18ee1d3f732321398896462c834ab9b9e065"
+    },
+    "base/command.tsx": {
+      "source": "registry/bases/base/ui/command.tsx",
+      "sha256": "65c077360299bf07e26db0954e1f2472f0ecc4568e881b4b956634fa65ca6c80",
+      "adaptedSha256": "da649f12ecb310b4e4c01f711622d6d2b3fdf60ce24e5979be404cfcb6186a8f"
     },
     "base/dialog.tsx": {
       "source": "registry/bases/base/ui/dialog.tsx",
@@ -58,6 +83,16 @@
       "source": "registry/bases/base/ui/dropdown-menu.tsx",
       "sha256": "18c1829679694a9b9850afcabf1158a80ec3624fb5e03d0d4b13339b729e0503",
       "adaptedSha256": "212e8ea159fe3f8f3f91d036f7991855ffd1884632252823d107544b4ec57fc9"
+    },
+    "base/empty.tsx": {
+      "source": "registry/bases/base/ui/empty.tsx",
+      "sha256": "05c419160ac0226973f6f00d7d8865dc46645a75ea0697138992cdbc736efec4",
+      "adaptedSha256": "05c419160ac0226973f6f00d7d8865dc46645a75ea0697138992cdbc736efec4"
+    },
+    "base/hover-card.tsx": {
+      "source": "registry/bases/base/ui/hover-card.tsx",
+      "sha256": "9c1412f06a968da1a5f7fd6d30d0f615445ac8e48b04fcc40bd70c8dfdfc7cb5",
+      "adaptedSha256": "9c1412f06a968da1a5f7fd6d30d0f615445ac8e48b04fcc40bd70c8dfdfc7cb5"
     },
     "base/input-group.tsx": {
       "source": "registry/bases/base/ui/input-group.tsx",
@@ -94,6 +129,11 @@
       "sha256": "7e49845827447091a6493473779a05ba45cb8302e3703a6f9e4225dd6315cce2",
       "adaptedSha256": "7e49845827447091a6493473779a05ba45cb8302e3703a6f9e4225dd6315cce2"
     },
+    "base/select.tsx": {
+      "source": "registry/bases/base/ui/select.tsx",
+      "sha256": "6348d30035b68867d5efffe9b0b1611718226bef9fdeef9554349d6b98252110",
+      "adaptedSha256": "2569fc8e6c82657bfbce206a78105054fb1e692fc5846fa13dc50b6e0932d411"
+    },
     "base/separator.tsx": {
       "source": "registry/bases/base/ui/separator.tsx",
       "sha256": "9a80ff8c110e0c55489509f4f82ebcc929c0174b59544047147b7134f86a54e7",
@@ -114,10 +154,30 @@
       "sha256": "8fcbad84e494a75484a0975221fb40f54c4a7d68f79cfc305cb158d1feb1badf",
       "adaptedSha256": "8fcbad84e494a75484a0975221fb40f54c4a7d68f79cfc305cb158d1feb1badf"
     },
+    "base/spinner.tsx": {
+      "source": "registry/bases/base/ui/spinner.tsx",
+      "sha256": "494f71fd2733709d0e43be44e3353d9df215b370137af0195251cbdfdcc9e17b",
+      "adaptedSha256": "99147f92433f0111b98ec810bccce71dbc008ee8cb792bb96ae7f0fd4288657d"
+    },
+    "base/switch.tsx": {
+      "source": "registry/bases/base/ui/switch.tsx",
+      "sha256": "87aaf20b3209fabbcf0a9520c8b34733ddf2c91524c80ec72ed3dd3684f1bca3",
+      "adaptedSha256": "87aaf20b3209fabbcf0a9520c8b34733ddf2c91524c80ec72ed3dd3684f1bca3"
+    },
     "base/textarea.tsx": {
       "source": "registry/bases/base/ui/textarea.tsx",
       "sha256": "8f527c89dec40a9b372376dc93d2ebb149bfd82f209856d110ead1aabec19c6a",
       "adaptedSha256": "8f527c89dec40a9b372376dc93d2ebb149bfd82f209856d110ead1aabec19c6a"
+    },
+    "base/toggle-group.tsx": {
+      "source": "registry/bases/base/ui/toggle-group.tsx",
+      "sha256": "2562e00c69ad2ad15e4ce9fdbcf4c9cc42223b7ce7340db0ad3d203f23177c21",
+      "adaptedSha256": "d44e48aa7532d9a6a014df2fcdd8dee5d7cfe689f09b25cbe5ab0c3b4229ac4c"
+    },
+    "base/toggle.tsx": {
+      "source": "registry/bases/base/ui/toggle.tsx",
+      "sha256": "b53df3a8d6ad7ae3853a5e72f8bbf11e39daababfc8b0e369347b355eb9af120",
+      "adaptedSha256": "b53df3a8d6ad7ae3853a5e72f8bbf11e39daababfc8b0e369347b355eb9af120"
     },
     "base/tooltip.tsx": {
       "source": "registry/bases/base/ui/tooltip.tsx",

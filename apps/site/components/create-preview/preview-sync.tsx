@@ -8,7 +8,8 @@ import { useInstallation } from "./installation-provider";
 export const ChatPreviewSync = ({
   iframeRef,
 }: Readonly<{ iframeRef: RefObject<HTMLIFrameElement | null> }>) => {
-  const { installation, scenario } = useInstallation();
+  const { resolution, scenario } = useInstallation();
+  const installation = resolution?.selection ?? null;
   const { resolvedTheme } = useTheme();
   useEffect(() => {
     const iframe = iframeRef.current;

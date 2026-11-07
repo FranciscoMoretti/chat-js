@@ -1,12 +1,15 @@
 "use client";
 
 import { createContext, useContext } from "react";
+import type { ComponentProps } from "react";
 import type { PresetConfig } from "shadcn/preset";
 import {
   ArrowUp,
+  Loader2,
   ArrowDown,
   Check,
   ChevronDown,
+  ChevronUp,
   ChevronRight,
   Copy,
   FileText,
@@ -19,39 +22,55 @@ import {
 } from "lucide-react";
 import {
   IconCopy,
+  IconLoader,
+  IconSearch,
   IconDots,
   IconLayoutSidebar,
   IconX,
   IconCheck,
   IconChevronRight,
+  IconChevronDown,
+  IconChevronUp,
   IconArrowDown,
 } from "@tabler/icons-react";
 import {
   CopyIcon,
+  SpinnerIcon,
+  MagnifyingGlassIcon,
   DotsThreeIcon,
   SidebarIcon,
   XIcon,
   CheckIcon,
   CaretRightIcon,
+  CaretDownIcon,
+  CaretUpIcon,
   ArrowDownIcon,
 } from "@phosphor-icons/react";
 import {
   RiFileCopyLine,
+  RiLoaderLine,
+  RiSearchLine,
   RiMoreLine,
   RiSideBarLine,
   RiCloseLine,
   RiCheckLine,
   RiArrowRightSLine,
+  RiArrowDownSLine,
+  RiArrowUpSLine,
   RiArrowDownLine,
 } from "@remixicon/react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Copy01Icon,
+  Loading03Icon,
+  Search01Icon,
   MoreHorizontalIcon,
   SidebarLeftIcon,
   Cancel01Icon,
   Tick02Icon,
   ArrowRight01Icon,
+  ArrowDown01Icon,
+  ArrowUp01Icon,
   ArrowDown02Icon,
 } from "@hugeicons/core-free-icons";
 
@@ -84,24 +103,62 @@ export const PreviewIcon = ({
 // Native registry placeholders follow the selected shadcn icon library.
 export const IconPlaceholder = ({
   lucide,
-  className,
-}: Readonly<{
-  lucide:
-    | "ChevronRightIcon"
-    | "CheckIcon"
-    | "ArrowDownIcon"
-    | "CopyIcon"
-    | "PanelLeftIcon"
-    | "XIcon"
-    | "MoreHorizontalIcon";
-  tabler: string;
-  hugeicons: string;
-  phosphor: string;
-  remixicon: string;
-  className?: string;
-}>) => {
+  tabler: _tabler,
+  hugeicons: _hugeicons,
+  phosphor: _phosphor,
+  remixicon: _remixicon,
+  children: _children,
+  ...props
+}: Readonly<
+  {
+    lucide:
+      | "Loader2Icon"
+      | "SearchIcon"
+      | "ChevronRightIcon"
+      | "ChevronDownIcon"
+      | "ChevronUpIcon"
+      | "CheckIcon"
+      | "ArrowDownIcon"
+      | "CopyIcon"
+      | "PanelLeftIcon"
+      | "XIcon"
+      | "MoreHorizontalIcon";
+    tabler: string;
+    hugeicons: string;
+    phosphor: string;
+    remixicon: string;
+  } & ComponentProps<"svg">
+>) => {
   const library = useContext(IconLibraryContext);
   const icons = {
+    ChevronDownIcon: {
+      hugeicons: ArrowDown01Icon,
+      tabler: IconChevronDown,
+      phosphor: CaretDownIcon,
+      remixicon: RiArrowDownSLine,
+      lucide: ChevronDown,
+    },
+    ChevronUpIcon: {
+      hugeicons: ArrowUp01Icon,
+      tabler: IconChevronUp,
+      phosphor: CaretUpIcon,
+      remixicon: RiArrowUpSLine,
+      lucide: ChevronUp,
+    },
+    Loader2Icon: {
+      hugeicons: Loading03Icon,
+      tabler: IconLoader,
+      phosphor: SpinnerIcon,
+      remixicon: RiLoaderLine,
+      lucide: Loader2,
+    },
+    SearchIcon: {
+      hugeicons: Search01Icon,
+      tabler: IconSearch,
+      phosphor: MagnifyingGlassIcon,
+      remixicon: RiSearchLine,
+      lucide: Search,
+    },
     MoreHorizontalIcon: {
       hugeicons: MoreHorizontalIcon,
       tabler: IconDots,
@@ -155,8 +212,8 @@ export const IconPlaceholder = ({
   if (library === "hugeicons") {
     return (
       <HugeiconsIcon
-        aria-hidden
-        className={className}
+        aria-hidden={props.role === undefined ? true : undefined}
+        {...props}
         icon={icons.hugeicons}
         strokeWidth={2}
       />
@@ -164,16 +221,36 @@ export const IconPlaceholder = ({
   }
   if (library === "tabler") {
     const Icon = icons.tabler;
-    return <Icon aria-hidden className={className} />;
+    return (
+      <Icon
+        aria-hidden={props.role === undefined ? true : undefined}
+        {...props}
+      />
+    );
   }
   if (library === "phosphor") {
     const Icon = icons.phosphor;
-    return <Icon aria-hidden className={className} />;
+    return (
+      <Icon
+        aria-hidden={props.role === undefined ? true : undefined}
+        {...props}
+      />
+    );
   }
   if (library === "remixicon") {
     const Icon = icons.remixicon;
-    return <Icon aria-hidden className={className} />;
+    return (
+      <Icon
+        aria-hidden={props.role === undefined ? true : undefined}
+        {...props}
+      />
+    );
   }
   const Icon = icons.lucide;
-  return <Icon aria-hidden className={className} />;
+  return (
+    <Icon
+      aria-hidden={props.role === undefined ? true : undefined}
+      {...props}
+    />
+  );
 };

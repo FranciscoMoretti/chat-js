@@ -9,10 +9,13 @@ export default defineConfig({
   testDir: ".",
   testMatch: [
     "create-activity.spec.mts",
+    "create-features.spec.mts",
     "create-plugins.spec.mts",
     "create-styles.spec.mts",
     "create-conversation.spec.mts",
     "create-parity.spec.mts",
+    "create-shared-screen.spec.mts",
+    "create-shared-controls.spec.mts",
   ],
   workers: 1,
   timeout: 120_000,

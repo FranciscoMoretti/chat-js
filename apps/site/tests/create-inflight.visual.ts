@@ -26,16 +26,9 @@ try {
   });
   const frame = page.frameLocator("iframe");
   await expect(frame.getByTestId("chat-preview")).toBeVisible();
-  const navigation = Promise.withResolvers<null>();
-  await page.route(
-    "**/create/preview?**",
-    async (route) => {
-      await navigation.promise;
-      await route.continue();
-    },
-    { times: 1 }
-  );
+  const originalFrame = await frame.locator("body").elementHandle();
   await page.getByRole("button", { name: "Tools", exact: true }).click();
+  await page.getByRole("tab", { name: "Appearance", exact: true }).click();
   await page.getByRole("button", { name: /^Theme /u }).click();
   await page.getByRole("menuitemradio", { name: "Rose", exact: true }).click();
   await page.keyboard.press("Escape");
@@ -46,29 +39,32 @@ try {
   if (preset === null) {
     throw new Error("The selected theme has no native preset code");
   }
-  navigation.resolve(null);
+  assert.equal(
+    await originalFrame?.evaluate((element) => element.isConnected),
+    true,
+    "Scene and preset changes retain the iframe document"
+  );
   await expect(frame.getByTestId("chat-preview")).toHaveAttribute(
     "data-preset",
     preset
   );
   await expect(
-    frame.getByRole("heading", { name: "Tools at work" })
+    frame.getByRole("navigation", { name: "breadcrumb" })
   ).toBeVisible();
-  await expect(
-    frame.getByRole("button", { name: "Attach sample file" })
-  ).toBeVisible();
+  await expect(frame.locator('input[type="file"]')).toBeAttached();
   assert.deepEqual(errors, []);
   console.log(
     "Preset selected during scene navigation reaches the hydrated preview."
   );
 
-  // Changing the base replaces the iframe. Direction selected while that new
-  // document is loading must reach both the URL and the rendered composition.
-  await page.goto(`${origin}/create?base=radix&rtl=true&uploads=true`, {
+  // Recovering an unsupported library creates a fresh iframe. Installation
+  // and appearance choices made during that load must reach their destinations.
+  await page.goto(`${origin}/create?base=aria&rtl=true&uploads=true`, {
     waitUntil: "domcontentloaded",
   });
-  await expect(frame.getByTestId("chat-preview")).toBeVisible();
-  await expect(frame.locator("html")).toHaveAttribute("dir", "rtl");
+  await expect(
+    page.getByRole("button", { name: "Use Base UI and Next.js" })
+  ).toBeVisible();
   const remount = Promise.withResolvers<null>();
   const requested = Promise.withResolvers<null>();
   await page.route(
@@ -80,29 +76,26 @@ try {
     },
     { times: 1 }
   );
+  await page.getByRole("button", { name: "Use Base UI and Next.js" }).click();
+  await requested.promise;
   await page
     .getByRole("button", { name: "Get Code", exact: true })
     .first()
     .click();
-  await page.getByRole("radio", { name: "Base UI", exact: true }).click();
-  await requested.promise;
-  await page
-    .getByRole("switch", { name: "Right-to-left", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Radix UI", exact: true }).click();
+  await page.getByRole("switch", { name: "Use pointer on buttons" }).check();
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog")).toBeHidden();
   await expect
-    .poll(() => new URL(page.url()).searchParams.get("rtl"))
-    .toBeNull();
+    .poll(() => new URL(page.url()).searchParams.get("base"))
+    .toBe("radix");
   remount.resolve(null);
   await expect(frame.getByTestId("chat-preview")).toHaveAttribute(
     "data-base",
     "base"
   );
-  await expect(frame.locator("html")).toHaveAttribute("dir", "ltr");
-  await expect(
-    frame.getByRole("button", { name: "Attach sample file" })
-  ).toBeVisible();
+  await expect(frame.locator("html")).toHaveAttribute("dir", "rtl");
+  await expect(frame.locator('input[type="file"]')).toBeAttached();
   await expect(page.getByRole("button", { name: "Retry preview" })).toHaveCount(
     0
   );
@@ -114,13 +107,13 @@ try {
   );
   await mkdir(output, { recursive: true });
   await page.screenshot({
-    path: `${output}create-inflight-base-ltr.png`,
+    path: `${output}create-inflight-base-rtl.png`,
     animations: "disabled",
     style: "nextjs-portal { visibility: hidden !important; }",
   });
   assert.deepEqual(errors, []);
   console.log(
-    "Base and direction selected during iframe replacement reach the rendered preview."
+    "Installation library and preview appearance survive an in-flight iframe load."
   );
 } finally {
   await browser.close();

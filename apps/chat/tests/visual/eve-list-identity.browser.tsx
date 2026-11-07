@@ -6,7 +6,7 @@ import React, { act } from "react";
 import { createRoot } from "react-dom/client";
 import { expect, test, vi } from "vitest";
 
-import { EveMessages } from "@/components/eve/eve-messages";
+import { ChatTranscript } from "@/components/chat/chat-transcript";
 import { EveSearchResultsView } from "@/chatjs/plugins/search/search-results-view";
 
 import "./sandbox.css";
@@ -156,7 +156,7 @@ test("EVE messages render streamed content and file parts", async () => {
     act(() => {
       root.render(
         <MessageScrollerProvider>
-          <EveMessages
+          <ChatTranscript
             disabled={false}
             isReadonly
             messages={messages}
@@ -193,7 +193,7 @@ test("EVE messages render streamed content and file parts", async () => {
     await renderRoot(
       root,
       <MessageScrollerProvider>
-        <EveMessages
+        <ChatTranscript
           disabled={false}
           isReadonly
           messages={streamedMessages}

@@ -4,8 +4,8 @@ import { createRoot } from "react-dom/client";
 
 import type { ReadonlyEveMessage } from "@/lib/eve/readonly-message-types";
 
-import { ControlledChatComposer } from "../components/controlled-chat-composer";
-import { EveMessages } from "../components/eve/eve-messages";
+import { ChatComposer } from "../components/chat/chat-composer";
+import { ChatTranscript } from "../components/chat/chat-transcript";
 import { MessageSiblingsView } from "../components/message-siblings-view";
 import { ResponseChoiceCards } from "../components/response-choice-cards";
 
@@ -69,7 +69,7 @@ const Editor = ({
   const [draft, setDraft] = useState("First user message");
   return (
     <div className="w-full space-y-2" data-testid="inline-editor">
-      <ControlledChatComposer
+      <ChatComposer
         autoFocus
         draft={draft}
         disabled={false}
@@ -155,7 +155,7 @@ const Transcript = ({
     >
       <h2 className="mb-2 text-lg font-medium">{title}</h2>
       <MessageScrollerProvider>
-        <EveMessages
+        <ChatTranscript
           actionsDisabled={loading}
           disabled={loading}
           editor={edit}

@@ -17,7 +17,7 @@ const storage = [
 ];
 
 void describe("ChatJS installation handoff", () => {
-  void test("keeps native preset encoding opaque while passing existing installation arguments", () => {
+  void test("keeps native preset encoding opaque while passing the complete installation", () => {
     const preset = {
       ...DEFAULT_PRESET_CONFIG,
       theme: "rose",
@@ -34,7 +34,7 @@ void describe("ChatJS installation handoff", () => {
     };
     assert.equal(
       createCommand(preset, "base", installation),
-      `bunx @chat-js/cli@beta create my-chat --yes --gateway openrouter --no-projects --attachments --storage-provider s3 --sandbox-provider vercel -- --preset ${encodePreset(preset)} --base base`
+      `bunx @chat-js/cli@beta create my-chat --yes --installation '${JSON.stringify({ plugins: installation.plugins, gateway: installation.gateway, storage: { options: {}, source: "s3" }, tools: [] })}' -- --preset ${encodePreset(preset)} --base base`
     );
   });
   void test("accepts only provider public config and safely quotes native CLI JSON", () => {
@@ -53,7 +53,7 @@ void describe("ChatJS installation handoff", () => {
     );
     assert.match(
       createCommand(DEFAULT_PRESET_CONFIG, "base", installation),
-      /--storage-config '\{"bucket":"my-app-files","region":"us-east-1"\}'/u
+      /"options":\{"bucket":"my-app-files","region":"us-east-1"\}/u
     );
     for (const config of [
       JSON.stringify({ accessKeyId: "private" }),
@@ -96,7 +96,7 @@ void test("upload links select a persistent sandbox and remove it when uploads a
   }
   assert.match(
     createCommand(DEFAULT_PRESET_CONFIG, "base", selected),
-    /--sandbox-provider vercel/u
+    /"sandbox":"vercel"/u
   );
   query.set("uploads", "false");
   const minimal = readInstallationSelection(query, gateways, storage);
@@ -107,7 +107,7 @@ void test("upload links select a persistent sandbox and remove it when uploads a
   assert.equal(minimal.sandbox, undefined);
   assert.doesNotMatch(
     createCommand(DEFAULT_PRESET_CONFIG, "base", minimal),
-    /--sandbox-provider/u
+    /"sandbox":/u
   );
 });
 
@@ -146,27 +146,13 @@ void test("full installation URL survives reload independently from preview scen
   assert.equal(readInstallationSelection(query, gateways, storage), null);
 });
 
-void test("exports the existing Projects flags and discloses missing Feedback support", async () => {
-  const { unsupportedCreateSelections } = await import("./create-model");
-  const selection = {
-    ...startingInstallation,
-    plugins: ["projects", "feedback"],
-  };
-  assert.match(
-    createCommand(DEFAULT_PRESET_CONFIG, "base", selection),
-    / --projects /u
+void test("exports explicit empty arrays without convenience defaults or demo scenario", () => {
+  const command = createCommand(
+    DEFAULT_PRESET_CONFIG,
+    "base",
+    startingInstallation
   );
-  assert.match(
-    createCommand(DEFAULT_PRESET_CONFIG, "base", startingInstallation),
-    / --no-projects /u
-  );
-  assert.doesNotMatch(
-    createCommand(DEFAULT_PRESET_CONFIG, "base", selection),
-    /--feedback/u
-  );
-  assert.ok(
-    unsupportedCreateSelections(selection).some((warning) =>
-      warning.includes("feedback")
-    )
-  );
+  assert.match(command, /"plugins":\[\]/u);
+  assert.match(command, /"tools":\[\]/u);
+  assert.doesNotMatch(command, /--projects|--attachments|scenario/u);
 });

@@ -16,11 +16,12 @@ if [ "$CHATJS_NATIVE_RTL" = 1 ]; then direction=(--rtl); fi
 export CHATJS_NATIVE_BASE="${CHATJS_NATIVE_BASE:-base}"
 export CHATJS_NATIVE_SCENARIO="${CHATJS_NATIVE_SCENARIO:-uploads}"
 case "$CHATJS_NATIVE_SCENARIO" in
+  selection) installation=(--installation '{"gateway":"vercel","plugins":["feedback","projects","langfuse"],"tools":["word-count"],"storage":{"source":"memory"}}') ;;
   minimal) installation=(--gateway vercel --no-attachments --no-documents) ;;
   full) installation=(--gateway vercel --no-attachments --projects --mcp --observability vercel-analytics,vercel-speed-insights) ;;
   documents) installation=(--gateway vercel --no-attachments) ;;
   uploads) installation=(--sandbox-provider vercel --gateway openrouter --attachments --storage-provider s3 --storage-config '{"bucket":"chatjs-native-smoke"}') ;;
-  *) echo "CHATJS_NATIVE_SCENARIO must be minimal, documents, full or uploads" >&2; exit 1 ;;
+  *) echo "CHATJS_NATIVE_SCENARIO must be selection, minimal, documents, full or uploads" >&2; exit 1 ;;
 esac
 cleanup() {
   kill "${registry_pid:-}" 2>/dev/null || true
@@ -53,7 +54,8 @@ CHATJS_REGISTRY_URL="$(cat "$fixture_root/address")"
 export CHATJS_REGISTRY_URL
 export npm_config_user_agent="bun/$(bun --version)"
 
-create_command=(node "$cli_root/dist/index.js" create "$fixture_root/app" --yes "${installation[@]}" --no-electron)
+create_command=(node "$cli_root/dist/index.js" create "$fixture_root/app" --yes "${installation[@]}")
+if [ "$CHATJS_NATIVE_SCENARIO" != selection ]; then create_command+=(--no-electron); fi
 if [ "${CHATJS_NATIVE_DEFAULT:-0}" = 1 ]; then
   "${create_command[@]}" > "$fixture_root/create.log" 2>&1
 else
@@ -86,7 +88,7 @@ assert.equal(uploads.uiBase, process.env.CHATJS_NATIVE_BASE);
 assert.equal(uploads.requiresPersistentSandbox, true);
 assert.match(await Bun.file("chatjs/providers/sandbox/provider.ts").text(), /supportsPersistentSandbox = true/);
 }
-if (process.env.CHATJS_NATIVE_SCENARIO !== "minimal") {
+if (!["minimal", "selection"].includes(process.env.CHATJS_NATIVE_SCENARIO)) {
 for (const kind of ["text", "code", "sheet"]) {
   const descriptor = await Bun.file(`chatjs/tools/${kind}-documents/chatjs.json`).json();
   assert.equal(descriptor.contractVersion, 2);
@@ -98,8 +100,14 @@ assert.match(await Bun.file("chatjs/providers/storage-options.ts").text(), /chat
 assert.match(await Bun.file("chatjs/providers/gateway.ts").text(), /openrouter/);
 } else {
 assert.equal(await Bun.file("chatjs/plugins/attachment-uploads/chatjs.json").exists(), false);
-assert.equal(await Bun.file("chatjs/tools/text-documents/chatjs.json").exists(), process.env.CHATJS_NATIVE_SCENARIO !== "minimal");
+assert.equal(await Bun.file("chatjs/tools/text-documents/chatjs.json").exists(), !["minimal", "selection"].includes(process.env.CHATJS_NATIVE_SCENARIO));
 assert.match(await Bun.file("chatjs/providers/gateway.ts").text(), /vercel|gateway/);
+}
+if (process.env.CHATJS_NATIVE_SCENARIO === "selection") {
+  const { readdir } = await import("node:fs/promises");
+  assert.deepEqual((await readdir("chatjs/plugins")).sort(), ["feedback", "langfuse", "projects"]);
+  assert.deepEqual((await readdir("chatjs/tools")).sort(), ["word-count"]);
+  assert.match(await Bun.file(".env.example").text(), /LANGFUSE/);
 }
 const paths = ["components.json", "app/globals.css", "app/layout.tsx", "chat.config.ts", "chatjs/providers/storage-options.ts", "lib/utils.ts", "lib/id.ts", "lib/file-language.ts", "components/ui/button.tsx"];
 const before = Object.fromEntries(await Promise.all(paths.map(async path => [path, await Bun.file(path).text()])));

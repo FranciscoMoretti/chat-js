@@ -63,7 +63,11 @@ export const SidebarProjects = ({
         });
         setNewProjectDialogOpen(false);
         setOpenMobile(false);
-        router.push(`/project/${data.id}`);
+        if (onProjectSelect) {
+          onProjectSelect(data.id);
+        } else {
+          router.push(`/project/${data.id}`);
+        }
       },
     })
   );

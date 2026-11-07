@@ -20,12 +20,14 @@ export function PreviewSwitcher() {
   }
 
   return (
-    <div className="dark absolute right-3 bottom-3 z-20 flex items-center gap-1 rounded-xl bg-card/90 p-1 shadow-xl backdrop-blur-xl">
+    <div role="group" aria-label="Preview scene" className="flex shrink-0 items-center gap-1 border-b bg-background px-3 py-2">
+      <span className="mr-auto text-xs font-medium text-muted-foreground">Preview scene</span>
       {PREVIEW_ITEMS.map((item) => (
         <Button
           key={item.value}
           variant="ghost"
           size="sm"
+          aria-pressed={params.item === item.value}
           data-active={params.item === item.value}
           className="h-7 min-w-8 cursor-pointer rounded-lg px-2.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground data-[active=true]:bg-accent data-[active=true]:text-accent-foreground"
           onClick={() => setParams({ item: item.value })}

@@ -19,29 +19,20 @@ export const createCommand = (
   installation: Readonly<InstallationSelection>
 ): string => {
   const selection = installationSelectionSchema.parse(installation);
-  const args = ["bunx", "@chat-js/cli@beta", "create", "my-chat", "--yes"];
-  if (selection.gateway !== undefined) {
-    args.push("--gateway", selection.gateway);
-  }
-  args.push(
-    selection.plugins.includes("projects") ? "--projects" : "--no-projects",
-    selection.plugins.includes("attachment-uploads")
-      ? "--attachments"
-      : "--no-attachments"
-  );
-  if (selection.storage) {
-    args.push("--storage-provider", selection.storage.source);
-    if (Object.keys(selection.storage.options).length > 0) {
-      args.push("--storage-config", JSON.stringify(selection.storage.options));
-    }
-  }
-  const sandbox =
-    selection.sandbox ??
-    (selection.plugins.includes("attachment-uploads") ? "vercel" : undefined);
-  if (typeof sandbox === "string" && sandbox !== "") {
-    args.push("--sandbox-provider", sandbox);
-  }
-  args.push("--", "--preset", encodePreset(preset), "--base", base);
+  const args = [
+    "bunx",
+    "@chat-js/cli@beta",
+    "create",
+    "my-chat",
+    "--yes",
+    "--installation",
+    JSON.stringify(selection),
+    "--",
+    "--preset",
+    encodePreset(preset),
+    "--base",
+    base,
+  ];
   return args.map(quoteArgument).join(" ");
 };
 
@@ -131,16 +122,3 @@ export const readInstallationSelection = (
     storage: storageSelection.data,
   });
 };
-
-/** The current CLI has no generic plugin/tool selection flags. Never imply parity. */
-export const unsupportedCreateSelections = (
-  selection: Readonly<InstallationSelection>
-): string[] => [
-  ...selection.plugins
-    .filter((id) => !["projects", "attachment-uploads"].includes(id))
-    .map((id) => `Plugin ${id}: not represented by this command.`),
-  ...selection.tools.map(
-    (id) => `Tool ${id}: not represented by this command.`
-  ),
-  "CLI defaults may install additional tools; this command is not an exact installation manifest.",
-];

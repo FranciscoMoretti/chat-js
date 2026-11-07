@@ -1,3 +1,4 @@
+import { attachPreviewFile } from "./create-fixtures.mts";
 /* eslint-disable no-await-in-loop -- Each case updates the same interactive composer. */
 import { test, expect } from "@uiverify/playwright";
 import { composerDraftCases } from "../../../packages/chat-visual-tests/contracts/composer";
@@ -17,6 +18,9 @@ for (const base of ["base"] as const) {
           colorScheme: width === 390 ? "dark" : "light",
         });
         await page.goto(`/create/preview?base=${base}&item=preview&rtl=${rtl}`);
+        await page.addStyleTag({
+          content: "nextjs-portal { display: none !important; }",
+        });
         const editor = page.getByRole("textbox", {
           name: "Message",
           exact: true,
@@ -62,12 +66,18 @@ for (const base of ["base"] as const) {
         await expect(
           page.getByText("A native composer message", { exact: true })
         ).toBeVisible();
+        await expect(
+          page.getByTestId("message-assistant-loading")
+        ).toBeHidden();
         await expect(editor).toHaveText("");
         await expect(editor).toBeFocused();
         await page.keyboard.type("A follow-up without clicking");
         await expect(editor).toHaveText("A follow-up without clicking");
         await page.keyboard.press("ControlOrMeta+A");
         await page.keyboard.press("Backspace");
+        await expect(
+          page.getByTestId("message-assistant-loading")
+        ).toBeHidden();
         await expect(editor).toHaveText("");
         await expect(send).toBeDisabled();
 
@@ -86,18 +96,16 @@ for (const base of ["base"] as const) {
             window.location.origin
           );
         });
-        await page.getByRole("button", { name: "Attach sample file" }).click();
+        await attachPreviewFile(page);
         await expect(send).toBeEnabled();
-        await page
-          .getByRole("button", { name: "Remove sample attachment" })
-          .click();
+        await page.getByRole("button", { name: "Remove attachment" }).click();
         await expect(send).toBeDisabled();
-        await page.getByRole("button", { name: "Attach sample file" }).click();
+        await attachPreviewFile(page);
         await send.click();
         await expect(
           page
             .locator('[data-role="user"]')
-            .getByText("project-notes.md", { exact: true })
+            .getByText("project-notes.png", { exact: true })
         ).toBeVisible();
         await expect(
           page
@@ -106,18 +114,16 @@ for (const base of ["base"] as const) {
             .getByText("This is a local preview.", { exact: false })
         ).toBeVisible();
         await expect(
-          page.getByRole("button", { name: "Remove sample attachment" })
+          page.getByRole("button", { name: "Remove attachment" })
         ).toBeHidden();
         await expect(send).toBeDisabled();
 
         for (const state of composerDraftCases) {
           const remove = page.getByRole("button", {
-            name: "Remove sample attachment",
+            name: "Remove attachment",
           });
           if (state.hasAttachments && !(await remove.isVisible())) {
-            await page
-              .getByRole("button", { name: "Attach sample file" })
-              .click();
+            await attachPreviewFile(page);
           } else if (!state.hasAttachments && (await remove.isVisible())) {
             await remove.click();
           }
@@ -132,16 +138,12 @@ for (const base of ["base"] as const) {
           exact: true,
         });
         if (width === 1000) {
-          await toggle.click();
+          await expect(toggle).toBeHidden();
           await expect(
-            page.locator('[data-slot="sidebar"][data-state="collapsed"]')
-          ).toBeVisible();
-          await expect(
-            page.getByRole("button", { name: "Building something good" })
-          ).toBeHidden();
-          await toggle.click();
-          await expect(
-            page.getByRole("button", { name: "Building something good" })
+            page.getByRole("link", {
+              name: "Building something good",
+              exact: true,
+            })
           ).toBeVisible();
         }
         if (width === 390) {
@@ -155,13 +157,14 @@ for (const base of ["base"] as const) {
             await uiVerify.snapshot("native mobile sidebar");
           }
         }
-        await page
-          .getByRole("button", { name: "New chat", exact: true })
-          .click();
+        await page.getByRole("link", { name: /New Chat/u }).click();
         await expect(
           page.getByRole("heading", { name: "How can I help you today?" })
         ).toBeVisible();
         await expect(page.getByRole("dialog")).toBeHidden();
+        await expect(
+          page.getByTestId("message-assistant-loading")
+        ).toBeHidden();
         await expect(editor).toHaveText("");
         await expect(send).toBeDisabled();
         if (width === 390) {
@@ -169,7 +172,7 @@ for (const base of ["base"] as const) {
           await expect(page.getByRole("dialog")).toBeVisible();
         }
         await page
-          .getByRole("button", { name: "Building something good", exact: true })
+          .getByRole("link", { name: "Building something good", exact: true })
           .click();
         await expect(page.getByRole("dialog")).toBeHidden();
         await expect(

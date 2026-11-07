@@ -6,6 +6,7 @@ import type {
 } from "react";
 
 import Link from "next/link";
+import { useChatNavigation } from "./chat/chat-navigation";
 import React from "react";
 
 import type { Route } from "next";
@@ -33,17 +34,28 @@ export const InternalLink = <T extends string>({
   ...props
 }: InternalLinkProps<T>): React.JSX.Element => {
   const router = useRouter();
+  const embedded = useChatNavigation();
   const captureModifiedNavigation = handleModifiedNavigation();
 
   const navigate = (): void => {
     onNavigate?.();
-    router.push(href);
+    if (embedded) {
+      embedded.navigate(href);
+    } else {
+      router.push(href);
+    }
   };
 
   const handleClick: ReactMouseEventHandler<HTMLAnchorElement> = (event) => {
     onClick?.(event);
 
     if (event.defaultPrevented || event.button !== PRIMARY_MOUSE_BUTTON) {
+      return;
+    }
+
+    if (embedded) {
+      event.preventDefault();
+      navigate();
       return;
     }
 
@@ -69,7 +81,7 @@ export const InternalLink = <T extends string>({
     if (
       event.defaultPrevented ||
       event.button !== AUXILIARY_MOUSE_BUTTON ||
-      !captureModifiedNavigation
+      !(captureModifiedNavigation || embedded)
     ) {
       return;
     }
@@ -82,6 +94,7 @@ export const InternalLink = <T extends string>({
     <Link
       {...props}
       href={href}
+      prefetch={embedded ? false : props.prefetch}
       onAuxClick={handleAuxClick}
       onClick={handleClick}
     />

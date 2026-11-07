@@ -13,14 +13,7 @@ import type { useEveAgent } from "eve/react";
 import React, { useState } from "react";
 import type { JSX as ReactJSX, ReactNode } from "react";
 
-import {
-  MessageScroller,
-  MessageScrollerButton,
-  MessageScrollerContent,
-  MessageScrollerItem,
-  MessageScrollerProvider,
-  MessageScrollerViewport,
-} from "@/components/ui/message-scroller";
+import { MessageScrollerItem } from "@/components/ui/message-scroller";
 import { AttachmentList } from "@/components/attachment-list";
 import { Button } from "@/components/ui/button";
 import type { SelectedModelValue, UiToolName } from "@/lib/ai/types";
@@ -51,17 +44,17 @@ import { EveForkRecovery } from "./eve-fork-recovery";
 import { EveInitialMessage } from "./eve-initial-message";
 import { useLogicalChat } from "./eve-logical-context";
 import { EveLogicalVersions } from "./eve-logical-navigation";
-import { EveMessages } from "./eve-messages";
 import {
   EveOptimisticResponseGroup,
   shouldAppendEveOptimisticResponseGroup,
 } from "./eve-optimistic-response-group";
-import { EveThinkingMessage } from "./eve-thinking-message";
 import { useEveAttachments } from "./use-eve-attachments";
 import { useEveComposerDraft } from "./use-eve-composer-draft";
 import { useEveFork } from "./use-eve-fork";
 import { useEveMessageDelivery } from "./use-eve-message-delivery";
 import { useLogicalCommands } from "./use-logical-commands";
+import { ChatMessageEditor } from "../chat/chat-message-editor";
+import { ChatConversationScreen } from "../chat/chat-conversation-screen";
 
 const sameComposerDraft = (
   draft: {
@@ -240,42 +233,35 @@ const EveConversationEditor = ({
   const handleEditDraft = fork.setDraft;
   const handleEditToolChange = fork.setSelectedTool;
   return (
-    <div className="w-full">
-      <p className="text-muted-foreground mb-2 text-sm">
-        Replace this message in a new branch. Later messages are not included.
-        All branches share workspace files and the installed environment.
-        Forking does not roll files back.
-      </p>
-      <EveComposer
-        autoFocus
-        status={fork.busy ? "submitted" : "ready"}
-        disabled={
-          busy ||
-          commandPending ||
-          hasApproval ||
-          Boolean(pendingMessage) ||
-          fork.locked
-        }
-        readOnly={Boolean(fork.pending)}
-        draft={fork.draft}
-        capabilities={{
-          files: fork.files,
-          selectedTool: fork.selectedTool,
-          onToolChange: handleEditToolChange,
-        }}
-        modelIds={expandSelectedModelValue(fork.modelSelection.value)}
-        modelPicker={
-          <ParallelResponseModelPicker modelSelection={fork.modelSelection} />
-        }
-        onDraftChange={handleEditDraft}
-        onSubmit={onSubmit}
-      />
-      {fork.error && (
-        <p className="text-destructive text-sm" role="alert">
-          {fork.error}
-        </p>
-      )}
-    </div>
+    <ChatMessageEditor
+      error={fork.error}
+      composer={
+        <EveComposer
+          autoFocus
+          status={fork.busy ? "submitted" : "ready"}
+          disabled={
+            busy ||
+            commandPending ||
+            hasApproval ||
+            Boolean(pendingMessage) ||
+            fork.locked
+          }
+          readOnly={Boolean(fork.pending)}
+          draft={fork.draft}
+          capabilities={{
+            files: fork.files,
+            selectedTool: fork.selectedTool,
+            onToolChange: handleEditToolChange,
+          }}
+          modelIds={expandSelectedModelValue(fork.modelSelection.value)}
+          modelPicker={
+            <ParallelResponseModelPicker modelSelection={fork.modelSelection} />
+          }
+          onDraftChange={handleEditDraft}
+          onSubmit={onSubmit}
+        />
+      }
+    />
   );
 };
 
@@ -742,176 +728,149 @@ const EveConversation = ({
         });
       }}
     >
-      <section className="flex h-full min-h-0 flex-col">
-        {header}
-        <div className="flex min-h-0 flex-1 flex-col">
-          <MessageScrollerProvider autoScroll key={conversationId}>
-            <MessageScroller className="flex-1">
-              <MessageScrollerViewport preserveScrollOnPrepend>
-                <MessageScrollerContent className="mx-auto w-full max-w-3xl p-4">
-                  {initialMessage !== undefined &&
-                    initialMessage !== "" &&
-                    messages.length === 0 && (
-                      <MessageScrollerItem
-                        messageId="initial-message"
-                        scrollAnchor
-                      >
-                        <EveInitialMessage message={initialMessage} />
-                      </MessageScrollerItem>
-                    )}
-                  <EveMessages
-                    actionsDisabled={actionLocks.transcript}
-                    conversationId={conversationId}
-                    disabled={busy || commandPending}
-                    inputDisabled={isInputResponseDisabled(
-                      agent.status,
-                      commandPending
-                    )}
-                    isReadonly={false}
-                    messages={messages}
-
-                    editor={
-                      hasText(editingMessageId)
-                        ? {
-                            content: (
-                              <EveConversationEditor
-                                fork={fork}
-                                busy={busy}
-                                commandPending={commandPending}
-                                hasApproval={hasApproval}
-                                pendingMessage={pendingMessage}
-                                onSubmit={() => {
-                                  const completion = handleEditSubmit();
-                                  startEventAction(async () => {
-                                    await completion;
-                                  });
-                                }}
-                              />
-                            ),
-                            disabled: fork.busy || Boolean(fork.pending),
-                            messageId: editingMessageId,
-                            onCancel: fork.cancelEdit,
-                          }
-                        : undefined
-                    }
-                    modelForMessage={modelForMessage}
-                    renderVersions={(message): React.JSX.Element => (
-                      <EveLogicalVersions
-                        conversationId={conversationId}
-                        messageId={message.id}
-                        disabled={actionLocks.navigation}
-                      />
-                    )}
-                    renderResponses={(message): React.JSX.Element => (
-                      <MessageResponses
-                        conversationId={conversationId}
-                        messageId={message.id}
-                        disabled={actionLocks.navigation}
-                      />
-                    )}
-                    messageKey={(message) =>
-                      controller.logicalId(conversationId, message.id) ??
-                      `${sessionId}:${message.id}`
-                    }
-
-                    onEdit={(message) => {
-                      const following = messages.slice(
-                        messages.indexOf(message) + 1
-                      );
-                      const nextUser = following.findIndex(
-                        (candidate) => candidate.role === "user"
-                      );
-                      const response = following
-                        .slice(0, nextUser === -1 ? following.length : nextUser)
-                        .find((candidate) => candidate.role === "assistant");
-                      const logicalId = controller.logicalId(
-                        conversationId,
-                        message.id
-                      );
-                      const group = hasText(logicalId)
-                        ? logicalResponseSlots(snapshot, logicalId)
-                        : undefined;
-                      const groupModels: Record<string, number> = {};
-                      for (const slot of group?.slots ?? []) {
-                        groupModels[slot.modelId] =
-                          (groupModels[slot.modelId] ?? 0) + 1;
-                      }
-                      const completion = fork.begin(message, undefined, {
-                        events: agent.events,
-                        modelSelection: group ? groupModels : undefined,
-                        response:
-                          response && hasText(modelForMessage(response))
-                            ? response
-                            : undefined,
-                      });
+      <ChatConversationScreen
+        conversationId={conversationId}
+        header={header}
+        transcript={{
+          actionsDisabled: actionLocks.transcript,
+          conversationId,
+          disabled: busy || commandPending,
+          inputDisabled: isInputResponseDisabled(agent.status, commandPending),
+          isReadonly: false,
+          messages,
+          editor: hasText(editingMessageId)
+            ? {
+                content: (
+                  <EveConversationEditor
+                    fork={fork}
+                    busy={busy}
+                    commandPending={commandPending}
+                    hasApproval={hasApproval}
+                    pendingMessage={pendingMessage}
+                    onSubmit={() => {
+                      const completion = handleEditSubmit();
                       startEventAction(async () => {
                         await completion;
                       });
                     }}
-
-                    onRegenerate={(message, response) => {
-                      void fork.begin(message, {
-                        events: agent.events,
-                        response,
-                      });
-                    }}
-
-                    suggestions={
-                      <ChatSuggestions
-                        conversationId={conversationId}
-                        events={agent.events}
-                        lastMessage={lastMessage}
-                        disabled={actionLocks.transcript}
-                        onSelect={(suggestion) => {
-                          void run(async () => {
-                            await (modelIds.length > 1
-                              ? fork.compare(
-                                  draftMessage(suggestion, []),
-                                  modelIds,
-                                  composerDraft.selectedTool ?? undefined,
-                                  false
-                                )
-                              : submitMessage(
-                                  suggestion,
-                                  [],
-                                  modelIds[0],
-                                  false,
-                                  composerDraft.selectedTool ?? undefined
-                                ));
-                          });
-                        }}
-                      />
-                    }
-
-                    respond={(response) => {
-                      startEventAction(async () => {
-                        await run(async () => {
-                          await send(async () => {
-                            await agent.respond([response]);
-                          });
-                        });
-                      });
-                    }}
                   />
-                  <EveThinkingMessage
-                    messages={messages}
-                    status={agent.status}
-                  />
-                  {comparison &&
-                    shouldAppendEveOptimisticResponseGroup(comparison) && (
-                      <MessageScrollerItem
-                        messageId={`comparison:${comparison.operationId}`}
-                        scrollAnchor
-                      >
-                        <EveOptimisticResponseGroup operation={comparison} />
-                      </MessageScrollerItem>
-                    )}
-                </MessageScrollerContent>
-              </MessageScrollerViewport>
-              <MessageScrollerButton />
-            </MessageScroller>
-          </MessageScrollerProvider>
-          <div className="mx-auto w-full max-w-3xl space-y-3 p-4">
+                ),
+                disabled: fork.busy || Boolean(fork.pending),
+                messageId: editingMessageId,
+                onCancel: fork.cancelEdit,
+              }
+            : undefined,
+          modelForMessage,
+          renderVersions: (message): React.JSX.Element => (
+            <EveLogicalVersions
+              conversationId={conversationId}
+              messageId={message.id}
+              disabled={actionLocks.navigation}
+            />
+          ),
+          renderResponses: (message): React.JSX.Element => (
+            <MessageResponses
+              conversationId={conversationId}
+              messageId={message.id}
+              disabled={actionLocks.navigation}
+            />
+          ),
+          messageKey: (message) =>
+            controller.logicalId(conversationId, message.id) ??
+            `${sessionId}:${message.id}`,
+          onEdit: (message) => {
+            const following = messages.slice(messages.indexOf(message) + 1);
+            const nextUser = following.findIndex(
+              (candidate) => candidate.role === "user"
+            );
+            const response = following
+              .slice(0, nextUser === -1 ? following.length : nextUser)
+              .find((candidate) => candidate.role === "assistant");
+            const logicalId = controller.logicalId(conversationId, message.id);
+            const group = hasText(logicalId)
+              ? logicalResponseSlots(snapshot, logicalId)
+              : undefined;
+            const groupModels: Record<string, number> = {};
+            for (const slot of group?.slots ?? []) {
+              groupModels[slot.modelId] = (groupModels[slot.modelId] ?? 0) + 1;
+            }
+            const completion = fork.begin(message, undefined, {
+              events: agent.events,
+              modelSelection: group ? groupModels : undefined,
+              response:
+                response && hasText(modelForMessage(response))
+                  ? response
+                  : undefined,
+            });
+            startEventAction(async () => {
+              await completion;
+            });
+          },
+          onRegenerate: (message, response) => {
+            void fork.begin(message, {
+              events: agent.events,
+              response,
+            });
+          },
+          suggestions: (
+            <ChatSuggestions
+              conversationId={conversationId}
+              events={agent.events}
+              lastMessage={lastMessage}
+              disabled={actionLocks.transcript}
+              onSelect={(suggestion) => {
+                void run(async () => {
+                  await (modelIds.length > 1
+                    ? fork.compare(
+                        draftMessage(suggestion, []),
+                        modelIds,
+                        composerDraft.selectedTool ?? undefined,
+                        false
+                      )
+                    : submitMessage(
+                        suggestion,
+                        [],
+                        modelIds[0],
+                        false,
+                        composerDraft.selectedTool ?? undefined
+                      ));
+                });
+              }}
+            />
+          ),
+          respond: (response) => {
+            startEventAction(async () => {
+              await run(async () => {
+                await send(async () => {
+                  await agent.respond([response]);
+                });
+              });
+            });
+          },
+        }}
+        status={agent.status}
+        leading={
+          initialMessage !== undefined &&
+          initialMessage !== "" &&
+          messages.length === 0 && (
+            <MessageScrollerItem messageId="initial-message" scrollAnchor>
+              <EveInitialMessage message={initialMessage} />
+            </MessageScrollerItem>
+          )
+        }
+        trailing={
+          comparison &&
+          shouldAppendEveOptimisticResponseGroup(comparison) && (
+            <MessageScrollerItem
+              messageId={`comparison:${comparison.operationId}`}
+              scrollAnchor
+            >
+              <EveOptimisticResponseGroup operation={comparison} />
+            </MessageScrollerItem>
+          )
+        }
+        notices={
+          <>
             <EveForkRecovery
               fork={fork}
               showError={!hasText(editingMessageId)}
@@ -935,45 +894,47 @@ const EveConversation = ({
                 setCommandFailure={setCommandFailure}
               />
             )}
-            <EveConversationComposer
-              input={input}
-              pendingMessage={pendingMessage}
-              status={agent.status}
-              busy={busy}
-              commandPending={commandPending}
-              cancelPending={cancelPending}
-              hasApproval={hasApproval}
-              displayedError={displayedError}
-              commandFailure={commandFailure}
-              agentError={agent.error}
-              onStop={() => {
-                startEventAction(cancel);
-              }}
+          </>
+        }
+        composer={
+          <EveConversationComposer
+            input={input}
+            pendingMessage={pendingMessage}
+            status={agent.status}
+            busy={busy}
+            commandPending={commandPending}
+            cancelPending={cancelPending}
+            hasApproval={hasApproval}
+            displayedError={displayedError}
+            commandFailure={commandFailure}
+            agentError={agent.error}
+            onStop={() => {
+              startEventAction(cancel);
+            }}
 
-              onSubmit={() => {
-                void run(async () => {
-                  await (modelIds.length > 1
-                    ? fork.compare(
-                        draftMessage(draft, files.attachments),
-                        modelIds,
-                        composerDraft.selectedTool ?? undefined
-                      )
-                    : submitMessage(
-                        draft,
-                        files.attachments,
-                        modelIds[0],
-                        true,
-                        composerDraft.selectedTool ?? undefined
-                      ));
-                });
-              }}
-              onReconnect={() => {
-                void run(agent.resume);
-              }}
-            />
-          </div>
-        </div>
-      </section>
+            onSubmit={() => {
+              void run(async () => {
+                await (modelIds.length > 1
+                  ? fork.compare(
+                      draftMessage(draft, files.attachments),
+                      modelIds,
+                      composerDraft.selectedTool ?? undefined
+                    )
+                  : submitMessage(
+                      draft,
+                      files.attachments,
+                      modelIds[0],
+                      true,
+                      composerDraft.selectedTool ?? undefined
+                    ));
+              });
+            }}
+            onReconnect={() => {
+              void run(agent.resume);
+            }}
+          />
+        }
+      />
     </EveArtifactLayout>
   );
 };

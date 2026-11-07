@@ -14,12 +14,12 @@ import React from "react";
 import { ActiveTool } from "@/components/composer/active-tool";
 import { ComposerMenu } from "@/components/composer/composer-menu";
 import { ContextBar } from "@/components/context-bar";
-import { ControlledChatComposer } from "@/components/controlled-chat-composer";
+import { ChatComposer } from "@/components/chat/chat-composer";
 import type { UiToolName } from "@/lib/ai/types";
 import type { DraftAttachment } from "@/lib/eve/draft";
 import { useChatModels } from "@/providers/chat-models-provider";
 import { useDefaultModel } from "@/providers/default-model-provider";
-import { installedToolNames } from "@/integrations/tools/catalog";
+import { useAvailableTools } from "../composer/tool-availability";
 
 import { EveModelPicker } from "./eve-model-picker";
 import type { useEveAttachments } from "./use-eve-attachments";
@@ -43,8 +43,10 @@ const unsupportedAttachments = (
     })
   );
 
-const isUnavailableTool = (tool: UiToolName | null): boolean =>
-  tool !== null && !installedToolNames.has(tool);
+const isUnavailableTool = (
+  tool: UiToolName | null,
+  available: ReadonlySet<string>
+): boolean => tool !== null && !available.has(tool);
 
 interface ComposerCapabilities {
   readonly files: Readonly<
@@ -58,7 +60,7 @@ interface ComposerCapabilities {
 }
 
 type ComposerProps = Omit<
-  ComponentProps<typeof ControlledChatComposer>,
+  ComponentProps<typeof ChatComposer>,
   "tools" | "attachments" | "hasAttachments" | "onPaste"
 > & {
   /** Model IDs used for capability checks; selection state belongs to the caller. */
@@ -83,7 +85,8 @@ const CapableComposer = ({
   const unsupported =
     !(props.readOnly === true) &&
     unsupportedAttachments(models, files.attachments);
-  const unavailableTool = isUnavailableTool(selectedTool);
+  const available = useAvailableTools();
+  const unavailableTool = isUnavailableTool(selectedTool, available);
   const locked = props.disabled || files.uploadQueue.length > 0;
   const uploadLocked = locked || props.readOnly;
   const removeAttachment = (attachment: { readonly url: string }): void => {
@@ -104,7 +107,7 @@ const CapableComposer = ({
       }}
     >
       {files.enabled && <input {...uploads.inputProps} />}
-      <ControlledChatComposer
+      <ChatComposer
         {...props}
         attachments={
           <ContextBar
@@ -168,7 +171,7 @@ export const EveComposer = ({
   const { modelPicker, modelIds: _modelIds, ...composer } = props;
   return (
     <fieldset className="min-w-0" aria-label="Message composer">
-      <ControlledChatComposer
+      <ChatComposer
         {...composer}
         tools={
           <fieldset

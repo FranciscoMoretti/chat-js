@@ -2,22 +2,22 @@
 
 import type { ComponentProps, JSX as ReactJSX } from "react";
 
-import { PromptForm } from "./composer/prompt-form";
+import { PromptForm } from "../composer/prompt-form";
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupButton,
-} from "./ui/input-group";
+} from "@/components/ui/input-group";
 import { ArrowUpIcon, Loader2Icon, SquareIcon } from "lucide-react";
 
 import type { ChatStatus } from "ai";
 
-import { LexicalChatInput } from "./lexical-chat-input";
+import { LexicalChatInput } from "../lexical-chat-input";
 
 import React from "react";
-import type { ReadonlyReactNode } from "../lib/readonly-react-node";
+import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 
-import { useIsMobile } from "../hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const MAX_DRAFT_LENGTH = 16_000;
 
@@ -88,7 +88,7 @@ const ComposerAction = ({
  * @param {ComponentProps<typeof LexicalChatInput>["onPaste"] | undefined} onPaste Runtime-owned onPaste value.
  * @returns {React.JSX.Element} The composed message interface.
  */
-export const ControlledChatComposer = ({
+export const ChatComposer = ({
   draft,
   onDraftChange,
   onSubmit,

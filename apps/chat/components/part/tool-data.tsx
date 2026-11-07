@@ -4,7 +4,7 @@ import {
   CodeBlockContent,
   CodeBlockHeader,
   CodeBlockTitle,
-} from "../ui/code-block";
+} from "@/components/ui/code-block";
 
 const defaultPrimitives = {
   CodeBlock,
