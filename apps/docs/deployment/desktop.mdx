@@ -20,7 +20,7 @@ The desktop integration uses `update-electron-app` with a public GitHub reposito
 }
 ```
 
-Packaged macOS and Windows builds use that repository for update discovery. Publish the required update artifacts alongside your installers, following the [update service's asset naming conventions](https://github.com/electron/update.electronjs.org#asset-naming-convention). Use SemVer release tags such as `v1.2.3`. The service skips drafts, prereleases, and package-scoped tags such as `@chat-js/electron@0.3.2`.
+Packaged macOS and Windows builds use that repository for update discovery. Before building each release, increment `version` in `electron/package.json` and match the release tag to that packaged version. For example, set `version` to `1.2.3`, then build and publish under `v1.2.3`. Publish the required update artifacts alongside your installers, following the [update service's asset naming conventions](https://github.com/electron/update.electronjs.org#asset-naming-convention). The service skips drafts, prereleases, and package-scoped tags such as `@chat-js/electron@0.3.2`.
 
 macOS builds must be signed for automatic updates. Linux has no built-in support for this updater. Distribute Linux updates through a package repository or have users install the new `.deb` or `.rpm` manually. See [Electron's platform requirements](https://www.electronjs.org/docs/latest/api/auto-updater).
 
