@@ -8,6 +8,8 @@ description: Abort provider streams without breaking resume
   The EVE-only ChatJS app uses native EVE cancellation and recovery instead.
 </Callout>
 
+For the ChatJS app, see [Execution & Recovery](../../core/execution).
+
 ## Problem
 
 You want a user to stop an in-flight response without killing resumable streams. Calling `stop()` on the client only ends the UI stream. The provider keeps generating tokens and you keep paying.

@@ -1,83 +1,26 @@
 ---
-title: Cookbook
-description: Reusable patterns to copy into any project
+title: Guides
+description: Practical walkthroughs for tools and local development
 ---
 
-The Cookbook contains implementation recipes for extending ChatJS and building AI chat applications. Each recipe explains its prerequisites and the source you can customize.
-
-## Recipes by Category
-
-### Streaming
-
-Patterns for handling real-time AI response streams.
+Use these guides for implementation tasks and development workflows. Configure an individual capability in its [Tools](../tools/overview) or [Plugins](../plugins/overview) page.
 
 <CardGroup cols={2}>
-  <Card title="Native EVE Conversations" href="/cookbook/next-chat-transition">
-    Create, resume, and recover conversations through the EVE runtime
+  <Card title="Custom Tool Part" href="./tool-part">
+    Connect a tool result to its conversation UI.
   </Card>
-  <Card title="Tool Part" href="/cookbook/tool-part">
-    Connect backend tools to frontend UI components with loading states
+  <Card title="Explicit Tool Selection" href="./explicit-tool-selection">
+    Customize how users select tools for a request.
+  </Card>
+  <Card title="Neon Branching" href="./neon-branching">
+    Use isolated database environments for schema development.
+  </Card>
+  <Card title="Development Auth Bypass" href="./dev-auth-bypass">
+    Authenticate local browser tests without an OAuth round trip.
+  </Card>
+  <Card title="Git Worktrees" href="./git-worktrees">
+    Run parallel development environments without switching branches.
   </Card>
 </CardGroup>
 
-### Models
-
-Patterns for the model system.
-
-<CardGroup cols={2}>
-  <Card title="Auto-Updating Models" href="/cookbook/auto-updating-models">
-    Fetch model catalogs at runtime with fallback to a static snapshot
-  </Card>
-</CardGroup>
-
-### Data
-
-Database patterns and state management.
-
-<CardGroup cols={2}>
-  <Card title="Resumable Streams Reference" href="/cookbook/resumable-streams">
-    A standalone AI SDK and Redis pub/sub pattern, separate from the EVE app
-  </Card>
-  <Card title="Credit Tracking" href="/cookbook/credit-tracking">
-    Track and limit AI usage with credit budgets
-  </Card>
-  <Card title="Neon Branching" href="/cookbook/neon-branching">
-    Isolated database environments for schema development
-  </Card>
-</CardGroup>
-
-### Auth
-
-Authentication patterns for AI applications.
-
-<CardGroup cols={2}>
-  <Card title="Dev Auth Bypass" href="/cookbook/dev-auth-bypass">
-    Auto-authenticate AI agents for browser testing
-  </Card>
-</CardGroup>
-
-### AI UX
-
-User experience patterns for chat interfaces.
-
-<CardGroup cols={2}>
-  <Card title="Follow-up Questions" href="/cookbook/follow-up-questions">
-    Generate contextual follow-up suggestions after AI responses
-  </Card>
-  <Card title="Chat Layout" href="/cookbook/chat-layout">
-    Resizable split-panel layout with collapsible secondary panel
-  </Card>
-</CardGroup>
-
-### Development
-
-Workflow patterns for local development.
-
-<CardGroup cols={2}>
-  <Card title="Create a plugin" href="/cookbook/create-plugin">
-    Package optional capabilities with server, browser, and native contributions
-  </Card>
-  <Card title="Git Worktrees" href="/cookbook/git-worktrees">
-    Parallel development environments without branch switching
-  </Card>
-</CardGroup>
+For foundational behavior, start with [Concepts](../core/architecture). Use [Customization](../customization/theming) for appearance and composition, and [Deployment](../deployment) for hosting and runtime services.

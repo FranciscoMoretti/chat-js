@@ -44,13 +44,14 @@ sequenceDiagram
 
 EVE runs conversations and persists their messages and execution state. ChatJS manages authentication, chat organization, sharing, files, documents, and billing.
 
-## Configuration
+## Core and optional extensions
 
-All settings flow from a single source:
+Core owns account authentication, conversation ownership, EVE execution, model resolution, and usage evidence. Installed plugins add capabilities such as Projects, Sharing, Model Preferences, and Credits. Tools and providers have separate installation contracts.
 
-1. `chat.config.ts` - Your configuration
-2. `lib/config.ts` - Parse and apply defaults
-3. `lib/env.ts` - Validate environment variables
-4. Runtime - Features enabled/disabled
+See [Configuration & Extensions](./configuration) for the available extension types and [Source Ownership](./source-ownership) for where to make changes.
 
-This ensures type-safe configuration and build-time validation of environment variables. See [Configuration](./configuration) for the full reference.
+## Usage evidence
+
+Core records model usage under unique accounting-wrapper attempt IDs and supported tool usage under session/call IDs. It reconciles tool receipts against the authoritative EVE stream. Replaying evidence with the same identity does not duplicate recorded usage. This recording and reconciliation also runs without Credits installed, without creating or debiting balances. Reconciliation failures can prevent new work.
+
+[Credits](../plugins/credits) owns balance checks and charging policy. Its page explains how recorded usage becomes a debit when the plugin is installed.

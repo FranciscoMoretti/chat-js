@@ -1,0 +1,25 @@
+---
+title: Source Ownership
+description: Know where to edit app code, installed source, and generated registrations
+---
+
+There are four file kinds: application, installed source, generated, and installation record. Application code is preserved during installation. Installed source can be customized, with local changes tracked for replacement/removal. Generated files are rebuilt from inputs, and records retain installation history. These kinds describe lifecycle, not editing permissions.
+
+Reusable helpers and contracts live in `chatjs/core/`. Selected provider implementations and configuration live in `chatjs/providers/`. Your composition remains in `integrations/`. Built-in plugin route and agent adapters carry a short source header because their framework paths do not show ownership. External plugins may omit that header. The plugin descriptor declares ownership of installed files.
+
+Run `chat-js status` to inspect the ownership and local-edit state of installed plugin files. See [status](../cli/status) for the file tree, source states, and migration from older layouts.
+
+| Location | Owner | What belongs here |
+| --- | --- | --- |
+| `chatjs/plugins/<id>/chat.ts`, `chatjs/plugins/<id>/billing.ts` | Installed plugin source, editable in your app | Plugin implementations |
+| `chatjs/generated/installed-chat.ts`, `chatjs/generated/installed-billing.ts` | Installer | Static imports and typed adapter lists |
+| `integrations/chat/server.ts`, `integrations/billing.ts` | Your app | Selection, ordering, wrappers, and local adapters |
+| `chatjs/core/chat/compose.ts`, `chatjs/core/billing/compose.ts` | Installed source | Shared composition rules and defaults |
+| Application-owned routes, queries, and runtime consumers | Your app | Calls to the composed integration |
+| Route and agent adapters declared by a plugin | Installed plugin source | Framework entry points that activate the plugin |
+
+Keep local application modules outside `chatjs/plugins/<id>/` when they should survive removal of that plugin. Generated lists do not contain callbacks, default policies, or application behavior.
+
+## Customize composition
+
+Use [Customizing Integrations](../cookbook/customize-integrations) for wrappers, local adapters, UI composition, and document kinds. See [Using Plugins](../plugins/using-plugins) for installation and database migrations.

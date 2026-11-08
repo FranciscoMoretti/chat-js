@@ -1,13 +1,26 @@
 ---
-title: Configuration
+title: Configuration & Extensions
 description: Install capabilities and configure runtime policy in ChatJS
 ---
 
-ChatJS separates **installed source**, **runtime policy**, and **deployment infrastructure**. The CLI installs tools, features, one gateway, and one storage adapter. `chat.config.ts` supplies branding, model defaults, authentication and guest policies. Environment variables supply credentials and deployment connections.
+ChatJS separates **installed source**, **runtime policy**, and **deployment infrastructure**. The CLI installs plugins, tools, and selected gateway, storage, and sandbox providers. `chat.config.ts` supplies branding, model defaults, authentication settings. Environment variables supply credentials and deployment connections.
+
+## Extension types
+
+| Type | What you select | Documentation |
+| --- | --- | --- |
+| Core | App behavior such as conversations, authentication, and parallel responses | [Architecture](./architecture) |
+| Plugins | Optional app integrations such as Projects, Credits, and MCP | [Plugins](../plugins/overview) |
+| Tools | Model-facing operations such as search, execution, and document editing | [Tools](../tools/overview) |
+| Gateway | Inference and model discovery | [Models & Gateways](../gateways/overview) |
+| Storage | Files SDK adapter for durable files | [File Storage](../storage) |
+| Sandbox | Execution infrastructure and persistent EVE session files where supported | [Sandboxes](../deployment/sandboxes) |
+
+Runtime settings configure the source you installed. They do not install missing capabilities. See [Source Ownership](./source-ownership) before customizing that source.
 
 ## Runtime configuration
 
-The generated `chat.config.ts` is parsed by `lib/config-schema.ts` and exported as `config` from `@/lib/config`. Use the installed gateway's discriminator and override only the settings you need. This example applies to a Vercel gateway installation with `deep-research` installed:
+The generated `chat.config.ts` is parsed by `lib/config-schema.ts` and exported as `config` from `@/lib/config`. Use the installed gateway's discriminator and override only the settings you need. This example applies to a Vercel gateway installation with `deep-research` and `followup-suggestions` installed:
 
 ```typescript title="chat.config.ts"
 import type { ConfigInput } from "@/lib/config-schema";
@@ -47,14 +60,14 @@ You keep one editable `chat.config.ts`. Each installed tool supplies its schema 
 
 Model settings do not install their tools. Follow-up suggestions retain an `enabled` runtime setting. Search, retrieval, code execution, image/video generation and deep research do not have `enabled` configuration fields.
 
-## Install tools and features
+## Install capabilities
 
 Run commands inside your generated app, using the CLI version appropriate to your installation:
 
 ```bash
 bunx chat-js@alpha add tavily-search deep-research
-bunx chat-js@alpha add code-documents saved-code-execution
-bunx chat-js@alpha add attachment-uploads --storage-provider vercel-blob
+bunx chat-js@alpha add code-documents saved-code-execution --sandbox-provider vercel
+bunx chat-js@alpha add attachment-uploads --storage-provider vercel-blob --sandbox-provider vercel
 bunx chat-js@alpha add mcp
 ```
 
@@ -62,9 +75,9 @@ bunx chat-js@alpha add mcp
 | --- | --- |
 | `tavily-search` or `firecrawl-search` | Selected provider's credentials. One `webSearch` provider serves chat and research. |
 | `deep-research` | Text documents, document reading and a search provider. Missing search defaults to Tavily. |
-| `saved-code-execution` | Code documents, document reading and a compatible `codeExecution` provider. Missing execution defaults to Vercel Sandbox. |
+| `saved-code-execution` | Code documents, document reading and a compatible `codeExecution` provider. Missing execution installs the built-in code-execution tool, which requires sandbox infrastructure. Select `--sandbox-provider` if none is installed. |
 | `generate-image` / `generate-video` | Compatible gateway capability, a default media model and persistent storage. Only the built-in Vercel gateway declares video support. |
-| `attachment-uploads` | Persistent storage. Configure limits separately under `attachments`. |
+| `attachment-uploads` | Persistent storage and a sandbox with persistent-file support. Configure limits separately under `attachments`. |
 | `mcp` | `MCP_ENCRYPTION_KEY`, including installations with no connectors yet. |
 | `vercel-analytics`, `vercel-speed-insights`, `langfuse` | Independently installed telemetry. Langfuse requires its keys. |
 
@@ -82,7 +95,7 @@ bunx chat-js@alpha add tavily-search --replace
 
 Replacement requires `--replace`. Modified or untracked provider source requires review and explicit `--overwrite`. Keep a version-control checkpoint before replacing customized source. The CLI preserves runtime model overrides, so review their IDs for the selected gateway and run `bun run setup` and `bun run fetch:models` after supplying credentials. Registry addresses can select external providers too. The CLI removes unused dependency entries that its installation receipt owns, and refreshes its marked environment-example sections. It preserves pre-existing dependencies, user-changed versions, dependencies referenced by remaining source and environment entries outside those sections. ChatJS supports new installations rather than upgrades from older templates.
 
-Search replacement uses the same `webSearch` slot for direct search and research. Saved-code execution requires an executor export, in addition to a `codeExecution` tool. A second independent sandbox provider and its resource cleanup remain release gates. See [Self-hosted deployment](../deployment/self-hosted) for the infrastructure acceptance boundary.
+Search replacement uses the same `webSearch` slot for direct search and research. Saved-code execution requires an executor export, in addition to a `codeExecution` tool. The built-in Vercel and Daytona adapters support code execution. Persistent session files require Vercel or a compatible external provider. Hosted lifecycle validation is separate from adapter selection. See [Self-hosted deployment](../deployment/self-hosted) for the infrastructure acceptance boundary.
 
 A reproducible minimal scaffold omits document tools as well as optional integrations:
 
@@ -92,7 +105,7 @@ bunx chat-js@alpha create minimal-chat --yes --no-documents --no-mcp --no-attach
 
 ## Runtime policy and credentials
 
-Authentication booleans enable GitHub, Google or Vercel OAuth and require the corresponding credentials. `anonymous` configures the older guest route's IP rate limits. Disposable sessions use the server-owned policy in `lib/eve/session-policy.ts`, including model, input-size, expiry, and IP limits. Guests have no credit balance. Retention additionally needs an operational cleanup schedule and lifecycle support.
+Authentication booleans enable GitHub, Google or Vercel OAuth and require the corresponding credentials. Install [Guest Chat](../plugins/guest-chat) for disposable visitor sessions. Its server-owned policy controls the model, input size, expiry, and IP limits. Guests have no credit balance. Retention additionally needs an operational cleanup schedule and lifecycle support.
 
 `features.parallelResponses` controls parallel responses. `attachments.acceptedTypes`, `maxBytes` and `maxDimension` control installed upload behavior. Neither setting installs its feature. Branding, organization/legal text and pricing display are also runtime configuration.
 

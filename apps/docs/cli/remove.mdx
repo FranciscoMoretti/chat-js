@@ -1,0 +1,34 @@
+---
+title: remove
+description: Disconnect installed plugins while retaining database schemas and data
+---
+
+Inspect a removal plan before removing a plugin:
+
+```bash
+bunx chat-js@alpha remove projects --dry-run
+```
+
+The command reports the plugin's activation, removable source, retained schemas, and modified or untracked files. Resolve application imports that depend on the plugin before removal.
+
+```bash
+bunx chat-js@alpha remove projects --backup
+```
+
+`--backup` preserves removed source, including customizations, under `chatjs/removed-plugins`. Without that explicit choice, modified source blocks removal. `--yes` skips confirmation but does not authorize removing modified source.
+
+## Arguments and options
+
+| Argument or flag | Default | Purpose |
+| --- | --- | --- |
+| `<plugins...>` | Required | One or more installed plugin IDs |
+| `-c, --cwd <cwd>` | Current directory | Select the ChatJS project |
+| `--dry-run` | `false` | Show the plan without writing |
+| `--backup` | `false` | Preserve removed source in the backup directory |
+| `-y, --yes` | `false` | Skip confirmation |
+
+## Retained data
+
+Removal disconnects registrations and removes owned source. It retains database data, schema inputs, shared UI, and package dependencies. No database migration is applied. Review retained schemas and generate a migration separately if you intend to change stored data.
+
+This command removes plugins. It is not a general tool or provider uninstaller. See [status](./status) to inspect installation ownership and [Using Plugins](../plugins/using-plugins#database-migrations) for migration behavior.

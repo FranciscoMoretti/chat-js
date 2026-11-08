@@ -1,0 +1,35 @@
+---
+title: Desktop Release Process
+description: Repository maintainer reference for publishing Electron artifacts
+---
+
+This page describes the ChatJS monorepo release process. Scaffolded apps receive the Electron source and Forge configuration, but do not inherit this release automation. For your own app, start with [Desktop Distribution](../deployment/desktop).
+
+## Release Flow
+
+In the ChatJS monorepo, use Changesets to version npm packages and desktop artifacts. The CLI normally follows a separate manual release process during its alpha period, with the version-specific workflow exception below.
+
+The release flow is:
+
+1. Add a changeset that includes `@chat-js/electron`
+2. Let the Changesets workflow open the version PR
+3. Merge that version PR
+4. The npm release workflow publishes the public packages versioned by Changesets. Its Changesets publish command excludes the `chat-js` CLI during alpha
+5. The desktop artifact workflow reads the new `apps/electron/package.json` version, builds macOS, Windows, and Linux artifacts, and publishes them to GitHub Releases under the package-scoped tag `@chat-js/electron@<version>`
+
+This workflow publishes downloadable installers. Its package-scoped tags are skipped by the default updater's [SemVer release filter](https://github.com/electron/update.electronjs.org/blob/main/src/updates.ts), so these releases do not provide automatic updates through `update.electronjs.org`. For your own app, use compatible tags such as `v1.2.3` and the platform requirements in [Desktop Distribution](../deployment/desktop).
+
+That keeps versioning, changelogs, and release triggering consistent for packages managed by Changesets. The publish destinations are:
+
+- Shared public packages publish to npm
+- `@chat-js/electron` publishes installers to GitHub Releases
+
+The current [release workflow](https://github.com/FranciscoMoretti/chat-js/blob/main/.github/workflows/release.yml) has an explicit bootstrap exception: it publishes `@chat-js/registry@0.2.0-beta.3` and `chat-js@1.0.0-alpha.2` as a matched pair, skipping versions already on npm. Do not manually publish those versions while that workflow owns their release.
+
+For later CLI alphas not covered by an explicit workflow step, choose the next unused version, update `packages/cli/package.json`, and run `bun install` to synchronize the lockfile. Publish the audited prerelease from `packages/cli` with `bun publish --tag alpha` and verify that `chat-js@alpha` resolves to it. Review the current workflow before publishing. The general Changesets publish command does not release CLI alphas.
+
+For a concrete reference, see the workflow used in this repository:
+
+- [`.github/workflows/electron-release.yml`](https://github.com/franciscomoretti/chat-js/blob/main/.github/workflows/electron-release.yml)
+
+If you scaffold a new app with the Electron option, you get the desktop app code and Forge config, but not this repository's release automation automatically. Use the workflow above as a starting point if you want the same Changesets-driven versioning flow in your own project.

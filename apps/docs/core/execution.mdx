@@ -1,0 +1,30 @@
+---
+title: Execution & Recovery
+description: Understand creation, streaming, reconnecting, and cancellation
+---
+
+ChatJS uses EVE to execute conversations and recover their durable state. The browser connects through the authenticated ChatJS gateway. Your app does not need the separate Redis resumable-stream recipe used by standalone AI SDK applications.
+
+## Starting a conversation
+
+For a new conversation, the composer records a durable creation request before asking ChatJS to create the EVE session. The page then navigates to `/chat/:id`. If the request is interrupted, the retained request can recover or retry. An uncertain network response does not establish whether creation succeeded.
+
+## Streaming and reconnecting
+
+EVE owns the transcript, execution state, approvals, and stream position. When you reopen a chat, ChatJS reconnects and restores those messages and execution state. Application records supply the sidebar, ownership, and other installed app capabilities without mirroring the native transcript.
+
+Changing the selected branch changes the path you view. Other active parallel responses can continue streaming. See [Conversations](./conversations) for branches and response groups.
+
+## Stopping execution
+
+Use the stop control for the selected running response to request cancellation. Each parallel response has its own execution and stop control. Stopping one does not stop the other responses in the group.
+
+Cancellation is an asynchronous command. The interface tracks a pending stop rather than treating a button click as proof that execution has stopped.
+
+## Interrupted commands
+
+The conversation interface retains recovery state for unconfirmed creation and delivery. Use the recovery controls to retry or recover the saved operation rather than starting a second conversation to replace an uncertain result.
+
+## Tools and infrastructure
+
+[Tool Calls & Approvals](./tool-calls) describes execution that waits for your decision. [Sandboxes](../deployment/sandboxes) explains ephemeral code execution and persistent session files. [Architecture](./architecture) describes runtime and application ownership.
