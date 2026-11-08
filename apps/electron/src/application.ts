@@ -30,6 +30,7 @@ const COOKIE_SEPARATOR_LENGTH = 1;
 const DEV_ENTRY_ARG_INDEX = 1;
 const DEV_ENTRY_MIN_ARGS = 2;
 const EMPTY_WINDOW_COUNT = 0;
+const SQUIRREL_FIRST_RUN_DELAY_MS = 10_000;
 
 // Disable GPU acceleration in WSL / headless environments to prevent D3D12 crashes.
 const isWslOrHeadless =
@@ -658,6 +659,14 @@ const setupAutoUpdater = async (): Promise<void> => {
   }
 
   try {
+    if (
+      process.platform === "win32" &&
+      process.argv.includes("--squirrel-firstrun")
+    ) {
+      // Squirrel holds the updater lock briefly after installation. Only delay
+      // the update check; the window and tray have already started normally.
+      await sleep(SQUIRREL_FIRST_RUN_DELAY_MS);
+    }
     const { updateElectronApp } = await import("update-electron-app");
 
     updateElectronApp({
