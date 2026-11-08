@@ -168,6 +168,8 @@ const removeLegacyElectronDistributionScripts = (scripts: ScriptMap): void => {
 };
 
 const normalizeElectronScripts = (scripts: ScriptMap): void => {
+  // Repository tests use Bun; generated companions support every package manager.
+  delete scripts["test:unit"];
   const build = configureElectronRuntimeScripts(scripts);
   configureElectronDistributionScripts(scripts);
   scripts["electron:build"] = build;
