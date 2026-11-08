@@ -1,5 +1,6 @@
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { after } from "next/server";
+import { chat } from "@/integrations/chat/server";
 import { env } from "@/lib/env";
 import {
   conversationBinding,
@@ -33,7 +34,7 @@ export const POST = async (
     principal.ownerId,
     input.data
   );
-  if (response.ok && !input.data.fork) {
+  if (response.ok) {
     const binding = conversationBinding.safeParse(
       await response
         .clone()
@@ -42,6 +43,14 @@ export const POST = async (
     );
     if (binding.success) {
       after(async () => {
+        if (input.data.fork) {
+          await chat.afterBranch({
+            ownerId: principal.ownerId,
+            conversationId: binding.data.id,
+            sessionId: binding.data.sessionId,
+          });
+          return;
+        }
         await runChatAfterCreate({
           conversationId: binding.data.id,
           message: input.data.message,

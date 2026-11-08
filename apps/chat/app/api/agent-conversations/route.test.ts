@@ -13,9 +13,13 @@ const mocks = vi.hoisted(() => ({
   after: vi.fn<(callback: () => void | Promise<void>) => void>(),
   create: vi.fn(),
   afterCreate: vi.fn(),
+  afterBranch: vi.fn(),
   principal: vi.fn(),
 }));
 vi.mock("next/server", () => ({ after: mocks.after }));
+vi.mock("@/integrations/chat/server", () => ({
+  chat: { afterBranch: mocks.afterBranch },
+}));
 vi.mock("@/lib/env", () => ({
   env: { APP_URL: "http://localhost:3790" },
 }));
@@ -35,9 +39,9 @@ const input = {
   operationId: "00000000-0000-4000-8000-000000000001",
 };
 
-const request = (): Request =>
+const request = (body: unknown = input): Request =>
   new Request("http://localhost:3790/api/agent-conversations", {
-    body: JSON.stringify(input),
+    body: JSON.stringify(body),
     headers: {
       "content-type": "application/json",
       origin: "http://localhost:3790",
@@ -93,6 +97,31 @@ test("defers root plugin work until after the creation response", async () => {
     message: "hello",
     ownerId: "account",
   });
+});
+
+test("runs the branch callback after returning the bound session", async () => {
+  const conversationId = "00000000-0000-4000-8000-000000000002";
+  mocks.create.mockResolvedValue(
+    Response.json({ id: conversationId, sessionId: "branch-session" })
+  );
+
+  const response = await POST(
+    request({
+      ...input,
+      fork: { conversationId: "00000000-0000-4000-8000-000000000003" },
+    })
+  );
+
+  expect(response.status).toBe(HTTP_STATUS.ok);
+  expect(mocks.afterBranch).not.toHaveBeenCalled();
+  const [[afterResponseCallback]] = mocks.after.mock.calls;
+  await afterResponseCallback();
+  expect(mocks.afterBranch).toHaveBeenCalledExactlyOnceWith({
+    ownerId: "account",
+    conversationId,
+    sessionId: "branch-session",
+  });
+  expect(mocks.afterCreate).not.toHaveBeenCalled();
 });
 
 test("signed-out callers cannot create account conversations", async () => {
