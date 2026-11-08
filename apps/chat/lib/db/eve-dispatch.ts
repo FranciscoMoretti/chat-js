@@ -21,10 +21,9 @@ export const getEveMessageDisplayReceipts = async (
 ): Promise<EveMessageDisplayReceipt[]> => {
   const rows = await database
     .select({
-      kind: eveDispatch.kind,
       deliveryId: eveDispatch.deliveryId,
       intent: eveDispatch.intent,
-      history: eveConversation.initialSeed,
+      history: sql<unknown>`case when ${eveDispatch.kind} = 'create' then ${eveConversation.initialSeed} end`,
     })
     .from(eveDispatch)
     .innerJoin(
@@ -57,9 +56,7 @@ export const getEveMessageDisplayReceipts = async (
             kind: "send",
             deliveryId: row.deliveryId,
             selectedTool,
-            ...(row.kind === "create" &&
-            row.history !== null &&
-            row.history !== undefined
+            ...(row.history !== null && row.history !== undefined
               ? {
                   history: parseEveCopySeed(row.history).messages.map(
                     (message) => ({
