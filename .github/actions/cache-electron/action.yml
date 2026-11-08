@@ -1,0 +1,22 @@
+name: Cache Electron archive
+description: Verify and cache the official archive before package installation.
+runs:
+  using: composite
+  steps:
+    - name: Read Electron version
+      id: version
+      shell: bash
+      run: echo "version=$(node -p "require('./apps/electron/package.json').devDependencies.electron")" >> "$GITHUB_OUTPUT"
+    - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      id: cache
+      with:
+        path: ~/.cache/electron
+        key: electron-archive-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.version.outputs.version }}
+    - name: Download verified release archive
+      if: steps.cache.outputs.cache-hit != 'true'
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+        ELECTRON_VERSION: ${{ steps.version.outputs.version }}
+      # Both Electron's install.js and Forge use this default cache on Linux.
+      run: bash "$GITHUB_ACTION_PATH/cache.sh" "$ELECTRON_VERSION" "$HOME/.cache/electron"

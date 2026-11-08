@@ -16,6 +16,7 @@ on:
       - "packages/registry/src/tools/_shared/**"
       - "bun.lock"
       - "package.json"
+      - ".github/actions/cache-electron/**"
       - ".github/workflows/uiverify-chat.yml"
   pull_request:
     paths:
@@ -27,6 +28,7 @@ on:
       - "packages/registry/src/tools/_shared/**"
       - "bun.lock"
       - "package.json"
+      - ".github/actions/cache-electron/**"
       - ".github/workflows/uiverify-chat.yml"
 
 permissions:
@@ -57,6 +59,7 @@ jobs:
           path: ~/.bun/install/cache
           key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
           restore-keys: ${{ runner.os }}-bun-
+      - uses: ./.github/actions/cache-electron
       - run: bun install --frozen-lockfile
       - name: Install Chromium
         run: node_modules/.bin/playwright install --with-deps chromium
