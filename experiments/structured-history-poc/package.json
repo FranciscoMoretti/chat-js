@@ -1,0 +1,13 @@
+{
+  "name": "chatjs-structured-history-poc",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "verify": "bun verify.ts",
+    "setup": "bun setup.ts"
+  },
+  "dependencies": {
+    "just-bash": "3.6.0",
+    "zod": "4.5.4"
+  }
+}
