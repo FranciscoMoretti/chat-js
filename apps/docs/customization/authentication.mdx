@@ -1,0 +1,137 @@
+---
+title: Authentication
+description: Configure OAuth providers and sign-in behavior
+---
+
+Account sign-in uses Better Auth. Configure the providers you want to offer, then supply their credentials. See [Identity & Access](../core/authentication) for sessions, ownership, and optional guest access.
+
+## Enabling Providers
+
+Toggle providers in `chat.config.ts` under the `authentication` key:
+
+```typescript title="chat.config.ts"
+authentication: {
+  google: false, // requires AUTH_GOOGLE_ID + AUTH_GOOGLE_SECRET
+  github: true,  // requires AUTH_GITHUB_ID + AUTH_GITHUB_SECRET
+  vercel: false, // requires VERCEL_APP_CLIENT_ID + VERCEL_APP_CLIENT_SECRET
+},
+```
+
+Provider toggles in `chat.config.ts` control validation and which sign-in buttons are shown. Runtime provider registration in `lib/auth.ts` is based on provider env vars being present.
+
+To fully disable a provider, set its toggle to `false` and remove its env vars.
+
+Config validation runs at build time via `bun run prebuild`. A missing env var for an enabled provider fails the build. At least one provider must be enabled and fully configured.
+
+### Required environment variables
+
+| Provider | Variable                   | Description              |
+| -------- | -------------------------- | ------------------------ |
+| GitHub   | `AUTH_GITHUB_ID`           | OAuth App client ID      |
+| GitHub   | `AUTH_GITHUB_SECRET`       | OAuth App client secret  |
+| Google   | `AUTH_GOOGLE_ID`           | OAuth client ID          |
+| Google   | `AUTH_GOOGLE_SECRET`       | OAuth client secret      |
+| Vercel   | `VERCEL_APP_CLIENT_ID`     | Vercel App client ID     |
+| Vercel   | `VERCEL_APP_CLIENT_SECRET` | Vercel App client secret |
+
+All providers also require a shared secret used to sign session tokens:
+
+```bash
+AUTH_SECRET=<random 32-byte base64 string>
+```
+
+Generate one:
+
+```bash
+openssl rand -base64 32
+# or visit https://generate-secret.vercel.app/32
+```
+
+---
+
+## Provider Setup
+
+### GitHub
+
+1. Go to **GitHub → Settings → Developer Settings → OAuth Apps → New OAuth App**.
+2. Set **Homepage URL** to your app URL (e.g. `https://your-domain.com`).
+3. Set **Authorization callback URL** to:
+   ```text
+   https://your-domain.com/api/auth/callback/github
+   ```
+4. Copy the **Client ID** and generate a **Client Secret**.
+5. Add to your environment:
+   ```bash
+   AUTH_GITHUB_ID=your_client_id
+   AUTH_GITHUB_SECRET=your_client_secret
+   ```
+6. Enable in `chat.config.ts`: `authentication: { github: true }`
+
+<Callout type="note">
+  For local development, create a separate GitHub OAuth App with the callback
+  URL set to `http://localhost:3000/api/auth/callback/github`.
+</Callout>
+
+---
+
+### Google
+
+1. Go to **[Google Cloud Console](https://console.cloud.google.com/) → APIs & Services → Credentials → Create Credentials → OAuth client ID**.
+2. Choose **Web application**.
+3. Under **Authorized redirect URIs** add:
+   ```text
+   https://your-domain.com/api/auth/callback/google
+   http://localhost:3000/api/auth/callback/google
+   ```
+4. Copy the **Client ID** and **Client Secret**.
+5. Add to your environment:
+   ```bash
+   AUTH_GOOGLE_ID=your_client_id
+   AUTH_GOOGLE_SECRET=your_client_secret
+   ```
+6. Enable in `chat.config.ts`: `authentication: { google: true }`
+
+<Callout type="note">
+  The Google OAuth consent screen must be configured and published before users
+  outside your Google Workspace can sign in. For testing, add yourself as a test
+  user without publishing.
+</Callout>
+
+---
+
+### Vercel
+
+1. Create a Vercel App using the **[Sign in with Vercel setup guide](https://vercel.com/docs/sign-in-with-vercel/getting-started)**.
+2. Under **Redirect URL** add:
+   ```text
+   https://your-domain.com/api/auth/callback/vercel
+   ```
+3. Copy the **Client ID** and **Client Secret** from the Vercel App.
+4. Add to your environment:
+   ```bash
+   VERCEL_APP_CLIENT_ID=your_client_id
+   VERCEL_APP_CLIENT_SECRET=your_client_secret
+   ```
+5. Enable in `chat.config.ts`: `authentication: { vercel: true }`
+
+<Callout type="note">
+  The Vercel provider is useful when your users are Vercel teams and you want to
+  authenticate using their Vercel account. New scaffolds disable it by default.
+  The checked-in reference app enables it and requires Vercel credentials unless
+  you disable the provider and remove its environment variables.
+</Callout>
+
+---
+
+## Adding a New OAuth Provider
+
+Better Auth supports many OAuth 2.0 / OIDC providers (Discord, Twitter/X, Apple, LinkedIn, and more). To add one:
+
+1. Add a provider flag to `authenticationConfigObjectSchema` and `AUTHENTICATION_DEFAULTS` in `lib/config-schema.ts`. Update the `authentication` selections in `chat.config.ts`.
+2. Declare its credentials in `lib/env-schema.ts` and its requirements in `authEnvRequirements` in `lib/config-requirements.ts` so `check-env` validates enabled providers.
+3. Add the provider to the explicit `socialProviders` return type and registration object in `lib/auth.ts`, using those credentials.
+4. Add its ID and order to `SOCIAL_AUTH_PROVIDER_ORDER` in `lib/social-auth.ts`. Add its label and icon to `AUTH_PROVIDER_METADATA` in `components/auth-providers.tsx`. The existing button list then renders it using the Better Auth client.
+5. Register the OAuth app with the provider, setting the redirect URI to `/api/auth/callback/[provider]`.
+6. Run your app's type checks and `bun run check-env`, then verify sign-in and callback handling.
+
+See the [Better Auth OAuth guide](https://better-auth.com/docs/concepts/oauth) for the social-provider configuration model, then choose a provider from the Authentication section of the Better Auth docs for provider-specific options.

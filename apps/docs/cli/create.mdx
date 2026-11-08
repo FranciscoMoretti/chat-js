@@ -45,7 +45,7 @@ When run without `--yes`, the CLI walks you through:
 4. **Observability and tool providers:** one optional multiselect for Vercel Analytics, Speed Insights and Langfuse, all initially off, followed by provider selection for enabled tools
 5. **File storage:** provider and non-secret adapter options when selected features store files
 6. **Auth providers:** authentication method (e.g. GitHub OAuth)
-7. **Electron desktop app:** optionally adds an `electron/` subfolder to package the app as a native desktop app (see [Desktop](/platforms/desktop))
+7. **Electron desktop app:** optionally adds an `electron/` subfolder to package the app as a native desktop app (see [Desktop](../deployment/desktop))
 
 New apps use the invoking package manager, with Bun as the fallback. The CLI records its version in `package.json`, and shadcn installs dependencies immediately. The former `--no-install`, `--package-manager`, and `--registry` flags are removed.
 

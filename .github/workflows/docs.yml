@@ -50,6 +50,8 @@ jobs:
           key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
           restore-keys: ${{ runner.os }}-bun-
       - if: steps.affected.outputs.run == 'true'
+        uses: ./.github/actions/cache-electron
+      - if: steps.affected.outputs.run == 'true'
         run: bun install --frozen-lockfile
       - name: Validate and build docs
         if: steps.affected.outputs.run == 'true'

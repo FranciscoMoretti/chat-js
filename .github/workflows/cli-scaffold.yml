@@ -73,6 +73,7 @@ jobs:
           path: ~/.bun/install/cache
           key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
           restore-keys: ${{ runner.os }}-bun-
+      - uses: ./.github/actions/cache-electron
       - run: bun install --frozen-lockfile
       - name: Build CLI and run shared unit tests
         run: bunx turbo run test:unit --filter=chat-js
@@ -129,6 +130,7 @@ jobs:
           path: ~/.bun/install/cache
           key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
           restore-keys: ${{ runner.os }}-bun-
+      - uses: ./.github/actions/cache-electron
       - run: bun install --frozen-lockfile
       - uses: actions/download-artifact@v4
         with:

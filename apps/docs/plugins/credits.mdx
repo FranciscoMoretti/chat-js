@@ -33,6 +33,29 @@ Core sums provider costs using database decimal arithmetic, rounds up once per t
 
 [Guest Chat](./guest-chat) owns disposable visitor sessions and rate limits. Guests do not enter account billing or own monetary balances. Credits does not add payments, subscriptions, top-ups, or an administrative balance editor.
 
+## From usage to a debit
+
+```mermaid
+flowchart LR
+    Model[Model call] --> Wrapper[Core accounting wrapper]
+    Wrapper --> ModelLedger[Durable model ledger]
+    Event[Tool completion event] --> Hook[agent/hooks/billing.ts]
+    Hook --> Usage[lib/eve/usage.ts]
+    Stream[Authoritative EVE stream] --> Reconcile[lib/eve/reconcile-usage.ts]
+    Reconcile --> Usage
+    Usage --> Ledger[Usage settlement]
+    ModelLedger --> Ledger
+    Ledger --> Credits[Optional Credits debit]
+```
+
+`lib/eve/usage.ts` ingests supported platform-tool receipts and registers native child sessions. Tool receipt identities use the native session and call ID. Model calls are recorded separately through the accounting wrapper in `lib/eve/model-ledger.ts` and the durable ledger in `lib/db/eve-model-ledger.ts`. The wrapper generates a unique attempt ID before each model call. Replaying a receipt for an existing identity does not debit it twice. A new model attempt has a distinct identity.
+
+`lib/eve/reconcile-usage.ts` normally reads from the durable stream cursor. On the managed backend, the next admission request retries sessions with unpriced tool receipts from the beginning, including their child sessions, when the one-minute sweep interval is due. These retries do not run in the background. Unresolved pricing keeps replay available without itself blocking admission. An output with no recognized tool receipt is skipped rather than treated as an unpriced receipt. Other reconciliation failures can still prevent new work.
+
+Both new-conversation and follow-up-message admission call `canStartPaidTurn` in `lib/eve/spending-admission.ts`. It reconciles usage before reading the balance. Reconciliation failures propagate to the request's recovery response. A positive balance check does not reserve a concurrent budget for work already running.
+
+The installed billing policy commits debits in the same transaction as usage evidence and settlement markers. See [Architecture](../core/architecture#usage-evidence) for the behavior that remains without Credits.
+
 ## Storage
 
 | Table | Fields | Purpose |
@@ -56,4 +79,4 @@ Only one installed plugin can provide billing. Its `billing.ts` entry must load 
 
 A new app without this plugin has no `UserCredit` table, credits router, or balance display. Spending passes the optional monetary gate, while authentication, guest rate and input/output limits, and usage reconciliation still apply.
 
-Adding Credits does not run a historical backfill. However, a later receipt for a previously unbilled turn computes its unpaid total from all recorded evidence for that turn. Decide how to settle existing in-flight turns before enabling billing on an app that previously ran without it. See [Credit Tracking](../cookbook/credit-tracking) for the accounting flow.
+Adding Credits does not run a historical backfill. However, a later receipt for a previously unbilled turn computes its unpaid total from all recorded evidence for that turn. Decide how to settle existing in-flight turns before enabling billing on an app that previously ran without it.

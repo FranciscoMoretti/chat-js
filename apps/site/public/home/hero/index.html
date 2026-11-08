@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>ChatJS — Living C</title>
+    <link rel="stylesheet" href="hero.css" />
+  </head>
+  <body>
+    <div class="hero-art">
+      <div class="art-meta">
+        <span>BUILDING BLOCKS. CONNECTED.</span
+        ><button id="motion-toggle">Pause</button>
+      </div>
+      <div class="c-frame">
+        <div class="hero-stage" id="hero-stage">
+          <div id="hero-blocks"></div>
+          <div id="hero-labels" aria-hidden="true"></div>
+          <div class="c-inscription">YOUR APP,<br />TAKING SHAPE.</div>
+        </div>
+      </div>
+      <div class="hero-scenes">
+        <button data-hero-scene="letter">The blocks</button
+        ><button data-hero-scene="app">Chat app</button
+        ><button data-hero-scene="research">Research</button>
+      </div>
+      <div class="piece-description">
+        <span id="piece-kind"></span>
+        <p id="piece-description"></p>
+      </div>
+    </div>
+    <script src="./brand.js"></script>
+    <script src="./hero-layouts.js"></script>
+    <script src="./hero-motion.js"></script>
+  </body>
+</html>

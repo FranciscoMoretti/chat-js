@@ -1,134 +1,9 @@
 ---
-title: "Authentication"
-description: "Session-based OAuth authentication with Better Auth"
+title: Identity & Access
+description: Understand account sessions, conversation ownership, and optional guest access
 ---
 
-## Overview
-
-ChatJS uses [Better Auth](https://better-auth.com) for all authentication. Every user sign-in goes through an OAuth social provider — there is no email/password flow. Sessions are stored in Postgres and validated on every request via a signed cookie with a short-lived cache to reduce database load.
-
-The auth layer has two modes:
-
-- **Authenticated users** — signed in via GitHub, Google, or Vercel OAuth. Full access to chat history, all enabled models, and all enabled features.
-- **Anonymous users** — no sign-in required. A credit-limited, cookie-based session lets visitors try the app without an account.
-
----
-
-## Enabling Providers
-
-Toggle providers in `chat.config.ts` under the `authentication` key:
-
-```typescript title="chat.config.ts"
-authentication: {
-  google: false, // requires AUTH_GOOGLE_ID + AUTH_GOOGLE_SECRET
-  github: true,  // requires AUTH_GITHUB_ID + AUTH_GITHUB_SECRET
-  vercel: false, // requires VERCEL_APP_CLIENT_ID + VERCEL_APP_CLIENT_SECRET
-},
-```
-
-Provider toggles in `chat.config.ts` control validation and which sign-in buttons are shown. Runtime provider registration in `apps/chat/lib/auth.ts` is based on provider env vars being present.
-
-To fully disable a provider, set its toggle to `false` and remove its env vars.
-
-Config validation runs at build time via `bun run prebuild`. A missing env var for an enabled provider will fail the build early rather than causing a runtime error.
-
-### Required environment variables
-
-| Provider | Variable                   | Description              |
-| -------- | -------------------------- | ------------------------ |
-| GitHub   | `AUTH_GITHUB_ID`           | OAuth App client ID      |
-| GitHub   | `AUTH_GITHUB_SECRET`       | OAuth App client secret  |
-| Google   | `AUTH_GOOGLE_ID`           | OAuth client ID          |
-| Google   | `AUTH_GOOGLE_SECRET`       | OAuth client secret      |
-| Vercel   | `VERCEL_APP_CLIENT_ID`     | Vercel App client ID     |
-| Vercel   | `VERCEL_APP_CLIENT_SECRET` | Vercel App client secret |
-
-All providers also require a shared secret used to sign session tokens:
-
-```bash
-AUTH_SECRET=<random 32-byte base64 string>
-```
-
-Generate one:
-
-```bash
-openssl rand -base64 32
-# or visit https://generate-secret.vercel.app/32
-```
-
----
-
-## Provider Setup
-
-### GitHub
-
-1. Go to **GitHub → Settings → Developer Settings → OAuth Apps → New OAuth App**.
-2. Set **Homepage URL** to your app URL (e.g. `https://your-domain.com`).
-3. Set **Authorization callback URL** to:
-   ```
-   https://your-domain.com/api/auth/callback/github
-   ```
-4. Copy the **Client ID** and generate a **Client Secret**.
-5. Add to your environment:
-   ```bash
-   AUTH_GITHUB_ID=your_client_id
-   AUTH_GITHUB_SECRET=your_client_secret
-   ```
-6. Enable in `chat.config.ts`: `authentication: { github: true }`
-
-<Callout type="note">
-  For local development, create a separate GitHub OAuth App with the callback
-  URL set to `http://localhost:3000/api/auth/callback/github`.
-</Callout>
-
----
-
-### Google
-
-1. Go to **[Google Cloud Console](https://console.cloud.google.com/) → APIs & Services → Credentials → Create Credentials → OAuth client ID**.
-2. Choose **Web application**.
-3. Under **Authorized redirect URIs** add:
-   ```
-   https://your-domain.com/api/auth/callback/google
-   http://localhost:3000/api/auth/callback/google
-   ```
-4. Copy the **Client ID** and **Client Secret**.
-5. Add to your environment:
-   ```bash
-   AUTH_GOOGLE_ID=your_client_id
-   AUTH_GOOGLE_SECRET=your_client_secret
-   ```
-6. Enable in `chat.config.ts`: `authentication: { google: true }`
-
-<Callout type="note">
-  The Google OAuth consent screen must be configured and published before users
-  outside your Google Workspace can sign in. For testing, add yourself as a test
-  user without publishing.
-</Callout>
-
----
-
-### Vercel
-
-1. Create a Vercel App using the **[Sign in with Vercel setup guide](https://vercel.com/docs/sign-in-with-vercel/getting-started)**.
-2. Under **Redirect URL** add:
-   ```
-   https://your-domain.com/api/auth/callback/vercel
-   ```
-3. Copy the **Client ID** and **Client Secret** from the Vercel App.
-4. Add to your environment:
-   ```bash
-   VERCEL_APP_CLIENT_ID=your_client_id
-   VERCEL_APP_CLIENT_SECRET=your_client_secret
-   ```
-5. Enable in `chat.config.ts`: `authentication: { vercel: true }`
-
-<Callout type="note">
-  The Vercel provider is useful when your users are Vercel teams and you want to
-  authenticate using their Vercel account. It is off by default.
-</Callout>
-
----
+ChatJS uses Better Auth for account sessions. EVE requests pass through the authenticated ChatJS gateway, which enforces access to the selected conversation. Plugin installation can add guest access or public sharing without granting access to private account data.
 
 ## Session Lifecycle
 
@@ -137,7 +12,7 @@ openssl rand -base64 32
 3. Better Auth exchanges the code for tokens, upserts the user in the database, and creates a session.
 4. A signed HttpOnly session cookie is set on the browser.
 
-Sessions are stored in Postgres. A short-lived cookie cache reduces database hits — most session validations are resolved from the cookie itself rather than a database query.
+Sessions are stored in Postgres. A short-lived cookie cache reduces database hits. Most session validations are resolved from the cookie itself rather than a database query.
 
 ---
 
@@ -151,22 +26,14 @@ Core account authentication remains in Better Auth. The shared EVE agent require
 
 ---
 
-## Route Protection
+## Access boundaries
 
-Public routes (auth callbacks, shared chats, landing pages) are accessible without signing in. All other routes redirect unauthenticated users to `/login`.
+Account routes require a registered principal. Public authentication routes and installed public-sharing or guest flows apply their own access policies. Signing in does not grant access to another user's private conversations.
 
 Account chat handlers require a registered principal. Guest Chat installs a separate bootstrap adapter and native authenticator that enforce its session policy.
 
 ---
 
-## Adding a New OAuth Provider
+## Configure sign-in
 
-Better Auth supports many OAuth 2.0 / OIDC providers (Discord, Twitter/X, Apple, LinkedIn, and more). To add one:
-
-1. Add it to the Better Auth config in `apps/chat/lib/auth.ts` with credentials from env vars.
-2. Add the new env vars to `apps/chat/lib/env-schema.ts`.
-3. Add a sign-in button to `apps/chat/components/social-auth-providers.tsx` using the Better Auth client.
-4. Register the OAuth app with the provider, setting the redirect URI to `/api/auth/callback/[provider]`.
-5. Optionally, gate it behind a new flag in `authenticationConfigSchema` in `apps/chat/lib/config-schema.ts`.
-
-See the [Better Auth OAuth guide](https://better-auth.com/docs/concepts/oauth) for the social-provider configuration model, then choose a provider from the Authentication section of the Better Auth docs for provider-specific options.
+See [Authentication](../customization/authentication) to enable OAuth providers or add a sign-in provider. [Sharing](../plugins/sharing) documents public read-only access, and [Guest Chat](../plugins/guest-chat) documents disposable visitor sessions.
