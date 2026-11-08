@@ -5,6 +5,7 @@ import { readEvePostgresQueueInventory } from "./eve-queue-inventory";
 import { z } from "zod";
 
 const EMPTY_COUNT = 0;
+const EXPECTED_QUEUE_TASK_COUNT = 2;
 const MIN_IDENTIFIER_LENGTH = 1;
 const MIN_QUEUE_RUNS = 1;
 const MAX_INVENTORY_SIZE = 10_000;
@@ -72,8 +73,8 @@ const readQueuePurgeScope = async (
 ): Promise<Set<string>> => {
   await query`select pg_advisory_xact_lock(hashtextextended(${`eve-queue-purge:${scope.taskIdentifier}:${scope.sessionId}`}, 0))`;
   const configured = await query`select identifier from workflow.eve_queue_tasks
-  where identifier = ${scope.taskIdentifier}`;
-  if (configured.length === EMPTY_COUNT) {
+  where identifier in (${scope.taskIdentifier}, ${`${scope.taskIdentifier}_executor`})`;
+  if (configured.length !== EXPECTED_QUEUE_TASK_COUNT) {
     throw new Error("Install the queue fence before removing payloads.");
   }
   const retained = z.array(z.object({ id: z.string() })).parse(

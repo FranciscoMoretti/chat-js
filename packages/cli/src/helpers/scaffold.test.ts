@@ -298,7 +298,7 @@ describe("scaffoldFromTemplate", (): void => {
       ).exists()
     ).toBe(false);
     const archives = {
-      "@workflow/world-postgres": "workflow-world-postgres-5.0.0-beta.40.tgz",
+      "@workflow/world-postgres": "workflow-world-postgres-5.1.1.tgz",
     };
 
     await Promise.all(
@@ -801,7 +801,7 @@ describe("scaffoldFromTemplate", (): void => {
         ).toBeUndefined();
         expect(packageJson.dependencies["@vercel/analytics"]).toBeUndefined();
         expect(packageJson.dependencies["@workflow/world-postgres"]).toBe(
-          "file:vendor/workflow-world-postgres-5.0.0-beta.40.tgz"
+          "file:vendor/workflow-world-postgres-5.1.1.tgz"
         );
         expect(
           electronPackageJson.devDependencies["@better-auth/electron"]

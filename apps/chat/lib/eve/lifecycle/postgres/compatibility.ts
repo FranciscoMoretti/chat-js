@@ -1,12 +1,12 @@
 import type { ArrayParameter, Helper, PendingQuery, Row } from "postgres";
 
-// Exact migration boundary of @workflow/world-postgres 5.0.0-beta.40 and
+// Exact migration boundary of @workflow/world-postgres 5.1.1 and
 // graphile-worker 0.16.6. New migrations require native acceptance and review of
 // queue envelopes, ownership relationships, triggers, and deletion ordering.
-const workflowMigrationBoundary = "1786060800000";
+const workflowMigrationBoundary = "1790208000000";
 const graphileMigrationBoundary = 18;
 const queueFenceCount = 1;
-const missingTaskCount = 0;
+const queueTaskCount = 2;
 const fencedTables = [
   "workflow_runs",
   "workflow_events",
@@ -14,6 +14,9 @@ const fencedTables = [
   "workflow_steps",
   "workflow_hooks",
   "workflow_waits",
+  "workflow_invocations",
+  "workflow_snapshots",
+  "workflow_start_hook_admissions",
   "workflow_stream_chunks",
 ];
 
@@ -71,11 +74,11 @@ export const assertPostgresLifecycleCompatibility = async (
           and a.attnum = any(t.tgattr)) = array['payload', 'task_id']))
   `;
   const tasks = await connection`
-    select identifier from workflow.eve_queue_tasks where identifier = 'workflow_flows'
+    select identifier from workflow.eve_queue_tasks where identifier in ('workflow_flows', 'workflow_flows_executor')
   `;
   if (
     triggers.length !== fencedTables.length + queueFenceCount ||
-    tasks.length === missingTaskCount
+    tasks.length !== queueTaskCount
   ) {
     throw new Error(
       "Workflow lifecycle fences are missing or disabled, or their definitions are incompatible. Run eve:setup before cleanup."

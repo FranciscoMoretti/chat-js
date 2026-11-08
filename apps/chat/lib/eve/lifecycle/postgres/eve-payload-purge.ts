@@ -5,6 +5,7 @@ import { readEvePostgresRunInventoryInTransaction } from "./eve-run-inventory";
 import { z } from "zod";
 
 const EMPTY_COUNT = 0;
+const EXPECTED_QUEUE_TASK_COUNT = 2;
 const MIN_IDENTIFIER_LENGTH = 1;
 type PayloadQuery = PostgresLifecycleQuery & {
   readonly array: TransactionSql["array"];
@@ -33,8 +34,8 @@ const assertPayloadPurgeReady = async (
     throw new Error("Fence every run and stream before purging payloads.");
   }
   const configured =
-    await query`select identifier from workflow.eve_queue_tasks where identifier = ${taskIdentifier}`;
-  if (configured.length === EMPTY_COUNT) {
+    await query`select identifier from workflow.eve_queue_tasks where identifier in (${taskIdentifier}, ${`${taskIdentifier}_executor`})`;
+  if (configured.length !== EXPECTED_QUEUE_TASK_COUNT) {
     throw new Error("Install the queue fence before purging payloads.");
   }
   const queue = await readEvePostgresQueueInventory(query, {
@@ -96,6 +97,9 @@ const erasePayloadInventory = async (
   await query`delete from workflow.workflow_steps where run_id in ${query(receipt.runIds)}`;
   await query`delete from workflow.workflow_hooks where run_id in ${query(receipt.runIds)}`;
   await query`delete from workflow.workflow_waits where run_id in ${query(receipt.runIds)}`;
+  await query`delete from workflow.workflow_invocations where run_id in ${query(receipt.runIds)}`;
+  await query`delete from workflow.workflow_snapshots where run_id in ${query(receipt.runIds)}`;
+  await query`delete from workflow.workflow_start_hook_admissions where run_id in ${query(receipt.runIds)}`;
   await query`delete from workflow.workflow_runs where id in ${query(receipt.runIds)}`;
 };
 /**
