@@ -218,7 +218,7 @@ const applyChatTemplateSourceTransforms = async (
     patchPath: pathModule.join(
       getRepoRoot(),
       "patches",
-      "workflow-world-postgres@5.0.0-beta.40.patch"
+      "workflow-world-postgres@5.1.1.patch"
     ),
   });
 };

@@ -50,14 +50,12 @@ const readCreationReservation = async (
   request: ReadonlyNativeSurface<Request>,
   owner: string
 ): Promise<string | null> => {
-  const command = z
-    .object({ operationId: z.uuid(), seed: z.boolean().optional() })
-    .safeParse(
-      await request
-        .clone()
-        .json()
-        .catch(() => null)
-    );
+  const command = z.object({ operationId: z.uuid() }).safeParse(
+    await request
+      .clone()
+      .json()
+      .catch(() => null)
+  );
   if (!command.success) {
     return null;
   }
@@ -68,11 +66,7 @@ const readCreationReservation = async (
     reservation === null ||
     reservation.ownerId !== owner ||
     reservation.state === "deleting" ||
-    reservation.state === "deleted" ||
-    (reservation.creationKind === "copy" && command.data.seed !== true) ||
-    (command.data.seed === true &&
-      reservation.creationKind !== "copy" &&
-      !isNonEmptyString(reservation.parentConversationId))
+    reservation.state === "deleted"
   ) {
     return null;
   }

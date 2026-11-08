@@ -19,11 +19,14 @@ const file = z.strictObject({
       (value) => ["https:", "http:", "data:"].includes(new URL(value).protocol),
       "Seed files require a copied HTTP or data URL."
     ),
-  existingPath: z.string().startsWith("/").optional(),
   mediaType: z.string().min(MIN_LENGTH),
   filename: z.string().optional(),
   size: z.number().int().nonnegative().optional(),
 });
+// Old captures recorded a sandbox path. Native history needs only the owned URL.
+const persistedFile = file
+  .extend({ existingPath: z.string().startsWith("/").optional() })
+  .transform(({ existingPath: _existingPath, ...part }) => part);
 const toolBase = {
   type: z.literal("dynamic-tool"),
   toolName: z.string().min(MIN_LENGTH),
@@ -50,7 +53,6 @@ const tool = z.discriminatedUnion("state", [
 
 /** Trusted server input, never a browser request body or a runtime checkpoint. */
 const eveCopySeedSchema = z.strictObject({
-  /** Resolve compact file URLs through the authenticated channel before the first model turn. */
   attachments: z.literal("channel").optional(),
   messages: z
     .array(
@@ -58,7 +60,7 @@ const eveCopySeedSchema = z.strictObject({
         z.strictObject({
           role: z.literal("user"),
           metadata: metadata.optional(),
-          parts: z.array(z.union([text, file])).min(MIN_LENGTH),
+          parts: z.array(z.union([text, persistedFile])).min(MIN_LENGTH),
         }),
         z.strictObject({
           role: z.literal("assistant"),
@@ -73,7 +75,7 @@ const eveCopySeedSchema = z.strictObject({
               z.union([
                 text,
                 reasoning,
-                file,
+                persistedFile,
                 tool,
                 z.strictObject({ type: z.literal("step-start") }),
               ])
@@ -84,7 +86,7 @@ const eveCopySeedSchema = z.strictObject({
     )
     .max(MAX_COPY_MESSAGES),
 });
-export type EveCopySeed = z.infer<typeof eveCopySeedSchema>;
+export type EveCopySeed = Pick<z.infer<typeof eveCopySeedSchema>, "messages">;
 
 /** Validate and detach the server-prepared copy transcript before journal acceptance.
  * @param {unknown} value Server-prepared transcript, never a browser payload.
@@ -111,33 +113,5 @@ export const parseEveCopySeed = (value: unknown): EveCopySeed => {
       }
     }
   }
-  return seed;
+  return { messages: seed.messages };
 };
-
-const requiredFile = (part: z.infer<typeof file>) => {
-  if (part.existingPath === undefined) {
-    throw new Error("Imported attachment has no authorized workspace path.");
-  }
-  return { ...part, existingPath: part.existingPath };
-};
-
-/** Validate the persisted trusted seed at the native boundary, including observed paths. */
-export const requireWorkspaceSeedPaths = (seed: EveCopySeed) => ({
-  ...seed,
-  messages: seed.messages.map((message) => {
-    if (message.role === "user") {
-      return {
-        ...message,
-        parts: message.parts.map((part) =>
-          part.type === "file" ? requiredFile(part) : part
-        ),
-      };
-    }
-    return {
-      ...message,
-      parts: message.parts.map((part) =>
-        part.type === "file" ? requiredFile(part) : part
-      ),
-    };
-  }),
-});

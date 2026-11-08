@@ -150,6 +150,13 @@ describe("EVE environment defaults", () => {
     );
   });
 
+  it("rejects a PostgreSQL job prefix outside the lifecycle fences", () => {
+    const source = { ...base, WORKFLOW_POSTGRES_JOB_PREFIX: "custom_" };
+    expect(() => {
+      configureWorkflowEnvironment(source);
+    }).toThrow("requires the default Workflow job prefix");
+  });
+
   it("never borrows migration credentials, even when the runtime URL is missing or pooled", () => {
     for (const DATABASE_URL of [
       undefined,

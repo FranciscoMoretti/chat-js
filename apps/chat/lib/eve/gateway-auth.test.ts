@@ -177,25 +177,6 @@ it.each([
   }
 );
 
-it("does not let a seed reservation use the message operation namespace", async () => {
-  mocks.mapping.mockResolvedValue({
-    creationKind: "copy",
-    id: reservationId,
-    ownerId: "owner",
-    state: "creating",
-  });
-  const command = request("/eve/v1/session", "POST");
-  command.headers.delete("x-chatjs-deletion");
-  expect(await authenticateEveGateway(command)).toBeNull();
-  const seed = new Request(command.url, {
-    body: JSON.stringify({ operationId: reservationId, seed: true }),
-    headers: command.headers,
-    method: "POST",
-  });
-  expect(await authenticateEveGateway(seed)).toMatchObject({
-    attributes: { chatjsReservationId: reservationId },
-  });
-});
 it("authorizes owned child streams without granting child mutation or cross-owner access", async () => {
   mocks.child.mockResolvedValueOnce({ rootSessionId: "root" });
   const read = new Request("http://localhost/eve/v1/session/child/stream", {

@@ -133,9 +133,13 @@ test.each([false, true])(
         "base64"
       ),
     };
-    const [queued] = await connection<
+    const queued = await connection<
       { id: string }[]
-    >`select id from graphile_worker.add_job('workflow_flows', ${connection.json(envelope)}::json, run_at := now() + interval '1 day')`;
+    >`select job.id from (values ('workflow_flows'), ('workflow_flows_executor')) as task(name)
+      cross join lateral graphile_worker.add_job(task.name, ${connection.json(envelope)}::json, run_at := now() + interval '1 day') job`;
+    expect(queued).toHaveLength(2);
+    const jobIds = queued.map(({ id }) => id);
+    await connection`insert into workflow.workflow_snapshots (run_id, data) values (${sessionId}, decode('01', 'hex'))`;
     await lifecycle.retire([sessionId, sessionId], retire);
     expect(await world.runs.get(sessionId)).toMatchObject({
       status: "cancelled",
@@ -151,14 +155,20 @@ test.each([false, true])(
       status: "cancelled",
     });
     expect(
-      await connection`select id from graphile_worker._private_jobs where id = ${queued.id}`
+      await connection`select id from graphile_worker._private_jobs where id::text in ${connection(jobIds)}`
     ).toEqual([]);
     await expect(
       connection`update workflow.workflow_runs set status = 'running' where id = ${sessionId}`
     ).rejects.toMatchObject({ code: "55000" });
+    await expect(
+      connection`update workflow.workflow_snapshots set data = decode('02', 'hex') where run_id = ${sessionId}`
+    ).rejects.toMatchObject({ code: "55000" });
     expect(await lifecycle.purge(sessionId, unexpectedRetirement)).toEqual(
       resources
     );
+    expect(
+      await connection`select run_id from workflow.workflow_snapshots where run_id = ${sessionId}`
+    ).toEqual([]);
     expect(
       await connection`select id from workflow.workflow_runs where id = ${sessionId}`
     ).toEqual([]);

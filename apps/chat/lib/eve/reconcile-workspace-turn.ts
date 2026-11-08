@@ -1,4 +1,3 @@
-import { setTimeout as delay } from "node:timers/promises";
 import { Client } from "eve/client";
 import {
   readActiveEveWorkspaceOperation,
@@ -10,27 +9,6 @@ import {
   hasSettledWorkspaceSession,
 } from "./workspace-turn-evidence";
 import type { WorkspaceTurnEvent } from "./workspace-turn-evidence";
-import { z } from "zod";
-
-const seededCreation = z.object({ fork: z.looseObject({}) });
-
-/** Wait only for known seed initialization; timeout never authorizes another dispatch. */
-const readWorkspaceEvents = async (
-  read: () => Promise<readonly WorkspaceTurnEvent[]>,
-  signal: AbortSignal,
-  waitForSeed: boolean
-): Promise<readonly WorkspaceTurnEvent[]> => {
-  let events = await read();
-  if (waitForSeed) {
-    while (!hasSettledWorkspaceSession(events)) {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Observe initialization of this exact known seed; one deadline bounds all polls.
-      await delay(250, undefined, { signal });
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Each snapshot follows the previous observation of the same native seed.
-      events = await read();
-    }
-  }
-  return events;
-};
 
 const hasSettledDescendants = async (
   events: readonly WorkspaceTurnEvent[],
@@ -66,8 +44,7 @@ const hasSettledDescendants = async (
 /** Reconcile known receipts only. Failure/absence leaves the durable workspace reservation intact. */
 export const reconcileEveWorkspaceTurn = async (
   ownerId: string,
-  conversationId: string,
-  options: { readonly waitForSeed?: boolean } = {}
+  conversationId: string
 ): Promise<void> => {
   const active = await readActiveEveWorkspaceOperation(ownerId, conversationId);
   const sessionId = active?.operation.sessionId;
@@ -89,10 +66,6 @@ export const reconcileEveWorkspaceTurn = async (
     },
   });
   const signal = AbortSignal.timeout(15_000);
-  const seeded =
-    operation.kind === "copy" ||
-    (operation.kind === "create" &&
-      seededCreation.safeParse(operation.intent).success);
   const read = async (
     nativeSessionId: string
   ): Promise<readonly WorkspaceTurnEvent[]> => {
@@ -103,19 +76,11 @@ export const reconcileEveWorkspaceTurn = async (
   };
   let events: readonly WorkspaceTurnEvent[];
   try {
-    events = await readWorkspaceEvents(
-      async () => await read(sessionId),
-      signal,
-      options.waitForSeed === true &&
-        operation.conversationId === conversationId &&
-        seeded
-    );
+    events = await read(sessionId);
     if (
       !hasSettledWorkspaceOperation(
         {
-          kind: operation.kind,
           deliveryId: operation.deliveryId,
-          seeded,
         },
         events
       )

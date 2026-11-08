@@ -65,7 +65,8 @@ const prefix = [
 ];
 const seededPrefix = prefix.map((entry, index) => ({
   ...entry,
-  id: `seed_message_${index}`,
+  id: `import:imported:${index}`,
+  metadata: { imported: true as const, historyId: String(index) },
 }));
 const original = [
   ...prefix,
@@ -360,7 +361,7 @@ it("places edit and regenerated versions at the selected message, preserving pre
   expect(retry.slice(0, 3)).toEqual(root.slice(0, 3));
   expect(snapshot.children.get(root[1])).toEqual([root[2], edit[2]]);
   expect(snapshot.children.get(root[2])).toEqual([root[3], retry[3]]);
-  expect(chat.logicalId("edit", "seed_message_0")).toBe(root[0]);
+  expect(chat.logicalId("edit", "import:imported:0")).toBe(root[0]);
 });
 
 it("resolves edits of inherited seed messages through their source aliases", () => {
@@ -375,7 +376,7 @@ it("resolves edits of inherited seed messages through their source aliases", () 
     branch("nested", {
       parentConversationId: "edit",
       forkKind: "edit",
-      forkMessageId: "seed_message_0",
+      forkMessageId: "import:imported:0",
     }),
   ]);
   chat.observe(

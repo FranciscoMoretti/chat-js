@@ -74,17 +74,17 @@ const context: HookContext<"*"> = {
 };
 const restored = {
   data: {
-    transcriptSeed: {
-      attachments: "channel",
-      messages: [
-        {
-          parts: [{ text: "inherited text", type: "text" }],
-          role: "user",
-        },
-      ],
-    },
+    deliveryId: "import",
+    turnId: "import-turn",
+    parts: [],
+    history: [
+      {
+        parts: [{ text: "inherited text", type: "text" }],
+        role: "user",
+      },
+    ],
   },
-  type: "session.started",
+  type: "delivery.consumed",
 } satisfies HookEvent;
 const started: HookEvent = {
   data: { turnId: "turn_1", cause: { deliveryId: "delivery" }, follows: null },
@@ -107,14 +107,24 @@ beforeEach(() => {
   });
 });
 it("defers inherited history until binding and retains it if indexing fails", async () => {
-  await dispatch(restored);
-  expect(mocks.index).not.toHaveBeenCalled();
   mocks.index.mockRejectedValueOnce(new Error("offline"));
-  await expect(dispatch(started)).resolves.toBeUndefined();
+  await expect(dispatch(restored)).resolves.toBeUndefined();
   expect(console.error).toHaveBeenCalled();
   await dispatch(started);
   expect(mocks.index).toHaveBeenLastCalledWith("owner", "branch", [
-    { key: "seed:0", text: "inherited text" },
+    { key: "import:history:0", text: "inherited text" },
+  ]);
+  expect(mocks.state).toEqual([]);
+});
+it("retries imported history at settlement after an early binding miss", async () => {
+  mocks.resolve.mockRejectedValueOnce(new Error("binding pending"));
+  await dispatch(restored);
+  await dispatch({
+    type: "turn.settled",
+    data: { turnId: "turn_1", outcome: "completed" },
+  });
+  expect(mocks.index).toHaveBeenCalledExactlyOnceWith("owner", "branch", [
+    { key: "import:history:0", text: "inherited text" },
   ]);
   expect(mocks.state).toEqual([]);
 });
@@ -189,15 +199,15 @@ it("bounds pending text size and deduplicates replayed history", async () => {
   const oversized: HookEvent = {
     ...restored,
     data: {
-      transcriptSeed: {
-        attachments: "channel",
-        messages: [
-          {
-            parts: [{ text: "x".repeat(256_001), type: "text" }],
-            role: "user",
-          },
-        ],
-      },
+      deliveryId: "import",
+      turnId: "import-turn",
+      parts: [],
+      history: [
+        {
+          parts: [{ text: "x".repeat(256_001), type: "text" }],
+          role: "user",
+        },
+      ],
     },
   };
   await dispatch(oversized);
@@ -206,6 +216,7 @@ it("bounds pending text size and deduplicates replayed history", async () => {
     expect.stringContaining("snapshot recovery queued"),
     { omitted: 1, sessionId: "session" }
   );
+  mocks.resolve.mockRejectedValue(new Error("Binding pending"));
   await dispatch(restored);
   await dispatch(restored);
   expect(mocks.state).toHaveLength(1);
@@ -215,17 +226,17 @@ it("automatically recovers a large restored history and the next message on a he
   await dispatch({
     ...restored,
     data: {
-      transcriptSeed: {
-        attachments: "channel",
-        messages: Array.from({ length: 300 }, (_, index) => ({
-          parts: [{ text: `restored ${index}`, type: "text" }],
-          role: "user",
-        })),
-      },
+      deliveryId: "import",
+      turnId: "import-turn",
+      parts: [],
+      history: Array.from({ length: 300 }, (_, index) => ({
+        parts: [{ text: `restored ${index}`, type: "text" }],
+        role: "user",
+      })),
     },
   });
-  expect(mocks.state).toHaveLength(256);
-  expect(mocks.recover).not.toHaveBeenCalled();
+  expect(mocks.state).toHaveLength(0);
+  expect(mocks.recover).toHaveBeenCalled();
   await dispatch({
     data: {
       parts: [{ kind: "text", text: "new message after history" }],

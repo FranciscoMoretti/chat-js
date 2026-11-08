@@ -225,7 +225,7 @@ it("accepts message edit boundaries but rejects historical runtime checkpoints",
     operationId: crypto.randomUUID(),
   };
   expect(createConversationInput.parse(input)).toEqual(input);
-  for (const beforeMessageId of ["seed_message_0", "evt_native:user"]) {
+  for (const beforeMessageId of ["import:imported:0", "evt_native:user"]) {
     const edit = {
       ...input,
       forkKind: "edit",

@@ -1,6 +1,6 @@
 # Maintained runtime dependencies
 
-EVE is installed from the published `@chat-js/eve@1.0.0-rc.1-chatjs.0` fork through the `eve` npm alias. Its source and packaging workflow live in [the fork](https://github.com/FranciscoMoretti/eve/tree/francisco/chatjs-package); see [the package development guide](../docs/eve-package-development.md).
+EVE is installed from the published `@chat-js/eve@1.0.0-rc.6-chatjs.1` fork through the `eve` npm alias. Its source and packaging workflow live in [the fork](https://github.com/FranciscoMoretti/eve/tree/francisco/chatjs-package); see [the package development guide](../docs/eve-package-development.md).
 
 The former compiled EVE workflow-identity patch is removed: the maintained RC1 source supplies the scoped-package workflow behavior.
 
@@ -11,9 +11,9 @@ The former compiled EVE workflow-identity patch is removed: the maintained RC1 s
 
 ## Remaining compiled patch
 
-`workflow-world-postgres@5.0.0-beta.40.patch` still changes compiled queue and stream code. It allows distinct deliveries to wake a workflow awaiting a step while retaining exact-idempotency-key deduplication. It also resolves a consumed stream prefix in SQL and avoids transferring already-consumed payloads during resume.
+`workflow-world-postgres@5.1.1.patch` resolves a consumed stream prefix in SQL to avoid transferring those payloads during resume. World 5.1.1 supplies atomic start hooks and allows unkeyed wake delivery while deduplicating exact delivery keys.
 
-The installer still packages this patched world as an archive so Bun, npm, pnpm and Yarn receive the same behavior. This packaging is not a source-maintained fork and does not close the patch-removal gate in [#652](https://github.com/FranciscoMoretti/chat-js/issues/652). PostgreSQL world `5.0.1` was inspected on 4 October 2026: queue serialization has changed, but its stream reader still skips consumed payloads after fetching them. Replacing the current world requires equivalent stream-prefix behavior plus native upgrade acceptance; a version bump alone is insufficient.
+The installer still packages the patched world so all four package managers receive the same stream behavior. ChatJS verifies the 5.1.1 migration boundary and fences the regular and executor queue tasks as well as the provider's run and payload tables.
 
 The remaining EVE dynamic-tool approval typing issue is also unresolved in the published fork. `DynamicToolEntry` uses an unparameterized `Approval` and fixes `approvalKey` input to `Record<string, unknown>`. ChatJS's `defineToolSet` retains native tool inference and the application durable-output constraint. Remove that compensation only after a source change and tested release of the maintained EVE fork, preserving input, output and approval inference. No new EVE package or world fork was published by this task.
 

@@ -60,7 +60,7 @@ create or replace trigger eve_queue_fence before insert or update of payload, ta
 /**
  * Explicit provider migration after installEvePostgresResourceFence. Fences enqueues and replacements, leaving worker bookkeeping and existing job removal available.
  *
- * @param {Sql} connection Postgres connection used to install the queue trigger and register its task in one READ COMMITTED transaction.
+ * @param {Sql} connection Postgres connection used to install the queue trigger and register its tasks in one READ COMMITTED transaction.
  * @param {string} taskIdentifier Nonempty provider task identifier (normally workflow_flows) whose queue writes require writable resources.
  * @returns {Promise<void>} Resolves after the trigger and task registration commit; validation, migration or transaction failures reject.
  */
@@ -76,7 +76,7 @@ export const installEvePostgresQueueFence = async (
     ) => {
       await query`select 'workflow.eve_assert_writable(text[])'::regprocedure`;
       await query.unsafe(installSql);
-      await query`insert into workflow.eve_queue_tasks(identifier) values (${taskIdentifier}) on conflict do nothing`;
+      await query`insert into workflow.eve_queue_tasks(identifier) values (${taskIdentifier}), (${`${taskIdentifier}_executor`}) on conflict do nothing`;
     }
   );
 };

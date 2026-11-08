@@ -4,7 +4,7 @@ Registered and guest chats use one EVE agent and one worker. Both enter through 
 
 Guest sessions request EVE native retention `0` on every backend. The installed instrumentation policy excludes guest input/output trace capture, which EVE uses to select zero retention; registered-user policy remains unchanged. Scheduled cleanup ends the session and completes the local credential policy. Guest admission and cleanup do not require the PostgreSQL purge lifecycle.
 
-The pinned `@workflow/world-postgres@5.0.0-beta.40` accepts the retention preference but does not implement payload deletion. PostgreSQL guest payloads therefore remain stored until the provider implements it or an operator removes them separately. This is an accepted limitation, not a deletion guarantee. Vercel enforces its own retention policy. Native retention does not remove provider logs, traces already exported, or all run metadata.
+PostgreSQL World 5.1.1 implements zero-retention payload clearing when a run finishes. Vercel enforces its own retention policy. Native retention leaves run metadata, provider logs, and previously exported traces. ChatJS cleanup reports session retirement rather than verifying payload erasure.
 
 Guests keep the existing chat presentation at `/`. They get one inexpensive text model (`openai/gpt-5-nano`), with the picker locked. No tools, uploads, connectors, account APIs or account data are accessible. Server-owned policy enforces usage and rate limits plus bounded input and output. Registered authentication, billing, durable history and recovery keep their existing behavior.
 

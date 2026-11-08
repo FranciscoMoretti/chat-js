@@ -25,7 +25,7 @@ const readQueueMessages = async (
         convert_from(decode(job.payload->>'data', 'base64'), 'UTF8')::jsonb as body
       from graphile_worker._private_jobs job
       join graphile_worker._private_tasks task on task.id = job.task_id
-      where task.identifier = ${taskIdentifier}
+      where task.identifier in (${taskIdentifier}, ${`${taskIdentifier}_executor`})
     ), metadata as (
       select id, locked, body,
         case when jsonb_typeof(body->'runId') = 'string'
@@ -47,7 +47,7 @@ const readQueueMessages = async (
   );
 
 /**
- * Internal metadata-only inventory for Workflow Postgres beta.40's Graphile
+ * Internal metadata-only inventory for Workflow Postgres 5.1.1's Graphile
  * transport. Caller authorizes run IDs and supplies its configured queue task.
  * Includes resilient child creation even when its run row does not exist yet.
  * This read neither locks nor removes jobs; later cleanup must recheck ownership.
