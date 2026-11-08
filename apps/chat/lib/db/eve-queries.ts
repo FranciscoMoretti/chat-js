@@ -7,7 +7,7 @@ import { chat } from "@/integrations/chat/server";
 import { reserveConversationWorkspace } from "./eve-workspaces";
 import { eveDeletionScope } from "./eve-deletion-scope";
 import { markEveCreationFailure } from "./eve-creation-failure";
-import { dispatchEveOnce } from "./eve-dispatch";
+import { dispatchEveOnce, EveDispatchUnknownError } from "./eve-dispatch";
 import {
   and,
   desc,
@@ -898,6 +898,21 @@ const createEveConversation = async (
     );
     const binding = boundConversation(matching);
     if (binding) {
+      const [receipt] = await db
+        .select({ sessionId: eveDispatch.sessionId })
+        .from(eveDispatch)
+        .where(
+          and(
+            eq(eveDispatch.ownerId, ownerId),
+            eq(eveDispatch.operationId, matching.id),
+            eq(eveDispatch.conversationId, matching.id),
+            eq(eveDispatch.sessionId, binding.sessionId),
+            eq(eveDispatch.kind, "create")
+          )
+        );
+      if (!hasQueryRow(receipt)) {
+        throw new EveDispatchUnknownError();
+      }
       return binding;
     }
     reservation = matching;
@@ -923,7 +938,7 @@ const createEveConversation = async (
           forkKind,
         },
       },
-      async () =>
+      async (saveReceipt) =>
         await db.transaction(async (tx: CreationTransactionView) => {
           // The reservation is already committed so native hooks can find it.
           // Transaction locks release on worker death; creating rows need no manual repair.
@@ -945,7 +960,7 @@ const createEveConversation = async (
             .where(eq(eveConversation.id, reservation.id));
           const binding = boundConversation(current);
           if (binding) {
-            return binding;
+            throw new EveDispatchUnknownError();
           }
           if (
             !(
@@ -965,7 +980,12 @@ const createEveConversation = async (
             reservation.id,
             accepted.sessionId
           );
-          return { ...bound, deliveryId: accepted.deliveryId };
+          const receipt = {
+            sessionId: bound.sessionId,
+            deliveryId: accepted.deliveryId,
+          };
+          await saveReceipt(tx, receipt);
+          return receipt;
         })
     );
     return { id: reservation.id, sessionId: dispatched.sessionId };

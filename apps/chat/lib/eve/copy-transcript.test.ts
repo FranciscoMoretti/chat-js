@@ -271,6 +271,71 @@ it("preserves native seeded text tool results through the ChatJS shared-copy pro
   expect(JSON.stringify(copied.seed)).not.toContain("original");
 });
 
+it("captures imported messages and the completed native answer without a boundary", () => {
+  const imported: EveCopySeed["messages"] = [
+    { role: "user", parts: [{ type: "text", text: "Old question" }] },
+    { role: "assistant", parts: [{ type: "text", text: "Old answer" }] },
+  ];
+  const local: SessionEvent[] = [
+    {
+      type: "model.requested",
+      scope: { turnId: "import-turn" },
+      data: { runId: "native-run", owner: { turnId: "import-turn" } },
+    },
+    {
+      type: "model.started",
+      scope: { turnId: "import-turn" },
+      data: { runId: "native-run", attempt: 0, modelId: "fixture" },
+    },
+    {
+      type: "content.completed",
+      scope: { turnId: "import-turn", runId: "native-run" },
+      data: {
+        runId: "native-run",
+        partId: "reply",
+        kind: "text",
+        phase: "reply",
+        value: "Native answer",
+      },
+    },
+    {
+      type: "model.settled",
+      scope: { turnId: "import-turn", runId: "native-run" },
+      data: {
+        runId: "native-run",
+        generationId: "native-generation",
+        outcome: "completed",
+        finishReason: "stop",
+      },
+    },
+    {
+      type: "turn.settled",
+      data: { turnId: "import-turn", outcome: "completed", reply: ["reply"] },
+    },
+    {
+      type: "delivery.settled",
+      data: { deliveryId: "import", turnId: "import-turn", outcome: "handled" },
+    },
+  ];
+  const prefix = history(imported).slice(0, -1);
+  const events = [
+    ...prefix,
+    ...local.map((event, index) => ({
+      ...event,
+      meta: meta(prefix.length + index),
+    })),
+  ];
+  expect(capture(events, []).seed.messages).toEqual([
+    ...imported,
+    { role: "user", parts: [{ type: "text", text: "Continue" }] },
+    {
+      role: "assistant",
+      modelId: "fixture",
+      parts: [{ type: "text", text: "Native answer" }],
+    },
+  ]);
+});
+
 it("branches before an edited user message and rejects invalid boundaries", () => {
   const events = history([
     {

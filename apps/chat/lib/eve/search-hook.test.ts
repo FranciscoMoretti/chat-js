@@ -116,6 +116,18 @@ it("defers inherited history until binding and retains it if indexing fails", as
   ]);
   expect(mocks.state).toEqual([]);
 });
+it("retries imported history at settlement after an early binding miss", async () => {
+  mocks.resolve.mockRejectedValueOnce(new Error("binding pending"));
+  await dispatch(restored);
+  await dispatch({
+    type: "turn.settled",
+    data: { turnId: "turn_1", outcome: "completed" },
+  });
+  expect(mocks.index).toHaveBeenCalledExactlyOnceWith("owner", "branch", [
+    { key: "import:history:0", text: "inherited text" },
+  ]);
+  expect(mocks.state).toEqual([]);
+});
 it("never indexes subagent-private text into the parent chat", async () => {
   await dispatch(restored, {
     ...context,

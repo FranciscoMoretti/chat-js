@@ -323,3 +323,39 @@ it("exposes captured history only for the bound creation receipt", async () => {
     display.some((receipt) => receipt.deliveryId === "initial-delivery")
   ).toBe(false);
 });
+
+it("rolls back the session binding when saving its create receipt fails", async () => {
+  const { createEveConversation } = await import("./eve-queries");
+  const operationId = "00000000-0000-4000-8000-000000000074";
+  const create = vi.fn().mockResolvedValue({
+    sessionId: "receipt-failure-session",
+    deliveryId: "receipt-failure-delivery",
+  });
+  await postgres.exec(`
+    CREATE FUNCTION reject_test_receipt() RETURNS trigger LANGUAGE plpgsql AS $$
+    BEGIN RAISE EXCEPTION 'Receipt write failed'; END;
+    $$;
+    CREATE TRIGGER reject_test_receipt BEFORE UPDATE ON "EveDispatch"
+    FOR EACH ROW WHEN (NEW."sessionId" = 'receipt-failure-session')
+    EXECUTE FUNCTION reject_test_receipt();
+  `);
+  try {
+    await expect(
+      createEveConversation("owner", operationId, "Initial message", create)
+    ).rejects.toMatchObject({ cause: { message: "Receipt write failed" } });
+  } finally {
+    await postgres.exec(`
+      DROP TRIGGER reject_test_receipt ON "EveDispatch";
+      DROP FUNCTION reject_test_receipt();
+    `);
+  }
+  const conversation = await postgres.query(
+    `SELECT "sessionId" FROM "EveConversation" WHERE "operationId" = $1`,
+    [operationId]
+  );
+  expect(conversation.rows).toEqual([{ sessionId: null }]);
+  await expect(
+    createEveConversation("owner", operationId, "Initial message", create)
+  ).rejects.toBeInstanceOf(EveDispatchUnknownError);
+  expect(create).toHaveBeenCalledOnce();
+});

@@ -32,7 +32,11 @@ export default defineHook({
         return;
       }
       const entries = eveEventSearchText(event);
-      if (event.type !== "turn.started" && entries.length === 0) {
+      if (
+        entries.length === 0 &&
+        event.type !== "turn.started" &&
+        event.type !== "turn.settled"
+      ) {
         return;
       }
       let omitted = 0;

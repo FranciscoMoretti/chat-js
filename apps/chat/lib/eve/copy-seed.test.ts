@@ -69,3 +69,22 @@ it("rejects executable or incomplete copy data and invalid text tool results bef
     })
   ).toThrow("byte limit");
 });
+
+it("strips persisted RC1 attachment routing metadata from native history", () => {
+  const file = {
+    type: "file",
+    url: "https://example.com/copied",
+    mediaType: "image/png",
+  };
+  expect(
+    parseEveCopySeed({
+      attachments: "channel",
+      messages: [
+        {
+          role: "user",
+          parts: [{ ...file, existingPath: "/workspace/copied" }],
+        },
+      ],
+    })
+  ).toEqual({ messages: [{ role: "user", parts: [file] }] });
+});

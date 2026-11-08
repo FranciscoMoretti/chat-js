@@ -23,6 +23,10 @@ const file = z.strictObject({
   filename: z.string().optional(),
   size: z.number().int().nonnegative().optional(),
 });
+// Old captures recorded a sandbox path. Native history needs only the owned URL.
+const persistedFile = file
+  .extend({ existingPath: z.string().startsWith("/").optional() })
+  .transform(({ existingPath: _existingPath, ...part }) => part);
 const toolBase = {
   type: z.literal("dynamic-tool"),
   toolName: z.string().min(MIN_LENGTH),
@@ -49,13 +53,14 @@ const tool = z.discriminatedUnion("state", [
 
 /** Trusted server input, never a browser request body or a runtime checkpoint. */
 const eveCopySeedSchema = z.strictObject({
+  attachments: z.literal("channel").optional(),
   messages: z
     .array(
       z.discriminatedUnion("role", [
         z.strictObject({
           role: z.literal("user"),
           metadata: metadata.optional(),
-          parts: z.array(z.union([text, file])).min(MIN_LENGTH),
+          parts: z.array(z.union([text, persistedFile])).min(MIN_LENGTH),
         }),
         z.strictObject({
           role: z.literal("assistant"),
@@ -70,7 +75,7 @@ const eveCopySeedSchema = z.strictObject({
               z.union([
                 text,
                 reasoning,
-                file,
+                persistedFile,
                 tool,
                 z.strictObject({ type: z.literal("step-start") }),
               ])
@@ -81,7 +86,7 @@ const eveCopySeedSchema = z.strictObject({
     )
     .max(MAX_COPY_MESSAGES),
 });
-export type EveCopySeed = z.infer<typeof eveCopySeedSchema>;
+export type EveCopySeed = Pick<z.infer<typeof eveCopySeedSchema>, "messages">;
 
 /** Validate and detach the server-prepared copy transcript before journal acceptance.
  * @param {unknown} value Server-prepared transcript, never a browser payload.
@@ -108,5 +113,5 @@ export const parseEveCopySeed = (value: unknown): EveCopySeed => {
       }
     }
   }
-  return seed;
+  return { messages: seed.messages };
 };
