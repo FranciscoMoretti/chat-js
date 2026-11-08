@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>ChatJS / Carbon source</title>
+    <link rel="stylesheet" href="scene.css" />
+    <script src="gsap.min.js"></script>
+    <script src="../hero/brand.js"></script>
+  </head>
+  <body>
+    <main
+      id="stage"
+      data-composition-id="source-choreography"
+      data-width="1200"
+      data-height="720"
+      data-duration="10"
+      data-fps="60"
+    >
+      <section class="clip" data-start="0" data-duration="10">
+        <svg
+          id="scene"
+          viewBox="0 0 1200 720"
+          xmlns="http://www.w3.org/2000/svg"
+          role="img"
+          aria-label="Carbon patterned modules move into the app source. Their square edges frame the added folders and files."
+        >
+          <defs>
+            <linearGradient id="pattern-fade" x2="0" y2="1">
+              <stop stop-color="white" />
+              <stop offset=".62" stop-color="white" stop-opacity=".8" />
+              <stop offset="1" stop-color="white" stop-opacity="0" />
+            </linearGradient>
+            <mask id="tile-mask" maskContentUnits="objectBoundingBox">
+              <rect width="1" height="1" fill="url(#pattern-fade)" />
+            </mask>
+          </defs>
+          <g id="library">
+            <text x="48" y="215" class="micro">OPTIONAL / YOUR CHOICE</text>
+            <g id="slots" />
+            <text id="status" x="48" y="480" class="status">
+              Add only what your app needs.
+            </text>
+            <text x="48" y="507" class="micro">
+              THE SAME BLOCKS. NOW IN YOUR SOURCE.
+            </text>
+          </g>
+          <g id="tree">
+            <g id="root-mark" />
+            <text x="672" y="80" class="root-label">my-app</text>
+            <text x="636" y="108" class="micro">
+              YOUR PROJECT / SELECTED FILES
+            </text>
+            <path id="trunk" class="guide" />
+            <g id="frames" />
+            <g id="rows" />
+          </g>
+          <g id="pieces" />
+        </svg>
+      </section>
+    </main>
+    <script src="scene.js"></script>
+  </body>
+</html>

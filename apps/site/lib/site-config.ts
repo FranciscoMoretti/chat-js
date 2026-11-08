@@ -2,7 +2,7 @@ const siteConfig = {
   creator: "@franmoretti_",
   demoUrl: "https://demo.chatjs.dev",
   description:
-    "Open-source Next.js AI chat app starter with authentication, streaming, tool calling, and 120+ model integrations for production deployments.",
+    "The building blocks for your AI app. A working chat, your choice of models, tools and plugins. Code you own.",
   desktopUrl: "https://github.com/franciscomoretti/chat-js/releases/latest",
   docsUrl: "https://chatjs.dev/docs",
   githubUrl: "https://github.com/franciscomoretti/chat-js",
