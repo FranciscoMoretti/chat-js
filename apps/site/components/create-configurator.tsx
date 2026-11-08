@@ -49,12 +49,12 @@ const CreateDesigner = () => {
       className="chatjs-create-shell group/layout bg-background text-foreground relative z-10 flex h-svh min-h-0 flex-col overflow-hidden"
       data-slot="layout"
     >
-      <header className="flex h-14 shrink-0 items-center gap-2 px-4 md:h-16 md:px-6">
+      <header className="flex h-14 shrink-0 items-center gap-2 px-[16px] md:h-16 md:px-6">
         <Link
-          className="mr-auto flex min-w-0 items-center gap-2 font-semibold tracking-tight"
+          className="mr-auto flex min-w-[16px] items-center gap-2 font-semibold tracking-tight"
           href="/"
         >
-          <BrandMark className="size-4 shrink-0" />
+          <BrandMark className="size-[16px] shrink-0" />
           <span className="truncate">
             ChatJS{" "}
             <span className="text-muted-foreground font-normal">/ Create</span>

@@ -394,6 +394,10 @@ try {
   const mobileGetCode = page
     .getByRole("button", { name: "Get Code", exact: true })
     .first();
+  const brandBounds = await page
+    .getByRole("link", { name: "ChatJS / Create" })
+    .boundingBox();
+  assert.ok(brandBounds && brandBounds.width >= 16);
   const getCodeBounds = await mobileGetCode.boundingBox();
   assert.ok(getCodeBounds && getCodeBounds.x + getCodeBounds.width <= 320);
   await capture("create-mobile-large-text");
