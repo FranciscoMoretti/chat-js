@@ -5,14 +5,14 @@ import { recordEveUsage } from "../../../../lib/db/eve-billing";
 // This worker uses only the local mock model, whose provider cost is known to be zero.
 export default defineHook({
   events: {
-    "step.completed": async (
+    "model.settled": async (
       event: {
-        readonly meta: { readonly id: string };
-        readonly data: { readonly turnId: string };
+        readonly data: { readonly runId: string };
       },
       context: {
         readonly session: {
           readonly id: string;
+          readonly turn: { readonly id: string };
           readonly auth: {
             readonly initiator: { readonly principalId: string } | null;
           };
@@ -25,10 +25,10 @@ export default defineHook({
       }
       await recordEveUsage({
         costUsd: 0,
-        eventId: event.meta.id,
+        eventId: `fixture-model:${event.data.runId}`,
         ownerId,
         sessionId: context.session.id,
-        turnId: event.data.turnId,
+        turnId: context.session.turn.id,
       });
     },
   },

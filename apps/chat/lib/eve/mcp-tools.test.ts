@@ -1,3 +1,11 @@
+import { z } from "zod";
+import type {
+  ApprovalPolicy,
+  ApprovalResponsePolicy,
+} from "eve/tools/approval";
+import { dynamicEvaluate } from "@eve-test/dist/src/dynamic/definition.js";
+import { testDynamicContext } from "../../tests/helpers/eve-dynamic-context";
+import { testToolContext } from "../../tests/helpers/eve-tool-context";
 import assert from "node:assert/strict";
 import { setTimeout as delay } from "node:timers/promises";
 import { jsonSchema, tool } from "ai";
@@ -406,22 +414,28 @@ it("validates tool input before asking for consent", async () => {
   expect(execute).not.toHaveBeenCalled();
 });
 it("registers native per-call approval restricted to the session owner", async () => {
-  const resolve = mcp.events["step.started"];
-  if (!resolve) {
-    throw new Error("Missing MCP resolver.");
+  const resolve = dynamicEvaluate(mcp);
+  const tools = await resolve(testDynamicContext({ session: context.session }));
+  if (!tools || !("server__echo" in tools)) {
+    throw new Error("Missing echo tool");
   }
-  const tools = await resolve(
-    {},
-    { channel: {}, messages: [], model: null, session: context.session }
-  );
-  const { approval } = tools.server__echo;
-  if (!approval || typeof approval === "function" || !approval.response) {
-    throw new Error("Missing native owner approval policy.");
-  }
+  // Dynamic resolvers erase the concrete tool policy types at their public boundary.
+  const { approval } = z
+    .object({
+      approval: z.object({
+        request: z.custom<ApprovalPolicy>(
+          (value) => typeof value === "function"
+        ),
+        response: z.custom<ApprovalResponsePolicy>(
+          (value) => typeof value === "function"
+        ),
+      }),
+    })
+    .parse(tools.server__echo);
   expect(
     await approval.request({
+      ...testToolContext(),
       abortSignal: new AbortController().signal,
-      approvedTools: new Set(),
       callId: "call",
       getSandbox: () => {
         throw new Error("Unexpected sandbox");
@@ -441,7 +455,7 @@ it("registers native per-call approval restricted to the session owner", async (
     },
     request: {
       callId: "call",
-      requestId: "request",
+      interactionId: "request",
       toolName: "server__echo",
       principal: initiator,
     },

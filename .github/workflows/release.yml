@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
@@ -16,6 +17,10 @@ jobs:
   release:
     name: Release
     runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+      id-token: write
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -39,20 +44,79 @@ jobs:
           npm install --global npm@latest --prefix ~/.npm-global
           echo "$HOME/.npm-global/bin" >> "$GITHUB_PATH"
 
+      # Tokens cannot publish these packages. release.yml must be a trusted
+      # publisher on both @chat-js/registry and chat-js. Remove this step after
+      # 0.2.0-beta.3 and 1.0.0-alpha.2 are on npm.
+      - name: Publish matched gateway registry and CLI
+        id: gateway-pair
+        continue-on-error: true
+        env:
+          NPM_CONFIG_PROVENANCE: true
+        run: |
+          set -euo pipefail
+          export PATH="$HOME/.npm-global/bin:$PATH"
+          echo "npm $(npm --version) ($(command -v npm))"
+          if [ -z "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ]; then
+            echo "::error::GitHub OIDC token endpoint is missing; trusted publishing cannot sign in."
+            exit 1
+          fi
+
+          publish_exact() {
+            local workspace_dir="$1"
+            local expected="$2"
+            local name version tag lookup
+            name="$(node -p "require('./${workspace_dir}/package.json').name")"
+            version="$(node -p "require('./${workspace_dir}/package.json').version")"
+            tag="$(node -p "require('./${workspace_dir}/package.json').publishConfig?.tag ?? 'latest'")"
+            if [ "${version}" != "${expected}" ]; then
+              echo "Skipping ${name}; version is ${version}, not ${expected}"
+              return 0
+            fi
+            if lookup="$(npm view "${name}@${version}" version --json 2>&1)"; then
+              echo "${name}@${version} already on npm"
+            elif printf '%s' "$lookup" | grep -q 'E404'; then
+              echo "Publishing ${name}@${version} on tag ${tag}"
+              (cd "${workspace_dir}" && npm publish --access public --tag "${tag}")
+            else
+              echo "::error::Could not query npm for ${name}@${version}; refusing to treat a registry/authentication failure as a missing version."
+              printf '%s\n' "$lookup"
+              return 1
+            fi
+          }
+
+          publish_exact packages/registry 0.2.0-beta.3
+          node -e '
+            const fs = require("fs");
+            const cli = "packages/cli/package.json";
+            const manifest = JSON.parse(fs.readFileSync(cli, "utf8"));
+            for (const name of ["@chat-js/gateways", "@chat-js/sandboxes"]) {
+              if (manifest.dependencies[name]?.startsWith("workspace:")) {
+                const workspace = `packages/${name.split("/")[1]}/package.json`;
+                manifest.dependencies[name] = JSON.parse(fs.readFileSync(workspace, "utf8")).version;
+              }
+            }
+            fs.writeFileSync(cli, `${JSON.stringify(manifest, null, 2)}\n`);
+          '
+          publish_exact packages/cli 1.0.0-alpha.2
+          if [ "$(node -p "require('./packages/cli/package.json').version")" = "1.0.0-alpha.2" ]; then
+            npm dist-tag add chat-js@1.0.0-alpha.2 latest
+          fi
+
       - name: Create Release Pull Request or Publish
         id: changesets
+        if: always()
         uses: changesets/action@v1
         with:
-          publish: bun run release
+          publish: ${{ steps.gateway-pair.outcome == 'success' && 'bun run release' || '' }}
           title: "chore: version releases"
           commit: "chore: version releases"
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
           NPM_CONFIG_PROVENANCE: true
 
-      # Trusted publishing cannot create a package's first version, and it is
-      # only configured for @chat-js/cli today. Finish any unpublished packages
-      # with the classic token so a partial Changesets publish cannot leave
+      # Configure chat-js on npm to trust this repository and release.yml.
+      # Trusted publishing cannot create a package's first version. Use the
+      # classic token for unpublished packages so a partial publish cannot leave
       # @chat-js/thread (or similar first releases) off npm. Do not publish
       # the old version while Changesets is still preparing a version PR.
       - name: Publish first-time packages
@@ -72,7 +136,7 @@ jobs:
             version="$(node -p "require('./${workspace_dir}/package.json').version")"
             tag="${name}@${version}"
             if [[ "${version%%+*}" == *-* ]]; then
-              echo "::error::Publish audited prereleases explicitly with --tag beta; the stable fallback cannot publish ${tag}."
+              echo "::error::Publish audited prereleases explicitly with their prerelease tag; the stable fallback cannot publish ${tag}."
               return 1
             fi
 

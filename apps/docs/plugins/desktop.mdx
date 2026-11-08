@@ -10,7 +10,7 @@ Use Desktop to connect your web app to an Electron companion. The plugin owns br
 Choose Electron when creating your app, or add Desktop to an existing app:
 
 ```bash
-bunx @chat-js/cli@latest add desktop
+bunx chat-js@alpha add desktop
 ```
 
 The CLI installs `chatjs/plugins/desktop/`, its `/device-login` route, and authentication registrations. It also creates an `electron/` companion directory when one does not already exist. Adding the plugin again preserves an existing companion. Desktop adds no database tables or migrations.
@@ -23,7 +23,7 @@ bun install
 bun run dev
 ```
 
-The companion loads `http://localhost:3000` in development. Set `ELECTRON_APP_URL` when your web app runs at another address. See [Desktop platform](../platforms/desktop) for icons, installers, signing, and releases.
+The companion loads `http://localhost:3000` in development. Set `ELECTRON_APP_URL` when your web app runs at another address. See [Desktop Distribution](../deployment/desktop) for icons, installers, signing, and releases.
 
 ## Authentication
 
@@ -66,4 +66,4 @@ Navigation and sign-out import renderer detection from the dependency-free bridg
 
 ## Without Desktop
 
-A new web-only app contains no desktop plugin, device-login route, Electron companion, or `@better-auth/electron` dependency. Generated defaults render the normal web forms, use web sign-out, and preserve ordinary browser link behavior. Guest sessions and chat ownership remain core behavior.
+A new web-only app contains no desktop plugin, device-login route, Electron companion, or `@better-auth/electron` dependency. Generated defaults render the normal web forms, use web sign-out, and preserve ordinary browser link behavior. Core account authentication and chat ownership remain available. Guest sessions require the separate Guest Chat plugin.

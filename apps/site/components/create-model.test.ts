@@ -34,7 +34,7 @@ void describe("ChatJS installation handoff", () => {
     };
     assert.equal(
       createCommand(preset, "base", installation),
-      `bunx @chat-js/cli@beta create my-chat --yes --installation '${JSON.stringify({ plugins: installation.plugins, gateway: installation.gateway, storage: { options: {}, source: "s3" }, tools: [] })}' -- --preset ${encodePreset(preset)} --base base`
+      `bunx chat-js@alpha create my-chat --yes --installation '${JSON.stringify({ plugins: installation.plugins, gateway: installation.gateway, storage: { options: {}, source: "s3" }, tools: [] })}' -- --preset ${encodePreset(preset)} --base base`
     );
   });
   void test("accepts only provider public config and safely quotes native CLI JSON", () => {

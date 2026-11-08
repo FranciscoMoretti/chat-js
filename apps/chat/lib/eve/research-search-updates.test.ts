@@ -17,8 +17,14 @@ vi.mock("eve/client", () => ({
 }));
 
 const child = (callId: string, turnId = "turn", name = "researcher") => ({
-  data: { callId, sessionId: "child", name, turnId },
-  type: "agent.started",
+  data: {
+    owner: { callId },
+    sessionId: "child",
+    name,
+    stream: "/eve/v1/session/child/stream",
+  },
+  scope: { turnId },
+  type: "child.opened",
 });
 
 it("restores actual search evidence only from researchers owned by this call and turn", async () => {
@@ -71,22 +77,21 @@ it("restores actual search evidence only from researchers owned by this call and
           ...child("research"),
           data: {
             ...child("research").data,
-            remote: { url: "https://remote.test" },
+            stream: "https://remote.test/stream",
           },
         },
       ],
     })
     .mockResolvedValueOnce({
       events: [
-        { data: {}, type: "action.partial" },
+        { data: {}, type: "call.progress" },
         {
           data: {
-            result: {
-              kind: "tool-result",
-              output: createToolResult({}, 0.05, [update, { malformed: true }]),
-            },
+            callId: "search",
+            outcome: "completed",
+            output: createToolResult({}, 0.05, [update, { malformed: true }]),
           },
-          type: "action.result",
+          type: "call.settled",
         },
       ],
     });

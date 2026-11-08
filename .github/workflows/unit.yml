@@ -57,6 +57,7 @@ jobs:
           key: ${{ runner.os }}-turbo-unit-${{ hashFiles('bun.lock') }}-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-turbo-unit-${{ hashFiles('bun.lock') }}-
+      - uses: ./.github/actions/cache-electron
       - run: bun install --frozen-lockfile
       - name: Test release safety and recovery
         run: bun test scripts/release-guard.test.ts scripts/release-fallback.test.ts

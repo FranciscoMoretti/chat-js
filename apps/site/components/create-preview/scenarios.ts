@@ -38,7 +38,7 @@ const conversation: readonly ReadonlyEveMessage[] = [
       {
         type: "text",
         state: "done",
-        text: "# A small start. A great experience.\n\nStart with one useful conversation. Keep the interface clear, let people bring their context, and make every interaction feel considered.\n\n## Make it personal\n\nYour colors, your typography, your way of working.\n\n## Keep it simple\n\nA focused workspace that gets out of the way.\n\n```sh\nbunx @chat-js/cli@beta create my-chat\n```\n\nReady when you are.",
+        text: "# A small start. A great experience.\n\nStart with one useful conversation. Keep the interface clear, let people bring their context, and make every interaction feel considered.\n\n## Make it personal\n\nYour colors, your typography, your way of working.\n\n## Keep it simple\n\nA focused workspace that gets out of the way.\n\n```sh\nbunx chat-js@alpha create my-chat\n```\n\nReady when you are.",
       },
     ],
   },
@@ -62,21 +62,30 @@ const tools: readonly ReadonlyEveMessage[] = [
         text: "Start by reviewing the project notes, then gather sources.",
       },
       {
-        type: "dynamic-tool",
-        toolCallId: "notes",
-        toolName: "Reviewing project notes",
-        state: "output-available",
+        type: "tool",
+        kind: "tool",
+        stepIndex: 0,
+        callId: "notes",
+        name: "Reviewing project notes",
+        label: "Reviewing project notes",
+        state: "completed",
         input: { file: "project-notes.md" },
         output: { summary: "Keep the scope small." },
       },
       {
-        type: "dynamic-tool",
-        toolCallId: "search",
-        toolName: "Search unavailable",
-        state: "output-error",
+        type: "tool",
+        kind: "tool",
+        stepIndex: 0,
+        callId: "search",
+        name: "Search unavailable",
+        label: "Search unavailable",
+        state: "failed",
         input: { query: "app design" },
-        errorText:
-          "This is a sample error state. No external tool runs in the preview.",
+        error: {
+          code: "preview-error",
+          message:
+            "This is a sample error state. No external tool runs in the preview.",
+        },
       },
     ],
   },
@@ -116,21 +125,30 @@ export const sceneMessages = (
                 .map((toolName, index): ReadonlyEveMessagePart =>
                   toolName === "createTextDocument"
                     ? {
-                        type: "dynamic-tool",
-                        toolCallId: `sample-tool-${index}`,
-                        toolName,
-                        state: "output-available",
+                        type: "tool",
+                        kind: "tool",
+                        stepIndex: 0,
+                        callId: `sample-tool-${index}`,
+                        name: toolName,
+                        label: toolName,
+                        state: "completed",
                         input: { title: sampleDocument.title },
                         output: sampleDocument,
                       }
                     : {
-                        type: "dynamic-tool",
-                        toolCallId: `sample-tool-${index}`,
-                        toolName,
-                        state: "output-error",
+                        type: "tool",
+                        kind: "tool",
+                        stepIndex: 0,
+                        callId: `sample-tool-${index}`,
+                        name: toolName,
+                        label: toolName,
+                        state: "failed",
                         input: {},
-                        errorText:
-                          "This is a sample error state. No external tool runs in the preview.",
+                        error: {
+                          code: "preview-error",
+                          message:
+                            "This is a sample error state. No external tool runs in the preview.",
+                        },
                       }
                 ),
             },

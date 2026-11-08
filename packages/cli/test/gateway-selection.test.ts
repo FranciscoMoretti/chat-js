@@ -39,10 +39,7 @@ const sandboxArchive = nodePath.join(
   `chat-js-sandboxes-${sandboxPackage.version}.tgz`
 );
 const cliDirectory = nodePath.join(import.meta.dir, "..");
-const cliEntry = nodePath.join(
-  root,
-  "cli/node_modules/@chat-js/cli/dist/index.js"
-);
+const cliEntry = nodePath.join(root, "cli/node_modules/chat-js/dist/index.js");
 const archive = nodePath.join(
   root,
   `chat-js-gateways-${gatewayPackage.version}.tgz`
@@ -425,7 +422,7 @@ beforeAll(async () => {
     nodePath.join(root, "cli/package.json"),
     JSON.stringify({
       dependencies: {
-        "@chat-js/cli": `file:${nodePath.join(root, `chat-js-cli-${cliPackage.version}.tgz`)}`,
+        "chat-js": `file:${nodePath.join(root, `chat-js-${cliPackage.version}.tgz`)}`,
       },
       overrides: {
         "@chat-js/gateways": `file:${archive}`,
@@ -917,7 +914,7 @@ for (const gateway of [...GATEWAYS, "acme"]) {
 import {tools} from "./integrations/tools/execution";
 import type { ToolContext } from "eve/tools";
 const unavailable = () => { throw new Error("Unexpected resource access"); };
-const context: ToolContext = { callId: "fixture", toolName: "fixture", messages: [], abortSignal: new AbortController().signal, session: { id: "fixture", auth: { current: null, initiator: null }, turn: { id: "turn", sequence: 0 } }, getSandbox: unavailable, getToken: unavailable, requireAuth: unavailable };
+const context: ToolContext = { callId: "fixture", toolName: "fixture", messages: [], abortSignal: new AbortController().signal, session: { id: "fixture", auth: { current: null, initiator: null }, turn: { id: "turn", sequence: 0 } }, getSandbox: unavailable, getToken: unavailable, requireAuth: unavailable, to: unavailable, channel: { kind: "http", metadata: {} } };
 const tool = tools.codeExecution;
 assert.ok(tool.execute);
 const result = await tool.execute({command: "echo hello"}, context);

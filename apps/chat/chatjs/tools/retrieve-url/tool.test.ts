@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
+import { z } from "zod";
 import { testToolContext } from "@/tests/helpers/eve-tool-context";
 import { toolResultSchema } from "@/lib/eve/tool-result";
 
@@ -27,6 +28,18 @@ beforeEach(() => {
 });
 
 afterEach(() => vi.unstubAllEnvs());
+
+test("invalid successful scrape rejects instead of becoming a retrieval failure", async () => {
+  mocks.scrape.mockResolvedValue({
+    markdown: "Content",
+    metadata: { description: "Description", language: 42, title: "Page" },
+    success: true,
+  });
+  const { retrieveUrl } = await import("./tool");
+  await expect(
+    retrieveUrl.execute({ url: "https://example.com" }, testToolContext())
+  ).rejects.toBeInstanceOf(z.ZodError);
+});
 
 test.each([
   ["missing configuration", "https://example.com"],

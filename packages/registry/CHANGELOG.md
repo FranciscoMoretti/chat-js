@@ -1,5 +1,12 @@
 # @chat-js/registry
 
+## 0.2.0-beta.3
+
+### Beta Changes
+
+- Install selected gateways at `~/chatjs/providers/gateway.ts`. `0.2.0-beta.2` remains published with the previous `lib/ai/gateway.ts` target.
+- Publish under `beta`; stable `latest` remains unchanged.
+
 ## 0.2.0-beta.2
 
 ### Beta Changes

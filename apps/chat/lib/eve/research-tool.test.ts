@@ -46,19 +46,20 @@ let controller: AbortController;
 let context: WorkflowToolContext;
 const document: Awaited<ReturnType<typeof saveResearchReport>>["document"] = {
   date: "2026-09-28",
-  documentId: "doc",
+  documentId: "60dbe86a-b2c4-4d32-ae09-a00e90b84e99",
   kind: "text",
   result: "Saved",
-  revisionId: "revision",
+  revisionId: "663ccf42-10c9-453f-b9da-ebf684a6da97",
   status: "success",
   title: "Report",
 };
 beforeEach(() => {
   vi.resetAllMocks();
   nativeResult.mockImplementation((data) => ({
-    status: "waiting",
+    status: "completed",
     data,
-    message: undefined,
+    reply: undefined,
+    sessionEnded: false,
   }));
   controller = new AbortController();
   context = {
@@ -281,12 +282,13 @@ it("publishes completed searches when a researcher fails without masking the fai
   expect(mocks.save).not.toHaveBeenCalled();
 });
 
-it("rejects failed or cancelled native child turns before saving or starting more work", async () => {
+it("rejects failed or missing-output native child results before saving or starting more work", async () => {
   agent.mockResolvedValue({ research_brief: "Brief", title: "Report" });
   nativeResult.mockReturnValue({
     status: "failed",
     data: undefined,
-    message: undefined,
+    reply: undefined,
+    sessionEnded: false,
     error: { message: "Child failed" },
   });
   await expect(Array.fromAsync(researchStream(context))).rejects.toThrow(
@@ -296,9 +298,10 @@ it("rejects failed or cancelled native child turns before saving or starting mor
   expect(mocks.save).not.toHaveBeenCalled();
   agent.mockClear();
   nativeResult.mockReturnValue({
-    status: "waiting",
+    status: "completed",
     data: undefined,
-    message: undefined,
+    reply: undefined,
+    sessionEnded: false,
   });
   await expect(Array.fromAsync(researchStream(context))).rejects.toThrow(
     "without structured output"

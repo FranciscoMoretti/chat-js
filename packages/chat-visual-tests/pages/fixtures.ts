@@ -301,6 +301,86 @@ export const invoicesShared: NonNullable<ServerData["transcript"]> = {
 
 export const invoicesTranscripts = { [invoicesSessionId]: invoicesTranscript };
 
+// Exercises the shared projection through the real observer, store and transcript.
+export const validatedToolTranscripts = {
+  [invoicesSessionId]: [
+    {
+      id: "tool-user",
+      role: "user",
+      parts: [
+        { type: "text", text: "Count these words and show the other results." },
+      ],
+    },
+    {
+      id: "tool-answer",
+      role: "assistant",
+      metadata: { status: "complete", turnId: "turn-tools" },
+      parts: [
+        {
+          type: "tool",
+          kind: "tool",
+          stepIndex: 0,
+          name: "wordCount",
+          label: "wordCount",
+          callId: "count-success",
+          state: "completed",
+          input: { text: "one two" },
+          output: {
+            kind: "chatjs.tool-result",
+            version: 1,
+            status: "success",
+            output: {
+              words: 2,
+              characters: 7,
+              charactersNoSpaces: 6,
+              sentences: 1,
+            },
+          },
+        },
+        {
+          type: "tool",
+          kind: "tool",
+          stepIndex: 0,
+          name: "wordCount",
+          label: "wordCount",
+          callId: "count-failure",
+          state: "completed",
+          input: { text: "one two" },
+          output: {
+            kind: "chatjs.tool-result",
+            version: 1,
+            status: "error",
+            output: null,
+            error: "Counting service unavailable.",
+          },
+        },
+        {
+          type: "tool",
+          kind: "tool",
+          stepIndex: 0,
+          name: "externalLookup",
+          label: "externalLookup",
+          callId: "external-result",
+          state: "completed",
+          input: { query: "example" },
+          output: "External tool result retained.",
+        },
+        {
+          type: "tool",
+          kind: "tool",
+          stepIndex: 0,
+          name: "wordCount",
+          label: "wordCount",
+          callId: "imported-result",
+          state: "completed",
+          input: { text: "one two" },
+          output: "Historical text output retained.",
+        },
+      ],
+    },
+  ],
+} satisfies Record<string, EveMessage[]>;
+
 export const questionTranscripts = {
   [invoicesSessionId]: [
     {
@@ -309,31 +389,32 @@ export const questionTranscripts = {
       parts: [
         { type: "text", text: "Let’s narrow down the invoice investigation." },
         {
-          type: "dynamic-tool",
-          toolName: "askQuestion",
-          toolCallId: "question-call",
-          state: "approval-requested",
-          approval: { id: "question-request" },
+          type: "tool",
+          kind: "tool",
+          stepIndex: 0,
+          name: "askQuestion",
+          label: "askQuestion",
+          callId: "question-call",
+          state: "approval",
           input: {},
-          toolMetadata: {
-            eve: {
-              kind: "tool-call",
-              name: "askQuestion",
-              inputRequest: {
-                requestId: "question-request",
-                kind: "question",
-                display: "select",
-                prompt: "Which invoice issue should we investigate?",
-                allowFreeform: true,
-                options: [
-                  {
-                    id: "performance",
-                    label: "Query performance",
-                    description: "Find slow queries and missing indexes",
-                  },
-                  { id: "accuracy", label: "Invoice accuracy" },
-                ],
-              },
+          interaction: {
+            interactionId: "question-request",
+            turnId: "fixture-turn",
+            stepIndex: 0,
+            status: "open",
+            request: {
+              kind: "question",
+              display: "select",
+              prompt: "Which invoice issue should we investigate?",
+              allowFreeform: true,
+              options: [
+                {
+                  id: "performance",
+                  label: "Query performance",
+                  description: "Find slow queries and missing indexes",
+                },
+                { id: "accuracy", label: "Invoice accuracy" },
+              ],
             },
           },
         },
@@ -514,9 +595,9 @@ export const launchChats: HistoryPage = {
 export const invoicesFollowupEvents: typeof route.events = {
   [invoicesSessionId]: [
     {
-      type: "turn.completed",
-      data: { turnId: "turn_0", sequence: 2 },
-      meta: { id: "completed-invoices", at: "2026-10-18T10:00:00Z" },
+      type: "turn.settled",
+      data: { turnId: "turn_0", outcome: "completed" },
+      meta: { position: { line: 2, index: 0 }, at: "2026-10-18T10:00:00Z" },
     },
   ],
 };
@@ -528,7 +609,8 @@ export const invoicesFollowupTrpc = {
   }) => {
     if (
       input.conversationId !== invoicesConversation.id ||
-      input.eventId !== "completed-invoices"
+      input.eventId !==
+        JSON.stringify([invoicesConversation.sessionId, "turn_0", "completed"])
     ) {
       return new TrpcFixtureError(
         "NOT_FOUND",
@@ -598,10 +680,13 @@ export const archivedDiagramTranscript: EveMessage[] = [
     metadata: { status: "complete", turnId: "turn_0" },
     parts: [
       {
-        type: "dynamic-tool",
-        toolName: "drawDiagram",
-        toolCallId: "archived-diagram-call",
-        state: "output-available",
+        type: "tool",
+        kind: "tool",
+        stepIndex: 0,
+        name: "drawDiagram",
+        label: "drawDiagram",
+        callId: "archived-diagram-call",
+        state: "completed",
         input: { title: "Deployment flow" },
         output: {
           documentId: archivedDocumentId,
@@ -620,3 +705,24 @@ export const archivedDiagramTranscript: EveMessage[] = [
 export const chatFailure = `The model provider is unavailable. Request reference: ${"reference".repeat(20)}`;
 export const creationFailure =
   "Unable to start this conversation. Choose another model.";
+
+export const guestTranscript: EveMessage[] = [
+  {
+    id: "guest-question",
+    role: "user",
+    metadata: { status: "complete", turnId: "turn_0" },
+    parts: [{ type: "text", text: "Hello", state: "done" }],
+  },
+  {
+    id: "guest-answer",
+    role: "assistant",
+    metadata: {
+      status: "complete",
+      turnId: "turn_0",
+      modelId: "openai/gpt-5-nano",
+    },
+    parts: [
+      { type: "text", text: "Hello! How can I help you today?", state: "done" },
+    ],
+  },
+];

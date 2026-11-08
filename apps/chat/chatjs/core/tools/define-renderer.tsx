@@ -20,7 +20,11 @@ const isValidatedToolRenderer = (
 type RenderableTool<TInput, TOutput> = { toolCallId: string } & (
   | { state: "input-streaming"; input?: Partial<TInput>; output?: never }
   | { state: "input-available"; input: TInput; output?: never }
-  | { state: "output-available"; input: TInput; output: TOutput }
+  | {
+      state: "output-available";
+      input: TInput;
+      output: TOutput;
+    }
 );
 
 interface ToolRendererProps<
@@ -73,12 +77,12 @@ export const defineToolRenderer = <TInput, TOutput, TUpdate = never>({
   render: Renderer,
 }: {
   inputSchema: z.ZodType<TInput>;
-  streamingInputSchema?: z.ZodType<Partial<TInput>>;
+  streamingInputSchema?: z.ZodType<Partial<NoInfer<TInput>>>;
   outputSchema: z.ZodType<TOutput>;
   updateSchema?: z.ZodType<TUpdate>;
-  renderProgress?: ComponentType<{ updates: TUpdate[] }>;
+  renderProgress?: ComponentType<{ updates: NoInfer<TUpdate>[] }>;
   render: ComponentType<{
-    tool: RenderableTool<TInput, TOutput>;
+    tool: RenderableTool<NoInfer<TInput>, NoInfer<TOutput>>;
     messageId: string;
     isReadonly: boolean;
   }>;
@@ -88,19 +92,14 @@ export const defineToolRenderer = <TInput, TOutput, TUpdate = never>({
   isReadonly: boolean;
 }) => React.JSX.Element) & { validatedToolRenderer: true } => {
   const ValidatedToolBody = ({
-    tool,
+    value,
     messageId,
     isReadonly,
   }: {
-    readonly tool: unknown;
+    readonly value: z.output<typeof envelope>;
     readonly messageId: string;
     readonly isReadonly: boolean;
   }): React.JSX.Element => {
-    const parsed = envelope.safeParse(tool);
-    if (!parsed.success) {
-      return <InvalidResult />;
-    }
-    const value = parsed.data;
     const common = { isReadonly, messageId };
     const identity = { toolCallId: value.toolCallId };
     if (value.state === "output-error") {
@@ -162,19 +161,24 @@ export const defineToolRenderer = <TInput, TOutput, TUpdate = never>({
     readonly isReadonly: boolean;
   }): React.JSX.Element => {
     const parsed = envelope.safeParse(props.tool);
-    const updates = (parsed.success ? (parsed.data.updates ?? []) : []).flatMap(
-      (update) => {
-        const value = updateSchema?.safeParse(update);
-        if (value?.success === true) {
-          return [value.data];
-        }
-        return [];
+    if (!parsed.success) {
+      return <InvalidResult />;
+    }
+    const updates = (parsed.data.updates ?? []).flatMap((update) => {
+      const value = updateSchema?.safeParse(update);
+      if (value?.success === true) {
+        return [value.data];
       }
-    );
+      return [];
+    });
     return (
       <>
         {Progress && <Progress updates={updates} />}
-        <ValidatedToolBody {...props} />
+        <ValidatedToolBody
+          value={parsed.data}
+          messageId={props.messageId}
+          isReadonly={props.isReadonly}
+        />
       </>
     );
   };

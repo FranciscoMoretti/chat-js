@@ -1,9 +1,10 @@
+import { colors } from "@chatjs/brand/identity";
 import { siteConfig, siteLinks } from "@/lib/site-config";
 import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    background_color: "#f8f7f4",
+    background_color: colors.background,
     categories: ["developer tools", "productivity", "artificial intelligence"],
     description: siteConfig.description,
     display: "standalone",
@@ -19,7 +20,7 @@ export default function manifest(): MetadataRoute.Manifest {
         type: "image/x-icon",
       },
     ],
-    name: `${siteConfig.name} - Open-Source AI Chat Starter`,
+    name: `${siteConfig.name} - Building blocks for your AI app`,
     short_name: siteConfig.shortName,
     shortcuts: [
       {
@@ -32,6 +33,6 @@ export default function manifest(): MetadataRoute.Manifest {
       },
     ],
     start_url: "/",
-    theme_color: "#09090b",
+    theme_color: colors.background,
   };
 }

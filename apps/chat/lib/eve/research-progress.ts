@@ -1,3 +1,4 @@
+import type { z } from "zod";
 import type { ToolContext } from "eve/tools";
 
 import type { ToolProgressWriter } from "@/lib/ai/tool-context";
@@ -16,21 +17,26 @@ export const executeWithResearchProgress = <Output extends ToolOutput>(
       usage: ToolUsage;
       dataStream: ToolProgressWriter;
     }>
-  ) => Promise<Output>
-): AsyncGenerator<ToolResult<Output | { searches: [] }>, void> =>
-  executeWithToolProgress<Output | { searches: [] }>(
+  ) => Promise<NoInfer<Output>>,
+  outputSchema: z.ZodType<Output>
+): AsyncGenerator<ToolResult<Output>, void> =>
+  executeWithToolProgress<Output>(
     context,
     async ({ abortSignal, usage, publish }) => {
       const updates = new Map<string, ReadonlyNativeSurface<ResearchUpdate>>();
-      return await execute({
-        abortSignal,
-        dataStream: {
-          write(part): void {
-            updates.set(part.id ?? `update-${updates.size}`, part.data);
-            publish({ searches: [] }, [...updates.values()]);
+      return outputSchema.parse(
+        await execute({
+          abortSignal,
+          dataStream: {
+            write(part): void {
+              updates.set(part.id ?? `update-${updates.size}`, part.data);
+              publish(outputSchema.parse({ searches: [] }), [
+                ...updates.values(),
+              ]);
+            },
           },
-        },
-        usage,
-      });
+          usage,
+        })
+      );
     }
   );

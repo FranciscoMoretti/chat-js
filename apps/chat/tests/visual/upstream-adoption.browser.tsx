@@ -3,7 +3,8 @@ import { expect, test, vi } from "vitest";
 import { page, commands, userEvent } from "vitest/browser";
 import { takeSnapshot } from "@uiverify/vitest";
 import { EvePendingInput } from "@/components/eve/eve-pending-input";
-import type { EveMessageInputRequest, InputResponse } from "eve/client";
+import type { InteractionRequest, Answer } from "eve/events";
+
 import {
   Context,
   ContextTrigger,
@@ -19,8 +20,12 @@ import { EveSearchResultsView } from "@/chatjs/plugins/search/search-results-vie
 import { mount, unmount } from "./primitive-mount";
 import "./sandbox.css";
 
-const question: EveMessageInputRequest = {
-  requestId: "fixture-question",
+type MessageInteraction = InteractionRequest & {
+  readonly interactionId: string;
+};
+
+const question: MessageInteraction = {
+  interactionId: "fixture-question",
   kind: "question",
   display: "select",
   prompt: "Which topic should we research?",
@@ -34,9 +39,9 @@ const question: EveMessageInputRequest = {
   ],
   allowFreeform: true,
 };
-const approval: EveMessageInputRequest = {
-  requestId: "fixture-approval",
-  kind: "tool-approval",
+const approval: MessageInteraction = {
+  interactionId: "fixture-approval",
+  kind: "approval",
   display: "confirmation",
   prompt: "Delete this document?",
   options: [
@@ -52,7 +57,7 @@ for (const viewport of [
   test(`upstream questions and feedback at ${viewport.width} ${viewport.dir}`, async () => {
     await page.viewport(viewport.width, 1000);
     await commands.faviconAssets();
-    const respond = vi.fn<(response: InputResponse) => void>();
+    const respond = vi.fn<(response: Answer) => void>();
     const send = vi.fn<(text: string) => void>();
     const fixture = await mount(
       <main
@@ -115,7 +120,7 @@ for (const viewport of [
       expect(respond).not.toHaveBeenCalled();
       await page.getByRole("button", { name: "Submit answer" }).click();
       expect(respond).toHaveBeenLastCalledWith({
-        requestId: question.requestId,
+        interactionId: question.interactionId,
         optionId: "accessibility",
       });
       respond.mockClear();
@@ -127,7 +132,7 @@ for (const viewport of [
       expect(respond).not.toHaveBeenCalled();
       await page.getByRole("button", { name: "Submit answer" }).click();
       expect(respond).toHaveBeenLastCalledWith({
-        requestId: question.requestId,
+        interactionId: question.interactionId,
         text: "Security\nPrivacy",
       });
       await page
@@ -135,7 +140,7 @@ for (const viewport of [
         .first()
         .click();
       expect(respond).toHaveBeenLastCalledWith({
-        requestId: approval.requestId,
+        interactionId: approval.interactionId,
         optionId: "approve",
       });
       await expect

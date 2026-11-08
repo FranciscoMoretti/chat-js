@@ -1,4 +1,3 @@
-import { requireEveDeletionLifecycle } from "@/lib/eve/deletion-lifecycle";
 import { readGuestBody } from "@/chatjs/plugins/guest-chat/guest-body";
 import {
   createGuestRuntimeSession,
@@ -58,18 +57,6 @@ export const POST = async (
       { status: 503 }
     );
   }
-  try {
-    // Never admit temporary data unless this deployment can later erase it.
-    await requireEveDeletionLifecycle().check();
-  } catch {
-    return Response.json(
-      {
-        error:
-          "Guest retention is unavailable. Please sign in or try again later.",
-      },
-      { status: 503 }
-    );
-  }
   await loadEveModelDefinition(value.data.modelId);
   let ipHash: string;
   try {
@@ -101,7 +88,7 @@ export const POST = async (
     new URL(host).origin
   );
   const response = await fetch(
-    new URL("/eve/chat/v1/session", connection.host),
+    new URL("/eve/chat/v1/session", connection.baseUrl),
     {
       body: JSON.stringify({ operationId: claims.policyId }),
       cache: "no-store",

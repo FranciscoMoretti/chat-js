@@ -10,9 +10,9 @@ description: Connect Model Context Protocol servers to extend AI capabilities
 Install MCP during creation, or add it to an existing app:
 
 ```bash
-bunx @chat-js/cli@latest create my-chat --mcp
+bunx chat-js@alpha create my-chat --mcp
 # Or, inside an existing app:
-bunx @chat-js/cli@latest add mcp
+bunx chat-js@alpha add mcp
 ```
 
 Installation adds the connector settings pages, OAuth callback, router and composer control. Installed registrations determine availability. You can create an app with `--no-mcp` to omit these files.
@@ -27,7 +27,7 @@ bun run db:generate
 bun run db:migrate
 ```
 
-New apps receive a baseline for their selected plugins. See [plugin migrations](../core/plugins#database-migrations) for migration ownership and removal behavior.
+New apps receive a baseline for their selected plugins. See [plugin migrations](./using-plugins#database-migrations) for migration ownership and removal behavior.
 
 ### Encryption key
 
@@ -135,4 +135,4 @@ Server URLs, OAuth tokens, and credentials are encrypted with `MCP_ENCRYPTION_KE
 
 ## Customization
 
-Edit `chatjs/plugins/mcp/` for connector behavior, the router, and browser contributions. The plugin's `mcp-env.ts` owns credential validation and is loaded only when MCP is installed. See [Create a plugin](../cookbook/create-plugin) and the [Plugin API](../reference/plugin-api) for contribution contracts.
+Edit `chatjs/plugins/mcp/` for connector behavior, the router, and browser contributions. The plugin's `mcp-env.ts` owns credential validation and is loaded only when MCP is installed. See [Create a plugin](./create-plugin) and the [Plugin API](../reference/plugin-api) for contribution contracts.

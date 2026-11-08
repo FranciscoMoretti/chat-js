@@ -53,7 +53,7 @@ export const startLocalEveGuestCleanup = (): (() => void) | undefined => {
       if (
         result.status === "fulfilled" &&
         (result.value.skipped ||
-          result.value.deletedCount ||
+          result.value.retiredCount ||
           Boolean(result.value.pendingCount))
       ) {
         console.info("Local EVE guest cleanup", result.value);

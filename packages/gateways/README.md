@@ -18,4 +18,4 @@ Verification:
 
 - `bun run test:unit`: adapter model creation, media support and discovery fallback.
 - `bun run test:types`: shared declarations and built-in adapter contracts.
-- `bun --filter @chat-js/cli test:gateways`: independently install and type-check every built-in selection and an external registry, including rejected gateway selections and unsupported video configuration. Assert that the shared archive contains no adapter implementations.
+- `bun --filter chat-js test:gateways`: independently install and type-check every built-in selection and an external registry, including rejected gateway selections and unsupported video configuration. Assert that the shared archive contains no adapter implementations.

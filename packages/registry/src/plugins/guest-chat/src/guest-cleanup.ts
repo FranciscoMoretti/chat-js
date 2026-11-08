@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { Client } from "eve/client";
+import { Client, ClientError } from "eve/client";
 
 import {
   bindGuestRuntimeCleanupSession,
@@ -9,17 +9,19 @@ import {
   pruneGuestRuntimeRates,
 } from "@/chatjs/plugins/guest-chat/guest-queries";
 import { getGuestCleanupConnectionOptions } from "@/chatjs/plugins/guest-chat/guest-cleanup-auth";
-import { requireEveDeletionLifecycle } from "@/lib/eve/deletion-lifecycle";
 
 const MAX_CLEANUP_BATCH = 5;
 const RETIRE_TIMEOUT_MS = 30_000;
 
-const resolveCleanupSession = async (guest: {
-  readonly id: string;
-  readonly modelId: string;
-  readonly ownerId: string;
-  readonly sessionId: string | null;
-}): Promise<string> => {
+const resolveCleanupSession = async (
+  guest: {
+    readonly id: string;
+    readonly modelId: string;
+    readonly ownerId: string;
+    readonly sessionId: string | null;
+  },
+  signal: AbortSignal
+): Promise<string> => {
   if (guest.sessionId !== null) {
     return guest.sessionId;
   }
@@ -30,7 +32,7 @@ const resolveCleanupSession = async (guest: {
     modelId: guest.modelId,
     policyId: guest.id,
   });
-  const response = await fetch(`${connection.host}/v1/session`, {
+  const response = await fetch(`${connection.baseUrl}/v1/session`, {
     method: "POST",
     redirect: "error",
     headers: {
@@ -39,7 +41,7 @@ const resolveCleanupSession = async (guest: {
       "content-type": "application/json",
     },
     body: JSON.stringify({ operationId: guest.id }),
-    signal: AbortSignal.timeout(RETIRE_TIMEOUT_MS),
+    signal,
   });
   if (!response.ok) {
     throw new Error("Guest creation reconciliation remains unresolved.");
@@ -55,34 +57,45 @@ const resolveCleanupSession = async (guest: {
   return sessionId;
 };
 
-export const cleanupGuestRuntimeSessions = async (): Promise<{
+export const cleanupGuestRuntimeSessions = async ({
+  deadline = Number.POSITIVE_INFINITY,
+}: { readonly deadline?: number } = {}): Promise<{
   deletedCount: number;
+  retiredCount: number;
   pendingCount: number;
   skipped: boolean;
 }> => {
-  if ((await countPendingGuestRuntimeDeletions()) === 0) {
+  const initialPendingCount = await countPendingGuestRuntimeDeletions();
+  if (initialPendingCount === 0) {
     await pruneGuestRuntimeRates();
-    return { deletedCount: 0, pendingCount: 0, skipped: false };
+    return {
+      deletedCount: 0,
+      retiredCount: 0,
+      pendingCount: 0,
+      skipped: false,
+    };
   }
-  const lifecycle = requireEveDeletionLifecycle();
-  // Compatibility checks precede claims or retirement. Missing fences never
-  // produce a successful cleanup report or erase the durable retry record.
-  await lifecycle.check();
-  let deletedCount = 0;
+  let retiredCount = 0;
   let pendingCount = 0;
-  for (let attempt = 0; attempt < MAX_CLEANUP_BATCH; attempt += 1) {
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Claim and purge one session at a time to bound provider connections and work.
+  for (
+    let attempt = 0;
+    attempt < MAX_CLEANUP_BATCH && Date.now() < deadline;
+    attempt += 1
+  ) {
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Claim and retire one session at a time to bound provider connections and work.
     const guest = await claimExpiredGuestRuntimeSession();
     if (!guest) {
       break;
     }
     let phase = "reconcile-session";
     try {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Reconcile only the current claimed guest before native purge.
-      const sessionId = await resolveCleanupSession(guest);
-      phase = "retire-and-purge";
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Native purge serializes durable retirement, fencing, queue drain and payload erasure.
-      await lifecycle.purge(sessionId, async () => {
+      const signal = AbortSignal.timeout(
+        Math.max(1, Math.min(RETIRE_TIMEOUT_MS, deadline - Date.now()))
+      );
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Reconcile only the current claimed guest before retirement.
+      const sessionId = await resolveCleanupSession(guest, signal);
+      phase = "retire";
+      const retire = async (): Promise<void> => {
         const client = new Client(
           getGuestCleanupConnectionOptions({
             ownerId: guest.ownerId,
@@ -92,29 +105,50 @@ export const cleanupGuestRuntimeSessions = async (): Promise<{
           })
         );
         const session = client.sessions.attach(sessionId);
-        await session.reset({
+        const current = await session.snapshot({
+          signal,
+        });
+        if (current.events.some((event) => event.type === "session.ended")) {
+          return;
+        }
+        const retirement = await session.end({
           reason: "Guest retention expired",
-          signal: AbortSignal.timeout(RETIRE_TIMEOUT_MS),
+          signal,
         });
+        for await (const event of retirement.stream({
+          signal,
+        })) {
+          if (event.type === "session.ended") {
+            return;
+          }
+        }
         const snapshot = await session.snapshot({
-          signal: AbortSignal.timeout(RETIRE_TIMEOUT_MS),
+          signal,
         });
-        if (
-          !snapshot.events.some(
-            (event) =>
-              event.type === "session.completed" ||
-              event.type === "session.failed"
-          )
-        ) {
+        if (!snapshot.events.some((event) => event.type === "session.ended")) {
           throw new Error("Guest retirement is not terminal. Retry cleanup.");
         }
-      });
+      };
+      try {
+        // oxlint-disable-next-line eslint/no-await-in-loop -- Finish this session before completing its policy; payloads follow native World retention.
+        await retire();
+      } catch (error) {
+        // EVE can expire history as soon as end completes. Only its explicit
+        // expiry response is terminal evidence; 404, auth and transport failures retry.
+        if (
+          !ClientError.is(error) ||
+          error.status !== 410 ||
+          error.code !== "session_expired"
+        ) {
+          throw error;
+        }
+      }
       phase = "complete-policy";
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Mark deleted only after the exact bound native session was purged.
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Complete local policy after verified ending or expiry.
       if (!(await completeGuestRuntimeDeletion(guest.id, sessionId))) {
         throw new Error("Guest deletion binding changed.");
       }
-      deletedCount += 1;
+      retiredCount += 1;
     } catch {
       pendingCount += 1;
       console.error("Guest runtime cleanup requires retry", {
@@ -123,10 +157,23 @@ export const cleanupGuestRuntimeSessions = async (): Promise<{
       });
     }
   }
+  if (Date.now() >= deadline) {
+    // No new bookkeeping after the deadline; a later sweep establishes completion.
+    return {
+      deletedCount: 0,
+      retiredCount,
+      pendingCount: Math.max(
+        pendingCount,
+        initialPendingCount - retiredCount,
+        1
+      ),
+      skipped: false,
+    };
+  }
   await pruneGuestRuntimeRates();
   pendingCount = Math.max(
     pendingCount,
     await countPendingGuestRuntimeDeletions()
   );
-  return { deletedCount, pendingCount, skipped: false };
+  return { deletedCount: 0, retiredCount, pendingCount, skipped: false };
 };

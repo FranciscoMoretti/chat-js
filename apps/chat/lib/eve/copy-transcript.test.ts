@@ -1,46 +1,76 @@
-import type { EveMessage, MessageStreamEvent } from "eve/client";
+import type { SessionStreamEvent, SessionEvent } from "eve/client";
 import {
   EveCopyNotReadyError,
   eveCopyResources,
   prepareEveCopyTranscript,
 } from "./copy-transcript";
 import { expect, it } from "vitest";
-import type { ReadonlyEveMessagePart } from "./readonly-message-types";
+import type { EveCopySeed } from "./copy-seed";
 
 const sourceFile = "aaaaaaaaaaaaaaaaaaaaaaaa.png";
 const sourceUrl = `/api/files/${sourceFile}`;
 
-const history = (
-  messages: readonly Readonly<
-    Omit<EveMessage, "parts"> & {
-      readonly parts: readonly ReadonlyEveMessagePart[];
-    }
-  >[]
-): MessageStreamEvent[] => [
+const history = (messages: EveCopySeed["messages"]): SessionStreamEvent[] => [
   {
-    data: { messages },
-    meta: { at: "2026-09-12T00:00:00Z", id: "seed-event" },
-    type: "history.seeded",
-  },
-  {
-    data: { continuationToken: "source-token", wait: "next-user-message" },
-    meta: { at: "2026-09-12T00:00:01Z", id: "idle-event" },
-    type: "session.waiting",
+    data: {
+      transcriptSeed: {
+        attachments: "channel",
+        messages: messages.map((message) => {
+          if (message.role === "user") {
+            return {
+              ...message,
+              parts: message.parts.map((part) =>
+                part.type === "file"
+                  ? {
+                      ...part,
+                      existingPath: "/workspace/.eve/attachments/note.pdf",
+                    }
+                  : part
+              ),
+            };
+          }
+          return {
+            ...message,
+            parts: message.parts.map((part) =>
+              part.type === "file"
+                ? {
+                    ...part,
+                    existingPath: "/workspace/.eve/attachments/note.pdf",
+                  }
+                : part
+            ),
+          };
+        }),
+      },
+    },
+    meta: {
+      at: "2026-09-12T00:00:00Z",
+      position: { line: 0, index: 0 },
+      endOfLine: true,
+    },
+    type: "session.started",
   },
 ];
+const admitted: SessionStreamEvent = {
+  type: "delivery.admitted",
+  data: { deliveryId: "new" },
+  meta: {
+    at: "2026-09-12T00:00:02Z",
+    position: { line: 1, index: 0 },
+    endOfLine: true,
+  },
+};
 
 it("prepares exactly the public content without execution, approval or billing identities", () => {
   const events = history([
     {
-      id: "source-user",
       parts: [{ text: "Question", type: "text" }],
       role: "user",
     },
     {
-      id: "source-assistant",
       metadata: { turnId: "private-turn" },
       parts: [
-        { state: "done", text: "Visible reasoning", type: "reasoning" },
+        { text: "Visible reasoning", type: "reasoning" },
         {
           input: { prompt: "Image" },
           output: {
@@ -51,11 +81,11 @@ it("prepares exactly the public content without execution, approval or billing i
             version: 1,
           },
           state: "output-available",
-          toolCallId: "private-call",
+
           toolName: "generateImage",
           type: "dynamic-tool",
         },
-        { state: "done", text: "Answer", type: "text" },
+        { text: "Answer", type: "text" },
       ],
       role: "assistant",
     },
@@ -83,7 +113,6 @@ it("preserves inline attachments and tool error or denial content without approv
   const result = prepareEveCopyTranscript(
     history([
       {
-        id: "user",
         parts: [
           {
             filename: "note.pdf",
@@ -95,17 +124,12 @@ it("preserves inline attachments and tool error or denial content without approv
         role: "user",
       },
       {
-        id: "answer",
         parts: [
           {
-            approval: {
-              approved: false,
-              id: "private-receipt",
-              reason: "Declined",
-            },
+            reason: "Declined",
             input: {},
             state: "output-denied",
-            toolCallId: "denied-call",
+
             toolName: "confirm_note",
             type: "dynamic-tool",
           },
@@ -113,7 +137,7 @@ it("preserves inline attachments and tool error or denial content without approv
             errorText: "Unavailable",
             input: {},
             state: "output-error",
-            toolCallId: "error-call",
+
             toolName: "readDocument",
             type: "dynamic-tool",
           },
@@ -129,62 +153,21 @@ it("preserves inline attachments and tool error or denial content without approv
   expect(JSON.stringify(result.seed)).not.toContain("private-receipt");
 });
 
-it.each<EveMessage["parts"][number]>([
-  { state: "streaming", text: "Partial", type: "text" },
-  {
-    input: {},
-    state: "input-available",
-    toolCallId: "call",
-    toolName: "tool",
-    type: "dynamic-tool",
-  },
-  {
-    input: {},
-    output: {},
-    partial: true,
-    state: "output-available",
-    toolCallId: "call",
-    toolName: "tool",
-    type: "dynamic-tool",
-  },
-  {
-    approval: { id: "private" },
-    input: {},
-    state: "approval-requested",
-    toolCallId: "call",
-    toolName: "tool",
-    type: "dynamic-tool",
-  },
-])(
-  "refuses incomplete visible parts rather than dropping them",
-  (part: ReadonlyEveMessagePart) => {
-    expect(() =>
-      prepareEveCopyTranscript(
-        history([{ id: "answer", parts: [part], role: "assistant" }])
-      )
-    ).toThrow(EveCopyNotReadyError);
-  }
-);
-
-it("requires a durable idle boundary, including when a new turn has no assistant text yet", () => {
+it("requires a completed idle boundary before copying", () => {
   const events = history([
-    {
-      id: "question",
-      parts: [{ text: "Question", type: "text" }],
-      role: "user",
-    },
+    { role: "user", parts: [{ type: "text", text: "Question" }] },
   ]);
-  expect(() => prepareEveCopyTranscript(events.slice(0, 1))).toThrow(
+  expect(() => prepareEveCopyTranscript([...events, admitted])).toThrow(
     EveCopyNotReadyError
   );
-  const received: MessageStreamEvent = {
-    data: { message: "Next question", sequence: 1, turnId: "turn_1" },
-    meta: { at: "2026-09-12T00:00:02Z", id: "new" },
-    type: "message.received",
+  const started: SessionStreamEvent = {
+    type: "turn.started",
+    data: { turnId: "turn", cause: { deliveryId: "new" }, follows: null },
+    meta: { ...admitted.meta, position: { line: 2, index: 0 } },
   };
-  expect(() => prepareEveCopyTranscript([...events, received])).toThrow(
-    EveCopyNotReadyError
-  );
+  expect(() =>
+    prepareEveCopyTranscript([...events, admitted, started])
+  ).toThrow(EveCopyNotReadyError);
 });
 
 it("does not mutate frozen inputs while collecting copy resources", () => {
@@ -194,16 +177,12 @@ it("does not mutate frozen inputs while collecting copy resources", () => {
 it("retains model provenance in copies of copies without carrying private metadata", () => {
   const events = history([
     {
-      id: "seed_message_0",
       parts: [{ text: "Question", type: "text" }],
       role: "user",
     },
     {
-      id: "seed_message_1",
-      metadata: {
-        modelId: "gateway/google/gemini-2.5-flash-lite",
-        result: "private-result",
-      },
+      modelId: "gateway/google/gemini-2.5-flash-lite",
+      metadata: { result: "private-result" },
       parts: [{ text: "Answer", type: "text" }],
       role: "assistant",
     },
@@ -221,15 +200,12 @@ it("preserves selected tools in copies without publishing unrelated custom metad
   const result = prepareEveCopyTranscript(
     history([
       {
-        id: "source-user",
         metadata: {
-          custom: {
-            chatjs: {
-              privateToken: "owner-only",
-              selectedTool: "createTextDocument",
-            },
-            integration: { token: "integration-secret" },
+          chatjs: {
+            privateToken: "owner-only",
+            selectedTool: "createTextDocument",
           },
+          integration: { token: "integration-secret" },
         },
         parts: [{ text: "Create a document", type: "text" }],
         role: "user",
@@ -244,19 +220,17 @@ it("preserves selected tools in copies without publishing unrelated custom metad
 });
 
 it("preserves native seeded text tool results through the ChatJS shared-copy projection", () => {
-  const messages: EveMessage[] = [
+  const messages: EveCopySeed["messages"] = [
     {
-      id: "seed_message_0",
       parts: [{ text: "Read the file", type: "text" }],
       role: "user",
     },
     {
-      id: "seed_message_1",
       parts: [
         {
           type: "dynamic-tool",
           toolName: "readFile",
-          toolCallId: "seed_tool_0",
+
           input: { path: "notes.txt" },
           state: "output-available",
           output: "plain text",
@@ -279,34 +253,120 @@ it("preserves native seeded text tool results through the ChatJS shared-copy pro
 it("branches before an edited user message and rejects invalid boundaries", () => {
   const events = history([
     {
-      id: "first",
       role: "user",
       parts: [{ type: "text", text: "Original first" }],
     },
     {
-      id: "answer",
       role: "assistant",
-      parts: [{ type: "text", text: "Old answer", state: "done" }],
+      parts: [{ type: "text", text: "Old answer" }],
     },
     {
-      id: "later",
       role: "user",
       parts: [{ type: "text", text: "Later prompt" }],
     },
   ]);
-  expect(prepareEveCopyTranscript(events, [], "first").seed.messages).toEqual(
-    []
-  );
-  const prefix = prepareEveCopyTranscript(events, [], "later").seed.messages;
+  expect(
+    prepareEveCopyTranscript(events, [], "seed_message_0").seed.messages
+  ).toEqual([]);
+  const prefix = prepareEveCopyTranscript(events, [], "seed_message_2").seed
+    .messages;
   expect(prefix.map((message) => message.role)).toEqual(["user", "assistant"]);
   expect(JSON.stringify(prefix)).not.toContain("Later prompt");
   expect(prepareEveCopyTranscript(events).seed.messages).toHaveLength(3);
-  for (const invalid of ["missing", "answer"]) {
+  for (const invalid of ["missing", "seed_message_1"]) {
     expect(() => prepareEveCopyTranscript(events, [], invalid)).toThrow(
       "not a user message"
     );
   }
   expect(() =>
-    prepareEveCopyTranscript(events.slice(0, 1), [], "first")
+    prepareEveCopyTranscript([...events, admitted], [], "seed_message_0")
   ).toThrow(EveCopyNotReadyError);
+});
+
+it("copies native completed calls without carrying execution identities", () => {
+  const native: SessionEvent[] = [
+    { type: "session.started", data: {} },
+    { type: "delivery.admitted", data: { deliveryId: "source-user" } },
+    {
+      type: "turn.started",
+      data: {
+        turnId: "private-turn",
+        follows: null,
+        cause: { deliveryId: "source-user" },
+      },
+    },
+    {
+      type: "delivery.consumed",
+      data: {
+        turnId: "private-turn",
+        deliveryId: "source-user",
+        parts: [{ kind: "text", text: "Question" }],
+      },
+    },
+    {
+      type: "model.started",
+      scope: { turnId: "private-turn" },
+      data: { runId: "source-assistant", attempt: 0, modelId: "fixture" },
+    },
+    {
+      type: "call.requested",
+      scope: { turnId: "private-turn", runId: "source-assistant" },
+      data: {
+        callId: "private-call",
+        owner: { runId: "source-assistant" },
+        capability: { kind: "tool", name: "wordCount" },
+        input: { text: "hello" },
+      },
+    },
+    {
+      type: "call.settled",
+      scope: { turnId: "private-turn", runId: "source-assistant" },
+      data: {
+        callId: "private-call",
+        outcome: "completed",
+        output: { words: 1 },
+      },
+    },
+    {
+      type: "delivery.settled",
+      data: {
+        deliveryId: "source-user",
+        turnId: "private-turn",
+        outcome: "handled",
+      },
+    },
+    {
+      type: "turn.settled",
+      data: { turnId: "private-turn", outcome: "completed" },
+    },
+  ];
+  const events = native.map((event, index) => ({
+    ...event,
+    meta: {
+      at: "2026-11-02T00:00:00Z",
+      position: { line: index, index: 0 },
+      endOfLine: true,
+    },
+  }));
+  const copy = prepareEveCopyTranscript(events);
+  expect(copy.seed.messages[1]?.parts).toContainEqual({
+    type: "dynamic-tool",
+    toolName: "wordCount",
+    input: { text: "hello" },
+    state: "output-available",
+    output: { words: 1 },
+  });
+  for (const id of [
+    "source-user",
+    "source-assistant",
+    "private-turn",
+    "private-call",
+  ]) {
+    expect(JSON.stringify(copy.seed)).not.toContain(id);
+  }
+  for (const boundary of [4, 5, 6, 7, 8]) {
+    expect(() => prepareEveCopyTranscript(events.slice(0, boundary))).toThrow(
+      EveCopyNotReadyError
+    );
+  }
 });

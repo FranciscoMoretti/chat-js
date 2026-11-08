@@ -824,7 +824,7 @@ const assertMatchingMessageCreation = (
  * @param {string} ownerId Owner creating the conversation.
  * @param {string} operationId Stable owner-scoped operation ID used to find or reuse the conversation reservation.
  * @param {string} message First user message and default conversation title.
- * @param {(id: string) => string | Promise<string>} create Native-session creator called with the reserved conversation ID as native idempotency key; its result is awaited before binding.
+ * @param {(id: string) => Promise<{ sessionId: string; deliveryId?: string }>} create Native-session creator called with the reserved conversation ID as native idempotency key; its result is awaited before binding.
  * @param {string} [initialModelId] Initial model to use for the conversation.
  * @param {unknown} [initialRequest] Initial request metadata persisted with the conversation.
  * @param {string} [initialContentHash] Hash used to identify the initial content.
@@ -838,7 +838,7 @@ const createEveConversation = async (
   ownerId: string,
   operationId: string,
   message: string,
-  create: (id: string) => string | Promise<string>,
+  create: (id: string) => Promise<{ sessionId: string; deliveryId?: string }>,
   {
     initialModelId,
     initialRequest,
@@ -962,13 +962,14 @@ const createEveConversation = async (
               "This conversation can no longer be created."
             );
           }
-          const sessionId = await create(reservation.id);
-          return await bindConversationSession(
+          const accepted = await create(reservation.id);
+          const bound = await bindConversationSession(
             tx,
             ownerId,
             reservation.id,
-            sessionId
+            accepted.sessionId
           );
+          return { ...bound, deliveryId: accepted.deliveryId };
         })
     );
     return { id: reservation.id, sessionId: dispatched.sessionId };

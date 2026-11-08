@@ -9,6 +9,8 @@ export interface EveResponseCardCandidate {
   readonly modelName: string;
   readonly state: "bound" | "unresolved" | "waiting" | "rejected" | "pending";
   readonly status?:
+    | "busy"
+    | "idle"
     | "submitted"
     | "streaming"
     | "resuming"
@@ -38,7 +40,8 @@ export const EveResponseGroupCards = ({
         const loading =
           candidate.state === "pending" ||
           (candidate.state === "bound" &&
-            (candidate.status === "submitted" ||
+            (candidate.status === "busy" ||
+              candidate.status === "submitted" ||
               candidate.status === "streaming" ||
               candidate.status === "resuming"));
         let statusLabel = "Open response";
@@ -57,7 +60,10 @@ export const EveResponseGroupCards = ({
           statusLabel = "Needs input";
         } else if (loading) {
           statusLabel = "Generating...";
-        } else if (candidate.status === "ready") {
+        } else if (
+          candidate.status === "idle" ||
+          candidate.status === "ready"
+        ) {
           statusLabel = selected ? "Selected" : "Task completed";
         }
         return {

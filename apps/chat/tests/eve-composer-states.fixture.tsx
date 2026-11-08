@@ -3,8 +3,6 @@ import React, { useState } from "react";
 import type { ComponentProps } from "react";
 import { createRoot } from "react-dom/client";
 
-import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-
 import { ChatComposer } from "../components/chat/chat-composer";
 import { MessageScrollerProvider } from "../components/ui/message-scroller";
 import { EveThinkingMessage } from "../components/eve/eve-thinking-message";
@@ -21,10 +19,7 @@ const states: {
   {
     cancellable: true,
     name: "Waiting for content",
-    parts: [
-      { type: "step-start" },
-      { state: "streaming", text: "", type: "text" },
-    ],
+    parts: [{ state: "streaming", text: "", type: "text" }],
     status: "streaming",
   },
   {
@@ -60,7 +55,7 @@ const Fixture = (): React.JSX.Element => {
           cancellable,
           stopDisabled,
           parts,
-        }: ReadonlyNativeSurface<(typeof states)[number]>) => (
+        }: (typeof states)[number]) => (
           <section aria-label={name} key={name}>
             <h2>{name}</h2>
             <MessageScrollerProvider>

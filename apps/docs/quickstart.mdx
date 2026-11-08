@@ -3,6 +3,12 @@ title: "Quickstart"
 description: "Get ChatJS running in minutes"
 ---
 
+<Callout type="warning">
+  **ChatJS 1.0 is in alpha.** You can build apps with it, but APIs,
+  configuration, and generated code may change substantially before the stable
+  release. Use `chat-js@alpha` to try the current alpha.
+</Callout>
+
 ## Prerequisites
 
 Install **Node.js 24+** and a package manager: npm, yarn, pnpm, or Bun.
@@ -10,7 +16,7 @@ Install **Node.js 24+** and a package manager: npm, yarn, pnpm, or Bun.
 ## 1. Create your project
 
 ```bash
-npx @chat-js/cli@latest create my-app
+npx chat-js@alpha create my-app
 cd my-app
 ```
 
@@ -28,7 +34,7 @@ Fill in `.env.local` using the generated example. You need:
 | --- | --- |
 | PostgreSQL connection | [PostgreSQL setup](./reference/database#eve-workflow-database) |
 | AI gateway credentials | [Gateways](./gateways/overview) |
-| Authentication provider credentials and secrets | [Authentication](./core/authentication) and [environment variables](./reference/env-vars) |
+| Authentication provider credentials and secrets | [Authentication](./customization/authentication) and [environment variables](./reference/env-vars) |
 | Credentials for any optional features you selected | [Environment variables](./reference/env-vars) |
 
 Generate `AUTH_SECRET` and `EVE_GATEWAY_SECRET` independently by running `openssl rand -base64 32` once for each. Leave `EVE_INTERNAL_ORIGIN` blank for the integrated worker; it follows the deployment or local app. Local/self-hosted workflows default to `DATABASE_URL` and require a direct or session connection. Set `WORKFLOW_POSTGRES_URL` to use a separate workflow database. Vercel deployments use managed Workflow and do not need that variable.
@@ -110,10 +116,10 @@ You're up and running. Here's where to go next:
   <Card title="Configuration" icon="settings" href="/core/configuration">
     Customize features, branding, and settings in chat.config.ts
   </Card>
-  <Card title="AI Capabilities" icon="sparkles" href="/features/overview">
+  <Card title="AI Capabilities" icon="sparkles" href="./tools/overview">
     Explore built-in tools: web search, image generation, code execution
   </Card>
-  <Card title="Desktop App" icon="monitor" href="/platforms/desktop">
+  <Card title="Desktop App" icon="monitor" href="./deployment/desktop">
     Package your app as a native desktop application with Electron
   </Card>
 </CardGroup>

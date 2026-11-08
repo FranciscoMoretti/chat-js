@@ -7,12 +7,18 @@ import { FollowUpSuggestionsView } from "./followup-suggestions-view";
 
 export const FollowupSuggestions = ({
   conversationId,
+  sessionId,
   events,
   lastMessage,
   onSelect,
   disabled,
 }: ChatSuggestionsProps): React.JSX.Element | null => {
-  const suggestions = useEveFollowups(conversationId, events, lastMessage);
+  const suggestions = useEveFollowups(
+    conversationId,
+    sessionId,
+    events,
+    lastMessage
+  );
   return (
     <FollowUpSuggestionsView
       suggestions={suggestions}

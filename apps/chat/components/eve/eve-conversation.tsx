@@ -1,4 +1,5 @@
 "use client";
+import type { SessionStreamEvent } from "eve/client";
 
 import { useEveDeliveryReceipt } from "./use-eve-delivery-receipt";
 
@@ -55,6 +56,27 @@ import { useEveMessageDelivery } from "./use-eve-message-delivery";
 import { useLogicalCommands } from "./use-logical-commands";
 import { ChatMessageEditor } from "../chat/chat-message-editor";
 import { ChatConversationScreen } from "../chat/chat-conversation-screen";
+
+const settledError = (
+  event: SessionStreamEvent | undefined
+): string | undefined => {
+  if (event?.type !== "turn.settled") {
+    return undefined;
+  }
+  return event.data.error?.message;
+};
+
+const composerStatus = (
+  status: string
+): "submitted" | "streaming" | "ready" => {
+  if (status === "resuming") {
+    return "submitted";
+  }
+  if (status === "busy") {
+    return "streaming";
+  }
+  return "ready";
+};
 
 const sameComposerDraft = (
   draft: {
@@ -164,13 +186,13 @@ const conversationStatus = (
   return label;
 };
 
-const isInputResponseDisabled = (
+const isAnswerDisabled = (
   status: string | undefined,
   commandPending: boolean
-): boolean => commandPending || status === "submitted" || status === "resuming";
+): boolean => commandPending || status === "busy" || status === "resuming";
 
 const isExecutionBusy = (status: string | undefined): boolean =>
-  status === "streaming" || status === "submitted" || status === "resuming";
+  status === "busy" || status === "resuming";
 
 const selectedConversationMessages = (
   messages: readonly ReadonlyEveMessage[],
@@ -429,7 +451,7 @@ const EveConversationComposer = ({
         </p>
       )}
       <EveComposer
-        status={status === "resuming" ? "submitted" : status}
+        status={composerStatus(status)}
         disabled={
           !composerDraft.loaded ||
           busy ||
@@ -526,20 +548,15 @@ const EveConversation = ({
     delivery.accept
   );
   const latestTurn = agent.events.findLast(
-    (event) =>
-      event.type === "turn.started" ||
-      event.type === "turn.failed" ||
-      event.type === "turn.completed" ||
-      event.type === "turn.cancelled"
+    (event) => event.type === "turn.started" || event.type === "turn.settled"
   );
-  const durableError =
-    latestTurn?.type === "turn.failed" ? latestTurn.data.message : undefined;
+  const durableError = settledError(latestTurn);
   const displayedError =
     commandFailure?.message ?? agent.error?.message ?? durableError;
   // Failed provisional messages are retained in the recovery panel below.
   // They must not look like accepted transcript entries or survive a retry twice.
   const messages = selectedConversationMessages(
-    agent.data.messages,
+    agent.messages,
     controller,
     snapshot,
     conversationId
@@ -547,10 +564,7 @@ const EveConversation = ({
   const lastMessage = messages.at(-1);
   const editingMessageId =
     fork.editingMessageId ??
-    messages.find(
-      (message) =>
-        message.id === fork.editingBoundary && Boolean(fork.editingBoundary)
-    )?.id;
+    messages.find((message) => message.id === fork.editingBoundary)?.id;
   const responseModels = responseModelReferences(agent.events);
   const modelForMessage = (
     message: Readonly<Pick<(typeof messages)[number], "metadata">>
@@ -564,15 +578,16 @@ const EveConversation = ({
       separator > 0 &&
       separator < reference.length - 1
     ) {
-      return reference.slice(separator + 1);
+      return reference;
     }
     return undefined;
   };
   const busy = isExecutionBusy(agent.status);
-  const hasApproval = agent.data.messages.some((message) =>
+  const hasApproval = agent.messages.some((message) =>
     message.parts.some(
       (part) =>
-        part.type === "dynamic-tool" && part.state === "approval-requested"
+        (part.type === "tool" && part.interaction?.status === "open") ||
+        (part.type === "interaction" && part.status === "open")
     )
   );
   const run = async (action: () => Promise<unknown>): Promise<void> => {
@@ -712,16 +727,14 @@ const EveConversation = ({
       replaying={agent.status === "resuming"}
       onStopExecution={cancelExecution}
       logicalChatId={controller.chatId}
-      getExecutionMessages={(id) =>
-        snapshot.agents.get(id)?.data.messages ?? []
-      }
+      getExecutionMessages={(id) => snapshot.agents.get(id)?.messages ?? []}
       isExecutionBusy={(id) => {
         const status = snapshot.agents.get(id)?.status;
         return isExecutionBusy(status);
       }}
       conversationId={conversationId}
       documentActionsDisabled={actionLocks.document}
-      messages={agent.data.messages}
+      messages={agent.messages}
       onDocumentAction={async ({ message, modelId }) => {
         await run(async () => {
           await submitMessage(message, [], modelId, false);
@@ -735,7 +748,7 @@ const EveConversation = ({
           actionsDisabled: actionLocks.transcript,
           conversationId,
           disabled: busy || commandPending,
-          inputDisabled: isInputResponseDisabled(agent.status, commandPending),
+          inputDisabled: isAnswerDisabled(agent.status, commandPending),
           isReadonly: false,
           messages,
           editor: hasText(editingMessageId)
@@ -814,6 +827,7 @@ const EveConversation = ({
           },
           suggestions: (
             <ChatSuggestions
+              sessionId={sessionId}
               conversationId={conversationId}
               events={agent.events}
               lastMessage={lastMessage}
@@ -848,7 +862,7 @@ const EveConversation = ({
             });
           },
         }}
-        status={agent.status}
+        status={composerStatus(agent.status)}
         leading={
           initialMessage !== undefined &&
           initialMessage !== "" &&

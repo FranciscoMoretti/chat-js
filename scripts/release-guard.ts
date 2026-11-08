@@ -5,11 +5,13 @@ const packageSchema = z.object({
   name: z.string(),
   version: z.string().optional(),
   private: z.boolean().optional(),
-  publishConfig: z.object({ registry: z.string().optional() }).optional(),
+  publishConfig: z
+    .object({ registry: z.string().optional(), tag: z.string().optional() })
+    .optional(),
 });
 const registryResultSchema = z.object({
   version: z.string(),
-  "dist-tags": z.object({ latest: z.string() }),
+  "dist-tags": z.record(z.string(), z.string()),
 });
 const isPrerelease = (version: string): boolean =>
   version.split("+")[0].includes("-");
@@ -19,6 +21,7 @@ export interface ReleasePackage {
   readonly version: string;
   readonly directory: string;
   readonly registry?: string;
+  readonly tag?: string;
 }
 
 export const publicPrereleases = async (
@@ -50,6 +53,7 @@ export const publicPrereleases = async (
           version: entry.version,
           directory: path.dirname(path.join(root, file)),
           registry: entry.publishConfig?.registry,
+          tag: entry.publishConfig?.tag,
         },
       ];
     })
@@ -88,9 +92,14 @@ const queryPublishedPackage = async (
   return JSON.parse(output);
 };
 
-// Changesets defaults to latest even when publishConfig.tag says beta. It may
-// enter the ordinary release path only after every local prerelease is already
-// published; Changesets then skips those versions instead of publishing them.
+// Changesets defaults to latest even when publishConfig.tag specifies a
+// prerelease channel. It may enter the ordinary release path only after every
+// local prerelease is already published; Changesets then skips those versions.
+// 1.0.0-alpha.2 is the approved default. 1.0.0-alpha.0 fetches registry
+// 0.2.0-beta.2 and rejects every gateway because those items still install
+// lib/ai/gateway.ts. Pointing latest to another prerelease needs a fresh review.
+const approvedPrereleaseDefaults = new Map([["chat-js", "1.0.0-alpha.2"]]);
+
 export const assertPrereleasesPublished = async (
   packages: readonly ReleasePackage[],
   lookup: (entry: ReleasePackage) => Promise<unknown> = queryPublishedPackage
@@ -99,17 +108,23 @@ export const assertPrereleasesPublished = async (
     packages.map(async (entry) => {
       try {
         const published = registryResultSchema.parse(await lookup(entry));
+        const { latest } = published["dist-tags"];
+        const approvedDefault =
+          latest !== undefined &&
+          approvedPrereleaseDefaults.get(entry.name) === latest;
         if (
           published.version !== entry.version ||
-          isPrerelease(published["dist-tags"].latest)
+          (entry.tag !== undefined &&
+            published["dist-tags"][entry.tag] !== entry.version) ||
+          (latest !== undefined && isPrerelease(latest) && !approvedDefault)
         ) {
           throw new Error(
-            "The exact version must exist and latest must remain stable"
+            "The exact version and configured tag must match, and latest must be absent, stable, or explicitly approved"
           );
         }
       } catch {
         throw new Error(
-          `Refusing ordinary release for ${entry.name}@${entry.version}. Publish the audited beta explicitly first with --tag beta, verify the exact version and stable latest tag, then retry. Registry lookup failures also block publication.`
+          `Refusing ordinary release for ${entry.name}@${entry.version}. Publish the audited prerelease explicitly first with its prerelease tag, verify the exact version and configured tag match and that latest is absent, stable, or explicitly approved, then retry. Registry lookup failures also block publication.`
         );
       }
     })

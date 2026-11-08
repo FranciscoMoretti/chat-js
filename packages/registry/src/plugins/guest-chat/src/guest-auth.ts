@@ -50,7 +50,7 @@ const guestOperation = (
   if (method !== "POST") {
     return null;
   }
-  if (url.pathname === `${path}/reset`) {
+  if (url.pathname === `${path}/end`) {
     return {
       body:
         claims.purpose === "cleanup"
@@ -151,7 +151,7 @@ export const authenticateDisposableGuest = async (
     authenticator: "chatjs-disposable-guest",
     issuer: "chatjs",
     principalId: claims.ownerId,
-    principalType: "user",
+    principalType: "guest",
     subject: claims.ownerId,
   };
 };

@@ -28,7 +28,7 @@ test.each(["workflow", "metadata", "client"] satisfies (
   }
 );
 
-test("persisted fork workflow IDs resolve to the same callable workflow", async () => {
+test("fresh fork workflows register only the canonical runtime identity", async () => {
   const result = await applyWorkflowTransform(
     "entry.js",
     'async function workflowEntry() { "use workflow"; return "recovered"; }',
@@ -40,7 +40,7 @@ test("persisted fork workflow IDs resolve to the same callable workflow", async 
   runInNewContext(result.code, { __private_workflows: workflows });
   const current = workflows.get("workflow//eve//workflowEntry");
   const persisted = workflows.get("workflow//@chat-js/eve//workflowEntry");
-  expect(persisted).toBeDefined();
-  expect(persisted).toBe(current);
-  await expect(persisted?.()).resolves.toBe("recovered");
+  expect(persisted).toBeUndefined();
+  expect(current).toBeDefined();
+  await expect(current?.()).resolves.toBe("recovered");
 });

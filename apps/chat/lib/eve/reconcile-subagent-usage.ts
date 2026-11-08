@@ -10,7 +10,6 @@ import { ingestEveUsage } from "./usage";
 import { tryEveAccountingWrite } from "./accounting-log";
 
 const INITIAL_STREAM_INDEX = 0;
-const STREAM_EVENT_INCREMENT = 1;
 const STREAM_READ_TIMEOUT_MS = 15_000;
 
 /**
@@ -45,15 +44,14 @@ const reconcileEveSubagentUsage = async (
     if (!replayUnpriced && length === start) {
       continue;
     }
-    let childIndex = start;
+    const nativeSession = client.sessions.attach(child.sessionId);
     let childUnresolved = false;
     // oxlint-disable-next-line eslint/no-await-in-loop -- Discover and settle descendants before their durable cursor advances; each of four workers must finish its read and observe shared failure before scheduling another.
-    for await (const event of client.sessions.attach(child.sessionId).stream({
+    for await (const event of nativeSession.stream({
       follow: false,
       signal: AbortSignal.timeout(STREAM_READ_TIMEOUT_MS),
       startIndex: start,
     })) {
-      childIndex += STREAM_EVENT_INCREMENT;
       if (
         !(await ingestEveUsage(ownerId, child.sessionId, event, {
           sessionId,
@@ -63,8 +61,9 @@ const reconcileEveSubagentUsage = async (
         childUnresolved = true;
       }
       if (
-        event.type === "agent.started" &&
-        !event.data.remote &&
+        event.type === "child.opened" &&
+        event.data.stream ===
+          `/eve/v1/session/${encodeURIComponent(event.data.sessionId)}/stream` &&
         !discovered.has(event.data.sessionId)
       ) {
         const nested = await getEveSubagent(ownerId, event.data.sessionId);
@@ -76,6 +75,7 @@ const reconcileEveSubagentUsage = async (
         descendants.push(nested);
       }
     }
+    const childIndex = nativeSession.state.streamIndex;
     if (childUnresolved) {
       unresolved = true;
     } else if (childIndex > start) {

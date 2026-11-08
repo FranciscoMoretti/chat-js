@@ -1,13 +1,27 @@
 ---
 title: Overview
-description: "@chat-js/cli — scaffold and manage ChatJS applications"
+description: "chat-js — scaffold and manage ChatJS applications"
 ---
 
-`@chat-js/cli` gets you from zero to a running ChatJS app in one command. No installation required — run it directly with `npx`:
+<Callout type="warning">
+  **ChatJS 1.0 is in alpha.** You can build apps with it, but APIs,
+  configuration, and generated code may change substantially before the stable
+  release. Use `chat-js@alpha` to try the current alpha.
+</Callout>
+
+`chat-js` gets you from zero to a running ChatJS app in one command. No global CLI installation is required. With Bun installed, run:
 
 ```bash
-npx @chat-js/cli@latest create my-app
+bunx chat-js@alpha create my-app
 ```
+
+With npm instead of Bun, use:
+
+```bash
+npx chat-js@alpha create my-app
+```
+
+Creation detects npm from its default `npm/` user-agent prefix. If you override npm's `user-agent` setting, preserve that prefix. An unrecognized launcher falls back to Bun and requires Bun to be installed.
 
 <CardGroup cols={2}>
   <Card title="create" icon="rocket" href="/cli/create">
@@ -22,5 +36,11 @@ npx @chat-js/cli@latest create my-app
   </Card>
   <Card title="status" icon="list" href="/cli/status">
     Inspect plugin-owned files, local edits, and removal dependencies.
+  </Card>
+  <Card title="sync" icon="refresh-cw" href="./sync">
+    Regenerate registrations after descriptor or direct shadcn changes.
+  </Card>
+  <Card title="remove" icon="minus" href="./remove">
+    Disconnect plugins while retaining schema inputs and stored data.
   </Card>
 </CardGroup>

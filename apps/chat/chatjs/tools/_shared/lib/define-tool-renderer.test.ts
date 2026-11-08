@@ -75,10 +75,13 @@ const renderResult = ({
       part: {
         input,
         output,
-        state: "output-available",
-        toolCallId: "call-fixture",
-        toolName,
-        type: "dynamic-tool",
+        state: "completed",
+        callId: "call-fixture",
+        type: "tool",
+        kind: "tool",
+        stepIndex: 0,
+        name: toolName,
+        label: toolName,
       },
     })
   );
@@ -145,12 +148,18 @@ test("shows a failed tool instead of its loading skeleton", () => {
       isReadonly: true,
       messageId: "message-fixture",
       part: {
-        errorText: "Weather service unavailable",
+        error: {
+          code: "fixture_error",
+          message: "Weather service unavailable",
+        },
         input: {},
-        state: "output-error",
-        toolCallId: "call-fixture",
-        toolName: "getWeather",
-        type: "dynamic-tool",
+        state: "failed",
+        callId: "call-fixture",
+        name: "getWeather",
+        label: "getWeather",
+        type: "tool",
+        kind: "tool",
+        stepIndex: 0,
       },
     })
   );

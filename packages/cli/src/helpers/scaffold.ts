@@ -61,7 +61,7 @@ const getCliPackageRoot = (): string => {
     }
   }
 
-  throw new Error("Could not locate the @chat-js/cli package root.");
+  throw new Error("Could not locate the chat-js package root.");
 };
 
 const getRepoRoot = (): string =>
@@ -219,21 +219,6 @@ const applyChatTemplateSourceTransforms = async (
       getRepoRoot(),
       "patches",
       "workflow-world-postgres@5.0.0-beta.40.patch"
-    ),
-  });
-  await vendorPatchedPackage({
-    destination,
-    dependencyName: "eve",
-    packageDir: await resolvePackageDirectory(
-      "eve",
-      pathModule.join(getRepoRoot(), "apps", "chat"),
-      "@chat-js/eve"
-    ),
-    packageName: "@chat-js/eve",
-    patchPath: pathModule.join(
-      getRepoRoot(),
-      "patches",
-      "@chat-js%2Feve@0.80.1-chatjs.4.patch"
     ),
   });
 };

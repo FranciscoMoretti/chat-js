@@ -32,8 +32,6 @@ const mocks = vi.hoisted(() => ({
   create: vi.fn(),
   bind: vi.fn(),
   ip: vi.fn(),
-  lifecycle: vi.fn(),
-  lifecycleCheck: vi.fn(),
 }));
 const settings = vi.hoisted(
   (): {
@@ -65,14 +63,12 @@ vi.mock("@/lib/eve/model-selection", () => ({
   loadEveModelDefinition: mocks.model,
 }));
 
-vi.mock("@/lib/eve/deletion-lifecycle", () => ({
-  requireEveDeletionLifecycle: mocks.lifecycle,
-}));
+vi.mock("@/lib/eve/deletion-lifecycle", () => {
+  throw new Error("Guest admission must not load the account purge lifecycle");
+});
 
 beforeEach(() => {
   vi.clearAllMocks();
-  mocks.lifecycle.mockImplementation(() => ({ check: mocks.lifecycleCheck }));
-  mocks.lifecycleCheck.mockResolvedValue(null);
   mocks.create.mockResolvedValue({
     status: "ready",
     guest: { id: "00000000-0000-4000-8000-000000000001" },
@@ -169,34 +165,4 @@ test("never sends a creation credential to a request-derived host", async () => 
   );
   expect(response.status).toBe(HTTP_STATUS.serviceUnavailable);
   expect(mocks.fetch).not.toHaveBeenCalled();
-});
-
-test("unsupported workflow lifecycle blocks guest admission before policy creation", async () => {
-  mocks.lifecycle.mockImplementationOnce(() => {
-    throw new Error("unsupported managed world");
-  });
-  const response = await POST(request({ modelId: "openai/gpt-5-nano" }));
-  expect(response.status).toBe(HTTP_STATUS.serviceUnavailable);
-  expect(mocks.create).not.toHaveBeenCalled();
-  expect(mocks.fetch).not.toHaveBeenCalled();
-});
-
-test("missing fences or failed lifecycle readiness blocks guest admission", async () => {
-  mocks.lifecycleCheck.mockRejectedValueOnce(
-    new Error("private database details")
-  );
-  const response = await POST(request({ modelId: "openai/gpt-5-nano" }));
-  expect(response.status).toBe(HTTP_STATUS.serviceUnavailable);
-  expect(await response.text()).not.toContain("private database details");
-  expect(mocks.create).not.toHaveBeenCalled();
-  expect(mocks.fetch).not.toHaveBeenCalled();
-});
-
-test("guest policy creation follows verified lifecycle readiness", async () => {
-  const response = await POST(request({ modelId: "openai/gpt-5-nano" }));
-  expect(response.status).toBe(HTTP_STATUS.ok);
-  expect(mocks.lifecycleCheck).toHaveBeenCalledOnce();
-  expect(mocks.lifecycleCheck.mock.invocationCallOrder[0]).toBeLessThan(
-    mocks.create.mock.invocationCallOrder[0]
-  );
 });

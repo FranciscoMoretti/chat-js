@@ -8,13 +8,16 @@ import { createToolResult } from "../lib/eve/tool-result";
 const imageMode = process.argv.includes("--image");
 const common = {
   input: { prompt: "A tree in the wind" },
-  toolCallId: "fixture",
-  toolName: imageMode ? "generateImage" : "generateVideo",
-  type: "dynamic-tool",
+  callId: "fixture",
+  name: imageMode ? "generateImage" : "generateVideo",
+  label: imageMode ? "generateImage" : "generateVideo",
+  type: "tool",
+  kind: "tool",
+  stepIndex: 0,
 } as const;
-const parts: Extract<EveMessagePart, { type: "dynamic-tool" }>[] = [
-  { ...common, inputText: "", state: "input-streaming" },
-  { ...common, state: "input-available" },
+const parts: Extract<EveMessagePart, { type: "tool" }>[] = [
+  { ...common, input: undefined, inputText: "", state: "streaming" },
+  { ...common, state: "requested" },
   {
     ...common,
     output: createToolResult(
@@ -32,19 +35,22 @@ const parts: Extract<EveMessagePart, { type: "dynamic-tool" }>[] = [
       },
       0.5
     ),
-    state: "output-available",
+    state: "completed",
   },
   {
     ...common,
-    errorText: imageMode
-      ? "Image provider unavailable"
-      : "Video provider unavailable",
-    state: "output-error",
+    error: {
+      code: "fixture_error",
+      message: imageMode
+        ? "Image provider unavailable"
+        : "Video provider unavailable",
+    },
+    state: "failed",
   },
   {
     ...common,
-    approval: { approved: false, id: "fixture" },
-    state: "output-denied",
+
+    state: "rejected",
   },
   {
     ...common,
@@ -52,9 +58,9 @@ const parts: Extract<EveMessagePart, { type: "dynamic-tool" }>[] = [
       { error: "Upload failed after provider work completed." },
       0.5
     ),
-    state: "output-available",
+    state: "completed",
   },
-  { ...common, output: { invalid: true }, state: "output-available" },
+  { ...common, output: { invalid: true }, state: "completed" },
 ];
 process.stdout.write(
   renderToStaticMarkup(

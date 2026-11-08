@@ -72,7 +72,18 @@ export const createFixtureTransport = (
       case "followupSuggestions.get": {
         z.object({
           conversationId: z.literal(sampleConversation.id),
-          eventId: z.string().startsWith("preview-completion:"),
+          eventId: z
+            .string()
+            .refine(
+              (value) =>
+                z
+                  .tuple([
+                    z.literal("preview-session"),
+                    z.string(),
+                    z.literal("completed"),
+                  ])
+                  .safeParse(JSON.parse(value)).success
+            ),
         }).parse(input);
         return [
           "What should I build first?",

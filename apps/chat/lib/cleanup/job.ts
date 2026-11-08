@@ -4,7 +4,7 @@ import type { CleanupResult, CleanupTask } from "./contracts";
 
 const ORPHANED_ATTACHMENTS_RETENTION_TIME = 14_400_000;
 
-export const runCleanupJob = async () => {
+export const runCleanupJob = async (deadline = Number.POSITIVE_INFINITY) => {
   const tasks: readonly CleanupTask[] = [
     {
       id: "orphanedAttachments",
@@ -21,10 +21,12 @@ export const runCleanupJob = async () => {
   const results: Record<string, CleanupResult | { error: string }> = {};
   const settled = await Promise.allSettled(
     tasks.map(async (task) => {
-      const result = await task.run();
+      const result = await task.run({ deadline });
       if (
         !Number.isSafeInteger(result.deletedCount) ||
         result.deletedCount < 0 ||
+        !Number.isSafeInteger(result.retiredCount ?? 0) ||
+        (result.retiredCount ?? 0) < 0 ||
         !Number.isSafeInteger(result.pendingCount ?? 0) ||
         (result.pendingCount ?? 0) < 0 ||
         typeof result.skipped !== "boolean"

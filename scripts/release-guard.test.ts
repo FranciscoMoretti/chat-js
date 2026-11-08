@@ -5,7 +5,7 @@ import path from "node:path";
 import { assertPrereleasesPublished, publicPrereleases } from "./release-guard";
 
 const beta = {
-  name: "@chat-js/cli",
+  name: "chat-js",
   version: "0.9.0-beta.1",
   directory: "/unused",
 };
@@ -42,7 +42,6 @@ for (const result of [
   { error: { code: "E404" } },
   { version: "0.9.0-beta.0", "dist-tags": { latest: "0.8.0" } },
   { version: beta.version, "dist-tags": { latest: beta.version } },
-  { version: beta.version, "dist-tags": {} },
 ]) {
   test(`refuses unsafe registry state: ${JSON.stringify(result)}`, async () => {
     const message = await rejectionMessage(async () => {
@@ -52,7 +51,7 @@ for (const result of [
       );
     });
     expect(message).toContain(
-      "Publish the audited beta explicitly first with --tag beta"
+      "Publish the audited prerelease explicitly first with its prerelease tag"
     );
   });
 }
@@ -79,7 +78,10 @@ test("discovers public workspace prereleases and retains their configured regist
       JSON.stringify({
         name: beta.name,
         version: beta.version,
-        publishConfig: { registry: "https://registry.example.test" },
+        publishConfig: {
+          registry: "https://registry.example.test",
+          tag: "beta",
+        },
       })
     );
     await Bun.write(
@@ -100,9 +102,80 @@ test("discovers public workspace prereleases and retains their configured regist
         version: beta.version,
         directory: path.join(root, "packages/cli"),
         registry: "https://registry.example.test",
+        tag: "beta",
       },
     ]);
   } finally {
     await rm(root, { recursive: true, force: true });
   }
 });
+
+test("allows an audited alpha before the first stable release", async () => {
+  const alpha = { ...beta, version: "1.0.0-alpha.2", tag: "alpha" };
+  await assertPrereleasesPublished(
+    [alpha],
+    async () =>
+      await Promise.resolve({
+        version: alpha.version,
+        "dist-tags": { alpha: alpha.version },
+      })
+  );
+  await assertPrereleasesPublished(
+    [alpha],
+    async () =>
+      await Promise.resolve({
+        version: alpha.version,
+        "dist-tags": { latest: alpha.version, alpha: alpha.version },
+      })
+  );
+});
+
+test("allows a later alpha while latest retains the approved default", async () => {
+  const alpha = { ...beta, version: "1.0.0-alpha.3", tag: "alpha" };
+  await assertPrereleasesPublished(
+    [alpha],
+    async () =>
+      await Promise.resolve({
+        version: alpha.version,
+        "dist-tags": { latest: "1.0.0-alpha.2", alpha: alpha.version },
+      })
+  );
+});
+
+for (const tags of [{}, { alpha: "1.0.0-alpha.2" }]) {
+  test(`rejects a missing or stale configured alpha tag: ${JSON.stringify(
+    tags
+  )}`, async () => {
+    const alpha = { ...beta, version: "1.0.0-alpha.3", tag: "alpha" };
+    const message = await rejectionMessage(async () => {
+      await assertPrereleasesPublished(
+        [alpha],
+        async () =>
+          await Promise.resolve({
+            version: alpha.version,
+            "dist-tags": { latest: "1.0.0-alpha.2", ...tags },
+          })
+      );
+    });
+    expect(message).toContain("configured tag match");
+  });
+}
+
+for (const entry of [
+  { ...beta, version: "1.0.0-alpha.3" },
+  { ...beta, name: "another-package", version: "1.0.0-alpha.0" },
+]) {
+  test(`rejects unapproved prerelease defaults for ${entry.name}@${entry.version}`, async () => {
+    const message = await rejectionMessage(async () => {
+      await assertPrereleasesPublished(
+        [entry],
+        async () =>
+          await Promise.resolve({
+            version: entry.version,
+            "dist-tags": { latest: entry.version },
+          })
+      );
+    });
+    expect(message).toContain("Refusing ordinary release");
+  });
+}

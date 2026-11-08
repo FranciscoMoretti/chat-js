@@ -17,6 +17,8 @@ test("word count source handles empty text and whitespace without phantom words"
     abortSignal: new AbortController().signal,
     callId: "test",
     getSandbox: unexpected,
+    to: unexpected,
+    channel: { kind: "http", metadata: {} },
     messages: [],
     getToken: unexpected,
     requireAuth: unexpected,

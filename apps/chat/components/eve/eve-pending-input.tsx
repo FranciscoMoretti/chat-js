@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import type { EveMessageInputRequest, InputResponse } from "eve/client";
+import type { InteractionRequest, Answer } from "eve/events";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -24,9 +24,9 @@ import {
 } from "@/components/ui/questionnaire";
 
 interface PendingInputProps {
-  readonly request: EveMessageInputRequest;
+  readonly request: InteractionRequest & { readonly interactionId: string };
   readonly disabled: boolean;
-  readonly respond: (response: InputResponse) => void;
+  readonly respond: (response: Answer) => void;
 }
 
 const PendingQuestion = ({
@@ -55,7 +55,10 @@ const PendingQuestion = ({
         choice &&
         request.options?.some((option) => option.id === choice.value) === true
       ) {
-        respond({ requestId: request.requestId, optionId: choice.value });
+        respond({
+          interactionId: request.interactionId,
+          optionId: choice.value,
+        });
         return;
       }
       const answer = new FormData(form).get("answer");
@@ -64,7 +67,7 @@ const PendingQuestion = ({
         typeof answer === "string" &&
         answer.trim()
       ) {
-        respond({ requestId: request.requestId, text: answer.trim() });
+        respond({ interactionId: request.interactionId, text: answer.trim() });
       }
     }}
   >
@@ -130,7 +133,10 @@ export const EvePendingInput = (
             variant={option.style === "danger" ? "destructive" : "outline"}
             onClick={() => {
               if (!disabled) {
-                respond({ requestId: request.requestId, optionId: option.id });
+                respond({
+                  interactionId: request.interactionId,
+                  optionId: option.id,
+                });
               }
             }}
             type="button"

@@ -1,4 +1,4 @@
-import { conversationReducer } from "eve/client";
+import { conversationOf } from "eve/client";
 import type { EveMessage } from "eve/client";
 import { describe, expect, it, vi } from "vitest";
 
@@ -39,25 +39,26 @@ const agent = (
       readonly parts: readonly ReadonlyEveMessagePart[];
     }
   >[],
-  status: NativeChatAgent["status"] = "ready"
+  status: NativeChatAgent["status"] = "idle"
 ): Parameters<LogicalChat["observe"]>[1] => ({
-  cancel: vi
-    .fn<NativeChatAgent["cancel"]>()
-    .mockRejectedValue(new Error("unused")),
-  conversation: conversationReducer.initial(),
-  data: { messages },
+  ...conversationOf([]),
+  messages,
+  cancel: async () => await Promise.reject(new Error("unused")),
+  clear: async () => await Promise.reject(new Error("unused")),
+  compact: async () => await Promise.reject(new Error("unused")),
+  end: async () => await Promise.reject(new Error("unused")),
+  follow: vi.fn<() => void>(),
   error: undefined,
   events: [],
   prewarm: vi.fn<NativeChatAgent["prewarm"]>().mockResolvedValue(),
-  reset: (): void => {
-    // This test runtime has no resettable external state.
-  },
-  respond: vi.fn<NativeChatAgent["respond"]>().mockResolvedValue(),
+  newSession: vi.fn<() => void>(),
+  respond: async () => await Promise.reject(new Error("unused")),
   resume: vi.fn<NativeChatAgent["resume"]>().mockResolvedValue(),
-  send: vi.fn<NativeChatAgent["send"]>().mockResolvedValue(),
+  send: async () => await Promise.reject(new Error("unused")),
   session: undefined,
   status,
 });
+
 const prefix = [
   message("u1", "user", "turn_0"),
   message("turn_0:assistant", "assistant", "turn_0"),
@@ -136,7 +137,7 @@ describe("logical chat over native sessions", () => {
           message("right-user", "user", "turn_0"),
           message("turn_0:assistant", "assistant", "turn_0"),
         ],
-        "streaming"
+        "busy"
       )
     );
     chat.observe("left", agent(prefix));
@@ -155,7 +156,7 @@ describe("logical chat over native sessions", () => {
           message("right-user", "user", "turn_0"),
           message("turn_0:assistant", "assistant", "turn_0", "late"),
         ],
-        "streaming"
+        "busy"
       )
     );
     expect(chat.getSnapshot().conversationId).toBe("left");
@@ -245,7 +246,7 @@ it("keeps a selected retry pending until its assistant binds", () => {
   chat.observe("root", agent(original));
   chat.observe(
     "retry",
-    agent([...seededPrefix, message("retry-u", "user", "turn_1")], "streaming")
+    agent([...seededPrefix, message("retry-u", "user", "turn_1")], "busy")
   );
   chat.selectBranch("retry");
   expect(chat.getSnapshot().conversationId).toBe("root");
@@ -257,7 +258,7 @@ it("keeps a selected retry pending until its assistant binds", () => {
         message("retry-u", "user", "turn_1"),
         message("turn_1:assistant", "assistant", "turn_1"),
       ],
-      "streaming"
+      "busy"
     )
   );
   expect(chat.getSnapshot().conversationId).toBe("retry");
@@ -285,11 +286,11 @@ it("navigation revokes a delayed pending response without affecting its native o
         message("retry-u", "user", "turn_1"),
         message("turn_1:assistant", "assistant", "turn_1"),
       ],
-      "streaming"
+      "busy"
     )
   );
   expect(chat.getSnapshot().conversationId).toBe("root");
-  expect(chat.getSnapshot().agents.get("retry")?.status).toBe("streaming");
+  expect(chat.getSnapshot().agents.get("retry")?.status).toBe("busy");
 });
 
 it("isolates command locks, failures and cancellation generations per execution", () => {
@@ -311,7 +312,7 @@ it("registration before the URL transition does not revoke initial follow", () =
   const chat = new LogicalChat("chat", "root");
   chat.setBranches([branch("root")]);
   chat.setVisible(false);
-  chat.observe("root", agent([prefix[0]], "streaming"));
+  chat.observe("root", agent([prefix[0]], "busy"));
   chat.setVisible(true);
   chat.observe("root", agent(prefix));
   expect(chat.getSnapshot().cursorId).toBe(

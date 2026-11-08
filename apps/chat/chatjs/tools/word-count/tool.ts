@@ -1,3 +1,4 @@
+import { validateToolOutput } from "@/chatjs/core/tools/validate-output";
 import { toolDefinition } from "./definition";
 import type { ToolUsage } from "@/lib/eve/tool-usage";
 import { defineTool } from "eve/tools";
@@ -31,7 +32,12 @@ export const wordCount = defineTool({
           .split(SENTENCE_SPLIT_REGEX)
           .filter((sentence) => sentence.trim().length > EMPTY_COUNT).length;
 
-        return { characters, charactersNoSpaces, sentences, words };
+        return validateToolOutput(toolDefinition.outputSchema, {
+          characters,
+          charactersNoSpaces,
+          sentences,
+          words,
+        });
       }
     ),
   inputSchema: toolDefinition.inputSchema,

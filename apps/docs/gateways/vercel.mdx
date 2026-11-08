@@ -28,7 +28,7 @@ AI_GATEWAY_API_KEY=your_key_here
 Install the gateway source (add `--replace` when another gateway is installed):
 
 ```bash
-bunx @chat-js/cli@latest add --gateway vercel
+bunx chat-js@alpha add --gateway vercel
 ```
 
 Then configure runtime model overrides for that installation:
@@ -59,7 +59,7 @@ The gateway authenticates using one of these (checked in order):
 
 ## Image Generation
 
-The Vercel gateway supports dedicated image models (e.g., `bfl/flux-pro-1.1`) through `createImageModel()`. This enables the built-in [Image Generation](/features/image-generation) feature.
+The Vercel gateway supports dedicated image models (e.g., `bfl/flux-pro-1.1`) through `createImageModel()`. This enables the built-in [Image Generation](/tools/generate-image) feature.
 
 ## Related
 

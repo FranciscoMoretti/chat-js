@@ -85,7 +85,7 @@ for (const base of ["base"] as const) {
           const text = await navigator.clipboard.readText();
           return text.trim();
         })
-      ).toBe("bunx @chat-js/cli@beta create my-chat");
+      ).toBe("bunx chat-js@alpha create my-chat");
     }
     expect(errors).toEqual([]);
   });

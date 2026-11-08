@@ -1,0 +1,110 @@
+---
+title: Desktop Distribution
+description: Brand, package, and distribute your Electron companion
+---
+
+Install and configure the [Desktop plugin](../plugins/desktop) before packaging. The Electron companion loads your hosted ChatJS app. Set the deployed app URL and use matching app identity and protocol settings in both builds.
+
+The [ChatJS release history](https://github.com/FranciscoMoretti/chat-js/releases) contains reference-app installers. The instructions below package your own application.
+
+## Auto-Updates
+
+The desktop integration uses `update-electron-app` with a public GitHub repository. Before packaging, set `repository.url` in `electron/package.json` to your own public release repository, replacing the scaffold's placeholder owner and repository:
+
+```json title="electron/package.json"
+{
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/your-app.git"
+  }
+}
+```
+
+Packaged macOS and Windows builds use that repository for update discovery. Before building each release, increment `version` in `electron/package.json` and match the release tag to that packaged version. For example, set `version` to `1.2.3`, then build and publish under `v1.2.3`. Publish the required update artifacts alongside your installers, following the [update service's asset naming conventions](https://github.com/electron/update.electronjs.org#asset-naming-convention). The service skips drafts, prereleases, and package-scoped tags such as `@chat-js/electron@0.3.2`.
+
+macOS builds must be signed for automatic updates. On Windows, install the app through the Squirrel.Windows installer produced by `bun run make:win`. Running the output of `bun run package` directly does not provide the Squirrel installation required for updates. Linux has no built-in support for this updater. Distribute Linux updates through a package repository or have users install the new `.deb` or `.rpm` manually. See [Electron's platform requirements](https://www.electronjs.org/docs/latest/api/auto-updater).
+
+## Customization
+
+### App icon
+
+Replace `electron/icon.png` with your own 512x512 PNG, then regenerate the platform-specific assets:
+
+```bash
+cd electron
+bun run generate-icons
+```
+
+### App name, scheme, and production URL
+
+Edit `chat.config.ts` in your project root:
+
+```ts
+const config = {
+  appName: "My App",
+  appPrefix: "myapp",
+  appUrl: "https://my-app.vercel.app",
+};
+```
+
+Before each build, the Electron prebuild step writes a `branding.json` file from those values and the plugin's `protocol.ts`. The native runtime imports this generated configuration instead of web-app modules. Rebuild after changing these settings.
+
+Use `electron/forge.config.ts` for packaging-specific settings. Keep the app identity and URL in `chat.config.ts` so protocol registration, authentication callbacks, and packaged builds use the same values.
+
+## Building for Distribution
+
+Install your project's dependencies and run the matching command from `electron/` on each build host. These are separate platform builds, not three commands to run on one machine. Outputs are written to `electron/out/`.
+
+### macOS
+
+Use a macOS host for the [DMG maker](https://www.electronforge.io/config/makers/dmg). The scaffold includes the required Forge makers. Signing additionally needs the configuration described below.
+
+```bash
+cd electron
+bun run make:mac
+```
+
+Produces `.dmg` and `.zip` artifacts.
+
+### Windows
+
+Use a Windows host for the scaffold's [Squirrel.Windows maker](https://www.electronforge.io/config/makers/squirrel.windows). Forge also supports Linux cross-builds with Mono and Wine installed.
+
+```bash
+cd electron
+bun run make:win
+```
+
+Produces the `.exe` installer and update artifacts.
+
+### Linux
+
+Use a Linux host. The [Debian maker](https://www.electronforge.io/config/makers/deb) requires `fakeroot` and `dpkg`. The [RPM maker](https://www.electronforge.io/config/makers/rpm) requires `rpm` or `rpm-build`. On Debian or Ubuntu:
+
+```bash
+sudo apt-get install fakeroot dpkg rpm
+cd electron
+bun run make:linux
+```
+
+Produces `.deb` and `.rpm` packages.
+
+To test the packaged app without an installer, use:
+
+```bash
+bun run package
+```
+
+## macOS Distribution Notes
+
+For public macOS distribution outside the App Store, you will usually want:
+
+- code signing
+- notarization
+- a stable bundle identifier and install path
+
+The scaffold includes a starter `electron/entitlements.mac.plist`. Configure signing in `electron/forge.config.ts` to use that file. Signing and notarization also require your Apple Developer credentials and CI setup.
+
+## Release automation
+
+Configure publishing for your own repository and distribution targets. [Desktop Release Process](../reference/desktop-releases) documents the ChatJS maintainer workflow for publishing installers. Its package-scoped release tags are incompatible with the default update service, so adapt the tags and verify update discovery before using that workflow for automatic updates.

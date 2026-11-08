@@ -1,6 +1,6 @@
 ---
 title: Registry Overview
-description: Choose gateway and tool extensions, and understand their source and installation contracts
+description: Understand extension distribution, source ownership, and installation contracts
 ---
 
 Use the ChatJS registry to install editable source and the dependencies required by your selected extensions. shadcn distributes and installs items. The ChatJS CLI configures the app and generates tool registrations from installed descriptors.
@@ -13,9 +13,11 @@ Choose a category based on what you want to change in your app.
 | --- | --- | --- |
 | Gateways | Select the AI backend when creating an app | [Choose a gateway](../gateways/overview) |
 | File Storage | Select the storage adapter when creating an app | [Choose storage](../storage) |
+| Sandboxes | Select execution infrastructure for tools and supported persistent EVE sessions | [Configure sandboxes](../deployment/sandboxes) |
 | Tools | Add server tools and their result renderers to an existing app | [Install tools](../tools/install) |
+| Plugins | Add optional app capabilities and integrations | [Choose plugins](../plugins/overview) |
 
-For gateways, use `chat-js create --gateway` to install and configure the selected adapter. For tools, use `chat-js add` to install items and regenerate registrations. For storage, use `chat-js create --storage-provider` to install an adapter and generate its typed options. Each category has its own activation contract.
+For gateways, use `chat-js create --gateway <gateway>` to install and configure the selected adapter. For tools, use `chat-js add` to install items and regenerate registrations. For storage, use `chat-js create --storage-provider <storage-provider>` to install an adapter and generate its typed options. For sandboxes, use `chat-js add --sandbox-provider <item>` to install infrastructure without a model-facing tool. For plugins, use `chat-js add <plugin>` and complete that plugin's setup. Each category has its own activation contract.
 
 ## Source and ownership
 

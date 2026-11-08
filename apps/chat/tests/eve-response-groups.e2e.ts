@@ -85,9 +85,9 @@ test("parallel reservations and partial dispatch retries keep ordered exact iden
         operation.operationId,
         eveMessageTitle(operation.message),
 
-        (id) => {
+        async (id) => {
           nativeCalls.push(id);
-          return createEveTestSession();
+          return await createEveTestSession();
         },
         { fork: operation.fork, initialModelId: operation.modelId }
       );
@@ -288,7 +288,9 @@ test("deleting a partial family erases group payloads and fences unstarted candi
       owner,
       group.candidates[1].operationId,
       input.message,
-      vi.fn<() => Promise<string>>().mockResolvedValue("must-not-create"),
+      vi
+        .fn<() => Promise<{ sessionId: string }>>()
+        .mockResolvedValue({ sessionId: "must-not-create" }),
       { fork: { conversationId: root.id } }
     )
   ).rejects.toThrow();
@@ -297,7 +299,9 @@ test("deleting a partial family erases group payloads and fences unstarted candi
       owner,
       group.candidates[1].operationId,
       input.message,
-      vi.fn<() => Promise<string>>().mockResolvedValue("must-not-create-root")
+      vi
+        .fn<() => Promise<{ sessionId: string }>>()
+        .mockResolvedValue({ sessionId: "must-not-create-root" })
     )
   ).rejects.toThrow("response group has been deleted");
   const [untouched] = await db
@@ -453,7 +457,7 @@ test("an in-flight candidate prevents family erasure until its binding resolves"
     async () => {
       entered.resolve();
       await release.promise;
-      return createEveTestSession();
+      return await createEveTestSession();
     }
   );
   await entered.promise;

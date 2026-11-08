@@ -10,7 +10,7 @@ Use Feedback to add private upvote and downvote actions to your assistant messag
 ### Add the plugin
 
 ```bash
-bunx @chat-js/cli@latest add feedback
+bunx chat-js@alpha add feedback
 ```
 
 When you install the plugin, the CLI registers the `feedback` router, message actions, and conversation cleanup callback.
@@ -23,7 +23,7 @@ bun run db:generate
 bun run db:migrate
 ```
 
-Your existing reference-app data keeps the same table and keys. See [plugin migrations](../core/plugins#database-migrations).
+Your existing reference-app data keeps the same table and keys. See [plugin migrations](./using-plugins#database-migrations).
 
 ## Usage
 

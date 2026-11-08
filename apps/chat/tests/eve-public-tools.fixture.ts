@@ -2,36 +2,63 @@ import type { EveMessage, EveMessagePart } from "eve/client";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
-import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-
 import { EveSharedMessages } from "../chatjs/plugins/sharing/ui/transcript-messages";
 import { sharedEvePart } from "../lib/eve/shared-messages";
 
 const parts: EveMessagePart[] = [
   {
-    approval: { id: "owner-approval-secret", isAutomatic: true },
     input: { note: "Published note" },
-    state: "approval-requested",
-    toolCallId: "approval",
-    toolName: "example",
-    type: "dynamic-tool",
+    state: "approval",
+    callId: "approval",
+    name: "example",
+    label: "example",
+    type: "tool",
+    kind: "tool",
+    stepIndex: 0,
+    interaction: {
+      interactionId: "owner-approval-secret",
+      turnId: "fixture-turn",
+      stepIndex: 0,
+      status: "open",
+      request: { kind: "approval", prompt: "Approve this tool?" },
+    },
   },
   {
-    approval: { approved: false, id: "owner-approval-secret" },
     input: { note: "Declined note" },
-    state: "output-denied",
-    toolCallId: "declined",
-    toolName: "example",
-    type: "dynamic-tool",
+    state: "rejected",
+    callId: "declined",
+    name: "example",
+    label: "example",
+    type: "tool",
+    kind: "tool",
+    stepIndex: 0,
+    interaction: {
+      interactionId: "owner-approval-secret",
+      turnId: "fixture-turn",
+      stepIndex: 0,
+      status: "settled",
+      outcome: "declined",
+      request: { kind: "approval", prompt: "Approve this tool?" },
+    },
   },
   {
-    approval: { approved: true, id: "owner-approval-secret" },
     input: { text: "one two" },
     output: { characters: 7, charactersNoSpaces: 6, sentences: 1, words: 2 },
-    state: "output-available",
-    toolCallId: "complete",
-    toolName: "wordCount",
-    type: "dynamic-tool",
+    state: "completed",
+    callId: "complete",
+    name: "wordCount",
+    label: "wordCount",
+    type: "tool",
+    kind: "tool",
+    stepIndex: 0,
+    interaction: {
+      interactionId: "owner-approval-secret",
+      turnId: "fixture-turn",
+      stepIndex: 0,
+      status: "settled",
+      outcome: "accepted",
+      request: { kind: "approval", prompt: "Approve this tool?" },
+    },
   },
   {
     input: {
@@ -47,22 +74,23 @@ const parts: EveMessagePart[] = [
       usage: { costUsd: 99 },
       version: 2,
     },
-    state: "output-available",
-    toolCallId: "malformed",
-    toolName: "codeExecution",
-    type: "dynamic-tool",
+    state: "completed",
+    callId: "malformed",
+    name: "codeExecution",
+    label: "codeExecution",
+    type: "tool",
+    kind: "tool",
+    stepIndex: 0,
   },
 ];
 process.stdout.write(
   renderToStaticMarkup(
     createElement(EveSharedMessages, {
-      messages: parts.map(
-        (part: ReadonlyNativeSurface<EveMessagePart>, index): EveMessage => ({
-          id: `public-${index}`,
-          parts: sharedEvePart(part),
-          role: "assistant",
-        })
-      ),
+      messages: parts.map((part: EveMessagePart, index): EveMessage => ({
+        id: `public-${index}`,
+        parts: sharedEvePart(part),
+        role: "assistant",
+      })),
     })
   )
 );

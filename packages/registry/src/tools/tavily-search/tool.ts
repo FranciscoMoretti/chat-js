@@ -9,7 +9,7 @@ import {
   executeMultiQuerySearch,
 } from "@/tools/platform/search-presentation";
 import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
-import { webSearchInput } from "./schemas";
+import { webSearchInput, webSearchResult } from "./schemas";
 import type { z } from "zod";
 
 const TAVILY_COST_CENTS = 5;
@@ -134,7 +134,8 @@ Avoid:
         usage.addCostUsd(TAVILY_COST_CENTS / CENTS_PER_USD);
 
         return result;
-      }
+      },
+      webSearchResult
     ),
   // Keep defaultable fields required and nullable for strict tool calling.
   inputSchema: webSearchInput,

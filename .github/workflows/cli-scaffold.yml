@@ -40,7 +40,7 @@ jobs:
             exit 0
           fi
           TURBO_VERSION="$(node -p "require('./package.json').devDependencies.turbo")"
-          if npx -y "turbo@${TURBO_VERSION}" query affected --tasks test:scaffold --packages @chat-js/cli --exit-code >/tmp/cli-scaffold-query.json 2>/tmp/cli-scaffold-query.log; then
+          if npx -y "turbo@${TURBO_VERSION}" query affected --tasks test:scaffold --packages chat-js --exit-code >/tmp/cli-scaffold-query.json 2>/tmp/cli-scaffold-query.log; then
             echo "run=false" >>"$GITHUB_OUTPUT"
           else
             status=$?
@@ -73,9 +73,10 @@ jobs:
           path: ~/.bun/install/cache
           key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
           restore-keys: ${{ runner.os }}-bun-
+      - uses: ./.github/actions/cache-electron
       - run: bun install --frozen-lockfile
       - name: Build CLI and run shared unit tests
-        run: bunx turbo run test:unit --filter=@chat-js/cli
+        run: bunx turbo run test:unit --filter=chat-js
       - name: Verify reusable registry validation
         run: bun run --cwd packages/registry-validation test:unit
       - name: Validate registry combinations in memory
@@ -129,6 +130,7 @@ jobs:
           path: ~/.bun/install/cache
           key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
           restore-keys: ${{ runner.os }}-bun-
+      - uses: ./.github/actions/cache-electron
       - run: bun install --frozen-lockfile
       - uses: actions/download-artifact@v4
         with:

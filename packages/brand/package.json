@@ -1,0 +1,21 @@
+{
+  "name": "@chatjs/brand",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./identity": "./src/identity.ts",
+    "./square": "./src/square.ts"
+  },
+  "scripts": {
+    "generate": "bun scripts/generate.ts",
+    "check": "bun scripts/generate.ts --check",
+    "test:types": "tsc --noEmit",
+    "test:unit": "bun test scripts/generate.test.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.12",
+    "sharp": "0.35.3",
+    "typescript": "6.0.2"
+  }
+}

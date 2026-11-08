@@ -31,7 +31,8 @@
     "electron:make": "bun run make",
     "electron:publish": "bun run publish",
     "lint": "oxlint . && oxfmt --check .",
-    "format": "oxfmt --write ."
+    "format": "oxfmt --write .",
+    "test:unit": "bun test"
   },
   "dependencies": {},
   "devDependencies": {

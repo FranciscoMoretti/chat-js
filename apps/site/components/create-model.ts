@@ -21,7 +21,7 @@ export const createCommand = (
   const selection = installationSelectionSchema.parse(installation);
   const args = [
     "bunx",
-    "@chat-js/cli@beta",
+    "chat-js@alpha",
     "create",
     "my-chat",
     "--yes",

@@ -14,7 +14,7 @@ const retrievedContent = z
   })
   .transform((item) => ({ ...item, language: item.language }));
 const retrievalFailure = z
-  .object({ error: z.string().optional() })
+  .strictObject({ error: z.string().optional() })
   .transform((item) => ({ error: item.error }));
 const retrievedResult = z.union([
   z.object({ error: z.string() }),

@@ -8,6 +8,7 @@ export default defineHook({
     "*": async (
       event: Parameters<typeof ingestEveActivity>[2],
       context: {
+        readonly now: Date;
         readonly session: {
           readonly auth: {
             readonly initiator: {
@@ -24,7 +25,12 @@ export default defineHook({
       }
       const ownerId = context.session.auth.initiator?.principalId;
       if (typeof ownerId === "string" && ownerId !== "") {
-        await ingestEveActivity(ownerId, context.session.id, event);
+        await ingestEveActivity(
+          ownerId,
+          context.session.id,
+          event,
+          context.now
+        );
       }
     },
   },

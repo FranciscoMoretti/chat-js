@@ -11,7 +11,7 @@ const conversationScopeTimeoutMilliseconds = 10_000;
 export default defineHook({
   events: {
     "turn.started": async (
-      _event: { readonly data: { readonly sequence: number } },
+      _event: unknown,
       context: Readonly<{
         session: Readonly<
           Pick<HookContext["session"], "id" | "auth" | "parent">

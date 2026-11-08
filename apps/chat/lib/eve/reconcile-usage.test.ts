@@ -1,6 +1,6 @@
 import { setTimeout as delay } from "node:timers/promises";
 import { beforeEach, expect, it, vi } from "vitest";
-import type { MessageStreamEvent } from "eve/client";
+import type { SessionStreamEvent } from "eve/client";
 import { reconcileEveOwnerUsage } from "./reconcile-usage";
 import type { withManagedUsageReconciliation } from "@/lib/db/eve-billing";
 
@@ -15,7 +15,7 @@ const mocks = vi.hoisted(() => ({
     VERCEL: "",
     VERCEL_ENV: "preview",
   },
-  events: new Map<string, MessageStreamEvent[]>(),
+  events: new Map<string, SessionStreamEvent[]>(),
   ingest: vi.fn(),
   managed: vi.fn<typeof withManagedUsageReconciliation>(),
   positions: vi.fn(),
@@ -57,19 +57,26 @@ vi.mock("./usage", () => ({ ingestEveUsage: mocks.ingest }));
 vi.mock("eve/client", () => ({
   Client: class {
     public sessions = {
-      attach: (
-        sessionId: string
-      ): {
-        stream: (options: unknown) => AsyncGenerator<MessageStreamEvent, void>;
-      } => ({
-        async *stream(
-          options: unknown
-        ): AsyncGenerator<MessageStreamEvent, void> {
-          mocks.streamOptions(options);
-          await mocks.read(sessionId);
-          yield* mocks.events.get(sessionId) ?? [];
-        },
-      }),
+      attach: (sessionId: string) => {
+        const state = { streamIndex: 0 };
+        return {
+          state,
+          async *stream(options: {
+            readonly startIndex: number;
+          }): AsyncGenerator<SessionStreamEvent, void> {
+            mocks.streamOptions(options);
+            await mocks.read(sessionId);
+            state.streamIndex = options.startIndex;
+            for (const event of mocks.events.get(sessionId) ?? []) {
+              if (event.meta.position.line < options.startIndex) {
+                continue;
+              }
+              state.streamIndex = event.meta.position.line + 1;
+              yield event;
+            }
+          },
+        };
+      },
     };
   },
 }));
@@ -276,16 +283,15 @@ it("reconciles child tails even when the root cursor is unchanged and preserves 
       usageStreamIndex: 2,
     },
   ]);
-  const event: MessageStreamEvent = {
-    data: {
-      code: "cancelled",
-      message: "Cancelled",
-      sequence: 0,
-      stepIndex: 0,
-      turnId: "turn_0",
+  const event: SessionStreamEvent = {
+    type: "model.settled",
+    data: { runId: "run", outcome: "failed" },
+    scope: { turnId: "turn_0" },
+    meta: {
+      at: "2026-09-28T00:00:00Z",
+      position: { line: 2, index: 0 },
+      endOfLine: true,
     },
-    meta: { at: "2026-09-28T00:00:00Z", id: "child-event" },
-    type: "step.failed",
   };
   mocks.events.set("child", [event]);
   await reconcileEveOwnerUsage("owner");
@@ -311,26 +317,24 @@ it("admits work without advancing child progress when a completed child charge r
   ]);
   mocks.events.set("child", [
     {
+      type: "call.settled",
       data: {
-        result: {
-          kind: "tool-result",
-          callId: "unpriced-tool",
-          toolName: "paid-tool",
-          output: {
-            kind: "chatjs.tool-result",
-            version: 1,
-            status: "success",
-            output: null,
-            usage: {},
-          },
+        callId: "unpriced-tool",
+        outcome: "completed",
+        output: {
+          kind: "chatjs.tool-result",
+          version: 1,
+          status: "success",
+          output: null,
+          usage: {},
         },
-        status: "completed",
-        sequence: 0,
-        stepIndex: 0,
-        turnId: "turn_0",
       },
-      meta: { at: "2026-09-28T00:00:00Z", id: "unpriced" },
-      type: "action.result",
+      scope: { turnId: "turn_0" },
+      meta: {
+        at: "2026-09-28T00:00:00Z",
+        position: { line: 0, index: 0 },
+        endOfLine: true,
+      },
     },
   ]);
   mocks.ingest.mockResolvedValue(false);
@@ -358,14 +362,18 @@ it("settles newly discovered descendants before admitting the next turn", async 
   mocks.events.set("child", [
     {
       data: {
-        callId: "call",
-        streamPath: "/stream",
+        owner: { callId: "call" },
+        stream: "/eve/v1/session/grandchild/stream",
         name: "worker",
         sessionId: "grandchild",
-        turnId: "turn_0",
       },
-      meta: { at: "2026-09-28T00:00:00Z", id: "delegation" },
-      type: "agent.started",
+      scope: { turnId: "turn_0" },
+      meta: {
+        at: "2026-09-28T00:00:00Z",
+        position: { line: 0, index: 0 },
+        endOfLine: true,
+      },
+      type: "child.opened",
     },
   ]);
   await reconcileEveOwnerUsage("owner");

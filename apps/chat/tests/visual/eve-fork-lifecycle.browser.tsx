@@ -101,7 +101,7 @@ const userMessage = (
 
 const responseMessage = (): EveMessage => ({
   id: "seed_message_1",
-  metadata: { modelId: "gateway/anthropic/claude-sonnet-4" },
+  metadata: { modelId: "anthropic/claude-sonnet-4" },
   parts: [{ text: "The answer", type: "text" }],
   role: "assistant",
 });

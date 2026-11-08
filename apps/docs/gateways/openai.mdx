@@ -17,7 +17,7 @@ OPENAI_API_KEY=sk-...
 3. Install the gateway source (add `--replace` when another gateway is installed):
 
 ```bash
-bunx @chat-js/cli@latest add --gateway openai
+bunx chat-js@alpha add --gateway openai
 ```
 
 Then configure runtime model overrides for that installation:
@@ -67,7 +67,7 @@ The OpenAI gateway supports dedicated image models through `createImageModel()`:
 - `gpt-image-1.5`
 - `dall-e-3`
 
-This enables the built-in [Image Generation](/features/image-generation) feature.
+This enables the built-in [Image Generation](../tools/generate-image) feature.
 
 ## Related
 

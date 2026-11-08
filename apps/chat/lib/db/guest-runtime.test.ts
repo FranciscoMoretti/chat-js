@@ -172,6 +172,13 @@ test("cleanup claims expired guests only and fences completion to exact binding"
   expect(
     await completeGuestRuntimeDeletion(expired.id, expired.sessionId)
   ).toBe(true);
+  // A second worker may finish the same claimed binding after its lease expires.
+  expect(
+    await completeGuestRuntimeDeletion(expired.id, expired.sessionId)
+  ).toBe(true);
+  expect(await completeGuestRuntimeDeletion(expired.id, active.sessionId)).toBe(
+    false
+  );
   const activePolicy = await readGuestRuntimeSession(active.sessionId);
   expect(activePolicy?.state).toBe("active");
   expect(await countPendingGuestRuntimeDeletions()).toBe(0);

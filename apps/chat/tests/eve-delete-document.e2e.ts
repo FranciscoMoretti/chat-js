@@ -4,7 +4,7 @@ import type { TestInfo } from "@playwright/test";
 
 import { and, eq, sql } from "drizzle-orm";
 import { Client } from "eve/client";
-import type { MessageStreamEvent } from "eve/client";
+import type { SessionStreamEvent } from "eve/client";
 import { z } from "zod";
 
 import { db } from "../lib/db/client";
@@ -13,19 +13,6 @@ import { getEveConnectionOptions } from "../lib/eve/connection-options";
 import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
-type DeleteDocumentEventReader =
-  | Readonly<{
-      type: "step.started";
-      data: Readonly<{ modelId: string; turnId: string }>;
-    }>
-  | Readonly<{ type: "turn.started"; data: Readonly<{ turnId: string }> }>
-  | Readonly<{
-      type: Exclude<
-        MessageStreamEvent["type"],
-        "step.started" | "turn.started"
-      >;
-      data?: unknown;
-    }>;
 
 test("installed deleteDocument requires approval, survives reload, and honors rejection", async ({
   page,
@@ -164,18 +151,18 @@ test("installed deleteDocument requires approval, survives reload, and honors re
     .slice(beforeApproval.events.length)
     .filter(
       (
-        event: DeleteDocumentEventReader
-      ): event is Extract<MessageStreamEvent, { type: "step.started" }> =>
-        event.type === "step.started"
+        event: SessionStreamEvent
+      ): event is Extract<SessionStreamEvent, { type: "model.started" }> =>
+        event.type === "model.started"
     );
   expect(resumedSteps.length).toBeGreaterThan(0);
   for (const step of resumedSteps) {
-    expect(step.data.modelId).toBe("gateway/openai/gpt-4.1-mini");
+    expect(step.data.modelId).toBe("openai/gpt-4.1-mini");
     expect(
       afterApproval.events.some(
-        (event: DeleteDocumentEventReader) =>
+        (event: SessionStreamEvent) =>
           event.type === "turn.started" &&
-          event.data.turnId === step.data.turnId
+          event.data.turnId === step.scope?.turnId
       )
     ).toBe(true);
   }

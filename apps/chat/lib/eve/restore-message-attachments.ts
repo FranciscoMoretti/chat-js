@@ -1,4 +1,4 @@
-import { Client, defaultMessageReducer } from "eve/client";
+import { Client, conversationOf } from "eve/client";
 import { attachmentDigest, draftAttachment } from "./draft";
 
 import type { ReadonlyEveMessagePart } from "./readonly-message-types";
@@ -103,16 +103,8 @@ const describeHistoricalAttachment = (
 const replayHistoricalUserMessage = (
   snapshot: Readonly<SessionSnapshot>,
   input: Readonly<{ messageId: string }>
-): ReturnType<
-  ReturnType<typeof defaultMessageReducer>["initial"]
->["messages"][number] => {
-  const reducer = defaultMessageReducer();
-  const reduceEvent = reducer.reduce.bind(reducer);
-  let state = reducer.initial();
-  for (const event of snapshot.events) {
-    state = reduceEvent(state, event);
-  }
-  const { messages } = state;
+): ReturnType<typeof conversationOf>["messages"][number] => {
+  const { messages } = conversationOf(snapshot.events);
   const message = messages.find(
     (item: Readonly<Pick<(typeof messages)[number], "id" | "role">>) =>
       item.id === input.messageId && item.role === "user"

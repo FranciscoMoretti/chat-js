@@ -1,10 +1,10 @@
+import { nativeToolEvents } from "./helpers/eve-tool-events";
 import { execFileSync } from "node:child_process";
 
 import { expect, test } from "@playwright/test";
 import type { TestInfo } from "@playwright/test";
 import { eq } from "drizzle-orm";
 import { Client } from "eve/client";
-import type { MessageStreamEvent } from "eve/client";
 
 import { db } from "../lib/db/client";
 import { eveConversation, eveUsage } from "../lib/db/schema";
@@ -16,23 +16,6 @@ import { toolResultSchema } from "../lib/eve/tool-result";
 import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(env.DATABASE_URL);
-type RunCodeActionResultReader =
-  | Readonly<{
-      type: "action.result";
-      data: Readonly<{
-        result: Readonly<{
-          callId: string;
-          kind: string;
-          output: unknown;
-          toolName?: string;
-        }>;
-      }>;
-    }>
-  | Readonly<{
-      type: Exclude<MessageStreamEvent["type"], "action.result">;
-      data?: unknown;
-    }>;
-
 test("saved-code controls cover pending, disabled, denied and error states", async ({
   page,
 }, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
@@ -151,30 +134,24 @@ test("artifact Run executes saved source, retains output across reload and shari
   const snapshot = await client.sessions
     .attach(binding.sessionId)
     .snapshot({ signal: AbortSignal.timeout(15_000) });
-  const executions = snapshot.events.filter(
-    (
-      event: RunCodeActionResultReader
-    ): event is Extract<MessageStreamEvent, { type: "action.result" }> =>
-      event.type === "action.result" &&
-      event.data.result.kind === "tool-result" &&
-      event.data.result.toolName === "runCodeDocument"
+  const executions = nativeToolEvents(
+    snapshot.events,
+    "runCodeDocument",
+    "call.settled"
   );
   expect(executions).toHaveLength(1);
   const [event] = executions;
-  if (
-    event?.type !== "action.result" ||
-    event.data.result.kind !== "tool-result"
-  ) {
+  if (event?.type !== "call.settled") {
     throw new Error("Missing native saved-code result");
   }
-  const result = toolResultSchema.parse(event.data.result.output);
+  const result = toolResultSchema.parse(event.data.output);
   expect(result.output).toMatchObject({
     code: 'console.log("saved-revision-73")',
     language: "javascript",
   });
   expect(result.usage.costUsd).toBe(0.05);
   await reconcileEveUsage(conversation.ownerId, binding.sessionId);
-  const evidenceId = `eve-tool:${binding.sessionId}:${event.data.result.callId}`;
+  const evidenceId = `eve-tool:${binding.sessionId}:${event.data.callId}`;
   const before = await db
     .select()
     .from(eveUsage)

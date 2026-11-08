@@ -239,10 +239,10 @@ export const ChatPreview = () => {
     status === "ready" && lastMessage?.role === "assistant"
       ? [
           {
-            type: "turn.completed",
-            data: { turnId: lastMessage.id, sequence: 0 },
+            type: "turn.settled",
+            data: { turnId: lastMessage.id, outcome: "completed" },
             meta: {
-              id: `preview-completion:${lastMessage.id}`,
+              position: { line: 1, index: 0 },
               at: "2026-01-01T00:00:00.000Z",
             },
           },
@@ -345,6 +345,7 @@ export const ChatPreview = () => {
                       messages: transcriptMessages,
                       suggestions: (
                         <ChatSuggestions
+                          sessionId="preview-session"
                           conversationId={sampleConversation.id}
                           events={completionEvents}
                           lastMessage={lastMessage}

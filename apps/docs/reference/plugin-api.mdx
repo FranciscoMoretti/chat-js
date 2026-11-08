@@ -5,7 +5,7 @@ description: Typed server and client contracts for optional ChatJS capabilities
 
 Plugins own optional behavior, storage, and UI. Core owns authentication, chat identity, lifecycle coordination, dispatch, and recovery. Core can name a capability such as Projects and declare its optional input fields without importing its implementation.
 
-Start with [Create a plugin](../cookbook/create-plugin) for installation and packaging. Use [Customize plugin integrations](../cookbook/customize-integrations) to add app-owned chat and billing behavior that survives later installation. Installed source lives in `chatjs/plugins/<id>/`, with thin framework adapters under `app/` and `agent/`.
+Start with [Create a plugin](../plugins/create-plugin) for installation and packaging. Use [Customize plugin integrations](../cookbook/customize-integrations) to add app-owned chat and billing behavior that survives later installation. Installed source lives in `chatjs/plugins/<id>/`, with thin framework adapters under `app/` and `agent/`.
 
 ## Entry points
 
@@ -186,7 +186,7 @@ These are React composition seams, not global registration hooks for arbitrary s
 
 ### Suggestions
 
-When you contribute to `ChatSuggestions`, it receives `conversationId`, native `events`, `lastMessage?: { role, metadata?: { turnId?: string } }`, `disabled`, and `onSelect`. It renders beneath the last editable message when transcript actions are available. Handle a missing `lastMessage`, `metadata`, or `turnId` without assuming completion identity. Your plugin owns completion matching, storage reads, and polling. The callback returns the selected text to core's existing send/compare flow.
+When you contribute to `ChatSuggestions`, it receives `sessionId`, `conversationId`, native `events`, `lastMessage?: { role, metadata?: { turnId?: string } }`, `disabled`, and `onSelect`. It renders beneath the last editable message when transcript actions are available. Handle a missing `lastMessage`, `metadata`, or `turnId` without assuming completion identity. Your plugin owns completion matching, storage reads, and polling. The callback returns the selected text to core's existing send/compare flow.
 
 Follow-up Suggestions uses native EVE hooks for generation and the per-conversation cleanup callback for session-owned records. Its claim-before-generation rule and core usage accounting survive extraction; no new event bus or generic mutation wrapper is involved.
 
@@ -242,8 +242,8 @@ Authenticator names must be unique and cannot use the reserved account identity 
 
 Declare `cleanup: { export: "guestCleanup", id: "guest-chat" }`. Export a `CleanupTask` with a matching `id` and `run()` from `cleanup.ts`. Task IDs must be unique. Core reserves `orphanedAttachments` for its storage sweep.
 
-A task returns `{ deletedCount, pendingCount?, skipped }` for one bounded sweep. Counts must be nonnegative safe integers. Omit `pendingCount` only when the sweep has no remaining work. Skipped tasks, pending work, invalid counts, and errors make the job unsuccessful. Independent tasks still run, and responses contain safe error messages.
+A task returns `{ deletedCount, retiredCount?, pendingCount?, skipped }` for one bounded sweep. `deletedCount` reports payload deletion; optional `retiredCount` reports ended or expired sessions whose payloads remain under provider retention. Retirement is not proof of erasure. Counts must be nonnegative safe integers. Omit `pendingCount` only when the sweep has no remaining work. Skipped tasks, pending work, invalid counts, and errors make the job unsuccessful. Independent tasks still run, and responses contain safe error messages.
 
-The authenticated cron endpoint and hosted draining script consume this common result. Plugins own inventory and retry policy. Core retains the native deletion fences and purge verification. The cleanup contribution does not add a scheduler framework.
+The authenticated cron endpoint and hosted draining script consume this common result. Plugins own inventory and retry policy. Core retains the native deletion fences and purge verification for providers that support purge. Managed guest retention uses terminal-session evidence instead. The Vercel cron drains progressing batches within a time and batch budget; incomplete work remains retryable. The cleanup contribution does not add a scheduler framework.
 
 All installed instrumentation registrations start independently. One exporter's failure still propagates to Next.js, but cannot prevent another plugin's local cleanup registration from starting.

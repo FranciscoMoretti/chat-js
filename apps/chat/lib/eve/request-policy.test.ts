@@ -10,44 +10,44 @@ const responseSchema = () => {
 };
 
 test.each([
-  { requestId: "request", optionId: "approve" },
-  { requestId: "request", optionId: "cancel" },
-  { requestId: "request", text: "answer" },
-  { requestId: "request", optionId: "other", text: "answer" },
-  { requestId: "request" },
-  { requestId: "request", text: "" },
-])("preserves the existing input response shape %j", (response) => {
-  expect(
-    responseSchema().safeParse({ inputResponses: [response] }).success
-  ).toBe(true);
+  { interactionId: "request", optionId: "approve" },
+  { interactionId: "request", optionId: "cancel" },
+  { interactionId: "request", text: "answer" },
+  { interactionId: "request", optionId: "other", text: "answer" },
+  { interactionId: "request" },
+  { interactionId: "request", text: "" },
+])("preserves the native answer shape %j", (response) => {
+  expect(responseSchema().safeParse({ answers: [response] }).success).toBe(
+    true
+  );
 });
 
 test.each([
-  { requestId: "" },
-  { requestId: 1 },
-  { requestId: "request", optionId: null },
-  { requestId: "request", text: 1 },
-  { requestId: "request", responder: "owner" },
-  { requestId: "request", approval: true },
+  { interactionId: "" },
+  { interactionId: 1 },
+  { interactionId: "request", optionId: null },
+  { interactionId: "request", text: 1 },
+  { interactionId: "request", responder: "owner" },
+  { interactionId: "request", approval: true },
 ])("rejects malformed or authority-bearing input response %j", (response) => {
-  expect(
-    responseSchema().safeParse({ inputResponses: [response] }).success
-  ).toBe(false);
+  expect(responseSchema().safeParse({ answers: [response] }).success).toBe(
+    false
+  );
 });
 
 test("keeps input responses bounded and separate from message commands", () => {
   const schema = responseSchema();
-  expect(schema.safeParse({ inputResponses: [] }).success).toBe(false);
+  expect(schema.safeParse({ answers: [] }).success).toBe(false);
   expect(
     schema.safeParse({
-      inputResponses: Array.from({ length: 17 }, () => ({
-        requestId: "request",
+      answers: Array.from({ length: 17 }, () => ({
+        interactionId: "request",
       })),
     }).success
   ).toBe(false);
   expect(
     schema.safeParse({
-      inputResponses: [{ requestId: "request" }],
+      answers: [{ interactionId: "request" }],
       message: "hello",
     }).success
   ).toBe(false);
