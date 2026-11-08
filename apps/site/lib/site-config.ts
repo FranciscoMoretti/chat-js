@@ -1,4 +1,5 @@
 const siteConfig = {
+  appScreenshot: "/chatjs_preview_light.png",
   creator: "@franmoretti_",
   demoUrl: "https://demo.chatjs.dev",
   description:
