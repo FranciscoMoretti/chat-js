@@ -9,21 +9,23 @@ const log = createModuleLogger("chat.after-create");
 
 const runAfter = async (
   adapters: readonly ChatServerIntegration[],
-  contribution: "afterCreate" | "afterBranch",
-  invoke: (adapter: ChatServerIntegration) => Promise<void>
+  invoke: (adapter: ChatServerIntegration) => Promise<void>,
+  branchConversationId?: string
 ): Promise<void> => {
-  for (const adapter of adapters) {
+  for (const [adapterIndex, adapter] of adapters.entries()) {
     try {
       // oxlint-disable-next-line no-await-in-loop -- Optional work runs in declared order after the response.
       await invoke(adapter);
     } catch (error) {
-      log.warn(
-        {
-          contribution,
-          errorName: error instanceof Error ? error.name : typeof error,
-        },
-        "Chat post-creation contribution failed"
-      );
+      const errorName = error instanceof Error ? error.name : typeof error;
+      if (branchConversationId === undefined) {
+        log.warn({ errorName }, "Chat afterCreate contribution failed");
+      } else {
+        log.warn(
+          { errorName, adapterIndex, conversationId: branchConversationId },
+          "Chat afterBranch contribution failed"
+        );
+      }
     }
   }
 };
@@ -51,14 +53,18 @@ export const composeChat = (
     }
   },
   afterCreate: async (context) => {
-    await runAfter(adapters, "afterCreate", async (adapter) => {
+    await runAfter(adapters, async (adapter) => {
       await adapter.afterCreate?.(context);
     });
   },
   afterBranch: async (context) => {
-    await runAfter(adapters, "afterBranch", async (adapter) => {
-      await adapter.afterBranch?.(context);
-    });
+    await runAfter(
+      adapters,
+      async (adapter) => {
+        await adapter.afterBranch?.(context);
+      },
+      context.conversationId
+    );
   },
   historyFilter: (input, surface) =>
     and(...adapters.map((adapter) => adapter.historyFilter?.(input, surface))),
