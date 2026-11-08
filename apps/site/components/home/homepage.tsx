@@ -1,7 +1,7 @@
 import { ArrowRight, ArrowUpRight, Github, Plus } from "lucide-react";
 import Link from "next/link";
 import { siteLinks } from "@/lib/site-config";
-import { Brand } from "./brand";
+import { Brand } from "../brand";
 import { BlockCollection } from "./collection";
 import { CreateCommand } from "./command";
 import { SourceAnimation } from "./source-animation";

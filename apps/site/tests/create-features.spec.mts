@@ -287,6 +287,16 @@ for (const width of [1440, 390]) {
       animations: "disabled",
     });
     await uiVerify.snapshot("design");
+    await page
+      .getByRole("button", { name: "Toggle theme", exact: true })
+      .click();
+    await expect(page.locator("html")).toHaveClass(/dark/u);
+    await expect(page.getByRole("link", { name: "ChatJS home" })).toBeVisible();
+    await unchangedFrame();
+    await page.screenshot({
+      path: testInfo.outputPath("app-dark.png"),
+      animations: "disabled",
+    });
     await page.getByRole("tab", { name: "Stack", exact: true }).click();
     await selectChoice(page, "Model gateway", "OpenRouter");
     await expect(

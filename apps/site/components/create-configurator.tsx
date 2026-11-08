@@ -2,7 +2,7 @@
 
 import { Suspense, useState } from "react";
 import dynamic from "next/dynamic";
-import Link from "next/link";
+import { Brand } from "./brand";
 import { Monitor, Smartphone } from "lucide-react";
 import { CreateSkeleton } from "@/vendor/shadcn-create/components/create-skeleton";
 import { Customizer } from "@/vendor/shadcn-create/components/customizer";
@@ -60,13 +60,10 @@ const CreateWorkspace = () => {
       data-slot="layout"
     >
       <header className="flex shrink-0 flex-wrap items-center gap-3 border-b px-4 py-3 md:px-6">
-        <Link
-          className="mr-auto font-semibold tracking-tight sm:flex-1"
-          href="/"
-        >
-          ChatJS{" "}
-          <span className="text-muted-foreground font-normal">/ Create</span>
-        </Link>
+        <div className="mr-auto flex items-center gap-2.5 sm:flex-1">
+          <Brand className="inline-flex items-center gap-2.5 font-semibold tracking-tight" />
+          <span className="text-muted-foreground text-sm">/ Create</span>
+        </div>
         <TabsList
           aria-label="Create workspace"
           className="order-last w-full sm:order-none sm:w-64"
