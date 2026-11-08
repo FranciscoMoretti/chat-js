@@ -19,13 +19,33 @@ In a ChatJS app with registry-based media tools:
 npx chat-js@alpha add generate-video
 ```
 
-Enable `ai.tools.video.enabled` and configure its default model in `chat.config.ts`. You receive `chatjs/tools/generate-video/tool.ts`, `renderer.tsx`, and `chatjs.json`. Sync generates registrations and credential requirements. Fresh apps without video generation receive neither the built-in tool nor its renderer.
+Configure `ai.tools.video.default` in `chat.config.ts`. Installation makes the tool available without a separate `enabled` flag. You receive `chatjs/tools/generate-video/tool.ts`, `renderer.tsx`, and `chatjs.json`. Sync generates registrations and credential requirements. Fresh apps without video generation receive neither the built-in tool nor its renderer.
 
 ## Behavior
 
 The built-in tool accepts a prompt, optional aspect ratio, and optional duration. It uploads the result through Files SDK and returns `{ videoUrl, prompt }`. The renderer shows progress, the video player, or a failure message.
 
-The installed tool resolves the selected model through the native tool helpers and reports usage through `executeWithToolUsage` and `usage.addCostUsd()`. The tool retains the existing fixed estimate of 50 cents per successful generation. This estimate is not a provider invoice. See [Video Generation](../features/video-generation).
+The installed tool resolves the selected model through the native tool helpers and reports usage through `executeWithToolUsage` and `usage.addCostUsd()`. The tool retains the existing fixed estimate of 50 cents per successful generation. This estimate is not a provider invoice.
+
+### Parameters
+
+| Parameter         | Description                                    |
+| ----------------- | ---------------------------------------------- |
+| `prompt`          | Description of the video to generate           |
+| `aspectRatio`     | `16:9`, `9:16`, or `1:1`, defaulting to `16:9` |
+| `durationSeconds` | Duration from 1 to 10 seconds, defaulting to 5 |
+
+### Model selection
+
+If the selected chat model supports video output, the tool uses it. Otherwise, it uses `ai.tools.video.default`. Only the built-in Vercel gateway currently declares video support.
+
+```ts title="chat.config.ts"
+ai: {
+  tools: {
+    video: { default: "xai/grok-imagine-video" },
+  },
+}
+```
 
 ## External implementations
 

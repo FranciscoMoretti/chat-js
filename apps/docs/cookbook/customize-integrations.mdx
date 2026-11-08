@@ -1,5 +1,5 @@
 ---
-title: Customize plugin integrations
+title: Customizing Integrations
 description: Compose installed plugins and tools in app-owned integration modules
 ---
 
@@ -7,23 +7,9 @@ ChatJS separates installed registrations from application behavior. You own the 
 
 Start with a scaffold that includes these integration modules. An existing app using the older generated exports needs to adopt the modules and update its consumers explicitly. Sync does not migrate arbitrary application code.
 
-## Ownership
+## Source ownership
 
-There are four file kinds: application, installed source, generated, and installation record. Application code is preserved during installation. Installed source can be customized, with local changes tracked for replacement/removal. Generated files are rebuilt from inputs, and records retain installation history. These kinds describe lifecycle, not editing permissions.
-
-Reusable helpers and contracts live in `chatjs/core/`. Selected provider implementations and configuration live in `chatjs/providers/`. Your composition remains in `integrations/`. Native route and agent adapters that belong to plugins carry a short source header because their framework paths do not show ownership.
-
-Run `chat-js status` to inspect the ownership and local-edit state of installed plugin files. See [status](../cli/status) for the file tree, source states, and migration from older layouts.
-
-| Location | Owner | What belongs here |
-| --- | --- | --- |
-| `chatjs/plugins/<id>/chat.ts`, `chatjs/plugins/<id>/billing.ts` | Installed plugin source, editable in your app | Plugin implementations |
-| `chatjs/generated/installed-chat.ts`, `chatjs/generated/installed-billing.ts` | Installer | Static imports and typed adapter lists |
-| `integrations/chat/server.ts`, `integrations/billing.ts` | Your app | Selection, ordering, wrappers, and local adapters |
-| `chatjs/core/chat/compose.ts`, `chatjs/core/billing/compose.ts` | Installed source | Shared composition rules and defaults |
-| Routes, queries, and native runtime callers | Your app | Calls to the composed integration |
-
-Keep local application modules outside `chatjs/plugins/<id>/` when they should survive removal of that plugin. Generated lists do not contain callbacks, default policies, or application behavior.
+Read [Source Ownership](../core/source-ownership) before editing installed or generated files. The recipes below compose installed inputs in your app-owned `integrations/` modules.
 
 ## Chat lifecycle
 
@@ -122,7 +108,7 @@ To supply an entirely app-owned billing adapter, pass it to `composeBilling` ins
 
 Sync writes static installation lists and maps under `chatjs/generated/`. It does not rewrite `integrations/` or the composition helpers. Runtime callers keep importing the same app-owned modules as the installed selection changes.
 
-Prefer importing the generated lists when your composition should follow installation automatically. If you directly import a plugin implementation to wrap it, your app now depends on that plugin. Removal detects supported static imports and requires you to resolve that dependency first. See [Create a plugin](./create-plugin) for packaging and installation metadata.
+Prefer importing the generated lists when your composition should follow installation automatically. If you directly import a plugin implementation to wrap it, your app now depends on that plugin. Removal detects supported static imports and requires you to resolve that dependency first. See [Create a plugin](../plugins/create-plugin) for packaging and installation metadata.
 
 Keep chat lifecycle and billing modules safe for Next.js server code and native EVE. Do not import React, route handlers, or Next.js request helpers into them. Browser UI retains its separate [typed slot interface](../reference/plugin-api#client-slots).
 

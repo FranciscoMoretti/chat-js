@@ -1,20 +1,30 @@
 ---
-title: Code Execution
-description: Secure Python and JavaScript sandbox for running code
+title: Sandboxes
+description: Configure sandbox infrastructure for EVE sessions and code execution
 ---
 
-## Overview
+Sandbox providers supply execution infrastructure independently of installed tools. ChatJS uses the selected provider for code execution and, when supported, persistent EVE session files. Installing a sandbox provider does not expose a code-execution tool to the model.
 
-Execute Python and JavaScript code in a secure sandboxed environment directly from chat. The `code-execution` tool uses shared sandbox infrastructure with a five-minute execution deadline. Select Vercel Sandbox or Daytona independently of the tool. Sandboxes are optional. An app using sandbox-backed tools must select exactly one provider. Other tools can reuse the same infrastructure. Ad-hoc and saved-document execution use the selected executor. Saved documents execute their authorized stored revision, not replacement source supplied by the caller.
+## EVE session sandboxes
 
-<Frame>
-  <img
-    src="/docs/images/code-execution.gif"
-    alt="Running Python and JavaScript code in the sandbox from chat"
-  />
-</Frame>
+The main agent declares its sandbox environment in `agent/sandbox.ts`. Account sessions register their sandbox lifecycle, and research subagents inherit the parent sandbox. Persistent providers support session files, process execution, resume, and cleanup.
 
-## Quick Start
+| Built-in provider | Code-execution tools | Persistent EVE session files |
+| --- | --- | --- |
+| Vercel Sandbox | Supported | Supported |
+| Daytona | Supported | Not supported by the current adapter |
+
+Ordinary chat can run without persistent sandbox support. ChatJS explicitly disables the EVE sandbox environment in that case, and requests requiring its filesystem fail. Ephemeral code execution and persistent session files are separate capabilities.
+
+To install infrastructure without a model-facing tool:
+
+```bash
+bunx chat-js@alpha add --sandbox-provider vercel
+```
+
+See [Code Execution](../tools/code-execution) for installing and using the tool.
+
+## Select a provider
 
 Select the tool when creating an app:
 
@@ -64,88 +74,7 @@ DAYTONA_ORGANIZATION_ID=your_organization_id
 
 Run the generated environment check before startup. The descriptor declares both variables and the adapter rejects empty credentials before allocation. The returned sandbox organization must match the configured organization. This adapter uses Daytona Cloud at `https://app.daytona.io/api` and needs no Vercel sandbox credentials. It does not certify the rest of your hosting configuration.
 
-## Pre-installed Packages
-
-Both built-in providers install these packages inside each Python sandbox before executing your code:
-
-- `matplotlib` - Plotting and visualization
-- `pandas` - Data analysis
-- `numpy` - Numerical computing
-- `sympy` - Symbolic mathematics
-- `yfinance` - Yahoo Finance market data
-
-## Installing Additional Packages
-
-Add `!pip install` lines at the top of your code. They are automatically stripped before execution:
-
-```python
-!pip install requests beautifulsoup4
-
-import requests
-from bs4 import BeautifulSoup
-
-response = requests.get("https://example.com")
-print(response.status_code)
-```
-
-## Output
-
-There are two ways to return output:
-
-**1. Use `print()`**
-
-```python
-import pandas as pd
-df = pd.DataFrame({"a": [1, 2], "b": [3, 4]})
-print(df.head())
-```
-
-**2. Assign to `result` or `results`**
-
-The sandbox automatically prints these variables if they exist:
-
-```python
-import numpy as np
-result = np.mean([1, 2, 3, 4, 5])
-```
-
-<Callout type="warning">
-  Implicit REPL output (last expression value) is not captured. Always use
-  `print()` or assign to `result`.
-</Callout>
-
-## Charts
-
-The sandbox supports `matplotlib` charts. No need to call `plt.show()`. The chart is saved automatically:
-
-```python
-import matplotlib.pyplot as plt
-import numpy as np
-
-x = np.linspace(0, 10, 100)
-y = np.sin(x)
-
-plt.figure(figsize=(10, 6))
-plt.plot(x, y)
-plt.title("Sine Wave")
-plt.xlabel("x")
-plt.ylabel("sin(x)")
-```
-
-Supported chart types:
-
-- Line charts
-- Scatter plots
-- Bar charts
-
-<Callout type="note">
-  Matplotlib charts are returned as PNG images. Assign a `chart` dictionary for
-  interactive line, scatter, and bar charts.
-</Callout>
-
-## Customization
-
-### Sandbox Images
+## Sandbox images
 
 Select the image for each language with environment variables:
 
@@ -173,9 +102,7 @@ VERCEL_TOKEN=your_token_here
 
 The sandbox automatically uses these credentials when running outside Vercel infrastructure.
 
-### Tool Definition
-
-The generic tool, renderer, schemas and descriptor live in `chatjs/tools/code-execution/`. Shared Python and JavaScript command wrappers live under `chatjs/tools/_shared/code-execution/`. Generated `chatjs/generated/code-executor.ts` exports the typed executor for ad-hoc and saved-document execution.
+## Provider contract
 
 `chatjs/providers/sandbox/provider.ts` exports the selected provider factory, `adapter.ts` contains its SDK integration, and `options.ts` declares its identity and environment requirements. `lib/sandbox/runtime.ts` exposes `getSandboxProvider()` to consumers. `@chat-js/sandboxes/provider` defines the common command and provider interfaces. `@chat-js/sandboxes/runtime` provides `withSandbox`, which coordinates allocation, cancellation and confirmed cleanup with the consumer's durable ownership store.
 
@@ -193,7 +120,7 @@ An uncertain create response remains an explicit reconciliation blocker. A singl
 
 Daytona API-key authentication does not honor a separate organization override. Cleanup therefore binds to a non-secret key fingerprint as well as the configured organization. Keep the original credentials until all resources are drained. Replacing the provider or key with outstanding intents fails closed and requires restoring the original provider scope or performing verified reconciliation.
 
-The application charges a fixed $0.05 for a completed built-in execution, independently of the provider's invoice. The shared executor records zero application cost for infrastructure failure and charges only after output validation and confirmed cleanup. Native EVE cancellation and settlement retain their existing receipt behavior. Shared code wrappers can report user-code errors as completed executions. Provider compute costs may still accrue on failures, cancellation and uncertain creation.
+The shared executor records a fixed $0.05 usage cost for a completed built-in execution, independently of the provider's invoice. It records zero application cost for infrastructure failure and records the completed-execution cost only after output validation and confirmed cleanup. The optional [Credits plugin](../plugins/credits) applies balance checks and debits. Core retains usage evidence without a billing adapter. Native EVE cancellation and settlement retain their existing receipt behavior. Shared code wrappers can report user-code errors as completed executions. Provider compute costs may still accrue on failures, cancellation and uncertain creation.
 
 ## Provider evaluation and validation
 

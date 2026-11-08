@@ -23,7 +23,7 @@ bun run db:generate
 bun run db:migrate
 ```
 
-Existing reference-app installations keep their `UserModelPreference` table, keys, indexes, and saved choices. Moving schema ownership alone does not require a database change. Fresh installations create the table through the plugin schema. See [plugin migrations](../core/plugins#database-migrations).
+Existing reference-app installations keep their `UserModelPreference` table, keys, indexes, and saved choices. Moving schema ownership alone does not require a database change. Fresh installations create the table through the plugin schema. See [plugin migrations](./using-plugins#database-migrations).
 
 ## Usage
 
@@ -35,7 +35,7 @@ Hiding a model changes its visibility in the picker. It does not revoke permissi
 
 ## Configuration
 
-You do not need a plugin-specific configuration block. Configure your catalog and defaults in `chat.config.ts`, including `ai.curatedDefaults` and `ai.disabledModels`. See [Multi-Model Support](../core/multi-model).
+You do not need a plugin-specific configuration block. Configure your catalog and defaults in `chat.config.ts`, including `ai.curatedDefaults` and `ai.disabledModels`. See [Multi-Model Support](../customization/models).
 
 ## Schema
 
