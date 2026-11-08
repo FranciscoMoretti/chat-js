@@ -18,8 +18,31 @@ try {
   page.on("pageerror", (error) => {
     errors.push(error.message);
   });
+  await page.route(`http://localhost:${process.env.PORT}/`, async (route) => {
+    const response = await route.fetch();
+    await route.fulfill({
+      response,
+      headers: { ...response.headers(), "referrer-policy": "no-referrer" },
+    });
+  });
+  await page.addInitScript(() => {
+    // oxlint-disable-next-line typescript/unbound-method -- Called below with the original dialog receiver.
+    const original = HTMLDialogElement.prototype.showModal;
+    HTMLDialogElement.prototype.showModal = function showModal() {
+      const titleId = this.getAttribute("aria-labelledby");
+      document.documentElement.dataset.dialogTitleAtOpen =
+        titleId === null
+          ? ""
+          : (document.querySelector(`#${CSS.escape(titleId)}`)?.textContent ??
+            "");
+      original.call(this);
+    };
+  });
   await page.goto(`http://localhost:${process.env.PORT}/`);
   await page.getByTestId("homepage").waitFor();
+  await page.getByRole("link", { name: "Skip to content" }).focus();
+  await page.keyboard.press("Enter");
+  assert.equal(await page.evaluate(() => document.activeElement?.id), "main");
   await page.evaluate(async () => {
     await document.fonts.ready;
   });
@@ -66,7 +89,11 @@ try {
   await page
     .getByRole("button", { name: "Explore Projects", exact: true })
     .click();
-  await page.getByRole("dialog").waitFor();
+  await page.getByRole("dialog", { name: "Projects", exact: true }).waitFor();
+  assert.equal(
+    await page.locator("html").getAttribute("data-dialog-title-at-open"),
+    "Projects"
+  );
   await page
     .getByRole("dialog")
     .screenshot({ path: `${output}projects-dialog.png` });
@@ -82,6 +109,11 @@ try {
       .evaluate((button) => button === document.activeElement),
     true
   );
+  await page
+    .getByRole("button", { name: "Explore Projects", exact: true })
+    .click();
+  await page.getByRole("dialog", { name: "Projects", exact: true }).waitFor();
+  await page.keyboard.press("Escape");
   await page.locator("#source").scrollIntoViewIfNeeded();
   const source = page.frameLocator(".source-illustration");
   await source
@@ -94,6 +126,23 @@ try {
   });
   await page.locator("#faq details").last().locator("summary").click();
   await page.locator("#faq").screenshot({ path: `${output}faq.png` });
+  await page.setViewportSize({ width: 550, height: 1000 });
+  await page.locator("#source").scrollIntoViewIfNeeded();
+  await source.locator('#scene[viewBox="0 0 600 1160"]').waitFor();
+  const sourceSize = await page.locator(".source-illustration").boundingBox();
+  assert.ok(
+    sourceSize &&
+      sourceSize.width < 540 &&
+      sourceSize.height / sourceSize.width > 1.9
+  );
+  assert.equal(
+    await source.locator("html").evaluate(() => document.referrer),
+    ""
+  );
+  await page.locator("#source").screenshot({
+    path: `${output}narrow-source-complete.png`,
+    animations: "disabled",
+  });
   await page.setViewportSize({ width: 390, height: 844 });
   const mobileLinks = await Promise.all(
     ["Docs", "Demo", "Create", "GitHub"].map(

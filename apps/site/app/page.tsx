@@ -1,7 +1,13 @@
 import { siteConfig, siteLinks } from "@/lib/site-config";
 import { Homepage } from "@/components/home/homepage";
-import type { Metadata } from "next";
+import { colors } from "@chatjs/brand/identity";
+import type { Metadata, Viewport } from "next";
 import React from "react";
+
+const socialDescription =
+  "A working chat. Your choice of models. Tools and plugins. Code you own.";
+const socialTitle = "ChatJS — The building blocks for your AI app";
+const viewport: Viewport = { themeColor: colors.background };
 
 const metadata: Metadata = {
   alternates: {
@@ -10,12 +16,18 @@ const metadata: Metadata = {
   description:
     "The building blocks for your AI app. A working chat, your choice of models, tools and plugins. Code you own.",
   openGraph: {
-    description:
-      "A working chat. Your choice of models. Tools and plugins. Code you own.",
-    title: "ChatJS — The building blocks for your AI app",
+    description: socialDescription,
+    title: socialTitle,
     url: siteLinks.home,
   },
   title: "The building blocks for your AI app",
+  twitter: {
+    card: "summary_large_image",
+    creator: siteConfig.creator,
+    description: socialDescription,
+    images: [siteConfig.ogImage],
+    title: socialTitle,
+  },
 };
 
 const structuredData = {
@@ -61,5 +73,5 @@ const HomePage = (): React.JSX.Element => (
   </>
 );
 
-export { metadata };
+export { metadata, viewport };
 export default HomePage;

@@ -19,6 +19,7 @@ void describe("homepage assets are portable outside the design archive", () => {
     const result: unknown = runInNewContext(`${bundle}
       JSON.stringify({
         mark: CarbonMotion.mark(),
+        customMark: CarbonMotion.mark('"/><script>alert(1)</script>'),
         first: CarbonSquare.svg('MCP', 'Optional', 6),
         second: CarbonSquare.svg('MCP', 'Added', 6),
         escaped: CarbonSquare.svg('<test>', 'A & B', 0)
@@ -30,10 +31,15 @@ void describe("homepage assets are portable outside the design archive", () => {
     assert.match(String(result), /&lt;test&gt;/u);
     assert.match(String(result), /A &amp; B/u);
     assert.doesNotMatch(String(result), /NaN|undefined/u);
+    assert.doesNotMatch(String(result), /<script>/u);
+    assert.match(String(result), /&quot;/u);
   });
   void it("every block ships its artwork and resolves to documented capabilities", () => {
     assert.equal(new Set(blocks.map((block) => block.id)).size, blocks.length);
     for (const block of blocks) {
+      if (block.command) {
+        assert.match(block.command, /^npx chat-js@alpha (?:create|add) /u);
+      }
       const svg = readFileSync(
         path.resolve(publicRoot, `home/blocks/${block.id}.svg`),
         "utf-8"

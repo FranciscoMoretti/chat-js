@@ -1,4 +1,4 @@
-import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import sharp from "sharp";
@@ -192,6 +192,27 @@ for (const [source, destination] of [
 }
 
 const stale: string[] = [];
+const mirroredBlocks = path.join(repo, "apps/site/public/home/blocks");
+const publishedBlocks = await readdir(mirroredBlocks).catch(
+  (error: unknown) => {
+    if (error instanceof Error && "code" in error && error.code === "ENOENT") {
+      return [];
+    }
+    throw error;
+  }
+);
+await Promise.all(
+  publishedBlocks
+    .filter((file) => file.endsWith(".svg") && !productFiles.includes(file))
+    .map(async (file) => {
+      const target = path.join(mirroredBlocks, file);
+      if (check) {
+        stale.push(path.relative(repo, target));
+      } else {
+        await rm(target);
+      }
+    })
+);
 await Promise.all(
   [...outputs].map(async ([file, data]) => {
     if (check) {

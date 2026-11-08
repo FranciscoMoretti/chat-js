@@ -25,4 +25,4 @@ export const foundations = [
 ] as const;
 
 export const markSvg = (fill = "currentColor") =>
-  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${mark.viewBox}" fill="${fill}"><path d="${mark.path}"/></svg>`;
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${mark.viewBox}" fill="${fill.replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")}"><path d="${mark.path}"/></svg>`;

@@ -290,6 +290,7 @@
   margin-bottom: 42px;
 }
 .home-page .source-frame {
+  container-type: inline-size;
   border: 1px solid #35352f;
   background: #0c0c0c;
   border-radius: 5px;
@@ -600,9 +601,6 @@
   .home-page .source-section h2 {
     font-size: 45px;
   }
-  .home-page .source-frame iframe {
-    aspect-ratio: 1200/720;
-  }
   .home-page .source-title {
     padding: 15px;
   }
@@ -714,9 +712,6 @@
   .home-page .source-section h2 {
     font-size: 37px;
     letter-spacing: -1.7px;
-  }
-  .home-page .source-frame iframe {
-    aspect-ratio: 600/1080;
   }
   .home-page .source-title {
     font-size: 6px;
@@ -1270,5 +1265,12 @@
   }
   .home-page header .github-link {
     width: 30px;
+  }
+}
+
+/* Match the illustration's own viewport breakpoint, not the page width. */
+@container (width < 540px) {
+  .home-page .source-frame iframe {
+    aspect-ratio: 600 / 1160;
   }
 }

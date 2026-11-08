@@ -51,7 +51,8 @@ export const wavePaths = (index: number, phase = 0.3): string => {
         7 * Math.cos(globalX * 0.035 - line * 0.008 - time);
       path += `${x ? "L" : "M"}${x} ${(y - offsetY).toFixed(2)}`;
     }
-    paths += `<path d="${path}" opacity="${line % 3 === 0 ? 0.9 : 0.55}"/>`;
+    // Keep the approved uniform contrast across the wave field.
+    paths += `<path d="${path}" opacity="0.55"/>`;
   }
   return paths;
 };

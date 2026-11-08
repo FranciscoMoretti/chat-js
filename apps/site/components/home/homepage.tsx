@@ -42,7 +42,7 @@ export const Homepage = () => (
         </a>
       </nav>
     </header>
-    <main id="main">
+    <main id="main" tabIndex={-1}>
       <section className="hero split wrap" aria-labelledby="home-title">
         <div className="hero-copy">
           <span className="eyebrow">

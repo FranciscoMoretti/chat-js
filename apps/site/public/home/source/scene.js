@@ -51,4 +51,4 @@
 })();
 
 // Only the same-origin parent controls this isolated illustration timeline.
-addEventListener("message", event => { if (event.source !== parent || event.origin !== new URL(document.referrer).origin || event.data?.type !== "chatjs:seek" || typeof event.data.time !== "number" || !Number.isFinite(event.data.time)) return; window.MotionStudy.seek(event.data.time); });
+addEventListener("message", event => { if (event.source !== parent || event.origin !== window.location.origin || event.data?.type !== "chatjs:seek" || typeof event.data.time !== "number" || !Number.isFinite(event.data.time)) return; window.MotionStudy.seek(event.data.time); });

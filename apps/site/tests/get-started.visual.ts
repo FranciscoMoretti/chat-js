@@ -30,7 +30,9 @@ const captureViewport = async (width: number): Promise<void> => {
     style: "nextjs-portal { visibility: hidden !important; }",
   });
   await section.getByRole("button", { name: "Copy create command" }).click();
-  await section.getByText("Copied", { exact: true }).waitFor();
+  await section
+    .getByText("Copied", { exact: true })
+    .waitFor({ state: "attached" });
   assert.equal(
     await page.evaluate(async () => await navigator.clipboard.readText()),
     command

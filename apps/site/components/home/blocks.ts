@@ -7,7 +7,7 @@ export const blocks = [
     path: "quickstart",
     summary: "A working chat interface you can shape around your product.",
     body: "The composer, saved conversations and streaming responses work together with the runtime. Change the interface in your own project.",
-    command: "bunx @chat-js/cli@latest create my-app",
+    command: "npx chat-js@alpha create my-app",
     note: "Configure your database, gateway and authentication, then run setup.",
   },
   {
@@ -27,7 +27,7 @@ export const blocks = [
     path: "plugins/projects",
     summary: "A shared home for related conversations.",
     body: "Give each project a name, icon and shared instructions. Keep the conversations around a piece of work in one place.",
-    command: "bunx @chat-js/cli@latest add projects",
+    command: "npx chat-js@alpha add projects",
     note: "Run inside a ChatJS app. Review and apply the plugin’s database migrations.",
   },
   {
@@ -37,7 +37,7 @@ export const blocks = [
     path: "plugins/search",
     summary: "Find the conversation you were looking for.",
     body: "Search chat titles and conversation text from the sidebar or keyboard. Results open the branch containing the match.",
-    command: "bunx @chat-js/cli@latest add search",
+    command: "npx chat-js@alpha add search",
     note: "Run inside a ChatJS app. Apply migrations and backfill existing conversations as described in the docs.",
   },
   {
@@ -47,7 +47,7 @@ export const blocks = [
     path: "plugins/attachments",
     summary: "Bring your context into the conversation.",
     body: "Add images and PDFs to your chats. Choose compatible persistent storage and sandbox infrastructure for file uploads.",
-    command: "bunx @chat-js/cli@latest add attachment-uploads",
+    command: "npx chat-js@alpha add attachment-uploads",
     note: "Requires durable storage and a compatible sandbox with persistent-file support.",
   },
   {
@@ -57,7 +57,7 @@ export const blocks = [
     path: "features/canvas",
     summary: "Write it. Refine it. Keep it.",
     body: "Create and edit text in a document canvas beside the conversation. Work directly in the editor or ask the AI for changes, then compare revisions and revisit earlier versions.",
-    command: "bunx @chat-js/cli@latest add text-documents",
+    command: "npx chat-js@alpha add text-documents",
     note: "This square represents the installable text-documents capability, not the full document tool suite. Review the generated configuration and document permissions in your app.",
   },
   {
@@ -67,7 +67,7 @@ export const blocks = [
     path: "features/web-search",
     summary: "Answers with sources you can open.",
     body: "Search the web and show the sources behind an answer. Source cards expose the retrieved pages, and citations connect the response to its supporting material.",
-    command: "bunx @chat-js/cli@latest add tavily-search",
+    command: "npx chat-js@alpha add tavily-search",
     note: "Choose Tavily or Firecrawl and configure its API key. The illustrated query and source cards are examples, not live search results.",
   },
   {
@@ -77,7 +77,7 @@ export const blocks = [
     path: "plugins/mcp",
     summary: "Your tools, beyond your app.",
     body: "Add external MCP servers from the Connectors settings page. Discover their tools, resources and prompts, with OAuth authorization where required.",
-    command: "bunx @chat-js/cli@latest add mcp",
+    command: "npx chat-js@alpha add mcp",
     note: "Requires MCP_ENCRYPTION_KEY and the plugin’s database migrations. Connector authorization depends on the server.",
   },
   {
@@ -87,7 +87,7 @@ export const blocks = [
     path: "tools/generate-image",
     summary: "An idea becomes an image.",
     body: "Create images from a prompt, or edit an attachment or a previous generated image. View the result in the conversation and open it for a closer look.",
-    command: "bunx @chat-js/cli@latest add generate-image",
+    command: "npx chat-js@alpha add generate-image",
     note: "The built-in implementation requires a compatible gateway, an image-capable default model, durable storage and credentials. Enable image generation in chat.config.ts. Artwork here is illustrative.",
   },
   {
@@ -97,7 +97,7 @@ export const blocks = [
     path: "features/canvas",
     summary: "Give your data room to work.",
     body: "Create and edit a spreadsheet alongside the conversation. Ask for changes to the data, edit cells directly, and copy the result as CSV.",
-    command: "bunx @chat-js/cli@latest add sheet-documents",
+    command: "npx chat-js@alpha add sheet-documents",
     note: "This square represents the installable sheet-documents capability. The table contains sample data; code execution and analysis tools are separate capabilities.",
   },
   {
@@ -107,7 +107,7 @@ export const blocks = [
     path: "features/deep-research",
     summary: "From a question to a researched report.",
     body: "Follow a research brief through multiple searches and synthesis. Progress stays visible, and the final report is saved as a document you can open and refine.",
-    command: "bunx @chat-js/cli@latest add deep-research",
+    command: "npx chat-js@alpha add deep-research",
     note: "Requires a configured search provider and model access. Research uses multiple model calls. The registry declares a text-documents dependency; the preview shows an illustrative completed run.",
   },
   {
@@ -117,7 +117,7 @@ export const blocks = [
     path: "tools/overview",
     summary: "Let your AI do something useful.",
     body: "Install tools and render their results in the conversation. The preview shows Retrieve URL fetching a page; add your own tools for your product.",
-    command: "bunx @chat-js/cli@latest add retrieve-url",
+    command: "npx chat-js@alpha add retrieve-url",
     note: "Run inside a ChatJS app. Review the selected tool’s provider and credential requirements.",
   },
   {
@@ -127,7 +127,7 @@ export const blocks = [
     path: "plugins/sharing",
     summary: "Share the conversation, keep control.",
     body: "Publish a read-only conversation branch with a link. Public readers can view the shared transcript; your workspace stays private. Make it private again to revoke managed access.",
-    command: "bunx @chat-js/cli@latest add sharing",
+    command: "npx chat-js@alpha add sharing",
     note: "No additional credentials. Revocation cannot recall content someone already downloaded.",
   },
   {
@@ -137,7 +137,7 @@ export const blocks = [
     path: "tools/generate-video",
     summary: "A prompt, with a play button.",
     body: "Generate a video and watch it in the conversation. The renderer shows generation progress, then a player with playback controls and the original prompt.",
-    command: "bunx @chat-js/cli@latest add generate-video",
+    command: "npx chat-js@alpha add generate-video",
     note: "The built-in implementation requires a video-capable gateway and default model, durable storage and credentials. Enable video generation in chat.config.ts. The square is a static player illustration.",
   },
   {
@@ -147,7 +147,7 @@ export const blocks = [
     path: "features/code-execution",
     summary: "Run the code. See the result.",
     body: "Execute Python or JavaScript in a sandbox and show the output in the conversation. The preview is a sample Python result, not live execution.",
-    command: "bunx @chat-js/cli@latest add code-execution",
+    command: "npx chat-js@alpha add code-execution",
     note: "Select a compatible sandbox provider, such as Daytona or Vercel, and configure its credentials. The tool and infrastructure are separate choices.",
   },
   {
@@ -167,7 +167,7 @@ export const blocks = [
     path: "plugins/followup-suggestions",
     summary: "A useful next question.",
     body: "Generate related questions after a completed assistant answer. Choosing a suggestion sends it through the existing conversation flow.",
-    command: "bunx @chat-js/cli@latest add followup-suggestions",
+    command: "npx chat-js@alpha add followup-suggestions",
     note: "Apply migrations and enable ai.tools.followupSuggestions.enabled. Generation uses an additional model call and is not available for guest or background sessions.",
   },
   {
@@ -177,7 +177,7 @@ export const blocks = [
     path: "plugins/feedback",
     summary: "A small signal on each answer.",
     body: "Add upvote and downvote actions to assistant messages. Ratings belong to the conversation owner and are not exposed in public shares.",
-    command: "bunx @chat-js/cli@latest add feedback",
+    command: "npx chat-js@alpha add feedback",
     note: "Review and apply the plugin’s database migrations.",
   },
   {
@@ -187,7 +187,7 @@ export const blocks = [
     path: "plugins/ai-titles",
     summary: "Conversations with a name.",
     body: "Generate a concise chat title from the first message. A fallback title is available immediately, and a manual rename takes precedence over generation.",
-    command: "bunx @chat-js/cli@latest add ai-titles",
+    command: "npx chat-js@alpha add ai-titles",
     note: "Uses a model supported by your gateway. No new database table or migration is required.",
   },
   {
@@ -197,7 +197,7 @@ export const blocks = [
     path: "plugins/model-preferences",
     summary: "A picker that feels like yours.",
     body: "Let signed-in users choose which available models appear in their picker. Their preferences persist across sessions; hiding a model changes visibility, not authorization.",
-    command: "bunx @chat-js/cli@latest add model-preferences",
+    command: "npx chat-js@alpha add model-preferences",
     note: "Review and apply the plugin’s database migrations. No additional credentials are required. Model names in the illustration are examples.",
   },
   {
@@ -207,7 +207,7 @@ export const blocks = [
     path: "plugins/credits",
     summary: "A balance beside the conversation.",
     body: "Display a registered user’s remaining balance in the sidebar, check spending availability and debit recorded usage. The shown balance is an example.",
-    command: "bunx @chat-js/cli@latest add credits",
+    command: "npx chat-js@alpha add credits",
     note: "Review the migration and rollout instructions for your database. This plugin does not provide payments, subscriptions or top-ups.",
   },
 ] as const;

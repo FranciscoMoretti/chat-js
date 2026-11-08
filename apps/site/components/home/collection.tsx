@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { ArrowUpRight, Plus, X } from "lucide-react";
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { siteLinks } from "@/lib/site-config";
 import { blocks } from "./blocks";
 
@@ -31,6 +31,12 @@ export const BlockCollection = () => {
   const dialog = useRef<HTMLDialogElement>(null);
   const trigger = useRef<HTMLButtonElement | null>(null);
 
+  useLayoutEffect(() => {
+    if (selected && dialog.current?.open === false) {
+      dialog.current?.showModal();
+    }
+  }, [selected]);
+
   return (
     <>
       <div className="collection-toolbar">
@@ -50,7 +56,6 @@ export const BlockCollection = () => {
             onClick={(event) => {
               trigger.current = event.currentTarget;
               setSelected(block);
-              dialog.current?.showModal();
             }}
           >
             <Artwork block={block} />
@@ -78,7 +83,10 @@ export const BlockCollection = () => {
         ref={dialog}
         className="block-dialog"
         aria-labelledby="block-dialog-title"
-        onClose={() => trigger.current?.focus()}
+        onClose={() => {
+          setSelected(null);
+          trigger.current?.focus();
+        }}
       >
         <button
           type="button"
