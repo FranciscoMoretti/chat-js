@@ -76,7 +76,7 @@ const ForkFixture = (): React.JSX.Element => {
         type="button"
         onClick={() => {
           void fork.begin({
-            id: "seed_message_0",
+            id: "import:imported:0",
             parts: [{ text: "Find the answer", type: "text" }],
             role: "user",
           });

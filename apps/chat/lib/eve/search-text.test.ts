@@ -41,22 +41,22 @@ it("indexes seeded display text while excluding reasoning, tools and model lifec
   expect(
     eveEventSearchText({
       data: {
-        transcriptSeed: {
-          attachments: "channel",
-          messages: [
-            {
-              parts: [
-                { text: "visible answer", type: "text" },
-                { text: "private thinking", type: "reasoning" },
-              ],
-              role: "assistant",
-            },
-          ],
-        },
+        deliveryId: "import",
+        turnId: "import-turn",
+        parts: [],
+        history: [
+          {
+            parts: [
+              { text: "visible answer", type: "text" },
+              { text: "private thinking", type: "reasoning" },
+            ],
+            role: "assistant",
+          },
+        ],
       },
-      type: "session.started",
+      type: "delivery.consumed",
     })
-  ).toEqual([{ key: "seed:0", text: "visible answer" }]);
+  ).toEqual([{ key: "import:history:0", text: "visible answer" }]);
 });
 
 it("excludes model text preambles from conversation search", () => {

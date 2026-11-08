@@ -25,15 +25,15 @@ beforeEach(() => {
     events: [
       {
         data: {
-          transcriptSeed: {
-            attachments: "channel",
-            messages: Array.from({ length: 300 }, (_, index) => ({
-              parts: [{ text: `Restored message ${index}`, type: "text" }],
-              role: "user",
-            })),
-          },
+          deliveryId: "import",
+          turnId: "import-turn",
+          parts: [],
+          history: Array.from({ length: 300 }, (_, index) => ({
+            parts: [{ text: `Restored message ${index}`, type: "text" }],
+            role: "user",
+          })),
         },
-        type: "session.started",
+        type: "delivery.consumed",
       },
       {
         data: {
@@ -72,7 +72,7 @@ it("recovers every restored entry and the latest message, and can retry after a 
     )
   ).toEqual([
     ...Array.from({ length: 300 }, (_, index) => ({
-      key: `seed:${index}`,
+      key: `import:history:${index}`,
       text: `Restored message ${index}`,
     })),
     { key: "delivery:latest", text: "Newest message" },

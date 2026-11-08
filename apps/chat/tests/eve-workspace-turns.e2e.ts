@@ -236,67 +236,28 @@ test("membership is required even when the caller knows the conversation and wor
   expect(dispatch).not.toHaveBeenCalled();
 });
 
-test("seed-only copies hold the workspace until native seed idle and cannot unlock a subsequent send", async () => {
-  const seed = {
-    ...operation(),
-    kind: "copy" as const,
-    intent: { fork: { source: "original" } },
-  };
-  const create = vi.fn(
-    async () => await Promise.resolve({ sessionId: "seeded" })
-  );
-  await dispatchEveOnce(seed, create);
-  snapshots.set("seeded", []);
-  const send = operation();
-  const deliver = vi.fn(
-    async () =>
-      await Promise.resolve({ sessionId: "seeded", deliveryId: "followup" })
-  );
-  await expect(dispatchEveOnce(send, deliver)).rejects.toBeInstanceOf(
-    EveWorkspaceBusyError
-  );
-  snapshots.set("seeded", [session]);
-  await dispatchEveOnce(send, deliver);
-  expect(deliver).toHaveBeenCalledTimes(1);
-  await dispatchEveOnce(seed, create);
-  expect(create).toHaveBeenCalledTimes(1);
-  await reconcileEveWorkspaceTurn("owner", firstConversation);
-  await expect(
-    dispatchEveOnce(operation(secondConversation), deliver)
-  ).rejects.toBeInstanceOf(EveWorkspaceBusyError);
-  snapshots.set("seeded", settled("followup"));
-  await dispatchEveOnce(operation(secondConversation), deliver);
-  expect(deliver).toHaveBeenCalledTimes(2);
-});
-
-test("a known fork seed waits for asynchronous idle publication before its first send", async () => {
-  const seed = {
+test("a branch creation stays fenced until its first delivery settles", async () => {
+  const creation = {
     ...operation(),
     kind: "create" as const,
     intent: { fork: { conversationId: secondConversation } },
   };
   await dispatchEveOnce(
-    seed,
-    async () => await Promise.resolve({ sessionId: "delayed-seed" })
+    creation,
+    async () =>
+      await Promise.resolve({ sessionId: "branch", deliveryId: "initial" })
   );
-  snapshots.set("delayed-seed", []);
-  const ready = setTimeout(() => {
-    snapshots.set("delayed-seed", [session]);
-  }, 25);
-  try {
-    await reconcileEveWorkspaceTurn("owner", firstConversation, {
-      waitForSeed: true,
-    });
-    const dispatch = vi.fn(
-      async () =>
-        await Promise.resolve({
-          sessionId: "delayed-seed",
-          deliveryId: "first-send",
-        })
-    );
-    await dispatchEveOnce(operation(), dispatch);
-    expect(dispatch).toHaveBeenCalledTimes(1);
-  } finally {
-    clearTimeout(ready);
-  }
+  snapshots.set("branch", [session]);
+  await reconcileEveWorkspaceTurn("owner", firstConversation);
+  const deliver = vi.fn(
+    async () => await Promise.resolve({ sessionId: "next", deliveryId: "next" })
+  );
+  await expect(
+    dispatchEveOnce(operation(secondConversation), deliver)
+  ).rejects.toBeInstanceOf(EveWorkspaceBusyError);
+  expect(deliver).not.toHaveBeenCalled();
+  snapshots.set("branch", settled("initial"));
+  await reconcileEveWorkspaceTurn("owner", firstConversation);
+  await dispatchEveOnce(operation(secondConversation), deliver);
+  expect(deliver).toHaveBeenCalledOnce();
 });

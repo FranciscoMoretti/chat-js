@@ -126,10 +126,11 @@ test("shared workspace forks retain immutable image/PDF originals and independen
     .where(eq(eveWorkspaceAttachment.workspaceId, sourceRow.workspaceId));
   expect(originals).toHaveLength(2);
   expect(originals.every((file) => file.paths.length > 0)).toBe(true);
-  const copied = await page.request.post("/api/agent-conversation-copies", {
+  const copied = await page.request.post("/api/agent-conversations", {
     headers: { origin },
     data: {
-      sourceConversationId: source.id,
+      fork: { conversationId: source.id },
+      message: "Continue briefly without using tools.",
       operationId: crypto.randomUUID(),
       modelId,
     },
@@ -254,11 +255,12 @@ test("shared workspace forks retain immutable image/PDF originals and independen
   const anonymous = await browser.newContext();
   try {
     const denied = await anonymous.request.post(
-      `${origin}/api/agent-conversation-copies`,
+      `${origin}/api/agent-conversations`,
       {
         headers: { origin },
         data: {
-          sourceConversationId: source.id,
+          fork: { conversationId: source.id },
+          message: "Continue briefly without using tools.",
           operationId: crypto.randomUUID(),
           modelId,
         },

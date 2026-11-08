@@ -24,10 +24,6 @@ const FIRST_INPUT_INDEX = 0;
 
 vi.mock("./client", (): { db: typeof database } => ({ db: database }));
 vi.mock("@/lib/env", () => ({ env: {} }));
-vi.mock("@/lib/eve/workspace-attachments", () => ({
-  resolveWorkspaceSeedAttachments: async ({ seed }: { seed: unknown }) =>
-    await Promise.resolve(seed),
-}));
 
 const { getEveDocumentRevision, saveEveDocumentRevision } =
   await import("./eve-documents");
@@ -201,7 +197,7 @@ it("captures current document heads once and keeps retries independent of later 
     .select()
     .from(eveConversation)
     .where(eq(eveConversation.id, target));
-  expect(copy.initialSeed).toEqual({ ...seed, attachments: "channel" });
+  expect(copy.initialSeed).toEqual(seed);
 });
 
 it("releases only rejected reservation references and preserves unknown deliveries", async () => {

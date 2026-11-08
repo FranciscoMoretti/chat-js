@@ -417,26 +417,6 @@ test("conversation whose creation is unconfirmed, with the request saved here", 
     .toBeVisible();
 });
 
-test("saved copy of a shared conversation that was not confirmed", async () => {
-  const copy = {
-    ...unconfirmed,
-    creationKind: "copy" as const,
-    parentConversationId: "f1e2d3c4-b5a6-4978-8a6b-5c4d3e2f1a0b",
-  };
-  await renderRoute(conversation, {
-    ...request,
-    server: {
-      conversation: copy,
-      conversations: history,
-    },
-  });
-  await expect
-    .element(
-      page.getByText("Saving is unconfirmed. Retry to finish the saved copy.")
-    )
-    .toBeVisible();
-});
-
 const shared = (
   <ChatLayout>
     <SharePage params={Promise.resolve({ id: invoicesConversation.id })} />
@@ -470,61 +450,15 @@ test("shared conversation, signed in", async () => {
     .element(page.getByText("invoices_account_status_due_idx"))
     .toBeVisible();
   await expect
-    .element(page.getByRole("region", { name: "Save shared conversation" }))
+    .element(page.getByRole("button", { name: "Save to your chats" }))
+    .not.toBeInTheDocument();
+  await expect
+    .element(
+      page.getByText(
+        "Shared conversations are read-only. Workspace access is private to the owner."
+      )
+    )
     .toBeVisible();
-
-  // A shared transcript has a footer after the last message. Resizing to mobile
-  // must keep its save action reachable through the native end-scroll control.
-  await page.viewport(390, 844);
-  const viewport = document.querySelector<HTMLElement>(
-    '[data-slot="message-scroller-viewport"]'
-  );
-  if (!viewport) {
-    throw new Error("Missing shared transcript viewport");
-  }
-  await expect
-    .poll(() => viewport.scrollHeight > viewport.clientHeight)
-    .toBe(true);
-  await expect
-    .poll(
-      () =>
-        viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight <
-          8 ||
-        document.querySelector<HTMLElement>(
-          '[data-slot="message-scroller-button"]'
-        )?.dataset.active === "true"
-    )
-    .toBe(true);
-  viewport.dispatchEvent(
-    new WheelEvent("wheel", { deltaY: -1000, bubbles: true })
-  );
-  viewport.scrollTo({ top: 0, behavior: "instant" });
-  viewport.dispatchEvent(new Event("scroll"));
-  await expect
-    .poll(
-      () =>
-        document.querySelector<HTMLElement>(
-          '[data-slot="message-scroller-button"]'
-        )?.dataset.active
-    )
-    .toBe("true");
-  await page
-    .getByRole("button", { name: "Scroll to end", exact: true })
-    .click();
-  await expect
-    .poll(
-      () => viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight
-    )
-    .toBeLessThan(2);
-  const save = page.getByRole("button", { name: "Save to your chats" });
-  await expect.element(save).toBeVisible();
-  await expect
-    .poll(() => {
-      const action = save.element().getBoundingClientRect();
-      const bounds = viewport.getBoundingClientRect();
-      return action.top >= bounds.top && action.bottom <= bounds.bottom;
-    })
-    .toBe(true);
 });
 
 test("owner can select or write a question answer while the native turn stays open", async () => {

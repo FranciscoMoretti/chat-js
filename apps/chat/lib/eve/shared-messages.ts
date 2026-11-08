@@ -20,8 +20,11 @@ interface SharedEveMessage {
   parts: EveMessagePart[];
   role: EveMessage["role"];
   metadata?:
-    | { custom: ReturnType<typeof eveToolMetadata>; modelId?: undefined }
-    | { modelId: string; custom?: undefined };
+    | (ReadonlyEveMessageMetadata & {
+        custom: ReturnType<typeof eveToolMetadata>;
+        modelId?: undefined;
+      })
+    | (ReadonlyEveMessageMetadata & { modelId: string; custom?: undefined });
 }
 
 const sharedModelId = (

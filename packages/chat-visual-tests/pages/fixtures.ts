@@ -1,5 +1,5 @@
 import type { inferRouterOutputs } from "@trpc/server";
-import type { EveMessage } from "eve/client";
+import type { ReadonlyEveMessage as EveMessage } from "@/lib/eve/readonly-message-types";
 
 import type { Session } from "@/lib/auth";
 import type { AppRouter } from "@/trpc/routers/_app";

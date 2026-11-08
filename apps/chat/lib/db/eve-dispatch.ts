@@ -7,6 +7,8 @@ import { EveWorkspaceBusyError, lockEveWorkspace } from "./eve-workspace-turns";
 import { reconcileEveWorkspaceTurn } from "../eve/reconcile-workspace-turn";
 import { z } from "zod";
 import { frontendToolsSchema } from "@/lib/ai/types";
+import { parseEveCopySeed } from "@/lib/eve/copy-seed";
+import { eveMessageTool } from "@/lib/eve/message-tool-selection";
 import type { EveMessageDisplayReceipt } from "@/lib/eve/message-display";
 
 const hasRow: (row: unknown) => boolean = Boolean;
@@ -22,6 +24,7 @@ export const getEveMessageDisplayReceipts = async (
       kind: eveDispatch.kind,
       deliveryId: eveDispatch.deliveryId,
       intent: eveDispatch.intent,
+      history: eveConversation.initialSeed,
     })
     .from(eveDispatch)
     .innerJoin(
@@ -49,7 +52,31 @@ export const getEveMessageDisplayReceipts = async (
     }
     const selectedTool = intent.data.selectedTool ?? null;
     return isNonEmptyString(row.deliveryId)
-      ? [{ kind: "send", deliveryId: row.deliveryId, selectedTool }]
+      ? [
+          {
+            kind: "send",
+            deliveryId: row.deliveryId,
+            selectedTool,
+            ...(row.kind === "create" &&
+            row.history !== null &&
+            row.history !== undefined
+              ? {
+                  history: parseEveCopySeed(row.history).messages.map(
+                    (message) => ({
+                      role: message.role,
+                      ...(message.role === "assistant"
+                        ? { modelId: message.modelId }
+                        : {
+                            selectedTool: eveMessageTool({
+                              metadata: { custom: message.metadata },
+                            }),
+                          }),
+                    })
+                  ),
+                }
+              : {}),
+          },
+        ]
       : [];
   });
 };

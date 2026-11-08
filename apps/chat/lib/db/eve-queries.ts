@@ -750,7 +750,7 @@ const bindConversationSession = async (
   }
   const [bound] = await tx
     .update(eveConversation)
-    .set({ initialRequest: null, initialSeed: null, sessionId, state: "bound" })
+    .set({ initialRequest: null, sessionId, state: "bound" })
     .where(
       and(
         eq(eveConversation.id, reservationId),
@@ -800,12 +800,11 @@ const assertMatchingMessageCreation = (
   initialModelId: string | undefined,
   initialContentHash: string | undefined,
   fork: ReadonlyNativeSurface<EveForkInput> | undefined,
-  forkKind: typeof eveConversation.$inferInsert.forkKind,
-  seedOnly: boolean
+  forkKind: typeof eveConversation.$inferInsert.forkKind
 ): ConversationRow => {
   if (
     existing === undefined ||
-    existing.creationKind !== (seedOnly ? "copy" : "message") ||
+    existing.creationKind !== "message" ||
     existing.firstMessage !== message ||
     existing.initialModelId !== (initialModelId ?? null) ||
     existing.initialContentHash !== (initialContentHash ?? null) ||
@@ -847,7 +846,6 @@ const createEveConversation = async (
     fork,
     forkKind,
     fileKeys = [],
-    seedOnly = false,
   }: ReadonlyNativeSurface<{
     initialRequest?: unknown;
     initialModelId?: string;
@@ -856,10 +854,9 @@ const createEveConversation = async (
     fork?: EveForkInput;
     forkKind?: typeof eveConversation.$inferInsert.forkKind;
     fileKeys?: string[];
-    seedOnly?: boolean;
   }> = {}
 ): Promise<BoundConversation> => {
-  if ((forkKind || seedOnly) && !fork) {
+  if (forkKind && !fork) {
     throw new CreationConflictError(
       "Fork intent requires a source conversation."
     );
@@ -867,7 +864,7 @@ const createEveConversation = async (
   let [reservation] = await reserveEveConversation(
     {
       firstMessage: message,
-      creationKind: seedOnly ? "copy" : "message",
+      creationKind: "message",
       forkKind,
       initialContentHash,
       initialModelId,
@@ -897,8 +894,7 @@ const createEveConversation = async (
       initialModelId,
       initialContentHash,
       fork,
-      forkKind,
-      seedOnly
+      forkKind
     );
     const binding = boundConversation(matching);
     if (binding) {
@@ -918,7 +914,7 @@ const createEveConversation = async (
         ownerId,
         operationId: reservation.id,
         conversationId: reservation.id,
-        kind: seedOnly ? "copy" : "create",
+        kind: "create",
         intent: reservation.initialRequest ?? {
           message,
           initialModelId,
@@ -954,7 +950,7 @@ const createEveConversation = async (
           if (
             !(
               hasQueryRow(current) &&
-              current.creationKind === (seedOnly ? "copy" : "message") &&
+              current.creationKind === "message" &&
               (current.state === "creating" || current.state === "uncertain")
             )
           ) {

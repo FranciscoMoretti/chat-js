@@ -37,16 +37,6 @@ export const createEveConversationOperation = async (
     | undefined;
   try {
     const existing = await getEveCreation(ownerId, input.operationId);
-    if (existing?.creationKind === "copy") {
-      return Response.json(
-        {
-          creationRejected: true,
-          error:
-            "This operation belongs to a saved copy. Resume the copy operation instead.",
-        },
-        { status: 409 }
-      );
-    }
     if (existing?.state === "deleting" || existing?.state === "deleted") {
       return Response.json(
         {
