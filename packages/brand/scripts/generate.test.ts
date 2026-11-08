@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import {
   cp,
   mkdtemp,
+  mkdir,
   readFile,
   rename,
   rm,
@@ -27,6 +28,12 @@ test("brand sync detects and removes retired artwork without touching other file
       path.resolve(packageRoot, "../../node_modules"),
       path.join(fixture, "node_modules")
     );
+    // Resolve from this workspace instead of relying on the installer's hoisting layout.
+    await mkdir(path.join(brand, "node_modules"), { recursive: true });
+    await symlink(
+      path.dirname(fileURLToPath(import.meta.resolve("sharp/package.json"))),
+      path.join(brand, "node_modules/sharp")
+    );
     const generate = async (check = false) => {
       const child = Bun.spawn(
         [
@@ -48,7 +55,7 @@ test("brand sync detects and removes retired artwork without touching other file
       return { code, output: stdout + stderr };
     };
     const generated = await generate();
-    assert.equal(generated.code, 0);
+    assert.equal(generated.code, 0, generated.output);
     const mirrored = path.join(fixture, "apps/site/public/home/blocks");
     await writeFile(
       path.join(mirrored, "notes.txt"),
@@ -60,10 +67,10 @@ test("brand sync detects and removes retired artwork without touching other file
     );
     const check = await generate(true);
     assert.equal(check.code, 1);
-    assert.match(check.output, /blocks\/mcp\.svg/u);
+    assert.ok(check.output.includes(path.join("blocks", "mcp.svg")));
     await readFile(path.join(mirrored, "mcp.svg"));
     const regenerated = await generate();
-    assert.equal(regenerated.code, 0);
+    assert.equal(regenerated.code, 0, regenerated.output);
     await assert.rejects(readFile(path.join(mirrored, "mcp.svg")), {
       code: "ENOENT",
     });
@@ -73,7 +80,7 @@ test("brand sync detects and removes retired artwork without touching other file
       "Keep non-artwork files."
     );
     const clean = await generate(true);
-    assert.equal(clean.code, 0);
+    assert.equal(clean.code, 0, clean.output);
   } finally {
     await rm(fixture, { recursive: true, force: true });
   }
