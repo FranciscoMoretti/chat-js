@@ -16,7 +16,7 @@ const siteConfig = {
     "LLM app boilerplate",
   ],
   name: "ChatJS",
-  ogImage: "/chatjs_preview_light.png",
+  ogImage: "/opengraph-image.jpg",
   shortName: "ChatJS",
   title: "ChatJS",
   url: "https://chatjs.dev",

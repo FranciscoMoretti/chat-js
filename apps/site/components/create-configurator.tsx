@@ -51,11 +51,11 @@ const CreateDesigner = () => {
     >
       <header className="flex h-14 shrink-0 items-center gap-2 px-4 md:h-16 md:px-6">
         <Link
-          className="mr-auto flex items-center gap-2 font-semibold tracking-tight"
+          className="mr-auto flex min-w-0 items-center gap-2 font-semibold tracking-tight"
           href="/"
         >
           <BrandMark className="size-4 shrink-0" />
-          <span>
+          <span className="truncate">
             ChatJS{" "}
             <span className="text-muted-foreground font-normal">/ Create</span>
           </span>

@@ -308,6 +308,17 @@ try {
     "Offscreen mobile branches remain reachable"
   );
   await capture(page, "threads-mobile-live");
+  await page.setViewportSize({ width: 320, height: 780 });
+  await page.addStyleTag({ content: "html { font-size: 200%; }" });
+  const heading = intro.getByRole("heading", { level: 1 });
+  const headingFits = await heading.evaluate(
+    (element) => element.scrollWidth <= element.clientWidth
+  );
+  assert.ok(headingFits, "The Threads heading wraps at larger text sizes");
+  await heading.screenshot({
+    animations: "disabled",
+    path: `${output}threads-mobile-large-text.png`,
+  });
   assert.deepEqual(errors, [], "No browser runtime errors");
   console.log(
     `Threads interaction checks passed; deterministic captures in ${output}`

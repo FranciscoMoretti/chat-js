@@ -17,8 +17,12 @@
   font-family: CarbonGeist, Arial, sans-serif;
 }
 
+.threads-page h1 {
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+
 .threads-page h1 em {
   color: var(--carbon-muted);
   font-style: normal;
-  white-space: nowrap;
 }
