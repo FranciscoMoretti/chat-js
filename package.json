@@ -68,7 +68,10 @@
     "eve:check": "dotenv -e .env.worktree.local -e .env.local -- bun run --cwd apps/chat eve:check",
     "test:tools:live": "dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env chat -- bun --filter=@chatjs/chat run test:tools:live",
     "test:visual:create:activity": "bun -e 'import { rmSync } from \"node:fs\"; rmSync(\"apps/site/uiverify-archive\", { recursive: true, force: true });' && dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env site -- playwright test --config apps/site/tests/create.playwright.config.mts && bun -e 'import { finalizeArchive } from \"@uiverify/playwright\"; finalizeArchive(\"apps/site/uiverify-archive\");'",
-    "test:visual:site:install": "dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env site -- bun apps/site/tests/get-started.visual.ts"
+    "test:visual:site:install": "dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env site -- bun apps/site/tests/get-started.visual.ts",
+    "test:visual:home": "dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env site -- bun apps/site/tests/homepage.visual.ts",
+    "brand:generate": "bun --filter @chatjs/brand generate",
+    "brand:check": "bun --filter @chatjs/brand check"
   },
   "devDependencies": {
     "@changesets/changelog-github": "^0.5.2",

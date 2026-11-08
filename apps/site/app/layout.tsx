@@ -43,13 +43,13 @@ const metadata: Metadata = {
     ],
     locale: "en_US",
     siteName: siteConfig.name,
-    title: `${siteConfig.title} — The Prod-Ready AI Chat App`,
+    title: `${siteConfig.title} — The building blocks for your AI app`,
     type: "website",
     url: siteConfig.url,
   },
   publisher: siteConfig.name,
   title: {
-    default: `${siteConfig.title} — The Prod-Ready AI Chat App`,
+    default: `${siteConfig.title} — The building blocks for your AI app`,
     template: `%s | ${siteConfig.title}`,
   },
   twitter: {
@@ -57,7 +57,7 @@ const metadata: Metadata = {
     creator: siteConfig.creator,
     description: siteConfig.description,
     images: [siteConfig.ogImage],
-    title: `${siteConfig.title} — The Prod-Ready AI Chat App`,
+    title: `${siteConfig.title} — The building blocks for your AI app`,
   },
 };
 

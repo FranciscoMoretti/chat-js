@@ -26,6 +26,7 @@ jobs:
           path: ~/.bun/install/cache
           key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
           restore-keys: ${{ runner.os }}-bun-
+      - uses: ./.github/actions/cache-electron
       - name: Install dependencies
         run: bun install --frozen-lockfile
       - name: Check Oxlint and Oxfmt across the repository

@@ -9,12 +9,14 @@
     "start": "next start",
     "lint": "oxlint . && oxfmt --check .",
     "test:types": "next typegen . && tsc --noEmit",
-    "format": "oxfmt --write ."
+    "format": "oxfmt --write .",
+    "test:unit": "bun test tests/home-assets.test.ts"
   },
   "dependencies": {
     "@ai-sdk/react": "4.0.140",
     "@base-ui/react": "^1.8.0",
     "@chat-js/thread": "workspace:*",
+    "@chatjs/brand": "workspace:*",
     "@hugeicons/core-free-icons": "^3.0.0",
     "@hugeicons/react": "^1.1.1",
     "@lexical/react": "^0.32.1",

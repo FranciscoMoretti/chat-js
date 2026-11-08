@@ -70,6 +70,7 @@ The CLI walks you through gateway, features, and auth choices, generates `chat.c
 - `apps/chat`: Next.js chat app ([demo.chatjs.dev](https://demo.chatjs.dev))
 - `apps/docs`: Blume docs ([chatjs.dev/docs](https://chatjs.dev/docs))
 - `packages/cli`: interactive scaffold CLI
+- [`packages/brand`](packages/brand/README.md): approved logo, icons, square patterns, product artwork and export scripts
 
 ## Development
 
