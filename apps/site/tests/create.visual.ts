@@ -135,6 +135,15 @@ try {
     });
   };
   await waitForPreset();
+  await expect(
+    page.getByRole("link", { name: "ChatJS / Create" }).locator("svg")
+  ).toBeVisible();
+  await expect(
+    frame
+      .getByTestId("chat-preview")
+      .getByText("ChatJS", { exact: true })
+      .first()
+  ).toBeVisible();
   await capture("create-default");
   assert.notEqual(
     await frame
@@ -378,6 +387,26 @@ try {
     .waitFor();
   await capture("create-mobile-installation");
   await page.keyboard.press("Escape");
+  await page.setViewportSize({ width: 320, height: 780 });
+  await page.addStyleTag({
+    content: "html { font-size: 200%; }",
+  });
+  const mobileGetCode = page
+    .getByRole("button", { name: "Get Code", exact: true })
+    .first();
+  const brandBounds = await page
+    .getByRole("link", { name: "ChatJS / Create" })
+    .boundingBox();
+  assert.ok(brandBounds && brandBounds.width >= 16);
+  const getCodeBounds = await mobileGetCode.boundingBox();
+  assert.ok(getCodeBounds && getCodeBounds.x + getCodeBounds.width <= 320);
+  await capture("create-mobile-large-text");
+  await mobileGetCode.click();
+  await dialog
+    .getByRole("button", { name: "Copy Command", exact: true })
+    .waitFor();
+  await page.keyboard.press("Escape");
+  await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`${origin}/create?base=aria`);
   await page
     .getByRole("heading", { name: "This setup is not available yet." })

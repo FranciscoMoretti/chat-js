@@ -158,6 +158,15 @@ for (const page of pages) {
     ]);
 
     if (page.name === "home") {
+      await Promise.all(
+        ["light", "dark"].map(async (theme) => {
+          const banner = source.querySelector<HTMLImageElement>(
+            `main img[src$="/hero-${theme}.png"]`
+          );
+          expect(banner).not.toBeNull();
+          await banner?.decode();
+        })
+      );
       const deployment = [...sections].find(
         (section) =>
           section

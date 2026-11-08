@@ -1,22 +1,10 @@
-/* Scoped to the homepage: Create and Threads retain their own design systems. */
-@font-face {
-  font-family: HomeGeist;
-  src: url("/home/fonts/geist.woff2");
-  font-weight: 100 900;
-  font-display: swap;
-}
-@font-face {
-  font-family: HomePlex;
-  src: url("/home/fonts/plex.ttf");
-  font-display: swap;
-}
 .home-page {
   color-scheme: dark;
-  --bg: #0c0c0c;
-  --fg: #eeeee9;
-  --muted: #94948e;
-  --line: #292928;
-  --surface: #111110;
+  --bg: var(--carbon-background);
+  --fg: var(--carbon-foreground);
+  --muted: var(--carbon-muted);
+  --line: var(--carbon-line);
+  --surface: var(--carbon-surface);
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
 }
 .home-page * {
@@ -31,7 +19,7 @@
   background: var(--bg);
   color: var(--fg);
   font:
-    14px/1.65 HomeGeist,
+    14px/1.65 CarbonGeist,
     Arial,
     sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -68,46 +56,9 @@
 .home-page p {
   color: var(--muted);
 }
-.home-page .wrap {
-  width: min(1280px, calc(100% - 96px));
-  margin-inline: auto;
-}
-.home-page header {
-  height: 88px;
-  border-bottom: 1px solid var(--line);
-  display: flex;
-  align-items: center;
-  gap: 40px;
-}
-.home-page .logo {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 23px;
-  font-weight: 650;
-  letter-spacing: -1.1px;
-}
-.home-page .logo svg {
-  width: 25px;
-  height: 25px;
-  display: block;
-}
-.home-page header nav {
-  margin-left: auto;
-  display: flex;
-  gap: 28px;
-  color: #a5a5a0;
-  font-size: 12px;
-}
-.home-page .header-create {
-  border: 1px solid #393936;
-  padding: 7px 13px;
-  border-radius: 5px;
-  font-size: 12px;
-}
 .home-page .eyebrow {
   font:
-    9px/1.6 HomePlex,
+    9px/1.6 CarbonPlex,
     monospace;
   letter-spacing: 0.8px;
   color: #9a9a93;
@@ -302,12 +253,12 @@
   align-items: center;
   border-bottom: 1px solid #252522;
   padding: 17px 24px;
-  font: 8px HomePlex;
+  font: 8px CarbonPlex;
   letter-spacing: 0.5px;
   color: #77776f;
 }
 .home-page .source-title a {
-  font: 10px HomeGeist;
+  font: 10px CarbonGeist;
   color: #bdbdb4;
   letter-spacing: 0;
 }
@@ -323,7 +274,7 @@
   display: flex;
   align-items: center;
   gap: 22px;
-  font: 9px HomePlex;
+  font: 9px CarbonPlex;
   color: #a1a198;
 }
 .home-page .source-controls button {
@@ -408,28 +359,10 @@
 }
 .home-page .closing code {
   display: block;
-  font: 10px HomePlex;
+  font: 10px CarbonPlex;
   color: #74746b;
   margin-top: 23px;
   user-select: all;
-}
-.home-page footer {
-  border-top: 1px solid var(--line);
-  padding: 35px 0 40px;
-  display: flex;
-  align-items: center;
-  gap: 30px;
-}
-.home-page footer > span {
-  font-size: 11px;
-  color: #71716b;
-}
-.home-page footer nav {
-  display: flex;
-  gap: 25px;
-  margin-left: auto;
-  font-size: 11px;
-  color: #a7a79c;
 }
 .home-page .sr-only {
   position: absolute;
@@ -474,7 +407,7 @@
 }
 .home-page .dialog-art > span {
   display: block;
-  font: 7px HomePlex;
+  font: 7px CarbonPlex;
   color: #777;
   margin-top: 15px;
   text-align: center;
@@ -501,7 +434,7 @@
   overflow-wrap: anywhere;
 }
 .home-page .dialog-command code {
-  font: 10px/1.8 HomePlex;
+  font: 10px/1.8 CarbonPlex;
   user-select: all;
 }
 .home-page .dialog-info .setup-note {
@@ -521,9 +454,6 @@
   }
 }
 @media (max-width: 1100px) {
-  .home-page .wrap {
-    width: calc(100% - 56px);
-  }
   .home-page .split {
     gap: 20px;
     padding-top: 50px;
@@ -551,14 +481,6 @@
   }
 }
 @media (max-width: 800px) {
-  .home-page header {
-    gap: 20px;
-    height: 78px;
-  }
-  .home-page header nav {
-    gap: 18px;
-  }
-
   .home-page .split {
     grid-template-columns: 1fr;
     gap: 25px;
@@ -623,17 +545,6 @@
   .home-page .closing h2 {
     font-size: 49px;
   }
-  .home-page footer {
-    flex-wrap: wrap;
-    gap: 18px;
-  }
-  .home-page footer nav {
-    margin-left: auto;
-  }
-  .home-page footer > span {
-    order: 3;
-    width: 100%;
-  }
   .home-page .dialog-body {
     grid-template-columns: 1fr;
   }
@@ -649,21 +560,6 @@
   }
 }
 @media (max-width: 480px) {
-  .home-page .wrap {
-    width: calc(100% - 36px);
-  }
-  .home-page .logo {
-    font-size: 22px;
-  }
-  .home-page .logo svg {
-    width: 23px;
-    height: 23px;
-  }
-  .home-page header nav {
-    font-size: 10px;
-    gap: 16px;
-  }
-
   .home-page .hero h1 {
     font-size: 43px;
     letter-spacing: -2.4px;
@@ -760,13 +656,6 @@
   }
   .home-page .closing code {
     font-size: 8px;
-  }
-  .home-page footer .logo {
-    font-size: 20px;
-  }
-  .home-page footer nav {
-    font-size: 9px;
-    gap: 15px;
   }
   .home-page .dialog-art {
     width: 210px;
@@ -884,7 +773,7 @@
   margin: 0;
 }
 .home-page .next-block small {
-  font: 8px HomePlex;
+  font: 8px CarbonPlex;
   color: #929282;
   margin-top: 25px;
 }
@@ -899,7 +788,7 @@
   color: #9b9b90;
 }
 .home-page .collection-bottom > span:last-child {
-  font: 8px/1.8 HomePlex;
+  font: 8px/1.8 CarbonPlex;
   color: #727267;
 }
 .home-page .collection-section [hidden] {
@@ -1005,13 +894,13 @@
   color: #e8e8df;
 }
 .home-page .cli-command .prompt {
-  font: 12px HomePlex;
+  font: 12px CarbonPlex;
   color: #7d7d6d;
   flex: none;
 }
 .home-page .cli-command code {
   font:
-    12px/1.7 HomePlex,
+    12px/1.7 CarbonPlex,
     monospace;
   user-select: all;
   overflow-wrap: anywhere;
@@ -1024,7 +913,7 @@
   gap: 7px;
   color: #969689;
   margin-left: auto;
-  font: 10px HomeGeist;
+  font: 10px CarbonGeist;
   min-width: 48px;
   flex: none;
   padding: 3px;
@@ -1190,30 +1079,8 @@
   height: 13px;
   stroke-width: 2.5;
 }
-.home-page header nav {
-  align-items: center;
-  gap: 24px;
-}
-.home-page header nav a {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 36px;
-}
-.home-page header .header-create {
-  color: var(--fg);
-  padding: 6px 13px;
-}
-.home-page header .github-link {
-  width: 36px;
-  border-radius: 5px;
-}
-.home-page header .github-link:hover {
-  background: #1d1d1b;
-}
 .home-page .foundation-band a,
 .home-page .source-title a,
-.home-page footer nav a,
 .home-page .dialog-info .actions > a,
 .home-page .next-block small {
   display: inline-flex;
@@ -1242,30 +1109,6 @@
   width: 36px;
   height: 36px;
   padding: 0;
-}
-@media (max-width: 480px) {
-  .home-page header {
-    gap: 10px;
-  }
-  .home-page header .logo {
-    font-size: 20px;
-    gap: 7px;
-  }
-  .home-page header .logo svg {
-    width: 22px;
-    height: 22px;
-  }
-  .home-page header nav {
-    gap: 9px;
-    font-size: 11px;
-  }
-  .home-page header .header-create {
-    font-size: 11px;
-    padding: 5px 9px;
-  }
-  .home-page header .github-link {
-    width: 30px;
-  }
 }
 
 /* Match the illustration's own viewport breakpoint, not the page width. */

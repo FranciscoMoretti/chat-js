@@ -35,7 +35,7 @@ const metadata: Metadata = {
     description: siteConfig.description,
     images: [
       {
-        alt: "ChatJS AI chat application interface preview",
+        alt: "ChatJS Carbon mark and building blocks",
         height: 630,
         url: siteConfig.ogImage,
         width: 1200,

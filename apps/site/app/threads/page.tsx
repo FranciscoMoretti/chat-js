@@ -23,6 +23,9 @@ import {
 } from "@/components/thread-showcase";
 import { siteConfig, siteLinks } from "@/lib/site-config";
 
+import "../../components/carbon.css";
+import "./threads.css";
+
 const THREADS_TITLE = "useThread — Branching Chats for AI SDK";
 const THREADS_DESCRIPTION =
   "Keep the useChat interface and add message trees, branch navigation, and concurrent AI SDK response streams.";
@@ -116,19 +119,19 @@ const architectureRows = [
 ] as const;
 
 const ThreadsPage = (): React.JSX.Element => (
-  <div className="flex min-h-screen flex-col">
+  <div className="carbon-page threads-page flex min-h-screen flex-col">
     <Navbar />
     <main className="flex-1">
       <section className="border-border/50 border-b">
-        <div className="mx-auto max-w-6xl px-6 pt-16 pb-14 sm:pt-24 sm:pb-20">
+        <div className="carbon-wrap pt-12 pb-12 sm:pt-16 sm:pb-16">
           <div className="grid gap-12 lg:grid-cols-[minmax(0,1.12fr)_minmax(23rem,0.88fr)] lg:items-end">
             <div className="min-w-0">
               <div className="text-muted-foreground flex items-center gap-2 font-mono text-xs tracking-[0.18em] uppercase">
                 <GitBranch className="size-4" />
                 useThread for AI SDK
               </div>
-              <h1 className="font-display mt-7 max-w-4xl text-4xl leading-[0.98] tracking-tight sm:text-7xl">
-                Branching conversations for AI SDK.
+              <h1 className="mt-6 max-w-4xl text-[clamp(2.6rem,5.1vw,4.5rem)] leading-[1.04] font-medium tracking-[-0.055em]">
+                Branching conversations <em>for AI SDK.</em>
               </h1>
               <p className="text-foreground/72 mt-7 max-w-2xl text-lg leading-8 sm:text-xl">
                 Keep the{" "}
@@ -141,7 +144,7 @@ const ThreadsPage = (): React.JSX.Element => (
               </p>
               <div className="mt-8 flex flex-wrap items-center gap-5">
                 <a
-                  className="bg-primary text-primary-foreground inline-flex min-h-11 items-center gap-2 px-5 text-sm font-medium transition-opacity hover:opacity-85"
+                  className="bg-primary text-primary-foreground inline-flex min-h-11 items-center gap-2 rounded-[5px] px-5 text-sm font-medium transition-opacity hover:opacity-85"
                   href="#playground"
                 >
                   Try the playground
@@ -157,7 +160,7 @@ const ThreadsPage = (): React.JSX.Element => (
               </div>
             </div>
 
-            <div className="border-border bg-card min-w-0 border-y">
+            <div className="border-border bg-card min-w-0 rounded-md border">
               <div className="border-border flex items-center justify-between border-b px-4 py-3">
                 <span className="text-muted-foreground font-mono text-xs">
                   Chat.tsx
@@ -206,13 +209,13 @@ const ThreadsPage = (): React.JSX.Element => (
       </section>
 
       <section className="scroll-mt-20 py-16 sm:py-20" id="playground">
-        <div className="mx-auto max-w-6xl px-6">
+        <div className="carbon-wrap">
           <div className="mb-8 flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
             <div className="max-w-2xl">
               <p className="text-muted-foreground font-mono text-xs tracking-[0.18em] uppercase">
                 The package, not a mockup
               </p>
-              <h2 className="font-display mt-4 text-3xl tracking-tight sm:text-5xl">
+              <h2 className="mt-4 text-3xl leading-[1.1] font-medium tracking-[-0.045em] sm:text-5xl">
                 Move through the tree while it streams.
               </h2>
             </div>
@@ -226,14 +229,14 @@ const ThreadsPage = (): React.JSX.Element => (
         </div>
       </section>
 
-      <section className="border-border/50 bg-card border-y py-20 sm:py-28">
-        <div className="mx-auto max-w-6xl px-6">
+      <section className="border-border/50 bg-card border-y py-16 sm:py-24">
+        <div className="carbon-wrap">
           <div className="grid gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
             <div>
               <p className="text-muted-foreground font-mono text-xs tracking-[0.18em] uppercase">
                 A strict extension
               </p>
-              <h2 className="font-display mt-5 text-3xl tracking-tight sm:text-5xl">
+              <h2 className="mt-5 text-3xl leading-[1.1] font-medium tracking-[-0.045em] sm:text-5xl">
                 Your chat stays linear. Its history does not.
               </h2>
               <p className="text-foreground/68 mt-5 leading-7">
@@ -282,14 +285,14 @@ const ThreadsPage = (): React.JSX.Element => (
         </div>
       </section>
 
-      <section className="py-20 sm:py-28">
-        <div className="mx-auto max-w-6xl px-6">
+      <section className="py-16 sm:py-24">
+        <div className="carbon-wrap">
           <div className="grid gap-14 lg:grid-cols-[0.92fr_1.08fr] lg:items-start lg:gap-20">
             <div>
               <p className="text-muted-foreground font-mono text-xs tracking-[0.18em] uppercase">
                 Why it keeps working
               </p>
-              <h2 className="font-display mt-5 text-3xl tracking-tight sm:text-5xl">
+              <h2 className="mt-5 text-3xl leading-[1.1] font-medium tracking-[-0.045em] sm:text-5xl">
                 One tree. One AI SDK lifecycle per response.
               </h2>
               <p className="text-foreground/68 mt-5 max-w-xl leading-7">
@@ -331,12 +334,12 @@ const ThreadsPage = (): React.JSX.Element => (
       </section>
 
       <section className="border-border/50 bg-card border-y py-20 sm:py-24">
-        <div className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-10 px-6 lg:flex-row lg:items-end">
+        <div className="carbon-wrap flex flex-col items-start justify-between gap-10 lg:flex-row lg:items-end">
           <div className="max-w-2xl">
             <p className="text-muted-foreground font-mono text-xs tracking-[0.18em] uppercase">
               Headless by design
             </p>
-            <h2 className="font-display mt-5 text-3xl tracking-tight sm:text-5xl">
+            <h2 className="mt-5 text-3xl leading-[1.1] font-medium tracking-[-0.045em] sm:text-5xl">
               Own the experience. Choose how you integrate it.
             </h2>
             <p className="text-foreground/68 mt-5 leading-7">
@@ -346,7 +349,7 @@ const ThreadsPage = (): React.JSX.Element => (
             </p>
           </div>
           <a
-            className="bg-primary text-primary-foreground inline-flex min-h-11 shrink-0 items-center gap-2 px-5 text-sm font-medium transition-opacity hover:opacity-85"
+            className="bg-primary text-primary-foreground inline-flex min-h-11 shrink-0 items-center gap-2 rounded-[5px] px-5 text-sm font-medium transition-opacity hover:opacity-85"
             href={`${siteLinks.docs}/threads`}
           >
             Read the docs

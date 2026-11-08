@@ -51,6 +51,18 @@ try {
     name: "Main",
     exact: true,
   });
+  const docs = navigation.getByRole("link", { name: "Docs", exact: true });
+  assert.equal(
+    await docs.getAttribute("href"),
+    process.env.NEXT_PUBLIC_CHATJS_DOCS_URL ?? "https://chatjs.dev/docs"
+  );
+  assert.equal(
+    await page
+      .getByRole("navigation", { name: "Footer" })
+      .getByRole("link", { name: "Thread library" })
+      .getAttribute("href"),
+    "/threads"
+  );
   assert.deepEqual(await navigation.getByRole("link").allTextContents(), [
     "Docs",
     "Demo",
@@ -69,9 +81,13 @@ try {
       .getAttribute("href"),
     "https://github.com/franciscomoretti/chat-js"
   );
-  await page
-    .locator("header")
-    .screenshot({ path: `${output}desktop-navigation.png` });
+  const header = page.locator("header.carbon-nav");
+  const desktopHeader = await header.boundingBox();
+  assert.equal(desktopHeader?.height, 60);
+  await header.screenshot({ path: `${output}desktop-navigation.png` });
+  await page.getByRole("link", { name: "ChatJS home" }).first().focus();
+  await header.screenshot({ path: `${output}desktop-navigation-focus.png` });
+  await page.locator("main").focus();
   assert.equal(
     await page
       .getByRole("link", { name: "Create your app" })
@@ -151,9 +167,12 @@ try {
     )
   );
   assert.deepEqual(mobileLinks, [true, true, true, true]);
+  const mobileHeader = await header.boundingBox();
+  assert.equal(mobileHeader?.height, 56);
+  await header.screenshot({ path: `${output}mobile-navigation.png` });
   await page
-    .locator("header")
-    .screenshot({ path: `${output}mobile-navigation.png` });
+    .getByRole("contentinfo")
+    .screenshot({ path: `${output}mobile-footer.png` });
   await page
     .locator(".hero")
     .screenshot({ path: `${output}mobile-hero.png`, animations: "disabled" });

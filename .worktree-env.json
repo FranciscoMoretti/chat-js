@@ -26,6 +26,7 @@
     "site": {
       "offset": 2,
       "exports": {
+        "NEXT_PUBLIC_CHATJS_DOCS_URL": "{apps.docs.url}/docs",
         "PORT": "{port}"
       }
     },

@@ -1,18 +1,12 @@
 .playground {
-  --thread-blue: #2867dc;
-  --thread-teal: #087f70;
-  --thread-amber: #a15b0b;
-  margin-top: 3rem;
+  --thread-active: #e2e2d9;
+  --thread-running: #b5c4b7;
+  --thread-stopped: #cbb691;
+  margin-top: 1.75rem;
   overflow: hidden;
   background: var(--card);
   border: 1px solid var(--border);
-  border-radius: 16px;
-  box-shadow: 0 24px 70px -30px #163c5133;
-}
-:global(.dark) .playground {
-  --thread-blue: #83b2ff;
-  --thread-teal: #59d9bb;
-  --thread-amber: #f3ba6a;
+  border-radius: 7px;
 }
 .playground button {
   cursor: pointer;
@@ -21,7 +15,7 @@
   cursor: not-allowed;
 }
 .playground button:focus-visible {
-  outline: 3px solid var(--thread-blue);
+  outline: 3px solid var(--thread-active);
   outline-offset: 4px;
 }
 .playgroundTitle {
@@ -33,8 +27,9 @@
   letter-spacing: -0.025em;
 }
 .brandGlyph {
-  font-size: 26px;
-  color: var(--thread-teal);
+  width: 17px;
+  height: 17px;
+  color: var(--foreground);
 }
 .demoButton {
   display: flex;
@@ -44,8 +39,8 @@
   font-size: 12px;
   font-weight: 600;
   color: var(--card);
-  background: var(--thread-blue);
-  border: 1px solid var(--thread-blue);
+  background: var(--thread-active);
+  border: 1px solid var(--thread-active);
   border-radius: 7px;
   transition:
     transform 0.2s,
@@ -70,13 +65,13 @@
 }
 .responseStatus[data-state="streaming"],
 .responseStatus[data-state="submitted"] {
-  color: var(--thread-teal);
+  color: var(--thread-running);
 }
 .responseStatus[data-state="stopped"] {
-  color: var(--thread-amber);
+  color: var(--thread-stopped);
 }
 .responseStatus[data-state="error"] {
-  color: #dd4848;
+  color: #eca09a;
 }
 .tokens {
   margin-left: auto;
@@ -88,9 +83,9 @@
   flex-shrink: 0;
   width: 13px;
   height: 13px;
-  border: 2px solid color-mix(in srgb, var(--thread-teal) 22%, transparent);
-  border-top-color: var(--thread-teal);
-  border-right-color: var(--thread-teal);
+  border: 2px solid color-mix(in srgb, var(--thread-running) 22%, transparent);
+  border-top-color: var(--thread-running);
+  border-right-color: var(--thread-running);
   border-radius: 50%;
   animation: orbit 1.2s linear infinite;
 }
@@ -114,7 +109,7 @@
   gap: 5px;
   align-items: center;
   font-size: 10px;
-  color: var(--thread-blue);
+  color: var(--thread-active);
 }
 .viewingBadge > span {
   width: 6px;
@@ -150,15 +145,15 @@
   place-items: center;
   width: 28px;
   height: 28px;
-  color: var(--thread-teal);
-  background: color-mix(in srgb, var(--thread-teal) 10%, var(--card));
-  border: 1px solid color-mix(in srgb, var(--thread-teal) 24%, transparent);
+  color: var(--thread-running);
+  background: color-mix(in srgb, var(--thread-running) 10%, var(--card));
+  border: 1px solid color-mix(in srgb, var(--thread-running) 24%, transparent);
   border-radius: 9px;
 }
 .currentTurn {
   font-size: 9px;
   font-weight: 500;
-  color: var(--thread-blue);
+  color: var(--thread-active);
 }
 .userMessage {
   width: fit-content;
@@ -170,12 +165,12 @@
 }
 .userMessage .messageBody {
   padding: 12px 16px;
-  background: color-mix(in srgb, var(--thread-blue) 8%, var(--secondary));
-  border: 1px solid color-mix(in srgb, var(--thread-blue) 12%, transparent);
+  background: color-mix(in srgb, var(--thread-active) 8%, var(--secondary));
+  border: 1px solid color-mix(in srgb, var(--thread-active) 12%, transparent);
   border-radius: 18px 18px 4px 18px;
 }
 .userMessage[data-selected="true"] .messageBody {
-  border-color: var(--thread-blue);
+  border-color: var(--thread-active);
 }
 .assistantMessage {
   margin-right: 24px;
@@ -219,12 +214,12 @@
   height: 28px;
   padding: 0 7px;
   font-size: 10px;
-  color: var(--thread-blue);
+  color: var(--thread-active);
   border: 1px solid var(--border);
   border-radius: 5px;
 }
 .branchButton:hover {
-  background: color-mix(in srgb, var(--thread-blue) 8%, transparent);
+  background: color-mix(in srgb, var(--thread-active) 8%, transparent);
 }
 .branchButton:disabled {
   opacity: 0.4;
@@ -241,7 +236,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   font-weight: 500;
-  color: var(--thread-blue);
+  color: var(--thread-active);
   white-space: nowrap;
 }
 .treePanel {
@@ -280,7 +275,7 @@
 .legendSelected {
   width: 14px;
   height: 3px;
-  background: var(--thread-blue);
+  background: var(--thread-active);
   border-radius: 2px;
 }
 .edge {
@@ -289,7 +284,7 @@
   transition: stroke 0.25s;
 }
 .selectedEdge {
-  stroke: var(--thread-blue);
+  stroke: var(--thread-active);
   stroke-width: 3;
   transition: stroke 0.25s;
 }
@@ -310,23 +305,23 @@
     background 0.2s;
 }
 .treeNode:hover {
-  border-color: var(--thread-blue);
+  border-color: var(--thread-active);
   box-shadow: 0 4px 12px #00000012;
 }
 .treeNode[data-path="true"] {
-  background: color-mix(in srgb, var(--thread-blue) 5%, var(--card));
-  border-color: color-mix(in srgb, var(--thread-blue) 50%, var(--border));
+  background: color-mix(in srgb, var(--thread-active) 5%, var(--card));
+  border-color: color-mix(in srgb, var(--thread-active) 50%, var(--border));
 }
 .treeNode[aria-pressed="true"] {
   padding: 9px;
-  border: 2px solid var(--thread-blue);
+  border: 2px solid var(--thread-active);
   box-shadow:
-    0 0 0 4px color-mix(in srgb, var(--thread-blue) 12%, transparent),
+    0 0 0 4px color-mix(in srgb, var(--thread-active) 12%, transparent),
     0 6px 18px #0000000d;
 }
 .treeNode[data-state="streaming"],
 .treeNode[data-state="submitted"] {
-  outline: 2px solid color-mix(in srgb, var(--thread-teal) 60%, transparent);
+  outline: 2px solid color-mix(in srgb, var(--thread-running) 60%, transparent);
   outline-offset: 4px;
   animation: breathe 1.8s ease-in-out infinite;
 }
@@ -343,7 +338,7 @@
 .assistantGlyph {
   font-size: 15px;
   line-height: 14px;
-  color: var(--thread-teal);
+  color: var(--thread-running);
 }
 .nodePreview {
   display: block;
@@ -369,7 +364,7 @@
   font-size: 9px;
   line-height: 13px;
   color: var(--card);
-  background: var(--thread-blue);
+  background: var(--thread-active);
   border-radius: 4px 4px 0 0;
 }
 .mapHint {
@@ -405,7 +400,7 @@
 }
 @keyframes breathe {
   50% {
-    outline-color: var(--thread-teal);
+    outline-color: var(--thread-running);
     outline-offset: 6px;
   }
 }

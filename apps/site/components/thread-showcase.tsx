@@ -1,5 +1,6 @@
 "use client";
 
+import { BrandMark } from "./brand-mark";
 import type { ThreadInit, ThreadRun, ThreadRunHandle } from "@chat-js/thread";
 import { getMessageText } from "@chat-js/thread";
 import { useThread } from "@chat-js/thread/react";
@@ -763,7 +764,7 @@ const PlaygroundSession = (): React.JSX.Element => {
       <div className="border-border flex min-h-16 flex-wrap items-center justify-between gap-3 border-b px-4 py-3">
         <div>
           <p className={styles.playgroundTitle}>
-            <span className={styles.brandGlyph}>✦</span> One conversation. Every
+            <BrandMark className={styles.brandGlyph} /> One conversation. Every
             possibility.
           </p>
           <p className="text-muted-foreground text-xs">
