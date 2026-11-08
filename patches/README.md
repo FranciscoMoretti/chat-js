@@ -1,6 +1,6 @@
 # Maintained runtime dependencies
 
-EVE is installed from the published `@chat-js/eve@1.0.0-rc.1-chatjs.0` fork through the `eve` npm alias. Its source and packaging workflow live in [the fork](https://github.com/FranciscoMoretti/eve/tree/francisco/chatjs-package); see [the package development guide](../docs/eve-package-development.md).
+EVE is installed from the published `@chat-js/eve@1.0.0-rc.6-chatjs.0` fork through the `eve` npm alias. Its source and packaging workflow live in [the fork](https://github.com/FranciscoMoretti/eve/tree/francisco/chatjs-package); see [the package development guide](../docs/eve-package-development.md).
 
 The former compiled EVE workflow-identity patch is removed: the maintained RC1 source supplies the scoped-package workflow behavior.
 
