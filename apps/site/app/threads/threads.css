@@ -1,0 +1,24 @@
+.threads-page {
+  --background: var(--carbon-background);
+  --foreground: var(--carbon-foreground);
+  --card: var(--carbon-surface);
+  --card-foreground: var(--carbon-foreground);
+  --primary: var(--carbon-foreground);
+  --primary-foreground: var(--carbon-background);
+  --secondary: #191918;
+  --muted: #191918;
+  --muted-foreground: var(--carbon-muted);
+  --accent: #20201d;
+  --border: var(--carbon-line);
+  --ring: var(--carbon-foreground);
+  --font-geist-mono: CarbonPlex, monospace;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: CarbonGeist, Arial, sans-serif;
+}
+
+.threads-page h1 em {
+  color: var(--carbon-muted);
+  font-style: normal;
+  white-space: nowrap;
+}

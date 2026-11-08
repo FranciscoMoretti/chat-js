@@ -34,16 +34,20 @@ bun brand:generate
 bun brand:check
 ```
 
-Generate after editing a source. Commit both sources and generated exports. Check regenerates in memory and fails if any expected asset or website copy is missing or differs; it does not write files.
+Generate after editing a source. Commit both sources and generated exports. Check regenerates in memory and fails if any expected asset or application copy is missing or differs; it does not write files.
 
-The generator updates these website consumers:
+The generator updates these application assets:
 
 - `apps/site/public/home/hero/brand.js`, used by both hero and source animations.
 - `apps/site/public/home/blocks/`, copied from the component-preview masters.
 - `apps/site/public/home/fonts/`, copied from the brand font sources.
-- `apps/site/public/logo.svg` and the Next.js icon, Apple icon and favicon in `apps/site/app/`.
+- `apps/site/public/logo.svg`, plus the browser icons and social preview in `apps/site/app/`.
+- The Chat app mark, browser icons and social preview in `apps/chat/`.
+- The Docs wordmarks, favicon and light/dark banners in `apps/docs/public/`.
+- The Electron source icon in `apps/electron/icon.png`. The existing desktop packaging script generates its native formats.
+- The Remotion mark in `apps/videos/public/brand/`.
 
-The React homepage logo imports `@chatjs/brand/identity` directly. Chat, Docs, Electron and video branding can adopt these exports separately; this package does not rewrite them.
+The Site homepage, Threads page and Create UI use the same React mark from `@chatjs/brand/identity`. The Chat and Electron icons are copied assets so a scaffold can ship them without depending on this private workspace.
 
 ## Using the assets
 

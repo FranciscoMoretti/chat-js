@@ -1,10 +1,12 @@
-import { ArrowRight, ArrowUpRight, Github, Plus } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Plus } from "lucide-react";
 import Link from "next/link";
 import { siteLinks } from "@/lib/site-config";
-import { Brand } from "./brand";
+import { Footer } from "@/components/footer";
+import { Navbar } from "@/components/navbar";
 import { BlockCollection } from "./collection";
 import { CreateCommand } from "./command";
 import { SourceAnimation } from "./source-animation";
+import "../carbon.css";
 import "./home.css";
 
 const Actions = () => (
@@ -19,31 +21,13 @@ const Actions = () => (
 );
 
 export const Homepage = () => (
-  <div className="home-page" data-testid="homepage">
+  <div className="home-page carbon-page" data-testid="homepage">
     <a className="skip-link" href="#main">
       Skip to content
     </a>
-    <header className="wrap">
-      <Brand />
-      <nav aria-label="Main">
-        <a href={siteLinks.docs}>Docs</a>
-        <a href={siteLinks.demo}>Demo</a>
-        <Link className="header-create" href="/create">
-          Create
-        </Link>
-        <a
-          className="github-link"
-          href={siteLinks.github}
-          aria-label="GitHub"
-          title="ChatJS on GitHub"
-        >
-          {/* oxlint-disable-next-line typescript/no-deprecated -- Use the requested GitHub glyph from the pinned Lucide release. */}
-          <Github size={19} aria-hidden="true" />
-        </a>
-      </nav>
-    </header>
+    <Navbar />
     <main id="main" tabIndex={-1}>
-      <section className="hero split wrap" aria-labelledby="home-title">
+      <section className="hero split carbon-wrap" aria-labelledby="home-title">
         <div className="hero-copy">
           <span className="eyebrow">
             <i aria-hidden="true" />
@@ -69,7 +53,7 @@ export const Homepage = () => (
           src="/home/hero/index.html"
         />
       </section>
-      <div className="wrap">
+      <div className="carbon-wrap">
         <div className="foundation-band">
           <span className="eyebrow">A FOUNDATION, ALREADY WORKING.</span>
           <span>Chat &amp; conversations</span>
@@ -85,7 +69,7 @@ export const Homepage = () => (
         id="blocks"
         aria-labelledby="collection-title"
       >
-        <div className="wrap">
+        <div className="carbon-wrap">
           <div className="section-head">
             <div>
               <span className="eyebrow">01 / MAKE IT YOURS</span>
@@ -107,7 +91,7 @@ export const Homepage = () => (
         id="source"
         aria-labelledby="source-title"
       >
-        <div className="wrap">
+        <div className="carbon-wrap">
           <div className="section-head">
             <div>
               <span className="eyebrow">02 / THE SOURCE IS THE PRODUCT</span>
@@ -148,7 +132,7 @@ export const Homepage = () => (
         </div>
       </section>
       <section
-        className="faq section wrap"
+        className="faq section carbon-wrap"
         id="faq"
         aria-labelledby="faq-title"
       >
@@ -199,23 +183,12 @@ export const Homepage = () => (
           </details>
         </div>
       </section>
-      <section className="closing wrap">
+      <section className="closing carbon-wrap">
         <span className="eyebrow">THE NEXT PART IS YOURS.</span>
         <h2>What will you build?</h2>
         <Actions />
       </section>
     </main>
-    <footer className="wrap">
-      <Brand />
-      <span>The foundation for your AI app.</span>
-      <nav aria-label="Footer">
-        <a href={siteLinks.docsGettingStarted}>
-          Documentation <ArrowUpRight size={13} aria-hidden="true" />
-        </a>
-        <a href={siteLinks.github}>
-          GitHub <ArrowUpRight size={13} aria-hidden="true" />
-        </a>
-      </nav>
-    </footer>
+    <Footer />
   </div>
 );

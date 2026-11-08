@@ -1,0 +1,162 @@
+@font-face {
+  font-family: CarbonGeist;
+  src: url("/home/fonts/geist.woff2") format("woff2");
+  font-weight: 100 900;
+  font-display: swap;
+}
+@font-face {
+  font-family: CarbonPlex;
+  src: url("/home/fonts/plex.ttf") format("truetype");
+  font-display: swap;
+}
+
+.carbon-page {
+  --carbon-background: #0c0c0c;
+  --carbon-foreground: #eeeee9;
+  --carbon-muted: #94948e;
+  --carbon-line: #292928;
+  --carbon-surface: #111110;
+  color-scheme: dark;
+}
+
+.carbon-wrap {
+  width: min(1280px, calc(100% - 96px));
+  margin-inline: auto;
+}
+
+.carbon-nav,
+.carbon-footer {
+  display: flex;
+  align-items: center;
+  font-family: CarbonGeist, Arial, sans-serif;
+}
+
+.carbon-nav {
+  min-height: 60px;
+  gap: 12px;
+  border-bottom: 1px solid var(--carbon-line);
+}
+
+.carbon-page .carbon-brand {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 8px;
+  color: var(--carbon-foreground);
+  border-radius: 3px;
+  font-size: 20px;
+  font-weight: 630;
+  letter-spacing: -0.85px;
+  line-height: 1;
+}
+
+.carbon-brand svg {
+  width: 21px;
+  height: 21px;
+}
+
+.carbon-nav nav,
+.carbon-footer nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-inline-start: auto;
+  font-size: 13px;
+}
+
+.carbon-page :is(.carbon-nav, .carbon-footer) nav a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  color: #b0b0a8;
+  text-decoration: none;
+}
+
+.carbon-nav nav a {
+  min-height: 36px;
+  padding-inline: 8px;
+  border-radius: 5px;
+}
+
+.carbon-page .carbon-nav .carbon-nav-create {
+  min-height: 32px;
+  padding-inline: 11px;
+  color: var(--carbon-foreground);
+  border: 1px solid #383834;
+}
+
+.carbon-nav-github {
+  min-width: 36px;
+}
+
+.carbon-page :is(.carbon-nav, .carbon-footer) nav a:hover {
+  color: var(--carbon-foreground);
+}
+
+.carbon-nav nav a:hover {
+  background: #1b1b19;
+}
+
+.carbon-page :is(.carbon-nav, .carbon-footer) a:focus-visible {
+  outline: 1px solid var(--carbon-foreground);
+  outline-offset: 3px;
+}
+
+.carbon-footer {
+  flex-wrap: wrap;
+  gap: 12px 22px;
+  padding-block: 28px;
+  border-top: 1px solid var(--carbon-line);
+}
+
+.carbon-footer > span {
+  color: var(--carbon-muted);
+  font-size: 12px;
+}
+
+.carbon-footer nav {
+  gap: 18px;
+  font-size: 12px;
+}
+
+@media (max-width: 1100px) {
+  .carbon-wrap {
+    width: calc(100% - 56px);
+  }
+}
+
+@media (max-width: 480px) {
+  .carbon-wrap {
+    width: calc(100% - 36px);
+  }
+  .carbon-nav {
+    min-height: 56px;
+    gap: 4px;
+  }
+  .carbon-nav nav {
+    gap: 2px;
+    font-size: 12px;
+  }
+  .carbon-nav nav a {
+    padding-inline: 6px;
+  }
+  .carbon-page .carbon-nav .carbon-nav-create {
+    padding-inline: 8px;
+  }
+  .carbon-nav-github {
+    min-width: 30px;
+  }
+  .carbon-page .carbon-brand {
+    gap: 6px;
+    font-size: 18px;
+  }
+  .carbon-brand svg {
+    width: 19px;
+    height: 19px;
+  }
+  .carbon-footer > span {
+    order: 3;
+    width: 100%;
+  }
+}

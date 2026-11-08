@@ -135,6 +135,15 @@ try {
     });
   };
   await waitForPreset();
+  await expect(
+    page.getByRole("link", { name: "ChatJS / Create" }).locator("svg")
+  ).toBeVisible();
+  await expect(
+    frame
+      .getByTestId("chat-preview")
+      .getByText("ChatJS", { exact: true })
+      .first()
+  ).toBeVisible();
   await capture("create-default");
   assert.notEqual(
     await frame

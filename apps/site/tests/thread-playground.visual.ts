@@ -38,6 +38,27 @@ try {
   await page.getByTestId("thread-playground").waitFor();
   await page.evaluate(async () => await document.fonts.ready);
   await page.clock.pauseAt(new Date("2026-01-01T00:01:00Z"));
+  await page
+    .locator("header")
+    .filter({
+      has: page.getByRole("link", { name: "ChatJS home", exact: true }),
+    })
+    .screenshot({
+      animations: "disabled",
+      path: `${output}threads-header.png`,
+    });
+  await page.getByRole("contentinfo").screenshot({
+    animations: "disabled",
+    path: `${output}threads-footer.png`,
+    style: "nextjs-portal { visibility: hidden !important; }",
+  });
+  assert.equal(
+    await page
+      .getByRole("navigation", { name: "Main" })
+      .getByRole("link", { name: /thread/iu })
+      .count(),
+    0
+  );
   const intro = page.locator("main > section").first();
   assert.match(
     (await intro.locator("pre").textContent()) ?? "",
@@ -251,13 +272,16 @@ try {
         .length === 3
   );
   await page.clock.runFor(1800);
-  await page.evaluate((): void => {
-    document.documentElement.classList.add("dark");
-  });
-  await capture(page, "threads-dark-live");
+  await capture(page, "threads-live");
   await page.setViewportSize({ height: 844, width: 390 });
-  await page.evaluate((): void => {
-    document.documentElement.classList.remove("dark");
+  await page.locator("header.carbon-nav").screenshot({
+    animations: "disabled",
+    path: `${output}threads-mobile-header.png`,
+  });
+  await intro.screenshot({
+    animations: "disabled",
+    path: `${output}threads-mobile-intro.png`,
+    style: "nextjs-portal { visibility: hidden !important; }",
   });
   assert.equal(
     await page.evaluate(

@@ -1,5 +1,6 @@
 "use client";
 
+import { BrandMark } from "@/components/brand-mark";
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { decodePreset, DEFAULT_PRESET_CONFIG } from "shadcn/preset";
@@ -346,7 +347,7 @@ export const ChatPreview = () => {
           header={
             <SidebarMenu>
               <div className="flex items-center gap-2 px-2 py-2 font-semibold">
-                <PreviewIcon name="chat" />
+                <BrandMark className="size-4 shrink-0" />
                 <span className="group-data-[collapsible=icon]:hidden">
                   ChatJS
                 </span>

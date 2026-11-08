@@ -38,5 +38,10 @@ const siteLinks = {
   threads: `${siteConfig.url}/threads`,
 } as const;
 
+const docsNavigationHref =
+  process.env.NODE_ENV === "development"
+    ? (process.env.NEXT_PUBLIC_CHATJS_DOCS_URL ?? siteLinks.docs)
+    : siteLinks.docs;
+
 const siteLastModified = new Date("2025-03-28T16:14:00.000Z");
-export { siteConfig, siteLastModified, siteLinks };
+export { docsNavigationHref, siteConfig, siteLastModified, siteLinks };
