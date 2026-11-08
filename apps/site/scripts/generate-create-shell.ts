@@ -26,6 +26,7 @@ const names = new Set(
         "skeleton",
         "radio-group",
         "switch",
+        "checkbox",
         "tabs",
         "toggle-group",
         "select",

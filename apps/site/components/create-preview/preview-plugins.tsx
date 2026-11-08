@@ -14,6 +14,11 @@ import { createFixtureTransport } from "./fixture-transport";
 import { creditsClient } from "../../../chat/chatjs/plugins/credits/client-plugin";
 import { searchClient } from "../../../chat/chatjs/plugins/search/client-plugin";
 import { livePreviewPlugins } from "./preview-capabilities";
+import type { UiPlugin } from "../../../chat/chatjs/core/ui/slots";
+import { mcpClient } from "../../../chat/chatjs/plugins/mcp/client-plugin";
+import { sharingClient } from "../../../chat/chatjs/plugins/sharing/client-plugin";
+import { followupSuggestionsClient } from "../../../chat/chatjs/plugins/followup-suggestions/client-plugin";
+import { SharingEnvironmentContext } from "../../../chat/chatjs/plugins/sharing/ui/share-button";
 
 import { modelPreferencesClient } from "../../../chat/chatjs/plugins/model-preferences/client-plugin";
 import { attachmentUploadsClient } from "../../../chat/chatjs/plugins/attachment-uploads/client-plugin";
@@ -29,12 +34,29 @@ export const usePreviewFixtures = () => {
   return fixture;
 };
 const clients = {
+  mcp: mcpClient,
+  sharing: sharingClient,
+  "followup-suggestions": followupSuggestionsClient,
   "model-preferences": modelPreferencesClient,
   "attachment-uploads": attachmentUploadsClient,
   feedback: feedbackClient,
   projects: projectsClient,
   credits: creditsClient,
   search: searchClient,
+} satisfies Record<(typeof livePreviewPlugins)[number], UiPlugin>;
+
+// A copied preview link opens Create, never an unpublished production /share route.
+const previewSharingEnvironment = {
+  getUrl: () => {
+    const url = new URL(window.parent.location.href);
+    url.pathname = "/create";
+    url.searchParams.set("item", "preview-02");
+    url.searchParams.delete("__previewScenario");
+    url.hash = "";
+    return url.href;
+  },
+  notice:
+    "Sample sharing only. Nothing is published; copied links open Create.",
 };
 
 const date = new Date("2026-01-01T00:00:00Z");
@@ -92,13 +114,15 @@ export const PreviewPlugins = ({
       >
         <SessionContext value={previewSession}>
           <FixtureContext value={runtime.fixtures}>
-            <Plugins
-              plugins={livePreviewPlugins
-                .filter((id) => enabled.includes(id))
-                .map((id) => clients[id])}
-            >
-              {children}
-            </Plugins>
+            <SharingEnvironmentContext value={previewSharingEnvironment}>
+              <Plugins
+                plugins={livePreviewPlugins
+                  .filter((id) => enabled.includes(id))
+                  .map((id) => clients[id])}
+              >
+                {children}
+              </Plugins>
+            </SharingEnvironmentContext>
           </FixtureContext>
         </SessionContext>
       </TRPCProvider>

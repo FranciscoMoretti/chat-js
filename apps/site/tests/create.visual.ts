@@ -266,26 +266,28 @@ try {
   await presetDialog.getByRole("button", { name: "Open", exact: true }).click();
   await waitForPreset(beforeShuffle);
 
-  await page.getByRole("tab", { name: "App", exact: true }).click();
+  await page.getByRole("tab", { name: "Plugins", exact: true }).click();
   const panel = page.getByRole("region", { name: "Configure your app" });
   await panel
     .getByRole("switch", { name: "Attachment Uploads", exact: true })
     .check();
-  await panel.getByRole("tab", { name: "Tools", exact: true }).click();
-  await panel
-    .getByRole("switch", { name: "Tavily Search", exact: true })
+  await page.getByRole("tab", { name: "Stack", exact: true }).click();
+  await page
+    .getByRole("checkbox", { name: "Tavily Search", exact: true })
     .check();
-  await panel.getByRole("tab", { name: "Providers", exact: true }).click();
   const choose = async (label: string, value: string) => {
-    await panel.getByRole("combobox", { name: label, exact: true }).click();
-    await page.getByRole("option", { name: value, exact: true }).click();
+    await page
+      .getByRole("radiogroup", { name: label, exact: true })
+      .getByRole("radio", { name: value, exact: true })
+      .check();
   };
   await choose("Model gateway", "OpenRouter");
-  await choose("Storage provider", "S3");
-  await panel
+  await choose("File storage", "S3");
+  await page
     .getByLabel("Storage bucket", { exact: true })
     .fill("my-chat-uploads");
-  await choose("Sandbox provider", "Vercel Sandbox");
+  await choose("Sandbox", "Vercel Sandbox");
+  await page.getByRole("tab", { name: "App", exact: true }).click();
   await page.getByRole("tab", { name: "Appearance", exact: true }).click();
   await page
     .getByRole("button", { name: "Get Code", exact: true })

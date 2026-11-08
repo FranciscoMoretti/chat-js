@@ -119,7 +119,7 @@ test("host configuration does not cover the shared composer or reset its draft",
   const editor = frame.getByRole("textbox", { name: "Message", exact: true });
   await editor.fill("Keep this draft");
   const bounds = await page.locator("iframe").boundingBox();
-  await page.getByRole("tab", { name: "App", exact: true }).click();
+  await page.getByRole("tab", { name: "Plugins", exact: true }).click();
   await page.getByRole("switch", { name: "Feedback", exact: true }).check();
   await expect(
     frame.getByRole("button", { name: "Upvote Response", exact: true })

@@ -1,3 +1,4 @@
+import { createConnectorFixtures } from "./preview-connectors";
 import { sampleConversation } from "./preview-data";
 import { TRPCClientError } from "@trpc/client";
 import type { TRPCLink } from "@trpc/client";
@@ -25,6 +26,7 @@ export const createFixtureTransport = (
   let deleted = false;
   let { title } = sampleConversation;
   let isPinned = false;
+  let visibility: "private" | "public" = "private";
   const updatedAt = new Date().toISOString();
   const failMutation = () => {
     if (scenario === "mutation-error") {
@@ -32,10 +34,14 @@ export const createFixtureTransport = (
     }
   };
 
+  const connectorFixtures = createConnectorFixtures(failMutation);
   const projectFixtures = createProjectFixtures(failMutation);
   const documentFixtures = createDocumentFixtures(failMutation);
   let votes: Outputs["feedback"]["votes"] = [];
   const resolve = (path: string, input: unknown): unknown => {
+    if (path.startsWith("mcp.")) {
+      return connectorFixtures.resolve(path, input);
+    }
     if (path.startsWith("project.")) {
       return projectFixtures.resolve(path, input);
     }
@@ -43,6 +49,37 @@ export const createFixtureTransport = (
       return documentFixtures.resolve(path, input);
     }
     switch (path) {
+      case "sharing.get": {
+        z.object({ id: z.literal(sampleConversation.id) }).parse(input);
+        return {
+          id: sampleConversation.id,
+          visibility,
+        } satisfies Outputs["sharing"]["get"];
+      }
+      case "sharing.setVisibility": {
+        const value = z
+          .object({
+            id: z.literal(sampleConversation.id),
+            visibility: z.enum(["private", "public"]),
+          })
+          .parse(input);
+        failMutation();
+        ({ visibility } = value);
+        return {
+          id: sampleConversation.id,
+        } satisfies Outputs["sharing"]["setVisibility"];
+      }
+      case "followupSuggestions.get": {
+        z.object({
+          conversationId: z.literal(sampleConversation.id),
+          eventId: z.string().startsWith("preview-completion:"),
+        }).parse(input);
+        return [
+          "What should I build first?",
+          "How can I make it my own?",
+          "What would a simple plan look like?",
+        ] satisfies Outputs["followupSuggestions"]["get"];
+      }
       case "credits.getAvailableCredits": {
         return {
           balanceCents: sampleBalanceCents,
@@ -78,7 +115,7 @@ export const createFixtureTransport = (
           isPinned,
           href: `/chat/${sampleConversation.id}`,
           parentHref: "/",
-          visibility: "private",
+          visibility,
         } satisfies NonNullable<Outputs["eve"]["get"]>;
       }
       case "eve.rename": {

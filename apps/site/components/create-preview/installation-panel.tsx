@@ -1,41 +1,13 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { CircleCheck, CircleAlert, Settings2 } from "lucide-react";
 import { Button } from "@/vendor/shadcn-create/styles/base-nova/ui/button";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-  CardFooter,
-} from "@/vendor/shadcn-create/styles/base-nova/ui/card";
-import { Badge } from "@/vendor/shadcn-create/styles/base-nova/ui/badge";
 import {
   Alert,
   AlertTitle,
   AlertDescription,
 } from "@/vendor/shadcn-create/styles/base-nova/ui/alert";
-import {
-  Field,
-  FieldContent,
-  FieldDescription,
-  FieldLabel,
-  FieldTitle,
-  FieldGroup,
-} from "@/vendor/shadcn-create/styles/base-nova/ui/field";
-import { Switch } from "@/vendor/shadcn-create/styles/base-nova/ui/switch";
-import { Input } from "@/vendor/shadcn-create/styles/base-nova/ui/input";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-} from "@/vendor/shadcn-create/styles/base-nova/ui/select";
 import { ScrollArea } from "@/vendor/shadcn-create/styles/base-nova/ui/scroll-area";
 import {
   Popover,
@@ -45,192 +17,21 @@ import {
   PopoverTitle,
   PopoverDescription,
 } from "@/vendor/shadcn-create/styles/base-nova/ui/popover";
-import {
-  Tabs,
-  TabsList,
-  TabsTrigger,
-  TabsContent,
-} from "@/vendor/shadcn-create/styles/base-nova/ui/tabs";
 import { useInstallation } from "./installation-provider";
-import { pluginPreviewLabel } from "./preview-capabilities";
+import { FeatureChoices, featureSection } from "./installation-choices";
 
-const FeatureChoices = ({ kind }: Readonly<{ kind: "plugin" | "tool" }>) => {
-  const { catalog, installation, resolution, update } = useInstallation();
-  if (!installation || !resolution) {
-    return null;
-  }
-  const key = kind === "plugin" ? "plugins" : "tools";
-  return (
-    <FieldGroup className="gap-2">
-      {catalog
-        .filter((item) => item.definition?.kind === kind)
-        .map((item) => {
-          const { definition } = item;
-          if (!definition) {
-            return null;
-          }
-          const { id } = definition;
-          const selected = resolution.selection[key].includes(id);
-          const requiredBy = resolution.reasons[item.name] ?? [];
-          const isThisItem = (source: string) =>
-            source === id ||
-            source === item.name ||
-            source === `@chatjs/${item.name}`;
-          const explicit = installation[key].some(isThisItem);
-          const availability =
-            definition.kind === "plugin"
-              ? pluginPreviewLabel(id, Boolean(definition.client))
-              : "Tool scenes";
-          const dependency = requiredBy.length
-            ? `Required by ${requiredBy.join(", ")}${explicit ? "; also selected directly" : ""}`
-            : "Optional";
-          return (
-            <FieldLabel key={item.name} htmlFor={`feature-${item.name}`}>
-              <Field orientation="horizontal">
-                <FieldContent className="min-w-0 gap-2">
-                  <FieldTitle>{item.title}</FieldTitle>
-                  <FieldDescription>{item.description}</FieldDescription>
-                  <div className="flex min-w-0 items-center gap-2">
-                    <Badge variant="outline">{availability}</Badge>
-                    <span
-                      className="text-muted-foreground min-w-0 truncate text-xs font-normal"
-                      title={dependency}
-                    >
-                      {dependency}
-                    </span>
-                  </div>
-                </FieldContent>
-                <Switch
-                  id={`feature-${item.name}`}
-                  className="mt-0.5 shrink-0"
-                  aria-label={item.title}
-                  checked={selected}
-                  disabled={!explicit && requiredBy.length > 0}
-                  onCheckedChange={(checked) => {
-                    update({
-                      ...installation,
-                      [key]: checked
-                        ? [...installation[key], id]
-                        : installation[key].filter(
-                            (value) => !isThisItem(value)
-                          ),
-                    });
-                  }}
-                />
-              </Field>
-            </FieldLabel>
-          );
-        })}
-    </FieldGroup>
-  );
-};
+export const InvalidInstallation = () => (
+  <Alert variant="destructive">
+    <AlertTitle>Invalid installation options</AlertTitle>
+    <AlertDescription>
+      <Link href="/create" className="underline">
+        Start a new setup
+      </Link>
+    </AlertDescription>
+  </Alert>
+);
 
-const ProviderChoices = () => {
-  const { catalog, installation, update } = useInstallation();
-  if (!installation) {
-    return null;
-  }
-  const storage = catalog.find(
-    (item) =>
-      item.definition?.kind === "storage" &&
-      item.definition.id === installation.storage?.source
-  )?.definition;
-  return (
-    <FieldGroup>
-      {(["gateway", "storage", "sandbox"] as const).map((kind) => {
-        const choices = catalog
-          .filter((item) => item.definition?.kind === kind)
-          .map((item) => ({
-            value: item.definition?.id ?? item.name,
-            label: item.title,
-          }));
-        if (kind === "sandbox") {
-          choices.unshift({ value: "none", label: "None" });
-        }
-        const value =
-          (kind === "storage"
-            ? installation.storage?.source
-            : installation[kind]) ?? (kind === "sandbox" ? "none" : null);
-        return (
-          <Field key={kind}>
-            <FieldLabel htmlFor={`chatjs-${kind}`}>
-              {
-                {
-                  gateway: "Model gateway",
-                  storage: "Storage provider",
-                  sandbox: "Sandbox provider",
-                }[kind]
-              }
-            </FieldLabel>
-            <Select
-              items={choices}
-              value={value}
-              modal={false}
-              onValueChange={(next) => {
-                if (next === null) {
-                  return;
-                }
-                const provider = next === "none" ? undefined : next;
-                update({
-                  ...installation,
-                  [kind]:
-                    kind === "storage"
-                      ? { source: next, options: {} }
-                      : provider,
-                });
-              }}
-            >
-              <SelectTrigger id={`chatjs-${kind}`} className="w-full">
-                <SelectValue placeholder="Choose a provider" />
-              </SelectTrigger>
-              <SelectContent alignItemWithTrigger={false}>
-                <SelectGroup>
-                  {choices.map((choice) => (
-                    <SelectItem key={choice.value} value={choice.value}>
-                      {choice.label}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-          </Field>
-        );
-      })}
-      {storage?.kind === "storage" &&
-        storage.configKeys.map((key) => (
-          <Field key={key}>
-            <FieldLabel htmlFor={`storage-${key}`}>Storage {key}</FieldLabel>
-            <Input
-              id={`storage-${key}`}
-              value={
-                typeof installation.storage?.options[key] === "string"
-                  ? installation.storage.options[key]
-                  : ""
-              }
-              onChange={(event) => {
-                update({
-                  ...installation,
-                  storage: {
-                    source: storage.id,
-                    options: {
-                      ...installation.storage?.options,
-                      [key]: event.target.value,
-                    },
-                  },
-                });
-              }}
-            />
-          </Field>
-        ))}
-      <FieldDescription>
-        Public configuration only. Add credentials to your generated app’s
-        environment.
-      </FieldDescription>
-    </FieldGroup>
-  );
-};
-
-const InstallationRequirements = () => {
+export const InstallationRequirements = () => {
   const { resolution } = useInstallation();
   const issues = resolution?.issues ?? [];
   const requirements = [
@@ -304,67 +105,60 @@ const InstallationRequirements = () => {
   );
 };
 
-export const InstallationPanel = () => {
-  const { installation } = useInstallation();
-  const [tab, setTab] = useState("plugins");
+export const InstallationPanel = ({
+  onConfigureStack,
+}: {
+  readonly onConfigureStack: () => void;
+}) => {
+  const { catalog, installation } = useInstallation();
   return (
-    <section aria-label="Configure your app" className="h-full min-h-0">
-      <Card size="sm" className="h-full min-h-0 gap-3 rounded-2xl">
-        <CardHeader>
-          <CardTitle>Build your app</CardTitle>
-          <CardDescription>
-            Choose the features behind your design.
-          </CardDescription>
-        </CardHeader>
-        {installation ? (
-          <>
-            <Tabs
-              value={tab}
-              onValueChange={setTab}
-              className="min-h-0 flex-1 gap-3"
-            >
-              <div className="px-3">
-                <TabsList
-                  aria-label="App configuration"
-                  variant="line"
-                  className="w-full shrink-0"
+    <section
+      aria-label="Configure your app"
+      className="bg-card flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border"
+    >
+      <div className="border-b px-4 py-4">
+        <h2 className="text-sm font-medium">Make it yours</h2>
+        <p className="text-muted-foreground mt-1 text-xs leading-relaxed">
+          Choose what your chat can do.
+        </p>
+      </div>
+      <ScrollArea className="min-h-0 flex-1">
+        <div className="space-y-5 p-4">
+          {installation ? (
+            <>
+              {(["Chat features", "Access & usage"] as const).map((section) => (
+                <section key={section} aria-label={section}>
+                  <h3 className="text-muted-foreground mb-2 text-xs font-medium">
+                    {section}
+                  </h3>
+                  <FeatureChoices
+                    items={catalog.filter(
+                      (item) => featureSection(item) === section
+                    )}
+                  />
+                </section>
+              ))}
+              <div className="border-t pt-4">
+                <p className="text-muted-foreground mb-3 text-xs leading-relaxed">
+                  Choose AI tools, providers and integrations in your stack.
+                </p>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={onConfigureStack}
                 >
-                  <TabsTrigger value="plugins">Plugins</TabsTrigger>
-                  <TabsTrigger value="tools">Tools</TabsTrigger>
-                  <TabsTrigger value="providers">Providers</TabsTrigger>
-                </TabsList>
+                  Configure stack <Settings2 />
+                </Button>
               </div>
-              <ScrollArea key={tab} className="min-h-0 flex-1">
-                <CardContent className="pb-3">
-                  <TabsContent value="plugins">
-                    <FeatureChoices kind="plugin" />
-                  </TabsContent>
-                  <TabsContent value="tools">
-                    <FeatureChoices kind="tool" />
-                  </TabsContent>
-                  <TabsContent value="providers">
-                    <ProviderChoices />
-                  </TabsContent>
-                </CardContent>
-              </ScrollArea>
-            </Tabs>
-            <CardFooter className="h-12 shrink-0 p-2">
-              <InstallationRequirements />
-            </CardFooter>
-          </>
-        ) : (
-          <CardContent>
-            <Alert variant="destructive">
-              <AlertTitle>Invalid installation options</AlertTitle>
-              <AlertDescription>
-                <Link href="/create" className="underline">
-                  Start a new setup
-                </Link>
-              </AlertDescription>
-            </Alert>
-          </CardContent>
-        )}
-      </Card>
+            </>
+          ) : (
+            <InvalidInstallation />
+          )}
+        </div>
+      </ScrollArea>
+      <div className="shrink-0 border-t p-2">
+        <InstallationRequirements />
+      </div>
     </section>
   );
 };

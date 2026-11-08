@@ -3,7 +3,7 @@ import { test, expect } from "@uiverify/playwright";
 
 const setup = async (page: Page) => {
   await page.goto("/create?item=preview-02");
-  await page.getByRole("tab", { name: "App", exact: true }).first().click();
+  await page.getByRole("tab", { name: "Plugins", exact: true }).first().click();
   await page.getByRole("switch", { name: "Feedback", exact: true }).check();
   await page.getByRole("switch", { name: "Projects", exact: true }).check();
   await page.getByRole("tab", { name: "Appearance", exact: true }).click();
@@ -133,7 +133,7 @@ test("native controls style the open production dialog and Share restores the fu
     "data-style",
     "lyra"
   );
-  await page.getByRole("tab", { name: "App", exact: true }).first().click();
+  await page.getByRole("tab", { name: "Plugins", exact: true }).first().click();
   await expect(
     page.getByRole("switch", { name: "Feedback", exact: true })
   ).toBeChecked();
@@ -148,7 +148,6 @@ test("native controls style the open production dialog and Share restores the fu
     "aria-pressed",
     "true"
   );
-  await page.getByRole("tab", { name: "Plugins", exact: true }).click();
   await page.getByRole("switch", { name: "Feedback", exact: true }).uncheck();
   await page.getByRole("switch", { name: "Projects", exact: true }).uncheck();
   await page.getByRole("tab", { name: "Appearance", exact: true }).click();
@@ -329,7 +328,7 @@ test("Credits and Search toggle live without backend calls or leaving Create", a
   await page.goto("/create?item=preview");
   const preview = page.frameLocator('iframe[title="Preview"]');
   await expect(preview.getByTestId("chat-preview")).toBeVisible();
-  await page.getByRole("tab", { name: "App", exact: true }).click();
+  await page.getByRole("tab", { name: "Plugins", exact: true }).click();
   await page.getByRole("switch", { name: "Credits", exact: true }).check();
   await page.getByRole("switch", { name: "Search", exact: true }).check();
   await expect(preview.locator('[data-slot="sidebar-footer"]')).toContainText(
@@ -373,3 +372,182 @@ test("Credits and Search toggle live without backend calls or leaving Create", a
   expect(requests).toEqual([]);
   expect(errors).toEqual([]);
 });
+
+test("plugin toggles mount real MCP, sharing and follow-up UI without backends", async ({
+  page,
+  uiVerify,
+}, testInfo) => {
+  uiVerify.disableAutoSnapshot();
+  await page.setViewportSize({ width: 1440, height: 1100 });
+  const backendRequests: string[] = [];
+  page.on("request", (request) => {
+    if (
+      /\/api\/(?:trpc|auth)|\/eve\/|https:\/\/example\.invalid\//u.test(
+        request.url()
+      )
+    ) {
+      backendRequests.push(request.url());
+    }
+  });
+  await page.goto(
+    `/create?item=preview-02&installation=${encodeURIComponent(JSON.stringify({ gateway: "vercel", plugins: [], tools: [] }))}`
+  );
+  const preview = page.frameLocator('iframe[title="Preview"]');
+  await expect(preview.getByTestId("chat-preview")).toBeVisible();
+  await page.getByRole("tab", { name: "Plugins", exact: true }).click();
+  await expect(
+    preview.getByRole("button", { name: "Composer options" })
+  ).toHaveCount(0);
+  await page.getByRole("switch", { name: "Mcp", exact: true }).check();
+  const openConnectors = async () => {
+    await preview.getByRole("button", { name: "Composer options" }).click();
+    await preview
+      .getByRole("menuitem", { name: "Connectors", exact: true })
+      .click();
+  };
+  await openConnectors();
+  const connector = preview.getByRole("menuitemcheckbox", {
+    name: "Project knowledge",
+  });
+  await expect(connector).toBeChecked();
+  await connector.click();
+  await expect(connector).not.toBeChecked();
+  await page.screenshot({ path: testInfo.outputPath("mcp.png") });
+  await page.keyboard.press("Escape");
+  await page.keyboard.press("Escape");
+  await page.getByRole("switch", { name: "Mcp", exact: true }).uncheck();
+  await expect(
+    preview.getByRole("button", { name: "Composer options" })
+  ).toHaveCount(0);
+  await page.getByRole("switch", { name: "Mcp", exact: true }).check();
+  await openConnectors();
+  await expect(connector).not.toBeChecked();
+  await preview.getByRole("menuitem", { name: "Manage connectors" }).click();
+  await expect(
+    preview.getByText(
+      "This destination is not previewed yet. It is available in the generated app."
+    )
+  ).toBeVisible();
+  await expect(preview.getByTestId("chat-preview")).toBeVisible();
+  await page.getByRole("switch", { name: "Sharing", exact: true }).check();
+  await preview
+    .getByRole("button", { name: "Share chat", exact: true })
+    .click();
+  const dialog = preview.getByRole("dialog", {
+    name: "Share chat",
+    exact: true,
+  });
+  await expect(dialog).toContainText("Sample sharing only");
+  await dialog.getByRole("button", { name: "Share Chat", exact: true }).click();
+  const link = dialog.getByRole("textbox", { name: "Link", exact: true });
+  await expect(link).toBeVisible();
+  expect(new URL(await link.inputValue()).pathname).toBe("/create");
+  await dialog.getByRole("button", { name: "Copy", exact: true }).click();
+  expect(
+    await page.evaluate(async () => await navigator.clipboard.readText())
+  ).toBe(await link.inputValue());
+  await page.screenshot({ path: testInfo.outputPath("sharing.png") });
+  await dialog
+    .getByRole("button", { name: "Make Private", exact: true })
+    .click();
+  await expect(dialog).toBeHidden();
+  await page.getByRole("switch", { name: "Sharing", exact: true }).uncheck();
+  await expect(
+    preview.getByRole("button", { name: "Share chat", exact: true })
+  ).toHaveCount(0);
+  await page
+    .getByRole("switch", { name: "Followup Suggestions", exact: true })
+    .check();
+  const suggestion = preview
+    .getByRole("group", { name: "Related questions" })
+    .getByRole("button", {
+      name: "What should I build first?",
+      exact: true,
+    });
+  await expect(suggestion).toBeEnabled();
+  await page.screenshot({ path: testInfo.outputPath("followups.png") });
+  await suggestion.click();
+  await expect(preview.locator('[data-role="user"]').last()).toContainText(
+    "What should I build first?"
+  );
+  await page
+    .getByRole("switch", { name: "Followup Suggestions", exact: true })
+    .uncheck();
+  await expect(suggestion).toHaveCount(0);
+  expect(backendRequests).toEqual([]);
+});
+
+for (const scenario of ["ready", "mutation-error"] as const) {
+  test(`new plugin surfaces on mobile RTL: ${scenario}`, async ({
+    page,
+    uiVerify,
+  }, testInfo) => {
+    uiVerify.disableAutoSnapshot();
+    await page.setViewportSize({ width: 390, height: 950 });
+    const errors: string[] = [];
+    page.on("pageerror", (error) => errors.push(error.message));
+    await page.goto("/create/preview?item=preview-02&rtl=true");
+    await expect(page.getByTestId("chat-preview")).toBeVisible();
+    await page.evaluate((previewScenario) => {
+      window.postMessage(
+        {
+          type: "chatjs:create-installation",
+          mode: "dark",
+          scenario: previewScenario,
+          installation: {
+            gateway: "vercel",
+            plugins: ["mcp", "sharing", "followup-suggestions"],
+            tools: [],
+          },
+        },
+        location.origin
+      );
+    }, scenario);
+    await expect(
+      page.getByRole("group", { name: "Related questions" })
+    ).toBeVisible();
+    await page.getByRole("button", { name: "Composer options" }).click();
+    await page
+      .getByRole("menuitem", { name: "Connectors", exact: true })
+      .click();
+    const connector = page.getByRole("menuitemcheckbox", {
+      name: "Project knowledge",
+    });
+    await expect(connector).toBeChecked();
+    await connector.click();
+    if (scenario === "mutation-error") {
+      await expect(
+        page.getByText("Failed to update connector", { exact: true })
+      ).toBeVisible();
+      await expect(connector).toBeChecked();
+    } else {
+      await expect(connector).not.toBeChecked();
+    }
+    await page.screenshot({ path: testInfo.outputPath("mcp-mobile-rtl.png") });
+    await page.keyboard.press("Escape");
+    await page.keyboard.press("Escape");
+    await page.getByRole("button", { name: /^Chat menu:/u }).click();
+    await page.getByRole("menuitem", { name: "Share", exact: true }).click();
+    const dialog = page.getByRole("dialog", {
+      name: "Share chat",
+      exact: true,
+    });
+    await dialog
+      .getByRole("button", { name: "Share Chat", exact: true })
+      .click();
+    if (scenario === "mutation-error") {
+      await expect(
+        page.getByText("Sample mutation failure", { exact: true })
+      ).toBeVisible();
+      await expect(dialog.getByText("Private", { exact: true })).toBeVisible();
+    } else {
+      await expect(
+        dialog.getByRole("textbox", { name: "Link", exact: true })
+      ).toBeVisible();
+    }
+    await page.screenshot({
+      path: testInfo.outputPath("sharing-mobile-rtl.png"),
+    });
+    expect(errors).toEqual([]);
+  });
+}

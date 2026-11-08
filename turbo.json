@@ -257,6 +257,14 @@
     "@chat-js/gateways#test:types": {
       "dependsOn": ["^test:types"],
       "outputs": ["dist/**"]
+    },
+    "@chatjs/site#test:unit": {
+      "dependsOn": ["^test:unit"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/packages/registry/*.ts",
+        "$TURBO_ROOT$/packages/registry/src/**"
+      ]
     }
   }
 }

@@ -5,6 +5,8 @@ import { toast } from "sonner";
 import { attachmentDigest, draftAttachment } from "../../../chat/lib/eve/draft";
 import type { DraftAttachment } from "../../../chat/lib/eve/draft";
 import type { UiToolName } from "../../../chat/lib/ai/types";
+import { ChatSuggestions } from "../../../chat/components/chat-slots";
+import type { ChatSuggestionsProps } from "../../../chat/chatjs/core/chat/contracts";
 import { ChatSidebar } from "../../../chat/components/chat/chat-sidebar";
 import { ChatNavigationContext } from "../../../chat/components/chat/chat-navigation";
 import { EveChatHeader } from "../../../chat/components/eve/eve-chat-header";
@@ -104,7 +106,6 @@ export const ChatPreview = () => {
   const availableTools = previewTools(installation.tools ?? []);
 
   const uploads = installation.plugins.includes("attachment-uploads");
-  const hasAttachments = attachments.length > 0 && uploads;
   const welcome = params.item === "preview" && messages.length === 0;
   const conversationTitle =
     params.item === "preview-tools"
@@ -183,9 +184,11 @@ export const ChatPreview = () => {
     void setParams({ item });
   };
 
-  const send = () => {
-    const text = draft.trim();
-    if (!text && !hasAttachments) {
+  const submit = (
+    text: string,
+    files: readonly Readonly<DraftAttachment>[]
+  ) => {
+    if (!text && files.length === 0) {
       return;
     }
     if (scenario === "mutation-error") {
@@ -198,11 +201,53 @@ export const ChatPreview = () => {
     simulateResponse();
     setMessages((previous) => [
       ...previous,
-      { text, attachments: uploads ? attachments : [] },
+      { text, attachments: uploads ? files : [] },
     ]);
     setDraft("");
     setAttachments([]);
   };
+
+  const send = () => {
+    submit(draft.trim(), uploads ? attachments : []);
+  };
+
+  const transcriptMessages = [
+    ...sceneMessages(params.item, uploads, availableTools),
+    ...submittedMessages(messages, installation.gateway),
+  ]
+    .map((message): ReadonlyEveMessage =>
+      replacements[message.id] === undefined
+        ? message
+        : {
+            ...message,
+            parts: [
+              {
+                type: "text",
+                state: "done",
+                text: replacements[message.id],
+              },
+            ],
+          }
+    )
+    .map((message) =>
+      message.role === "assistant"
+        ? { ...message, metadata: { ...message.metadata, turnId: message.id } }
+        : message
+    );
+  const lastMessage = transcriptMessages.at(-1);
+  const completionEvents: ChatSuggestionsProps["events"] =
+    status === "ready" && lastMessage?.role === "assistant"
+      ? [
+          {
+            type: "turn.completed",
+            data: { turnId: lastMessage.id, sequence: 0 },
+            meta: {
+              id: `preview-completion:${lastMessage.id}`,
+              at: "2026-01-01T00:00:00.000Z",
+            },
+          },
+        ]
+      : [];
 
   const content = (
     <IconLibraryContext value={preset.iconLibrary}>
@@ -297,22 +342,17 @@ export const ChatPreview = () => {
                     status={status}
                     transcript={{
                       conversationId: sampleConversation.id,
-                      messages: [
-                        ...sceneMessages(params.item, uploads, availableTools),
-                        ...submittedMessages(messages, installation.gateway),
-                      ].map((message): ReadonlyEveMessage =>
-                        replacements[message.id] === undefined
-                          ? message
-                          : {
-                              ...message,
-                              parts: [
-                                {
-                                  type: "text",
-                                  state: "done",
-                                  text: replacements[message.id],
-                                },
-                              ],
-                            }
+                      messages: transcriptMessages,
+                      suggestions: (
+                        <ChatSuggestions
+                          conversationId={sampleConversation.id}
+                          events={completionEvents}
+                          lastMessage={lastMessage}
+                          disabled={status !== "ready"}
+                          onSelect={(suggestion) => {
+                            submit(suggestion, []);
+                          }}
+                        />
                       ),
                       isReadonly: false,
                       disabled: status !== "ready",

@@ -1,6 +1,9 @@
 // Host capabilities, separate from what can be installed. Keep this serializable
 // so the configurator never imports production plugin controllers.
 export const livePreviewPlugins = [
+  "mcp",
+  "sharing",
+  "followup-suggestions",
   "feedback",
   "projects",
   "credits",
@@ -18,6 +21,12 @@ export const pluginPreviewLabel = (id: string, hasClient: boolean) => {
   }
   if (id === "vercel-analytics" || id === "vercel-speed-insights") {
     return "No visible UI";
+  }
+  if (id === "guest-chat") {
+    return "Signed-out experience";
+  }
+  if (id === "desktop") {
+    return "Desktop app only";
   }
   return hasClient ? "Not previewed" : "Server only";
 };

@@ -3,8 +3,10 @@ import { installationSelectionSchema } from "../../../packages/registry/installa
 import { test, expect } from "@uiverify/playwright";
 
 const selectChoice = async (page: Page, label: string, option: string) => {
-  await page.getByRole("combobox", { name: label, exact: true }).click();
-  await page.getByRole("option", { name: option, exact: true }).click();
+  await page
+    .getByRole("radiogroup", { name: label, exact: true })
+    .getByRole("radio", { name: option, exact: true })
+    .check();
 };
 const checkRequirements = async (page: Page) => {
   await page.getByRole("button", { name: "Setup requirements" }).click();
@@ -14,7 +16,7 @@ const checkRequirements = async (page: Page) => {
   await page.keyboard.press("Escape");
 };
 
-test("Features resolve the full installation and preserve explicit choices", async ({
+test("App and Stack share selections, dependencies and the install command", async ({
   page,
   uiVerify,
 }, testInfo) => {
@@ -23,90 +25,104 @@ test("Features resolve the full installation and preserve explicit choices", asy
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto("/create");
+  const preview = page.frameLocator('iframe[title="Preview"]');
+  await expect(preview.getByTestId("chat-preview")).toBeVisible();
+  const draft = preview.getByRole("textbox", { name: "Message", exact: true });
+  await draft.fill("Keep this while configuring my stack");
+  const originalDocument = await preview.locator("body").elementHandle();
   await expect(
-    page.frameLocator("iframe").getByTestId("chat-preview")
-  ).toBeVisible();
-  await expect(
-    page.getByRole("tab", { name: "App", exact: true })
-  ).toHaveAttribute("aria-selected", "true");
+    page.getByRole("tablist", { name: "Create workspace" }).getByRole("tab")
+  ).toHaveText(["App", "Stack"]);
   await expect(
     page
       .getByRole("tablist", { name: "Configuration category" })
       .getByRole("tab")
-  ).toHaveText(["App", "Appearance"]);
+  ).toHaveText(["Appearance", "Plugins"]);
+  await page.getByRole("tab", { name: "Plugins", exact: true }).click();
   const panel = page.getByRole("region", { name: "Configure your app" });
-  await expect(panel.getByRole("tab")).toHaveText([
-    "Plugins",
-    "Tools",
-    "Providers",
-  ]);
-  await expect(panel.getByRole("switch")).toHaveCount(15);
-  await expect(page.getByRole("dialog")).toHaveCount(0);
-  const previewFrame = page.locator('iframe[title="Preview"]');
-  await expect(previewFrame).toBeInViewport();
-  const desktopPreviewBounds = await previewFrame.boundingBox();
-  expect(desktopPreviewBounds?.height).toBeGreaterThan(200);
-  await page.getByRole("tab", { name: "Appearance", exact: true }).click();
-  await expect(
-    page.getByRole("button", { name: "Style Nova", exact: true })
-  ).toBeVisible();
-  await page.getByRole("tab", { name: "App", exact: true }).click();
-  await panel.getByRole("switch", { name: "Langfuse", exact: true }).check();
-  await expect(panel).toContainText("Server only");
-  await page.addStyleTag({
-    content:
-      "iframe, nextjs-portal { visibility: hidden !important; } *, *::before, *::after { animation: none !important; transition: none !important; }",
-  });
-  await uiVerify.snapshot("desktop plugins");
-  await page.screenshot({ path: testInfo.outputPath("plugins.png") });
-  await panel.getByRole("tab", { name: "Tools", exact: true }).click();
-  await panel
-    .getByRole("switch", { name: "Deep Research", exact: true })
-    .check();
-  await expect(
-    panel.getByRole("switch", { name: "Text Documents", exact: true })
-  ).toBeChecked();
-  await expect(
-    panel.getByRole("switch", { name: "Text Documents", exact: true })
-  ).toBeDisabled();
-  await expect(panel).toContainText("Required by Deep Research");
-  await uiVerify.snapshot("desktop dependencies");
-  await panel
-    .getByRole("switch", { name: "Deep Research", exact: true })
-    .uncheck();
-  await expect(
-    panel.getByRole("switch", { name: "Text Documents", exact: true })
-  ).not.toBeChecked();
-  await panel.getByRole("tab", { name: "Plugins", exact: true }).click();
+  await expect(panel.getByRole("switch")).toHaveCount(11);
+  await expect(panel.getByRole("switch", { name: "Langfuse" })).toHaveCount(0);
   await panel
     .getByRole("switch", { name: "Attachment Uploads", exact: true })
     .check();
   await checkRequirements(page);
-  await panel.getByRole("tab", { name: "Providers", exact: true }).click();
-  await selectChoice(page, "Sandbox provider", "Daytona");
+  await uiVerify.snapshot("design features");
+  await page.screenshot({ path: testInfo.outputPath("features-desktop.png") });
+  await panel.getByRole("button", { name: "Configure stack" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Configure your stack." })
+  ).toBeVisible();
+  await expect(page.locator('iframe[title="Preview"]')).toBeHidden();
+  const observability = page.getByRole("region", {
+    name: "Observability",
+    exact: true,
+  });
+  await expect(observability.getByRole("checkbox")).toHaveCount(3);
+  await observability
+    .getByRole("checkbox", { name: "Langfuse", exact: true })
+    .check();
+  const tools = page.getByRole("region", { name: "AI tools", exact: true });
+  await tools
+    .getByRole("checkbox", { name: "Deep Research", exact: true })
+    .check();
+  await expect(
+    tools.getByRole("checkbox", { name: "Text Documents", exact: true })
+  ).toBeChecked();
+  await expect(
+    tools.getByRole("checkbox", { name: "Text Documents", exact: true })
+  ).toBeDisabled();
+  await tools.getByRole("button", { name: "About Text Documents" }).click();
+  await expect(
+    page.getByText("Required by Deep Research", { exact: true })
+  ).toBeVisible();
+  await page.keyboard.press("Escape");
+  await tools
+    .getByRole("checkbox", { name: "Deep Research", exact: true })
+    .uncheck();
+  await expect(
+    tools.getByRole("checkbox", { name: "Text Documents", exact: true })
+  ).not.toBeChecked();
+  await tools.getByRole("textbox", { name: "Search tools" }).fill("weather");
+  await expect(tools.getByRole("checkbox")).toHaveCount(1);
+  await tools.getByRole("checkbox").check();
+  await selectChoice(page, "File storage", "S3");
+  await page
+    .getByLabel("Storage bucket", { exact: true })
+    .fill("my-chat-files");
+  await selectChoice(page, "Sandbox", "Daytona");
   await checkRequirements(page);
-  await page.setViewportSize({ width: 390, height: 844 });
+  await selectChoice(page, "Sandbox", "Vercel Sandbox");
+  await expect(
+    page.getByRole("complementary", { name: "Your app summary" })
+  ).toContainText("Ready to install");
+  await page.getByRole("link", { name: "Model gateway", exact: true }).click();
+  await uiVerify.snapshot("stack selections");
+  await page.screenshot({ path: testInfo.outputPath("stack-desktop.png") });
+  await page.getByRole("tab", { name: "App", exact: true }).click();
   expect(
-    await panel.evaluate(
-      (element) => element.scrollWidth <= element.clientWidth
-    )
+    await originalDocument?.evaluate((element) => element.isConnected)
   ).toBe(true);
-  await expect(previewFrame).toBeInViewport();
-  const mobilePreviewBounds = await previewFrame.boundingBox();
-  expect(mobilePreviewBounds?.height).toBeGreaterThan(200);
-  await panel.getByLabel("Sandbox provider").scrollIntoViewIfNeeded();
-  await expect(panel.getByLabel("Sandbox provider")).toBeInViewport();
-  await uiVerify.snapshot("mobile provider requirement");
-  await page.screenshot({ path: testInfo.outputPath("providers-mobile.png") });
-  await selectChoice(page, "Sandbox provider", "Vercel Sandbox");
-  await expect(panel).toContainText("Ready to install");
-  await page.getByRole("tab", { name: "Appearance", exact: true }).click();
+  await expect(draft).toHaveText("Keep this while configuring my stack");
+  await expect(
+    panel.getByRole("switch", { name: "Attachment Uploads", exact: true })
+  ).toBeChecked();
+  await page.getByRole("tab", { name: "Stack", exact: true }).click();
+  await expect(
+    tools.getByRole("textbox", { name: "Search tools" })
+  ).toHaveValue("weather");
+  await tools
+    .getByRole("button", { name: "Preview tools", exact: true })
+    .click();
+  await expect(
+    page.getByRole("tab", { name: "App", exact: true })
+  ).toHaveAttribute("aria-selected", "true");
+  await expect(page).toHaveURL(/item=preview-tools/u);
+  await page.reload();
   const requested = installationSelectionSchema.parse(
     JSON.parse(new URL(page.url()).searchParams.get("installation") ?? "null")
   );
-  expect(requested.plugins).toEqual(["langfuse", "attachment-uploads"]);
-  expect(requested.tools).toEqual([]);
-  await page.reload();
+  expect(requested.plugins).toEqual(["attachment-uploads", "langfuse"]);
+  expect(requested.tools).toEqual(["get-weather"]);
   await page
     .getByRole("button", { name: "Get Code", exact: true })
     .first()
@@ -114,11 +130,11 @@ test("Features resolve the full installation and preserve explicit choices", asy
   const command = page.getByTestId("create-command");
   await expect(command).toContainText("--installation");
   await expect(command).toContainText(
-    '"plugins":["langfuse","attachment-uploads"]'
+    '"plugins":["attachment-uploads","langfuse"]'
   );
   await expect(command).toContainText('"sandbox":"vercel"');
-  await expect(command).toContainText('"tools":[]');
-  await expect(command).not.toContainText("scenario");
+  await expect(command).toContainText('"bucket":"my-chat-files"');
+  await expect(command).toContainText('"tools":["get-weather"]');
   await page.getByRole("button", { name: "Copy Command", exact: true }).click();
   expect(
     await page.evaluate(async () => await navigator.clipboard.readText())
@@ -126,17 +142,20 @@ test("Features resolve the full installation and preserve explicit choices", asy
   expect(errors).toEqual([]);
 });
 
-test("invalid links block export and retain a recovery action", async ({
+test("invalid links block export and retain a recovery action in both views", async ({
   page,
   uiVerify,
 }) => {
   uiVerify.disableAutoSnapshot();
   await page.goto("/create?installation=broken");
-  await page.getByRole("tab", { name: "App", exact: true }).click();
+  await page.getByRole("tab", { name: "Plugins", exact: true }).click();
   await expect(
     page.getByRole("link", { name: "Start a new setup" })
   ).toBeVisible();
-  await page.getByRole("tab", { name: "Appearance", exact: true }).click();
+  await page.getByRole("tab", { name: "Stack", exact: true }).click();
+  await expect(
+    page.getByRole("link", { name: "Start a new setup" })
+  ).toBeVisible();
   await page
     .getByRole("button", { name: "Get Code", exact: true })
     .first()
@@ -146,7 +165,7 @@ test("invalid links block export and retain a recovery action", async ({
   ).toBeDisabled();
 });
 
-test("namespaced plugin selections can be removed and missing providers can be chosen", async ({
+test("namespaced selections and missing providers remain editable", async ({
   page,
   uiVerify,
 }) => {
@@ -154,36 +173,72 @@ test("namespaced plugin selections can be removed and missing providers can be c
   await page.goto(
     `/create?installation=${encodeURIComponent(JSON.stringify({ plugins: ["@chatjs/feedback"], tools: [] }))}`
   );
-  await page.getByRole("tab", { name: "App", exact: true }).click();
-  const panel = page.getByRole("region", { name: "Configure your app" });
-  await expect(
-    panel.getByRole("switch", { name: "Feedback", exact: true })
-  ).toBeChecked();
-  await panel.getByRole("switch", { name: "Feedback", exact: true }).uncheck();
-  await expect(
-    panel.getByRole("switch", { name: "Feedback", exact: true })
-  ).not.toBeChecked();
-  await panel.getByRole("tab", { name: "Providers", exact: true }).click();
-  await expect(
-    panel.getByRole("combobox", { name: "Model gateway" })
-  ).toContainText("Choose a provider");
+  await page.getByRole("tab", { name: "Plugins", exact: true }).click();
+  const feedback = page.getByRole("switch", { name: "Feedback", exact: true });
+  await expect(feedback).toBeChecked();
+  await feedback.uncheck();
+  await expect(feedback).not.toBeChecked();
+  await page.getByRole("tab", { name: "Stack", exact: true }).click();
+  const gateway = page.getByRole("radiogroup", { name: "Model gateway" });
+  await expect(gateway.getByRole("radio", { checked: true })).toHaveCount(0);
   await selectChoice(page, "Model gateway", "Vercel AI Gateway");
-  await expect(panel).toContainText("Ready to install");
+  await expect(
+    page.getByRole("complementary", { name: "Your app summary" })
+  ).toContainText("Ready to install");
+  const storage = page.getByRole("radiogroup", {
+    name: "File storage",
+    exact: true,
+  });
+  await expect(storage.getByRole("radio")).toHaveCount(4);
+  await page.getByRole("button", { name: /^Show all .* providers$/u }).click();
+  await page
+    .getByRole("textbox", { name: "Search storage providers" })
+    .fill("Azure");
+  await expect(storage.getByRole("radio")).toHaveCount(1);
+  await storage
+    .getByRole("radio", { name: "Azure Blob Storage", exact: true })
+    .check();
+  await uiVerify.snapshot("custom storage selection");
+  await page
+    .getByRole("textbox", { name: "Search storage providers" })
+    .fill("no matching provider");
+  await expect(page.getByRole("status")).toHaveText(
+    "No providers match “no matching provider”."
+  );
+  await uiVerify.snapshot("empty provider search");
+  await page.getByRole("button", { name: "Show fewer providers" }).click();
+  await expect(
+    storage.getByRole("radio", { name: "Azure Blob Storage", exact: true })
+  ).toBeChecked();
+  await expect(storage.getByRole("radio")).toHaveCount(5);
+  // Native radio keyboard behavior and explicit opt-out survive URL serialization.
+  await gateway.getByRole("radio", { name: "Vercel AI Gateway" }).focus();
+  await page.keyboard.press("ArrowRight");
+  await expect(
+    gateway.getByRole("radio", { name: "OpenAI", exact: true })
+  ).toBeChecked();
+  await selectChoice(page, "File storage", "None");
+  await expect(
+    page
+      .getByRole("radiogroup", { name: "File storage" })
+      .getByRole("radio", { name: "None" })
+  ).toBeChecked();
 });
 
 for (const width of [1440, 390]) {
-  test(`configuration stays anchored while interacting at ${width}px`, async ({
+  test(`configuration stays anchored and switches views at ${width}px`, async ({
     page,
     uiVerify,
   }, testInfo) => {
     uiVerify.disableAutoSnapshot();
-    await page.setViewportSize({ width, height: 1000 });
+    await page.setViewportSize({ width, height: width === 390 ? 844 : 1000 });
     await page.goto("/create?item=preview-02");
     const frame = page.locator('iframe[title="Preview"]');
     const preview = page.frameLocator('iframe[title="Preview"]');
     await expect(preview.getByTestId("chat-preview")).toBeVisible();
     await page.evaluate(async () => await document.fonts.ready);
     const initialFrame = await frame.boundingBox();
+    expect(initialFrame?.height).toBeGreaterThan(200);
     const categories = page.getByRole("tablist", {
       name: "Configuration category",
       includeHidden: true,
@@ -203,67 +258,78 @@ for (const width of [1440, 390]) {
     await expect(getCode).toBeEnabled();
     await expect(getCode).toBeInViewport();
     const initialGetCode = await getCode.boundingBox();
-    await page.screenshot({
-      path: testInfo.outputPath("app-code-action.png"),
-      animations: "disabled",
-    });
-    await getCode.click();
-    await expect(
-      page.getByRole("dialog", { name: "Create your ChatJS app" })
-    ).toBeVisible();
-    await page.keyboard.press("Escape");
     const unchangedFrame = async () => {
       expect(await frame.boundingBox()).toEqual(initialFrame);
       expect(await categories.boundingBox()).toEqual(initialCategories);
       expect(await getCode.boundingBox()).toEqual(initialGetCode);
     };
-    await page.getByRole("tab", { name: "App", exact: true }).click();
+    await page.getByRole("tab", { name: "Plugins", exact: true }).click();
     await unchangedFrame();
-    const panel = page.getByRole("region", { name: "Configure your app" });
-    const feedback = panel.getByRole("switch", {
+    const feedback = page.getByRole("switch", {
       name: "Feedback",
       exact: true,
     });
-    await feedback.scrollIntoViewIfNeeded();
     const before = await feedback.boundingBox();
     await feedback.check();
     expect(await feedback.boundingBox()).toEqual(before);
     await expect(preview.getByTestId("message-upvote")).toBeVisible();
     await unchangedFrame();
-    await page.getByRole("tab", { name: "Providers", exact: true }).click();
-    await unchangedFrame();
-    await page.getByRole("combobox", { name: "Model gateway" }).click();
+    await page
+      .getByRole("button", { name: "About Feedback", exact: true })
+      .click();
     await unchangedFrame();
     await page.keyboard.press("Escape");
     await page.getByRole("button", { name: "Setup requirements" }).click();
     await unchangedFrame();
     await page.keyboard.press("Escape");
-    await page.getByRole("tab", { name: "Tools", exact: true }).click();
-    await unchangedFrame();
-    await page.getByRole("tab", { name: "Appearance", exact: true }).click();
-    await unchangedFrame();
     await page.screenshot({
-      path: testInfo.outputPath("appearance-code-action.png"),
+      path: testInfo.outputPath("design.png"),
       animations: "disabled",
     });
+    await uiVerify.snapshot("design");
+    await page.getByRole("tab", { name: "Stack", exact: true }).click();
+    await selectChoice(page, "Model gateway", "OpenRouter");
     await expect(
-      page
-        .getByRole("tabpanel")
-        .getByRole("button", { name: "Get Code", exact: true })
-    ).toHaveCount(0);
-    await page.getByRole("button", { name: "Style Nova", exact: true }).click();
-    await unchangedFrame();
-    await page.keyboard.press("Escape");
-    await getCode.click();
-    await expect(page.getByTestId("create-command")).toContainText(
-      '"plugins":["feedback"]'
-    );
-    await unchangedFrame();
+      page.getByRole("button", { name: "Get Code", exact: true }).first()
+    ).toBeInViewport();
+    await uiVerify.snapshot("stack");
+    await page.screenshot({
+      path: testInfo.outputPath("stack.png"),
+      animations: "disabled",
+    });
     expect(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= window.innerWidth
       )
     ).toBe(true);
+    await page
+      .getByRole("link", { name: "Observability", exact: true })
+      .click();
+    const observability = page.getByRole("region", {
+      name: "Observability",
+      exact: true,
+    });
+    await expect(observability.getByRole("heading")).toBeInViewport();
+    await observability
+      .getByRole("checkbox", { name: "Langfuse", exact: true })
+      .check();
+    await uiVerify.snapshot("observability");
+    await page.screenshot({
+      path: testInfo.outputPath("observability.png"),
+      animations: "disabled",
+    });
+    await page.getByRole("tab", { name: "App", exact: true }).click();
+    await unchangedFrame();
+    await page.getByRole("tab", { name: "Appearance", exact: true }).click();
+    await unchangedFrame();
+    await page.getByRole("button", { name: "Style Nova", exact: true }).click();
+    await unchangedFrame();
+    await page.keyboard.press("Escape");
+    await getCode.click();
+    await expect(page.getByTestId("create-command")).toContainText(
+      '"plugins":["feedback","langfuse"]'
+    );
+    await unchangedFrame();
   });
 }
 
@@ -350,3 +416,124 @@ test("Get Code selects either library without replacing the preview", async ({
   await dialog.getByRole("button", { name: "Base UI", exact: true }).click();
   await expect(command).toContainText("--base base");
 });
+
+/* eslint-disable no-await-in-loop -- Exercise dependent selections sequentially to measure each layout change. */
+// Dependency explanations and validation status must not move selection targets.
+for (const width of [1440, 1024, 390]) {
+  test(`stack selections keep card geometry and scroll position at ${width}px`, async ({
+    page,
+    uiVerify,
+  }, testInfo) => {
+    uiVerify.disableAutoSnapshot();
+    const errors: string[] = [];
+    page.on("pageerror", (error) => errors.push(error.message));
+    await page.setViewportSize({ width, height: 950 });
+    const installation = {
+      gateway: "vercel",
+      plugins: [],
+      tools: [],
+      storage: { source: "s3", options: {} },
+      sandbox: "vercel",
+    };
+    await page.goto(
+      `/create?installation=${encodeURIComponent(JSON.stringify(installation))}`
+    );
+    await expect(
+      page.frameLocator('iframe[title="Preview"]').getByTestId("chat-preview")
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Get Code", exact: true }).first()
+    ).toBeEnabled();
+    await expect(
+      page.getByText("Loading preview…", { exact: true })
+    ).toBeHidden();
+    await page.getByRole("tab", { name: "Stack", exact: true }).click();
+    await expect(
+      page.getByRole("heading", { name: "Configure your stack." })
+    ).toBeVisible();
+    await page.evaluate(async () => await document.fonts.ready);
+    const tools = page.getByRole("region", { name: "AI tools", exact: true });
+    const scroll = page.getByTestId("stack-scroll");
+    const summary = page.getByRole("complementary", {
+      name: "Your app summary",
+    });
+    const geometry = async () =>
+      await tools.locator('label[for^="feature-"]').evaluateAll((cards) =>
+        cards.map((card) => {
+          const rect = card.getBoundingClientRect();
+          const container = card.closest('[data-testid="stack-scroll"]');
+          return {
+            x: rect.x,
+            y: rect.y + (container?.scrollTop ?? 0),
+            width: rect.width,
+            height: rect.height,
+          };
+        })
+      );
+    const summaryGeometry = async () =>
+      await summary.evaluate((element) => {
+        const bounds = element.getBoundingClientRect();
+        return {
+          height: bounds.height,
+          controls: [...element.querySelectorAll("button")].map((button) => {
+            const rect = button.getBoundingClientRect();
+            return {
+              x: rect.x - bounds.x,
+              y: rect.y - bounds.y,
+              width: rect.width,
+              height: rect.height,
+            };
+          }),
+        };
+      });
+    const beforeSummary = await summaryGeometry();
+    await expect(summary).toContainText("Setup needed");
+    await page
+      .getByLabel("Storage bucket", { exact: true })
+      .fill("preview-files");
+    await expect(summary).toContainText("Ready to install");
+    expect(await summaryGeometry()).toEqual(beforeSummary);
+    const before = await geometry();
+    // Each click is explicitly brought into view before measuring: browser scrolling
+    // to reach an offscreen control is distinct from a selection shifting the layout.
+    for (const checked of [true, false]) {
+      const names = [
+        "Text Documents",
+        "Sheet Documents",
+        "Delete Document",
+        "Deep Research",
+      ];
+      for (const name of checked ? names : names.toReversed()) {
+        const control = tools.getByRole("checkbox", { name, exact: true });
+        await control.scrollIntoViewIfNeeded();
+        const scrollBefore = await scroll.evaluate(
+          (element) => element.scrollTop
+        );
+        await control.setChecked(checked);
+        await expect(control).toBeChecked({ checked });
+        expect(await geometry()).toEqual(before);
+        expect(await scroll.evaluate((element) => element.scrollTop)).toBe(
+          scrollBefore
+        );
+        expect(await summaryGeometry()).toEqual(beforeSummary);
+      }
+      await tools
+        .getByRole("button", { name: "About Read Document", exact: true })
+        .click();
+      if (checked) {
+        await expect(
+          page.getByText(/^Required by .*Text Documents/u)
+        ).toBeVisible();
+      }
+      await page.screenshot({
+        path: testInfo.outputPath(`dependencies-${checked}.png`),
+        animations: "disabled",
+      });
+      await page.keyboard.press("Escape");
+      expect(await geometry()).toEqual(before);
+    }
+    expect(errors).toEqual([]);
+  });
+}
+
+/* eslint-enable no-await-in-loop */
