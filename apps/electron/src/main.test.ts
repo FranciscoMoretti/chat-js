@@ -31,17 +31,27 @@ beforeAll(async () => {
   entryPoint = new Script(await result.outputs[0].text());
 });
 
-const launch = async (platform: NodeJS.Platform, args: readonly string[]) => {
+const launch = async (
+  platform: NodeJS.Platform,
+  args: readonly string[],
+  spawnError?: Error
+) => {
   // ChildProcess exposes EventEmitter's API, which the startup handler uses.
   // oxlint-disable-next-line unicorn/prefer-event-target
   const updater = new EventEmitter();
   const quit = mock(() => {});
+  const logError = mock(() => {});
   const startApplication = mock(() => {});
-  const spawn = mock(() => updater);
+  const spawn = mock(() => {
+    if (spawnError) {
+      throw spawnError;
+    }
+    return updater;
+  });
 
   entryPoint.runInNewContext({
     Buffer,
-    console,
+    console: { ...console, error: logError },
     module: { exports: {} },
     process: {
       argv: [executable, ...args],
@@ -55,10 +65,10 @@ const launch = async (platform: NodeJS.Platform, args: readonly string[]) => {
         case "electron": {
           return { app: { quit } };
         }
-        case "child_process": {
+        case "node:child_process": {
           return { spawn };
         }
-        case "path": {
+        case "node:path": {
           return path.win32;
         }
         default: {
@@ -70,7 +80,7 @@ const launch = async (platform: NodeJS.Platform, args: readonly string[]) => {
   });
   // Let the bundled application's dynamic import finish.
   await setImmediate();
-  return { quit, spawn, startApplication, updater };
+  return { logError, quit, spawn, startApplication, updater };
 };
 
 test.each(["--squirrel-install", "--squirrel-updated", "--squirrel-uninstall"])(
@@ -85,7 +95,7 @@ test.each(["--squirrel-install", "--squirrel-updated", "--squirrel-uninstall"])(
     expect(spawn).toHaveBeenCalledWith(
       String.raw`C:\Apps\My App\Update.exe`,
       [`--${operation}=My App.exe`],
-      { detached: true }
+      { detached: true, stdio: "ignore" }
     );
     expect(quit).not.toHaveBeenCalled();
     expect(startApplication).not.toHaveBeenCalled();
@@ -94,6 +104,42 @@ test.each(["--squirrel-install", "--squirrel-updated", "--squirrel-uninstall"])(
     expect(startApplication).not.toHaveBeenCalled();
   }
 );
+
+test.each(["ENOENT", "EACCES"])(
+  "%s from Update.exe is reported and quits cleanly",
+  async (code) => {
+    const { logError, quit, startApplication, updater } = await launch(
+      "win32",
+      ["--squirrel-install"]
+    );
+    updater.emit("error", Object.assign(new Error(code), { code }));
+    updater.emit("close", -1);
+    expect(logError).toHaveBeenCalledTimes(1);
+    expect(quit).toHaveBeenCalledTimes(1);
+    expect(startApplication).not.toHaveBeenCalled();
+  }
+);
+
+test("a synchronous updater launch failure quits without starting the app", async () => {
+  const { logError, quit, startApplication } = await launch(
+    "win32",
+    ["--squirrel-install"],
+    new Error("Updater launch failed")
+  );
+  expect(logError).toHaveBeenCalledTimes(1);
+  expect(quit).toHaveBeenCalledTimes(1);
+  expect(startApplication).not.toHaveBeenCalled();
+});
+
+test("an unsuccessful shortcut update is reported before quitting", async () => {
+  const { logError, quit, startApplication, updater } = await launch("win32", [
+    "--squirrel-updated",
+  ]);
+  updater.emit("close", 1);
+  expect(logError).toHaveBeenCalledTimes(1);
+  expect(quit).toHaveBeenCalledTimes(1);
+  expect(startApplication).not.toHaveBeenCalled();
+});
 
 test("obsolete installs quit without shortcut work or normal startup", async () => {
   const { quit, spawn, startApplication } = await launch("win32", [
