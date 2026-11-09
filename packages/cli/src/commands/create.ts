@@ -692,6 +692,9 @@ const createProject = async (
   }
   const setup = await promptCreateSetup(options, project.targetDir);
   logger.break();
+  logger.info(
+    `Creating ChatJS app at ${project.displayPath}. Starting with shadcn setup...`
+  );
   const installedTools = await createStagedProject(
     project.targetDir,
     async (stage) => {

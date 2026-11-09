@@ -9,6 +9,7 @@ import {
 } from "node:fs/promises";
 import path from "node:path";
 import type { PackageManager } from "#cli/types";
+import { logger } from "#cli/utils/logger";
 import { scaffoldFromTemplate } from "./scaffold";
 import { initializeShadcn, runNativeShadcn } from "./initialize-shadcn";
 import { parseJsonObject, requireJsonObject } from "./json-object";
@@ -68,6 +69,7 @@ export const scaffoldNativeProject = async (
       path.join(cwd, "app/chatjs.css")
     );
     await initializeShadcn(cwd, args);
+    logger.info("Continuing ChatJS setup. Installing UI components...");
     const primitiveFiles = await readdir(path.join(core, "components/ui"), {
       withFileTypes: true,
     });
