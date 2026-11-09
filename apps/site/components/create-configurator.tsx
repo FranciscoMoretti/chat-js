@@ -16,7 +16,10 @@ import { Button } from "@/vendor/shadcn-create/styles/base-nova/ui/button";
 import { HistoryProvider } from "@/vendor/shadcn-create/hooks/use-history";
 import { LocksProvider } from "@/vendor/shadcn-create/hooks/use-locks";
 import { useDesignSystemSearchParams } from "@/vendor/shadcn-create/lib/search-params";
-import { InstallationProvider } from "./create-preview/installation-provider";
+import {
+  InstallationProvider,
+  useInstallation,
+} from "./create-preview/installation-provider";
 import type { InstallationCatalogItem } from "../../../packages/registry/installation-catalog";
 import { StackConfiguration } from "./create-preview/stack-configuration";
 import { InstallationPanel } from "./create-preview/installation-panel";
@@ -52,6 +55,13 @@ const itemsByBase = { base: previewItems, radix: previewItems };
 const CreateWorkspace = () => {
   const [params, setParams] = useDesignSystemSearchParams();
   const [view, setView] = useState("app");
+  const [guest, setGuest] = useState(false);
+  const { resolution } = useInstallation();
+  const guestEnabled =
+    resolution?.selection.plugins.includes("guest-chat") === true;
+  if (guest && !guestEnabled) {
+    setGuest(false);
+  }
   return (
     <Tabs
       value={view}
@@ -121,7 +131,11 @@ const CreateWorkspace = () => {
             <PreviewOverrideProvider>
               {(params.base === "base" || params.base === "radix") &&
               params.template === "next" ? (
-                <Preview />
+                <Preview
+                  guestEnabled={guestEnabled}
+                  guest={guest && guestEnabled}
+                  onGuestChange={setGuest}
+                />
               ) : (
                 <div
                   role="alert"
@@ -189,6 +203,7 @@ const CreateWorkspace = () => {
             setView("app");
           }}
           onPreviewTools={() => {
+            setGuest(false);
             void setParams({ item: "preview-tools" });
             setView("app");
           }}

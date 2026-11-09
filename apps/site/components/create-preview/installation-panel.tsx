@@ -18,7 +18,8 @@ import {
   PopoverDescription,
 } from "@/vendor/shadcn-create/styles/base-nova/ui/popover";
 import { useInstallation } from "./installation-provider";
-import { FeatureChoices, featureSection } from "./installation-choices";
+import { FeatureChoices } from "./installation-choices";
+import { groupAppPlugins } from "./catalog-groups";
 
 export const InvalidInstallation = () => (
   <Alert variant="destructive">
@@ -126,21 +127,17 @@ export const InstallationPanel = ({
         <div className="space-y-5 p-4">
           {installation ? (
             <>
-              {(["Chat features", "Access & usage"] as const).map((section) => (
-                <section key={section} aria-label={section}>
+              {groupAppPlugins(catalog).map(({ title, items }) => (
+                <section key={title} aria-label={title}>
                   <h3 className="text-muted-foreground mb-2 text-xs font-medium">
-                    {section}
+                    {title}
                   </h3>
-                  <FeatureChoices
-                    items={catalog.filter(
-                      (item) => featureSection(item) === section
-                    )}
-                  />
+                  <FeatureChoices items={items} />
                 </section>
               ))}
               <div className="border-t pt-4">
                 <p className="text-muted-foreground mb-3 text-xs leading-relaxed">
-                  Choose AI tools, providers and integrations in your stack.
+                  Choose tools, gateways and infrastructure in your stack.
                 </p>
                 <Button
                   variant="outline"

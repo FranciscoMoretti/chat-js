@@ -22,10 +22,7 @@ void test("every built-in signed-in chat UI plugin is registered in Create", () 
 });
 
 void test("non-chat experiences have accurate preview labels", () => {
-  assert.equal(
-    pluginPreviewLabel("guest-chat", false),
-    "Signed-out experience"
-  );
+  assert.equal(pluginPreviewLabel("guest-chat", false), "Preview as Guest");
   assert.equal(pluginPreviewLabel("desktop", true), "Desktop app only");
   assert.equal(pluginPreviewLabel("vercel-analytics", true), "No visible UI");
 });

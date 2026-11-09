@@ -14,12 +14,14 @@ import type { JSX as ReactJSX } from "react";
 
 import { useRouter } from "next/navigation";
 
+import { useChatNavigation } from "./chat/chat-navigation";
 import { useSession } from "@/providers/session-provider";
 
 const PureHeaderActions = (): ReactJSX.Element => {
   const { data: session } = useSession();
   const user = session?.user;
   const router = useRouter();
+  const navigation = useChatNavigation();
 
   return (
     <ChatHeaderActions>
@@ -30,6 +32,10 @@ const PureHeaderActions = (): ReactJSX.Element => {
               aria-label="Sign in"
               className="h-8 px-3"
               onClick={() => {
+                if (navigation) {
+                  navigation.navigate("/login");
+                  return;
+                }
                 router.push("/login");
                 router.refresh();
               }}

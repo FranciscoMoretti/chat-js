@@ -37,7 +37,11 @@ function isSameParams(
   )
 }
 
-export function Preview() {
+export function Preview({ guestEnabled, guest, onGuestChange }: {
+  readonly guestEnabled: boolean
+  readonly guest: boolean
+  readonly onGuestChange: (guest: boolean) => void
+}) {
   const [params, setParams] = useDesignSystemSearchParams()
   const override = usePreviewOverrideValue()
   const iframeRef = React.useRef<HTMLIFrameElement>(null)
@@ -198,7 +202,7 @@ export function Preview() {
 
   return (
     <div className="relative flex min-h-0 flex-1 flex-col justify-center overflow-hidden rounded-2xl ring ring-foreground/10 md:ring-muted dark:ring-foreground/10">
-      <PreviewSwitcher />
+      <PreviewSwitcher guestEnabled={guestEnabled} guest={guest} onGuestChange={onGuestChange} />
       <div className="relative z-0 mx-auto flex w-full flex-1 flex-col overflow-hidden">
         <div className="absolute inset-0 bg-muted dark:bg-muted/30" />
         <iframe
@@ -210,7 +214,7 @@ export function Preview() {
         />
         <PreviewRecovery iframeRef={iframeRef} />
       </div>
-      <ChatPreviewSync iframeRef={iframeRef} />
+      <ChatPreviewSync iframeRef={iframeRef} guest={guest} />
     </div>
   )
 }

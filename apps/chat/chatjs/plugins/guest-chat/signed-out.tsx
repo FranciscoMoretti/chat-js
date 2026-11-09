@@ -4,7 +4,7 @@ import { hasText, nonEmptyText } from "@/components/text-value";
 
 import { useEveAgent } from "eve/react";
 import React, { useEffect, useRef, useState } from "react";
-import type { JSX as ReactJSX } from "react";
+import type { JSX as ReactJSX, ReactNode } from "react";
 import { z } from "zod";
 
 import {
@@ -259,6 +259,54 @@ const GuestConversation = ({
   );
 };
 
+const GuestChatLayout = ({
+  children,
+}: {
+  readonly children: ReactNode;
+}): ReactJSX.Element => (
+  <ChatLayout isSecondaryPanelVisible={false}>
+    <ChatLayoutMain defaultSize="100%">
+      <section className="flex h-full min-h-0 flex-col">
+        <ChatHeaderView breadcrumb={null} className="h-(--header-height)" />
+        {children}
+      </section>
+    </ChatLayoutMain>
+  </ChatLayout>
+);
+
+const GuestWelcomeView = ({
+  modelId,
+  busy,
+  error,
+  draft,
+  onDraftChange,
+  onSend,
+}: {
+  readonly modelId: string;
+  readonly busy: boolean;
+  readonly error?: string;
+  readonly draft: string;
+  readonly onDraftChange: (draft: string) => void;
+  readonly onSend: () => void;
+}): ReactJSX.Element => (
+  <ChatWelcomeView>
+    {hasText(error) && (
+      <p role="alert" className="text-destructive mb-3 text-sm">
+        {error}
+      </p>
+    )}
+    <EveComposer
+      autoFocus
+      modelPicker={<EveModelPicker disabled modelId={modelId} />}
+      status={busy ? "submitted" : "ready"}
+      disabled={busy || !modelId}
+      draft={draft}
+      onDraftChange={onDraftChange}
+      onSubmit={onSend}
+    />
+  </ChatWelcomeView>
+);
+
 /** No URL, cookie, storage, or persisted application identity owns this chat. */
 const GuestChatScreen = (): ReactJSX.Element => {
   const [binding, setBinding] = useState<Binding>();
@@ -328,36 +376,28 @@ const GuestChatScreen = (): ReactJSX.Element => {
     };
   }, [binding]);
   return (
-    <ChatLayout isSecondaryPanelVisible={false}>
-      <ChatLayoutMain defaultSize="100%">
-        <section className="flex h-full min-h-0 flex-col">
-          <ChatHeaderView breadcrumb={null} className="h-(--header-height)" />
-          {binding ? (
-            <GuestConversation binding={binding} key={binding.sessionId} />
-          ) : (
-            <ChatWelcomeView>
-              {commandError && (
-                <p role="alert" className="text-destructive mb-3 text-sm">
-                  {commandError}
-                </p>
-              )}
-              <EveComposer
-                autoFocus
-                modelPicker={<EveModelPicker disabled modelId={modelId} />}
-                status={busy ? "submitted" : "ready"}
-                disabled={busy || !modelId}
-                draft={draft}
-                onDraftChange={setDraft}
-                onSubmit={() => {
-                  void submit();
-                }}
-              />
-            </ChatWelcomeView>
-          )}
-        </section>
-      </ChatLayoutMain>
-    </ChatLayout>
+    <GuestChatLayout>
+      {binding ? (
+        <GuestConversation binding={binding} key={binding.sessionId} />
+      ) : (
+        <GuestWelcomeView
+          modelId={modelId}
+          busy={busy}
+          error={commandError}
+          draft={draft}
+          onDraftChange={setDraft}
+          onSend={() => {
+            void submit();
+          }}
+        />
+      )}
+    </GuestChatLayout>
   );
 };
 
-export { GuestChatScreen, GuestConversationView };
+export {
+  GuestChatScreen,
+  GuestChatLayout,
+  GuestWelcomeView,
+  GuestConversationView,
+};

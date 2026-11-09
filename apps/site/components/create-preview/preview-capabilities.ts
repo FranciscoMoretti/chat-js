@@ -13,7 +13,11 @@ export const livePreviewPlugins = [
 ] as const;
 
 export const pluginPreviewLabel = (id: string, hasClient: boolean) => {
-  if (id === "attachment-uploads" || id === "model-preferences") {
+  if (
+    id === "attachment-uploads" ||
+    id === "model-preferences" ||
+    id === "ai-titles"
+  ) {
     return "Sample preview";
   }
   if (livePreviewPlugins.some((plugin) => plugin === id)) {
@@ -23,7 +27,7 @@ export const pluginPreviewLabel = (id: string, hasClient: boolean) => {
     return "No visible UI";
   }
   if (id === "guest-chat") {
-    return "Signed-out experience";
+    return "Preview as Guest";
   }
   if (id === "desktop") {
     return "Desktop app only";

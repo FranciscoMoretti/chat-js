@@ -14,6 +14,7 @@ const checkRequirements = async (page: Page) => {
     "persistent sandbox"
   );
   await page.keyboard.press("Escape");
+  await expect(page.getByLabel("Installation issues")).toBeHidden();
 };
 
 test("App and Stack share selections, dependencies and the install command", async ({
@@ -41,6 +42,12 @@ test("App and Stack share selections, dependencies and the install command", asy
   await page.getByRole("tab", { name: "Plugins", exact: true }).click();
   const panel = page.getByRole("region", { name: "Configure your app" });
   await expect(panel.getByRole("switch")).toHaveCount(11);
+  await expect(panel.getByRole("heading", { level: 3 })).toHaveText([
+    "Conversations",
+    "Responses",
+    "Files & connections",
+    "Access & usage",
+  ]);
   await expect(panel.getByRole("switch", { name: "Langfuse" })).toHaveCount(0);
   await panel
     .getByRole("switch", { name: "Attachment Uploads", exact: true })
@@ -48,6 +55,10 @@ test("App and Stack share selections, dependencies and the install command", asy
   await checkRequirements(page);
   await uiVerify.snapshot("design features");
   await page.screenshot({ path: testInfo.outputPath("features-desktop.png") });
+  await panel
+    .getByRole("switch", { name: "Credits", exact: true })
+    .scrollIntoViewIfNeeded();
+  await uiVerify.snapshot("access plugins");
   await panel.getByRole("button", { name: "Configure stack" }).click();
   await expect(
     page.getByRole("heading", { name: "Configure your stack." })
@@ -61,7 +72,23 @@ test("App and Stack share selections, dependencies and the install command", asy
   await observability
     .getByRole("checkbox", { name: "Langfuse", exact: true })
     .check();
-  const tools = page.getByRole("region", { name: "AI tools", exact: true });
+  await expect(
+    page.getByRole("navigation", { name: "Stack sections" }).getByRole("link")
+  ).toHaveText([
+    "Models & Gateways",
+    "Tools",
+    "Infrastructure",
+    "Observability",
+    "Platforms",
+  ]);
+  const tools = page.getByRole("region", { name: "Tools", exact: true });
+  await expect(tools.getByRole("heading", { level: 3 })).toHaveText([
+    "Search & research",
+    "Documents",
+    "Media",
+    "Execution",
+    "Utilities",
+  ]);
   await tools
     .getByRole("checkbox", { name: "Deep Research", exact: true })
     .check();
@@ -83,6 +110,9 @@ test("App and Stack share selections, dependencies and the install command", asy
     tools.getByRole("checkbox", { name: "Text Documents", exact: true })
   ).not.toBeChecked();
   await tools.getByRole("textbox", { name: "Search tools" }).fill("weather");
+  await expect(tools.getByRole("heading", { level: 3 })).toHaveText([
+    "Utilities",
+  ]);
   await expect(tools.getByRole("checkbox")).toHaveCount(1);
   await tools.getByRole("checkbox").check();
   await selectChoice(page, "File storage", "S3");
@@ -95,7 +125,9 @@ test("App and Stack share selections, dependencies and the install command", asy
   await expect(
     page.getByRole("complementary", { name: "Your app summary" })
   ).toContainText("Ready to install");
-  await page.getByRole("link", { name: "Model gateway", exact: true }).click();
+  await page
+    .getByRole("link", { name: "Models & Gateways", exact: true })
+    .click();
   await uiVerify.snapshot("stack selections");
   await page.screenshot({ path: testInfo.outputPath("stack-desktop.png") });
   await page.getByRole("tab", { name: "App", exact: true }).click();
@@ -269,6 +301,7 @@ for (const width of [1440, 390]) {
       name: "Feedback",
       exact: true,
     });
+    await feedback.scrollIntoViewIfNeeded();
     const before = await feedback.boundingBox();
     await feedback.check();
     expect(await feedback.boundingBox()).toEqual(before);
@@ -328,6 +361,11 @@ for (const width of [1440, 390]) {
       path: testInfo.outputPath("observability.png"),
       animations: "disabled",
     });
+    await page.getByRole("link", { name: "Platforms", exact: true }).click();
+    await expect(
+      page.getByRole("checkbox", { name: "Desktop", exact: true })
+    ).toBeInViewport();
+    await uiVerify.snapshot("platform plugins");
     await page.getByRole("tab", { name: "App", exact: true }).click();
     await unchangedFrame();
     await page.getByRole("tab", { name: "Appearance", exact: true }).click();
@@ -462,7 +500,7 @@ for (const width of [1440, 1024, 390]) {
       page.getByRole("heading", { name: "Configure your stack." })
     ).toBeVisible();
     await page.evaluate(async () => await document.fonts.ready);
-    const tools = page.getByRole("region", { name: "AI tools", exact: true });
+    const tools = page.getByRole("region", { name: "Tools", exact: true });
     const scroll = page.getByTestId("stack-scroll");
     const summary = page.getByRole("complementary", {
       name: "Your app summary",

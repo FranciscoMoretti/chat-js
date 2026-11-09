@@ -1,3 +1,4 @@
+import { samplePrompt } from "./preview-data";
 import type {
   ReadonlyEveMessage,
   ReadonlyEveMessagePart,
@@ -26,7 +27,7 @@ const conversation: readonly ReadonlyEveMessage[] = [
       {
         type: "text",
         state: "done",
-        text: "Help me build a small app people will love.",
+        text: samplePrompt,
       },
     ],
   },
@@ -111,7 +112,7 @@ export const sceneMessages = (
                 {
                   type: "text",
                   state: "done",
-                  text: "Select tools in the App panel to preview their states.",
+                  text: "Select tools in Stack to preview their states.",
                 },
               ],
             },

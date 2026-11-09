@@ -17,13 +17,18 @@ import {
   FieldTitle,
 } from "@/vendor/shadcn-create/styles/base-nova/ui/field";
 import { useInstallation } from "./installation-provider";
-import { FeatureChoices, featureSection } from "./installation-choices";
+import { FeatureChoices } from "./installation-choices";
+import {
+  choicesInGroup,
+  groupTools,
+  stackPluginGroups,
+} from "./catalog-groups";
 import {
   InstallationRequirements,
   InvalidInstallation,
 } from "./installation-panel";
 
-const providerSections = [
+const providers = [
   {
     kind: "gateway",
     title: "Model gateway",
@@ -40,6 +45,8 @@ const providerSections = [
     description: "Give tools an environment to run code and work with files.",
   },
 ] as const;
+
+const [gateway, ...infrastructure] = providers;
 
 const Section = ({
   id,
@@ -261,20 +268,17 @@ export const StackConfiguration = ({
 }) => {
   const { catalog, installation, resolution } = useInstallation();
   const [query, setQuery] = useState("");
-  const tools = catalog.filter((item) => featureSection(item) === "AI tools");
+  const tools = catalog.filter((item) => item.definition?.kind === "tool");
   const filteredTools = tools.filter((item) =>
     `${item.title} ${item.description}`
       .toLowerCase()
       .includes(query.toLowerCase())
   );
   const sections = [
-    ...providerSections.map((section) => ({
-      id: section.kind,
-      title: section.title,
-    })),
-    { id: "tools", title: "AI tools" },
-    { id: "observability", title: "Observability" },
-    { id: "platforms", title: "Platforms" },
+    { id: "gateway", title: "Models & Gateways" },
+    { id: "tools", title: "Tools" },
+    { id: "infrastructure", title: "Infrastructure" },
+    ...stackPluginGroups,
   ];
   return (
     <div className="h-full overflow-y-auto" data-testid="stack-scroll">
@@ -314,20 +318,16 @@ export const StackConfiguration = ({
                 ))}
               </nav>
               <div className="space-y-9">
-                {providerSections.map(({ kind, title, description }) => (
-                  <Section
-                    key={kind}
-                    id={kind}
-                    title={title}
-                    description={description}
-                  >
-                    <ProviderChoices kind={kind} title={title} />
-                    {kind === "storage" && <StorageOptions />}
-                  </Section>
-                ))}
+                <Section
+                  id="gateway"
+                  title="Models & Gateways"
+                  description={gateway.description}
+                >
+                  <ProviderChoices kind={gateway.kind} title={gateway.title} />
+                </Section>
                 <Section
                   id="tools"
-                  title="AI tools"
+                  title="Tools"
                   description="Add capabilities your assistant can use during a conversation."
                   action={
                     <Button variant="ghost" size="sm" onClick={onPreviewTools}>
@@ -347,7 +347,14 @@ export const StackConfiguration = ({
                       className="pl-9"
                     />
                   </div>
-                  <FeatureChoices items={filteredTools} cards />
+                  <div className="space-y-6">
+                    {groupTools(filteredTools).map(({ title, items }) => (
+                      <section key={title} aria-label={title}>
+                        <h3 className="mb-3 text-sm font-medium">{title}</h3>
+                        <FeatureChoices items={items} cards />
+                      </section>
+                    ))}
+                  </div>
                   {filteredTools.length === 0 && (
                     <output className="text-muted-foreground py-6 text-center text-sm">
                       No tools match “{query}”.
@@ -355,29 +362,45 @@ export const StackConfiguration = ({
                   )}
                 </Section>
                 <Section
-                  id="observability"
-                  title="Observability"
-                  description="Understand traffic, app performance and AI activity."
+                  id="infrastructure"
+                  title="Infrastructure"
+                  description="Choose services for the capabilities you selected."
                 >
-                  <FeatureChoices
-                    items={catalog.filter(
-                      (item) => featureSection(item) === "Observability"
-                    )}
-                    cards
-                  />
+                  <div className="space-y-6">
+                    {infrastructure.map(({ kind, title, description }) => (
+                      <div
+                        key={kind}
+                        id={`stack-${kind}`}
+                        className="scroll-mt-6"
+                      >
+                        <h3 className="text-sm font-medium">{title}</h3>
+                        <p className="text-muted-foreground mt-1 mb-3 text-sm">
+                          {description}
+                        </p>
+                        <ProviderChoices kind={kind} title={title} />
+                        {kind === "storage" && <StorageOptions />}
+                      </div>
+                    ))}
+                  </div>
                 </Section>
-                <Section
-                  id="platforms"
-                  title="Platforms"
-                  description="Your app runs on the web. Add another way to use it."
-                >
-                  <FeatureChoices
-                    items={catalog.filter(
-                      (item) => featureSection(item) === "Platforms"
-                    )}
-                    cards
-                  />
-                </Section>
+                {stackPluginGroups.map(({ id, title, description, ids }) => (
+                  <Section
+                    key={id}
+                    id={id}
+                    title={title}
+                    description={description}
+                  >
+                    <FeatureChoices
+                      items={choicesInGroup(
+                        catalog.filter(
+                          (item) => item.definition?.kind === "plugin"
+                        ),
+                        ids
+                      )}
+                      cards
+                    />
+                  </Section>
+                ))}
               </div>
             </div>
             <aside
@@ -391,7 +414,7 @@ export const StackConfiguration = ({
                 </p>
               </div>
               <dl className="space-y-4 text-sm">
-                {providerSections.map(({ kind, title }) => {
+                {providers.map(({ kind, title }) => {
                   const source =
                     kind === "storage"
                       ? resolution.selection.storage?.source
@@ -412,13 +435,13 @@ export const StackConfiguration = ({
                   );
                 })}
                 <div className="flex items-center justify-between border-t pt-4">
-                  <dt>Features & integrations</dt>
+                  <dt>Plugins</dt>
                   <dd className="tabular-nums">
                     {resolution.selection.plugins.length}
                   </dd>
                 </div>
                 <div className="flex items-center justify-between">
-                  <dt>AI tools</dt>
+                  <dt>Tools</dt>
                   <dd className="tabular-nums">
                     {resolution.selection.tools.length}
                   </dd>

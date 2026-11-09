@@ -33,8 +33,16 @@ page.setDefaultTimeout(15_000);
 const frame = page.frameLocator("iframe");
 const scenes = [
   { label: "New chat", item: "preview", title: "" },
-  { label: "Tools", item: "preview-tools", title: "Building something good" },
-  { label: "Chat", item: "preview-02", title: "Building something good" },
+  {
+    label: "Tools",
+    item: "preview-tools",
+    title: "Help me build a small app people will",
+  },
+  {
+    label: "Chat",
+    item: "preview-02",
+    title: "Help me build a small app people will",
+  },
 ] as const;
 const expectScene = async (scene: (typeof scenes)[number]) => {
   console.log("Checking scene", scene.label, page.url());

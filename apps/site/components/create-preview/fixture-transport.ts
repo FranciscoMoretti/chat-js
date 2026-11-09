@@ -1,5 +1,5 @@
 import { createConnectorFixtures } from "./preview-connectors";
-import { sampleConversation } from "./preview-data";
+import { sampleConversation, sampleGeneratedTitle } from "./preview-data";
 import { TRPCClientError } from "@trpc/client";
 import type { TRPCLink } from "@trpc/client";
 import type { inferRouterOutputs } from "@trpc/server";
@@ -24,7 +24,13 @@ export const createFixtureTransport = (
   scenario: "ready" | "mutation-error"
 ) => {
   let deleted = false;
-  let { title } = sampleConversation;
+  let title: Pick<
+    NonNullable<Outputs["eve"]["get"]>,
+    "title" | "titleStatus"
+  > = {
+    title: sampleConversation.title,
+    titleStatus: "fallback",
+  };
   let isPinned = false;
   let visibility: "private" | "public" = "private";
   const updatedAt = new Date().toISOString();
@@ -104,13 +110,12 @@ export const createFixtureTransport = (
             : [
                 {
                   ...sampleConversation,
-                  title,
+                  ...title,
                   state: "bound",
                   conversationId: sampleConversation.id,
                   createdAt: date,
                   updatedAt,
                   isPinned,
-                  titleStatus: "manual",
                   href: `/chat/${sampleConversation.id}`,
                   parentHref: "/",
                 },
@@ -121,8 +126,7 @@ export const createFixtureTransport = (
       case "eve.get": {
         return {
           chatId: sampleConversation.id,
-          title,
-          titleStatus: "manual",
+          ...title,
           isPinned,
           href: `/chat/${sampleConversation.id}`,
           parentHref: "/",
@@ -131,14 +135,14 @@ export const createFixtureTransport = (
       }
       case "eve.rename": {
         failMutation();
-        ({ title } = z
+        const next = z
           .object({ title: z.string().trim().min(1).max(255) })
-          .parse(input));
+          .parse(input);
+        title = { ...next, titleStatus: "manual" };
         return {
           id: sampleConversation.id,
-          title,
+          ...title,
           isPinned,
-          titleStatus: "manual",
         };
       }
       case "eve.pin": {
@@ -146,9 +150,8 @@ export const createFixtureTransport = (
         ({ isPinned } = z.object({ isPinned: z.boolean() }).parse(input));
         return {
           id: sampleConversation.id,
-          title,
+          ...title,
           isPinned,
-          titleStatus: "manual",
         };
       }
       case "search.query": {
@@ -162,14 +165,14 @@ export const createFixtureTransport = (
           "Start with one useful conversation. Keep the interface clear.";
         const matches =
           !deleted &&
-          `${title} ${text}`.toLowerCase().includes(search.toLowerCase());
+          `${title.title} ${text}`.toLowerCase().includes(search.toLowerCase());
         return {
           items: matches
             ? [
                 {
                   id: sampleConversation.id,
                   conversationId: sampleConversation.id,
-                  title,
+                  title: title.title,
                   excerpt: text,
                   updatedAt: date.toISOString(),
                   rank: 1,
@@ -227,6 +230,17 @@ export const createFixtureTransport = (
       });
   return {
     link,
+    setGeneratedTitles: (enabled: boolean) => {
+      const titleStatus = enabled ? "generated" : "fallback";
+      if (title.titleStatus === "manual" || title.titleStatus === titleStatus) {
+        return false;
+      }
+      title = {
+        title: enabled ? sampleGeneratedTitle : sampleConversation.title,
+        titleStatus,
+      };
+      return true;
+    },
     deleteConversation: () => {
       failMutation();
       deleted = true;

@@ -141,7 +141,7 @@ for (const base of ["base"] as const) {
           await expect(toggle).toBeHidden();
           await expect(
             page.getByRole("link", {
-              name: "Building something good",
+              name: "Help me build a small app people will",
               exact: true,
             })
           ).toBeVisible();
@@ -172,7 +172,10 @@ for (const base of ["base"] as const) {
           await expect(page.getByRole("dialog")).toBeVisible();
         }
         await page
-          .getByRole("link", { name: "Building something good", exact: true })
+          .getByRole("link", {
+            name: "Help me build a small app people will",
+            exact: true,
+          })
           .click();
         await expect(page.getByRole("dialog")).toBeHidden();
         await expect(

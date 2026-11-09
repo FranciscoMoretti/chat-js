@@ -137,8 +137,8 @@ test("host configuration does not cover the shared composer or reset its draft",
   });
   for (const scene of [
     { button: "New chat", title: "" },
-    { button: "Tools", title: "Building something good" },
-    { button: "Chat", title: "Building something good" },
+    { button: "Tools", title: "Help me build a small app people will" },
+    { button: "Chat", title: "Help me build a small app people will" },
   ]) {
     await scenes
       .getByRole("button", { name: scene.button, exact: true })

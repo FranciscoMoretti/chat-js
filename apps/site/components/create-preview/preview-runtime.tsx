@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { ReactNode, ComponentProps } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -48,10 +48,12 @@ const catalog = {
 export const PreviewRuntime = ({
   children,
   tools,
+  aiTitles,
   onDeleted,
 }: {
   readonly children: ReactNode;
   readonly tools: ReadonlySet<string>;
+  readonly aiTitles: boolean;
   readonly onDeleted: () => void;
 }) => {
   const [model, setModel] = useState(models[0].id);
@@ -64,6 +66,15 @@ export const PreviewRuntime = ({
   const fixtures = usePreviewFixtures();
   const cache = useQueryClient();
   const trpc = useTRPC();
+  useEffect(() => {
+    if (fixtures.setGeneratedTitles(aiTitles)) {
+      void Promise.all([
+        cache.invalidateQueries({ queryKey: trpc.eve.get.pathKey() }),
+        cache.invalidateQueries({ queryKey: trpc.eve.list.pathKey() }),
+        cache.invalidateQueries({ queryKey: trpc.search.query.pathKey() }),
+      ]);
+    }
+  }, [aiTitles, cache, fixtures, trpc]);
   const selection = useMemo(
     () => ({
       defaultModel: model,

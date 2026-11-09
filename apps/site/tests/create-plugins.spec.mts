@@ -281,13 +281,18 @@ for (const mobile of [false, true]) {
     await page.screenshot({ path: testInfo.outputPath("sidebar.png") });
     await page.getByRole("button", { name: /Search chats/u }).click();
     await expect(
-      page.getByRole("option", { name: "Building something good", exact: true })
+      page.getByRole("option", {
+        name: "Help me build a small app people will",
+        exact: true,
+      })
     ).toBeVisible();
     await page
       .getByRole("combobox", { name: "Search conversations" })
       .fill("useful");
     await expect(
-      page.getByRole("option", { name: /Building something good/u })
+      page.getByRole("option", {
+        name: /Help me build a small app people will/u,
+      })
     ).toContainText("useful conversation");
     await uiVerify.snapshot("search results");
     await page.screenshot({ path: testInfo.outputPath("search.png") });
@@ -299,9 +304,9 @@ for (const mobile of [false, true]) {
     ).toBeVisible();
     await page
       .getByRole("combobox", { name: "Search conversations" })
-      .fill("Building");
+      .fill("Help me build");
     await page
-      .getByRole("option", { name: /Building something good/u })
+      .getByRole("option", { name: /Help me build a small app people will/u })
       .click();
     await expect(page).toHaveURL(/\/create\/preview/u);
     await expect(
@@ -339,7 +344,7 @@ test("Credits and Search toggle live without backend calls or leaving Create", a
     .getByRole("combobox", { name: "Search conversations" })
     .fill("useful");
   await preview
-    .getByRole("option", { name: /Building something good/u })
+    .getByRole("option", { name: /Help me build a small app people will/u })
     .click();
   await expect(
     preview.getByRole("heading", {
@@ -551,3 +556,149 @@ for (const scenario of ["ready", "mutation-error"] as const) {
     expect(errors).toEqual([]);
   });
 }
+
+test("AI Titles updates the first-message title in the header and history", async ({
+  page,
+  uiVerify,
+}, testInfo) => {
+  uiVerify.disableAutoSnapshot();
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto("/create?item=preview-02");
+  const preview = page.frameLocator('iframe[title="Preview"]');
+  const title = "Help me build a small app people will";
+  const generated = "Planning a Small App";
+  const expectTitle = async (value: string) => {
+    await expect(
+      preview.getByRole("button", { name: `Chat menu: ${value}`, exact: true })
+    ).toBeVisible();
+    await expect(
+      preview.getByRole("link", { name: value, exact: true })
+    ).toBeVisible();
+  };
+  await expectTitle(title);
+  await page.getByRole("tab", { name: "Plugins", exact: true }).click();
+  const toggle = page.getByRole("switch", { name: /ai titles/iu });
+  await page.screenshot({
+    path: testInfo.outputPath("fallback.png"),
+    animations: "disabled",
+  });
+  await toggle.check();
+  await expectTitle(generated);
+  await page.screenshot({
+    path: testInfo.outputPath("generated.png"),
+    animations: "disabled",
+  });
+  await toggle.uncheck();
+  await expectTitle(title);
+  await preview
+    .getByRole("button", { name: `Chat menu: ${title}`, exact: true })
+    .click();
+  await preview.getByRole("menuitem", { name: "Rename", exact: true }).click();
+  const titleEditor = preview.getByRole("textbox", {
+    name: "Chat title",
+    exact: true,
+  });
+  await titleEditor.fill("My app plan");
+  await titleEditor.press("Enter");
+  await expectTitle("My app plan");
+  await toggle.check();
+  await expectTitle("My app plan");
+});
+
+test("Guest Chat switches preview identity and uses a temporary local conversation", async ({
+  page,
+  uiVerify,
+}, testInfo) => {
+  uiVerify.disableAutoSnapshot();
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  const backendRequests: string[] = [];
+  const errors: string[] = [];
+  page.on("request", (request) => {
+    if (/\/api\/(?:trpc|auth|eve-guest)|\/eve\//u.test(request.url())) {
+      backendRequests.push(request.url());
+    }
+  });
+  page.on("pageerror", (error) => errors.push(error.message));
+  await page.goto("/create?item=preview-02");
+  const frame = page.locator('iframe[title="Preview"]');
+  const preview = frame.contentFrame();
+  const signedIn = preview.getByTestId("chat-preview");
+  const guest = preview.getByTestId("guest-preview");
+  const draft = signedIn.getByRole("textbox", { name: "Message" });
+  await expect(draft).toBeVisible();
+  await draft.fill("Keep this signed-in draft");
+  const before = await frame.boundingBox();
+  await page.getByRole("tab", { name: "Plugins", exact: true }).click();
+  const plugin = page.getByRole("switch", { name: "Guest Chat", exact: true });
+  const guestMode = page.getByRole("button", { name: "Guest", exact: true });
+  const signedInMode = page.getByRole("button", {
+    name: "Signed in",
+    exact: true,
+  });
+  await expect(guestMode).toBeHidden();
+  await plugin.check();
+  await expect(signedInMode).toHaveAttribute("aria-pressed", "true");
+  expect(await frame.boundingBox()).toEqual(before);
+  await expect(signedIn).toBeVisible();
+  await guestMode.click();
+  await expect(guest).toBeVisible();
+  await expect(signedIn).toBeHidden();
+  await expect(
+    guest.getByRole("button", { name: "Composer options" })
+  ).toHaveCount(0);
+  await expect(
+    guest.getByRole("button", { name: "Sign in", exact: true }).first()
+  ).toBeVisible();
+  await page.screenshot({
+    path: testInfo.outputPath("guest-welcome.png"),
+    animations: "disabled",
+  });
+  await guest
+    .getByRole("textbox", { name: "Message" })
+    .fill("What can I do here?");
+  await guest.getByRole("button", { name: "Send", exact: true }).click();
+  await expect(
+    guest.getByText("What can I do here?", { exact: true })
+  ).toBeVisible();
+  await expect(guest.getByText(/This is a sample guest reply/u)).toBeVisible();
+  await page.screenshot({
+    path: testInfo.outputPath("guest-reply.png"),
+    animations: "disabled",
+  });
+  await guest.getByRole("link", { name: /New Chat/u }).click();
+  await expect(
+    guest.getByRole("heading", { name: "How can I help you today?" })
+  ).toBeVisible();
+  await signedInMode.click();
+  await expect(draft).toHaveText("Keep this signed-in draft");
+  expect(await frame.boundingBox()).toEqual(before);
+  await guestMode.click();
+  await expect(guest).toBeVisible();
+  await plugin.uncheck();
+  await expect(guest).toBeHidden();
+  await expect(signedIn).toBeVisible();
+  await page.setViewportSize({ width: 320, height: 800 });
+  const mobileBefore = await frame.boundingBox();
+  await plugin.check();
+  await expect(signedInMode).toHaveAttribute("aria-pressed", "true");
+  await guestMode.click();
+  await expect(
+    guest.getByRole("heading", { name: "How can I help you today?" })
+  ).toBeVisible();
+  expect(await frame.boundingBox()).toEqual(mobileBefore);
+  await page.screenshot({
+    path: testInfo.outputPath("guest-mobile.png"),
+    animations: "disabled",
+  });
+  await guest.getByRole("textbox", { name: "Message" }).fill("Stop this reply");
+  await guest.getByRole("button", { name: "Send", exact: true }).click();
+  await guest.getByRole("button", { name: /stop/iu }).click();
+  await expect(guest.getByRole("textbox", { name: "Message" })).toBeEditable();
+  await expect(guest.getByText(/This is a sample guest reply/u)).toHaveCount(0);
+  await guest.getByRole("button", { name: "Sign in", exact: true }).click();
+  await expect(
+    preview.getByText("Sign-in is available in the installed app.")
+  ).toBeVisible();
+  expect(backendRequests).toEqual([]);
+  expect(errors).toEqual([]);
+});

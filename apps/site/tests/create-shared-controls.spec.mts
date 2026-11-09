@@ -41,7 +41,9 @@ for (const rtl of [false, true]) {
       app.getByRole("button", { name: /Search chats/u })
     ).toBeVisible();
     await app
-      .getByRole("button", { name: "Chat menu: Building something good" })
+      .getByRole("button", {
+        name: "Chat menu: Help me build a small app people will",
+      })
       .click();
     await app.getByRole("menuitem", { name: "Rename", exact: true }).click();
     await app
@@ -164,7 +166,10 @@ test("shared message editor and deletion use local effects", async ({
     app.getByRole("heading", { name: "How can I help you today?" })
   ).toBeVisible();
   await expect(
-    app.getByRole("link", { name: "Building something good", exact: true })
+    app.getByRole("link", {
+      name: "Help me build a small app people will",
+      exact: true,
+    })
   ).toBeHidden();
 });
 
