@@ -1,3 +1,4 @@
+import { readInstallationInput } from "../../../packages/registry/app-preset";
 import type { Page } from "playwright/test";
 import { test, expect } from "@uiverify/playwright";
 
@@ -7,6 +8,7 @@ const setup = async (page: Page) => {
   await page.getByRole("switch", { name: "Feedback", exact: true }).check();
   await page.getByRole("switch", { name: "Projects", exact: true }).check();
   await page.getByRole("tab", { name: "Appearance", exact: true }).click();
+  await expect(page).toHaveURL(/app=a[0-9A-Za-z]+(?:&|$)/u);
   const preview = page.frameLocator('iframe[title="Preview"]');
   await expect(preview.getByTestId("message-upvote")).toBeEnabled();
   return preview;
@@ -90,6 +92,7 @@ test("native controls style the open production dialog and Share restores the fu
   await page.goto(
     `/create?item=preview-02&installation=${encodeURIComponent(JSON.stringify(selection))}&__previewScenario=mutation-error`
   );
+  await expect(page).toHaveURL(/app=a[0-9A-Za-z]+(?:&|$)/u);
   const preview = page.frameLocator('iframe[title="Preview"]');
   await expect(preview.getByTestId("message-upvote")).toBeEnabled();
   await preview.getByRole("button", { name: /^Chat menu:/u }).click();
@@ -122,9 +125,18 @@ test("native controls style the open production dialog and Share restores the fu
     async () => await navigator.clipboard.readText()
   );
   const shared = new URL(shareUrl);
-  expect(JSON.parse(shared.searchParams.get("installation") ?? "null")).toEqual(
-    selection
+  expect(shared.searchParams.get("app")).toMatch(/^a[0-9A-Za-z]+$/u);
+  const restored = readInstallationInput(
+    shared.searchParams.get("app") ?? "",
+    shared.searchParams.get("storage-config") ?? undefined
   );
+  expect({ ...restored, plugins: restored.plugins.toSorted() }).toEqual({
+    ...selection,
+    plugins: selection.plugins.toSorted(),
+  });
+  for (const key of ["gateway", "storage", "uploads"]) {
+    expect(shared.searchParams.has(key)).toBe(false);
+  }
   expect(shared.searchParams.has("scenario")).toBe(false);
   expect(shared.searchParams.has("__previewScenario")).toBe(false);
   expect(shared.searchParams.has("preset")).toBe(true);

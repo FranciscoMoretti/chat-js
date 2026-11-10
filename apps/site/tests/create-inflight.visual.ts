@@ -27,7 +27,9 @@ try {
   const frame = page.frameLocator("iframe");
   await expect(frame.getByTestId("chat-preview")).toBeVisible();
   const originalFrame = await frame.locator("body").elementHandle();
-  await page.getByRole("button", { name: "Tools", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Tool examples", exact: true })
+    .click();
   await page.getByRole("tab", { name: "Appearance", exact: true }).click();
   await page.getByRole("button", { name: /^Theme /u }).click();
   await page.getByRole("menuitemradio", { name: "Rose", exact: true }).click();

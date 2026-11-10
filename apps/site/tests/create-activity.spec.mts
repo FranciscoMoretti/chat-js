@@ -1,4 +1,4 @@
-import { selectPreviewTools } from "./create-fixtures.mts";
+import { commandAppPreset, selectPreviewTools } from "./create-fixtures.mts";
 /* eslint-disable no-await-in-loop -- Preset changes must settle before the next interaction. */
 import { test, expect } from "@uiverify/playwright";
 import { checkCreateHistory } from "./create-history.mjs";
@@ -71,9 +71,7 @@ for (const base of ["base"] as const) {
       );
       await selectPreviewTools(page);
       await expect(
-        page
-          .getByRole("alert")
-          .filter({ hasText: "This is a sample error state." })
+        page.getByRole("button", { name: "Show all sources", exact: true })
       ).toBeVisible();
       await page.goto(
         `/create/preview?item=preview-02&base=${base}&preset=${preset}`
@@ -109,7 +107,10 @@ for (const base of ["base"] as const) {
         );
         await selectPreviewTools(page);
         await expect(
-          page.getByRole("alert").filter({ hasText: "No external tool runs" })
+          page.getByText(
+            "Sample results for your selected tools. No external services are called.",
+            { exact: true }
+          )
         ).toBeVisible();
         await page.evaluate(async () => await document.fonts.ready);
         await page.addStyleTag({
@@ -153,7 +154,8 @@ test("unsupported library links offer a Base UI recovery without losing selectio
   await expect(page.getByTestId("create-command")).toContainText(
     "--preset b27I2r8C"
   );
-  await expect(page.getByTestId("create-command")).toContainText(
-    '"sandbox":"vercel"'
-  );
+  expect(
+    commandAppPreset(await page.getByTestId("create-command").textContent())
+      .sandbox
+  ).toBe("vercel");
 });

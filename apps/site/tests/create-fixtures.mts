@@ -1,3 +1,4 @@
+import { decodeAppPreset } from "../../../packages/registry/app-preset";
 import type { Page, FrameLocator } from "playwright/test";
 
 /** Exercise the production file-input path with a local, disposable fixture. */
@@ -28,4 +29,14 @@ export const selectPreviewTools = async (page: Page) => {
       window.location.origin
     );
   });
+};
+
+/** Decode built-in choices from the CLI output; public config stays explicit. */
+export const commandAppPreset = (command: string | null) => {
+  const code = /--app-preset (?<code>a[0-9A-Za-z]+)/u.exec(command ?? "")
+    ?.groups?.code;
+  if (code === undefined) {
+    throw new Error("Missing App preset in command");
+  }
+  return decodeAppPreset(code);
 };

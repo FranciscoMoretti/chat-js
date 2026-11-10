@@ -203,15 +203,16 @@ export function Preview({ guestEnabled, guest, onGuestChange }: {
   return (
     <div className="relative flex min-h-0 flex-1 flex-col justify-center overflow-hidden rounded-2xl ring ring-foreground/10 md:ring-muted dark:ring-foreground/10">
       <PreviewSwitcher guestEnabled={guestEnabled} guest={guest} onGuestChange={onGuestChange} />
-      <div className="relative z-0 mx-auto flex w-full flex-1 flex-col overflow-hidden">
-        <div className="absolute inset-0 bg-muted dark:bg-muted/30" />
+      <div data-testid="preview-viewport" className="relative z-0 mx-auto min-h-0 w-full flex-1 overflow-auto overscroll-contain bg-muted dark:bg-muted/30">
         <iframe
           ref={iframeRef}
           src={iframeSrc}
-          className="z-10 h-full flex-1 bg-background mx-auto transition-[width]"
-          style={{ width: params.size === 100 ? "100%" : `${params.size}px`, maxWidth: "100%" }}
+          className={`relative z-10 mx-auto block h-full min-h-[40rem] bg-background transition-[width] md:min-h-0 ${params.size === 100 ? "min-w-[64rem] md:min-w-0" : ""}`}
+          style={{ width: params.size === 100 ? "100%" : `${params.size}px` }}
           title="Preview"
         />
+        {/* Keep the floating scene controls clear of the composer at the end of the canvas. */}
+        <div aria-hidden="true" className="h-14 md:hidden" />
         <PreviewRecovery iframeRef={iframeRef} />
       </div>
       <ChatPreviewSync iframeRef={iframeRef} guest={guest} />

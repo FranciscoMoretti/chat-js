@@ -3,7 +3,7 @@ import type {
   ReadonlyEveMessage,
   ReadonlyEveMessagePart,
 } from "../../../chat/lib/eve/readonly-message-types";
-import { sampleDocument } from "./preview-documents";
+import { toolExamples } from "./tool-examples";
 import type { DraftAttachment } from "../../../chat/lib/eve/draft";
 import { sampleMessageId } from "./fixture-transport";
 
@@ -44,54 +44,6 @@ const conversation: readonly ReadonlyEveMessage[] = [
     ],
   },
 ];
-const tools: readonly ReadonlyEveMessage[] = [
-  {
-    id: "tools-user",
-    role: "user",
-    parts: [
-      { type: "text", state: "done", text: "Research a plan for my app." },
-    ],
-  },
-  {
-    id: sampleMessageId,
-    metadata: { modelId: "openai/gpt-5-nano" },
-    role: "assistant",
-    parts: [
-      {
-        type: "reasoning",
-        state: "done",
-        text: "Start by reviewing the project notes, then gather sources.",
-      },
-      {
-        type: "tool",
-        kind: "tool",
-        stepIndex: 0,
-        callId: "notes",
-        name: "Reviewing project notes",
-        label: "Reviewing project notes",
-        state: "completed",
-        input: { file: "project-notes.md" },
-        output: { summary: "Keep the scope small." },
-      },
-      {
-        type: "tool",
-        kind: "tool",
-        stepIndex: 0,
-        callId: "search",
-        name: "Search unavailable",
-        label: "Search unavailable",
-        state: "failed",
-        input: { query: "app design" },
-        error: {
-          code: "preview-error",
-          message:
-            "This is a sample error state. No external tool runs in the preview.",
-        },
-      },
-    ],
-  },
-];
-
 /** Native message data only. Rendering belongs to the scaffold's transcript. */
 export const sceneMessages = (
   item: string,
@@ -112,46 +64,55 @@ export const sceneMessages = (
                 {
                   type: "text",
                   state: "done",
-                  text: "Select tools in Stack to preview their states.",
+                  text: "Select AI tools to preview their examples.",
                 },
               ],
             },
           ]
         : [
-            tools[0],
             {
-              ...tools[1],
-              parts: [...selectedTools]
-                .filter((name) => !name.startsWith("edit"))
-                .map((toolName, index): ReadonlyEveMessagePart =>
-                  toolName === "createTextDocument"
-                    ? {
-                        type: "tool",
-                        kind: "tool",
-                        stepIndex: 0,
-                        callId: `sample-tool-${index}`,
-                        name: toolName,
-                        label: toolName,
-                        state: "completed",
-                        input: { title: sampleDocument.title },
-                        output: sampleDocument,
-                      }
-                    : {
-                        type: "tool",
-                        kind: "tool",
-                        stepIndex: 0,
-                        callId: `sample-tool-${index}`,
-                        name: toolName,
-                        label: toolName,
-                        state: "failed",
-                        input: {},
-                        error: {
-                          code: "preview-error",
-                          message:
-                            "This is a sample error state. No external tool runs in the preview.",
-                        },
-                      }
-                ),
+              id: "tools-user",
+              role: "user",
+              parts: [
+                {
+                  type: "text",
+                  state: "done",
+                  text: "Show me what my selected tools can do.",
+                },
+              ],
+            },
+            {
+              id: sampleMessageId,
+              metadata: { modelId: "openai/gpt-5-nano" },
+              role: "assistant",
+              parts: [
+                {
+                  type: "text",
+                  state: "done",
+                  text: "Sample results for your selected tools. No external services are called.",
+                },
+                ...[...selectedTools]
+                  .filter((name) => !name.startsWith("edit"))
+                  .map((name): ReadonlyEveMessagePart => {
+                    const example = toolExamples[name];
+                    if (example === undefined) {
+                      return {
+                        type: "text",
+                        state: "done",
+                        text: `A preview example for ${name} is not available yet.`,
+                      };
+                    }
+                    return {
+                      type: "tool",
+                      kind: "tool",
+                      stepIndex: 0,
+                      callId: `sample-tool-${name}`,
+                      name,
+                      state: "completed",
+                      ...example,
+                    };
+                  }),
+              ],
             },
           ];
   }

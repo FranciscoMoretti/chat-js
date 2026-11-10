@@ -89,7 +89,10 @@ for (const width of [1280, 390]) {
       await page.goto(`/create/preview?item=preview-tools&rtl=${rtl}`);
       await selectPreviewTools(page);
       await expect(
-        page.getByRole("alert").filter({ hasText: "No external tool runs" })
+        page.getByText(
+          "Sample results for your selected tools. No external services are called.",
+          { exact: true }
+        )
       ).toBeVisible();
       if (width === 390) {
         const toggle = page.getByRole("button", { name: "Toggle Sidebar" });
@@ -137,7 +140,7 @@ test("host configuration does not cover the shared composer or reset its draft",
   });
   for (const scene of [
     { button: "New chat", title: "" },
-    { button: "Tools", title: "Help me build a small app people will" },
+    { button: "Tool examples", title: "Help me build a small app people will" },
     { button: "Chat", title: "Help me build a small app people will" },
   ]) {
     await scenes
@@ -168,7 +171,7 @@ test("host configuration does not cover the shared composer or reset its draft",
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(scenes).toBeInViewport();
   await expect(
-    scenes.getByRole("button", { name: "Tools", exact: true })
+    scenes.getByRole("button", { name: "Tool examples", exact: true })
   ).toBeInViewport();
   expect(
     await page.evaluate(

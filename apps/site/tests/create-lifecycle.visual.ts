@@ -34,7 +34,7 @@ const frame = page.frameLocator("iframe");
 const scenes = [
   { label: "New chat", item: "preview", title: "" },
   {
-    label: "Tools",
+    label: "Tool examples",
     item: "preview-tools",
     title: "Help me build a small app people will",
   },
@@ -68,7 +68,9 @@ try {
     waitUntil: "domcontentloaded",
   });
   await expectScene(scenes[2]);
-  await page.getByRole("button", { name: "Tools", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Tool examples", exact: true })
+    .click();
   await expectScene(scenes[1]);
   await page.goBack({ waitUntil: "domcontentloaded" });
   await expectScene(scenes[2]);

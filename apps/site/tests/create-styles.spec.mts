@@ -45,9 +45,7 @@ for (const base of ["base"] as const) {
           );
           await selectPreviewTools(page);
           await expect(
-            page
-              .getByRole("alert")
-              .filter({ hasText: "This is a sample error state." })
+            page.getByRole("button", { name: "Show all sources", exact: true })
           ).toBeVisible();
           await page.evaluate(async () => await document.fonts.ready);
           await page.addStyleTag({

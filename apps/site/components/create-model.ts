@@ -1,3 +1,7 @@
+import {
+  encodeInstallationInput,
+  readInstallationInput,
+} from "../../../packages/registry/app-preset";
 import { encodePreset } from "shadcn/preset";
 import type { PresetBase, PresetConfig } from "shadcn/preset";
 import { installationSelectionSchema } from "../../../packages/registry/installation";
@@ -18,15 +22,16 @@ export const createCommand = (
   base: PresetBase,
   installation: Readonly<InstallationSelection>
 ): string => {
-  const selection = installationSelectionSchema.parse(installation);
+  const { code, storageConfig } = encodeInstallationInput(installation);
   const args = [
     "bunx",
     "chat-js@alpha",
     "create",
     "my-chat",
     "--yes",
-    "--installation",
-    JSON.stringify(selection),
+    "--app-preset",
+    code,
+    ...(storageConfig === undefined ? [] : ["--storage-config", storageConfig]),
     "--",
     "--preset",
     encodePreset(preset),
@@ -34,6 +39,28 @@ export const createCommand = (
     base,
   ];
   return args.map(quoteArgument).join(" ");
+};
+
+/** Canonical URL state. Preserve unknown/custom IDs so imported links stay editable. */
+export const encodeInstallationQuery = (selection: InstallationSelection) => {
+  let app: string | null = null;
+  let installation: string | null = null;
+  let storageConfig: string | null = null;
+  try {
+    const encoded = encodeInstallationInput(selection);
+    app = encoded.code;
+    storageConfig = encoded.storageConfig ?? null;
+  } catch {
+    installation = JSON.stringify(selection);
+  }
+  return {
+    app,
+    installation,
+    "storage-config": storageConfig,
+    gateway: null,
+    storage: null,
+    uploads: null,
+  };
 };
 
 export type CreateProvider = Readonly<{
@@ -45,14 +72,11 @@ export type CreateProvider = Readonly<{
 const readEncodedInstallation = (
   encoded: string,
   gateways: readonly CreateProvider[],
-  storageProviders: readonly CreateProvider[]
+  storageProviders: readonly CreateProvider[],
+  storageConfig?: string
 ): InstallationSelection | null => {
   try {
-    const parsed = installationSelectionSchema.safeParse(JSON.parse(encoded));
-    if (!parsed.success) {
-      return null;
-    }
-    const selection = parsed.data;
+    const selection = readInstallationInput(encoded, storageConfig);
     const provider = storageProviders.find(
       (item) => item.id === selection.storage?.source
     );
@@ -79,15 +103,11 @@ const readEncodedInstallation = (
   }
 };
 
-export const readInstallationSelection = (
+const readLegacyInstallationFields = (
   query: URLSearchParams,
   gateways: readonly CreateProvider[],
   storageProviders: readonly CreateProvider[]
 ) => {
-  const encoded = query.get("installation");
-  if (encoded !== null) {
-    return readEncodedInstallation(encoded, gateways, storageProviders);
-  }
   const gateway = query.get("gateway") ?? startingInstallation.gateway;
   const storage = query.get("storage") ?? startingInstallation.storage?.source;
   const uploads = query.get("uploads") ?? "false";
@@ -121,4 +141,28 @@ export const readInstallationSelection = (
     ...(uploads === "true" ? { sandbox: "vercel" } : {}),
     storage: storageSelection.data,
   });
+};
+
+export const readInstallationSelection = (
+  query: URLSearchParams,
+  gateways: readonly CreateProvider[],
+  storageProviders: readonly CreateProvider[]
+) => {
+  const app = query.get("app");
+  const legacy = query.get("installation");
+  if (app !== null && (legacy !== null || app.trim().startsWith("{"))) {
+    return null;
+  }
+  const encoded = app ?? legacy;
+  if (encoded !== null) {
+    return readEncodedInstallation(
+      encoded,
+      gateways,
+      storageProviders,
+      encoded.trim().startsWith("{")
+        ? undefined
+        : (query.get("storage-config") ?? undefined)
+    );
+  }
+  return readLegacyInstallationFields(query, gateways, storageProviders);
 };

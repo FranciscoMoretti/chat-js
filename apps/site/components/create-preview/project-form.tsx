@@ -3,6 +3,8 @@
 // ChatJS adaptation of upstream ProjectForm. Native dialog, field/toggle/tabs
 // structure is retained; ChatJS's existing installation selection replaces the
 // upstream framework/template choices because ChatJS owns its Next.js scaffold.
+import { setupAction } from "./setup-guidance";
+import type { ConfigureSetup } from "./setup-guidance";
 import * as React from "react";
 import { Copy01Icon, Tick02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -10,6 +12,8 @@ import { cn } from "cn";
 import { MousePointer2 } from "lucide-react";
 import { decodePreset } from "shadcn/preset";
 import { copyToClipboardWithMeta } from "@/components/create-preview/copy-clipboard";
+import type { InstallationSelection } from "../../../../packages/registry/installation";
+import { encodeInstallationInput } from "../../../../packages/registry/app-preset";
 import { createCommand } from "@/components/create-model";
 import { useInstallation } from "@/components/create-preview/installation-provider";
 import {
@@ -71,6 +75,9 @@ const formatCssVarsRule = (
     .map(([key, value]) => `  --${key}: ${value};`)
     .join("\n")}\n}`;
 
+const appPresetForSelection = (selection?: InstallationSelection) =>
+  selection ? encodeInstallationInput(selection).code : null;
+
 const useCreationOutput = (packageManager: PackageManager) => {
   const [params] = useDesignSystemSearchParams();
   const presetCode = usePresetCode();
@@ -108,6 +115,8 @@ const useCreationOutput = (packageManager: PackageManager) => {
   return {
     command,
     supported,
+    appPreset: command ? appPresetForSelection(installation) : null,
+    appearancePreset: presetCode,
     themeCss,
     warnings: resolution?.issues ?? [
       "Invalid installation options in this link.",
@@ -117,15 +126,25 @@ const useCreationOutput = (packageManager: PackageManager) => {
 
 export const ProjectForm = ({
   className,
-}: React.ComponentProps<typeof Button>) => {
+  onConfigureSetup,
+}: React.ComponentProps<typeof Button> & {
+  readonly onConfigureSetup: ConfigureSetup;
+}) => {
+  const { resolution, catalog } = useInstallation();
   const [open, setOpen] = React.useState(false);
   const [params, setParams] = useDesignSystemSearchParams();
   const [packageManager, setPackageManager] =
     React.useState<PackageManager>("bun");
   const [activeTab, setActiveTab] = React.useState("new-project");
   const [copied, setCopied] = React.useState(false);
-  const { command, supported, themeCss, warnings } =
-    useCreationOutput(packageManager);
+  const {
+    command,
+    supported,
+    appPreset,
+    appearancePreset,
+    themeCss,
+    warnings,
+  } = useCreationOutput(packageManager);
   React.useEffect(() => {
     const timer = setTimeout(() => {
       if (copied) {
@@ -171,6 +190,89 @@ export const ProjectForm = ({
           <div className="no-scrollbar overflow-y-auto">
             {activeTab === "new-project" ? (
               <FieldGroup className="min-w-0 gap-0 divide-y">
+                <section
+                  aria-label="Selection summary"
+                  className="space-y-3 px-6 py-4"
+                >
+                  <h2 className="text-sm font-medium">Your app</h2>
+                  <dl className="space-y-2 text-xs">
+                    <div className="flex justify-between gap-4">
+                      <dt className="text-muted-foreground">Appearance</dt>
+                      <dd className="capitalize">
+                        {params.style} · {params.theme}
+                      </dd>
+                    </div>
+                    {(["plugins", "tools"] as const).map((kind) => {
+                      const titles =
+                        resolution?.items
+                          .filter(
+                            (item) =>
+                              item.definition?.kind ===
+                              (kind === "plugins" ? "plugin" : "tool")
+                          )
+                          .map((item) => item.title) ?? [];
+                      return (
+                        <div key={kind} className="flex justify-between gap-4">
+                          <dt className="text-muted-foreground capitalize">
+                            {kind}
+                          </dt>
+                          <dd className="max-w-[75%] text-right">
+                            {titles.length ? titles.join(", ") : "None"}
+                          </dd>
+                        </div>
+                      );
+                    })}
+                    {(["gateway", "storage", "sandbox"] as const).map(
+                      (kind) => {
+                        const source =
+                          kind === "storage"
+                            ? resolution?.selection.storage?.source
+                            : resolution?.selection[kind];
+                        return (
+                          <div
+                            key={kind}
+                            className="flex justify-between gap-4"
+                          >
+                            <dt className="text-muted-foreground capitalize">
+                              {kind}
+                            </dt>
+                            <dd className="text-right">
+                              {catalog.find(
+                                (item) =>
+                                  item.definition?.kind === kind &&
+                                  item.definition.id === source
+                              )?.title ?? "None"}
+                            </dd>
+                          </div>
+                        );
+                      }
+                    )}
+                    <div className="flex justify-between gap-4">
+                      <dt className="text-muted-foreground">App preset</dt>
+                      <dd>
+                        <code
+                          data-testid="app-preset-code"
+                          className="select-all"
+                        >
+                          {appPreset ?? "Complete setup first"}
+                        </code>
+                      </dd>
+                    </div>
+                    <div className="flex justify-between gap-4">
+                      <dt className="text-muted-foreground">
+                        Appearance preset
+                      </dt>
+                      <dd>
+                        <code
+                          data-testid="appearance-preset-code"
+                          className="select-all"
+                        >
+                          {appearancePreset}
+                        </code>
+                      </dd>
+                    </div>
+                  </dl>
+                </section>
                 <div className="px-6 py-4">
                   <FieldSet className="gap-3">
                     <FieldLegend variant="label">Base</FieldLegend>
@@ -233,9 +335,10 @@ export const ProjectForm = ({
                   </p>
                 )}
                 <p className="text-muted-foreground px-6 py-4 text-xs">
-                  Includes your App selections. This command requires the CLI
-                  from this branch; the published beta does not support the
-                  complete selection yet.
+                  Add API keys and other credentials after installation. The App
+                  preset contains built-in selections; custom provider values
+                  are included separately in the command. This command requires
+                  the CLI from this branch until App presets are released.
                 </p>
               </FieldGroup>
             ) : (
@@ -293,10 +396,14 @@ export const ProjectForm = ({
                     </div>
                     <div className="bg-popover overflow-x-auto border-t p-3">
                       <code
-                        className="font-mono text-xs whitespace-nowrap"
+                        className={cn(
+                          "font-mono text-xs",
+                          command ? "whitespace-nowrap" : "whitespace-normal"
+                        )}
                         data-testid="create-command"
                       >
-                        {command || "Select a supported setup."}
+                        {command ||
+                          "Resolve the choices below to get your command."}
                       </code>
                     </div>
                   </Tabs>
@@ -307,7 +414,20 @@ export const ProjectForm = ({
                     aria-label="Installation issues"
                   >
                     {warnings.map((warning) => (
-                      <li key={warning}>{warning}</li>
+                      <li key={warning} className="mb-3">
+                        <p>{warning}</p>
+                        <Button
+                          variant="link"
+                          size="sm"
+                          className="h-auto p-0 text-xs"
+                          onClick={() => {
+                            setOpen(false);
+                            onConfigureSetup(setupAction(warning).destination);
+                          }}
+                        >
+                          {setupAction(warning).label}
+                        </Button>
+                      </li>
                     ))}
                   </ul>
                 )}

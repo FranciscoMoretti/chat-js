@@ -136,6 +136,7 @@ const printEnvChecklist = (entries: readonly Readonly<EnvVarEntry>[]): void => {
 };
 
 const createOptionsSchema = z.object({
+  appPreset: z.string().optional(),
   installation: z.string().optional(),
   attachments: z.boolean().optional(),
   codeExecutionTool: z.string().optional(),
@@ -472,11 +473,11 @@ const promptCreateSetup = async (
 };
 
 const selectedCreateSetup = async (
-  encoded: string,
+  input: Parameters<typeof readCreateInstallation>[0],
   targetDir: string,
   yes: boolean
 ): Promise<CreateSetup> => {
-  const selection = readCreateInstallation(encoded);
+  const selection = readCreateInstallation(input);
   selection.storage ??= { source: "memory", options: {} };
   const plan = await planInstallation(targetDir, selection, { fresh: true });
   const gatewaySelection = await resolveGateway(
@@ -728,10 +729,14 @@ const createProject = async (
     return;
   }
   const setup =
-    options.installation === undefined
+    options.installation === undefined && options.appPreset === undefined
       ? await promptCreateSetup(options, project.targetDir)
       : await selectedCreateSetup(
-          options.installation,
+          {
+            appPreset: options.appPreset,
+            installation: options.installation,
+            storageConfig: options.storageConfig,
+          },
           project.targetDir,
           options.yes
         );
@@ -760,9 +765,10 @@ const createProject = async (
 
 export const create = new Command()
   .name("create")
+  .option("--app-preset <code>", "App preset code; bypasses feature defaults")
   .option(
     "--installation <json>",
-    "complete Create catalog selection; bypasses feature defaults"
+    "complete JSON selection; bypasses feature defaults"
   )
   .option(
     "--code-execution-tool <item>",

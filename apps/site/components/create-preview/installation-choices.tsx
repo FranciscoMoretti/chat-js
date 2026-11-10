@@ -40,6 +40,8 @@ import {
   PopoverDescription,
 } from "@/vendor/shadcn-create/styles/base-nova/ui/popover";
 import { useInstallation } from "./installation-provider";
+import { setupActions } from "./setup-guidance";
+import type { ConfigureSetup } from "./setup-guidance";
 import { pluginPreviewLabel } from "./preview-capabilities";
 
 // Use the homepage illustrations’ motifs at the scale of a catalog row.
@@ -64,9 +66,11 @@ const pluginIcons: Readonly<Partial<Record<string, LucideIcon>>> = {
 export const FeatureChoices = ({
   items,
   cards = false,
+  onConfigureSetup,
 }: {
   readonly items: readonly InstallationCatalogItem[];
   readonly cards?: boolean;
+  readonly onConfigureSetup?: ConfigureSetup;
 }) => {
   const { installation, resolution, update } = useInstallation();
   if (!installation || !resolution) {
@@ -93,6 +97,13 @@ export const FeatureChoices = ({
             />
           );
         const selected = resolution.selection[key].includes(id);
+        const actions = selected
+          ? setupActions(
+              resolution.issues.filter((issue) =>
+                issue.startsWith(`${id} requires`)
+              )
+            )
+          : [];
         const requiredBy = resolution.reasons[item.name] ?? [];
         const isThisItem = (source: string) =>
           source === id ||
@@ -144,7 +155,7 @@ export const FeatureChoices = ({
               <p className="text-muted-foreground text-xs">
                 {definition.kind === "plugin"
                   ? pluginPreviewLabel(id, Boolean(definition.client))
-                  : "Tool scenes"}
+                  : "Tool examples"}
               </p>
             </PopoverContent>
           </Popover>
@@ -189,9 +200,27 @@ export const FeatureChoices = ({
                 {icon}
                 {item.title}
               </FieldLabel>
+              {onConfigureSetup &&
+                actions.map((action) => (
+                  <Button
+                    key={action.destination}
+                    variant="link"
+                    size="sm"
+                    className="h-auto justify-start p-0 text-xs"
+                    onClick={() => {
+                      onConfigureSetup(action.destination);
+                    }}
+                  >
+                    {action.label}
+                  </Button>
+                ))}
             </div>
             {details}
-            <Switch {...control} />
+            {definition.kind === "tool" ? (
+              <Checkbox {...control} />
+            ) : (
+              <Switch {...control} />
+            )}
           </div>
         );
       })}

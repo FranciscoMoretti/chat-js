@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import type { ReactNode } from "react";
-import { ArrowLeft, ArrowUpRight, Search } from "lucide-react";
 import { Button } from "@/vendor/shadcn-create/styles/base-nova/ui/button";
 import { Input } from "@/vendor/shadcn-create/styles/base-nova/ui/input";
 import {
@@ -18,11 +17,7 @@ import {
 } from "@/vendor/shadcn-create/styles/base-nova/ui/field";
 import { useInstallation } from "./installation-provider";
 import { FeatureChoices } from "./installation-choices";
-import {
-  choicesInGroup,
-  groupTools,
-  stackPluginGroups,
-} from "./catalog-groups";
+import { choicesInGroup, setupPluginGroups } from "./catalog-groups";
 import {
   InstallationRequirements,
   InvalidInstallation,
@@ -62,7 +57,7 @@ const Section = ({
   readonly action?: ReactNode;
 }) => (
   <section
-    id={`stack-${id}`}
+    id={`setup-${id}`}
     aria-label={title}
     className="scroll-mt-6 border-b pb-9 last:border-0"
   >
@@ -257,31 +252,19 @@ const StorageOptions = () => {
   );
 };
 
-export const StackConfiguration = ({
-  onApp,
-  onPreviewTools,
+export const SetupConfiguration = ({
   installAction,
 }: {
-  readonly onApp: () => void;
-  readonly onPreviewTools: () => void;
   readonly installAction: ReactNode;
 }) => {
   const { catalog, installation, resolution } = useInstallation();
-  const [query, setQuery] = useState("");
-  const tools = catalog.filter((item) => item.definition?.kind === "tool");
-  const filteredTools = tools.filter((item) =>
-    `${item.title} ${item.description}`
-      .toLowerCase()
-      .includes(query.toLowerCase())
-  );
   const sections = [
     { id: "gateway", title: "Models & Gateways" },
-    { id: "tools", title: "Tools" },
     { id: "infrastructure", title: "Infrastructure" },
-    ...stackPluginGroups,
+    ...setupPluginGroups,
   ];
   return (
-    <div className="h-full overflow-y-auto" data-testid="stack-scroll">
+    <div className="h-full overflow-y-auto" data-testid="setup-scroll">
       <div className="mx-auto max-w-6xl px-5 py-6 sm:px-8 sm:py-10">
         <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
           <div>
@@ -289,28 +272,25 @@ export const StackConfiguration = ({
               YOUR CHATJS APP
             </p>
             <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-              Configure your stack.
+              Set up your app.
             </h1>
             <p className="text-muted-foreground mt-3 max-w-xl text-sm leading-relaxed">
               Choose what powers your app. Start with the essentials and add
               what you need.
             </p>
           </div>
-          <Button variant="outline" onClick={onApp}>
-            <ArrowLeft /> Back to app
-          </Button>
         </div>
         {installation && resolution ? (
           <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_16rem] lg:gap-12">
             <div className="min-w-0">
               <nav
-                aria-label="Stack sections"
+                aria-label="Setup sections"
                 className="mb-8 flex flex-wrap gap-x-5 gap-y-3 border-y py-4 text-xs"
               >
                 {sections.map((section) => (
                   <a
                     key={section.id}
-                    href={`#stack-${section.id}`}
+                    href={`#setup-${section.id}`}
                     className="text-muted-foreground hover:text-foreground underline-offset-4 hover:underline"
                   >
                     {section.title}
@@ -326,42 +306,6 @@ export const StackConfiguration = ({
                   <ProviderChoices kind={gateway.kind} title={gateway.title} />
                 </Section>
                 <Section
-                  id="tools"
-                  title="Tools"
-                  description="Add capabilities your assistant can use during a conversation."
-                  action={
-                    <Button variant="ghost" size="sm" onClick={onPreviewTools}>
-                      Preview tools <ArrowUpRight />
-                    </Button>
-                  }
-                >
-                  <div className="relative mb-4">
-                    <Search className="text-muted-foreground absolute top-2.5 left-3 size-4" />
-                    <Input
-                      aria-label="Search tools"
-                      placeholder="Search tools…"
-                      value={query}
-                      onChange={(event) => {
-                        setQuery(event.target.value);
-                      }}
-                      className="pl-9"
-                    />
-                  </div>
-                  <div className="space-y-6">
-                    {groupTools(filteredTools).map(({ title, items }) => (
-                      <section key={title} aria-label={title}>
-                        <h3 className="mb-3 text-sm font-medium">{title}</h3>
-                        <FeatureChoices items={items} cards />
-                      </section>
-                    ))}
-                  </div>
-                  {filteredTools.length === 0 && (
-                    <output className="text-muted-foreground py-6 text-center text-sm">
-                      No tools match “{query}”.
-                    </output>
-                  )}
-                </Section>
-                <Section
                   id="infrastructure"
                   title="Infrastructure"
                   description="Choose services for the capabilities you selected."
@@ -370,7 +314,7 @@ export const StackConfiguration = ({
                     {infrastructure.map(({ kind, title, description }) => (
                       <div
                         key={kind}
-                        id={`stack-${kind}`}
+                        id={`setup-${kind}`}
                         className="scroll-mt-6"
                       >
                         <h3 className="text-sm font-medium">{title}</h3>
@@ -383,7 +327,7 @@ export const StackConfiguration = ({
                     ))}
                   </div>
                 </Section>
-                {stackPluginGroups.map(({ id, title, description, ids }) => (
+                {setupPluginGroups.map(({ id, title, description, ids }) => (
                   <Section
                     key={id}
                     id={id}

@@ -1,9 +1,12 @@
 "use client";
 
-import { createContext, useContext, useMemo } from "react";
+import { createContext, useContext, useMemo, useEffect } from "react";
 import type { ReactNode } from "react";
 import { parseAsString, parseAsStringLiteral, useQueryStates } from "nuqs";
-import { readInstallationSelection } from "../create-model";
+import {
+  readInstallationSelection,
+  encodeInstallationQuery,
+} from "../create-model";
 import type { CreateProvider } from "../create-model";
 import { resolveInstallationSelection } from "../../../../packages/registry/installation-catalog";
 import type { InstallationCatalogItem } from "../../../../packages/registry/installation-catalog";
@@ -51,6 +54,7 @@ export const InstallationProvider = ({
     [catalog]
   );
   const [params, setParams] = useQueryStates({
+    app: parseAsString,
     installation: parseAsString,
     // Test-only fault injection; never included in shared or installation URLs.
     __previewScenario: parseAsStringLiteral([
@@ -76,6 +80,28 @@ export const InstallationProvider = ({
       installation ? resolveInstallationSelection(installation, catalog) : null,
     [installation, catalog]
   );
+  // Replace legacy JSON links without adding history entries or resolving implicit
+  // dependencies into explicit selections. The URL records only user choices.
+  useEffect(() => {
+    if (!installation) {
+      return;
+    }
+    const canonical = encodeInstallationQuery(installation);
+    if (
+      (
+        [
+          "app",
+          "installation",
+          "storage-config",
+          "gateway",
+          "storage",
+          "uploads",
+        ] as const
+      ).some((key) => params[key] !== canonical[key])
+    ) {
+      void setParams(canonical, { history: "replace" });
+    }
+  }, [installation, params, setParams]);
   const value = useMemo<InstallationContextValue>(
     () => ({
       catalog,
@@ -85,13 +111,7 @@ export const InstallationProvider = ({
       installation,
       scenario: params.__previewScenario,
       update: (selection) => {
-        void setParams({
-          installation: JSON.stringify(selection),
-          gateway: null,
-          storage: null,
-          uploads: null,
-          "storage-config": null,
-        });
+        void setParams(encodeInstallationQuery(selection));
       },
     }),
     [

@@ -110,7 +110,7 @@ test("local adapters drive project creation, model selection and document panels
   ).toBeVisible();
   await page
     .getByRole("group", { name: "Preview scene", exact: true })
-    .getByRole("button", { name: "Tools", exact: true })
+    .getByRole("button", { name: "Tool examples", exact: true })
     .click();
   await app
     .getByRole("button", { name: 'Created "Launch notes"', exact: true })

@@ -13,7 +13,7 @@ const appPluginGroups = [
   { title: "Access & usage", ids: ["guest-chat", "credits"] },
 ];
 
-export const stackPluginGroups = [
+export const setupPluginGroups = [
   {
     id: "observability",
     title: "Observability",
@@ -79,11 +79,11 @@ const groupChoices = (
 export const groupAppPlugins = (
   catalog: readonly InstallationCatalogItem[]
 ) => {
-  const stackIds = new Set(stackPluginGroups.flatMap(({ ids }) => ids));
+  const setupIds = new Set(setupPluginGroups.flatMap(({ ids }) => ids));
   return groupChoices(
     catalog.filter(
       (item) =>
-        item.definition?.kind === "plugin" && !stackIds.has(item.definition.id)
+        item.definition?.kind === "plugin" && !setupIds.has(item.definition.id)
     ),
     appPluginGroups,
     "Other plugins"

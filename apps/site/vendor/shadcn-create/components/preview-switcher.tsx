@@ -6,7 +6,7 @@ import { useDesignSystemSearchParams } from "@/vendor/shadcn-create/lib/search-p
 const PREVIEW_ITEMS = [
   { label: "Chat", value: "preview-02" },
   { label: "New chat", value: "preview" },
-  { label: "Tools", value: "preview-tools" },
+  { label: "Tool examples", value: "preview-tools" },
 ]
 
 export function PreviewSwitcher({ guestEnabled, guest, onGuestChange }: {
@@ -24,7 +24,7 @@ export function PreviewSwitcher({ guestEnabled, guest, onGuestChange }: {
   }
 
   return (
-    <div className="flex shrink-0 items-center justify-between gap-1 border-b bg-background px-2 py-2 sm:px-3">
+    <div className="absolute inset-x-2 bottom-2 z-20 flex shrink-0 flex-wrap items-center justify-end gap-1 md:relative md:inset-auto md:justify-between md:border-b md:bg-background md:px-3 md:py-2">
       {guestEnabled ? (
         <div role="group" aria-label="Preview identity" className="flex shrink-0 items-center gap-0.5 rounded-lg bg-muted p-0.5">
           {[{ label: "Signed in", value: false }, { label: "Guest", value: true }].map(({ label, value }) => (
@@ -41,9 +41,9 @@ export function PreviewSwitcher({ guestEnabled, guest, onGuestChange }: {
           ))}
         </div>
       ) : (
-        <span className="text-xs font-medium text-muted-foreground">Preview scene</span>
+        <span className="hidden text-xs font-medium text-muted-foreground md:inline">Preview scene</span>
       )}
-      <div role="group" aria-label="Preview scene" className={guest ? "invisible flex items-center gap-1" : "flex items-center gap-1"}>
+      <div role="group" aria-label="Preview scene" className={`${guest ? "invisible " : ""}flex items-center gap-1 rounded-xl bg-card/90 p-1 shadow-lg backdrop-blur-xl md:rounded-none md:bg-transparent md:p-0 md:shadow-none md:backdrop-blur-none`}>
       {PREVIEW_ITEMS.map((item) => (
         <Button
           key={item.value}

@@ -1,5 +1,5 @@
-import { installationSelectionSchema } from "../../../packages/registry/installation";
-import { attachPreviewFile } from "./create-fixtures.mts";
+import { readInstallationInput } from "../../../packages/registry/app-preset";
+import { commandAppPreset, attachPreviewFile } from "./create-fixtures.mts";
 /* eslint-disable no-await-in-loop -- Each native picker interaction must settle before the next. */
 import assert from "node:assert/strict";
 import { mkdir } from "node:fs/promises";
@@ -271,10 +271,11 @@ try {
   await panel
     .getByRole("switch", { name: "Attachment Uploads", exact: true })
     .check();
-  await page.getByRole("tab", { name: "Stack", exact: true }).click();
+  await page.getByRole("tab", { name: "AI tools", exact: true }).click();
   await page
     .getByRole("checkbox", { name: "Tavily Search", exact: true })
     .check();
+  await page.getByRole("tab", { name: "Setup", exact: true }).click();
   const choose = async (label: string, value: string) => {
     await page
       .getByRole("radiogroup", { name: label, exact: true })
@@ -287,7 +288,6 @@ try {
     .getByLabel("Storage bucket", { exact: true })
     .fill("my-chat-uploads");
   await choose("Sandbox", "Vercel Sandbox");
-  await page.getByRole("tab", { name: "App", exact: true }).click();
   await page.getByRole("tab", { name: "Appearance", exact: true }).click();
   await page
     .getByRole("button", { name: "Get Code", exact: true })
@@ -302,8 +302,8 @@ try {
   const command = await page.evaluate(
     async () => await navigator.clipboard.readText()
   );
-  assert.ok(command.includes('"gateway":"openrouter"'));
-  assert.ok(command.includes('"sandbox":"vercel"'));
+  assert.equal(commandAppPreset(command).gateway, "openrouter");
+  assert.equal(commandAppPreset(command).sandbox, "vercel");
   assert.ok(command.includes('"bucket":"my-chat-uploads"'));
   assert.match(command, /--no-rtl --pointer$/u);
   await capture("create-installation");
@@ -337,10 +337,11 @@ try {
     async () => await navigator.clipboard.readText()
   );
   const sharedPreset = await code();
-  await page.getByRole("button", { name: "Tools", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Tool examples", exact: true })
+    .click();
   await frame
-    .getByRole("alert")
-    .filter({ hasText: "This is a sample error state." })
+    .getByRole("button", { name: "Show all sources", exact: true })
     .waitFor();
   await frame.locator('input[type="file"]').waitFor({ state: "attached" });
   await capture("create-tool-states");
@@ -368,9 +369,10 @@ try {
   await expect(dialog.getByTestId("create-command")).toContainText(
     '"bucket":"my-chat-uploads"'
   );
-  await expect(dialog.getByTestId("create-command")).toContainText(
-    '"sandbox":"vercel"'
-  );
+  expect(
+    commandAppPreset(await dialog.getByTestId("create-command").textContent())
+      .sandbox
+  ).toBe("vercel");
   await page.keyboard.press("Escape");
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(
@@ -433,8 +435,9 @@ try {
   );
   assert.equal(publicLink.searchParams.has("token"), false);
   assert.equal(
-    installationSelectionSchema.parse(
-      JSON.parse(publicLink.searchParams.get("installation") ?? "null")
+    readInstallationInput(
+      publicLink.searchParams.get("app") ?? "",
+      publicLink.searchParams.get("storage-config") ?? undefined
     ).storage?.options?.bucket,
     "public-bucket"
   );

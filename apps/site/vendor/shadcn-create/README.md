@@ -31,7 +31,7 @@ The preview imports one canonical component set per library from `apps/v4/regist
 
 Run `bun apps/site/scripts/generate-create-preview.ts` to sync both libraries and CSS; add `--check` to fetch the immutable sources and verify the complete imported inventory byte-for-byte. `ui/provenance.json` records the commit, raw upstream hashes, adapted hashes, and the exact shadcn package version used for the RTL transform. There are no live registry lookups in this importer. The upstream MIT license above also covers these imports.
 
-The scene switcher occupies a labeled toolbar above the iframe. Preview-only controls stay outside the shared chat header and cannot cover the composer.
+The scene switcher uses a labeled toolbar above the iframe on desktop and the upstream bottom-right floating placement on narrow screens. The mobile editor scrolls a desktop-sized canvas in both axes; its Mobile preview control selects a 390px canvas. A trailing scroll area keeps the floating controls clear of the composer. Appearance controls size to their content, while plugin/tool panels have bounded scrolling. Preview-only controls stay outside the shared chat header.
 
 ## Approved presentation boundary
 
