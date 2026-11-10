@@ -12,5 +12,17 @@
       "source": "/docs/:match*",
       "destination": "/:match*"
     }
+  ],
+  "ignoreCommand": "node ../../scripts/docs-production.mjs ignore",
+  "headers": [
+    {
+      "source": "/docs/deployment.json",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        }
+      ]
+    }
   ]
 }

@@ -64,6 +64,17 @@
       "dependsOn": ["^build"],
       "outputs": [".next/**", "dist/**", "build/**"]
     },
+    "@chatjs/docs#build": {
+      "dependsOn": ["^build"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/.agents/skills/**",
+        "$TURBO_ROOT$/scripts/docs-production.mjs",
+        "$TURBO_ROOT$/package.json",
+        "$TURBO_ROOT$/bun.lock"
+      ],
+      "outputs": ["dist/**"]
+    },
     "format": {
       "cache": false
     },
