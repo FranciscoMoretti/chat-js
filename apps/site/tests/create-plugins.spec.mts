@@ -707,7 +707,10 @@ test("Guest Chat switches preview identity and uses a temporary local conversati
   await guest.getByRole("button", { name: /stop/iu }).click();
   await expect(guest.getByRole("textbox", { name: "Message" })).toBeEditable();
   await expect(guest.getByText(/This is a sample guest reply/u)).toHaveCount(0);
-  await guest.getByRole("button", { name: "Sign in", exact: true }).click();
+  await guest
+    .locator('[data-slot="chat-header"]')
+    .getByRole("button", { name: "Sign in", exact: true })
+    .click();
   await expect(
     preview.getByText("Sign-in is available in the installed app.")
   ).toBeVisible();
