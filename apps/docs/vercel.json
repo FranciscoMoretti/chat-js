@@ -13,5 +13,5 @@
       "destination": "/:match*"
     }
   ],
-  "ignoreCommand": "bunx turbo@2.10.12 query affected --base=\"$VERCEL_GIT_PREVIOUS_SHA\" --head=HEAD --tasks build --packages @chatjs/docs --exit-code"
+  "ignoreCommand": "bunx turbo@2.10.12 --skip-infer --cwd ../.. query affected --base=\"$VERCEL_GIT_PREVIOUS_SHA\" --head=HEAD --tasks build --packages @chatjs/docs --exit-code"
 }
