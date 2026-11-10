@@ -110,13 +110,15 @@ const branchPrefix = (
   return { prefix: source.slice(0, index), replaced: boundary };
 };
 
-const inheritedSeedId = (
+const inheritedHistoryId = (
   message: EveMessage,
   prefix: readonly string[],
   nodes: ReadonlyMap<string, LogicalNode>
 ): string | undefined => {
-  const match = /^seed_message_(?<index>\d+)$/u.exec(message.id);
-  const id = match === null ? undefined : prefix[Number(match.groups?.index)];
+  const historyId = message.metadata?.imported
+    ? message.metadata.historyId
+    : undefined;
+  const id = historyId === undefined ? undefined : prefix[Number(historyId)];
   if (id !== undefined && nodes.get(id)?.message.role !== message.role) {
     throw new Error(
       "Copied message roles do not match the saved branch prefix."
@@ -141,13 +143,11 @@ const projectBranch = (
   let hasPrompt = false;
   for (const message of messages) {
     const firstUser =
-      !hasPrompt &&
-      message.role === "user" &&
-      !message.id.startsWith("seed_message_");
+      !hasPrompt && message.role === "user" && !message.metadata?.imported;
     if (firstUser) {
       hasPrompt = true;
     }
-    const inheritedId = inheritedSeedId(message, inherited.prefix, nodes);
+    const inheritedId = inheritedHistoryId(message, inherited.prefix, nodes);
     const replacementId =
       firstUser && branch.forkKind === "regenerate"
         ? inherited.replaced
@@ -177,7 +177,7 @@ const projectBranch = (
   if (needsResponse) {
     return {
       hasLocalMessage: messages
-        .filter((message) => !message.id.startsWith("seed_message_"))
+        .filter((message) => !message.metadata?.imported)
         .some((message) => message.role === "assistant"),
       path,
     };

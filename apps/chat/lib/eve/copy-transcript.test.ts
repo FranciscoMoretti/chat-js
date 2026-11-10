@@ -2,53 +2,56 @@ import type { SessionStreamEvent, SessionEvent } from "eve/client";
 import {
   EveCopyNotReadyError,
   eveCopyResources,
-  prepareEveCopyTranscript,
+  prepareEveCopyTranscript as capture,
 } from "./copy-transcript";
 import { expect, it } from "vitest";
+import { nativeBranchHistory } from "./branch-history";
 import type { EveCopySeed } from "./copy-seed";
 
 const sourceFile = "aaaaaaaaaaaaaaaaaaaaaaaa.png";
 const sourceUrl = `/api/files/${sourceFile}`;
 
+const prepareEveCopyTranscript = (
+  events: readonly SessionStreamEvent[],
+  receipts: Parameters<typeof capture>[1] = [],
+  before = events.some(
+    (event) =>
+      event.type === "delivery.consumed" && event.data.deliveryId === "import"
+  )
+    ? "import:user"
+    : undefined
+) => capture(events, receipts, before);
+const meta = (line: number) => ({
+  at: "2026-11-08T00:00:00Z",
+  position: { line, index: 0 },
+  endOfLine: true,
+});
 const history = (messages: EveCopySeed["messages"]): SessionStreamEvent[] => [
+  { type: "session.started", meta: meta(0), data: {} },
+  { type: "delivery.admitted", meta: meta(1), data: { deliveryId: "import" } },
   {
+    type: "turn.started",
+    meta: meta(2),
     data: {
-      transcriptSeed: {
-        attachments: "channel",
-        messages: messages.map((message) => {
-          if (message.role === "user") {
-            return {
-              ...message,
-              parts: message.parts.map((part) =>
-                part.type === "file"
-                  ? {
-                      ...part,
-                      existingPath: "/workspace/.eve/attachments/note.pdf",
-                    }
-                  : part
-              ),
-            };
-          }
-          return {
-            ...message,
-            parts: message.parts.map((part) =>
-              part.type === "file"
-                ? {
-                    ...part,
-                    existingPath: "/workspace/.eve/attachments/note.pdf",
-                  }
-                : part
-            ),
-          };
-        }),
-      },
+      turnId: "import-turn",
+      follows: null,
+      cause: { deliveryId: "import" },
     },
-    meta: {
-      at: "2026-09-12T00:00:00Z",
-      position: { line: 0, index: 0 },
-      endOfLine: true,
+  },
+  {
+    type: "delivery.consumed",
+    meta: meta(3),
+    data: {
+      deliveryId: "import",
+      turnId: "import-turn",
+      parts: [{ kind: "text", text: "Continue" }],
+      history: nativeBranchHistory({ messages }),
     },
-    type: "session.started",
+  },
+  {
+    type: "turn.settled",
+    meta: meta(4),
+    data: { turnId: "import-turn", outcome: "completed" },
   },
 ];
 const admitted: SessionStreamEvent = {
@@ -56,7 +59,7 @@ const admitted: SessionStreamEvent = {
   data: { deliveryId: "new" },
   meta: {
     at: "2026-09-12T00:00:02Z",
-    position: { line: 1, index: 0 },
+    position: { line: 6, index: 0 },
     endOfLine: true,
   },
 };
@@ -187,7 +190,17 @@ it("retains model provenance in copies of copies without carrying private metada
       role: "assistant",
     },
   ]);
-  const copy = prepareEveCopyTranscript(events);
+  const copy = prepareEveCopyTranscript(events, [
+    {
+      kind: "send",
+      deliveryId: "import",
+      selectedTool: null,
+      history: [
+        { role: "user" },
+        { role: "assistant", modelId: "gateway/google/gemini-2.5-flash-lite" },
+      ],
+    },
+  ]);
   expect(copy.seed.messages[1]).toEqual({
     modelId: "gateway/google/gemini-2.5-flash-lite",
     parts: [{ text: "Answer", type: "text" }],
@@ -210,7 +223,15 @@ it("preserves selected tools in copies without publishing unrelated custom metad
         parts: [{ text: "Create a document", type: "text" }],
         role: "user",
       },
-    ])
+    ]),
+    [
+      {
+        kind: "send",
+        deliveryId: "import",
+        selectedTool: null,
+        history: [{ role: "user", selectedTool: "createTextDocument" }],
+      },
+    ]
   );
   expect(result.seed.messages[0]).toEqual({
     metadata: { chatjs: { selectedTool: "createTextDocument" } },
@@ -250,6 +271,71 @@ it("preserves native seeded text tool results through the ChatJS shared-copy pro
   expect(JSON.stringify(copied.seed)).not.toContain("original");
 });
 
+it("captures imported messages and the completed native answer without a boundary", () => {
+  const imported: EveCopySeed["messages"] = [
+    { role: "user", parts: [{ type: "text", text: "Old question" }] },
+    { role: "assistant", parts: [{ type: "text", text: "Old answer" }] },
+  ];
+  const local: SessionEvent[] = [
+    {
+      type: "model.requested",
+      scope: { turnId: "import-turn" },
+      data: { runId: "native-run", owner: { turnId: "import-turn" } },
+    },
+    {
+      type: "model.started",
+      scope: { turnId: "import-turn" },
+      data: { runId: "native-run", attempt: 0, modelId: "fixture" },
+    },
+    {
+      type: "content.completed",
+      scope: { turnId: "import-turn", runId: "native-run" },
+      data: {
+        runId: "native-run",
+        partId: "reply",
+        kind: "text",
+        phase: "reply",
+        value: "Native answer",
+      },
+    },
+    {
+      type: "model.settled",
+      scope: { turnId: "import-turn", runId: "native-run" },
+      data: {
+        runId: "native-run",
+        generationId: "native-generation",
+        outcome: "completed",
+        finishReason: "stop",
+      },
+    },
+    {
+      type: "turn.settled",
+      data: { turnId: "import-turn", outcome: "completed", reply: ["reply"] },
+    },
+    {
+      type: "delivery.settled",
+      data: { deliveryId: "import", turnId: "import-turn", outcome: "handled" },
+    },
+  ];
+  const prefix = history(imported).slice(0, -1);
+  const events = [
+    ...prefix,
+    ...local.map((event, index) => ({
+      ...event,
+      meta: meta(prefix.length + index),
+    })),
+  ];
+  expect(capture(events, []).seed.messages).toEqual([
+    ...imported,
+    { role: "user", parts: [{ type: "text", text: "Continue" }] },
+    {
+      role: "assistant",
+      modelId: "fixture",
+      parts: [{ type: "text", text: "Native answer" }],
+    },
+  ]);
+});
+
 it("branches before an edited user message and rejects invalid boundaries", () => {
   const events = history([
     {
@@ -266,20 +352,20 @@ it("branches before an edited user message and rejects invalid boundaries", () =
     },
   ]);
   expect(
-    prepareEveCopyTranscript(events, [], "seed_message_0").seed.messages
+    prepareEveCopyTranscript(events, [], "import:imported:0").seed.messages
   ).toEqual([]);
-  const prefix = prepareEveCopyTranscript(events, [], "seed_message_2").seed
+  const prefix = prepareEveCopyTranscript(events, [], "import:imported:2").seed
     .messages;
   expect(prefix.map((message) => message.role)).toEqual(["user", "assistant"]);
   expect(JSON.stringify(prefix)).not.toContain("Later prompt");
   expect(prepareEveCopyTranscript(events).seed.messages).toHaveLength(3);
-  for (const invalid of ["missing", "seed_message_1"]) {
+  for (const invalid of ["missing", "import:imported:1"]) {
     expect(() => prepareEveCopyTranscript(events, [], invalid)).toThrow(
       "not a user message"
     );
   }
   expect(() =>
-    prepareEveCopyTranscript([...events, admitted], [], "seed_message_0")
+    prepareEveCopyTranscript([...events, admitted], [], "import:imported:0")
   ).toThrow(EveCopyNotReadyError);
 });
 
@@ -348,7 +434,17 @@ it("copies native completed calls without carrying execution identities", () => 
       endOfLine: true,
     },
   }));
-  const copy = prepareEveCopyTranscript(events);
+  const copy = prepareEveCopyTranscript(events, [
+    {
+      kind: "send",
+      deliveryId: "import",
+      selectedTool: null,
+      history: [
+        { role: "user" },
+        { role: "assistant", modelId: "gateway/google/gemini-2.5-flash-lite" },
+      ],
+    },
+  ]);
   expect(copy.seed.messages[1]?.parts).toContainEqual({
     type: "dynamic-tool",
     toolName: "wordCount",

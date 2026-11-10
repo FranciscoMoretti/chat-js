@@ -4,12 +4,10 @@ import { db } from "@/lib/db/client";
 import { lockEveFamilies } from "@/lib/db/eve-family-lock";
 import { eveStoredFile, eveWorkspaceAttachment } from "@/lib/db/schema";
 import { downloadFile } from "@/lib/file-storage";
-import { keyFromFileUrl } from "@/lib/file-url";
 import {
   assertActiveWorkspaceMembership,
   readPersistentIdentity,
 } from "./persistent-sandbox-store";
-import type { EveCopySeed } from "./copy-seed";
 
 const digest = (content: Uint8Array): string =>
   createHash("sha256").update(content).digest("hex");
@@ -137,37 +135,4 @@ export const readWorkspaceAttachment = async (input: {
     throw new Error("Original attachment bytes changed.");
   }
   return bytes;
-};
-
-/** Enrich only attachments already present in the selected trusted transcript. */
-export const resolveWorkspaceSeedAttachments = async (input: {
-  workspaceId: string;
-  ownerId: string;
-  seed: EveCopySeed;
-}): Promise<EveCopySeed> => {
-  const seed = structuredClone(input.seed);
-  const files = await db
-    .select()
-    .from(eveWorkspaceAttachment)
-    .where(
-      and(
-        eq(eveWorkspaceAttachment.workspaceId, input.workspaceId),
-        eq(eveWorkspaceAttachment.ownerId, input.ownerId)
-      )
-    );
-  for (const message of seed.messages) {
-    for (const part of message.parts) {
-      if (part.type !== "file") {
-        continue;
-      }
-      const key = keyFromFileUrl(part.url);
-      const file = files.find((entry) => entry.fileKey === key);
-      const path = file?.paths.at(0);
-      if (path === undefined || path === "") {
-        throw new Error("Attachment has no observed shared workspace path.");
-      }
-      part.existingPath = path;
-    }
-  }
-  return seed;
 };

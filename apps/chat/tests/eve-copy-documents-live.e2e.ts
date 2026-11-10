@@ -99,9 +99,10 @@ test("copied document history survives source deletion and supports native editi
   const copyInput = {
     modelId,
     operationId: crypto.randomUUID(),
-    sourceConversationId: source.id,
+    fork: { conversationId: source.id },
+    message: "Continue briefly without using tools.",
   };
-  let copied = await page.request.post("/api/agent-conversation-copies", {
+  let copied = await page.request.post("/api/agent-conversations", {
     data: copyInput,
     headers: { origin },
   });
@@ -109,7 +110,7 @@ test("copied document history survives source deletion and supports native editi
     .poll(
       async () => {
         if (copied.status() === 503) {
-          copied = await page.request.post("/api/agent-conversation-copies", {
+          copied = await page.request.post("/api/agent-conversations", {
             data: copyInput,
             headers: { origin },
           });
@@ -302,21 +303,27 @@ test("copied document history survives source deletion and supports native editi
     .attach(forked.sessionId)
     .snapshot();
   const seed = forkSnapshot.events.find(
-    (
-      event: SessionStreamEvent
-    ): event is Extract<SessionStreamEvent, { type: "session.started" }> =>
-      event.type === "session.started"
+    (event) =>
+      event.type === "delivery.consumed" && event.data.history !== undefined
   );
-  expect(seed?.data.transcriptSeed?.messages).toHaveLength(2);
   expect(
-    seed?.data.transcriptSeed?.messages.map((message) => message.role)
+    seed?.type === "delivery.consumed" ? seed.data.history : undefined
+  ).toHaveLength(2);
+  expect(
+    (seed?.type === "delivery.consumed" ? seed.data.history : undefined)?.map(
+      (message) => message.role
+    )
   ).toEqual(["user", "assistant"]);
-  expect(JSON.stringify(seed?.data.transcriptSeed?.messages)).toContain(
-    "Amber apples."
-  );
-  expect(JSON.stringify(seed?.data.transcriptSeed?.messages)).not.toContain(
-    "Silver plums."
-  );
+  expect(
+    JSON.stringify(
+      seed?.type === "delivery.consumed" ? seed.data.history : undefined
+    )
+  ).toContain("Amber apples.");
+  expect(
+    JSON.stringify(
+      seed?.type === "delivery.consumed" ? seed.data.history : undefined
+    )
+  ).not.toContain("Silver plums.");
   expect(
     nativeToolEvents(forkSnapshot.events, "readDocument", "call.settled")
       .length > 0

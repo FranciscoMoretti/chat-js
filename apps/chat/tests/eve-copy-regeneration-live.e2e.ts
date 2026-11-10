@@ -58,9 +58,10 @@ test("copied responses regenerate with their original model after reload", async
   const copyInput = {
     modelId: selectedModel,
     operationId: crypto.randomUUID(),
-    sourceConversationId: source.id,
+    fork: { conversationId: source.id },
+    message: "Continue briefly without using tools.",
   };
-  let copied = await page.request.post("/api/agent-conversation-copies", {
+  let copied = await page.request.post("/api/agent-conversations", {
     data: copyInput,
     headers: { origin },
   });
@@ -68,7 +69,7 @@ test("copied responses regenerate with their original model after reload", async
     .poll(
       async () => {
         if (copied.status() === 503) {
-          copied = await page.request.post("/api/agent-conversation-copies", {
+          copied = await page.request.post("/api/agent-conversations", {
             data: copyInput,
             headers: { origin },
           });

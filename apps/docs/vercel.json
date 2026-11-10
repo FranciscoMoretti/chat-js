@@ -1,7 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "installCommand": "rm -rf node_modules && cd ../.. && bun install --frozen-lockfile",
-  "buildCommand": "bun run build",
+  "buildCommand": "cd ../.. && bunx turbo run build --filter=@chatjs/docs",
   "outputDirectory": "dist",
   "rewrites": [
     {
@@ -12,5 +12,6 @@
       "source": "/docs/:match*",
       "destination": "/:match*"
     }
-  ]
+  ],
+  "ignoreCommand": "bunx turbo@2.10.12 query affected --base=\"$VERCEL_GIT_PREVIOUS_SHA\" --head=HEAD --tasks build --packages @chatjs/docs --exit-code"
 }

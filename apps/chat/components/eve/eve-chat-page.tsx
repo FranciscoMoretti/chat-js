@@ -13,7 +13,6 @@ import { resolveEvePrincipal } from "@/lib/eve/principal";
 
 import { SignedOutScreen } from "@/integrations/auth/signed-out";
 import { EveArtifactLayout } from "./eve-artifact-layout";
-import { EveCopyButton } from "./eve-copy-button";
 import { EveCreationRecovery } from "./eve-creation-recovery";
 import { EveRuntimeRoute } from "./eve-runtime-provider";
 import { NewEveConversation } from "./new-eve-conversation";
@@ -90,22 +89,6 @@ export const EveChatPage = async ({
         operationId={selected.operationId}
         ownerId={principal.ownerId}
         scope={recoveryScope}
-      />
-    );
-  }
-  if (
-    selected?.creationKind === "copy" &&
-    hasText(selected.parentConversationId) &&
-    hasText(selected.initialModelId)
-  ) {
-    content = (
-      <EveCopyButton
-        recovery={{
-          modelId: selected.initialModelId,
-          operationId: selected.operationId,
-          sourceConversationId: selected.parentConversationId,
-        }}
-        sourceConversationId={selected.parentConversationId}
       />
     );
   }

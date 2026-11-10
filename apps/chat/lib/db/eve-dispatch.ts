@@ -7,6 +7,8 @@ import { EveWorkspaceBusyError, lockEveWorkspace } from "./eve-workspace-turns";
 import { reconcileEveWorkspaceTurn } from "../eve/reconcile-workspace-turn";
 import { z } from "zod";
 import { frontendToolsSchema } from "@/lib/ai/types";
+import { parseEveCopySeed } from "@/lib/eve/copy-seed";
+import { eveMessageTool } from "@/lib/eve/message-tool-selection";
 import type { EveMessageDisplayReceipt } from "@/lib/eve/message-display";
 
 const hasRow: (row: unknown) => boolean = Boolean;
@@ -19,9 +21,9 @@ export const getEveMessageDisplayReceipts = async (
 ): Promise<EveMessageDisplayReceipt[]> => {
   const rows = await database
     .select({
-      kind: eveDispatch.kind,
       deliveryId: eveDispatch.deliveryId,
       intent: eveDispatch.intent,
+      history: sql<unknown>`case when ${eveDispatch.kind} = 'create' then ${eveConversation.initialSeed} end`,
     })
     .from(eveDispatch)
     .innerJoin(
@@ -49,7 +51,29 @@ export const getEveMessageDisplayReceipts = async (
     }
     const selectedTool = intent.data.selectedTool ?? null;
     return isNonEmptyString(row.deliveryId)
-      ? [{ kind: "send", deliveryId: row.deliveryId, selectedTool }]
+      ? [
+          {
+            kind: "send",
+            deliveryId: row.deliveryId,
+            selectedTool,
+            ...(row.history !== null && row.history !== undefined
+              ? {
+                  history: parseEveCopySeed(row.history).messages.map(
+                    (message) => ({
+                      role: message.role,
+                      ...(message.role === "assistant"
+                        ? { modelId: message.modelId }
+                        : {
+                            selectedTool: eveMessageTool({
+                              metadata: { custom: message.metadata },
+                            }),
+                          }),
+                    })
+                  ),
+                }
+              : {}),
+          },
+        ]
       : [];
   });
 };
@@ -103,6 +127,11 @@ const readEveDispatch = async (input: {
   };
 };
 
+interface DispatchBinding {
+  sessionId: string;
+  deliveryId?: string;
+}
+
 /** Commits intent before the one allowed dispatch; worker failure leaves it unknown. */
 export const dispatchEveOnce = async (
   input: {
@@ -112,8 +141,13 @@ export const dispatchEveOnce = async (
     readonly kind: "create" | "copy" | "send";
     readonly intent: unknown;
   },
-  dispatch: () => Promise<{ sessionId: string; deliveryId?: string }>
-): Promise<{ sessionId: string; deliveryId?: string }> => {
+  dispatch: (
+    saveReceipt: (
+      transaction: Pick<typeof db, "update">,
+      binding: DispatchBinding
+    ) => Promise<void>
+  ) => Promise<DispatchBinding>
+): Promise<DispatchBinding> => {
   const replay = await readEveDispatch(input);
   if (replay) {
     return replay;
@@ -204,20 +238,32 @@ export const dispatchEveOnce = async (
     }
     throw new EveDispatchUnknownError();
   }
-  const binding = await dispatch();
-  if (
-    !isNonEmptyString(binding.sessionId) ||
-    (input.kind === "send" && !isNonEmptyString(binding.deliveryId))
-  ) {
-    throw new EveDispatchUnknownError();
-  }
-  const [saved] = await db
-    .update(eveDispatch)
-    .set(binding)
-    .where(and(identity, isNull(eveDispatch.sessionId)))
-    .returning();
-  if (!hasRow(saved)) {
-    throw new EveDispatchUnknownError();
+  const persist = async (
+    database: Pick<typeof db, "update">,
+    binding: DispatchBinding
+  ): Promise<void> => {
+    if (
+      !isNonEmptyString(binding.sessionId) ||
+      (input.kind === "send" && !isNonEmptyString(binding.deliveryId))
+    ) {
+      throw new EveDispatchUnknownError();
+    }
+    const [saved] = await database
+      .update(eveDispatch)
+      .set(binding)
+      .where(and(identity, isNull(eveDispatch.sessionId)))
+      .returning();
+    if (!hasRow(saved)) {
+      throw new EveDispatchUnknownError();
+    }
+  };
+  let savedInDispatch = false;
+  const binding = await dispatch(async (transaction, receipt) => {
+    await persist(transaction, receipt);
+    savedInDispatch = true;
+  });
+  if (!savedInDispatch) {
+    await persist(db, binding);
   }
   return binding;
 };

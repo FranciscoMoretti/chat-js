@@ -13,7 +13,7 @@ bunx chat-js@alpha add guest-chat
 
 Configure the shared EVE runtime and apply your generated database migration. Guests request native EVE retention `0` on every backend. ChatJS expires access and ends sessions. The selected Workflow World owns payload retention. Guest admission does not require PostgreSQL purge fences.
 
-The pinned PostgreSQL World (`5.0.0-beta.40`) accepts retention `0` but does not delete payloads. PostgreSQL guest content remains stored pending provider support or separate operator removal. Vercel enforces its provider retention policy. Successful ChatJS cleanup means session retirement and credential-policy completion, not verified payload erasure.
+PostgreSQL World 5.1.1 clears run payloads on completion for retention `0`. Vercel enforces its own retention policy. Successful ChatJS cleanup reports session retirement and credential-policy completion. Payload erasure is handled by the provider.
 
 On Vercel, admission uses the verified `x-vercel-forwarded-for` header. Elsewhere, set `TRUSTED_CLIENT_IP_HEADER` to a header your reverse proxy overwrites with one validated client IP. Missing or malformed addresses reject admission. Development uses the loopback address.
 

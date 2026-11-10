@@ -32,8 +32,11 @@ export default defineHook({
         return;
       }
       const entries = eveEventSearchText(event);
-      const restoring = event.type === "session.started";
-      if (!restoring && event.type !== "turn.started" && entries.length === 0) {
+      if (
+        entries.length === 0 &&
+        event.type !== "turn.started" &&
+        event.type !== "turn.settled"
+      ) {
         return;
       }
       let omitted = 0;
@@ -70,10 +73,6 @@ export default defineHook({
             sessionId: context.session.id,
           }
         );
-      }
-      // History can arrive before the native creation receipt binds the session.
-      if (restoring) {
-        return;
       }
       if (pending.get().length === 0 && !needsRecovery.get()) {
         return;

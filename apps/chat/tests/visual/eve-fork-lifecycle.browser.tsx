@@ -1,11 +1,13 @@
-import type { EveMessage } from "eve/client";
 import React, { act } from "react";
 import { createDomHarness } from "@/components/test-dom-harness";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { CreationRejectedError } from "@/lib/eve/create-conversation";
 import { eveToolMetadata } from "@/lib/eve/message-tool-selection";
-import type { ReadonlyEveMessagePart } from "@/lib/eve/readonly-message-types";
+import type {
+  ReadonlyEveMessage as EveMessage,
+  ReadonlyEveMessagePart,
+} from "@/lib/eve/readonly-message-types";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 import { useEveFork } from "@/components/eve/use-eve-fork";
@@ -93,14 +95,14 @@ const storage = () => {
 const userMessage = (
   parts: readonly ReadonlyEveMessagePart[] = []
 ): EveMessage => ({
-  id: "seed_message_0",
+  id: "import:imported:0",
   metadata: { custom: eveToolMetadata("webSearch") },
   parts: [{ text: "Find the answer", type: "text" }, ...parts],
   role: "user" as const,
 });
 
 const responseMessage = (): EveMessage => ({
-  id: "seed_message_1",
+  id: "import:imported:1",
   metadata: { modelId: "anthropic/claude-sonnet-4" },
   parts: [{ text: "The answer", type: "text" }],
   role: "assistant",
@@ -170,7 +172,7 @@ describe("useEveFork", () => {
 
       expect(mocks.restoreAttachments).not.toHaveBeenCalled();
       expect(required(fork).draft).toBe("Find the answer");
-      expect(required(fork).editingMessageId).toBe("seed_message_0");
+      expect(required(fork).editingMessageId).toBe("import:imported:0");
       expect(required(fork).modelSelection.value).toBe(
         "anthropic/claude-sonnet-4"
       );
@@ -306,7 +308,7 @@ describe("useEveFork", () => {
         await required(fork).submit();
       });
 
-      expect(required(fork).editingMessageId).toBe("seed_message_0");
+      expect(required(fork).editingMessageId).toBe("import:imported:0");
       expect(required(fork).pending).toBeUndefined();
       expect(required(fork).locked).toBe(false);
     } finally {
@@ -352,7 +354,7 @@ describe("useEveFork", () => {
         await required(fork).submit();
       });
 
-      expect(required(fork).editingMessageId).toBe("seed_message_0");
+      expect(required(fork).editingMessageId).toBe("import:imported:0");
       expect(required(fork).pending).toBeDefined();
       expect(required(fork).error).toBe(
         "The rejected version request could not be cleared. Keep this tab for recovery."
@@ -404,12 +406,12 @@ describe("useEveFork", () => {
       await act(async () => {
         await required(fork).begin({
           ...userMessage(),
-          id: "seed_message_2",
+          id: "import:imported:2",
           parts: [{ text: "A different message", type: "text" }],
         });
       });
 
-      expect(required(fork).editingMessageId).toBe("seed_message_0");
+      expect(required(fork).editingMessageId).toBe("import:imported:0");
       expect(required(fork).draft).toBe("Keep this edit draft.");
     } finally {
       act(() => {
@@ -459,7 +461,7 @@ describe("useEveFork", () => {
       });
 
       expect(mocks.resolveCreationRequest.mock.calls[0]?.[2]).toMatchObject({
-        fork: { conversationId, beforeMessageId: "seed_message_0" },
+        fork: { conversationId, beforeMessageId: "import:imported:0" },
         forkKind: "edit",
       });
       expect(mocks.openRuntime).toHaveBeenCalledWith(
@@ -684,10 +686,10 @@ describe("useEveFork", () => {
       });
       expect(mocks.restoreAttachments).toHaveBeenCalledExactlyOnceWith({
         conversationId,
-        messageId: "seed_message_0",
+        messageId: "import:imported:0",
       });
       expect(required(fork).files.attachments).toEqual([attachment]);
-      expect(required(fork).editingMessageId).toBe("seed_message_0");
+      expect(required(fork).editingMessageId).toBe("import:imported:0");
       expect(required(fork).locked).toBe(false);
     } finally {
       act(() => {
@@ -732,12 +734,12 @@ describe("useEveFork", () => {
         );
       });
 
-      expect(required(fork).editingMessageId).toBe("seed_message_0");
+      expect(required(fork).editingMessageId).toBe("import:imported:0");
       expect(required(fork).locked).toBe(true);
       expect(required(fork).error).toBe("Unable to restore attachment.");
       expect(mocks.restoreAttachments).toHaveBeenCalledWith({
         conversationId,
-        messageId: "seed_message_0",
+        messageId: "import:imported:0",
       });
     } finally {
       act(() => {

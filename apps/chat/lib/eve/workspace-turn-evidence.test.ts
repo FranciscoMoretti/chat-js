@@ -47,7 +47,7 @@ const settled: WorkspaceTurnEvent = {
 };
 const prefix = [session, admitted, started, consumed];
 const completed = [...prefix, handled, settled];
-const operation = { kind: "send", deliveryId: "exact", seeded: false } as const;
+const operation = { deliveryId: "exact" } as const;
 
 it("requires the exact consumed delivery and its settled turn", () => {
   expect(hasSettledWorkspaceOperation(operation, completed)).toBe(true);
@@ -103,11 +103,13 @@ it("accepts settled cancellation/failure but not a cancellation command receipt"
   );
 });
 
-it("requires positively observed idle state for a seed-only session", () => {
-  const seed = { kind: "copy", deliveryId: null, seeded: true } as const;
-  expect(hasSettledWorkspaceOperation(seed, [])).toBe(false);
-  expect(hasSettledWorkspaceOperation(seed, [session])).toBe(true);
-  expect(hasSettledWorkspaceOperation(seed, prefix)).toBe(false);
+it("never releases a branch before its initial delivery is consumed and settled", () => {
+  expect(hasSettledWorkspaceOperation({ deliveryId: null }, [session])).toBe(
+    false
+  );
+  expect(hasSettledWorkspaceOperation({ deliveryId: "exact" }, [session])).toBe(
+    false
+  );
 });
 
 it("rejects settlement before consumption or for another turn", () => {

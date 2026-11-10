@@ -70,7 +70,7 @@ const main = async (): Promise<void> => {
 agent/subagents/researcher/tools/webSearch.ts
  chatjs/tools/deep-research/schemas.ts chatjs/tools/deep-research/search-updates.ts
  tools/platform/research-updates-schema.ts lib/eve/tool-result.ts chatjs/core/documents/contracts.ts
- lib/file-url.ts lib/eve/tool-model-output.ts lib/eve/copy-seed.ts chatjs/tools/deep-research/prompts.ts`
+ lib/file-url.ts lib/eve/tool-model-output.ts chatjs/tools/deep-research/prompts.ts`
       .split(/\s+/u)
       .map(async (name) => {
         await mkdir(path.dirname(path.join(fixture, name)), {
@@ -93,17 +93,9 @@ agent/subagents/researcher/tools/webSearch.ts
   await write(
     "agent/channels/eve.ts",
     `import { eveChannel } from "eve/channels/eve";
-import { parseEveCopySeed } from "../../lib/eve/copy-seed";
 const channel = eveChannel({
   auth: () => ({ principalId: "owner", principalType: "user", authenticator: "chatjs-gateway", attributes: {} }),
-  resolveSeed: ({ auth, operationId }) => {
-    if (auth.principalId !== "owner" || operationId !== "accepted-copy") throw new Error("Unaccepted destination");
-    const seed = parseEveCopySeed({ attachments: "channel", messages: [
-      { role: "user", parts: [{ type: "text", text: "COPY_CONTEXT_SENTINEL" }] },
-      { role: "assistant", modelId: "gateway/copied-model", parts: [{ type: "dynamic-tool", toolName: "historicalOnly", input: {}, state: "output-available", output: "retained result", outputType: "text" }] },
-    ] });
-    return { ...seed, attachments: "channel" };
-  },
+
 });
 export default channel;`
   );
@@ -314,28 +306,6 @@ export default [defineEval({ description: "adaptive native research", async test
     if (["turn.cancelled", "turn.failed", "session.completed", "session.failed"].includes(event.type)) { childStopped = true; break; }
   }
   assert.ok(childStopped, "owned child must stop");
-}}), defineEval({ description: "trusted seed installs before the first native turn", async test(t) {
-  const created = await fetch(new URL("/eve/v1/session", t.target.url), {
-    method: "POST", headers: { "content-type": "application/json" },
-    body: JSON.stringify({ operationId: "accepted-copy", seed: true }),
-  });
-  assert.equal(created.status, 202);
-  const { sessionId } = await created.json();
-  const client = new Client({ host: t.target.url });
-  const session = client.sessions.attach(sessionId);
-  const initial = [];
-  for await (const event of session.stream({ follow: true, signal: AbortSignal.timeout(10000) })) {
-    initial.push(event);
-    if (event.type === "session.waiting") break;
-  }
-  assert.deepEqual(initial.map(event => event.type), ["history.seeded", "session.waiting"]);
-  assert.deepEqual(initial[0].data.messages.map(message => message.id), ["seed_message_0", "seed_message_1"]);
-  const result = await (await session.send("Continue the copied conversation")).result();
-  assert.equal(result.message, "Copied context retained");
-  const snapshot = await session.snapshot();
-  assert.equal(snapshot.events.filter(event => event.type === "history.seeded").length, 1);
-  assert.ok(!snapshot.events.some(event => event.type === "actions.requested" || event.type === "action.result"));
-
 }})];`
   );
   console.log(`Native research fixture: ${fixture}`);

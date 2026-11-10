@@ -233,7 +233,7 @@ it("exposes only a known send receipt for the exact owner and session", async ()
   );
 });
 
-it("exposes an initial selection only for a bound nonempty creation", async () => {
+it("exposes captured history only for the bound creation receipt", async () => {
   const { createEveConversation } = await import("./eve-queries");
   const operationId = "00000000-0000-4000-8000-000000000071";
   const create = vi.fn().mockResolvedValue({
@@ -243,7 +243,7 @@ it("exposes an initial selection only for a bound nonempty creation", async () =
   const options = {
     initialRequest: { message: "Initial message", selectedTool: "webSearch" },
   };
-  await createEveConversation(
+  const binding = await createEveConversation(
     "owner",
     operationId,
     "Initial message",
@@ -258,11 +258,54 @@ it("exposes an initial selection only for a bound nonempty creation", async () =
     options
   );
   expect(create).toHaveBeenCalledOnce();
-  expect(
-    await getEveMessageDisplayReceipts("owner", "initial-session")
-  ).toEqual([
-    { kind: "send", deliveryId: "initial-delivery", selectedTool: "webSearch" },
-  ]);
+  await postgres.query(
+    `UPDATE "EveConversation" SET "initialSeed" = $1 WHERE id = $2`,
+    [
+      JSON.stringify({
+        messages: [
+          {
+            role: "assistant",
+            modelId: "captured-model",
+            parts: [{ type: "text", text: "Captured answer" }],
+          },
+        ],
+      }),
+      binding.id,
+    ]
+  );
+  await postgres.query(
+    `UPDATE "EveWorkspace" SET "activeOperationId" = null WHERE id =
+      (SELECT "workspaceId" FROM "EveConversation" WHERE id = $1)`,
+    [binding.id]
+  );
+  await dispatchEveOnce(
+    {
+      ...input,
+      conversationId: binding.id,
+      operationId: "00000000-0000-4000-8000-000000000073",
+      intent: { ...input.intent, sessionId: "initial-session" },
+    },
+    vi.fn().mockResolvedValue({
+      sessionId: "initial-session",
+      deliveryId: "later-delivery",
+    })
+  );
+  const receipts = await getEveMessageDisplayReceipts(
+    "owner",
+    "initial-session"
+  );
+  expect(receipts).toHaveLength(2);
+  expect(receipts).toContainEqual({
+    kind: "send",
+    deliveryId: "initial-delivery",
+    selectedTool: "webSearch",
+    history: [{ role: "assistant", modelId: "captured-model" }],
+  });
+  expect(receipts).toContainEqual({
+    kind: "send",
+    deliveryId: "later-delivery",
+    selectedTool: null,
+  });
   expect(
     await getEveMessageDisplayReceipts("foreign", "initial-session")
   ).toEqual([]);
@@ -279,4 +322,40 @@ it("exposes an initial selection only for a bound nonempty creation", async () =
   expect(
     display.some((receipt) => receipt.deliveryId === "initial-delivery")
   ).toBe(false);
+});
+
+it("rolls back the session binding when saving its create receipt fails", async () => {
+  const { createEveConversation } = await import("./eve-queries");
+  const operationId = "00000000-0000-4000-8000-000000000074";
+  const create = vi.fn().mockResolvedValue({
+    sessionId: "receipt-failure-session",
+    deliveryId: "receipt-failure-delivery",
+  });
+  await postgres.exec(`
+    CREATE FUNCTION reject_test_receipt() RETURNS trigger LANGUAGE plpgsql AS $$
+    BEGIN RAISE EXCEPTION 'Receipt write failed'; END;
+    $$;
+    CREATE TRIGGER reject_test_receipt BEFORE UPDATE ON "EveDispatch"
+    FOR EACH ROW WHEN (NEW."sessionId" = 'receipt-failure-session')
+    EXECUTE FUNCTION reject_test_receipt();
+  `);
+  try {
+    await expect(
+      createEveConversation("owner", operationId, "Initial message", create)
+    ).rejects.toMatchObject({ cause: { message: "Receipt write failed" } });
+  } finally {
+    await postgres.exec(`
+      DROP TRIGGER reject_test_receipt ON "EveDispatch";
+      DROP FUNCTION reject_test_receipt();
+    `);
+  }
+  const conversation = await postgres.query(
+    `SELECT "sessionId" FROM "EveConversation" WHERE "operationId" = $1`,
+    [operationId]
+  );
+  expect(conversation.rows).toEqual([{ sessionId: null }]);
+  await expect(
+    createEveConversation("owner", operationId, "Initial message", create)
+  ).rejects.toBeInstanceOf(EveDispatchUnknownError);
+  expect(create).toHaveBeenCalledOnce();
 });

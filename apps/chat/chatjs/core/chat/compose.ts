@@ -7,6 +7,29 @@ import { createModuleLogger } from "@/lib/logger";
 
 const log = createModuleLogger("chat.after-create");
 
+const runAfter = async (
+  adapters: readonly ChatServerIntegration[],
+  invoke: (adapter: ChatServerIntegration) => Promise<void>,
+  branchConversationId?: string
+): Promise<void> => {
+  for (const [adapterIndex, adapter] of adapters.entries()) {
+    try {
+      // oxlint-disable-next-line no-await-in-loop -- Optional work runs in declared order after the response.
+      await invoke(adapter);
+    } catch (error) {
+      const errorName = error instanceof Error ? error.name : typeof error;
+      if (branchConversationId === undefined) {
+        log.warn({ errorName }, "Chat afterCreate contribution failed");
+      } else {
+        log.warn(
+          { errorName, adapterIndex, conversationId: branchConversationId },
+          "Chat afterBranch contribution failed"
+        );
+      }
+    }
+  }
+};
+
 /** Compose app and installed adapters without importing either implementation. */
 export const composeChat = (
   adapters: readonly ChatServerIntegration[]
@@ -30,17 +53,18 @@ export const composeChat = (
     }
   },
   afterCreate: async (context) => {
-    for (const adapter of adapters) {
-      try {
-        // oxlint-disable-next-line no-await-in-loop -- Optional work runs in declared order after the response.
-        await adapter.afterCreate?.(context);
-      } catch (error) {
-        log.warn(
-          { errorName: error instanceof Error ? error.name : typeof error },
-          "Chat afterCreate contribution failed"
-        );
-      }
-    }
+    await runAfter(adapters, async (adapter) => {
+      await adapter.afterCreate?.(context);
+    });
+  },
+  afterBranch: async (context) => {
+    await runAfter(
+      adapters,
+      async (adapter) => {
+        await adapter.afterBranch?.(context);
+      },
+      context.conversationId
+    );
   },
   historyFilter: (input, surface) =>
     and(...adapters.map((adapter) => adapter.historyFilter?.(input, surface))),

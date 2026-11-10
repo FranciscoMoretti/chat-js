@@ -22,22 +22,22 @@ const meta = {
   endOfLine: true,
 };
 const history: SessionStreamEvent = {
-  type: "session.started",
+  type: "delivery.consumed",
   meta,
   data: {
-    transcriptSeed: {
-      attachments: "channel",
-      messages: [
-        {
-          role: "user",
-          parts: [{ type: "text", text: "Question" }],
-        },
-        {
-          role: "assistant",
-          parts: [{ type: "text", text: "Answer" }],
-        },
-      ],
-    },
+    deliveryId: "import",
+    turnId: "import-turn",
+    parts: [],
+    history: [
+      {
+        role: "user",
+        parts: [{ type: "text", text: "Question" }],
+      },
+      {
+        role: "assistant",
+        parts: [{ type: "text", text: "Answer" }],
+      },
+    ],
   },
 };
 const started: SessionStreamEvent = {
@@ -49,14 +49,46 @@ beforeEach(() => {
   snapshot.mockReset();
 });
 it("copies a completed transcript without retaining native identities", async () => {
-  snapshot.mockResolvedValue({ events: [history] });
+  snapshot.mockResolvedValue({
+    events: [
+      {
+        type: "session.started",
+        meta: { ...meta, position: { line: 0, index: 0 } },
+        data: {},
+      },
+      {
+        type: "delivery.admitted",
+        meta: { ...meta, position: { line: 1, index: 0 } },
+        data: { deliveryId: "import" },
+      },
+      {
+        type: "turn.started",
+        meta: { ...meta, position: { line: 2, index: 0 } },
+        data: {
+          turnId: "import-turn",
+          follows: null,
+          cause: { deliveryId: "import" },
+        },
+      },
+      {
+        ...history,
+        meta: { ...meta, position: { line: 3, index: 0 } },
+        data: { ...history.data, parts: [{ kind: "text", text: "Continue" }] },
+      },
+      {
+        type: "turn.settled",
+        meta: { ...meta, position: { line: 4, index: 0 } },
+        data: { turnId: "import-turn", outcome: "completed" },
+      },
+    ],
+  });
   const result = await readCompletedEveCopyTranscript(
     "owner",
     "source",
     [],
     []
   );
-  expect(result.seed.messages).toHaveLength(2);
+  expect(result.seed.messages).toHaveLength(3);
   expect(JSON.stringify(result.seed)).not.toContain("seed_message");
 });
 it.each([
@@ -72,7 +104,39 @@ it.each([
   }
 );
 it("rejects an accepted send not yet visible in native history", async () => {
-  snapshot.mockResolvedValue({ events: [history] });
+  snapshot.mockResolvedValue({
+    events: [
+      {
+        type: "session.started",
+        meta: { ...meta, position: { line: 0, index: 0 } },
+        data: {},
+      },
+      {
+        type: "delivery.admitted",
+        meta: { ...meta, position: { line: 1, index: 0 } },
+        data: { deliveryId: "import" },
+      },
+      {
+        type: "turn.started",
+        meta: { ...meta, position: { line: 2, index: 0 } },
+        data: {
+          turnId: "import-turn",
+          follows: null,
+          cause: { deliveryId: "import" },
+        },
+      },
+      {
+        ...history,
+        meta: { ...meta, position: { line: 3, index: 0 } },
+        data: { ...history.data, parts: [{ kind: "text", text: "Continue" }] },
+      },
+      {
+        type: "turn.settled",
+        meta: { ...meta, position: { line: 4, index: 0 } },
+        data: { turnId: "import-turn", outcome: "completed" },
+      },
+    ],
+  });
   await expect(
     readCompletedEveCopyTranscript(
       "owner",

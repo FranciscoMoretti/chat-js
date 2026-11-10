@@ -330,16 +330,19 @@ const prepareEveCopyTranscript = (
     throw new EveCopyNotReadyError();
   }
   // Native display parts omit imported text encoding and denial reasons. Preserve
-  // these two fields from the authoritative seed, never from client metadata.
-  const importedMessages =
-    events.find((event) => event.type === "session.started")?.data
-      .transcriptSeed?.messages ?? [];
-  const importedParts = new Map(
-    importedMessages.map((message, index) => [
-      `seed_message_${index}`,
-      message.parts.filter((part) => part.type !== "step-start"),
-    ])
-  );
+  // these two fields from authoritative delivery history, never from client metadata.
+  const importedParts = new Map<string, readonly SeedPart[]>();
+  for (const event of events) {
+    if (event.type !== "delivery.consumed") {
+      continue;
+    }
+    for (const [index, message] of (event.data.history ?? []).entries()) {
+      importedParts.set(
+        `${event.data.deliveryId}:imported:${index}`,
+        message.parts ?? []
+      );
+    }
+  }
   const transcript = sharedEveMessages(events, receipts);
   const boundaryIndex =
     beforeMessageId === undefined

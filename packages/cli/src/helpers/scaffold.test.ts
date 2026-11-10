@@ -286,7 +286,7 @@ describe("scaffoldFromTemplate", (): void => {
       .object({ dependencies: z.record(z.string(), z.string()) })
       .parse(manifestValue);
     expect(manifest.dependencies.eve).toBe(
-      "npm:@chat-js/eve@1.0.0-rc.1-chatjs.0"
+      "npm:@chat-js/eve@1.0.0-rc.6-chatjs.1"
     );
     expect(
       await Bun.file(
@@ -298,7 +298,7 @@ describe("scaffoldFromTemplate", (): void => {
       ).exists()
     ).toBe(false);
     const archives = {
-      "@workflow/world-postgres": "workflow-world-postgres-5.0.0-beta.40.tgz",
+      "@workflow/world-postgres": "workflow-world-postgres-5.1.1.tgz",
     };
 
     await Promise.all(
@@ -793,7 +793,7 @@ describe("scaffoldFromTemplate", (): void => {
         ).toBe(false);
         expect(packageJson.dependencies["@better-auth/core"]).toBe("1.6.2");
         expect(packageJson.dependencies.eve).toBe(
-          "npm:@chat-js/eve@1.0.0-rc.1-chatjs.0"
+          "npm:@chat-js/eve@1.0.0-rc.6-chatjs.1"
         );
         expect(packageJson.dependencies["@ai-sdk/mcp"]).toBeUndefined();
         expect(
@@ -801,7 +801,7 @@ describe("scaffoldFromTemplate", (): void => {
         ).toBeUndefined();
         expect(packageJson.dependencies["@vercel/analytics"]).toBeUndefined();
         expect(packageJson.dependencies["@workflow/world-postgres"]).toBe(
-          "file:vendor/workflow-world-postgres-5.0.0-beta.40.tgz"
+          "file:vendor/workflow-world-postgres-5.1.1.tgz"
         );
         expect(
           electronPackageJson.devDependencies["@better-auth/electron"]

@@ -80,28 +80,19 @@ beforeEach(() => {
     Response.json(
       path.endsWith("/child")
         ? { sessionId: "child", deliveryId: "delivery" }
-        : { sessionId: "child" }
+        : { sessionId: "child", deliveryId: "delivery" }
     )
   );
 });
 
-it("creates an idle seed then journals the first send separately", async () => {
-  mocks.send.mockImplementation(async (_input, dispatch) => await dispatch());
+it("creates the branch and first delivery in one request", async () => {
   const response = await createEveConversationOperation("owner", input);
   expect(response.status).toBe(200);
-  expect(mocks.reconcile.mock.invocationCallOrder[0]).toBeLessThan(
-    mocks.canSpend.mock.invocationCallOrder[0]
-  );
+  expect(mocks.request).toHaveBeenCalledOnce();
   expect(
     JSON.parse(z.string().parse(mocks.request.mock.calls[0]?.[2]?.body))
-  ).toEqual({ operationId: input.operationId, seed: true });
-  expect(
-    JSON.parse(z.string().parse(mocks.request.mock.calls[1]?.[2]?.body))
-  ).toEqual({ message: "prepared comparison" });
-  expect(mocks.send.mock.calls[0]?.[0]).toMatchObject({
-    kind: "send",
-    operationId: input.operationId,
-  });
+  ).toEqual({ operationId: input.operationId, message: "prepared comparison" });
+  expect(mocks.send).not.toHaveBeenCalled();
 });
 it("maps project admission errors to not-found responses", async () => {
   mocks.reserve.mockRejectedValue(
@@ -144,18 +135,6 @@ it("persists fork intent without forwarding ChatJS metadata to Eve", async () =>
   expect(
     JSON.parse(z.string().parse(mocks.request.mock.calls.at(-1)?.[2]?.body))
   ).not.toHaveProperty("forkKind");
-});
-
-it("rejects saved-copy operations before ordinary native lookup or dispatch", async () => {
-  mocks.creation.mockResolvedValue({
-    creationKind: "copy",
-    state: "uncertain",
-  });
-  const response = await createEveConversationOperation("owner", input);
-  expect(response.status).toBe(409);
-  expect(await response.json()).toMatchObject({ creationRejected: true });
-  expect(mocks.reserve).not.toHaveBeenCalled();
-  expect(mocks.request).not.toHaveBeenCalled();
 });
 
 it("forwards selected tools on creation and includes them in the reservation identity", async () => {

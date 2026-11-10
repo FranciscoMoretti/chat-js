@@ -64,7 +64,7 @@ it("projects a known receipt by delivery identity, never by identical text", () 
     chatjs: { selectedTool: "webSearch" },
   });
   expect(projected.messages[1]?.metadata?.custom).toBeUndefined();
-  expect(data.messages[0]?.metadata?.custom).toBeUndefined();
+  expect(data.messages[0]?.metadata).not.toHaveProperty("custom");
   expect(projectEveMessageDisplay(data, events, [])).toBe(data);
 });
 

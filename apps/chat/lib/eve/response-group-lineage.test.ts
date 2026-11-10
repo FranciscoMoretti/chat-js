@@ -90,7 +90,7 @@ describe("response group lineage", () => {
   it("maps an imported candidate's response to its local first turn", () => {
     const candidate = row("imported", "operation-a", {
       forkKind: "comparison",
-      forkMessageId: "seed_message_2",
+      forkMessageId: "import:imported:2",
       parentConversationId: "copy",
     });
     const copy = row("copy", "copy-operation");
@@ -114,12 +114,12 @@ describe("response group lineage", () => {
     const copy = row("copy", "copy-operation");
     const candidate = row("imported", "operation-a", {
       forkKind: "comparison",
-      forkMessageId: "seed_message_2",
+      forkMessageId: "import:imported:2",
       parentConversationId: copy.id,
     });
     const prefixRegeneration = row("prefix-regeneration", "retry-prefix", {
       forkKind: "regenerate",
-      forkMessageId: "seed_message_2",
+      forkMessageId: "import:imported:2",
       parentConversationId: candidate.id,
     });
     expect(

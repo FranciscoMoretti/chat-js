@@ -38,6 +38,27 @@ try {
   await page.getByTestId("thread-playground").waitFor();
   await page.evaluate(async () => await document.fonts.ready);
   await page.clock.pauseAt(new Date("2026-01-01T00:01:00Z"));
+  await page
+    .locator("header")
+    .filter({
+      has: page.getByRole("link", { name: "ChatJS home", exact: true }),
+    })
+    .screenshot({
+      animations: "disabled",
+      path: `${output}threads-header.png`,
+    });
+  await page.getByRole("contentinfo").screenshot({
+    animations: "disabled",
+    path: `${output}threads-footer.png`,
+    style: "nextjs-portal { visibility: hidden !important; }",
+  });
+  assert.equal(
+    await page
+      .getByRole("navigation", { name: "Main" })
+      .getByRole("link", { name: /thread/iu })
+      .count(),
+    0
+  );
   const intro = page.locator("main > section").first();
   assert.match(
     (await intro.locator("pre").textContent()) ?? "",
@@ -251,13 +272,16 @@ try {
         .length === 3
   );
   await page.clock.runFor(1800);
-  await page.evaluate((): void => {
-    document.documentElement.classList.add("dark");
-  });
-  await capture(page, "threads-dark-live");
+  await capture(page, "threads-live");
   await page.setViewportSize({ height: 844, width: 390 });
-  await page.evaluate((): void => {
-    document.documentElement.classList.remove("dark");
+  await page.locator("header.carbon-nav").screenshot({
+    animations: "disabled",
+    path: `${output}threads-mobile-header.png`,
+  });
+  await intro.screenshot({
+    animations: "disabled",
+    path: `${output}threads-mobile-intro.png`,
+    style: "nextjs-portal { visibility: hidden !important; }",
   });
   assert.equal(
     await page.evaluate(
@@ -284,6 +308,17 @@ try {
     "Offscreen mobile branches remain reachable"
   );
   await capture(page, "threads-mobile-live");
+  await page.setViewportSize({ width: 320, height: 780 });
+  await page.addStyleTag({ content: "html { font-size: 200%; }" });
+  const heading = intro.getByRole("heading", { level: 1 });
+  const headingFits = await heading.evaluate(
+    (element) => element.scrollWidth <= element.clientWidth
+  );
+  assert.ok(headingFits, "The Threads heading wraps at larger text sizes");
+  await heading.screenshot({
+    animations: "disabled",
+    path: `${output}threads-mobile-large-text.png`,
+  });
   assert.deepEqual(errors, [], "No browser runtime errors");
   console.log(
     `Threads interaction checks passed; deterministic captures in ${output}`

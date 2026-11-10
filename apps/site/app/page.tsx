@@ -46,7 +46,7 @@ const structuredData = {
         priceCurrency: "USD",
       },
       operatingSystem: "Web, macOS, Windows, Linux",
-      screenshot: `${siteConfig.url}${siteConfig.ogImage}`,
+      screenshot: `${siteConfig.url}${siteConfig.appScreenshot}`,
       softwareHelp: siteLinks.docs,
       url: siteLinks.home,
     },

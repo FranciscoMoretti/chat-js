@@ -16,9 +16,7 @@ import {
   retainWorkspaceAttachment,
   recordWorkspaceAttachment,
   readWorkspaceAttachment,
-  resolveWorkspaceSeedAttachments,
 } from "../lib/eve/workspace-attachments";
-import { parseEveCopySeed } from "../lib/eve/copy-seed";
 
 const storage = vi.hoisted(() => ({
   bytes: new TextEncoder().encode("immutable uploaded original"),
@@ -93,49 +91,6 @@ test("retains immutable originals independently of selected fork history and rej
   await expect(readWorkspaceAttachment({ identity, path })).resolves.toEqual(
     original
   );
-  const seed = parseEveCopySeed({
-    attachments: "channel",
-    messages: [
-      {
-        role: "user",
-        parts: [
-          {
-            type: "file",
-            url: `https://app.test/api/files/${key}`,
-            mediaType: "application/pdf",
-          },
-        ],
-      },
-    ],
-  });
-  const fork = await resolveWorkspaceSeedAttachments({
-    ownerId,
-    workspaceId,
-    seed,
-  });
-  expect(fork.messages[0]?.parts[0]).toMatchObject({
-    existingPath: path,
-    url: `https://app.test/api/files/${key}`,
-  });
-  expect(seed.messages[0]?.parts[0]).not.toHaveProperty("existingPath");
-  const before = parseEveCopySeed({
-    messages: [
-      { role: "user", parts: [{ type: "text", text: "before upload" }] },
-    ],
-  });
-  await expect(
-    resolveWorkspaceSeedAttachments({ ownerId, workspaceId, seed: before })
-  ).resolves.toEqual(before);
-  await expect(readWorkspaceAttachment({ identity, path })).resolves.toEqual(
-    original
-  );
-  await expect(
-    resolveWorkspaceSeedAttachments({
-      ownerId: crypto.randomUUID(),
-      workspaceId,
-      seed,
-    })
-  ).rejects.toThrow("observed shared workspace path");
   await expect(
     retainWorkspaceAttachment({
       ownerId,

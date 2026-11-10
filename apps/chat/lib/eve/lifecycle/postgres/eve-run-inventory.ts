@@ -141,7 +141,7 @@ const readEvePostgresRunInventoryInTransaction = async (
 };
 
 /**
- * Read-only adapter for @workflow/world-postgres 5.0.0-beta.40.
+ * Read-only adapter for @workflow/world-postgres 5.1.1.
  * The caller must authorize the session before using this internal primitive.
  * This snapshot inventories known run/stream relationships, not queue, sandbox,
  * or blob coverage. It is not a retirement barrier or a purge receipt.

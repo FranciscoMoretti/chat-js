@@ -13,7 +13,7 @@ const positionRows = z.array(
 );
 
 /**
- * Metadata-only adapter for Eve 0.61.0 and world-postgres 5.0.0-beta.40.
+ * Metadata-only adapter for Workflow Postgres 5.1.1.
  * Uses the same default stream name and non-EOF chunk count as getReadable /
  * streams.getInfo. Callers must supply only owner-authorized sessions.
  * Missing streams are omitted, never certified as empty or settled.
@@ -38,10 +38,15 @@ const readEvePostgresStreamPositions = async (
     const rows = positionRows.parse(
       // oxlint-disable-next-line eslint/no-await-in-loop -- Bounded resources: the adapter opens a max: 1 pool and also accepts transaction connections; run one 500-name statement at a time instead of queuing every inventory batch on that connection.
       await connection`
+      with chunks as (
+        select stream_id, id, eof,
+          min(id) filter (where eof) over (partition by stream_id) as first_eof
+        from workflow.workflow_stream_chunks
+        where stream_id in ${connection(names.slice(offset, offset + STREAM_POSITION_BATCH_SIZE))}
+      )
       select stream_id as "streamId",
-        count(*) filter (where eof = false) as length
-      from workflow.workflow_stream_chunks
-      where stream_id in ${connection(names.slice(offset, offset + STREAM_POSITION_BATCH_SIZE))}
+        count(*) filter (where not eof and (first_eof is null or id < first_eof)) as length
+      from chunks
       group by stream_id
     `
     );
