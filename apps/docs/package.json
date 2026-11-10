@@ -2,7 +2,7 @@
   "name": "@chatjs/docs",
   "private": true,
   "scripts": {
-    "build": "blume build && bun ../../scripts/docs-production.mjs stamp",
+    "build": "blume build",
     "dev": "blume dev --port ${PORT:-4321}",
     "preview": "blume preview",
     "docs:links": "blume validate --external --strict",
