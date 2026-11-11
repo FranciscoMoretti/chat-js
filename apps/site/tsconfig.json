@@ -18,10 +18,121 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*", "../chat/*"],
+      "@/components/ui/button": [
+        "./components/create-preview/ui/base/button.tsx"
+      ],
+      "@/components/ui/sidebar": [
+        "./components/create-preview/ui/base/sidebar.tsx"
+      ],
+      "@/components/ui/dropdown-menu": [
+        "./components/create-preview/ui/base/dropdown-menu.tsx"
+      ],
+      "@/components/ui/tooltip": [
+        "./components/create-preview/ui/base/tooltip.tsx"
+      ],
+      "@/components/ui/input": [
+        "./components/create-preview/ui/base/input.tsx"
+      ],
+      "@/components/ui/separator": [
+        "./components/create-preview/ui/base/separator.tsx"
+      ],
+      "@/components/ui/scroll-area": [
+        "./components/create-preview/ui/base/scroll-area.tsx"
+      ],
+      "@/components/ui/sheet": [
+        "./components/create-preview/ui/base/sheet.tsx"
+      ],
+      "@/components/ui/skeleton": [
+        "./components/create-preview/ui/base/skeleton.tsx"
+      ],
+      "@/components/ui/textarea": [
+        "./components/create-preview/ui/base/textarea.tsx"
+      ],
+      "@/components/ui/dialog": [
+        "./components/create-preview/ui/base/dialog.tsx"
+      ],
+      "@/components/ui/breadcrumb": [
+        "./components/create-preview/ui/base/breadcrumb.tsx"
+      ],
+      "@/components/ui/label": [
+        "./components/create-preview/ui/base/label.tsx"
+      ],
+      "@/components/ui/popover": [
+        "./components/create-preview/ui/base/popover.tsx"
+      ],
+      "@/components/ui/alert-dialog": [
+        "./components/create-preview/ui/base/alert-dialog.tsx"
+      ],
+      "@/trpc/react": ["../chat/trpc/context.tsx"],
+      "@/providers/session-provider": ["../chat/providers/session-context.ts"],
+      "@/components/ui/command": [
+        "./components/create-preview/ui/base/command.tsx"
+      ],
+      "@/components/ui/alert": [
+        "./components/create-preview/ui/base/alert.tsx"
+      ],
+      "@/components/ui/empty": [
+        "./components/create-preview/ui/base/empty.tsx"
+      ],
+      "@/components/ui/direction": [
+        "./components/create-preview/ui/base/direction.tsx"
+      ],
+      "@/components/ui/input-group": [
+        "./components/create-preview/ui/base/input-group.tsx"
+      ],
+      "@/components/ui/bubble": [
+        "./components/create-preview/ui/base/bubble.tsx"
+      ],
+      "@/components/ui/trace": [
+        "./components/create-preview/ui/base/trace.tsx"
+      ],
+      "@/components/ui/code-block": [
+        "./components/create-preview/ui/base/code-block.tsx"
+      ],
+      "@/components/ui/message": [
+        "./components/create-preview/ui/base/message.tsx"
+      ],
+      "@/components/ui/collapsible": [
+        "./components/create-preview/ui/base/collapsible.tsx"
+      ],
+      "@/components/ui/message-scroller": [
+        "./components/create-preview/ui/base/message-scroller.tsx"
+      ],
+      "@/components/ui/attachment": [
+        "./components/create-preview/ui/base/attachment.tsx"
+      ],
+      "@/components/ui/hover-card": [
+        "./components/create-preview/ui/base/hover-card.tsx"
+      ],
+      "@/components/ui/spinner": [
+        "./components/create-preview/ui/base/spinner.tsx"
+      ],
+      "@/components/ui/badge": [
+        "./components/create-preview/ui/base/badge.tsx"
+      ],
+      "@/components/ui/avatar": [
+        "./components/create-preview/ui/base/avatar.tsx"
+      ],
+      "@/components/ui/checkbox": [
+        "./components/create-preview/ui/base/checkbox.tsx"
+      ],
+      "@/components/ui/switch": [
+        "./components/create-preview/ui/base/switch.tsx"
+      ],
+      "@/components/ui/select": [
+        "./components/create-preview/ui/base/select.tsx"
+      ],
+      "@/components/ui/toggle": [
+        "./components/create-preview/ui/base/toggle.tsx"
+      ],
+      "@/components/ui/toggle-group": [
+        "./components/create-preview/ui/base/toggle-group.tsx"
+      ]
     },
     "strictNullChecks": true,
-    "types": ["node"]
+    "types": ["node"],
+    "allowImportingTsExtensions": true
   },
   "include": [
     "next-env.d.ts",

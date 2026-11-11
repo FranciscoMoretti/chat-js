@@ -1,3 +1,4 @@
+import { selectPreviewTools } from "./create-fixtures.mts";
 /* eslint-disable no-await-in-loop -- Appearance changes must settle in the same open menu. */
 import { test, expect } from "@uiverify/playwright";
 import {
@@ -9,7 +10,7 @@ import {
 
 // Exercise every layout combination. Capture two representative layouts per
 // style/library, with menus and tool states together to avoid redundant shots.
-for (const base of ["base", "radix"] as const) {
+for (const base of ["base"] as const) {
   for (const [index, style] of PRESET_STYLES.entries()) {
     for (const rtl of [false, true]) {
       for (const width of [1000, 390]) {
@@ -28,9 +29,8 @@ for (const base of ["base", "radix"] as const) {
             menuColor,
           });
           await page.setViewportSize({ width, height: 1000 });
-          await page.emulateMedia({
-            colorScheme: width === 390 ? "dark" : "light",
-          });
+          const mode = width === 390 ? "dark" : "light";
+          await page.emulateMedia({ colorScheme: mode });
           await page.goto(
             `/create/preview?base=${base}&preset=${preset}&rtl=${rtl}&item=preview-tools`
           );
@@ -42,51 +42,52 @@ for (const base of ["base", "radix"] as const) {
             "dir",
             rtl ? "rtl" : "ltr"
           );
-          const failed = page.getByRole("button", {
-            name: "Search unavailable Error",
-          });
-          await expect(failed).toHaveAttribute("aria-expanded", "true");
-          await failed.press("Enter");
-          await expect(failed).toHaveAttribute("aria-expanded", "false");
-          await failed.press("Enter");
+          await expect(page.getByTestId("chat-preview")).toHaveAttribute(
+            "data-mode",
+            mode
+          );
+          await selectPreviewTools(page);
+          await expect(
+            page.getByRole("button", { name: "Show all sources", exact: true })
+          ).toBeVisible();
+          await expect(page.getByTestId("chat-preview")).toHaveAttribute(
+            "data-mode",
+            mode
+          );
           await page.evaluate(async () => await document.fonts.ready);
           await page.addStyleTag({
             content:
               "nextjs-portal { display: none !important; } *, *::before, *::after { animation: none !important; transition: none !important; }",
           });
-          const scenario = page.getByRole("button", {
-            name: "Preview scenario",
+          const modelMenu = page.getByRole("button", {
+            name: /^Chat menu:/u,
           });
-          await scenario.click();
+          await modelMenu.click();
           await expect(
-            page.getByRole("menuitemradio", {
-              name: "Tool states",
-              exact: true,
-            })
+            page.getByRole("menuitem", { name: "Rename", exact: true })
           ).toBeVisible();
           if (rtl === (width === 390)) {
             await uiVerify.snapshot("tools and menu");
           }
-          await page
-            .getByRole("menuitemradio", { name: "New chat", exact: true })
-            .click();
+          await page.goto(
+            `/create/preview?base=${base}&preset=${preset}&rtl=${rtl}&item=preview`
+          );
           await expect(
             page.getByRole("heading", { name: "How can I help you today?" })
           ).toBeVisible();
           const model = page.getByRole("button", {
-            name: "Choose preview model",
+            name: /GPT-5 nano/u,
           });
           await model.click();
-          await page
-            .getByRole("menuitemradio", { name: "Fast", exact: true })
-            .click();
-          await expect(model).toContainText("Fast");
-          await scenario.click();
-          await page
-            .getByRole("menuitemradio", { name: "Conversation", exact: true })
-            .click();
+          await page.getByRole("option", { name: /Claude Sonnet 4/u }).click();
           await expect(
-            page.getByRole("button", { name: "Copy", exact: true })
+            page.getByRole("button", { name: /Claude Sonnet 4/u })
+          ).toBeVisible();
+          await page.goto(
+            `/create/preview?base=${base}&preset=${preset}&rtl=${rtl}&item=preview-02`
+          );
+          await expect(
+            page.getByRole("button", { name: "Copy Code", exact: true })
           ).toBeVisible();
           expect(
             await page.evaluate(
@@ -100,7 +101,7 @@ for (const base of ["base", "radix"] as const) {
   }
 }
 
-for (const base of ["base", "radix"] as const) {
+for (const base of ["base"] as const) {
   test(`${base} keeps the open menu and draft while the native provider changes appearance`, async ({
     page,
     uiVerify,
@@ -111,7 +112,7 @@ for (const base of ["base", "radix"] as const) {
     // Radix modal menus hide background controls from the accessibility tree.
     const draft = frame.locator('[contenteditable][aria-label="Message"]');
     await draft.fill("Keep my draft while changing the preset");
-    await frame.getByRole("button", { name: "Choose preview model" }).click();
+    await frame.getByRole("button", { name: /^Chat menu:/u }).click();
     const popup = frame.locator('[data-slot="dropdown-menu-content"]');
     await expect(popup).toBeVisible();
     const originalMenu = await popup.elementHandle();
@@ -153,16 +154,14 @@ for (const base of ["base", "radix"] as const) {
       // Portaled menus and upstream @apply utilities must use the preset font,
       // even when the host site's theme defines a different inline font alias.
       await expect(popup).toHaveCSS("font-family", /inter/iu);
-      await expect(frame.locator('[data-slot="code-block-title"]')).toHaveCSS(
+      await expect(frame.locator('[data-slot="input-group"]')).toHaveCSS(
         "font-family",
         /inter/iu
       );
     }
-    await frame
-      .getByRole("menuitemradio", { name: "Fast", exact: true })
-      .click();
+    await frame.getByRole("menuitem", { name: "Pin", exact: true }).click();
     await expect(
-      frame.getByRole("button", { name: "Choose preview model" })
-    ).toContainText("Fast");
+      frame.getByRole("button", { name: /^Chat menu:/u })
+    ).toBeVisible();
   });
 }

@@ -1,5 +1,5 @@
 import type { inferRouterOutputs } from "@trpc/server";
-import type { EveMessage } from "eve/client";
+import type { ReadonlyEveMessage as EveMessage } from "@/lib/eve/readonly-message-types";
 
 import type { Session } from "@/lib/auth";
 import type { AppRouter } from "@/trpc/routers/_app";
@@ -726,3 +726,37 @@ export const guestTranscript: EveMessage[] = [
     ],
   },
 ];
+
+export const retrievedPageTranscripts = {
+  [invoicesSessionId]: [
+    {
+      id: "retrieved-answer",
+      role: "assistant",
+      metadata: { status: "complete", turnId: "retrieved-turn" },
+      parts: [
+        { type: "text", text: "Here is the page you requested." },
+        {
+          type: "tool",
+          kind: "tool",
+          stepIndex: 0,
+          callId: "retrieve-page",
+          name: "retrieveUrl",
+          label: "Read page",
+          state: "completed",
+          input: { url: "https://example.com" },
+          output: {
+            results: [
+              {
+                url: "https://example.com",
+                title: "Example documentation",
+                description: "A retrieved page with readable details.",
+                language: "en",
+                content: "This content remains visible when expanded.",
+              },
+            ],
+          },
+        },
+      ],
+    },
+  ],
+} satisfies Record<string, readonly EveMessage[]>;

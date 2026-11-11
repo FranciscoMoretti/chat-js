@@ -14,7 +14,10 @@ interface ComposerControl {
   id: string;
   Component: ComponentType<ComposerControlProps> & {
     /** Controls that can render nothing expose their availability to the menu. */
-    isAvailable?: (isMobile: boolean) => boolean;
+    isAvailable?: (
+      isMobile: boolean,
+      available: ReadonlySet<string>
+    ) => boolean;
   };
 }
 export type { ComposerControl, ComposerControlProps };

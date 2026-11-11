@@ -1,8 +1,9 @@
 const siteConfig = {
+  appScreenshot: "/chatjs_preview_light.png",
   creator: "@franmoretti_",
   demoUrl: "https://demo.chatjs.dev",
   description:
-    "Open-source Next.js AI chat app starter with authentication, streaming, tool calling, and 120+ model integrations for production deployments.",
+    "The building blocks for your AI app. A working chat, your choice of models, tools and plugins. Code you own.",
   desktopUrl: "https://github.com/franciscomoretti/chat-js/releases/latest",
   docsUrl: "https://chatjs.dev/docs",
   githubUrl: "https://github.com/franciscomoretti/chat-js",
@@ -16,7 +17,7 @@ const siteConfig = {
     "LLM app boilerplate",
   ],
   name: "ChatJS",
-  ogImage: "/chatjs_preview_light.png",
+  ogImage: "/opengraph-image.jpg",
   shortName: "ChatJS",
   title: "ChatJS",
   url: "https://chatjs.dev",
@@ -38,5 +39,10 @@ const siteLinks = {
   threads: `${siteConfig.url}/threads`,
 } as const;
 
+const docsNavigationHref =
+  process.env.NODE_ENV === "development"
+    ? (process.env.NEXT_PUBLIC_CHATJS_DOCS_URL ?? siteLinks.docs)
+    : siteLinks.docs;
+
 const siteLastModified = new Date("2025-03-28T16:14:00.000Z");
-export { siteConfig, siteLastModified, siteLinks };
+export { docsNavigationHref, siteConfig, siteLastModified, siteLinks };

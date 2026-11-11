@@ -23,7 +23,7 @@ export const readCompletedEveCopyTranscript = async (
     dispatches.some(
       (entry) =>
         !isNonEmptyString(entry.sessionId) ||
-        (entry.kind === "send" && !isNonEmptyString(entry.deliveryId))
+        !isNonEmptyString(entry.deliveryId)
     )
   ) {
     throw new EveCopyNotReadyError();
@@ -37,11 +37,7 @@ export const readCompletedEveCopyTranscript = async (
       event.type === "delivery.consumed" ? [event.data.deliveryId] : []
     )
   );
-  if (
-    dispatches.some(
-      (entry) => entry.kind === "send" && !observed.has(entry.deliveryId ?? "")
-    )
-  ) {
+  if (dispatches.some((entry) => !observed.has(entry.deliveryId ?? ""))) {
     throw new EveCopyNotReadyError();
   }
   return prepareEveCopyTranscript(snapshot.events, receipts, beforeMessageId);

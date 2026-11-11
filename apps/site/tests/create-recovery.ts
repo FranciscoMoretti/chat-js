@@ -22,9 +22,7 @@ export const verifyPreviewRecovery = async (page: Page, origin: string) => {
   failPreview = false;
   await page.getByRole("button", { name: "Retry preview" }).click();
   await expect(
-    page
-      .frameLocator("iframe")
-      .getByRole("button", { name: "Search unavailable Error" })
+    page.frameLocator("iframe").getByTestId("chat-preview")
   ).toBeVisible({ timeout: 15_000 });
   await expect(
     page.getByRole("button", { name: "Retry preview" })

@@ -24,7 +24,15 @@ import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { parseChatIdFromPathname } from "@/providers/parse-chat-id-from-pathname";
 import { useTRPC } from "@/trpc/react";
 
-export const SidebarProjects = (): ReactJSX.Element => {
+export const SidebarProjects = ({
+  conversationId,
+  allowManagement = true,
+  onProjectSelect,
+}: {
+  readonly conversationId?: string;
+  readonly allowManagement?: boolean;
+  readonly onProjectSelect?: (id: string) => void;
+}): ReactJSX.Element => {
   const pathname = usePathname();
   const router = useRouter();
   const trpc = useTRPC();
@@ -36,10 +44,11 @@ export const SidebarProjects = (): ReactJSX.Element => {
   const [newProjectDialogOpen, setNewProjectDialogOpen] = useState(false);
 
   const route = parseChatIdFromPathname(pathname);
+  const activeConversationId = conversationId ?? route.id;
   const membership = useQuery(
     trpc.project.forChat.queryOptions(
-      { id: route.id ?? "" },
-      { enabled: Boolean(route.id) }
+      { id: activeConversationId ?? "" },
+      { enabled: Boolean(activeConversationId) }
     )
   );
   const currentProjectId =
@@ -54,7 +63,11 @@ export const SidebarProjects = (): ReactJSX.Element => {
         });
         setNewProjectDialogOpen(false);
         setOpenMobile(false);
-        router.push(`/project/${data.id}`);
+        if (onProjectSelect) {
+          onProjectSelect(data.id);
+        } else {
+          router.push(`/project/${data.id}`);
+        }
       },
     })
   );
@@ -70,17 +83,19 @@ export const SidebarProjects = (): ReactJSX.Element => {
   };
   return (
     <>
-      <SidebarMenuItem>
-        <SidebarMenuButton
-          className="cursor-pointer"
-          onClick={() => {
-            setNewProjectDialogOpen(true);
-          }}
-        >
-          <FolderPlus className="size-4" />
-          <span>New project</span>
-        </SidebarMenuButton>
-      </SidebarMenuItem>
+      {allowManagement && (
+        <SidebarMenuItem>
+          <SidebarMenuButton
+            className="cursor-pointer"
+            onClick={() => {
+              setNewProjectDialogOpen(true);
+            }}
+          >
+            <FolderPlus className="size-4" />
+            <span>New project</span>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      )}
       {!isLoading &&
         projects?.map(
           (
@@ -89,6 +104,8 @@ export const SidebarProjects = (): ReactJSX.Element => {
             const isActive = currentProjectId === project.id;
             return (
               <SidebarProjectItem
+                allowManagement={allowManagement}
+                onSelect={onProjectSelect}
                 isActive={isActive}
                 key={project.id}
                 project={project}
@@ -98,13 +115,15 @@ export const SidebarProjects = (): ReactJSX.Element => {
           }
         )}
 
-      <ProjectDetailsDialog
-        isLoading={createProjectMutation.isPending}
-        mode="create"
-        onOpenChange={setNewProjectDialogOpen}
-        onSubmit={handleCreateProject}
-        open={newProjectDialogOpen}
-      />
+      {allowManagement && (
+        <ProjectDetailsDialog
+          isLoading={createProjectMutation.isPending}
+          mode="create"
+          onOpenChange={setNewProjectDialogOpen}
+          onSubmit={handleCreateProject}
+          open={newProjectDialogOpen}
+        />
+      )}
     </>
   );
 };

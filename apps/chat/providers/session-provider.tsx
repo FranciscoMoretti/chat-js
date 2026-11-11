@@ -12,18 +12,8 @@ import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 import type { Session } from "@/lib/auth";
 import authClient from "@/lib/auth-client";
 
-interface SessionContextValue {
-  data: Session | null;
-  /**
-   * True while the shell has neither a streamed server session nor a settled
-   * client session. Consumers should treat this as "unknown", not anonymous.
-   */
-  isPending: boolean;
-}
-
-const SessionContext = createContext<SessionContextValue | undefined>(
-  undefined
-);
+import { SessionContext } from "./session-context";
+import type { SessionContextValue } from "./session-context";
 
 const SessionSeedContext = createContext<
   ((session: ReadonlyNativeSurface<Session | null>) => void) | null
@@ -96,12 +86,5 @@ const SessionSeed = ({
   return null;
 };
 
-const useSession = (): SessionContextValue => {
-  const ctx = useContext(SessionContext);
-  if (!ctx) {
-    throw new Error("useSession must be used within a SessionProvider");
-  }
-  return ctx;
-};
-
-export { SessionProvider, SessionSeed, useSession };
+export { SessionProvider, SessionSeed };
+export { useSession } from "./session-context";

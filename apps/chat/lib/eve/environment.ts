@@ -9,6 +9,17 @@ const resolveWorkflowDatabaseUrl = (
   if (resolveWorkflowWorld(source) === "vercel") {
     return undefined;
   }
+  // Lifecycle fences and queue inventory cover the provider's default tasks.
+  const jobPrefix = source.WORKFLOW_POSTGRES_JOB_PREFIX;
+  if (
+    jobPrefix !== undefined &&
+    jobPrefix !== "" &&
+    jobPrefix !== "workflow_"
+  ) {
+    throw new Error(
+      "ChatJS PostgreSQL lifecycle requires the default Workflow job prefix."
+    );
+  }
   const configuredUrl = source.WORKFLOW_POSTGRES_URL;
 
   if (typeof configuredUrl !== "string" || configuredUrl === "") {

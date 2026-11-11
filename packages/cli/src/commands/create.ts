@@ -1,3 +1,7 @@
+import {
+  readCreateInstallation,
+  assertExclusiveInstallation,
+} from "#cli/helpers/create-installation";
 import { optionalDirectoryFiles } from "#cli/utils/installation-files";
 import { recordInstalledSource } from "#cli/utils/source-receipt";
 import { scaffoldNativeProject } from "#cli/helpers/native-scaffold";
@@ -5,7 +9,7 @@ import { createStagedProject } from "#cli/helpers/staged-project";
 import { generateBaseline } from "#cli/utils/generate-baseline";
 import { planSandboxInstallation } from "#cli/helpers/sandbox-installation";
 import { configureSandboxProvider } from "#cli/helpers/sandbox-provider";
-import type { resolveSandbox } from "#cli/registry/sandboxes";
+import { resolveSandbox } from "#cli/registry/sandboxes";
 import { installPlan, plannedSourceTargets } from "#cli/utils/install-plan";
 import { intro, outro } from "@clack/prompts";
 import { itemAddress, listTools, readItem } from "#cli/registry/shadcn";
@@ -132,6 +136,8 @@ const printEnvChecklist = (entries: readonly Readonly<EnvVarEntry>[]): void => {
 };
 
 const createOptionsSchema = z.object({
+  appPreset: z.string().optional(),
+  installation: z.string().optional(),
   attachments: z.boolean().optional(),
   codeExecutionTool: z.string().optional(),
   documents: z.boolean().optional(),
@@ -173,17 +179,13 @@ type CreateOptions = z.infer<typeof createOptionsSchema>;
 type AssistantTools = Awaited<ReturnType<typeof promptAssistantTools>>;
 
 interface CreateSetup {
-  assistantTools: AssistantTools;
   auth: Awaited<ReturnType<typeof promptAuth>>;
   coreFeatures: Awaited<ReturnType<typeof promptCoreFeatures>>;
-  documentTypes: Awaited<ReturnType<typeof promptDocumentTypes>>;
   gateway: Awaited<ReturnType<typeof resolveGateway>>["definition"]["id"];
   gatewaySelection: Awaited<ReturnType<typeof resolveGateway>>;
-  observability: Awaited<ReturnType<typeof promptObservability>>;
   plan: Awaited<ReturnType<typeof planInstallation>>;
   storage: Awaited<ReturnType<typeof promptStorage>>;
   sandbox: Awaited<ReturnType<typeof resolveSandbox>> | undefined;
-  usesStorage: boolean;
   withElectron: boolean;
 }
 
@@ -329,7 +331,7 @@ const loadInstallableTools = async (
 const addDocumentToolSources = (
   toolSources: string[],
   coreFeatures: ReadonlyInput<CreateSetup["coreFeatures"]>,
-  documentTypes: ReadonlyInput<CreateSetup["documentTypes"]>,
+  documentTypes: ReadonlyInput<Awaited<ReturnType<typeof promptDocumentTypes>>>,
   assistantTools: ReadonlyInput<AssistantTools>,
   selectedTools: readonly ReadonlyInput<z.output<typeof toolDefinitionSchema>>[]
 ): void => {
@@ -459,18 +461,55 @@ const promptCreateSetup = async (
   );
 
   return {
-    assistantTools,
     auth,
     coreFeatures,
-    documentTypes,
     gateway: gatewaySelection.definition.id,
     gatewaySelection,
-    observability,
     plan,
     storage,
     sandbox,
-    usesStorage,
     withElectron,
+  };
+};
+
+const selectedCreateSetup = async (
+  input: Parameters<typeof readCreateInstallation>[0],
+  targetDir: string,
+  yes: boolean
+): Promise<CreateSetup> => {
+  const selection = readCreateInstallation(input);
+  selection.storage ??= { source: "memory", options: {} };
+  const plan = await planInstallation(targetDir, selection, { fresh: true });
+  const gatewaySelection = await resolveGateway(
+    selection.gateway ?? "vercel",
+    targetDir
+  );
+  const storage = await resolveStorage(
+    selection.storage?.source ?? "memory",
+    targetDir
+  );
+  storage.options = selection.storage?.options ?? {};
+  const plugins = new Set(plan.plugins.map((plugin) => plugin.id));
+  return {
+    auth: await promptAuth(yes),
+    coreFeatures: {
+      attachments: plugins.has("attachment-uploads"),
+      documents: plan.expected.some((tool) => tool.documentKind !== undefined),
+      feedback: plugins.has("feedback"),
+      followupSuggestions: plugins.has("followup-suggestions"),
+      mcp: plugins.has("mcp"),
+      projects: plugins.has("projects"),
+      parallelResponses: true,
+    },
+    gateway: gatewaySelection.definition.id,
+    gatewaySelection,
+    plan,
+    storage,
+    sandbox:
+      selection.sandbox === undefined
+        ? undefined
+        : await resolveSandbox(selection.sandbox, targetDir),
+    withElectron: plugins.has("desktop"),
   };
 };
 
@@ -608,22 +647,21 @@ const printNextSteps = (
 ): void => {
   const envEntries = collectEnvChecklist({
     auth: setup.auth,
-    builtInTools: setup.assistantTools.builtInTools,
+    builtInTools: {
+      webSearch: false,
+      urlRetrieval: false,
+      deepResearch: false,
+      codeExecution: false,
+      imageGeneration: false,
+      videoGeneration: false,
+    },
     coreFeatures: setup.coreFeatures,
     gateway: setup.gateway,
     gatewayRequirements: setup.gatewaySelection.definition.envRequirements,
     installableToolEnvRequirements: [
       ...installedTools.flatMap((tool) => tool.envRequirements),
-      ...observabilityItems
-        .filter(
-          (item: ReadonlyInput<(typeof observabilityItems)[number]>): boolean =>
-            setup.observability.includes(item.name)
-        )
-        .flatMap(
-          (item: ReadonlyInput<(typeof observabilityItems)[number]>) =>
-            item.meta.chatjs.envRequirements ?? []
-        ),
-      ...(setup.usesStorage ? setup.storage.definition.envRequirements : []),
+      ...setup.plan.plugins.flatMap((plugin) => plugin.envRequirements ?? []),
+      ...setup.storage.definition.envRequirements,
       ...(setup.sandbox?.definition.envRequirements ?? []),
     ],
   });
@@ -690,8 +728,22 @@ const createProject = async (
     );
     return;
   }
-  const setup = await promptCreateSetup(options, project.targetDir);
+  const setup =
+    options.installation === undefined && options.appPreset === undefined
+      ? await promptCreateSetup(options, project.targetDir)
+      : await selectedCreateSetup(
+          {
+            appPreset: options.appPreset,
+            installation: options.installation,
+            storageConfig: options.storageConfig,
+          },
+          project.targetDir,
+          options.yes
+        );
   logger.break();
+  logger.info(
+    `Creating ChatJS app at ${project.displayPath}. Starting with shadcn setup...`
+  );
   const installedTools = await createStagedProject(
     project.targetDir,
     async (stage) => {
@@ -716,6 +768,11 @@ const createProject = async (
 
 export const create = new Command()
   .name("create")
+  .option("--app-preset <code>", "App preset code; bypasses feature defaults")
+  .option(
+    "--installation <json>",
+    "complete JSON selection; bypasses feature defaults"
+  )
   .option(
     "--code-execution-tool <item>",
     "code-execution tool name or registry address"
@@ -787,6 +844,7 @@ export const create = new Command()
       try {
         const { target, shadcnArgs } = createShadcnArguments(command);
         const options = createOptionsSchema.parse({ target, ...opts });
+        assertExclusiveInstallation(options);
         assertCreateShadcnReady(shadcnArgs, options.fromGit);
         await createProject(options, shadcnArgs);
       } catch (error) {

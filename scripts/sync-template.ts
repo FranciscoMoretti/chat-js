@@ -121,11 +121,7 @@ const applyTemplateTransforms = async (destination: string): Promise<void> => {
       sourceDir
     ),
     packageName: "@workflow/world-postgres",
-    patchPath: join(
-      rootDir,
-      "patches",
-      "workflow-world-postgres@5.0.0-beta.40.patch"
-    ),
+    patchPath: join(rootDir, "patches", "workflow-world-postgres@5.1.1.patch"),
   });
 
   await stampTemplateManifest(destination);

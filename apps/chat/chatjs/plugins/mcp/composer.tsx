@@ -17,7 +17,6 @@ import {
   DropdownMenuSubTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-import { installedPlugins } from "@/integrations/plugin-catalog";
 import { useSession } from "@/providers/session-provider";
 import { useTRPC } from "@/trpc/react";
 
@@ -36,7 +35,7 @@ const ConnectorsControl = ({
     isError,
   } = useQuery({
     ...trpc.mcp.listConnected.queryOptions(),
-    enabled: installedPlugins.has("mcp") && isAuthenticated,
+    enabled: isAuthenticated,
   });
 
   const queryKey = trpc.mcp.listConnected.queryKey();
@@ -81,9 +80,6 @@ const ConnectorsControl = ({
       },
     })
   );
-  if (!installedPlugins.has("mcp")) {
-    return null;
-  }
   let status: string | undefined;
   if (!isAuthenticated) {
     status = "Sign in to use connectors";
@@ -139,5 +135,4 @@ const ConnectorsControl = ({
   );
 };
 
-ConnectorsControl.isAvailable = (): boolean => installedPlugins.has("mcp");
 export { ConnectorsControl };

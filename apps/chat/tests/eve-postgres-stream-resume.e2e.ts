@@ -72,6 +72,7 @@ test("batched default-stream positions match the provider without counting EOF o
 
   await streamer.streams.write(runId, name, encoder.encode("appended"));
   await streamer.streams.close(runId, name);
+  await streamer.streams.write(runId, name, encoder.encode("after EOF"));
   const updated = await readEvePostgresStreamPositions(positionConnection, ids);
   expect(updated.get(sessionId)).toBe(3);
   const streamInfo = await streamer.streams.getInfo(runId, name);
@@ -109,7 +110,9 @@ test("resume excludes consumed payloads in SQL, including an at-tail read", asyn
   );
   expect(payloadReads.length).toBeGreaterThan(0);
   expect(payloadReads.every((query) => query.includes('"id" >'))).toBe(true);
+  await streamer.streams.write(runId, name, encoder.encode("after EOF"));
   expect(await read(name, 3)).toEqual([]);
+  expect(await read(name, 4)).toEqual([]);
 });
 
 test("zero, relative-tail, and empty streams preserve their sequences", async () => {

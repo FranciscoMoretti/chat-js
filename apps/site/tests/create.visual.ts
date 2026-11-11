@@ -1,3 +1,5 @@
+import { readInstallationInput } from "../../../packages/registry/app-preset";
+import { commandAppPreset, attachPreviewFile } from "./create-fixtures.mts";
 /* eslint-disable no-await-in-loop -- Each native picker interaction must settle before the next. */
 import assert from "node:assert/strict";
 import { mkdir } from "node:fs/promises";
@@ -40,13 +42,23 @@ try {
     waitUntil: "domcontentloaded",
   });
   const frame = page.frameLocator("iframe");
+  const openAppearance = async () => {
+    await expect(
+      page.getByRole("button", { name: "Get Code", exact: true }).first()
+    ).toBeEnabled();
+    const tab = page.getByRole("tab", { name: "Appearance", exact: true });
+    await tab.click();
+    await expect(tab).toHaveAttribute("aria-selected", "true");
+  };
   const code = async () => {
+    await openAppearance();
     const text = await page
       .getByRole("button", { name: /^--preset /u })
       .textContent();
     return (text ?? "").replace("--preset ", "").trim();
   };
   const waitForPreset = async (expectedCode?: string) => {
+    await openAppearance();
     let lastState = "";
     // Poll a fresh, atomic DOM snapshot: nuqs commits URL state asynchronously.
     // Capturing a host code once can wait forever for a superseded transition.
@@ -104,12 +116,18 @@ try {
         )
         .toBe(true);
     } catch (error) {
-      throw new Error(`Preset synchronization failed: ${lastState}`, {
-        cause: error,
-      });
+      throw new Error(
+        `Preset synchronization failed at ${page.url()}: ${lastState}`,
+        {
+          cause: error,
+        }
+      );
     }
     await frame.locator("body").evaluate(async () => {
       await document.fonts.ready;
+      const style = document.createElement("style");
+      style.textContent = "nextjs-portal { display: none !important; }";
+      document.head.append(style);
     });
   };
   const pick = async (label: string, value: string) => {
@@ -135,6 +153,15 @@ try {
     });
   };
   await waitForPreset();
+  await expect(
+    page.getByRole("link", { name: "ChatJS / Create" }).locator("svg")
+  ).toBeVisible();
+  await expect(
+    frame
+      .getByTestId("chat-preview")
+      .getByText("ChatJS", { exact: true })
+      .first()
+  ).toBeVisible();
   await capture("create-default");
   assert.notEqual(
     await frame
@@ -174,22 +201,16 @@ try {
         .locator("svg")
         .innerHTML()
     );
-    await frame.getByRole("button", { name: "Choose preview model" }).click();
-    nativeGlyphs.add(
-      await frame
-        .getByRole("menuitemradio", { name: "Balanced", exact: true })
-        .locator("svg")
-        .innerHTML()
-    );
-    await frame
-      .getByRole("menuitemradio", { name: "Balanced", exact: true })
-      .press("Escape");
-    await frame
-      .getByRole("menuitemradio", { name: "Balanced", exact: true })
-      .waitFor({ state: "hidden" });
-    await expect(
-      frame.getByRole("button", { name: "Choose preview model" })
-    ).toBeFocused();
+    await page
+      .getByRole("button", { name: "Theme Neutral", exact: true })
+      .click();
+    const checked = page.getByRole("menuitemradio", {
+      name: "Neutral",
+      exact: true,
+    });
+    nativeGlyphs.add(await checked.locator("svg").innerHTML());
+    await checked.press("Escape");
+    await expect(checked).toBeHidden();
   }
   assert.equal(nativeGlyphs.size, PRESET_ICON_LIBRARIES.length);
   assert.equal(
@@ -209,7 +230,11 @@ try {
     "1"
   );
   assert.match(
-    await frame.locator("h1").evaluate((el) => getComputedStyle(el).fontFamily),
+    await frame
+      .locator("body")
+      .evaluate((el) =>
+        getComputedStyle(el).getPropertyValue("--font-heading")
+      ),
     /lora/iu
   );
 
@@ -250,47 +275,52 @@ try {
   await presetDialog.getByRole("button", { name: "Open", exact: true }).click();
   await waitForPreset(beforeShuffle);
 
+  await page.getByRole("tab", { name: "Plugins", exact: true }).click();
+  const panel = page.getByRole("region", { name: "Configure your app" });
+  await panel
+    .getByRole("switch", { name: "Attachment Uploads", exact: true })
+    .check();
+  await page.getByRole("tab", { name: "AI tools", exact: true }).click();
+  await page
+    .getByRole("checkbox", { name: "Tavily Search", exact: true })
+    .check();
+  await page.getByRole("tab", { name: "Setup", exact: true }).click();
+  const choose = async (label: string, value: string) => {
+    await page
+      .getByRole("radiogroup", { name: label, exact: true })
+      .getByRole("radio", { name: value, exact: true })
+      .check();
+  };
+  await choose("Model gateway", "OpenRouter");
+  await choose("File storage", "S3");
+  await page
+    .getByLabel("Storage bucket", { exact: true })
+    .fill("my-chat-uploads");
+  await choose("Sandbox", "Vercel Sandbox");
+  await page.getByRole("tab", { name: "Appearance", exact: true }).click();
   await page
     .getByRole("button", { name: "Get Code", exact: true })
     .first()
     .click();
   const dialog = page.getByRole("dialog", { name: "Create your ChatJS app" });
-  await dialog.getByLabel("Model gateway").selectOption("openrouter");
-  await dialog.getByRole("switch", { name: "Attachment uploads" }).check();
-  await dialog.getByLabel("Storage provider").selectOption("s3");
-  assert.equal(
-    await dialog
-      .getByRole("button", { name: "Copy Command", exact: true })
-      .isEnabled(),
-    false
-  );
-  await dialog
-    .getByLabel("Storage bucket", { exact: true })
-    .fill("my-chat-uploads");
-  await dialog.getByRole("switch", { name: "Pointer cursor" }).check();
-  await dialog.getByRole("switch", { name: "Right-to-left" }).check();
-  await page.waitForFunction(
-    () => new URLSearchParams(location.search).get("rtl") === "true"
-  );
+  await dialog.getByRole("switch", { name: "Use pointer on buttons" }).check();
+  await expect(dialog.getByRole("switch")).toHaveCount(1);
   await dialog
     .getByRole("button", { name: "Copy Command", exact: true })
     .click();
   const command = await page.evaluate(
     async () => await navigator.clipboard.readText()
   );
-  assert.match(command, /--gateway openrouter --attachments/u);
-  assert.match(command, /--sandbox-provider vercel/u);
-  await expect(dialog.getByText(/Includes Vercel Sandbox/u)).toBeVisible();
-  assert.match(command, /--storage-config '\{"bucket":"my-chat-uploads"\}'/u);
-  assert.match(command, /--rtl --pointer$/u);
+  assert.equal(commandAppPreset(command).gateway, "openrouter");
+  assert.equal(commandAppPreset(command).sandbox, "vercel");
+  assert.ok(command.includes('"bucket":"my-chat-uploads"'));
+  assert.match(command, /--no-rtl --pointer$/u);
   await capture("create-installation");
   await page.keyboard.press("Escape");
   await waitForPreset();
-  await frame.getByRole("button", { name: "Attach sample file" }).click();
-  await frame
-    .getByRole("button", { name: "Remove sample attachment" })
-    .waitFor();
-  assert.equal(await frame.locator("html").getAttribute("dir"), "rtl");
+  await attachPreviewFile(frame);
+  await frame.getByRole("button", { name: "Remove attachment" }).waitFor();
+  assert.equal(await frame.locator("html").getAttribute("dir"), "ltr");
 
   await page
     .getByRole("button", { name: "Menu Default / Solid", exact: true })
@@ -303,10 +333,10 @@ try {
     .click();
   await page.keyboard.press("Escape");
   await waitForPreset();
-  await frame.getByRole("button", { name: "Choose preview model" }).click();
+  await frame.getByRole("button", { name: /^Chat menu:/u }).click();
   await capture("create-custom-light-menu");
   await frame
-    .getByRole("menuitemradio", { name: "Balanced", exact: true })
+    .getByRole("menuitem", { name: "Rename", exact: true })
     .press("Escape");
   await page.getByRole("button", { name: "Toggle theme", exact: true }).click();
   await frame.locator('[data-mode="dark"]').waitFor();
@@ -316,17 +346,19 @@ try {
     async () => await navigator.clipboard.readText()
   );
   const sharedPreset = await code();
-  await page.getByRole("button", { name: "Tools", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Tool examples", exact: true })
+    .click();
   await frame
-    .getByRole("button", { name: "Search unavailable Error" })
+    .getByRole("button", { name: "Show all sources", exact: true })
     .waitFor();
-  await frame.getByRole("button", { name: "Attach sample file" }).waitFor();
+  await frame.locator('input[type="file"]').waitFor({ state: "attached" });
   await capture("create-tool-states");
   await page.getByRole("button", { name: "New chat", exact: true }).click();
   await frame
     .getByRole("heading", { name: "How can I help you today?" })
     .waitFor();
-  await frame.getByRole("button", { name: "Attach sample file" }).waitFor();
+  await frame.locator('input[type="file"]').waitFor({ state: "attached" });
   await page
     .getByRole("button", { name: "Mobile preview", exact: true })
     .click();
@@ -343,24 +375,18 @@ try {
     .getByRole("button", { name: "Get Code", exact: true })
     .first()
     .click();
-  assert.equal(
-    await dialog.getByLabel("Storage bucket", { exact: true }).inputValue(),
-    "my-chat-uploads"
-  );
   await expect(dialog.getByTestId("create-command")).toContainText(
-    "--sandbox-provider vercel"
+    '"bucket":"my-chat-uploads"'
   );
-  await dialog.getByRole("switch", { name: "Attachment uploads" }).uncheck();
-  await expect(dialog.getByTestId("create-command")).not.toContainText(
-    "--sandbox-provider"
-  );
-  await dialog.getByRole("switch", { name: "Attachment uploads" }).check();
-  await expect(dialog.getByTestId("create-command")).toContainText(
-    "--sandbox-provider vercel"
-  );
+  expect(
+    commandAppPreset(await dialog.getByTestId("create-command").textContent())
+      .sandbox
+  ).toBe("vercel");
   await page.keyboard.press("Escape");
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.getByRole("button", { name: "Open", exact: true }).waitFor();
+  await expect(
+    page.getByRole("tab", { name: "Appearance", exact: true })
+  ).toBeVisible();
   assert.equal(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= innerWidth
@@ -378,6 +404,26 @@ try {
     .waitFor();
   await capture("create-mobile-installation");
   await page.keyboard.press("Escape");
+  await page.setViewportSize({ width: 320, height: 780 });
+  await page.addStyleTag({
+    content: "html { font-size: 200%; }",
+  });
+  const mobileGetCode = page
+    .getByRole("button", { name: "Get Code", exact: true })
+    .first();
+  const brandBounds = await page
+    .getByRole("link", { name: "ChatJS / Create" })
+    .boundingBox();
+  assert.ok(brandBounds && brandBounds.width >= 16);
+  const getCodeBounds = await mobileGetCode.boundingBox();
+  assert.ok(getCodeBounds && getCodeBounds.x + getCodeBounds.width <= 320);
+  await capture("create-mobile-large-text");
+  await mobileGetCode.click();
+  await dialog
+    .getByRole("button", { name: "Copy Command", exact: true })
+    .waitFor();
+  await page.keyboard.press("Escape");
+  await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`${origin}/create?base=aria`);
   await page
     .getByRole("heading", { name: "This setup is not available yet." })
@@ -418,8 +464,11 @@ try {
   );
   assert.equal(publicLink.searchParams.has("token"), false);
   assert.equal(
-    publicLink.searchParams.get("storage-config"),
-    JSON.stringify({ bucket: "public-bucket" })
+    readInstallationInput(
+      publicLink.searchParams.get("app") ?? "",
+      publicLink.searchParams.get("storage-config") ?? undefined
+    ).storage?.options?.bucket,
+    "public-bucket"
   );
   publicQuery.set(
     "storage-config",

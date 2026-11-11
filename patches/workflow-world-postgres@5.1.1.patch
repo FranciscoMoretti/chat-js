@@ -1,0 +1,52 @@
+diff --git a/dist/streamer.js b/dist/streamer.js
+--- a/dist/streamer.js
++++ b/dist/streamer.js
+@@ -245,14 +245,14 @@
+     const notifyStream = async (payload) => {
+         await pool.query('SELECT pg_notify($1, $2)', [STREAM_TOPIC, payload]);
+     };
+-    const loadPersistedChunks = (name) => drizzle
++    const loadPersistedChunks = (name, after) => drizzle
+         .select({
+         id: streams.chunkId,
+         eof: streams.eof,
+         data: streams.chunkData,
+     })
+         .from(streams)
+-        .where(and(eq(streams.streamId, name)))
++        .where(and(eq(streams.streamId, name), ...(after ? [gt(streams.chunkId, after)] : [])))
+         .orderBy(streams.chunkId);
+     // The chunkId of the first EOF row, if any has been written. A producer
+     // that retries a terminal write can append data and EOF rows after it;
+@@ -489,10 +489,29 @@
+                         });
+                         // A rejection here fails the stream; detach the listener that was
+                         // registered above so a failing stream does not leak on each read.
+-                        const chunks = await loadPersistedChunks(name).catch((err) => {
++                        let chunks;
++                        try {
++                            if (Number.isSafeInteger(offset) && offset > 0) {
++                                // Find the consumed prefix without reading its payloads or skipping the first EOF.
++                                const eof = await findFirstEofChunkId(name);
++                                const [boundary] = await drizzle
++                                    .select({ id: streams.chunkId })
++                                    .from(streams)
++                                    .where(and(eq(streams.streamId, name), eq(streams.eof, false), ...(eof ? [lt(streams.chunkId, eof)] : [])))
++                                    .orderBy(streams.chunkId)
++                                    .offset(offset - 1)
++                                    .limit(1);
++                                if (boundary) {
++                                    lastChunkId = boundary.id;
++                                    offset = 0;
++                                }
++                            }
++                            chunks = await loadPersistedChunks(name, lastChunkId);
++                        }
++                        catch (err) {
+                             cleanup();
+                             throw err;
+-                        });
++                        }
+                         // Resolve negative offset relative to the data chunk count: the
+                         // rows before the first EOF marker. Rows after it (a retried
+                         // terminal write) are ignored by `enqueue`, so they must not

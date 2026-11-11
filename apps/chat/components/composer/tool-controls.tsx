@@ -1,4 +1,5 @@
 "use client";
+import { useAvailableTools } from "./tool-availability";
 
 import type { ComposerControlProps } from "./control";
 import React from "react";
@@ -35,8 +36,9 @@ const ToolControl = ({
 }): ReactJSX.Element | null => {
   const { data: session } = useSession();
   const { getModelById } = useChatModels();
-  const definition = getToolDisplay(tool);
-  if (!installedToolNames.has(tool) || !definition) {
+  const available = useAvailableTools();
+  const definition = getToolDisplay(tool, available);
+  if (!available.has(tool) || !definition) {
     return null;
   }
   const model = getModelById(selectedModelId);
@@ -79,11 +81,11 @@ const canvasTools = {
   sheet: "createSheetDocument",
   text: "createTextDocument",
 } as const;
-const getCanvasTool = ():
-  | (typeof canvasTools)[keyof typeof canvasTools]
-  | undefined => {
+const getCanvasTool = (
+  available = installedToolNames
+): (typeof canvasTools)[keyof typeof canvasTools] | undefined => {
   const kind = (["text", "code", "sheet"] as const).find((entry) =>
-    installedToolNames.has(canvasTools[entry])
+    available.has(canvasTools[entry])
   );
   if (kind) {
     return canvasTools[kind];
@@ -94,7 +96,8 @@ const getCanvasTool = ():
 const CanvasControl = (
   props: ComposerControlProps
 ): React.JSX.Element | null => {
-  const tool = getCanvasTool();
+  const available = useAvailableTools();
+  const tool = getCanvasTool(available);
   if (tool) {
     return <ToolControl {...props} tool={tool} />;
   }
@@ -117,18 +120,30 @@ const VideoControl = (props: ComposerControlProps): React.JSX.Element => (
   <ToolControl {...props} tool="generateVideo" />
 );
 
-CanvasControl.isAvailable = (): boolean => Boolean(getCanvasTool());
+CanvasControl.isAvailable = (
+  _mobile: boolean,
+  available = installedToolNames
+): boolean => Boolean(getCanvasTool(available));
 
-SearchControl.isAvailable = (): boolean => installedToolNames.has("webSearch");
+SearchControl.isAvailable = (
+  _mobile: boolean,
+  available = installedToolNames
+): boolean => available.has("webSearch");
 
-ResearchControl.isAvailable = (): boolean =>
-  installedToolNames.has("deepResearch");
+ResearchControl.isAvailable = (
+  _mobile: boolean,
+  available = installedToolNames
+): boolean => available.has("deepResearch");
 
-ImageControl.isAvailable = (): boolean =>
-  installedToolNames.has("generateImage");
+ImageControl.isAvailable = (
+  _mobile: boolean,
+  available = installedToolNames
+): boolean => available.has("generateImage");
 
-VideoControl.isAvailable = (): boolean =>
-  installedToolNames.has("generateVideo");
+VideoControl.isAvailable = (
+  _mobile: boolean,
+  available = installedToolNames
+): boolean => available.has("generateVideo");
 
 export {
   CanvasControl,

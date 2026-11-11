@@ -12,13 +12,13 @@ import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 import { toast } from "sonner";
 
 interface DefaultModelContextType {
-  changeModel: (modelId: AppModelId) => Promise<void>;
+  changeModel: (modelId: AppModelId) => void | Promise<void>;
   defaultModel: AppModelId;
 }
 
-const DefaultModelContext = createContext<DefaultModelContextType | undefined>(
-  undefined
-);
+export const DefaultModelContext = createContext<
+  DefaultModelContextType | undefined
+>(undefined);
 
 interface DefaultModelClientProviderProps {
   readonly children: ReadonlyReactNode;

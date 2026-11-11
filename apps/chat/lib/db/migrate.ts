@@ -122,6 +122,36 @@ const runMigrate = async (): Promise<void> => {
       );
     }
 
+    const [workspaceSchema] = await connection<{ available: boolean }[]>`
+      select to_regclass('public."EveWorkspace"') is not null
+        and to_regclass('public."EveDispatch"') is not null as available
+    `;
+    if (workspaceSchema?.available) {
+      const [legacyClaims] = await connection<{ pending: boolean }[]>`
+        select exists (
+          select 1
+          from "EveWorkspace" workspace
+          join "EveDispatch" dispatch
+            on dispatch."ownerId" = workspace."ownerId"
+            and dispatch."operationId" = workspace."activeOperationId"
+          where dispatch."deliveryId" is null
+            and (
+              dispatch.kind = 'copy'
+              or (
+                dispatch.kind = 'create'
+                and dispatch."sessionId" is not null
+                and jsonb_typeof(dispatch.intent -> 'fork') = 'object'
+              )
+            )
+        ) as pending
+      `;
+      if (legacyClaims?.pending) {
+        throw new Error(
+          "Resolve active legacy EVE seed operations with the previous ChatJS app and worker before upgrading. Their workspace claims must be cleared by the previous runtime."
+        );
+      }
+    }
+
     await migrate(db, { migrationsFolder });
     // Existing chat rows can be large: build outside Drizzle's transaction so
     // regular chat writes remain available during rollout.

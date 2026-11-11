@@ -25,6 +25,12 @@ export interface ChatServerIntegration {
   readonly publicReadFilter?: () => SQL;
   /** After a root creation response, outside its transaction. May repeat on recovery. */
   readonly afterCreate?: (context: ChatCreatedContext) => Promise<void>;
+  /** After a branch is bound, outside its transaction. May repeat on recovery. */
+  readonly afterBranch?: (context: {
+    readonly ownerId: string;
+    readonly conversationId: string;
+    readonly sessionId: string;
+  }) => Promise<void>;
   /** Called only for a newly inserted logical chat, before its transaction commits. */
   readonly onCreate?: (context: {
     readonly tx: Readonly<Pick<typeof db, "select" | "insert">>;

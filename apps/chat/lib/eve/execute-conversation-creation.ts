@@ -1,11 +1,6 @@
 import { CreationRejectedError } from "@/lib/creation-rejected-error";
-import { reconcileEveWorkspaceTurn } from "./reconcile-workspace-turn";
 import { EveWorkspaceBusyError } from "../db/eve-workspace-turns";
 import { EveForkBoundaryError } from "./fork-boundary-error";
-import {
-  dispatchEveOnce,
-  EveDispatchUnknownError,
-} from "@/lib/db/eve-dispatch";
 
 import {
   CreationConflictError,
@@ -87,10 +82,7 @@ export const executeEveConversationCreation = async (
   let preparedMessage = initialPreparedMessage;
   try {
     const existing = await getEveCreation(ownerId, input.operationId);
-    if (
-      (existing?.state !== "bound" || input.fork) &&
-      preparedMessage === undefined
-    ) {
+    if (existing?.state !== "bound" && preparedMessage === undefined) {
       await loadEveModelDefinition(input.modelId);
       preparedMessage = await prepareEveMessage(input.message, input.modelId);
     }
@@ -105,7 +97,7 @@ export const executeEveConversationCreation = async (
           "/eve/chat/v1/session",
           {
             body: JSON.stringify({
-              ...(input.fork ? { seed: true } : { message: preparedMessage }),
+              message: preparedMessage,
               operationId,
             }),
             method: "POST",
@@ -120,9 +112,7 @@ export const executeEveConversationCreation = async (
         return z
           .object({
             sessionId: z.string().min(MINIMUM_SESSION_IDENTIFIER_LENGTH),
-            deliveryId: input.fork
-              ? z.string().min(1).optional()
-              : z.string().min(1),
+            deliveryId: z.string().min(1),
           })
           .parse(await result.json());
       },
@@ -139,48 +129,6 @@ export const executeEveConversationCreation = async (
         initialTitle: eveConversationTitleFallback(input.message),
       }
     );
-    if (input.fork) {
-      await reconcileEveWorkspaceTurn(ownerId, binding.id, {
-        waitForSeed: true,
-      });
-      await dispatchEveOnce(
-        {
-          ownerId,
-          operationId: input.operationId,
-          conversationId: binding.id,
-          kind: "send",
-          intent: {
-            sessionId: binding.sessionId,
-            message: input.message,
-            modelId: input.modelId ?? null,
-            selectedTool: input.selectedTool ?? null,
-          },
-        },
-        async () => {
-          const result = await requestEveCreation(
-            "dispatch",
-            ownerId,
-            `/eve/chat/v1/session/${binding.sessionId}`,
-            {
-              body: JSON.stringify({ message: preparedMessage }),
-              method: "POST",
-              signal: AbortSignal.timeout(SESSION_DISPATCH_TIMEOUT_MS),
-            },
-            input.modelId,
-            input.selectedTool
-          );
-          if (!result.ok) {
-            throw new EveDispatchUnknownError();
-          }
-          return z
-            .object({
-              sessionId: z.literal(binding.sessionId),
-              deliveryId: z.string().min(1),
-            })
-            .parse(await result.json());
-        }
-      );
-    }
     return Response.json(binding);
   } catch (error) {
     logger.error(

@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, expect, test, vi } from "vitest";
 import { eq, sql } from "drizzle-orm";
-import type { SessionStreamEvent } from "eve/client";
+import type { SessionEvent, SessionStreamEvent } from "eve/client";
 import { db } from "../lib/db/client";
 import { env } from "../lib/env";
 import {
@@ -79,7 +79,7 @@ afterAll(async () => {
   await db.delete(user).where(eq(user.id, ownerId));
 });
 
-test.each(["seed_message_0", "seed_message_1"])(
+test.each(["import:imported:0", "import:imported:1"])(
   "a public fork before %s authorizes only attachments in its selected history",
   async (beforeMessageId) => {
     const earlyKey = `${crypto.randomUUID().replaceAll("-", "").slice(0, 24)}.png`;
@@ -111,45 +111,71 @@ test.each(["seed_message_0", "seed_message_1"])(
         paths: [`/workspace/.eve/attachments/${fileKey}`],
       }))
     );
-    const events: SessionStreamEvent[] = [
+    const events: (SessionEvent & { meta?: SessionStreamEvent["meta"] })[] = [
+      { type: "session.started", data: {} },
+      { type: "delivery.admitted", data: { deliveryId: "import" } },
       {
-        type: "session.started",
+        type: "turn.started",
+        scope: { turnId: "import-turn" },
+        data: {
+          turnId: "import-turn",
+          cause: { deliveryId: "import" },
+          follows: null,
+        },
+        meta: { at: "2026-11-02T00:00:00Z", position: { line: 0, index: 0 } },
+      },
+      {
+        type: "delivery.consumed",
+        scope: { turnId: "import-turn" },
         meta: {
           at: "2026-11-02T00:00:00Z",
-          position: { line: 0, index: 0 },
+          position: { line: 0, index: 1 },
           endOfLine: true,
         },
         data: {
-          transcriptSeed: {
-            attachments: "channel",
-            messages: [
-              {
-                role: "user",
-                parts: [
-                  {
-                    type: "file",
-                    existingPath: "/workspace/.eve/attachments/fixture",
-                    url: `http://localhost:3220/api/files/${earlyKey}`,
-                    mediaType: "image/png",
-                  },
-                ],
-              },
-              {
-                role: "user",
-                parts: [
-                  {
-                    type: "file",
-                    existingPath: "/workspace/.eve/attachments/fixture",
-                    url: `http://localhost:3220/api/files/${laterKey}`,
-                    mediaType: "application/pdf",
-                  },
-                ],
-              },
-            ],
-          },
+          deliveryId: "import",
+          turnId: "import-turn",
+          parts: [],
+          history: [
+            {
+              role: "user",
+              parts: [
+                {
+                  type: "file",
+
+                  url: `http://localhost:3220/api/files/${earlyKey}`,
+                  mediaType: "image/png",
+                },
+              ],
+            },
+            {
+              role: "user",
+              parts: [
+                {
+                  type: "file",
+
+                  url: `http://localhost:3220/api/files/${laterKey}`,
+                  mediaType: "application/pdf",
+                },
+              ],
+            },
+          ],
         },
       },
+      {
+        type: "turn.settled",
+        scope: { turnId: "import-turn" },
+        data: { turnId: "import-turn", outcome: "completed" },
+      },
     ];
+    const completedEvents: SessionStreamEvent[] = events.map((event, line) => ({
+      ...event,
+      meta: {
+        at: "2026-11-02T00:00:00Z",
+        position: { line, index: 0 },
+        endOfLine: true,
+      },
+    }));
     native.capture.mockImplementation(
       async (
         _ownerId: string,
@@ -157,9 +183,13 @@ test.each(["seed_message_0", "seed_message_1"])(
         _dispatches: unknown,
         _receipts: unknown,
         boundary: string
-      ) => await Promise.resolve(prepareEveCopyTranscript(events, [], boundary))
+      ) =>
+        await Promise.resolve(
+          prepareEveCopyTranscript(completedEvents, [], boundary)
+        )
     );
-    const selectedKeys = beforeMessageId === "seed_message_1" ? [earlyKey] : [];
+    const selectedKeys =
+      beforeMessageId === "import:imported:1" ? [earlyKey] : [];
     const fork = await createEveConversation(
       ownerId,
       crypto.randomUUID(),
@@ -267,47 +297,73 @@ test("a public historical fork cannot expose future document revisions or their 
       revisionId: unrelatedId,
     },
   ]);
-  const events: SessionStreamEvent[] = [
+  const events: (SessionEvent & { meta?: SessionStreamEvent["meta"] })[] = [
+    { type: "session.started", data: {} },
+    { type: "delivery.admitted", data: { deliveryId: "import" } },
     {
-      type: "session.started",
+      type: "turn.started",
+      scope: { turnId: "import-turn" },
+      data: {
+        turnId: "import-turn",
+        cause: { deliveryId: "import" },
+        follows: null,
+      },
+      meta: { at: "2026-11-02T00:00:00Z", position: { line: 0, index: 0 } },
+    },
+    {
+      type: "delivery.consumed",
+      scope: { turnId: "import-turn" },
       meta: {
         at: "2026-11-02T00:00:00Z",
-        position: { line: 0, index: 0 },
+        position: { line: 0, index: 1 },
         endOfLine: true,
       },
       data: {
-        transcriptSeed: {
-          attachments: "channel",
-          messages: [
-            {
-              role: "user",
-              parts: [{ type: "text", text: "Write notes" }],
-            },
-            {
-              role: "assistant",
-              parts: [
-                {
-                  type: "dynamic-tool",
-                  toolName: "createTextDocument",
-                  input: {},
-                  state: "output-available",
-                  output: { documentId, revisionId: earlyId },
-                },
-              ],
-            },
-            {
-              role: "user",
-              parts: [{ type: "text", text: "Change them" }],
-            },
-          ],
-        },
+        deliveryId: "import",
+        turnId: "import-turn",
+        parts: [],
+        history: [
+          {
+            role: "user",
+            parts: [{ type: "text", text: "Write notes" }],
+          },
+          {
+            role: "assistant",
+            parts: [
+              {
+                type: "dynamic-tool",
+                toolName: "createTextDocument",
+                input: {},
+                state: "output-available",
+                output: { documentId, revisionId: earlyId },
+              },
+            ],
+          },
+          {
+            role: "user",
+            parts: [{ type: "text", text: "Change them" }],
+          },
+        ],
       },
     },
+    {
+      type: "turn.settled",
+      scope: { turnId: "import-turn" },
+      data: { turnId: "import-turn", outcome: "completed" },
+    },
   ];
+  const completedEvents: SessionStreamEvent[] = events.map((event, line) => ({
+    ...event,
+    meta: {
+      at: "2026-11-02T00:00:00Z",
+      position: { line, index: 0 },
+      endOfLine: true,
+    },
+  }));
   native.capture.mockImplementation(
     async () =>
       await Promise.resolve(
-        prepareEveCopyTranscript(events, [], "seed_message_2")
+        prepareEveCopyTranscript(completedEvents, [], "import:imported:2")
       )
   );
   const fork = await createEveConversation(
@@ -315,7 +371,9 @@ test("a public historical fork cannot expose future document revisions or their 
     crypto.randomUUID(),
     "Fork",
     async () => await Promise.resolve({ sessionId: crypto.randomUUID() }),
-    { fork: { conversationId: source.id, beforeMessageId: "seed_message_2" } }
+    {
+      fork: { conversationId: source.id, beforeMessageId: "import:imported:2" },
+    }
   );
   await db
     .update(eveConversation)

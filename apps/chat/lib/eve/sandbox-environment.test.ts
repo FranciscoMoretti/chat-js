@@ -2,6 +2,11 @@ import { beforeEach, expect, it, vi } from "vitest";
 
 const installed = vi.hoisted(() => ({ persistent: false }));
 const calls = vi.hoisted(() => ({ register: vi.fn(), provider: vi.fn() }));
+vi.mock("@/lib/eve/workspace-attachments", () => ({
+  retainWorkspaceAttachment: vi.fn(),
+  readWorkspaceAttachment: vi.fn(),
+  recordWorkspaceAttachment: vi.fn(),
+}));
 vi.mock("@/chatjs/providers/sandbox/provider", () => ({
   get supportsPersistentSandbox() {
     return installed.persistent;
@@ -43,7 +48,3 @@ it("selects the installed persistent provider without resolving credentials at i
   expect(createAppSandboxEnvironment().provider).toBe("chatjs-persistent");
   expect(calls.provider).not.toHaveBeenCalled();
 });
-
-vi.mock("@/lib/eve/workspace-attachments", () => ({
-  resolveWorkspaceSeedAttachments: vi.fn(),
-}));

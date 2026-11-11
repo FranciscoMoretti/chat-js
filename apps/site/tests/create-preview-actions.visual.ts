@@ -1,3 +1,4 @@
+import { attachPreviewFile } from "./create-fixtures.mts";
 import assert from "node:assert/strict";
 import { mkdir } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
@@ -32,7 +33,7 @@ try {
   await frame
     .getByLabel("Message", { exact: true })
     .fill("An unfinished draft");
-  await frame.getByRole("button", { name: "New chat", exact: true }).click();
+  await frame.getByRole("link", { name: /New Chat/u }).click();
   await expect(
     frame.getByRole("heading", { name: "How can I help you today?" })
   ).toBeVisible();
@@ -46,11 +47,9 @@ try {
   await frame
     .getByLabel("Message", { exact: true })
     .fill("Another unfinished draft");
-  await frame.getByRole("button", { name: "Attach sample file" }).click();
-  await frame
-    .getByRole("button", { name: "Remove sample attachment" })
-    .waitFor();
-  await frame.getByRole("button", { name: "New chat", exact: true }).click();
+  await attachPreviewFile(frame);
+  await frame.getByRole("button", { name: "Remove attachment" }).waitFor();
+  await frame.getByRole("link", { name: /New Chat/u }).click();
   await expect(
     frame.getByRole("heading", { name: "How can I help you today?" })
   ).toBeVisible();
@@ -59,7 +58,7 @@ try {
     0
   );
   await expect(
-    frame.getByRole("button", { name: "Remove sample attachment" })
+    frame.getByRole("button", { name: "Remove attachment" })
   ).toHaveCount(0);
   await page.screenshot({
     path: `${output}${base}-create-sidebar-new-chat.png`,

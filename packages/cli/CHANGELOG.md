@@ -1,5 +1,13 @@
 # chat-js
 
+## 1.0.0-alpha.2
+
+Publish the CLI with public versions of its internal gateway and sandbox dependencies so `npx chat-js` can install it outside the monorepo.
+
+## 1.0.0-alpha.1
+
+Pin new apps to registry `0.2.0-beta.3`, whose gateway items install `chatjs/providers/gateway.ts`. `1.0.0-alpha.0` fetched `0.2.0-beta.2` and rejected every gateway because those items still install `lib/ai/gateway.ts`.
+
 ## 1.0.0-alpha.0
 
 Start the 1.0 alpha series under the transferred `chat-js` package name, based on the current main branch. Install with `npx chat-js@alpha create my-app`. APIs and generated source remain subject to substantial changes before the stable 1.0 release.

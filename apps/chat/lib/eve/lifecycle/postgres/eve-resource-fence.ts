@@ -101,7 +101,8 @@ create or replace trigger eve_resource_fence before insert or update
   on workflow.workflow_stream_chunks for each row execute function workflow.eve_guard_stream();
 do $$ declare table_name text; begin
   foreach table_name in array array['workflow_events', 'workflow_event_slots',
-    'workflow_steps', 'workflow_hooks', 'workflow_waits']
+    'workflow_steps', 'workflow_hooks', 'workflow_waits',
+    'workflow_invocations', 'workflow_snapshots', 'workflow_start_hook_admissions']
   loop
     execute format('create or replace trigger eve_resource_fence before insert or update on workflow.%I for each row execute function workflow.eve_guard_run_payload()', table_name);
   end loop;

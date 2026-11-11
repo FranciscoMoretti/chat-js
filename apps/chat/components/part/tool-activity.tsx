@@ -13,7 +13,7 @@ import {
   TraceCollapsible,
   TraceCollapsibleTrigger,
   TraceCollapsibleContent,
-} from "../ui/trace";
+} from "@/components/ui/trace";
 
 const defaultPrimitives = {
   Trace,

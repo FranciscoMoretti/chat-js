@@ -55,9 +55,9 @@ it.each([
     version: "2.0.45",
   },
   {
-    archiveName: "workflow-world-postgres-5.0.0-beta.40.tgz",
+    archiveName: "workflow-world-postgres-5.1.1.tgz",
     name: "@workflow/world-postgres",
-    version: "5.0.0-beta.40",
+    version: "5.1.1",
   },
 ])(
   "ships the maintained $name archive with compatible metadata",

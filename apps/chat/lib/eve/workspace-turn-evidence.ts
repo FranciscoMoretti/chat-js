@@ -20,17 +20,12 @@ export const hasSettledWorkspaceSession = (
 
 export const hasSettledWorkspaceOperation = (
   operation: {
-    readonly kind: "create" | "copy" | "send";
     readonly deliveryId: string | null;
-    readonly seeded: boolean;
   },
   events: readonly WorkspaceTurnEvent[]
 ): boolean => {
   if (!hasSettledWorkspaceSession(events)) {
     return false;
-  }
-  if (operation.kind === "copy" || operation.seeded) {
-    return true;
   }
   const consumedIndex = events.findIndex(
     (event) =>

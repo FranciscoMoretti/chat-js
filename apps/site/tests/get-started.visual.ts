@@ -20,21 +20,19 @@ const captureViewport = async (width: number): Promise<void> => {
   await page.goto(`http://localhost:${process.env.PORT}`, {
     waitUntil: "domcontentloaded",
   });
-  const section = page.locator("section").filter({
-    has: page.getByRole("heading", {
-      name: "Get started in under five minutes",
-    }),
-  });
+  const section = page.locator(".hero-cli");
   await section.waitFor();
   await page.evaluate(async () => await document.fonts.ready);
-  assert.equal(await section.locator("code").textContent(), `$ ${command}`);
+  assert.equal(await section.locator("code").textContent(), command);
   await section.screenshot({
     animations: "disabled",
     path: `${output}${width}-default.png`,
     style: "nextjs-portal { visibility: hidden !important; }",
   });
-  await section.getByRole("button", { name: "Copy command" }).click();
-  await section.getByText("Copied", { exact: true }).waitFor();
+  await section.getByRole("button", { name: "Copy create command" }).click();
+  await section
+    .getByText("Copied", { exact: true })
+    .waitFor({ state: "attached" });
   assert.equal(
     await page.evaluate(async () => await navigator.clipboard.readText()),
     command

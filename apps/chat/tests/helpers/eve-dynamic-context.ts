@@ -4,6 +4,8 @@ import { conversationOf } from "eve/client";
 export const testDynamicContext = (
   overrides: Partial<DynamicContext> = {}
 ): DynamicContext => ({
+  getSandbox: async () =>
+    await Promise.reject(new Error("Sandbox unavailable in this test")),
   channel: { kind: "http", metadata: {} },
   messages: async () => await Promise.resolve([]),
   model: { id: "test/model" },

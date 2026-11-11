@@ -1,5 +1,6 @@
 "use client";
 
+import { useChatNavigation } from "./chat/chat-navigation";
 import { useEffect } from "react";
 
 import { useRouter } from "next/navigation";
@@ -8,6 +9,7 @@ import { useSidebar } from "@/components/ui/sidebar";
 
 const KeyboardShortcuts = (): null => {
   const router = useRouter();
+  const embedded = useChatNavigation();
   const { setOpenMobile } = useSidebar();
 
   // Keyboard shortcut for new chat
@@ -28,7 +30,11 @@ const KeyboardShortcuts = (): null => {
         event.preventDefault();
         setOpenMobile(false);
         globalThis.dispatchEvent(new Event("chatjs:new-chat"));
-        router.push("/");
+        if (embedded) {
+          embedded.navigate("/");
+        } else {
+          router.push("/");
+        }
       }
     };
 
@@ -36,7 +42,7 @@ const KeyboardShortcuts = (): null => {
     return (): void => {
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [setOpenMobile, router]);
+  }, [setOpenMobile, router, embedded]);
 
   // This component only handles keyboard events
   return null;

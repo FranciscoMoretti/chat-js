@@ -7,7 +7,7 @@ import { chat } from "@/integrations/chat/server";
 import { reserveConversationWorkspace } from "./eve-workspaces";
 import { eveDeletionScope } from "./eve-deletion-scope";
 import { markEveCreationFailure } from "./eve-creation-failure";
-import { dispatchEveOnce } from "./eve-dispatch";
+import { dispatchEveOnce, EveDispatchUnknownError } from "./eve-dispatch";
 import {
   and,
   desc,
@@ -750,7 +750,7 @@ const bindConversationSession = async (
   }
   const [bound] = await tx
     .update(eveConversation)
-    .set({ initialRequest: null, initialSeed: null, sessionId, state: "bound" })
+    .set({ initialRequest: null, sessionId, state: "bound" })
     .where(
       and(
         eq(eveConversation.id, reservationId),
@@ -800,12 +800,11 @@ const assertMatchingMessageCreation = (
   initialModelId: string | undefined,
   initialContentHash: string | undefined,
   fork: ReadonlyNativeSurface<EveForkInput> | undefined,
-  forkKind: typeof eveConversation.$inferInsert.forkKind,
-  seedOnly: boolean
+  forkKind: typeof eveConversation.$inferInsert.forkKind
 ): ConversationRow => {
   if (
     existing === undefined ||
-    existing.creationKind !== (seedOnly ? "copy" : "message") ||
+    existing.creationKind !== "message" ||
     existing.firstMessage !== message ||
     existing.initialModelId !== (initialModelId ?? null) ||
     existing.initialContentHash !== (initialContentHash ?? null) ||
@@ -847,7 +846,6 @@ const createEveConversation = async (
     fork,
     forkKind,
     fileKeys = [],
-    seedOnly = false,
   }: ReadonlyNativeSurface<{
     initialRequest?: unknown;
     initialModelId?: string;
@@ -856,10 +854,9 @@ const createEveConversation = async (
     fork?: EveForkInput;
     forkKind?: typeof eveConversation.$inferInsert.forkKind;
     fileKeys?: string[];
-    seedOnly?: boolean;
   }> = {}
 ): Promise<BoundConversation> => {
-  if ((forkKind || seedOnly) && !fork) {
+  if (forkKind && !fork) {
     throw new CreationConflictError(
       "Fork intent requires a source conversation."
     );
@@ -867,7 +864,7 @@ const createEveConversation = async (
   let [reservation] = await reserveEveConversation(
     {
       firstMessage: message,
-      creationKind: seedOnly ? "copy" : "message",
+      creationKind: "message",
       forkKind,
       initialContentHash,
       initialModelId,
@@ -897,11 +894,25 @@ const createEveConversation = async (
       initialModelId,
       initialContentHash,
       fork,
-      forkKind,
-      seedOnly
+      forkKind
     );
     const binding = boundConversation(matching);
     if (binding) {
+      const [receipt] = await db
+        .select({ sessionId: eveDispatch.sessionId })
+        .from(eveDispatch)
+        .where(
+          and(
+            eq(eveDispatch.ownerId, ownerId),
+            eq(eveDispatch.operationId, matching.id),
+            eq(eveDispatch.conversationId, matching.id),
+            eq(eveDispatch.sessionId, binding.sessionId),
+            eq(eveDispatch.kind, "create")
+          )
+        );
+      if (!hasQueryRow(receipt)) {
+        throw new EveDispatchUnknownError();
+      }
       return binding;
     }
     reservation = matching;
@@ -918,7 +929,7 @@ const createEveConversation = async (
         ownerId,
         operationId: reservation.id,
         conversationId: reservation.id,
-        kind: seedOnly ? "copy" : "create",
+        kind: "create",
         intent: reservation.initialRequest ?? {
           message,
           initialModelId,
@@ -927,7 +938,7 @@ const createEveConversation = async (
           forkKind,
         },
       },
-      async () =>
+      async (saveReceipt) =>
         await db.transaction(async (tx: CreationTransactionView) => {
           // The reservation is already committed so native hooks can find it.
           // Transaction locks release on worker death; creating rows need no manual repair.
@@ -949,12 +960,12 @@ const createEveConversation = async (
             .where(eq(eveConversation.id, reservation.id));
           const binding = boundConversation(current);
           if (binding) {
-            return binding;
+            throw new EveDispatchUnknownError();
           }
           if (
             !(
               hasQueryRow(current) &&
-              current.creationKind === (seedOnly ? "copy" : "message") &&
+              current.creationKind === "message" &&
               (current.state === "creating" || current.state === "uncertain")
             )
           ) {
@@ -969,7 +980,12 @@ const createEveConversation = async (
             reservation.id,
             accepted.sessionId
           );
-          return { ...bound, deliveryId: accepted.deliveryId };
+          const receipt = {
+            sessionId: bound.sessionId,
+            deliveryId: accepted.deliveryId,
+          };
+          await saveReceipt(tx, receipt);
+          return receipt;
         })
     );
     return { id: reservation.id, sessionId: dispatched.sessionId };

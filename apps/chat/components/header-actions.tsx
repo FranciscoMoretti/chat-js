@@ -1,6 +1,7 @@
 "use client";
 
 import { Hint } from "@/components/hint";
+import { ChatHeaderActions } from "./chat/chat-header";
 import { memo } from "react";
 import { Button } from "@/components/ui/button";
 
@@ -13,15 +14,17 @@ import type { JSX as ReactJSX } from "react";
 
 import { useRouter } from "next/navigation";
 
+import { useChatNavigation } from "./chat/chat-navigation";
 import { useSession } from "@/providers/session-provider";
 
 const PureHeaderActions = (): ReactJSX.Element => {
   const { data: session } = useSession();
   const user = session?.user;
   const router = useRouter();
+  const navigation = useChatNavigation();
 
   return (
-    <div className="flex items-center gap-2">
+    <ChatHeaderActions>
       {!user && (
         <Hint
           trigger={
@@ -29,6 +32,10 @@ const PureHeaderActions = (): ReactJSX.Element => {
               aria-label="Sign in"
               className="h-8 px-3"
               onClick={() => {
+                if (navigation) {
+                  navigation.navigate("/login");
+                  return;
+                }
                 router.push("/login");
                 router.refresh();
               }}
@@ -45,7 +52,7 @@ const PureHeaderActions = (): ReactJSX.Element => {
       )}
       <DocsLink />
       <GitHubLink />
-    </div>
+    </ChatHeaderActions>
   );
 };
 

@@ -7,7 +7,10 @@ import { ChatLoadingShell } from "@/components/chat-loading-shell";
 import { EveDeletionProvider } from "@/components/eve/eve-deletion-provider";
 import { EveRuntimeProvider } from "@/components/eve/eve-runtime-provider";
 import { KeyboardShortcuts } from "@/components/keyboard-shortcuts";
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import {
+  ChatWorkspace,
+  ChatWorkspaceContent,
+} from "@/components/chat/chat-workspace";
 import type { AppModelId } from "@/lib/ai/app-model-id";
 import { config } from "@/lib/config";
 import { isPlaywrightTestEnvironment } from "@/lib/constants";
@@ -21,8 +24,6 @@ import { TRPCReactProvider } from "@/trpc/react";
 import { HydrateClient } from "@/trpc/server";
 
 import { auth } from "@/lib/auth";
-
-const sidebarInsetClassName = "[--header-height:calc(var(--spacing)*13)]";
 
 const resolveDefaultModel = (
   cookieModel: string | undefined,
@@ -91,21 +92,21 @@ const ChatLayout = async ({
   const content = (
     <>
       <AppSidebar />
-      <SidebarInset className={sidebarInsetClassName}>
+      <ChatWorkspaceContent>
         <Suspense fallback={<ChatLoadingShell />}>
           <ChatLayoutDynamic>{children}</ChatLayoutDynamic>
         </Suspense>
-      </SidebarInset>
+      </ChatWorkspaceContent>
     </>
   );
   return (
     <TRPCReactProvider>
       <SessionProvider>
-        <SidebarProvider defaultOpen={defaultOpen}>
+        <ChatWorkspace defaultOpen={defaultOpen}>
           <ChatPlugins>
             <EveDeletionProvider>{content}</EveDeletionProvider>
           </ChatPlugins>
-        </SidebarProvider>
+        </ChatWorkspace>
       </SessionProvider>
     </TRPCReactProvider>
   );

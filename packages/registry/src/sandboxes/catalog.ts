@@ -31,6 +31,7 @@ export const builtInSandboxes = ["vercel", "daytona"].map((id) => ({
       kind: "sandbox",
       id,
       capabilities: {
+        persistent: id === "vercel",
         runtimes: ["python", "javascript"],
         cleanup: "durable-allocation",
         cancellation: "terminate",

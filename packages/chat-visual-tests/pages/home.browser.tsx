@@ -58,8 +58,23 @@ test("home with Guest Chat installed has a fixed inexpensive model", async () =>
 test("home signed in lists projects and chat history", async () => {
   await renderRoute(home, signedIn);
   await expect
+    .element(page.getByRole("link", { name: /New Chat/u }))
+    .toBeVisible();
+  await expect
+    .element(page.getByRole("button", { name: "New project", exact: true }))
+    .toBeVisible();
+  await expect.element(page.getByText("Chats", { exact: true })).toBeVisible();
+  await expect
     .element(page.getByText("How can I help you today?"))
     .toBeVisible();
+  const appMark = page.getByRole("img", { name: "ChatJS", exact: true });
+  await expect.element(appMark).toBeVisible();
+  await expect
+    .poll(() => {
+      const image = appMark.element();
+      return image instanceof HTMLImageElement && image.naturalWidth > 0;
+    })
+    .toBe(true);
   await expect.element(page.getByText("Q4 launch")).toBeVisible();
   await expect
     .element(page.getByText("Onboarding email sequence ideas"))

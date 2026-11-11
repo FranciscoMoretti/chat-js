@@ -1,4 +1,5 @@
 "use client";
+import { useAvailableTools } from "./tool-availability";
 
 import { MenuButton } from "@/components/menu-button";
 import {
@@ -29,6 +30,7 @@ export const ComposerMenu = (
   props: ComposerControlProps
 ): ReactJSX.Element | null => {
   const mobile = useIsMobile();
+  const available = useAvailableTools();
   const hasAttachments = ComposerAttachments.useHasContent();
   const hasExtensions = ComposerExtensions.useHasContent();
   const controls = composerControls.filter(
@@ -38,7 +40,7 @@ export const ComposerMenu = (
       readonly Component: Readonly<
         Pick<(typeof composerControls)[number]["Component"], "isAvailable">
       >;
-    }) => Component.isAvailable?.(mobile) ?? true
+    }) => Component.isAvailable?.(mobile, available) ?? true
   );
   const hasControls = controls.length > 0 || hasAttachments || hasExtensions;
   if (!hasControls && props.selectedTool === null) {
@@ -80,7 +82,7 @@ export const ComposerMenu = (
                 }}
               >
                 Clear{" "}
-                {getToolDisplay(props.selectedTool)?.shortName ??
+                {getToolDisplay(props.selectedTool, available)?.shortName ??
                   "unavailable tool"}
               </DropdownMenuItem>
             </>

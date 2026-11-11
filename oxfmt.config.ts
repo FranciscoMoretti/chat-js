@@ -6,6 +6,11 @@ export default defineConfig({
   // These generated indexes have content hashes checked by chat-js sync.
   // Reformatting their bodies invalidates the guard against overwriting user edits.
   ignorePatterns: [
+    // Frozen standalone animation exports; exercised by homepage visual coverage.
+    "apps/site/public/home/hero/*.js",
+    // Generated from the typed brand sources.
+    "packages/brand/assets/runtime/*.js",
+    "apps/site/public/home/source/*.js",
     ...(ultracite.ignorePatterns ?? []),
     // shadcn-installed Code Block dependencies; keep upstream source unchanged.
     "apps/chat/hooks/use-highlighted-code.ts",

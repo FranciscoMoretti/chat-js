@@ -7,8 +7,13 @@ import { useInstallation } from "./installation-provider";
 
 export const ChatPreviewSync = ({
   iframeRef,
-}: Readonly<{ iframeRef: RefObject<HTMLIFrameElement | null> }>) => {
-  const { installation } = useInstallation();
+  guest,
+}: Readonly<{
+  iframeRef: RefObject<HTMLIFrameElement | null>;
+  guest: boolean;
+}>) => {
+  const { resolution, scenario } = useInstallation();
+  const installation = resolution?.selection ?? null;
   const { resolvedTheme } = useTheme();
   useEffect(() => {
     const iframe = iframeRef.current;
@@ -17,6 +22,8 @@ export const ChatPreviewSync = ({
         {
           type: "chatjs:create-installation",
           installation,
+          guest,
+          scenario,
           mode: resolvedTheme === "dark" ? "dark" : "light",
         },
         window.location.origin
@@ -36,6 +43,6 @@ export const ChatPreviewSync = ({
       iframe?.removeEventListener("load", send);
       window.removeEventListener("message", ready);
     };
-  }, [iframeRef, installation, resolvedTheme]);
+  }, [iframeRef, installation, guest, scenario, resolvedTheme]);
   return null;
 };

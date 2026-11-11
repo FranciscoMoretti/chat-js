@@ -27,7 +27,7 @@ bun run db:generate
 bun run db:migrate
 ```
 
-New apps receive a baseline for their selected plugins. See [plugin migrations](../core/plugins#database-migrations) for migration ownership and removal behavior.
+New apps receive a baseline for their selected plugins. See [plugin migrations](./using-plugins#database-migrations) for migration ownership and removal behavior.
 
 ### Encryption key
 
@@ -135,4 +135,4 @@ Server URLs, OAuth tokens, and credentials are encrypted with `MCP_ENCRYPTION_KE
 
 ## Customization
 
-Edit `chatjs/plugins/mcp/` for connector behavior, the router, and browser contributions. The plugin's `mcp-env.ts` owns credential validation and is loaded only when MCP is installed. See [Create a plugin](../cookbook/create-plugin) and the [Plugin API](../reference/plugin-api) for contribution contracts.
+Edit `chatjs/plugins/mcp/` for connector behavior, the router, and browser contributions. The plugin's `mcp-env.ts` owns credential validation and is loaded only when MCP is installed. See [Create a plugin](./create-plugin) and the [Plugin API](../reference/plugin-api) for contribution contracts.

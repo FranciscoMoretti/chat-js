@@ -1,6 +1,6 @@
 {
   "name": "@chat-js/registry",
-  "version": "0.2.0-beta.2",
+  "version": "0.2.0-beta.3",
   "private": false,
   "description": "ChatJS tool and gateway registry items",
   "keywords": [
@@ -100,7 +100,7 @@
     "drizzle-orm": "^0.45.1",
     "echarts": "6.0.0",
     "echarts-for-react": "^3.0.2",
-    "eve": "npm:@chat-js/eve@1.0.0-rc.1-chatjs.0",
+    "eve": "npm:@chat-js/eve@1.0.0-rc.6-chatjs.1",
     "files-sdk": "2.5.0",
     "geist": "^1.7.2",
     "guarded-fetch": "^0.1.4",

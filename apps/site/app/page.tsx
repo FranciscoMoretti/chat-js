@@ -1,30 +1,33 @@
 import { siteConfig, siteLinks } from "@/lib/site-config";
-import { Faq } from "@/components/faq";
-import { Features } from "@/components/features";
-import { Footer } from "@/components/footer";
-import { GetStarted } from "@/components/get-started";
-import { Hero } from "@/components/hero";
-import { LogoCloud } from "@/components/logo-cloud";
-import type { Metadata } from "next";
-import { Navbar } from "@/components/navbar";
-import { Platforms } from "@/components/platforms";
+import { Homepage } from "@/components/home/homepage";
+import { colors } from "@chatjs/brand/identity";
+import type { Metadata, Viewport } from "next";
 import React from "react";
-import { TechStack } from "@/components/tech-stack";
-import { UseCases } from "@/components/use-cases";
+
+const socialDescription =
+  "A working chat. Your choice of models. Tools and plugins. Code you own.";
+const socialTitle = "ChatJS — The building blocks for your AI app";
+const viewport: Viewport = { themeColor: colors.background };
 
 const metadata: Metadata = {
   alternates: {
     canonical: siteLinks.home,
   },
   description:
-    "Stop rebuilding the same AI chat infrastructure. ChatJS gives you a production-ready foundation with auth, streaming, tool calling, and 120+ models.",
+    "The building blocks for your AI app. A working chat, your choice of models, tools and plugins. Code you own.",
   openGraph: {
-    description:
-      "A production-ready foundation with auth, streaming, tool calling, and 120+ models. Scaffold it, customize it, ship it.",
-    title: "ChatJS - Stop Rebuilding the Same AI Chat Infrastructure",
+    description: socialDescription,
+    title: socialTitle,
     url: siteLinks.home,
   },
-  title: "The Prod-Ready AI Chat App",
+  title: "The building blocks for your AI app",
+  twitter: {
+    card: "summary_large_image",
+    creator: siteConfig.creator,
+    description: socialDescription,
+    images: [siteConfig.ogImage],
+    title: socialTitle,
+  },
 };
 
 const structuredData = {
@@ -43,7 +46,7 @@ const structuredData = {
         priceCurrency: "USD",
       },
       operatingSystem: "Web, macOS, Windows, Linux",
-      screenshot: `${siteConfig.url}${siteConfig.ogImage}`,
+      screenshot: `${siteConfig.url}${siteConfig.appScreenshot}`,
       softwareHelp: siteLinks.docs,
       url: siteLinks.home,
     },
@@ -64,22 +67,11 @@ const structuredData = {
 };
 
 const HomePage = (): React.JSX.Element => (
-  <div className="flex min-h-screen flex-col">
+  <>
     <script type="application/ld+json">{JSON.stringify(structuredData)}</script>
-    <Navbar />
-    <main className="flex-1">
-      <Hero />
-      <LogoCloud />
-      <Features />
-      <TechStack />
-      <Platforms />
-      <UseCases />
-      <Faq />
-      <GetStarted />
-    </main>
-    <Footer />
-  </div>
+    <Homepage />
+  </>
 );
 
-export { metadata };
+export { metadata, viewport };
 export default HomePage;

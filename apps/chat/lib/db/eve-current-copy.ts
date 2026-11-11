@@ -187,26 +187,15 @@ export const initializeEveCurrentCopy = async (
         .values(files.map((file) => ({ ...file, conversationId })))
         .onConflictDoNothing();
     }
-    const { resolveWorkspaceSeedAttachments } =
-      await import("@/lib/eve/workspace-attachments");
     await tx
       .update(eveConversation)
-      .set({
-        initialSeed: await resolveWorkspaceSeedAttachments({
-          ownerId,
-          workspaceId: target.workspaceId,
-          seed: parseEveCopySeed({
-            ...projection.seed,
-            attachments: "channel",
-          }),
-        }),
-      })
+      .set({ initialSeed: parseEveCopySeed(projection.seed) })
       .where(eq(eveConversation.id, conversationId));
   });
 };
 
-/** Only accepted server reservations can supply trusted transcript seeds. */
-export const resolveEveCurrentCopySeed = async (
+/** Only accepted server reservations can supply trusted branch history. */
+export const resolveEveBranchHistory = async (
   ownerId: string,
   reservationId: string
 ) => {
@@ -219,12 +208,14 @@ export const resolveEveCurrentCopySeed = async (
         eq(eveConversation.ownerId, ownerId)
       )
     );
-  if (
-    row === undefined ||
-    row.initialSeed === null ||
-    !["creating", "uncertain"].includes(row.state)
-  ) {
-    throw new Error("Copy initialization is unavailable.");
+  if (row === undefined || !["creating", "uncertain"].includes(row.state)) {
+    throw new Error("Branch initialization is unavailable.");
+  }
+  if (row.parentConversationId === null) {
+    return null;
+  }
+  if (row.initialSeed === null) {
+    throw new Error("Branch history was not captured.");
   }
   return parseEveCopySeed(row.initialSeed);
 };
