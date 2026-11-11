@@ -57,12 +57,14 @@ export const renderRoute = async (
   {
     viewports = ["desktop", "mobile"],
     allowPendingSidebar = false,
+    fakeTimeouts = false,
     ...request
   }: Partial<Omit<typeof route, "queryClients">> & {
     /** Limit to the viewports where this state looks different from its neighbours. */
     viewports?: readonly Viewport[];
     /** Only loading-state fixtures intentionally retain the sidebar Suspense fallback. */
     allowPendingSidebar?: boolean;
+    fakeTimeouts?: boolean;
   } = {}
 ) => {
   disableAutoSnapshot();
@@ -82,7 +84,10 @@ export const renderRoute = async (
     trpc: {},
     ...request,
   });
-  vi.useFakeTimers({ now, toFake: ["Date"] });
+  vi.useFakeTimers({
+    now,
+    toFake: fakeTimeouts ? ["Date", "setTimeout", "clearTimeout"] : ["Date"],
+  });
   await page.viewport(VIEWPORTS.desktop.width, VIEWPORTS.desktop.height);
   const container = document.createElement("div");
   document.body.append(container);

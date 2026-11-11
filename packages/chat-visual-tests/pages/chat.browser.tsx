@@ -387,7 +387,7 @@ test("conversation inside a project", async () => {
   await expect
     .poll(() =>
       document.querySelector(
-        '[data-slot="sidebar"] [data-slot="scroll-area-scrollbar"]'
+        '[data-slot="sidebar"] [data-slot="scroll-area-scrollbar"][data-has-overflow-y]'
       )
     )
     .not.toBeNull();

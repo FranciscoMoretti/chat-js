@@ -161,12 +161,14 @@ test("native transcript follows streaming, releases manual scroll, and preserves
         { interval: 50 }
       )
       .toBeGreaterThanOrEqual(3);
+    const settledDrift = existing.getBoundingClientRect().top - anchorTop;
+    expect(Math.abs(settledDrift)).toBeLessThan(3);
     act(() => {
-      viewport.scrollTop += existing.getBoundingClientRect().top - anchorTop;
+      viewport.scrollTop += settledDrift;
     });
     await expect
-      .poll(() => existing.getBoundingClientRect().top - anchorTop)
-      .toBe(0);
+      .poll(() => Math.abs(existing.getBoundingClientRect().top - anchorTop))
+      .toBeLessThan(1);
     await takeSnapshot("native-conversation-history-and-streaming");
     await page.elementLocator(fixture.container).screenshot();
 

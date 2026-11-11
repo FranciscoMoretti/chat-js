@@ -3,7 +3,7 @@ import { conversationOf } from "eve/client";
 import { takeSnapshot } from "@uiverify/vitest";
 import React, { act } from "react";
 import { expect, test, vi } from "vitest";
-import { commands, page } from "vitest/browser";
+import { page } from "vitest/browser";
 
 import { EveConversation } from "@/components/eve/eve-conversation";
 import { EveLogicalContext } from "@/components/eve/eve-logical-context";
@@ -48,7 +48,6 @@ test("conversation retains its draft across rerenders and shows delivery recover
   const controller = new LogicalChat(conversationId, conversationId);
   controller.observe(conversationId, agent);
   const value = { controller, ownerId, snapshot: controller.getSnapshot() };
-  await commands.modelAssets();
   const state = await mountNative(
     <EveLogicalContext value={value}>
       <EveConversation

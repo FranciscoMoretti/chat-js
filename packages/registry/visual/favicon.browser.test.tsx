@@ -1,7 +1,7 @@
 import { takeSnapshot } from "@uiverify/vitest";
 import React, { act } from "react";
 import { expect, test, vi } from "vitest";
-import { commands, page } from "vitest/browser";
+import { page } from "vitest/browser";
 import { Favicon } from "@/components/favicon";
 import { FaviconGroup } from "@/components/favicon-group";
 import { WebSourceBadge } from "@/components/source-badge";
@@ -10,12 +10,6 @@ import { McpConnectDialog } from "@/chatjs/plugins/mcp/ui/mcp-connect-dialog";
 import { ConnectorHeader } from "@/chatjs/plugins/mcp/ui/connector-header";
 import { mount, renderRoot, unmount } from "@/tests/visual/primitive-mount";
 import "@/tests/visual/sandbox.css";
-
-declare module "vitest/browser" {
-  interface BrowserCommands {
-    faviconAssets: () => Promise<void>;
-  }
-}
 
 vi.mock("@/trpc/react", () => ({
   useTRPC: () => ({ mcp: { authorize: { mutationOptions: () => ({}) } } }),
@@ -34,7 +28,6 @@ const source = {
 const faviconUrl = "https://favicon.example.test/icon.svg";
 
 test("favicon sizes, source overlap, and connector fallback gallery", async () => {
-  await commands.faviconAssets();
   const fixture = await mount(
     <div className="bg-background text-foreground grid w-96 gap-6 p-6">
       <div className="flex items-center gap-4">
@@ -122,7 +115,6 @@ test("favicon sizes, source overlap, and connector fallback gallery", async () =
 });
 
 test("favicon loads remote URLs directly and recovers after a failed source changes", async () => {
-  await commands.faviconAssets();
   const consoleError = vi.spyOn(console, "error");
   const fixture = await mount(
     <Favicon
@@ -180,7 +172,6 @@ test("favicon loads remote URLs directly and recovers after a failed source chan
 });
 
 test("MCP connect dialog keeps its layout when the favicon falls back", async () => {
-  await commands.faviconAssets();
   const fixture = await mount(
     <McpConnectDialog
       connector={{
