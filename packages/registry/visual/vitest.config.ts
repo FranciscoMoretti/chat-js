@@ -1,4 +1,4 @@
-import type { Page, Route } from "playwright";
+import type { Page } from "playwright";
 import { createRequire } from "node:module";
 import { defineConfig } from "vitest/config";
 import { fileURLToPath } from "node:url";
@@ -16,6 +16,9 @@ const geistFonts = path.join(
   path.dirname(createRequire(import.meta.url).resolve("geist/font")),
   "fonts"
 );
+
+// Vitest may reuse a Playwright page across files. Install each fixture once.
+const pagesWithVisualAssets = new WeakSet<Page>();
 
 export default defineConfig({
   css: {
@@ -110,11 +113,14 @@ export default defineConfig({
     setupFiles: [fileURLToPath(new URL("setup.ts", import.meta.url))],
     browser: {
       commands: {
-        faviconAssets: async ({
+        visualAssets: async ({
           page,
         }: {
           readonly page: Page;
         }): Promise<void> => {
+          if (pagesWithVisualAssets.has(page)) {
+            return;
+          }
           await page.route(
             /^https:\/\/(?:favicon\.example\.test|www\.google\.com)\//u,
             async (route): Promise<void> => {
@@ -126,21 +132,16 @@ export default defineConfig({
               });
             }
           );
-        },
-        modelAssets: async ({
-          page,
-        }: {
-          readonly page: Readonly<Pick<Page, "route">>;
-        }): Promise<void> => {
           await page.route(
             "https://models.dev/**",
-            async (route: Readonly<Pick<Route, "fulfill">>): Promise<void> => {
+            async (route): Promise<void> => {
               await route.fulfill({
                 body: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"><rect x="2" y="2" width="12" height="12" fill="currentColor"/></svg>',
                 contentType: "image/svg+xml",
               });
             }
           );
+          pagesWithVisualAssets.add(page);
         },
       },
       enabled: true,

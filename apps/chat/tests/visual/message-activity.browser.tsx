@@ -1,6 +1,6 @@
 import React, { act } from "react";
 import { expect, test, vi } from "vitest";
-import { page, commands } from "vitest/browser";
+import { page } from "vitest/browser";
 import { takeSnapshot } from "@uiverify/vitest";
 import { captureChatStory } from "../../../../packages/registry/src/tools/_shared/visual";
 import { McpToolResult } from "@/components/part/mcp-tool-result";
@@ -13,12 +13,6 @@ import { Sources } from "@/components/sources";
 import { ReasoningPart } from "@/components/part/message-reasoning";
 import { mount, unmount } from "@/tests/visual/primitive-mount";
 import "./sandbox.css";
-
-declare module "vitest/browser" {
-  interface BrowserCommands {
-    faviconAssets: () => Promise<void>;
-  }
-}
 
 const setArtifact = vi.fn();
 vi.mock("@/hooks/use-artifact", () => ({
@@ -98,7 +92,6 @@ test.each([1000, 390])(
   "sources open directly and restore focus at %i pixels",
   async (width) => {
     await page.viewport(width, 844);
-    await commands.faviconAssets();
     const fixture = await mount(
       <Sources
         sources={[

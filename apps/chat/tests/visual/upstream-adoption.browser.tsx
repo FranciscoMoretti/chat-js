@@ -1,6 +1,6 @@
 import React from "react";
 import { expect, test, vi } from "vitest";
-import { page, commands, userEvent } from "vitest/browser";
+import { page, userEvent } from "vitest/browser";
 import { takeSnapshot } from "@uiverify/vitest";
 import { EvePendingInput } from "@/components/eve/eve-pending-input";
 import type { InteractionRequest, Answer } from "eve/events";
@@ -56,7 +56,6 @@ for (const viewport of [
 ] as const) {
   test(`upstream questions and feedback at ${viewport.width} ${viewport.dir}`, async () => {
     await page.viewport(viewport.width, 1000);
-    await commands.faviconAssets();
     const respond = vi.fn<(response: Answer) => void>();
     const send = vi.fn<(text: string) => void>();
     const fixture = await mount(

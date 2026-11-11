@@ -6,7 +6,7 @@ import { takeSnapshot } from "@uiverify/vitest";
 import { AppRouterContext } from "next/dist/shared/lib/app-router-context.shared-runtime";
 import React, { act, useState } from "react";
 import { expect, test, vi } from "vitest";
-import { commands, page } from "vitest/browser";
+import { page } from "vitest/browser";
 
 import { ModelSelector } from "@/components/model-selector";
 import type { AppModelDefinition } from "@/lib/ai/app-models";
@@ -20,11 +20,6 @@ import type { AppRouter } from "@/trpc/routers/_app";
 
 import "@/tests/visual/sandbox.css";
 
-declare module "vitest/browser" {
-  interface BrowserCommands {
-    modelAssets: () => Promise<void>;
-  }
-}
 vi.mock("@/lib/auth-client", () => ({
   default: {
     useSession: (): {
@@ -225,8 +220,6 @@ const selectBeta = async (name: string): Promise<void> => {
 };
 for (const scenario of scenarios) {
   test(`native model selection ${scenario.name}`, async () => {
-    await commands.modelAssets();
-
     const { fixture, queryClient, requests } = await mountSelector(
       scenario.initialSelection,
       true
@@ -246,7 +239,6 @@ for (const scenario of scenarios) {
 }
 
 test("model selection defaults to a single model", async () => {
-  await commands.modelAssets();
   const { fixture, queryClient } = await mountSelector("openai/gpt-4.1");
   try {
     await page.getByTestId("model-selector").click();

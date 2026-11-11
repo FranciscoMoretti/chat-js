@@ -1,5 +1,5 @@
 import { conversationOf } from "eve/client";
-import { ensureFonts } from "../../registry/src/tools/_shared/visual-fonts";
+import "../../registry/visual/setup";
 import type * as EveClient from "eve/client";
 import { MotionGlobalConfig } from "motion/react";
 import type { AnchorHTMLAttributes } from "react";
@@ -21,12 +21,7 @@ freeze.textContent = FREEZE_MOTION_CSS;
 document.head.append(freeze);
 // Motion animates height and scroll in JavaScript, where the CSS freeze cannot reach.
 MotionGlobalConfig.skipAnimations = true;
-await ensureFonts();
-// Favicons load from Google; serve the fixed icon the registry stories use.
-await commands.faviconAssets();
 await commands.appIcon();
-// Model logos load from models.dev; serve the fixed one the registry's model tests use.
-await commands.modelAssets();
 // The root layout's <body> class, which renderRoute mounts inside of.
 document.body.classList.add("antialiased");
 

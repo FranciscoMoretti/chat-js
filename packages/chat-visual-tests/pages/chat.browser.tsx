@@ -366,6 +366,31 @@ test("conversation inside a project", async () => {
         .getByRole("link", { name: launchProject.name })
     )
     .toBeVisible();
+  // The sidebar's scroll area checks for overflow when it mounts or resizes, not
+  // when its lists finish loading, so whether this sidebar (which overflows) shows
+  // a scrollbar varies. Once both lists are in, have it check again.
+  const sidebar = document.querySelector<HTMLElement>(
+    '[data-slot="sidebar"] [data-slot="scroll-area-viewport"]'
+  );
+  if (!sidebar) {
+    throw new Error("Missing sidebar viewport");
+  }
+  await expect
+    .element(page.elementLocator(sidebar).getByText("Billing service"))
+    .toBeVisible();
+  await expect
+    .element(
+      page.elementLocator(sidebar).getByText("Onboarding email sequence ideas")
+    )
+    .toBeVisible();
+  sidebar.dispatchEvent(new Event("scroll"));
+  await expect
+    .poll(() =>
+      document.querySelector(
+        '[data-slot="sidebar"] [data-slot="scroll-area-scrollbar"][data-has-overflow-y]'
+      )
+    )
+    .not.toBeNull();
 });
 
 test("conversation whose last reply failed", async () => {

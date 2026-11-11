@@ -7,6 +7,7 @@ import HomePage from "@/app/(chat)/page";
 
 import {
   history,
+  now,
   signedIn,
   signedInTrpc,
   creationFailure,
@@ -160,14 +161,22 @@ test("home shows an unavailable balance instead of a false zero", async () => {
 });
 
 test("signed-in composer options expose uploads with the native menu", async () => {
-  await renderRoute(home, signedIn);
+  await renderRoute(home, { ...signedIn, fakeTimeouts: true });
   await expect
     .element(page.getByText("How can I help you today?"))
     .toBeVisible();
+  await expect
+    .element(page.getByRole("textbox", { name: "Message" }))
+    .toHaveFocus();
+  // Flush the composer's fallback focus before the menu takes focus.
+  await vi.runOnlyPendingTimersAsync();
+  vi.useRealTimers();
+  vi.useFakeTimers({ now, toFake: ["Date"] });
   await page.getByRole("button", { name: "Composer options" }).click();
   await expect
     .element(page.getByRole("menuitem", { name: "Attach files" }))
     .toBeVisible();
+  await expect.element(page.getByRole("menu")).toHaveFocus();
   const items = [...document.querySelectorAll('[role="menuitem"]')].map(
     (item) => item.textContent
   );
