@@ -4,6 +4,7 @@ import * as React from "react"
 import { Share03Icon, Tick02Icon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 
+import { encodeInstallationQuery } from "@/components/create-model"
 import { useInstallation } from "@/components/create-preview/installation-provider"
 import { copyToClipboardWithMeta } from "@/components/create-preview/copy-clipboard"
 import { Button } from "@/vendor/shadcn-create/styles/base-nova/ui/button"
@@ -20,14 +21,13 @@ export function ShareButton() {
     const url = new URL(window.location.href)
     url.searchParams.set("preset", presetCode)
     // Only known public setup fields are shared; provider credentials never belong in links.
-    const allowed = ["preset", "base", "item", "rtl", "pointer", "size", "gateway", "uploads", "storage", "storage-config"]
+    const allowed = ["preset", "base", "item", "rtl", "pointer", "size", "storage-config", "app", "installation"]
     for (const key of [...url.searchParams.keys()]) if (!allowed.includes(key)) url.searchParams.delete(key)
-    url.searchParams.delete("storage-config")
     if (installation) {
-      url.searchParams.set("gateway", installation.gateway ?? "")
-      url.searchParams.set("uploads", String(installation.plugins.includes("attachment-uploads")))
-      url.searchParams.set("storage", installation.storage?.source ?? "")
-      if (Object.keys(installation.storage?.options ?? {}).length) url.searchParams.set("storage-config", JSON.stringify(installation.storage?.options))
+      for (const [key, value] of Object.entries(encodeInstallationQuery(installation))) {
+        if (value === null) url.searchParams.delete(key)
+        else url.searchParams.set(key, value)
+      }
     }
     return url.toString()
   }

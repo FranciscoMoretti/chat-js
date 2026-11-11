@@ -28,6 +28,7 @@ import {
   launchProject,
   questionTranscripts,
   validatedToolTranscripts,
+  retrievedPageTranscripts,
   session,
   signedIn,
 } from "./fixtures";
@@ -1077,3 +1078,34 @@ test.each(["plugin", "editor"])(
     }
   }
 );
+
+test("text and retrieved page keep their natural height", async () => {
+  await renderRoute(conversation, {
+    ...request,
+    transcripts: retrievedPageTranscripts,
+  });
+  const heading = page.getByRole("heading", {
+    name: "Example documentation",
+    exact: true,
+  });
+  await expect.element(heading).toBeVisible();
+  await page.getByText("View content", { exact: true }).click();
+  await expect
+    .element(
+      page.getByText("This content remains visible when expanded.", {
+        exact: true,
+      })
+    )
+    .toBeVisible();
+  const card = heading.element().closest(".overflow-hidden");
+  if (!card) {
+    throw new Error("Missing retrieved page card");
+  }
+  const intro = page
+    .getByText("Here is the page you requested.", { exact: true })
+    .element();
+  expect(
+    card.getBoundingClientRect().top - intro.getBoundingClientRect().bottom
+  ).toBeLessThanOrEqual(40);
+  expect(card.scrollHeight - card.clientHeight).toBeLessThanOrEqual(1);
+});

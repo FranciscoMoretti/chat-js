@@ -4,7 +4,7 @@ import { page } from "vitest/browser";
 import { takeSnapshot } from "@uiverify/vitest";
 
 import type * as InputGroupModule from "@/components/ui/input-group";
-import { ControlledChatComposer } from "@/components/controlled-chat-composer";
+import { ChatComposer } from "@/components/chat/chat-composer";
 import { mount, unmount } from "./primitive-mount";
 import "./composer-native-style.css";
 
@@ -30,7 +30,7 @@ test("native Nova keeps an editable empty composer opaque without enabling Send"
       {states.map(({ label, disabled, readOnly }) => (
         <section aria-label={label} key={label}>
           <h2>{label}</h2>
-          <ControlledChatComposer
+          <ChatComposer
             draft=""
             disabled={disabled}
             readOnly={readOnly}

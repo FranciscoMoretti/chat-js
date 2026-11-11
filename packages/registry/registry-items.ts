@@ -1,0 +1,231 @@
+import { toolDefinition as wordCountDefinition } from "./src/tools/word-count/definition";
+import { toolDefinition as weatherDefinition } from "./src/tools/get-weather/definition";
+import { builtInSandboxes } from "./src/sandboxes/catalog";
+import { codeExecutionItem, codeExecutionRuntimeItem } from "./code-execution";
+import {
+  codeExecutionUiItem,
+  documentItems,
+  savedCodeExecutionItem,
+} from "./src/tools/documents";
+import type { RegistryItem } from "shadcn/schema";
+import { builtInGateways } from "./src/gateways/catalog";
+import { pluginItems } from "./src/plugins/catalog";
+import registryPackage from "./package.json";
+import { researchItem } from "./src/tools/research";
+import { toolDefinitionSchema } from "./metadata";
+
+const toolItems = (
+  [
+    {
+      dependencies: ["ai", "zod"],
+      description: "Generate videos using the selected gateway and storage",
+      id: "generate-video",
+      config: { key: "video" },
+      requiresGateway: ["video"],
+      requiresStorage: true,
+      slot: "generateVideo",
+      tools: [
+        {
+          composer: {
+            icon: "Video",
+            name: "Create a video",
+            shortName: "Video",
+          },
+          rendererExport: "GenerateVideoRenderer",
+          toolExport: "generateVideoTool",
+        },
+      ],
+    },
+    {
+      dependencies: ["ai", "zod", "lucide-react"],
+      description:
+        "Generate and edit images using the selected gateway and storage",
+      id: "generate-image",
+      config: { key: "image" },
+      requiresGateway: ["image"],
+      requiresStorage: true,
+      slot: "generateImage",
+      tools: [
+        {
+          composer: {
+            icon: "Images",
+            name: "Create an image",
+            shortName: "Image",
+          },
+          rendererExport: "GenerateImageRenderer",
+          toolExport: "generateImageTool",
+        },
+      ],
+    },
+    {
+      dependencies: ["ai", "zod"],
+      description: wordCountDefinition.description,
+      id: "word-count",
+      tools: [
+        {
+          rendererExport: "WordCountRenderer",
+          toolExport: wordCountDefinition.name,
+          definitionExport: "toolDefinition",
+        },
+      ],
+    },
+    {
+      dependencies: ["ai", "zod", "date-fns"],
+      description: weatherDefinition.description,
+      id: "get-weather",
+      tools: [
+        {
+          rendererExport: "GetWeatherRenderer",
+          toolExport: weatherDefinition.name,
+          definitionExport: "toolDefinition",
+        },
+      ],
+    },
+    {
+      dependencies: [
+        "ai",
+        "zod",
+        "@mendable/firecrawl-js",
+        "lucide-react",
+        "react-markdown",
+      ],
+      description: "Fetch structured information from a single URL",
+      envRequirements: [{ options: [["FIRECRAWL_API_KEY"]] }],
+      id: "retrieve-url",
+      slot: "retrieveUrl",
+      tools: [
+        { rendererExport: "RetrieveUrlRenderer", toolExport: "retrieveUrl" },
+      ],
+    },
+  ] as const
+).map(
+  ({
+    description,
+    dependencies,
+    ...definition
+  }: Readonly<{
+    dependencies: readonly string[];
+    description: string;
+    id: string;
+    config?: { readonly key: string };
+    slot?: string;
+    tools: readonly unknown[];
+  }>) =>
+    ({
+      dependencies: [...dependencies],
+      description,
+      files: [
+        ...(definition.config ? ["configuration-schema.ts"] : []),
+        ...(definition.id === "retrieve-url" ? ["retrieve-url-env.ts"] : []),
+        ...(["word-count", "get-weather"].includes(definition.id)
+          ? ["definition.ts"]
+          : []),
+        "tool.ts",
+        "renderer.tsx",
+        "schemas.ts",
+        ...(definition.id === "generate-image"
+          ? [
+              "image-model.ts",
+              "image-input.ts",
+              "image-errors.ts",
+              "image-generation.ts",
+              "image-request.ts",
+            ]
+          : []),
+      ].map((file) => ({
+        path: `src/tools/${definition.id}/${file}`,
+        target: `~/chatjs/tools/${definition.id}/${file}`,
+        type: "registry:file",
+      })),
+      meta: {
+        chatjs: toolDefinitionSchema.parse({
+          contractVersion: 1,
+          ...definition,
+          kind: "tool",
+        }),
+      },
+      ...(definition.id === "retrieve-url"
+        ? { registryDependencies: ["alert"] }
+        : {}),
+      name: definition.id,
+      type: "registry:item",
+    }) satisfies RegistryItem
+);
+
+const searchToolItems = (
+  [
+    { dependency: "@tavily/core", id: "tavily-search", key: "TAVILY_API_KEY" },
+    {
+      dependency: "@mendable/firecrawl-js",
+      id: "firecrawl-search",
+      key: "FIRECRAWL_API_KEY",
+    },
+  ] as const
+).map(({ id, dependency, key }) => ({
+  dependencies: [
+    "ai",
+    "zod",
+    `${dependency}@${registryPackage.devDependencies[dependency]}`,
+  ],
+  description: `Use ${id} for chat and deep research`,
+  files: [
+    {
+      path: `src/tools/${id}/${id}-env.ts`,
+      target: `~/chatjs/tools/${id}/${id}-env.ts`,
+      type: "registry:file" as const,
+    },
+    {
+      path: `src/tools/${id}/tool.ts`,
+      target: `~/chatjs/tools/${id}/tool.ts`,
+      type: "registry:file" as const,
+    },
+    {
+      path: `src/tools/${id}/renderer.tsx`,
+      target: `~/chatjs/tools/${id}/renderer.tsx`,
+      type: "registry:file" as const,
+    },
+    {
+      path: `src/tools/${id}/schemas.ts`,
+      target: `~/chatjs/tools/${id}/schemas.ts`,
+      type: "registry:file" as const,
+    },
+  ],
+  meta: {
+    chatjs: toolDefinitionSchema.parse({
+      contractVersion: 1,
+      envRequirements: [{ options: [[key]] }],
+      id,
+      kind: "tool",
+      slot: "webSearch",
+      tools: [
+        {
+          composer: {
+            icon: "Globe",
+            name: "Web Search",
+            shortName: "Search",
+          },
+          rendererExport: "WebSearchRenderer",
+          toolExport: "webSearch",
+        },
+      ],
+    }),
+  },
+  name: id as string,
+  type: "registry:item" as const,
+}));
+
+const registryItems: RegistryItem[] = [
+  ...pluginItems,
+  ...builtInGateways,
+  ...builtInSandboxes,
+  ...toolItems,
+  ...documentItems,
+  savedCodeExecutionItem,
+  researchItem,
+  codeExecutionUiItem,
+  ...searchToolItems,
+  codeExecutionItem,
+  codeExecutionRuntimeItem,
+];
+export { codeExecutionItem } from "./code-execution";
+export { registryItems, searchToolItems, toolItems };

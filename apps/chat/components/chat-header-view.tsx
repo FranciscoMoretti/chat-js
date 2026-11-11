@@ -7,30 +7,31 @@ import React from "react";
 import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { cn } from "@/lib/utils";
+import {
+  ChatHeader,
+  ChatHeaderLeading,
+  ChatHeaderTitle,
+} from "./chat/chat-header";
 
 export const ChatHeaderView = ({
   breadcrumb,
   actions,
   className,
+  utilities,
 }: {
   readonly breadcrumb: ReadonlyReactNode;
   readonly actions?: ReadonlyReactNode;
   readonly className?: string;
+  readonly utilities?: ReadonlyReactNode;
 }): React.JSX.Element => (
-  <header
-    className={cn(
-      "bg-background sticky top-0 flex items-center justify-between gap-2 px-2 py-1.5 md:px-2",
-      className
-    )}
-  >
-    <div className="flex flex-1 items-center justify-between gap-2 overflow-hidden">
-      <div className="flex min-w-0 items-center gap-2">
+  <ChatHeader className={className}>
+    <ChatHeaderLeading>
+      <ChatHeaderTitle>
         <SidebarTrigger className="md:hidden" />
         {breadcrumb}
-      </div>
+      </ChatHeaderTitle>
       {actions}
-    </div>
-    <HeaderActions />
-  </header>
+    </ChatHeaderLeading>
+    {utilities === undefined ? <HeaderActions /> : utilities}
+  </ChatHeader>
 );

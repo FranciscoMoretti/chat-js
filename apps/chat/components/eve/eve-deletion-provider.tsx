@@ -105,4 +105,4 @@ const EveDeletionProvider = ({
   );
 };
 
-export { EveDeletionProvider, useEveDeletion };
+export { EveDeletionProvider, useEveDeletion, DeletionContext };

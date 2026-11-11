@@ -265,7 +265,12 @@
     },
     "@chatjs/site#test:unit": {
       "dependsOn": ["^test:unit"],
-      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/apps/docs/**/*.mdx"]
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/packages/registry/*.ts",
+        "$TURBO_ROOT$/packages/registry/src/**",
+        "$TURBO_ROOT$/apps/docs/**/*.mdx"
+      ]
     }
   }
 }

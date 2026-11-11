@@ -1,4 +1,5 @@
 "use client";
+import { useAvailableTools } from "./tool-availability";
 
 import { CircleAlert, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -19,10 +20,11 @@ export const ActiveTool = ({
   readonly disabled?: boolean;
   readonly onClear: () => void;
 }): React.JSX.Element | null => {
+  const available = useAvailableTools();
   if (selectedTool === null) {
     return null;
   }
-  const definition = getToolDisplay(selectedTool);
+  const definition = getToolDisplay(selectedTool, available);
   const Icon = definition?.icon ?? CircleAlert;
   const label = definition?.shortName ?? "Unavailable tool";
   return (

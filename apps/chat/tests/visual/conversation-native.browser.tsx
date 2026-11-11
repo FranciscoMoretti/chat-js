@@ -2,7 +2,7 @@ import React, { act } from "react";
 import { expect, test, vi } from "vitest";
 import { page } from "vitest/browser";
 import { takeSnapshot } from "@uiverify/vitest";
-import { EveMessages } from "@/components/eve/eve-messages";
+import { ChatTranscript } from "@/components/chat/chat-transcript";
 import { AttachmentList } from "@/components/attachment-list";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import {
@@ -47,7 +47,7 @@ const Transcript = ({
         <MessageScroller>
           <MessageScrollerViewport>
             <MessageScrollerContent className="p-4">
-              <EveMessages
+              <ChatTranscript
                 disabled={false}
                 isReadonly
                 messages={items}

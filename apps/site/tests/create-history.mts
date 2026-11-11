@@ -25,10 +25,10 @@ export const checkCreateHistory = async (page: Page, origin: string) => {
   await page.goto(`${origin}/create?preset=b4Xa52`, {
     waitUntil: "domcontentloaded",
   });
-  await page
-    .getByRole("button", { name: "Get Code", exact: true })
-    .first()
-    .waitFor();
+  await expect(
+    page.getByRole("button", { name: "Get Code", exact: true }).first()
+  ).toBeEnabled();
+  await page.getByRole("tab", { name: "Appearance", exact: true }).click();
   await expect(presetButton).toHaveAttribute("title", "--preset b4Xa52");
   await expect(undo).toBeDisabled();
   await expect(redo).toBeDisabled();
@@ -47,10 +47,10 @@ export const checkCreateHistory = async (page: Page, origin: string) => {
   await pickTheme("Green");
   await expect(redo).toBeDisabled();
   await page.reload({ waitUntil: "domcontentloaded" });
-  await page
-    .getByRole("button", { name: "Get Code", exact: true })
-    .first()
-    .waitFor();
+  await expect(
+    page.getByRole("button", { name: "Get Code", exact: true }).first()
+  ).toBeEnabled();
+  await page.getByRole("tab", { name: "Appearance", exact: true }).click();
   await expect(
     page.getByRole("button", { name: "Theme Green", exact: true })
   ).toBeVisible();

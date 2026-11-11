@@ -69,6 +69,8 @@ export function ActionMenuScript() {
             (function() {
               // Forward Cmd/Ctrl + K (and P) to parent
               document.addEventListener('keydown', function(e) {
+                // Production plugin shortcuts can handle the event inside the iframe.
+                if (e.defaultPrevented) return;
                 if ((e.key === 'k' || e.key === 'p') && (e.metaKey || e.ctrlKey)) {
                   e.preventDefault();
                   if (window.parent && window.parent !== window) {

@@ -37,7 +37,11 @@ function isSameParams(
   )
 }
 
-export function Preview() {
+export function Preview({ guestEnabled, guest, onGuestChange }: {
+  readonly guestEnabled: boolean
+  readonly guest: boolean
+  readonly onGuestChange: (guest: boolean) => void
+}) {
   const [params, setParams] = useDesignSystemSearchParams()
   const override = usePreviewOverrideValue()
   const iframeRef = React.useRef<HTMLIFrameElement>(null)
@@ -46,7 +50,9 @@ export function Preview() {
   // Hover previews overlay the committed params without touching the URL —
   // clearing the override re-sends the committed params, reverting the preview.
   const mergedParams = React.useMemo(
-    () => (override ? { ...params, ...override } : params),
+    // The library choice belongs to installation. The shared application preview
+    // uses Base UI for both outputs, without remounting its local runtime.
+    () => ({ ...params, ...override, base: "base" as const }),
     [params, override]
   )
 
@@ -189,27 +195,27 @@ export function Preview() {
     // via a postMessage channel, for it to sync its own history onto the host's.
     return serializeDesignSystemSearchParams(
       `/create/preview`,
-      params
+      { ...params, base: "base" }
     )
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [params.base, params.item])
+  }, [])
 
   return (
-    <div className="relative flex flex-1 flex-col justify-center overflow-hidden rounded-2xl ring ring-foreground/10 md:ring-muted dark:ring-foreground/10">
-      <div className="relative z-0 mx-auto flex w-full flex-1 flex-col overflow-hidden">
-        <div className="absolute inset-0 bg-muted dark:bg-muted/30" />
+    <div className="relative flex min-h-0 flex-1 flex-col justify-center overflow-hidden rounded-2xl ring ring-foreground/10 md:ring-muted dark:ring-foreground/10">
+      <PreviewSwitcher guestEnabled={guestEnabled} guest={guest} onGuestChange={onGuestChange} />
+      <div data-testid="preview-viewport" className="relative z-0 mx-auto min-h-0 w-full flex-1 overflow-auto overscroll-contain bg-muted dark:bg-muted/30">
         <iframe
-          key={params.base + params.item}
           ref={iframeRef}
           src={iframeSrc}
-          className="z-10 h-full flex-1 bg-background mx-auto transition-[width]"
-          style={{ width: params.size === 100 ? "100%" : `${params.size}px`, maxWidth: "100%" }}
+          className={`relative z-10 mx-auto block h-full min-h-[40rem] bg-background transition-[width] md:min-h-0 ${params.size === 100 ? "min-w-[64rem] md:min-w-0" : ""}`}
+          style={{ width: params.size === 100 ? "100%" : `${params.size}px` }}
           title="Preview"
         />
-        <PreviewRecovery key={"recovery-" + params.base + params.item} iframeRef={iframeRef} />
+        {/* Keep the floating scene controls clear of the composer at the end of the canvas. */}
+        <div aria-hidden="true" className="h-14 md:hidden" />
+        <PreviewRecovery iframeRef={iframeRef} />
       </div>
-      <ChatPreviewSync key={params.base + params.item} iframeRef={iframeRef} />
-      <PreviewSwitcher />
+      <ChatPreviewSync iframeRef={iframeRef} guest={guest} />
     </div>
   )
 }

@@ -1,3 +1,4 @@
+import { attachPreviewFile } from "./create-fixtures.mts";
 import { test, expect } from "@uiverify/playwright";
 import {
   DEFAULT_PRESET_CONFIG,
@@ -7,7 +8,7 @@ import {
 
 // One conversation contains bubbles, attachment, code, activity, scroller and
 // composer. Alternate responsive layouts; the interaction matrix covers all four.
-for (const base of ["base", "radix"] as const) {
+for (const base of ["base"] as const) {
   for (const [index, style] of PRESET_STYLES.entries()) {
     test(`${base} ${style} conversation with attachment`, async ({
       page,
@@ -55,9 +56,9 @@ for (const base of ["base", "radix"] as const) {
           "nextjs-portal { display: none !important; } *, *::before, *::after { animation: none !important; transition: none !important; }",
       });
       await uiVerify.snapshot("conversation");
-      await page.getByRole("button", { name: "Attach sample file" }).click();
+      await attachPreviewFile(page);
       await expect(
-        page.getByRole("button", { name: "Remove sample attachment" })
+        page.getByRole("button", { name: "Remove attachment" })
       ).toBeVisible();
       await page
         .getByRole("textbox", { name: "Message" })
@@ -73,3 +74,58 @@ for (const base of ["base", "radix"] as const) {
     });
   }
 }
+
+test("a pending attachment stays out of a new preview chat", async ({
+  page,
+  uiVerify,
+}) => {
+  uiVerify.disableAutoSnapshot();
+  await page.setViewportSize({ width: 1000, height: 1100 });
+  await page.goto("/create/preview?item=preview-02");
+  await expect(page.getByRole("textbox", { name: "Message" })).toBeVisible();
+  await page.evaluate(() => {
+    window.postMessage(
+      {
+        type: "chatjs:create-installation",
+        installation: { gateway: "vercel", plugins: ["attachment-uploads"] },
+        mode: "light",
+      },
+      window.location.origin
+    );
+    const delayedRead = Promise.withResolvers();
+    window.addEventListener(
+      "release-preview-file",
+      () => {
+        delayedRead.resolve(null);
+      },
+      { once: true }
+    );
+    File.prototype.arrayBuffer = async function arrayBuffer(this: File) {
+      const buffer = await Blob.prototype.arrayBuffer.call(this);
+      if (document.body.dataset.previewFile === undefined) {
+        document.body.dataset.previewFile = "pending";
+        await delayedRead.promise;
+      }
+      return buffer;
+    };
+  });
+  await expect(
+    page.getByText("project-notes.md", { exact: true })
+  ).toBeVisible();
+  await attachPreviewFile(page);
+  await expect(page.locator("body")).toHaveAttribute(
+    "data-preview-file",
+    "pending"
+  );
+  await page.getByRole("link", { name: /New Chat/u }).click();
+  await expect(
+    page.getByRole("heading", { name: "How can I help you today?" })
+  ).toBeVisible();
+  await page.evaluate(() => {
+    window.dispatchEvent(new Event("release-preview-file"));
+  });
+  await attachPreviewFile(page);
+  await expect(
+    page.getByRole("button", { name: "Remove attachment" })
+  ).toHaveCount(1);
+});

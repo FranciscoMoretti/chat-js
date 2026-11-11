@@ -7,7 +7,7 @@ import type { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { createTRPCClient, httpBatchLink, loggerLink } from "@trpc/client";
 import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
-import { createTRPCContext } from "@trpc/tanstack-react-query";
+import { TRPCProvider } from "./context";
 
 import superjson from "superjson";
 
@@ -17,8 +17,6 @@ import { getBaseUrl } from "@/lib/url";
 
 import { isAbortedRequest } from "./is-aborted-request";
 import { makeQueryClient } from "./query-client";
-
-const { TRPCProvider, useTRPC, useTRPCClient } = createTRPCContext<AppRouter>();
 
 let browserQueryClient: QueryClient | undefined;
 
@@ -96,4 +94,5 @@ const TRPCReactProvider = (props: {
     </QueryClientProvider>
   );
 };
-export { TRPCProvider, TRPCReactProvider, useTRPC, useTRPCClient };
+export { TRPCReactProvider };
+export { TRPCProvider, useTRPC, useTRPCClient } from "./context";

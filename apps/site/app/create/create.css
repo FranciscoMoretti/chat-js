@@ -1,4 +1,5 @@
-/* Native Create theme and shell utilities from shadcn/ui; see vendor provenance. */
+/* Native shadcn shell utilities, with ChatJS brand tokens scoped to the configurator.
+ * The preview iframe keeps its independently selected shadcn theme. */
 @import "tailwindcss";
 @import "shadcn/tailwind.css";
 @reference "../globals.css";
@@ -11,26 +12,33 @@
   --color-surface: var(--surface);
   --color-surface-foreground: var(--surface-foreground);
 }
+@font-face {
+  font-family: ChatJSPlex;
+  src: url("/home/fonts/plex.ttf");
+  font-weight: 400;
+  font-display: swap;
+}
 html:has(.chatjs-create-shell) {
+  --font-geist-mono: ChatJSPlex, monospace;
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0% 0 0);
+  --background: color-mix(in srgb, var(--chatjs-foreground) 16%, white);
+  --foreground: var(--chatjs-background);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0% 0 0);
+  --card-foreground: var(--chatjs-background);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0% 0 0);
-  --primary: oklch(0% 0 0);
+  --popover-foreground: var(--chatjs-background);
+  --primary: var(--chatjs-background);
   --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
+  --secondary: color-mix(in srgb, var(--chatjs-foreground) 40%, white);
   --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
+  --muted: color-mix(in srgb, var(--chatjs-foreground) 40%, white);
+  --muted-foreground: color-mix(in srgb, var(--chatjs-background) 65%, white);
+  --accent: color-mix(in srgb, var(--chatjs-foreground) 40%, white);
   --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.97 0.01 17);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
+  --border: color-mix(in srgb, var(--chatjs-border) 15%, white);
+  --input: color-mix(in srgb, var(--chatjs-border) 15%, white);
   --ring: oklch(0.708 0 0);
   --chart-1: var(--color-blue-300);
   --chart-2: var(--color-blue-500);
@@ -38,12 +46,12 @@ html:has(.chatjs-create-shell) {
   --chart-4: var(--color-blue-700);
   --chart-5: var(--color-blue-800);
   --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0% 0 0);
+  --sidebar-foreground: var(--chatjs-background);
   --sidebar-primary: oklch(0.205 0 0);
   --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent: color-mix(in srgb, var(--chatjs-foreground) 40%, white);
   --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-border: color-mix(in srgb, var(--chatjs-border) 15%, white);
   --sidebar-ring: oklch(0.708 0 0);
   --surface: oklch(0.98 0 0);
   --surface-foreground: var(--foreground);
@@ -51,52 +59,68 @@ html:has(.chatjs-create-shell) {
   --code-foreground: var(--surface-foreground);
   --code-highlight: oklch(0.96 0 0);
   --code-number: oklch(0.56 0 0);
-  --selection: oklch(0% 0 0);
+  --selection: var(--chatjs-background);
   --selection-foreground: oklch(1 0 0);
 }
 
 html.dark:has(.chatjs-create-shell),
 body:has(.chatjs-create-shell) .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.371 0 0);
-  --accent-foreground: oklch(0.985 0 0);
+  --background: var(--chatjs-background);
+  --foreground: var(--chatjs-foreground);
+  --card: var(--chatjs-surface);
+  --card-foreground: var(--chatjs-foreground);
+  --popover: var(--chatjs-surface);
+  --popover-foreground: var(--chatjs-foreground);
+  --primary: var(--chatjs-foreground);
+  --primary-foreground: var(--chatjs-surface);
+  --secondary: color-mix(
+    in srgb,
+    var(--chatjs-border) 35%,
+    var(--chatjs-surface)
+  );
+  --secondary-foreground: var(--chatjs-foreground);
+  --muted: color-mix(in srgb, var(--chatjs-border) 35%, var(--chatjs-surface));
+  --muted-foreground: var(--chatjs-muted);
+  --accent: color-mix(in srgb, var(--chatjs-border) 65%, var(--chatjs-surface));
+  --accent-foreground: var(--chatjs-foreground);
   --destructive: oklch(0.704 0.191 22.216);
   --destructive-foreground: oklch(0.58 0.22 27);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  --border: color-mix(
+    in srgb,
+    var(--chatjs-border) 65%,
+    var(--chatjs-background)
+  );
+  --input: var(--chatjs-border);
+  --ring: var(--chatjs-muted);
   --chart-1: var(--color-blue-300);
   --chart-2: var(--color-blue-500);
   --chart-3: var(--color-blue-600);
   --chart-4: var(--color-blue-700);
   --chart-5: var(--color-blue-800);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar: var(--chatjs-surface);
+  --sidebar-foreground: var(--chatjs-foreground);
   --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-primary-foreground: var(--chatjs-foreground);
+  --sidebar-accent: color-mix(
+    in srgb,
+    var(--chatjs-border) 35%,
+    var(--chatjs-surface)
+  );
+  --sidebar-accent-foreground: var(--chatjs-foreground);
+  --sidebar-border: color-mix(
+    in srgb,
+    var(--chatjs-border) 65%,
+    var(--chatjs-background)
+  );
   --sidebar-ring: oklch(0.439 0 0);
-  --surface: oklch(0.2 0 0);
-  --surface-foreground: oklch(0.708 0 0);
+  --surface: var(--chatjs-surface);
+  --surface-foreground: var(--chatjs-muted);
   --code: var(--surface);
   --code-foreground: var(--surface-foreground);
   --code-highlight: oklch(0.27 0 0);
   --code-number: oklch(0.72 0 0);
-  --selection: oklch(0.922 0 0);
-  --selection-foreground: oklch(0.205 0 0);
+  --selection: var(--chatjs-foreground);
+  --selection-foreground: var(--chatjs-surface);
 }
 
 @utility section-soft {
@@ -114,6 +138,8 @@ body:has(.chatjs-create-shell) .dark {
 body:has(.chatjs-create-shell) {
   overscroll-behavior: none;
 }
-body:has(.chatjs-create-shell) * {
-  border-color: var(--border);
+@layer base {
+  body:has(.chatjs-create-shell) * {
+    border-color: var(--border);
+  }
 }

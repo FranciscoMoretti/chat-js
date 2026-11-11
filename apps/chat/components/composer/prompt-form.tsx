@@ -1,7 +1,7 @@
 "use client";
 
 import type { ComponentProps, ReactNode, JSX } from "react";
-import { InputGroup, InputGroupAddon } from "../ui/input-group";
+import { InputGroup, InputGroupAddon } from "@/components/ui/input-group";
 import { cn } from "cn";
 
 const defaultPrimitives = { InputGroup, InputGroupAddon };

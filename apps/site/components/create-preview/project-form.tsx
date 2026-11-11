@@ -3,13 +3,17 @@
 // ChatJS adaptation of upstream ProjectForm. Native dialog, field/toggle/tabs
 // structure is retained; ChatJS's existing installation selection replaces the
 // upstream framework/template choices because ChatJS owns its Next.js scaffold.
+import { setupAction } from "./setup-guidance";
+import type { ConfigureSetup } from "./setup-guidance";
 import * as React from "react";
-import Link from "next/link";
 import { Copy01Icon, Tick02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { cn } from "cn";
+import { MousePointer2 } from "lucide-react";
 import { decodePreset } from "shadcn/preset";
 import { copyToClipboardWithMeta } from "@/components/create-preview/copy-clipboard";
+import type { InstallationSelection } from "../../../../packages/registry/installation";
+import { encodeInstallationInput } from "../../../../packages/registry/app-preset";
 import { createCommand } from "@/components/create-model";
 import { useInstallation } from "@/components/create-preview/installation-provider";
 import {
@@ -32,15 +36,11 @@ import {
   FieldDescription,
   FieldGroup,
   FieldLabel,
-  FieldLegend,
   FieldSet,
+  FieldLegend,
 } from "@/vendor/shadcn-create/styles/base-nova/ui/field";
-import { Input } from "@/vendor/shadcn-create/styles/base-nova/ui/input";
 import { Switch } from "@/vendor/shadcn-create/styles/base-nova/ui/switch";
-import {
-  RadioGroup,
-  RadioGroupItem,
-} from "@/vendor/shadcn-create/styles/base-nova/ui/radio-group";
+
 import {
   Tabs,
   TabsList,
@@ -53,6 +53,17 @@ import {
 import { usePresetCode } from "@/vendor/shadcn-create/hooks/use-design-system";
 import { useDesignSystemSearchParams } from "@/vendor/shadcn-create/lib/search-params";
 
+// Pinned upstream logos are rendered as CSS masks, never injected as markup.
+const logoMask = (logo: unknown): string | undefined => {
+  if (typeof logo !== "string") {
+    return undefined;
+  }
+  const svg = logo.includes("xmlns=")
+    ? logo
+    : logo.replace("<svg", '<svg xmlns="http://www.w3.org/2000/svg"');
+  return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
+};
+
 const PACKAGE_MANAGERS = ["pnpm", "npm", "yarn", "bun"] as const;
 const RUNNERS = { pnpm: "pnpm dlx", npm: "npx", yarn: "yarn dlx", bun: "bunx" };
 type PackageManager = (typeof PACKAGE_MANAGERS)[number];
@@ -64,126 +75,20 @@ const formatCssVarsRule = (
     .map(([key, value]) => `  --${key}: ${value};`)
     .join("\n")}\n}`;
 
-const publicValue = (value: unknown): string =>
-  typeof value === "string" ? value : "";
-const InstallationFields = () => {
-  const { installation, gateways, storageProviders, update } =
-    useInstallation();
-  const storage = storageProviders.find(
-    (item) => item.id === installation?.storage?.source
-  );
-  return installation ? (
-    <>
-      <Field>
-        <FieldLabel htmlFor="chatjs-gateway">Model gateway</FieldLabel>
-        <select
-          id="chatjs-gateway"
-          className="border-input bg-background h-9 rounded-md border px-3 text-sm"
-          value={installation.gateway}
-          onChange={(event) => {
-            update({ ...installation, gateway: event.target.value });
-          }}
-        >
-          {gateways.map((item) => (
-            <option key={item.id} value={item.id}>
-              {item.title}
-            </option>
-          ))}
-        </select>
-      </Field>
-      <Field orientation="horizontal">
-        <FieldContent>
-          <FieldLabel htmlFor="chatjs-uploads">Attachment uploads</FieldLabel>
-          <FieldDescription>
-            Add files and images to conversations. Includes Vercel Sandbox for
-            persistent files; configure its credentials in your app.
-          </FieldDescription>
-        </FieldContent>
-        <Switch
-          id="chatjs-uploads"
-          checked={installation.plugins.includes("attachment-uploads")}
-          onCheckedChange={(checked) => {
-            update({
-              ...installation,
-              plugins: checked ? ["attachment-uploads"] : [],
-            });
-          }}
-        />
-      </Field>
-      <Field>
-        <FieldLabel htmlFor="chatjs-storage">Storage provider</FieldLabel>
-        <select
-          id="chatjs-storage"
-          className="border-input bg-background h-9 rounded-md border px-3 text-sm"
-          value={installation.storage?.source}
-          onChange={(event) => {
-            update({
-              ...installation,
-              storage: { source: event.target.value, options: {} },
-            });
-          }}
-        >
-          {storageProviders.map((item) => (
-            <option key={item.id} value={item.id}>
-              {item.title}
-            </option>
-          ))}
-        </select>
-      </Field>
-      {storage?.configKeys?.map((key) => (
-        <Field key={key}>
-          <FieldLabel htmlFor={`storage-${key}`}>Storage {key}</FieldLabel>
-          <Input
-            id={`storage-${key}`}
-            value={publicValue(installation.storage?.options[key])}
-            onChange={(event) => {
-              update({
-                ...installation,
-                storage: {
-                  source: storage.id,
-                  options: {
-                    ...installation.storage?.options,
-                    [key]: event.target.value,
-                  },
-                },
-              });
-            }}
-          />
-          <FieldDescription>
-            Public configuration only. Add credentials in your generated app’s
-            environment.
-          </FieldDescription>
-        </Field>
-      ))}
-    </>
-  ) : (
-    <p role="alert">
-      Invalid installation options in this link.{" "}
-      <Link href="/create" className="underline">
-        Start a new setup
-      </Link>
-      .
-    </p>
-  );
-};
+const appPresetForSelection = (selection?: InstallationSelection) =>
+  selection ? encodeInstallationInput(selection).code : null;
 
 const useCreationOutput = (packageManager: PackageManager) => {
   const [params] = useDesignSystemSearchParams();
   const presetCode = usePresetCode();
-  const { installation, storageProviders } = useInstallation();
+  const { resolution } = useInstallation();
+  const installation = resolution?.selection;
   const preset = decodePreset(presetCode);
-  const storage = storageProviders.find(
-    (item) => item.id === installation?.storage?.source
-  );
-  const missingConfig =
-    storage?.configKeys?.some(
-      (key) => !publicValue(installation?.storage?.options[key]).trim()
-    ) ?? false;
   const { base } = params;
   const supported =
     (base === "base" || base === "radix") && params.template === "next";
   const command =
-    preset && installation && supported
+    preset && installation && supported && resolution?.issues.length === 0
       ? createCommand(preset, base, installation).replace(
           /^bunx/u,
           RUNNERS[packageManager]
@@ -207,20 +112,39 @@ const useCreationOutput = (packageManager: PackageManager) => {
     formatCssVarsRule(":root", theme.cssVars?.light),
     formatCssVarsRule(".dark", theme.cssVars?.dark),
   ].join("\n\n");
-  return { command, missingConfig, supported, themeCss };
+  return {
+    command,
+    supported,
+    appPreset: command ? appPresetForSelection(installation) : null,
+    appearancePreset: presetCode,
+    themeCss,
+    warnings: resolution?.issues ?? [
+      "Invalid installation options in this link.",
+    ],
+  };
 };
 
 export const ProjectForm = ({
   className,
-}: React.ComponentProps<typeof Button>) => {
+  onConfigureSetup,
+}: React.ComponentProps<typeof Button> & {
+  readonly onConfigureSetup: ConfigureSetup;
+}) => {
+  const { resolution, catalog } = useInstallation();
   const [open, setOpen] = React.useState(false);
   const [params, setParams] = useDesignSystemSearchParams();
   const [packageManager, setPackageManager] =
     React.useState<PackageManager>("bun");
   const [activeTab, setActiveTab] = React.useState("new-project");
   const [copied, setCopied] = React.useState(false);
-  const { command, missingConfig, supported, themeCss } =
-    useCreationOutput(packageManager);
+  const {
+    command,
+    supported,
+    appPreset,
+    appearancePreset,
+    themeCss,
+    warnings,
+  } = useCreationOutput(packageManager);
   React.useEffect(() => {
     const timer = setTimeout(() => {
       if (copied) {
@@ -265,66 +189,133 @@ export const ProjectForm = ({
           </DialogHeader>
           <div className="no-scrollbar overflow-y-auto">
             {activeTab === "new-project" ? (
-              <FieldGroup className="min-w-0 px-6 py-4">
-                <FieldSet className="gap-3">
-                  <FieldLegend variant="label">Base</FieldLegend>
-                  <RadioGroup
-                    value={params.base}
-                    onValueChange={(value: string) => {
-                      if (value === "base" || value === "radix") {
-                        void setParams({ base: value });
+              <FieldGroup className="min-w-0 gap-0 divide-y">
+                <section
+                  aria-label="Selection summary"
+                  className="space-y-3 px-6 py-4"
+                >
+                  <h2 className="text-sm font-medium">Your app</h2>
+                  <dl className="space-y-2 text-xs">
+                    <div className="flex justify-between gap-4">
+                      <dt className="text-muted-foreground">Appearance</dt>
+                      <dd className="capitalize">
+                        {params.style} · {params.theme}
+                      </dd>
+                    </div>
+                    {(["plugins", "tools"] as const).map((kind) => {
+                      const titles =
+                        resolution?.items
+                          .filter(
+                            (item) =>
+                              item.definition?.kind ===
+                              (kind === "plugins" ? "plugin" : "tool")
+                          )
+                          .map((item) => item.title) ?? [];
+                      return (
+                        <div key={kind} className="flex justify-between gap-4">
+                          <dt className="text-muted-foreground capitalize">
+                            {kind}
+                          </dt>
+                          <dd className="max-w-[75%] text-right">
+                            {titles.length ? titles.join(", ") : "None"}
+                          </dd>
+                        </div>
+                      );
+                    })}
+                    {(["gateway", "storage", "sandbox"] as const).map(
+                      (kind) => {
+                        const source =
+                          kind === "storage"
+                            ? resolution?.selection.storage?.source
+                            : resolution?.selection[kind];
+                        return (
+                          <div
+                            key={kind}
+                            className="flex justify-between gap-4"
+                          >
+                            <dt className="text-muted-foreground capitalize">
+                              {kind}
+                            </dt>
+                            <dd className="text-right">
+                              {catalog.find(
+                                (item) =>
+                                  item.definition?.kind === kind &&
+                                  item.definition.id === source
+                              )?.title ?? "None"}
+                            </dd>
+                          </div>
+                        );
                       }
-                    }}
-                    aria-label="Base"
-                    className="grid grid-cols-3 gap-2"
-                  >
-                    {BASES.map((base) => (
-                      <FieldLabel key={base.name} htmlFor={`base-${base.name}`}>
-                        <Field orientation="horizontal">
-                          <FieldContent>
-                            {base.title}
-                            {base.name === "aria" && (
-                              <span className="text-muted-foreground text-xs">
-                                Coming later
-                              </span>
-                            )}
-                          </FieldContent>
-                          <RadioGroupItem
-                            disabled={base.name === "aria"}
+                    )}
+                    <div className="flex justify-between gap-4">
+                      <dt className="text-muted-foreground">App preset</dt>
+                      <dd>
+                        <code
+                          data-testid="app-preset-code"
+                          className="select-all"
+                        >
+                          {appPreset ?? "Complete setup first"}
+                        </code>
+                      </dd>
+                    </div>
+                    <div className="flex justify-between gap-4">
+                      <dt className="text-muted-foreground">
+                        Appearance preset
+                      </dt>
+                      <dd>
+                        <code
+                          data-testid="appearance-preset-code"
+                          className="select-all"
+                        >
+                          {appearancePreset}
+                        </code>
+                      </dd>
+                    </div>
+                  </dl>
+                </section>
+                <div className="px-6 py-4">
+                  <FieldSet className="gap-3">
+                    <FieldLegend variant="label">Base</FieldLegend>
+                    <ToggleGroup
+                      value={[params.base]}
+                      onValueChange={(values) => {
+                        const [base] = values;
+                        if (base === "base" || base === "radix") {
+                          void setParams({ base });
+                        }
+                      }}
+                      aria-label="Component library"
+                      variant="outline"
+                      className="w-full"
+                    >
+                      {BASES.filter((base) => base.name !== "aria").map(
+                        (base) => (
+                          <ToggleGroupItem
+                            key={base.name}
                             value={base.name}
-                            id={`base-${base.name}`}
-                          />
-                        </Field>
-                      </FieldLabel>
-                    ))}
-                  </RadioGroup>
-                  <FieldDescription>
-                    ChatJS creates a Next.js app with Base UI or Radix.
-                  </FieldDescription>
-                </FieldSet>
-                {!supported && (
-                  <p role="alert" className="text-destructive text-sm">
-                    This setup uses an unavailable base or framework. Choose
-                    Base UI or Radix and Next.js to create ChatJS.
-                  </p>
-                )}
-                <InstallationFields />
-                <Field orientation="horizontal">
-                  <FieldContent>
-                    <FieldLabel htmlFor="chatjs-rtl">Right-to-left</FieldLabel>
-                  </FieldContent>
-                  <Switch
-                    id="chatjs-rtl"
-                    checked={params.rtl}
-                    onCheckedChange={(rtl) => {
-                      void setParams({ rtl });
-                    }}
-                  />
-                </Field>
-                <Field orientation="horizontal">
+                            className="h-12 flex-1 justify-start gap-2 px-4"
+                          >
+                            <span
+                              aria-hidden="true"
+                              className="size-4 bg-current mask-contain mask-center mask-no-repeat"
+                              style={{ maskImage: logoMask(base.meta?.logo) }}
+                            />
+                            {base.title}
+                          </ToggleGroupItem>
+                        )
+                      )}
+                    </ToggleGroup>
+                    <FieldDescription>
+                      Your app uses the selected library. The live preview uses
+                      Base UI.
+                    </FieldDescription>
+                  </FieldSet>
+                </div>
+                <Field className="px-6 py-4" orientation="horizontal">
                   <FieldContent>
                     <FieldLabel htmlFor="chatjs-pointer">
-                      Pointer cursor
+                      <MousePointer2 className="size-4" />
+                      Use pointer on buttons
                     </FieldLabel>
                   </FieldContent>
                   <Switch
@@ -335,6 +326,20 @@ export const ProjectForm = ({
                     }}
                   />
                 </Field>
+                {!supported && (
+                  <p
+                    role="alert"
+                    className="text-destructive px-6 py-4 text-sm"
+                  >
+                    Choose Base UI or Radix UI and Next.js to create ChatJS.
+                  </p>
+                )}
+                <p className="text-muted-foreground px-6 py-4 text-xs">
+                  Add API keys and other credentials after installation. The App
+                  preset contains built-in selections; custom provider values
+                  are included separately in the command. This command requires
+                  the CLI from this branch until App presets are released.
+                </p>
               </FieldGroup>
             ) : (
               <FieldGroup className="min-w-0 px-6 py-4">
@@ -376,7 +381,7 @@ export const ProjectForm = ({
                         size="icon-sm"
                         variant="ghost"
                         className="ml-auto"
-                        disabled={!command || missingConfig}
+                        disabled={!command}
                         onClick={() => {
                           void copy();
                         }}
@@ -391,26 +396,46 @@ export const ProjectForm = ({
                     </div>
                     <div className="bg-popover overflow-x-auto border-t p-3">
                       <code
-                        className="font-mono text-xs whitespace-nowrap"
+                        className={cn(
+                          "font-mono text-xs",
+                          command ? "whitespace-nowrap" : "whitespace-normal"
+                        )}
                         data-testid="create-command"
                       >
-                        {command || "Select a supported setup."}
+                        {command ||
+                          "Resolve the choices below to get your command."}
                       </code>
                     </div>
                   </Tabs>
                 )}
-                {missingConfig && activeTab === "new-project" && (
-                  <output className="text-muted-foreground text-xs">
-                    Enter the storage configuration to continue.
-                  </output>
+                {activeTab === "new-project" && (
+                  <ul
+                    className="text-muted-foreground list-disc pl-4 text-xs"
+                    aria-label="Installation issues"
+                  >
+                    {warnings.map((warning) => (
+                      <li key={warning} className="mb-3">
+                        <p>{warning}</p>
+                        <Button
+                          variant="link"
+                          size="sm"
+                          className="h-auto p-0 text-xs"
+                          onClick={() => {
+                            setOpen(false);
+                            onConfigureSetup(setupAction(warning).destination);
+                          }}
+                        >
+                          {setupAction(warning).label}
+                        </Button>
+                      </li>
+                    ))}
+                  </ul>
                 )}
                 <Button
                   onClick={() => {
                     void copy();
                   }}
-                  disabled={
-                    activeTab === "new-project" && (!command || missingConfig)
-                  }
+                  disabled={activeTab === "new-project" && !command}
                   className="h-9 w-full"
                 >
                   {copied ? "Copied" : copyLabel}

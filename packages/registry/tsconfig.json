@@ -11,6 +11,8 @@
   },
   "include": [
     "registry.ts",
+    "registry-items.ts",
+    "installation-catalog.ts",
     "metadata.ts",
     "src/**/*.ts",
     "src/**/*.tsx",

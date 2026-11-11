@@ -4,10 +4,16 @@ import { EveSearchChats } from "./search-chats";
 
 export const SearchSidebarItem = ({
   ownerId,
+  onChatSelect,
 }: {
   readonly ownerId?: string;
+  readonly onChatSelect?: (id: string) => void;
 }) => (
   <SidebarMenuItem>
-    <EveSearchChats key={ownerId ?? "anonymous"} ownerId={ownerId} />
+    <EveSearchChats
+      key={ownerId ?? "anonymous"}
+      ownerId={ownerId}
+      onChatSelect={onChatSelect}
+    />
   </SidebarMenuItem>
 );

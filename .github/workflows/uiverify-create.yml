@@ -8,6 +8,8 @@ on:
       - "apps/chat/components/**"
       - "apps/chat/hooks/**"
       - "apps/chat/lib/**"
+      - "apps/chat/providers/**"
+      - "apps/chat/trpc/**"
       - "apps/chat/package.json"
       - "packages/registry/**"
       - "packages/chat-visual-tests/contracts/**"
@@ -21,6 +23,8 @@ on:
       - "apps/chat/components/**"
       - "apps/chat/hooks/**"
       - "apps/chat/lib/**"
+      - "apps/chat/providers/**"
+      - "apps/chat/trpc/**"
       - "apps/chat/package.json"
       - "packages/registry/**"
       - "packages/chat-visual-tests/contracts/**"
@@ -61,7 +65,7 @@ jobs:
         run: bun apps/site/scripts/generate-create-preview.ts --check
       - run: node_modules/.bin/playwright install --with-deps chromium
       - run: bun --filter @chat-js/thread build
-      - name: Capture Create with both primitive libraries
+      - name: Capture Create with native Base UI presets
         run: |
           set -euo pipefail
           PORT=3000 bun --filter @chatjs/site dev > "$RUNNER_TEMP/create-server.log" 2>&1 &

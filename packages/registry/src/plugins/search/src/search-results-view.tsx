@@ -86,7 +86,7 @@ export const EveSearchResultsView = ({
       shouldFilter={false}
       className="**:data-[slot=command-input-wrapper]:h-12"
     >
-      <div className="flex items-center pr-2">
+      <div className="flex items-center pe-2 *:data-[slot=command-input-wrapper]:min-w-0 *:data-[slot=command-input-wrapper]:flex-1">
         <CommandInput
           ref={inputRef}
           aria-label="Search conversations"

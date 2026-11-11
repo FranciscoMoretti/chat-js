@@ -3,13 +3,13 @@ import React, { useState } from "react";
 import type { ComponentProps } from "react";
 import { createRoot } from "react-dom/client";
 
-import { ControlledChatComposer } from "../components/controlled-chat-composer";
+import { ChatComposer } from "../components/chat/chat-composer";
 import { MessageScrollerProvider } from "../components/ui/message-scroller";
 import { EveThinkingMessage } from "../components/eve/eve-thinking-message";
 
 const states: {
   name: string;
-  status: ComponentProps<typeof ControlledChatComposer>["status"];
+  status: ComponentProps<typeof ChatComposer>["status"];
   cancellable: boolean;
   stopDisabled?: boolean;
   parts?: EveMessage["parts"];
@@ -64,7 +64,7 @@ const Fixture = (): React.JSX.Element => {
                 messages={parts ? [{ id: name, parts, role: "assistant" }] : []}
               />
             </MessageScrollerProvider>
-            <ControlledChatComposer
+            <ChatComposer
               disabled={status !== "ready"}
               draft=""
               onDraftChange={() => {

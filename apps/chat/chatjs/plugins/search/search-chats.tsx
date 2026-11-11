@@ -174,8 +174,10 @@ const serverShortcut = (): string => "Ctrl+K";
 
 export const EveSearchChats = ({
   ownerId,
+  onChatSelect,
 }: {
   readonly ownerId?: string;
+  readonly onChatSelect?: (id: string) => void;
 }): ReactJSX.Element => {
   const shortcut = useSyncExternalStore(
     subscribePlatform,
@@ -196,9 +198,9 @@ export const EveSearchChats = ({
         setOpen((value) => !value);
       }
     };
-    document.addEventListener("keydown", down);
+    document.addEventListener("keydown", down, true);
     return (): void => {
-      document.removeEventListener("keydown", down);
+      document.removeEventListener("keydown", down, true);
     };
   }, []);
   return (
@@ -240,7 +242,11 @@ export const EveSearchChats = ({
             onSelect={(id) => {
               setOpen(false);
               setOpenMobile(false);
-              router.push(`/chat/${id}`);
+              if (onChatSelect) {
+                onChatSelect(id);
+              } else {
+                router.push(`/chat/${id}`);
+              }
             }}
           />
         )}

@@ -22,9 +22,9 @@ import type {
 } from "@/lib/eve/readonly-message-types";
 import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 
-import { EveAttachment } from "./eve-attachment";
+import { EveAttachment } from "../eve/eve-attachment";
 import { documentDefinitions } from "@/integrations/documents/definitions";
-import { EveMessagePart } from "./eve-message-part";
+import { EveMessagePart } from "../eve/eve-message-part";
 import { MessageActions } from "@/components/chat-slots";
 
 const messagePartIdentity = (part: ReadonlyEveMessagePart): string => {
@@ -52,7 +52,7 @@ const messagePartIdentity = (part: ReadonlyEveMessagePart): string => {
   }
 };
 
-interface EveMessagesProps {
+interface ChatTranscriptProps {
   readonly conversationId?: string;
   readonly messageKey?: (message: ReadonlyEveMessage) => string;
   readonly messages: readonly ReadonlyEveMessage[];
@@ -84,7 +84,7 @@ interface EveMessagesProps {
 }
 
 interface MessageRowProps extends Omit<
-  EveMessagesProps,
+  ChatTranscriptProps,
   "messages" | "messageKey"
 > {
   readonly message: ReadonlyEveMessage;
@@ -341,14 +341,14 @@ const EveMessageRow = ({
   );
 };
 
-// Parts remain EVE-owned; the message chrome is shared with the original runtime.
-export const EveMessages = ({
+// Production and Create render the same EVE parts and installed tool surfaces.
+export const ChatTranscript = ({
   messages,
   messageKey,
   disabled,
   actionsDisabled = disabled,
   ...props
-}: EveMessagesProps): ReactJSX.Element[] => {
+}: ChatTranscriptProps): ReactJSX.Element[] => {
   const latestDocumentCallId = messages
     .flatMap(
       (message: Readonly<{ parts: readonly ReadonlyEveMessagePart[] }>) =>

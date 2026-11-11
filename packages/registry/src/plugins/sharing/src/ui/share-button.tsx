@@ -3,7 +3,7 @@ import { DialogButton } from "@/components/dialog-button";
 import { PopoverButton } from "@/components/popover-button";
 
 import { Copy, GlobeIcon, Loader2, LockIcon, Share } from "lucide-react";
-import React, { useState } from "react";
+import React, { createContext, useContext, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,12 @@ import { LoginPrompt } from "@/components/upgrade-cta/login-prompt";
 
 type ShareStep = "info" | "shared";
 
+/** Runtime-owned link destination; the dialog and visibility controller stay shared. */
+export const SharingEnvironmentContext = createContext<{
+  readonly getUrl: (chatId: string) => string;
+  readonly notice?: string;
+}>({ getUrl: (chatId) => `${globalThis.location.origin}/share/${chatId}` });
+
 const ShareDialogView = ({
   chatId,
   isPublic,
@@ -36,6 +42,7 @@ const ShareDialogView = ({
   readonly onClose: () => void;
   readonly setVisibility: (visibility: "private" | "public") => Promise<void>;
 }): React.JSX.Element => {
+  const environment = useContext(SharingEnvironmentContext);
   const [, startEventAction] = React.useTransition();
   const [step, setStep] = useState<ShareStep>("info");
   const handleShare = async (): Promise<void> => {
@@ -60,7 +67,7 @@ const ShareDialogView = ({
     }
   };
   const handleCopyLink = async (): Promise<void> => {
-    const shareUrl = `${globalThis.location.origin}/share/${chatId}`;
+    const shareUrl = environment.getUrl(chatId);
     try {
       await navigator.clipboard.writeText(shareUrl);
       toast.success("Share link copied to clipboard");
@@ -185,7 +192,7 @@ const ShareDialogView = ({
               </label>
               <input
                 className="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex h-10 w-full rounded-md border px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
-                defaultValue={`${globalThis.location.origin}/share/${chatId}`}
+                value={environment.getUrl(chatId)}
                 id="link"
                 readOnly
               />
@@ -236,6 +243,9 @@ const ShareDialogView = ({
             </Button>
           </div>
         </>
+      )}
+      {typeof environment.notice === "string" && environment.notice !== "" && (
+        <p className="text-muted-foreground text-xs">{environment.notice}</p>
       )}
     </>
   );

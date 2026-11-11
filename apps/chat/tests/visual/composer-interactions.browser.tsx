@@ -2,7 +2,7 @@ import React, { act, useState } from "react";
 import { expect, test, vi } from "vitest";
 import { page, userEvent } from "vitest/browser";
 import { takeSnapshot, disableAutoSnapshot } from "@uiverify/vitest";
-import { ControlledChatComposer } from "@/components/controlled-chat-composer";
+import { ChatComposer } from "@/components/chat/chat-composer";
 import { InputGroupButton } from "@/components/ui/input-group";
 import { mount, unmount } from "./primitive-mount";
 import "./sandbox.css";
@@ -14,7 +14,7 @@ test("app and Create share submission eligibility", async () => {
     <main>
       {composerDraftCases.map(({ name, canSend: _canSend, ...props }) => (
         <section key={name} aria-label={name}>
-          <ControlledChatComposer
+          <ChatComposer
             {...props}
             disabled={false}
             onDraftChange={vi.fn<(value: string) => void>()}
@@ -49,7 +49,7 @@ const DraftComposer = ({
 }) => {
   const [draft, setDraft] = useState("Restored draft");
   return (
-    <ControlledChatComposer
+    <ChatComposer
       draft={draft}
       disabled={false}
       onDraftChange={setDraft}
@@ -153,7 +153,7 @@ test("submission guards cover read-only, uploads, length and busy states while c
       onStop: stop,
       stopDisabled: true,
     },
-  ] satisfies (Partial<React.ComponentProps<typeof ControlledChatComposer>> & {
+  ] satisfies (Partial<React.ComponentProps<typeof ChatComposer>> & {
     name: string;
     draft: string;
   })[];
@@ -162,7 +162,7 @@ test("submission guards cover read-only, uploads, length and busy states while c
       {states.map(({ name, ...props }) => (
         <section key={name} aria-label={name}>
           <h2>{name}</h2>
-          <ControlledChatComposer
+          <ChatComposer
             disabled={false}
             onSubmit={submit}
             onDraftChange={draftChange}

@@ -9,6 +9,7 @@ import {
 } from "@tanstack/react-query";
 import { isToday, isYesterday, subMonths, subWeeks } from "date-fns";
 import { usePathname } from "next/navigation";
+import { useChatNavigation } from "../chat/chat-navigation";
 import type { JSX as ReactJSX } from "react";
 import React, { useEffect, useRef } from "react";
 
@@ -75,7 +76,7 @@ export const EveHistoryList = ({
     >,
     index: number
   ) => Exclude<React.ReactNode, Promise<unknown>>;
-  readonly initialPage: Awaited<ReturnType<typeof listEveConversations>>;
+  readonly initialPage?: Awaited<ReturnType<typeof listEveConversations>>;
 }): ReactJSX.Element => {
   const trpc = useTRPC();
   const openDeletion = useEveDeletion();
@@ -92,7 +93,9 @@ export const EveHistoryList = ({
             readonly updatedAt: string;
           } | null;
         }) => page.nextCursor,
-        initialData: { pageParams: [null], pages: [initialPage] },
+        initialData: initialPage
+          ? { pageParams: [null], pages: [initialPage] }
+          : undefined,
       }
     )
   );
@@ -105,7 +108,8 @@ export const EveHistoryList = ({
       ) => page.items
     ) ?? [];
   const pathname = usePathname();
-  const route = parseChatIdFromPathname(pathname);
+  const navigation = useChatNavigation();
+  const route = parseChatIdFromPathname(navigation?.pathname ?? pathname);
   const routeId = route.id;
   const selectedIdentity = useQuery(
     trpc.eve.get.queryOptions(
