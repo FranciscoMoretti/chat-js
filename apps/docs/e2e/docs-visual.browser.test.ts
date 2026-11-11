@@ -101,6 +101,17 @@ const pages = [
   { name: "reasoning", path: "/docs/core/reasoning" },
 ] as const;
 
+const capturePage = async (name: string) => {
+  if (name === "home") {
+    document.documentElement.dataset.theme = "light";
+    await takeSnapshot(name);
+    document.documentElement.dataset.theme = "dark";
+    await takeSnapshot("home-dark");
+  } else {
+    await takeSnapshot(name);
+  }
+};
+
 for (const page of pages) {
   test(`docs ${page.name}`, async () => {
     document.head.replaceChildren();
@@ -165,8 +176,15 @@ for (const page of pages) {
           );
           expect(banner).not.toBeNull();
           await banner?.decode();
+          expect(banner?.naturalWidth).toBe(1280);
+          expect(banner?.naturalHeight).toBe(640);
         })
       );
+      expect(
+        source
+          .querySelector('meta[property="og:image"]')
+          ?.getAttribute("content")
+      ).toBe("https://chatjs.dev/docs/images/opengraph-image.jpg");
       const deployment = [...sections].find(
         (section) =>
           section
@@ -214,6 +232,6 @@ for (const page of pages) {
       )
     );
     await document.fonts.ready;
-    await takeSnapshot(page.name);
+    await capturePage(page.name);
   });
 }

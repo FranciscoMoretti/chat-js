@@ -173,6 +173,11 @@ try {
   await page
     .getByRole("contentinfo")
     .screenshot({ path: `${output}mobile-footer.png` });
+  const footerText = await page.getByRole("contentinfo").textContent();
+  assert.equal(
+    footerText?.includes("The building blocks for your AI app."),
+    true
+  );
   await page
     .locator(".hero")
     .screenshot({ path: `${output}mobile-hero.png`, animations: "disabled" });

@@ -326,6 +326,14 @@ export default defineConfig({
       description:
         "Production-ready AI chat documentation for auth, streaming, tools, and deployment.",
       site: "ChatJS",
+      logo: "/logo/dark.svg",
+      palette: {
+        accent: "#e8e8df",
+        background: "#0b0b0a",
+        foreground: "#e8e8df",
+        muted: "#acac9f",
+        border: "#404039",
+      },
     },
     x: {
       creator: "@franmoretti_",
