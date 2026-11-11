@@ -1,6 +1,10 @@
 <div align="center">
 
-<img src="apps/chat/app/icon.svg" alt="ChatJS" width="64" height="64">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="packages/brand/assets/social/github-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="packages/brand/assets/social/github-white.png">
+  <img src="packages/brand/assets/social/github-dark.png" alt="ChatJS — The building blocks for your AI app" width="1280" height="640">
+</picture>
 
 # ChatJS
 
