@@ -15,6 +15,20 @@ const minimal = {
   storage: { source: "vercel-blob", options: {} },
 };
 
+test("provider item aliases resolve to canonical IDs without changing the request", () => {
+  const input = {
+    ...minimal,
+    gateway: "@chatjs/vercel-gateway",
+    storage: { source: "vercel-blob-storage", options: {} },
+    sandbox: "vercel-sandbox",
+  };
+  const result = resolveInstallationSelection(input, catalog);
+
+  expect(result.requested).toEqual(input);
+  expect(result.selection).toEqual({ ...minimal, sandbox: "vercel" });
+  expect(result.issues).toEqual([]);
+});
+
 test("the web catalog and packaged registry describe exactly the same choices", () => {
   const sorted = (items: typeof catalog) =>
     items.toSorted((a, b) => a.name.localeCompare(b.name));

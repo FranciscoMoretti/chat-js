@@ -1,6 +1,6 @@
 "use client";
 
-import { Activity, useEffect, useState, useRef } from "react";
+import { Activity, useEffect, useLayoutEffect, useState, useRef } from "react";
 import { toast } from "sonner";
 import { attachmentDigest, draftAttachment } from "../../../chat/lib/eve/draft";
 import type { DraftAttachment } from "../../../chat/lib/eve/draft";
@@ -54,7 +54,11 @@ export const ChatPreview = () => {
   const [scenario, setScenario] = useState<"ready" | "mutation-error">("ready");
   const [draft, setDraft] = useState("");
   const [messages, setMessages] = useState<
-    { text: string; attachments: readonly Readonly<DraftAttachment>[] }[]
+    {
+      id: number;
+      text: string;
+      attachments: readonly Readonly<DraftAttachment>[];
+    }[]
   >([]);
   const [attachments, setAttachments] = useState<
     readonly Readonly<DraftAttachment>[]
@@ -64,6 +68,8 @@ export const ChatPreview = () => {
   const [error, setError] = useState<string>();
   const [edit, setEdit] = useState<{ id: string; text: string }>();
   const [replacements, setReplacements] = useState<Record<string, string>>({});
+  const nextMessageId = useRef(0);
+  const attachmentGeneration = useRef(0);
   const objectUrls = useRef<string[]>([]);
   useEffect(
     () => () => {
@@ -108,6 +114,13 @@ export const ChatPreview = () => {
   const availableTools = previewTools(installation.tools ?? []);
 
   const uploads = installation.plugins.includes("attachment-uploads");
+  useLayoutEffect(
+    () => () => {
+      attachmentGeneration.current += 1;
+    },
+    // oxlint-disable-next-line react/exhaustive-effect-dependencies -- Invalidate reads whenever the preview context changes.
+    [params.item, uploads, guest]
+  );
   const welcome = params.item === "preview" && messages.length === 0;
   const conversationTitle =
     params.item === "preview-tools"
@@ -206,11 +219,14 @@ export const ChatPreview = () => {
     }
     setError(undefined);
     simulateResponse();
+    const id = nextMessageId.current;
+    nextMessageId.current += 1;
     setMessages((previous) => [
       ...previous,
-      { text, attachments: uploads ? files : [] },
+      { id, text, attachments: uploads ? files : [] },
     ]);
     setDraft("");
+    attachmentGeneration.current += 1;
     setAttachments([]);
   };
 
@@ -284,6 +300,7 @@ export const ChatPreview = () => {
                     selectScene("preview");
                     setMessages([]);
                     setDraft("");
+                    attachmentGeneration.current += 1;
                     setAttachments([]);
                     setEdit(undefined);
                     setReplacements({});
@@ -453,22 +470,30 @@ export const ChatPreview = () => {
                               busy: false,
                               errors: [],
                               enqueue: async (files) => {
-                                const added = await Promise.all(
-                                  files.map(async (file) =>
-                                    draftAttachment.parse({
-                                      name: file.name,
-                                      contentType: file.type,
-                                      digest: await attachmentDigest(
+                                const generation = attachmentGeneration.current;
+                                const digests = await Promise.all(
+                                  files.map(
+                                    async (file) =>
+                                      await attachmentDigest(
                                         await file.arrayBuffer()
-                                      ),
-                                      url: (() => {
-                                        const url = URL.createObjectURL(file);
-                                        objectUrls.current.push(url);
-                                        return url;
-                                      })(),
-                                    })
+                                      )
                                   )
                                 );
+                                if (
+                                  generation !== attachmentGeneration.current
+                                ) {
+                                  return;
+                                }
+                                const added = files.map((file, index) => {
+                                  const url = URL.createObjectURL(file);
+                                  objectUrls.current.push(url);
+                                  return draftAttachment.parse({
+                                    name: file.name,
+                                    contentType: file.type,
+                                    digest: digests[index],
+                                    url,
+                                  });
+                                });
                                 setAttachments((current) => [
                                   ...current,
                                   ...added,

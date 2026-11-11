@@ -37,6 +37,17 @@ test("live Create shares production plugin controllers", async ({
     "aria-pressed",
     "true"
   );
+  const draft = preview.getByRole("textbox", { name: "Message", exact: true });
+  await draft.fill("Check my preview reply");
+  await draft.press("Enter");
+  const replyVotes = preview.getByTestId("message-upvote");
+  await expect(replyVotes).toHaveCount(2);
+  await replyVotes.last().click();
+  await expect(replyVotes.last()).toHaveAttribute("aria-pressed", "true");
+  await expect(preview.getByTestId("message-downvote").first()).toHaveAttribute(
+    "aria-pressed",
+    "true"
+  );
   await preview.getByRole("button", { name: /^Chat menu:/u }).click();
   await preview.getByRole("menuitem", { name: "Move to project" }).click();
   await preview
@@ -631,7 +642,11 @@ test("Guest Chat switches preview identity and uses a temporary local conversati
     }
   });
   page.on("pageerror", (error) => errors.push(error.message));
-  await page.goto("/create?item=preview-02");
+  await page.goto(
+    `/create?item=preview-02&installation=${encodeURIComponent(
+      JSON.stringify({ gateway: "openai", plugins: [], tools: [] })
+    )}`
+  );
   const frame = page.locator('iframe[title="Preview"]');
   const preview = frame.contentFrame();
   const signedIn = preview.getByTestId("chat-preview");
@@ -654,6 +669,9 @@ test("Guest Chat switches preview identity and uses a temporary local conversati
   await expect(signedIn).toBeVisible();
   await guestMode.click();
   await expect(guest).toBeVisible();
+  await expect(
+    guest.getByRole("button", { name: /GPT-5 nano/iu })
+  ).toBeDisabled();
   await expect(signedIn).toBeHidden();
   await expect(
     guest.getByRole("button", { name: "Composer options" })

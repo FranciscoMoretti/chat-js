@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { ChatModelsContext } from "../../../chat/providers/chat-models-provider";
+import { guestPreviewCatalog } from "./preview-runtime";
 import { SessionContext } from "../../../chat/providers/session-context";
 import { Plugins } from "../../../chat/chatjs/core/ui/slots";
 import { ChatSidebar } from "../../../chat/components/chat/chat-sidebar";
@@ -98,7 +100,7 @@ export const GuestPreview = ({
     }, 700);
   };
 
-  return (
+  const content = (
     <SessionContext value={guestSession}>
       <Plugins plugins={noPlugins}>
         <ChatNavigationContext
@@ -159,5 +161,11 @@ export const GuestPreview = ({
         </ChatNavigationContext>
       </Plugins>
     </SessionContext>
+  );
+
+  return (
+    <ChatModelsContext value={guestPreviewCatalog(modelId)}>
+      {content}
+    </ChatModelsContext>
   );
 };

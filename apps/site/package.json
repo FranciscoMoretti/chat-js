@@ -3,7 +3,7 @@
   "version": "0.1.1",
   "private": true,
   "scripts": {
-    "prebuild": "bun --filter @chat-js/thread build",
+    "prebuild": "bun --filter @chat-js/gateways --filter @chat-js/sandboxes --filter @chat-js/thread build",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
@@ -15,6 +15,8 @@
   "dependencies": {
     "@ai-sdk/react": "4.0.140",
     "@base-ui/react": "^1.8.0",
+    "@chat-js/gateways": "workspace:*",
+    "@chat-js/sandboxes": "workspace:*",
     "@chat-js/thread": "workspace:*",
     "@chatjs/brand": "workspace:*",
     "@hugeicons/core-free-icons": "^3.0.0",

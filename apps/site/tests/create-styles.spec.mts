@@ -29,9 +29,8 @@ for (const base of ["base"] as const) {
             menuColor,
           });
           await page.setViewportSize({ width, height: 1000 });
-          await page.emulateMedia({
-            colorScheme: width === 390 ? "dark" : "light",
-          });
+          const mode = width === 390 ? "dark" : "light";
+          await page.emulateMedia({ colorScheme: mode });
           await page.goto(
             `/create/preview?base=${base}&preset=${preset}&rtl=${rtl}&item=preview-tools`
           );
@@ -43,10 +42,18 @@ for (const base of ["base"] as const) {
             "dir",
             rtl ? "rtl" : "ltr"
           );
+          await expect(page.getByTestId("chat-preview")).toHaveAttribute(
+            "data-mode",
+            mode
+          );
           await selectPreviewTools(page);
           await expect(
             page.getByRole("button", { name: "Show all sources", exact: true })
           ).toBeVisible();
+          await expect(page.getByTestId("chat-preview")).toHaveAttribute(
+            "data-mode",
+            mode
+          );
           await page.evaluate(async () => await document.fonts.ready);
           await page.addStyleTag({
             content:

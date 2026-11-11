@@ -14,8 +14,8 @@ export const attachPreviewFile = async (scope: Page | FrameLocator) => {
 };
 
 export const selectPreviewTools = async (page: Page) => {
-  await page.getByTestId("chat-preview").waitFor();
-  await page.evaluate(() => {
+  const mode = await page.getByTestId("chat-preview").getAttribute("data-mode");
+  await page.evaluate((theme) => {
     window.postMessage(
       {
         type: "chatjs:create-installation",
@@ -24,11 +24,11 @@ export const selectPreviewTools = async (page: Page) => {
           plugins: [],
           tools: ["tavily-search"],
         },
-        mode: "light",
+        mode: theme,
       },
       window.location.origin
     );
-  });
+  }, mode);
 };
 
 /** Decode built-in choices from the CLI output; public config stays explicit. */

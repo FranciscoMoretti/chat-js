@@ -128,14 +128,15 @@ export const sceneMessages = (
 
 export const submittedMessages = (
   entries: readonly {
+    id: number;
     text: string;
     attachments: readonly Readonly<DraftAttachment>[];
   }[],
   gateway: string | undefined
 ): readonly ReadonlyEveMessage[] =>
-  entries.flatMap((entry, index): ReadonlyEveMessage[] => [
+  entries.flatMap((entry): ReadonlyEveMessage[] => [
     {
-      id: `preview-user-${index}`,
+      id: `preview-user-${entry.id}`,
       role: "user",
       parts: [
         ...(entry.text
@@ -156,7 +157,7 @@ export const submittedMessages = (
       ],
     },
     {
-      id: `preview-assistant-${index}`,
+      id: `preview-assistant-${entry.id}`,
       role: "assistant",
       parts: [
         {

@@ -39,11 +39,15 @@ const models: AppModelDefinition[] = [
   output: { text: true, image: false, audio: false, video: false },
   toolCall: true,
 }));
-const catalog = {
-  allModels: models,
-  models,
-  getModelById: (id: string) => models.find((model) => model.id === id),
-};
+const modelCatalog = (entries: AppModelDefinition[]) => ({
+  allModels: entries,
+  models: entries,
+  getModelById: (id: string) => entries.find((model) => model.id === id),
+});
+const catalog = modelCatalog(models);
+
+export const guestPreviewCatalog = (id: string) =>
+  modelCatalog([{ ...models[0], id, apiModelId: id }]);
 
 export const PreviewRuntime = ({
   children,

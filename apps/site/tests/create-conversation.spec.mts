@@ -74,3 +74,58 @@ for (const base of ["base"] as const) {
     });
   }
 }
+
+test("a pending attachment stays out of a new preview chat", async ({
+  page,
+  uiVerify,
+}) => {
+  uiVerify.disableAutoSnapshot();
+  await page.setViewportSize({ width: 1000, height: 1100 });
+  await page.goto("/create/preview?item=preview-02");
+  await expect(page.getByRole("textbox", { name: "Message" })).toBeVisible();
+  await page.evaluate(() => {
+    window.postMessage(
+      {
+        type: "chatjs:create-installation",
+        installation: { gateway: "vercel", plugins: ["attachment-uploads"] },
+        mode: "light",
+      },
+      window.location.origin
+    );
+    const delayedRead = Promise.withResolvers();
+    window.addEventListener(
+      "release-preview-file",
+      () => {
+        delayedRead.resolve(null);
+      },
+      { once: true }
+    );
+    File.prototype.arrayBuffer = async function arrayBuffer(this: File) {
+      const buffer = await Blob.prototype.arrayBuffer.call(this);
+      if (document.body.dataset.previewFile === undefined) {
+        document.body.dataset.previewFile = "pending";
+        await delayedRead.promise;
+      }
+      return buffer;
+    };
+  });
+  await expect(
+    page.getByText("project-notes.md", { exact: true })
+  ).toBeVisible();
+  await attachPreviewFile(page);
+  await expect(page.locator("body")).toHaveAttribute(
+    "data-preview-file",
+    "pending"
+  );
+  await page.getByRole("link", { name: /New Chat/u }).click();
+  await expect(
+    page.getByRole("heading", { name: "How can I help you today?" })
+  ).toBeVisible();
+  await page.evaluate(() => {
+    window.dispatchEvent(new Event("release-preview-file"));
+  });
+  await attachPreviewFile(page);
+  await expect(
+    page.getByRole("button", { name: "Remove attachment" })
+  ).toHaveCount(1);
+});

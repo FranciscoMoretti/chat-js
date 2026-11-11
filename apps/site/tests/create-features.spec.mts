@@ -396,7 +396,12 @@ test("Get Code selects either library without replacing the preview", async ({
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto(
     `/create?installation=${encodeURIComponent(
-      JSON.stringify({ gateway: "vercel", plugins: ["feedback"], tools: [] })
+      JSON.stringify({
+        gateway: "vercel",
+        plugins: ["feedback"],
+        tools: [],
+        sandbox: "vercel-sandbox",
+      })
     )}`
   );
   const preview = page.frameLocator("iframe");
@@ -413,6 +418,7 @@ test("Get Code selects either library without replacing the preview", async ({
     dialog.getByRole("button", { name: "Base UI", exact: true })
   ).toHaveAttribute("aria-pressed", "true");
   await expect(command).toContainText("--base base");
+  expect(commandAppPreset(await command.textContent()).sandbox).toBe("vercel");
   await expect(dialog.getByRole("switch")).toHaveAccessibleName(
     "Use pointer on buttons"
   );

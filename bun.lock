@@ -193,6 +193,8 @@
       "dependencies": {
         "@ai-sdk/react": "4.0.140",
         "@base-ui/react": "^1.8.0",
+        "@chat-js/gateways": "workspace:*",
+        "@chat-js/sandboxes": "workspace:*",
         "@chat-js/thread": "workspace:*",
         "@chatjs/brand": "workspace:*",
         "@hugeicons/core-free-icons": "^3.0.0",

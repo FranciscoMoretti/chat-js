@@ -258,6 +258,15 @@ export const resolveInstallationSelection = (
   const gateway = choose(requested.gateway, "gateway") ?? undefined;
   const storage = choose(requested.storage?.source, "storage") ?? undefined;
   const sandbox = choose(requested.sandbox, "sandbox") ?? undefined;
+  if (gateway) {
+    selection.gateway = gateway.id;
+  }
+  if (storage && selection.storage) {
+    selection.storage.source = storage.id;
+  }
+  if (sandbox) {
+    selection.sandbox = sandbox.id;
+  }
   // Iterate the growing graph so dependencies of inferred providers are resolved too.
   for (const item of selected.values()) {
     if (item.definition?.kind !== "tool") {

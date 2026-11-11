@@ -16,7 +16,10 @@ type Outputs = inferRouterOutputs<AppRouter>;
 
 const voteInput = z.object({
   conversationId: z.literal(sampleConversation.id),
-  messageId: z.literal(sampleMessageId),
+  messageId: z.union([
+    z.literal(sampleMessageId),
+    z.string().regex(/^preview-assistant-\d+$/u),
+  ]),
   type: z.enum(["up", "down"]),
 });
 /** A bounded terminal transport, not a server implementation. Unsupported calls fail closed. */
@@ -197,7 +200,10 @@ export const createFixtureTransport = (
           messageId: data.messageId,
           isUpvoted: data.type === "up",
         } satisfies Outputs["feedback"]["vote"];
-        votes = [saved];
+        votes = [
+          ...votes.filter((vote) => vote.messageId !== data.messageId),
+          saved,
+        ];
         return saved;
       }
       default: {

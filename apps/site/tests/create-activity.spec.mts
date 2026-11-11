@@ -112,6 +112,10 @@ for (const base of ["base"] as const) {
             { exact: true }
           )
         ).toBeVisible();
+        await expect(page.getByTestId("chat-preview")).toHaveAttribute(
+          "data-mode",
+          mode
+        );
         await page.evaluate(async () => await document.fonts.ready);
         await page.addStyleTag({
           content:
