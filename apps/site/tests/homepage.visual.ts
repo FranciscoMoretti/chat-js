@@ -40,6 +40,7 @@ try {
   });
   await page.goto(`http://localhost:${process.env.PORT}/`);
   await page.getByTestId("homepage").waitFor();
+  await page.addStyleTag({ content: "nextjs-portal { display: none; }" });
   await page.getByRole("link", { name: "Skip to content" }).focus();
   await page.keyboard.press("Enter");
   assert.equal(await page.evaluate(() => document.activeElement?.id), "main");
@@ -191,6 +192,27 @@ try {
     ),
     true
   );
+  await page.locator(".closing").screenshot({
+    path: `${output}mobile-closing.png`,
+    animations: "disabled",
+  });
+  // Keep larger hero text and actions usable at narrow and split-layout widths.
+  const captureResponsiveHero = async (width: number) => {
+    await page.setViewportSize({ width, height: 1000 });
+    await page.locator(".hero").screenshot({
+      path: `${output}hero-${width}.png`,
+      animations: "disabled",
+    });
+    assert.equal(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth
+      ),
+      true,
+      `Homepage should fit a ${width}px viewport`
+    );
+  };
+  await captureResponsiveHero(320);
+  await captureResponsiveHero(900);
   assert.deepEqual(errors, []);
 } finally {
   await browser.close();

@@ -38,7 +38,7 @@ export const CreateCommand = () => {
 
   return (
     <div className="hero-cli">
-      <span className="eyebrow">OR START IN YOUR TERMINAL</span>
+      <span className="eyebrow">Or start in your terminal</span>
       <div className="cli-command">
         <span className="prompt" aria-hidden="true">
           $
@@ -60,7 +60,6 @@ export const CreateCommand = () => {
           <span>{status === "Command copied." ? "Copied" : "Copy"}</span>
         </button>
       </div>
-      <span className="hero-cli-note">Choose your setup. Keep the source.</span>
       <output className="sr-only" aria-live="polite">
         {status}
       </output>
