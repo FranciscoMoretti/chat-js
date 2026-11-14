@@ -1,11 +1,21 @@
 {
+  "native": {
+    "files": ["tool.ts", "schemas.ts", "retrieve-url-env.ts"],
+    "dependencies": ["eve", "zod", "@mendable/firecrawl-js"]
+  },
   "envRequirements": [{ "options": [["FIRECRAWL_API_KEY"]] }],
   "id": "retrieve-url",
   "kind": "tool",
   "requiresTools": [],
   "slot": "retrieveUrl",
   "tools": [
-    { "rendererExport": "RetrieveUrlRenderer", "toolExport": "retrieveUrl" }
+    {
+      "accounting": "unknown",
+      "readOnly": true,
+      "rendererExport": "RetrieveUrlRenderer",
+      "toolExport": "retrieveUrl"
+    }
   ],
-  "contractVersion": 1
+  "contractVersion": 1,
+  "channelSupport": { "web": "supported", "slack": "unverified" }
 }

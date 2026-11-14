@@ -8,6 +8,7 @@ process.env.UIVERIFY_ARCHIVE_DIR ??= fileURLToPath(
 export default defineConfig({
   testDir: ".",
   testMatch: [
+    "create-agent.spec.mts",
     "create-activity.spec.mts",
     "create-features.spec.mts",
     "create-plugins.spec.mts",

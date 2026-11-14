@@ -2,7 +2,6 @@ import type { EveChannelConfig } from "eve/channels/eve";
 import { assertEveFilesOwned } from "@/lib/db/eve-files";
 import { downloadFile } from "@/lib/file-storage";
 import { keyFromFileUrl } from "@/lib/file-url";
-import { retainWorkspaceAttachment } from "./workspace-attachments";
 
 type FileContext = NonNullable<
   Parameters<NonNullable<EveChannelConfig["fetchFile"]>>[1]
@@ -33,23 +32,14 @@ export const fetchEveChannelFile = async (
   if (
     auth === null ||
     typeof auth !== "object" ||
-    auth.principalType === "anonymous"
+    auth.principalType !== "user" ||
+    auth.authenticator !== "chatjs-gateway"
   ) {
     throw new Error("Attachment resolution requires an authenticated owner.");
   }
   await assertEveFilesOwned(auth.principalId, [key]);
   const file = await downloadFile(key);
   const bytes = Buffer.from(await file.arrayBuffer());
-  const sessionId = context?.session?.id;
-  if (sessionId === undefined || sessionId === "") {
-    throw new Error("Attachment session is unavailable.");
-  }
-  await retainWorkspaceAttachment({
-    ownerId: auth.principalId,
-    sessionId,
-    fileKey: key,
-    content: bytes,
-  });
   return {
     bytes,
     mediaType: file.type,

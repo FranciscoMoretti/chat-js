@@ -15,12 +15,7 @@ export const builtInSandboxes = ["vercel", "daytona"].map((id) => ({
         ]
       : [`@daytona/sdk@${registryPackage.devDependencies["@daytona/sdk"]}`]),
   ],
-  files: [
-    "provider.ts",
-    `${id}-sandbox-env.ts`,
-    "adapter.ts",
-    ...(id === "vercel" ? ["persistent.ts"] : []),
-  ].map((file) => ({
+  files: ["provider.ts", `${id}-sandbox-env.ts`, "adapter.ts"].map((file) => ({
     path: `src/sandboxes/${id}/${file}`,
     target: `~/chatjs/providers/sandbox/${file}`,
     type: "registry:file" as const,
@@ -31,7 +26,7 @@ export const builtInSandboxes = ["vercel", "daytona"].map((id) => ({
       kind: "sandbox",
       id,
       capabilities: {
-        persistent: id === "vercel",
+        persistent: false,
         runtimes: ["python", "javascript"],
         cleanup: "durable-allocation",
         cancellation: "terminate",

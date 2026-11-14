@@ -17,5 +17,6 @@
       "workflow": true
     }
   ],
-  "contractVersion": 1
+  "contractVersion": 1,
+  "channelSupport": { "web": "supported", "slack": "unverified" }
 }

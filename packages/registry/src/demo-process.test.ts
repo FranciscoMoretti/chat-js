@@ -90,7 +90,8 @@ test("a hung generator is terminated and its worker lease can be released", asyn
       path.join(directory, "hung.ts"),
       `await Bun.write("pid", String(process.pid)); setInterval(() => {}, 1000);`
     );
-    expect(runDemoWorker(["hung.ts"], directory, 500)).rejects.toThrow(
+    // Leave enough startup time to record the PID before testing termination.
+    expect(runDemoWorker(["hung.ts"], directory, 2000)).rejects.toThrow(
       "deadline"
     );
     const pid = Number(await readFile(path.join(directory, "pid"), "utf-8"));

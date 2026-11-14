@@ -10,7 +10,6 @@ import { purgeEvePostgresSessionPayloads } from "@/lib/eve/lifecycle/postgres/ev
 import { installEvePostgresQueueFence } from "@/lib/eve/lifecycle/postgres/eve-queue-fence";
 import { purgeEvePostgresQueue } from "@/lib/eve/lifecycle/postgres/eve-queue-purge";
 import { installEvePostgresResourceFence } from "@/lib/eve/lifecycle/postgres/eve-resource-fence";
-import { verifyEveSandboxCoverage } from "@/lib/eve/lifecycle/postgres/eve-sandbox-coverage-proof";
 import { fenceEvePostgresSession } from "@/lib/eve/lifecycle/postgres/eve-session-fence";
 
 import { env } from "../lib/env";
@@ -49,7 +48,6 @@ afterAll(async () => {
       throw reason;
     }
     await query`delete from workflow.workflow_runs where id in ${query(runIds)}`;
-    await query`delete from workflow.eve_sandbox_coverage where session_id in ${query(runIds)}`;
     await query`delete from workflow.eve_session_retirements where session_id in ${query(runIds)}`;
     await query`delete from workflow.eve_payload_purges where task_identifier = ${task}`;
     await query`delete from workflow.eve_queue_purge_runs where task_identifier = ${task}`;
@@ -333,69 +331,4 @@ test("missing queue-discovered runs stop preparation before payload erasure", as
       vi.fn<() => Promise<void>>().mockResolvedValue()
     )
   ).rejects.toThrow("Resolve missing runs");
-});
-
-test("sandbox coverage requires fences and receipts, then survives native payload erasure", async () => {
-  const root = await fixture();
-  const child = await fixture(root);
-  await query`update workflow.workflow_runs set name = 'workflow//eve//workflowEntry' where id in ${query([root, child])}`;
-  const input = { appRoot: "/fixture", runIds: [root, child], sessionId: root };
-  const verify = vi
-    .fn<(sessionId: string) => Promise<void>>()
-    .mockResolvedValue();
-  await expect(verifyEveSandboxCoverage(query, input, verify)).rejects.toThrow(
-    "Fence native writers"
-  );
-  const inventory = await fenceEvePostgresSession(query, root);
-  await expect(
-    verifyEveSandboxCoverage(query, input, () => {
-      throw new Error("receipt absent");
-    })
-  ).rejects.toThrow("receipt absent");
-  expect(
-    await query`select session_id from workflow.eve_sandbox_coverage where session_id = ${root}`
-  ).toHaveLength(0);
-  expect(await verifyEveSandboxCoverage(query, input, verify)).toEqual(
-    [root, child].toSorted()
-  );
-  expect(verify.mock.calls).toEqual(
-    [root, child].toSorted().map((sessionId) => [sessionId])
-  );
-  await purgeEvePostgresQueue(query, {
-    runIds: inventory.runIds,
-    sessionId: root,
-    taskIdentifier: task,
-  });
-  await purgeEvePostgresSessionPayloads(query, {
-    sessionId: root,
-    taskIdentifier: task,
-  });
-  expect(
-    await verifyEveSandboxCoverage(query, input, () => {
-      throw new Error("must use saved proof");
-    })
-  ).toEqual([root, child].toSorted());
-  await expect(
-    verifyEveSandboxCoverage(query, { ...input, appRoot: "/other" }, verify)
-  ).rejects.toThrow("scope changed");
-  await expect(
-    verifyEveSandboxCoverage(query, { ...input, runIds: [root] }, verify)
-  ).rejects.toThrow("scope changed");
-  expect(verify).toHaveBeenCalledTimes(2);
-});
-
-test("unknown workflow coverage never calls the ownership verifier", async () => {
-  const root = await fixture();
-  await fenceEvePostgresSession(query, root);
-  const verify = vi
-    .fn<(sessionId: string) => Promise<void>>()
-    .mockResolvedValue();
-  await expect(
-    verifyEveSandboxCoverage(
-      query,
-      { appRoot: "/fixture", runIds: [root], sessionId: root },
-      verify
-    )
-  ).rejects.toThrow("incomplete sandbox workflow coverage");
-  expect(verify).not.toHaveBeenCalled();
 });

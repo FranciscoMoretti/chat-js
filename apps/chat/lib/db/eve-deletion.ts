@@ -1,5 +1,5 @@
 import { chat } from "@/integrations/chat/server";
-import { checkDeletedWorkspaceMemberships } from "@/lib/eve/persistent-sandbox-store";
+import { checkDeletedWorkspaceMemberships } from "@/lib/db/eve-workspace-deletion";
 import { eveDeletionScope } from "./eve-deletion-scope";
 import { unretainedEveDocumentRevisionIds } from "./eve-document-retention";
 import { and, eq, exists, inArray, or, sql } from "drizzle-orm";

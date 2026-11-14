@@ -9,7 +9,7 @@ import {
   deserializeContext,
   serializeContext,
 } from "@eve-test/dist/src/context/serialize.js";
-import { expect, it, vi } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 import type {
   installedDocumentKinds,
@@ -30,6 +30,12 @@ import {
   eveTurnTool,
   filterEveTools,
 } from "./turn-tools";
+
+beforeEach(() => {
+  vi.stubEnv("TAVILY_API_KEY", "test-only");
+  vi.stubEnv("BLOB_READ_WRITE_TOKEN", "test-only");
+});
+afterEach(() => vi.unstubAllEnvs());
 
 const mocks = vi.hoisted(() => ({ kinds: new Set<string>() }));
 vi.mock("@/integrations/tools/catalog", async (importOriginal) => {
@@ -267,4 +273,15 @@ it("withholds removed document writes while preserving installed revision reads"
       installed.add(kind);
     }
   }
+});
+
+it("rejects explicit unconfigured selections and hides their transitive dependents", async () => {
+  vi.stubEnv("TAVILY_API_KEY", "");
+  await contextStorage.run(new ContextContainer(), async () => {
+    await expect(startTurn("webSearch")).rejects.toThrow("TAVILY_API_KEY");
+    await startTurn();
+    expect(
+      filterEveTools({ webSearch: {}, deepResearch: {}, wordCount: {} })
+    ).toEqual({ wordCount: {} });
+  });
 });

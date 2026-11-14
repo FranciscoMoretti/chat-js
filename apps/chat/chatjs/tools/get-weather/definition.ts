@@ -1,4 +1,3 @@
-import type { ToolDefinition } from "@/chatjs/core/tools/tool-definition";
 import { weatherInput, weatherResult } from "./schemas";
 
 export const toolDefinition = {
@@ -7,4 +6,4 @@ export const toolDefinition = {
   inputSchema: weatherInput,
   outputSchema: weatherResult,
   display: { name: "Weather", shortName: "Weather" },
-} as const satisfies ToolDefinition;
+} as const;

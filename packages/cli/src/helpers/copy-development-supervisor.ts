@@ -12,7 +12,6 @@ export const copyDevelopmentSupervisor = async (
       "dev-process-tree.ts",
       "dev-health.ts",
       "dev-recovery.ts",
-      "persistent-sandbox-cleanup.ts",
     ].map(async (file) => {
       await cp(
         path.join(repository, "scripts", file),

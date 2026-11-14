@@ -2,17 +2,13 @@ import { expect, test } from "bun:test";
 
 import type { ToolContext } from "eve/tools";
 
-import { toolResultSchema } from "@/lib/eve/tool-result";
-
 import { wordCount } from "./tool";
-
-const ZERO_COST_USD = 0;
 
 const unexpected = (): never => {
   throw new Error("Word count must not acquire external resources");
 };
 
-test("word count source handles empty text and whitespace without phantom words", async () => {
+test("word count source handles empty text and whitespace without phantom words", () => {
   const options = {
     abortSignal: new AbortController().signal,
     callId: "test",
@@ -29,20 +25,15 @@ test("word count source handles empty text and whitespace without phantom words"
     },
     toolName: "wordCount",
   } satisfies ToolContext;
-  const empty = toolResultSchema.parse(
-    await wordCount.execute({ text: " \n\t " }, options)
-  );
-  expect(empty.output).toEqual({
+  const empty = wordCount.execute({ text: " \n\t " }, options);
+  expect(empty).toEqual({
     characters: 4,
     charactersNoSpaces: 0,
     sentences: 0,
     words: 0,
   });
-  const result = toolResultSchema.parse(
-    await wordCount.execute({ text: "One two three." }, options)
-  );
-  expect(result.usage.costUsd).toBe(ZERO_COST_USD);
-  expect(result.output).toEqual({
+  const result = wordCount.execute({ text: "One two three." }, options);
+  expect(result).toEqual({
     characters: 14,
     charactersNoSpaces: 12,
     sentences: 1,

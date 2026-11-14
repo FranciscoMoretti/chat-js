@@ -1,4 +1,10 @@
-import { readInstallationInput } from "../../../packages/registry/app-preset";
+import catalogFixture from "./eve-catalog.fixture.json" with { type: "json" };
+import { parseEveCatalog } from "../../../packages/registry/eve-catalog";
+import {
+  encodeAppPreset,
+  readInstallationInput,
+} from "../../../packages/registry/app-preset";
+import { installationSelectionSchema } from "../../../packages/registry/installation";
 import { commandAppPreset } from "./create-fixtures.mts";
 import type { Page } from "playwright/test";
 import { test, expect } from "@uiverify/playwright";
@@ -9,14 +15,11 @@ const selectChoice = async (page: Page, label: string, option: string) => {
     .getByRole("radio", { name: option, exact: true })
     .check();
 };
-const checkRequirements = async (page: Page) => {
-  await page.getByRole("button", { name: "Setup requirements" }).click();
-  await expect(page.getByLabel("Installation issues")).toContainText(
-    "persistent sandbox"
-  );
-  await page.keyboard.press("Escape");
-  await expect(page.getByLabel("Installation issues")).toBeHidden();
-};
+test.beforeEach(async ({ page }) => {
+  await page.route("**/api/eve-catalog", async (route) => {
+    await route.fulfill({ json: parseEveCatalog(catalogFixture) });
+  });
+});
 
 test("Create sections share selections, dependencies and the install command", async ({
   page,
@@ -34,21 +37,21 @@ test("Create sections share selections, dependencies and the install command", a
   const originalDocument = await preview.locator("body").elementHandle();
   await expect(
     page.getByRole("tablist", { name: "Create workspace" }).getByRole("tab")
-  ).toHaveText(["Appearance", "Plugins", "AI tools", "Setup"]);
+  ).toHaveText(["Appearance", "Plugins", "Agent", "Setup"]);
   await page.getByRole("tab", { name: "Plugins", exact: true }).click();
   const panel = page.getByRole("region", { name: "Configure your app" });
-  await expect(panel.getByRole("switch")).toHaveCount(11);
+  await expect(panel.getByRole("switch")).toHaveCount(12);
   await expect(panel.getByRole("heading", { level: 3 })).toHaveText([
     "Conversations",
     "Responses",
     "Files & connections",
     "Access & usage",
+    "Other plugins",
   ]);
   await expect(panel.getByRole("switch", { name: "Langfuse" })).toHaveCount(0);
   await panel
     .getByRole("switch", { name: "Attachment Uploads", exact: true })
     .check();
-  await checkRequirements(page);
   await uiVerify.snapshot("design features");
   await page.screenshot({ path: testInfo.outputPath("features-desktop.png") });
   await panel
@@ -77,14 +80,16 @@ test("Create sections share selections, dependencies and the install command", a
     "Observability",
     "Platforms",
   ]);
-  await page.getByRole("tab", { name: "AI tools", exact: true }).click();
-  const tools = page.getByRole("region", { name: "AI tools", exact: true });
+  await page.getByRole("tab", { name: "Agent", exact: true }).click();
+  const tools = page.getByRole("region", {
+    name: "Application capabilities",
+    exact: true,
+  });
   await expect(tools.getByRole("heading", { level: 3 })).toHaveText([
     "Search & research",
     "Documents",
     "Media",
     "Execution",
-    "Utilities",
   ]);
   await tools
     .getByRole("checkbox", { name: "Deep Research", exact: true })
@@ -106,8 +111,9 @@ test("Create sections share selections, dependencies and the install command", a
   await expect(
     tools.getByRole("checkbox", { name: "Text Documents", exact: true })
   ).not.toBeChecked();
-  await tools
-    .getByRole("checkbox", { name: "Get Weather", exact: true })
+  await page
+    .getByTestId("eve-@chatjs/get-weather")
+    .getByRole("checkbox")
     .check();
   await uiVerify.snapshot("AI tools");
   await page.screenshot({ path: testInfo.outputPath("tools-desktop.png") });
@@ -117,7 +123,6 @@ test("Create sections share selections, dependencies and the install command", a
     .getByLabel("Storage bucket", { exact: true })
     .fill("my-chat-files");
   await selectChoice(page, "Sandbox", "Daytona");
-  await checkRequirements(page);
   await selectChoice(page, "Sandbox", "Vercel Sandbox");
   await expect(
     page.getByRole("complementary", { name: "Your app summary" })
@@ -135,27 +140,23 @@ test("Create sections share selections, dependencies and the install command", a
   await expect(
     panel.getByRole("switch", { name: "Attachment Uploads", exact: true })
   ).toBeChecked();
-  await page.getByRole("tab", { name: "AI tools", exact: true }).click();
+  await page.getByRole("tab", { name: "Agent", exact: true }).click();
   await expect(
-    tools.getByRole("checkbox", { name: "Get Weather", exact: true })
+    page.getByTestId("eve-@chatjs/get-weather").getByRole("checkbox")
   ).toBeChecked();
-  await tools
-    .getByRole("button", { name: "Preview tool examples", exact: true })
+  await page.getByRole("tab", { name: "Appearance", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Tool examples", exact: true })
     .click();
-  await expect(
-    page.getByRole("tab", { name: "AI tools", exact: true })
-  ).toHaveAttribute("aria-selected", "true");
   await expect(page).toHaveURL(/item=preview-tools/u);
   await page.reload();
   const selectionQuery = new URL(page.url()).searchParams;
-  expect(selectionQuery.get("app")).toMatch(/^a[0-9A-Za-z]+$/u);
-  const requested = readInstallationInput(
-    selectionQuery.get("app") ?? "",
-    selectionQuery.get("storage-config") ?? undefined
-  );
+  expect(selectionQuery.get("app")).toMatch(/^agent1_[A-Za-z0-9_-]+$/u);
+  const requested = readInstallationInput(selectionQuery.get("app") ?? "");
   expect(requested.storage?.options.bucket).toBe("my-chat-files");
   expect(requested.plugins).toEqual(["attachment-uploads", "langfuse"]);
-  expect(requested.tools).toEqual(["get-weather"]);
+  expect(requested.tools).toEqual([]);
+  expect(requested.eve).toEqual(["@chatjs/get-weather"]);
   await page
     .getByRole("button", { name: "Get Code", exact: true })
     .first()
@@ -167,9 +168,11 @@ test("Create sections share selections, dependencies and the install command", a
     "langfuse",
   ]);
   expect(commandAppPreset(await command.textContent()).sandbox).toBe("vercel");
-  await expect(command).toContainText('"bucket":"my-chat-files"');
-  expect(commandAppPreset(await command.textContent()).tools).toEqual([
-    "get-weather",
+  expect(
+    commandAppPreset(await command.textContent()).storage?.options.bucket
+  ).toBe("my-chat-files");
+  expect(commandAppPreset(await command.textContent()).eve).toEqual([
+    "@chatjs/get-weather",
   ]);
   await page.getByRole("button", { name: "Copy Command", exact: true }).click();
   expect(
@@ -183,7 +186,7 @@ test("invalid links block export and retain a recovery action in both views", as
   uiVerify,
 }) => {
   uiVerify.disableAutoSnapshot();
-  await page.goto("/create?installation=broken");
+  await page.goto("/create?app=broken");
   await page.getByRole("tab", { name: "Plugins", exact: true }).click();
   await expect(
     page.getByRole("link", { name: "Start a new setup" })
@@ -207,7 +210,7 @@ test("namespaced selections and missing providers remain editable", async ({
 }) => {
   uiVerify.disableAutoSnapshot();
   await page.goto(
-    `/create?installation=${encodeURIComponent(JSON.stringify({ plugins: ["@chatjs/feedback"], tools: [] }))}`
+    `/create?app=${encodeAppPreset(installationSelectionSchema.parse({ plugins: ["@chatjs/feedback"], tools: [] }))}`
   );
   await page.getByRole("tab", { name: "Plugins", exact: true }).click();
   const feedback = page.getByRole("switch", { name: "Feedback", exact: true });
@@ -294,9 +297,10 @@ for (const width of [1440, 390]) {
       expect(await categories.boundingBox()).toEqual(initialCategories);
       expect(await getCode.boundingBox()).toEqual(initialGetCode);
     };
-    await page.getByRole("tab", { name: "AI tools", exact: true }).click();
-    await unchangedFrame();
-    await uiVerify.snapshot("AI tools panel");
+    await page.getByRole("tab", { name: "Agent", exact: true }).click();
+    await expect(frame).toBeHidden();
+    expect(await categories.boundingBox()).toEqual(initialCategories);
+    await uiVerify.snapshot("Agent panel");
     await page.screenshot({
       path: testInfo.outputPath("ai-tools.png"),
       animations: "disabled",
@@ -395,12 +399,12 @@ test("Get Code selects either library without replacing the preview", async ({
   uiVerify.disableAutoSnapshot();
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto(
-    `/create?installation=${encodeURIComponent(
-      JSON.stringify({
+    `/create?app=${encodeAppPreset(
+      installationSelectionSchema.parse({
         gateway: "vercel",
         plugins: ["feedback"],
         tools: [],
-        sandbox: "vercel-sandbox",
+        sandbox: "vercel",
       })
     )}`
   );
@@ -435,7 +439,7 @@ test("Get Code selects either library without replacing the preview", async ({
     "feedback",
   ]);
   await expect(dialog.getByTestId("app-preset-code")).toHaveText(
-    /a[0-9A-Za-z]+/u
+    /agent1_[A-Za-z0-9_-]+/u
   );
   await expect(dialog.getByTestId("appearance-preset-code")).toHaveText(
     /b[0-9A-Za-z]+/u
@@ -505,7 +509,7 @@ for (const width of [1440, 1024, 390]) {
       sandbox: "vercel",
     };
     await page.goto(
-      `/create?installation=${encodeURIComponent(JSON.stringify(installation))}`
+      `/create?app=${encodeAppPreset(installationSelectionSchema.parse(installation))}`
     );
     await expect(
       page.frameLocator('iframe[title="Preview"]').getByTestId("chat-preview")
@@ -521,10 +525,11 @@ for (const width of [1440, 1024, 390]) {
       page.getByRole("heading", { name: "Set up your app." })
     ).toBeVisible();
     await page.evaluate(async () => await document.fonts.ready);
-    const tools = page.getByRole("region", { name: "AI tools", exact: true });
-    const scroll = page
-      .getByTestId("tools-scroll")
-      .locator('[data-slot="scroll-area-viewport"]');
+    const tools = page.getByRole("region", {
+      name: "Application capabilities",
+      exact: true,
+    });
+    const scroll = page.getByTestId("agent-scroll");
     const summary = page.getByRole("complementary", {
       name: "Your app summary",
     });
@@ -532,7 +537,7 @@ for (const width of [1440, 1024, 390]) {
       await tools.locator('label[for^="feature-"]').evaluateAll((cards) =>
         cards.map((card) => {
           const rect = card.getBoundingClientRect();
-          const container = card.closest('[data-slot="scroll-area-viewport"]');
+          const container = card.closest('[data-testid="agent-scroll"]');
           return {
             x: rect.x,
             y: rect.y + (container?.scrollTop ?? 0),
@@ -564,7 +569,7 @@ for (const width of [1440, 1024, 390]) {
       .fill("preview-files");
     await expect(summary).toContainText("Ready to install");
     expect(await summaryGeometry()).toEqual(beforeSummary);
-    await page.getByRole("tab", { name: "AI tools", exact: true }).click();
+    await page.getByRole("tab", { name: "Agent", exact: true }).click();
     const before = await geometry();
     // Each click is explicitly brought into view before measuring: browser scrolling
     // to reach an offscreen control is distinct from a selection shifting the layout.
@@ -641,7 +646,7 @@ test("all built-in examples render and document examples open the right editors"
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto(
-    `/create?item=preview-tools&installation=${encodeURIComponent(JSON.stringify(installation))}`
+    `/create?item=preview-tools&app=${encodeAppPreset(installationSelectionSchema.parse(installation))}`
   );
   const preview = page.frameLocator('iframe[title="Preview"]');
   const messages = preview.getByRole("region", {
@@ -688,9 +693,9 @@ for (const width of [1440, 390]) {
       tools: ["generate-image", "generate-video", "code-execution"],
     };
     await page.goto(
-      `/create?item=preview-tools&installation=${encodeURIComponent(JSON.stringify(installation))}`
+      `/create?item=preview-tools&app=${encodeAppPreset(installationSelectionSchema.parse(installation))}`
     );
-    await page.getByRole("tab", { name: "AI tools", exact: true }).click();
+    await page.getByRole("tab", { name: "Appearance", exact: true }).click();
     const preview = page.frameLocator('iframe[title="Preview"]');
     await expect(
       preview.getByText(
@@ -747,7 +752,7 @@ for (const width of [1440, 390]) {
     await expect(
       page.getByRole("tab", { name: "Setup", exact: true })
     ).toHaveAttribute("aria-selected", "true");
-    await page.getByRole("tab", { name: "AI tools", exact: true }).click();
+    await page.getByRole("tab", { name: "Appearance", exact: true }).click();
     expect(await page.locator('iframe[title="Preview"]').boundingBox()).toEqual(
       frameBounds
     );
@@ -774,22 +779,22 @@ for (const width of [1440, 390]) {
       gateway: "vercel",
     };
     await page.goto(
-      `/create?installation=${encodeURIComponent(JSON.stringify(installation))}`
+      `/create?app=${encodeAppPreset(installationSelectionSchema.parse(installation))}`
     );
     await expect(
       page.frameLocator('iframe[title="Preview"]').getByTestId("chat-preview")
     ).toBeVisible();
-    await page.getByRole("tab", { name: "AI tools", exact: true }).click();
-    const tools = page.getByRole("region", { name: "AI tools", exact: true });
+    await page.getByRole("tab", { name: "Agent", exact: true }).click();
+    const tools = page.getByRole("region", {
+      name: "Application capabilities",
+      exact: true,
+    });
     await tools
       .getByRole("button", { name: "Choose a sandbox" })
       .scrollIntoViewIfNeeded();
     await expect(
       tools.getByRole("button", { name: "Choose a sandbox" })
     ).toBeVisible();
-    await expect(
-      page.getByRole("region", { name: "Installation status" })
-    ).toContainText("Review setup · 1 choice needed");
     await uiVerify.snapshot("contextual setup action");
     await page.screenshot({
       path: testInfo.outputPath("contextual-setup.png"),
@@ -798,7 +803,7 @@ for (const width of [1440, 390]) {
     await expect(
       page.getByRole("radiogroup", { name: "Sandbox", exact: true })
     ).toBeInViewport();
-    await page.getByRole("tab", { name: "AI tools", exact: true }).click();
+    await page.getByRole("tab", { name: "Agent", exact: true }).click();
     await expect(
       tools.getByRole("checkbox", { name: "Code Execution", exact: true })
     ).toBeChecked();
@@ -823,16 +828,13 @@ for (const width of [1440, 390]) {
       page.getByRole("radiogroup", { name: "Sandbox", exact: true })
     ).toBeInViewport();
     await selectChoice(page, "Sandbox", "Vercel Sandbox");
-    await page.getByRole("tab", { name: "AI tools", exact: true }).click();
+    await page.getByRole("tab", { name: "Agent", exact: true }).click();
     await expect(
       tools.getByRole("checkbox", { name: "Code Execution", exact: true })
     ).toBeChecked();
     await expect(
       tools.getByRole("button", { name: "Choose a sandbox" })
     ).toHaveCount(0);
-    await expect(
-      page.getByRole("region", { name: "Installation status" })
-    ).toContainText("Ready to install");
     await page
       .getByRole("button", { name: "Get Code", exact: true })
       .first()
@@ -864,7 +866,7 @@ for (const width of [1440, 390]) {
       gateway: "vercel",
     };
     await page.goto(
-      `/create?item=preview-tools&installation=${encodeURIComponent(JSON.stringify(installation))}`
+      `/create?item=preview-tools&app=${encodeAppPreset(installationSelectionSchema.parse(installation))}`
     );
     const preview = page.frameLocator('iframe[title="Preview"]');
     const title = preview.getByRole("heading", {
@@ -895,7 +897,7 @@ for (const width of [1440, 390]) {
     await preview.getByText("View content", { exact: true }).click();
     await expect(
       preview.getByText(
-        "Choose your appearance, plugins and AI tools, then configure the services that power your app.",
+        "Choose your appearance, plugins and agent capabilities, then configure the services that power your app.",
         { exact: true }
       )
     ).toBeVisible();
@@ -915,7 +917,7 @@ for (const width of [1440, 390]) {
     uiVerify.disableAutoSnapshot();
     await page.setViewportSize({ width, height: 1000 });
     await page.goto(
-      `/create?installation=${encodeURIComponent(JSON.stringify({ plugins: [], tools: ["code-execution"], gateway: "vercel" }))}`
+      `/create?app=${encodeAppPreset(installationSelectionSchema.parse({ plugins: [], tools: ["code-execution"], gateway: "vercel" }))}`
     );
     await page.getByRole("tab", { name: "Setup", exact: true }).click();
     const summary = page.getByRole("complementary", {

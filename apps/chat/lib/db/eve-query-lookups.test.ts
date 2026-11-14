@@ -186,7 +186,7 @@ test("owner-visible lookup boundaries return null for missing and foreign identi
   expect(await getEveDeletionState("owner", missingId)).toBeNull();
 });
 
-vi.mock("@/lib/eve/persistent-sandbox-store", () => ({
+vi.mock("@/lib/db/eve-workspace-deletion", () => ({
   checkDeletedWorkspaceMemberships: vi
     .fn<() => Promise<void>>()
     .mockResolvedValue(),

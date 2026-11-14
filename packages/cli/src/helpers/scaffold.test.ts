@@ -269,7 +269,7 @@ describe("scaffoldFromTemplate", (): void => {
     ).toBe(false);
     expect(
       await readFile(pathModule.join(destination, "agent/sandbox.ts"), "utf-8")
-    ).toContain("createAppSandboxEnvironment");
+    ).toContain("DefaultSandbox.environment()");
     expect(
       existsSync(pathModule.join(destination, "guest/agent/sandbox.ts"))
     ).toBe(false);
@@ -342,7 +342,6 @@ describe("scaffoldFromTemplate", (): void => {
       "lib/eve/model-runtime.test.ts",
       "lib/eve/local-sandbox-inventory.test.ts",
       "lib/eve/purge-local-sandbox.test.ts",
-      "lib/eve/verify-local-coverage.test.ts",
       "lib/db/eve-document-capabilities.test.ts",
       "lib/db/eve-model-ledger.test.ts",
       "lib/db/eve-billing.test.ts",

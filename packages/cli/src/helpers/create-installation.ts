@@ -37,6 +37,11 @@ export const assertExclusiveInstallation = (
 export const readCreateInstallation = (input: CreateInstallationInput) => {
   assertExclusiveInstallation({ ...input });
   const { appPreset, installation, storageConfig } = input;
+  if (storageConfig !== undefined) {
+    throw new Error(
+      "Include storage options in the application configuration, not --storage-config."
+    );
+  }
   if (appPreset !== undefined && appPreset.trim().startsWith("{")) {
     throw new Error(
       "--app-preset expects a compact code; use --installation for JSON."
@@ -48,7 +53,7 @@ export const readCreateInstallation = (input: CreateInstallationInput) => {
     );
   }
   const resolution = resolveInstallationSelection(
-    readInstallationInput(appPreset ?? installation ?? "", storageConfig),
+    readInstallationInput(appPreset ?? installation ?? ""),
     installationCatalog(registry.items)
   );
   if (resolution.issues.length) {

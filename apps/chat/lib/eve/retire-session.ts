@@ -29,11 +29,15 @@ const readRetiredSessionSnapshot = async (
   if (current.events.some((event) => event.type === "session.ended")) {
     return current;
   }
-  const retirement = await session.end({
+  await session.end({
     reason: "Conversation deleted",
     signal: AbortSignal.timeout(SESSION_RETIRE_TIMEOUT_MS),
   });
-  for await (const event of retirement.stream({
+  // End acknowledges submission before the terminal event is durable. Follow the
+  // session from our snapshot; the pinned client's end-delivery reader does not follow.
+  for await (const event of session.stream({
+    follow: true,
+    startIndex: current.session.streamIndex,
     signal: AbortSignal.timeout(SESSION_RETIRE_TIMEOUT_MS),
   })) {
     if (event.type === "session.ended") {
@@ -60,8 +64,10 @@ const reconcileRetiredSessionUsage = async (
 ): Promise<void> => {
   let unresolved = false;
   for (const event of events) {
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Ingest snapshot events in native order before subagent reconciliation; unresolved costs prevent retirement receipts and payload erasure.
-    if (!(await ingestEveUsage(ownerId, sessionId, event))) {
+    if (
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Preserve native event order before erasure.
+      !(await ingestEveUsage(ownerId, sessionId, event))
+    ) {
       unresolved = true;
     }
   }

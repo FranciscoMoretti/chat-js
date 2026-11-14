@@ -1,4 +1,4 @@
-import { searchQueriesSchema } from "@/tools/platform/search-presentation";
+import { searchQueriesSchema, searchOutputSchema } from "./search-runtime";
 import { z } from "zod";
 
 const webSearchInput = z.object({
@@ -21,19 +21,5 @@ const webSearchInput = z.object({
     .nullable(),
 });
 
-const searchResult = z.object({
-  content: z.string(),
-  title: z.string(),
-  url: z.string(),
-});
-
-const searchQuery = z.object({ maxResults: z.number(), query: z.string() });
-const queryResults = z.object({
-  query: searchQuery,
-  results: z.array(searchResult),
-});
-const webSearchResult = z.object({
-  error: z.string().optional(),
-  searches: z.array(queryResults),
-});
+const webSearchResult = searchOutputSchema;
 export { webSearchInput, webSearchResult };

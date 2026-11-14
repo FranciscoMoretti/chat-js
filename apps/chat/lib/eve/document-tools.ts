@@ -4,14 +4,11 @@ import {
   eveDocumentEditInput,
   eveDocumentReadInput,
 } from "@/chatjs/core/documents/contracts";
-import {
-  getEveDocumentRevision,
-  saveEveDocumentRevision,
-} from "@/lib/db/eve-documents";
+import type { saveEveDocumentRevision } from "@/lib/db/eve-documents";
+import { documentRepository } from "./document-repository";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import type { ToolContext } from "eve/tools";
 import { createHash } from "node:crypto";
-import { resolveEveConversationScope } from "./conversation-scope";
 
 type DocumentContext = Pick<ToolContext, "session" | "callId" | "abortSignal">;
 
@@ -55,16 +52,8 @@ const readEveDocumentTool = async (
   context: ReadonlyNativeSurface<DocumentContext>
 ): ReturnType<typeof executeEveDocumentTool> => {
   const input = eveDocumentReadInput.parse(value);
-  const scope = await resolveEveConversationScope(
-    context.session.auth.initiator?.principalId,
-    context.session.id,
-    context.abortSignal
-  );
-  const revision = await getEveDocumentRevision(
-    scope.ownerId,
-    scope.conversationId,
-    input.documentId
-  );
+  const repository = await documentRepository(context);
+  const revision = await repository.read(input.documentId);
   if (!revision) {
     throw new Error("Document not found.");
   }
@@ -115,30 +104,21 @@ const writeEveDocumentTool = async (
   }
   const edit = operation.edit ? eveDocumentEditInput.parse(value) : undefined;
   const input = edit ?? eveDocumentCreateInput.parse(value);
-  const scope = await resolveEveConversationScope(
-    context.session.auth.initiator?.principalId,
-    context.session.id,
-    context.abortSignal
-  );
+  const repository = await documentRepository(context);
   context.abortSignal.throwIfAborted();
-  const revision = await saveEveDocumentRevision(
-    {
-      ...scope,
-      content: documentDefinitions
-        .require(operation.kind)
-        .contentSchema.parse(input.content),
-      documentId:
-        edit?.documentId ??
-        documentIdForCall(context.session.id, context.callId),
-      expectedRevisionId: edit?.expectedRevisionId ?? null,
-      fileIds: input.fileIds,
-      kind: operation.kind,
-      operationId: `tool:${context.callId}`,
-      title: input.title,
-      turnIndex: context.session.turn.sequence,
-    },
-    context.abortSignal
-  );
+  const revision = await repository.save({
+    content: documentDefinitions
+      .require(operation.kind)
+      .contentSchema.parse(input.content),
+    documentId:
+      edit?.documentId ?? documentIdForCall(context.session.id, context.callId),
+    expectedRevisionId: edit?.expectedRevisionId ?? null,
+    fileIds: input.fileIds,
+    kind: operation.kind,
+    operationId: `tool:${context.callId}`,
+    title: input.title,
+    turnIndex: context.session.turn.sequence,
+  });
   return {
     date: revision.createdAt.toISOString(),
     documentId: revision.documentId,

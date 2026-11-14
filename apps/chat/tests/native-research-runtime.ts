@@ -113,11 +113,6 @@ export async function recordEveUsage(row) {
   return row.costUsd !== undefined;
 }`
   );
-  // This fixture covers workflow/search receipts, not gateway model accounting.
-  await write(
-    "lib/eve/model-accounting.ts",
-    "export const observeEveModelAccounting = () => {};"
-  );
   await cp(
     path.join(app, "lib/eve/accounting-log.ts"),
     path.join(fixture, "lib/eve/accounting-log.ts")

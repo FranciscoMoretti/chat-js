@@ -10,7 +10,7 @@ import { ToolInput, ToolOutput } from "@/components/part/tool-data";
 import { ToolActivity } from "@/components/part/tool-activity";
 import { ReasoningPart } from "@/components/part/message-reasoning";
 import { EvePendingInput } from "./eve-pending-input";
-import { parseToolId } from "@/lib/ai/mcp-name-id";
+import { eveMcpResult } from "@/lib/eve/mcp-result";
 import { getEveInstalledToolRenderer } from "@/lib/ai/tool-renderer-registry";
 import { documentDefinitions } from "@/integrations/documents/definitions";
 import type { ReadonlyEveMessagePart } from "@/lib/eve/readonly-message-types";
@@ -33,6 +33,9 @@ const toolStatus = (
   }
   if (part.state === "rejected") {
     return "Request declined.";
+  }
+  if (part.state === "cancelled") {
+    return "Tool stopped.";
   }
   if (part.state === "failed") {
     return part.error?.message ?? "Tool failed";
@@ -163,7 +166,10 @@ export const EveMessagePart = ({
       />
     );
   }
-  if (parseToolId(part.name)) {
+  if (
+    part.state === "completed" &&
+    eveMcpResult.safeParse(part.output).success
+  ) {
     return <EveMcpResult part={part} />;
   }
   return (

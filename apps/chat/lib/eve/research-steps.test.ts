@@ -78,9 +78,12 @@ const context = (): WorkflowToolContext => ({
   ask: vi.fn(),
 });
 afterEach(() => {
+  vi.unstubAllEnvs();
   vi.restoreAllMocks();
 });
 beforeEach(() => {
+  vi.stubEnv("TAVILY_API_KEY", "test-only");
+  vi.stubEnv("BLOB_READ_WRITE_TOKEN", "test-only");
   vi.clearAllMocks();
   mocks.save.mockReset();
   mocks.selected.mockReturnValue(null);

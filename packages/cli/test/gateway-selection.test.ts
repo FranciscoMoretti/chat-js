@@ -1598,14 +1598,7 @@ it(
       "-e",
       `
       import { supervise } from "./scripts/dev-supervisor.mts";
-      import { preparePersistentSandboxCleanup } from "./scripts/persistent-sandbox-cleanup.ts";
-      import { readFile, rm } from "node:fs/promises";
-      const runId = crypto.randomUUID();
-      await preparePersistentSandboxCleanup(runId);
-      const filename = \`.eve/chatjs-cleanup/\${runId}.json\`;
-      const saved = JSON.parse(await readFile(filename, "utf-8"));
-      if (saved.pid !== process.pid || typeof supervise !== "function") throw new Error("Invalid standalone supervisor");
-      await rm(filename);
+      if (typeof supervise !== "function") throw new Error("Invalid standalone supervisor");
     `,
     ]);
     await rejects(

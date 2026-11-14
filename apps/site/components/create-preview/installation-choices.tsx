@@ -39,6 +39,8 @@ import {
   PopoverTitle,
   PopoverDescription,
 } from "@/vendor/shadcn-create/styles/base-nova/ui/popover";
+import { CapabilityRow } from "./capability-row";
+import type { InstallationSelection } from "../../../../packages/registry/installation";
 import { useInstallation } from "./installation-provider";
 import { setupActions } from "./setup-guidance";
 import type { ConfigureSetup } from "./setup-guidance";
@@ -63,21 +65,52 @@ const pluginIcons: Readonly<Partial<Record<string, LucideIcon>>> = {
   desktop: Monitor,
 };
 
+const requiresChatjs = (
+  definition: InstallationCatalogItem["definition"]
+): boolean =>
+  definition?.kind === "plugin" ||
+  (definition?.kind === "tool" && definition.native === undefined);
+
+const FeatureIcon = ({
+  definition,
+}: {
+  readonly definition: InstallationCatalogItem["definition"];
+}) => {
+  const Icon =
+    definition?.kind === "plugin"
+      ? (pluginIcons[definition.id] ?? Puzzle)
+      : undefined;
+  return Icon === undefined ? null : (
+    <Icon
+      aria-hidden="true"
+      className="text-muted-foreground size-4 shrink-0"
+    />
+  );
+};
+
 export const FeatureChoices = ({
   items,
   cards = false,
+  compact = false,
+  onSelectionChange,
   onConfigureSetup,
 }: {
   readonly items: readonly InstallationCatalogItem[];
   readonly cards?: boolean;
+  readonly compact?: boolean;
+  readonly onSelectionChange?: (selection: InstallationSelection) => void;
   readonly onConfigureSetup?: ConfigureSetup;
 }) => {
   const { installation, resolution, update } = useInstallation();
   if (!installation || !resolution) {
     return null;
   }
+  const applySelection = onSelectionChange ?? update;
+  const gridClass = compact
+    ? "grid gap-2 md:grid-cols-2"
+    : "grid gap-3 sm:grid-cols-2";
   return (
-    <div className={cards ? "grid gap-3 sm:grid-cols-2" : "divide-y"}>
+    <div className={cards || compact ? gridClass : "divide-y"}>
       {items.map((item) => {
         const { definition } = item;
         if (definition?.kind !== "plugin" && definition?.kind !== "tool") {
@@ -85,17 +118,7 @@ export const FeatureChoices = ({
         }
         const key = definition.kind === "plugin" ? "plugins" : "tools";
         const { id } = definition;
-        const Icon =
-          definition.kind === "plugin"
-            ? (pluginIcons[id] ?? Puzzle)
-            : undefined;
-        const icon =
-          Icon === undefined ? null : (
-            <Icon
-              aria-hidden="true"
-              className="text-muted-foreground size-4 shrink-0"
-            />
-          );
+        const icon = <FeatureIcon definition={definition} />;
         const selected = resolution.selection[key].includes(id);
         const actions = selected
           ? setupActions(
@@ -111,7 +134,7 @@ export const FeatureChoices = ({
           source === `@chatjs/${item.name}`;
         const explicit = installation[key].some(isThisItem);
         const onCheckedChange = (checked: boolean) => {
-          update({
+          applySelection({
             ...installation,
             [key]: checked
               ? [...installation[key], id]
@@ -160,6 +183,22 @@ export const FeatureChoices = ({
             </PopoverContent>
           </Popover>
         );
+        if (compact) {
+          return (
+            <CapabilityRow
+              key={item.name}
+              title={item.title}
+              description={item.description}
+              source="ChatJS"
+              requiresChatJS={requiresChatjs(definition)}
+              controlId={control.id}
+              checked={selected}
+              disabled={control.disabled}
+              onCheckedChange={onCheckedChange}
+              action={details}
+            />
+          );
+        }
         if (cards) {
           return (
             <div key={item.name} className="relative h-full">
@@ -172,6 +211,14 @@ export const FeatureChoices = ({
                   className="h-full min-h-28 gap-4 p-4!"
                 >
                   <FieldContent className="min-w-0 gap-2">
+                    <span className="text-muted-foreground text-xs">
+                      Source: ChatJS
+                    </span>
+                    {requiresChatjs(definition) && (
+                      <span className="text-muted-foreground text-xs">
+                        Requires ChatJS
+                      </span>
+                    )}
                     <FieldTitle>
                       {icon}
                       {item.title}

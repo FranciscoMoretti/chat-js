@@ -11,7 +11,7 @@ import {
   recordInstalledSource,
 } from "./source-receipt";
 
-import { installItems } from "#cli/registry/shadcn";
+import { installResolvedItems } from "#cli/registry/resolved-items";
 
 import { updateEnvironmentExample } from "./environment-example";
 
@@ -172,7 +172,7 @@ const installPlan = async (
   const staged: { readonly from: string; readonly to: string }[] = [];
   await mkdir(path.join(cwd, "chatjs"), { recursive: true });
   try {
-    await installItems(plan.sources, cwd, overwrite);
+    await installResolvedItems(plan.resolvedItems, cwd, overwrite);
     for (const { previous } of plan.replacements) {
       const from = path.join(cwd, "chatjs/tools", previous.id);
       const to = path.join(

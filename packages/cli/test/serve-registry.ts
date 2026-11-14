@@ -20,7 +20,12 @@ const server = Bun.serve({
     if (path === "/sandboxes.tgz") {
       return new Response(Bun.file(sandboxArchive));
     }
-    if (!/^\/(?:base\/|radix\/)?[a-z0-9-]+\.json$/u.test(path)) {
+    if (await Bun.file(`${addressFile}.offline`).exists()) {
+      return new Response("Registry unavailable during recipe replay", {
+        status: 503,
+      });
+    }
+    if (!/^\/(?:base\/|radix\/|eve\/)?[a-z0-9-]+\.json$/u.test(path)) {
       return new Response("Not found", { status: 404 });
     }
     const file = Bun.file(

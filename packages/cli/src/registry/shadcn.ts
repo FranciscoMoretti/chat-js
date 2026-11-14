@@ -1,3 +1,4 @@
+import { registryResolution } from "./resolution-context";
 import {
   addRegistryItems,
   getRegistriesConfig,
@@ -51,6 +52,16 @@ const readItem = async (
   source: string,
   cwd: string
 ): Promise<ReturnType<typeof registryItemSchema.parse>> => {
+  const snapshot = registryResolution.getStore();
+  if (snapshot) {
+    const recorded = snapshot.get(source);
+    if (!recorded) {
+      throw new Error(
+        `Recipe does not contain ${source}. Resolve a new recipe explicitly; no newer revision was fetched.`
+      );
+    }
+    return registryItemSchema.parse(recorded);
+  }
   const [item] = await withRegistryTransport(
     async () =>
       await getRegistryItems([source], { config: await registryConfig(cwd) })

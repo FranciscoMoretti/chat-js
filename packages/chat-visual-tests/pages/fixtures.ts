@@ -358,8 +358,8 @@ export const validatedToolTranscripts = {
           type: "tool",
           kind: "tool",
           stepIndex: 0,
-          name: "externalLookup",
-          label: "externalLookup",
+          name: "native__lookup",
+          label: "native lookup",
           callId: "external-result",
           state: "completed",
           input: { query: "example" },
@@ -754,6 +754,51 @@ export const retrievedPageTranscripts = {
                 content: "This content remains visible when expanded.",
               },
             ],
+          },
+        },
+      ],
+    },
+  ],
+} satisfies Record<string, readonly EveMessage[]>;
+
+export const signInTranscripts = {
+  [invoicesSessionId]: [
+    {
+      id: "notion-sign-in",
+      role: "assistant",
+      parts: [
+        {
+          type: "text",
+          text: "Connect Notion to continue searching your workspace.",
+        },
+        {
+          type: "interaction",
+          interactionId: "notion-consent",
+          turnId: "fixture-turn",
+          stepIndex: 0,
+          status: "open",
+          request: {
+            kind: "sign-in",
+            prompt: "Sign in to Notion",
+            signIn: {
+              name: "notion",
+              displayName: "Notion",
+              url: "https://example.invalid/notion-consent",
+              instructions: "Choose the pages this agent may access.",
+              userCode: "DEMO-CODE",
+            },
+          },
+        },
+        {
+          type: "interaction",
+          interactionId: "invalid-consent",
+          turnId: "fixture-turn",
+          stepIndex: 0,
+          status: "open",
+          request: {
+            kind: "sign-in",
+            prompt: "Connection needs a new sign-in link",
+            signIn: { name: "expired", url: "data:text/plain,unsafe" },
           },
         },
       ],

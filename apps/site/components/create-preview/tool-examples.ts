@@ -106,7 +106,7 @@ export const toolExamples: Readonly<Partial<Record<string, ToolExample>>> = {
           title: "ChatJS documentation",
           description: "The building blocks for your AI app",
           content:
-            "Choose your appearance, plugins and AI tools, then configure the services that power your app.",
+            "Choose your appearance, plugins and agent capabilities, then configure the services that power your app.",
           language: "en",
         },
       ],

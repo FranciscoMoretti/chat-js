@@ -1,27 +1,16 @@
-import { validateToolOutput } from "@/chatjs/core/tools/validate-output";
 import FirecrawlApp from "@mendable/firecrawl-js";
 import { defineTool } from "eve/tools";
 import { readToolEnvironment } from "./retrieve-url-env";
-import { createModuleLogger } from "@/lib/logger";
-import { executeWithToolUsage } from "@/lib/eve/tool-usage";
 import { retrievedInput, retrievedResult } from "./schemas";
-import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
 import { z } from "zod";
 
 type RetrieveUrlInput = Readonly<z.infer<typeof retrievedInput>>;
 type RetrieveUrlContext = Readonly<{
   abortSignal: Readonly<AbortSignal>;
 }>;
-type RetrieveUrlUsage = Readonly<{
-  addCostUsd: (cost: number) => void;
-  markUnknown: () => void;
-}>;
-
 const hasNonEmptyValue = (value: string | null | undefined): value is string =>
   typeof value === "string" && value !== "";
 
-const UNBILLED_TOOL_COST_USD = 0;
-const log = createModuleLogger("tools/retrieve-url");
 const extractedPage = z.object({
   content: z.string(),
   description: z.string(),
@@ -59,8 +48,8 @@ const parseUrl = (url: string): URL | null => {
 const redactUrl = (url: Readonly<Pick<URL, "origin" | "pathname">>): string =>
   `${url.origin}${url.pathname}`;
 
-const retrieveContent = async (url: string, usage: RetrieveUrlUsage) => {
-  usage.addCostUsd(UNBILLED_TOOL_COST_USD);
+const retrieveContent = async (url: string, signal: Readonly<AbortSignal>) => {
+  signal.throwIfAborted();
   try {
     const app = createClient();
     if (!app) {
@@ -78,14 +67,13 @@ const retrieveContent = async (url: string, usage: RetrieveUrlUsage) => {
 
     const redactedUrl = redactUrl(parsedUrl);
     const normalizedUrl = parsedUrl.toString();
-    // Firecrawl does not return a monetary receipt for scrape/extract.
-    usage.markUnknown();
     const content = await app.scrapeUrl(normalizedUrl);
+    signal.throwIfAborted();
     if (!(content.success && content.metadata)) {
       return {
         results: [
           {
-            error: content.error,
+            error: "Failed to retrieve content",
           },
         ],
       };
@@ -108,6 +96,7 @@ const retrieveContent = async (url: string, usage: RetrieveUrlUsage) => {
         schema: extractedPage,
       });
 
+      signal.throwIfAborted();
       if (
         extractResult.success &&
         extractResult.data !== undefined &&
@@ -137,15 +126,8 @@ const retrieveContent = async (url: string, usage: RetrieveUrlUsage) => {
         },
       ],
     };
-  } catch (error) {
-    const parsedUrl = parseUrl(url);
-    log.error(
-      {
-        err: error,
-        url: parsedUrl ? redactUrl(parsedUrl) : "<invalid-url>",
-      },
-      "Firecrawl API error in retrieveUrl tool"
-    );
+  } catch {
+    signal.throwIfAborted();
     return {
       error: "Failed to retrieve content",
     };
@@ -161,9 +143,7 @@ Use for:
 Avoid:
 - General-purpose web searches`,
   execute: async ({ url }: RetrieveUrlInput, context: RetrieveUrlContext) =>
-    await executeWithToolUsage(context, async (usage: RetrieveUrlUsage) =>
-      validateToolOutput(retrievedResult, await retrieveContent(url, usage))
-    ),
+    retrievedResult.parse(await retrieveContent(url, context.abortSignal)),
   inputSchema: retrievedInput,
-  toModelOutput: toolResultToModelOutput,
+  outputSchema: retrievedResult,
 });

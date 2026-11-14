@@ -65,11 +65,16 @@ const context = testToolContext({
   session: {
     id: "session",
     auth: {
-      current: null,
+      current: {
+        principalId: "owner",
+        principalType: "user",
+        authenticator: "chatjs-gateway",
+        attributes: {},
+      },
       initiator: {
         principalId: "owner",
         principalType: "user",
-        authenticator: "test",
+        authenticator: "chatjs-gateway",
         attributes: {},
       },
     },
@@ -145,4 +150,27 @@ it("never turns missing authorization into a retained-document read", async () =
   await expect(
     executeEveDocumentTool("readDocument", { documentId }, context)
   ).rejects.toThrow("not found");
+});
+
+it("does not carry the web initiator's document authority to another current caller", async () => {
+  const foreign = testToolContext({
+    ...context,
+    session: {
+      ...context.session,
+      auth: {
+        ...context.session.auth,
+        current: {
+          authenticator: "chatjs-gateway",
+          principalType: "user",
+          principalId: "another-owner",
+          attributes: {},
+        },
+      },
+    },
+  });
+  await expect(
+    executeEveDocumentTool("readDocument", { documentId }, foreign)
+  ).rejects.toThrow("current account owner");
+  expect(mocks.read).not.toHaveBeenCalled();
+  expect(mocks.scope).not.toHaveBeenCalled();
 });

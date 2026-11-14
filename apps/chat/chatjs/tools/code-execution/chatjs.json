@@ -17,5 +17,6 @@
   "tools": [
     { "rendererExport": "CodeExecution", "toolExport": "codeExecution" }
   ],
-  "contractVersion": 1
+  "contractVersion": 1,
+  "channelSupport": { "web": "supported", "slack": "unverified" }
 }

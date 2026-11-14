@@ -6,6 +6,7 @@ export type InstallationFileKind =
   | "record";
 
 export const installationRecordPaths = [
+  "chatjs/agent-recipe.json",
   "chatjs/installed-source.json",
   "chatjs/installed-source-content.json",
   "chatjs/installed-dependencies.json",

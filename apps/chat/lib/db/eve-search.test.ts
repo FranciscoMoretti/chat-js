@@ -496,7 +496,7 @@ describe("preview search history", (): void => {
   });
 });
 
-vi.mock("@/lib/eve/persistent-sandbox-store", () => ({
+vi.mock("@/lib/db/eve-workspace-deletion", () => ({
   checkDeletedWorkspaceMemberships: vi
     .fn<() => Promise<void>>()
     .mockResolvedValue(),

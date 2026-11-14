@@ -1,4 +1,13 @@
 {
+  "native": {
+    "files": [
+      "tool.ts",
+      "schemas.ts",
+      "tavily-search-env.ts",
+      "search-runtime.ts"
+    ],
+    "dependencies": ["eve", "zod", "@tavily/core"]
+  },
   "envRequirements": [{ "options": [["TAVILY_API_KEY"]] }],
   "id": "tavily-search",
   "kind": "tool",
@@ -6,6 +15,9 @@
   "slot": "webSearch",
   "tools": [
     {
+      "accounting": { "costUsd": 0.05 },
+      "updatesExport": "searchUpdates",
+      "readOnly": true,
       "composer": {
         "icon": "Globe",
         "name": "Web Search",
@@ -15,5 +27,6 @@
       "toolExport": "webSearch"
     }
   ],
-  "contractVersion": 1
+  "contractVersion": 1,
+  "channelSupport": { "web": "supported", "slack": "unverified" }
 }

@@ -11,11 +11,22 @@ vi.mock("next/cache", () => ({
 vi.mock("@/lib/config", () => ({
   config: {
     ai: {
+      workflows: { chat: "openai/gpt-5-mini" },
       curatedDefaults: ["openai/gpt-5-mini"],
       disabledModels: ["fixture/disabled"],
       gateway: "vercel",
       providerOrder: ["preferred", "secondary"],
     },
+  },
+}));
+vi.mock("@/integrations/chat/models", () => ({
+  webModels: {
+    allowedModels: [
+      "openai/gpt-5-mini-reasoning",
+      "fixture/known",
+      "fixture/new",
+      "fixture/last",
+    ],
   },
 }));
 vi.mock("./models.generated", () => ({
@@ -80,12 +91,13 @@ test("chat catalogs preserve reasoning variants, disabled filtering, and provide
     )
   ).toMatchObject({ reasoning: true });
 });
-test("readonly catalogs enable curated reasoning variants and newly discovered IDs", async () => {
+test("readonly catalogs enable configured alternatives alongside curated defaults", async () => {
   const models = Object.freeze(await fetchChatModels());
   const enabled = getDefaultEnabledModels(models);
   expect([...enabled]).toEqual([
     "openai/gpt-5-mini",
     "openai/gpt-5-mini-reasoning",
+    "fixture/known",
     "fixture/new",
     "fixture/last",
   ]);

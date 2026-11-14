@@ -27,6 +27,7 @@ import {
   invoicesFollowupTrpc,
   launchProject,
   questionTranscripts,
+  signInTranscripts,
   validatedToolTranscripts,
   retrievedPageTranscripts,
   session,
@@ -87,6 +88,13 @@ test("validated tools preserve receipt results, failures and native fallbacks", 
     .toBeVisible();
   await expect
     .element(page.getByText("This tool result could not be displayed."))
+    .not.toBeInTheDocument();
+  await expect
+    .element(
+      page.getByText(
+        "MCP tool failed. Check the connector in settings and try again."
+      )
+    )
     .not.toBeInTheDocument();
   await page.screenshot({ path: "__screenshots__/validated-tools.png" });
 });
@@ -174,9 +182,12 @@ test("cancelled document and saved-code operations show stopped states", async (
   await expect
     .element(page.getByText("Document operation stopped."))
     .toBeVisible();
-  await expect.element(page.getByText("Tool stopped.")).toBeVisible();
-  await page.getByRole("button", { name: "search Error", exact: true }).click();
-  await expect.element(page.getByText("MCP tool stopped.")).toBeVisible();
+  await expect.element(page.getByText("Tool stopped.").first()).toBeVisible();
+  await expect
+    .element(
+      page.getByRole("button", { name: "fixture__search Error", exact: true })
+    )
+    .toBeVisible();
   await expect.element(page.getByText("Waiting for input.")).toBeVisible();
   await expect.element(page.getByText("Request declined.")).toBeVisible();
   await page.screenshot({ path: "__screenshots__/native-stopped.png" });
@@ -1108,4 +1119,23 @@ test("text and retrieved page keep their natural height", async () => {
     card.getBoundingClientRect().top - intro.getBoundingClientRect().bottom
   ).toBeLessThanOrEqual(40);
   expect(card.scrollHeight - card.clientHeight).toBeLessThanOrEqual(1);
+});
+
+test("native connection sign-in", async () => {
+  await renderRoute(conversation, {
+    ...request,
+    transcripts: signInTranscripts,
+  });
+  await expect
+    .element(page.getByRole("link", { name: "Connect Notion" }))
+    .toHaveAttribute("href", "https://example.invalid/notion-consent");
+  await expect.element(page.getByText("DEMO-CODE")).toBeVisible();
+  await expect
+    .element(page.getByRole("button", { name: "Sign-in unavailable" }))
+    .toBeDisabled();
+  await page.viewport(390, 900);
+  await expect.poll(() => window.innerWidth).toBe(390);
+  await page.screenshot({
+    path: "__screenshots__/native-connection-mobile.png",
+  });
 });

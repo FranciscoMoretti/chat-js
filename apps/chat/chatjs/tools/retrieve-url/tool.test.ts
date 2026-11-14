@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { z } from "zod";
 import { testToolContext } from "@/tests/helpers/eve-tool-context";
-import { toolResultSchema } from "@/lib/eve/tool-result";
 
 const mocks = vi.hoisted(() => ({
   extract: vi.fn(),
@@ -13,14 +12,6 @@ vi.mock("@mendable/firecrawl-js", () => ({
     public extract = mocks.extract;
   },
 }));
-vi.mock(
-  "@/lib/logger",
-  (): { createModuleLogger: () => { error: () => void } } => ({
-    createModuleLogger: (): { error: () => void } => ({
-      error: vi.fn<() => void>(),
-    }),
-  })
-);
 beforeEach(() => {
   vi.resetModules();
   vi.resetAllMocks();
@@ -45,9 +36,8 @@ test.each([
   ["missing configuration", "https://example.com"],
   ["invalid URL", "file:///private"],
 ])(
-  "%s produces a zero-cost receipt without calling Firecrawl",
+  "%s returns an actionable native error without calling Firecrawl",
   async (reason, url) => {
-    const noChargeUsd = 0;
     if (reason === "missing configuration") {
       vi.stubEnv("FIRECRAWL_API_KEY", "");
     }
@@ -58,13 +48,14 @@ test.each([
       },
       testToolContext()
     );
-    expect(toolResultSchema.parse(result).usage.costUsd).toBe(noChargeUsd);
+    expect(result).toHaveProperty("error");
+    expect(result).not.toHaveProperty("usage");
     expect(mocks.scrape).not.toHaveBeenCalled();
   }
 );
 
 test.each([false, true])(
-  "provider completion keeps unknown cost explicit (failure=%s)",
+  "provider completion returns native data or a sanitized error (failure=%s)",
   async (fails) => {
     if (fails) {
       mocks.scrape.mockRejectedValue(new Error("remote failure"));
@@ -80,7 +71,21 @@ test.each([false, true])(
       { url: "https://example.com" },
       testToolContext()
     );
-    expect(toolResultSchema.parse(result).usage.costUsd).toBeUndefined();
+    expect(result).toEqual(
+      fails
+        ? { error: "Failed to retrieve content" }
+        : {
+            results: [
+              {
+                content: "Content",
+                description: "Description",
+                title: "Page",
+                url: "https://example.com/",
+              },
+            ],
+          }
+    );
+    expect(result).not.toHaveProperty("usage");
     expect(mocks.scrape).toHaveBeenCalledOnce();
   }
 );
@@ -136,7 +141,7 @@ test.each([
       { url: "https://example.com/page?token=private" },
       testToolContext()
     );
-    expect(toolResultSchema.parse(result).output).toEqual({
+    expect(result).toEqual({
       results: [{ ...expected, url: "https://example.com/page" }],
     });
     expect(mocks.extract).toHaveBeenCalledOnce();

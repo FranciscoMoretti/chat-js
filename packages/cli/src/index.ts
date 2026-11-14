@@ -6,6 +6,7 @@ import { create } from "./commands/create";
 import packageJson from "../package.json";
 import { remove } from "./commands/remove";
 import { sync } from "./commands/sync";
+import { setup } from "./commands/setup";
 import { status } from "./commands/status";
 
 const SUCCESS_EXIT_CODE = 0;
@@ -24,5 +25,6 @@ program.addCommand(sync);
 program.addCommand(remove);
 program.addCommand(config);
 program.addCommand(status);
+program.addCommand(setup);
 
 program.parse();

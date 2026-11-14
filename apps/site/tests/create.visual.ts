@@ -1,4 +1,8 @@
-import { readInstallationInput } from "../../../packages/registry/app-preset";
+import { installationSelectionSchema } from "../../../packages/registry/installation";
+import {
+  readInstallationInput,
+  encodeAppPreset,
+} from "../../../packages/registry/app-preset";
 import { commandAppPreset, attachPreviewFile } from "./create-fixtures.mts";
 /* eslint-disable no-await-in-loop -- Each native picker interaction must settle before the next. */
 import assert from "node:assert/strict";
@@ -280,10 +284,10 @@ try {
   await panel
     .getByRole("switch", { name: "Attachment Uploads", exact: true })
     .check();
-  await page.getByRole("tab", { name: "AI tools", exact: true }).click();
+  await page.getByRole("tab", { name: "Agent", exact: true }).click();
   await page
-    .getByRole("checkbox", { name: "Tavily Search", exact: true })
-    .check();
+    .getByLabel("Web search", { exact: true })
+    .selectOption("tavily-search");
   await page.getByRole("tab", { name: "Setup", exact: true }).click();
   const choose = async (label: string, value: string) => {
     await page
@@ -453,8 +457,11 @@ try {
 
   const publicQuery = new URLSearchParams({
     token: "private",
-    storage: "s3",
-    "storage-config": JSON.stringify({ bucket: "public-bucket" }),
+    app: encodeAppPreset(
+      installationSelectionSchema.parse({
+        storage: { source: "s3", options: { bucket: "public-bucket" } },
+      })
+    ),
   });
   await page.goto(`${origin}/create?${publicQuery}`);
   await waitForPreset("b0");
@@ -464,15 +471,20 @@ try {
   );
   assert.equal(publicLink.searchParams.has("token"), false);
   assert.equal(
-    readInstallationInput(
-      publicLink.searchParams.get("app") ?? "",
-      publicLink.searchParams.get("storage-config") ?? undefined
-    ).storage?.options?.bucket,
+    readInstallationInput(publicLink.searchParams.get("app") ?? "").storage
+      ?.options?.bucket,
     "public-bucket"
   );
   publicQuery.set(
-    "storage-config",
-    JSON.stringify({ bucket: "public-bucket", secret: "private" })
+    "app",
+    encodeAppPreset(
+      installationSelectionSchema.parse({
+        storage: {
+          source: "s3",
+          options: { bucket: "public-bucket", secret: "private" },
+        },
+      })
+    )
   );
   await page.goto(`${origin}/create?${publicQuery}`);
   await expect(

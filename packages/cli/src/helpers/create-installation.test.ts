@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { encodeInstallationInput } from "../../../registry/app-preset";
+import { encodeAppPreset } from "../../../registry/app-preset";
 import { expect, test } from "bun:test";
 import {
   assertExclusiveInstallation,
@@ -21,8 +21,9 @@ test("Create's command round trips full and empty selections into the CLI", () =
     };
     const command = createCommand(DEFAULT_PRESET_CONFIG, "base", selection);
     const encoded =
-      /--app-preset (?<selection>a[0-9A-Za-z]+) -- --preset/u.exec(command)
-        ?.groups?.selection;
+      /--app-preset (?<selection>agent1_[A-Za-z0-9_-]+) -- --preset/u.exec(
+        command
+      )?.groups?.selection;
     expect(encoded).toBeDefined();
     const decoded = readCreateInstallation({ appPreset: encoded ?? "" });
     expect({ ...decoded, plugins: decoded.plugins.toSorted() }).toEqual({
@@ -34,7 +35,7 @@ test("Create's command round trips full and empty selections into the CLI", () =
 
 test("complete selection rejects invalid or ambiguous inputs before scaffolding", () => {
   expect(() => readCreateInstallation({ appPreset: "not-json" })).toThrow(
-    "App preset"
+    "Agent configuration"
   );
   expect(() =>
     readCreateInstallation({
@@ -77,36 +78,17 @@ test("generated shell command preserves custom values as one argument", () => {
   expect(result.status).toBe(0);
   const args = result.stdout.split("\0");
   const code = args[args.indexOf("--app-preset") + 1];
-  const config = args[args.indexOf("--storage-config") + 1];
-  expect(
-    readCreateInstallation({ appPreset: code ?? "", storageConfig: config })
-  ).toEqual(selection);
+  expect(readCreateInstallation({ appPreset: code ?? "" })).toEqual(selection);
   expect(args.slice(args.indexOf("--") + 1, -1)).toEqual([
     "--preset",
     encodePreset(DEFAULT_PRESET_CONFIG),
     "--base",
     "radix",
   ]);
-  expect(() => readCreateInstallation({ appPreset: code ?? "" })).toThrow(
-    "bucket"
-  );
-  expect(() =>
-    readCreateInstallation({
-      appPreset: code ?? "",
-      storageConfig: '{"secretAccessKey":"secret"}',
-    })
-  ).toThrow();
-  expect(() => {
-    assertExclusiveInstallation({
-      appPreset: code,
-      storageConfig: config,
-      yes: true,
-    });
-  }).not.toThrow();
 });
 
 test("compact presets enforce dependencies before scaffolding", () => {
-  const { code } = encodeInstallationInput({
+  const code = encodeAppPreset({
     gateway: "vercel",
     plugins: ["attachment-uploads"],
     tools: [],
@@ -114,7 +96,11 @@ test("compact presets enforce dependencies before scaffolding", () => {
   expect(() => readCreateInstallation({ appPreset: code })).toThrow(
     "persistent"
   );
-  expect(() => readCreateInstallation({ appPreset: "a0" })).toThrow("gateway");
+  expect(() =>
+    readCreateInstallation({
+      appPreset: encodeAppPreset({ plugins: [], tools: [] }),
+    })
+  ).toThrow("gateway");
 });
 
 test("App presets and JSON have distinct mutually exclusive flags", () => {
@@ -132,7 +118,7 @@ test("App presets and JSON have distinct mutually exclusive flags", () => {
   );
   expect(() =>
     readCreateInstallation({ installation, storageConfig: "{}" })
-  ).toThrow("already contain");
+  ).toThrow("Include storage options");
   expect(() => {
     assertExclusiveInstallation({ appPreset: "a1", projects: true });
   }).toThrow("cannot be combined");

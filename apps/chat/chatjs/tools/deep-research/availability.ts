@@ -1,3 +1,4 @@
+import { missingToolConfiguration } from "@/lib/eve/tool-configuration";
 import { isAccountSession } from "@/lib/eve/session-identity";
 import { eveTurnAccount, eveTurnTool } from "@/lib/eve/turn-tools";
 import {
@@ -12,6 +13,7 @@ export const researchAvailable = (
 ): boolean => {
   const selected = eveTurnTool.get();
   return (
+    missingToolConfiguration("deepResearch").length === 0 &&
     isAccountSession(session) &&
     !session.parent &&
     eveTurnAccount.get() &&

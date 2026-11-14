@@ -1,3 +1,4 @@
+import { webModels } from "@/integrations/chat/models";
 import {
   generatedForGateway,
   models as generatedModels,
@@ -66,8 +67,13 @@ const buildChatModels = (
 ): AppModelDefinition[] =>
   appModels
     .filter(
-      (model: { readonly output: { readonly text: boolean } }) =>
-        model.output.text
+      (model: {
+        readonly id: string;
+        readonly output: { readonly text: boolean };
+      }) =>
+        model.output.text &&
+        (model.id === (webModels.model ?? config.ai.workflows.chat) ||
+          webModels.allowedModels.includes(model.id))
     )
     .toSorted(
       (
@@ -130,7 +136,11 @@ const getDefaultEnabledModels = (
     readonly apiModelId: string;
   }[]
 ): Set<AppModelId> => {
-  const enabled = new Set<AppModelId>(config.ai.curatedDefaults);
+  const enabled = new Set<AppModelId>([
+    ...config.ai.curatedDefaults,
+    webModels.model ?? config.ai.workflows.chat,
+    ...webModels.allowedModels,
+  ]);
 
   // If a curated default has a -reasoning variant, enable it too
   for (const model of appModels) {

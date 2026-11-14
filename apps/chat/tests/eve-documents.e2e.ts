@@ -21,7 +21,7 @@ import { and, eq, inArray, sql } from "drizzle-orm";
 import { afterAll, expect, test } from "vitest";
 
 import { db } from "../lib/db/client";
-import { cleanupWorkspaceIfUnused } from "../lib/eve/persistent-sandbox-store";
+import { cleanupWorkspaceIfUnused } from "../lib/db/eve-workspace-deletion";
 import { reconcileEveWorkspaceTurn } from "../lib/eve/reconcile-workspace-turn";
 import { completeEveConversationDeletion } from "../lib/db/eve-deletion";
 import {
@@ -135,9 +135,7 @@ test("document purge requires the owned family fence, erases inherited revisions
   assert.ok(source);
   await reconcileEveWorkspaceTurn(owner, root.id);
   const deletion = await beginEveConversationDeletion(owner, source.chatId);
-  await cleanupWorkspaceIfUnused(owner, source.workspaceId, () => {
-    throw new Error("Text-only fixture must not allocate a sandbox");
-  });
+  await cleanupWorkspaceIfUnused(owner, source.workspaceId);
   assert.ok(deletion);
   await expect(purgeEveFamilyDocuments(stranger, root.id)).rejects.toThrow();
   await expect(purgeEveFamilyDocuments(owner, unrelated.id)).rejects.toThrow();

@@ -89,7 +89,7 @@ const documentItems: RegistryItem[] = [
         id: "read-document",
         kind: "tool",
 
-        tools: [{ toolExport: "readDocument" }],
+        tools: [{ readOnly: true, toolExport: "readDocument" }],
       }),
     },
     name: "read-document",

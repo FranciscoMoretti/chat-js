@@ -11,8 +11,6 @@ vi.mock("@tavily/core", (): { tavily: () => { search: typeof search } } => ({
 beforeEach(() => vi.stubEnv("TAVILY_API_KEY", "test-key"));
 afterEach(() => vi.unstubAllEnvs());
 
-vi.mock("@/lib/id", () => ({ generateUUID: (): string => "search-update" }));
-
 const collect = async <SearchValue>(
   value:
     | Readonly<SearchValue>
@@ -30,7 +28,7 @@ const collect = async <SearchValue>(
   return await Array.fromAsync(result);
 };
 
-test("native search streams sources and seals a final cost receipt", async () => {
+test("native search streams sources without application receipts", async () => {
   search.mockResolvedValue({
     results: [
       { content: "Evidence", title: "Source", url: "https://example.com" },
@@ -62,9 +60,7 @@ test("native search streams sources and seals a final cost receipt", async () =>
     })
   );
   expect(finalResult).toMatchObject({
-    output: { searches: [{ results: [{ title: "Source" }] }] },
-    status: "success",
-    usage: { costUsd: 0.05 },
+    searches: [{ results: [{ title: "Source" }] }],
   });
   expect(finalResult.updates).toContainEqual(
     expect.objectContaining({
@@ -75,6 +71,7 @@ test("native search streams sources and seals a final cost receipt", async () =>
     })
   );
   expect(results.length).toBeGreaterThan(1);
+  expect(finalResult).not.toHaveProperty("usage");
 });
 test("strict fields remain required while explicit nulls apply defaults", async () => {
   search.mockResolvedValue({ results: [] });

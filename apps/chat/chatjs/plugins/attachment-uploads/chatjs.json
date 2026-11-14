@@ -11,7 +11,6 @@
     "chatjs/plugins/attachment-uploads/client-plugin.ts"
   ],
   "requiresStorage": true,
-  "requiresPersistentSandbox": true,
   "client": {
     "export": "attachmentUploadsClient",
     "composerControls": ["attach-files", "take-photo"],

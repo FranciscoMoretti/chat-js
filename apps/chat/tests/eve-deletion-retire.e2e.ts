@@ -134,7 +134,7 @@ test("internal retirement settles usage after access revocation and is retryable
       "bun",
       [
         "-e",
-        'import { purgeLocalEveFamilyResources } from "./lib/eve/purge-local-resources"; const result = await purgeLocalEveFamilyResources(process.argv[1], process.argv[2], process.cwd()); console.log(JSON.stringify(result)); process.exit(0);',
+        'import { purgeLocalEveFamilyResources } from "./lib/eve/purge-local-resources"; const result = await purgeLocalEveFamilyResources(process.argv[1], process.argv[2]); console.log(JSON.stringify(result)); process.exit(0);',
         owner,
         binding.id,
       ],

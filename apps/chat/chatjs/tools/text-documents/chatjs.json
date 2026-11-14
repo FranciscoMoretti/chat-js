@@ -16,5 +16,6 @@
     }
   ],
   "contractVersion": 2,
-  "uiBase": "base"
+  "uiBase": "base",
+  "channelSupport": { "web": "supported", "slack": "unverified" }
 }

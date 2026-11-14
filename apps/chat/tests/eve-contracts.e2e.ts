@@ -5,7 +5,7 @@ import {
   setSharing,
 } from "@/chatjs/plugins/sharing/queries";
 import { createEveTestSession } from "./eve-native-session.fixture";
-import { cleanupWorkspaceIfUnused } from "../lib/eve/persistent-sandbox-store";
+import { cleanupWorkspaceIfUnused } from "../lib/db/eve-workspace-deletion";
 import { reconcileEveWorkspaceTurn } from "../lib/eve/reconcile-workspace-turn";
 import { EveWorkspaceBusyError } from "../lib/db/eve-workspace-turns";
 import { dispatchEveOnce } from "../lib/db/eve-dispatch";
@@ -622,13 +622,7 @@ test("final application deletion erases family content, preserves accounting and
   await expect(completeEveConversationDeletion(owner, chatId)).rejects.toThrow(
     "Workspace cleanup is incomplete"
   );
-  await cleanupWorkspaceIfUnused(
-    owner,
-    family?.workspaceId ?? "missing",
-    () => {
-      throw new Error("Text-only fixture must not allocate a sandbox");
-    }
-  );
+  await cleanupWorkspaceIfUnused(owner, family?.workspaceId ?? "missing");
   await expect(
     completeEveConversationDeletion("other", root.id)
   ).rejects.toThrow("Conversation identity is unavailable");

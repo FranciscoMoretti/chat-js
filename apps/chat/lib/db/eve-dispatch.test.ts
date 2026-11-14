@@ -34,9 +34,6 @@ vi.mock("./client", () => {
   return { db: database };
 });
 
-vi.mock("../eve/workspace-attachments", () => ({
-  resolveWorkspaceSeedAttachments: vi.fn(),
-}));
 vi.mock("../env", () => ({ env: {} }));
 // This suite exercises journal/receipt behavior; workspace/native reconciliation
 // is covered by eve-workspace-turns.e2e.ts against concurrent PostgreSQL clients.

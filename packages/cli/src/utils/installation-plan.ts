@@ -1,3 +1,4 @@
+import { resolveItemPayload } from "#cli/registry/resolved-items";
 import { defaultToolProviders } from "../../../registry/installation-catalog";
 import { assertCurrentInstallationLayout } from "./installation-layout";
 import { readInstalledPlugins } from "./installed-plugins";
@@ -69,6 +70,9 @@ export const planInstallation = async (
   const providers = new Map<string, string>();
   let gateway: GatewayDefinition | undefined;
   let sandboxProviderSource: string | undefined;
+  let sandboxDefinition:
+    | ReturnType<typeof sandboxDefinitionSchema.parse>
+    | undefined;
   const selectProvider = (definition: {
     readonly kind: string;
     readonly id: string;
@@ -131,7 +135,8 @@ export const planInstallation = async (
         break;
       }
       case "sandbox": {
-        selectProvider(sandboxDefinitionSchema.parse(metadata));
+        sandboxDefinition = sandboxDefinitionSchema.parse(metadata);
+        selectProvider(sandboxDefinition);
         sandboxProviderSource = item.files?.find(
           (file) => file.target === "~/chatjs/providers/sandbox/provider.ts"
         )?.content;
@@ -308,5 +313,10 @@ export const planInstallation = async (
     replacements,
     selection,
     sources: [...items.keys()],
+    resolvedItems: await Promise.all(
+      [...items].map(async ([source, item]) =>
+        resolveItemPayload(source, await item)
+      )
+    ),
   };
 };

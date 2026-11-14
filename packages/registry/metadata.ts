@@ -31,6 +31,14 @@ const composerSchema = z.object({
 });
 
 const toolRegistrationSchema = z.object({
+  accounting: z
+    .union([
+      z.enum(["receipt", "none", "unknown"]),
+      z.strictObject({ costUsd: z.number().nonnegative() }),
+    ])
+    .optional(),
+  updatesExport: identifier.optional(),
+  readOnly: z.boolean().optional(),
   composer: composerSchema.optional(),
   rendererExport: identifier.optional(),
   definitionExport: identifier.optional(),
@@ -54,6 +62,18 @@ const executionCapabilities = z.object({
 });
 
 const toolDefinitionBase = z.object({
+  channelSupport: z
+    .strictObject({
+      web: z.enum(["supported", "unverified", "unsupported"]),
+      slack: z.enum(["supported", "unverified", "unsupported"]),
+    })
+    .optional(),
+  native: z
+    .strictObject({
+      files: z.array(z.string().regex(/^[a-zA-Z][a-zA-Z0-9-]*\.ts$/u)).min(1),
+      dependencies: z.array(z.string().min(1)),
+    })
+    .optional(),
   config: z.object({ key: identifier }).optional(),
   availabilityExport: identifier.optional(),
   codeExecutionCapabilities: executionCapabilities.optional(),

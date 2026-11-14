@@ -318,23 +318,49 @@ const sourceFor = (
   const ordinary = registrations.filter(
     (item): boolean => !item.workflow && !item.provider
   );
+  const accountingImport = [...providers, ...ordinary].some(
+    (item) => item.accounting !== undefined && item.accounting !== "receipt"
+  )
+    ? 'import { withToolAccounting } from "@/lib/eve/tool-accounting";\n'
+    : "";
+  const execution = (
+    item: ReadonlyInput<Registration>,
+    index: number
+  ): string =>
+    item.accounting !== undefined && item.accounting !== "receipt"
+      ? `withToolAccounting(tool${index}, ${JSON.stringify(item.accounting)}${item.updatesExport === undefined ? "" : `, updates${index}`})`
+      : `tool${index}`;
   return {
-    providerBody: `import { defineToolSet } from "@/lib/eve/tool-types";\n${registrationImports(
-      providers.map((item, registrationIndex) => ({
-        alias: `tool${registrationIndex}`,
-        id: item.id,
-        name: item.toolExport,
-      })),
+    providerBody: `${providers.some((item) => item.accounting !== undefined && item.accounting !== "receipt") ? accountingImport : ""}import { defineToolSet } from "@/lib/eve/tool-types";\n${registrationImports(
+      providers.flatMap((item, index) => [
+        { alias: `tool${index}`, id: item.id, name: item.toolExport },
+        ...(item.updatesExport === undefined
+          ? []
+          : [
+              {
+                alias: `updates${index}`,
+                id: item.id,
+                name: item.updatesExport,
+              },
+            ]),
+      ]),
       "tool"
-    )}\n\nexport const providers = defineToolSet(${providers.length > 0 ? `{\n${orderedProperties(providers.map((item, registrationIndex) => ({ key: registrationKey(item), value: `tool${registrationIndex}` })))}\n}` : "{}"});\n`,
-    toolBody: `import { defineToolSet } from "@/lib/eve/tool-types";\n${registrationImports(
-      ordinary.map((item, index) => ({
-        alias: `tool${index}`,
-        id: item.id,
-        name: item.toolExport,
-      })),
+    )}\n\nexport const providers = defineToolSet(${providers.length > 0 ? `{\n${orderedProperties(providers.map((item, registrationIndex) => ({ key: registrationKey(item), value: execution(item, registrationIndex) })))}\n}` : "{}"});\n`,
+    toolBody: `${ordinary.some((item) => item.accounting !== undefined && item.accounting !== "receipt") ? accountingImport : ""}import { defineToolSet } from "@/lib/eve/tool-types";\n${registrationImports(
+      ordinary.flatMap((item, index) => [
+        { alias: `tool${index}`, id: item.id, name: item.toolExport },
+        ...(item.updatesExport === undefined
+          ? []
+          : [
+              {
+                alias: `updates${index}`,
+                id: item.id,
+                name: item.updatesExport,
+              },
+            ]),
+      ]),
       "tool"
-    )}\n\nexport const installedTools = defineToolSet(${ordinary.length > 0 ? `{\n${orderedProperties(ordinary.map((item, index) => ({ key: registrationKey(item), value: `tool${index}` })))}\n}` : "{}"});\n`,
+    )}\n\nexport const installedTools = defineToolSet(${ordinary.length > 0 ? `{\n${orderedProperties(ordinary.map((item, index) => ({ key: registrationKey(item), value: execution(item, index) })))}\n}` : "{}"});\n`,
     uiBody: `import type { ToolRendererRegistry } from "@/lib/ai/tool-renderer-registry";\n${registrationImports(
       renderers.flatMap((item, registrationIndex) => {
         if (
@@ -403,6 +429,32 @@ const renderToolRegistrations = (
 ): Map<string, string> => {
   const files = new Map<string, string>([
     ["chatjs/generated/installed-config.ts", generatedSource(configSource)],
+    [
+      "chatjs/generated/tool-requirements.ts",
+      generatedSource(
+        `import type { ToolRequirements } from "@/lib/tool-readiness";\nexport const toolRequirements: Readonly<Record<string, ToolRequirements>> = ${JSON.stringify(
+          Object.fromEntries(
+            definitions.flatMap((item) =>
+              item.tools.map((tool) => [
+                item.slot ?? tool.toolExport,
+                {
+                  id: item.id,
+                  envRequirements: item.envRequirements,
+                  requiresTools: item.requiresTools,
+                  requiresGateway: (item.requiresGateway?.length ?? 0) > 0,
+                  requiresStorage: item.requiresStorage === true,
+                  requiresSandbox:
+                    item.requiresSandbox === true ||
+                    item.requiresPersistentSandbox === true,
+                },
+              ])
+            )
+          ),
+          null,
+          2
+        )};\n`
+      ),
+    ],
   ]);
   const documents = definitions.filter(
     (item: ReadonlyInput<ToolDefinition>) => item.documentKind !== undefined
@@ -447,7 +499,7 @@ const renderToolRegistrations = (
   files.set(
     "chatjs/generated/installed-tools.ts",
     generatedSource(
-      `export const installedSelectableToolNames: ReadonlySet<string> = new Set(${JSON.stringify(registrations.filter((item) => item.composer).map((item) => item.key))});\nexport const installedWorkflowToolNames: ReadonlySet<string> = new Set(${JSON.stringify(registrations.filter((item) => item.workflow).map((item) => item.key))});\nexport const installedToolNames: ReadonlySet<string> = new Set(${JSON.stringify(keys)});\n`
+      `export const installedSelectableToolNames: ReadonlySet<string> = new Set(${JSON.stringify(registrations.filter((item) => item.composer).map((item) => item.key))});\nexport const installedWorkflowToolNames: ReadonlySet<string> = new Set(${JSON.stringify(registrations.filter((item) => item.workflow).map((item) => item.key))});\nexport const installedToolNames: ReadonlySet<string> = new Set(${JSON.stringify(keys)});\nexport const installedReadOnlyToolNames: ReadonlySet<string> = new Set(${JSON.stringify(registrations.filter((item) => item.readOnly === true).map((item) => item.key))});\n`
     )
   );
   const composerTools = registrations

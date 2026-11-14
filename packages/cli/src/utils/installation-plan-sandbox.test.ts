@@ -252,71 +252,29 @@ test("create permits no sandbox when the resolved graph has no consumer", async 
   }
 });
 
-test("uploads require a persistent provider through create planning and installed-plugin replacement", async () => {
+test("uploads can use the native sandbox without a ChatJS provider", async () => {
   const f = await fixture();
   try {
     const selection = {
       plugins: [f.address("attachment-uploads")],
-      tools: [f.address("code-execution")],
+      tools: [],
       storage: { source: f.address("storage"), options: {} },
     };
-    await rejects(
-      planInstallation(f.root, selection, { fresh: true }),
-      /persistent sandbox/u
-    );
-    await rejects(
-      planInstallation(
-        f.root,
-        { ...selection, sandbox: f.address("daytona-sandbox") },
-        { fresh: true }
-      ),
-      /persistent sandbox/u
-    );
     const selected = await planSandboxInstallation(
       f.root,
       selection,
       { fresh: true },
       async (required, persistent) => {
-        expect(required).toBe(true);
-        expect(persistent).toBe(true);
-        return await Promise.resolve(f.address("vercel-sandbox"));
+        expect(required).toBe(false);
+        expect(persistent).toBe(false);
+        await Promise.resolve();
       }
     );
-    expect(selected.sandbox?.definition.id).toBe("vercel");
-    await mkdir(path.join(f.root, "chatjs/plugins/attachment-uploads"), {
-      recursive: true,
-    });
-    await writeFile(
-      path.join(f.root, "chatjs/plugins/attachment-uploads/chatjs.json"),
-      JSON.stringify({
-        kind: "plugin",
-        contractVersion: 1,
-        id: "attachment-uploads",
-        files: [],
-      })
-    );
-    await mkdir(path.join(f.root, "chatjs/providers/sandbox"), {
-      recursive: true,
-    });
-    await writeFile(
-      path.join(f.root, "chatjs/providers/sandbox/options.ts"),
-      'export const sandboxId = "vercel";'
-    );
-    await writeFile(
-      path.join(f.root, "chatjs/providers/sandbox/provider.ts"),
-      "export const supportsPersistentSandbox = true;"
-    );
-    await writeFile(
-      path.join(f.root, "chatjs/providers/storage-options.ts"),
-      'export const storageId = "s3";'
-    );
-    await rejects(
-      planInstallation(
-        f.root,
-        { plugins: [], tools: [], sandbox: f.address("daytona-sandbox") },
-        { replace: true }
-      ),
-      /persistent sandbox/u
+    expect(selected.sandbox).toBeUndefined();
+    await planInstallation(
+      f.root,
+      { ...selection, sandbox: f.address("daytona-sandbox") },
+      { fresh: true }
     );
   } finally {
     await f.server.stop(true);

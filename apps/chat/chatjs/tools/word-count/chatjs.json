@@ -1,14 +1,21 @@
 {
+  "native": {
+    "files": ["tool.ts", "definition.ts", "schemas.ts"],
+    "dependencies": ["eve", "zod"]
+  },
   "envRequirements": [],
   "id": "word-count",
   "kind": "tool",
   "requiresTools": [],
   "tools": [
     {
+      "accounting": "none",
+      "readOnly": true,
       "rendererExport": "WordCountRenderer",
       "definitionExport": "toolDefinition",
       "toolExport": "wordCount"
     }
   ],
-  "contractVersion": 1
+  "contractVersion": 1,
+  "channelSupport": { "web": "supported", "slack": "unverified" }
 }

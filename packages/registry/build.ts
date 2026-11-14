@@ -7,6 +7,7 @@ import { spawn } from "bun";
 import { registryItemSchema, registrySchema } from "shadcn/schema";
 import { selectUiSources } from "./ui-implementations";
 import { registryItemForUi } from "./ui-registry";
+import { nativeRegistryItem, nativeRegistry } from "./native-registry";
 
 const JSON_INDENTATION = 2;
 const SUCCESS_EXIT_CODE = 0;
@@ -58,6 +59,14 @@ const selectedItems = new Map(
     })
   )
 );
+
+const portableItems = registry.items.flatMap((item) => {
+  const native = nativeRegistryItem(
+    item,
+    selectedItems.get(item.name)?.get("base") ?? new Map()
+  );
+  return native ? [native] : [];
+});
 
 await rm(path.join(cwd, "dist"), { force: true, recursive: true });
 await mkdir(path.join(cwd, "dist/source"), { recursive: true });
@@ -136,3 +145,18 @@ await Promise.all(
     );
   })
 );
+
+const nativeOutput = path.join(output, "eve");
+await mkdir(nativeOutput, { recursive: true });
+await Promise.all([
+  writeFile(
+    path.join(nativeOutput, "registry.json"),
+    `${JSON.stringify(nativeRegistry(portableItems), null, JSON_INDENTATION)}\n`
+  ),
+  ...portableItems.map(async (item) => {
+    await writeFile(
+      path.join(nativeOutput, `${item.name}.json`),
+      `${JSON.stringify(item, null, JSON_INDENTATION)}\n`
+    );
+  }),
+]);

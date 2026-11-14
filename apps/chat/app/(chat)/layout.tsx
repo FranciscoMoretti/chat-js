@@ -1,3 +1,4 @@
+import { webModels } from "@/integrations/chat/models";
 import { cookies, headers } from "next/headers";
 import React, { Suspense } from "react";
 
@@ -29,7 +30,7 @@ const resolveDefaultModel = (
   cookieModel: string | undefined,
   chatModels: readonly { readonly id: string }[]
 ): AppModelId => {
-  const configuredModel = config.ai.workflows.chat;
+  const configuredModel = webModels.model ?? config.ai.workflows.chat;
   let defaultModel: AppModelId = cookieModel ?? configuredModel;
 
   if (typeof cookieModel === "string" && cookieModel !== "") {

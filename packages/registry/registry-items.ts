@@ -61,9 +61,15 @@ const toolItems = (
       dependencies: ["ai", "zod"],
       description: wordCountDefinition.description,
       id: "word-count",
+      native: {
+        files: ["tool.ts", "definition.ts", "schemas.ts"],
+        dependencies: ["eve", "zod"],
+      },
       tools: [
         {
           rendererExport: "WordCountRenderer",
+          readOnly: true,
+          accounting: "none",
           toolExport: wordCountDefinition.name,
           definitionExport: "toolDefinition",
         },
@@ -73,9 +79,15 @@ const toolItems = (
       dependencies: ["ai", "zod", "date-fns"],
       description: weatherDefinition.description,
       id: "get-weather",
+      native: {
+        files: ["tool.ts", "definition.ts", "schemas.ts"],
+        dependencies: ["eve", "zod"],
+      },
       tools: [
         {
           rendererExport: "GetWeatherRenderer",
+          readOnly: true,
+          accounting: "none",
           toolExport: weatherDefinition.name,
           definitionExport: "toolDefinition",
         },
@@ -92,9 +104,18 @@ const toolItems = (
       description: "Fetch structured information from a single URL",
       envRequirements: [{ options: [["FIRECRAWL_API_KEY"]] }],
       id: "retrieve-url",
+      native: {
+        files: ["tool.ts", "schemas.ts", "retrieve-url-env.ts"],
+        dependencies: ["eve", "zod", "@mendable/firecrawl-js"],
+      },
       slot: "retrieveUrl",
       tools: [
-        { rendererExport: "RetrieveUrlRenderer", toolExport: "retrieveUrl" },
+        {
+          readOnly: true,
+          rendererExport: "RetrieveUrlRenderer",
+          toolExport: "retrieveUrl",
+          accounting: "unknown",
+        },
       ],
     },
   ] as const
@@ -170,6 +191,11 @@ const searchToolItems = (
   description: `Use ${id} for chat and deep research`,
   files: [
     {
+      path: "src/tools/_shared/search-runtime.ts",
+      target: `~/chatjs/tools/${id}/search-runtime.ts`,
+      type: "registry:file" as const,
+    },
+    {
       path: `src/tools/${id}/${id}-env.ts`,
       target: `~/chatjs/tools/${id}/${id}-env.ts`,
       type: "registry:file" as const,
@@ -197,6 +223,10 @@ const searchToolItems = (
       id,
       kind: "tool",
       slot: "webSearch",
+      native: {
+        files: ["tool.ts", "schemas.ts", `${id}-env.ts`, "search-runtime.ts"],
+        dependencies: ["eve", "zod", dependency],
+      },
       tools: [
         {
           composer: {
@@ -205,7 +235,10 @@ const searchToolItems = (
             shortName: "Search",
           },
           rendererExport: "WebSearchRenderer",
+          readOnly: true,
           toolExport: "webSearch",
+          accounting: { costUsd: 0.05 },
+          updatesExport: "searchUpdates",
         },
       ],
     }),
@@ -214,18 +247,35 @@ const searchToolItems = (
   type: "registry:item" as const,
 }));
 
-const registryItems: RegistryItem[] = [
-  ...pluginItems,
-  ...builtInGateways,
-  ...builtInSandboxes,
-  ...toolItems,
-  ...documentItems,
-  savedCodeExecutionItem,
-  researchItem,
-  codeExecutionUiItem,
-  ...searchToolItems,
-  codeExecutionItem,
-  codeExecutionRuntimeItem,
-];
+const registryItems: RegistryItem[] = (
+  [
+    ...pluginItems,
+    ...builtInGateways,
+    ...builtInSandboxes,
+    ...toolItems,
+    ...documentItems,
+    savedCodeExecutionItem,
+    researchItem,
+    codeExecutionUiItem,
+    ...searchToolItems,
+    codeExecutionItem,
+    codeExecutionRuntimeItem,
+  ] satisfies RegistryItem[]
+).map((item): RegistryItem => {
+  const definition = toolDefinitionSchema.safeParse(item.meta?.chatjs);
+  if (!definition.success) {
+    return item;
+  }
+  return {
+    ...item,
+    meta: {
+      ...item.meta,
+      chatjs: {
+        ...definition.data,
+        channelSupport: { web: "supported", slack: "unverified" },
+      },
+    },
+  };
+});
 export { codeExecutionItem } from "./code-execution";
 export { registryItems, searchToolItems, toolItems };

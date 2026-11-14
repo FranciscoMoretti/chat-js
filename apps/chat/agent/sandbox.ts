@@ -1,6 +1,4 @@
-import { defineSandbox } from "eve/sandbox";
-import { createAppSandboxEnvironment } from "../lib/eve/sandbox-environment";
+import { DefaultSandbox, defineSandbox } from "eve/sandbox";
 
-export const environment = createAppSandboxEnvironment();
-
+export const environment = DefaultSandbox.environment();
 export default defineSandbox(async () => await environment.open());

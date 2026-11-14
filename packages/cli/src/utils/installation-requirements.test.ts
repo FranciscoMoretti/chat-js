@@ -211,11 +211,16 @@ test("add validates installed provider literals without executing user source", 
   );
 });
 
-test("uploads reject absent and nonpersistent sandboxes, accept compatible external providers", async () => {
+test("explicit persistent capability requirements validate external providers", async () => {
   const cwd = await mkdtemp(path.join(tmpdir(), "chatjs-upload-sandbox-"));
   roots.push(cwd);
   const target = {
-    plugins: [{ id: "attachment-uploads" }],
+    plugins: [
+      {
+        id: "custom-persistent-resource",
+        requiresPersistentSandbox: true as const,
+      },
+    ],
     storage: "s3",
     tools: [],
   };
@@ -256,4 +261,14 @@ test("uploads reject absent and nonpersistent sandboxes, accept compatible exter
     }),
     /persistent sandbox/u
   );
+});
+
+test("uploads require storage but use the native agent sandbox without an app provider", async () => {
+  const cwd = await mkdtemp(path.join(tmpdir(), "chatjs-native-upload-"));
+  roots.push(cwd);
+  await validateProviderRequirements(cwd, {
+    plugins: [{ id: "attachment-uploads", requiresStorage: true }],
+    storage: "s3",
+    tools: [],
+  });
 });

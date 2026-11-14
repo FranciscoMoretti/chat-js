@@ -1,9 +1,4 @@
 import { findDescendants, parseProcessRows } from "./dev-process-tree";
-import { randomUUID } from "node:crypto";
-import {
-  finishPersistentSandboxCleanup,
-  preparePersistentSandboxCleanup,
-} from "./persistent-sandbox-cleanup";
 import type { ChildProcess } from "node:child_process";
 import { execFileSync, spawn } from "node:child_process";
 import { setTimeout as delay } from "node:timers/promises";
@@ -28,15 +23,11 @@ interface SupervisorRuntime {
   readonly now: () => number;
   readonly sleep: (milliseconds: number, signal?: AbortSignal) => Promise<void>;
   readonly snapshot: () => string;
-  readonly start: (runId: string) => SupervisedChild;
-  readonly prepareSandboxCleanup?: (runId: string) => Promise<void>;
-  readonly finishSandboxCleanup?: (runId: string) => Promise<void>;
+  readonly start: () => SupervisedChild;
 }
 type MonitorOutcome = "monitoring" | "shutdown" | "child-exit" | "unhealthy";
 
 const runtime: SupervisorRuntime = {
-  prepareSandboxCleanup: preparePersistentSandboxCleanup,
-  finishSandboxCleanup: finishPersistentSandboxCleanup,
   health: checkHealth,
   kill: (pid, signal) => {
     process.kill(pid, signal);
@@ -47,7 +38,7 @@ const runtime: SupervisorRuntime = {
   },
   snapshot: () =>
     execFileSync("ps", ["-axo", "pid=,ppid=,lstart="], { encoding: "utf-8" }),
-  start: (runId) =>
+  start: () =>
     spawn(
       process.versions.bun === undefined ? "npm" : process.execPath,
       ["run", "dev"],
@@ -55,7 +46,6 @@ const runtime: SupervisorRuntime = {
         detached: true,
         env: {
           ...process.env,
-          CHATJS_SANDBOX_DEV_RUN_ID: runId,
           NODE_OPTIONS: "--max-old-space-size=4096",
         },
         stdio: "inherit",
@@ -204,20 +194,7 @@ export const supervise = async (
       console.info("Starting ChatJS and managed Eve runtime");
       launcherObserved = false;
       launcherStarted = undefined;
-      const sandboxRunId = randomUUID();
-      if (environment.prepareSandboxCleanup) {
-        // oxlint-disable-next-line eslint/no-await-in-loop -- Validate prior cleanup intents before a replacement worker can allocate resources.
-        await environment.prepareSandboxCleanup(sandboxRunId);
-      }
-      if (shutdown.aborted) {
-        if (environment.finishSandboxCleanup) {
-          // oxlint-disable-next-line eslint/no-await-in-loop -- Release the prepared intent without starting a worker after shutdown.
-          await environment.finishSandboxCleanup(sandboxRunId);
-        }
-        outcome = "shutdown";
-        continue;
-      }
-      child = environment.start(sandboxRunId);
+      child = environment.start();
       try {
         // oxlint-disable-next-line eslint/no-await-in-loop -- Monitor one launcher to completion before cleaning up and starting its replacement.
         const { outcome: monitorOutcome, wasReady } = await monitorChild(
@@ -238,10 +215,6 @@ export const supervise = async (
         terminate("SIGKILL");
         child = undefined;
         descendants.clear();
-        if (environment.finishSandboxCleanup) {
-          // oxlint-disable-next-line eslint/no-await-in-loop -- Stop persistent resources after worker termination; failed cleanup retains its durable intent.
-          await environment.finishSandboxCleanup(sandboxRunId);
-        }
       }
       if (shutdown.aborted) {
         outcome = "shutdown";

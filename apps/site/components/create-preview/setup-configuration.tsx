@@ -1,5 +1,6 @@
 "use client";
 
+import { ConfigurationSection as Section } from "./configuration-section";
 import { useState } from "react";
 import type { ReactNode } from "react";
 import { Button } from "@/vendor/shadcn-create/styles/base-nova/ui/button";
@@ -42,37 +43,6 @@ const providers = [
 ] as const;
 
 const [gateway, ...infrastructure] = providers;
-
-const Section = ({
-  id,
-  title,
-  description,
-  children,
-  action,
-}: {
-  readonly id: string;
-  readonly title: string;
-  readonly description: string;
-  readonly children: ReactNode;
-  readonly action?: ReactNode;
-}) => (
-  <section
-    id={`setup-${id}`}
-    aria-label={title}
-    className="scroll-mt-6 border-b pb-9 last:border-0"
-  >
-    <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
-      <div>
-        <h2 className="text-lg font-semibold tracking-tight">{title}</h2>
-        <p className="text-muted-foreground mt-1 text-sm leading-relaxed">
-          {description}
-        </p>
-      </div>
-      {action}
-    </div>
-    {children}
-  </section>
-);
 
 const ProviderChoices = ({
   kind,

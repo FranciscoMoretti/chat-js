@@ -1,5 +1,3 @@
-import type { PersistentSandboxProvider } from "./persistent.ts";
-
 /** Stable, non-secret coordinates. Credential scope may be a fingerprint, never a token. */
 interface SandboxScope {
   readonly providerId: string;
@@ -15,7 +13,6 @@ interface Sandbox {
   }>;
 }
 interface SandboxProvider {
-  readonly persistent?: PersistentSandboxProvider;
   readonly scope: SandboxScope;
   create: (
     options: Readonly<{

@@ -4,7 +4,6 @@ import { defineConfig } from "@playwright/test";
 export default defineConfig({
   ...config,
   testMatch: [
-    "eve-shared-workspace-live.e2e.ts",
     "eve-logical-chat.e2e.ts",
     "eve-branching-regression.e2e.ts",
     "eve-chat-identity.e2e.ts",

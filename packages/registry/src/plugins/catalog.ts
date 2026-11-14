@@ -1,3 +1,4 @@
+import { slackDocumentsItem } from "./slack-documents/manifest";
 import { guestChatItem } from "./guest-chat/manifest";
 import { desktopItem } from "./desktop/manifest";
 import { creditsItem } from "./credits/manifest";
@@ -13,6 +14,7 @@ import { attachmentUploadsItem } from "./attachment-uploads/manifest";
 import { observabilityItems } from "./observability";
 
 export const pluginItems = [
+  slackDocumentsItem,
   projectsItem,
   feedbackItem,
   followupSuggestionsItem,

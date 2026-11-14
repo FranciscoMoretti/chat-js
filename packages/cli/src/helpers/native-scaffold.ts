@@ -1,3 +1,4 @@
+import type { AgentRecipe } from "./agent-recipe";
 import {
   cp,
   mkdir,
@@ -36,7 +37,8 @@ const nativeOwned = new Set([
 export const scaffoldNativeProject = async (
   cwd: string,
   packageManager: PackageManager,
-  args: readonly string[]
+  args: readonly string[],
+  recipe?: AgentRecipe
 ): Promise<void> => {
   // Keep the core payload outside the framework root so native file discovery
   // never sees a preconfigured Base application or its primitives.
@@ -68,15 +70,30 @@ export const scaffoldNativeProject = async (
       path.join(core, "app/chatjs.css"),
       path.join(cwd, "app/chatjs.css")
     );
-    await initializeShadcn(cwd, args);
-    logger.info("Continuing ChatJS setup. Installing UI components...");
-    const primitiveFiles = await readdir(path.join(core, "components/ui"), {
-      withFileTypes: true,
-    });
-    const primitives = primitiveFiles
-      .filter((file) => file.isFile() && file.name.endsWith(".tsx"))
-      .map((file) => file.name.slice(0, -4));
-    await runNativeShadcn(cwd, ["add", "--yes", "--overwrite", ...primitives]);
+    if (recipe) {
+      await Promise.all(
+        recipe.native.map(async (file) => {
+          const target = path.join(cwd, file.path);
+          await mkdir(path.dirname(target), { recursive: true });
+          await writeFile(target, file.content);
+        })
+      );
+    } else {
+      await initializeShadcn(cwd, args);
+      logger.info("Continuing ChatJS setup. Installing UI components...");
+      const primitiveFiles = await readdir(path.join(core, "components/ui"), {
+        withFileTypes: true,
+      });
+      const primitives = primitiveFiles
+        .filter((file) => file.isFile() && file.name.endsWith(".tsx"))
+        .map((file) => file.name.slice(0, -4));
+      await runNativeShadcn(cwd, [
+        "add",
+        "--yes",
+        "--overwrite",
+        ...primitives,
+      ]);
+    }
     // Native owns its generated config, CSS, fonts, utilities and primitives.
     // Compositions are copied only after that stage has completed successfully.
     await cp(core, cwd, {

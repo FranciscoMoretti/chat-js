@@ -1,3 +1,5 @@
+import { encodeAppPreset } from "../../../packages/registry/app-preset";
+import { installationSelectionSchema } from "../../../packages/registry/installation";
 import { test, expect } from "playwright/test";
 
 const installation = {
@@ -28,7 +30,7 @@ for (const rtl of [false, true]) {
     });
     await page.setViewportSize({ width: 1440, height: 1000 });
     await page.goto(
-      `/create?item=preview-02&rtl=${rtl}&installation=${encodeURIComponent(JSON.stringify(installation))}`
+      `/create?item=preview-02&rtl=${rtl}&app=${encodeAppPreset(installationSelectionSchema.parse(installation))}`
     );
     const app = page.frameLocator("iframe");
     await expect(
@@ -93,7 +95,7 @@ test("local adapters drive project creation, model selection and document panels
   page.on("pageerror", (error) => errors.push(error.message));
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto(
-    `/create?item=preview-tools&installation=${encodeURIComponent(JSON.stringify(installation))}`
+    `/create?item=preview-tools&app=${encodeAppPreset(installationSelectionSchema.parse(installation))}`
   );
   const app = page.frameLocator("iframe");
   await app.getByRole("button", { name: "New project", exact: true }).click();
@@ -144,7 +146,7 @@ test("shared message editor and deletion use local effects", async ({
   page,
 }) => {
   await page.goto(
-    `/create?item=preview-02&installation=${encodeURIComponent(JSON.stringify(installation))}`
+    `/create?item=preview-02&app=${encodeAppPreset(installationSelectionSchema.parse(installation))}`
   );
   const app = page.frameLocator("iframe");
   await app.getByRole("button", { name: "Edit message", exact: true }).click();

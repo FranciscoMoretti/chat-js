@@ -1,3 +1,4 @@
+import { billing } from "@/integrations/billing";
 import type { SessionEvent as UsageEventReader } from "eve/client";
 import { recordEveUsage } from "@/lib/db/eve-billing";
 import { registerEveSubagent } from "@/lib/db/eve-subagents";
@@ -17,10 +18,12 @@ const ingestToolUsage = async (
   event: Extract<UsageEventReader, { type: "call.settled" }>,
   attribution?: Readonly<{ sessionId: string; turnId: string }>
 ): Promise<boolean> => {
-  const result = toolResultSchema.safeParse(event.data.output);
+  // Native capabilities are unmetered by ChatJS unless they explicitly opt into
+  // its receipt protocol. Their service/compute costs are not inferred as zero.
   if (!hasEveToolReceipt(event.data.output)) {
     return true;
   }
+  const result = toolResultSchema.safeParse(event.data.output);
   const recordedCost = result.success ? result.data.usage.costUsd : undefined;
   const turnId = attribution?.turnId ?? event.scope?.turnId;
   if (turnId === undefined || turnId === "") {
@@ -66,6 +69,11 @@ export const ingestEveUsage = async (
       return false;
     }
     await registerEveSubagent(ownerId, sessionId, event.data.sessionId, turnId);
+  }
+
+  // Replay and deletion share this path even when application billing is absent.
+  if (billing.debit === undefined) {
+    return true;
   }
 
   if (event.type === "call.settled") {

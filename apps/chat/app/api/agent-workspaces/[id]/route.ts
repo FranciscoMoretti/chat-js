@@ -1,11 +1,9 @@
 import { z } from "zod";
 import { readOwnedWorkspace } from "@/lib/db/eve-workspaces";
-import { purgeEveWorkspaceFiles } from "@/lib/eve/purge-files";
 import { env } from "@/lib/env";
 import { resolveEvePrincipal } from "@/lib/eve/principal";
 import { sameOrigin } from "@/lib/eve/request-policy";
-import { cleanupWorkspaceIfUnused } from "@/lib/eve/persistent-sandbox-store";
-import { getPersistentSandboxProvider } from "@/lib/sandbox/runtime";
+import { cleanupWorkspaceIfUnused } from "@/lib/db/eve-workspace-deletion";
 
 const headers = { "cache-control": "no-store" };
 
@@ -30,13 +28,7 @@ export const DELETE = async (
     return new Response(null, { headers, status: 404 });
   }
   try {
-    await cleanupWorkspaceIfUnused(
-      principal.ownerId,
-      id,
-      getPersistentSandboxProvider,
-      true
-    );
-    await purgeEveWorkspaceFiles(principal.ownerId, id);
+    await cleanupWorkspaceIfUnused(principal.ownerId, id, true);
     return Response.json({ workspaceId: id, status: "deleted" }, { headers });
   } catch {
     return Response.json(

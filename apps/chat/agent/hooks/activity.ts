@@ -1,7 +1,7 @@
 import { isAccountSession } from "../../lib/eve/session-identity";
 import { defineHook } from "eve/hooks";
 
-import { ingestEveActivity } from "../../lib/eve/activity";
+import type { ingestEveActivity } from "../../lib/eve/activity";
 
 export default defineHook({
   events: {
@@ -23,6 +23,7 @@ export default defineHook({
       if (!isAccountSession(context.session)) {
         return;
       }
+      const { ingestEveActivity } = await import("../../lib/eve/activity");
       const ownerId = context.session.auth.initiator?.principalId;
       if (typeof ownerId === "string" && ownerId !== "") {
         await ingestEveActivity(

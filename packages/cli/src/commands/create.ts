@@ -1,8 +1,13 @@
+import { installEveIntegrations } from "#cli/helpers/eve-integrations";
+import { registryResolution } from "#cli/registry/resolution-context";
+import { parseAgentRecipe, writeAgentRecipe } from "#cli/helpers/agent-recipe";
+import type { AgentRecipe } from "#cli/helpers/agent-recipe";
 import {
   readCreateInstallation,
   assertExclusiveInstallation,
 } from "#cli/helpers/create-installation";
 import { optionalDirectoryFiles } from "#cli/utils/installation-files";
+import { writeAgentConfiguration } from "#cli/helpers/agent-configuration";
 import { recordInstalledSource } from "#cli/utils/source-receipt";
 import { scaffoldNativeProject } from "#cli/helpers/native-scaffold";
 import { createStagedProject } from "#cli/helpers/staged-project";
@@ -136,6 +141,7 @@ const printEnvChecklist = (entries: readonly Readonly<EnvVarEntry>[]): void => {
 };
 
 const createOptionsSchema = z.object({
+  recipe: z.string().optional(),
   appPreset: z.string().optional(),
   installation: z.string().optional(),
   attachments: z.boolean().optional(),
@@ -517,9 +523,15 @@ const scaffoldProject = async (
   project: Readonly<ProjectTarget>,
   packageManager: PackageManager,
   withElectron: boolean,
-  shadcnArgs: readonly string[]
+  shadcnArgs: readonly string[],
+  recipe?: AgentRecipe
 ): Promise<void> => {
-  await scaffoldNativeProject(project.targetDir, packageManager, shadcnArgs);
+  await scaffoldNativeProject(
+    project.targetDir,
+    packageManager,
+    shadcnArgs,
+    recipe
+  );
   if (withElectron) {
     await scaffoldElectron(project.targetDir, {
       packageManager,
@@ -554,6 +566,10 @@ const writeConfiguration = async (
         gateway: setup.gateway,
         gatewayDefaults: setup.gatewaySelection.definition.defaults,
       })
+    );
+    await writeAgentConfiguration(
+      project.targetDir,
+      setup.plan.selection.agent
     );
     configSpinner.succeed("Configuration written.");
   } catch (error) {
@@ -689,6 +705,14 @@ const printNextSteps = (
     );
   }
   logger.break();
+  logger.info(
+    "Check capability configuration with chat-js setup (requires Bun). This does not verify live services."
+  );
+  if ((setup.plan.selection.eve?.length ?? 0) > 0) {
+    logger.info(
+      "Native EVE capabilities installed. Complete provider setup using chatjs/eve-setup.md; credentials and consent are not configured by Create."
+    );
+  }
   printEnvChecklist(envEntries);
   logger.log(
     "  Postgres setup (Neon, Supabase, or another host): https://www.chatjs.dev/docs/reference/database"
@@ -701,9 +725,15 @@ const printNextSteps = (
 
 const createProject = async (
   options: Readonly<CreateOptions>,
-  shadcnArgs: readonly string[]
+  shadcnArgs: readonly string[],
+  recipe?: AgentRecipe
 ): Promise<void> => {
   const packageManager = launcherPackageManager();
+  if (recipe && packageManager !== "bun") {
+    throw new Error(
+      "Replay this recipe with Bun so its frozen dependency lock is honored."
+    );
+  }
   if (!options.yes) {
     intro("Create ChatJS App");
   }
@@ -752,7 +782,8 @@ const createProject = async (
         stagedProject,
         packageManager,
         setup.withElectron,
-        shadcnArgs
+        shadcnArgs,
+        recipe
       );
       // Resolve only after native init has selected the actual library.
       setup.plan = await planInstallation(stage, setup.plan.selection, {
@@ -760,7 +791,35 @@ const createProject = async (
         fresh: true,
       });
       await writeConfiguration(stagedProject, setup);
-      return await installRegistryItems(packageManager, stagedProject, setup);
+      const installed = await installRegistryItems(
+        packageManager,
+        stagedProject,
+        setup
+      );
+      const eve = await installEveIntegrations(
+        stage,
+        setup.plan.selection.eve ?? [],
+        packageManager,
+        recipe?.eve,
+        setup.plan.selection.eveRegistries
+      );
+      if (recipe) {
+        const lockfile = recipe.native.find((file) => file.path === "bun.lock");
+        if (!lockfile) {
+          throw new Error("Recipe is missing its dependency lock.");
+        }
+        await writeFile(path.join(stage, "bun.lock"), lockfile.content);
+        await runCommand("bun", ["install", "--frozen-lockfile"], stage);
+      }
+      if (packageManager === "bun") {
+        await writeAgentRecipe(stage, {
+          selection: setup.plan.selection,
+          appearance: [...shadcnArgs],
+          capabilities: setup.plan.resolvedItems,
+          eve,
+        });
+      }
+      return installed;
     }
   );
   printNextSteps(packageManager, project, setup, installedTools);
@@ -769,6 +828,10 @@ const createProject = async (
 export const create = new Command()
   .name("create")
   .option("--app-preset <code>", "App preset code; bypasses feature defaults")
+  .option(
+    "--recipe <path>",
+    "replay a saved Agent recipe with frozen capabilities and dependencies"
+  )
   .option(
     "--installation <json>",
     "complete JSON selection; bypasses feature defaults"
@@ -844,6 +907,37 @@ export const create = new Command()
       try {
         const { target, shadcnArgs } = createShadcnArguments(command);
         const options = createOptionsSchema.parse({ target, ...opts });
+        if (options.recipe !== undefined) {
+          const conflicts = Object.entries(options).filter(
+            ([key, value]) =>
+              !["recipe", "target", "yes"].includes(key) && value !== undefined
+          );
+          if (conflicts.length > 0 || shadcnArgs.length > 0) {
+            throw new Error(
+              "--recipe cannot be combined with selection or appearance options. Edit the builder choices and generate a new recipe for an upgrade."
+            );
+          }
+          const recipe = parseAgentRecipe(
+            JSON.parse(await readFile(path.resolve(options.recipe), "utf-8"))
+          );
+          await registryResolution.run(
+            new Map(
+              recipe.capabilities.map(({ source, item }) => [source, item])
+            ),
+            async () => {
+              await createProject(
+                {
+                  target,
+                  yes: options.yes,
+                  installation: JSON.stringify(recipe.selection),
+                },
+                recipe.appearance,
+                recipe
+              );
+            }
+          );
+          return;
+        }
         assertExclusiveInstallation(options);
         assertCreateShadcnReady(shadcnArgs, options.fromGit);
         await createProject(options, shadcnArgs);

@@ -94,6 +94,13 @@ export const InstallationRequirements = ({
         </PopoverHeader>
         <ScrollArea className="max-h-72 overflow-y-auto">
           <div className="flex flex-col gap-4">
+            {(resolution?.selection.eve?.length ?? 0) > 0 && (
+              <p className="text-sm">
+                {resolution?.selection.eve?.length} native EVE capabilities
+                selected. Complete provider setup after installation; live
+                access is not verified here.
+              </p>
+            )}
             {issues.length > 0 && (
               <Alert variant="destructive">
                 <AlertTitle>Complete your setup</AlertTitle>

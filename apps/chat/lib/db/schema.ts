@@ -369,35 +369,6 @@ const eveStoredFile = pgTable(
   ]
 );
 
-/** Immutable uploaded originals retained by a workspace independently of transcript history. */
-const eveWorkspaceAttachment = pgTable(
-  "EveWorkspaceAttachment",
-  {
-    workspaceId: uuid("workspaceId").notNull(),
-    fileKey: text("fileKey").notNull(),
-    ownerId: text("ownerId").notNull(),
-    sha256: text("sha256").notNull(),
-    paths: text("paths")
-      .array()
-      .notNull()
-      .default(sql`'{}'::text[]`),
-  },
-  (table) => [
-    primaryKey({ columns: [table.workspaceId, table.fileKey] }),
-    index("EveWorkspaceAttachment_file").on(table.fileKey),
-    foreignKey({
-      columns: [table.workspaceId, table.ownerId],
-      foreignColumns: [eveWorkspace.id, eveWorkspace.ownerId],
-      name: "EveWorkspaceAttachment_workspace_owner_fk",
-    }),
-    foreignKey({
-      columns: [table.fileKey, table.ownerId],
-      foreignColumns: [eveStoredFile.key, eveStoredFile.ownerId],
-      name: "EveWorkspaceAttachment_file_owner_fk",
-    }),
-  ]
-);
-
 const eveFileReference = pgTable(
   "EveFileReference",
   {
@@ -417,50 +388,6 @@ const eveFileReference = pgTable(
       foreignColumns: [eveStoredFile.key, eveStoredFile.ownerId],
     }),
   ]
-);
-
-// Allocation intent survives provider timeouts and worker crashes.
-// Persistent filesystem ownership is retained independently of native workflow payloads.
-const eveSandboxSession = pgTable(
-  "EveSandboxSession",
-  {
-    sessionId: text("sessionId").primaryKey(),
-    rootSessionId: text("rootSessionId").notNull(),
-    conversationId: uuid("conversationId").notNull(),
-    workspaceId: uuid("workspaceId").notNull(),
-    ownerId: text("ownerId").notNull(),
-    devRunId: text("devRunId"),
-    state: text("state", { enum: ["active", "retired"] }).notNull(),
-  },
-  (table) => [
-    index("EveSandboxSession_root").on(table.rootSessionId),
-    index("EveSandboxSession_workspace").on(table.workspaceId),
-    foreignKey({
-      columns: [table.conversationId, table.ownerId],
-      foreignColumns: [eveConversation.id, eveConversation.ownerId],
-      name: "EveSandboxSession_conversation_owner_fk",
-    }),
-    foreignKey({
-      columns: [table.workspaceId, table.ownerId],
-      foreignColumns: [eveWorkspace.id, eveWorkspace.ownerId],
-      name: "EveSandboxSession_workspace_owner_fk",
-    }),
-    index("EveSandboxSession_dev").on(table.devRunId),
-  ]
-);
-const evePersistentSandbox = pgTable(
-  "EvePersistentSandbox",
-  {
-    name: text("name").primaryKey(),
-    workspaceId: uuid("workspaceId")
-      .notNull()
-      .references(() => eveWorkspace.id),
-    providerId: text("providerId").notNull(),
-    accountId: text("accountId").notNull(),
-    scopeId: text("scopeId").notNull(),
-    state: text("state", { enum: ["pending", "ready", "deleted"] }).notNull(),
-  },
-  (table) => [unique("EvePersistentSandbox_workspace").on(table.workspaceId)]
 );
 
 const eveCodeSandbox = pgTable(
@@ -792,8 +719,6 @@ const eveImportedDocumentCheckpointEntry = pgTable(
 
 export {
   eveWorkspace,
-  eveSandboxSession,
-  evePersistentSandbox,
   eveDispatch,
   account,
   eveChat,
@@ -804,7 +729,6 @@ export {
   eveDocumentHead,
   eveDocumentRevision,
   eveFileReference,
-  eveWorkspaceAttachment,
   eveImportedDocumentCheckpoint,
   eveImportedDocumentCheckpointEntry,
   eveNamedDocumentCheckpoint,

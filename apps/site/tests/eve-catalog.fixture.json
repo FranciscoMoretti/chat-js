@@ -1,0 +1,145 @@
+{
+  "items": [
+    {
+      "name": "extension/agent-browser",
+      "type": "registry:item",
+      "title": "agent-browser",
+      "description": "Add browser automation tools backed by agent-browser to an eve agent."
+    },
+    {
+      "name": "memory/file",
+      "type": "registry:item",
+      "title": "File memory",
+      "description": "Store durable per-principal memory in a private Vercel Blob store. Setup connects production, preview, and development in the project's primary function region; Blob usage may incur charges.",
+      "meta": {
+        "eve": {
+          "setup": {
+            "package": "eve",
+            "bin": "eve",
+            "args": ["integration", "setup", "file-memory"]
+          },
+          "requires": ">=0.49.1",
+          "docs": "/docs/memory/file"
+        }
+      }
+    },
+    {
+      "name": "tool/web_fetch",
+      "type": "registry:item",
+      "title": "Web Fetch",
+      "description": "Fetch a URL from the app runtime."
+    },
+    {
+      "name": "connection/linear",
+      "type": "registry:item",
+      "title": "Linear",
+      "description": "Issues, projects, cycles, and comments via Linear's MCP server.",
+      "meta": {
+        "eve": {
+          "setup": {
+            "command": "eve",
+            "package": "eve",
+            "bin": "eve",
+            "args": [
+              "integration",
+              "connect",
+              "linear",
+              "mcp.linear.app",
+              "linear"
+            ]
+          },
+          "requires": ">=0.29.0"
+        }
+      }
+    },
+    {
+      "name": "connection/notion",
+      "type": "registry:item",
+      "title": "Notion",
+      "description": "Search and edit Notion pages and databases over MCP or OpenAPI.",
+      "meta": {
+        "eve": {
+          "setup": {
+            "command": "eve",
+            "package": "eve",
+            "bin": "eve",
+            "args": [
+              "integration",
+              "connect",
+              "notion",
+              "mcp.notion.com",
+              "notion"
+            ]
+          },
+          "requires": ">=0.29.0"
+        }
+      }
+    },
+    {
+      "name": "channel/web",
+      "type": "registry:item",
+      "title": "Web Chat",
+      "description": "Add the built-in Next.js Web Chat channel to an eve agent.",
+      "meta": {
+        "eve": {
+          "setup": {
+            "command": "eve",
+            "package": "eve",
+            "bin": "eve",
+            "args": ["integration", "setup", "web"]
+          },
+          "requires": ">=0.66.1",
+          "docs": "/docs/channels/eve",
+          "implementation": "native"
+        }
+      }
+    },
+    {
+      "name": "channel/slack",
+      "type": "registry:item",
+      "title": "Slack",
+      "description": "Connect an eve agent to Slack with Vercel Connect or portable credentials.",
+      "meta": {
+        "eve": {
+          "setup": {
+            "command": "eve",
+            "package": "eve",
+            "bin": "eve",
+            "args": ["integration", "setup", "slack"]
+          },
+          "requires": ">=0.33.0",
+          "docs": "/docs/channels/slack",
+          "implementation": "native"
+        }
+      }
+    },
+    {
+      "name": "channel/discord",
+      "type": "registry:item",
+      "title": "Discord",
+      "description": "Connect an eve agent to Discord with guided connector and slash-command setup.",
+      "meta": {
+        "eve": {
+          "setup": {
+            "command": "eve",
+            "package": "eve",
+            "bin": "eve",
+            "args": ["integration", "setup", "discord"]
+          },
+          "requires": ">=0.33.0",
+          "docs": "/docs/channels/discord",
+          "implementation": "native"
+        }
+      }
+    },
+    {
+      "name": "instrumentation/braintrust",
+      "type": "registry:item",
+      "title": "Braintrust",
+      "description": "Trace eve agent sessions in Braintrust, including turns, steps, tool calls, and subagent interactions.",
+      "envVars": {
+        "BRAINTRUST_API_KEY": ""
+      }
+    }
+  ]
+}

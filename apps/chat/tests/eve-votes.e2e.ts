@@ -1,5 +1,5 @@
 import { reconcileEveWorkspaceTurn } from "../lib/eve/reconcile-workspace-turn";
-import { cleanupWorkspaceIfUnused } from "../lib/eve/persistent-sandbox-store";
+import { cleanupWorkspaceIfUnused } from "../lib/db/eve-workspace-deletion";
 import { setSharing } from "../chatjs/plugins/sharing/queries";
 import { eveVote } from "../chatjs/plugins/feedback/feedback-schema";
 
@@ -193,13 +193,7 @@ test("deletion erases existing feedback and rejects a vote whose snapshot finish
   native.snapshot.mockImplementationOnce(async () => {
     const bound = await getEveConversation(owner, row.id);
     await beginEveConversationDeletion(owner, row.id);
-    await cleanupWorkspaceIfUnused(
-      owner,
-      bound?.workspaceId ?? "missing",
-      () => {
-        throw new Error("Text-only fixture must not allocate a sandbox");
-      }
-    );
+    await cleanupWorkspaceIfUnused(owner, bound?.workspaceId ?? "missing");
     await completeEveConversationDeletion(owner, row.id);
     return { events };
   });

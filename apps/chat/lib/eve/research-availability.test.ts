@@ -8,7 +8,7 @@ import {
 } from "@eve-test/dist/src/context/serialize.js";
 import { generateText, tool, wrapLanguageModel } from "ai";
 import { MockLanguageModelV3 } from "ai/test";
-import { beforeEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { z } from "zod";
 
 import { researchAvailable } from "@/chatjs/tools/deep-research/availability";
@@ -40,7 +40,10 @@ vi.mock("@/integrations/tools/catalog", () => ({
 vi.mock("../../integrations/tools/providers", () => ({
   toolProviders: mocks.tools,
 }));
+afterEach(() => vi.unstubAllEnvs());
 beforeEach(() => {
+  vi.stubEnv("TAVILY_API_KEY", "test-only");
+  vi.stubEnv("BLOB_READ_WRITE_TOKEN", "test-only");
   mocks.tools.webSearch = {};
   mocks.research = true;
   mocks.text = true;

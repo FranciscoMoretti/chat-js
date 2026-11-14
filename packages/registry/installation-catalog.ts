@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { eveCompositionIssue } from "./eve-catalog";
 import type { RegistryItem } from "shadcn/schema";
 import { gatewayDefinitionSchema } from "@chat-js/gateways/definition";
 import { sandboxDefinitionSchema } from "@chat-js/sandboxes/definition";
@@ -78,6 +79,41 @@ export const defaultToolProviders = {
   codeExecution: "code-execution",
   webSearch: "tavily-search",
 } as const;
+
+/** Capability provider replacement is shared by Create and installation clients. */
+export const selectToolProvider = (
+  input: Readonly<InstallationSelection>,
+  catalog: readonly InstallationCatalogItem[],
+  slot:
+    | "webSearch"
+    | "codeExecution"
+    | "retrieveUrl"
+    | "generateImage"
+    | "generateVideo",
+  provider: string | undefined
+): InstallationSelection => {
+  const choices = catalog.filter(
+    (item) => item.definition?.kind === "tool" && item.definition.slot === slot
+  );
+  const chosen = choices.find((item) => item.definition?.id === provider);
+  if (provider !== undefined && !chosen) {
+    throw new Error(`Unknown ${slot} provider: ${provider}.`);
+  }
+  const selection = installationSelectionSchema.parse(input);
+  selection.tools = selection.tools.filter(
+    (source) =>
+      !choices.some(
+        (item) =>
+          source === item.name ||
+          source === item.definition?.id ||
+          source === `@chatjs/${item.name}`
+      )
+  );
+  if (provider !== undefined) {
+    selection.tools.push(provider);
+  }
+  return selection;
+};
 
 const mediaIssues = (
   definition: Extract<Definition, { kind: "tool" }>,
@@ -190,6 +226,37 @@ const storageIssues = (
   return issues;
 };
 
+const nativeCapabilityIssues = (
+  selection: InstallationSelection,
+  catalog: readonly InstallationCatalogItem[],
+  definitions: readonly Definition[]
+): string[] => {
+  const nativeTools = (selection.eve ?? []).flatMap((id) => {
+    if (!id.startsWith("@chatjs/")) {
+      return [];
+    }
+    const definition = catalog.find(
+      (item) => item.name === id.slice("@chatjs/".length)
+    )?.definition;
+    return definition?.kind === "tool" ? [definition] : [];
+  });
+  return nativeTools.flatMap((native) => {
+    const conflicts = (item: Definition) =>
+      item.kind === "tool" &&
+      (item.id === native.id ||
+        (native.slot !== undefined && item.slot === native.slot));
+    if (definitions.some(conflicts)) {
+      return [
+        `${native.id} is selected through EVE and through application features. Choose one installation for this capability.`,
+      ];
+    }
+    if (nativeTools.some((item) => item !== native && conflicts(item))) {
+      return [`Select only one native provider for ${native.slot}.`];
+    }
+    return [];
+  });
+};
+
 export const resolveInstallationSelection = (
   input: Readonly<InstallationSelection>,
   catalog: readonly InstallationCatalogItem[]
@@ -298,6 +365,11 @@ export const resolveInstallationSelection = (
     .filter((item) => item.kind === "tool")
     .map((item) => item.id);
   issues.push(
+    ...(selection.eve ?? []).flatMap((id) => {
+      const issue = eveCompositionIssue(id);
+      return issue === undefined ? [] : [issue];
+    }),
+    ...nativeCapabilityIssues(selection, catalog, definitions),
     ...providerIssues(definitions, gateway, storage, sandbox),
     ...toolIssues(definitions),
     ...storageIssues(selection, storage)

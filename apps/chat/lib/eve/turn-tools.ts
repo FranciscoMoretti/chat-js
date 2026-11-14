@@ -1,3 +1,4 @@
+import { missingToolConfiguration } from "./tool-configuration";
 import { defineState } from "eve/context";
 
 import type { UiToolName } from "@/lib/ai/types";
@@ -18,6 +19,9 @@ const eveTurnTool = defineState<UiToolName | null>(
 const eveTurnAccount = defineState<boolean>("chatjs.turn-account", () => false);
 
 const eveInstalledToolEnabled = (name: string): boolean => {
+  if (missingToolConfiguration(name).length > 0) {
+    return false;
+  }
   const operation = documentDefinitions.operations.get(name);
   if (operation) {
     return installedDocumentKinds.has(operation.kind);

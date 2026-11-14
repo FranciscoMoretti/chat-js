@@ -1,10 +1,5 @@
-import {
-  eveWorkspace,
-  eveWorkspaceAttachment,
-  eveFileReference,
-  eveStoredFile,
-} from "./schema";
-import { and, eq, inArray, lt, notExists, ne } from "drizzle-orm";
+import { eveFileReference, eveStoredFile } from "./schema";
+import { and, eq, inArray, lt, notExists } from "drizzle-orm";
 
 import { db } from "./client";
 import { lockEveFamilies } from "./eve-family-lock";
@@ -49,19 +44,6 @@ export const prepareEveOrphanedFilePurge = async (
       .select({ key: eveFileReference.key })
       .from(eveFileReference)
       .where(eq(eveFileReference.key, eveStoredFile.key));
-    const workspaceReferences = tx
-      .select({ key: eveWorkspaceAttachment.fileKey })
-      .from(eveWorkspaceAttachment)
-      .innerJoin(
-        eveWorkspace,
-        eq(eveWorkspace.id, eveWorkspaceAttachment.workspaceId)
-      )
-      .where(
-        and(
-          eq(eveWorkspaceAttachment.fileKey, eveStoredFile.key),
-          ne(eveWorkspace.state, "deleted")
-        )
-      );
     // Include tombstones: a provider can finish an uncertain write after an
     // earlier deletion. A later inventory pass must remove that object again.
     return await tx
@@ -72,8 +54,7 @@ export const prepareEveOrphanedFilePurge = async (
           inArray(eveStoredFile.ownerId, owners),
           inArray(eveStoredFile.key, keys),
           lt(eveStoredFile.createdAt, cutoff),
-          notExists(references),
-          notExists(workspaceReferences)
+          notExists(references)
         )
       )
       .returning({

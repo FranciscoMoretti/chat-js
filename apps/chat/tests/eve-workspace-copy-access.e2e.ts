@@ -14,13 +14,12 @@ import {
   eveWorkspace,
   eveFileReference,
   eveStoredFile,
-  eveWorkspaceAttachment,
 } from "../lib/db/schema";
 import { completeEveConversationDeletion } from "../lib/db/eve-deletion";
 import {
   cleanupWorkspaceIfUnused,
   checkDeletedWorkspaceMemberships,
-} from "../lib/eve/persistent-sandbox-store";
+} from "../lib/db/eve-workspace-deletion";
 import {
   getAccessibleEveDocument,
   getEveDocumentHistory,
@@ -63,9 +62,6 @@ afterAll(async () => {
     .delete(eveDocumentRevision)
     .where(eq(eveDocumentRevision.ownerId, ownerId));
   await db
-    .delete(eveWorkspaceAttachment)
-    .where(eq(eveWorkspaceAttachment.ownerId, ownerId));
-  await db
     .delete(eveFileReference)
     .where(eq(eveFileReference.ownerId, ownerId));
   await db.delete(eveStoredFile).where(eq(eveStoredFile.ownerId, ownerId));
@@ -100,15 +96,6 @@ test.each(["import:imported:0", "import:imported:1"])(
         key,
         conversationId: source.id,
         ownerId,
-      }))
-    );
-    await db.insert(eveWorkspaceAttachment).values(
-      [earlyKey, laterKey].map((fileKey) => ({
-        fileKey,
-        ownerId,
-        workspaceId: source.workspaceId,
-        sha256: "fixture-original",
-        paths: [`/workspace/.eve/attachments/${fileKey}`],
       }))
     );
     const events: (SessionEvent & { meta?: SessionStreamEvent["meta"] })[] = [
@@ -221,13 +208,6 @@ test.each(["import:imported:0", "import:imported:1"])(
       allowed: true,
       managed: true,
     });
-    const catalog = await db
-      .select({ key: eveWorkspaceAttachment.fileKey })
-      .from(eveWorkspaceAttachment)
-      .where(eq(eveWorkspaceAttachment.workspaceId, source.workspaceId));
-    expect(catalog.map((entry) => entry.key).toSorted()).toEqual(
-      [earlyKey, laterKey].toSorted()
-    );
   }
 );
 
@@ -616,9 +596,7 @@ test("original deletion retains fork document ancestry until the last member is 
   expect(visible?.revision.content).toBe("Shared");
   await beginEveConversationDeletion(ownerId, fork.id);
   await purgeEveFamilyDocuments(ownerId, fork.id);
-  await cleanupWorkspaceIfUnused(ownerId, source.workspaceId, () => {
-    throw new Error("No sandbox was allocated");
-  });
+  await cleanupWorkspaceIfUnused(ownerId, source.workspaceId);
   await completeEveConversationDeletion(ownerId, fork.id);
   await purgeEveFamilyDocuments(ownerId, fork.id);
   expect(

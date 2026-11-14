@@ -35,6 +35,7 @@
     "prepublishOnly": "bun run build",
     "test:types": "tsc --noEmit && tsc --noEmit -p scripts/tsconfig.json",
     "test:unit": "bun test src",
+    "test:native": "bun run build && bun test --timeout 180000 test/native-eve.test.ts",
     "test:installation": "bunx turbo run build --filter=@chat-js/gateways --filter=@chat-js/sandboxes --filter=@chat-js/thread && bun run --cwd ../cli template:sync && bun test --timeout 60000 test/installation-validation.test.ts",
     "profile:validation": "bun scripts/validation-profile.ts",
     "test:visual": "vitest run --config visual/vitest.config.ts",

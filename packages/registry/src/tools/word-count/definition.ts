@@ -1,4 +1,3 @@
-import type { ToolDefinition } from "@/chatjs/core/tools/tool-definition";
 import { wordCountInput, wordCountResult } from "./schemas";
 
 export const toolDefinition = {
@@ -7,4 +6,4 @@ export const toolDefinition = {
   inputSchema: wordCountInput,
   outputSchema: wordCountResult,
   display: { name: "Word count", shortName: "Word count" },
-} as const satisfies ToolDefinition;
+} as const;

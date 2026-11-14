@@ -46,7 +46,8 @@
     "test:gateways": "bun run template:sync && bun test --timeout 180000 ./test/gateway-selection.test.ts",
     "test:types": "tsc --noEmit",
     "lint": "oxlint . && oxfmt --check .",
-    "format": "oxfmt --write ."
+    "format": "oxfmt --write .",
+    "test:native-agent": "bun test/native-agent-acceptance.ts"
   },
   "dependencies": {
     "@chat-js/gateways": "workspace:*",
@@ -61,11 +62,16 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@aws-sdk/client-s3": "3.1146.0",
     "@chat-js/registry-validation": "workspace:*",
     "@types/bun": "latest",
     "@types/node": "22.13.10",
+    "@vercel/sandbox": "3.3.0",
+    "eve": "npm:@chat-js/eve@1.0.0-rc.6-chatjs.1",
     "next": "16.3.0",
+    "playwright": "^1.59.1",
     "png2icons": "^2.0.1",
+    "postgres": "3.4.9",
     "tsx": "^4.19.1"
   }
 }

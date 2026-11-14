@@ -26,7 +26,7 @@ import type {
   SetupDestination,
 } from "./create-preview/setup-guidance";
 import { SetupConfiguration } from "./create-preview/setup-configuration";
-import { ToolsConfiguration } from "./create-preview/tools-configuration";
+import { AgentConfiguration } from "./create-preview/agent-configuration";
 import {
   InstallationPanel,
   InstallationRequirements,
@@ -67,11 +67,10 @@ const CreateWorkspace = () => {
     destination?: SetupDestination;
   } | null>(null);
   const configureSetup: ConfigureSetup = (destination) => {
-    setView(
-      destination === "tools" || destination === "plugins"
-        ? destination
-        : "setup"
-    );
+    setView(destination === "plugins" ? "plugins" : "setup");
+    if (destination === "tools") {
+      setView("agent");
+    }
     setSetupRequest({ destination });
   };
   useEffect(() => {
@@ -111,7 +110,7 @@ const CreateWorkspace = () => {
         >
           <TabsTrigger value="appearance">Appearance</TabsTrigger>
           <TabsTrigger value="plugins">Plugins</TabsTrigger>
-          <TabsTrigger value="tools">AI tools</TabsTrigger>
+          <TabsTrigger value="agent">Agent</TabsTrigger>
           <TabsTrigger value="setup">Setup</TabsTrigger>
         </TabsList>
         <div className="flex items-center justify-end gap-2 lg:flex-1">
@@ -128,14 +127,15 @@ const CreateWorkspace = () => {
       </header>
       <main
         className={
-          view === "setup"
+          view === "setup" || view === "agent"
             ? "hidden"
             : "section-soft relative z-10 flex min-h-0 flex-1 flex-col overflow-hidden [--customizer-width:--spacing(80)] [--gap:--spacing(4)] md:[--gap:--spacing(6)]"
         }
       >
         <div className="flex min-h-11 shrink-0 items-center justify-between gap-3 px-4 py-2 md:px-6">
           <span className="text-muted-foreground hidden min-w-0 text-xs md:block">
-            Choose your look and capabilities. Try them live, then get the code.
+            Choose your look and capabilities. Preview examples, then get the
+            code.
           </span>
           <div className="flex w-full items-center justify-end gap-2 md:w-auto">
             <HistoryButtons />
@@ -220,23 +220,6 @@ const CreateWorkspace = () => {
               >
                 <InstallationPanel onConfigureSetup={configureSetup} />
               </TabsContent>
-              <TabsContent
-                keepMounted
-                value="tools"
-                className={
-                  view === "tools"
-                    ? "h-[min(22rem,42svh)] min-h-0 flex-none overflow-hidden md:h-auto md:flex-1"
-                    : "hidden"
-                }
-              >
-                <ToolsConfiguration
-                  onConfigureSetup={configureSetup}
-                  onPreviewTools={() => {
-                    setGuest(false);
-                    void setParams({ item: "preview-tools" });
-                  }}
-                />
-              </TabsContent>
               <section
                 aria-label="Installation status"
                 className="hidden shrink-0 md:block"
@@ -247,6 +230,15 @@ const CreateWorkspace = () => {
           </PreviewOverrideProvider>
         </div>
       </main>
+      <TabsContent
+        keepMounted
+        value="agent"
+        className={
+          view === "agent" ? "min-h-0 flex-1 overflow-hidden" : "hidden"
+        }
+      >
+        <AgentConfiguration onConfigureSetup={configureSetup} />
+      </TabsContent>
       <TabsContent
         keepMounted
         value="setup"

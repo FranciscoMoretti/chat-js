@@ -2,8 +2,6 @@ import { isAccountSession } from "../../lib/eve/session-identity";
 import type { HookContext } from "eve/hooks";
 import { defineHook } from "eve/hooks";
 
-import { resolveEveConversationScope } from "../../lib/eve/conversation-scope";
-
 const conversationScopeTimeoutMilliseconds = 10_000;
 
 export default defineHook({
@@ -19,6 +17,8 @@ export default defineHook({
       if (!isAccountSession(context.session)) {
         return;
       }
+      const { resolveEveConversationScope } =
+        await import("../../lib/eve/conversation-scope");
       await resolveEveConversationScope(
         context.session.auth.initiator?.principalId,
         context.session.parent?.rootSessionId ?? context.session.id,

@@ -166,9 +166,7 @@ const validateProviderRequirements = async (
   await validateStorage(cwd, fileConsumers, target.storage);
   if (
     [...target.tools, ...target.plugins].some(
-      (item) =>
-        item.requiresPersistentSandbox === true ||
-        item.id === "attachment-uploads"
+      (item) => item.requiresPersistentSandbox === true
     )
   ) {
     await validatePersistentSandbox(

@@ -4,18 +4,14 @@ const retrievedInput = z.object({
   url: z.string().describe("The URL to retrieve the information from."),
 });
 
-const retrievedContent = z
-  .object({
-    content: z.string(),
-    description: z.string(),
-    language: z.string().optional(),
-    title: z.string(),
-    url: z.string(),
-  })
-  .transform((item) => ({ ...item, language: item.language }));
-const retrievalFailure = z
-  .strictObject({ error: z.string().optional() })
-  .transform((item) => ({ error: item.error }));
+const retrievedContent = z.object({
+  content: z.string(),
+  description: z.string(),
+  language: z.string().optional(),
+  title: z.string(),
+  url: z.string(),
+});
+const retrievalFailure = z.strictObject({ error: z.string().optional() });
 const retrievedResult = z.union([
   z.object({ error: z.string() }),
   z.object({ results: z.array(retrievedContent) }),

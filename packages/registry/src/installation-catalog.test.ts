@@ -1,3 +1,4 @@
+import { defaultAgentConfiguration } from "../agent-configuration";
 import { expect, test } from "bun:test";
 import {
   installationCatalog,
@@ -99,7 +100,7 @@ test("provider requirements block invalid installs without changing user choices
     storage: { source: "memory", options: {} },
   };
   const result = resolveInstallationSelection(requested, catalog);
-  expect(result.issues.join(", ")).toContain("persistent sandbox");
+  expect(result.issues.join(", ")).not.toContain("persistent sandbox");
   expect(result.issues.join(", ")).toContain("persistent storage");
   expect(result.selection.sandbox).toBe("daytona");
   expect(
@@ -135,4 +136,58 @@ test("unknown entries and private storage options fail closed", () => {
       catalog
     ).issues.join(", ")
   ).toContain("environment variables");
+});
+
+test("native default tools do not require a ChatJS sandbox provider", () => {
+  const missing = resolveInstallationSelection(
+    { ...minimal, agent: { ...defaultAgentConfiguration, defaultTools: true } },
+    catalog
+  );
+  expect(missing.issues).toEqual([]);
+  const enabled = resolveInstallationSelection(
+    {
+      ...minimal,
+      agent: { ...defaultAgentConfiguration, defaultTools: true },
+      sandbox: "vercel",
+    },
+    catalog
+  );
+  expect(enabled.issues).toEqual([]);
+});
+
+test("Slack can use native sandbox tools", () => {
+  const result = resolveInstallationSelection(
+    {
+      ...minimal,
+      eve: ["channel/slack"],
+      sandbox: "vercel",
+      agent: { ...defaultAgentConfiguration, defaultTools: true },
+    },
+    catalog
+  );
+  expect(result.issues).toEqual([]);
+});
+
+test("native portable tools need no application services and cannot duplicate an application provider", () => {
+  const portable = resolveInstallationSelection(
+    { ...minimal, eve: ["@chatjs/word-count"] },
+    catalog
+  );
+  expect(portable.issues).toEqual([]);
+  expect(portable.selection.tools).toEqual([]);
+  expect(portable.selection.plugins).toEqual([]);
+  const duplicate = resolveInstallationSelection(
+    { ...minimal, eve: ["@chatjs/word-count"], tools: ["word-count"] },
+    catalog
+  );
+  expect(duplicate.issues).toContain(
+    "word-count is selected through EVE and through application features. Choose one installation for this capability."
+  );
+  const providers = resolveInstallationSelection(
+    { ...minimal, eve: ["@chatjs/tavily-search", "@chatjs/firecrawl-search"] },
+    catalog
+  );
+  expect(providers.issues).toContain(
+    "Select only one native provider for webSearch."
+  );
 });
