@@ -25,4 +25,4 @@ const hasSessionCookie = (cookieHeader: string): boolean =>
         EMPTY_COOKIE_VALUE_LENGTH
     );
   });
-export { hasSessionCookie, isBetterAuthCookieName };
+export { hasSessionCookie, isBetterAuthCookieName, isSessionTokenCookieName };

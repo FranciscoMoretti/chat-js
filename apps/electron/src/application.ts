@@ -14,12 +14,18 @@ import {
   nativeImage,
   shell,
 } from "electron";
-import { hasSessionCookie, isBetterAuthCookieName } from "./lib/auth-cookies";
-import type { MenuItemConstructorOptions } from "electron";
+import {
+  hasSessionCookie,
+  isBetterAuthCookieName,
+  isSessionTokenCookieName,
+} from "./lib/auth-cookies";
+import type { IpcMainInvokeEvent, MenuItemConstructorOptions } from "electron";
 import { electronAuthClient } from "./lib/auth-client";
 import { parseAuthRequestOptions } from "./auth-request-options";
 import path from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
+
+const APP_ORIGIN = new URL(APP_URL).origin;
 
 const AUTH_FLOW_ID_INCREMENT = 1;
 const AUTH_REFRESH_DELAY_MS = 250;
@@ -119,6 +125,43 @@ const getAuthErrorDetail = (error: unknown): string => {
   return String(error);
 };
 
+const isAppUrl = (url: string): boolean => {
+  const parsed = URL.parse(url);
+  return (
+    parsed !== null &&
+    (parsed.protocol === "https:" || parsed.protocol === "http:") &&
+    parsed.origin === APP_ORIGIN
+  );
+};
+
+const assertAppAuthSender = ({
+  sender,
+  senderFrame,
+}: IpcMainInvokeEvent): void => {
+  if (
+    !mainWindow ||
+    mainWindow.isDestroyed() ||
+    sender !== mainWindow.webContents ||
+    !senderFrame ||
+    senderFrame !== sender.mainFrame ||
+    senderFrame.origin !== APP_ORIGIN ||
+    !isAppUrl(senderFrame.url)
+  ) {
+    throw new Error("Untrusted sender for desktop auth IPC");
+  }
+};
+
+const showMainWindow = (): void => {
+  if (!mainWindow || mainWindow.isDestroyed()) {
+    return;
+  }
+  if (mainWindow.isMinimized()) {
+    mainWindow.restore();
+  }
+  mainWindow.show();
+  mainWindow.focus();
+};
+
 const broadcastAuthState = (): void => {
   if (!mainWindow || mainWindow.isDestroyed()) {
     return;
@@ -196,6 +239,9 @@ const setAuthOverlay = async (
   try {
     if (win.webContents.isLoadingMainFrame()) {
       win.webContents.once("did-finish-load", (): void => {
+        if (options.visible && currentAuthOverlayMessage !== options.message) {
+          return;
+        }
         void (async (): Promise<void> => {
           try {
             await win.webContents.executeJavaScript(script);
@@ -220,7 +266,11 @@ const setAuthState = async (nextState: AuthRendererState): Promise<void> => {
   currentAuthState = nextState;
   broadcastAuthState();
 
-  if (nextState.status === "idle") {
+  if (
+    nextState.status === "idle" ||
+    nextState.status === "timed-out" ||
+    nextState.status === "error"
+  ) {
     await setAuthOverlay(mainWindow, { visible: false });
     return;
   }
@@ -258,29 +308,23 @@ const resetAuthFlow = async (): Promise<void> => {
   });
 };
 
-// Setup the @better-auth/electron main process handler.
-// Registers the protocol handler, deep-link listeners, CSP updates, and
-// renderer bridges. Must be called before the app is ready.
+// Configure the SDK before readiness. The application handles deep links and
+// registers its own IPC handlers so every auth invocation checks the sender.
 electronAuthClient.setupMain({
+  bridges: false,
   getWindow: () => mainWindow,
   scheme: false,
 });
 
 registerProtocolClient();
 
-// Better Auth should register these bridges in setupMain(), but we also
-// register them explicitly so the preload bridge stays reliable in dev builds.
-ipcMain.removeHandler("better-auth:requestAuth");
 ipcMain.handle(
   "better-auth:requestAuth",
-  async (_event: unknown, options: unknown): Promise<void> => {
+  async (event: IpcMainInvokeEvent, options: unknown): Promise<void> => {
+    assertAppAuthSender(event);
+
     if (isAuthFlowInProgress) {
-      if (mainWindow) {
-        mainWindow.show();
-      }
-      if (mainWindow) {
-        mainWindow.focus();
-      }
+      showMainWindow();
       return;
     }
 
@@ -306,9 +350,13 @@ ipcMain.handle(
   }
 );
 
-ipcMain.handle("chatjs:cancel-auth-flow", async (): Promise<void> => {
-  await resetAuthFlow();
-});
+ipcMain.handle(
+  "chatjs:cancel-auth-flow",
+  async (event: IpcMainInvokeEvent): Promise<void> => {
+    assertAppAuthSender(event);
+    await resetAuthFlow();
+  }
+);
 const syncAuthSessionCookies = async (
   win?: AuthSessionWindow | null
 ): Promise<void> => {
@@ -361,6 +409,7 @@ const syncAuthSessionCookies = async (
         cookie: Readonly<{ name: string; value: string }>
       ): Promise<void> => {
         await targetSession.cookies.set({
+          httpOnly: isSessionTokenCookieName(cookie.name),
           name: cookie.name,
           path: "/",
           secure: url.protocol === "https:",
@@ -372,14 +421,14 @@ const syncAuthSessionCookies = async (
   );
 };
 
-ipcMain.removeHandler("better-auth:signOut");
-ipcMain.handle("better-auth:signOut", async () => {
+ipcMain.handle("better-auth:signOut", async (event: IpcMainInvokeEvent) => {
+  assertAppAuthSender(event);
   const result = await electronAuthClient.signOut();
   await syncAuthSessionCookies();
   return result;
 });
-ipcMain.removeHandler("better-auth:getUser");
-ipcMain.handle("better-auth:getUser", async () => {
+ipcMain.handle("better-auth:getUser", async (event: IpcMainInvokeEvent) => {
+  assertAppAuthSender(event);
   const sessionResult = await electronAuthClient.getSession();
   const sessionData = sessionResult.data;
   if (!sessionData) {
@@ -428,27 +477,38 @@ const authenticateFromDeepLink = async (url: string): Promise<boolean> => {
 const waitForElectronSession = async (
   timeoutMs = AUTH_SESSION_TIMEOUT_MS
 ): Promise<boolean> => {
-  const start = Date.now();
+  const deadline = performance.now() + timeoutMs;
+  // Use the same deadline for every request, including response body reads.
+  const signal = AbortSignal.timeout(timeoutMs);
 
-  while (Date.now() - start < timeoutMs) {
+  while (!signal.aborted && performance.now() < deadline) {
     const cookieHeader = electronAuthClient.getCookie();
     const hasCookie = hasSessionCookie(cookieHeader);
 
     try {
       // oxlint-disable-next-line no-await-in-loop -- Poll sequentially until the native cookie and server session agree.
-      const sessionResult = await electronAuthClient.getSession();
+      const sessionResult = await electronAuthClient.getSession({
+        fetchOptions: { signal },
+      });
       const sessionData = sessionResult.data;
       const hasUser = Boolean(sessionData && sessionData.user);
 
-      if (hasCookie && hasUser) {
+      if (hasCookie && hasUser && performance.now() < deadline) {
         return true;
       }
     } catch (error) {
+      if (signal.aborted) {
+        return false;
+      }
       console.warn("[electron-main] session check failed while waiting", error);
     }
 
+    const remainingMs = deadline - performance.now();
+    if (remainingMs <= 0) {
+      break;
+    }
     // oxlint-disable-next-line no-await-in-loop -- Back off between session polls rather than issue overlapping requests.
-    await sleep(AUTH_SESSION_POLL_INTERVAL_MS);
+    await sleep(Math.min(AUTH_SESSION_POLL_INTERVAL_MS, remainingMs));
   }
 
   return false;
@@ -474,31 +534,34 @@ const scheduleAuthRefresh = (): void => {
     void (async (): Promise<void> => {
       try {
         const ready = await waitForElectronSession();
+        if (authFlowId !== currentAuthFlowId) {
+          return;
+        }
+
         if (!ready) {
           isAuthFlowInProgress = false;
-          await setAuthState(
-            authFlowId === currentAuthFlowId
-              ? {
-                  detail: "Please try the browser flow again.",
-                  message:
-                    "Still waiting for the desktop app to finish signing in...",
-                  status: "timed-out",
-                }
-              : {
-                  message: null,
-                  status: "idle",
-                }
-          );
+          await setAuthState({
+            detail: "Please try the browser flow again.",
+            message:
+              "Still waiting for the desktop app to finish signing in...",
+            status: "timed-out",
+          });
           return;
         }
 
         await syncAuthSessionCookies(targetWindow);
+        if (authFlowId !== currentAuthFlowId) {
+          return;
+        }
         isAuthFlowInProgress = false;
         await setAuthState({
           message: null,
           status: "idle",
         });
       } catch (error) {
+        if (authFlowId !== currentAuthFlowId) {
+          return;
+        }
         console.error("[electron-main] auth refresh failed", error);
         isAuthFlowInProgress = false;
         await setAuthState({
@@ -528,6 +591,17 @@ const createWindow = (): BrowserWindow => {
   if (process.platform === "win32" || process.platform === "linux") {
     win.removeMenu();
   }
+
+  win.webContents.on("will-navigate", (event) => {
+    if (!isAppUrl(event.url)) {
+      event.preventDefault();
+    }
+  });
+  win.webContents.on("will-redirect", (event) => {
+    if (event.isMainFrame && !isAppUrl(event.url)) {
+      event.preventDefault();
+    }
+  });
 
   // Avoid touching encrypted auth storage on app launch. On macOS this can
   // trigger an immediate Keychain prompt before the window even loads, which
@@ -682,10 +756,17 @@ const setupAutoUpdater = async (): Promise<void> => {
   }
 };
 
-ipcMain.handle("chatjs:sync-auth-session", async (): Promise<void> => {
-  await syncAuthSessionCookies();
+ipcMain.handle(
+  "chatjs:sync-auth-session",
+  async (event: IpcMainInvokeEvent): Promise<void> => {
+    assertAppAuthSender(event);
+    await syncAuthSessionCookies();
+  }
+);
+ipcMain.handle("chatjs:get-auth-state", (event: IpcMainInvokeEvent) => {
+  assertAppAuthSender(event);
+  return currentAuthState;
 });
-ipcMain.handle("chatjs:get-auth-state", () => currentAuthState);
 
 void (async (): Promise<void> => {
   await app.whenReady();
@@ -720,14 +801,17 @@ app.on(
       value.startsWith(`${APP_SCHEME}://`)
     );
 
-    if (typeof deepLinkUrl === "string" && deepLinkUrl !== "") {
-      void (async (): Promise<void> => {
-        const didAuthenticate = await authenticateFromDeepLink(deepLinkUrl);
-        if (didAuthenticate) {
-          scheduleAuthRefresh();
-        }
-      })();
+    if (deepLinkUrl === undefined) {
+      showMainWindow();
+      return;
     }
+
+    void (async (): Promise<void> => {
+      const didAuthenticate = await authenticateFromDeepLink(deepLinkUrl);
+      if (didAuthenticate) {
+        scheduleAuthRefresh();
+      }
+    })();
   }
 );
 app.on("before-quit", (): void => {
