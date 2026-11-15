@@ -1,3 +1,4 @@
+import { assetDataUri } from "../../registry/src/tools/_shared/visual-fonts";
 import { definePlugin, slot } from "@/chatjs/core/ui/slots";
 import { MessageResponses } from "@/components/chat-slots";
 import { chatPlugins } from "@/integrations/chat/ui";
@@ -8,6 +9,7 @@ import ChatLayout from "@/app/(chat)/layout";
 import type { ChatMessageProps } from "@/chatjs/core/chat/contracts";
 import {
   generatedImageTranscripts,
+  generatedVideoTranscripts,
   history,
   invoicesConversation,
   invoicesTranscripts,
@@ -71,48 +73,67 @@ test("plugin response content composes with core message actions", async () => {
     .toBeVisible();
 });
 
-for (const withViewer of [false, true]) {
-  test(`image artifact actions with viewer=${withViewer}`, async () => {
-    const original = [...chatPlugins];
-    if (!withViewer) {
-      chatPlugins.splice(
-        0,
-        chatPlugins.length,
-        ...original.filter((plugin) => plugin.id !== "image-viewer")
-      );
-    }
-    onTestFinished(() => {
-      chatPlugins.splice(0, chatPlugins.length, ...original);
-    });
-    await renderRoute(
-      <ChatLayout>
-        <ChatPage params={Promise.resolve({ id: invoicesConversation.id })} />
-      </ChatLayout>,
-      {
-        ...signedIn,
-        path: `/chat/${invoicesConversation.chatId}`,
-        server: { conversation: invoicesConversation, conversations: history },
-        transcripts: generatedImageTranscripts,
-        trpc: invoicesTrpc,
+for (const media of ["image", "video"]) {
+  for (const withViewer of [false, true]) {
+    test(`${media} artifact actions with viewer=${withViewer}`, async () => {
+      const original = [...chatPlugins];
+      if (!withViewer) {
+        chatPlugins.splice(
+          0,
+          chatPlugins.length,
+          ...original.filter((plugin) => plugin.id !== `${media}-viewer`)
+        );
       }
-    );
-    await expect
-      .element(
-        page.getByRole("button", { name: "Download image", exact: true })
-      )
-      .toBeVisible();
-    const open = page.getByRole("button", { name: "Open image", exact: true });
-    if (withViewer) {
-      await open.click();
-      await expect.element(page.getByRole("dialog")).toBeVisible();
-      await page.screenshot({ path: "__screenshots__/image-viewer.png" });
-      await page.getByRole("button", { name: "Close", exact: true }).click();
-      await expect.element(page.getByRole("dialog")).not.toBeInTheDocument();
-    } else {
-      await expect.element(open).not.toBeInTheDocument();
-      await page.screenshot({
-        path: "__screenshots__/image-without-viewer.png",
+      onTestFinished(() => {
+        chatPlugins.splice(0, chatPlugins.length, ...original);
       });
-    }
-  });
+      await renderRoute(
+        <ChatLayout>
+          <ChatPage params={Promise.resolve({ id: invoicesConversation.id })} />
+        </ChatLayout>,
+        {
+          ...signedIn,
+          path: `/chat/${invoicesConversation.chatId}`,
+          server: {
+            conversation: invoicesConversation,
+            conversations: history,
+          },
+          transcripts:
+            media === "image"
+              ? generatedImageTranscripts
+              : generatedVideoTranscripts(
+                  await assetDataUri(
+                    new URL(
+                      "../../registry/src/tools/generate-video/fixtures/blue.mp4",
+                      import.meta.url
+                    ).href,
+                    "video/mp4"
+                  )
+                ),
+          trpc: invoicesTrpc,
+        }
+      );
+      await expect
+        .element(
+          page.getByRole("button", { name: `Download ${media}`, exact: true })
+        )
+        .toBeVisible();
+      const open = page.getByRole("button", {
+        name: `Open ${media}`,
+        exact: true,
+      });
+      if (withViewer) {
+        await open.click();
+        await expect.element(page.getByRole("dialog")).toBeVisible();
+        await page.screenshot({ path: `__screenshots__/${media}-viewer.png` });
+        await page.getByRole("button", { name: "Close", exact: true }).click();
+        await expect.element(page.getByRole("dialog")).not.toBeInTheDocument();
+      } else {
+        await expect.element(open).not.toBeInTheDocument();
+        await page.screenshot({
+          path: `__screenshots__/${media}-without-viewer.png`,
+        });
+      }
+    });
+  }
 }

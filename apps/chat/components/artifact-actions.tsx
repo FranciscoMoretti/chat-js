@@ -14,4 +14,6 @@ export interface ArtifactReference {
 /** Installed viewers contribute actions for supported artifacts; otherwise renders nothing. */
 export const ArtifactViewerActions = defineSlot<{
   readonly artifact: ArtifactReference;
+  /** Let the originating surface pause playback before a viewer opens. */
+  readonly onOpen?: () => void;
 }>();

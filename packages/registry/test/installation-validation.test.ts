@@ -211,24 +211,28 @@ for (const sandbox of ["default", "vercel", "docker", "just-bash"]) {
   }, 60_000);
 }
 
-for (const withViewer of [false, true]) {
-  test(`image generation installs and typechecks with viewer=${withViewer}`, async () => {
-    const { files } = await renderValidationProject(prepared.core, {
-      gateway: "vercel",
-      storage: { source: "vercel-blob", options: {} },
-      tools: ["generate-image"],
-      plugins: withViewer ? ["image-viewer"] : [],
-    });
-    expect(files.has("chatjs/tools/generate-image/renderer.tsx")).toBe(true);
-    expect(files.has("chatjs/plugins/image-viewer/image-modal.tsx")).toBe(
-      withViewer
-    );
-    const registrations = new TextDecoder().decode(
-      files.get("chatjs/generated/installed-chat-ui.ts")
-    );
-    expect(registrations.includes("imageViewerClient")).toBe(withViewer);
-    expect(
-      typecheckProject(files, validationDependencyFixtures).diagnostics
-    ).toEqual([]);
-  }, 60_000);
+for (const media of ["image", "video"]) {
+  for (const withViewer of [false, true]) {
+    test(`${media} generation installs and typechecks with viewer=${withViewer}`, async () => {
+      const { files } = await renderValidationProject(prepared.core, {
+        gateway: "vercel",
+        storage: { source: "vercel-blob", options: {} },
+        tools: [`generate-${media}`],
+        plugins: withViewer ? [`${media}-viewer`] : [],
+      });
+      expect(files.has(`chatjs/tools/generate-${media}/renderer.tsx`)).toBe(
+        true
+      );
+      expect(
+        files.has(`chatjs/plugins/${media}-viewer/viewer-action.tsx`)
+      ).toBe(withViewer);
+      const registrations = new TextDecoder().decode(
+        files.get("chatjs/generated/installed-chat-ui.ts")
+      );
+      expect(registrations.includes(`${media}ViewerClient`)).toBe(withViewer);
+      expect(
+        typecheckProject(files, validationDependencyFixtures).diagnostics
+      ).toEqual([]);
+    }, 60_000);
+  }
 }

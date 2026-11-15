@@ -8,8 +8,10 @@ import { ImageModal } from "./image-modal";
 
 export const ImageViewerAction = ({
   artifact,
+  onOpen,
 }: {
   readonly artifact: ArtifactReference;
+  readonly onOpen?: () => void;
 }) => {
   const [open, setOpen] = useState(false);
   if (!artifact.mediaType.startsWith("image/")) {
@@ -24,6 +26,7 @@ export const ImageViewerAction = ({
         variant="ghost"
         className="bg-black/50 text-white hover:bg-black/70 hover:text-white"
         onClick={() => {
+          onOpen?.();
           setOpen(true);
         }}
       >

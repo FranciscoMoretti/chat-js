@@ -2,6 +2,7 @@
 // so the configurator never imports production plugin controllers.
 export const livePreviewPlugins = [
   "image-viewer",
+  "video-viewer",
   "mcp",
   "sharing",
   "followup-suggestions",

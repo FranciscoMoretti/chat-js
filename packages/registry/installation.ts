@@ -48,6 +48,7 @@ type InstallationSelection = z.infer<typeof installationSelectionSchema>;
 const demoInstallation = installationSelectionSchema.parse({
   plugins: [
     "image-viewer",
+    "video-viewer",
     "slack-documents",
     "desktop",
     "projects",

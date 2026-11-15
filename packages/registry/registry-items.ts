@@ -20,6 +20,7 @@ const toolItems = (
       dependencies: ["ai", "zod"],
       description: "Generate videos using the selected gateway and storage",
       id: "generate-video",
+      agentCategory: "tool",
       config: { key: "video" },
       requiresGateway: ["video"],
       requiresStorage: true,

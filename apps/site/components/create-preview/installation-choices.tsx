@@ -6,6 +6,7 @@ import {
   Folder,
   Info,
   Images,
+  Video,
   Link2,
   MessageSquare,
   Monitor,
@@ -44,6 +45,7 @@ import { pluginPreviewLabel } from "./preview-capabilities";
 const pluginIcons: Readonly<Partial<Record<string, LucideIcon>>> = {
   projects: Folder,
   "image-viewer": Images,
+  "video-viewer": Video,
   search: Search,
   "ai-titles": TextCursorInput,
   sharing: Link2,

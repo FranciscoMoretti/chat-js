@@ -11,7 +11,7 @@ const appPluginGroups = [
   },
   {
     title: "Files & connections",
-    ids: ["attachment-uploads", "image-viewer", "mcp"],
+    ids: ["attachment-uploads", "image-viewer", "video-viewer", "mcp"],
   },
   { title: "Access & usage", ids: ["guest-chat", "credits"] },
 ];

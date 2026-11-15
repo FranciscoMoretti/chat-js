@@ -1,4 +1,5 @@
 {
+  "agentCategory": "tool",
   "config": { "key": "video" },
   "envRequirements": [],
   "id": "generate-video",

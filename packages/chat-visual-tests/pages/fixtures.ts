@@ -855,3 +855,37 @@ export const generatedImageTranscripts = {
     },
   ],
 } satisfies Record<string, readonly EveMessage[]>;
+
+export const generatedVideoTranscripts = (videoUrl: string) =>
+  ({
+    [invoicesSessionId]: [
+      {
+        id: "video-request",
+        role: "user",
+        parts: [{ type: "text", text: "Generate a calm blue sky video." }],
+      },
+      {
+        id: "video-answer",
+        role: "assistant",
+        metadata: { status: "complete", turnId: "turn-video" },
+        parts: [
+          {
+            type: "tool",
+            kind: "tool",
+            stepIndex: 0,
+            name: "generateVideo",
+            label: "Generate video",
+            callId: "video-success",
+            state: "completed",
+            input: { prompt: "A calm blue sky" },
+            output: {
+              kind: "chatjs.tool-result",
+              version: 1,
+              status: "success",
+              output: { videoUrl, prompt: "A calm blue sky" },
+            },
+          },
+        ],
+      },
+    ],
+  }) satisfies Record<string, readonly EveMessage[]>;
