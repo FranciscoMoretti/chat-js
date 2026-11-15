@@ -25,7 +25,10 @@ import type {
   ConfigureSetup,
   SetupDestination,
 } from "./create-preview/setup-guidance";
-import { SetupConfiguration } from "./create-preview/setup-configuration";
+import {
+  SetupConfiguration,
+  SetupSummary,
+} from "./create-preview/setup-configuration";
 import { AgentConfiguration } from "./create-preview/agent-configuration";
 import {
   InstallationPanel,
@@ -68,21 +71,21 @@ const CreateWorkspace = () => {
   } | null>(null);
   const configureSetup: ConfigureSetup = (destination) => {
     setView(destination === "plugins" ? "plugins" : "setup");
-    if (destination === "tools") {
+    if (destination === "tools" || destination === "sandbox") {
       setView("agent");
     }
     setSetupRequest({ destination });
   };
   useEffect(() => {
-    if (!setupRequest?.destination || view !== "setup") {
+    if (!setupRequest?.destination || (view !== "setup" && view !== "agent")) {
       return;
     }
     const section = document.querySelector(
-      `#setup-${setupRequest.destination}`
+      `#${view === "agent" ? "agent" : "setup"}-${setupRequest.destination}`
     );
     section?.scrollIntoView({ block: "start" });
     section
-      ?.querySelector<HTMLElement>('input, button, [role="radio"]')
+      ?.querySelector<HTMLElement>('input, select, button, [role="radio"]')
       ?.focus({ preventScroll: true });
   }, [setupRequest, view]);
   const [guest, setGuest] = useState(false);
@@ -115,13 +118,19 @@ const CreateWorkspace = () => {
         </TabsList>
         <div className="flex items-center justify-end gap-2 lg:flex-1">
           <ModeSwitcher />
-          <section aria-label="Installation status" className="md:hidden">
+          <section
+            aria-label="Installation status"
+            className={view === "setup" ? "hidden" : "md:hidden"}
+          >
             <InstallationRequirements
               compact
               onConfigureSetup={configureSetup}
             />
           </section>
           <ShareButton />
+          {view === "setup" && (
+            <SetupSummary onConfigureSetup={configureSetup} />
+          )}
           <ProjectForm onConfigureSetup={configureSetup} />
         </div>
       </header>
@@ -242,11 +251,11 @@ const CreateWorkspace = () => {
       <TabsContent
         keepMounted
         value="setup"
-        className={view === "setup" ? "min-h-0 overflow-hidden" : "hidden"}
+        className={
+          view === "setup" ? "min-h-0 flex-1 overflow-hidden" : "hidden"
+        }
       >
-        <SetupConfiguration
-          installAction={<ProjectForm onConfigureSetup={configureSetup} />}
-        />
+        <SetupConfiguration />
       </TabsContent>
       <PresetHandler />
     </Tabs>

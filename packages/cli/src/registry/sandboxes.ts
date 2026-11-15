@@ -7,12 +7,10 @@ export const resolveSandbox = async (source: string, cwd = process.cwd()) => {
   const definition = sandboxDefinitionSchema.parse(item.meta?.chatjs);
   if (
     item.type !== "registry:item" ||
-    !(item.files ?? []).some(
-      (file) => file.target === "~/chatjs/providers/sandbox/provider.ts"
-    )
+    !(item.files ?? []).some((file) => file.target === "~/agent/sandbox.ts")
   ) {
     throw new Error(
-      "Sandbox provider must install chatjs/providers/sandbox/provider.ts exporting createSandboxProvider."
+      "Sandbox provider must install a native EVE agent/sandbox.ts."
     );
   }
   return { definition, source: address };

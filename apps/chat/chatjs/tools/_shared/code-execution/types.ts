@@ -1,4 +1,4 @@
-import type { Sandbox } from "@chat-js/sandboxes/provider";
+import type { SandboxSession } from "eve/sandbox";
 import type { createModuleLogger } from "@/lib/logger";
 
 const supportedExecutionLanguages = ["python", "javascript"] as const;
@@ -10,13 +10,14 @@ interface CodeExecutionResult {
   message: string;
 }
 
-type ExecutionSandbox = Pick<Sandbox, "runCommand">;
+type ExecutionSandbox = Pick<SandboxSession, "run">;
 
 interface CodeExecutionContext {
   code: string;
   log: ReturnType<typeof createModuleLogger>;
   requestId: string;
   sandbox: ExecutionSandbox;
+  signal: AbortSignal;
 }
 export { supportedExecutionLanguages };
 export type {

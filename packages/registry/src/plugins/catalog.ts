@@ -11,7 +11,6 @@ import { feedbackItem } from "./feedback/manifest";
 import { projectsItem } from "./projects/manifest";
 import { mcpItem } from "./mcp/manifest";
 import { attachmentUploadsItem } from "./attachment-uploads/manifest";
-import { observabilityItems } from "./observability";
 
 export const pluginItems = [
   slackDocumentsItem,
@@ -27,5 +26,4 @@ export const pluginItems = [
   sharingItem,
   mcpItem,
   attachmentUploadsItem,
-  ...observabilityItems,
 ];

@@ -69,10 +69,6 @@ export const planInstallation = async (
   const plugins = new Map<string, PluginDefinition>();
   const providers = new Map<string, string>();
   let gateway: GatewayDefinition | undefined;
-  let sandboxProviderSource: string | undefined;
-  let sandboxDefinition:
-    | ReturnType<typeof sandboxDefinitionSchema.parse>
-    | undefined;
   const selectProvider = (definition: {
     readonly kind: string;
     readonly id: string;
@@ -135,11 +131,7 @@ export const planInstallation = async (
         break;
       }
       case "sandbox": {
-        sandboxDefinition = sandboxDefinitionSchema.parse(metadata);
-        selectProvider(sandboxDefinition);
-        sandboxProviderSource = item.files?.find(
-          (file) => file.target === "~/chatjs/providers/sandbox/provider.ts"
-        )?.content;
+        selectProvider(sandboxDefinitionSchema.parse(metadata));
         break;
       }
       case "storage": {
@@ -168,9 +160,9 @@ export const planInstallation = async (
     ...(typeof selection.gateway === "string" && selection.gateway !== ""
       ? [visit(itemAddress(selection.gateway, "gateway"), "gateway")]
       : []),
-    ...(typeof selection.sandbox === "string" && selection.sandbox !== ""
-      ? [visit(itemAddress(selection.sandbox, "sandbox"), "sandbox")]
-      : []),
+    ...(selection.sandbox === undefined
+      ? []
+      : [visit(itemAddress(selection.sandbox, "sandbox"), "sandbox")]),
     ...(selection.storage
       ? [visit(itemAddress(selection.storage.source, "storage"), "storage")]
       : []),
@@ -289,7 +281,6 @@ export const planInstallation = async (
     gateway,
     storage: providers.get("storage"),
     sandbox: providers.get("sandbox"),
-    sandboxProviderSource,
     tools: target(),
   });
   return {

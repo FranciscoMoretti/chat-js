@@ -15,12 +15,6 @@ const appPluginGroups = [
 
 export const setupPluginGroups = [
   {
-    id: "observability",
-    title: "Observability",
-    ids: ["vercel-analytics", "vercel-speed-insights", "langfuse"],
-    description: "Understand traffic, app performance and AI activity.",
-  },
-  {
     id: "platforms",
     title: "Platforms",
     ids: ["desktop"],

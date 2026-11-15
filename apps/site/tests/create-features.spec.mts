@@ -64,22 +64,14 @@ test("Create sections share selections, dependencies and the install command", a
     page.getByRole("heading", { name: "Set up your app." })
   ).toBeVisible();
   await expect(page.locator('iframe[title="Preview"]')).toBeHidden();
-  const observability = page.getByRole("region", {
-    name: "Observability",
-    exact: true,
-  });
-  await expect(observability.getByRole("checkbox")).toHaveCount(3);
-  await observability
-    .getByRole("checkbox", { name: "Langfuse", exact: true })
-    .check();
+  await expect(
+    page
+      .getByTestId("setup-scroll")
+      .getByRole("region", { name: "Observability", exact: true })
+  ).toHaveCount(0);
   await expect(
     page.getByRole("navigation", { name: "Setup sections" }).getByRole("link")
-  ).toHaveText([
-    "Models & Gateways",
-    "Infrastructure",
-    "Observability",
-    "Platforms",
-  ]);
+  ).toHaveText(["Models & Gateways", "Infrastructure", "Platforms"]);
   await page.getByRole("tab", { name: "Agent", exact: true }).click();
   const tools = page.getByRole("region", {
     name: "Application capabilities",
@@ -122,15 +114,23 @@ test("Create sections share selections, dependencies and the install command", a
   await page
     .getByLabel("Storage bucket", { exact: true })
     .fill("my-chat-files");
-  await selectChoice(page, "Sandbox", "Daytona");
-  await selectChoice(page, "Sandbox", "Vercel Sandbox");
+  await page.getByRole("tab", { name: "Agent", exact: true }).click();
+  await page
+    .getByRole("radiogroup", { name: "Sandbox", exact: true })
+    .getByRole("radio", { name: "Vercel Sandbox", exact: true })
+    .check();
+  await page.getByRole("tab", { name: "Setup", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Your app summary", exact: true })
+    .click();
   await expect(
     page.getByRole("complementary", { name: "Your app summary" })
   ).toContainText("Ready to install");
+  await page.keyboard.press("Escape");
   await page
     .getByRole("link", { name: "Models & Gateways", exact: true })
     .click();
-  await uiVerify.snapshot("stack selections");
+  await uiVerify.snapshot("square setup provider tiles light");
   await page.screenshot({ path: testInfo.outputPath("stack-desktop.png") });
   await page.getByRole("tab", { name: "Plugins", exact: true }).click();
   expect(
@@ -154,7 +154,7 @@ test("Create sections share selections, dependencies and the install command", a
   expect(selectionQuery.get("app")).toMatch(/^agent1_[A-Za-z0-9_-]+$/u);
   const requested = readInstallationInput(selectionQuery.get("app") ?? "");
   expect(requested.storage?.options.bucket).toBe("my-chat-files");
-  expect(requested.plugins).toEqual(["attachment-uploads", "langfuse"]);
+  expect(requested.plugins).toEqual(["attachment-uploads"]);
   expect(requested.tools).toEqual([]);
   expect(requested.eve).toEqual(["@chatjs/get-weather"]);
   await page
@@ -165,7 +165,6 @@ test("Create sections share selections, dependencies and the install command", a
   await expect(command).toContainText("--app-preset");
   expect(commandAppPreset(await command.textContent()).plugins).toEqual([
     "attachment-uploads",
-    "langfuse",
   ]);
   expect(commandAppPreset(await command.textContent()).sandbox).toBe("vercel");
   expect(
@@ -221,9 +220,13 @@ test("namespaced selections and missing providers remain editable", async ({
   const gateway = page.getByRole("radiogroup", { name: "Model gateway" });
   await expect(gateway.getByRole("radio", { checked: true })).toHaveCount(0);
   await selectChoice(page, "Model gateway", "Vercel AI Gateway");
+  await page
+    .getByRole("button", { name: "Your app summary", exact: true })
+    .click();
   await expect(
     page.getByRole("complementary", { name: "Your app summary" })
   ).toContainText("Ready to install");
+  await page.keyboard.press("Escape");
   const storage = page.getByRole("radiogroup", {
     name: "File storage",
     exact: true,
@@ -345,7 +348,7 @@ for (const width of [1440, 390]) {
     await expect(
       page.getByRole("button", { name: "Get Code", exact: true }).first()
     ).toBeInViewport();
-    await uiVerify.snapshot("stack");
+    await uiVerify.snapshot("square setup provider tiles dark");
     await page.screenshot({
       path: testInfo.outputPath("stack.png"),
       animations: "disabled",
@@ -355,22 +358,6 @@ for (const width of [1440, 390]) {
         () => document.documentElement.scrollWidth <= window.innerWidth
       )
     ).toBe(true);
-    await page
-      .getByRole("link", { name: "Observability", exact: true })
-      .click();
-    const observability = page.getByRole("region", {
-      name: "Observability",
-      exact: true,
-    });
-    await expect(observability.getByRole("heading")).toBeInViewport();
-    await observability
-      .getByRole("checkbox", { name: "Langfuse", exact: true })
-      .check();
-    await uiVerify.snapshot("observability");
-    await page.screenshot({
-      path: testInfo.outputPath("observability.png"),
-      animations: "disabled",
-    });
     await page.getByRole("link", { name: "Platforms", exact: true }).click();
     await expect(
       page.getByRole("checkbox", { name: "Desktop", exact: true })
@@ -387,7 +374,7 @@ for (const width of [1440, 390]) {
     expect(
       commandAppPreset(await page.getByTestId("create-command").textContent())
         .plugins
-    ).toEqual(["feedback", "langfuse"]);
+    ).toEqual(["feedback"]);
     await unchangedFrame();
   });
 }
@@ -562,13 +549,21 @@ for (const width of [1440, 1024, 390]) {
           }),
         };
       });
+    await page
+      .getByRole("button", { name: "Your app summary", exact: true })
+      .click();
     const beforeSummary = await summaryGeometry();
     await expect(summary).toContainText("Review setup · 1 choice needed");
+    await page.keyboard.press("Escape");
     await page
       .getByLabel("Storage bucket", { exact: true })
       .fill("preview-files");
+    await page
+      .getByRole("button", { name: "Your app summary", exact: true })
+      .click();
     await expect(summary).toContainText("Ready to install");
     expect(await summaryGeometry()).toEqual(beforeSummary);
+    await page.keyboard.press("Escape");
     await page.getByRole("tab", { name: "Agent", exact: true }).click();
     const before = await geometry();
     // Each click is explicitly brought into view before measuring: browser scrolling
@@ -609,6 +604,9 @@ for (const width of [1440, 1024, 390]) {
       expect(await geometry()).toEqual(before);
     }
     await page.getByRole("tab", { name: "Setup", exact: true }).click();
+    await page
+      .getByRole("button", { name: "Your app summary", exact: true })
+      .click();
     expect(await summaryGeometry()).toEqual(beforeSummary);
     expect(errors).toEqual([]);
   });
@@ -776,6 +774,7 @@ for (const width of [1440, 390]) {
     const installation = {
       plugins: ["feedback"],
       tools: ["code-execution"],
+      sandbox: "just-bash",
       gateway: "vercel",
     };
     await page.goto(
@@ -790,16 +789,16 @@ for (const width of [1440, 390]) {
       exact: true,
     });
     await tools
-      .getByRole("button", { name: "Choose a sandbox" })
+      .getByRole("button", { name: "Configure sandbox" })
       .scrollIntoViewIfNeeded();
     await expect(
-      tools.getByRole("button", { name: "Choose a sandbox" })
+      tools.getByRole("button", { name: "Configure sandbox" })
     ).toBeVisible();
     await uiVerify.snapshot("contextual setup action");
     await page.screenshot({
       path: testInfo.outputPath("contextual-setup.png"),
     });
-    await tools.getByRole("button", { name: "Choose a sandbox" }).click();
+    await tools.getByRole("button", { name: "Configure sandbox" }).click();
     await expect(
       page.getByRole("radiogroup", { name: "Sandbox", exact: true })
     ).toBeInViewport();
@@ -822,18 +821,21 @@ for (const width of [1440, 390]) {
     await page.screenshot({
       path: testInfo.outputPath("installation-review.png"),
     });
-    await dialog.getByRole("button", { name: "Choose a sandbox" }).click();
+    await dialog.getByRole("button", { name: "Configure sandbox" }).click();
     await expect(dialog).toBeHidden();
     await expect(
       page.getByRole("radiogroup", { name: "Sandbox", exact: true })
     ).toBeInViewport();
-    await selectChoice(page, "Sandbox", "Vercel Sandbox");
+    await page
+      .getByRole("radiogroup", { name: "Sandbox", exact: true })
+      .getByRole("radio", { name: "Vercel Sandbox", exact: true })
+      .check();
     await page.getByRole("tab", { name: "Agent", exact: true }).click();
     await expect(
       tools.getByRole("checkbox", { name: "Code Execution", exact: true })
     ).toBeChecked();
     await expect(
-      tools.getByRole("button", { name: "Choose a sandbox" })
+      tools.getByRole("button", { name: "Configure sandbox" })
     ).toHaveCount(0);
     await page
       .getByRole("button", { name: "Get Code", exact: true })
@@ -917,12 +919,15 @@ for (const width of [1440, 390]) {
     uiVerify.disableAutoSnapshot();
     await page.setViewportSize({ width, height: 1000 });
     await page.goto(
-      `/create?app=${encodeAppPreset(installationSelectionSchema.parse({ plugins: [], tools: ["code-execution"], gateway: "vercel" }))}`
+      `/create?app=${encodeAppPreset(installationSelectionSchema.parse({ plugins: [], tools: ["code-execution"], sandbox: "just-bash", gateway: "vercel" }))}`
     );
     await page.getByRole("tab", { name: "Setup", exact: true }).click();
     const summary = page.getByRole("complementary", {
       name: "Your app summary",
     });
+    await page
+      .getByRole("button", { name: "Your app summary", exact: true })
+      .click();
     const status = summary.getByRole("button", { name: "Setup requirements" });
     await status.scrollIntoViewIfNeeded();
     await expect(status).toContainText("Review setup");
@@ -933,6 +938,15 @@ for (const width of [1440, 390]) {
     ).toBeLessThanOrEqual(1);
     await uiVerify.snapshot("setup status wraps inside summary");
     await page.screenshot({ path: testInfo.outputPath("setup-status.png") });
+    await status.click();
+    await page
+      .getByRole("button", {
+        name: "Configure sandbox",
+        exact: true,
+      })
+      .click();
+    await expect(summary).toBeHidden();
+    await expect(page.locator("#agent-sandbox h2")).toBeInViewport();
   });
 }
 

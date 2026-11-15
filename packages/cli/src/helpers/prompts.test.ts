@@ -1,4 +1,3 @@
-import { rejects } from "node:assert/strict";
 import { expect, it, spyOn } from "bun:test";
 import * as clack from "@clack/prompts";
 
@@ -8,7 +7,6 @@ import {
   promptAuth,
   promptCoreFeatures,
   promptDocumentTypes,
-  promptObservability,
 } from "./prompts";
 import { collectEnvChecklist } from "./env-checklist";
 import { externalGatewayFixture } from "../../test/external-gateway";
@@ -84,7 +82,6 @@ it("uses external defaults and every environment group with --yes", async () => 
   );
   expect(coreFeatures.mcp).toBe(false);
   expect(coreFeatures.attachments).toBe(false);
-  expect(await promptObservability(true)).toEqual([]);
   expect(documentTypes).toEqual({ code: true, sheet: true, text: true });
   expect(builtInTools.webSearch).toBe(false);
   const input = {
@@ -141,14 +138,14 @@ it.each([true, false])(
   }
 );
 
-it("only offers compatible built-in sandboxes for uploads and requires an explicit noninteractive choice", async () => {
+it("offers native environments and defaults noninteractive creation to Automatic", async () => {
   const select = spyOn(clack, "select").mockResolvedValue("vercel");
   try {
-    expect(await promptSandbox(false, true, true)).toBe("vercel");
+    expect(await promptSandbox(false)).toBe("vercel");
     expect(
       select.mock.calls[0]?.[0].options.map((option) => option.value)
-    ).toEqual(["vercel"]);
-    await rejects(promptSandbox(true, true, true), /persistent sandbox/u);
+    ).toEqual(["default", "vercel", "docker", "just-bash"]);
+    expect(await promptSandbox(true)).toBe("default");
   } finally {
     select.mockRestore();
   }

@@ -1,14 +1,11 @@
 import type { CodeExecutor } from "@/lib/eve/code-executor";
 import { codeExecutionInput, codeExecutionResult } from "./schemas";
 import { defineTool } from "eve/tools";
-import { eveCodeSandboxOwnership } from "@/lib/eve/code-sandbox-ownership";
 import { createModuleLogger } from "@/lib/logger";
 import { executeJavaScriptInSandbox } from "@/chatjs/tools/_shared/code-execution/javascript";
 import { executePythonInSandbox } from "@/chatjs/tools/_shared/code-execution/python";
 import { executeWithToolUsage } from "@/lib/eve/tool-usage";
 import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
-import { getSandboxProvider } from "@/lib/sandbox/runtime";
-import { withSandbox } from "@chat-js/sandboxes/runtime";
 
 const EXECUTION_COST_USD = 0.05;
 const executeCode: CodeExecutor = async (input, context) =>
@@ -16,25 +13,21 @@ const executeCode: CodeExecutor = async (input, context) =>
     const log = createModuleLogger("code-execution");
     usage.addCostUsd(0);
     try {
-      const result = await withSandbox(
-        getSandboxProvider(),
-        {
-          ownership: eveCodeSandboxOwnership(context),
-          runtime: input.language,
-          signal: context.abortSignal,
-        },
-        async (sandbox) => {
-          const execution = {
-            code: input.code,
-            log,
-            requestId: context.callId,
-            sandbox,
-          };
-          return input.language === "javascript"
-            ? await executeJavaScriptInSandbox(execution)
-            : await executePythonInSandbox(execution);
-        }
-      );
+      const sandbox = await context.getSandbox();
+      const execution = {
+        code: input.code,
+        log,
+        requestId: context.callId,
+        sandbox,
+        signal: AbortSignal.any([
+          context.abortSignal,
+          AbortSignal.timeout(300_000),
+        ]),
+      };
+      const result =
+        input.language === "javascript"
+          ? await executeJavaScriptInSandbox(execution)
+          : await executePythonInSandbox(execution);
       const output = codeExecutionResult.parse(result);
       usage.addCostUsd(EXECUTION_COST_USD);
       return output;
@@ -52,7 +45,7 @@ Use for:
 - Execute JavaScript for scripting, transformations, async fetches, and general runtime checks
 
 Python support:
-- matplotlib, pandas, numpy, sympy, yfinance pre-installed — do NOT reinstall them
+- matplotlib, pandas, numpy, sympy, yfinance are installed in a session virtual environment when needed
 - Produce interactive line / scatter / bar charts OR matplotlib PNG charts
 - Install extra libs by adding lines like: '!pip install <pkg> [<pkg2> ...]' (we auto-install and strip these lines; pre-installed packages are ignored)
 

@@ -96,19 +96,19 @@ test("provider requirements block invalid installs without changing user choices
   const requested = {
     ...minimal,
     plugins: ["attachment-uploads"],
-    sandbox: "daytona",
+    sandbox: "docker",
     storage: { source: "memory", options: {} },
   };
   const result = resolveInstallationSelection(requested, catalog);
   expect(result.issues.join(", ")).not.toContain("persistent sandbox");
   expect(result.issues.join(", ")).toContain("persistent storage");
-  expect(result.selection.sandbox).toBe("daytona");
+  expect(result.selection.sandbox).toBe("docker");
   expect(
     resolveInstallationSelection(
-      { ...minimal, tools: ["code-execution"] },
+      { ...minimal, sandbox: "just-bash", tools: ["code-execution"] },
       catalog
     ).issues.join(", ")
-  ).toContain("requires a sandbox");
+  ).toContain("requires native Python");
   expect(
     resolveInstallationSelection(
       { ...minimal, gateway: "openrouter", tools: ["generate-video"] },

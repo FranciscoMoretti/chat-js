@@ -28,7 +28,6 @@ import {
   promptElectron,
   promptGateway,
   promptImageGenerationTool,
-  promptObservability,
   promptProjectName,
   promptSearchTool,
   promptStorage,
@@ -54,7 +53,6 @@ import { handleError } from "#cli/utils/handle-error";
 import { highlighter } from "#cli/utils/highlighter";
 import { launcherPackageManager } from "#cli/utils/get-package-manager";
 import { logger } from "#cli/utils/logger";
-import { observabilityItems } from "../../../registry/src/plugins/observability";
 import { parseJsonObject } from "#cli/helpers/json-object";
 import path from "node:path";
 import { planInstallation } from "#cli/utils/installation-plan";
@@ -153,24 +151,6 @@ const createOptionsSchema = z.object({
   imageGenerationTool: z.string().optional(),
   mcp: z.boolean().optional(),
   projects: z.boolean().optional(),
-  observability: z
-    .string()
-    .refine(
-      (value): boolean =>
-        value
-          .split(",")
-          .map((id): string => id.trim())
-          .filter(Boolean)
-          .every((id): boolean =>
-            observabilityItems.some(
-              (
-                item: ReadonlyInput<(typeof observabilityItems)[number]>
-              ): boolean => item.name === id
-            )
-          ),
-      "Observability must select vercel-analytics, vercel-speed-insights or langfuse."
-    )
-    .optional(),
   searchTool: z.string().optional(),
   storageConfig: z.string().optional(),
   storageProvider: z.string().optional(),
@@ -380,13 +360,6 @@ const promptCreateSetup = async (
   if (options.attachments !== undefined) {
     coreFeatures.attachments = options.attachments;
   }
-  const observability =
-    options.observability === undefined
-      ? await promptObservability(options.yes)
-      : options.observability
-          .split(",")
-          .map((id): string => id.trim())
-          .filter(Boolean);
   coreFeatures.documents = options.documents ?? coreFeatures.documents;
   const documentTypes = await promptDocumentTypes(
     options.yes,
@@ -445,7 +418,6 @@ const promptCreateSetup = async (
     targetDir,
     {
       plugins: [
-        ...observability,
         ...(withElectron ? ["desktop"] : []),
         ...(coreFeatures.mcp ? ["mcp"] : []),
         ...(coreFeatures.projects ? ["projects"] : []),
@@ -461,9 +433,7 @@ const promptCreateSetup = async (
       tools: toolSources,
     },
     { documents: options.documents, fresh: true },
-    async (required, persistent) =>
-      options.sandboxProvider ??
-      (await promptSandbox(options.yes, required, persistent))
+    async () => options.sandboxProvider ?? (await promptSandbox(options.yes))
   );
 
   return {
@@ -511,10 +481,7 @@ const selectedCreateSetup = async (
     gatewaySelection,
     plan,
     storage,
-    sandbox:
-      selection.sandbox === undefined
-        ? undefined
-        : await resolveSandbox(selection.sandbox, targetDir),
+    sandbox: await resolveSandbox(selection.sandbox ?? "default", targetDir),
     withElectron: plugins.has("desktop"),
   };
 };
@@ -602,7 +569,7 @@ const installRegistryItems = async (
     await installPlan(
       project.targetDir,
       plan,
-      { fresh: true, managedTargets: ["chatjs/providers/sandbox/options.ts"] },
+      { fresh: true, managedTargets: [] },
       async (): Promise<void> => {
         await configureGatewayProvider(
           project.targetDir,
@@ -642,7 +609,6 @@ const installRegistryItems = async (
       "chatjs/providers/gateway-defaults.ts",
       "lib/ai/models.generated.ts",
       "chatjs/providers/storage-options.ts",
-      "chatjs/providers/sandbox/options.ts",
       ".env.example",
     ]);
     installSpinner.succeed("Registry items installed and configured.");
@@ -818,6 +784,11 @@ const createProject = async (
           capabilities: setup.plan.resolvedItems,
           eve,
         });
+        await runCommand(
+          "bun",
+          ["run", "oxfmt", "--write", "chatjs/agent-recipe.json"],
+          stage
+        );
       }
       return installed;
     }
@@ -866,10 +837,6 @@ export const create = new Command()
     "install attachment picker, camera, paste/drop and upload endpoint"
   )
   .option("--no-attachments", "omit user attachment uploads")
-  .option(
-    "--observability <items>",
-    "comma-separated vercel-analytics, vercel-speed-insights, langfuse (default: none)"
-  )
   .option("--documents", "install text, code and sheet documents")
   .option("--no-documents", "omit document tools from the new app")
   .option(
@@ -887,7 +854,7 @@ export const create = new Command()
   )
   .option(
     "--sandbox-provider <item>",
-    "optional sandbox provider: vercel, daytona or registry address"
+    "native EVE environment: default, vercel, docker, just-bash or registry address"
   )
   .option(
     "--storage-provider <item>",

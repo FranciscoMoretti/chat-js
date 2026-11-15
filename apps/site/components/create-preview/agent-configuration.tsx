@@ -1,5 +1,10 @@
 "use client";
 
+import { CapabilityRow } from "./capability-row";
+import {
+  RadioGroup,
+  RadioGroupItem,
+} from "@/vendor/shadcn-create/styles/base-nova/ui/radio-group";
 import { AgentCategoryIcon } from "./agent-category-icon";
 import { EveCatalog } from "./eve-catalog";
 import {
@@ -17,6 +22,11 @@ import { useInstallation } from "./installation-provider";
 import { groupTools } from "./catalog-groups";
 import type { ConfigureSetup } from "./setup-guidance";
 import { setupActions } from "./setup-guidance";
+
+const sandboxVisualIds: Readonly<Record<string, string>> = {
+  vercel: "setup/vercel",
+  "just-bash": "tool/bash",
+};
 
 const selectClassName =
   "border-input bg-background h-9 w-full rounded-md border px-3 text-sm";
@@ -55,6 +65,53 @@ export const AgentConfiguration = ({
           Build your agent
         </h1>
         <EveCatalog>
+          <section
+            id="agent-sandbox"
+            aria-label="Sandbox"
+            className="scroll-mt-20 border-t pt-7 lg:scroll-mt-6"
+          >
+            <h2 className="flex items-center gap-2 text-lg font-semibold tracking-tight">
+              <AgentCategoryIcon category="sandbox" />
+              Sandbox
+            </h2>
+            <RadioGroup
+              aria-label="Sandbox"
+              className="mt-5 grid gap-3 md:grid-cols-2"
+              value={installation.sandbox ?? "default"}
+              onValueChange={(value) => {
+                if (typeof value === "string") {
+                  update({ ...installation, sandbox: value });
+                }
+              }}
+            >
+              {catalog
+                .filter((item) => item.definition?.kind === "sandbox")
+                .map((item) => {
+                  const id = item.definition?.id ?? item.name;
+                  const controlId = `agent-sandbox-${id}`;
+                  return (
+                    <CapabilityRow
+                      key={id}
+                      title={item.title}
+                      description={item.description}
+                      visualId={sandboxVisualIds[id] ?? `sandbox/${id}`}
+                      category="sandbox"
+                      source="EVE"
+                      controlId={controlId}
+                      checked={(installation.sandbox ?? "default") === id}
+                      control={
+                        <RadioGroupItem
+                          id={controlId}
+                          value={id}
+                          aria-label={item.title}
+                          className="absolute! end-3 top-4 shrink-0"
+                        />
+                      }
+                    />
+                  );
+                })}
+            </RadioGroup>
+          </section>
           <section
             id="agent-application"
             aria-label="Application capabilities"

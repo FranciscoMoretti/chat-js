@@ -2,14 +2,12 @@
 // Includes shipped core source, styles, configuration and supported executable scripts.
 export const coreDependencyNames: readonly string[] = [
   "@ai-sdk/devtools",
-  "@ai-sdk/otel",
   "@ai-sdk/provider",
   // Keep AI SDK schema identity stable when Bun adds MCP to an existing app.
   "@ai-sdk/provider-utils",
   "@base-ui/react",
   "@better-auth/core",
   "@chat-js/gateways",
-  "@chat-js/sandboxes",
   "@lexical/react",
   "@playwright/test",
   "@radix-ui/react-accordion",
@@ -49,6 +47,8 @@ export const coreDependencyNames: readonly string[] = [
   "@types/node",
   "@types/react",
   "@types/react-dom",
+  "@vercel/connect",
+  "@vercel/oidc",
   "@workflow/world-postgres",
   "ai",
   "better-auth",
@@ -113,7 +113,6 @@ export const inheritedRegistryDependencies: readonly string[] = [
   "zod",
   "@ai-sdk/provider",
   "@chat-js/gateways",
-  "@chat-js/sandboxes",
 ];
 
 export const selectCoreDependencies = (

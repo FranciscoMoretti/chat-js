@@ -23,9 +23,6 @@ export const pluginPreviewLabel = (id: string, hasClient: boolean) => {
   if (livePreviewPlugins.some((plugin) => plugin === id)) {
     return "Live preview";
   }
-  if (id === "vercel-analytics" || id === "vercel-speed-insights") {
-    return "No visible UI";
-  }
   if (id === "guest-chat") {
     return "Preview as Guest";
   }

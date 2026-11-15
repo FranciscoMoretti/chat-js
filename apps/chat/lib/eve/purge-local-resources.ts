@@ -1,6 +1,5 @@
 import { purgeEveFamilyDocuments } from "@/lib/db/eve-documents";
 import { prepareEveFamilyDeletion } from "./prepare-deletion";
-import { purgeEveFamilyCodeSandboxes } from "./purge-code-sandboxes";
 import { purgeEveFamilyFiles } from "./purge-files";
 import { cleanupRetiredEveWorkspaces } from "../db/eve-workspace-deletion";
 
@@ -8,7 +7,6 @@ const purgeExternalEveFamilyResources = async (
   ownerId: string,
   family: Readonly<{ rootId: string }>
 ): Promise<void> => {
-  await purgeEveFamilyCodeSandboxes(ownerId, family.rootId);
   await purgeEveFamilyDocuments(ownerId, family.rootId);
   await purgeEveFamilyFiles(ownerId, family.rootId);
 };

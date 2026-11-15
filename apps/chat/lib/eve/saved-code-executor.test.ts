@@ -72,7 +72,8 @@ beforeEach(() => {
 });
 
 test("executes owned saved source once, exposing only execution context and preserving the cost receipt", async () => {
-  const context = testToolContext();
+  const getSandbox = vi.fn();
+  const context = { ...testToolContext(), getSandbox };
   const results = await Array.fromAsync(
     executeEveCodeDocument({ ...input, code: "model replacement" }, context)
   );
@@ -87,6 +88,7 @@ test("executes owned saved source once, exposing only execution context and pres
     {
       abortSignal: context.abortSignal,
       callId: context.callId,
+      getSandbox,
       session: context.session,
     }
   );

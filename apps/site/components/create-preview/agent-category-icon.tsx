@@ -1,5 +1,6 @@
 import {
   Activity,
+  Cpu,
   AppWindow,
   BookOpen,
   BrainCircuit,
@@ -13,6 +14,7 @@ import type { LucideIcon } from "lucide-react";
 
 const categoryIcons: Readonly<Record<string, LucideIcon>> = {
   tool: Wrench,
+  sandbox: Cpu,
   connection: Plug,
   channel: MessagesSquare,
   skill: BookOpen,

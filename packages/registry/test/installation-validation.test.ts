@@ -49,13 +49,6 @@ for (const plugin of plugins) {
       gateway: "openai",
       tools: [],
       plugins: selected,
-      sandbox: selected.some(
-        (id) =>
-          plugins.find((candidate) => candidate.id === id)
-            ?.requiresPersistentSandbox
-      )
-        ? "vercel"
-        : undefined,
       storage: {
         source: selected.some(
           (id) =>
@@ -196,3 +189,24 @@ test("plugin removal and reinstall preserve a type-correct app with retained sch
     await rm(root, { recursive: true, force: true });
   }
 }, 60_000);
+
+for (const sandbox of ["default", "vercel", "docker", "just-bash"]) {
+  test(`native ${sandbox} environment generates a type-correct agent`, async () => {
+    const output = await renderValidationProject(prepared.core, {
+      gateway: "openai",
+      storage: { source: "memory", options: {} },
+      plugins: [],
+      tools: sandbox === "just-bash" ? [] : ["code-execution"],
+      sandbox,
+    });
+    expect(output.files.has("agent/sandbox.ts")).toBe(true);
+    expect(
+      [...output.files.keys()].some((file) =>
+        file.startsWith("chatjs/providers/sandbox/")
+      )
+    ).toBe(false);
+    expect(
+      typecheckProject(output.files, validationDependencyFixtures).diagnostics
+    ).toEqual([]);
+  }, 60_000);
+}

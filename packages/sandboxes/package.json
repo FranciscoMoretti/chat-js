@@ -1,7 +1,7 @@
 {
   "name": "@chat-js/sandboxes",
   "version": "0.2.0",
-  "description": "Sandbox provider contracts and lifecycle runtime for ChatJS",
+  "description": "Native EVE sandbox registry metadata for ChatJS",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
@@ -16,18 +16,6 @@
   ],
   "type": "module",
   "exports": {
-    "./provider": {
-      "types": "./dist/provider.d.ts",
-      "bun": "./src/provider.ts",
-      "development": "./src/provider.ts",
-      "default": "./dist/provider.js"
-    },
-    "./runtime": {
-      "types": "./dist/runtime.d.ts",
-      "bun": "./src/runtime.ts",
-      "development": "./src/runtime.ts",
-      "default": "./dist/runtime.js"
-    },
     "./definition": {
       "types": "./dist/definition.d.ts",
       "bun": "./src/definition.ts",

@@ -11,6 +11,7 @@ export default defineConfig({
     "create-agent.spec.mts",
     "create-activity.spec.mts",
     "create-features.spec.mts",
+    "create-setup.spec.mts",
     "create-plugins.spec.mts",
     "create-styles.spec.mts",
     "create-conversation.spec.mts",

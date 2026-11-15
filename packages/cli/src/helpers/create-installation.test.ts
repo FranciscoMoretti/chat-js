@@ -9,10 +9,7 @@ import { createCommand } from "../../../../apps/site/components/create-model";
 import { DEFAULT_PRESET_CONFIG, encodePreset } from "shadcn/preset";
 
 test("Create's command round trips full and empty selections into the CLI", () => {
-  for (const plugins of [
-    [],
-    ["feedback", "projects", "langfuse", "guest-chat"],
-  ]) {
+  for (const plugins of [[], ["feedback", "projects", "guest-chat"]]) {
     const selection = {
       gateway: "vercel",
       plugins,

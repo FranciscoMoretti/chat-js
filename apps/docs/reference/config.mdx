@@ -29,7 +29,7 @@ Use `config` from `@/lib/config` for runtime access. See [Configuration](../core
 | `chatjs/generated/tool-definitions.ts` | Browser-safe tool schemas and display metadata |
 | `chatjs/generated/providers.ts` | Shared search, retrieval, media and code-execution provider registrations |
 | `integrations/tools/execution.ts`, `integrations/tools/ui.ts` | User-authored tool and renderer registrations |
-| `chatjs/plugins/*/chatjs.json`, generated plugin registrations | Installed uploads, MCP and telemetry contributions |
+| `chatjs/plugins/*/chatjs.json`, generated plugin registrations | Installed application plugin contributions, such as uploads and MCP |
 
 Tools can declare `requiresTools`, `requiresGateway` (`image` or `video`) and `requiresStorage`. Plugins can declare `requiresPlugins` and `requiresStorage`. Provider slots and document kinds are exclusive. The planner validates the complete resulting installation, including existing tools during replacement. Declared external capabilities still need adapter and lifecycle tests.
 
@@ -71,6 +71,6 @@ Pricing text does not configure payment processing. Guest access limits do not r
 
 `bun run check-env` checks base application credentials, the installed gateway/storage/tool/feature requirements and enabled OAuth providers. It also runs before development and production builds. A search installation requires its selected provider's key. Setting the other search provider's key does not change the installed implementation.
 
-For example, a minimal app omits MCP, uploads, tools and telemetry and needs no credentials for those absent capabilities. Adding MCP requires `MCP_ENCRYPTION_KEY` even before a connector is configured. See [Configuration](../core/configuration) for installation and replacement commands.
+For example, a minimal app omits MCP, uploads and tools and needs no credentials for those absent capabilities. Adding MCP requires `MCP_ENCRYPTION_KEY` even before a connector is configured. See [Configuration](../core/configuration) for installation and replacement commands.
 
 Guest model and rate limits belong to [Guest Chat](../plugins/guest-chat) in `chatjs/plugins/guest-chat/guest-policy.ts`. Core has no anonymous model or quota settings.

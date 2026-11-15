@@ -1,5 +1,6 @@
 "use client";
 
+import { CategoryNavigation, categoryLayout } from "./category-navigation";
 import { AgentCategoryIcon } from "./agent-category-icon";
 import { CapabilityRow } from "./capability-row";
 import { ConfigurationSection } from "./configuration-section";
@@ -87,64 +88,44 @@ export const EveCatalog = ({ children }: { readonly children: ReactNode }) => {
         group.items.length > 0 || (group.id === "skill" && !selectedOnly)
     );
   return (
-    <section
-      aria-label="EVE catalog"
-      className="grid items-start gap-6 lg:grid-cols-[10rem_minmax(0,1fr)]"
-    >
-      <nav
-        aria-label="Agent categories"
-        className="bg-background sticky top-0 z-10 flex items-center gap-2 py-2 lg:top-6 lg:block lg:space-y-1 lg:py-0"
+    <section aria-label="EVE catalog" className={categoryLayout}>
+      <CategoryNavigation
+        label="Agent categories"
+        prefix="agent"
+        sections={[
+          ...groups.map((group) => ({
+            id: group.id,
+            title: group.title,
+            count: group.items.length,
+            icon: (
+              <AgentCategoryIcon
+                category={group.id}
+                className="size-3.5 shrink-0"
+              />
+            ),
+          })),
+          {
+            id: "sandbox",
+            title: "Sandbox",
+            icon: (
+              <AgentCategoryIcon
+                category="sandbox"
+                className="size-3.5 shrink-0"
+              />
+            ),
+          },
+          {
+            id: "application",
+            title: "Application capabilities",
+            icon: (
+              <AgentCategoryIcon
+                category="application"
+                className="size-3.5 shrink-0"
+              />
+            ),
+          },
+        ]}
       >
-        <select
-          aria-label="Jump to category"
-          className="border-input bg-background h-10 min-w-0 flex-1 rounded-md border px-3 text-sm lg:hidden"
-          value=""
-          onChange={(event) => {
-            document
-              .querySelector(`#${CSS.escape(`agent-${event.target.value}`)}`)
-              ?.scrollIntoView({ block: "start" });
-          }}
-        >
-          <option value="" disabled>
-            Jump to category
-          </option>
-          {groups.map((group) => (
-            <option key={group.id} value={group.id}>
-              {group.title} ({group.items.length})
-            </option>
-          ))}
-          <option value="application">Application capabilities</option>
-        </select>
-        {groups.map((group) => (
-          <a
-            key={group.id}
-            href={`#agent-${group.id}`}
-            aria-label={group.title}
-            className="text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:outline-ring hidden items-center gap-2 rounded-md px-2 py-2 text-xs font-medium focus-visible:outline-2 lg:flex"
-          >
-            <AgentCategoryIcon
-              category={group.id}
-              className="size-3.5 shrink-0"
-            />
-            {group.title}
-            <span
-              aria-hidden="true"
-              className="ms-auto text-[10px] tabular-nums"
-            >
-              {group.items.length}
-            </span>
-          </a>
-        ))}
-        <a
-          href="#agent-application"
-          className="text-muted-foreground hover:bg-accent hover:text-foreground hidden items-center gap-2 rounded-md px-2 py-2 text-xs font-medium lg:flex"
-        >
-          <AgentCategoryIcon
-            category="application"
-            className="size-3.5 shrink-0"
-          />
-          Application capabilities
-        </a>
         <Button
           variant={selectedOnly ? "secondary" : "ghost"}
           size="sm"
@@ -159,7 +140,7 @@ export const EveCatalog = ({ children }: { readonly children: ReactNode }) => {
         >
           Selected · {selected.length}
         </Button>
-      </nav>
+      </CategoryNavigation>
       <div className="min-w-0 space-y-7">
         {isLoading && (
           <output className="text-muted-foreground text-sm">
@@ -259,13 +240,15 @@ export const EveCatalog = ({ children }: { readonly children: ReactNode }) => {
                   Deleting a chat does not automatically delete provider memory.
                 </p>
               )}
-              <div className="grid items-start gap-2 md:grid-cols-2">
+              <div className="grid gap-3 md:grid-cols-2">
                 {group.items.map((item) => {
                   const issue = eveCompositionIssue(item.id);
                   return (
                     <CapabilityRow
                       key={item.id}
                       title={item.title}
+                      visualId={item.id}
+                      category={item.category}
                       description={item.description}
                       source={item.source}
                       requiresChatJS={item.requiresChatJS}

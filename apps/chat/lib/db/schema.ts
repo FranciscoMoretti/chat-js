@@ -390,28 +390,6 @@ const eveFileReference = pgTable(
   ]
 );
 
-const eveCodeSandbox = pgTable(
-  "EveCodeSandbox",
-  {
-    callId: text("callId").notNull(),
-    conversationId: uuid("conversationId").notNull(),
-    createdAt: timestamp("createdAt").notNull().defaultNow(),
-    creationConfirmed: boolean("creationConfirmed").notNull().default(false),
-    name: text("name").primaryKey(),
-    ownerId: text("ownerId").notNull(),
-    state: text("state", { enum: ["unresolved", "deleted"] })
-      .notNull()
-      .default("unresolved"),
-  },
-  (table) => [
-    foreignKey({
-      columns: [table.conversationId, table.ownerId],
-      foreignColumns: [eveConversation.id, eveConversation.ownerId],
-    }),
-    index("EveCodeSandbox_conversation").on(table.conversationId),
-  ]
-);
-
 /** Native child identity and billing progress; transcript stays in EVE. */
 const eveSubagentSession = pgTable(
   "EveSubagentSession",
@@ -722,7 +700,6 @@ export {
   eveDispatch,
   account,
   eveChat,
-  eveCodeSandbox,
   eveConversation,
   eveDocumentCheckpoint,
   eveDocumentCheckpointEntry,

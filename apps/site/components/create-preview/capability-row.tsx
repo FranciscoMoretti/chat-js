@@ -1,9 +1,21 @@
-import { ArrowUpRight } from "lucide-react";
+import { CapabilityVisual } from "./capability-visual";
+import { ArrowUpRight, Info } from "lucide-react";
 import type { ReactNode } from "react";
+import { Button } from "@/vendor/shadcn-create/styles/base-nova/ui/button";
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+  PopoverHeader,
+  PopoverTitle,
+  PopoverDescription,
+} from "@/vendor/shadcn-create/styles/base-nova/ui/popover";
 import { Checkbox } from "@/vendor/shadcn-create/styles/base-nova/ui/checkbox";
 
 export const CapabilityRow = ({
   title,
+  visualId,
+  category,
   description,
   source,
   requiresChatJS,
@@ -12,12 +24,15 @@ export const CapabilityRow = ({
   checked,
   disabled,
   onCheckedChange,
+  control,
   docs,
   reason,
-  action,
+  details,
   testId,
 }: {
   readonly title: string;
+  readonly visualId: string;
+  readonly category?: string;
   readonly description: string;
   readonly source: string;
   readonly requiresChatJS?: boolean;
@@ -25,70 +40,88 @@ export const CapabilityRow = ({
   readonly controlLabel?: string;
   readonly checked: boolean;
   readonly disabled?: boolean;
-  readonly onCheckedChange: (checked: boolean) => void;
+  readonly control?: ReactNode;
+  readonly onCheckedChange?: (checked: boolean) => void;
   readonly docs?: string;
   readonly reason?: string;
-  readonly action?: ReactNode;
+  readonly details?: ReactNode;
   readonly testId?: string;
 }) => (
   <article
     data-testid={testId}
     data-selected={checked}
-    className="bg-card hover:border-foreground/25 data-[selected=true]:border-foreground/50 data-[selected=true]:bg-accent/35 relative flex min-w-0 rounded-lg border transition-colors duration-150"
+    data-disabled={disabled}
+    className="bg-card hover:border-foreground/40 data-[selected=true]:border-foreground has-[:focus-visible]:outline-ring relative flex min-w-0 rounded-md border has-[:focus-visible]:outline-2"
   >
     <label
       htmlFor={controlId}
-      className="flex min-w-0 flex-1 cursor-pointer items-start gap-3 p-3"
+      className="flex min-w-0 flex-1 cursor-pointer items-start gap-3 rounded-md py-4 ps-4 pe-11 [-webkit-tap-highlight-color:transparent] has-[:disabled]:cursor-default motion-safe:transition-transform motion-safe:duration-150 motion-safe:ease-out motion-safe:not-has-[:disabled]:active:scale-[0.96]"
     >
-      <Checkbox
-        id={controlId}
-        className="mt-0.5 shrink-0"
-        aria-label={controlLabel}
-        checked={checked}
-        disabled={disabled}
-        onCheckedChange={onCheckedChange}
-      />
+      <CapabilityVisual id={visualId} category={category} />
       <span className="min-w-0 flex-1">
-        <span className="flex flex-wrap items-baseline gap-x-2 gap-y-1 pe-7">
-          <span className="text-sm font-medium break-words">{title}</span>
-          <span
-            className="text-muted-foreground text-[11px]"
-            aria-label={`Source: ${source}`}
-          >
-            {source}
-          </span>
+        <span className="block text-sm leading-5 font-medium break-words">
+          {title}
         </span>
-        <span
-          className="text-muted-foreground mt-1 line-clamp-2 text-xs leading-5"
-          title={description}
-        >
+        <span className="text-muted-foreground mt-1 line-clamp-2 text-xs leading-5">
           {description}
         </span>
-        {requiresChatJS === true && (
-          <span className="text-muted-foreground mt-1 block text-[11px]">
-            Requires ChatJS
-          </span>
-        )}
         {reason !== undefined && (
           <span className="text-muted-foreground mt-1 block text-xs leading-5">
             {reason}
           </span>
         )}
       </span>
-    </label>
-    <div className="absolute end-2 top-2">
-      {docs !== undefined && (
-        <a
-          href={docs}
-          target="_blank"
-          rel="noreferrer"
-          aria-label={`${title} documentation`}
-          className="text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:outline-ring flex size-7 items-center justify-center rounded-md focus-visible:outline-2"
-        >
-          <ArrowUpRight className="size-3.5" aria-hidden="true" />
-        </a>
+      {control ?? (
+        <Checkbox
+          id={controlId}
+          className="absolute! end-3 top-4 shrink-0"
+          aria-label={controlLabel}
+          checked={checked}
+          disabled={disabled}
+          onCheckedChange={onCheckedChange}
+        />
       )}
-      {action}
-    </div>
+    </label>
+    <Popover>
+      <PopoverTrigger
+        render={
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-muted-foreground absolute end-1.5 bottom-1.5 size-7"
+          />
+        }
+        aria-label={`About ${title}`}
+      >
+        <Info className="size-3.5" aria-hidden="true" />
+      </PopoverTrigger>
+      <PopoverContent
+        align="end"
+        className="w-72 max-w-[calc(100vw-2rem)] motion-reduce:animate-none!"
+      >
+        <PopoverHeader>
+          <PopoverTitle>{title}</PopoverTitle>
+          <PopoverDescription>{description}</PopoverDescription>
+        </PopoverHeader>
+        <div className="text-muted-foreground space-y-1 text-xs">
+          <p aria-label={`Source: ${source}`}>Source: {source}</p>
+          {requiresChatJS === true && <p>Requires ChatJS</p>}
+          {reason !== undefined && <p>{reason}</p>}
+          {details}
+        </div>
+        {docs !== undefined && (
+          <a
+            href={docs}
+            target="_blank"
+            rel="noreferrer"
+            aria-label={`${title} documentation`}
+            className="focus-visible:outline-ring inline-flex items-center gap-1 text-xs underline underline-offset-4 focus-visible:outline-2"
+          >
+            Documentation
+            <ArrowUpRight className="size-3.5" aria-hidden="true" />
+          </a>
+        )}
+      </PopoverContent>
+    </Popover>
   </article>
 );

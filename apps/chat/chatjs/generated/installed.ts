@@ -7,13 +7,10 @@ export const installedPlugins: ReadonlySet<string> = new Set([
   "feedback",
   "followup-suggestions",
   "guest-chat",
-  "langfuse",
   "mcp",
   "model-preferences",
   "projects",
   "search",
   "sharing",
   "slack-documents",
-  "vercel-analytics",
-  "vercel-speed-insights",
 ]);

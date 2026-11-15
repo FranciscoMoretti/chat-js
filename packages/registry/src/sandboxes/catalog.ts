@@ -1,35 +1,53 @@
 import { sandboxDefinitionSchema } from "@chat-js/sandboxes/definition";
-import sandboxPackage from "@chat-js/sandboxes/package.json";
 import registryPackage from "../../package.json";
 
-export const builtInSandboxes = ["vercel", "daytona"].map((id) => ({
+export const builtInSandboxes = [
+  {
+    id: "default",
+    title: "Automatic",
+    description:
+      "EVE selects Vercel on Vercel, Docker when available, or a simulated shell in development.",
+  },
+  {
+    id: "vercel",
+    title: "Vercel Sandbox",
+    description: "Hosted sandbox with native Python and Node processes.",
+  },
+  {
+    id: "docker",
+    title: "Docker",
+    description:
+      "Containers on a reachable Docker host, with native Python and Node processes.",
+  },
+  {
+    id: "just-bash",
+    title: "just-bash",
+    description:
+      "Simulated shell and filesystem. Cannot run native Python or Node processes.",
+  },
+].map(({ id, title, description }) => ({
   name: `${id}-sandbox`,
-  title: id === "vercel" ? "Vercel Sandbox" : "Daytona",
+  title,
+  description,
   type: "registry:item" as const,
-  dependencies: [
-    `${sandboxPackage.name}@${sandboxPackage.version}`,
-    ...(id === "vercel"
-      ? [
-          `@vercel/sandbox@${registryPackage.devDependencies["@vercel/sandbox"]}`,
-          `@vercel/oidc@${registryPackage.devDependencies["@vercel/oidc"]}`,
-        ]
-      : [`@daytona/sdk@${registryPackage.devDependencies["@daytona/sdk"]}`]),
+  dependencies: [`eve@${registryPackage.devDependencies.eve}`],
+  files: [
+    {
+      path: `src/sandboxes/${id}/sandbox.ts`,
+      target: "~/agent/sandbox.ts",
+      type: "registry:file" as const,
+    },
   ],
-  files: ["provider.ts", `${id}-sandbox-env.ts`, "adapter.ts"].map((file) => ({
-    path: `src/sandboxes/${id}/${file}`,
-    target: `~/chatjs/providers/sandbox/${file}`,
-    type: "registry:file" as const,
-  })),
   meta: {
     chatjs: sandboxDefinitionSchema.parse({
       contractVersion: 1,
       kind: "sandbox",
       id,
       capabilities: {
-        persistent: false,
-        runtimes: ["python", "javascript"],
-        cleanup: "durable-allocation",
-        cancellation: "terminate",
+        persistent: true,
+        runtimes: id === "just-bash" ? [] : ["python", "javascript"],
+        cleanup: "eve-session",
+        cancellation: "eve",
       },
       envRequirements:
         id === "vercel"
@@ -42,7 +60,7 @@ export const builtInSandboxes = ["vercel", "daytona"].map((id) => ({
                 runtimeAuth: "vercel-oidc",
               },
             ]
-          : [{ options: [["DAYTONA_API_KEY", "DAYTONA_ORGANIZATION_ID"]] }],
+          : [],
     }),
   },
 }));

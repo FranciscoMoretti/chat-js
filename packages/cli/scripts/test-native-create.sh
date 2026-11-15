@@ -16,10 +16,10 @@ if [ "$CHATJS_NATIVE_RTL" = 1 ]; then direction=(--rtl); fi
 export CHATJS_NATIVE_BASE="${CHATJS_NATIVE_BASE:-base}"
 export CHATJS_NATIVE_SCENARIO="${CHATJS_NATIVE_SCENARIO:-uploads}"
 case "$CHATJS_NATIVE_SCENARIO" in
-  selection) installation=(--installation '{"gateway":"vercel","plugins":["feedback","projects","langfuse"],"eve":["connection/notion","channel/slack","tool/web_fetch","@chatjs/get-weather","@skills/vercel-labs/agent-skills/vercel-react-best-practices"],"tools":["word-count","tavily-search","retrieve-url"],"storage":{"source":"memory"},"agent":{"model":"openai/gpt-5-mini","reasoning":"high"}}') ;;
+  selection) installation=(--installation '{"gateway":"vercel","plugins":["feedback","projects"],"eve":["connection/notion","channel/slack","tool/web_fetch","@chatjs/get-weather","@skills/vercel-labs/agent-skills/vercel-react-best-practices"],"tools":["word-count","tavily-search","retrieve-url"],"storage":{"source":"memory"},"agent":{"model":"openai/gpt-5-mini","reasoning":"high"}}') ;;
   acceptance) installation=(--installation '{"gateway":"vercel","plugins":["attachment-uploads"],"tools":[],"storage":{"source":"minio","options":{"bucket":"chatjs-acceptance","endpoint":"http://127.0.0.1:9000"}},"agent":{"model":"openai/gpt-5-mini","defaultTools":true,"approval":"always"}}') ;;
   minimal) installation=(--gateway vercel --no-attachments --no-documents) ;;
-  full) installation=(--gateway vercel --no-attachments --projects --mcp --observability vercel-analytics,vercel-speed-insights) ;;
+  full) installation=(--gateway vercel --no-attachments --projects --mcp) ;;
   documents) installation=(--gateway vercel --no-attachments) ;;
   uploads) installation=(--sandbox-provider vercel --gateway openrouter --attachments --storage-provider s3 --storage-config '{"bucket":"chatjs-native-smoke"}') ;;
   *) echo "CHATJS_NATIVE_SCENARIO must be acceptance, selection, minimal, documents, full or uploads" >&2; exit 1 ;;
@@ -113,13 +113,12 @@ assert.match(await Bun.file("chatjs/providers/gateway.ts").text(), /vercel|gatew
 }
 if (process.env.CHATJS_NATIVE_SCENARIO === "selection") {
   const { readdir } = await import("node:fs/promises");
-  assert.deepEqual((await readdir("chatjs/plugins")).sort(), ["feedback", "langfuse", "projects"]);
+  assert.deepEqual((await readdir("chatjs/plugins")).sort(), ["feedback", "projects"]);
   assert.deepEqual((await readdir("chatjs/tools")).sort(), ["retrieve-url", "tavily-search", "word-count"]);
   const { installedTools } = await import("./chatjs/generated/tools.ts");
   const counted = (await Array.fromAsync(installedTools.wordCount.execute({text: "One two three."}, {abortSignal: new AbortController().signal}))).at(-1);
   assert.equal(counted.usage.costUsd, 0);
   assert.equal(counted.output.words, 3);
-  assert.match(await Bun.file(".env.example").text(), /LANGFUSE/);
   const readiness = Bun.spawnSync(["bun", "scripts/agent-status.ts", "--json"], { env: { PATH: process.env.PATH }, stdout: "pipe", stderr: "pipe" });
   assert.equal(readiness.exitCode, 1, readiness.stderr.toString());
   const report = JSON.parse(readiness.stdout.toString());
@@ -130,7 +129,7 @@ if (process.env.CHATJS_NATIVE_SCENARIO === "selection") {
   assert.equal(configured.exitCode, 1, configured.stderr.toString());
   const configuredReport = JSON.parse(configured.stdout.toString());
   assert.ok(configuredReport.tools.every(tool => tool.configuration === "present"));
-  const ready = Bun.spawnSync(["bun", "scripts/agent-status.ts", "--json"], { env: { PATH: process.env.PATH, TAVILY_API_KEY: "test-only", FIRECRAWL_API_KEY: "test-only", LANGFUSE_PUBLIC_KEY: "test-only", LANGFUSE_SECRET_KEY: "test-only", VERCEL_OIDC_TOKEN: "test-only" }, stdout: "pipe", stderr: "pipe" });
+  const ready = Bun.spawnSync(["bun", "scripts/agent-status.ts", "--json"], { env: { PATH: process.env.PATH, TAVILY_API_KEY: "test-only", FIRECRAWL_API_KEY: "test-only", VERCEL_OIDC_TOKEN: "test-only" }, stdout: "pipe", stderr: "pipe" });
   assert.equal(ready.exitCode, 0, ready.stderr.toString());
   assert.ok(!ready.stdout.toString().includes("test-only"));
   const readyReport = JSON.parse(ready.stdout.toString());

@@ -610,9 +610,9 @@ test("saved-code registration requires an explicitly compatible executor", async
   );
   definition.codeExecutorExport = "executeCode";
   definition.codeExecutionCapabilities = {
-    cancellation: "terminate",
-    cleanup: "durable-allocation",
-    files: "ephemeral",
+    cancellation: "eve",
+    cleanup: "eve-session",
+    files: "session",
     languages: ["python", "javascript"],
     timeout: "bounded",
     usage: "single-receipt",

@@ -19,7 +19,6 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("ai", () => ({ generateText: mocks.generate }));
 vi.mock("@/lib/ai/providers", () => ({ getLanguageModel: mocks.model }));
-vi.mock("@/lib/ai/telemetry", () => ({ chatTelemetry: "telemetry" }));
 vi.mock("@/lib/config", () => ({
   config: { ai: { workflows: { title: "openai/gpt-5-nano" } } },
 }));
@@ -56,7 +55,6 @@ it("uses the configured ChatJS title model for a concise title", async () => {
     expect.objectContaining({
       maxRetries: 0,
       model: "title-model",
-      telemetry: { integrations: "telemetry", isEnabled: true },
     })
   );
 });

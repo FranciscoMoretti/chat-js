@@ -79,7 +79,6 @@ bunx chat-js@alpha add mcp
 | `generate-image` / `generate-video` | Compatible gateway capability, a default media model and persistent storage. Only the built-in Vercel gateway declares video support. |
 | `attachment-uploads` | Persistent storage and a sandbox with persistent-file support. Configure limits separately under `attachments`. |
 | `mcp` | `MCP_ENCRYPTION_KEY`, including installations with no connectors yet. |
-| `vercel-analytics`, `vercel-speed-insights`, `langfuse` | Independently installed telemetry. Langfuse requires its keys. |
 
 Planning resolves transitive registry dependencies and validates the resulting selection before installation. Memory storage is appropriate only when no installed feature needs persistent files. An external adapter's metadata is a declaration, not proof of live provider behavior.
 

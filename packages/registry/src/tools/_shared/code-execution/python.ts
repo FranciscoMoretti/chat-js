@@ -1,3 +1,4 @@
+import { runCodeCommand } from "./sandbox-command";
 import type {
   CodeExecutionContext,
   CodeExecutionResult,
@@ -8,6 +9,7 @@ import { z } from "zod";
 type PythonExecutionContext = Readonly<{
   sandbox: Readonly<ExecutionSandbox>;
   requestId: string;
+  signal: AbortSignal;
   log: Readonly<Pick<CodeExecutionContext["log"], "error" | "info">>;
 }>;
 
@@ -50,19 +52,20 @@ const packageName = (spec: string): string =>
 
 const installBasePackages = async (
   basePackages: readonly string[],
-  { sandbox, requestId, log }: PythonExecutionContext
+  { sandbox, requestId, log, signal }: PythonExecutionContext
 ): Promise<{
   success: boolean;
   result?: CodeExecutionResult;
 }> => {
-  const installStep = await sandbox.runCommand({
-    args: ["install", ...basePackages],
-    cmd: "pip",
-  });
+  const installStep = await runCodeCommand(
+    sandbox,
+    signal,
+    "/workspace/.chatjs-python/bin/pip",
+    ["install", ...basePackages]
+  );
   if (installStep.exitCode !== PROCESS_SUCCESS) {
-    const errorOutput = await installStep.stderr();
-    const standardOutput =
-      errorOutput.trim() === "" ? await installStep.stdout() : "";
+    const errorOutput = installStep.stderr;
+    const standardOutput = errorOutput.trim() === "" ? installStep.stdout : "";
     const installStderr = errorOutput.trim() || standardOutput.trim();
     log.error(
       { requestId, stderr: installStderr },
@@ -118,7 +121,7 @@ interface PythonPackagePreparation {
 const processExtraPackages = async (
   code: string,
   basePackages: readonly string[],
-  { sandbox, requestId, log }: PythonExecutionContext
+  { sandbox, requestId, log, signal }: PythonExecutionContext
 ): Promise<PythonPackagePreparation> => {
   const { codeWithoutPipLines, extraPackages } = pythonPackagePlan(
     code,
@@ -133,14 +136,16 @@ const processExtraPackages = async (
     { packageCount: extraPackages.length, requestId },
     "installing extra packages"
   );
-  const dynamicInstall = await sandbox.runCommand({
-    args: ["install", ...extraPackages],
-    cmd: "pip",
-  });
+  const dynamicInstall = await runCodeCommand(
+    sandbox,
+    signal,
+    "/workspace/.chatjs-python/bin/pip",
+    ["install", ...extraPackages]
+  );
   if (dynamicInstall.exitCode !== PROCESS_SUCCESS) {
-    const errorOutput = await dynamicInstall.stderr();
+    const errorOutput = dynamicInstall.stderr;
     const standardOutput =
-      errorOutput.trim() === "" ? await dynamicInstall.stdout() : "";
+      errorOutput.trim() === "" ? dynamicInstall.stdout : "";
     const stderr = errorOutput.trim() || standardOutput.trim();
     log.error(
       { exitCode: dynamicInstall.exitCode, requestId },
@@ -216,13 +221,13 @@ except Exception as e:
     sys.exit(1)
 `;
 
-const parseExecutionOutput = async (
+const parseExecutionOutput = (
   execResult: Readonly<{
-    stdout: () => Promise<string>;
+    stdout: string;
     exitCode: number;
   }>
-): Promise<PythonExecutionOutput> => {
-  const stdout = await execResult.stdout();
+): PythonExecutionOutput => {
+  const { stdout } = execResult;
   let execInfo: PythonExecutionInfo = { success: true };
   let outputText = "";
   let chartData: Record<string, unknown> | null = null;
@@ -269,18 +274,19 @@ const parseExecutionOutput = async (
 
 const checkForChart = async (
   chartPath: string,
-  { sandbox, requestId, log }: PythonExecutionContext
+  { sandbox, requestId, log, signal }: PythonExecutionContext
 ): Promise<{ base64: string; format: string } | undefined> => {
-  const chartCheck = await sandbox.runCommand({
-    args: ["-f", chartPath],
-    cmd: "test",
-  });
+  const chartCheck = await runCodeCommand(sandbox, signal, "test", [
+    "-f",
+    chartPath,
+  ]);
   if (chartCheck.exitCode === PROCESS_SUCCESS) {
-    const base64Command = await sandbox.runCommand({
-      args: ["-w", "0", chartPath],
-      cmd: "base64",
-    });
-    const b64 = await base64Command.stdout();
+    const base64Command = await runCodeCommand(sandbox, signal, "base64", [
+      "-w",
+      "0",
+      chartPath,
+    ]);
+    const b64 = base64Command.stdout;
     log.info({ requestId }, "chart generated");
     return { base64: (b64 ?? "").trim(), format: "png" };
   }
@@ -321,13 +327,14 @@ export const executePythonInSandbox = async ({
   code,
   log,
   requestId,
+  signal,
 }: Readonly<
-  Pick<CodeExecutionContext, "code" | "requestId"> & {
-    sandbox: Readonly<Pick<CodeExecutionContext["sandbox"], "runCommand">>;
+  Pick<CodeExecutionContext, "code" | "requestId" | "signal"> & {
+    sandbox: Readonly<Pick<CodeExecutionContext["sandbox"], "run">>;
     log: Readonly<Pick<CodeExecutionContext["log"], "error" | "info">>;
   }
 >): Promise<CodeExecutionResult> => {
-  const execution = { log, requestId, sandbox };
+  const execution = { log, requestId, sandbox, signal };
   const basePackages = [
     "matplotlib",
     "pandas",
@@ -335,7 +342,18 @@ export const executePythonInSandbox = async ({
     "sympy",
     "yfinance",
   ] as const;
-  const chartPath = "/tmp/chart.png";
+  const chartPath = `/tmp/chatjs-chart-${crypto.randomUUID()}.png`;
+  const prepare = await sandbox.run({
+    command:
+      "test -x /workspace/.chatjs-python/bin/python || (sudo apt-get update && sudo apt-get install -y python3-venv && python3 -m venv /workspace/.chatjs-python)",
+    signal,
+  });
+  if (prepare.exitCode !== 0) {
+    return {
+      chart: "",
+      message: `Python environment setup failed: ${prepare.stderr || prepare.stdout}`,
+    };
+  }
 
   const baseInstallResult = await installBasePackages(basePackages, execution);
   if (!baseInstallResult.success) {
@@ -352,20 +370,21 @@ export const executePythonInSandbox = async ({
   }
 
   const wrappedCode = createWrappedCode(codeToRun, chartPath);
-  const execResult = await sandbox.runCommand({
-    args: ["-c", wrappedCode],
-    cmd: "python3",
-  });
+  const execResult = await runCodeCommand(
+    sandbox,
+    signal,
+    "/workspace/.chatjs-python/bin/python",
+    ["-c", wrappedCode]
+  );
 
-  const { outputText, chartData, execInfo } =
-    await parseExecutionOutput(execResult);
+  const { outputText, chartData, execInfo } = parseExecutionOutput(execResult);
 
   const message = buildResponseMessage({
     execInfo,
     log,
     outputText,
     requestId,
-    stderr: await execResult.stderr(),
+    stderr: execResult.stderr,
   });
 
   if (chartData) {

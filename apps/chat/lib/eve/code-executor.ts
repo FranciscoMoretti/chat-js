@@ -13,7 +13,7 @@ type CodeExecutionInput = Readonly<{
 
 type CodeExecutionContext = Pick<
   ToolContext,
-  "abortSignal" | "callId" | "session"
+  "abortSignal" | "callId" | "session" | "getSandbox"
 >;
 
 /** Providers specialize chart formats while sharing the durable output envelope. */

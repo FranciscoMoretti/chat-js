@@ -17,7 +17,7 @@ import { eveTurnAccount } from "@/lib/eve/turn-tools";
 import { codeExecutor } from "@/integrations/tools/code-executor";
 
 type ReadonlyCodeExecutionContext = Readonly<
-  Pick<ToolContext, "callId" | "session"> & {
+  Pick<ToolContext, "callId" | "session" | "getSandbox"> & {
     abortSignal: Readonly<AbortSignal>;
   }
 >;
@@ -117,6 +117,7 @@ export const executeEveCodeDocument = async function* executeEveCodeDocument(
     abortSignal: context.abortSignal,
     callId: context.callId,
     session: context.session,
+    getSandbox: context.getSandbox,
   });
   if (result.status === "error") {
     yield result;

@@ -525,8 +525,6 @@ const toolArguments = (gateway: string): string[] => {
     return [
       "--mcp",
       "--attachments",
-      "--observability",
-      "vercel-analytics,vercel-speed-insights,langfuse",
       "--video-generation-tool",
       "generate-video",
       "--image-generation-tool",
@@ -767,7 +765,7 @@ for (const gateway of [...GATEWAYS, "acme"]) {
       expect(
         await readFile(nodePath.join(cwd, ".env.example"), "utf-8")
       ).not.toMatch(
-        /^(?:TAVILY_API_KEY|FIRECRAWL_API_KEY|MCP_ENCRYPTION_KEY|LANGFUSE_SECRET_KEY|BLOB_READ_WRITE_TOKEN)=/mu
+        /^(?:TAVILY_API_KEY|FIRECRAWL_API_KEY|MCP_ENCRYPTION_KEY|BLOB_READ_WRITE_TOKEN)=/mu
       );
     }
 
@@ -779,7 +777,7 @@ for (const gateway of [...GATEWAYS, "acme"]) {
       "dependencies"
     );
     if (gateway === "vercel") {
-      expect(dependencies["@vercel/sandbox"]).toBeDefined();
+      expect(dependencies["@vercel/sandbox"]).toBeUndefined();
       expect(
         await Bun.file(
           nodePath.join(cwd, "chatjs/tools/generate-image/tool.ts")
@@ -1086,15 +1084,6 @@ assert.equal(aiConfigSchema.safeParse({ ...ai, tools: { ...ai.tools, video: { de
       );
       await run(cwd, ["bun", "run", "lint"]);
       // Reinstall the full selection while preserving user-authored registrations.
-      const installedObservability = await Promise.all(
-        ["vercel-analytics", "vercel-speed-insights", "langfuse"].map(
-          async (id) =>
-            await Bun.file(
-              nodePath.join(cwd, `chatjs/plugins/${id}/chatjs.json`)
-            ).exists()
-        )
-      );
-      expect(installedObservability).toEqual([true, true, true]);
       expect(
         await Bun.file(
           nodePath.join(cwd, "app/(chat)/api/files/upload/route.ts")
@@ -1106,9 +1095,6 @@ assert.equal(aiConfigSchema.safeParse({ ...ai, tools: { ...ai.tools, video: { de
         "add",
         "attachment-uploads",
         "mcp",
-        "vercel-analytics",
-        "vercel-speed-insights",
-        "langfuse",
         "--yes",
       ]);
       await run(cwd, ["bun", "run", "format"]);
@@ -1119,25 +1105,10 @@ assert.equal(aiConfigSchema.safeParse({ ...ai, tools: { ...ai.tools, video: { de
         ).exists()
       ).toBe(true);
       expect(
-        await readFile(
-          nodePath.join(cwd, "chatjs/providers/sandbox/adapter.ts"),
-          "utf-8"
-        )
-      ).toContain('from "./vercel-sandbox-env"');
+        await readFile(nodePath.join(cwd, "agent/sandbox.ts"), "utf-8")
+      ).toContain("VercelSandbox.environment()");
       await run(cwd, ["bun", "run", "test:types"]);
       await run(cwd, ["bun", "run", "lint"]);
-      expect(
-        await readFile(
-          nodePath.join(cwd, "chatjs/generated/installed.ts"),
-          "utf-8"
-        )
-      ).toContain("langfuse");
-      expect(
-        await readFile(
-          nodePath.join(cwd, "chatjs/generated/installed-layout.ts"),
-          "utf-8"
-        )
-      ).toContain("vercel-speed-insights");
       expect(
         await readFile(
           nodePath.join(cwd, "chatjs/generated/installed-uploads.ts"),
@@ -1375,21 +1346,11 @@ for (const installAtCreation of [false, true]) {
       "--no-electron",
       installAtCreation ? "--mcp" : "--no-mcp",
       ...(installAtCreation
-        ? [
-            "--attachments",
-            "--sandbox-provider",
-            "vercel",
-            "--observability",
-            "vercel-analytics,vercel-speed-insights,langfuse",
-          ]
+        ? ["--attachments", "--sandbox-provider", "vercel"]
         : []),
     ]);
     await Promise.all(
-      [
-        "app/(chat)/api/files/upload/route.ts",
-        "chatjs/plugins/vercel-speed-insights/chatjs.json",
-        "chatjs/plugins/langfuse/chatjs.json",
-      ].map(async (file) => {
+      ["app/(chat)/api/files/upload/route.ts"].map(async (file) => {
         expect(await Bun.file(nodePath.join(cwd, file)).exists()).toBe(
           installAtCreation
         );
@@ -1561,16 +1522,16 @@ requireCredentials("mcp", descriptor.envRequirements, {NODE_ENV: "test", MCP_ENC
   }, 180_000);
 }
 
-const DAYTONA_INSTALL_TEST_TIMEOUT_MS = 180_000;
+const NATIVE_SANDBOX_INSTALL_TEST_TIMEOUT_MS = 180_000;
 it(
-  "Daytona installs and replaces Vercel through the packed CLI",
+  "Docker installs and replaces Vercel through the packed CLI",
   async () => {
-    const cwd = nodePath.join(root, "daytona");
+    const cwd = nodePath.join(root, "docker");
     await run(root, [
       "node",
       cliEntry,
       "create",
-      "daytona",
+      "docker",
       "--yes",
       "--no-electron",
       "--gateway",
@@ -1578,7 +1539,7 @@ it(
       "--code-execution-tool",
       "code-execution",
       "--sandbox-provider",
-      "daytona",
+      "docker",
     ]);
     const executorPath = nodePath.join(
       cwd,
@@ -1613,11 +1574,8 @@ it(
     );
     expect(executor).toContain("code-execution/tool");
     expect(
-      await readFile(
-        nodePath.join(cwd, "chatjs/providers/sandbox/provider.ts"),
-        "utf-8"
-      )
-    ).toContain("createDaytonaProvider");
+      await readFile(nodePath.join(cwd, "agent/sandbox.ts"), "utf-8")
+    ).toContain("DockerSandbox.environment");
     await run(cwd, ["bun", "run", "test:types"]);
     await run(cwd, [
       "node",
@@ -1630,25 +1588,22 @@ it(
     ]);
     expect(await readFile(executorPath, "utf-8")).toBe(executor);
     expect(
-      await readFile(
-        nodePath.join(cwd, "chatjs/providers/sandbox/provider.ts"),
-        "utf-8"
-      )
-    ).toContain("resolveSandboxAuth");
+      await readFile(nodePath.join(cwd, "agent/sandbox.ts"), "utf-8")
+    ).toContain("VercelSandbox.environment");
     await run(cwd, ["bun", "run", "test:types"]);
     await run(cwd, [
       "node",
       cliEntry,
       "add",
       "--sandbox-provider",
-      "daytona",
+      "docker",
       "--replace",
       "--yes",
     ]);
     expect(await readFile(executorPath, "utf-8")).toBe(executor);
     expect(
       await readFile(nodePath.join(cwd, ".env.example"), "utf-8")
-    ).toContain("DAYTONA_API_KEY");
+    ).not.toContain("VERCEL_TOKEN");
     expect(
       await Bun.file(
         nodePath.join(cwd, "chatjs/providers/sandbox/persistent.ts")
@@ -1657,7 +1612,7 @@ it(
     await run(cwd, ["bun", "run", "test:types"]);
     await run(cwd, ["bun", "run", "lint"]);
   },
-  DAYTONA_INSTALL_TEST_TIMEOUT_MS
+  NATIVE_SANDBOX_INSTALL_TEST_TIMEOUT_MS
 );
 
 testChatPluginSelections(root, cliEntry);

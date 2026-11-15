@@ -416,26 +416,6 @@ const scaffoldFromTemplate = async (
     packageJsonPath,
     `${JSON.stringify(packageJson, null, JSON_INDENTATION_SPACES)}\n`
   );
-  await mkdir(pathModule.join(destination, "chatjs/providers/sandbox"), {
-    recursive: true,
-  });
-  await writeFile(
-    pathModule.join(destination, "chatjs/providers/sandbox/provider.ts"),
-    `import type { SandboxProvider } from "@chat-js/sandboxes/provider";
-
-export const createSandboxProvider: (() => SandboxProvider) | undefined = undefined;
-export const supportsPersistentSandbox = false;
-`
-  );
-  await writeFile(
-    pathModule.join(destination, "chatjs/providers/sandbox/options.ts"),
-    `import type { EnvRequirement } from "@/lib/config-requirements";
-
-const sandboxId = "";
-const sandboxEnvRequirements: EnvRequirement[] = [];
-export { sandboxId, sandboxEnvRequirements };
-`
-  );
 
   const manifest = parseJsonObject(
     await readFile(packageJsonPath, "utf-8"),

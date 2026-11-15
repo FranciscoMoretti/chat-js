@@ -1,28 +1,16 @@
 import { expect, it, vi } from "vitest";
+import type { SandboxSession } from "eve/sandbox";
 import type { Logger } from "pino";
 import type { MockInstance } from "vitest";
-import { Sandbox } from "@vercel/sandbox";
 import { executePythonInSandbox } from "@/chatjs/tools/_shared/code-execution/python";
 import pino from "pino";
 
-const mocks = vi.hoisted(() => ({ runCommand: vi.fn() }));
-vi.mock(
-  "@vercel/sandbox",
-  (): {
-    Sandbox: { create: () => { runCommand: typeof mocks.runCommand } };
-  } => ({
-    Sandbox: {
-      create: (): { runCommand: typeof mocks.runCommand } => ({
-        runCommand: mocks.runCommand,
-      }),
-    },
-  })
-);
+const mocks = vi.hoisted(() => ({ run: vi.fn<SandboxSession["run"]>() }));
 const SUCCESS_EXIT_CODE = 0;
 const FAILED_EXIT_CODE = 1;
-const PIP_COMMAND_ORDINAL = 2;
-const CHART_COMMAND_COUNT = 2;
-const FALLBACK_COMMAND_COUNT = 3;
+const PIP_COMMAND_ORDINAL = 3;
+const CHART_COMMAND_COUNT = 3;
+const FALLBACK_COMMAND_COUNT = 4;
 
 it.each([
   {
@@ -43,20 +31,34 @@ it.each([
 ])(
   "parses the execution status trailer $trailer",
   async ({ trailer, expectedMessage }) => {
-    mocks.runCommand.mockReset();
-    mocks.runCommand
-      .mockResolvedValueOnce({ exitCode: SUCCESS_EXIT_CODE })
+    mocks.run.mockReset();
+    mocks.run
       .mockResolvedValueOnce({
         exitCode: SUCCESS_EXIT_CODE,
-        stderr: (): string => "",
-        stdout: (): string => `printed output\n${trailer}`,
+        stdout: "",
+        stderr: "",
       })
-      .mockResolvedValueOnce({ exitCode: FAILED_EXIT_CODE });
+      .mockResolvedValueOnce({
+        exitCode: SUCCESS_EXIT_CODE,
+        stdout: "",
+        stderr: "",
+      })
+      .mockResolvedValueOnce({
+        exitCode: SUCCESS_EXIT_CODE,
+        stderr: "",
+        stdout: `printed output\n${trailer}`,
+      })
+      .mockResolvedValueOnce({
+        exitCode: FAILED_EXIT_CODE,
+        stdout: "",
+        stderr: "",
+      });
     const result = await executePythonInSandbox({
       code: "print('output')",
       log: pino({ level: "silent" }),
       requestId: "execution-envelope",
-      sandbox: await Sandbox.create(),
+      sandbox: { run: mocks.run },
+      signal: new AbortController().signal,
     });
     expect(result.message).toBe(expectedMessage);
     expect(result.chart).toBe("");
@@ -74,19 +76,33 @@ const createPipRedactionFixture = (
   const log = pino({ level: "silent" });
   const info = vi.spyOn(log, "info");
   const error = vi.spyOn(log, "error");
-  mocks.runCommand.mockReset();
-  mocks.runCommand
-    .mockResolvedValueOnce({ exitCode: SUCCESS_EXIT_CODE })
+  mocks.run.mockReset();
+  mocks.run
     .mockResolvedValueOnce({
-      exitCode,
-      stderr: (): string => `Could not install ${packageUrl}`,
+      exitCode: SUCCESS_EXIT_CODE,
+      stdout: "",
+      stderr: "",
     })
     .mockResolvedValueOnce({
       exitCode: SUCCESS_EXIT_CODE,
-      stderr: (): string => "",
-      stdout: (): string => '{"success":true}',
+      stdout: "",
+      stderr: "",
     })
-    .mockResolvedValueOnce({ exitCode: FAILED_EXIT_CODE });
+    .mockResolvedValueOnce({
+      exitCode,
+      stdout: "",
+      stderr: `Could not install ${packageUrl}`,
+    })
+    .mockResolvedValueOnce({
+      exitCode: SUCCESS_EXIT_CODE,
+      stderr: "",
+      stdout: '{"success":true}',
+    })
+    .mockResolvedValueOnce({
+      exitCode: FAILED_EXIT_CODE,
+      stdout: "",
+      stderr: "",
+    });
   return {
     error,
     info,
@@ -108,13 +124,13 @@ it.each([SUCCESS_EXIT_CODE, FAILED_EXIT_CODE])(
       code: `!pip install ${packageUrl}\nprint(4)`,
       log,
       requestId: "test-request",
-      sandbox: await Sandbox.create(),
+      sandbox: { run: mocks.run },
+      signal: new AbortController().signal,
     });
 
-    expect(mocks.runCommand).toHaveBeenNthCalledWith(PIP_COMMAND_ORDINAL, {
-      args: ["install", packageUrl],
-      cmd: "pip",
-    });
+    const command = mocks.run.mock.calls[PIP_COMMAND_ORDINAL - 1]?.[0];
+    expect(command?.command).toContain(packageUrl);
+    expect(command?.signal).toBeInstanceOf(AbortSignal);
     expect(info).toHaveBeenCalledWith(
       { packageCount: 1, requestId: "test-request" },
       "installing extra packages"
@@ -184,24 +200,37 @@ it.each([
         }>;
     commandCount: number;
   }>): Promise<void> => {
-    mocks.runCommand.mockReset();
-    mocks.runCommand
-      .mockResolvedValueOnce({ exitCode: SUCCESS_EXIT_CODE })
+    mocks.run.mockReset();
+    mocks.run
       .mockResolvedValueOnce({
         exitCode: SUCCESS_EXIT_CODE,
-        stderr: (): string => "",
-        stdout: (): string =>
-          `printed output\n__CHART_JSON__:${chart}\n{"success":true}`,
+        stdout: "",
+        stderr: "",
       })
-      .mockResolvedValueOnce({ exitCode: FAILED_EXIT_CODE });
+      .mockResolvedValueOnce({
+        exitCode: SUCCESS_EXIT_CODE,
+        stdout: "",
+        stderr: "",
+      })
+      .mockResolvedValueOnce({
+        exitCode: SUCCESS_EXIT_CODE,
+        stderr: "",
+        stdout: `printed output\n__CHART_JSON__:${chart}\n{"success":true}`,
+      })
+      .mockResolvedValueOnce({
+        exitCode: FAILED_EXIT_CODE,
+        stdout: "",
+        stderr: "",
+      });
     const result = await executePythonInSandbox({
       code: "print('output')",
       log: pino({ level: "silent" }),
       requestId: "chart-envelope",
-      sandbox: await Sandbox.create(),
+      sandbox: { run: mocks.run },
+      signal: new AbortController().signal,
     });
     expect(result.message).toBe("printed output");
     expect(result.chart).toEqual(expectedChart);
-    expect(mocks.runCommand).toHaveBeenCalledTimes(commandCount);
+    expect(mocks.run).toHaveBeenCalledTimes(commandCount);
   }
 );

@@ -23,9 +23,9 @@ const definition = (
 ): ReturnType<typeof toolDefinitionSchema.parse> =>
   toolDefinitionSchema.parse({
     codeExecutionCapabilities: {
-      cancellation: "terminate",
-      cleanup: "durable-allocation",
-      files: "ephemeral",
+      cancellation: "eve",
+      cleanup: "eve-session",
+      files: "session",
       languages: ["python", "javascript"],
       timeout: "bounded",
       usage: "single-receipt",

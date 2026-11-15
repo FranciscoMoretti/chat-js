@@ -60,12 +60,9 @@ const demoInstallation = installationSelectionSchema.parse({
     "sharing",
     "mcp",
     "attachment-uploads",
-    "vercel-analytics",
-    "vercel-speed-insights",
-    "langfuse",
   ],
   gateway: "vercel",
-  sandbox: "vercel",
+  sandbox: "default",
   storage: { source: "vercel-blob" },
   tools: [
     "word-count",

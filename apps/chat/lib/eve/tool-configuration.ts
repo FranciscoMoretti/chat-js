@@ -1,7 +1,6 @@
 import { toolRequirements } from "../../chatjs/generated/tool-requirements";
 import { gatewayEnvRequirements } from "../../chatjs/providers/gateway-defaults";
 import { storageEnvRequirements } from "../../chatjs/providers/storage-options";
-import { sandboxEnvRequirements } from "../../chatjs/providers/sandbox/options";
 import { inspectToolConfiguration } from "../tool-readiness";
 
 export const missingToolConfiguration = (
@@ -15,7 +14,6 @@ export const missingToolConfiguration = (
         {
           gateway: gatewayEnvRequirements,
           storage: storageEnvRequirements,
-          sandbox: sandboxEnvRequirements,
         },
         environment
       )

@@ -169,10 +169,10 @@ test("validates plugin dependencies and exclusive storage slots before writing",
     fetch(request: Readonly<Pick<Request, "url">>): Response {
       const name = new URL(request.url).pathname.slice(1).replace(".json", "");
       const chatjs =
-        name === "langfuse"
+        name === "custom-service"
           ? {
               contractVersion: 1,
-              id: "langfuse",
+              id: "custom-service",
               kind: "plugin",
               requiresPlugins: ["mcp"],
             }
@@ -198,7 +198,7 @@ test("validates plugin dependencies and exclusive storage slots before writing",
   try {
     await rejects(
       planInstallation(root, {
-        plugins: [`${source}/langfuse.json`],
+        plugins: [`${source}/custom-service.json`],
         tools: [],
       }),
       (reason: unknown) => {
@@ -209,14 +209,14 @@ test("validates plugin dependencies and exclusive storage slots before writing",
       }
     );
     const plan = await planInstallation(root, {
-      plugins: [`${source}/mcp.json`, `${source}/langfuse.json`],
+      plugins: [`${source}/mcp.json`, `${source}/custom-service.json`],
       tools: [],
     });
     expect(
       plan.plugins
         .map((plugin: { readonly id: string }): string => plugin.id)
         .toSorted()
-    ).toEqual(["langfuse", "mcp"]);
+    ).toEqual(["custom-service", "mcp"]);
     await rejects(
       planInstallation(root, {
         plugins: [`${source}/mcp.json`],
@@ -238,10 +238,10 @@ test("validates plugin dependencies and exclusive storage slots before writing",
     );
     expect(
       await planInstallation(root, {
-        plugins: [`${source}/langfuse.json`],
+        plugins: [`${source}/custom-service.json`],
         tools: [],
       })
-    ).toMatchObject({ plugins: [{ id: "langfuse" }] });
+    ).toMatchObject({ plugins: [{ id: "custom-service" }] });
     await rejects(
       planInstallation(root, {
         plugins: [],

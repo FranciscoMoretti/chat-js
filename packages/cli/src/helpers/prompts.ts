@@ -102,7 +102,6 @@ const AUTH_LABELS: Record<AuthProvider, string> = {
 };
 
 const PROMPT_CANCEL_EXIT_CODE = 1;
-const OBSERVABILITY_CANCEL_EXIT_CODE = 0;
 
 const handleCancel: <PromptValue>(
   value: PromptValue
@@ -588,32 +587,22 @@ const promptSearchTool = async (skipPrompt: boolean): Promise<string> => {
 const promptCodeExecutionTool = async (_skipPrompt: boolean): Promise<string> =>
   await Promise.resolve("code-execution");
 const promptSandbox = async (
-  skipPrompt: boolean,
-  required: boolean,
-  persistent = false
+  skipPrompt: boolean
 ): Promise<string | undefined> => {
   if (skipPrompt) {
-    if (required) {
-      throw new Error(
-        persistent
-          ? "Attachment uploads require a persistent sandbox. Pass --sandbox-provider vercel or a compatible external provider."
-          : "Code execution requires --sandbox-provider vercel or daytona."
-      );
-    }
-    return undefined;
+    return "default";
   }
   const choice = await select({
-    message: persistent
-      ? "Uploads require persistent files. Which sandbox provider should the app use?"
-      : "Which sandbox provider should the app use?",
+    message: "Which native EVE sandbox should the agent use?",
     options: [
-      ...(required ? [] : [{ label: "None", value: "none" }]),
+      { label: "Automatic (EVE default)", value: "default" },
       { label: "Vercel Sandbox", value: "vercel" },
-      ...(persistent ? [] : [{ label: "Daytona", value: "daytona" }]),
+      { label: "Docker", value: "docker" },
+      { label: "just-bash (no native Python or Node)", value: "just-bash" },
     ],
   });
   handleCancel(choice);
-  return choice === "none" ? undefined : choice;
+  return choice;
 };
 const promptUrlRetrievalTool = async (skipPrompt: boolean): Promise<string> => {
   if (skipPrompt) {
@@ -712,27 +701,6 @@ const promptVideoGenerationTool = async (
   handleCancel(address);
   return address.trim();
 };
-// One optional group; new applications never enable telemetry by default.
-const promptObservability = async (yes: boolean): Promise<string[]> => {
-  if (yes) {
-    return [];
-  }
-  const result = await multiselect({
-    initialValues: [],
-    message: "Optional observability integrations",
-    options: [
-      { label: "Vercel Analytics", value: "vercel-analytics" },
-      { label: "Vercel Speed Insights", value: "vercel-speed-insights" },
-      { label: "Langfuse", value: "langfuse" },
-    ],
-    required: false,
-  });
-  if (isCancel(result)) {
-    cancel("Operation cancelled.");
-    process.exit(OBSERVABILITY_CANCEL_EXIT_CODE);
-  }
-  return result;
-};
 export {
   promptAssistantTools,
   promptAuth,
@@ -743,7 +711,6 @@ export {
   promptElectron,
   promptGateway,
   promptImageGenerationTool,
-  promptObservability,
   promptProjectName,
   promptSearchTool,
   promptStorage,

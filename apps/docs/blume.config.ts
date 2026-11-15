@@ -141,9 +141,6 @@ export default defineConfig({
             "/plugins/followup-suggestions",
             "/plugins/mcp",
             "/plugins/attachments",
-            "/plugins/vercel-analytics",
-            "/plugins/vercel-speed-insights",
-            "/plugins/langfuse",
           ],
         },
         {

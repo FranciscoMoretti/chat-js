@@ -1,9 +1,7 @@
 "use client";
 
 import {
-  Activity,
   ArrowRight,
-  ChartNoAxesColumnIncreasing,
   FileText,
   Folder,
   Info,
@@ -12,7 +10,6 @@ import {
   Monitor,
   Plug,
   Puzzle,
-  Route,
   Search,
   SlidersHorizontal,
   TextCursorInput,
@@ -24,13 +21,7 @@ import type { InstallationCatalogItem } from "../../../../packages/registry/inst
 import { Button } from "@/vendor/shadcn-create/styles/base-nova/ui/button";
 import { Checkbox } from "@/vendor/shadcn-create/styles/base-nova/ui/checkbox";
 import { Switch } from "@/vendor/shadcn-create/styles/base-nova/ui/switch";
-import {
-  Field,
-  FieldContent,
-  FieldDescription,
-  FieldLabel,
-  FieldTitle,
-} from "@/vendor/shadcn-create/styles/base-nova/ui/field";
+import { FieldLabel } from "@/vendor/shadcn-create/styles/base-nova/ui/field";
 import {
   Popover,
   PopoverTrigger,
@@ -39,6 +30,8 @@ import {
   PopoverTitle,
   PopoverDescription,
 } from "@/vendor/shadcn-create/styles/base-nova/ui/popover";
+import { SetupTile, setupTileGrid, setupTileControl } from "./setup-tile";
+import { SetupProviderMark } from "./setup-provider-mark";
 import { CapabilityRow } from "./capability-row";
 import type { InstallationSelection } from "../../../../packages/registry/installation";
 import { useInstallation } from "./installation-provider";
@@ -59,9 +52,6 @@ const pluginIcons: Readonly<Partial<Record<string, LucideIcon>>> = {
   mcp: Plug,
   "guest-chat": MessageSquare,
   credits: Wallet,
-  "vercel-analytics": ChartNoAxesColumnIncreasing,
-  "vercel-speed-insights": Activity,
-  langfuse: Route,
   desktop: Monitor,
 };
 
@@ -88,6 +78,10 @@ const FeatureIcon = ({
   );
 };
 
+const setupCaptions: Readonly<Record<string, string>> = {
+  desktop: "Desktop app",
+};
+
 export const FeatureChoices = ({
   items,
   cards = false,
@@ -106,9 +100,7 @@ export const FeatureChoices = ({
     return null;
   }
   const applySelection = onSelectionChange ?? update;
-  const gridClass = compact
-    ? "grid gap-2 md:grid-cols-2"
-    : "grid gap-3 sm:grid-cols-2";
+  const gridClass = compact ? "grid gap-3 md:grid-cols-2" : setupTileGrid;
   return (
     <div className={cards || compact ? gridClass : "divide-y"}>
       {items.map((item) => {
@@ -160,7 +152,7 @@ export const FeatureChoices = ({
                   size="icon"
                   className={
                     cards
-                      ? "text-muted-foreground absolute end-3 top-3 size-7"
+                      ? "text-muted-foreground absolute start-1 top-1 size-7"
                       : "text-muted-foreground size-7"
                   }
                 />
@@ -188,6 +180,8 @@ export const FeatureChoices = ({
             <CapabilityRow
               key={item.name}
               title={item.title}
+              visualId={`@chatjs/${item.name}`}
+              category="tool"
               description={item.description}
               source="ChatJS"
               requiresChatJS={requiresChatjs(definition)}
@@ -195,43 +189,21 @@ export const FeatureChoices = ({
               checked={selected}
               disabled={control.disabled}
               onCheckedChange={onCheckedChange}
-              action={details}
+              details={dependency === null ? undefined : <p>{dependency}</p>}
             />
           );
         }
         if (cards) {
           return (
-            <div key={item.name} className="relative h-full">
-              <FieldLabel
-                htmlFor={control.id}
-                className="h-full cursor-pointer"
-              >
-                <Field
-                  orientation="horizontal"
-                  className="h-full min-h-28 gap-4 p-4!"
-                >
-                  <FieldContent className="min-w-0 gap-2">
-                    <span className="text-muted-foreground text-xs">
-                      Source: ChatJS
-                    </span>
-                    {requiresChatjs(definition) && (
-                      <span className="text-muted-foreground text-xs">
-                        Requires ChatJS
-                      </span>
-                    )}
-                    <FieldTitle>
-                      {icon}
-                      {item.title}
-                    </FieldTitle>
-                    <FieldDescription className="text-xs leading-relaxed">
-                      {item.description}
-                    </FieldDescription>
-                  </FieldContent>
-                  <Checkbox {...control} className="me-8 mt-0.5" />
-                </Field>
-              </FieldLabel>
-              {details}
-            </div>
+            <SetupTile
+              key={item.name}
+              title={item.title}
+              caption={setupCaptions[id] ?? "Optional feature"}
+              controlId={control.id}
+              visual={<SetupProviderMark id={id} />}
+              control={<Checkbox {...control} className={setupTileControl} />}
+              action={details}
+            />
           );
         }
         return (

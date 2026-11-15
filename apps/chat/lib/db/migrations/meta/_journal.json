@@ -183,6 +183,13 @@
       "when": 1794561876308,
       "tag": "0026_loving_mesmero",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1794686052068,
+      "tag": "0027_misty_stephen_strange",
+      "breakpoints": true
     }
   ]
 }

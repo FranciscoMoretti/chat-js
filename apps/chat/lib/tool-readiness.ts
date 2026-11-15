@@ -7,16 +7,13 @@ export interface ToolRequirements {
   readonly requiresTools: readonly string[];
   readonly requiresGateway: boolean;
   readonly requiresStorage: boolean;
-  readonly requiresSandbox: boolean;
 }
 
 /** Configuration presence only. No credential values, network requests, or connection claims. */
 export const inspectToolConfiguration = (
   name: string,
   tools: Readonly<Partial<Record<string, ToolRequirements>>>,
-  providers: Readonly<
-    Record<"gateway" | "storage" | "sandbox", readonly EnvRequirement[]>
-  >,
+  providers: Readonly<Record<"gateway" | "storage", readonly EnvRequirement[]>>,
   environment: Readonly<NodeJS.ProcessEnv>
 ): string[] => {
   const visiting = new Set<string>();
@@ -33,7 +30,6 @@ export const inspectToolConfiguration = (
       ...definition.envRequirements,
       ...(definition.requiresGateway ? providers.gateway : []),
       ...(definition.requiresStorage ? providers.storage : []),
-      ...(definition.requiresSandbox ? providers.sandbox : []),
     ];
     const missing = requirements.flatMap((requirement) => {
       const message = getMissingRequirement(requirement, environment);

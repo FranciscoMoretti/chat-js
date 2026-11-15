@@ -234,14 +234,15 @@ export const ProjectForm = ({
                             className="flex justify-between gap-4"
                           >
                             <dt className="text-muted-foreground capitalize">
-                              {kind}
+                              {kind === "sandbox" ? "Sandbox" : kind}
                             </dt>
                             <dd className="text-right">
                               {catalog.find(
                                 (item) =>
                                   item.definition?.kind === kind &&
                                   item.definition.id === source
-                              )?.title ?? "None"}
+                              )?.title ??
+                                (kind === "sandbox" ? "Automatic" : "None")}
                             </dd>
                           </div>
                         );

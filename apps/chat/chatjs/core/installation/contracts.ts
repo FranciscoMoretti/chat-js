@@ -31,10 +31,7 @@ interface AttachmentUploadIntegration {
 }
 
 /** Optional startup registrations; core lifecycle runs independently. */
-type InstrumentationRegistration = (context: {
-  readonly appPrefix: string;
-  readonly runtime: string | undefined;
-}) => void | Promise<void>;
+type InstrumentationRegistration = () => void | Promise<void>;
 export type {
   ModelVisibility,
   AttachmentUploadBehavior,

@@ -443,9 +443,6 @@ const renderToolRegistrations = (
                   requiresTools: item.requiresTools,
                   requiresGateway: (item.requiresGateway?.length ?? 0) > 0,
                   requiresStorage: item.requiresStorage === true,
-                  requiresSandbox:
-                    item.requiresSandbox === true ||
-                    item.requiresPersistentSandbox === true,
                 },
               ])
             )

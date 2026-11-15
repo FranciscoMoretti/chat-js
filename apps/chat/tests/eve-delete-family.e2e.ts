@@ -4,14 +4,9 @@ import postgres from "postgres";
 import { afterAll, expect, test, vi } from "vitest";
 
 import { db } from "../lib/db/client";
-import {
-  recordEveCodeSandboxDeletion,
-  reserveEveCodeSandbox,
-} from "../lib/db/eve-code-sandboxes";
 import { insertEveConversationFixtures } from "./eve-conversation-fixture";
 import {
   eveChat,
-  eveCodeSandbox,
   eveConversation,
   eveWorkspace,
   eveStoredFile,
@@ -22,11 +17,6 @@ import { env } from "../lib/env";
 import { deleteLocalEveConversationFamily } from "../lib/eve/delete-local-conversation";
 import { assertEveTestDatabase } from "./eve-test-database";
 
-const provider = {
-  providerId: "vercel",
-  scopeId: "fixture-project",
-  accountId: "fixture-team",
-};
 vi.mock("server-only", () => ({}));
 // Real app/native PostgreSQL deletion with a mocked external sandbox and blob provider.
 const providers = vi.hoisted(() => ({
@@ -54,7 +44,6 @@ await db.insert(user).values({
   name: "Deletion fixture",
 });
 afterAll(async () => {
-  await db.delete(eveCodeSandbox).where(eq(eveCodeSandbox.ownerId, owner));
   await db.delete(eveFileReference).where(eq(eveFileReference.ownerId, owner));
   await db.delete(eveStoredFile).where(eq(eveStoredFile.ownerId, owner));
   await db.delete(eveConversation).where(eq(eveConversation.ownerId, owner));
@@ -94,35 +83,15 @@ const fixture = async (parentId?: string) => {
   return { ...conversation, sessionId };
 };
 
-test("full deletion keeps uncertain resources pending, then erases only its family and retries after payload removal", async () => {
+test("full deletion erases only its family and retries after payload removal", async () => {
   const target = await fixture();
   const child = await fixture(target.id);
   const unrelated = await fixture();
-  const name = await reserveEveCodeSandbox(
-    owner,
-    target.id,
-    "unallocated-fixture",
-    provider
-  );
-  await expect(
-    deleteLocalEveConversationFamily(owner, target.chatId)
-  ).rejects.toThrow("uncertain code sandbox creation");
-  expect(
-    await native`select id from workflow.workflow_runs where id = ${target.sessionId}`
-  ).toHaveLength(1);
-  const [pending] = await db
-    .select()
-    .from(eveConversation)
-    .where(eq(eveConversation.id, target.id));
-  expect(pending.state).toBe("deleting");
-  expect(pending.chatId).not.toBe(target.id);
-  // The test never invoked an allocator for this reservation.
-  await recordEveCodeSandboxDeletion(owner, target.id, name);
   expect(await deleteLocalEveConversationFamily(owner, target.chatId)).toEqual({
-    rootId: pending.chatId,
+    rootId: target.chatId,
   });
   expect(await deleteLocalEveConversationFamily(owner, target.chatId)).toEqual({
-    rootId: pending.chatId,
+    rootId: target.chatId,
   });
   await Promise.all(
     [target, child].map(async (member) => {
@@ -145,7 +114,7 @@ test("full deletion keeps uncertain resources pending, then erases only its fami
   const [deletedChat] = await db
     .select()
     .from(eveChat)
-    .where(eq(eveChat.id, pending.chatId));
+    .where(eq(eveChat.id, target.chatId));
   expect(deletedChat).toMatchObject({
     activeConversationId: null,
     title: "",

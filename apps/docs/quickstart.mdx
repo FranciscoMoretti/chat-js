@@ -94,14 +94,12 @@ Once you're running locally, deploy your app:
 
 <Accordion>
 <AccordionItem title="Optional Features">
-  New apps omit uploads, MCP and observability by default. Install an optional integration with the CLI before configuring its credentials. Installed Langfuse requires both `LANGFUSE_PUBLIC_KEY` and `LANGFUSE_SECRET_KEY` before Node startup. The cleanup cron route ships with every app and only needs `CRON_SECRET`. It requires no integration install.
+  New apps omit uploads and MCP by default. Install an optional integration with the CLI before configuring its credentials. The cleanup cron route ships with every app and only needs `CRON_SECRET`. It requires no integration install.
 
 | Variable | Feature | Setup Guide |
 | --- | --- | --- |
 | `TAVILY_API_KEY` | Web search | [Tavily](https://app.tavily.com) |
 | `FIRECRAWL_API_KEY` | Web search | [Firecrawl](https://firecrawl.dev) |
-| `LANGFUSE_PUBLIC_KEY` | LLM observability | [Langfuse](https://langfuse.com) |
-| `LANGFUSE_SECRET_KEY` | LLM observability | [Langfuse](https://langfuse.com) |
 | `MCP_ENCRYPTION_KEY` | MCP connectors | `openssl rand -base64 32` (must be exactly 44 chars) |
 | `CRON_SECRET` | Cleanup cron job | [Generate](https://generate-secret.vercel.app/32) |
 

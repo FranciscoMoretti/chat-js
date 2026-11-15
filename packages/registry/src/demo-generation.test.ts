@@ -260,17 +260,11 @@ process.exit(0);
     // Fresh preset imports remove an installed plugin and its ownership.
     const preset = "packages/registry/installation.ts";
     const previousPreset = await read(preset);
-    await write(
-      preset,
-      previousPreset.replace('    "vercel-analytics",\n', "")
-    );
+    await write(preset, previousPreset.replace('    "feedback",\n', ""));
     await run([preset]);
     expect(
       await Bun.file(
-        path.join(
-          fixture,
-          "apps/chat/chatjs/plugins/vercel-analytics/chatjs.json"
-        )
+        path.join(fixture, "apps/chat/chatjs/plugins/feedback/chatjs.json")
       ).exists()
     ).toBe(false);
     // Exercise the production process adapter, including its incremental cache.

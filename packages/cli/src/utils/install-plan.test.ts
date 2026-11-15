@@ -42,9 +42,9 @@ const server = (): Bun.Server<undefined> =>
           ? {}
           : {
               codeExecutionCapabilities: {
-                cancellation: "terminate",
-                cleanup: "durable-allocation",
-                files: "ephemeral",
+                cancellation: "eve",
+                cleanup: "eve-session",
+                files: "session",
                 languages: ["python", "javascript"],
                 timeout: "bounded",
                 usage: "single-receipt",
@@ -585,10 +585,11 @@ test("provider installation refuses inferred native dependency destinations befo
   }
 }, 30_000);
 
-test("failed fresh registration restores the scaffold sandbox selection", async () => {
+test("failed registration restores an existing native sandbox file", async () => {
   const root = await fixture();
-  const target = path.join(root, "chatjs/providers/sandbox/options.ts");
-  const original = await readFile(target, "utf-8");
+  const target = path.join(root, "agent/sandbox.ts");
+  const original = 'export default "custom native sandbox";\n';
+  await writeFile(target, original);
   const plan = await planInstallation(
     root,
     { plugins: [], tools: [] },
@@ -600,10 +601,10 @@ test("failed fresh registration restores the scaffold sandbox selection", async 
       plan,
       {
         fresh: true,
-        managedTargets: ["chatjs/providers/sandbox/options.ts"],
+        managedTargets: ["agent/sandbox.ts"],
       },
       async () => {
-        await writeFile(target, 'export const sandboxId = "daytona";');
+        await writeFile(target, 'export default "replacement";');
         throw new Error("registration failed");
       }
     ),

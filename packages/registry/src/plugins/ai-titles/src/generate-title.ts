@@ -2,7 +2,6 @@ import { settleEveRootFallbackTitle } from "@/lib/db/eve-title";
 import { generateText } from "ai";
 
 import { getLanguageModel } from "@/lib/ai/providers";
-import { chatTelemetry } from "@/lib/ai/telemetry";
 import { config } from "@/lib/config";
 import {
   isEveRootTitlePending,
@@ -50,7 +49,6 @@ Rules (strictly follow all):
       maxRetries: 0,
       model: await getLanguageModel(config.ai.workflows.title),
       prompt: JSON.stringify(message),
-      telemetry: { integrations: chatTelemetry, isEnabled: true },
     });
     const title = normalizeGeneratedTitle(text);
 

@@ -246,4 +246,4 @@ A task returns `{ deletedCount, retiredCount?, pendingCount?, skipped }` for one
 
 The authenticated cron endpoint and hosted draining script consume this common result. Plugins own inventory and retry policy. Core retains the native deletion fences and purge verification for providers that support purge. Managed guest retention uses terminal-session evidence instead. The Vercel cron drains progressing batches within a time and batch budget; incomplete work remains retryable. The cleanup contribution does not add a scheduler framework.
 
-All installed instrumentation registrations start independently. One exporter's failure still propagates to Next.js, but cannot prevent another plugin's local cleanup registration from starting.
+Installed application startup registrations use the zero-argument `instrumentation` callback. Next.js starts every registration even if another throws, and propagates failures. Guest Chat uses this callback for development-only cleanup. Agent observability uses native EVE instrumentation under `agent/instrumentation/`.

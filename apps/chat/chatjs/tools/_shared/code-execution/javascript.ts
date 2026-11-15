@@ -1,3 +1,4 @@
+import { runCodeCommand } from "./sandbox-command";
 import type { CodeExecutionContext, CodeExecutionResult } from "./types";
 
 const SUCCESS_EXIT_CODE = 0;
@@ -131,16 +132,16 @@ const findExecutionTrailer = (
   };
 };
 
-const parseExecutionOutput = async (
+const parseExecutionOutput = (
   execResult: Readonly<{
-    stdout: () => Promise<string>;
+    stdout: string;
     exitCode: number;
   }>
-): Promise<{
+): {
   outputText: string;
   execInfo: unknown;
-}> => {
-  const stdout = await execResult.stdout();
+} => {
+  const { stdout } = execResult;
   const lines = (stdout ?? "").split("\n");
   const trailer = findExecutionTrailer(lines);
 
@@ -199,19 +200,21 @@ export const executeJavaScriptInSandbox = async ({
   code,
   log,
   requestId,
+  signal,
 }: Readonly<
-  Pick<CodeExecutionContext, "code" | "requestId"> & {
-    sandbox: Readonly<Pick<CodeExecutionContext["sandbox"], "runCommand">>;
+  Pick<CodeExecutionContext, "code" | "requestId" | "signal"> & {
+    sandbox: Readonly<Pick<CodeExecutionContext["sandbox"], "run">>;
     log: Readonly<Pick<CodeExecutionContext["log"], "error">>;
   }
 >): Promise<CodeExecutionResult> => {
-  const execResult = await sandbox.runCommand({
-    args: ["--input-type=module", "-e", createWrappedCode(code)],
-    cmd: "node",
-  });
+  const execResult = await runCodeCommand(sandbox, signal, "node", [
+    "--input-type=module",
+    "-e",
+    createWrappedCode(code),
+  ]);
 
-  const { outputText, execInfo } = await parseExecutionOutput(execResult);
-  const stderr = await execResult.stderr();
+  const { outputText, execInfo } = parseExecutionOutput(execResult);
+  const { stderr } = execResult;
   return {
     chart: "",
     message: formatExecutionMessage(

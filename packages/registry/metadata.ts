@@ -47,9 +47,9 @@ const toolRegistrationSchema = z.object({
 });
 
 const executionCapabilities = z.object({
-  cancellation: z.literal("terminate"),
-  cleanup: z.literal("durable-allocation"),
-  files: z.literal("ephemeral"),
+  cancellation: z.literal("eve"),
+  cleanup: z.literal("eve-session"),
+  files: z.literal("session"),
   languages: z
     .array(z.enum(["python", "javascript"]))
     .refine(
@@ -89,8 +89,7 @@ const toolDefinitionBase = z.object({
   kind: z.literal("tool"),
   requiresGateway: z.array(z.enum(["image", "video"])).optional(),
   requiresStorage: z.literal(true).optional(),
-  requiresPersistentSandbox: z.literal(true).optional(),
-  requiresSandbox: z.literal(true).optional(),
+  requiresNativeProcesses: z.literal(true).optional(),
   requiresTools: z.array(identifier).default([]),
   slot: z
     .enum([
@@ -181,7 +180,6 @@ const pluginDefinitionBase = z.object({
   envRequirements: z.array(envRequirementSchema).optional(),
   requiresPlugins: z.array(pluginIdSchema).optional(),
   requiresStorage: z.literal(true).optional(),
-  requiresPersistentSandbox: z.literal(true).optional(),
   chat: z.object({ export: identifier }).optional(),
   billing: z.object({ export: identifier }).optional(),
   signedOut: z.object({ export: identifier }).optional(),

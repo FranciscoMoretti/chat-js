@@ -1,47 +1,57 @@
-import { beforeEach, expect, it, vi } from "vitest";
+import { expect, it, vi } from "vitest";
 import { testToolContext } from "@/tests/helpers/eve-tool-context";
+import type { SandboxSession } from "eve/sandbox";
 
-const mocks = vi.hoisted(() => ({ execute: vi.fn() }));
 vi.mock("@/lib/logger", () => ({
-  createModuleLogger: (): { error: ReturnType<typeof vi.fn> } => ({
-    error: vi.fn(),
-  }),
+  createModuleLogger: () => ({ error: vi.fn(), info: vi.fn() }),
 }));
-vi.mock("@/lib/eve/code-sandbox-ownership", () => ({
-  eveCodeSandboxOwnership: vi.fn(),
-}));
-vi.mock("@/lib/sandbox/runtime", () => ({ getSandboxProvider: vi.fn() }));
-vi.mock("@chat-js/sandboxes/runtime", () => ({ withSandbox: mocks.execute }));
 
-beforeEach(() => {
-  mocks.execute.mockReset();
-});
+const unexpected = () => {
+  throw new Error("Unexpected sandbox operation");
+};
 
-it("the selected typed executor returns exactly one completed usage receipt", async () => {
+it("uses the native session sandbox and keeps one usage receipt", async () => {
   const { executeCode } = await import("@/chatjs/tools/code-execution/tool");
-  mocks.execute.mockResolvedValue({ chart: "", message: "42" });
+  const run = vi.fn<SandboxSession["run"]>().mockResolvedValue({
+    stdout: '42\n__EXECUTION_STATUS__:{"success":true}',
+    stderr: "",
+    exitCode: 0,
+  });
+  const sandbox: SandboxSession = {
+    run,
+    spawn: unexpected,
+    readFile: unexpected,
+    readBinaryFile: unexpected,
+    readTextFile: unexpected,
+    writeFile: unexpected,
+    writeBinaryFile: unexpected,
+    writeTextFile: unexpected,
+    writeFiles: unexpected,
+    resolvePath: unexpected,
+    removePath: unexpected,
+  };
+  const getSandbox = vi.fn().mockResolvedValue(sandbox);
   const result = await executeCode(
     { code: "return 42", language: "javascript", title: "Answer" },
-    testToolContext()
+    { ...testToolContext(), getSandbox }
   );
+  expect(getSandbox).toHaveBeenCalledTimes(1);
+  expect(run.mock.calls[0]?.[0].command).toContain("'node'");
+  expect(run.mock.calls[0]?.[0].signal).toBeInstanceOf(AbortSignal);
   expect(result).toMatchObject({
     output: { chart: "", message: "42" },
     usage: { costUsd: 0.05 },
   });
 });
-it("failed cleanup or invalid output does not receive a completed execution charge", async () => {
+
+it("a native sandbox failure is not charged as completed execution", async () => {
   const { executeCode } = await import("@/chatjs/tools/code-execution/tool");
-  mocks.execute.mockRejectedValueOnce(new Error("cleanup failed"));
-  const input = {
-    code: "source",
-    language: "python",
-    title: "Answer",
-  } as const;
-  expect(await executeCode(input, testToolContext())).toMatchObject({
-    usage: { costUsd: 0 },
-  });
-  mocks.execute.mockResolvedValueOnce({ chart: null, message: "invalid" });
-  expect(await executeCode(input, testToolContext())).toMatchObject({
-    usage: { costUsd: 0 },
-  });
+  const getSandbox = vi
+    .fn()
+    .mockRejectedValue(new Error("native sandbox unavailable"));
+  const result = await executeCode(
+    { code: "return 42", language: "javascript", title: "Answer" },
+    { ...testToolContext(), getSandbox }
+  );
+  expect(result).toMatchObject({ usage: { costUsd: 0 } });
 });

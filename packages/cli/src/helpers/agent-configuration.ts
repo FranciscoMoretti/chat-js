@@ -24,7 +24,7 @@ export const writeAgentConfiguration = async (
     path.join(cwd, "integrations/chat/models.ts"),
     [
       ...(model === undefined
-        ? ['import { config } from "@/lib/config";']
+        ? ['import { config } from "@/lib/config";', ""]
         : []),
       `export const webModels: { readonly model?: string; readonly allowedModels: readonly string[] } = { model: ${modelExpression}, allowedModels: ${JSON.stringify(allowedModels)} };`,
       "",
@@ -40,9 +40,12 @@ export const writeAgentConfiguration = async (
         : []),
       'import { configureWorkflowEnvironment } from "../lib/eve/environment";',
       'import { resolveWorkflowWorld } from "../lib/eve/world-config";',
+      "",
       "configureWorkflowEnvironment(process.env);",
       "export default defineAgent({",
-      `  ...${JSON.stringify(nativeOptions)},`,
+      ...Object.entries(nativeOptions).map(
+        ([key, value]) => `  ${JSON.stringify(key)}: ${JSON.stringify(value)},`
+      ),
       `  model: applicationModel(${modelExpression}),`,
       `  approval: ${approvalExpression},`,
       '  build: { externalDependencies: ["pino", "pino-pretty", "thread-stream", "typescript"] },',

@@ -16,14 +16,17 @@ const jumpToCategory = async (
   id: string
 ) => {
   await (width < 1024
-    ? page.getByLabel("Jump to category").selectOption(id)
+    ? page
+        .getByRole("navigation", { name: "Agent categories" })
+        .getByLabel("Jump to category")
+        .selectOption(id)
     : page
         .getByRole("navigation", { name: "Agent categories" })
         .getByRole("link", { name: title, exact: true })
         .click());
 };
 
-for (const width of [1440, 390]) {
+for (const width of [1440, 845, 390]) {
   test(`Agent authoring exports native settings without a chat preview at ${width}px`, async ({
     page,
     uiVerify,
@@ -47,6 +50,9 @@ for (const width of [1440, 390]) {
           ],
         }),
       });
+    });
+    await page.route("**/capability-icons/notion.svg", async (route) => {
+      await route.fulfill({ status: 503, body: "" });
     });
     // Imported model settings stay intact while their controls are hidden.
     const initial = installationSelectionSchema.parse({
@@ -84,6 +90,20 @@ for (const width of [1440, 390]) {
       })
       .check();
     await expect(
+      page.getByTestId("eve-channel/slack").locator("img")
+    ).toHaveJSProperty("complete", true);
+    expect(
+      await page
+        .getByTestId("eve-channel/slack")
+        .locator("img")
+        .evaluate((image: HTMLImageElement) => image.naturalWidth)
+    ).toBeGreaterThan(0);
+    await expect(
+      page
+        .getByTestId("eve-connection/notion")
+        .locator("[data-capability-visual]")
+    ).toHaveAttribute("data-capability-visual", "category");
+    await expect(
       page.getByLabel(
         /^(?:Model|Allowed alternative models|Reasoning|Compaction model)$/u
       )
@@ -116,6 +136,12 @@ for (const width of [1440, 390]) {
         ).toHaveCount(1);
       })
     );
+    await catalog
+      .getByRole("checkbox", {
+        name: "Braintrust (instrumentation/braintrust)",
+        exact: true,
+      })
+      .check();
     await expect(
       catalog.getByTestId("capability-list").getByRole("checkbox")
     ).toHaveCount(14);
@@ -129,7 +155,7 @@ for (const width of [1440, 390]) {
       element.scrollTo(0, 0);
     });
     await uiVerify.snapshot(
-      "agent catalog categories with matching section icons"
+      "agent catalog with local logos and category fallback"
     );
     await page.screenshot({ path: testInfo.outputPath("agent.png") });
     await page
@@ -163,10 +189,23 @@ for (const width of [1440, 390]) {
     await page.screenshot({ path: testInfo.outputPath("channels.png") });
     await jumpToCategory(page, width, "Tools", "tool");
     const portable = page.getByTestId("eve-@chatjs/word-count");
-    await expect(portable.getByLabel("Source: ChatJS")).toBeVisible();
     await expect(
-      portable.getByText("Requires ChatJS", { exact: true })
+      page.getByLabel("Source: ChatJS", { exact: true })
     ).toHaveCount(0);
+    await portable.getByRole("button", { name: "About Word Count" }).click();
+    const portableDetails = page.getByRole("dialog");
+    await expect(portableDetails).toHaveCSS("animation-name", "none");
+    await expect(portableDetails.getByLabel("Source: ChatJS")).toBeVisible();
+    await expect(
+      portableDetails.getByText("Requires ChatJS", { exact: true })
+    ).toHaveCount(0);
+    await expect(
+      portableDetails.getByRole("link", { name: "Word Count documentation" })
+    ).toBeVisible();
+    await uiVerify.snapshot("capability source and documentation details");
+    await page.screenshot({ path: testInfo.outputPath("details.png") });
+    await page.keyboard.press("Escape");
+    await expect(portable.getByRole("checkbox")).not.toBeChecked();
     await portable.getByRole("checkbox").check();
     await jumpToCategory(page, width, "Tools", "tool");
     await uiVerify.snapshot(
@@ -174,9 +213,7 @@ for (const width of [1440, 390]) {
     );
     await page.screenshot({ path: testInfo.outputPath("portable.png") });
     await expect(portable.locator("details")).toHaveCount(0);
-    await expect(
-      portable.getByRole("link", { name: "Word Count documentation" })
-    ).toBeVisible();
+
     await portable.getByRole("checkbox").press("Space");
     await expect(portable.getByRole("checkbox")).not.toBeChecked();
     await portable.getByRole("checkbox").press("Space");
@@ -220,15 +257,33 @@ for (const width of [1440, 390]) {
     await page
       .getByRole("button", { name: "Add capability", exact: true })
       .click();
+    await page
+      .getByTestId("eve-@acme/analytics")
+      .getByRole("button", { name: "About @acme/analytics" })
+      .click();
     await expect(
-      page.getByTestId("eve-@acme/analytics").getByLabel("Source: @acme")
+      page.getByRole("dialog").getByLabel("Source: @acme")
     ).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(
+      page
+        .getByTestId("eve-@acme/analytics")
+        .locator("[data-capability-visual]")
+    ).toHaveAttribute("data-capability-visual", "category");
     await uiVerify.snapshot("external registry source");
     const search = page.getByLabel("Research search provider", { exact: true });
     await expect(search).toHaveCount(0);
     await page
       .getByRole("checkbox", { name: "Deep Research", exact: true })
       .check();
+    await page
+      .getByRole("button", { name: "About Deep Research", exact: true })
+      .click();
+    await expect(
+      page.getByRole("dialog").getByText("Requires ChatJS", { exact: true })
+    ).toBeVisible();
+    await uiVerify.snapshot("application capability dependencies");
+    await page.keyboard.press("Escape");
     await search.selectOption("firecrawl-search");
     await expect(search).toHaveValue("firecrawl-search");
     await expect(
@@ -239,11 +294,44 @@ for (const width of [1440, 390]) {
       .getByRole("checkbox", { name: "Deep Research", exact: true })
       .uncheck();
     await expect(search).toHaveCount(0);
+    const environment = page.getByRole("region", {
+      name: "Sandbox",
+      exact: true,
+    });
+    const sandbox = environment.getByRole("radiogroup", {
+      name: "Sandbox",
+      exact: true,
+    });
+    await expect(sandbox.getByRole("radio")).toHaveCount(4);
+    await expect(
+      sandbox.getByRole("radio", { name: "Automatic", exact: true })
+    ).toBeChecked();
+    await expect(environment.getByRole("combobox")).toHaveCount(0);
+    await sandbox
+      .getByRole("radio", { name: "just-bash", exact: true })
+      .check();
+    await expect(
+      sandbox.getByRole("radio", { name: "Automatic", exact: true })
+    ).not.toBeChecked();
+    await expect(environment).toContainText("Cannot run native Python or Node");
+    await environment.scrollIntoViewIfNeeded();
+    const dockerLogo = environment.locator(
+      'img[src="/capability-icons/docker.svg"]'
+    );
+    await expect(dockerLogo).toBeVisible();
+    await expect(dockerLogo).toHaveJSProperty("complete", true);
+    expect(
+      await dockerLogo.evaluate((img: HTMLImageElement) => img.naturalWidth)
+    ).toBeGreaterThan(0);
+    await uiVerify.snapshot("native EVE sandboxes");
+    await page.screenshot({ path: testInfo.outputPath("sandbox.png") });
+    await sandbox.getByRole("radio", { name: "Docker", exact: true }).check();
     await page.getByRole("button", { name: "Get Code", exact: true }).click();
     const recipe = commandAppPreset(
       await page.getByTestId("create-command").textContent()
     );
     expect(recipe.plugins).toEqual([]);
+    expect(recipe.sandbox).toBe("docker");
     expect(recipe.eve).toContain(
       "@skills/vercel-labs/agent-skills/vercel-react-best-practices"
     );
@@ -252,6 +340,7 @@ for (const width of [1440, 390]) {
     expect(recipe.eveRegistries).toEqual({
       "@acme": "https://registry.example/r/{name}.json",
     });
+    expect(recipe.eve).toContain("instrumentation/braintrust");
     expect(recipe.eve).toContain("channel/slack");
     expect(recipe.eve).toContain("connection/notion");
     expect(recipe.eve).toContain("connection/linear");
@@ -327,6 +416,87 @@ test("Native catalog loading, retry, empty and selected states preserve choices"
   await expect(
     catalog.getByTestId("capability-list").getByRole("checkbox")
   ).toBeChecked();
-  await uiVerify.snapshot("catalog selected native tool");
+  await expect(
+    catalog
+      .getByTestId("eve-tool/web_fetch")
+      .locator("[data-capability-visual]")
+  ).toHaveAttribute("data-capability-visual", "symbol");
+  await uiVerify.snapshot("catalog functional tool icons");
   await page.screenshot({ path: testInfo.outputPath("selected.png") });
+});
+
+// These existing services previously rendered category fallbacks. Use the actual
+// bundled assets so a missing file or invalid SVG fails in the browser too.
+test("Existing service logos render across every agent category", async ({
+  page,
+  uiVerify,
+}, testInfo) => {
+  uiVerify.disableAutoSnapshot();
+  await page.setViewportSize({ width: 1440, height: 1800 });
+  const services = [
+    ["connection/candid", "Candid"],
+    ["connection/local-falcon", "Local Falcon"],
+    ["connection/natural", "Natural"],
+    ["channel/recall", "Recall.ai"],
+    ["channel/chat-sdk-velt", "Velt"],
+    ["channel/chat-sdk-sendblue", "Sendblue"],
+    ["channel/linq", "Linq"],
+    ["channel/chat-sdk-kapso", "Kapso"],
+    ["channel/photon-imessage", "Photon iMessage"],
+    ["channel/chat-sdk-lark", "Lark / Feishu"],
+    ["channel/chat-sdk-beeper", "Beeper"],
+    ["extension/agent-browser", "agent-browser"],
+    ["extension/jetty", "Jetty"],
+    ["memory/arcana", "Kybernesis Arcana"],
+    ["memory/memco", "memco"],
+    ["instrumentation/raindrop", "Raindrop"],
+    ["instrumentation/oodle", "Oodle"],
+  ] as const;
+  await page.route("**/api/eve-catalog", async (route) => {
+    await route.fulfill({
+      json: parseEveCatalog({
+        items: services.map(([name, title]) => ({ name, title })),
+      }),
+    });
+  });
+  await page.goto("/create");
+  await page.getByRole("tab", { name: "Agent", exact: true }).click();
+  await expect(page.getByTestId("eve-connection/candid")).toBeAttached();
+  // Load offscreen images too, so this verifies the entire local asset set.
+  await page.locator("img").evaluateAll((images) => {
+    for (const image of images) {
+      if (image instanceof HTMLImageElement) {
+        image.loading = "eager";
+      }
+    }
+  });
+  await Promise.all(
+    services.map(async ([id]) => {
+      const card = page.getByTestId(`eve-${id}`);
+      await expect(
+        card.locator('[data-capability-visual="brand"]')
+      ).toBeVisible();
+      await expect
+        .poll(
+          async () =>
+            await card
+              .locator("img")
+              .evaluate(
+                (image: HTMLImageElement) =>
+                  image.complete && image.naturalWidth > 0
+              )
+        )
+        .toBe(true);
+    })
+  );
+  const capture = async (theme: string) => {
+    await jumpToCategory(page, 1440, "Connections", "connection");
+    await uiVerify.snapshot(`complete service logos ${theme}`);
+    await page.screenshot({
+      path: testInfo.outputPath(`service-logos-${theme}.png`),
+    });
+  };
+  await capture("light");
+  await page.getByRole("button", { name: "Toggle theme", exact: true }).click();
+  await capture("dark");
 });

@@ -8,7 +8,7 @@ import { assert, expect, test } from "vitest";
 test("reports missing groups explicitly without exposing supplied secrets", () => {
   try {
     requireCredentials(
-      "langfuse",
+      "custom-service",
       [
         { options: [["PUBLIC_KEY", "SECRET_KEY"], ["TOKEN"]] },
         { options: [["HOST"]] },
@@ -22,7 +22,7 @@ test("reports missing groups explicitly without exposing supplied secrets", () =
       throw error;
     }
     expect(error.code).toBe("CHATJS_MISSING_CREDENTIALS");
-    expect(error.integration).toBe("langfuse");
+    expect(error.integration).toBe("custom-service");
     expect(error.requirements).toHaveLength(1);
     expect(error.message).toContain("PUBLIC_KEY + SECRET_KEY or TOKEN");
     expect(error.message).not.toContain("private-value");

@@ -357,3 +357,61 @@ test(
   },
   timeoutMs
 );
+
+test(
+  "a dependency's peer import resolves the application's npm alias",
+  async () => {
+    const extra = await mkdtemp(path.join(tmpdir(), "registry-peer-alias-"));
+    try {
+      await Promise.all(
+        (
+          [
+            [
+              "framework",
+              {
+                name: "patched-framework",
+                version: "1.0.0",
+                types: "index.d.ts",
+              },
+              "export interface Context { value: string }",
+            ],
+            [
+              "integration",
+              {
+                name: "integration",
+                version: "1.0.0",
+                types: "index.d.ts",
+                peerDependencies: { framework: "*" },
+              },
+              'import type { Context } from "framework"; export declare const context: Context;',
+            ],
+          ] as const
+        ).map(async ([directory, manifest, source]) => {
+          const target = path.join(extra, "node_modules", directory);
+          await mkdir(target, { recursive: true });
+          await writeFile(
+            path.join(target, "package.json"),
+            JSON.stringify(manifest)
+          );
+          await writeFile(path.join(target, "index.d.ts"), source);
+        })
+      );
+      const files = project(
+        {
+          "src/index.ts":
+            'import { context } from "integration"; export const value: string = context.value;',
+        },
+        {
+          framework: "npm:patched-framework@1.0.0",
+          integration: "1.0.0",
+        }
+      );
+      expect(
+        typecheckProject(files, [fixture.directory, extra]).diagnostics
+      ).toEqual([]);
+    } finally {
+      await rm(extra, { recursive: true, force: true });
+    }
+  },
+  timeoutMs
+);

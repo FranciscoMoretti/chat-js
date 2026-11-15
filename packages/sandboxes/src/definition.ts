@@ -6,15 +6,9 @@ const sandboxDefinitionSchema = z.object({
   id: z.string().regex(/^[a-z][a-z0-9-]*$/u),
   capabilities: z.object({
     persistent: z.boolean().optional(),
-    runtimes: z
-      .array(z.enum(["python", "javascript"]))
-      .refine(
-        (runtimes) =>
-          runtimes.includes("python") && runtimes.includes("javascript"),
-        "Sandbox contract v1 requires Python and JavaScript."
-      ),
-    cleanup: z.literal("durable-allocation"),
-    cancellation: z.literal("terminate"),
+    runtimes: z.array(z.enum(["python", "javascript"])),
+    cleanup: z.literal("eve-session"),
+    cancellation: z.literal("eve"),
   }),
   envRequirements: z
     .array(

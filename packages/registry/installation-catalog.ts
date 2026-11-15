@@ -148,20 +148,17 @@ const providerIssues = (
     if (definition.requiresStorage && (!storage || storage.id === "memory")) {
       issues.push(`${definition.id} requires persistent storage.`);
     }
-    if (
-      definition.kind === "plugin" &&
-      definition.requiresPersistentSandbox &&
-      (sandbox?.kind !== "sandbox" || sandbox.capabilities.persistent !== true)
-    ) {
-      issues.push(
-        `${definition.id} requires a persistent sandbox. Choose Vercel Sandbox.`
-      );
-    }
     if (definition.kind !== "tool") {
       continue;
     }
-    if (definition.requiresSandbox && !sandbox) {
-      issues.push(`${definition.id} requires a sandbox.`);
+    if (
+      definition.requiresNativeProcesses &&
+      sandbox?.kind === "sandbox" &&
+      !sandbox.capabilities.runtimes.includes("python")
+    ) {
+      issues.push(
+        `${definition.id} requires native Python and Node processes. Choose Automatic, Vercel Sandbox or Docker in Agent.`
+      );
     }
     issues.push(...mediaIssues(definition, gateway));
   }

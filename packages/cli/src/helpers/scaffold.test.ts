@@ -233,18 +233,11 @@ describe("scaffoldFromTemplate", (): void => {
   it("scaffolds without a sandbox SDK or persistent capability", async (): Promise<void> => {
     const destination = makeTempDir("no-sandbox");
     await scaffoldFromTemplate(destination);
-    const provider = z
-      .object({
-        createSandboxProvider: z.undefined(),
-        supportsPersistentSandbox: z.boolean(),
-      })
-      .parse(
-        await import(
-          pathModule.join(destination, "chatjs/providers/sandbox/provider.ts")
-        )
-      );
-    expect(provider.createSandboxProvider).toBeUndefined();
-    expect(provider.supportsPersistentSandbox).toBe(false);
+    expect(
+      existsSync(
+        pathModule.join(destination, "chatjs/providers/sandbox/provider.ts")
+      )
+    ).toBe(false);
     const manifest = z
       .object({ dependencies: z.record(z.string(), z.string()) })
       .parse(
@@ -267,9 +260,9 @@ describe("scaffoldFromTemplate", (): void => {
         pathModule.join(destination, "chatjs/providers/sandbox/persistent.ts")
       )
     ).toBe(false);
-    expect(
-      await readFile(pathModule.join(destination, "agent/sandbox.ts"), "utf-8")
-    ).toContain("DefaultSandbox.environment()");
+    expect(existsSync(pathModule.join(destination, "agent/sandbox.ts"))).toBe(
+      false
+    );
     expect(
       existsSync(pathModule.join(destination, "guest/agent/sandbox.ts"))
     ).toBe(false);

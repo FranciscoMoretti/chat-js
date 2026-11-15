@@ -5,7 +5,6 @@ import type { ToolRequirements } from "./tool-readiness";
 const providers = {
   gateway: [{ options: [["MODEL_KEY"]] }],
   storage: [{ options: [["STORAGE_KEY"]] }],
-  sandbox: [{ options: [["SANDBOX_KEY"]] }],
 };
 const tool = (overrides: Partial<ToolRequirements> = {}): ToolRequirements => ({
   id: "test",
@@ -13,7 +12,6 @@ const tool = (overrides: Partial<ToolRequirements> = {}): ToolRequirements => ({
   requiresTools: [],
   requiresGateway: false,
   requiresStorage: false,
-  requiresSandbox: false,
   ...overrides,
 });
 it("checks alternative credentials and dependencies without exposing their values", () => {
@@ -51,18 +49,15 @@ it("checks alternative credentials and dependencies without exposing their value
   ).toEqual([]);
   expect(env).not.toHaveProperty("TOKEN");
 });
-it("fails closed for absent dependencies and cycles and checks sandbox configuration", () => {
+it("fails closed for absent dependencies and cycles", () => {
   expect(
     inspectToolConfiguration(
       "runner",
-      { runner: tool({ requiresSandbox: true, requiresTools: ["absent"] }) },
+      { runner: tool({ requiresTools: ["absent"] }) },
       providers,
       { NODE_ENV: "test" }
     )
-  ).toEqual([
-    "test: SANDBOX_KEY",
-    "Required capability absent is not installed.",
-  ]);
+  ).toEqual(["Required capability absent is not installed."]);
   expect(
     inspectToolConfiguration(
       "cycle",
