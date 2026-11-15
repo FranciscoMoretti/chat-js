@@ -125,14 +125,25 @@ const getAuthErrorDetail = (error: unknown): string => {
   return String(error);
 };
 
-const isAppUrl = (url: string): boolean => {
+const parseWebUrl = (url: string): URL | null => {
   const parsed = URL.parse(url);
-  return (
-    parsed !== null &&
-    (parsed.protocol === "https:" || parsed.protocol === "http:") &&
-    parsed.origin === APP_ORIGIN
-  );
+  return parsed?.protocol === "https:" || parsed?.protocol === "http:"
+    ? parsed
+    : null;
 };
+
+const isAppUrl = (url: string): boolean =>
+  parseWebUrl(url)?.origin === APP_ORIGIN;
+
+const isAppMainFrame = (
+  contents: Electron.WebContents,
+  frame: Electron.WebFrameMain | null | undefined
+): boolean =>
+  frame !== null &&
+  frame !== undefined &&
+  frame === contents.mainFrame &&
+  frame.origin === APP_ORIGIN &&
+  isAppUrl(frame.url);
 
 const assertAppAuthSender = ({
   sender,
@@ -142,10 +153,7 @@ const assertAppAuthSender = ({
     !mainWindow ||
     mainWindow.isDestroyed() ||
     sender !== mainWindow.webContents ||
-    !senderFrame ||
-    senderFrame !== sender.mainFrame ||
-    senderFrame.origin !== APP_ORIGIN ||
-    !isAppUrl(senderFrame.url)
+    !isAppMainFrame(sender, senderFrame)
   ) {
     throw new Error("Untrusted sender for desktop auth IPC");
   }
@@ -593,8 +601,21 @@ const createWindow = (): BrowserWindow => {
   }
 
   win.webContents.on("will-navigate", (event) => {
-    if (!isAppUrl(event.url)) {
-      event.preventDefault();
+    const destination = parseWebUrl(event.url);
+    if (destination?.origin === APP_ORIGIN) {
+      return;
+    }
+    event.preventDefault();
+
+    // Connector authorization navigates directly from the app to the provider.
+    if (destination && isAppMainFrame(win.webContents, event.initiator)) {
+      void (async (): Promise<void> => {
+        try {
+          await shell.openExternal(destination.href);
+        } catch (error) {
+          console.warn("[electron-main] failed to open link in browser", error);
+        }
+      })();
     }
   });
   win.webContents.on("will-redirect", (event) => {

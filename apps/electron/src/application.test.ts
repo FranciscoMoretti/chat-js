@@ -89,6 +89,7 @@ const launch = async () => {
   };
   type Invoke = (event: unknown, options?: unknown) => unknown;
   const handlers = new Map<string, Invoke>();
+  const openExternal = mock(async (_url: string) => {});
   const electron = {
     app,
     // oxlint-disable-next-line eslint/prefer-arrow-callback -- Electron calls the mock with new.
@@ -102,6 +103,7 @@ const launch = async () => {
     },
     Menu: { buildFromTemplate: () => ({}) },
     nativeImage: { createFromPath: () => ({ resize: () => ({}) }) },
+    shell: { openExternal },
     // oxlint-disable-next-line eslint/prefer-arrow-callback -- Electron calls the mock with new.
     Tray: mock(function Tray() {
       return { on() {}, setContextMenu() {}, setToolTip() {} };
@@ -161,6 +163,7 @@ const launch = async () => {
     frame,
     handlers,
     invoke,
+    openExternal,
     startDeadline,
     timers,
     trusted,
@@ -185,6 +188,39 @@ test("main-frame navigation and redirects stay on the configured app origin", as
     });
     expect(preventDefault).toHaveBeenCalledTimes(1);
   }
+});
+
+test("a trusted main-frame navigation hands connector OAuth to the browser", async () => {
+  const { contents, frame, openExternal } = await launch();
+  const providerUrl = "https://provider.example.test/authorize?state=example";
+  const preventDefault = mock(() => {});
+
+  contents.emit("will-navigate", {
+    initiator: frame,
+    preventDefault,
+    url: providerUrl,
+  });
+  expect(preventDefault).toHaveBeenCalledTimes(1);
+  expect(openExternal).toHaveBeenCalledWith(providerUrl);
+
+  contents.emit("will-navigate", {
+    initiator: { ...frame },
+    preventDefault,
+    url: providerUrl,
+  });
+  contents.emit("will-navigate", {
+    initiator: frame,
+    preventDefault,
+    url: "file:///example",
+  });
+  contents.emit("will-redirect", {
+    initiator: frame,
+    isMainFrame: true,
+    preventDefault,
+    url: providerUrl,
+  });
+  expect(preventDefault).toHaveBeenCalledTimes(4);
+  expect(openExternal).toHaveBeenCalledTimes(1);
 });
 
 test("only the app's trusted main frame can use auth IPC", async () => {
