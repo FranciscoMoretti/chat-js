@@ -126,7 +126,8 @@ export const AgentConfiguration = ({
                 (item) =>
                   !searchProviders.includes(item) &&
                   item.definition?.kind === "tool" &&
-                  item.definition.native === undefined
+                  item.definition.native === undefined &&
+                  item.definition.agentCategory === undefined
               )
             ).map(({ title, items }) => (
               <section key={title} aria-label={title}>

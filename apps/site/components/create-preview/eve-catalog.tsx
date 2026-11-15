@@ -3,6 +3,7 @@
 import { CategoryNavigation, categoryLayout } from "./category-navigation";
 import { AgentCategoryIcon } from "./agent-category-icon";
 import { CapabilityRow } from "./capability-row";
+import { FeatureChoices } from "./installation-choices";
 import { ConfigurationSection } from "./configuration-section";
 import { RegistryCapabilityForm } from "./registry-capability-form";
 import { portableChatjsCapabilities } from "../../../../packages/registry/chatjs-capabilities";
@@ -31,7 +32,7 @@ const fetchCatalog = async (url: string): Promise<EveCatalogItem[]> => {
 };
 
 export const EveCatalog = ({ children }: { readonly children: ReactNode }) => {
-  const { installation, update, catalog } = useInstallation();
+  const { installation, resolution, update, catalog } = useInstallation();
   const { data, error, isLoading, mutate } = useSWR<EveCatalogItem[], Error>(
     "/api/eve-catalog",
     fetchCatalog,
@@ -51,6 +52,21 @@ export const EveCatalog = ({ children }: { readonly children: ReactNode }) => {
     return null;
   }
   const selected = installation.eve ?? [];
+  const selectedAppTools = resolution?.selection.tools ?? installation.tools;
+  const appTools = catalog.filter(
+    (item) =>
+      item.definition?.kind === "tool" &&
+      item.definition.agentCategory !== undefined
+  );
+  const visibleAppTools = appTools.filter(
+    (item) =>
+      !selectedOnly || selectedAppTools.includes(item.definition?.id ?? "")
+  );
+  const selectedCount =
+    selected.length +
+    appTools.filter((item) =>
+      selectedAppTools.includes(item.definition?.id ?? "")
+    ).length;
   const toggle = (id: string, checked: boolean) => {
     update({
       ...installation,
@@ -82,10 +98,17 @@ export const EveCatalog = ({ children }: { readonly children: ReactNode }) => {
       id,
       title,
       items: visible.filter((item) => item.category === id),
+      appItems: visibleAppTools.filter(
+        (item) =>
+          item.definition?.kind === "tool" &&
+          item.definition.agentCategory === id
+      ),
     }))
     .filter(
       (group) =>
-        group.items.length > 0 || (group.id === "skill" && !selectedOnly)
+        group.items.length > 0 ||
+        group.appItems.length > 0 ||
+        (group.id === "skill" && !selectedOnly)
     );
   return (
     <section aria-label="EVE catalog" className={categoryLayout}>
@@ -96,7 +119,7 @@ export const EveCatalog = ({ children }: { readonly children: ReactNode }) => {
           ...groups.map((group) => ({
             id: group.id,
             title: group.title,
-            count: group.items.length,
+            count: group.items.length + group.appItems.length,
             icon: (
               <AgentCategoryIcon
                 category={group.id}
@@ -138,7 +161,7 @@ export const EveCatalog = ({ children }: { readonly children: ReactNode }) => {
               ?.scrollTo({ top: 0 });
           }}
         >
-          Selected · {selected.length}
+          Selected · {selectedCount}
         </Button>
       </CategoryNavigation>
       <div className="min-w-0 space-y-7">
@@ -166,7 +189,7 @@ export const EveCatalog = ({ children }: { readonly children: ReactNode }) => {
             </Button>
           </div>
         )}
-        {selectedOnly && selected.length === 0 && (
+        {selectedOnly && selectedCount === 0 && (
           <p className="text-muted-foreground rounded-lg border border-dashed p-6 text-center text-sm">
             No capabilities selected yet.
           </p>
@@ -241,6 +264,13 @@ export const EveCatalog = ({ children }: { readonly children: ReactNode }) => {
                 </p>
               )}
               <div className="grid gap-3 md:grid-cols-2">
+                {group.appItems.length > 0 && (
+                  <FeatureChoices
+                    items={group.appItems}
+                    compact
+                    className="contents"
+                  />
+                )}
                 {group.items.map((item) => {
                   const issue = eveCompositionIssue(item.id);
                   return (

@@ -1,4 +1,5 @@
 {
+  "agentCategory": "tool",
   "config": { "key": "image" },
   "envRequirements": [],
   "id": "generate-image",

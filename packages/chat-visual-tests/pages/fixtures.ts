@@ -805,3 +805,53 @@ export const signInTranscripts = {
     },
   ],
 } satisfies Record<string, readonly EveMessage[]>;
+
+const generatedImageArtwork = `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360">
+  <defs>
+    <linearGradient id="sky" x2="0" y2="1">
+      <stop stop-color="#e7e5d6"/>
+      <stop offset="1" stop-color="#babfad"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#sky)" d="M0 0h640v360H0z"/>
+  <circle cx="460" cy="100" r="42" fill="#f7f1dc"/>
+  <path d="M0 240Q100 100 240 210T640 190V360H0Z" fill="#89937b"/>
+  <path d="M0 290Q160 170 360 240T640 210V360H0Z" fill="#626e59"/>
+  <path d="M0 320Q180 260 320 300T640 270V360H0Z" fill="#354b3e"/>
+</svg>`)}`;
+
+export const generatedImageTranscripts = {
+  [invoicesSessionId]: [
+    {
+      id: "image-request",
+      role: "user",
+      parts: [{ type: "text", text: "Generate an image for the launch." }],
+    },
+    {
+      id: "image-answer",
+      role: "assistant",
+      metadata: { status: "complete", turnId: "turn-image" },
+      parts: [
+        {
+          type: "tool",
+          kind: "tool",
+          stepIndex: 0,
+          name: "generateImage",
+          label: "Generate image",
+          callId: "image-success",
+          state: "completed",
+          input: { prompt: "Launch artwork" },
+          output: {
+            kind: "chatjs.tool-result",
+            version: 1,
+            status: "success",
+            output: {
+              imageUrl: generatedImageArtwork,
+              prompt: "Launch artwork",
+            },
+          },
+        },
+      ],
+    },
+  ],
+} satisfies Record<string, readonly EveMessage[]>;

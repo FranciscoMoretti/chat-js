@@ -47,6 +47,7 @@ type InstallationSelection = z.infer<typeof installationSelectionSchema>;
 // Checked-in demo preset preserves the application's installed plugins.
 const demoInstallation = installationSelectionSchema.parse({
   plugins: [
+    "image-viewer",
     "slack-documents",
     "desktop",
     "projects",

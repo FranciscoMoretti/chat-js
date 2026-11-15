@@ -7,6 +7,7 @@ import { createTRPCClient } from "@trpc/client";
 import type { AppRouter } from "../../../chat/trpc/routers/_app";
 import { TRPCProvider } from "../../../chat/trpc/context";
 import { SessionContext } from "../../../chat/providers/session-context";
+import { imageViewerClient } from "../../../chat/chatjs/plugins/image-viewer/client-plugin";
 import { Plugins } from "../../../chat/chatjs/core/ui/slots";
 import { feedbackClient } from "../../../chat/chatjs/plugins/feedback/client-plugin";
 import { projectsClient } from "../../../chat/chatjs/plugins/projects/client-plugin";
@@ -34,6 +35,7 @@ export const usePreviewFixtures = () => {
   return fixture;
 };
 const clients = {
+  "image-viewer": imageViewerClient,
   mcp: mcpClient,
   sharing: sharingClient,
   "followup-suggestions": followupSuggestionsClient,

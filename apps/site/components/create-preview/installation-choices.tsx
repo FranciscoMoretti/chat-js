@@ -5,6 +5,7 @@ import {
   FileText,
   Folder,
   Info,
+  Images,
   Link2,
   MessageSquare,
   Monitor,
@@ -42,6 +43,7 @@ import { pluginPreviewLabel } from "./preview-capabilities";
 // Use the homepage illustrations’ motifs at the scale of a catalog row.
 const pluginIcons: Readonly<Partial<Record<string, LucideIcon>>> = {
   projects: Folder,
+  "image-viewer": Images,
   search: Search,
   "ai-titles": TextCursorInput,
   sharing: Link2,
@@ -60,6 +62,11 @@ const requiresChatjs = (
 ): boolean =>
   definition?.kind === "plugin" ||
   (definition?.kind === "tool" && definition.native === undefined);
+
+const toolBadge = (definition: InstallationCatalogItem["definition"]) =>
+  definition?.kind === "tool" && definition.agentCategory !== undefined
+    ? "ChatJS"
+    : undefined;
 
 const FeatureIcon = ({
   definition,
@@ -84,12 +91,14 @@ const setupCaptions: Readonly<Record<string, string>> = {
 
 export const FeatureChoices = ({
   items,
+  className,
   cards = false,
   compact = false,
   onSelectionChange,
   onConfigureSetup,
 }: {
   readonly items: readonly InstallationCatalogItem[];
+  readonly className?: string;
   readonly cards?: boolean;
   readonly compact?: boolean;
   readonly onSelectionChange?: (selection: InstallationSelection) => void;
@@ -102,7 +111,7 @@ export const FeatureChoices = ({
   const applySelection = onSelectionChange ?? update;
   const gridClass = compact ? "grid gap-3 md:grid-cols-2" : setupTileGrid;
   return (
-    <div className={cards || compact ? gridClass : "divide-y"}>
+    <div className={className ?? (cards || compact ? gridClass : "divide-y")}>
       {items.map((item) => {
         const { definition } = item;
         if (definition?.kind !== "plugin" && definition?.kind !== "tool") {
@@ -184,6 +193,7 @@ export const FeatureChoices = ({
               category="tool"
               description={item.description}
               source="ChatJS"
+              badge={toolBadge(definition)}
               requiresChatJS={requiresChatjs(definition)}
               controlId={control.id}
               checked={selected}

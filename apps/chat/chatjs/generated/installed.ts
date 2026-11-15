@@ -7,6 +7,7 @@ export const installedPlugins: ReadonlySet<string> = new Set([
   "feedback",
   "followup-suggestions",
   "guest-chat",
+  "image-viewer",
   "mcp",
   "model-preferences",
   "projects",

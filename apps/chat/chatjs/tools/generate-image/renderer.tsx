@@ -1,6 +1,7 @@
 "use client";
-import { ImageActions, ImageModal } from "@/components/image-modal";
-import React, { useState } from "react";
+import { ImageActions } from "@/components/image-actions";
+import { ArtifactViewerActions } from "@/components/artifact-actions";
+import React from "react";
 import { generateImageInput, generateImageResult } from "./schemas";
 import Image from "next/image";
 import { ImageOffIcon } from "lucide-react";
@@ -19,7 +20,6 @@ const GenerateImageView = ({
 }: ReadonlyNativeSurface<{
   tool: GenerateImageTool;
 }>): React.JSX.Element | null => {
-  const [dialogOpen, setDialogOpen] = useState(false);
   const imageUrl = tool.output?.imageUrl;
   const { handleImageError, imageUnavailable } = useImageLoadError(imageUrl);
 
@@ -41,57 +41,45 @@ const GenerateImageView = ({
   }
 
   return (
-    <>
-      <div className="flex w-full flex-col gap-4 overflow-hidden rounded-lg border">
-        <div className="group relative">
-          {imageUnavailable ? (
-            <output className="bg-muted/30 text-muted-foreground flex min-h-64 w-full flex-col items-center justify-center gap-2">
-              <ImageOffIcon className="size-8" />
-              <span>Generated image unavailable</span>
-            </output>
-          ) : (
-            <>
-              <button
-                className="w-full cursor-pointer text-left"
-                onClick={(): void => {
-                  setDialogOpen(true);
+    <div className="flex w-full flex-col gap-4 overflow-hidden rounded-lg border">
+      <div className="group relative">
+        {imageUnavailable ? (
+          <output className="bg-muted/30 text-muted-foreground flex min-h-64 w-full flex-col items-center justify-center gap-2">
+            <ImageOffIcon className="size-8" />
+            <span>Generated image unavailable</span>
+          </output>
+        ) : (
+          <>
+            <Image
+              alt={output.prompt}
+              loading="eager"
+              unoptimized
+              className="h-auto w-full max-w-full"
+              height={512}
+              onError={handleImageError}
+              src={output.imageUrl}
+              width={512}
+            />
+            <div className="absolute top-2 right-2 flex items-center gap-1">
+              <ArtifactViewerActions
+                artifact={{
+                  fileId: output.fileId,
+                  url: output.imageUrl,
+                  name: output.prompt,
+                  mediaType: "image/*",
                 }}
-                type="button"
-              >
-                <Image
-                  alt={output.prompt}
-                  loading="eager"
-                  unoptimized
-                  className="h-auto w-full max-w-full"
-                  height={512}
-                  onError={handleImageError}
-                  src={output.imageUrl}
-                  width={512}
-                />
-              </button>
-              <ImageActions
-                className="absolute top-2 right-2 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100"
-                imageUrl={output.imageUrl}
               />
-            </>
-          )}
-        </div>
-        <div className="p-4 pt-0">
-          <p className="text-muted-foreground text-sm">
-            Generated from: &quot;{output.prompt}&quot;
-          </p>
-        </div>
+              <ImageActions imageUrl={output.imageUrl} />
+            </div>
+          </>
+        )}
       </div>
-
-      <ImageModal
-        imageName={output.prompt}
-        imageUrl={output.imageUrl}
-        isOpen={dialogOpen}
-        onClose={(): void => {
-          setDialogOpen(false);
-        }}
-      />
-    </>
+      <div className="p-4 pt-0">
+        <p className="text-muted-foreground text-sm">
+          Generated from: &quot;{output.prompt}&quot;
+        </p>
+      </div>
+    </div>
   );
 };
 

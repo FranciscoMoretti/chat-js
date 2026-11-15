@@ -7,6 +7,7 @@ import ChatPage from "@/app/(chat)/chat/[id]/page";
 import ChatLayout from "@/app/(chat)/layout";
 import type { ChatMessageProps } from "@/chatjs/core/chat/contracts";
 import {
+  generatedImageTranscripts,
   history,
   invoicesConversation,
   invoicesTranscripts,
@@ -69,3 +70,49 @@ test("plugin response content composes with core message actions", async () => {
     .element(page.getByRole("button", { name: "Copy" }).first())
     .toBeVisible();
 });
+
+for (const withViewer of [false, true]) {
+  test(`image artifact actions with viewer=${withViewer}`, async () => {
+    const original = [...chatPlugins];
+    if (!withViewer) {
+      chatPlugins.splice(
+        0,
+        chatPlugins.length,
+        ...original.filter((plugin) => plugin.id !== "image-viewer")
+      );
+    }
+    onTestFinished(() => {
+      chatPlugins.splice(0, chatPlugins.length, ...original);
+    });
+    await renderRoute(
+      <ChatLayout>
+        <ChatPage params={Promise.resolve({ id: invoicesConversation.id })} />
+      </ChatLayout>,
+      {
+        ...signedIn,
+        path: `/chat/${invoicesConversation.chatId}`,
+        server: { conversation: invoicesConversation, conversations: history },
+        transcripts: generatedImageTranscripts,
+        trpc: invoicesTrpc,
+      }
+    );
+    await expect
+      .element(
+        page.getByRole("button", { name: "Download image", exact: true })
+      )
+      .toBeVisible();
+    const open = page.getByRole("button", { name: "Open image", exact: true });
+    if (withViewer) {
+      await open.click();
+      await expect.element(page.getByRole("dialog")).toBeVisible();
+      await page.screenshot({ path: "__screenshots__/image-viewer.png" });
+      await page.getByRole("button", { name: "Close", exact: true }).click();
+      await expect.element(page.getByRole("dialog")).not.toBeInTheDocument();
+    } else {
+      await expect.element(open).not.toBeInTheDocument();
+      await page.screenshot({
+        path: "__screenshots__/image-without-viewer.png",
+      });
+    }
+  });
+}

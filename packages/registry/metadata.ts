@@ -62,6 +62,8 @@ const executionCapabilities = z.object({
 });
 
 const toolDefinitionBase = z.object({
+  // Builder category is independent of standalone packaging.
+  agentCategory: z.enum(["tool", "extension"]).optional(),
   channelSupport: z
     .strictObject({
       web: z.enum(["supported", "unverified", "unsupported"]),

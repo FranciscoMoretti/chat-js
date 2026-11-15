@@ -1,3 +1,4 @@
+import { imageViewerItem } from "./image-viewer/manifest";
 import { slackDocumentsItem } from "./slack-documents/manifest";
 import { guestChatItem } from "./guest-chat/manifest";
 import { desktopItem } from "./desktop/manifest";
@@ -13,6 +14,7 @@ import { mcpItem } from "./mcp/manifest";
 import { attachmentUploadsItem } from "./attachment-uploads/manifest";
 
 export const pluginItems = [
+  imageViewerItem,
   slackDocumentsItem,
   projectsItem,
   feedbackItem,

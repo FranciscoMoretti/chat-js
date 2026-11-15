@@ -1,6 +1,7 @@
 // Host capabilities, separate from what can be installed. Keep this serializable
 // so the configurator never imports production plugin controllers.
 export const livePreviewPlugins = [
+  "image-viewer",
   "mcp",
   "sharing",
   "followup-suggestions",

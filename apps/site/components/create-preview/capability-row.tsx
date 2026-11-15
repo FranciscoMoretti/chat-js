@@ -14,6 +14,7 @@ import { Checkbox } from "@/vendor/shadcn-create/styles/base-nova/ui/checkbox";
 
 export const CapabilityRow = ({
   title,
+  badge,
   visualId,
   category,
   description,
@@ -31,6 +32,7 @@ export const CapabilityRow = ({
   testId,
 }: {
   readonly title: string;
+  readonly badge?: string;
   readonly visualId: string;
   readonly category?: string;
   readonly description: string;
@@ -61,6 +63,11 @@ export const CapabilityRow = ({
       <span className="min-w-0 flex-1">
         <span className="block text-sm leading-5 font-medium break-words">
           {title}
+          {badge !== undefined && (
+            <span className="bg-muted text-muted-foreground ms-2 inline-flex rounded px-1.5 py-0.5 align-middle text-[10px] leading-4 font-medium">
+              {badge}
+            </span>
+          )}
         </span>
         <span className="text-muted-foreground mt-1 line-clamp-2 text-xs leading-5">
           {description}

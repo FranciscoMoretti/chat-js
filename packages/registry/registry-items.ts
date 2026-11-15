@@ -41,6 +41,7 @@ const toolItems = (
       description:
         "Generate and edit images using the selected gateway and storage",
       id: "generate-image",
+      agentCategory: "tool",
       config: { key: "image" },
       requiresGateway: ["image"],
       requiresStorage: true,

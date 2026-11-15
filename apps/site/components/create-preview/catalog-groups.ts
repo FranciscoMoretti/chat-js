@@ -9,7 +9,10 @@ const appPluginGroups = [
     title: "Responses",
     ids: ["feedback", "followup-suggestions", "model-preferences"],
   },
-  { title: "Files & connections", ids: ["attachment-uploads", "mcp"] },
+  {
+    title: "Files & connections",
+    ids: ["attachment-uploads", "image-viewer", "mcp"],
+  },
   { title: "Access & usage", ids: ["guest-chat", "credits"] },
 ];
 

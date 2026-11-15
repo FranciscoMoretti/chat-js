@@ -40,7 +40,7 @@ test("Create sections share selections, dependencies and the install command", a
   ).toHaveText(["Appearance", "Plugins", "Agent", "Setup"]);
   await page.getByRole("tab", { name: "Plugins", exact: true }).click();
   const panel = page.getByRole("region", { name: "Configure your app" });
-  await expect(panel.getByRole("switch")).toHaveCount(12);
+  await expect(panel.getByRole("switch")).toHaveCount(13);
   await expect(panel.getByRole("heading", { level: 3 })).toHaveText([
     "Conversations",
     "Responses",
@@ -1044,5 +1044,92 @@ for (const width of [390, 740]) {
       )
     ).toBe(true);
     await uiVerify.snapshot("narrow mobile canvas");
+  });
+}
+
+for (const width of [1440, 390]) {
+  test(`image tool and optional viewer compose at ${width}px`, async ({
+    page,
+    uiVerify,
+  }, testInfo) => {
+    uiVerify.disableAutoSnapshot();
+    await page.setViewportSize({ width, height: 1000 });
+    const errors: string[] = [];
+    page.on("pageerror", (error) => errors.push(error.message));
+    const installation = installationSelectionSchema.parse({
+      gateway: "vercel",
+      storage: { source: "vercel-blob" },
+      tools: ["generate-image"],
+      plugins: [],
+    });
+    await page.goto(
+      `/create?item=preview-tools&app=${encodeAppPreset(installation)}`,
+      { waitUntil: "domcontentloaded" }
+    );
+    const preview = page.frameLocator('iframe[title="Preview"]');
+    await expect(preview.getByTestId("chat-preview")).toBeVisible();
+    if (width === 390) {
+      await page
+        .getByRole("button", { name: "Mobile preview", exact: true })
+        .click();
+    }
+    await page.getByRole("tab", { name: "Agent", exact: true }).click();
+    const tools = page.locator("#agent-tool");
+    await expect(
+      tools.getByRole("checkbox", { name: "Generate Image", exact: true })
+    ).toBeChecked();
+    await expect(
+      page
+        .locator("#agent-application")
+        .getByRole("checkbox", { name: "Generate Image", exact: true })
+    ).toHaveCount(0);
+    await tools
+      .getByRole("checkbox", { name: "Generate Image", exact: true })
+      .scrollIntoViewIfNeeded();
+    await uiVerify.snapshot("image generation in native Tools category");
+    await page.screenshot({ path: testInfo.outputPath("image-tool.png") });
+    await page.getByRole("tab", { name: "Plugins", exact: true }).click();
+    const viewer = page.getByRole("switch", {
+      name: "Image viewer",
+      exact: true,
+    });
+    await expect(viewer).not.toBeChecked();
+    const download = preview.getByRole("button", {
+      name: "Download image",
+      exact: true,
+    });
+    await expect(download).toBeVisible();
+    await expect(
+      preview.getByRole("button", { name: "Open image", exact: true })
+    ).toHaveCount(0);
+    await uiVerify.snapshot("image card without optional viewer");
+    await page.screenshot({
+      path: testInfo.outputPath("image-without-viewer.png"),
+    });
+    const [file] = await Promise.all([
+      page.waitForEvent("download"),
+      download.click(),
+    ]);
+    expect(await file.failure()).toBeNull();
+    await viewer.check();
+    const open = preview.getByRole("button", {
+      name: "Open image",
+      exact: true,
+    });
+    await expect(open).toBeVisible();
+    await open.click();
+    const dialog = preview.getByRole("dialog");
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByRole("img")).toBeVisible();
+    await uiVerify.snapshot("optional image viewer open");
+    await page.screenshot({
+      path: testInfo.outputPath("image-viewer-open.png"),
+    });
+    await dialog.getByRole("button", { name: "Close", exact: true }).click();
+    await expect(dialog).toHaveCount(0);
+    await viewer.uncheck();
+    await expect(open).toHaveCount(0);
+    await expect(download).toBeVisible();
+    expect(errors).toEqual([]);
   });
 }
