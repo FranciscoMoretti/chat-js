@@ -159,7 +159,7 @@ This list declares metadata, not execution. Register the native tool in `integra
 
 ### Files and viewers
 
-Native EVE tools create and edit files in the session sandbox. Install `publish-file` to publish an immutable download through ChatJS storage, or import an authorized conversation file back into the sandbox with `import_file`.
+Native EVE tools create and edit files in the session sandbox. Install `attach-workspace-file` to publish an immutable download through ChatJS storage, or import an authorized conversation file back into the sandbox with `import_file`.
 
 Optional viewer plugins register actions in the `ArtifactViewerActions` slot from `components/artifact-actions.tsx`. A viewer opens a supported MIME type from the same authorized file URL used for downloading; it does not own agent execution or edit a revisioned document. When no viewer matches, the file remains downloadable. See [Documents & Files](../tools/canvas).
 
@@ -208,26 +208,26 @@ For a renderer, retain the installed map and replace one entry with a normal Rea
 import { installedToolUi } from "@/chatjs/generated/ui";
 import { defineToolRenderer } from "@/chatjs/core/tools/define-renderer";
 import {
-  wordCountInput,
-  wordCountResult,
-} from "@/chatjs/tools/word-count/schemas";
+  attachWorkspaceFileInput,
+  attachWorkspaceFileResult,
+} from "@/chatjs/tools/attach-workspace-file/schemas";
 
-const WordCount = installedToolUi["tool-wordCount"];
+const Attachment = installedToolUi["tool-attach_workspace_file"];
 export const ui = {
   ...installedToolUi,
-  "tool-wordCount": defineToolRenderer({
-    inputSchema: wordCountInput,
-    outputSchema: wordCountResult,
+  "tool-attach_workspace_file": defineToolRenderer({
+    inputSchema: attachWorkspaceFileInput,
+    outputSchema: attachWorkspaceFileResult,
     render: (props) => (
-      <section aria-label="Word count">
-        <WordCount {...props} />
+      <section aria-label="Workspace file">
+        <Attachment {...props} />
       </section>
     ),
   }),
 };
 ```
 
-This example requires the word-count renderer to be installed. Tool renderers must use `defineToolRenderer`: a plain React wrapper lacks the validation marker and is intentionally rejected when rendering persisted messages. A wrapper that imports a concrete plugin directly makes removal depend on updating that import. Keep shadcn primitives in `components/ui/` close to upstream; compose application UI above them.
+This example requires Attach Workspace File to be installed. Tool renderers must use `defineToolRenderer`: a plain React wrapper lacks the validation marker and is intentionally rejected when rendering persisted messages. A wrapper that imports a concrete plugin directly makes removal depend on updating that import. Keep shadcn primitives in `components/ui/` close to upstream; compose application UI above them.
 
 Exclusive integrations reject multiple selections. Hook implementations are selected at module scope, never by looping through hooks during rendering. Session profiles must have unique authenticator identities; cleanup tasks must have unique IDs, including core tasks.
 

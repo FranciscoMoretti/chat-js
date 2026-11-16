@@ -133,7 +133,7 @@ export const installEveIntegrations = async (
     [
       "# EVE capability setup",
       "",
-      "The selected native files and dependencies are installed. Provider setup and live verification have not run.",
+      "EVE installed the selected registry items without running provider setup. Some integrations, including Slack, create their agent files during setup.",
       "",
       "Review each integration’s documentation, then complete its native setup where provided:",
       "",

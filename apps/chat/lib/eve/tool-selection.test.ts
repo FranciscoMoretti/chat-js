@@ -83,7 +83,7 @@ it("limits every toolbox and resets a later automatic turn instead of inheriting
       deepResearch: {},
       server__echo: {},
       generateImage: {},
-      wordCount: {},
+      attach_workspace_file: {},
     };
     const available = filterEveTools(tools);
     expect(Object.keys(available)).toEqual(["generateImage"]);
@@ -93,7 +93,7 @@ it("limits every toolbox and resets a later automatic turn instead of inheriting
       "deepResearch",
       "server__echo",
       "generateImage",
-      "wordCount",
+      "attach_workspace_file",
     ]);
     expect(eveTurnTool.get()).toBe("generateImage");
     await startTurn();
@@ -184,7 +184,7 @@ it("restores the selected capability from Eve serialized context before a resume
       Object.keys(
         filterEveTools({
           generateImage: {},
-          wordCount: {},
+          attach_workspace_file: {},
         })
       )
     ).toEqual(["generateImage"]);
@@ -217,7 +217,28 @@ it("rejects unconfigured image generation without disabling native research", as
     );
     await startTurn();
     expect(
-      filterEveTools({ generateImage: {}, deepResearch: {}, wordCount: {} })
-    ).toEqual({ deepResearch: {}, wordCount: {} });
+      filterEveTools({ generateImage: {}, deepResearch: {}, server__echo: {} })
+    ).toEqual({ deepResearch: {}, server__echo: {} });
+  });
+});
+
+it("offers the configured workspace attachment tool alongside selected research", async () => {
+  await contextStorage.run(new ContextContainer(), async () => {
+    const tools = {
+      deepResearch: {},
+      attach_workspace_file: {},
+      generateImage: {},
+      import_file: {},
+    };
+    await startTurn("deepResearch");
+    expect(filterEveTools(tools)).toEqual({
+      deepResearch: tools.deepResearch,
+      attach_workspace_file: tools.attach_workspace_file,
+    });
+    expect(filterEveTools({ deepResearch: tools.deepResearch })).toEqual({
+      deepResearch: tools.deepResearch,
+    });
+    vi.stubEnv("BLOB_READ_WRITE_TOKEN", "");
+    expect(filterEveTools(tools)).toEqual({ deepResearch: tools.deepResearch });
   });
 });

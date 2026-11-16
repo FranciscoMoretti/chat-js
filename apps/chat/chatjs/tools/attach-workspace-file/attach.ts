@@ -2,8 +2,11 @@ import nodePath from "node:path";
 import type { SandboxSession } from "eve/sandbox";
 import type { FileUploader } from "@/lib/file-storage";
 import type { z } from "zod";
-import type { publishFileInput } from "./schemas";
-import { maximumPublishedFileBytes, publishFileResult } from "./schemas";
+import type { attachWorkspaceFileInput } from "./schemas";
+import {
+  maximumWorkspaceFileBytes,
+  attachWorkspaceFileResult,
+} from "./schemas";
 
 // Active browser formats such as HTML and SVG are delivered as downloads.
 const mediaTypes: Readonly<Record<string, string>> = {
@@ -33,8 +36,8 @@ const shellQuote = (value: string): string =>
 const inWorkspace = (path: string, root: string): boolean =>
   path.startsWith(`${root}/`);
 
-export const publishSandboxFile = async (
-  input: z.infer<typeof publishFileInput>,
+export const attachSandboxFile = async (
+  input: z.infer<typeof attachWorkspaceFileInput>,
   {
     sandbox,
     upload,
@@ -44,12 +47,12 @@ export const publishSandboxFile = async (
     readonly upload: FileUploader;
     readonly signal: AbortSignal;
   }
-): Promise<z.infer<typeof publishFileResult>> => {
+): Promise<z.infer<typeof attachWorkspaceFileResult>> => {
   signal.throwIfAborted();
   const root = nodePath.posix.normalize(sandbox.resolvePath("."));
   const path = nodePath.posix.normalize(sandbox.resolvePath(input.path));
   if (!inWorkspace(path, root)) {
-    throw new Error("Publish a file inside the sandbox workspace.");
+    throw new Error("Attach a file inside the sandbox workspace.");
   }
   const quoted = shellQuote(path);
   const resolved = await sandbox.run({
@@ -78,7 +81,7 @@ export const publishSandboxFile = async (
         break;
       }
       size += value.byteLength;
-      if (size > maximumPublishedFileBytes) {
+      if (size > maximumWorkspaceFileBytes) {
         throw new Error("Files must be 32 MiB or smaller.");
       }
       chunks.push(value);
@@ -93,7 +96,7 @@ export const publishSandboxFile = async (
     mediaTypes[nodePath.posix.extname(name).toLowerCase()] ??
     "application/octet-stream";
   const stored = await upload(name, Buffer.concat(chunks, size), mediaType);
-  return publishFileResult.parse({
+  return attachWorkspaceFileResult.parse({
     fileId: stored.fileId,
     url: stored.url,
     name: stored.pathname,

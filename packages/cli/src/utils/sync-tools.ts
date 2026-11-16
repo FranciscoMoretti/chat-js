@@ -417,7 +417,7 @@ const renderToolRegistrations = (
   files.set(
     "chatjs/generated/installed-tools.ts",
     generatedSource(
-      `export const installedSelectableToolNames: ReadonlySet<string> = new Set(${JSON.stringify(registrations.filter((item) => item.composer).map((item) => item.key))});\nexport const installedWorkflowToolNames: ReadonlySet<string> = new Set(${JSON.stringify(registrations.filter((item) => item.workflow).map((item) => item.key))});\nexport const installedToolNames: ReadonlySet<string> = new Set(${JSON.stringify(keys)});\nexport const installedReadOnlyToolNames: ReadonlySet<string> = new Set(${JSON.stringify(registrations.filter((item) => item.readOnly === true).map((item) => item.key))});\n`
+      `export const installedSelectableToolNames: ReadonlySet<string> = new Set(${JSON.stringify(registrations.filter((item) => item.composer).map((item) => item.key))});\nexport const installedWorkflowToolNames: ReadonlySet<string> = new Set(${JSON.stringify(registrations.filter((item) => item.workflow).map((item) => item.key))});\nexport const installedToolNames: ReadonlySet<string> = new Set(${JSON.stringify(keys)});\n`
     )
   );
   const composerTools = registrations

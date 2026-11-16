@@ -115,8 +115,6 @@ export default defineConfig({
             "/tools/generate-image",
             "/tools/generate-video",
             "/tools/canvas",
-            "/tools/word-count",
-            "/tools/get-weather",
             "/tools/authoring",
           ],
         },

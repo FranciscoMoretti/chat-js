@@ -74,7 +74,7 @@ const EMPTY_TOPIC_COUNT = 0;
 export default defineWorkflowTool({
   availableInSubagents: false,
   description:
-    "Conduct deep research using installed EVE capabilities and sandbox files. Supply the full task and relevant conversation context in request. Use only for explicit deep research requests, once per turn. Returns a Markdown report path in the shared sandbox. After completion, deliver the file using publish_file when installed or your channel's native file delivery. If no delivery mechanism exists, explain where the file is and do not invent a download URL. If clarification is needed, ask the returned questions. If research fails, report the error instead of starting duplicate research.",
+    "Conduct deep research using installed EVE capabilities and sandbox files. Supply the full task and relevant conversation context in request. Use only for explicit deep research requests, once per turn. Returns a Markdown report path in the shared sandbox. After completion, deliver the file using attach_workspace_file when installed or your channel's native file delivery. If no delivery mechanism exists, explain where the file is and do not invent a download URL. If clarification is needed, ask the returned questions. If research fails, report the error instead of starting duplicate research.",
   async *execute(
     input: Readonly<z.infer<typeof researchInput>>,
     context: ResearchWorkflowContext

@@ -52,7 +52,7 @@ Each invocation uses its own directory. Whole-file writes can be retried without
 
 The final result contains a report title and sandbox path. Research does not upload the report or create a ChatJS document.
 
-- In ChatJS, the calling agent can use the separately installed `publish_file` tool to create an authorized downloadable snapshot. That tool requires ChatJS file storage; research itself does not.
+- In ChatJS, install `attach-workspace-file` so the calling agent can use `attach_workspace_file` to attach the report as a download. The Research composer selection makes the attachment tool available when its storage is configured. Research itself only needs the EVE sandbox for its files.
 - Other channels can use their native file delivery capabilities.
 - Without a delivery capability, the agent explains that the report exists in its sandbox rather than inventing a download link.
 

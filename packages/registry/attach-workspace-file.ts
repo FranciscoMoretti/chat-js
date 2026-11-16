@@ -1,28 +1,28 @@
 import type { RegistryItem } from "shadcn/schema";
 import { toolDefinitionSchema } from "./metadata";
 
-export const publishFileItem: RegistryItem = {
-  name: "publish-file",
+export const attachWorkspaceFileItem: RegistryItem = {
+  name: "attach-workspace-file",
   type: "registry:item",
   description:
-    "Publish downloadable files and import earlier artifacts for chat-driven revisions. Viewers are optional.",
+    "Attach workspace files to the conversation as downloads, or import earlier files into the workspace for revision.",
   dependencies: ["eve", "zod", "lucide-react"],
   files: [
     "tool.ts",
-    "publish.ts",
-    "publish-conversation-file.ts",
+    "attach.ts",
+    "attach-conversation-file.ts",
     "import.ts",
     "schemas.ts",
     "renderer.tsx",
   ].map((file) => ({
-    path: `src/tools/publish-file/${file}`,
-    target: `~/chatjs/tools/publish-file/${file}`,
+    path: `src/tools/attach-workspace-file/${file}`,
+    target: `~/chatjs/tools/attach-workspace-file/${file}`,
     type: "registry:file",
   })),
   meta: {
     chatjs: toolDefinitionSchema.parse({
       contractVersion: 1,
-      id: "publish-file",
+      id: "attach-workspace-file",
       kind: "tool",
       agentCategory: "tool",
       requiresChatJS: true,
@@ -31,8 +31,8 @@ export const publishFileItem: RegistryItem = {
       tools: [
         { toolExport: "import_file", accounting: "none" },
         {
-          toolExport: "publish_file",
-          rendererExport: "PublishFileRenderer",
+          toolExport: "attach_workspace_file",
+          rendererExport: "AttachWorkspaceFileRenderer",
           accounting: "none",
         },
       ],

@@ -3,10 +3,10 @@ title: Tools Overview
 description: Install and distribute typed ChatJS tools with shadcn registries
 ---
 
-The ChatJS registry distributes editable source code using shadcn. A tool includes server logic, dependencies, and a declarative registration descriptor. Tools can include their own client renderer. Built-in search and media-generation items include renderers for their own output. Installed tools become part of your app's typed tool system. All installed and custom tools use native EVE definitions. Installed registry items use a `contractVersion: 1` descriptor. Custom tools are registered directly in `integrations/tools/execution.ts` without a descriptor.
+The ChatJS registry distributes editable source code using shadcn. A tool includes server logic, dependencies, and a declarative registration descriptor. Tools can include their own client renderer. Media generation and workspace attachments include renderers for their output. Installed tools become part of your app's typed tool system. All installed and custom tools use native EVE definitions. Installed registry items use a `contractVersion: 1` descriptor. Custom tools are registered directly in `integrations/tools/execution.ts` without a descriptor.
 
 ```bash
-npx chat-js@alpha add word-count
+npx chat-js@alpha add deep-research
 ```
 
 shadcn resolves the item and its dependencies, installs packages, and writes the source files. ChatJS then regenerates separate server and client registrations. Existing source follows shadcn's overwrite prompts. Pass `--overwrite` to replace it.
@@ -17,9 +17,7 @@ EVE’s default `bash` tool handles general [code execution](./code-execution). 
 
 | Tool | Purpose | Credentials |
 | --- | --- | --- |
-| [Word Count](./word-count) | Count words, characters, and sentences | None |
-| [Get Weather](./get-weather) | Fetch weather for coordinates | None |
-| [Publish File](./code-execution#publish-a-generated-file) (`publish-file`) | Publish a finished native sandbox file for download | Persistent storage |
+| [Attach Workspace File](./code-execution#attach-a-generated-file) (`attach-workspace-file`) | Attach a finished workspace file for download | Persistent storage |
 | [Deep Research](./deep-research) | Research a topic and write a sandbox report | Model and research sources available to the agent |
 | [Generate Video](./generate-video) | Generate video clips | Selected gateway and file storage |
 | [Generate Image](./generate-image) | Generate and edit images | Selected gateway and file storage |
@@ -60,7 +58,7 @@ You can also pass a complete registry item URL or local JSON path. Registry requ
 ## Direct shadcn installation
 
 ```bash
-npx shadcn@4.21.0 add @chatjs/word-count
+npx shadcn@4.21.0 add @chatjs/deep-research
 npx chat-js@alpha sync
 ```
 

@@ -19,7 +19,7 @@ test("native installation delegates without granting consent or overwriting app 
   ]);
   for (const id of [
     "@skills/vercel-labs/agent-skills/vercel-react-best-practices",
-    "@chatjs/word-count",
+    "@chatjs/deep-research",
     "@acme/tool",
     "https://registry.example/item.json?q=a&limit=1",
   ]) {

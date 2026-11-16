@@ -71,9 +71,11 @@ test("validated tools preserve receipt results, failures and native fallbacks", 
     ...request,
     transcripts: validatedToolTranscripts,
   });
-  await expect.element(page.getByText("Words", { exact: true })).toBeVisible();
   await expect
-    .element(page.getByText("Counting service unavailable."))
+    .element(page.getByText("sample-notes.md", { exact: true }))
+    .toBeVisible();
+  await expect
+    .element(page.getByText("File storage unavailable."))
     .toBeVisible();
   await expect
     .element(page.getByText("External tool result retained.", { exact: false }))

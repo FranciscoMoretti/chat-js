@@ -13,26 +13,20 @@ import {
   generateVideoResult,
 } from "../../../chat/chatjs/tools/generate-video/schemas";
 import {
-  weatherInput,
-  weatherResult,
-} from "../../../chat/chatjs/tools/get-weather/schemas";
-import {
-  publishFileInput,
-  publishFileResult,
-} from "../../../chat/chatjs/tools/publish-file/schemas";
-import {
-  wordCountInput,
-  wordCountResult,
-} from "../../../chat/chatjs/tools/word-count/schemas";
+  attachWorkspaceFileInput,
+  attachWorkspaceFileResult,
+} from "../../../chat/chatjs/tools/attach-workspace-file/schemas";
 import { sceneMessages } from "./scenarios";
 import { toolExamples } from "./tool-examples";
 
 for (const [name, input, output] of [
   ["generateImage", generateImageInput, generateImageResult],
   ["generateVideo", generateVideoInput, generateVideoResult],
-  ["publish_file", publishFileInput, publishFileResult],
-  ["wordCount", wordCountInput, wordCountResult],
-  ["getWeather", weatherInput, weatherResult],
+  [
+    "attach_workspace_file",
+    attachWorkspaceFileInput,
+    attachWorkspaceFileResult,
+  ],
   ["deepResearch", researchInput, researchOutput],
 ] as const) {
   void test(`${name} example satisfies the production renderer contract`, () => {

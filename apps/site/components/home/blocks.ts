@@ -57,7 +57,7 @@ export const blocks = [
     path: "tools/canvas",
     summary: "Write it. Refine it. Keep it.",
     body: "Create reports and other files in the agent sandbox, then publish them for download. Ask for changes in chat and keep each published result.",
-    command: "npx chat-js@alpha add publish-file",
+    command: "npx chat-js@alpha add attach-workspace-file",
     note: "Requires persistent file storage. Published files are immutable snapshots with conversation access controls.",
   },
   {
@@ -98,7 +98,7 @@ export const blocks = [
     summary: "Give your data room to work.",
     body: "Preview CSV, TSV and Excel files from the conversation. Browse worksheets, download the original, or ask the agent to create an updated file.",
     command: "npx chat-js@alpha add spreadsheet-viewer",
-    note: "Read-only preview. File generation uses native sandbox tools and publish-file; the viewer does not recalculate formulas.",
+    note: "Read-only preview. File generation uses native sandbox tools and attach-workspace-file; the viewer does not recalculate formulas.",
   },
   {
     id: "research",
@@ -108,7 +108,7 @@ export const blocks = [
     summary: "From a question to a researched report.",
     body: "Follow a research brief through multiple searches and synthesis. Progress stays visible, and the final report is saved as a downloadable Markdown file.",
     command: "npx chat-js@alpha add deep-research",
-    note: "Uses the agent’s available search tools and connections. Add Publish File to offer downloadable reports in web chat.",
+    note: "Uses the agent’s available search tools and connections. Add Attach Workspace File to offer downloadable reports in web chat.",
   },
   {
     id: "tools",
@@ -116,8 +116,8 @@ export const blocks = [
     category: "Tools",
     path: "tools/overview",
     summary: "Let your AI do something useful.",
-    body: "Install tools and render their results in the conversation. Start with Word Count or add your own tools.",
-    command: "npx chat-js@alpha add word-count",
+    body: "Install tools and render their results in the conversation. Attach workspace files to the chat or add your own tools.",
+    command: "npx chat-js@alpha add attach-workspace-file",
     note: "Run inside a ChatJS app. Review the selected tool’s provider and credential requirements.",
   },
   {

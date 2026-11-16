@@ -59,7 +59,7 @@ test("generated shell command preserves custom values as one argument", () => {
   const selection = {
     gateway: "vercel",
     plugins: [],
-    tools: ["word-count"],
+    tools: ["deep-research"],
     storage: {
       source: "s3",
       options: { bucket: "team's 日本語 $(echo should-not-run)" },

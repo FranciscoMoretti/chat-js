@@ -3,7 +3,7 @@ title: Namespaces
 description: Identify registry sources independently of item categories and installed paths
 ---
 
-Configure registry source aliases such as `@chatjs` or `@acme` in `components.json`. An address such as `@chatjs/word-count` identifies an item from that source. The item's `meta.chatjs.kind` identifies its category independently of its name.
+Configure registry source aliases such as `@chatjs` or `@acme` in `components.json`. An address such as `@chatjs/deep-research` identifies an item from that source. The item's `meta.chatjs.kind` identifies its category independently of its name.
 
 Source folders, public item names, and installed paths are separate. The built-in Vercel item is named `vercel-gateway`, is authored under `src/gateways/vercel/`, and installs into `chatjs/providers/gateway.ts`. Changing a registry alias does not change an item's explicit file targets.
 

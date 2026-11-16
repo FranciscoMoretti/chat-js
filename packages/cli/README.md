@@ -87,7 +87,7 @@ The CLI uses unmodified shadcn 4.22.1 for registry resolution and installation. 
 
 ```sh
 chat-js add @acme/my-tool --yes
-chat-js add word-count --overwrite
+chat-js add deep-research --overwrite
 chat-js sync
 ```
 

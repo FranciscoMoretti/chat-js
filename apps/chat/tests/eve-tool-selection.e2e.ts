@@ -73,7 +73,6 @@ test("Image tool selection survives native history and edits while later turns r
   await expect(page.getByText("Ready", { exact: true })).toBeVisible({
     timeout: 90_000,
   });
-  await expect(page.getByText("Words", { exact: true })).toHaveCount(0);
   const conflict = await page.request.post("/api/agent-conversations", {
     data: { ...operation, selectedTool: null },
     headers: { origin },

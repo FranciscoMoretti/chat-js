@@ -768,12 +768,24 @@ defineConfig({ ai: { gateway: "${gateway}", tools: { video: { default: "video" }
 `
     );
     if (gateway === "vercel") {
-      await run(cwd, ["node", cliEntry, "add", "word-count", "--yes"]);
+      await run(cwd, [
+        "node",
+        cliEntry,
+        "add",
+        "attach-workspace-file",
+        "--yes",
+      ]);
       const index = await readFile(
         nodePath.join(cwd, "chatjs/generated/tools.ts"),
         "utf-8"
       );
-      await run(cwd, ["node", cliEntry, "add", "word-count", "--yes"]);
+      await run(cwd, [
+        "node",
+        cliEntry,
+        "add",
+        "attach-workspace-file",
+        "--yes",
+      ]);
       expect(
         await readFile(nodePath.join(cwd, "chatjs/generated/tools.ts"), "utf-8")
       ).toBe(index);
@@ -782,13 +794,16 @@ defineConfig({ ai: { gateway: "${gateway}", tools: { video: { default: "video" }
         "--bun",
         "shadcn@4.21.0",
         "add",
-        "@chatjs/get-weather",
+        "@chatjs/deep-research",
         "--yes",
       ]);
       await run(cwd, ["node", cliEntry, "sync"]);
       expect(
-        await readFile(nodePath.join(cwd, "chatjs/generated/tools.ts"), "utf-8")
-      ).toContain("getWeather as tool");
+        await readFile(
+          nodePath.join(cwd, "chatjs/generated/installed-tools.ts"),
+          "utf-8"
+        )
+      ).toContain("deepResearch");
     }
     await run(cwd, ["bun", "run", "test:types"]);
     await writeFile(
@@ -943,16 +958,16 @@ assert.equal(aiConfigSchema.safeParse({ ...ai, tools: { ...ai.tools, video: { de
       const longDirectory = nodePath.join(cwd, "chatjs/tools/long-renderer");
       await mkdir(longDirectory);
       const toolExport =
-        "wordCountWithAnIntentionallyLongNameForFormattingVerification";
+        "attachWorkspaceFileWithAnIntentionallyLongNameForFormattingVerification";
       const rendererExport =
-        "WordCountRendererWithAnIntentionallyLongNameForFormattingVerification";
+        "AttachWorkspaceFileRendererWithAnIntentionallyLongNameForFormattingVerification";
       await writeFile(
         nodePath.join(longDirectory, "tool.ts"),
-        `export { wordCount as ${toolExport} } from "../word-count/tool";\n`
+        `export { attach_workspace_file as ${toolExport} } from "../attach-workspace-file/tool";\n`
       );
       await writeFile(
         nodePath.join(longDirectory, "renderer.tsx"),
-        `export { WordCountRenderer as ${rendererExport} } from "../word-count/renderer";\n`
+        `export { AttachWorkspaceFileRenderer as ${rendererExport} } from "../attach-workspace-file/renderer";\n`
       );
       await writeFile(
         nodePath.join(longDirectory, "chatjs.json"),
@@ -988,7 +1003,6 @@ it("native tools: a minimal scaffold installs external EVE tools and preserves d
     "--yes",
     "--no-electron",
   ]);
-  await run(cwd, ["node", cliEntry, "add", "word-count", "--yes"]);
   await run(cwd, [
     "node",
     cliEntry,
@@ -1185,7 +1199,7 @@ requireCredentials("mcp", descriptor.envRequirements, {NODE_ENV: "test", MCP_ENC
       nodePath.join(cwd, "components/settings/settings-nav.tsx"),
       computedSettings
     );
-    await run(cwd, ["node", cliEntry, "add", "word-count", "--yes"]);
+    await run(cwd, ["node", cliEntry, "add", "deep-research", "--yes"]);
     expect(
       await readFile(nodePath.join(cwd, "composer-controls.ts"), "utf-8")
     ).toBe(computedComposer);

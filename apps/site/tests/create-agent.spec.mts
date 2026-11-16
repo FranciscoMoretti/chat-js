@@ -215,36 +215,37 @@ for (const width of [1440, 845, 390]) {
     await uiVerify.snapshot("agent native channels and composition");
     await page.screenshot({ path: testInfo.outputPath("channels.png") });
     await jumpToCategory(page, width, "Tools", "tool");
-    const portable = page.getByTestId("eve-@chatjs/word-count");
+    const attachment = catalog.getByRole("checkbox", {
+      name: "Attach Workspace File",
+      exact: true,
+    });
     await expect(
       page.getByLabel("Source: ChatJS", { exact: true })
     ).toHaveCount(0);
-    await portable.getByRole("button", { name: "About Word Count" }).click();
-    const portableDetails = page.getByRole("dialog");
-    await expect(portableDetails).toHaveCSS("animation-name", "none");
-    await expect(portableDetails.getByLabel("Source: ChatJS")).toBeVisible();
+    await catalog
+      .getByRole("button", { name: "About Attach Workspace File" })
+      .click();
+    const attachmentDetails = page.getByRole("dialog");
+    await expect(attachmentDetails).toHaveCSS("animation-name", "none");
+    await expect(attachmentDetails.getByLabel("Source: ChatJS")).toBeVisible();
     await expect(
-      portableDetails.getByText("Requires ChatJS", { exact: true })
-    ).toHaveCount(0);
-    await expect(
-      portableDetails.getByRole("link", { name: "Word Count documentation" })
+      attachmentDetails.getByText("Requires ChatJS", { exact: true })
     ).toBeVisible();
     await uiVerify.snapshot("capability source and documentation details");
     await page.screenshot({ path: testInfo.outputPath("details.png") });
     await page.keyboard.press("Escape");
-    await expect(portable.getByRole("checkbox")).not.toBeChecked();
-    await portable.getByRole("checkbox").check();
+    await expect(attachment).not.toBeChecked();
+    await attachment.check();
     await jumpToCategory(page, width, "Tools", "tool");
-    await uiVerify.snapshot(
-      "portable ChatJS source without application requirement"
-    );
-    await page.screenshot({ path: testInfo.outputPath("portable.png") });
-    await expect(portable.locator("details")).toHaveCount(0);
+    await uiVerify.snapshot("ChatJS workspace attachment selected");
+    await page.screenshot({
+      path: testInfo.outputPath("workspace-attachment.png"),
+    });
 
-    await portable.getByRole("checkbox").press("Space");
-    await expect(portable.getByRole("checkbox")).not.toBeChecked();
-    await portable.getByRole("checkbox").press("Space");
-    await expect(portable.getByRole("checkbox")).toBeChecked();
+    await attachment.press("Space");
+    await expect(attachment).not.toBeChecked();
+    await attachment.press("Space");
+    await expect(attachment).toBeChecked();
     if (width === 1440) {
       await page
         .getByRole("button", { name: "Toggle theme", exact: true })
@@ -315,7 +316,7 @@ for (const width of [1440, 845, 390]) {
     await uiVerify.snapshot("native research capability");
     await page.keyboard.press("Escape");
     await expect(
-      page.getByRole("checkbox", { name: "Publish File", exact: true })
+      page.getByRole("checkbox", { name: "Attach Workspace File", exact: true })
     ).toBeEnabled();
     await expect(
       page.getByRole("checkbox", { name: "Text Documents", exact: true })
@@ -377,8 +378,7 @@ for (const width of [1440, 845, 390]) {
     expect(recipe.eve).toContain(
       "@skills/vercel-labs/agent-skills/vercel-react-best-practices"
     );
-    expect(recipe.eve).toContain("@chatjs/word-count");
-    expect(recipe.tools).not.toContain("word-count");
+    expect(recipe.tools).toContain("attach-workspace-file");
     expect(recipe.eveRegistries).toEqual({
       "@acme": "https://registry.example/r/{name}.json",
     });
@@ -643,7 +643,7 @@ for (const width of [1440, 845, 390]) {
       page.getByRole("checkbox", { name: "Text Documents", exact: true })
     ).toHaveCount(0);
     await expect(
-      page.getByRole("checkbox", { name: "Publish File", exact: true })
+      page.getByRole("checkbox", { name: "Attach Workspace File", exact: true })
     ).not.toBeChecked();
     await jumpToCategory(page, width, "Extensions", "extension");
     await uiVerify.snapshot("research extension with native registry items");
@@ -662,7 +662,7 @@ for (const width of [1440, 845, 390]) {
     await research.uncheck();
     await expect(research).not.toBeChecked();
     await expect(
-      page.getByRole("checkbox", { name: "Publish File", exact: true })
+      page.getByRole("checkbox", { name: "Attach Workspace File", exact: true })
     ).not.toBeChecked();
   });
 }

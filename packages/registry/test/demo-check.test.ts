@@ -22,7 +22,7 @@ const verifyGatewayAndTool = (
     'chat: "google/gemini-2.5-flash-lite"'
   );
   expect(
-    required(expected, "chatjs/tools/publish-file/renderer.tsx")
+    required(expected, "chatjs/tools/attach-workspace-file/renderer.tsx")
   ).toContain('from "@/components/file-artifact-card"');
 };
 

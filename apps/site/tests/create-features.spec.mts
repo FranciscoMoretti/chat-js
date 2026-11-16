@@ -32,7 +32,7 @@ for (const width of [1440, 390]) {
     const installation = installationSelectionSchema.parse({
       gateway: "vercel",
       storage: { source: "vercel-blob" },
-      tools: ["publish-file"],
+      tools: ["attach-workspace-file"],
       plugins: [],
     });
     await page.goto(
@@ -49,7 +49,7 @@ for (const width of [1440, 390]) {
     await page.getByRole("tab", { name: "Agent", exact: true }).click();
     const publish = page
       .locator("#agent-tool")
-      .getByRole("checkbox", { name: "Publish File", exact: true });
+      .getByRole("checkbox", { name: "Attach Workspace File", exact: true });
     await expect(publish).toBeChecked();
     await publish.scrollIntoViewIfNeeded();
     await uiVerify.snapshot("publication tool in Agent");
@@ -80,7 +80,7 @@ for (const width of [1440, 390]) {
     const recipe = commandAppPreset(
       await page.getByTestId("create-command").textContent()
     );
-    expect(recipe.tools).toContain("publish-file");
+    expect(recipe.tools).toContain("attach-workspace-file");
     expect(recipe.plugins).toEqual([]);
   });
 }
@@ -150,10 +150,10 @@ test("Create sections share selections, dependencies and the install command", a
     .getByRole("checkbox", { name: "Deep Research", exact: true })
     .check();
   await expect(
-    tools.getByRole("checkbox", { name: "Publish File", exact: true })
+    tools.getByRole("checkbox", { name: "Attach Workspace File", exact: true })
   ).not.toBeChecked();
   await page
-    .getByRole("button", { name: "About Publish File", exact: true })
+    .getByRole("button", { name: "About Attach Workspace File", exact: true })
     .click();
   await expect(
     page.getByText("Required by Deep Research", { exact: true })
@@ -163,12 +163,9 @@ test("Create sections share selections, dependencies and the install command", a
     .getByRole("checkbox", { name: "Deep Research", exact: true })
     .uncheck();
   await expect(
-    tools.getByRole("checkbox", { name: "Publish File", exact: true })
+    tools.getByRole("checkbox", { name: "Attach Workspace File", exact: true })
   ).not.toBeChecked();
-  await page
-    .getByTestId("eve-@chatjs/get-weather")
-    .getByRole("checkbox")
-    .check();
+  await page.getByTestId("eve-connection/linear").getByRole("checkbox").check();
   await uiVerify.snapshot("AI tools");
   await page.screenshot({ path: testInfo.outputPath("tools-desktop.png") });
   await page.getByRole("tab", { name: "Setup", exact: true }).click();
@@ -207,7 +204,7 @@ test("Create sections share selections, dependencies and the install command", a
   ).toBeChecked();
   await page.getByRole("tab", { name: "Agent", exact: true }).click();
   await expect(
-    page.getByTestId("eve-@chatjs/get-weather").getByRole("checkbox")
+    page.getByTestId("eve-connection/linear").getByRole("checkbox")
   ).toBeChecked();
   await page.getByRole("tab", { name: "Appearance", exact: true }).click();
   await page
@@ -221,7 +218,7 @@ test("Create sections share selections, dependencies and the install command", a
   expect(requested.storage?.options.bucket).toBe("my-chat-files");
   expect(requested.plugins).toEqual(["attachment-uploads"]);
   expect(requested.tools).toEqual([]);
-  expect(requested.eve).toEqual(["@chatjs/get-weather"]);
+  expect(requested.eve).toEqual(["connection/linear"]);
   await page
     .getByRole("button", { name: "Get Code", exact: true })
     .first()
@@ -236,7 +233,7 @@ test("Create sections share selections, dependencies and the install command", a
     commandAppPreset(await command.textContent()).storage?.options.bucket
   ).toBe("my-chat-files");
   expect(commandAppPreset(await command.textContent()).eve).toEqual([
-    "@chatjs/get-weather",
+    "connection/linear",
   ]);
   await page.getByRole("button", { name: "Copy Command", exact: true }).click();
   expect(
@@ -642,7 +639,7 @@ for (const width of [1440, 1024, 390]) {
       const names = [
         "Generate Image",
         "Generate Video",
-        "Publish File",
+        "Attach Workspace File",
         "Deep Research",
       ];
       for (const name of checked ? names : names.toReversed()) {
@@ -659,7 +656,10 @@ for (const width of [1440, 1024, 390]) {
         );
       }
       await tools
-        .getByRole("button", { name: "About Publish File", exact: true })
+        .getByRole("button", {
+          name: "About Attach Workspace File",
+          exact: true,
+        })
         .click();
 
       await page.screenshot({
@@ -693,10 +693,8 @@ test("built-in tool examples render published files without document editors", a
     tools: [
       "generate-image",
       "generate-video",
-      "get-weather",
-      "word-count",
       "deep-research",
-      "publish-file",
+      "attach-workspace-file",
     ],
   });
   const errors: string[] = [];
@@ -811,7 +809,7 @@ for (const width of [1440, 390]) {
     await page.setViewportSize({ width, height: 1000 });
     const installation = {
       plugins: ["feedback"],
-      tools: ["publish-file"],
+      tools: ["attach-workspace-file"],
       sandbox: "just-bash",
       gateway: "vercel",
     };
@@ -846,7 +844,7 @@ for (const width of [1440, 390]) {
     await expect(
       page
         .getByTestId("agent-scroll")
-        .getByRole("checkbox", { name: "Publish File", exact: true })
+        .getByRole("checkbox", { name: "Attach Workspace File", exact: true })
     ).toBeChecked();
     await page
       .getByRole("button", { name: "Get Code", exact: true })
@@ -876,7 +874,7 @@ for (const width of [1440, 390]) {
     await expect(
       page
         .getByTestId("agent-scroll")
-        .getByRole("checkbox", { name: "Publish File", exact: true })
+        .getByRole("checkbox", { name: "Attach Workspace File", exact: true })
     ).toBeChecked();
     await expect(
       page
@@ -890,7 +888,7 @@ for (const width of [1440, 390]) {
     expect(
       commandAppPreset(await dialog.getByTestId("create-command").textContent())
         .tools
-    ).toContain("publish-file");
+    ).toContain("attach-workspace-file");
     await expect(
       dialog.getByRole("button", { name: "Copy Command", exact: true })
     ).toBeEnabled();
@@ -1133,7 +1131,7 @@ for (const width of [1440, 390]) {
         gateway: "vercel",
         storage: { source: "vercel-blob", options: {} },
         plugins: ["spreadsheet-viewer"],
-        tools: ["publish-file"],
+        tools: ["attach-workspace-file"],
       })
     );
     await page.goto(`/create?item=preview-tools&app=${app}`);

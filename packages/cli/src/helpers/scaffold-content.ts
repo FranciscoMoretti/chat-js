@@ -18,6 +18,8 @@ const researchTestFiles = [
 // Runtime regressions, historical migration tools and sample evaluations stay
 // in the reference repository rather than becoming downstream app source.
 const REPOSITORY_ONLY_FILES = new Set([
+  "agent/channels/slack.ts",
+  "agent/connections/notion.ts",
   "lib/eve/portable-providers.test.ts",
   "lib/db/retire-legacy-guests.test.ts",
   "lib/eve/guest-ip.test.ts",
@@ -86,7 +88,7 @@ const REPOSITORY_ONLY_FILES = new Set([
   "lib/db/eve-upload-retention.test.ts",
   "lib/eve/core-tool-types.test.ts",
   "lib/eve/document-execution.test.ts",
-  "lib/eve/publish-file.test.ts",
+  "lib/eve/attach-workspace-file.test.ts",
   "lib/eve/document-deletion.test.ts",
   "lib/eve/document-runs.test.ts",
   "lib/eve/local-sandbox-inventory.test.ts",

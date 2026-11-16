@@ -750,7 +750,7 @@ test.each(["", "apps/chat/"])(
       "chatjs/plugins/mcp/component.ts",
       "composition/custom/custom-tools.ts",
       "composition/custom/custom-ui.ts",
-      "chatjs/tools/word-count/tool.ts",
+      "chatjs/tools/attach-workspace-file/tool.ts",
       "scripts/generate-models.ts",
     ];
     const malformed = "debugger;export  const chosen={answer:42}\n";

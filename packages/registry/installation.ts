@@ -77,11 +77,9 @@ const demoInstallation = installationSelectionSchema.parse({
   sandbox: "default",
   storage: { source: "vercel-blob" },
   tools: [
-    "word-count",
-    "get-weather",
     "generate-image",
     "generate-video",
-    "publish-file",
+    "attach-workspace-file",
     "deep-research",
   ],
 });

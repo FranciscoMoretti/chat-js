@@ -10,6 +10,8 @@ import { tmpdir } from "node:os";
 test.each([
   {
     excluded: [
+      "agent/channels/slack.ts",
+      "agent/connections/notion.ts",
       "chatjs/installed-source.json",
       "chatjs/installed-dependencies.json",
       "chatjs/retained-plugin-schemas.json",
@@ -75,6 +77,7 @@ test.each([
       ".env.example",
       "nested/.env.example",
       "app/page.tsx",
+      "agent/channels/eve.ts",
       "lib/eve/message-delivery.test.ts",
       "chatjs/generated/tools.ts",
       "chatjs/core/ui/slots.tsx",

@@ -88,8 +88,8 @@ const project = async (): Promise<string> => {
 };
 const install = async (
   root: string,
-  id = "word-count",
-  toolExport = "wordCount"
+  id = "text-stats",
+  toolExport = "textStats"
 ): Promise<void> => {
   const dir = path.join(root, "chatjs/tools", id);
   await mkdir(dir, { recursive: true });
@@ -98,7 +98,7 @@ const install = async (
     envRequirements: [],
     id,
     kind: "tool",
-    tools: [{ rendererExport: "WordCountRenderer", toolExport }],
+    tools: [{ rendererExport: "TextStatsRenderer", toolExport }],
   };
   await writeFile(path.join(dir, "chatjs.json"), JSON.stringify(definition));
   await writeFile(
@@ -107,7 +107,7 @@ const install = async (
   );
   await writeFile(
     path.join(dir, "renderer.tsx"),
-    "export const WordCountRenderer = () => null;"
+    "export const TextStatsRenderer = () => null;"
   );
 };
 test("definition reads are bounded and registration waits for every admitted directory", async () => {
@@ -209,7 +209,7 @@ test("sync registers direct installs deterministically and preserves custom modu
     path.join(root, "chatjs/generated/tools.ts"),
     "utf-8"
   );
-  expect(before).toContain('from "@/chatjs/tools/word-count/tool"');
+  expect(before).toContain('from "@/chatjs/tools/text-stats/tool"');
   expect(before).not.toContain("import { providers }");
   expect(before).not.toContain("Object.hasOwn");
   const installedBefore = await readFile(
@@ -270,7 +270,7 @@ test("missing descriptors and edited generated output fail without dropping regi
   await syncTools(root);
   const index = path.join(root, "chatjs/generated/tools.ts");
   const before = await readFile(index, "utf-8");
-  await rm(path.join(root, "chatjs/tools/word-count/chatjs.json"));
+  await rm(path.join(root, "chatjs/tools/text-stats/chatjs.json"));
   expect(syncTools(root)).rejects.toThrow("Missing descriptor");
   expect(await readFile(index, "utf-8")).toBe(before);
   await writeFile(index, `${before}\n// custom edit`);
@@ -283,7 +283,7 @@ test("duplicate keys and symlink directories fail before writing indexes", async
   expect(syncTools(root)).rejects.toThrow("Duplicate installed");
   await rm(path.join(root, "chatjs/tools/other"), { recursive: true });
   await symlink(
-    path.join(root, "chatjs/tools/word-count"),
+    path.join(root, "chatjs/tools/text-stats"),
     path.join(root, "chatjs/tools/other")
   );
   expect(syncTools(root)).rejects.toThrow("symlinks");
@@ -644,7 +644,7 @@ test("workflow installs stay static and reserve their names for app composition"
 test("composer metadata follows installation and removal without editing UI order", async () => {
   const root = await project();
   await install(root);
-  const descriptor = path.join(root, "chatjs/tools/word-count/chatjs.json");
+  const descriptor = path.join(root, "chatjs/tools/text-stats/chatjs.json");
   const definition = toolDefinitionSchema.parse(
     JSON.parse(await readFile(descriptor, "utf-8"))
   );
@@ -661,13 +661,13 @@ test("composer metadata follows installation and removal without editing UI orde
   const before = await readFile(generated, "utf-8");
   expect(before).toContain('import { Hash as Icon0 } from "lucide-react"');
   expect(before).toContain(
-    '"wordCount": { icon: Icon0, name: "Count words", shortName: "Words" }'
+    '"textStats": { icon: Icon0, name: "Count words", shortName: "Words" }'
   );
   await syncTools(root);
   expect(await readFile(generated, "utf-8")).toBe(before);
-  await rm(path.join(root, "chatjs/tools/word-count"), { recursive: true });
+  await rm(path.join(root, "chatjs/tools/text-stats"), { recursive: true });
   await syncTools(root);
-  expect(await readFile(generated, "utf-8")).not.toContain("wordCount");
+  expect(await readFile(generated, "utf-8")).not.toContain("textStats");
   expect(await readFile(order, "utf-8")).toBe(
     "// Application-owned ordering\n"
   );
@@ -679,7 +679,7 @@ test("invalid composer icon is rejected before generated files change", async ()
   await syncTools(root);
   const generated = path.join(root, "chatjs/generated/composer-tools.ts");
   const before = await readFile(generated, "utf-8");
-  const descriptor = path.join(root, "chatjs/tools/word-count/chatjs.json");
+  const descriptor = path.join(root, "chatjs/tools/text-stats/chatjs.json");
   const definition = toolDefinitionSchema.parse(
     JSON.parse(await readFile(descriptor, "utf-8"))
   );
@@ -698,7 +698,7 @@ test.each(["GlobeIcon", "BookOpen", "Edit3"])(
   async (icon) => {
     const root = await project();
     await install(root);
-    const descriptor = path.join(root, "chatjs/tools/word-count/chatjs.json");
+    const descriptor = path.join(root, "chatjs/tools/text-stats/chatjs.json");
     const definition = toolDefinitionSchema.parse(
       JSON.parse(await readFile(descriptor, "utf-8"))
     );

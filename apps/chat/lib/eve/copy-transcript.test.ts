@@ -400,7 +400,7 @@ it("copies native completed calls without carrying execution identities", () => 
       data: {
         callId: "private-call",
         owner: { runId: "source-assistant" },
-        capability: { kind: "tool", name: "wordCount" },
+        capability: { kind: "tool", name: "exampleTextStats" },
         input: { text: "hello" },
       },
     },
@@ -447,7 +447,7 @@ it("copies native completed calls without carrying execution identities", () => 
   ]);
   expect(copy.seed.messages[1]?.parts).toContainEqual({
     type: "dynamic-tool",
-    toolName: "wordCount",
+    toolName: "exampleTextStats",
     input: { text: "hello" },
     state: "output-available",
     output: { words: 1 },

@@ -12,7 +12,7 @@ const installation = {
     "model-preferences",
     "attachment-uploads",
   ],
-  tools: ["deep-research", "publish-file"],
+  tools: ["deep-research", "attach-workspace-file"],
   storage: { source: "vercel-blob" },
   sandbox: "vercel",
 };

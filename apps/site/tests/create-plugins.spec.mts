@@ -100,7 +100,7 @@ test("native controls style the open production dialog and Share restores the fu
   const selection = {
     gateway: "openrouter",
     plugins: ["feedback", "projects"],
-    tools: ["get-weather"],
+    tools: ["deep-research"],
     sandbox: "daytona",
     storage: { source: "s3", options: { bucket: "public-files" } },
   };

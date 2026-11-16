@@ -681,20 +681,22 @@ describe("scaffoldFromTemplate", (): void => {
       false
     );
     expect(
-      existsSync(pathModule.join(destination, "chatjs", "tools", "get-weather"))
+      existsSync(
+        pathModule.join(destination, "chatjs", "tools", "attach-workspace-file")
+      )
     ).toBe(false);
     expect(
       await readFile(
         pathModule.join(destination, "chatjs", "generated", "tools.ts"),
         "utf-8"
       )
-    ).not.toContain("getWeather");
+    ).not.toContain("attach_workspace_file");
     expect(
       await readFile(
         pathModule.join(destination, "chatjs", "generated", "ui.ts"),
         "utf-8"
       )
-    ).not.toContain("GetWeatherRenderer");
+    ).not.toContain("AttachWorkspaceFileRenderer");
   });
   it(
     "falls back to repo source apps when synced templates are missing",

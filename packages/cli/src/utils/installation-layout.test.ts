@@ -27,7 +27,7 @@ test("fresh installation planning does not require the destination to exist", as
 
 for (const marker of [
   "plugins/mcp/chatjs.json",
-  "tools/chatjs/word-count/chatjs.json",
+  "tools/chatjs/attach-workspace-file/chatjs.json",
   "lib/ui-slots.tsx",
   "lib/compose-chat.ts",
   "lib/ai/gateway.ts",

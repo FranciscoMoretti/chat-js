@@ -105,7 +105,7 @@ test("native deep research saves a reloadable report in ChatJS with a usage rece
     },
     {
       message:
-        "Call deepResearch exactly once. Research the purpose of the HTML dialog element and its accessibility behavior, using the current MDN documentation as the primary source. Audience: web developers. Scope: a short report under 300 words with citations, no historical comparison. All requirements are specified; no clarification is needed. Pass this full task as the request. After research returns its report path, call publish_file to deliver the Markdown file.",
+        "Call deepResearch exactly once. Research the purpose of the HTML dialog element and its accessibility behavior, using the current MDN documentation as the primary source. Audience: web developers. Scope: a short report under 300 words with citations, no historical comparison. All requirements are specified; no clarification is needed. Pass this full task as the request. After research returns its report path, call attach_workspace_file to deliver the Markdown file.",
       modelId: config.ai.workflows.chat,
       operationId: crypto.randomUUID(),
       selectedTool: "deepResearch",

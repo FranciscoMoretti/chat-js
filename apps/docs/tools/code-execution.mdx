@@ -11,12 +11,12 @@ Choose Automatic, Docker or Vercel Sandbox in the builder's Agent tab. Automatic
 
 Install dependencies using normal shell commands or configure the native EVE sandbox image. ChatJS does not install Python packages, rewrite notebook syntax, print special variables or capture charts automatically.
 
-## Publish a generated file
+## Attach a generated file
 
-Install `publish-file` with persistent storage:
+Install `attach-workspace-file` with persistent storage:
 
 ```bash
-bunx chat-js@alpha add publish-file --storage-provider vercel-blob
+bunx chat-js@alpha add attach-workspace-file --storage-provider vercel-blob
 ```
 
 For example, the agent can use `bash` to run:
@@ -30,7 +30,7 @@ print('Created /workspace/budget.csv')
 PY
 ```
 
-Then call `publish_file` with `{ "path": "/workspace/budget.csv" }`. The tool copies a snapshot into application storage and returns an authenticated file reference. Files must be inside the sandbox workspace and at most 32 MiB. ChatJS checks access to the owning web conversation; subagents return paths to the parent for publication. Native Slack file delivery remains an EVE channel concern.
+Then call `attach_workspace_file` with `{ "path": "/workspace/budget.csv" }`. The tool copies a snapshot into application storage and returns an authenticated file reference. Files must be inside the sandbox workspace and at most 32 MiB. ChatJS checks access to the owning web conversation; subagents return paths to the parent for publication. Native Slack file delivery remains an EVE channel concern.
 
 For charts, save an image explicitly, such as `plt.savefig('/workspace/chart.png')`, then publish that file. There is no special `chart` dictionary protocol.
 
@@ -46,7 +46,7 @@ The spreadsheet viewer opens uploaded and published CSV, TSV and XLSX files. It 
 
 ## Revise a file through chat
 
-The `publish-file` item also installs `import_file`. When you ask for a change to an earlier artifact, the agent imports its exact `fileId` and filename into the current EVE workspace, edits that copy using native tools, and publishes a new file. The original snapshot stays unchanged. Import works even when the original sandbox is gone, provided the file is still stored and referenced by the current conversation.
+The `attach-workspace-file` item also installs `import_file`. When you ask for a change to an earlier artifact, the agent imports its exact `fileId` and filename into the current EVE workspace, edits that copy using native tools, and publishes a new file. The original snapshot stays unchanged. Import works even when the original sandbox is gone, provided the file is still stored and referenced by the current conversation.
 
 Import checks the current conversation owner's authority before reading storage. It accepts files up to 32 MiB and does not grant access to files from other conversations. If a file is ambiguous or unavailable, identify it or upload it again. You can also download a file, edit it in another application and upload the result when uploads are installed.
 

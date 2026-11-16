@@ -1,8 +1,8 @@
 import { expect, mock, test } from "bun:test";
 import assert from "node:assert/strict";
 import nodePath from "node:path";
-import { publishSandboxFile } from "./publish";
-import { maximumPublishedFileBytes } from "./schemas";
+import { attachSandboxFile } from "./attach";
+import { maximumWorkspaceFileBytes } from "./schemas";
 
 const fixture = (
   realPath = "/workspace/report.csv",
@@ -57,7 +57,7 @@ const fixture = (
 test("publishes a byte snapshot with a filename and small descriptor", async () => {
   const bytes = new TextEncoder().encode("original");
   const deps = fixture("/workspace/report.csv", bytes);
-  const result = await publishSandboxFile(
+  const result = await attachSandboxFile(
     { path: "report.csv", name: "budget.csv" },
     deps
   );
@@ -77,7 +77,7 @@ test.each(["../secret.txt", "/tmp/secret.txt", "/workspace-other/secret.txt"])(
   async (path) => {
     const deps = fixture();
     await assert.rejects(
-      publishSandboxFile({ path }, deps),
+      attachSandboxFile({ path }, deps),
       /inside the sandbox workspace/u
     );
     expect(deps.sandbox.run).not.toHaveBeenCalled();
@@ -90,7 +90,7 @@ test.each(["/tmp/secret.txt", "", "/workspace-other/secret.txt"])(
   async (resolved) => {
     const deps = fixture(resolved);
     await assert.rejects(
-      publishSandboxFile({ path: "report.csv" }, deps),
+      attachSandboxFile({ path: "report.csv" }, deps),
       /missing/u
     );
     expect(deps.sandbox.readFile).not.toHaveBeenCalled();
@@ -106,14 +106,14 @@ test("bounds bytes before storage and cancels oversized streams", async () => {
       await Promise.resolve(
         new ReadableStream({
           start(controller) {
-            controller.enqueue(new Uint8Array(maximumPublishedFileBytes + 1));
+            controller.enqueue(new Uint8Array(maximumWorkspaceFileBytes + 1));
           },
           cancel,
         })
       )
   );
   await assert.rejects(
-    publishSandboxFile({ path: "report.csv" }, deps),
+    attachSandboxFile({ path: "report.csv" }, deps),
     /32 MiB/u
   );
   expect(cancel).toHaveBeenCalled();
@@ -123,7 +123,7 @@ test("bounds bytes before storage and cancels oversized streams", async () => {
 test("does not upload aborted reads or claim a failed upload succeeded", async () => {
   const deps = fixture();
   await assert.rejects(
-    publishSandboxFile(
+    attachSandboxFile(
       { path: "report.csv" },
       { ...deps, signal: AbortSignal.abort() }
     )
@@ -131,13 +131,13 @@ test("does not upload aborted reads or claim a failed upload succeeded", async (
   expect(deps.upload).not.toHaveBeenCalled();
   deps.upload.mockRejectedValue(new Error("Storage unavailable"));
   await assert.rejects(
-    publishSandboxFile({ path: "report.csv" }, deps),
+    attachSandboxFile({ path: "report.csv" }, deps),
     /Storage unavailable/u
   );
 });
 
 test("active browser formats are downloaded as binary", async () => {
-  const result = await publishSandboxFile(
+  const result = await attachSandboxFile(
     { path: "report.html" },
     fixture("/workspace/report.html")
   );

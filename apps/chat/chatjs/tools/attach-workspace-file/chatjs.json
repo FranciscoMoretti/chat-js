@@ -3,7 +3,7 @@
   "requiresChatJS": true,
   "channelSupport": { "web": "supported", "slack": "unsupported" },
   "envRequirements": [],
-  "id": "publish-file",
+  "id": "attach-workspace-file",
   "kind": "tool",
   "requiresStorage": true,
   "requiresTools": [],
@@ -11,8 +11,8 @@
     { "accounting": "none", "toolExport": "import_file" },
     {
       "accounting": "none",
-      "rendererExport": "PublishFileRenderer",
-      "toolExport": "publish_file"
+      "rendererExport": "AttachWorkspaceFileRenderer",
+      "toolExport": "attach_workspace_file"
     }
   ],
   "contractVersion": 1

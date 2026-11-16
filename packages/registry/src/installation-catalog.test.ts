@@ -58,7 +58,7 @@ test("research does not infer application dependencies", () => {
   expect(result.issues).toEqual([]);
   expect(result.selection.tools).toEqual(["deep-research"]);
   expect(result.requested.tools).toEqual(["deep-research"]);
-  expect(result.reasons["publish-file"]).toBeUndefined();
+  expect(result.reasons["attach-workspace-file"]).toBeUndefined();
   expect(requested.tools).toEqual(["deep-research"]);
   expect(
     resolveInstallationSelection({ ...requested, tools: [] }, catalog).selection
@@ -136,19 +136,19 @@ test("Slack can use native sandbox tools", () => {
   expect(result.issues).toEqual([]);
 });
 
-test("native portable tools need no application services and cannot duplicate an application provider", () => {
+test("native portable capabilities need no application services and cannot duplicate an application provider", () => {
   const portable = resolveInstallationSelection(
-    { ...minimal, eve: ["@chatjs/word-count"] },
+    { ...minimal, eve: ["@chatjs/deep-research"] },
     catalog
   );
   expect(portable.issues).toEqual([]);
   expect(portable.selection.tools).toEqual([]);
   expect(portable.selection.plugins).toEqual([]);
   const duplicate = resolveInstallationSelection(
-    { ...minimal, eve: ["@chatjs/word-count"], tools: ["word-count"] },
+    { ...minimal, eve: ["@chatjs/deep-research"], tools: ["deep-research"] },
     catalog
   );
   expect(duplicate.issues).toContain(
-    "word-count is selected through EVE and through application features. Choose one installation for this capability."
+    "deep-research is selected through EVE and through application features. Choose one installation for this capability."
   );
 });

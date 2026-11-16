@@ -55,37 +55,25 @@ test("portable distributions reuse implementation source and exclude app contrib
   );
   expect(portable.filter((name) => name !== null).toSorted()).toEqual([
     "deep-research",
-    "get-weather",
-    "word-count",
   ]);
 });
 
-test.each(["word-count", "deep-research"])(
-  "%s cannot borrow ChatJS imports or undeclared packages",
-  async (name) => {
-    const item = registry.items.find((entry) => entry.name === name);
-    if (!item) {
-      throw new Error(`Missing ${name}`);
-    }
-    const sources = await readSources(item);
-    for (const content of [
-      'import { cost } from "@/lib/eve/tool-usage";',
-      'import { thing } from "unlisted-package";',
-    ]) {
-      expect(() =>
-        nativeRegistryItem(
-          item,
-          new Map([
-            ...sources,
-            [
-              name === "deep-research"
-                ? "agent/tools/deepResearch.ts"
-                : "chatjs/tools/word-count/tool.ts",
-              content,
-            ],
-          ])
-        )
-      ).toThrow("dependency");
-    }
+test("Deep Research cannot borrow ChatJS imports or undeclared packages", async () => {
+  const name = "deep-research";
+  const item = registry.items.find((entry) => entry.name === name);
+  if (!item) {
+    throw new Error(`Missing ${name}`);
   }
-);
+  const sources = await readSources(item);
+  for (const content of [
+    'import { cost } from "@/lib/eve/tool-usage";',
+    'import { thing } from "unlisted-package";',
+  ]) {
+    expect(() =>
+      nativeRegistryItem(
+        item,
+        new Map([...sources, ["agent/tools/deepResearch.ts", content]])
+      )
+    ).toThrow("dependency");
+  }
+});

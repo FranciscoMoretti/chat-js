@@ -37,7 +37,6 @@ const toolRegistrationSchema = z.object({
       z.strictObject({ costUsd: z.number().nonnegative() }),
     ])
     .optional(),
-  readOnly: z.boolean().optional(),
   composer: composerSchema.optional(),
   rendererExport: identifier.optional(),
   definitionExport: identifier.optional(),

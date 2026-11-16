@@ -46,18 +46,22 @@ for (const viewers of [
   [],
   ["image-viewer", "video-viewer", "spreadsheet-viewer"],
 ]) {
-  test(`publish-file installs with viewers=${viewers.length > 0}`, async () => {
+  test(`attach-workspace-file installs with viewers=${viewers.length > 0}`, async () => {
     const output = await renderValidationProject(prepared.core, {
       gateway: "openai",
       storage: { source: "vercel-blob", options: {} },
-      tools: ["publish-file"],
+      tools: ["attach-workspace-file"],
       plugins: viewers,
     });
     expect(
       typecheckProject(output.files, validationDependencyFixtures).diagnostics
     ).toEqual([]);
-    expect(output.files.has("chatjs/tools/publish-file/tool.ts")).toBe(true);
-    expect(output.files.has("chatjs/tools/publish-file/import.ts")).toBe(true);
+    expect(output.files.has("chatjs/tools/attach-workspace-file/tool.ts")).toBe(
+      true
+    );
+    expect(
+      output.files.has("chatjs/tools/attach-workspace-file/import.ts")
+    ).toBe(true);
     expect(
       new TextDecoder().decode(output.files.get("chatjs/generated/tools.ts"))
     ).toContain("import_file");
@@ -76,7 +80,7 @@ test("deep-research installs native files without search adapters, provisioned s
   expect(
     typecheckProject(files, validationDependencyFixtures).diagnostics
   ).toEqual([]);
-  expect(files.has("chatjs/tools/publish-file/tool.ts")).toBe(false);
+  expect(files.has("chatjs/tools/attach-workspace-file/tool.ts")).toBe(false);
   expect(files.has("chatjs/tools/tavily-search/tool.ts")).toBe(false);
   expect(files.has("chatjs/tools/text-documents/tool.ts")).toBe(false);
   expect(files.has("agent/tools/deepResearch.ts")).toBe(true);
@@ -148,11 +152,11 @@ test("tool composition retains registry dependencies and cannot borrow undeclare
     gateway: "openai",
     storage: { source: "memory", options: {} },
     plugins: ["feedback"],
-    tools: ["word-count"],
+    tools: ["deep-research"],
   });
   expect(
     output.items
-      .find((item) => item.name === "word-count")
+      .find((item) => item.name === "deep-research")
       ?.dependencies?.map(dependencyName)
   ).toContain("zod");
   expect(

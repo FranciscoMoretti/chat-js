@@ -58,7 +58,7 @@ test("registry selections preserve native addresses, mappings and independent so
   const selection = installationSelectionSchema.parse({
     eve: [
       "@skills/vercel-labs/agent-skills/vercel-react-best-practices",
-      "@chatjs/word-count",
+      "@chatjs/deep-research",
       "@acme/search",
       "https://registry.example/item.json?q=a&limit=1",
     ],

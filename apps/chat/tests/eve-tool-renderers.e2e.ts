@@ -26,8 +26,9 @@ test("installed renderer states stay readable at desktop and mobile sizes", asyn
   await page.setContent(
     `<!doctype html><html class="dark"><head>${styles}</head><body class="bg-background text-foreground">${content}</body></html>`
   );
-  await expect(page.getByText("Counting words...").first()).toBeVisible();
-  await expect(page.getByText("Words", { exact: true })).toBeVisible();
+  await expect(
+    page.getByText("sample-notes.md", { exact: true })
+  ).toBeVisible();
   await expect(page.getByRole("alert")).toHaveCount(2);
   await expect(page.getByText("Request declined.")).toBeVisible();
   /* oxlint-disable eslint/no-await-in-loop -- Viewport changes and screenshots operate on the same browser page. */
@@ -309,7 +310,9 @@ test("public tool projection preserves readable results without approval control
   await expect(
     page.getByText("Request declined.", { exact: true })
   ).toBeVisible();
-  await expect(page.getByText("Words", { exact: true })).toBeVisible();
+  await expect(
+    page.getByText("sample-notes.md", { exact: true })
+  ).toBeVisible();
   await expect(
     page.getByText(
       "This tool result is unavailable in the shared conversation.",

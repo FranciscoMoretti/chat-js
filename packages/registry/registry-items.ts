@@ -1,13 +1,11 @@
 import { spreadsheetGridItem } from "./spreadsheet-grid";
-import { toolDefinition as wordCountDefinition } from "./src/tools/word-count/definition";
-import { toolDefinition as weatherDefinition } from "./src/tools/get-weather/definition";
 import { builtInSandboxes } from "./src/sandboxes/catalog";
 import type { RegistryItem } from "shadcn/schema";
 import { builtInGateways } from "./src/gateways/catalog";
 import { pluginItems } from "./src/plugins/catalog";
 import { researchItem } from "./src/tools/research";
 import { toolDefinitionSchema } from "./metadata";
-import { publishFileItem } from "./publish-file";
+import { attachWorkspaceFileItem } from "./attach-workspace-file";
 
 const toolItems = (
   [
@@ -56,44 +54,6 @@ const toolItems = (
         },
       ],
     },
-    {
-      dependencies: ["ai", "zod"],
-      description: wordCountDefinition.description,
-      id: "word-count",
-      native: {
-        layout: "tool",
-        files: ["tool.ts", "definition.ts", "schemas.ts"],
-        dependencies: ["eve", "zod"],
-      },
-      tools: [
-        {
-          rendererExport: "WordCountRenderer",
-          readOnly: true,
-          accounting: "none",
-          toolExport: wordCountDefinition.name,
-          definitionExport: "toolDefinition",
-        },
-      ],
-    },
-    {
-      dependencies: ["ai", "zod", "date-fns"],
-      description: weatherDefinition.description,
-      id: "get-weather",
-      native: {
-        layout: "tool",
-        files: ["tool.ts", "definition.ts", "schemas.ts"],
-        dependencies: ["eve", "zod"],
-      },
-      tools: [
-        {
-          rendererExport: "GetWeatherRenderer",
-          readOnly: true,
-          accounting: "none",
-          toolExport: weatherDefinition.name,
-          definitionExport: "toolDefinition",
-        },
-      ],
-    },
   ] as const
 ).map(
   ({
@@ -113,9 +73,6 @@ const toolItems = (
       description,
       files: [
         ...(definition.config ? ["configuration-schema.ts"] : []),
-        ...(["word-count", "get-weather"].includes(definition.id)
-          ? ["definition.ts"]
-          : []),
         "tool.ts",
         "renderer.tsx",
         "schemas.ts",
@@ -151,7 +108,7 @@ const registryItems: RegistryItem[] = (
     ...builtInGateways,
     ...builtInSandboxes,
     ...toolItems,
-    publishFileItem,
+    attachWorkspaceFileItem,
     spreadsheetGridItem,
     researchItem,
   ] satisfies RegistryItem[]

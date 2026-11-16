@@ -2,12 +2,12 @@ import type { WorkflowStepToolContext } from "eve/tools";
 import type { z } from "zod";
 import { eveGeneratedFileUploader } from "@/lib/eve/generated-files";
 import { resolveEveConversationScope } from "@/lib/eve/conversation-scope";
-import { publishSandboxFile } from "./publish";
-import type { publishFileInput } from "./schemas";
+import { attachSandboxFile } from "./attach";
+import type { attachWorkspaceFileInput } from "./schemas";
 
 /** Application boundary shared by tools and durable workflows publishing sandbox files. */
-export const publishConversationFile = async (
-  input: z.infer<typeof publishFileInput>,
+export const attachConversationFile = async (
+  input: z.infer<typeof attachWorkspaceFileInput>,
   context: Readonly<WorkflowStepToolContext>
 ) => {
   const { current, initiator } = context.session.auth;
@@ -26,7 +26,7 @@ export const publishConversationFile = async (
     context.session.id,
     context.abortSignal
   );
-  return await publishSandboxFile(input, {
+  return await attachSandboxFile(input, {
     sandbox: await context.getSandbox(),
     upload: eveGeneratedFileUploader(context),
     signal: context.abortSignal,

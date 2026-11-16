@@ -16,7 +16,7 @@ import { z } from "zod";
 import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
 import { executeWithToolUsage } from "@/lib/eve/tool-usage";
 
-export const wordCount = defineTool({
+export const textStats = defineTool({
   description: "Count words in text",
   inputSchema: z.object({ text: z.string() }),
   execute: ({ text }, context) =>
@@ -48,7 +48,7 @@ Export a renderer built with `defineToolRenderer`. It validates persisted input 
 import { z } from "zod";
 import { defineToolRenderer } from "@/chatjs/core/tools/define-renderer";
 
-export const WordCountRenderer = defineToolRenderer({
+export const TextStatsRenderer = defineToolRenderer({
   inputSchema: z.object({ text: z.string() }),
   outputSchema: z.object({ words: z.number() }),
   render: ({ tool }) =>
@@ -71,7 +71,7 @@ import { z } from "zod";
 import type { ToolDefinition } from "@/chatjs/core/tools/tool-definition";
 
 export const toolDefinition = {
-  name: "wordCount",
+  name: "textStats",
   description: "Count words in text",
   inputSchema: z.object({ text: z.string() }),
   outputSchema: z.object({ words: z.number() }),
@@ -88,7 +88,7 @@ Add `"definitionExport": "toolDefinition"` beside the registration's `toolExport
 
 ## Files and viewers
 
-Use EVE's native sandbox tools for document creation and editing. Install `publish-file` to deliver immutable snapshots through ChatJS storage. A tool can offer a rich result renderer without requiring a viewer plugin. File cards dispatch to optional viewers by media type, with download as the fallback. See [Documents & Files](./canvas).
+Use EVE's native sandbox tools for document creation and editing. Install `attach-workspace-file` to deliver immutable snapshots through ChatJS storage. A tool can offer a rich result renderer without requiring a viewer plugin. File cards dispatch to optional viewers by media type, with download as the fallback. See [Documents & Files](./canvas).
 
 ## Item metadata
 
@@ -98,15 +98,15 @@ Declare standard shadcn files and dependencies in `packages/registry/registry.ts
 {
   "contractVersion": 1,
   "kind": "tool",
-  "id": "word-count",
+  "id": "text-stats",
   "tools": [
-    { "toolExport": "wordCount", "rendererExport": "WordCountRenderer" }
+    { "toolExport": "textStats", "rendererExport": "TextStatsRenderer" }
   ],
   "envRequirements": []
 }
 ```
 
-Use `contractVersion: 1` for a UI-independent descriptor. Version 2 additionally declares `uiBase: "base"` or `"radix"` for UI compatibility. Neither selects an execution implementation. The same metadata is emitted as `meta.chatjs` in the registry item and as an installed `chatjs/tools/word-count/chatjs.json` descriptor.
+Use `contractVersion: 1` for a UI-independent descriptor. Version 2 additionally declares `uiBase: "base"` or `"radix"` for UI compatibility. Neither selects an execution implementation. The same metadata is emitted as `meta.chatjs` in the registry item and as an installed `chatjs/tools/text-stats/chatjs.json` descriptor.
 
 A registry item can register several native tools through its `tools` array. Each export comes from the item’s `tool.ts`, and optional renderers come from `renderer.tsx`. Registration names must be unique across all installed items. Provider slots register exactly one tool.
 
@@ -182,7 +182,7 @@ The build script emits `registry.json`, then pinned shadcn reads the sources and
 Install the item into an independent ChatJS app and type-check it. Exercise it through an EVE worker to verify durable execution, rendering, cancellation, and usage where relevant:
 
 ```bash
-npx chat-js@alpha add https://example.com/r/word-count.json
+npx chat-js@alpha add https://example.com/r/text-stats.json
 ```
 
 ## Related

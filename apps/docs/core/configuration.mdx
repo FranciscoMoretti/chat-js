@@ -58,14 +58,14 @@ Run commands inside your generated app, using the CLI version appropriate to you
 
 ```bash
 bunx chat-js@alpha add deep-research
-bunx chat-js@alpha add publish-file spreadsheet-viewer --storage-provider vercel-blob
+bunx chat-js@alpha add attach-workspace-file spreadsheet-viewer --storage-provider vercel-blob
 bunx chat-js@alpha add attachment-uploads --storage-provider vercel-blob --sandbox-provider vercel
 bunx chat-js@alpha add mcp
 ```
 
 | Installation | Requirements |
 | --- | --- |
-| `deep-research` | Uses the parent agent’s model and available tools/connections. Returns a sandbox report path. Install `publish-file` separately for web downloads. |
+| `deep-research` | Uses the parent agent’s model and available tools/connections. Returns a sandbox report path. Install `attach-workspace-file` separately for web downloads. |
 | `generate-image` / `generate-video` | Compatible gateway capability, a default media model and persistent storage. Only the built-in Vercel gateway declares video support. |
 | `attachment-uploads` | Persistent storage and a sandbox with persistent-file support. Configure limits separately under `attachments`. |
 | `mcp` | `MCP_ENCRYPTION_KEY`, including installations with no connectors yet. |

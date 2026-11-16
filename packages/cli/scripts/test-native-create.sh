@@ -16,16 +16,15 @@ if [ "$CHATJS_NATIVE_RTL" = 1 ]; then direction=(--rtl); fi
 export CHATJS_NATIVE_BASE="${CHATJS_NATIVE_BASE:-base}"
 export CHATJS_NATIVE_SCENARIO="${CHATJS_NATIVE_SCENARIO:-uploads}"
 case "$CHATJS_NATIVE_SCENARIO" in
-  selection) installation=(--installation '{"gateway":"vercel","plugins":["feedback","projects"],"eve":["connection/notion","connection/tavily","connection/firecrawl","channel/slack","tool/web_fetch","@chatjs/get-weather","@skills/vercel-labs/agent-skills/vercel-react-best-practices"],"tools":["word-count"],"storage":{"source":"memory"},"agent":{"model":"openai/gpt-5-mini","reasoning":"high"}}') ;;
-  acceptance) installation=(--installation '{"gateway":"vercel","plugins":["attachment-uploads"],"tools":[],"storage":{"source":"minio","options":{"bucket":"chatjs-acceptance","endpoint":"http://127.0.0.1:9000"}},"agent":{"model":"openai/gpt-5-mini","defaultTools":true,"approval":"always"}}') ;;
-  minimal) installation=(--gateway vercel --no-attachments --no-documents) ;;
+  selection) installation=(--installation '{"gateway":"vercel","plugins":["feedback","projects"],"eve":["connection/notion","connection/tavily","connection/firecrawl","channel/slack","tool/web_fetch","@skills/vercel-labs/agent-skills/vercel-react-best-practices"],"tools":[],"storage":{"source":"memory"},"agent":{"model":"openai/gpt-5-mini","reasoning":"high"}}') ;;
+  acceptance) installation=(--installation '{"gateway":"vercel","plugins":["attachment-uploads"],"tools":["attach-workspace-file"],"storage":{"source":"minio","options":{"bucket":"chatjs-acceptance","endpoint":"http://127.0.0.1:9000"}},"agent":{"model":"openai/gpt-5-mini","defaultTools":true,"approval":"always"}}') ;;
+  minimal) installation=(--gateway vercel --no-attachments) ;;
   full) installation=(--gateway vercel --no-attachments --projects --mcp) ;;
-  documents) installation=(--gateway vercel --no-attachments) ;;
-  uploads) installation=(--sandbox-provider vercel --gateway openrouter --attachments --storage-provider s3 --storage-config '{"bucket":"chatjs-native-smoke"}') ;;
-  *) echo "CHATJS_NATIVE_SCENARIO must be acceptance, selection, minimal, documents, full or uploads" >&2; exit 1 ;;
+  uploads) installation=(--installation '{"gateway":"openrouter","plugins":["attachment-uploads"],"tools":["attach-workspace-file"],"sandbox":"vercel","storage":{"source":"s3","options":{"bucket":"chatjs-native-smoke"}}}') ;;
+  *) echo "CHATJS_NATIVE_SCENARIO must be acceptance, selection, minimal, full or uploads" >&2; exit 1 ;;
 esac
 if [[ "$CHATJS_NATIVE_SCENARIO" = acceptance && "${CHATJS_NATIVE_BILLING:-0}" = 1 ]]; then
-  installation=(--installation '{"gateway":"vercel","plugins":["attachment-uploads","credits"],"tools":[],"storage":{"source":"minio","options":{"bucket":"chatjs-acceptance","endpoint":"http://127.0.0.1:9000"}},"agent":{"model":"openai/gpt-5-mini","defaultTools":true,"approval":"always"}}')
+  installation=(--installation '{"gateway":"vercel","plugins":["attachment-uploads","credits"],"tools":["attach-workspace-file"],"storage":{"source":"minio","options":{"bucket":"chatjs-acceptance","endpoint":"http://127.0.0.1:9000"}},"agent":{"model":"openai/gpt-5-mini","defaultTools":true,"approval":"always"}}')
 fi
 cleanup() {
   kill "${registry_pid:-}" 2>/dev/null || true
@@ -60,7 +59,7 @@ export CHATJS_EVE_REGISTRY_URL="${CHATJS_REGISTRY_URL%/*}/eve/{name}.json"
 export npm_config_user_agent="bun/$(bun --version)"
 
 create_command=(node "$cli_root/dist/index.js" create "$fixture_root/app" --yes "${installation[@]}")
-if [[ "$CHATJS_NATIVE_SCENARIO" != selection && "$CHATJS_NATIVE_SCENARIO" != acceptance ]]; then create_command+=(--no-electron); fi
+if [[ "$CHATJS_NATIVE_SCENARIO" == minimal || "$CHATJS_NATIVE_SCENARIO" == full ]]; then create_command+=(--no-electron); fi
 if [ "${CHATJS_NATIVE_DEFAULT:-0}" = 1 ]; then
   "${create_command[@]}" > "$fixture_root/create.log" 2>&1
 else
@@ -89,43 +88,45 @@ assert.equal(config.style, `${process.env.CHATJS_NATIVE_BASE}-${preset.values.st
 assert.equal(config.iconLibrary, preset.values.iconLibrary);
 assert.equal(config.rtl, process.env.CHATJS_NATIVE_RTL === "1");
 assert.equal(config.registries["@chatjs"], process.env.CHATJS_NATIVE_BASE === "radix" ? process.env.CHATJS_REGISTRY_URL.replace("/{name}.json", "/radix/{name}.json") : process.env.CHATJS_REGISTRY_URL);
-if (["uploads", "acceptance"].includes(process.env.CHATJS_NATIVE_SCENARIO)) {
-const uploads = await Bun.file("chatjs/plugins/attachment-uploads/chatjs.json").json();
-assert.equal(uploads.contractVersion, 2);
-assert.equal(uploads.uiBase, process.env.CHATJS_NATIVE_BASE);
-assert.equal(uploads.requiresPersistentSandbox, undefined);
-assert.match(await Bun.file("chatjs/providers/sandbox/provider.ts").text(), /supportsPersistentSandbox = false/);
+const scenario = process.env.CHATJS_NATIVE_SCENARIO;
+const attachesFiles = ["uploads", "acceptance"].includes(scenario);
+// EVE writes the Slack channel file during provider setup.
+assert.equal(await Bun.file("agent/channels/slack.ts").exists(), false);
+assert.equal(await Bun.file("agent/connections/notion.ts").exists(), scenario === "selection");
+assert.equal(await Bun.file("agent/channels/eve.ts").exists(), true);
+assert.equal(await Bun.file("chatjs/plugins/attachment-uploads/chatjs.json").exists(), attachesFiles);
+assert.equal(await Bun.file("chatjs/tools/attach-workspace-file/chatjs.json").exists(), attachesFiles);
+if (attachesFiles) {
+  const uploads = await Bun.file("chatjs/plugins/attachment-uploads/chatjs.json").json();
+  assert.equal(uploads.contractVersion, 2);
+  assert.equal(uploads.uiBase, process.env.CHATJS_NATIVE_BASE);
+  process.env.DATABASE_URL = "postgresql://fixture:fixture@127.0.0.1:1/fixture";
+  process.env.WORKFLOW_POSTGRES_URL = process.env.DATABASE_URL;
+  process.env.EVE_GATEWAY_SECRET = "fixture-eve-secret-at-least-thirty-two-characters";
+  process.env.AUTH_SECRET = "fixture-auth-secret";
+  process.env.APP_URL = "http://localhost:3000";
+  const { installedTools } = await import("./chatjs/generated/tools.ts");
+  assert.equal(typeof installedTools.attach_workspace_file.execute, "function");
+  assert.equal(typeof installedTools.import_file.execute, "function");
 }
-if (!["minimal", "selection", "acceptance"].includes(process.env.CHATJS_NATIVE_SCENARIO)) {
-for (const kind of ["text", "code", "sheet"]) {
-  const descriptor = await Bun.file(`chatjs/tools/${kind}-documents/chatjs.json`).json();
-  assert.equal(descriptor.contractVersion, 2);
-  assert.equal(descriptor.uiBase, process.env.CHATJS_NATIVE_BASE);
-}
-}
-if (process.env.CHATJS_NATIVE_SCENARIO === "uploads") {
-assert.match(await Bun.file("chatjs/providers/storage-options.ts").text(), /chatjs-native-smoke/);
-assert.match(await Bun.file("chatjs/providers/gateway.ts").text(), /openrouter/);
+if (scenario === "uploads") {
+  assert.match(await Bun.file("agent/sandbox.ts").text(), /VercelSandbox/);
+  assert.match(await Bun.file("chatjs/providers/storage-options.ts").text(), /chatjs-native-smoke/);
+  assert.match(await Bun.file("chatjs/providers/gateway.ts").text(), /openrouter/);
 } else {
-assert.equal(await Bun.file("chatjs/plugins/attachment-uploads/chatjs.json").exists(), process.env.CHATJS_NATIVE_SCENARIO === "acceptance");
-assert.equal(await Bun.file("chatjs/tools/text-documents/chatjs.json").exists(), !["minimal", "selection", "acceptance"].includes(process.env.CHATJS_NATIVE_SCENARIO));
-assert.match(await Bun.file("chatjs/providers/gateway.ts").text(), /vercel|gateway/);
+  assert.match(await Bun.file("chatjs/providers/gateway.ts").text(), /vercel|gateway/);
 }
-if (process.env.CHATJS_NATIVE_SCENARIO === "selection") {
+if (scenario === "acceptance") {
+  assert.equal(await Bun.file("agent/sandbox.ts").exists(), false);
+  assert.match(await Bun.file("chatjs/providers/storage-options.ts").text(), /chatjs-acceptance/);
+}
+if (scenario === "selection") {
   const { readdir } = await import("node:fs/promises");
   assert.deepEqual((await readdir("chatjs/plugins")).sort(), ["feedback", "projects"]);
-  assert.deepEqual((await readdir("chatjs/tools")).sort(), ["word-count"]);
-  const { installedTools } = await import("./chatjs/generated/tools.ts");
-  const counted = (await Array.fromAsync(installedTools.wordCount.execute({text: "One two three."}, {abortSignal: new AbortController().signal}))).at(-1);
-  assert.equal(counted.usage.costUsd, 0);
-  assert.equal(counted.output.words, 3);
-  const readiness = Bun.spawnSync(["bun", "scripts/agent-status.ts", "--json"], { env: { PATH: process.env.PATH }, stdout: "pipe", stderr: "pipe" });
-  assert.equal(readiness.exitCode, 0, readiness.stderr.toString());
-  const report = JSON.parse(readiness.stdout.toString());
-  assert.equal(report.tools.find(tool => tool.name === "wordCount").configuration, "present");
-  assert.ok(report.tools.every(tool => tool.connection === "not-checked" && tool.verification === "not-run"));
-  assert.ok(report.plugins.every(plugin => plugin.verification === "not-run"));
+  assert.equal(await Bun.file("chatjs/tools/attach-workspace-file/tool.ts").exists(), false);
   const setup = await Bun.file("chatjs/eve-setup.md").text();
+  assert.ok(setup.includes("eve add channel/slack --skip-install"));
+  assert.ok((await Bun.file("chatjs/agent-recipe.json").json()).selection.eve.includes("channel/slack"));
   for (const provider of ["notion", "tavily", "firecrawl"]) {
     assert.ok(setup.includes(`eve add connection/${provider} --skip-install`));
   }
@@ -135,9 +136,8 @@ if (process.env.CHATJS_NATIVE_SCENARIO === "selection") {
   assert.match(await Bun.file("agent/agent.ts").text(), /openai\/gpt-5-mini/);
   assert.equal(await Bun.file("agent/instructions/configured.md").exists(), false);
   assert.match(await Bun.file("agent/skills/vercel-react-best-practices/SKILL.md").text(), /React/);
-  assert.equal(await Bun.file("agent/tools/getWeather.ts").exists(), true);
 }
-const paths = [...(process.env.CHATJS_NATIVE_SCENARIO === "acceptance" ? ["agent/tools/web_fetch.ts"] : []), "chatjs/agent-recipe.json", "agent/agent.ts", ...(process.env.CHATJS_NATIVE_SCENARIO === "selection" ? ["agent/tools/web_fetch.ts", "agent/connections/notion.ts", "agent/connections/tavily.ts", "agent/connections/firecrawl.ts", "agent/channels/slack.ts", "agent/tools/getWeather.ts", "agent/skills/vercel-react-best-practices/SKILL.md"] : []), "components.json", "app/globals.css", "app/layout.tsx", "chat.config.ts", "chatjs/providers/storage-options.ts", "lib/utils.ts", "lib/id.ts", "lib/file-language.ts", "components/ui/button.tsx"];
+const paths = [...(scenario === "acceptance" ? ["agent/tools/web_fetch.ts"] : []), ...(attachesFiles ? ["chatjs/tools/attach-workspace-file/tool.ts"] : []), ...(scenario === "uploads" ? ["agent/sandbox.ts"] : []), "chatjs/agent-recipe.json", "agent/agent.ts", ...(process.env.CHATJS_NATIVE_SCENARIO === "selection" ? ["agent/tools/web_fetch.ts", "agent/connections/notion.ts", "agent/connections/tavily.ts", "agent/connections/firecrawl.ts", "agent/skills/vercel-react-best-practices/SKILL.md"] : []), "components.json", "app/globals.css", "app/layout.tsx", "chat.config.ts", "chatjs/providers/storage-options.ts", "lib/utils.ts", "lib/id.ts", "lib/file-language.ts", "components/ui/button.tsx"];
 const before = Object.fromEntries(await Promise.all(paths.map(async path => [path, await Bun.file(path).text()])));
 await Bun.write(`${root}/before.json`, JSON.stringify(before));
 '
@@ -178,11 +178,13 @@ if [ "$CHATJS_NATIVE_SCENARIO" = selection ]; then
   bun -e '
     import { strict as assert } from "node:assert";
     const root = process.env.CHATJS_NATIVE_FIXTURE;
-    for (const file of ["agent/connections/notion.ts", "agent/channels/slack.ts", "agent/agent.ts", "agent/tools/getWeather.ts", "agent/skills/vercel-react-best-practices/SKILL.md", "chatjs/tools/word-count/tool.ts", "agent/connections/tavily.ts", "agent/connections/firecrawl.ts", "components/ui/button.tsx"]) {
+    for (const file of ["agent/connections/notion.ts", "agent/agent.ts", "agent/skills/vercel-react-best-practices/SKILL.md", "agent/connections/tavily.ts", "agent/connections/firecrawl.ts", "components/ui/button.tsx"]) {
       assert.equal(await Bun.file(file).text(), await Bun.file(`${root}/app/${file}`).text(), file);
     }
     const original = await Bun.file(`${root}/app/chatjs/agent-recipe.json`).json();
     const replayed = await Bun.file("chatjs/agent-recipe.json").json();
+    assert.equal(await Bun.file("agent/channels/slack.ts").exists(), false);
+    assert.ok((await Bun.file("chatjs/eve-setup.md").text()).includes("eve add channel/slack --skip-install"));
     assert.deepEqual(replayed.capabilities, original.capabilities);
     assert.deepEqual(replayed.selection, original.selection);
   '

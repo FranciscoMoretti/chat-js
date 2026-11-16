@@ -4,7 +4,6 @@ import {
   Bot,
   CircleHelp,
   Clock,
-  CloudSun,
   FilePenLine,
   FileText,
   FolderSearch,
@@ -15,7 +14,6 @@ import {
   MessagesSquare,
   Search,
   Terminal,
-  WholeWord,
   WandSparkles,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -40,9 +38,7 @@ const symbols: Readonly<Record<string, LucideIcon>> = {
   "channel/web": MessagesSquare,
   "@chatjs/generate-image": ImagePlus,
   "@chatjs/generate-video": Video,
-  "@chatjs/publish-file": FileText,
-  "@chatjs/word-count": WholeWord,
-  "@chatjs/get-weather": CloudSun,
+  "@chatjs/attach-workspace-file": FileText,
 };
 
 export const capabilitySymbol = (id: string): ReactNode => {

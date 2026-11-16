@@ -1,6 +1,9 @@
 import { beforeEach, expect, test, vi } from "vitest";
 import { testToolContext } from "../../tests/helpers/eve-tool-context";
-import { import_file, publish_file } from "@/chatjs/tools/publish-file/tool";
+import {
+  import_file,
+  attach_workspace_file,
+} from "@/chatjs/tools/attach-workspace-file/tool";
 
 const mocks = vi.hoisted(() => ({
   resolve: vi.fn(),
@@ -14,7 +17,7 @@ vi.mock("../file-storage", () => ({
   downloadFile: vi.fn(),
   getFileMetadata: vi.fn(),
 }));
-vi.mock("@/chatjs/tools/publish-file/import", () => ({
+vi.mock("@/chatjs/tools/attach-workspace-file/import", () => ({
   importStoredFile: mocks.import,
 }));
 vi.mock("./conversation-scope", () => ({
@@ -23,8 +26,8 @@ vi.mock("./conversation-scope", () => ({
 vi.mock("./generated-files", () => ({
   eveGeneratedFileUploader: mocks.uploader,
 }));
-vi.mock("@/chatjs/tools/publish-file/publish", () => ({
-  publishSandboxFile: mocks.publish,
+vi.mock("@/chatjs/tools/attach-workspace-file/attach", () => ({
+  attachSandboxFile: mocks.publish,
 }));
 
 const owner = {
@@ -53,7 +56,7 @@ test.each([
   "publication rejects a caller without the owner's authority",
   async (current) => {
     await expect(
-      publish_file.execute({ path: "report.csv" }, contextFor(current))
+      attach_workspace_file.execute({ path: "report.csv" }, contextFor(current))
     ).rejects.toThrow("authority");
     expect(mocks.resolve).not.toHaveBeenCalled();
     expect(mocks.publish).not.toHaveBeenCalled();
@@ -63,7 +66,7 @@ test.each([
 test("publication checks the conversation boundary before acquiring the sandbox", async () => {
   mocks.resolve.mockRejectedValue(new Error("Conversation deleted"));
   await expect(
-    publish_file.execute({ path: "report.csv" }, contextFor())
+    attach_workspace_file.execute({ path: "report.csv" }, contextFor())
   ).rejects.toThrow("Conversation deleted");
   expect(mocks.resolve).toHaveBeenCalledWith(
     "owner",

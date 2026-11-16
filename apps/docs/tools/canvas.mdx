@@ -10,7 +10,7 @@ Documents are files in the agent's native EVE sandbox. Ask the agent to create a
 Enable EVE's native default tools and install file publication with persistent storage:
 
 ```bash
-bunx chat-js@alpha add publish-file --storage-provider vercel-blob
+bunx chat-js@alpha add attach-workspace-file --storage-provider vercel-blob
 ```
 
 Use Docker or Vercel Sandbox when your task needs native Python or Node processes. The simulated just-bash environment can write text files but cannot run those processes. See [Sandboxes](../deployment/sandboxes).
@@ -19,7 +19,7 @@ Use Docker or Vercel Sandbox when your task needs native Python or Node processe
 
 For example, ask: "Create a sample budget spreadsheet as a CSV file in your sandbox and publish it for download."
 
-The agent uses native tools to write the file, then calls `publish_file`. ChatJS stores an immutable snapshot and displays a download card. Publication is limited to files inside the sandbox workspace, up to 32 MiB each. Access follows the owning ChatJS conversation.
+The agent uses native tools to write the file, then calls `attach_workspace_file`. ChatJS stores an immutable snapshot and displays a download card. Publication is limited to files inside the sandbox workspace, up to 32 MiB each. Access follows the owning ChatJS conversation.
 
 ## Optional viewers
 
@@ -33,7 +33,7 @@ The spreadsheet viewer opens CSV, TSV and XLSX files in a read-only preview. You
 
 ## Changing a file
 
-Ask the agent to revise an earlier file. The `import_file` tool, included with `publish-file`, copies the authorized snapshot into the current sandbox. The agent edits that copy with native tools and publishes a new file. Previous downloads remain unchanged.
+Ask the agent to revise an earlier file. The `import_file` tool, included with `attach-workspace-file`, copies the authorized snapshot into the current sandbox. The agent edits that copy with native tools and publishes a new file. Previous downloads remain unchanged.
 
 There is no manual editor, revision chain, version picker or restore button. To reuse an earlier result, identify that file in the conversation and ask the agent to import it. You can also download it, edit it elsewhere, and upload the result when attachment uploads are installed.
 

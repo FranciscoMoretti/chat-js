@@ -14,7 +14,7 @@ test("EVE installs and discovers portable capabilities", async () => {
   const root = path.resolve(import.meta.dir, "..");
   const files = new Map<string, string>(
     await Promise.all(
-      ["registry", "word-count", "get-weather", "deep-research"].map(
+      ["registry", "deep-research"].map(
         async (name) =>
           [
             `/${name}.json`,
@@ -79,7 +79,7 @@ test("EVE installs and discovers portable capabilities", async () => {
     );
     await run(directory, ["bun", "install"]);
     const eve = path.join(directory, "node_modules/eve/bin/eve.js");
-    for (const id of ["word-count", "get-weather", "deep-research"]) {
+    for (const id of ["deep-research"]) {
       // oxlint-disable-next-line no-await-in-loop -- Both installer operations mutate the same project's dependency graph.
       await run(directory, [
         "node",
@@ -120,8 +120,6 @@ test("EVE installs and discovers portable capabilities", async () => {
     const discovered = z
       .object({ tools: z.array(z.string()) })
       .parse(JSON.parse(stdout));
-    expect(discovered.tools).toContain("wordCount");
-    expect(discovered.tools).toContain("getWeather");
     expect(discovered.tools).toContain("deepResearch");
     await run(directory, ["node", eve, "build"]);
   } finally {

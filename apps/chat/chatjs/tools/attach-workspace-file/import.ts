@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { SandboxSession } from "eve/sandbox";
 import type { z } from "zod";
-import { maximumPublishedFileBytes } from "./schemas";
+import { maximumWorkspaceFileBytes } from "./schemas";
 import type { importFileInput } from "./schemas";
 
 /** Copy authorized stored bytes into a fresh native workspace path. */
@@ -26,7 +26,7 @@ export const importStoredFile = async (
 ) => {
   signal.throwIfAborted();
   const metadata = await stat();
-  if (metadata.size > maximumPublishedFileBytes) {
+  if (metadata.size > maximumWorkspaceFileBytes) {
     throw new Error("Files must be 32 MiB or smaller.");
   }
   signal.throwIfAborted();
@@ -43,7 +43,7 @@ export const importStoredFile = async (
         break;
       }
       size += value.byteLength;
-      if (size > maximumPublishedFileBytes) {
+      if (size > maximumWorkspaceFileBytes) {
         throw new Error("Files must be 32 MiB or smaller.");
       }
       chunks.push(value);

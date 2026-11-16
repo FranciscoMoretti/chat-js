@@ -171,6 +171,6 @@ test("research execution ships native files without application service imports 
     expect(file.target).not.toContain("/subagents/");
     const source = readFileSync(path.join(registryDir, file.path), "utf-8");
     expect(source).not.toMatch(/from ["']@\//u);
-    expect(source).not.toContain("publishConversationFile");
+    expect(source).not.toContain("attachConversationFile");
   }
 });

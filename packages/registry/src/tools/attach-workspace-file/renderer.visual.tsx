@@ -3,9 +3,9 @@ import { expect, test } from "vitest";
 import { Plugins } from "@/chatjs/core/ui/slots";
 import { imageViewerClient } from "../../plugins/image-viewer/src/client-plugin";
 import { captureChatStory } from "../_shared/visual";
-import { PublishFileRenderer } from "./renderer";
+import { AttachWorkspaceFileRenderer } from "./renderer";
 
-test("publish-file renders lifecycle and optional viewer states", async () => {
+test("attach-workspace-file renders lifecycle and optional viewer states", async () => {
   const common = { isReadonly: true, messageId: "file-message" };
   const input = { path: "/workspace/report.xlsx" };
   const output = {
@@ -16,11 +16,11 @@ test("publish-file renders lifecycle and optional viewer states", async () => {
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     url: "data:application/octet-stream;base64,cmVwb3J0",
   };
-  await captureChatStory("publish-file", [
+  await captureChatStory("attach-workspace-file", [
     {
       label: "Preparing",
       ui: (
-        <PublishFileRenderer
+        <AttachWorkspaceFileRenderer
           {...common}
           tool={{ toolCallId: "streaming", state: "input-streaming" }}
         />
@@ -29,7 +29,7 @@ test("publish-file renders lifecycle and optional viewer states", async () => {
     {
       label: "Publishing",
       ui: (
-        <PublishFileRenderer
+        <AttachWorkspaceFileRenderer
           {...common}
           tool={{ toolCallId: "publishing", state: "input-available", input }}
         />
@@ -38,7 +38,7 @@ test("publish-file renders lifecycle and optional viewer states", async () => {
     {
       label: "Awaiting approval",
       ui: (
-        <PublishFileRenderer
+        <AttachWorkspaceFileRenderer
           {...common}
           tool={{ toolCallId: "approval", state: "approval-requested", input }}
         />
@@ -47,7 +47,7 @@ test("publish-file renders lifecycle and optional viewer states", async () => {
     {
       label: "Denied",
       ui: (
-        <PublishFileRenderer
+        <AttachWorkspaceFileRenderer
           {...common}
           tool={{ toolCallId: "denied", state: "output-denied", input }}
         />
@@ -56,7 +56,7 @@ test("publish-file renders lifecycle and optional viewer states", async () => {
     {
       label: "Failed",
       ui: (
-        <PublishFileRenderer
+        <AttachWorkspaceFileRenderer
           {...common}
           tool={{
             toolCallId: "failed",
@@ -70,7 +70,7 @@ test("publish-file renders lifecycle and optional viewer states", async () => {
     {
       label: "Download without a viewer",
       ui: (
-        <PublishFileRenderer
+        <AttachWorkspaceFileRenderer
           {...common}
           tool={{
             toolCallId: "published",
@@ -91,7 +91,7 @@ test("publish-file renders lifecycle and optional viewer states", async () => {
       label: "Image with an optional viewer",
       ui: (
         <Plugins plugins={[imageViewerClient]}>
-          <PublishFileRenderer
+          <AttachWorkspaceFileRenderer
             {...common}
             tool={{
               toolCallId: "image",

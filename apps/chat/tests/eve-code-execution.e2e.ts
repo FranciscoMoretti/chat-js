@@ -131,7 +131,7 @@ test("Native tools publish a spreadsheet, then chat revises it without changing 
           operationId,
           modelId,
           message:
-            "Use bash to run Python with csv.writer to create /workspace/budget.csv with exactly three CSV rows: Item,Cost then Hosting,120 then Design,80. Use real row separators, not literal backslash-n characters. Then call publish_file for that path. Do not use document tools.",
+            "Use bash to run Python with csv.writer to create /workspace/budget.csv with exactly three CSV rows: Item,Cost then Hosting,120 then Design,80. Use real row separators, not literal backslash-n characters. Then call attach_workspace_file for that path. Do not use document tools.",
         }),
       });
       return { ok: response.ok, body: (await response.json()) as unknown };
@@ -159,7 +159,7 @@ test("Native tools publish a spreadsheet, then chat revises it without changing 
   await page
     .getByRole("textbox", { name: "Message", exact: true })
     .fill(
-      "Use import_file for the published budget.csv, then bash with Python to change Hosting from 120 to 500, then publish_file as budget-revised.csv. Keep the original artifact unchanged."
+      "Use import_file for the published budget.csv, then bash with Python to change Hosting from 120 to 500, then attach_workspace_file as budget-revised.csv. Keep the original artifact unchanged."
     );
   await page.getByRole("button", { name: "Send", exact: true }).click();
   const revised = page.getByRole("button", {

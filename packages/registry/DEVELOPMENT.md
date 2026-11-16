@@ -119,7 +119,7 @@ The shared descriptor already carries tool exports, workflow placement, provider
 - `native`: the audited standalone source/dependency subset, when supported.
 - `channelSupport`: support in the complete ChatJS application. Curated tools currently support web; Slack remains unverified. Portable EVE installation alone does not certify a channel or a live provider.
 
-Word count, weather and Deep Research can be installed into ordinary EVE agents. Tavily and Firecrawl are available through EVE’s connection catalog.
+Deep Research can be installed into ordinary EVE agents. Tavily and Firecrawl are available through EVE’s connection catalog.
 
 Run `bun run test:native` under Node 24 to install the portable payloads through the real EVE CLI in a fresh project and verify their source, types, discovery and compilation.
 

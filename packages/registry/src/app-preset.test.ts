@@ -9,7 +9,7 @@ import { installationSelectionSchema } from "../installation";
 test("complete agent configuration round trips Unicode, skills and public provider options", () => {
   const selection = installationSelectionSchema.parse({
     gateway: "vercel",
-    tools: ["word-count", "@custom/tool"],
+    tools: ["generate-image", "@custom/tool"],
     storage: { source: "s3", options: { bucket: "team’s files" } },
     eve: ["@skills/vercel-labs/agent-skills/vercel-react-best-practices"],
     agent: {

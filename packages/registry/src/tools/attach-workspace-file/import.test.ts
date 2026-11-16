@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { expect, mock, test } from "bun:test";
 import { importStoredFile } from "./import";
-import { importFileInput, maximumPublishedFileBytes } from "./schemas";
+import { importFileInput, maximumWorkspaceFileBytes } from "./schemas";
 
 const input = { fileId: "abcdefghijklmnopqrstuvwx", name: "budget.xlsx" };
 const fixture = (bytes = new Uint8Array([0, 255, 1, 17])) => {
@@ -47,11 +47,11 @@ test("imports exact binary bytes to distinct paths without mutating the stored f
 
 test("rejects large stored metadata and oversized actual bytes before acquiring a sandbox", async () => {
   const metadata = fixture();
-  metadata.stat.mockResolvedValue({ size: maximumPublishedFileBytes + 1 });
+  metadata.stat.mockResolvedValue({ size: maximumWorkspaceFileBytes + 1 });
   await assert.rejects(importStoredFile(input, metadata), /32 MiB/u);
   expect(metadata.read).not.toHaveBeenCalled();
   expect(metadata.getSandbox).not.toHaveBeenCalled();
-  const actual = fixture(new Uint8Array(maximumPublishedFileBytes + 1));
+  const actual = fixture(new Uint8Array(maximumWorkspaceFileBytes + 1));
   actual.stat.mockResolvedValue({ size: 1 });
   await assert.rejects(importStoredFile(input, actual), /32 MiB/u);
   expect(actual.getSandbox).not.toHaveBeenCalled();
