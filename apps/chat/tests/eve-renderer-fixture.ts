@@ -4,6 +4,8 @@ import { renderToStaticMarkup } from "react-dom/server";
 
 import { EveToolResult } from "../components/eve/eve-tool-result";
 
+const input = { path: "/workspace/sample-notes.md" };
+
 const states: {
   label: string;
   part: Extract<EveMessagePart, { type: "tool" }>;
@@ -11,7 +13,7 @@ const states: {
   {
     label: "Loading",
     part: {
-      input: { path: "/workspace/sample-notes.md" },
+      input,
       state: "requested",
       callId: "loading",
       name: "attach_workspace_file",
@@ -24,7 +26,7 @@ const states: {
   {
     label: "Complete",
     part: {
-      input: { path: "/workspace/sample-notes.md" },
+      input,
       output: {
         fileId: "abcdefghijklmnopqrstuvwx.md",
         name: "sample-notes.md",
@@ -44,7 +46,7 @@ const states: {
   {
     label: "Malformed result",
     part: {
-      input: { path: "/workspace/sample-notes.md" },
+      input,
       output: { size: {} },
       state: "completed",
       callId: "invalid",
@@ -59,7 +61,7 @@ const states: {
     label: "Failed",
     part: {
       error: { code: "fixture_error", message: "File storage unavailable" },
-      input: {},
+      input,
       state: "failed",
       callId: "failed",
       name: "attach_workspace_file",
@@ -72,7 +74,7 @@ const states: {
   {
     label: "Declined",
     part: {
-      input: { path: "/workspace/sample-notes.md" },
+      input,
       state: "rejected",
       callId: "denied",
       name: "attach_workspace_file",
@@ -93,7 +95,7 @@ const states: {
   {
     label: "Preparing input",
     part: {
-      inputText: '{"text":"one"',
+      inputText: '{"path":"/workspace/sample-notes.md"',
       state: "streaming",
       callId: "streaming",
       name: "attach_workspace_file",
@@ -106,7 +108,7 @@ const states: {
   {
     label: "Approval pending",
     part: {
-      input: { text: "one" },
+      input,
       state: "approval",
       callId: "approval",
       name: "attach_workspace_file",
@@ -126,7 +128,7 @@ const states: {
   {
     label: "Approval received",
     part: {
-      input: { text: "one" },
+      input,
       state: "requested",
       callId: "approved",
       name: "attach_workspace_file",
@@ -142,19 +144,6 @@ const states: {
         outcome: "accepted",
         request: { kind: "approval", prompt: "Approve this tool?" },
       },
-    },
-  },
-  {
-    label: "File attachment loading",
-    part: {
-      input: { path: "/workspace/sample-notes.md" },
-      state: "requested",
-      callId: "weather-loading",
-      name: "attach_workspace_file",
-      label: "attach_workspace_file",
-      type: "tool",
-      kind: "tool",
-      stepIndex: 0,
     },
   },
 ];
