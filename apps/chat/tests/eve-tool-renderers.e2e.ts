@@ -313,7 +313,11 @@ test("public tool projection preserves readable results without approval control
   // The static fixture has no client scroller to clear its initial scroll state.
   await page
     .locator('[data-slot="message-scroller-viewport"]')
-    .evaluate((viewport) => viewport.removeAttribute("data-pending-scroll"));
+    .evaluate((viewport) => {
+      if (viewport instanceof HTMLElement) {
+        delete viewport.dataset.pendingScroll;
+      }
+    });
   await expect(page.getByText(/"note": "Published note"/u)).toBeVisible();
   await expect(
     page.getByText("Waiting for input.", { exact: true })
