@@ -4,7 +4,6 @@ import { TRPCClientError } from "@trpc/client";
 import type { TRPCLink } from "@trpc/client";
 import type { inferRouterOutputs } from "@trpc/server";
 import { observable } from "@trpc/server/observable";
-import { createDocumentFixtures } from "./preview-documents";
 import { createProjectFixtures } from "./preview-projects";
 import { z } from "zod";
 import type { AppRouter } from "../../../chat/trpc/routers/_app";
@@ -45,7 +44,6 @@ export const createFixtureTransport = (
 
   const connectorFixtures = createConnectorFixtures(failMutation);
   const projectFixtures = createProjectFixtures(failMutation);
-  const documentFixtures = createDocumentFixtures(failMutation);
   let votes: Outputs["feedback"]["votes"] = [];
   const resolve = (path: string, input: unknown): unknown => {
     if (path.startsWith("mcp.")) {
@@ -53,9 +51,6 @@ export const createFixtureTransport = (
     }
     if (path.startsWith("project.")) {
       return projectFixtures.resolve(path, input);
-    }
-    if (path === "eve.document" || path === "eve.saveDocument") {
-      return documentFixtures.resolve(path, input);
     }
     switch (path) {
       case "sharing.get": {

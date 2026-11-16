@@ -6,14 +6,12 @@ import {
   AUTH_PROVIDERS,
   BUILT_IN_TOOL_KEYS,
   CORE_FEATURE_KEYS,
-  DOCUMENT_TYPE_KEYS,
   GATEWAYS,
 } from "#cli/types";
 import type {
   AuthProvider,
   BuiltInToolKey,
   CoreFeatureKey,
-  DocumentTypeKey,
   Gateway,
 } from "#cli/types";
 import {
@@ -22,7 +20,6 @@ import {
 } from "./storage-provider";
 import {
   authEnvRequirements,
-  builtInToolEnvRequirements,
   coreFeatureEnvRequirements,
   gatewayEnvRequirements,
 } from "./config-requirements";
@@ -48,7 +45,6 @@ const AUTH_DEFAULTS: Record<AuthProvider, boolean> = AUTHENTICATION_DEFAULTS;
 
 const CORE_FEATURE_LABELS: Record<CoreFeatureKey, string> = {
   attachments: "Attachments",
-  documents: "Documents",
   followupSuggestions: "Follow-up Suggestions",
   mcp: "MCP Tool Servers",
   projects: "Projects",
@@ -56,43 +52,22 @@ const CORE_FEATURE_LABELS: Record<CoreFeatureKey, string> = {
   parallelResponses: "Parallel Responses",
 };
 
-const DOCUMENT_TYPE_LABELS: Record<DocumentTypeKey, string> = {
-  code: "Code Documents",
-  sheet: "Spreadsheet Documents",
-  text: "Text Documents",
-};
-
-const DOCUMENT_TYPE_HINTS: Record<DocumentTypeKey, string> = {
-  code: "Code files and snippets",
-  sheet: "CSV-based tables and structured data",
-  text: "Notes, guides, markdown, and long-form writing",
-};
-
 const BUILT_IN_TOOL_LABELS: Record<BuiltInToolKey, string> = {
-  codeExecution: "Code Execution",
   deepResearch: "Deep Research",
   imageGeneration: "Image Generation",
-  urlRetrieval: "URL Retrieval",
   videoGeneration: "Video Generation",
-  webSearch: "Web Search",
 };
 
 const BUILT_IN_TOOL_HINTS: Record<BuiltInToolKey, string> = {
-  codeExecution: "Execute code in a sandboxed environment",
   deepResearch: "Run multi-step web research and generate reports",
   imageGeneration: "Generate images inside chat",
-  urlRetrieval: "Fetch structured content from a specific URL",
   videoGeneration: "Generate videos inside chat",
-  webSearch: "Search the web from chat",
 };
 
 const BUILT_IN_TOOL_DEFAULTS: Readonly<Record<BuiltInToolKey, boolean>> = {
-  codeExecution: false,
   deepResearch: false,
   imageGeneration: false,
-  urlRetrieval: false,
   videoGeneration: false,
-  webSearch: false,
 };
 
 const AUTH_LABELS: Record<AuthProvider, string> = {
@@ -310,7 +285,6 @@ const promptCoreFeatures = async (
 ): Promise<Record<CoreFeatureKey, boolean>> => {
   const CORE_FEATURE_DEFAULTS: Record<CoreFeatureKey, boolean> = {
     attachments: false,
-    documents: true,
     followupSuggestions: false,
     feedback: false,
     mcp: mcp ?? false,
@@ -333,15 +307,12 @@ const promptCoreFeatures = async (
     ),
     message: `Which ${highlighter.info("core features")} would you like to enable? ${highlighter.dim("(space to toggle, enter to submit)")}`,
     options: availableFeatures.map((key) => ({
-      hint:
-        key === "documents"
-          ? "Create, edit, and review documents in chat"
-          : coreFeatureEnvRequirements[key]
-              ?.map(
-                (requirement: Readonly<{ description: string }>) =>
-                  requirement.description
-              )
-              .join("; "),
+      hint: coreFeatureEnvRequirements[key]
+        ?.map(
+          (requirement: Readonly<{ description: string }>) =>
+            requirement.description
+        )
+        .join("; "),
       label: CORE_FEATURE_LABELS[key],
       value: key,
     })),
@@ -352,49 +323,10 @@ const promptCoreFeatures = async (
   return {
     attachments: selected.includes("attachments"),
     parallelResponses: selected.includes("parallelResponses"),
-    documents: selected.includes("documents"),
     mcp: mcp ?? selected.includes("mcp"),
     projects: projects ?? selected.includes("projects"),
     feedback: selected.includes("feedback"),
     followupSuggestions: selected.includes("followupSuggestions"),
-  };
-};
-const promptDocumentTypes = async (
-  skipPrompt: boolean,
-  documentsEnabled: boolean
-): Promise<Record<DocumentTypeKey, boolean>> => {
-  const DOCUMENT_TYPE_DEFAULTS: Record<DocumentTypeKey, boolean> = {
-    code: true,
-    sheet: true,
-    text: true,
-  };
-
-  if (!documentsEnabled) {
-    return { text: false, code: false, sheet: false };
-  }
-
-  if (skipPrompt) {
-    return { ...DOCUMENT_TYPE_DEFAULTS };
-  }
-
-  const selected = await multiselect({
-    initialValues: DOCUMENT_TYPE_KEYS.filter(
-      (key) => DOCUMENT_TYPE_DEFAULTS[key]
-    ),
-    message: `Which ${highlighter.info("document types")} would you like to enable? ${highlighter.dim("(space to toggle, enter to submit)")}`,
-    options: DOCUMENT_TYPE_KEYS.map((key) => ({
-      hint: DOCUMENT_TYPE_HINTS[key],
-      label: DOCUMENT_TYPE_LABELS[key],
-      value: key,
-    })),
-    required: false,
-  });
-  handleCancel(selected);
-
-  return {
-    text: selected.includes("text"),
-    code: selected.includes("code"),
-    sheet: selected.includes("sheet"),
   };
 };
 const isInstallableTool = (item: ReadonlyInput<RegistryIndexItem>): boolean => {
@@ -407,12 +339,7 @@ const isInstallableTool = (item: ReadonlyInput<RegistryIndexItem>): boolean => {
   if (hidden === true || hasSlot) {
     return false;
   }
-  const documentMeta = item.meta;
-  const documentChatjs = documentMeta && documentMeta.chatjs;
-  const hasDocumentRun = Boolean(
-    documentChatjs && documentChatjs.documentRunExport
-  );
-  return !hasDocumentRun && item.name !== "deep-research";
+  return item.name !== "deep-research";
 };
 
 const assistantToolOptions = (
@@ -420,8 +347,7 @@ const assistantToolOptions = (
   supportedBuiltInTools: readonly BuiltInToolKey[]
 ): Option<string>[] => [
   ...supportedBuiltInTools.map((key) => ({
-    hint:
-      builtInToolEnvRequirements[key]?.description ?? BUILT_IN_TOOL_HINTS[key],
+    hint: BUILT_IN_TOOL_HINTS[key],
     label: BUILT_IN_TOOL_LABELS[key],
     value: key,
   })),
@@ -480,16 +406,10 @@ const promptAssistantTools = async (
   handleCancel(selected);
 
   const builtInTools = {
-    webSearch: selected.includes("webSearch"),
-    urlRetrieval: selected.includes("urlRetrieval"),
     deepResearch: selected.includes("deepResearch"),
-    codeExecution: selected.includes("codeExecution"),
     imageGeneration: selected.includes("imageGeneration"),
     videoGeneration: selected.includes("videoGeneration"),
   };
-  if (builtInTools.deepResearch) {
-    builtInTools.webSearch = true;
-  }
 
   return {
     builtInTools,
@@ -548,44 +468,6 @@ const promptElectron = async (
 
   return wantsElectron;
 };
-const promptSearchTool = async (skipPrompt: boolean): Promise<string> => {
-  if (skipPrompt) {
-    return "tavily-search";
-  }
-  const choice = await select({
-    message: "Which web search tool should chat and deep research use?",
-    options: [
-      {
-        hint: "Requires TAVILY_API_KEY",
-        label: "Tavily",
-        value: "tavily-search",
-      },
-      {
-        hint: "Requires FIRECRAWL_API_KEY",
-        label: "Firecrawl",
-        value: "firecrawl-search",
-      },
-      { label: "External registry item", value: "external" },
-    ],
-  });
-  handleCancel(choice);
-  if (choice !== "external") {
-    return choice;
-  }
-  const address = await text({
-    message: "Search tool registry address:",
-    validate: (value): "Enter an address" | undefined => {
-      if (typeof value !== "string" || value.trim() === "") {
-        return "Enter an address";
-      }
-      return undefined;
-    },
-  });
-  handleCancel(address);
-  return address.trim();
-};
-const promptCodeExecutionTool = async (_skipPrompt: boolean): Promise<string> =>
-  await Promise.resolve("code-execution");
 const promptSandbox = async (
   skipPrompt: boolean
 ): Promise<string | undefined> => {
@@ -603,37 +485,6 @@ const promptSandbox = async (
   });
   handleCancel(choice);
   return choice;
-};
-const promptUrlRetrievalTool = async (skipPrompt: boolean): Promise<string> => {
-  if (skipPrompt) {
-    return "retrieve-url";
-  }
-  const choice = await select({
-    message: "Which URL retrieval tool should chat use?",
-    options: [
-      {
-        hint: "Requires FIRECRAWL_API_KEY",
-        label: "Firecrawl",
-        value: "retrieve-url",
-      },
-      { label: "External registry item", value: "external" },
-    ],
-  });
-  handleCancel(choice);
-  if (choice !== "external") {
-    return choice;
-  }
-  const address = await text({
-    message: "URL retrieval tool registry address:",
-    validate: (value): "Enter an address" | undefined => {
-      if (typeof value !== "string" || value.trim() === "") {
-        return "Enter an address";
-      }
-      return undefined;
-    },
-  });
-  handleCancel(address);
-  return address.trim();
 };
 const promptImageGenerationTool = async (
   skipPrompt: boolean
@@ -704,16 +555,12 @@ const promptVideoGenerationTool = async (
 export {
   promptAssistantTools,
   promptAuth,
-  promptCodeExecutionTool,
   promptSandbox,
   promptCoreFeatures,
-  promptDocumentTypes,
   promptElectron,
   promptGateway,
   promptImageGenerationTool,
   promptProjectName,
-  promptSearchTool,
   promptStorage,
-  promptUrlRetrievalTool,
   promptVideoGenerationTool,
 };

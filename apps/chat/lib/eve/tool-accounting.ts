@@ -18,8 +18,7 @@ const isStream = <Output>(
  */
 export const withToolAccounting = <Input, Output extends ToolOutput>(
   definition: ToolDefinition<Input, Output>,
-  policy: AccountingPolicy,
-  updates?: (output: Output) => readonly ToolOutput[]
+  policy: AccountingPolicy
 ): ToolDefinition<Input, ToolResult<Output>> => {
   const costUsd = typeof policy === "object" ? policy.costUsd : undefined;
   const settledCostUsd = policy === "none" ? 0 : costUsd;
@@ -43,20 +42,16 @@ export const withToolAccounting = <Input, Output extends ToolOutput>(
         for await (const output of result) {
           context.abortSignal.throwIfAborted();
           final = { output };
-          yield createToolResult(output, undefined, updates?.(output));
+          yield createToolResult(output);
         }
         context.abortSignal.throwIfAborted();
         if (!final) {
           throw new Error("Native tool completed without an output snapshot.");
         }
-        yield createToolResult(
-          final.output,
-          settledCostUsd,
-          updates?.(final.output)
-        );
+        yield createToolResult(final.output, settledCostUsd);
       } else {
         context.abortSignal.throwIfAborted();
-        yield createToolResult(result, settledCostUsd, updates?.(result));
+        yield createToolResult(result, settledCostUsd);
       }
     },
     toModelOutput: async (result) =>

@@ -81,11 +81,6 @@ const NativeObserver = ({
           queryKey: trpc.eve.messageDisplay.queryKey({ sessionId }),
         });
       }
-      if (event.type === "call.settled") {
-        void queryClient.invalidateQueries({
-          queryKey: trpc.eve.document.pathKey(),
-        });
-      }
     },
     resume: true,
   });

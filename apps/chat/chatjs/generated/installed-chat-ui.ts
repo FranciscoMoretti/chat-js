@@ -10,7 +10,8 @@ import { modelPreferencesClient as plugin6 } from "@/chatjs/plugins/model-prefer
 import { projectsClient as plugin7 } from "@/chatjs/plugins/projects/client-plugin";
 import { searchClient as plugin8 } from "@/chatjs/plugins/search/client-plugin";
 import { sharingClient as plugin9 } from "@/chatjs/plugins/sharing/client-plugin";
-import { videoViewerClient as plugin10 } from "@/chatjs/plugins/video-viewer/client-plugin";
+import { spreadsheetViewerClient as plugin10 } from "@/chatjs/plugins/spreadsheet-viewer/client-plugin";
+import { videoViewerClient as plugin11 } from "@/chatjs/plugins/video-viewer/client-plugin";
 import type { UiPlugin } from "@/chatjs/core/ui/slots";
 export const installedChatPlugins: readonly UiPlugin[] = [
   plugin0,
@@ -24,4 +25,5 @@ export const installedChatPlugins: readonly UiPlugin[] = [
   plugin8,
   plugin9,
   plugin10,
+  plugin11,
 ];

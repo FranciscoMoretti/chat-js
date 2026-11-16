@@ -3,6 +3,11 @@
 import { CategoryNavigation, categoryLayout } from "./category-navigation";
 import { AgentCategoryIcon } from "./agent-category-icon";
 import { CapabilityRow } from "./capability-row";
+import {
+  defaultAgentConfiguration,
+  enabledEveDefaultTools,
+  eveDefaultToolIds,
+} from "../../../../packages/registry/agent-configuration";
 import { FeatureChoices } from "./installation-choices";
 import { ConfigurationSection } from "./configuration-section";
 import { RegistryCapabilityForm } from "./registry-capability-form";
@@ -20,6 +25,7 @@ import type { EveCatalogItem } from "../../../../packages/registry/eve-catalog";
 import { Button } from "@/vendor/shadcn-create/styles/base-nova/ui/button";
 import { Input } from "@/vendor/shadcn-create/styles/base-nova/ui/input";
 import { useInstallation } from "./installation-provider";
+import type { InstallationSelection } from "../../../../packages/registry/installation";
 
 const fetchCatalog = async (url: string): Promise<EveCatalogItem[]> => {
   const response = await fetch(url);
@@ -31,7 +37,13 @@ const fetchCatalog = async (url: string): Promise<EveCatalogItem[]> => {
   return eveCatalogItemsSchema.parse(await response.json());
 };
 
-export const EveCatalog = ({ children }: { readonly children: ReactNode }) => {
+export const EveCatalog = ({
+  children,
+  onAppToolSelectionChange,
+}: {
+  readonly children: ReactNode;
+  readonly onAppToolSelectionChange: (selection: InstallationSelection) => void;
+}) => {
   const { installation, resolution, update, catalog } = useInstallation();
   const { data, error, isLoading, mutate } = useSWR<EveCatalogItem[], Error>(
     "/api/eve-catalog",
@@ -52,22 +64,48 @@ export const EveCatalog = ({ children }: { readonly children: ReactNode }) => {
     return null;
   }
   const selected = installation.eve ?? [];
+  const enabled = [
+    ...new Set([...selected, ...enabledEveDefaultTools(installation.agent)]),
+  ];
   const selectedAppTools = resolution?.selection.tools ?? installation.tools;
   const appTools = catalog.filter(
     (item) =>
       item.definition?.kind === "tool" &&
-      item.definition.agentCategory !== undefined
+      item.definition.agentCategory !== undefined &&
+      !selected.includes(`@chatjs/${item.name}`)
   );
   const visibleAppTools = appTools.filter(
     (item) =>
       !selectedOnly || selectedAppTools.includes(item.definition?.id ?? "")
   );
   const selectedCount =
-    selected.length +
+    enabled.length +
     appTools.filter((item) =>
       selectedAppTools.includes(item.definition?.id ?? "")
     ).length;
   const toggle = (id: string, checked: boolean) => {
+    const defaultTool = eveDefaultToolIds.find((tool) => tool === id);
+    const agent = installation.agent ?? defaultAgentConfiguration;
+    if (defaultTool !== undefined) {
+      const disabled = (agent.disabledDefaultTools ?? []).filter(
+        (tool) => tool !== defaultTool
+      );
+      if (!checked && agent.defaultTools) {
+        disabled.push(defaultTool);
+      }
+      update({
+        ...installation,
+        agent: {
+          ...agent,
+          disabledDefaultTools: disabled.length ? disabled : undefined,
+        },
+        eve:
+          checked && !agent.defaultTools
+            ? [...selected, id]
+            : selected.filter((item) => item !== id),
+      });
+      return;
+    }
     update({
       ...installation,
       eve: checked ? [...selected, id] : selected.filter((item) => item !== id),
@@ -75,14 +113,26 @@ export const EveCatalog = ({ children }: { readonly children: ReactNode }) => {
   };
   const knownItems = [
     ...(data ?? []),
-    ...portableChatjsCapabilities(catalog),
+    ...portableChatjsCapabilities(catalog).filter(
+      (item) => !appTools.some((app) => item.id === `@chatjs/${app.name}`)
+    ),
     ...(skills.data ?? []),
   ];
   const items = [
     ...knownItems,
-    ...selected
+    ...[...new Set([...eveDefaultToolIds, ...selected])]
       .filter((id) => !knownItems.some((item) => item.id === id))
-      .map(selectedCapability),
+      .map((id) =>
+        eveDefaultToolIds.some((tool) => tool === id)
+          ? {
+              ...selectedCapability(id),
+              title: id.slice("tool/".length).replaceAll("_", " "),
+              category: "tool",
+              description: "",
+              docs: "https://eve.dev/docs/concepts/built-in-tools",
+            }
+          : selectedCapability(id)
+      ),
   ];
   const categories = new Map<string, string>(Object.entries(eveCategories));
   for (const item of items) {
@@ -91,7 +141,9 @@ export const EveCatalog = ({ children }: { readonly children: ReactNode }) => {
     }
   }
   const visible = items.filter(
-    (item) => !selectedOnly || selected.includes(item.id)
+    (item) =>
+      enabled.includes(item.id) ||
+      (!selectedOnly && eveCompositionIssue(item.id) === undefined)
   );
   const groups = [...categories]
     .map(([id, title]) => ({
@@ -133,16 +185,6 @@ export const EveCatalog = ({ children }: { readonly children: ReactNode }) => {
             icon: (
               <AgentCategoryIcon
                 category="sandbox"
-                className="size-3.5 shrink-0"
-              />
-            ),
-          },
-          {
-            id: "application",
-            title: "Application capabilities",
-            icon: (
-              <AgentCategoryIcon
-                category="application"
                 className="size-3.5 shrink-0"
               />
             ),
@@ -206,6 +248,25 @@ export const EveCatalog = ({ children }: { readonly children: ReactNode }) => {
               title={group.title}
               icon={<AgentCategoryIcon category={group.id} />}
             >
+              {group.id === "channel" && (
+                <p className="text-muted-foreground mb-3 text-xs leading-5">
+                  Web chat provided by ChatJS.
+                </p>
+              )}
+              {group.id === "instrumentation" && (
+                <p className="text-muted-foreground mb-3 text-xs leading-5">
+                  <a
+                    href="https://eve.dev/docs/observability/agent-runs"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="underline underline-offset-4"
+                  >
+                    Vercel Agent Runs
+                  </a>{" "}
+                  is automatic on Preview and Production when trace sampling is
+                  enabled.
+                </p>
+              )}
               {group.id === "skill" && !selectedOnly && (
                 <div className="mb-3 space-y-2">
                   <form
@@ -269,6 +330,7 @@ export const EveCatalog = ({ children }: { readonly children: ReactNode }) => {
                     items={group.appItems}
                     compact
                     className="contents"
+                    onSelectionChange={onAppToolSelectionChange}
                   />
                 )}
                 {group.items.map((item) => {
@@ -287,10 +349,7 @@ export const EveCatalog = ({ children }: { readonly children: ReactNode }) => {
                       testId={`eve-${item.id}`}
                       controlId={`capability-${item.id}`}
                       controlLabel={`${item.title} (${item.id})`}
-                      disabled={
-                        issue !== undefined && !selected.includes(item.id)
-                      }
-                      checked={selected.includes(item.id)}
+                      checked={enabled.includes(item.id)}
                       onCheckedChange={(checked) => {
                         toggle(item.id, checked);
                       }}

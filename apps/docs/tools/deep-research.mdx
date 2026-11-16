@@ -1,128 +1,59 @@
 ---
 title: Deep Research
-description: Multi-step research agent with comprehensive reports
+description: Native EVE research with sandbox reports and optional application presentation
 ---
 
 ## Overview
 
-Deep Research is an autonomous agent that conducts multi-step research on complex topics. It breaks down research questions, executes parallel web searches, synthesizes findings, and produces comprehensive reports saved as documents.
-
-## Quick Start
-
-Install the capability in your app:
+Deep Research appears under **Agent → Extensions**, with **Source: ChatJS**. Its execution files use EVE and Zod; they do not require ChatJS authentication, database tables, search adapters, or file storage. ChatJS supplies the progress renderer when installed in a ChatJS app.
 
 ```bash
 bunx chat-js@alpha add deep-research
 ```
 
-Deep research uses the same search provider as [web search](/tools/web-search). Install one provider and configure its matching key. Missing search defaults to Tavily. To use Firecrawl, run `bunx chat-js@alpha add firecrawl-search --replace`:
+For an EVE-only installation, use the native item from your deployed registry:
 
 ```bash
-# Option 1: Tavily (recommended)
-TAVILY_API_KEY=your_tavily_key
-
-# Option 2: Firecrawl
-FIRECRAWL_API_KEY=your_firecrawl_key
+eve add https://your-registry.example/r/eve/deep-research.json
 ```
 
-## How It Works
+Replace the example URL with your registry endpoint. The registry build emits `dist/r/eve/deep-research.json` and its catalog. Deploy that output or publish a package containing it before using a remote URL. This distribution includes only native agent files and EVE/Zod dependencies. Use the ChatJS command above when you also want its progress renderer.
 
-Deep research executes a 4-step pipeline:
+The bundle installs its workflow under `agent/tools/deepResearch.ts` and supporting files under `agent/lib/research/`. It is a source-file integration, not a separately mounted extension package.
 
-```mermaid
-flowchart LR
-    A[Clarify] --> B[Research Brief]
-    B --> C[Supervisor Loop]
-    C --> D[Final Report]
-```
+## Capabilities and configuration
 
-### Step 1: Clarification
+Research uses EVE's built-in agent copies. Unlike declared subagents, those copies inherit the parent agent's tools, connections, skills, instructions, model, approvals, and shared sandbox. Install search or retrieval capabilities on the parent through EVE's documented registry commands or native connection files. Research needs no ChatJS provider selector or provider-specific adapter. EVE owns connection discovery, credentials, approvals, and execution.
 
-If enabled, the agent analyzes the user's request and asks clarifying questions when the scope is ambiguous. This ensures the research stays focused.
+Configure the model and reasoning in `agent/agent.ts`, connections in `agent/connections/`, and the sandbox through EVE's sandbox configuration. Research uses the same model configuration as the parent; separate research model settings in `chat.config.ts` are no longer used. In a ChatJS app, native copies also inherit the application's model wrapper and optional billing hooks.
 
-When clarification is needed:
-
-- The agent responds with a question and pauses execution
-- You provide the requested information in your next message
-- If you explicitly selected the deep research tool, it remains selected after you respond
-- Research continues automatically with the clarified scope
-
-### Step 2: Research Brief
-
-The agent transforms the conversation into a structured research brief with a clear title and scope. This brief guides all subsequent research.
-
-### Step 3: Supervisor Loop
-
-A supervisor agent orchestrates the research:
-
-1. Reads the research brief
-2. Identifies topics that need investigation
-3. Dispatches researcher sub-agents to gather information
-4. Collects and organizes findings
-5. Continues until research is complete or iteration limit is reached
-
-Each researcher agent:
-
-- Executes web searches on its assigned topic
-- Gathers relevant information from multiple sources
-- Compresses findings into concise notes
-
-### Step 4: Final Report
-
-The agent synthesizes all research notes into a comprehensive markdown report and saves it as a document using the [canvas](/tools/canvas) feature.
-
-## Configuration
-
-Configure deep research behavior in `chat.config.ts`:
+Workflow-specific bounds live in `agent/lib/research/configuration.ts`:
 
 ```ts
-ai: {
-  tools: {
-    deepResearch: {
-      defaultModel: "google/gemini-2.5-flash-lite",
-      finalReportModel: "google/gemini-3-flash",
-      allowClarification: true,      // Ask clarifying questions
-      maxResearcherIterations: 1,    // Supervisor loop iterations
-      maxConcurrentResearchUnits: 2, // Topics researched in parallel
-      maxSearchQueries: 2,           // Queries per research topic
-    },
-  },
-},
+export const researchOptions = {
+  allow_clarification: true,
+  max_concurrent_research_units: 2,
+  max_researcher_iterations: 1,
+  search_api_max_queries: 2,
+};
 ```
 
-| Option | Default | Description |
-| --- | --- | --- |
-| `allowClarification` | `true` | Whether to ask clarifying questions |
-| `maxResearcherIterations` | `1` | Max supervisor loop iterations |
-| `maxConcurrentResearchUnits` | `2` | Topics researched in parallel |
-| `maxSearchQueries` | `2` | Max search queries per research topic |
-| `deepResearch` model | `gemini-2.5-flash-lite` | Model for research and supervision |
-| `deepResearchFinalReport` model | `gemini-3-flash` | Model for final report generation |
+The supervisor may choose up to `max_concurrent_research_units` topics per decision round; topics are processed sequentially. It makes at most `max_researcher_iterations + 1` decisions. The search-query setting is guidance to the researcher, not a runtime limit on a connection. EVE's own agent limits and approval policies still apply.
 
-<Callout type="note">
-  Research uses multiple LLM calls. Consider cost implications when increasing
-  iteration limits or using more expensive models.
-</Callout>
+## Research and files
 
-## UI States
+The calling agent supplies `request`: the full task, relevant conversation context, scope, and any input sandbox paths. Research does not fetch a ChatJS conversation or assume a web account. If clarification is needed, it returns questions for the calling agent to ask.
 
-The research progress is shown in real-time:
+The workflow writes a brief, cited source findings, compressed notes, and a final Markdown report under `research/run-<encoded-call-id>/`. Later phases read those files. Native copies share the parent sandbox, so they can use its existing files and installed capabilities.
 
-| State       | Shows                                  |
-| ----------- | -------------------------------------- |
-| `started`   | Research has begun                     |
-| `writing`   | Writing research brief or final report |
-| `thoughts`  | Research topics being investigated     |
-| `completed` | Research finished, report available    |
+Each invocation uses its own directory. Whole-file writes can be retried without appending duplicate content. Intermediate files follow EVE's sandbox lifecycle; if they disappear, research fails explicitly instead of silently omitting evidence.
 
-Each research topic shows its own progress indicator as it's being investigated.
+## Delivery and presentation
 
-## Output
+The final result contains a report title and sandbox path. Research does not upload the report or create a ChatJS document.
 
-Deep research produces a document (via the canvas feature) containing:
+- In ChatJS, the calling agent can use the separately installed `publish_file` tool to create an authorized downloadable snapshot. That tool requires ChatJS file storage; research itself does not.
+- Other channels can use their native file delivery capabilities.
+- Without a delivery capability, the agent explains that the report exists in its sandbox rather than inventing a download link.
 
-- Comprehensive markdown report
-- Structured findings organized by topic
-- Citations from web sources
-
-The document is saved to the user's account and can be viewed, edited, and exported.
+The optional ChatJS renderer shows phase progress and report readiness. The separate publication result supplies the download card and optional viewer action. Viewers and document editors are not required. Published downloads remain unchanged when later research or sandbox edits create new files.

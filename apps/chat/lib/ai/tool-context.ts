@@ -1,19 +1,6 @@
 import type { ImageModel, LanguageModel } from "ai";
 import type { AppModelId } from "@/lib/ai/app-model-id";
 import type { Experimental_VideoModelV4 } from "@ai-sdk/provider";
-import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-import type { ResearchUpdate } from "@/tools/platform/research-updates-schema";
-
-/** Progress events understood by installed search tools without depending on ChatMessage. */
-interface ToolProgressWriter {
-  write: (
-    part: Readonly<{
-      data: ReadonlyNativeSurface<ResearchUpdate>;
-      id?: string;
-      type: "data-researchUpdate";
-    }>
-  ) => void;
-}
 
 interface ToolModelProvider {
   createImageModel: (modelId: string) => ImageModel;
@@ -25,4 +12,4 @@ interface ToolModelProvider {
     output: { image: boolean; video: boolean };
   }>;
 }
-export type { ToolModelProvider, ToolProgressWriter };
+export type { ToolModelProvider };

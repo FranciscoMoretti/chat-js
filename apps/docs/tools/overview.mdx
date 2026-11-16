@@ -3,7 +3,7 @@ title: Tools Overview
 description: Install and distribute typed ChatJS tools with shadcn registries
 ---
 
-The ChatJS registry distributes editable source code using shadcn. A tool includes server logic, dependencies, and a declarative registration descriptor. Tools can include their own client renderer. Built-in search and code-execution items include renderers for their own output. Installed tools become part of your app's typed tool system. All installed and custom tools use native EVE definitions. Installed registry items use a `contractVersion: 1` descriptor. Custom tools are registered directly in `integrations/tools/execution.ts` without a descriptor.
+The ChatJS registry distributes editable source code using shadcn. A tool includes server logic, dependencies, and a declarative registration descriptor. Tools can include their own client renderer. Built-in search and media-generation items include renderers for their own output. Installed tools become part of your app's typed tool system. All installed and custom tools use native EVE definitions. Installed registry items use a `contractVersion: 1` descriptor. Custom tools are registered directly in `integrations/tools/execution.ts` without a descriptor.
 
 ```bash
 npx chat-js@alpha add word-count
@@ -11,23 +11,18 @@ npx chat-js@alpha add word-count
 
 shadcn resolves the item and its dependencies, installs packages, and writes the source files. ChatJS then regenerates separate server and client registrations. Existing source follows shadcn's overwrite prompts. Pass `--overwrite` to replace it.
 
+EVE’s default `bash` tool handles general [code execution](./code-execution). It does not require a separate ChatJS tool.
+
 ## Available tools
 
 | Tool | Purpose | Credentials |
 | --- | --- | --- |
-| [Delete Document](./canvas#document-deletion-with-approval) (`delete-document`) | Remove a document from the current conversation after owner approval | None |
 | [Word Count](./word-count) | Count words, characters, and sentences | None |
 | [Get Weather](./get-weather) | Fetch weather for coordinates | None |
-| [Tavily Search](../tools/web-search) | Search with topic, depth, and domain options | `TAVILY_API_KEY` |
-| [Firecrawl Search](../tools/web-search) | Search with page content extraction | `FIRECRAWL_API_KEY` |
-| [Code Execution](./code-execution) | Run Python and JavaScript using the selected sandbox provider | Selected sandbox credentials |
-| [Deep Research](./deep-research) | Research a topic and save a report | Selected gateway and search provider |
-| [Read Document](./canvas#reading-documents) (`read-document`) | Read a saved document revision | None |
-| [Saved Code Execution](./canvas#code-execution) (`saved-code-execution`) | Run a saved code revision | Compatible sandbox credentials |
-| [Document bundles](./canvas) | Create and edit text, code, and spreadsheet documents | Depends on installed actions |
+| [Publish File](./code-execution#publish-a-generated-file) (`publish-file`) | Publish a finished native sandbox file for download | Persistent storage |
+| [Deep Research](./deep-research) | Research a topic and write a sandbox report | Model and research sources available to the agent |
 | [Generate Video](./generate-video) | Generate video clips | Selected gateway and file storage |
 | [Generate Image](./generate-image) | Generate and edit images | Selected gateway and file storage |
-| [Retrieve URL](./retrieve-url) | Extract a page through Firecrawl | `FIRECRAWL_API_KEY` |
 
 ## Installed files
 
@@ -80,3 +75,5 @@ Tool environment requirements live in `chatjs.json`, generated from typed item m
 - [CLI add](../cli/add) for command options
 - [Adding Tools](./install) for the installation steps
 - [Tools](./authoring) for source authoring
+
+For external web search and retrieval, see [Web search](./web-search).

@@ -330,7 +330,7 @@ test("legacy comparison retries recover the original assignment without weakenin
     operationId: crypto.randomUUID(),
     modelIds: ["one", "two"],
     message: "Legacy comparison",
-    selectedTool: "webSearch" as const,
+    selectedTool: "generateImage" as const,
     projectId: crypto.randomUUID(),
   };
   const group = await reserveEveResponseGroup("owner", input);

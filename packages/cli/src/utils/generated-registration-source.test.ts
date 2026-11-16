@@ -31,11 +31,11 @@ test("groups registration values without changing literal data or initializer or
 });
 test("keeps type exports separate without obsolete capability exceptions", () => {
   const generated = generatedRegistrationSource(
-    "export interface WorkflowTools { tool: string }\nexport const composerTools: Readonly<Record<string, { icon: string } | undefined>> = {};\nexport const DocumentRun: (() => void) | undefined = InstalledDocumentRun;\nexport const codeExecutor: (() => void) | undefined = undefined;\n"
+    "export interface WorkflowTools { tool: string }\nexport const composerTools: Readonly<Record<string, { icon: string } | undefined>> = {};\nexport const DocumentRun: (() => void) | undefined = InstalledDocumentRun;\nexport const optionalAction: (() => void) | undefined = undefined;\n"
   );
   expect(generated).toContain("export type { WorkflowTools };");
   expect(generated).toContain(
-    "export { composerTools, DocumentRun, codeExecutor };"
+    "export { composerTools, DocumentRun, optionalAction };"
   );
   expect(generated).toContain("interface WorkflowTools { tool: string }");
   expect(generated).not.toContain("typescript/consistent-type-definitions");
@@ -43,7 +43,7 @@ test("keeps type exports separate without obsolete capability exceptions", () =>
   expect(generated).not.toContain("import/no-named-export");
   expect(generated).not.toContain("import/prefer-default-export");
   expect(generated).toContain(
-    "const codeExecutor: (() => void) | undefined = undefined;"
+    "const optionalAction: (() => void) | undefined = undefined;"
   );
   expect(generated).not.toContain("import/group-exports");
 });

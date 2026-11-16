@@ -52,44 +52,18 @@ test("empty choices stay empty; backend plugins do not require preview implement
   }
 });
 
-test("transitive dependencies are inferred without becoming user selections", () => {
+test("research does not infer application dependencies", () => {
   const requested = { ...minimal, tools: ["deep-research"] };
   const result = resolveInstallationSelection(requested, catalog);
   expect(result.issues).toEqual([]);
-  expect(result.selection.tools.toSorted()).toEqual([
-    "deep-research",
-    "read-document",
-    "tavily-search",
-    "text-documents",
-  ]);
+  expect(result.selection.tools).toEqual(["deep-research"]);
   expect(result.requested.tools).toEqual(["deep-research"]);
-  expect(result.reasons["text-documents"]).toEqual(["Deep Research"]);
+  expect(result.reasons["publish-file"]).toBeUndefined();
   expect(requested.tools).toEqual(["deep-research"]);
   expect(
     resolveInstallationSelection({ ...requested, tools: [] }, catalog).selection
       .tools
   ).toEqual([]);
-  expect(
-    resolveInstallationSelection(
-      { ...requested, tools: ["text-documents"] },
-      catalog
-    ).selection.tools.toSorted()
-  ).toEqual(["read-document", "text-documents"]);
-});
-
-test("explicit providers satisfy slots without silently installing their defaults", () => {
-  const result = resolveInstallationSelection(
-    { ...minimal, tools: ["deep-research", "firecrawl-search"] },
-    catalog
-  );
-  expect(result.issues).toEqual([]);
-  expect(result.selection.tools).not.toContain("tavily-search");
-  expect(
-    resolveInstallationSelection(
-      { ...minimal, tools: ["tavily-search", "firecrawl-search"] },
-      catalog
-    ).issues.join(", ")
-  ).toContain("Choose only one webSearch");
 });
 
 test("provider requirements block invalid installs without changing user choices", () => {
@@ -103,12 +77,6 @@ test("provider requirements block invalid installs without changing user choices
   expect(result.issues.join(", ")).not.toContain("persistent sandbox");
   expect(result.issues.join(", ")).toContain("persistent storage");
   expect(result.selection.sandbox).toBe("docker");
-  expect(
-    resolveInstallationSelection(
-      { ...minimal, sandbox: "just-bash", tools: ["code-execution"] },
-      catalog
-    ).issues.join(", ")
-  ).toContain("requires native Python");
   expect(
     resolveInstallationSelection(
       { ...minimal, gateway: "openrouter", tools: ["generate-video"] },
@@ -182,12 +150,5 @@ test("native portable tools need no application services and cannot duplicate an
   );
   expect(duplicate.issues).toContain(
     "word-count is selected through EVE and through application features. Choose one installation for this capability."
-  );
-  const providers = resolveInstallationSelection(
-    { ...minimal, eve: ["@chatjs/tavily-search", "@chatjs/firecrawl-search"] },
-    catalog
-  );
-  expect(providers.issues).toContain(
-    "Select only one native provider for webSearch."
   );
 });

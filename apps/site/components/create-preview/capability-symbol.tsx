@@ -40,9 +40,9 @@ const symbols: Readonly<Record<string, LucideIcon>> = {
   "channel/web": MessagesSquare,
   "@chatjs/generate-image": ImagePlus,
   "@chatjs/generate-video": Video,
+  "@chatjs/publish-file": FileText,
   "@chatjs/word-count": WholeWord,
   "@chatjs/get-weather": CloudSun,
-  "@chatjs/retrieve-url": Globe,
 };
 
 export const capabilitySymbol = (id: string): ReactNode => {

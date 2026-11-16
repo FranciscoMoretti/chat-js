@@ -15,7 +15,6 @@ import {
   ContextOutputUsage,
 } from "@/components/ai-elements/context";
 import { Suggestion, Suggestions } from "@/components/ai-elements/suggestion";
-import { WebSourceBadge } from "@/components/source-badge";
 import { EveSearchResultsView } from "@/chatjs/plugins/search/search-results-view";
 import { mount, unmount } from "./primitive-mount";
 import "./sandbox.css";
@@ -100,14 +99,6 @@ for (const viewport of [
             <Suggestion key={text} suggestion={text} onClick={send} />
           ))}
         </Suggestions>
-        <WebSourceBadge
-          result={{
-            title: "Accessible interfaces",
-            url: "https://example.test/accessibility",
-            content: "Keyboard navigation matters.",
-            source: "web",
-          }}
-        />
       </main>
     );
     try {

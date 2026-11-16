@@ -1,7 +1,6 @@
 import {
   Activity,
   Cpu,
-  AppWindow,
   BookOpen,
   BrainCircuit,
   Layers,
@@ -21,7 +20,6 @@ const categoryIcons: Readonly<Record<string, LucideIcon>> = {
   extension: Puzzle,
   memory: BrainCircuit,
   instrumentation: Activity,
-  application: AppWindow,
 };
 
 export const AgentCategoryIcon = ({

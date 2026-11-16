@@ -1,5 +1,5 @@
-import { testHookContext } from "../../tests/helpers/eve-hook-context";
 import { isNonEmptyString } from "@/lib/is-non-empty-string";
+import { testHookContext } from "../../tests/helpers/eve-hook-context";
 
 import {
   ContextContainer,
@@ -11,11 +11,6 @@ import {
 } from "@eve-test/dist/src/context/serialize.js";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
-import type {
-  installedDocumentKinds,
-  installedToolNames,
-} from "@/integrations/tools/catalog";
-
 import selectionHook from "../../agent/hooks/tool-selection";
 import { frontendToolsSchema } from "../ai/types";
 import { eveCreationContentHash } from "./creation-content-hash";
@@ -25,29 +20,13 @@ import {
   readCreationRequest,
 } from "./pending-create";
 import { selectedEveTools } from "./selected-tools";
-import {
-  eveInstalledToolEnabled,
-  eveTurnTool,
-  filterEveTools,
-} from "./turn-tools";
+import { eveTurnTool, filterEveTools } from "./turn-tools";
 
 beforeEach(() => {
-  vi.stubEnv("TAVILY_API_KEY", "test-only");
+  vi.stubEnv("AI_GATEWAY_API_KEY", "test-only");
   vi.stubEnv("BLOB_READ_WRITE_TOKEN", "test-only");
 });
 afterEach(() => vi.unstubAllEnvs());
-
-const mocks = vi.hoisted(() => ({ kinds: new Set<string>() }));
-vi.mock("@/integrations/tools/catalog", async (importOriginal) => {
-  const actual = await importOriginal<{
-    installedDocumentKinds: typeof installedDocumentKinds;
-    installedToolNames: typeof installedToolNames;
-  }>();
-  for (const kind of actual.installedDocumentKinds) {
-    mocks.kinds.add(kind);
-  }
-  return { ...actual, installedDocumentKinds: mocks.kinds };
-});
 
 const startTurn = async (selectedTool?: string, principalType = "user") =>
   await selectionHook.events?.["turn.started"]?.(
@@ -81,7 +60,7 @@ const startTurn = async (selectedTool?: string, principalType = "user") =>
             principalType: "user",
           },
           initiator: {
-            attributes: { selectedTool: "webSearch" },
+            attributes: { selectedTool: "generateImage" },
             authenticator:
               principalType === "guest"
                 ? "chatjs-disposable-guest"
@@ -98,56 +77,31 @@ const startTurn = async (selectedTool?: string, principalType = "user") =>
 
 it("limits every toolbox and resets a later automatic turn instead of inheriting the initiator's choice", async () => {
   await contextStorage.run(new ContextContainer(), async () => {
-    await startTurn("webSearch");
+    await startTurn("generateImage");
     const tools = {
       confirm_note: {},
       deepResearch: {},
       server__echo: {},
-      webSearch: {},
+      generateImage: {},
       wordCount: {},
     };
     const available = filterEveTools(tools);
-    expect(Object.keys(available)).toEqual(["webSearch"]);
-    expect(available.webSearch).toBe(tools.webSearch);
+    expect(Object.keys(available)).toEqual(["generateImage"]);
+    expect(available.generateImage).toBe(tools.generateImage);
     expect(Object.keys(tools)).toEqual([
       "confirm_note",
       "deepResearch",
       "server__echo",
-      "webSearch",
+      "generateImage",
       "wordCount",
     ]);
-    expect(eveTurnTool.get()).toBe("webSearch");
+    expect(eveTurnTool.get()).toBe("generateImage");
     await startTurn();
     const automatic = filterEveTools(tools);
     expect(automatic).toEqual(tools);
     expect(automatic).not.toBe(tools);
     expect(automatic.confirm_note).toBe(tools.confirm_note);
   });
-});
-it("includes document revision reads without leaking unrelated tools", () => {
-  expect(selectedEveTools("createTextDocument")?.toSorted()).toEqual(
-    [
-      "createTextDocument",
-      "createCodeDocument",
-      "createSheetDocument",
-      "editTextDocument",
-      "editCodeDocument",
-      "editSheetDocument",
-      "readDocument",
-    ].toSorted()
-  );
-  for (const tool of [
-    "createCodeDocument",
-    "createSheetDocument",
-    "editTextDocument",
-    "editCodeDocument",
-    "editSheetDocument",
-  ] as const) {
-    expect(selectedEveTools(tool)).toEqual(
-      selectedEveTools("createTextDocument")
-    );
-  }
-  expect(selectedEveTools("generateVideo")).toEqual(["generateVideo"]);
 });
 
 it.each(frontendToolsSchema.options)(
@@ -160,10 +114,10 @@ it.each(frontendToolsSchema.options)(
 
 it("includes tool selection in creation identity while preserving existing automatic identities", () => {
   expect(eveCreationContentHash("hello")).toBeUndefined();
-  const search = eveCreationContentHash("hello", "webSearch");
-  expect(search).toBe(eveCreationContentHash("hello", "webSearch"));
-  expect(search).not.toBe(eveCreationContentHash("hello", "deepResearch"));
-  expect(search).not.toBe(eveCreationContentHash("changed", "webSearch"));
+  const image = eveCreationContentHash("hello", "generateImage");
+  expect(image).toBe(eveCreationContentHash("hello", "generateImage"));
+  expect(image).not.toBe(eveCreationContentHash("hello", "deepResearch"));
+  expect(image).not.toBe(eveCreationContentHash("changed", "generateImage"));
 });
 
 it.each([["model-a"], ["model-a", "model-b"]])(
@@ -190,7 +144,7 @@ it.each([["model-a"], ["model-a", "model-b"]])(
       "hello",
       modelIds,
       { context },
-      "webSearch",
+      "generateImage",
       { projectId }
     );
     expect(readCreationRequest(storage, "owner", { context })).toEqual(
@@ -212,7 +166,7 @@ it.each([["model-a"], ["model-a", "model-b"]])(
       context,
       original.operationId
     );
-    expect(moved.selectedTool).toBe("webSearch");
+    expect(moved.selectedTool).toBe("generateImage");
     expect(moved.operationId).not.toBe(original.operationId);
   }
 );
@@ -220,21 +174,20 @@ it.each([["model-a"], ["model-a", "model-b"]])(
 it("restores the selected capability from Eve serialized context before a resumed step", async () => {
   const original = new ContextContainer();
   const saved = await contextStorage.run(original, async () => {
-    await startTurn("createTextDocument");
+    await startTurn("generateImage");
     return serializeContext(original);
   });
-  expect(saved["chatjs.turn-tool"]).toBe("createTextDocument");
+  expect(saved["chatjs.turn-tool"]).toBe("generateImage");
   const resumed = await deserializeContext(saved);
   await contextStorage.run(resumed, async () => {
     expect(
       Object.keys(
         filterEveTools({
-          createTextDocument: {},
-          readDocument: {},
+          generateImage: {},
           wordCount: {},
         })
       )
-    ).toEqual(["createTextDocument", "readDocument"]);
+    ).toEqual(["generateImage"]);
     await startTurn();
     expect(eveTurnTool.get()).toBeNull();
   });
@@ -245,7 +198,7 @@ it("guest automatic and explicit turns retain only configured anonymous tools", 
       confirm_note: {},
       deepResearch: {},
       server__echo: {},
-      webSearch: {},
+      generateImage: {},
     };
     await startTurn(undefined, "guest");
     expect(Object.keys(filterEveTools(tools))).toEqual([]);
@@ -256,32 +209,15 @@ it("guest automatic and explicit turns retain only configured anonymous tools", 
   });
 });
 
-it("withholds removed document writes while preserving installed revision reads", () => {
-  const original = new Set(mocks.kinds);
-  const installed = mocks.kinds;
-  try {
-    installed.clear();
-    expect(eveInstalledToolEnabled("readDocument")).toBe(true);
-    expect(eveInstalledToolEnabled("createTextDocument")).toBe(false);
-    installed.add("text");
-    expect(eveInstalledToolEnabled("readDocument")).toBe(true);
-    expect(eveInstalledToolEnabled("createTextDocument")).toBe(true);
-    expect(eveInstalledToolEnabled("createCodeDocument")).toBe(false);
-  } finally {
-    installed.clear();
-    for (const kind of original) {
-      installed.add(kind);
-    }
-  }
-});
-
-it("rejects explicit unconfigured selections and hides their transitive dependents", async () => {
-  vi.stubEnv("TAVILY_API_KEY", "");
+it("rejects unconfigured image generation without disabling native research", async () => {
+  vi.stubEnv("BLOB_READ_WRITE_TOKEN", "");
   await contextStorage.run(new ContextContainer(), async () => {
-    await expect(startTurn("webSearch")).rejects.toThrow("TAVILY_API_KEY");
+    await expect(startTurn("generateImage")).rejects.toThrow(
+      "BLOB_READ_WRITE_TOKEN"
+    );
     await startTurn();
     expect(
-      filterEveTools({ webSearch: {}, deepResearch: {}, wordCount: {} })
-    ).toEqual({ wordCount: {} });
+      filterEveTools({ generateImage: {}, deepResearch: {}, wordCount: {} })
+    ).toEqual({ deepResearch: {}, wordCount: {} });
   });
 });

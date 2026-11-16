@@ -286,8 +286,8 @@ try {
     .check();
   await page.getByRole("tab", { name: "Agent", exact: true }).click();
   await page
-    .getByLabel("Web search", { exact: true })
-    .selectOption("tavily-search");
+    .getByRole("checkbox", { name: "Deep Research", exact: true })
+    .check();
   await page.getByRole("tab", { name: "Setup", exact: true }).click();
   const choose = async (label: string, value: string) => {
     await page

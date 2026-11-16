@@ -18,17 +18,7 @@
     "generate-image": "a2Zr34kLAG",
     "word-count": "a59i69UgKW",
     "get-weather": "aAJQCIzMf2",
-    "retrieve-url": "aKcqObyjK4",
-    "delete-document": "afFgnDxSe8",
-    "read-document": "a1KVNaRuvIG",
-    "text-documents": "a2f0lAtpqaW",
-    "code-documents": "a5K1WLnfhB2",
-    "sheet-documents": "aAe32hbLOM4",
-    "saved-code-execution": "aLI65PCgmi8",
-    "deep-research": "agaCAoPNZQG",
-    "tavily-search": "a1NAOLcol8qW",
-    "firecrawl-search": "a2kKmhFdWHh2",
-    "code-execution": "a5UfZOVH2ZO4"
+    "deep-research": "agaCAoPNZQG"
   },
   "gateway": {
     "vercel": "a1",

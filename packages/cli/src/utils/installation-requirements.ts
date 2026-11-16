@@ -129,24 +129,6 @@ const validateProviderRequirements = async (
     validateMedia(mediaConsumers, gateway);
   }
 };
-const validateCodeExecutionRequirements = (
-  definition: Readonly<{
-    slot?: string;
-    codeExecutorExport?: string;
-    codeExecutionCapabilities?: unknown;
-  }>
-): void => {
-  if (
-    definition.slot === "codeExecution" &&
-    ((definition.codeExecutorExport ?? "") === "" ||
-      typeof definition.codeExecutionCapabilities !== "object" ||
-      definition.codeExecutionCapabilities === null)
-  ) {
-    throw new Error(
-      "Selected codeExecution provider requires a typed executor and declared execution, cleanup and usage capabilities."
-    );
-  }
-};
 
 const registryMetadataKind = (metadata: unknown): unknown =>
   typeof metadata === "object" &&
@@ -170,5 +152,4 @@ export {
   registryMetadataKind,
   validateRequestedKind,
   validateProviderRequirements,
-  validateCodeExecutionRequirements,
 };

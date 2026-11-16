@@ -13,6 +13,6 @@ export const installedPlugins: ReadonlySet<string> = new Set([
   "projects",
   "search",
   "sharing",
-  "slack-documents",
+  "spreadsheet-viewer",
   "video-viewer",
 ]);

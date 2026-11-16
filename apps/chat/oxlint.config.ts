@@ -24,13 +24,10 @@ export default defineConfig({
     "tests/eve-results/**",
   ],
   overrides: [
-    // EVE uses discovered tool filenames verbatim as IDs for deepResearch and webSearch; confirm_note is preserved by its explicit map key.
-    // Oxlint 1.82 reports filename-case at offset zero and ignores source directives; a native probe reproduced this for both remaining exceptions.
+    // EVE uses discovered tool filenames verbatim as IDs for deepResearch; confirm_note is preserved by its explicit map key.
+    // Oxlint 1.82 reports filename-case at offset zero and ignores source directives; a native probe reproduced this for the remaining exception.
     {
-      files: [
-        "agent/tools/deepResearch.ts",
-        "agent/subagents/researcher/tools/webSearch.ts",
-      ],
+      files: ["agent/tools/deepResearch.ts"],
       rules: { "unicorn/filename-case": "off" },
     },
   ],

@@ -26,7 +26,7 @@ const installDependencies = async (
     contractVersion: 1,
     id: "first",
     kind: "tool",
-    slot: "webSearch",
+    slot: "generateImage",
     tools: [{ toolExport: "search" }],
   });
   const next = toolDefinitionSchema.parse({ ...previous, id: "second" });
@@ -86,7 +86,7 @@ test("replacement prunes only owned, unchanged, unused dependencies", async () =
       contractVersion: 1,
       id: "first",
       kind: "tool",
-      slot: "webSearch",
+      slot: "generateImage",
       tools: [{ toolExport: "search" }],
     });
     const next = toolDefinitionSchema.parse({ ...previous, id: "second" });

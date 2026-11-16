@@ -58,10 +58,10 @@ it("projects a known receipt by delivery identity, never by identical text", () 
   const events = [received(1, "accepted"), received(2, "unknown")];
   const data = project(events);
   const projected = projectEveMessageDisplay(data, events, [
-    { kind: "send", deliveryId: "accepted", selectedTool: "webSearch" },
+    { kind: "send", deliveryId: "accepted", selectedTool: "generateImage" },
   ]);
   expect(projected.messages[0]?.metadata?.custom).toEqual({
-    chatjs: { selectedTool: "webSearch" },
+    chatjs: { selectedTool: "generateImage" },
   });
   expect(projected.messages[1]?.metadata?.custom).toBeUndefined();
   expect(data.messages[0]?.metadata).not.toHaveProperty("custom");
@@ -74,7 +74,7 @@ it("requires one receipt and one consumption for the exact delivery", () => {
   const receipt = {
     kind: "send",
     deliveryId: "accepted",
-    selectedTool: "webSearch",
+    selectedTool: "generateImage",
   } as const;
   expect(projectEveMessageDisplay(data, [event], [receipt, receipt])).toBe(
     data
@@ -99,7 +99,7 @@ it("does not decorate pending optimistic messages even when their id matches", (
   const projected = projectEveMessageDisplay(
     data,
     [event],
-    [{ kind: "send", deliveryId: "accepted", selectedTool: "webSearch" }]
+    [{ kind: "send", deliveryId: "accepted", selectedTool: "generateImage" }]
   );
   expect(projected.messages[0]?.metadata?.custom).toBeUndefined();
 });

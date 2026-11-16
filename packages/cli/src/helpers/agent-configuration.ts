@@ -8,7 +8,13 @@ export const writeAgentConfiguration = async (
   input: unknown
 ): Promise<void> => {
   const configuration = agentConfigurationSchema.parse(input ?? {});
-  const { approval, allowedModels, model, ...nativeOptions } = configuration;
+  const {
+    approval,
+    allowedModels,
+    disabledDefaultTools,
+    model,
+    ...nativeOptions
+  } = configuration;
   const modelExpression =
     model === undefined ? "config.ai.workflows.chat" : JSON.stringify(model);
   const approvalExpressions = {
@@ -54,4 +60,17 @@ export const writeAgentConfiguration = async (
       "",
     ].join("\n")
   );
+  if (disabledDefaultTools !== undefined && disabledDefaultTools.length > 0) {
+    const toolsDirectory = path.join(cwd, "agent/tools");
+    await mkdir(toolsDirectory, { recursive: true });
+    await Promise.all(
+      disabledDefaultTools.map(async (id) => {
+        await writeFile(
+          path.join(toolsDirectory, `${id.slice("tool/".length)}.ts`),
+          'import { disableTool } from "eve/tools";\n\nexport default disableTool();\n',
+          { flag: "wx" }
+        );
+      })
+    );
+  }
 };

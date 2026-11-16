@@ -140,9 +140,9 @@ it("persists fork intent without forwarding ChatJS metadata to Eve", async () =>
 it("forwards selected tools on creation and includes them in the reservation identity", async () => {
   await createEveConversationOperation("owner", {
     ...input,
-    selectedTool: "webSearch",
+    selectedTool: "generateImage",
   });
-  expect(mocks.request.mock.calls.at(-1)?.[4]).toBe("webSearch");
+  expect(mocks.request.mock.calls.at(-1)?.[4]).toBe("generateImage");
   const originalHash = mocks.reserve.mock.calls.at(-1)?.[4]?.initialContentHash;
   expect(originalHash).toBeTypeOf("string");
   await createEveConversationOperation("owner", {
@@ -163,9 +163,10 @@ it("persists a compact fallback title before native creation", async () => {
 });
 
 it("journals the complete creation command before dispatch so another tab can recover it", async () => {
-  const command = { ...input, selectedTool: "webSearch" } satisfies Parameters<
-    typeof createEveConversationOperation
-  >[1];
+  const command = {
+    ...input,
+    selectedTool: "generateImage",
+  } satisfies Parameters<typeof createEveConversationOperation>[1];
   await createEveConversationOperation("owner", command);
   expect(mocks.reserve.mock.calls.at(-1)?.[4]?.initialRequest).toEqual(command);
 });

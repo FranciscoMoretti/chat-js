@@ -41,16 +41,7 @@ const server = (): Bun.Server<undefined> =>
         ...(id === "extra"
           ? {}
           : {
-              codeExecutionCapabilities: {
-                cancellation: "eve",
-                cleanup: "eve-session",
-                files: "session",
-                languages: ["python", "javascript"],
-                timeout: "bounded",
-                usage: "single-receipt",
-              },
-              codeExecutorExport: "executeCode",
-              slot: "codeExecution",
+              slot: "generateImage",
             }),
         tools: [{ toolExport: id === "extra" ? "extra" : "executeCode" }],
       };

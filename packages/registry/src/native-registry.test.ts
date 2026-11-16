@@ -43,7 +43,10 @@ test("portable distributions reuse implementation source and exclude app contrib
         expect(file.path).not.toMatch(/renderer|chatjs\.json/u);
         if (!file.path.startsWith("entrypoints/")) {
           expect(file.content).toBe(
-            sources.get(`chatjs/tools/${item.name}/${path.basename(file.path)}`)
+            sources.get(file.target?.replace(/^~\//u, "") ?? "") ??
+              sources.get(
+                `chatjs/tools/${item.name}/${path.basename(file.path)}`
+              )
           );
         }
       }
@@ -51,29 +54,38 @@ test("portable distributions reuse implementation source and exclude app contrib
     })
   );
   expect(portable.filter((name) => name !== null).toSorted()).toEqual([
-    "firecrawl-search",
+    "deep-research",
     "get-weather",
-    "retrieve-url",
-    "tavily-search",
     "word-count",
   ]);
 });
 
-test("a portable capability cannot borrow ChatJS imports or undeclared packages", async () => {
-  const item = registry.items.find((entry) => entry.name === "word-count");
-  if (!item) {
-    throw new Error("Missing word count");
+test.each(["word-count", "deep-research"])(
+  "%s cannot borrow ChatJS imports or undeclared packages",
+  async (name) => {
+    const item = registry.items.find((entry) => entry.name === name);
+    if (!item) {
+      throw new Error(`Missing ${name}`);
+    }
+    const sources = await readSources(item);
+    for (const content of [
+      'import { cost } from "@/lib/eve/tool-usage";',
+      'import { thing } from "unlisted-package";',
+    ]) {
+      expect(() =>
+        nativeRegistryItem(
+          item,
+          new Map([
+            ...sources,
+            [
+              name === "deep-research"
+                ? "agent/tools/deepResearch.ts"
+                : "chatjs/tools/word-count/tool.ts",
+              content,
+            ],
+          ])
+        )
+      ).toThrow("dependency");
+    }
   }
-  const sources = await readSources(item);
-  for (const content of [
-    'import { cost } from "@/lib/eve/tool-usage";',
-    'import { thing } from "unlisted-package";',
-  ]) {
-    expect(() =>
-      nativeRegistryItem(
-        item,
-        new Map([...sources, ["chatjs/tools/word-count/tool.ts", content]])
-      )
-    ).toThrow("dependency");
-  }
-});
+);

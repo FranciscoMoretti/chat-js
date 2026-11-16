@@ -2,23 +2,15 @@ import { userCredit } from "@/chatjs/plugins/credits/credits-schema";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 
-import { expect, test } from "@playwright/test";
 import type { Response } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import { eq, sql } from "drizzle-orm";
 import type { SessionStreamEvent } from "eve/client";
 import postgres from "postgres";
 import { z } from "zod";
 
 import { db } from "../lib/db/client";
-import { saveEveDocumentRevision } from "../lib/db/eve-documents";
-import {
-  eveChat,
-  eveConversation,
-  eveDispatch,
-  eveDocumentCheckpoint,
-  eveDocumentCheckpointEntry,
-  eveDocumentRevision,
-} from "../lib/db/schema";
+import { eveConversation } from "../lib/db/schema";
 import { env } from "../lib/env";
 import { purgeEveNativeSession } from "../lib/eve/lifecycle/postgres/eve-native-purge";
 import { prepareEveFamilyDeletion } from "../lib/eve/prepare-deletion";
@@ -82,18 +74,6 @@ test("internal retirement settles usage after access revocation and is retryable
     { timeout: 90_000 }
   );
   await expect(page.getByText("Ready", { exact: true })).toBeVisible();
-  await saveEveDocumentRevision({
-    content: "Artifact content to remove",
-    conversationId: binding.id,
-    documentId: crypto.randomUUID(),
-    expectedRevisionId: null,
-    fileIds: [],
-    kind: "text",
-    operationId: crypto.randomUUID(),
-    ownerId: owner,
-    title: "Removal fixture",
-    turnIndex: 0,
-  });
   // Reset acknowledges before the terminal event is durable; retry fenced cleanup.
   await expect(async () => {
     const family = await retireEveFamilyForDeletion(owner, binding.id);
@@ -145,12 +125,6 @@ test("internal retirement settles usage after access revocation and is retryable
   };
   expect(await purgeResources()).toEqual(prepared);
   expect(await purgeResources()).toEqual(prepared);
-  expect(
-    await db
-      .select()
-      .from(eveDocumentRevision)
-      .where(eq(eveDocumentRevision.conversationId, binding.id))
-  ).toEqual([]);
   const [pending] = await db
     .select({ state: eveConversation.state })
     .from(eveConversation)
@@ -208,20 +182,6 @@ test("internal retirement settles usage after access revocation and is retryable
   } finally {
     await native.end();
   }
-  // Remove only this retired test binding; this is not a production purge assertion.
-  await db.transaction(async (tx) => {
-    await tx
-      .delete(eveDocumentCheckpointEntry)
-      .where(eq(eveDocumentCheckpointEntry.conversationId, binding.id));
-    await tx
-      .delete(eveDocumentCheckpoint)
-      .where(eq(eveDocumentCheckpoint.conversationId, binding.id));
-    await tx
-      .delete(eveDispatch)
-      .where(eq(eveDispatch.conversationId, binding.id));
-    await tx.delete(eveConversation).where(eq(eveConversation.id, binding.id));
-    await tx.delete(eveChat).where(eq(eveChat.id, identity.chatId));
-  });
 });
 
 test("sidebar deletion retires a fresh conversation and reports its durable tombstone", async ({

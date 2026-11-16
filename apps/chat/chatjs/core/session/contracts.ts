@@ -1,10 +1,6 @@
 import type { DynamicModelContext } from "eve";
 import type { HookContext } from "eve/hooks";
 import type { SessionEvent } from "eve/client";
-import type {
-  DocumentRepository,
-  DocumentToolContext,
-} from "@/lib/eve/document-repository";
 import type { LanguageModelV4 } from "@ai-sdk/provider";
 import type { z } from "zod";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
@@ -39,9 +35,6 @@ export interface SessionProfile {
     modelId?: string
   ) => Promise<SessionModel>;
   readonly toolNames?: ReadonlySet<string>;
-  readonly documents?: (
-    context: DocumentToolContext
-  ) => Promise<DocumentRepository>;
   readonly specialists?: boolean;
   readonly observeEvent?: (
     event: SessionEvent,

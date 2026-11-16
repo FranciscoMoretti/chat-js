@@ -1,120 +1,57 @@
 ---
 title: Code Execution
-description: Secure Python and JavaScript sandbox for running code
+description: Run commands with native EVE tools and publish generated files
 ---
 
-## Overview
+## Native execution
 
-Execute Python and JavaScript code in a secure sandboxed environment directly from chat. The `code-execution` tool uses shared sandbox infrastructure with a five-minute execution deadline. Select Vercel Sandbox or Daytona independently of the tool. Sandboxes are optional. An app using sandbox-backed tools must select exactly one provider. Other tools can reuse the same infrastructure. Ad-hoc and saved-document execution use the selected executor. Saved documents execute their authorized stored revision, not replacement source supplied by the caller.
+New ChatJS agents enable EVE's default tools, including `bash`, `read_file`, `write_file` and `edit_file`. Use `bash` to run Python, Node or other commands available in the agent's sandbox. ChatJS displays the command, stdout, stderr, exit code and native background-process status.
 
-<Frame>
-  <img
-    src="/docs/images/code-execution.gif"
-    alt="Running Python and JavaScript code in the sandbox from chat"
-  />
-</Frame>
+Choose Automatic, Docker or Vercel Sandbox in the builder's Agent tab. Automatic can fall back to just-bash in development; that simulated environment cannot run native Python or Node processes. See [Sandboxes](../deployment/sandboxes).
 
-## Installation
+Install dependencies using normal shell commands or configure the native EVE sandbox image. ChatJS does not install Python packages, rewrite notebook syntax, print special variables or capture charts automatically.
 
-Install the tool with a compatible [sandbox provider](../deployment/sandboxes):
+## Publish a generated file
+
+Install `publish-file` with persistent storage:
 
 ```bash
-bunx chat-js@alpha add code-execution --sandbox-provider vercel
+bunx chat-js@alpha add publish-file --storage-provider vercel-blob
 ```
 
-Configure provider credentials using the [sandbox setup guide](../deployment/sandboxes). Sandbox selection is shared infrastructure, including persistent EVE session files when the provider supports them.
-
-For saved code documents, install the execution action and its dependencies:
+For example, the agent can use `bash` to run:
 
 ```bash
-bunx chat-js@alpha add saved-code-execution --sandbox-provider vercel
+python3 - <<'PY'
+import csv
+with open('/workspace/budget.csv', 'w') as file:
+    csv.writer(file).writerows([['Item', 'Cost'], ['Hosting', 120]])
+print('Created /workspace/budget.csv')
+PY
 ```
 
-## Pre-installed Packages
+Then call `publish_file` with `{ "path": "/workspace/budget.csv" }`. The tool copies a snapshot into application storage and returns an authenticated file reference. Files must be inside the sandbox workspace and at most 32 MiB. ChatJS checks access to the owning web conversation; subagents return paths to the parent for publication. Native Slack file delivery remains an EVE channel concern.
 
-Both built-in providers install these packages inside each Python sandbox before executing your code:
+For charts, save an image explicitly, such as `plt.savefig('/workspace/chart.png')`, then publish that file. There is no special `chart` dictionary protocol.
 
-- `matplotlib` - Plotting and visualization
-- `pandas` - Data analysis
-- `numpy` - Numerical computing
-- `sympy` - Symbolic mathematics
-- `yfinance` - Yahoo Finance market data
+## Optional viewers
 
-## Installing Additional Packages
+Downloads work without a viewer. Install viewers independently:
 
-Add `!pip install` lines at the top of your code. They are automatically stripped before execution:
-
-```python
-!pip install requests beautifulsoup4
-
-import requests
-from bs4 import BeautifulSoup
-
-response = requests.get("https://example.com")
-print(response.status_code)
+```bash
+bunx chat-js@alpha add image-viewer video-viewer spreadsheet-viewer
 ```
 
-## Output
+The spreadsheet viewer opens uploaded and published CSV, TSV and XLSX files. It displays read-only cell values and worksheet selection, with previews limited to 5,000 rows and 200 columns. It does not recalculate formulas, render Excel charts or preserve workbook formatting. The original file remains downloadable.
 
-There are two ways to return output:
+## Revise a file through chat
 
-**1. Use `print()`**
+The `publish-file` item also installs `import_file`. When you ask for a change to an earlier artifact, the agent imports its exact `fileId` and filename into the current EVE workspace, edits that copy using native tools, and publishes a new file. The original snapshot stays unchanged. Import works even when the original sandbox is gone, provided the file is still stored and referenced by the current conversation.
 
-```python
-import pandas as pd
-df = pd.DataFrame({"a": [1, 2], "b": [3, 4]})
-print(df.head())
-```
+Import checks the current conversation owner's authority before reading storage. It accepts files up to 32 MiB and does not grant access to files from other conversations. If a file is ambiguous or unavailable, identify it or upload it again. You can also download a file, edit it in another application and upload the result when uploads are installed.
 
-**2. Assign to `result` or `results`**
-
-The sandbox automatically prints these variables if they exist:
-
-```python
-import numpy as np
-result = np.mean([1, 2, 3, 4, 5])
-```
-
-<Callout type="warning">
-  Implicit REPL output (last expression value) is not captured. Always use
-  `print()` or assign to `result`.
-</Callout>
-
-## Charts
-
-The sandbox supports `matplotlib` charts. No need to call `plt.show()`. The chart is saved automatically:
-
-```python
-import matplotlib.pyplot as plt
-import numpy as np
-
-x = np.linspace(0, 10, 100)
-y = np.sin(x)
-
-plt.figure(figsize=(10, 6))
-plt.plot(x, y)
-plt.title("Sine Wave")
-plt.xlabel("x")
-plt.ylabel("sin(x)")
-```
-
-Interactive `chart` dictionaries support these chart types. Matplotlib output is returned as a PNG and is not limited to this list:
-
-- Line charts
-- Scatter plots
-- Bar charts
-
-<Callout type="note">
-  Matplotlib charts are returned as PNG images. Assign a `chart` dictionary for
-  interactive line, scatter, and bar charts.
-</Callout>
-
-## Customize the tool
-
-The generic tool, renderer, schemas and descriptor live in `chatjs/tools/code-execution/`. Shared Python and JavaScript command wrappers live under `chatjs/tools/_shared/code-execution/`. Generated `chatjs/generated/code-executor.ts` exports the typed executor for ad-hoc and saved-document execution.
-
-See [Sandboxes](../deployment/sandboxes) for provider credentials, runtime images, custom provider contracts, resource cleanup, and provider validation.
+Viewers stay read-only. New results are separate files in the conversation, without automatic version merging or an in-app editor.
 
 ## Accounting
 
-The built-in executor records $0.05 of usage cost for a completed execution after output validation and confirmed cleanup. This recorded cost is independent of the provider invoice. When installed, [Credits](../plugins/credits) applies its balance and debit policy. Without a billing adapter, core records the usage without debiting a balance. Infrastructure failures record zero application cost, although provider compute costs can still accrue. See [sandbox lifecycle and accounting](../deployment/sandboxes#lifecycle-and-accounting).
+Native command execution do not create a fixed ChatJS tool charge. Model usage and infrastructure provider charges remain separate. EVE owns sandbox lifecycle, cancellation and background processes.

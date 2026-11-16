@@ -18,11 +18,7 @@ const fixtureEnv = Object.fromEntries(
   Object.entries(process.env).filter(([key]) => !key.startsWith("GIT_"))
 );
 const presetNames = ["core", "react", "next", "tanstack"] as const;
-const toolFiles = [
-  "agent/tools/deepResearch.ts",
-  "agent/subagents/researcher/tools/webSearch.ts",
-  "agent/tools/otherTool.ts",
-];
+const toolFiles = ["agent/tools/deepResearch.ts", "agent/tools/otherTool.ts"];
 const compliantImports =
   'import { Zulu, alpha } from "members";\nimport Zebra from "zebra";\nimport apple from "apple";\nexport const chosen = [Zulu, alpha, Zebra, apple];\n';
 
@@ -754,7 +750,7 @@ test.each(["", "apps/chat/"])(
       "chatjs/plugins/mcp/component.ts",
       "composition/custom/custom-tools.ts",
       "composition/custom/custom-ui.ts",
-      "chatjs/tools/retrieve-url/tool.ts",
+      "chatjs/tools/word-count/tool.ts",
       "scripts/generate-models.ts",
     ];
     const malformed = "debugger;export  const chosen={answer:42}\n";

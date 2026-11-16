@@ -1,7 +1,6 @@
-import { route } from "./route";
-import { expect, onTestFinished, test, vi } from "vitest";
-import { documentDefinitions } from "@/integrations/documents/definitions";
+import { expect, test, vi } from "vitest";
 import { page, userEvent } from "vitest/browser";
+import { route } from "./route";
 
 import ChatPage from "@/app/(chat)/chat/[id]/page";
 import ChatLayout from "@/app/(chat)/layout";
@@ -9,29 +8,27 @@ import SharePage from "@/app/(chat)/share/[id]/page";
 
 import { retainResponseGroupDraft } from "@/lib/eve/create-response-group";
 import {
-  prepareResponseGroupCreation,
   prepareCreation,
+  prepareResponseGroupCreation,
 } from "@/lib/eve/pending-create";
 
 import {
-  history,
   chatFailure,
-  archivedDiagram,
-  archivedDiagramTranscript,
+  connectionResultTranscripts,
+  history,
   invoicesConversation,
+  invoicesFollowupEvents,
+  invoicesFollowupTrpc,
+  invoicesSearchTrpc,
   invoicesShared,
   invoicesTranscripts,
   invoicesTrpc,
-  invoicesSearchTrpc,
-  invoicesFollowupEvents,
-  invoicesFollowupTrpc,
   launchProject,
   questionTranscripts,
-  signInTranscripts,
-  validatedToolTranscripts,
-  retrievedPageTranscripts,
   session,
   signedIn,
+  signInTranscripts,
+  validatedToolTranscripts,
 } from "./fixtures";
 import { renderRoute } from "./render";
 
@@ -115,7 +112,7 @@ test("active native turn shows thinking before visible content", async () => {
   await page.screenshot({ path: "__screenshots__/native-thinking.png" });
 });
 
-test("cancelled document and saved-code operations show stopped states", async () => {
+test("cancelled native file and command operations show stopped states", async () => {
   await renderRoute(conversation, {
     ...request,
     transcripts: {
@@ -129,7 +126,7 @@ test("cancelled document and saved-code operations show stopped states", async (
               kind: "tool",
               stepIndex: 0,
               callId: "document",
-              name: "createTextDocument",
+              name: "write_file",
               label: "Document",
               state: "cancelled",
               input: { title: "Notes" },
@@ -139,7 +136,7 @@ test("cancelled document and saved-code operations show stopped states", async (
               kind: "tool",
               stepIndex: 0,
               callId: "code",
-              name: "runCodeDocument",
+              name: "bash",
               label: "Code",
               state: "cancelled",
               input: {},
@@ -169,7 +166,7 @@ test("cancelled document and saved-code operations show stopped states", async (
               kind: "tool",
               stepIndex: 0,
               callId: "declined",
-              name: "webSearch",
+              name: "web_search",
               label: "Search",
               state: "rejected",
               input: {},
@@ -1034,91 +1031,25 @@ test("message activity renders reasoning, tool errors and falsy results in the c
     .toHaveTextContent("Checking the inventory before answering.");
 });
 
-test.each(["plugin", "editor"])(
-  "a historical document remains readable after its %s is removed",
-  async (removed) => {
-    if (removed === "editor") {
-      const installed = new Set([...documentDefinitions.kinds, "diagram"]);
-      const kinds = vi
-        .spyOn(documentDefinitions.kinds, "has")
-        .mockImplementation((kind) => installed.has(kind));
-      onTestFinished(() => {
-        kinds.mockRestore();
-      });
-    }
-    const { sessionId } = invoicesConversation;
-    if (sessionId === null) {
-      throw new Error("Missing fixture session");
-    }
-    await renderRoute(conversation, {
-      ...request,
-      transcripts: { [sessionId]: archivedDiagramTranscript },
-      trpc: { ...invoicesTrpc, "eve.document": archivedDiagram },
-    });
-    await expect
-      .element(page.getByRole("button", { name: 'Updated "Deployment flow"' }))
-      .toBeVisible();
-    await page
-      .getByRole("button", { name: 'Updated "Deployment flow"' })
-      .click();
-    await expect
-      .element(
-        page.getByText("Your saved content is preserved.", { exact: false })
-      )
-      .toBeVisible();
-    await expect
-      .element(
-        page.getByText(archivedDiagram.revision.content, { exact: true })
-      )
-      .toBeVisible();
-    await expect
-      .element(
-        page.getByRole("button", { name: "Copy to clipboard", exact: true })
-      )
-      .toBeEnabled();
-    expect(document.querySelector('[aria-label="Diagram source"]')).toBeNull();
-    await expect
-      .element(
-        page.getByRole("button", { name: "Restore this version", exact: true })
-      )
-      .not.toBeInTheDocument();
-    if (removed === "editor") {
-      await page.elementLocator(document.body).screenshot({
-        path: "__screenshots__/document-without-editor.png",
-      });
-    }
-  }
-);
-
-test("text and retrieved page keep their natural height", async () => {
+test("native search connection result uses the generic tool view", async () => {
   await renderRoute(conversation, {
     ...request,
-    transcripts: retrievedPageTranscripts,
+    transcripts: connectionResultTranscripts,
   });
-  const heading = page.getByRole("heading", {
-    name: "Example documentation",
-    exact: true,
-  });
-  await expect.element(heading).toBeVisible();
-  await page.getByText("View content", { exact: true }).click();
   await expect
-    .element(
-      page.getByText("This content remains visible when expanded.", {
-        exact: true,
-      })
-    )
+    .element(page.getByRole("button", { name: /firecrawl__firecrawl_search/u }))
     .toBeVisible();
-  const card = heading.element().closest(".overflow-hidden");
-  if (!card) {
-    throw new Error("Missing retrieved page card");
-  }
-  const intro = page
-    .getByText("Here is the page you requested.", { exact: true })
-    .element();
-  expect(
-    card.getBoundingClientRect().top - intro.getBoundingClientRect().bottom
-  ).toBeLessThanOrEqual(40);
-  expect(card.scrollHeight - card.clientHeight).toBeLessThanOrEqual(1);
+  await expect
+    .element(page.getByText(/Documentation for the example project/u))
+    .toBeVisible();
+  await page.screenshot({
+    path: "__screenshots__/native-search-connection.png",
+  });
+  await page.viewport(390, 900);
+  await expect.poll(() => window.innerWidth).toBe(390);
+  await page.screenshot({
+    path: "__screenshots__/native-search-connection-mobile.png",
+  });
 });
 
 test("native connection sign-in", async () => {

@@ -35,6 +35,8 @@ test("home with Guest Chat installed has a fixed inexpensive model", async () =>
     .not.toBeInTheDocument();
   expect(document.querySelector('input[type="file"]')).toBeNull();
   await page.viewport(390, 844);
+  const layout = document.querySelector('[data-slot="chat-conversation"]');
+  expect(layout?.getBoundingClientRect().height).toBe(844);
   const header = document.querySelector("header");
   if (!header) {
     throw new Error("Home header is missing");

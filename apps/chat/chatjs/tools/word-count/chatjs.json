@@ -1,5 +1,6 @@
 {
   "native": {
+    "layout": "tool",
     "files": ["tool.ts", "definition.ts", "schemas.ts"],
     "dependencies": ["eve", "zod"]
   },

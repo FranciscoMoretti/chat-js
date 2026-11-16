@@ -22,7 +22,7 @@ export const selectPreviewTools = async (page: Page) => {
         installation: {
           gateway: "vercel",
           plugins: [],
-          tools: ["tavily-search"],
+          tools: ["deep-research"],
         },
         mode: theme,
       },

@@ -1,5 +1,6 @@
 {
   "agentCategory": "tool",
+  "requiresChatJS": true,
   "config": { "key": "image" },
   "envRequirements": [],
   "id": "generate-image",

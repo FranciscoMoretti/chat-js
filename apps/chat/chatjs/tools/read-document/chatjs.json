@@ -1,9 +1,0 @@
-{
-  "envRequirements": [],
-  "id": "read-document",
-  "kind": "tool",
-  "requiresTools": [],
-  "tools": [{ "readOnly": true, "toolExport": "readDocument" }],
-  "contractVersion": 1,
-  "channelSupport": { "web": "supported", "slack": "unverified" }
-}

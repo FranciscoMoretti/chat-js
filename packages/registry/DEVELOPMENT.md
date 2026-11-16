@@ -119,9 +119,9 @@ The shared descriptor already carries tool exports, workflow placement, provider
 - `native`: the audited standalone source/dependency subset, when supported.
 - `channelSupport`: support in the complete ChatJS application. Curated tools currently support web; Slack remains unverified. Portable EVE installation alone does not certify a channel or a live provider.
 
-Word count, weather, Tavily search, Firecrawl search and URL retrieval are portable capabilities. They return native schema-validated data and have no ChatJS runtime imports. For ChatJS, `chat-js sync` generates `withToolAccounting(...)` registration from their explicit accounting declaration. That application adapter records the declared charge while preserving tool approval, labels, end-turn decisions, model projections, cancellation and errors. There is no second executor. Streaming snapshots retain unsettled usage until a successful final snapshot. Search declares the existing $0.05 application charge, not a measured provider invoice. Retrieval declares unknown cost. Search exports its updates for ChatJS research presentation; its native model projection excludes progress. Workflows and capabilities with dynamic service costs still require explicit service/accounting integration before standalone publication.
+Word count, weather and Deep Research can be installed into ordinary EVE agents. Tavily and Firecrawl are available through EVE’s connection catalog.
 
-Run `bun run test:native` from this package under Node 24 to build and install the portable payloads with each search provider in turn through the real EVE CLI in a fresh project. The suite checks installed source bytes, TypeScript without ChatJS aliases, EVE discovery and EVE compilation. It needs package-registry access but no provider secrets. Use `CHATJS_KEEP_NATIVE_FIXTURE=1` to retain the project for inspection. Provider responses, failures and cancellation are tested with fixtures; this is not live provider or Slack certification.
+Run `bun run test:native` under Node 24 to install the portable payloads through the real EVE CLI in a fresh project and verify their source, types, discovery and compilation.
 
 ## Resolved installation and Agent recipes
 
@@ -135,9 +135,7 @@ The recipe is a starting point, not an export of developer edits. `sync` never r
 
 `chat-js setup --cwd <app> [--json]` runs the generated application's local capability configuration check using Bun. It reads `.env.local` and prints only missing variable names/descriptions. It does not contact providers, provision resources, or certify credentials. Installation, configuration presence, connection checks, and live verification are separate fields. Re-run after setting values; `bun check-env` validates the whole application and `bun run setup` performs the existing database/runtime setup.
 
-Generated tool requirements also gate runtime availability. Missing tool, storage, gateway, or sandbox credentials disable the affected tool and its dependents; an explicit selection reports the missing configuration. Research uses the selected search provider's requirements. Credentials being present does not mean the service has accepted them.
-
-On 12 November 2026, bounded live calls from this worktree returned results through Tavily, Firecrawl search, Firecrawl retrieval, and AI Gateway using the Vercel development environment. This does not certify Slack, durable memory, sandbox execution, OAuth continuations, or end-to-end application accounting. Live Slack checks were explicitly deferred.
+Generated tool requirements also gate runtime availability. Missing tool, storage, gateway, or sandbox credentials disable the affected tool and its dependents; an explicit selection reports the missing configuration. Credentials being present does not mean the service has accepted them.
 
 ## Native memory
 

@@ -86,14 +86,13 @@ const REPOSITORY_ONLY_FILES = new Set([
   "lib/db/eve-upload-retention.test.ts",
   "lib/eve/core-tool-types.test.ts",
   "lib/eve/document-execution.test.ts",
+  "lib/eve/publish-file.test.ts",
   "lib/eve/document-deletion.test.ts",
   "lib/eve/document-runs.test.ts",
-  "lib/eve/saved-code-executor.test.ts",
   "lib/eve/local-sandbox-inventory.test.ts",
   "lib/eve/purge-local-sandbox.test.ts",
   "lib/eve/tool-selection.test.ts",
   "lib/eve/tool-usage.test.ts",
-  "lib/eve/code-executor.test.ts",
   "lib/eve/mcp-setup.test.ts",
   "app/api/mcp/oauth/callback/route.test.ts",
   "lib/db/mcp-oauth-lock.test.ts",
@@ -258,8 +257,7 @@ const isRepositoryOnlyDependency = (name: string): boolean =>
     "diff",
     "papaparse",
     "react-data-grid",
-    "echarts",
-    "echarts-for-react",
+    "read-excel-file",
   ].includes(name);
 
 const normalizePackageManifest = async (packagePath: string): Promise<void> => {

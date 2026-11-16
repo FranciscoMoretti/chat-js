@@ -12,7 +12,7 @@ const installation = {
     "model-preferences",
     "attachment-uploads",
   ],
-  tools: ["tavily-search", "text-documents"],
+  tools: ["deep-research", "publish-file"],
   storage: { source: "vercel-blob" },
   sandbox: "vercel",
 };
@@ -24,7 +24,10 @@ for (const rtl of [false, true]) {
     const backend: string[] = [];
     page.on("pageerror", (error) => errors.push(error.message));
     page.on("request", (request) => {
-      if (/\/api\//u.test(request.url())) {
+      if (
+        /\/api\//u.test(request.url()) &&
+        request.frame().parentFrame() !== null
+      ) {
         backend.push(request.url());
       }
     });
@@ -75,7 +78,7 @@ for (const rtl of [false, true]) {
       app.getByRole("menuitem", { name: "Attach files", exact: true })
     ).toBeVisible();
     await expect(
-      app.getByRole("menuitemcheckbox", { name: "Web Search", exact: true })
+      app.getByRole("menuitemcheckbox", { name: "Deep Research", exact: true })
     ).toBeVisible();
     await page.keyboard.press("Escape");
     await expect(app.getByRole("menu")).toBeHidden();
@@ -88,7 +91,7 @@ for (const rtl of [false, true]) {
   });
 }
 
-test("local adapters drive project creation, model selection and document panels", async ({
+test("local adapters drive project creation and model selection", async ({
   page,
 }, info) => {
   const errors: string[] = [];
@@ -110,35 +113,9 @@ test("local adapters drive project creation, model selection and document panels
   await expect(
     app.getByRole("button", { name: /Claude Sonnet 4/u })
   ).toBeVisible();
-  await page
-    .getByRole("group", { name: "Preview scene", exact: true })
-    .getByRole("button", { name: "Tool examples", exact: true })
-    .click();
-  await app
-    .getByRole("button", { name: 'Created "Launch notes"', exact: true })
-    .click();
-  await expect(
-    app.getByRole("region", { name: "Document", exact: true })
-  ).toBeVisible();
-  await expect(
-    app.getByRole("region", { name: "Document", exact: true })
-  ).toContainText("Keep the scope small");
-  const document = app.getByRole("region", { name: "Document", exact: true });
-  await document
-    .locator('[contenteditable="true"]')
-    .fill("Document edited locally");
-  await expect(document).toContainText("Updated less than a minute ago");
-  await document.getByRole("button", { name: "Close", exact: true }).click();
-  await app
-    .getByRole("button", { name: 'Created "Launch notes"', exact: true })
-    .click();
-  // Reopening the original tool result intentionally selects its saved revision.
-  await expect(document).toContainText("You are viewing a previous version");
-  await document
-    .getByRole("button", { name: "Back to latest version", exact: true })
-    .click();
-  await expect(document).toContainText("Document edited locally");
-  await page.screenshot({ path: info.outputPath("shared-document.png") });
+  await page.screenshot({
+    path: info.outputPath("local-project-and-model.png"),
+  });
   expect(errors).toEqual([]);
 });
 

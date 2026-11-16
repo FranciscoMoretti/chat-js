@@ -65,7 +65,6 @@ const pages = [
   { name: "registry-testing", path: "/docs/registry/testing" },
   { name: "word-count", path: "/docs/tools/word-count" },
   { name: "get-weather", path: "/docs/tools/get-weather" },
-  { name: "retrieve-url", path: "/docs/tools/retrieve-url" },
   { name: "generate-image", path: "/docs/tools/generate-image" },
   { name: "generate-video", path: "/docs/tools/generate-video" },
   { name: "quickstart", path: "/docs/quickstart" },

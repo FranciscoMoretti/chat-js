@@ -38,7 +38,10 @@ void describe("homepage assets are portable outside the design archive", () => {
     assert.equal(new Set(blocks.map((block) => block.id)).size, blocks.length);
     for (const block of blocks) {
       if (block.command) {
-        assert.match(block.command, /^npx chat-js@alpha (?:create|add) /u);
+        assert.match(
+          block.command,
+          /^(?:npx chat-js@alpha (?:create|add) |eve add connection\/)/u
+        );
       }
       const svg = readFileSync(
         path.resolve(publicRoot, `home/blocks/${block.id}.svg`),

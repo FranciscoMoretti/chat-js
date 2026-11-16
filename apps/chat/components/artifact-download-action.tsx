@@ -12,7 +12,10 @@ const extensions: Readonly<Record<string, string>> = {
   "video/ogg": "ogv",
 };
 
-const downloadArtifact = async (artifact: ArtifactReference) => {
+const downloadArtifact = async (
+  artifact: ArtifactReference,
+  filename?: string
+) => {
   try {
     const response = await fetch(artifact.url);
     if (!response.ok) {
@@ -22,7 +25,8 @@ const downloadArtifact = async (artifact: ArtifactReference) => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `file-${Date.now()}.${extensions[blob.type] ?? "bin"}`;
+    link.download =
+      filename ?? `file-${Date.now()}.${extensions[blob.type] ?? "bin"}`;
     document.body.append(link);
     link.click();
     link.remove();
@@ -35,9 +39,11 @@ const downloadArtifact = async (artifact: ArtifactReference) => {
 export const ArtifactDownloadAction = ({
   artifact,
   label = "Download file",
+  filename,
 }: {
   readonly artifact: ArtifactReference;
   readonly label?: string;
+  readonly filename?: string;
 }) => (
   <Button
     aria-label={label}
@@ -45,7 +51,7 @@ export const ArtifactDownloadAction = ({
     size="icon-sm"
     variant="ghost"
     onClick={() => {
-      void downloadArtifact(artifact);
+      void downloadArtifact(artifact, filename);
     }}
   >
     <DownloadIcon size={16} />

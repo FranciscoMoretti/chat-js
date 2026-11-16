@@ -24,15 +24,18 @@ export const nativeRegistryItem = (
     return undefined;
   }
   if (
-    !native.files.includes("tool.ts") ||
+    (native.layout === "tool" && !native.files.includes("tool.ts")) ||
     new Set(native.files).size !== native.files.length
   ) {
     throw new Error(
-      `${item.name}: native files must include tool.ts exactly once and contain no duplicates.`
+      `${item.name}: native files must be unique; the tool layout must include tool.ts.`
     );
   }
   const files = native.files.map((name) => {
-    const target = `chatjs/tools/${definition.id}/${name}`;
+    const target =
+      native.layout === "agent"
+        ? `agent/${name}`
+        : `chatjs/tools/${definition.id}/${name}`;
     const file = item.files?.find(
       (candidate) => candidate.target?.replace(/^~\//u, "") === target
     );
@@ -43,20 +46,14 @@ export const nativeRegistryItem = (
     return {
       path: file.path,
       type: "registry:file" as const,
-      target: `~/agent/lib/chatjs/${definition.id}/${name}`,
+      target:
+        native.layout === "agent"
+          ? `~/agent/${name}`
+          : `~/agent/lib/chatjs/${definition.id}/${name}`,
       content,
     };
   });
-  for (const tool of definition.tools) {
-    if (
-      tool.workflow === true ||
-      tool.accounting === undefined ||
-      tool.accounting === "receipt"
-    ) {
-      throw new Error(
-        `${item.name}: native publication requires a verified ordinary tool with explicit accounting.`
-      );
-    }
+  for (const tool of native.layout === "tool" ? definition.tools : []) {
     const name = definition.slot ?? tool.toolExport;
     files.push({
       path: `entrypoints/${definition.id}/${name}.ts`,

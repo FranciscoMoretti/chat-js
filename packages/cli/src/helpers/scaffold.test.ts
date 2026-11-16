@@ -156,7 +156,6 @@ describe("buildConfigTs", (): void => {
       },
       coreFeatures: {
         attachments: false,
-        documents: true,
         followupSuggestions: true,
         feedback: false,
         mcp: false,
@@ -184,7 +183,6 @@ describe("buildConfigTs", (): void => {
       },
       coreFeatures: {
         attachments: false,
-        documents: true,
         followupSuggestions: true,
         feedback: false,
         mcp: false,
@@ -372,7 +370,6 @@ describe("scaffoldFromTemplate", (): void => {
     for (const file of [
       "tests/chat.e2e.ts",
       "tests/reasoning.e2e.ts",
-      "tests/artifacts.e2e.ts",
       "components/eve/eve-conversation.tsx",
       "lib/eve/message-delivery.test.ts",
 
@@ -540,7 +537,7 @@ describe("scaffoldFromTemplate", (): void => {
     ).toBe(true);
     expect(
       existsSync(
-        pathModule.join(destination, "components/chat/chat-layout.tsx")
+        pathModule.join(destination, "components/chat/chat-conversation.tsx")
       )
     ).toBe(true);
   });
@@ -680,16 +677,9 @@ describe("scaffoldFromTemplate", (): void => {
     expect(
       existsSync(pathModule.join(destination, "agent/tools/deepResearch.ts"))
     ).toBe(false);
-    for (const name of [
-      "researchPlanner",
-      "researcher",
-      "researchCompressor",
-      "researchWriter",
-    ]) {
-      expect(
-        existsSync(pathModule.join(destination, "agent/subagents", name))
-      ).toBe(false);
-    }
+    expect(existsSync(pathModule.join(destination, "agent/lib/research"))).toBe(
+      false
+    );
     expect(
       existsSync(pathModule.join(destination, "chatjs", "tools", "get-weather"))
     ).toBe(false);

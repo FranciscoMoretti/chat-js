@@ -5,7 +5,6 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { assertUiCompatibility } from "./ui-compatibility";
 import { installPlan } from "./install-plan";
-import { documentItems } from "../../../registry/src/tools/documents";
 import {
   pluginDefinitionSchema,
   toolDefinitionSchema,
@@ -151,58 +150,6 @@ test("sync validates Base UI plugins before regenerating tool registrations", as
     await rm(root, { recursive: true, force: true });
   }
 });
-
-test.each(["text", "code", "sheet"])(
-  "published %s document bundle rejects a legacy host before installation",
-  async (kind) => {
-    const item = documentItems.find(
-      (candidate) => candidate.name === `${kind}-documents`
-    );
-    if (!item) {
-      throw new Error(`Missing ${kind} document registry item`);
-    }
-    const definition = toolDefinitionSchema.parse(item.meta?.chatjs);
-    expect(definition.contractVersion).toBe(2);
-    expect(definition.uiBase).toBe("base");
-    const root = await mkdtemp(
-      path.join(tmpdir(), "chatjs-document-ui-boundary-")
-    );
-    try {
-      const config = JSON.stringify({ style: "new-york" });
-      await writeFile(path.join(root, "components.json"), config);
-      await rejects(
-        installPlan(
-          root,
-          {
-            environmentVariables: [],
-            expected: [definition],
-            plugins: [],
-            items: [item],
-            providerChanges: [],
-            replacements: [],
-            selection: { plugins: [], tools: [item.name] },
-            resolvedItems: [],
-            sources: [`@chatjs/${item.name}`],
-          },
-          { overwrite: true },
-          async () => {
-            await writeFile(
-              path.join(root, "unexpected-registration.ts"),
-              "unexpected write"
-            );
-          }
-        ),
-        /requires a matching ChatJS UI migration/u
-      );
-      expect(await readdir(root)).toEqual(["components.json"]);
-      expect(await Bun.file(path.join(root, "components.json")).text()).toBe(
-        config
-      );
-    } finally {
-      await rm(root, { recursive: true, force: true });
-    }
-  }
-);
 
 test("Radix descriptors require Radix and cannot be mixed with Base descriptors", async () => {
   const root = await mkdtemp(path.join(tmpdir(), "chatjs-radix-boundary-"));

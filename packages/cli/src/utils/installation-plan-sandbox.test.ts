@@ -1,3 +1,4 @@
+import { planInstallation } from "./installation-plan";
 import { planSandboxInstallation } from "../helpers/sandbox-installation";
 import { rejects } from "node:assert/strict";
 import { afterEach, expect, test } from "bun:test";
@@ -5,8 +6,20 @@ import { mkdir, mkdtemp, rm, writeFile, readFile } from "node:fs/promises";
 import path from "node:path";
 import { tmpdir } from "node:os";
 import { builtInSandboxes } from "../../../registry/src/sandboxes/catalog";
-import { codeExecutionItem } from "../../../registry/code-execution";
-import { planInstallation } from "./installation-plan";
+
+const nativeRuntimeItem = {
+  name: "native-runtime",
+  type: "registry:item",
+  meta: {
+    chatjs: {
+      contractVersion: 1,
+      kind: "tool",
+      id: "native-runtime",
+      requiresNativeProcesses: true,
+      tools: [{ toolExport: "nativeRun" }],
+    },
+  },
+};
 
 const roots: string[] = [];
 afterEach(async () => {
@@ -27,20 +40,21 @@ const fixture = async () => {
       const name = new URL(request.url).pathname.slice(1).replace(".json", "");
       const dependentItem = {
         name: "dependent",
+        registryDependencies: ["@chatjs/native-runtime"],
         type: "registry:item",
         meta: {
           chatjs: {
             contractVersion: 1,
             id: "dependent",
             kind: "tool",
-            requiresTools: ["codeExecution"],
+            requiresTools: ["nativeRun"],
             tools: [{ toolExport: "dependent" }],
           },
         },
       };
       const items = [
         dependentItem,
-        codeExecutionItem,
+        nativeRuntimeItem,
         ...builtInSandboxes,
         {
           name: "attachment-uploads",
@@ -83,7 +97,12 @@ const fixture = async () => {
           )
         : [];
       return item
-        ? Response.json({ ...item, files, registryDependencies: [] })
+        ? Response.json({
+            ...item,
+            files,
+            registryDependencies:
+              name === "dependent" ? ["@chatjs/native-runtime"] : [],
+          })
         : new Response("not found", { status: 404 });
     },
   });
@@ -118,7 +137,7 @@ test("native default needs no explicit selection; code execution rejects just-ba
     expect(empty.providerChanges).toEqual([]);
     const automatic = await planInstallation(
       f.root,
-      { plugins: [], tools: [f.address("code-execution")] },
+      { plugins: [], tools: [f.address("native-runtime")] },
       { fresh: true }
     );
     expect(automatic.expected).toHaveLength(1);
@@ -127,7 +146,7 @@ test("native default needs no explicit selection; code execution rejects just-ba
         f.root,
         {
           plugins: [],
-          tools: [f.address("code-execution")],
+          tools: [f.address("native-runtime")],
           sandbox: f.address("just-bash-sandbox"),
         },
         { fresh: true }
@@ -138,7 +157,7 @@ test("native default needs no explicit selection; code execution rejects just-ba
       f.root,
       {
         plugins: [],
-        tools: [f.address("code-execution")],
+        tools: [f.address("native-runtime")],
         sandbox: f.address("docker-sandbox"),
       },
       { fresh: true }
@@ -147,7 +166,7 @@ test("native default needs no explicit selection; code execution rejects just-ba
       { kind: "sandbox", next: "docker", previous: undefined },
     ]);
     expect(selected.expected.map((tool) => tool.id)).toEqual([
-      "code-execution",
+      "native-runtime",
     ]);
   } finally {
     await f.server.stop(true);
@@ -192,7 +211,7 @@ test("replacement requires --replace and the existing provider satisfies later c
     );
     const consumer = await planInstallation(f.root, {
       plugins: [],
-      tools: [f.address("code-execution")],
+      tools: [f.address("native-runtime")],
     });
     expect(consumer.expected).toHaveLength(1);
     const selection = {
@@ -226,7 +245,7 @@ test("create installs the chosen native environment with indirect code-execution
     );
     expect(selected.plan.expected.map((tool) => tool.id)).toEqual([
       "dependent",
-      "code-execution",
+      "native-runtime",
     ]);
     expect(selected.sandbox?.definition.id).toBe("docker");
   } finally {

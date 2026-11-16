@@ -126,10 +126,9 @@ All runtime consumers go through app-owned composition. There is no shared plugi
 | `navigation.ts`, `chat/model-visibility.ts`, `chat/uploads.ts` | Select navigation, model visibility and attachment hooks with explicit defaults |
 | `tools/execution.ts`, `tools/ui.ts`, `tools/providers.ts` | Compose native tools, renderers and shared provider definitions |
 | `tools/definitions.ts`, `tools/selection.ts`, `tools/availability.ts`, `tools/configuration.ts`, `tools/composer.ts` | Compose exposure predicates, client-safe schemas and display metadata |
-| `documents/definitions.ts`, `documents/ui.ts`, `documents/run.ts`, `tools/code-executor.ts` | Compose editors and assistant actions, select saved-document execution |
 | `routers.ts`, `instrumentation.ts`, `database.ts` | Compose native tRPC routers, startup handlers and Drizzle schema paths |
 | `chat/session-profiles.ts`, `cleanup.ts` | Select persisted-session profiles and scheduled cleanup tasks |
-| `plugin-catalog.ts`, `tools/catalog.ts` | Client-safe installation names and document kinds |
+| `plugin-catalog.ts`, `tools/catalog.ts` | Client-safe installation names |
 | `providers/gateway.ts`, `providers/storage.ts`, `providers/sandbox.ts` | Wrap the installed native provider factories |
 
 Each file imports the matching generated input and exports the app's selection. Gateway, storage and sandbox use their installed implementation modules directly rather than a generated registry. Their lifecycle and credentials remain in the provider implementations and runtime callers.
@@ -158,21 +157,11 @@ export const toolDefinitions = validateToolDefinitions([
 
 This list declares metadata, not execution. Register the native tool in `integrations/tools/execution.ts` and its validated renderer in `integrations/tools/ui.ts`. These separate imports keep execution out of the browser graph. Duplicate definition names fail at composition. Installed definitions also have a generated type check against their descriptor's registration name.
 
-### Document kinds
+### Files and viewers
 
-A document bundle owns three entry points:
+Native EVE tools create and edit files in the session sandbox. Install `publish-file` to publish an immutable download through ChatJS storage, or import an authorized conversation file back into the sandbox with `import_file`.
 
-| Entry | Responsibility |
-| --- | --- |
-| `definition.ts` | Browser-safe kind, content schema, create/edit operation names |
-| `tool.ts` | Native EVE tools with authorization and persistence |
-| `document.tsx` | Editor, copy behavior, comparison support, assistant actions |
-
-The app composes definitions in `integrations/documents/definitions.ts` and editors in `integrations/documents/ui.ts`. Add a kind such as `diagram` by adding its definition and view to those lists. You do not edit a core enum or add kind-specific branches. See [Authoring tools](../tools/authoring#document-bundles) for the bundle contract.
-
-Saved revisions store the kind as a string. Removing a bundle preserves its saved content and renders a read-only source fallback with a reinstall notice. Existing authorized reads still work. Tool and manual writes require the installed definition and pass its content schema. Reinstall the same kind to restore its editor. The content remains text, with a core size limit of two million characters. Structured formats can validate a textual representation.
-
-Wrap a document's `Body` in `integrations/documents/ui.ts` using ordinary React composition while retaining the other properties. A direct import of its installed source creates an explicit removal dependency, just like a tool renderer wrapper.
+Optional viewer plugins register actions in the `ArtifactViewerActions` slot from `components/artifact-actions.tsx`. A viewer opens a supported MIME type from the same authorized file URL used for downloading; it does not own agent execution or edit a revisioned document. When no viewer matches, the file remains downloadable. See [Documents & Files](../tools/canvas).
 
 ### Uploads outside the composer
 

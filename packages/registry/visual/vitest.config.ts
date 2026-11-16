@@ -46,7 +46,6 @@ export default defineConfig({
       "next/navigation",
       "@lexical/react/LexicalPlainTextPlugin",
       "cmdk",
-      "echarts",
       "nanoid",
       "next/dist/client/image-component",
       "react",
@@ -81,12 +80,6 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("../../../apps/chat", import.meta.url)),
-      echarts: createRequire(import.meta.url).resolve("echarts"),
-      // Browser optimization wraps the explicit CommonJS subpath as an object;
-      // use the package's equivalent published ESM component in this Vite fixture.
-      "echarts-for-react/lib/index": createRequire(import.meta.url).resolve(
-        "echarts-for-react/esm/index.js"
-      ),
       "geist-mono.woff2": path.join(
         geistFonts,
         "geist-mono/GeistMono-Variable.woff2"
@@ -151,6 +144,7 @@ export default defineConfig({
     },
     include: [
       "src/tools/*/renderer.visual.tsx",
+      "src/plugins/*/src/*.visual.tsx",
       "visual/*.browser.test.tsx",
       "../../apps/chat/tests/visual/*.browser.tsx",
     ],

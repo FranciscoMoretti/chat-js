@@ -3,6 +3,7 @@
 export const livePreviewPlugins = [
   "image-viewer",
   "video-viewer",
+  "spreadsheet-viewer",
   "mcp",
   "sharing",
   "followup-suggestions",

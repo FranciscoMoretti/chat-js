@@ -22,8 +22,8 @@ const verifyGatewayAndTool = (
     'chat: "google/gemini-2.5-flash-lite"'
   );
   expect(
-    required(expected, "chatjs/tools/code-execution/renderer.tsx")
-  ).toContain('from "@/components/sandbox.tsx"');
+    required(expected, "chatjs/tools/publish-file/renderer.tsx")
+  ).toContain('from "@/components/file-artifact-card"');
 };
 
 const verifyPlugins = (expected: Readonly<Record<string, string>>): void => {
@@ -45,8 +45,6 @@ const verifyEnvironmentBoundaries = (
 ): void => {
   for (const [file, reader] of [
     ["chatjs/plugins/mcp/setup.ts", "./mcp-env"],
-    ["chatjs/tools/retrieve-url/tool.ts", "./retrieve-url-env"],
-    ["chatjs/tools/tavily-search/tool.ts", "./tavily-search-env"],
   ] as const) {
     expect(required(expected, file)).toContain(`from "${reader}"`);
     expect(required(expected, file)).not.toContain('from "@/lib/env"');
@@ -61,6 +59,11 @@ const verifyExcludedFiles = (
   expected: Readonly<Record<string, string>>
 ): void => {
   for (const file of [
+    "chatjs/tools/text-documents/tool.ts",
+    "chatjs/tools/code-documents/tool.ts",
+    "chatjs/tools/sheet-documents/tool.ts",
+    "chatjs/tools/saved-code-execution/tool.ts",
+    "chatjs/plugins/slack-documents/slack-store.ts",
     "test-json.ts",
     "chatjs/plugins/test-runtime.ts",
     "composer-controls.ts",

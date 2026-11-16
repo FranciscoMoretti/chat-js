@@ -21,17 +21,13 @@ import { itemAddress, listTools, readItem } from "#cli/registry/shadcn";
 import {
   promptAssistantTools,
   promptAuth,
-  promptCodeExecutionTool,
   promptSandbox,
   promptCoreFeatures,
-  promptDocumentTypes,
   promptElectron,
   promptGateway,
   promptImageGenerationTool,
   promptProjectName,
-  promptSearchTool,
   promptStorage,
-  promptUrlRetrievalTool,
   promptVideoGenerationTool,
 } from "#cli/helpers/prompts";
 import { readFile, writeFile } from "node:fs/promises";
@@ -143,20 +139,16 @@ const createOptionsSchema = z.object({
   appPreset: z.string().optional(),
   installation: z.string().optional(),
   attachments: z.boolean().optional(),
-  codeExecutionTool: z.string().optional(),
-  documents: z.boolean().optional(),
   electron: z.boolean().optional(),
   fromGit: z.string().optional(),
   gateway: z.string().optional(),
   imageGenerationTool: z.string().optional(),
   mcp: z.boolean().optional(),
   projects: z.boolean().optional(),
-  searchTool: z.string().optional(),
   storageConfig: z.string().optional(),
   storageProvider: z.string().optional(),
   sandboxProvider: z.string().optional(),
   target: z.string().optional(),
-  urlRetrievalTool: z.string().optional(),
   videoGenerationTool: z.string().optional(),
   yes: z.boolean(),
 });
@@ -192,9 +184,6 @@ const collectToolSources = async (
   const toolSources = assistantTools.installableTools.map((tool): string =>
     itemAddress(tool, "tool")
   );
-  if (assistantTools.builtInTools.deepResearch) {
-    assistantTools.builtInTools.webSearch = true;
-  }
   const selections = [
     {
       plugin: "videoGeneration",
@@ -207,24 +196,6 @@ const collectToolSources = async (
       prompt: promptImageGenerationTool,
       slot: "generateImage",
       source: options.imageGenerationTool,
-    },
-    {
-      plugin: "webSearch",
-      prompt: promptSearchTool,
-      slot: "webSearch",
-      source: options.searchTool,
-    },
-    {
-      plugin: "codeExecution",
-      prompt: promptCodeExecutionTool,
-      slot: "codeExecution",
-      source: options.codeExecutionTool,
-    },
-    {
-      plugin: "urlRetrieval",
-      prompt: promptUrlRetrievalTool,
-      slot: "retrieveUrl",
-      source: options.urlRetrievalTool,
     },
   ] as const;
 
@@ -314,38 +285,6 @@ const loadInstallableTools = async (
     return [];
   }
 };
-const addDocumentToolSources = (
-  toolSources: string[],
-  coreFeatures: ReadonlyInput<CreateSetup["coreFeatures"]>,
-  documentTypes: ReadonlyInput<Awaited<ReturnType<typeof promptDocumentTypes>>>,
-  assistantTools: ReadonlyInput<AssistantTools>,
-  selectedTools: readonly ReadonlyInput<z.output<typeof toolDefinitionSchema>>[]
-): void => {
-  for (const kind of ["text", "code", "sheet"] as const) {
-    if (coreFeatures.documents && documentTypes[kind]) {
-      const source = itemAddress(`${kind}-documents`, "tool");
-      if (!toolSources.includes(source)) {
-        toolSources.push(source);
-      }
-    }
-  }
-  if (assistantTools.builtInTools.deepResearch) {
-    toolSources.push(itemAddress("deep-research", "tool"));
-  }
-  if (
-    coreFeatures.documents &&
-    documentTypes.code &&
-    selectedTools.some(
-      (tool: ReadonlyInput<z.output<typeof toolDefinitionSchema>>) =>
-        tool.slot === "codeExecution" &&
-        typeof tool.codeExecutorExport === "string" &&
-        tool.codeExecutorExport !== ""
-    )
-  ) {
-    toolSources.push(itemAddress("saved-code-execution", "tool"));
-  }
-};
-
 const promptCreateSetup = async (
   options: Readonly<CreateOptions>,
   targetDir: string
@@ -360,21 +299,12 @@ const promptCreateSetup = async (
   if (options.attachments !== undefined) {
     coreFeatures.attachments = options.attachments;
   }
-  coreFeatures.documents = options.documents ?? coreFeatures.documents;
-  const documentTypes = await promptDocumentTypes(
-    options.yes,
-    coreFeatures.documents
-  );
   const registryItems = await loadInstallableTools(options, targetDir);
   const assistantTools = await promptAssistantTools(
     registryItems,
     options.yes,
     gatewaySelection.definition
   );
-  if (assistantTools.builtInTools.deepResearch) {
-    coreFeatures.documents = true;
-    documentTypes.text = true;
-  }
   const toolSources = await collectToolSources(
     options,
     assistantTools,
@@ -386,13 +316,9 @@ const promptCreateSetup = async (
       return toolDefinitionSchema.parse(item.meta?.chatjs);
     })
   );
-  addDocumentToolSources(
-    toolSources,
-    coreFeatures,
-    documentTypes,
-    assistantTools,
-    selectedTools
-  );
+  if (assistantTools.builtInTools.deepResearch) {
+    toolSources.push(itemAddress("deep-research", "tool"));
+  }
   const usesStorage =
     coreFeatures.attachments ||
     selectedTools.some(
@@ -432,7 +358,7 @@ const promptCreateSetup = async (
       },
       tools: toolSources,
     },
-    { documents: options.documents, fresh: true },
+    { fresh: true },
     async () => options.sandboxProvider ?? (await promptSandbox(options.yes))
   );
 
@@ -470,7 +396,6 @@ const selectedCreateSetup = async (
     auth: await promptAuth(yes),
     coreFeatures: {
       attachments: plugins.has("attachment-uploads"),
-      documents: plan.expected.some((tool) => tool.documentKind !== undefined),
       feedback: plugins.has("feedback"),
       followupSuggestions: plugins.has("followup-suggestions"),
       mcp: plugins.has("mcp"),
@@ -481,7 +406,10 @@ const selectedCreateSetup = async (
     gatewaySelection,
     plan,
     storage,
-    sandbox: await resolveSandbox(selection.sandbox ?? "default", targetDir),
+    sandbox:
+      selection.sandbox === undefined
+        ? undefined
+        : await resolveSandbox(selection.sandbox, targetDir),
     withElectron: plugins.has("desktop"),
   };
 };
@@ -629,14 +557,6 @@ const printNextSteps = (
 ): void => {
   const envEntries = collectEnvChecklist({
     auth: setup.auth,
-    builtInTools: {
-      webSearch: false,
-      urlRetrieval: false,
-      deepResearch: false,
-      codeExecution: false,
-      imageGeneration: false,
-      videoGeneration: false,
-    },
     coreFeatures: setup.coreFeatures,
     gateway: setup.gateway,
     gatewayRequirements: setup.gatewaySelection.definition.envRequirements,
@@ -753,7 +673,6 @@ const createProject = async (
       );
       // Resolve only after native init has selected the actual library.
       setup.plan = await planInstallation(stage, setup.plan.selection, {
-        documents: options.documents,
         fresh: true,
       });
       await writeConfiguration(stagedProject, setup);
@@ -808,15 +727,6 @@ export const create = new Command()
     "complete JSON selection; bypasses feature defaults"
   )
   .option(
-    "--code-execution-tool <item>",
-    "code-execution tool name or registry address"
-  )
-  .option("--search-tool <item>", "search tool name or registry address")
-  .option(
-    "--url-retrieval-tool <item>",
-    "URL retrieval tool name or registry address"
-  )
-  .option(
     "--image-generation-tool <item>",
     "image generation tool name or registry address"
   )
@@ -837,8 +747,6 @@ export const create = new Command()
     "install attachment picker, camera, paste/drop and upload endpoint"
   )
   .option("--no-attachments", "omit user attachment uploads")
-  .option("--documents", "install text, code and sheet documents")
-  .option("--no-documents", "omit document tools from the new app")
   .option(
     "--projects",
     "install Projects pages, chat organization, and shared instructions"

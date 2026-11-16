@@ -9,9 +9,9 @@ it("restores explicit selections and treats historical messages as automatic", (
   ).toBeNull();
   expect(
     eveMessageTool({
-      metadata: { custom: eveToolMetadata("createTextDocument") },
+      metadata: { custom: eveToolMetadata("generateImage") },
     })
-  ).toBe("createTextDocument");
+  ).toBe("generateImage");
 });
 
 it("does not silently broaden an invalid persisted tool selection", () => {

@@ -8,13 +8,6 @@ import type { ui as chatjsUi } from "@/integrations/tools/ui";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
-vi.mock(
-  "@/components/eve/eve-document-tool",
-  (): { EveDocumentTool: () => null } => ({
-    EveDocumentTool: (): null => null,
-  })
-);
-
 vi.mock("@/integrations/tools/ui", async (importOriginal) => {
   const { z: zod } = await import("zod");
   const { createElement: reactCreateElement } = await import("react");

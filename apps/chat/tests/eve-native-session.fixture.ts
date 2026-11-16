@@ -75,7 +75,7 @@ vi.mock("../lib/eve/completed-copy-source", () => ({
         },
       ],
     },
-    resources: { fileKeys: [], documentIds: [], revisionIds: [] },
+    resources: { fileKeys: [] },
     projectionHash: "database-fixture",
   }),
 }));

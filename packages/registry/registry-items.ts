@@ -1,18 +1,13 @@
+import { spreadsheetGridItem } from "./spreadsheet-grid";
 import { toolDefinition as wordCountDefinition } from "./src/tools/word-count/definition";
 import { toolDefinition as weatherDefinition } from "./src/tools/get-weather/definition";
 import { builtInSandboxes } from "./src/sandboxes/catalog";
-import { codeExecutionItem, codeExecutionRuntimeItem } from "./code-execution";
-import {
-  codeExecutionUiItem,
-  documentItems,
-  savedCodeExecutionItem,
-} from "./src/tools/documents";
 import type { RegistryItem } from "shadcn/schema";
 import { builtInGateways } from "./src/gateways/catalog";
 import { pluginItems } from "./src/plugins/catalog";
-import registryPackage from "./package.json";
 import { researchItem } from "./src/tools/research";
 import { toolDefinitionSchema } from "./metadata";
+import { publishFileItem } from "./publish-file";
 
 const toolItems = (
   [
@@ -21,6 +16,7 @@ const toolItems = (
       description: "Generate videos using the selected gateway and storage",
       id: "generate-video",
       agentCategory: "tool",
+      requiresChatJS: true,
       config: { key: "video" },
       requiresGateway: ["video"],
       requiresStorage: true,
@@ -43,6 +39,7 @@ const toolItems = (
         "Generate and edit images using the selected gateway and storage",
       id: "generate-image",
       agentCategory: "tool",
+      requiresChatJS: true,
       config: { key: "image" },
       requiresGateway: ["image"],
       requiresStorage: true,
@@ -64,6 +61,7 @@ const toolItems = (
       description: wordCountDefinition.description,
       id: "word-count",
       native: {
+        layout: "tool",
         files: ["tool.ts", "definition.ts", "schemas.ts"],
         dependencies: ["eve", "zod"],
       },
@@ -82,6 +80,7 @@ const toolItems = (
       description: weatherDefinition.description,
       id: "get-weather",
       native: {
+        layout: "tool",
         files: ["tool.ts", "definition.ts", "schemas.ts"],
         dependencies: ["eve", "zod"],
       },
@@ -92,31 +91,6 @@ const toolItems = (
           accounting: "none",
           toolExport: weatherDefinition.name,
           definitionExport: "toolDefinition",
-        },
-      ],
-    },
-    {
-      dependencies: [
-        "ai",
-        "zod",
-        "@mendable/firecrawl-js",
-        "lucide-react",
-        "react-markdown",
-      ],
-      description: "Fetch structured information from a single URL",
-      envRequirements: [{ options: [["FIRECRAWL_API_KEY"]] }],
-      id: "retrieve-url",
-      native: {
-        files: ["tool.ts", "schemas.ts", "retrieve-url-env.ts"],
-        dependencies: ["eve", "zod", "@mendable/firecrawl-js"],
-      },
-      slot: "retrieveUrl",
-      tools: [
-        {
-          readOnly: true,
-          rendererExport: "RetrieveUrlRenderer",
-          toolExport: "retrieveUrl",
-          accounting: "unknown",
         },
       ],
     },
@@ -139,7 +113,6 @@ const toolItems = (
       description,
       files: [
         ...(definition.config ? ["configuration-schema.ts"] : []),
-        ...(definition.id === "retrieve-url" ? ["retrieve-url-env.ts"] : []),
         ...(["word-count", "get-weather"].includes(definition.id)
           ? ["definition.ts"]
           : []),
@@ -167,87 +140,10 @@ const toolItems = (
           kind: "tool",
         }),
       },
-      ...(definition.id === "retrieve-url"
-        ? { registryDependencies: ["alert"] }
-        : {}),
       name: definition.id,
       type: "registry:item",
     }) satisfies RegistryItem
 );
-
-const searchToolItems = (
-  [
-    { dependency: "@tavily/core", id: "tavily-search", key: "TAVILY_API_KEY" },
-    {
-      dependency: "@mendable/firecrawl-js",
-      id: "firecrawl-search",
-      key: "FIRECRAWL_API_KEY",
-    },
-  ] as const
-).map(({ id, dependency, key }) => ({
-  dependencies: [
-    "ai",
-    "zod",
-    `${dependency}@${registryPackage.devDependencies[dependency]}`,
-  ],
-  description: `Use ${id} for chat and deep research`,
-  files: [
-    {
-      path: "src/tools/_shared/search-runtime.ts",
-      target: `~/chatjs/tools/${id}/search-runtime.ts`,
-      type: "registry:file" as const,
-    },
-    {
-      path: `src/tools/${id}/${id}-env.ts`,
-      target: `~/chatjs/tools/${id}/${id}-env.ts`,
-      type: "registry:file" as const,
-    },
-    {
-      path: `src/tools/${id}/tool.ts`,
-      target: `~/chatjs/tools/${id}/tool.ts`,
-      type: "registry:file" as const,
-    },
-    {
-      path: `src/tools/${id}/renderer.tsx`,
-      target: `~/chatjs/tools/${id}/renderer.tsx`,
-      type: "registry:file" as const,
-    },
-    {
-      path: `src/tools/${id}/schemas.ts`,
-      target: `~/chatjs/tools/${id}/schemas.ts`,
-      type: "registry:file" as const,
-    },
-  ],
-  meta: {
-    chatjs: toolDefinitionSchema.parse({
-      contractVersion: 1,
-      envRequirements: [{ options: [[key]] }],
-      id,
-      kind: "tool",
-      slot: "webSearch",
-      native: {
-        files: ["tool.ts", "schemas.ts", `${id}-env.ts`, "search-runtime.ts"],
-        dependencies: ["eve", "zod", dependency],
-      },
-      tools: [
-        {
-          composer: {
-            icon: "Globe",
-            name: "Web Search",
-            shortName: "Search",
-          },
-          rendererExport: "WebSearchRenderer",
-          readOnly: true,
-          toolExport: "webSearch",
-          accounting: { costUsd: 0.05 },
-          updatesExport: "searchUpdates",
-        },
-      ],
-    }),
-  },
-  name: id as string,
-  type: "registry:item" as const,
-}));
 
 const registryItems: RegistryItem[] = (
   [
@@ -255,13 +151,9 @@ const registryItems: RegistryItem[] = (
     ...builtInGateways,
     ...builtInSandboxes,
     ...toolItems,
-    ...documentItems,
-    savedCodeExecutionItem,
+    publishFileItem,
+    spreadsheetGridItem,
     researchItem,
-    codeExecutionUiItem,
-    ...searchToolItems,
-    codeExecutionItem,
-    codeExecutionRuntimeItem,
   ] satisfies RegistryItem[]
 ).map((item): RegistryItem => {
   const definition = toolDefinitionSchema.safeParse(item.meta?.chatjs);
@@ -274,10 +166,12 @@ const registryItems: RegistryItem[] = (
       ...item.meta,
       chatjs: {
         ...definition.data,
-        channelSupport: { web: "supported", slack: "unverified" },
+        channelSupport: definition.data.channelSupport ?? {
+          web: "supported",
+          slack: "unverified",
+        },
       },
     },
   };
 });
-export { codeExecutionItem } from "./code-execution";
-export { registryItems, searchToolItems, toolItems };
+export { registryItems, toolItems };

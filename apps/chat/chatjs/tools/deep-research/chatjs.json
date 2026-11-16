@@ -1,12 +1,25 @@
 {
-  "config": { "key": "deepResearch" },
-  "availabilityExport": "researchAvailable",
+  "agentCategory": "extension",
+  "requiresChatJS": false,
+  "native": {
+    "layout": "agent",
+    "files": [
+      "tools/deepResearch.ts",
+      "lib/research/configuration.ts",
+      "lib/research/prompts.ts",
+      "lib/research/schemas.ts",
+      "lib/research/steps.ts",
+      "lib/research/workspace.ts"
+    ],
+    "dependencies": ["eve", "zod"]
+  },
   "envRequirements": [],
   "id": "deep-research",
   "kind": "tool",
-  "requiresTools": ["createTextDocument", "readDocument", "webSearch"],
+  "requiresTools": [],
   "tools": [
     {
+      "accounting": "none",
       "composer": {
         "icon": "Telescope",
         "name": "Deep Research",

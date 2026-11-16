@@ -103,7 +103,7 @@ test.each(["before-dispatch", "lost-response"])(
       message: "original message",
       modelId: "openai/gpt-4o",
       operationId: crypto.randomUUID(),
-      selectedTool: "webSearch",
+      selectedTool: "generateImage",
     } satisfies Parameters<typeof createEveConversationOperation>[1];
     const interruptedResponse = await createEveConversationOperation(
       owner,

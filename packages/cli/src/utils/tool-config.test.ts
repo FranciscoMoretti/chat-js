@@ -80,9 +80,9 @@ defineConfig({ ai: { gateway: gatewayType, tools: { followupSuggestions: {}, res
   await mkdir(path.join(root, "chatjs/tools/custom-research"), {
     recursive: true,
   });
-  await cp(
-    path.join(demo, "chatjs/tools/deep-research/configuration-schema.ts"),
-    path.join(root, "chatjs/tools/custom-research/configuration-schema.ts")
+  await writeFile(
+    path.join(root, "chatjs/tools/custom-research/configuration-schema.ts"),
+    'import { z } from "zod"; export const configSchema = z.object({ allowClarification: z.boolean().default(true), maxQueries: z.number().default(2) }).prefault({});'
   );
   await writeFile(
     path.join(root, "chatjs/generated/installed-config.ts"),
@@ -97,7 +97,7 @@ import assert from "node:assert/strict";
 const input = defineConfig({ ai: { gateway: gatewayType, tools: { research: { allowClarification: false } } } });
 const parsed = applyDefaults(input);
 assert.equal(parsed.ai.tools.research.allowClarification, false);
-assert.equal(parsed.ai.tools.research.finalReportModel, gatewayModelDefaults.roles.smart);
+assert.equal(parsed.ai.tools.research.maxQueries, 2);
 assert.equal(aiConfigSchema.safeParse({ ...parsed.ai, tools: { ...parsed.ai.tools, uninstalled: {} } }).success, false);
 // @ts-expect-error Unknown options are rejected alongside installed options.
 defineConfig({ ai: { gateway: gatewayType, tools: { research: {}, uninstalled: {} } } });

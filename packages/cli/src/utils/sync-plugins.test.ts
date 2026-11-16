@@ -476,10 +476,7 @@ for (const key of ["eve"]) {
 }
 
 for (const [contribution, ids] of [
-  [
-    "composerControls",
-    ["canvas", "web-search", "deep-research", "image", "video"],
-  ],
+  ["composerControls", ["deep-research", "image", "video"]],
   ["settingsItems", ["general"]],
 ] as const) {
   for (const id of ids) {

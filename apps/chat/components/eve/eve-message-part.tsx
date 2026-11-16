@@ -1,8 +1,6 @@
 "use client";
 import { eveToolUIState } from "@/lib/eve/tool-ui-state";
 
-import { isDocumentResult } from "@/chatjs/core/documents/contracts";
-
 import React from "react";
 import type { Answer } from "eve/events";
 import { Response } from "@/components/ai-elements/response";
@@ -12,12 +10,13 @@ import { ReasoningPart } from "@/components/part/message-reasoning";
 import { EvePendingInput } from "./eve-pending-input";
 import { eveMcpResult } from "@/lib/eve/mcp-result";
 import { getEveInstalledToolRenderer } from "@/lib/ai/tool-renderer-registry";
-import { documentDefinitions } from "@/integrations/documents/definitions";
 import type { ReadonlyEveMessagePart } from "@/lib/eve/readonly-message-types";
 import { EveAttachment } from "./eve-attachment";
-import { EveDocumentTool } from "./eve-document-tool";
 import { EveMcpResult } from "./eve-mcp-result";
 import { EveToolResult } from "./eve-tool-result";
+import { CodeSnippet } from "@/components/code-snippet";
+import { bashResultSchema } from "@/lib/eve/bash-result";
+import { BashOutput } from "./bash-output";
 
 const hasStructuredToolRenderer = (
   part: Extract<ReadonlyEveMessagePart, { type: "tool" }>
@@ -76,7 +75,16 @@ const ToolFallback = ({
   } else if (part.state === "failed") {
     content = <ToolOutput errorText={part.error?.message ?? "Tool failed"} />;
   } else if (part.state === "completed" && part.output !== undefined) {
-    content = <ToolOutput output={part.output} />;
+    const bash =
+      part.name === "bash"
+        ? bashResultSchema.safeParse(part.output)
+        : undefined;
+    content =
+      bash?.success === true ? (
+        <BashOutput output={bash.data} />
+      ) : (
+        <ToolOutput output={part.output} />
+      );
   }
   return (
     <ToolActivity
@@ -84,7 +92,15 @@ const ToolFallback = ({
       state={eveToolUIState(part.state)}
       defaultOpen
     >
-      <ToolInput input={part.input} />
+      {part.name === "bash" &&
+      typeof part.input === "object" &&
+      part.input !== null &&
+      "command" in part.input &&
+      typeof part.input.command === "string" ? (
+        <CodeSnippet code={part.input.command} language="bash" />
+      ) : (
+        <ToolInput input={part.input} />
+      )}
       {content}
     </ToolActivity>
   );
@@ -98,9 +114,7 @@ export const EveMessagePart = ({
   part,
   respond,
   inputDisabled,
-  previewDocument = false,
 }: {
-  readonly previewDocument?: boolean;
   readonly messageId: string;
   readonly isReadonly: boolean;
   readonly part: ReadonlyEveMessagePart;
@@ -152,20 +166,6 @@ export const EveMessagePart = ({
     );
   }
 
-  if (
-    documentDefinitions.operations.has(part.name) ||
-    part.name === "readDocument" ||
-    (part.state === "completed" && isDocumentResult(part.output))
-  ) {
-    return (
-      <EveDocumentTool
-        preview={previewDocument}
-        isReadonly={isReadonly}
-        messageId={messageId}
-        part={part}
-      />
-    );
-  }
   if (
     part.state === "completed" &&
     eveMcpResult.safeParse(part.output).success

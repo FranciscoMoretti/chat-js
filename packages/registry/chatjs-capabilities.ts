@@ -14,7 +14,7 @@ export const portableChatjsCapabilities = (
             id: `@chatjs/${item.name}`,
             title: item.title,
             description: item.description,
-            category: "tool",
+            category: item.definition.agentCategory ?? "tool",
             source: "ChatJS",
             requiresChatJS: false,
             setup: false,

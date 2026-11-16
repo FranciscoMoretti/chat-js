@@ -13,7 +13,7 @@ import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 import "./sandbox.css";
 
 const primary = config.ai.workflows.title;
-const secondary = config.ai.tools.code.edits;
+const secondary = "openai/gpt-5-mini";
 const createModel = (
   id: AppModelDefinition["id"],
   name: string

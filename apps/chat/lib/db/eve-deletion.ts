@@ -1,7 +1,6 @@
 import { chat } from "@/integrations/chat/server";
 import { checkDeletedWorkspaceMemberships } from "@/lib/db/eve-workspace-deletion";
 import { eveDeletionScope } from "./eve-deletion-scope";
-import { unretainedEveDocumentRevisionIds } from "./eve-document-retention";
 import { and, eq, exists, inArray, or, sql } from "drizzle-orm";
 import type { QueryPromise } from "drizzle-orm/query-promise";
 
@@ -10,15 +9,7 @@ import { tombstoneEveResponseGroups } from "./eve-response-groups";
 import {
   eveChat,
   eveConversation,
-  eveDocumentCheckpoint,
-  eveDocumentCheckpointEntry,
-  eveDocumentHead,
-  eveDocumentRevision,
   eveFileReference,
-  eveImportedDocumentCheckpoint,
-  eveImportedDocumentCheckpointEntry,
-  eveNamedDocumentCheckpoint,
-  eveNamedDocumentCheckpointEntry,
   eveSubagentSession,
 } from "./schema";
 
@@ -196,16 +187,7 @@ const completeEveConversationDeletion = async (
     );
     await checkDeletedWorkspaceMemberships(ownerId, ids, tx);
 
-    const contentTables = [
-      eveFileReference,
-      eveImportedDocumentCheckpointEntry,
-      eveImportedDocumentCheckpoint,
-      eveNamedDocumentCheckpointEntry,
-      eveNamedDocumentCheckpoint,
-      eveDocumentCheckpointEntry,
-      eveDocumentCheckpoint,
-      eveDocumentHead,
-    ];
+    const contentTables = [eveFileReference];
     // Only existence matters: check the fenced family's content in one snapshot.
     const remaining = await tx
       .select({ id: eveConversation.id })
@@ -214,17 +196,6 @@ const completeEveConversationDeletion = async (
         and(
           inArray(eveConversation.id, ids),
           or(
-            exists(
-              tx
-                .select({ id: eveDocumentRevision.id })
-                .from(eveDocumentRevision)
-                .where(
-                  inArray(
-                    eveDocumentRevision.id,
-                    unretainedEveDocumentRevisionIds(ownerId, ids)
-                  )
-                )
-            ),
             ...contentTables.map((table) =>
               exists(
                 tx

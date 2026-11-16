@@ -139,43 +139,6 @@ const states: {
     },
   },
   {
-    label: "Retrieving content",
-    part: {
-      input: { url: "https://example.com" },
-      state: "requested",
-      callId: "retrieving",
-      name: "retrieveUrl",
-      label: "retrieveUrl",
-      type: "tool",
-      kind: "tool",
-      stepIndex: 0,
-    },
-  },
-  {
-    label: "Retrieved content",
-    part: {
-      input: { url: "https://example.com" },
-      output: {
-        results: [
-          {
-            title: "Example page",
-            description: "A deterministic renderer fixture.",
-            content: "This is the retrieved content.",
-            url: "https://example.com",
-            language: "en",
-          },
-        ],
-      },
-      state: "completed",
-      callId: "retrieved",
-      name: "retrieveUrl",
-      label: "retrieveUrl",
-      type: "tool",
-      kind: "tool",
-      stepIndex: 0,
-    },
-  },
-  {
     label: "Weather loading",
     part: {
       input: { latitude: 0, longitude: 0 },

@@ -63,12 +63,18 @@ const requiresChatjs = (
   definition: InstallationCatalogItem["definition"]
 ): boolean =>
   definition?.kind === "plugin" ||
-  (definition?.kind === "tool" && definition.native === undefined);
+  (definition?.kind === "tool" &&
+    (definition.requiresChatJS ?? definition.native === undefined));
 
 const toolBadge = (definition: InstallationCatalogItem["definition"]) =>
   definition?.kind === "tool" && definition.agentCategory !== undefined
     ? "ChatJS"
     : undefined;
+
+const capabilityCategory = (
+  definition: InstallationCatalogItem["definition"]
+) =>
+  definition?.kind === "tool" ? (definition.agentCategory ?? "tool") : "plugin";
 
 const FeatureIcon = ({
   definition,
@@ -192,7 +198,7 @@ export const FeatureChoices = ({
               key={item.name}
               title={item.title}
               visualId={`@chatjs/${item.name}`}
-              category="tool"
+              category={capabilityCategory(definition)}
               description={item.description}
               source="ChatJS"
               badge={toolBadge(definition)}

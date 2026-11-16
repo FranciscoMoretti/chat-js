@@ -67,28 +67,27 @@ test("plans transitive dependencies and repairs against the complete resulting i
   roots.push(root);
   const reader = toolDefinitionSchema.parse({
     contractVersion: 1,
-    id: "read-document",
+    id: "fetch-data",
     kind: "tool",
-    tools: [{ toolExport: "readDocument" }],
+    tools: [{ toolExport: "fetchData" }],
   });
   const documents = toolDefinitionSchema.parse({
     contractVersion: 1,
-    documentKind: "text",
-    id: "text-documents",
+    id: "report-tools",
     kind: "tool",
-    requiresTools: ["readDocument"],
-    tools: [{ toolExport: "createTextDocument" }],
+    requiresTools: ["fetchData"],
+    tools: [{ toolExport: "createReport" }],
   });
   const server = Bun.serve({
     fetch(request: Readonly<Pick<Request, "url">>): Response {
-      const isReader = new URL(request.url).pathname.includes("read-document");
+      const isReader = new URL(request.url).pathname.includes("fetch-data");
       const definition = isReader ? reader : documents;
       return Response.json({
         meta: { chatjs: definition },
         name: definition.id,
         registryDependencies: isReader
           ? []
-          : [`http://127.0.0.1:${server.port}/read-document.json`],
+          : [`http://127.0.0.1:${server.port}/fetch-data.json`],
         type: "registry:item",
       });
     },
@@ -98,64 +97,41 @@ test("plans transitive dependencies and repairs against the complete resulting i
   try {
     const source = `http://127.0.0.1:${server.port}`;
 
-    await rejects(
-      planInstallation(
-        root,
-        {
-          plugins: [],
-          tools: [`${source}/text-documents.json`],
-        },
-        { documents: false, fresh: true }
-      ),
-      (reason: unknown) => {
-        expect(() => {
-          throw reason;
-        }).toThrow("--no-documents");
-        return true;
-      }
-    );
-    expect(await Bun.file(path.join(root, "package.json")).exists()).toBe(
-      false
-    );
     const first = await planInstallation(root, {
       plugins: [],
-      tools: [`${source}/text-documents.json`],
+      tools: [`${source}/report-tools.json`],
     });
     expect(
       first.expected
         .map((item: { readonly id: string }): string => item.id)
         .toSorted()
-    ).toEqual(["read-document", "text-documents"]);
+    ).toEqual(["fetch-data", "report-tools"]);
     expect(
       await Bun.file(path.join(root, "chatjs/generated/tools.ts")).exists()
     ).toBe(false);
-    const dir = path.join(root, "chatjs/tools/text-documents");
+    const dir = path.join(root, "chatjs/tools/report-tools");
     await mkdir(dir, { recursive: true });
     await writeFile(path.join(dir, "chatjs.json"), JSON.stringify(documents));
     await writeFile(
-      path.join(dir, "document.tsx"),
-      "export const documentUi = {};\n"
-    );
-    await writeFile(
       path.join(dir, "tool.ts"),
-      "export const createTextDocument = {};\n"
+      "export const createReport = {};\n"
     );
     await rejects(
       planInstallation(root, { plugins: [], tools: [] }),
       (reason: unknown) => {
         expect(() => {
           throw reason;
-        }).toThrow("requires installed tools: readDocument");
+        }).toThrow("requires installed tools: fetchData");
         return true;
       }
     );
     const repair = await planInstallation(root, {
       plugins: [],
-      tools: [`${source}/read-document.json`],
+      tools: [`${source}/fetch-data.json`],
     });
     expect(repair.expected).toEqual([reader]);
     expect(await readFile(path.join(dir, "tool.ts"), "utf-8")).toContain(
-      "createTextDocument"
+      "createReport"
     );
   } finally {
     await server.stop(true);

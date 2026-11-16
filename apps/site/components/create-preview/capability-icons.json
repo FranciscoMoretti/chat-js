@@ -1,6 +1,4 @@
 {
-  "@chatjs/firecrawl-search": "firecrawl.svg",
-  "@chatjs/tavily-search": "tavily.svg",
   "channel/blooio": "blooio.com.ico",
   "channel/chat-sdk-agentphone": "agentphone.to.png",
   "channel/chat-sdk-beeper": "chat-sdk-beeper.svg",

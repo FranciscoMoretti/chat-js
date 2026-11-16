@@ -84,7 +84,7 @@ describe("native tool accounting assembly", () => {
   });
 });
 
-it("settles one charge after streaming completes and retains progress for research", async () => {
+it("settles one charge after streaming completes", async () => {
   const native = defineTool({
     description: "Stream",
     inputSchema: z.object({}),
@@ -93,18 +93,13 @@ it("settles one charge after streaming completes and retains progress for resear
       yield { searches: ["source"], updates: [{ status: "completed" }] };
     },
   });
-  const tool = withToolAccounting(
-    native,
-    { costUsd: 0.05 },
-    (output) => output.updates
-  );
+  const tool = withToolAccounting(native, { costUsd: 0.05 });
   const outputs = await collect(tool.execute({}, testToolContext()));
   expect(outputs.map((output) => output.usage.costUsd)).toEqual([
     undefined,
     undefined,
     0.05,
   ]);
-  expect(outputs.at(-1)?.updates).toEqual([{ status: "completed" }]);
   const unknown = withToolAccounting(native, "unknown");
   const unknownOutputs = await collect(unknown.execute({}, testToolContext()));
   expect(unknownOutputs.at(-1)?.usage.costUsd).toBeUndefined();

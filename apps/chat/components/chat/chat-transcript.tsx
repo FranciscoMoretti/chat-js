@@ -1,7 +1,5 @@
 "use client";
 
-import { isDocumentResult } from "@/chatjs/core/documents/contracts";
-
 import { hasText } from "@/components/text-value";
 
 import type { Answer } from "eve/events";
@@ -23,7 +21,6 @@ import type {
 import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 
 import { EveAttachment } from "../eve/eve-attachment";
-import { documentDefinitions } from "@/integrations/documents/definitions";
 import { EveMessagePart } from "../eve/eve-message-part";
 import { MessageActions } from "@/components/chat-slots";
 
@@ -90,7 +87,6 @@ interface MessageRowProps extends Omit<
   readonly message: ReadonlyEveMessage;
   readonly userMessage: ReadonlyEveMessage | undefined;
   readonly isLast: boolean;
-  readonly latestDocumentCallId: string | undefined;
   readonly actionsDisabled: boolean;
 }
 
@@ -241,7 +237,6 @@ const EveMessageRow = ({
   message,
   userMessage,
   isLast,
-  latestDocumentCallId,
   conversationId,
   isReadonly,
   disabled,
@@ -332,9 +327,6 @@ const EveMessageRow = ({
           messageId={message.id}
           part={part}
           respond={respond}
-          previewDocument={
-            part.type === "tool" && part.callId === latestDocumentCallId
-          }
         />
       ))}
     </ChatMessageView>
@@ -349,18 +341,6 @@ export const ChatTranscript = ({
   actionsDisabled = disabled,
   ...props
 }: ChatTranscriptProps): ReactJSX.Element[] => {
-  const latestDocumentCallId = messages
-    .flatMap(
-      (message: Readonly<{ parts: readonly ReadonlyEveMessagePart[] }>) =>
-        message.parts
-    )
-    .filter((part: ReadonlyEveMessagePart) => part.type === "tool")
-    .findLast(
-      (part) =>
-        documentDefinitions.operations.has(part.name) ||
-        part.name === "readDocument" ||
-        (part.state === "completed" && isDocumentResult(part.output))
-    )?.callId;
   const precedingUsers: (ReadonlyEveMessage | undefined)[] = [];
   let precedingUser: ReadonlyEveMessage | undefined;
   for (const message of messages) {
@@ -380,7 +360,6 @@ export const ChatTranscript = ({
         message={message}
         userMessage={precedingUsers[index]}
         isLast={message.id === messages.at(-1)?.id}
-        latestDocumentCallId={latestDocumentCallId}
         disabled={disabled}
         actionsDisabled={actionsDisabled}
       />

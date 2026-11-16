@@ -1,4 +1,4 @@
-import type { AuthProvider, BuiltInToolKey, CoreFeatureKey } from "#cli/types";
+import type { AuthProvider, CoreFeatureKey } from "#cli/types";
 import type { ReadonlyInput } from "./readonly-input";
 import { builtInGateways } from "#cli/registry/gateways";
 import { mcpDefinition } from "../../../registry/src/plugins/mcp/manifest";
@@ -44,24 +44,6 @@ const coreFeatureEnvRequirements: Partial<
   ),
 };
 
-const builtInToolEnvRequirements: Record<
-  BuiltInToolKey,
-  EnvRequirement | undefined
-> = {
-  codeExecution: undefined,
-  deepResearch: {
-    description: "TAVILY_API_KEY or FIRECRAWL_API_KEY",
-    options: [["TAVILY_API_KEY"], ["FIRECRAWL_API_KEY"]],
-  },
-  imageGeneration: undefined,
-  urlRetrieval: undefined,
-  videoGeneration: undefined,
-  webSearch: {
-    description: "TAVILY_API_KEY or FIRECRAWL_API_KEY",
-    options: [["TAVILY_API_KEY"], ["FIRECRAWL_API_KEY"]],
-  },
-};
-
 const authEnvRequirements: Record<AuthProvider, EnvRequirement> = {
   github: {
     description: "AUTH_GITHUB_ID + AUTH_GITHUB_SECRET",
@@ -85,7 +67,6 @@ const envVarDescriptions: Record<string, string> = {
   AUTH_GOOGLE_SECRET: "Google OAuth client secret",
   AUTH_SECRET: "Secret used to sign auth sessions",
   DATABASE_URL: "Database connection string",
-  FIRECRAWL_API_KEY: "Firecrawl API key for search/retrieval",
   LITELLM_API_KEY: "Optional API key for LiteLLM proxy",
   LITELLM_BASE_URL: "Base URL for LiteLLM proxy",
   MCP_ENCRYPTION_KEY: "Encryption key for MCP connector secrets",
@@ -93,7 +74,6 @@ const envVarDescriptions: Record<string, string> = {
   OPENAI_COMPATIBLE_API_KEY: "API key for OpenAI-compatible gateway",
   OPENAI_COMPATIBLE_BASE_URL: "Base URL for OpenAI-compatible gateway",
   OPENROUTER_API_KEY: "OpenRouter API key",
-  TAVILY_API_KEY: "Tavily API key for web search",
   VERCEL_APP_CLIENT_ID: "Vercel OAuth client id",
   VERCEL_APP_CLIENT_SECRET: "Vercel OAuth client secret",
   VERCEL_OIDC_TOKEN: "OIDC token available in Vercel runtime",
@@ -103,7 +83,6 @@ const envVarDescriptions: Record<string, string> = {
 };
 export {
   authEnvRequirements,
-  builtInToolEnvRequirements,
   coreFeatureEnvRequirements,
   envVarDescriptions,
   gatewayEnvRequirements,

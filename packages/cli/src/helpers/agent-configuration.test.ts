@@ -25,3 +25,47 @@ test("native configuration preserves model settings without generating authored 
     await rm(cwd, { recursive: true, force: true });
   }
 });
+
+test.each([undefined, true, false])(
+  "generated agent enables native tools by default and honors override %s",
+  async (defaultTools) => {
+    const cwd = await mkdtemp(path.join(tmpdir(), "chatjs-agent-defaults-"));
+    try {
+      await writeAgentConfiguration(
+        cwd,
+        defaultTools === undefined ? undefined : { defaultTools }
+      );
+      expect(
+        await readFile(path.join(cwd, "agent/agent.ts"), "utf-8")
+      ).toContain(`"defaultTools": ${defaultTools ?? true}`);
+    } finally {
+      await rm(cwd, { recursive: true, force: true });
+    }
+  }
+);
+
+test("writes native disable overrides only for unchecked defaults", async () => {
+  const cwd = await mkdtemp(path.join(tmpdir(), "chatjs-agent-defaults-"));
+  try {
+    await writeAgentConfiguration(cwd, {
+      disabledDefaultTools: ["tool/bash", "tool/web_fetch"],
+    });
+    const source = await readFile(path.join(cwd, "agent/agent.ts"), "utf-8");
+    expect(source).toContain('"defaultTools": true');
+    expect(source).not.toContain("disabledDefaultTools");
+    const paths = ["bash.ts", "web_fetch.ts"].map((file) =>
+      path.join(cwd, "agent/tools", file)
+    );
+    const overrides = await Promise.all(
+      paths.map(async (file) => await readFile(file, "utf-8"))
+    );
+    const nativeOverride =
+      'import { disableTool } from "eve/tools";\n\nexport default disableTool();\n';
+    expect(overrides).toEqual([nativeOverride, nativeOverride]);
+    expect(
+      access(path.join(cwd, "agent/tools/read_file.ts"))
+    ).rejects.toThrow();
+  } finally {
+    await rm(cwd, { recursive: true, force: true });
+  }
+});

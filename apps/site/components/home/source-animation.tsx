@@ -106,7 +106,7 @@ export const SourceAnimation = () => {
         className="source-illustration"
         src="/home/source/index.html"
         loading="lazy"
-        title="MCP, Projects and Retrieve URL becoming folders and files in your source tree"
+        title="MCP, Projects and Word Count becoming folders and files in your source tree"
         onLoad={() => {
           seek(time.current);
         }}

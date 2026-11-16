@@ -26,7 +26,17 @@ const installationSelectionSchema = z
     tools: z.array(registryAddressSchema).default([]),
   })
   .superRefine((selection, context) => {
+    const disabledDefaults = new Set<string>(
+      selection.agent?.disabledDefaultTools
+    );
     for (const [index, id] of (selection.eve ?? []).entries()) {
+      if (disabledDefaults.has(id)) {
+        context.addIssue({
+          code: "custom",
+          path: ["eve", index],
+          message: `Remove the disable override before installing ${id}.`,
+        });
+      }
       const namespace = id.startsWith("@") ? id.split("/")[0] : undefined;
       if (
         namespace !== undefined &&
@@ -44,12 +54,12 @@ const installationSelectionSchema = z
 
 type InstallationSelection = z.infer<typeof installationSelectionSchema>;
 
-// Checked-in demo preset preserves the application's installed plugins.
+// The reference app demonstrates file artifacts with optional viewers.
 const demoInstallation = installationSelectionSchema.parse({
   plugins: [
     "image-viewer",
     "video-viewer",
-    "slack-documents",
+    "spreadsheet-viewer",
     "desktop",
     "projects",
     "feedback",
@@ -69,17 +79,9 @@ const demoInstallation = installationSelectionSchema.parse({
   tools: [
     "word-count",
     "get-weather",
-    "retrieve-url",
     "generate-image",
     "generate-video",
-    "tavily-search",
-    "code-execution",
-    "text-documents",
-    "code-documents",
-    "sheet-documents",
-    "read-document",
-    "delete-document",
-    "saved-code-execution",
+    "publish-file",
     "deep-research",
   ],
 });

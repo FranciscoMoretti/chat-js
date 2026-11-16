@@ -8,5 +8,4 @@ export const installedDatabaseSchemas: string[] = [
   "./chatjs/plugins/model-preferences/model-preferences-schema.ts",
   "./chatjs/plugins/projects/db/project-schema.ts",
   "./chatjs/plugins/search/search-schema.ts",
-  "./chatjs/plugins/slack-documents/slack-schema.ts",
 ];

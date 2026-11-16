@@ -30,6 +30,18 @@
       "description": "Fetch a URL from the app runtime."
     },
     {
+      "name": "connection/tavily",
+      "type": "registry:item",
+      "title": "Tavily",
+      "description": "Search and extract web content through Tavily."
+    },
+    {
+      "name": "connection/firecrawl",
+      "type": "registry:item",
+      "title": "Firecrawl",
+      "description": "Search, crawl, and scrape the web through Firecrawl."
+    },
+    {
       "name": "connection/linear",
       "type": "registry:item",
       "title": "Linear",

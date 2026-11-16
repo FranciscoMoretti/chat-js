@@ -14,10 +14,25 @@ test("complete agent configuration round trips Unicode, skills and public provid
     eve: ["@skills/vercel-labs/agent-skills/vercel-react-best-practices"],
     agent: {
       model: "provider/model",
+      disabledDefaultTools: ["tool/bash"],
     },
   });
   expect(decodeAppPreset(encodeAppPreset(selection))).toEqual(selection);
   expect(readInstallationInput(JSON.stringify(selection))).toEqual(selection);
+});
+
+test("rejects an invalid default tool ID or an install in a disabled tool slot", () => {
+  expect(() =>
+    installationSelectionSchema.parse({
+      agent: { disabledDefaultTools: ["tool/../../agent"] },
+    })
+  ).toThrow();
+  expect(() =>
+    installationSelectionSchema.parse({
+      agent: { disabledDefaultTools: ["tool/bash"] },
+      eve: ["tool/bash"],
+    })
+  ).toThrow("Remove the disable override before installing tool/bash.");
 });
 
 test("obsolete presets and invalid authored configuration fail instead of losing choices", () => {

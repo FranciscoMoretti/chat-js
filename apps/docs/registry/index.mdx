@@ -19,6 +19,14 @@ Choose a category based on what you want to change in your app.
 
 For gateways, use `chat-js create --gateway <gateway>` to install and configure the selected adapter. For tools, use `chat-js add` to install items and regenerate registrations. For storage, use `chat-js create --storage-provider <storage-provider>` to install an adapter and generate its typed options. For sandboxes, use `chat-js add --sandbox-provider <item>` to install infrastructure without a model-facing tool. For plugins, use `chat-js add <plugin>` and complete that plugin's setup. Each category has its own activation contract.
 
+## Agent categories and app plugins
+
+In Create, tools belong under **Agent → Tools** and Deep Research under **Agent → Extensions**. This placement is independent of **Source: ChatJS** and **Requires ChatJS**. Image/video generation and file publication require application services. Research runs independently and can optionally use ChatJS presentation.
+
+Image, video and spreadsheet viewers remain optional **Plugins**. Sharing is a plugin and Desktop is under **Setup → Platforms**. Installing a generation or publication tool does not install a viewer.
+
+The native EVE distribution under `dist/r/eve/` excludes application presentation and services. It supports ordinary tool modules and bundles of native agent files, including Deep Research. See [Deep Research](../tools/deep-research) for its two installation options.
+
 ## Source and ownership
 
 | Location in the repository | Responsibility |

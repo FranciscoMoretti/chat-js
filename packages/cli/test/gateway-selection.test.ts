@@ -65,23 +65,6 @@ const removeFixtureFiles = async (): Promise<void> => {
   }
 };
 
-const executionDefinition = {
-  codeExecutionCapabilities: {
-    cancellation: "terminate",
-    cleanup: "durable-allocation",
-    files: "ephemeral",
-    languages: ["python", "javascript"],
-    timeout: "bounded",
-    usage: "single-receipt",
-  },
-  codeExecutorExport: "executeCode",
-  contractVersion: 1,
-  envRequirements: [{ options: [["ACME_EXECUTION_TOKEN"]] }],
-  id: "acme-execution",
-  kind: "tool",
-  slot: "codeExecution",
-  tools: [{ rendererExport: "CommandRenderer", toolExport: "runCommand" }],
-};
 const external = externalGatewayFixture();
 const registryResponseSchema = z.looseObject({
   dependencies: z.array(z.string()).optional(),
@@ -121,78 +104,6 @@ export function createStorageAdapter(options: {bucket: string}) {
           },
         },
         name: "acme-bucket",
-        type: "registry:item",
-      });
-    }
-    if (path === "/external-execution.json") {
-      return Response.json({
-        dependencies: ["ai", "zod"],
-        files: [
-          {
-            content: JSON.stringify(executionDefinition),
-            path: "chatjs.json",
-            target: "~/chatjs/tools/acme-execution/chatjs.json",
-            type: "registry:file",
-          },
-          {
-            content: `import { defineTool } from "eve/tools";
-import { z } from "zod";
-import type { CodeExecutor } from "@/lib/eve/code-executor";
-import { createToolResult } from "@/lib/eve/tool-result";
-export const executeCode: CodeExecutor = async ({code}) => createToolResult({chart: "", message: code}, 0);
-export const runCommand = defineTool({description: "External fixture",inputSchema: z.object({command: z.string()}),
-    execute: async ({command}) => ({stdout: command, exitCode: 0})});`,
-            path: "tool.ts",
-            target: "~/chatjs/tools/acme-execution/tool.ts",
-            type: "registry:file",
-          },
-          {
-            content: `"use client";
-import { z } from "zod";
-import { defineToolRenderer } from "@/chatjs/core/tools/define-renderer";
-export const CommandRenderer = defineToolRenderer({
- inputSchema: z.object({command: z.string()}), outputSchema: z.object({stdout: z.string(), exitCode: z.number()}),
- render: ({tool}) => <pre>{tool.state === "output-available" ? tool.output.stdout : tool.input?.command}</pre>,
-});`,
-            path: "renderer.tsx",
-            target: "~/chatjs/tools/acme-execution/renderer.tsx",
-            type: "registry:file",
-          },
-        ],
-        meta: { chatjs: executionDefinition },
-        name: "acme-execution",
-        type: "registry:item",
-      });
-    }
-    if (path === "/external-search.json") {
-      const definition = {
-        contractVersion: 1,
-        envRequirements: [],
-        id: "acme-search",
-        kind: "tool",
-        slot: "webSearch",
-        tools: [{ toolExport: "lookup" }],
-      };
-      return Response.json({
-        dependencies: ["ai", "zod"],
-        files: [
-          {
-            content: JSON.stringify(definition),
-            path: "chatjs.json",
-            target: "~/chatjs/tools/acme-search/chatjs.json",
-            type: "registry:file",
-          },
-          {
-            content: `import {defineTool} from "eve/tools";
-import {z} from "zod";
-export const lookup = defineTool({description: "External fixture",inputSchema: z.object({query: z.string()}), execute: async ({query}) => ({documents: [{text: query, href: "https://example.com"}]})});`,
-            path: "tool.ts",
-            target: "~/chatjs/tools/acme-search/tool.ts",
-            type: "registry:file",
-          },
-        ],
-        meta: { chatjs: definition },
-        name: "acme-search",
         type: "registry:item",
       });
     }
@@ -255,38 +166,6 @@ export const lookup = defineTool({description: "External fixture",inputSchema: z
         ],
         meta: { chatjs: definition },
         name: "acme-image",
-        type: "registry:item",
-      });
-    }
-    if (path === "/external-retrieval.json") {
-      const definition = {
-        contractVersion: 1,
-        envRequirements: [{ options: [["ACME_RETRIEVAL_KEY"]] }],
-        id: "acme-retrieval",
-        kind: "tool",
-        slot: "retrieveUrl",
-        tools: [{ toolExport: "readPage" }],
-      };
-      return Response.json({
-        dependencies: ["ai", "zod"],
-        files: [
-          {
-            content: JSON.stringify(definition),
-            path: "chatjs.json",
-            target: "~/chatjs/tools/acme-retrieval/chatjs.json",
-            type: "registry:file",
-          },
-          {
-            content: `import {defineTool} from "eve/tools";
-import {z} from "zod";
-export const readPage = defineTool({description: "External fixture",inputSchema: z.object({target: z.string()}), execute: async ({target}) => ({text: "Page content", source: target})});`,
-            path: "tool.ts",
-            target: "~/chatjs/tools/acme-retrieval/tool.ts",
-            type: "registry:file",
-          },
-        ],
-        meta: { chatjs: definition },
-        name: definition.id,
         type: "registry:item",
       });
     }
@@ -529,14 +408,8 @@ const toolArguments = (gateway: string): string[] => {
       "generate-video",
       "--image-generation-tool",
       "generate-image",
-      "--search-tool",
-      "firecrawl-search",
-      "--code-execution-tool",
-      "code-execution",
       "--sandbox-provider",
       "vercel",
-      "--url-retrieval-tool",
-      "retrieve-url",
     ];
   }
   if (gateway === "acme") {
@@ -545,12 +418,6 @@ const toolArguments = (gateway: string): string[] => {
       `http://127.0.0.1:${registryServer.port}/external-video.json`,
       "--image-generation-tool",
       `http://127.0.0.1:${registryServer.port}/external-image.json`,
-      "--url-retrieval-tool",
-      `http://127.0.0.1:${registryServer.port}/external-retrieval.json`,
-      "--code-execution-tool",
-      `http://127.0.0.1:${registryServer.port}/external-execution.json`,
-      "--search-tool",
-      `http://127.0.0.1:${registryServer.port}/external-search.json`,
     ];
   }
   return [];
@@ -635,32 +502,7 @@ const verifyResearchInstallation = async (cwd: string, gateway: string) => {
         "utf-8"
       )
     ).toContain("deleteDocumentAvailable");
-    // Exercise namespaced transitive dependencies, including the shared UI item
-    // without a ChatJS tool descriptor, through actual installation and sync.
-    const sharedDirectory = nodePath.join(
-      cwd,
-      "chatjs/tools/_shared/code-execution"
-    );
-    await Promise.all(
-      [
-        "code-execution-chart.tsx",
-        "interactive-charts.tsx",
-        "interactive-chart-impl.tsx",
-      ].map(async (file) => {
-        await rm(nodePath.join(sharedDirectory, file), { force: true });
-      })
-    );
     await run(cwd, ["node", cliEntry, "add", "saved-code-execution", "--yes"]);
-    expect(
-      await Bun.file(
-        nodePath.join(sharedDirectory, "interactive-charts.tsx")
-      ).exists()
-    ).toBe(true);
-    expect(
-      await Bun.file(
-        nodePath.join(cwd, "chatjs/tools/code-execution-ui/chatjs.json")
-      ).exists()
-    ).toBe(false);
     const registered = await readFile(
       nodePath.join(cwd, "chatjs/generated/tools.ts"),
       "utf-8"
@@ -786,41 +628,6 @@ for (const gateway of [...GATEWAYS, "acme"]) {
       expect(
         await readFile(nodePath.join(cwd, "chatjs/generated/ui.ts"), "utf-8")
       ).toContain("generate-image/renderer");
-      expect(
-        await readFile(
-          nodePath.join(cwd, "chatjs/tools/retrieve-url/chatjs.json"),
-          "utf-8"
-        )
-      ).toContain("FIRECRAWL_API_KEY");
-      expect(
-        await Bun.file(
-          nodePath.join(cwd, "chatjs/tools/retrieve-url/tool.ts")
-        ).exists()
-      ).toBe(true);
-      expect(
-        await readFile(
-          nodePath.join(cwd, "chatjs/generated/providers.ts"),
-          "utf-8"
-        )
-      ).toContain("code-execution/tool");
-      expect(dependencies["@tavily/core"]).toBeUndefined();
-      expect(
-        await Bun.file(
-          nodePath.join(cwd, "chatjs/tools/tavily-search/tool.ts")
-        ).exists()
-      ).toBe(false);
-      expect(
-        await readFile(
-          nodePath.join(cwd, "chatjs/generated/providers.ts"),
-          "utf-8"
-        )
-      ).toContain("firecrawl-search/tool");
-      expect(
-        await readFile(
-          nodePath.join(cwd, "chatjs/tools/firecrawl-search/chatjs.json"),
-          "utf-8"
-        )
-      ).toContain("FIRECRAWL_API_KEY");
     }
 
     let selectedSdk = "@ai-sdk/openai-compatible";
@@ -891,21 +698,12 @@ for (const gateway of [...GATEWAYS, "acme"]) {
       ).toBe(false);
       expect(
         await readFile(nodePath.join(cwd, "chatjs/generated/ui.ts"), "utf-8")
-      ).toContain("acme-execution/renderer");
-      expect(
-        await readFile(nodePath.join(cwd, "chatjs/generated/ui.ts"), "utf-8")
       ).not.toContain("tool-webSearch");
       expect(
         await Bun.file(
           nodePath.join(cwd, "chatjs/tools/code-execution/tool.ts")
         ).exists()
       ).toBe(false);
-      expect(
-        await readFile(
-          nodePath.join(cwd, "chatjs/tools/acme-execution/chatjs.json"),
-          "utf-8"
-        )
-      ).toContain("ACME_EXECUTION_TOKEN");
       await writeFile(
         nodePath.join(cwd, "verify-execution.ts"),
         `import assert from "node:assert/strict";
@@ -913,38 +711,13 @@ import {tools} from "./integrations/tools/execution";
 import type { ToolContext } from "eve/tools";
 const unavailable = () => { throw new Error("Unexpected resource access"); };
 const context: ToolContext = { callId: "fixture", toolName: "fixture", messages: [], abortSignal: new AbortController().signal, session: { id: "fixture", auth: { current: null, initiator: null }, turn: { id: "turn", sequence: 0 } }, getSandbox: unavailable, getToken: unavailable, requireAuth: unavailable, to: unavailable, channel: { kind: "http", metadata: {} } };
-const tool = tools.codeExecution;
-assert.ok(tool.execute);
-const result = await tool.execute({command: "echo hello"}, context);
-assert.deepEqual(result, {stdout: "echo hello", exitCode: 0});
-assert.ok(tools.webSearch.execute);
-const search = await tools.webSearch.execute({query: "independent schema"}, context);
-assert.deepEqual(search, {documents: [{text: "independent schema", href: "https://example.com"}]});
-assert.ok(tools.retrieveUrl.execute);
 assert.ok(tools.generateVideo.execute);
 assert.deepEqual(await tools.generateVideo.execute({subject: "ocean"}, context), {asset: "ocean"});
 assert.ok(tools.generateImage.execute);
 assert.deepEqual(await tools.generateImage.execute({subject: "mountains"}, context), {asset: "mountains"});
-const page = await tools.retrieveUrl.execute({target: "https://example.com"}, context);
-assert.deepEqual(page, {text: "Page content", source: "https://example.com"});
 `
       );
       await run(cwd, ["env", "PLAYWRIGHT=True", "bun", "verify-execution.ts"]);
-      expect(dependencies["@mendable/firecrawl-js"]).toBeUndefined();
-      expect(
-        await Bun.file(
-          nodePath.join(cwd, "chatjs/tools/retrieve-url/tool.ts")
-        ).exists()
-      ).toBe(false);
-      expect(
-        await readFile(
-          nodePath.join(cwd, "chatjs/tools/acme-retrieval/chatjs.json"),
-          "utf-8"
-        )
-      ).toContain("ACME_RETRIEVAL_KEY");
-      expect(
-        await readFile(nodePath.join(cwd, "chatjs/generated/ui.ts"), "utf-8")
-      ).not.toContain("tool-retrieveUrl");
       expect(dependencies["@vercel/blob"]).toBeUndefined();
       expect(dependencies["@aws-sdk/client-s3"]).toBeUndefined();
       await writeFile(
@@ -1115,103 +888,6 @@ assert.equal(aiConfigSchema.safeParse({ ...ai, tools: { ...ai.tools, video: { de
           "utf-8"
         )
       ).toContain("attachmentUploads");
-
-      await rejects(
-        run(cwd, ["node", cliEntry, "add", "tavily-search", "--yes"]),
-        (reason: unknown) => {
-          expect(() => {
-            throw reason;
-          }).toThrow("--replace");
-          return true;
-        }
-      );
-      await run(cwd, [
-        "node",
-        cliEntry,
-        "add",
-        "tavily-search",
-        "--replace",
-        "--yes",
-      ]);
-      expect(
-        await Bun.file(
-          nodePath.join(cwd, "chatjs/tools/firecrawl-search/chatjs.json")
-        ).exists()
-      ).toBe(false);
-      expect(
-        await readFile(
-          nodePath.join(cwd, "chatjs/generated/providers.ts"),
-          "utf-8"
-        )
-      ).toContain("@/chatjs/tools/tavily-search/tool");
-      expect(
-        await readFile(
-          nodePath.join(cwd, "agent/subagents/researcher/tools/webSearch.ts"),
-          "utf-8"
-        )
-      ).toContain("Object.entries(toolProviders)");
-      const searchSource = nodePath.join(
-        cwd,
-        "chatjs/tools/tavily-search/tool.ts"
-      );
-      const originalSearch = await readFile(searchSource, "utf-8");
-      await writeFile(
-        searchSource,
-        `// customized provider
-${originalSearch}`
-      );
-
-      await rejects(
-        run(cwd, [
-          "node",
-          cliEntry,
-          "add",
-          "firecrawl-search",
-          "--replace",
-          "--yes",
-        ]),
-        (reason: unknown) => {
-          expect(() => {
-            throw reason;
-          }).toThrow("--overwrite");
-          return true;
-        }
-      );
-      expect(await readFile(searchSource, "utf-8")).toContain(
-        "customized provider"
-      );
-      await run(cwd, [
-        "node",
-        cliEntry,
-        "add",
-        "firecrawl-search",
-        "--replace",
-        "--overwrite",
-        "--yes",
-      ]);
-      const finalManifest = z
-        .object({ dependencies: z.record(z.string(), z.string()) })
-        .parse(
-          JSON.parse(
-            await readFile(nodePath.join(cwd, "package.json"), "utf-8")
-          )
-        );
-      expect(finalManifest.dependencies["@tavily/core"]).toBeUndefined();
-      expect(
-        finalManifest.dependencies["@mendable/firecrawl-js"]
-      ).toBeDefined();
-      expect(
-        await readFile(nodePath.join(cwd, ".env.example"), "utf-8")
-      ).not.toContain("TAVILY_API_KEY=");
-      expect(
-        await Bun.file(
-          nodePath.join(cwd, "chatjs/tools/code-execution/tool.ts")
-        ).exists()
-      ).toBe(true);
-      await run(cwd, ["bun", "run", "format"]);
-      await run(cwd, ["node", cliEntry, "sync"]);
-      await run(cwd, ["bun", "run", "test:types"]);
-      await run(cwd, ["bun", "run", "lint"]);
 
       await rejects(
         run(cwd, [
@@ -1536,16 +1212,9 @@ it(
       "--no-electron",
       "--gateway",
       "openai",
-      "--code-execution-tool",
-      "code-execution",
       "--sandbox-provider",
       "docker",
     ]);
-    const executorPath = nodePath.join(
-      cwd,
-      "chatjs/generated/code-executor.ts"
-    );
-    const executor = await readFile(executorPath, "utf-8");
     const appManifest = parsePackageJson(
       await readFile(nodePath.join(cwd, "package.json"), "utf-8")
     );
@@ -1572,7 +1241,6 @@ it(
       ]),
       /local app URL/u
     );
-    expect(executor).toContain("code-execution/tool");
     expect(
       await readFile(nodePath.join(cwd, "agent/sandbox.ts"), "utf-8")
     ).toContain("DockerSandbox.environment");
@@ -1586,7 +1254,6 @@ it(
       "--replace",
       "--yes",
     ]);
-    expect(await readFile(executorPath, "utf-8")).toBe(executor);
     expect(
       await readFile(nodePath.join(cwd, "agent/sandbox.ts"), "utf-8")
     ).toContain("VercelSandbox.environment");
@@ -1600,7 +1267,6 @@ it(
       "--replace",
       "--yes",
     ]);
-    expect(await readFile(executorPath, "utf-8")).toBe(executor);
     expect(
       await readFile(nodePath.join(cwd, ".env.example"), "utf-8")
     ).not.toContain("VERCEL_TOKEN");

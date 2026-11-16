@@ -1,4 +1,3 @@
-import { purgeEveFamilyDocuments } from "@/lib/db/eve-documents";
 import { prepareEveFamilyDeletion } from "./prepare-deletion";
 import { purgeEveFamilyFiles } from "./purge-files";
 import { cleanupRetiredEveWorkspaces } from "../db/eve-workspace-deletion";
@@ -7,7 +6,6 @@ const purgeExternalEveFamilyResources = async (
   ownerId: string,
   family: Readonly<{ rootId: string }>
 ): Promise<void> => {
-  await purgeEveFamilyDocuments(ownerId, family.rootId);
   await purgeEveFamilyFiles(ownerId, family.rootId);
 };
 
@@ -16,7 +14,7 @@ const purgeExternalEveFamilyResources = async (
  * until external tool resources are accounted for and final erasure can proceed.
  * @param {string} ownerId Owner authorizing the local family resource purge.
  * @param {string} conversationId Conversation resolving the retired deletion family.
- * @returns {ReturnType<typeof prepareEveFamilyDeletion>} The prepared family after external sandbox/document/file stages, or the unchanged absent/empty family result. Unattributed resource evidence or failed cleanup rejects before final native/application erasure.
+ * @returns {ReturnType<typeof prepareEveFamilyDeletion>} The prepared family after external sandbox/file stages, or the unchanged absent/empty family result. Unattributed resource evidence or failed cleanup rejects before final native/application erasure.
  */
 export const purgeLocalEveFamilyResources = async (
   ownerId: string,

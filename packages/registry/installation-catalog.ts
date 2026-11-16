@@ -74,47 +74,6 @@ export const installationCatalog = (
         : parseDefinition(item.meta.chatjs),
   }));
 
-// Installation policy shared with the incremental CLI planner.
-export const defaultToolProviders = {
-  codeExecution: "code-execution",
-  webSearch: "tavily-search",
-} as const;
-
-/** Capability provider replacement is shared by Create and installation clients. */
-export const selectToolProvider = (
-  input: Readonly<InstallationSelection>,
-  catalog: readonly InstallationCatalogItem[],
-  slot:
-    | "webSearch"
-    | "codeExecution"
-    | "retrieveUrl"
-    | "generateImage"
-    | "generateVideo",
-  provider: string | undefined
-): InstallationSelection => {
-  const choices = catalog.filter(
-    (item) => item.definition?.kind === "tool" && item.definition.slot === slot
-  );
-  const chosen = choices.find((item) => item.definition?.id === provider);
-  if (provider !== undefined && !chosen) {
-    throw new Error(`Unknown ${slot} provider: ${provider}.`);
-  }
-  const selection = installationSelectionSchema.parse(input);
-  selection.tools = selection.tools.filter(
-    (source) =>
-      !choices.some(
-        (item) =>
-          source === item.name ||
-          source === item.definition?.id ||
-          source === `@chatjs/${item.name}`
-      )
-  );
-  if (provider !== undefined) {
-    selection.tools.push(provider);
-  }
-  return selection;
-};
-
 const mediaIssues = (
   definition: Extract<Definition, { kind: "tool" }>,
   gateway: Definition | undefined
@@ -172,7 +131,7 @@ const toolIssues = (definitions: readonly Definition[]): string[] => {
     if (definition.kind !== "tool") {
       continue;
     }
-    for (const key of [definition.slot, definition.documentKind].filter(
+    for (const key of [definition.slot].filter(
       (value) => value !== undefined
     )) {
       const previous = occupied.get(key);
@@ -330,27 +289,6 @@ export const resolveInstallationSelection = (
   }
   if (sandbox) {
     selection.sandbox = sandbox.id;
-  }
-  // Iterate the growing graph so dependencies of inferred providers are resolved too.
-  for (const item of selected.values()) {
-    if (item.definition?.kind !== "tool") {
-      continue;
-    }
-    for (const [slot, id] of Object.entries(defaultToolProviders)) {
-      if (
-        item.definition.requiresTools.includes(slot) &&
-        ![...selected.values()].some(
-          (candidate) =>
-            candidate.definition?.kind === "tool" &&
-            candidate.definition.slot === slot
-        )
-      ) {
-        const dependency = find(id, "tool");
-        if (dependency) {
-          visit(dependency, item.title);
-        }
-      }
-    }
   }
   const definitions = [...selected.values()].flatMap((item) =>
     item.definition ? [item.definition] : []

@@ -1,6 +1,6 @@
 import {
   reserveEveGeneratedFile,
-  writeEveGeneratedFile,
+  withEveConversationFile,
 } from "@/lib/db/eve-files";
 import { createFileId, uploadFileAtKey } from "@/lib/file-storage";
 import type { FileUploader } from "@/lib/file-storage";
@@ -34,7 +34,7 @@ export const eveGeneratedFileUploader =
     );
     const key = createFileId();
     await reserveEveGeneratedFile(scope.ownerId, scope.conversationId, key);
-    return await writeEveGeneratedFile(
+    return await withEveConversationFile(
       scope.ownerId,
       scope.conversationId,
       key,

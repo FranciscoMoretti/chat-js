@@ -30,29 +30,11 @@ const config = defineConfig({
       "zai",
     ],
     tools: {
-      code: {
-        edits: "openai/gpt-5-mini",
-      },
-      deepResearch: {
-        allowClarification: true,
-        defaultModel: "openai/gpt-5-nano",
-        finalReportModel: "openai/gpt-5-mini",
-        maxConcurrentResearchUnits: 2,
-        maxResearcherIterations: 1,
-        maxSearchQueries: 2,
-      },
       followupSuggestions: {
         enabled: true,
       },
       image: {
         default: "google/gemini-3-pro-image",
-      },
-      sheet: {
-        analyze: "openai/gpt-5-mini",
-        format: "openai/gpt-5-mini",
-      },
-      text: {
-        polish: "openai/gpt-5-mini",
       },
     },
     workflows: {

@@ -4,11 +4,7 @@ import { withEve } from "eve/next";
 const nextConfig: NextConfig = {
   cacheComponents: true,
   experimental: {
-    optimizePackageImports: [
-      "react-tweet",
-      "echarts-for-react",
-      "lucide-react",
-    ],
+    optimizePackageImports: ["react-tweet", "lucide-react"],
     staleTimes: {
       dynamic: 0,
       static: 30,

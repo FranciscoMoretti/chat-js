@@ -304,7 +304,7 @@ const logReplacementPlan = ({
 }: Readonly<AddSetup>): void => {
   for (const { previous, next } of plan.replacements) {
     log.info(
-      `Replace ${previous.slot ?? previous.documentKind}: ${previous.id} → ${next.id}. Retire only ${previous.id}'s source; retain unrelated installations and editable UI order.`
+      `Replace ${previous.slot}: ${previous.id} → ${next.id}. Retire only ${previous.id}'s source; retain unrelated installations and editable UI order.`
     );
   }
   for (const { kind, previous, next } of plan.providerChanges) {

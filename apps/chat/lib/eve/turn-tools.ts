@@ -2,12 +2,6 @@ import { missingToolConfiguration } from "./tool-configuration";
 import { defineState } from "eve/context";
 
 import type { UiToolName } from "@/lib/ai/types";
-import {
-  installedDocumentKinds,
-  installedToolNames,
-} from "@/integrations/tools/catalog";
-
-import { documentDefinitions } from "@/integrations/documents/definitions";
 import { selectedEveTools } from "./selected-tools";
 
 // Set only by turn.started. Approval/reconnect authentication must not change it.
@@ -21,13 +15,6 @@ const eveTurnAccount = defineState<boolean>("chatjs.turn-account", () => false);
 const eveInstalledToolEnabled = (name: string): boolean => {
   if (missingToolConfiguration(name).length > 0) {
     return false;
-  }
-  const operation = documentDefinitions.operations.get(name);
-  if (operation) {
-    return installedDocumentKinds.has(operation.kind);
-  }
-  if (name === "readDocument") {
-    return installedToolNames.has(name);
   }
   return true;
 };

@@ -1,41 +1,29 @@
-import { afterAll, beforeAll, expect, test, vi } from "vitest";
-import { eq, sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import type { SessionEvent, SessionStreamEvent } from "eve/client";
+import { afterAll, beforeAll, expect, test, vi } from "vitest";
 import { db } from "../lib/db/client";
-import { env } from "../lib/env";
+import { initializeEveCurrentCopy } from "../lib/db/eve-current-copy";
+import { canReadEveFile } from "../lib/db/eve-files";
 import {
-  user,
+  beginEveConversationDeletion,
+  createEveConversation,
+  getEveCreation,
+} from "../lib/db/eve-queries";
+import {
+  getEveResponseGroup,
+  reserveEveResponseGroup,
+} from "../lib/db/eve-response-groups";
+import {
   eveChat,
   eveConversation,
   eveDispatch,
-  eveResponseGroup,
-  eveDocumentHead,
-  eveDocumentRevision,
-  eveWorkspace,
   eveFileReference,
+  eveResponseGroup,
   eveStoredFile,
+  eveWorkspace,
+  user,
 } from "../lib/db/schema";
-import { completeEveConversationDeletion } from "../lib/db/eve-deletion";
-import {
-  cleanupWorkspaceIfUnused,
-  checkDeletedWorkspaceMemberships,
-} from "../lib/db/eve-workspace-deletion";
-import {
-  getAccessibleEveDocument,
-  getEveDocumentHistory,
-  purgeEveFamilyDocuments,
-} from "../lib/db/eve-documents";
-import { canReadEveFile } from "../lib/db/eve-files";
-import { initializeEveCurrentCopy } from "../lib/db/eve-current-copy";
-import {
-  createEveConversation,
-  getEveCreation,
-  beginEveConversationDeletion,
-} from "../lib/db/eve-queries";
-import {
-  reserveEveResponseGroup,
-  getEveResponseGroup,
-} from "../lib/db/eve-response-groups";
+import { env } from "../lib/env";
 import { prepareEveCopyTranscript } from "../lib/eve/copy-transcript";
 import { insertEveConversationFixtures } from "./eve-conversation-fixture";
 import { assertEveTestDatabase } from "./eve-test-database";
@@ -57,10 +45,6 @@ beforeAll(async () => {
   });
 });
 afterAll(async () => {
-  await db.delete(eveDocumentHead).where(eq(eveDocumentHead.ownerId, ownerId));
-  await db
-    .delete(eveDocumentRevision)
-    .where(eq(eveDocumentRevision.ownerId, ownerId));
   await db
     .delete(eveFileReference)
     .where(eq(eveFileReference.ownerId, ownerId));
@@ -211,177 +195,6 @@ test.each(["import:imported:0", "import:imported:1"])(
   }
 );
 
-test("a public historical fork cannot expose future document revisions or their files", async () => {
-  const [source] = await insertEveConversationFixtures({
-    ownerId,
-    firstMessage: "Documents",
-    operationId: crypto.randomUUID(),
-    sessionId: crypto.randomUUID(),
-    state: "bound",
-  });
-  const documentId = crypto.randomUUID();
-  const laterDocumentId = crypto.randomUUID();
-  const earlyId = crypto.randomUUID();
-  const laterId = crypto.randomUUID();
-  const unrelatedId = crypto.randomUUID();
-  const earlyKey = `${crypto.randomUUID().replaceAll("-", "").slice(0, 24)}.png`;
-  const laterKey = `${crypto.randomUUID().replaceAll("-", "").slice(0, 24)}.png`;
-  await db
-    .insert(eveStoredFile)
-    .values([earlyKey, laterKey].map((key) => ({ key, ownerId })));
-  await db.insert(eveFileReference).values(
-    [earlyKey, laterKey].map((key) => ({
-      key,
-      ownerId,
-      conversationId: source.id,
-    }))
-  );
-  const revision = {
-    ownerId,
-    conversationId: source.id,
-    documentId,
-    title: "Notes",
-    kind: "text" as const,
-    turnIndex: 0,
-  };
-  await db.insert(eveDocumentRevision).values({
-    ...revision,
-    id: earlyId,
-    operationId: crypto.randomUUID(),
-    content: "Original",
-    fileIds: [earlyKey],
-  });
-  await db.insert(eveDocumentRevision).values([
-    {
-      ...revision,
-      id: laterId,
-      operationId: crypto.randomUUID(),
-      parentRevisionId: earlyId,
-      content: "Future secret",
-      fileIds: [laterKey],
-    },
-    {
-      ...revision,
-      documentId: laterDocumentId,
-      id: unrelatedId,
-      operationId: crypto.randomUUID(),
-      content: "Later document",
-    },
-  ]);
-  await db.insert(eveDocumentHead).values([
-    { ownerId, conversationId: source.id, documentId, revisionId: laterId },
-    {
-      ownerId,
-      conversationId: source.id,
-      documentId: laterDocumentId,
-      revisionId: unrelatedId,
-    },
-  ]);
-  const events: (SessionEvent & { meta?: SessionStreamEvent["meta"] })[] = [
-    { type: "session.started", data: {} },
-    { type: "delivery.admitted", data: { deliveryId: "import" } },
-    {
-      type: "turn.started",
-      scope: { turnId: "import-turn" },
-      data: {
-        turnId: "import-turn",
-        cause: { deliveryId: "import" },
-        follows: null,
-      },
-      meta: { at: "2026-11-02T00:00:00Z", position: { line: 0, index: 0 } },
-    },
-    {
-      type: "delivery.consumed",
-      scope: { turnId: "import-turn" },
-      meta: {
-        at: "2026-11-02T00:00:00Z",
-        position: { line: 0, index: 1 },
-        endOfLine: true,
-      },
-      data: {
-        deliveryId: "import",
-        turnId: "import-turn",
-        parts: [],
-        history: [
-          {
-            role: "user",
-            parts: [{ type: "text", text: "Write notes" }],
-          },
-          {
-            role: "assistant",
-            parts: [
-              {
-                type: "dynamic-tool",
-                toolName: "createTextDocument",
-                input: {},
-                state: "output-available",
-                output: { documentId, revisionId: earlyId },
-              },
-            ],
-          },
-          {
-            role: "user",
-            parts: [{ type: "text", text: "Change them" }],
-          },
-        ],
-      },
-    },
-    {
-      type: "turn.settled",
-      scope: { turnId: "import-turn" },
-      data: { turnId: "import-turn", outcome: "completed" },
-    },
-  ];
-  const completedEvents: SessionStreamEvent[] = events.map((event, line) => ({
-    ...event,
-    meta: {
-      at: "2026-11-02T00:00:00Z",
-      position: { line, index: 0 },
-      endOfLine: true,
-    },
-  }));
-  native.capture.mockImplementation(
-    async () =>
-      await Promise.resolve(
-        prepareEveCopyTranscript(completedEvents, [], "import:imported:2")
-      )
-  );
-  const fork = await createEveConversation(
-    ownerId,
-    crypto.randomUUID(),
-    "Fork",
-    async () => await Promise.resolve({ sessionId: crypto.randomUUID() }),
-    {
-      fork: { conversationId: source.id, beforeMessageId: "import:imported:2" },
-    }
-  );
-  await db
-    .update(eveConversation)
-    .set({ visibility: "public" })
-    .where(eq(eveConversation.id, fork.id));
-  const visible = await getAccessibleEveDocument(
-    undefined,
-    fork.id,
-    documentId
-  );
-  expect(visible?.revision.id).toBe(earlyId);
-  expect(visible?.revision.content).toBe("Original");
-  expect(
-    await getAccessibleEveDocument(undefined, fork.id, documentId, laterId)
-  ).toBeUndefined();
-  expect(
-    await getAccessibleEveDocument(undefined, fork.id, laterDocumentId)
-  ).toBeUndefined();
-  expect(await canReadEveFile(earlyKey)).toEqual({
-    allowed: true,
-    managed: true,
-  });
-  expect(await canReadEveFile(laterKey)).toEqual({
-    allowed: false,
-    managed: true,
-  });
-});
-
 test("an already captured seed remains replayable while its delivery is fenced", async () => {
   const [source] = await insertEveConversationFixtures({
     ownerId,
@@ -483,7 +296,7 @@ test.each(["retry", "delete"])(
             },
           ],
         },
-        resources: { fileKeys: [], documentIds: [], revisionIds: [] },
+        resources: { fileKeys: [] },
         projectionHash: "settled",
       });
       const result = await createEveConversation(
@@ -515,94 +328,3 @@ test.each(["retry", "delete"])(
     }
   }
 );
-
-test("original deletion retains fork document ancestry until the last member is deleted", async () => {
-  const [source] = await insertEveConversationFixtures({
-    ownerId,
-    firstMessage: "Documents",
-    operationId: crypto.randomUUID(),
-    sessionId: crypto.randomUUID(),
-    state: "bound",
-  });
-  const [fork] = await insertEveConversationFixtures({
-    ownerId,
-    firstMessage: "Fork",
-    operationId: crypto.randomUUID(),
-    sessionId: crypto.randomUUID(),
-    state: "bound",
-    parentConversationId: source.id,
-    rootConversationId: source.id,
-  });
-  const documentId = crypto.randomUUID();
-  const originalId = crypto.randomUUID();
-  const sharedId = crypto.randomUUID();
-  const futureId = crypto.randomUUID();
-  const base = {
-    ownerId,
-    conversationId: source.id,
-    documentId,
-    kind: "text" as const,
-    title: "Notes",
-  };
-  await db.insert(eveDocumentRevision).values({
-    ...base,
-    id: originalId,
-    operationId: crypto.randomUUID(),
-    content: "Original",
-  });
-  await db.insert(eveDocumentRevision).values({
-    ...base,
-    id: sharedId,
-    parentRevisionId: originalId,
-    operationId: crypto.randomUUID(),
-    content: "Shared",
-  });
-  await db.insert(eveDocumentRevision).values({
-    ...base,
-    id: futureId,
-    parentRevisionId: sharedId,
-    operationId: crypto.randomUUID(),
-    content: "Later private revision",
-  });
-  await db.insert(eveDocumentHead).values([
-    { ownerId, conversationId: source.id, documentId, revisionId: futureId },
-    { ownerId, conversationId: fork.id, documentId, revisionId: sharedId },
-  ]);
-  await beginEveConversationDeletion(ownerId, source.id);
-  await db.transaction(async (tx) => {
-    await checkDeletedWorkspaceMemberships(ownerId, [source.id], tx);
-    const available = await db.transaction(async (other) => {
-      const [row] = await other.execute<{ locked: boolean }>(
-        sql`select pg_try_advisory_xact_lock(hashtextextended(${`chatjs-workspace:${source.workspaceId}`}, 0)) as locked`
-      );
-      return row.locked;
-    });
-    expect(available).toBe(false);
-  });
-  await purgeEveFamilyDocuments(ownerId, source.id);
-  await completeEveConversationDeletion(ownerId, source.id);
-  const history = await getEveDocumentHistory(ownerId, fork.id, documentId);
-  expect(history.map((revision) => revision.id)).toEqual([
-    originalId,
-    sharedId,
-  ]);
-  expect(
-    await db
-      .select()
-      .from(eveDocumentRevision)
-      .where(eq(eveDocumentRevision.id, futureId))
-  ).toEqual([]);
-  const visible = await getAccessibleEveDocument(ownerId, fork.id, documentId);
-  expect(visible?.revision.content).toBe("Shared");
-  await beginEveConversationDeletion(ownerId, fork.id);
-  await purgeEveFamilyDocuments(ownerId, fork.id);
-  await cleanupWorkspaceIfUnused(ownerId, source.workspaceId);
-  await completeEveConversationDeletion(ownerId, fork.id);
-  await purgeEveFamilyDocuments(ownerId, fork.id);
-  expect(
-    await db
-      .select()
-      .from(eveDocumentRevision)
-      .where(eq(eveDocumentRevision.documentId, documentId))
-  ).toEqual([]);
-});

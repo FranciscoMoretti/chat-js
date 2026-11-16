@@ -1,0 +1,19 @@
+{
+  "agentCategory": "tool",
+  "requiresChatJS": true,
+  "channelSupport": { "web": "supported", "slack": "unsupported" },
+  "envRequirements": [],
+  "id": "publish-file",
+  "kind": "tool",
+  "requiresStorage": true,
+  "requiresTools": [],
+  "tools": [
+    { "accounting": "none", "toolExport": "import_file" },
+    {
+      "accounting": "none",
+      "rendererExport": "PublishFileRenderer",
+      "toolExport": "publish_file"
+    }
+  ],
+  "contractVersion": 1
+}

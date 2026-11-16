@@ -8,6 +8,7 @@ import {
 import { encodeAppPreset } from "../../../packages/registry/app-preset";
 import { installationSelectionSchema } from "../../../packages/registry/installation";
 import { commandAppPreset } from "./create-fixtures.mts";
+import { eveDefaultToolIds } from "../../../packages/registry/agent-configuration";
 
 const jumpToCategory = async (
   page: Page,
@@ -81,6 +82,18 @@ for (const width of [1440, 845, 390]) {
       page.getByRole("region", { name: "ChatJS memory", exact: true })
     ).toHaveCount(0);
     await page
+      .getByRole("checkbox", {
+        name: "Tavily (connection/tavily)",
+        exact: true,
+      })
+      .check();
+    await page
+      .getByRole("checkbox", {
+        name: "Firecrawl (connection/firecrawl)",
+        exact: true,
+      })
+      .check();
+    await page
       .getByRole("checkbox", { name: "Slack (channel/slack)", exact: true })
       .check();
     await page
@@ -142,9 +155,21 @@ for (const width of [1440, 845, 390]) {
         exact: true,
       })
       .check();
+    await jumpToCategory(page, width, "Observability", "instrumentation");
+    const observability = catalog.getByRole("region", {
+      name: "Observability",
+      exact: true,
+    });
     await expect(
-      catalog.getByTestId("capability-list").getByRole("checkbox")
-    ).toHaveCount(14);
+      observability.getByRole("link", { name: "Vercel Agent Runs" })
+    ).toBeVisible();
+    if (width === 1440) {
+      await uiVerify.snapshot("observability with Vercel Agent Runs default");
+      await page.screenshot({ path: testInfo.outputPath("observability.png") });
+    }
+    await expect(
+      catalog.getByTestId("eve-tool/bash").getByRole("checkbox")
+    ).toBeChecked();
     await expect(page.getByLabel("Search EVE catalog")).toHaveCount(0);
     await expect(page.getByLabel("Capability source")).toHaveCount(0);
     const scroll = page.getByTestId("agent-scroll");
@@ -179,12 +204,14 @@ for (const width of [1440, 845, 390]) {
     ).toBeVisible();
     await uiVerify.snapshot("agent native memory retention");
     await jumpToCategory(page, width, "Channels", "channel");
+    const channels = catalog.getByRole("region", {
+      name: "Channels",
+      exact: true,
+    });
     await expect(
-      page.getByRole("checkbox", {
-        name: "Web Chat (channel/web)",
-        exact: true,
-      })
-    ).toBeDisabled();
+      channels.getByText("Web chat provided by ChatJS.")
+    ).toBeVisible();
+    await expect(channels.getByTestId("eve-channel/web")).toHaveCount(0);
     await uiVerify.snapshot("agent native channels and composition");
     await page.screenshot({ path: testInfo.outputPath("channels.png") });
     await jumpToCategory(page, width, "Tools", "tool");
@@ -272,28 +299,30 @@ for (const width of [1440, 845, 390]) {
     ).toHaveAttribute("data-capability-visual", "category");
     await uiVerify.snapshot("external registry source");
     const search = page.getByLabel("Research search provider", { exact: true });
-    await expect(search).toHaveCount(0);
     await page
       .getByRole("checkbox", { name: "Deep Research", exact: true })
       .check();
+    await expect(search).toHaveCount(0);
     await page
       .getByRole("button", { name: "About Deep Research", exact: true })
       .click();
     await expect(
-      page.getByRole("dialog").getByText("Requires ChatJS", { exact: true })
+      page.getByRole("dialog").getByLabel("Source: ChatJS")
     ).toBeVisible();
-    await uiVerify.snapshot("application capability dependencies");
+    await expect(
+      page.getByRole("dialog").getByText("Requires ChatJS", { exact: true })
+    ).toHaveCount(0);
+    await uiVerify.snapshot("native research capability");
     await page.keyboard.press("Escape");
-    await search.selectOption("firecrawl-search");
-    await expect(search).toHaveValue("firecrawl-search");
+    await expect(
+      page.getByRole("checkbox", { name: "Publish File", exact: true })
+    ).toBeEnabled();
     await expect(
       page.getByRole("checkbox", { name: "Text Documents", exact: true })
-    ).toBeDisabled();
-    await search.selectOption("tavily-search");
+    ).toHaveCount(0);
     await page
       .getByRole("checkbox", { name: "Deep Research", exact: true })
       .uncheck();
-    await expect(search).toHaveCount(0);
     const environment = page.getByRole("region", {
       name: "Sandbox",
       exact: true,
@@ -307,6 +336,19 @@ for (const width of [1440, 845, 390]) {
       sandbox.getByRole("radio", { name: "Automatic", exact: true })
     ).toBeChecked();
     await expect(environment.getByRole("combobox")).toHaveCount(0);
+    await environment
+      .getByRole("button", { name: "About Automatic", exact: true })
+      .click();
+    await expect(page.getByRole("dialog")).toContainText(
+      "Run Docker during the build, or choose a sandbox provider."
+    );
+    if (width === 1440) {
+      await uiVerify.snapshot("automatic sandbox production details");
+      await page.screenshot({
+        path: testInfo.outputPath("automatic-sandbox.png"),
+      });
+    }
+    await page.keyboard.press("Escape");
     await sandbox
       .getByRole("radio", { name: "just-bash", exact: true })
       .check();
@@ -344,6 +386,8 @@ for (const width of [1440, 845, 390]) {
     expect(recipe.eve).toContain("channel/slack");
     expect(recipe.eve).toContain("connection/notion");
     expect(recipe.eve).toContain("connection/linear");
+    expect(recipe.eve).toContain("connection/tavily");
+    expect(recipe.eve).toContain("connection/firecrawl");
     expect(recipe.eve).toContain("memory/file");
     expect(recipe.tools).not.toContain("tavily-search");
     expect(recipe.tools).not.toContain("firecrawl-search");
@@ -370,6 +414,61 @@ for (const width of [1440, 845, 390]) {
   });
 }
 
+test("Native defaults can be unchecked without reinstalling the remaining tools", async ({
+  page,
+  uiVerify,
+}, testInfo) => {
+  uiVerify.disableAutoSnapshot();
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.route("**/api/eve-catalog", async (route) => {
+    await route.fulfill({ json: parseEveCatalog(catalogFixture) });
+  });
+  await page.goto("/create");
+  await page.getByRole("tab", { name: "Agent", exact: true }).click();
+  await Promise.all(
+    eveDefaultToolIds.map(async (id) => {
+      const card = page.getByTestId(`eve-${id}`);
+      await expect(card.getByRole("checkbox")).toBeChecked();
+      await expect(card.getByRole("checkbox")).toBeEnabled();
+      await expect(card.getByText("Included", { exact: true })).toHaveCount(0);
+    })
+  );
+  const bash = page.getByTestId("eve-tool/bash").getByRole("checkbox");
+  const fetch = page.getByTestId("eve-tool/web_fetch").getByRole("checkbox");
+  await bash.uncheck();
+  await fetch.uncheck();
+  await fetch.check();
+  await expect(bash).not.toBeChecked();
+  await expect(fetch).toBeChecked();
+  await bash.scrollIntoViewIfNeeded();
+  await uiVerify.snapshot("native defaults with Bash unchecked");
+  await page.screenshot({ path: testInfo.outputPath("native-defaults.png") });
+  const slack = page.getByRole("checkbox", {
+    name: "Slack (channel/slack)",
+    exact: true,
+  });
+  await slack.check();
+  await expect(
+    page.getByRole("button", { name: "Selected · 7", exact: true })
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Selected · 7", exact: true }).click();
+  await expect(
+    page.getByTestId("capability-list").getByRole("checkbox")
+  ).toHaveCount(7);
+  await expect(bash).toHaveCount(0);
+  await page.getByRole("button", { name: "Get Code", exact: true }).click();
+  const recipe = commandAppPreset(
+    await page.getByTestId("create-command").textContent()
+  );
+  expect(recipe.eve).toEqual(["channel/slack"]);
+  expect(recipe.agent?.defaultTools).toBe(true);
+  expect(recipe.agent?.disabledDefaultTools).toEqual(["tool/bash"]);
+  await page.goto(`/create?app=${encodeAppPreset(recipe)}`);
+  await page.getByRole("tab", { name: "Agent", exact: true }).click();
+  await expect(bash).not.toBeChecked();
+  await expect(fetch).toBeChecked();
+});
+
 test("Native catalog loading, retry, empty and selected states preserve choices", async ({
   page,
   uiVerify,
@@ -386,7 +485,9 @@ test("Native catalog loading, retry, empty and selected states preserve choices"
         : { json: parseEveCatalog(catalogFixture) }
     );
   });
-  await page.goto("/create");
+  await page.goto(
+    `/create?app=${encodeAppPreset(installationSelectionSchema.parse({ agent: { defaultTools: false } }))}`
+  );
   await page.getByRole("tab", { name: "Agent", exact: true }).click();
   const catalog = page.getByRole("region", {
     name: "EVE catalog",
@@ -499,4 +600,99 @@ test("Existing service logos render across every agent category", async ({
   await capture("light");
   await page.getByRole("button", { name: "Toggle theme", exact: true }).click();
   await capture("dark");
+});
+
+for (const width of [1440, 845, 390]) {
+  test(`Research bundle belongs to Extensions at ${width}px`, async ({
+    page,
+    uiVerify,
+  }, testInfo) => {
+    uiVerify.disableAutoSnapshot();
+    await page.setViewportSize({ width, height: 1000 });
+    await page.route("**/api/eve-catalog", async (route) => {
+      await route.fulfill({ json: parseEveCatalog(catalogFixture) });
+    });
+    const initial = installationSelectionSchema.parse({
+      gateway: "vercel",
+      storage: { source: "vercel-blob" },
+    });
+    await page.goto(`/create?app=${encodeAppPreset(initial)}`);
+    await page.getByRole("tab", { name: "Agent", exact: true }).click();
+    const extensions = page.getByRole("region", {
+      name: "Extensions",
+      exact: true,
+    });
+    const research = extensions.getByRole("checkbox", {
+      name: "Deep Research",
+      exact: true,
+    });
+    await expect(
+      page.getByRole("region", {
+        name: "Application capabilities",
+        exact: true,
+      })
+    ).toHaveCount(0);
+    await research.check();
+    await expect(
+      extensions.getByLabel("Research search provider", { exact: true })
+    ).toHaveCount(0);
+    await expect(
+      page.getByRole("checkbox", { name: "Deep Research", exact: true })
+    ).toHaveCount(1);
+    await expect(
+      page.getByRole("checkbox", { name: "Text Documents", exact: true })
+    ).toHaveCount(0);
+    await expect(
+      page.getByRole("checkbox", { name: "Publish File", exact: true })
+    ).not.toBeChecked();
+    await jumpToCategory(page, width, "Extensions", "extension");
+    await uiVerify.snapshot("research extension with native registry items");
+    await page.screenshot({
+      path: testInfo.outputPath("research-extension.png"),
+    });
+    await extensions
+      .getByRole("button", { name: "About Deep Research", exact: true })
+      .click();
+    const details = page.getByRole("dialog");
+    await expect(details.getByLabel("Source: ChatJS")).toBeVisible();
+    await expect(
+      details.getByText("Requires ChatJS", { exact: true })
+    ).toHaveCount(0);
+    await page.keyboard.press("Escape");
+    await research.uncheck();
+    await expect(research).not.toBeChecked();
+    await expect(
+      page.getByRole("checkbox", { name: "Publish File", exact: true })
+    ).not.toBeChecked();
+  });
+}
+
+test("an imported native research selection remains one Extension choice", async ({
+  page,
+  uiVerify,
+}) => {
+  uiVerify.disableAutoSnapshot();
+  await page.route("**/api/eve-catalog", async (route) => {
+    await route.fulfill({ json: parseEveCatalog(catalogFixture) });
+  });
+  const installation = installationSelectionSchema.parse({
+    gateway: "vercel",
+    eve: ["@chatjs/deep-research"],
+  });
+  await page.goto(`/create?app=${encodeAppPreset(installation)}`);
+  await page.getByRole("tab", { name: "Agent", exact: true }).click();
+  const research = page
+    .getByRole("region", { name: "Extensions", exact: true })
+    .getByRole("checkbox", {
+      name: "Deep Research (@chatjs/deep-research)",
+      exact: true,
+    });
+  await expect(research).toBeChecked();
+  await expect(
+    page.getByRole("checkbox", { name: /Deep Research/u })
+  ).toHaveCount(1);
+  await research.click();
+  await expect(
+    page.getByRole("checkbox", { name: "Deep Research", exact: true })
+  ).not.toBeChecked();
 });

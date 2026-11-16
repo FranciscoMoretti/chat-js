@@ -63,7 +63,6 @@ export const renderValidationProject = async (
   );
   const coreFeatures: Record<CoreFeatureKey, boolean> = {
     attachments: false,
-    documents: false,
     mcp: false,
     projects: false,
     feedback: false,

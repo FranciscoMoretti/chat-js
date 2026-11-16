@@ -196,7 +196,7 @@ it("exposes only a known send receipt for the exact owner and session", async ()
     {
       ...input,
       operationId,
-      intent: { ...input.intent, selectedTool: "webSearch" },
+      intent: { ...input.intent, selectedTool: "generateImage" },
     },
     dispatch
   );
@@ -222,7 +222,7 @@ it("exposes only a known send receipt for the exact owner and session", async ()
   expect(await getEveMessageDisplayReceipts("owner", "source")).toContainEqual({
     kind: "send",
     deliveryId: "receipt-delivery",
-    selectedTool: "webSearch",
+    selectedTool: "generateImage",
   });
   expect(await getEveMessageDisplayReceipts("foreign", "source")).toEqual([]);
   expect(await getEveMessageDisplayReceipts("owner", "other-session")).toEqual(
@@ -238,7 +238,10 @@ it("exposes captured history only for the bound creation receipt", async () => {
     deliveryId: "initial-delivery",
   });
   const options = {
-    initialRequest: { message: "Initial message", selectedTool: "webSearch" },
+    initialRequest: {
+      message: "Initial message",
+      selectedTool: "generateImage",
+    },
   };
   const binding = await createEveConversation(
     "owner",
@@ -295,7 +298,7 @@ it("exposes captured history only for the bound creation receipt", async () => {
   expect(receipts).toContainEqual({
     kind: "send",
     deliveryId: "initial-delivery",
-    selectedTool: "webSearch",
+    selectedTool: "generateImage",
     history: [{ role: "assistant", modelId: "captured-model" }],
   });
   expect(receipts).toContainEqual({
@@ -311,7 +314,7 @@ it("exposes captured history only for the bound creation receipt", async () => {
       ...input,
       operationId: "00000000-0000-4000-8000-000000000072",
       kind: "create",
-      intent: { message: "", selectedTool: "webSearch" },
+      intent: { message: "", selectedTool: "generateImage" },
     },
     async () => await Promise.resolve({ sessionId: "source" })
   );

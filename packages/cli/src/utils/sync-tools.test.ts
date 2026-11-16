@@ -305,14 +305,17 @@ test("a requested tool cannot report successful registration without its descrip
     })
   ).rejects.toThrow("does not match requested");
 });
-const installSearch = async (
+const installImageProvider = async (
   root: string,
   id: string,
   key: string
 ): Promise<void> => {
   const dir = path.join(root, "chatjs/tools", id);
   await mkdir(dir, { recursive: true });
-  await writeFile(path.join(dir, "tool.ts"), "export const webSearch = {};");
+  await writeFile(
+    path.join(dir, "tool.ts"),
+    "export const generateImage = {};"
+  );
   await writeFile(
     path.join(dir, "chatjs.json"),
     JSON.stringify({
@@ -320,47 +323,44 @@ const installSearch = async (
       envRequirements: [{ options: [[key]] }],
       id,
       kind: "tool",
-      slot: "webSearch",
-      tools: [{ toolExport: "webSearch" }],
+      slot: "generateImage",
+      tools: [{ toolExport: "generateImage" }],
     })
   );
 };
-test("search selections register standard tools without requiring a renderer", async () => {
+test("image providers register standard tools without requiring a renderer", async () => {
   const root = await project();
-  await installSearch(root, "external-search", "EXTERNAL_SEARCH_KEY");
+  await installImageProvider(root, "external-image", "EXTERNAL_IMAGE_KEY");
   const definitions = await syncTools(root);
   expect(definitions[0]?.envRequirements).toEqual([
-    { options: [["EXTERNAL_SEARCH_KEY"]] },
+    { options: [["EXTERNAL_IMAGE_KEY"]] },
   ]);
   expect(
     await readFile(path.join(root, "chatjs/generated/providers.ts"), "utf-8")
-  ).toContain("@/chatjs/tools/external-search/tool");
-  expect(
-    readFile(path.join(root, "chatjs/tools/search-config.ts"), "utf-8")
-  ).rejects.toMatchObject({ code: "ENOENT" });
+  ).toContain("@/chatjs/tools/external-image/tool");
   expect(
     await readFile(path.join(root, "chatjs/generated/tools.ts"), "utf-8")
-  ).not.toContain("webSearch");
+  ).not.toContain("generateImage");
   expect(
     await readFile(path.join(root, "chatjs/generated/ui.ts"), "utf-8")
-  ).not.toContain("external-search");
-  await installSearch(root, "another-search", "ANOTHER_KEY");
-  expect(syncTools(root)).rejects.toThrow("Only one webSearch");
-  await rm(path.join(root, "chatjs/tools/external-search"), {
+  ).not.toContain("external-image");
+  await installImageProvider(root, "another-image", "ANOTHER_KEY");
+  expect(syncTools(root)).rejects.toThrow("Only one generateImage");
+  await rm(path.join(root, "chatjs/tools/external-image"), {
     recursive: true,
   });
   await syncTools(root);
   expect(
     await readFile(path.join(root, "chatjs/generated/providers.ts"), "utf-8")
-  ).not.toContain("external-search/tool");
+  ).not.toContain("external-image/tool");
 });
 test.each([false, true])(
   "app-owned provider selection controls dynamic tools: %s",
   async (selected) => {
     const root = await project();
-    await installSearch(root, "external-search", "SEARCH_KEY");
+    await installImageProvider(root, "external-image", "IMAGE_KEY");
     const applicationProvider = selected
-      ? { webSearch: { appOwned: true } }
+      ? { generateImage: { appOwned: true } }
       : {};
     const source = `export const toolProviders = ${JSON.stringify(applicationProvider)};\n`;
     const integration = path.join(root, "integrations/tools/providers.ts");
@@ -385,85 +385,57 @@ test.each([false, true])(
   }
 );
 
-const installExecution = async (root: string, id: string): Promise<void> => {
+const installVideoProvider = async (
+  root: string,
+  id: string
+): Promise<void> => {
   const dir = path.join(root, "chatjs/tools", id);
   await mkdir(dir, { recursive: true });
-  await writeFile(path.join(dir, "tool.ts"), "export const runCode = {};");
+  await writeFile(path.join(dir, "tool.ts"), "export const createVideo = {};");
   await writeFile(
     path.join(dir, "chatjs.json"),
     JSON.stringify({
       contractVersion: 1,
       envRequirements: [
-        { options: [["RUNNER_TOKEN"], ["RUNNER_ID", "RUNNER_SECRET"]] },
-        { options: [["RUNNER_REGION"]] },
+        { options: [["VIDEO_TOKEN"], ["VIDEO_ID", "VIDEO_SECRET"]] },
+        { options: [["VIDEO_REGION"]] },
       ],
       id,
       kind: "tool",
-      slot: "codeExecution",
-      tools: [{ toolExport: "runCode" }],
+      slot: "generateVideo",
+      tools: [{ toolExport: "createVideo" }],
     })
   );
 };
-test("external execution tools compose with search and reject duplicate providers", async () => {
+test("image and video providers compose and reject duplicate slots", async () => {
   const root = await project();
-  await installSearch(root, "external-search", "SEARCH_KEY");
-  await installExecution(root, "external-runner");
+  await installImageProvider(root, "external-image", "IMAGE_KEY");
+  await installVideoProvider(root, "external-video");
   await syncTools(root);
   const selection = path.join(root, "chatjs/generated/providers.ts");
   const before = await readFile(selection, "utf-8");
-  expect(before).toContain("runCode as tool");
-  expect(before).toContain("codeExecution: tool");
+  expect(before).toContain("createVideo as tool");
+  expect(before).toContain("generateImage: tool");
+  expect(before).toContain("generateVideo: tool");
   expect(
     await readFile(path.join(root, "chatjs/generated/providers.ts"), "utf-8")
-  ).toContain("external-runner");
+  ).toContain("external-video");
   expect(
     await readFile(path.join(root, "chatjs/generated/ui.ts"), "utf-8")
-  ).not.toContain("external-runner");
-  await installExecution(root, "second-runner");
-  expect(syncTools(root)).rejects.toThrow("Only one codeExecution");
+  ).not.toContain("external-video");
+  await installVideoProvider(root, "second-video");
+  expect(syncTools(root)).rejects.toThrow("Only one generateVideo");
   expect(await readFile(selection, "utf-8")).toBe(before);
-  await rm(path.join(root, "chatjs/tools/external-runner"), {
+  await rm(path.join(root, "chatjs/tools/external-video"), {
     recursive: true,
   });
-  await rm(path.join(root, "chatjs/tools/second-runner"), { recursive: true });
+  await rm(path.join(root, "chatjs/tools/second-video"), { recursive: true });
   await syncTools(root);
-  expect(await readFile(selection, "utf-8")).not.toContain("codeExecution:");
+  expect(await readFile(selection, "utf-8")).not.toContain("generateVideo:");
   await writeFile(selection, "// user code");
   expect(syncTools(root)).rejects.toThrow("custom or legacy");
 });
 
-test("URL retrieval uses the selected export and rejects duplicate providers", async () => {
-  const root = await project();
-  const installRetrieval = async (id: string): Promise<void> => {
-    const dir = path.join(root, "chatjs/tools", id);
-    await mkdir(dir, { recursive: true });
-    await writeFile(path.join(dir, "tool.ts"), "export const readPage = {};");
-    await writeFile(
-      path.join(dir, "chatjs.json"),
-      JSON.stringify({
-        contractVersion: 1,
-        envRequirements: [{ options: [["PAGE_TOKEN"]] }],
-        id,
-        kind: "tool",
-        slot: "retrieveUrl",
-        tools: [{ toolExport: "readPage" }],
-      })
-    );
-  };
-  await installRetrieval("custom-retrieval");
-  await syncTools(root);
-  const server = await readFile(
-    path.join(root, "chatjs/generated/providers.ts"),
-    "utf-8"
-  );
-  expect(server).toContain("readPage as tool");
-  expect(server).toContain("retrieveUrl: tool");
-  await installRetrieval("second-retrieval");
-  expect(syncTools(root)).rejects.toThrow("Only one retrieveUrl");
-  expect(
-    await readFile(path.join(root, "chatjs/generated/providers.ts"), "utf-8")
-  ).toBe(server);
-});
 test("tools register natively and app-owned composition may explicitly replace a tool", async () => {
   const root = await project();
   await install(root, "native-counter", "countWords");
@@ -499,53 +471,53 @@ test("tools register natively and app-owned composition may explicitly replace a
 
 test("sync preserves request-context auth and environment credential fallbacks", async () => {
   const root = await project();
-  await installExecution(root, "vercel-runner");
-  const descriptor = path.join(root, "chatjs/tools/vercel-runner/chatjs.json");
+  await installVideoProvider(root, "vercel-video");
+  const descriptor = path.join(root, "chatjs/tools/vercel-video/chatjs.json");
   const definition = toolDefinitionSchema.parse(
     JSON.parse(await readFile(descriptor, "utf-8"))
   );
   assert.ok(
     definition.envRequirements?.[0] !== undefined,
-    "execution fixture requires an environment requirement"
+    "video fixture requires an environment requirement"
   );
   definition.envRequirements[0].runtimeAuth = "vercel-oidc";
   await writeFile(descriptor, JSON.stringify(definition));
   const definitions = await syncTools(root);
   expect(definitions[0]?.envRequirements).toEqual([
     {
-      options: [["RUNNER_TOKEN"], ["RUNNER_ID", "RUNNER_SECRET"]],
+      options: [["VIDEO_TOKEN"], ["VIDEO_ID", "VIDEO_SECRET"]],
       runtimeAuth: "vercel-oidc",
     },
-    { options: [["RUNNER_REGION"]] },
+    { options: [["VIDEO_REGION"]] },
   ]);
 });
 
 test("a bundle registers each native tool and renderer and rejects cross-bundle collisions", async () => {
   const root = await project();
-  const dir = path.join(root, "chatjs/tools/text-documents");
+  const dir = path.join(root, "chatjs/tools/report-tools");
   await mkdir(dir, { recursive: true });
   await writeFile(
     path.join(dir, "chatjs.json"),
     JSON.stringify({
       contractVersion: 1,
-      id: "text-documents",
+      id: "report-tools",
       kind: "tool",
       tools: [
         {
-          rendererExport: "DocumentRenderer",
-          toolExport: "createTextDocument",
+          rendererExport: "ReportRenderer",
+          toolExport: "createReport",
         },
-        { rendererExport: "DocumentRenderer", toolExport: "editTextDocument" },
+        { rendererExport: "ReportRenderer", toolExport: "reviseReport" },
       ],
     })
   );
   await writeFile(
     path.join(dir, "tool.ts"),
-    "export const createTextDocument = {}; export const editTextDocument = {};"
+    "export const createReport = {}; export const reviseReport = {};"
   );
   await writeFile(
     path.join(dir, "renderer.tsx"),
-    "export const DocumentRenderer = () => null;"
+    "export const ReportRenderer = () => null;"
   );
   await syncTools(root);
   const toolModule = requireJsonObject(
@@ -558,94 +530,36 @@ test("a bundle registers each native tool and renderer and rejects cross-bundle 
     "UI module"
   );
   const ui = requireJsonObject(uiModule.installedToolUi, "UI exports");
-  expect(Object.keys(tools)).toEqual([
-    "createTextDocument",
-    "editTextDocument",
-  ]);
-  expect(Object.keys(ui)).toEqual([
-    "tool-createTextDocument",
-    "tool-editTextDocument",
-  ]);
-  await install(root, "other", "editTextDocument");
+  expect(Object.keys(tools)).toEqual(["createReport", "reviseReport"]);
+  expect(Object.keys(ui)).toEqual(["tool-createReport", "tool-reviseReport"]);
+  await install(root, "other", "reviseReport");
   expect(syncTools(root)).rejects.toThrow("Duplicate installed");
 });
 
 test("sync rejects removing a dependency but permits uninstalling a complete bundle", async () => {
   const root = await project();
-  await install(root, "read-document", "readDocument");
-  await install(root, "text-documents", "createTextDocument");
-  const descriptor = path.join(root, "chatjs/tools/text-documents/chatjs.json");
+  await install(root, "fetch-data", "fetchData");
+  await install(root, "report-tools", "createReport");
+  const descriptor = path.join(root, "chatjs/tools/report-tools/chatjs.json");
   const definition = toolDefinitionSchema.parse(
     JSON.parse(await readFile(descriptor, "utf-8"))
   );
-  definition.requiresTools = ["readDocument"];
+  definition.requiresTools = ["fetchData"];
   await writeFile(descriptor, JSON.stringify(definition));
   await syncTools(root);
   const index = path.join(root, "chatjs/generated/tools.ts");
   const before = await readFile(index, "utf-8");
-  await rm(path.join(root, "chatjs/tools/read-document"), { recursive: true });
+  await rm(path.join(root, "chatjs/tools/fetch-data"), { recursive: true });
   expect(syncTools(root)).rejects.toThrow(
-    "requires installed tools: readDocument"
+    "requires installed tools: fetchData"
   );
   expect(syncTools(root, { checkOnly: true })).rejects.toThrow(
-    "requires installed tools: readDocument"
+    "requires installed tools: fetchData"
   );
   expect(await readFile(index, "utf-8")).toBe(before);
-  await rm(path.join(root, "chatjs/tools/text-documents"), { recursive: true });
+  await rm(path.join(root, "chatjs/tools/report-tools"), { recursive: true });
   await syncTools(root);
-  expect(await readFile(index, "utf-8")).not.toContain("createTextDocument");
-});
-
-test("saved-code registration requires an explicitly compatible executor", async () => {
-  const root = await project();
-  await installExecution(root, "external-runner");
-  await install(root, "saved-code-execution", "runCodeDocument");
-  expect(syncTools(root)).rejects.toThrow("compatible codeExecution provider");
-  const descriptor = path.join(
-    root,
-    "chatjs/tools/external-runner/chatjs.json"
-  );
-  const definition = toolDefinitionSchema.parse(
-    JSON.parse(await readFile(descriptor, "utf-8"))
-  );
-  definition.codeExecutorExport = "executeCode";
-  definition.codeExecutionCapabilities = {
-    cancellation: "eve",
-    cleanup: "eve-session",
-    files: "session",
-    languages: ["python", "javascript"],
-    timeout: "bounded",
-    usage: "single-receipt",
-  };
-  await writeFile(descriptor, JSON.stringify(definition));
-  await writeFile(
-    path.join(root, "chatjs/tools/external-runner/tool.ts"),
-    `import type { CodeExecutor } from "@/lib/eve/code-executor";
-export const executeCode: CodeExecutor = async () => ({
-  kind: "chatjs.tool-result",
-  status: "success",
-  version: 1,
-  output: { chart: null, message: "executed" },
-  usage: { costUsd: 0 },
-});
-export const runCode = {};`
-  );
-  await syncTools(root);
-  const registration = await readFile(
-    path.join(root, "chatjs/generated/code-executor.ts"),
-    "utf-8"
-  );
-  expect(registration).toContain(
-    'import { executeCode as execute } from "@/chatjs/tools/external-runner/tool"'
-  );
-  expect(registration).toContain(
-    "codeExecutor: CodeExecutor | undefined = execute"
-  );
-  const { codeExecutor } = requireJsonObject(
-    await import(path.join(root, "chatjs/generated/code-executor.ts")),
-    "executor module"
-  );
-  expect(typeof codeExecutor).toBe("function");
+  expect(await readFile(index, "utf-8")).not.toContain("createReport");
 });
 
 test("workflow installs stay static and reserve their names for app composition", async () => {
@@ -860,68 +774,4 @@ test("grouped tool and composer imports keep bindings attached beyond nine alias
   await syncTools(root, { checkOnly: true });
   await syncTools(root);
   expect(await readFile(file, "utf-8")).toBe(generated);
-});
-
-test("sync installs and removes a fourth document kind without rewriting app composition", async () => {
-  const root = await project();
-  const integration = path.join(root, "integrations/documents/definitions.ts");
-  await writeFile(integration, "// app-owned document policy\n");
-  const directory = path.join(root, "chatjs/tools/diagram");
-  await mkdir(directory, { recursive: true });
-  const descriptor = {
-    contractVersion: 1,
-    id: "diagram",
-    kind: "tool",
-    documentKind: "diagram",
-    tools: [
-      { toolExport: "drawDiagram", definitionExport: "drawing" },
-      { toolExport: "reviseDiagram" },
-    ],
-  };
-  const installDiagram = async () => {
-    await mkdir(directory, { recursive: true });
-    await Promise.all([
-      writeFile(
-        path.join(directory, "chatjs.json"),
-        JSON.stringify(descriptor)
-      ),
-      writeFile(
-        path.join(directory, "tool.ts"),
-        "export const drawDiagram = {}; export const reviseDiagram = {};"
-      ),
-      writeFile(
-        path.join(directory, "definition.ts"),
-        'export const documentDefinition = { kind: "diagram" } as const; export const drawing = { name: "drawDiagram" } as const;'
-      ),
-      writeFile(
-        path.join(directory, "document.tsx"),
-        "export const documentUi = {};"
-      ),
-    ]);
-    await syncTools(root);
-  };
-  await installDiagram();
-  const generated = await readFile(
-    path.join(root, "chatjs/generated/documents.ts"),
-    "utf-8"
-  );
-  expect(generated).toContain("@/chatjs/tools/diagram/definition");
-  expect(
-    await readFile(
-      path.join(root, "chatjs/generated/tool-definitions.ts"),
-      "utf-8"
-    )
-  ).toContain('"drawDiagram"');
-  await rm(directory, { recursive: true });
-  await syncTools(root);
-  expect(
-    await readFile(path.join(root, "chatjs/generated/documents.ts"), "utf-8")
-  ).not.toContain("diagram/definition");
-  await installDiagram();
-  expect(
-    await readFile(path.join(root, "chatjs/generated/documents.ts"), "utf-8")
-  ).toBe(generated);
-  expect(await readFile(integration, "utf-8")).toBe(
-    "// app-owned document policy\n"
-  );
 });

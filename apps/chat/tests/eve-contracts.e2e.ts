@@ -842,7 +842,7 @@ test("completed-copy capture fences a concurrent send and admits only one worksp
         ],
       },
       projectionHash: "captured",
-      resources: { fileKeys: [], documentIds: [], revisionIds: [] },
+      resources: { fileKeys: [] },
     };
   });
   const copyDispatch = vi.fn(createEveTestSession);

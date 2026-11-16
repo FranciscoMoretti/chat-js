@@ -1,6 +1,6 @@
+import { spreadsheetViewerItem } from "./spreadsheet-viewer/manifest";
 import { videoViewerItem } from "./video-viewer/manifest";
 import { imageViewerItem } from "./image-viewer/manifest";
-import { slackDocumentsItem } from "./slack-documents/manifest";
 import { guestChatItem } from "./guest-chat/manifest";
 import { desktopItem } from "./desktop/manifest";
 import { creditsItem } from "./credits/manifest";
@@ -16,8 +16,8 @@ import { attachmentUploadsItem } from "./attachment-uploads/manifest";
 
 export const pluginItems = [
   imageViewerItem,
+  spreadsheetViewerItem,
   videoViewerItem,
-  slackDocumentsItem,
   projectsItem,
   feedbackItem,
   followupSuggestionsItem,

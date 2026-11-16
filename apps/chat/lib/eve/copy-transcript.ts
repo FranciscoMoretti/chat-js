@@ -1,6 +1,6 @@
+import { z } from "zod";
 import { activeTurn, idle, session, turns } from "eve/events";
 import { conversationOf } from "eve/client";
-import { isDocumentResult } from "@/chatjs/core/documents/contracts";
 import { EveForkBoundaryError } from "./fork-boundary-error";
 import { isNonEmptyString } from "@/lib/is-non-empty-string";
 
@@ -14,9 +14,7 @@ import type {
   ReadonlyEveMessageMetadata,
 } from "./readonly-message-types";
 import { createHash } from "node:crypto";
-import { documentDefinitions } from "@/integrations/documents/definitions";
 import { sharedEveMessages } from "./shared-messages";
-import { z } from "zod";
 
 type Seed = EveCopySeed;
 type SeedPart = Seed["messages"][number]["parts"][number];
@@ -25,19 +23,6 @@ const EMPTY_CONTENT_LENGTH = 0;
 
 const RESOURCE_TOKEN = /[^\s<>()"'`[\]]+/gu;
 const SENTENCE_END = /[.,;:!?]+$/u;
-const DOCUMENT_TOOLS = new Set([
-  ...documentDefinitions.operations.keys(),
-  "readDocument",
-  "runCodeDocument",
-  "deepResearch",
-]);
-const DOCUMENT_FIELDS = new Set(["documentId"]);
-const REVISION_FIELDS = new Set([
-  "revisionId",
-  "expectedRevisionId",
-  "parentRevisionId",
-]);
-
 class EveCopyNotReadyError extends Error {
   public constructor() {
     super(
@@ -168,19 +153,9 @@ const transformFileReferences = (
     }
     return token;
   });
-/**
- * Scans copy content before destination keys are reserved.
- * @param {unknown} value Transcript or authorized document revision content to inspect.
- * @param {boolean} documentReferences Whether explicit document and revision fields are collected.
- * @returns {{ fileKeys: string[]; documentIds: string[]; revisionIds: string[] }} Sorted unique file keys, document IDs, and revision IDs found in supported references.
- */
-const eveCopyResources = (
-  value: unknown,
-  documentReferences = false
-): { fileKeys: string[]; documentIds: string[]; revisionIds: string[] } => {
+/** Collect authorized file references from a completed transcript. */
+const eveCopyResources = (value: unknown): { fileKeys: string[] } => {
   const files = new Set<string>();
-  const documents = new Set<string>();
-  const revisions = new Set<string>();
   visitStrings({ value }, (text, field) => {
     if ((field === "fileId" || field === "fileIds") && isFileStorageKey(text)) {
       files.add(text);
@@ -189,68 +164,9 @@ const eveCopyResources = (
       files.add(key);
       return key;
     });
-    if (
-      documentReferences &&
-      typeof field === "string" &&
-      field !== "" &&
-      DOCUMENT_FIELDS.has(field)
-    ) {
-      documents.add(z.uuid().parse(text).toLowerCase());
-    }
-    if (
-      documentReferences &&
-      typeof field === "string" &&
-      field !== "" &&
-      REVISION_FIELDS.has(field)
-    ) {
-      revisions.add(z.uuid().parse(text).toLowerCase());
-    }
     return text;
   });
-  return {
-    fileKeys: [...files].toSorted(),
-    documentIds: [...documents].toSorted(),
-    revisionIds: [...revisions].toSorted(),
-  };
-};
-const transcriptResources = (seed: {
-  readonly messages: readonly {
-    readonly parts: readonly (
-      | {
-          readonly type: "dynamic-tool";
-          readonly state: string;
-          readonly toolName: string;
-          readonly output?: unknown;
-        }
-      | { readonly type: Exclude<SeedPart["type"], "dynamic-tool"> }
-    )[];
-  }[];
-}): ReturnType<typeof eveCopyResources> => {
-  const resources = eveCopyResources(seed);
-  const documents = new Set<string>();
-  const revisions = new Set<string>();
-  for (const message of seed.messages) {
-    for (const part of message.parts) {
-      if (
-        part.type === "dynamic-tool" &&
-        part.state === "output-available" &&
-        (DOCUMENT_TOOLS.has(part.toolName) || isDocumentResult(part.output))
-      ) {
-        const documentResources = eveCopyResources(part, true);
-        for (const id of documentResources.documentIds) {
-          documents.add(id);
-        }
-        for (const id of documentResources.revisionIds) {
-          revisions.add(id);
-        }
-      }
-    }
-  }
-  return {
-    ...resources,
-    documentIds: [...documents].toSorted(),
-    revisionIds: [...revisions].toSorted(),
-  };
+  return { fileKeys: [...files].toSorted() };
 };
 const copyUserSeedMessage = (message: {
   readonly role: string;
@@ -308,7 +224,7 @@ const copyAssistantSeedMessage = (
  * @param {readonly SessionStreamEvent[]} events Ordered native events whose latest copy boundary must be waiting or completed.
  * @param {readonly EveMessageDisplayReceipt[]} receipts Owner-scoped positive bindings for display-only selection metadata.
  * @param {string} beforeMessageId Optional user message to replace; only the preceding transcript is seeded.
- * @returns {{ seed: Seed; projectionHash: string; resources: ReturnType<typeof transcriptResources>; }} The seed, its sanitized projection hash, and application resources to allocate; incomplete content throws.
+ * @returns {{ seed: Seed; projectionHash: string; resources: ReturnType<typeof eveCopyResources>; }} The seed, its sanitized projection hash, and application resources to allocate; incomplete content throws.
  */
 const prepareEveCopyTranscript = (
   events: readonly SessionStreamEvent[],
@@ -317,7 +233,7 @@ const prepareEveCopyTranscript = (
 ): {
   seed: Seed;
   projectionHash: string;
-  resources: ReturnType<typeof transcriptResources>;
+  resources: ReturnType<typeof eveCopyResources>;
 } => {
   const { view } = conversationOf(events);
   const lastTurn = turns(view).at(-1);
@@ -386,7 +302,7 @@ const prepareEveCopyTranscript = (
     projectionHash: createHash("sha256")
       .update(JSON.stringify(seed))
       .digest("hex"),
-    resources: transcriptResources(seed),
+    resources: eveCopyResources(seed),
   };
 };
 export { EveCopyNotReadyError, eveCopyResources, prepareEveCopyTranscript };

@@ -55,13 +55,7 @@ const assertUniqueContributions = (
   plugins: readonly PluginDefinition[]
 ): void => {
   const routers = new Set(["eve"]);
-  const controls = new Set([
-    "canvas",
-    "web-search",
-    "deep-research",
-    "image",
-    "video",
-  ]);
+  const controls = new Set(["deep-research", "image", "video"]);
   const settings = new Set(["general"]);
   const exclusive = new Set<string>();
   for (const plugin of plugins) {
