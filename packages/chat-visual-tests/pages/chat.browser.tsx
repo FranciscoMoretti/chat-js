@@ -1,3 +1,4 @@
+import { takeSnapshot } from "@uiverify/vitest";
 import { expect, test, vi } from "vitest";
 import { page, userEvent } from "vitest/browser";
 import { route } from "./route";
@@ -19,6 +20,7 @@ import {
   invoicesConversation,
   invoicesFollowupEvents,
   invoicesFollowupTrpc,
+  invoicesScrollTranscripts,
   invoicesSearchTrpc,
   invoicesShared,
   invoicesTranscripts,
@@ -127,11 +129,11 @@ test("cancelled native file and command operations show stopped states", async (
               type: "tool",
               kind: "tool",
               stepIndex: 0,
-              callId: "document",
+              callId: "write-file",
               name: "write_file",
-              label: "Document",
+              label: "Write file",
               state: "cancelled",
-              input: { title: "Notes" },
+              input: { path: "/workspace/notes.md" },
             },
             {
               type: "tool",
@@ -179,7 +181,12 @@ test("cancelled native file and command operations show stopped states", async (
     },
   });
   await expect
-    .element(page.getByText("Document operation stopped."))
+    .element(
+      page.getByRole("button", { name: "write_file Error", exact: true })
+    )
+    .toBeVisible();
+  await expect
+    .element(page.getByRole("button", { name: "bash Error", exact: true }))
     .toBeVisible();
   await expect.element(page.getByText("Tool stopped.").first()).toBeVisible();
   await expect
@@ -193,8 +200,11 @@ test("cancelled native file and command operations show stopped states", async (
 });
 
 test("mobile conversation can reveal the transcript below the composer", async () => {
-  // The conversation capture already covers both mobile themes.
-  await renderRoute(conversation, { ...request, viewports: [] });
+  await renderRoute(conversation, {
+    ...request,
+    transcripts: invoicesScrollTranscripts,
+    viewports: [],
+  });
   await expect
     .element(page.getByText("invoices_account_status_due_idx"))
     .toBeVisible();
@@ -205,6 +215,14 @@ test("mobile conversation can reveal the transcript below the composer", async (
   if (!viewport) {
     throw new Error("Missing transcript viewport");
   }
+  const composer = page.getByRole("textbox", { name: "Message" });
+  await expect.element(composer).toBeVisible();
+  await expect
+    .poll(
+      () =>
+        composer.element().getBoundingClientRect().bottom - window.innerHeight
+    )
+    .toBeLessThanOrEqual(0);
   await expect
     .poll(() => viewport.scrollHeight > viewport.clientHeight)
     .toBe(true);
@@ -234,6 +252,7 @@ test("mobile conversation can reveal the transcript below the composer", async (
   await expect
     .element(page.getByRole("button", { name: "Scroll to end", exact: true }))
     .toBeVisible();
+  await takeSnapshot("mobile-transcript-scrolled-up");
   await page
     .getByRole("button", { name: "Scroll to end", exact: true })
     .click();

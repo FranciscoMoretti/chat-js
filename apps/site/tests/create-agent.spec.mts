@@ -1,5 +1,5 @@
-import type { Page } from "@playwright/test";
 import { test, expect } from "@uiverify/playwright";
+import type { Page } from "playwright/test";
 import catalogFixture from "./eve-catalog.fixture.json" with { type: "json" };
 import {
   parseEveCatalog,

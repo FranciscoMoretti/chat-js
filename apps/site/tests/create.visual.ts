@@ -288,19 +288,19 @@ try {
   await page
     .getByRole("checkbox", { name: "Deep Research", exact: true })
     .check();
-  await page.getByRole("tab", { name: "Setup", exact: true }).click();
   const choose = async (label: string, value: string) => {
     await page
       .getByRole("radiogroup", { name: label, exact: true })
       .getByRole("radio", { name: value, exact: true })
       .check();
   };
+  await choose("Sandbox", "Vercel Sandbox");
+  await page.getByRole("tab", { name: "Setup", exact: true }).click();
   await choose("Model gateway", "OpenRouter");
   await choose("File storage", "S3");
   await page
     .getByLabel("Storage bucket", { exact: true })
     .fill("my-chat-uploads");
-  await choose("Sandbox", "Vercel Sandbox");
   await page.getByRole("tab", { name: "Appearance", exact: true }).click();
   await page
     .getByRole("button", { name: "Get Code", exact: true })
@@ -353,9 +353,7 @@ try {
   await page
     .getByRole("button", { name: "Tool examples", exact: true })
     .click();
-  await frame
-    .getByRole("button", { name: "Show all sources", exact: true })
-    .waitFor();
+  await frame.getByText("Launch research", { exact: true }).waitFor();
   await frame.locator('input[type="file"]').waitFor({ state: "attached" });
   await capture("create-tool-states");
   await page.getByRole("button", { name: "New chat", exact: true }).click();

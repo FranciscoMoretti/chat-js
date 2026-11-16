@@ -48,7 +48,7 @@ for (const base of ["base"] as const) {
           );
           await selectPreviewTools(page);
           await expect(
-            page.getByRole("button", { name: "Show all sources", exact: true })
+            page.getByText("Launch research", { exact: true })
           ).toBeVisible();
           await expect(page.getByTestId("chat-preview")).toHaveAttribute(
             "data-mode",

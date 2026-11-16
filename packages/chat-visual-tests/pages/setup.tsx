@@ -230,15 +230,19 @@ vi.mock("eve/react", () => {
   };
 });
 
-// The gateway's live catalog, replaced by the snapshot the repo already generates from it.
 // Keep the fixture's configured models independent of local builder selections.
 vi.mock("@/integrations/chat/models", () => ({
   webModels: {
     model: "google/gemini-2.5-flash-lite",
-    allowedModels: ["openai/gpt-5-nano"],
+    allowedModels: [
+      "openai/gpt-5-nano",
+      "openai/gpt-5-mini",
+      "anthropic/claude-sonnet-4",
+    ],
   },
 }));
 
+// The gateway's live catalog, replaced by the snapshot the repo already generates from it.
 vi.mock("@/lib/ai/models", async () => {
   const { models } = await import("@/lib/ai/models.generated");
   const { toModelData } = await import("@/lib/ai/to-model-data");

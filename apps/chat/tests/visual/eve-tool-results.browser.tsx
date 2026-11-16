@@ -36,11 +36,11 @@ test("failed research keeps validated progress alongside its error", async () =>
           ...common,
           output: createToolError(0.05, [
             {
-              queries: ["test evidence"],
+              message: "Compared the available evidence.",
               status: "completed",
-              title: "Search completed before failure",
+              title: "Analysis completed before failure",
               toolCallId: "fixture",
-              type: "web",
+              type: "thoughts",
             },
             { title: "Untrusted update", type: "invalid" },
           ]),
@@ -53,7 +53,9 @@ test("failed research keeps validated progress alongside its error", async () =>
     expect(container.querySelector('[role="alert"]')?.textContent).toBe(
       "The tool did not complete."
     );
-    expect(container.textContent).toContain("Search completed before failure");
+    expect(container.textContent).toContain(
+      "Analysis completed before failure"
+    );
     expect(container.textContent).not.toContain("Untrusted update");
     await takeSnapshot("failed-research-progress");
   } finally {
@@ -81,17 +83,17 @@ test("running research displays progress without a completed result", async () =
           label: "deepResearch",
           output: createToolResult({ format: "progress" }, 0, [
             {
-              type: "web",
-              title: "Searching sources",
+              type: "thoughts",
+              title: "Reviewing evidence",
               status: "running",
-              queries: ["evidence"],
+              message: "Comparing sources.",
               toolCallId: "fixture",
             },
           ]),
         }}
       />
     );
-    expect(container.textContent).toContain("Searching sources");
+    expect(container.textContent).toContain("Reviewing evidence");
     expect(container.querySelector('[role="alert"]')).toBeNull();
     await takeSnapshot("running-research-progress");
   } finally {

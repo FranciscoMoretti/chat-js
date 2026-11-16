@@ -142,9 +142,6 @@ for (const viewport of [
         .toBeDisabled();
       await page.getByRole("button", { name: "Explain the tradeoffs" }).click();
       expect(send).toHaveBeenCalledExactlyOnceWith("Explain the tradeoffs");
-      await takeSnapshot(
-        `questions-approval-context-suggestions-${viewport.width}-${viewport.dir}`
-      );
       await page.getByRole("button", { name: "24% context" }).hover();
       await expect
         .element(page.getByRole("progressbar", { name: "Context used" }))
@@ -158,17 +155,9 @@ for (const viewport of [
           page.getByRole("progressbar", { name: "Context used" }).query()
         )
         .toBeNull();
-      await page
-        .getByRole("link", {
-          name: "Accessible interfaces — example.test (opens in a new tab)",
-          exact: true,
-        })
-        .first()
-        .hover();
-      await expect
-        .element(page.getByText("Accessible interfaces", { exact: true }))
-        .toBeVisible();
-      await takeSnapshot(`source-preview-${viewport.width}-${viewport.dir}`);
+      await takeSnapshot(
+        `questions-approval-context-suggestions-${viewport.width}-${viewport.dir}`
+      );
     } finally {
       await unmount(fixture);
     }

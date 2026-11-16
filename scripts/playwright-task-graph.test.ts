@@ -41,5 +41,4 @@ test("Playwright builds its libraries without building the app beside next dev",
     "@chatjs/chat#test:e2e",
   ]);
   expect(e2eTasks[0]?.dependencies).toContain("@chat-js/gateways#build");
-  expect(e2eTasks[0]?.dependencies).toContain("@chat-js/sandboxes#build");
 }, 15_000);

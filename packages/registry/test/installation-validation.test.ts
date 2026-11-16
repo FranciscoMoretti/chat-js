@@ -97,6 +97,7 @@ test("deep-research installs native files without search adapters, provisioned s
   expect(descriptor.requiresChatJS).toBe(false);
   expect(descriptor.requiresTools).toEqual([]);
   expect(descriptor.requiresStorage).toBeUndefined();
+  expect(descriptor.native?.dependencies).toEqual(["eve", "zod"]);
 }, 60_000);
 
 for (const plugin of plugins) {
@@ -158,7 +159,7 @@ test("tool composition retains registry dependencies and cannot borrow undeclare
     output.items
       .find((item) => item.name === "deep-research")
       ?.dependencies?.map(dependencyName)
-  ).toContain("zod");
+  ).toContain("lucide-react");
   expect(
     typecheckProject(output.files, validationDependencyFixtures).diagnostics
   ).toEqual([]);

@@ -93,7 +93,7 @@ const ChatLayout = async ({
   const content = (
     <>
       <AppSidebar />
-      <ChatWorkspaceContent>
+      <ChatWorkspaceContent className="h-dvh min-w-0">
         <Suspense fallback={<ChatLoadingShell />}>
           <ChatLayoutDynamic>{children}</ChatLayoutDynamic>
         </Suspense>

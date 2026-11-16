@@ -301,6 +301,34 @@ export const invoicesShared: NonNullable<ServerData["transcript"]> = {
 
 export const invoicesTranscripts = { [invoicesSessionId]: invoicesTranscript };
 
+export const invoicesScrollTranscripts: Record<string, EveMessage[]> = {
+  [invoicesSessionId]: [
+    ...invoicesTranscript,
+    {
+      id: "scroll-followup-user",
+      role: "user",
+      parts: [{ type: "text", text: "How should I verify it in production?" }],
+    },
+    {
+      id: "scroll-followup-answer",
+      role: "assistant",
+      parts: [
+        {
+          type: "text",
+          state: "done",
+          text: [
+            "1. Measure how long the invoices query takes for a small account and a large one before the change.",
+            "2. Build the index concurrently and check that the build completes before running comparisons.",
+            "3. Compare query plans for the same accounts and confirm that each plan uses the new index.",
+            "4. Check the query's response times when traffic returns to its usual level.",
+            "5. Watch index usage and write latency for a full traffic cycle before removing any overlapping index.",
+          ].join("\n"),
+        },
+      ],
+    },
+  ],
+};
+
 // Exercises the shared projection through the real observer, store and transcript.
 export const validatedToolTranscripts = {
   [invoicesSessionId]: [
