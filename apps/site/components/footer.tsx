@@ -7,7 +7,7 @@ import { docsNavigationHref, siteLinks } from "@/lib/site-config";
 export const Footer = () => (
   <footer className="carbon-wrap carbon-footer">
     <Brand />
-    <span>The foundation for your AI app.</span>
+    <span>The building blocks for your AI app.</span>
     <nav aria-label="Footer">
       <a href={docsNavigationHref}>Documentation</a>
       <Link href="/threads">Thread library</Link>

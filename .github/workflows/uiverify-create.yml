@@ -78,7 +78,7 @@ jobs:
         if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
         env:
           UIVERIFY_API_KEY: ${{ secrets.UIVERIFY_CREATE_API_KEY }}
-        run: bunx uiverify upload --static-dir apps/site/uiverify-archive
+        run: bunx uiverify upload --static-dir apps/site/uiverify-archive --render-all
       - name: Save the capture
         if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2

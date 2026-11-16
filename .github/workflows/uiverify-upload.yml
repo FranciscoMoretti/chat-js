@@ -1,8 +1,8 @@
 name: UI Verify Upload
 
 # Uploads the capture of a fork's pull request, which gets no secrets. Runs from
-# main with secrets after "UI Verify Docs", "UI Verify Registry" or "UI Verify
-# Chat" finishes on a fork's pull request, and never runs code from the pull request: no checkout
+# main with secrets after a UI Verify capture finishes on a fork's pull
+# request, and never runs code from the pull request: no checkout
 # of its files, no install, no npx inside its tree. Values the pull request
 # controls reach the shell only through env.
 on:
@@ -66,9 +66,8 @@ jobs:
           git fetch -q --filter=blob:none --no-tags origin "$HEAD_SHA"
           git update-ref HEAD "$HEAD_SHA"
 
-      # Each suite uploads to its own project. Docs renders every page: its test
-      # loads the built pages in an iframe, so the module graph `--only-changed`
-      # reads cannot see a page edit.
+      # Each suite uploads to its own project. Render all Docs and Create captures
+      # because their tests load built pages and the module graph cannot see page edits.
       # Match same-repository uploads: keep differences advisory while preserving
       # the PR's cumulative visual changeset for human review.
       - name: Upload to UI Verify
@@ -86,10 +85,12 @@ jobs:
         # uploading to another suite's project.
         run: |
           set -euo pipefail
+          render_flags=()
           case "$WORKFLOW" in
-            "UI Verify Docs") key="$DOCS_KEY"; only_changed="" ;;
-            "UI Verify Registry") key="$REGISTRY_KEY"; only_changed="--only-changed" ;;
-            "UI Verify Chat", "UI Verify Create") key="$CHAT_KEY"; only_changed="--only-changed" ;;
+            "UI Verify Docs") key="$DOCS_KEY"; render_flags+=(--render-all) ;;
+            "UI Verify Registry") key="$REGISTRY_KEY" ;;
+            "UI Verify Chat") key="$CHAT_KEY" ;;
+            "UI Verify Create") key="$CREATE_KEY"; render_flags+=(--render-all) ;;
             *) echo "No UI Verify project for workflow: $WORKFLOW" >&2; exit 1 ;;
           esac
           if [ -z "$key" ]; then
@@ -98,7 +99,7 @@ jobs:
           fi
           export UIVERIFY_API_KEY="$key"
           mkdir -p "$RUNNER_TEMP/clean" && cd "$RUNNER_TEMP/clean"
-          npx -y uiverify@1.7.0 upload \
+          npx -y uiverify@1.8.1 upload \
             --static-dir "$RUNNER_TEMP/archive" \
             --working-directory "$RUNNER_TEMP/repo" \
-            $only_changed --auto-accept-changes
+            "${render_flags[@]}" --auto-accept-changes

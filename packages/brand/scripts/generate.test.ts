@@ -13,10 +13,11 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "bun:test";
+import sharp from "sharp";
 
 const packageRoot = fileURLToPath(new URL("../", import.meta.url));
 
-test("brand sync detects and removes retired artwork without touching other files", async () => {
+test("brand sync exports social sizes and removes only retired artwork", async () => {
   const fixture = await mkdtemp(path.join(tmpdir(), "chatjs-brand-sync-"));
   const brand = path.join(fixture, "packages/brand");
   try {
@@ -56,6 +57,22 @@ test("brand sync detects and removes retired artwork without touching other file
     };
     const generated = await generate();
     assert.equal(generated.code, 0, generated.output);
+    await Promise.all(
+      ["dark", "white"].flatMap((theme) =>
+        (
+          [
+            ["og", 1200, 630],
+            ["github", 1280, 640],
+          ] as const
+        ).map(async ([format, width, height]) => {
+          const image = await sharp(
+            path.join(brand, `assets/social/${format}-${theme}.png`)
+          ).metadata();
+          assert.equal(image.width, width);
+          assert.equal(image.height, height);
+        })
+      )
+    );
     const mirrored = path.join(fixture, "apps/site/public/home/blocks");
     await writeFile(
       path.join(mirrored, "notes.txt"),
@@ -84,4 +101,4 @@ test("brand sync detects and removes retired artwork without touching other file
   } finally {
     await rm(fixture, { recursive: true, force: true });
   }
-}, 20_000);
+}, 30_000);

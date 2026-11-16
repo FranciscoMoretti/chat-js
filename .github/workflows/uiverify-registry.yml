@@ -3,7 +3,7 @@ name: UI Verify Registry
 # Broad path filter on purpose: the registry snapshots render against apps/chat
 # (globals.css and the chat components the renderers import), so a change there
 # can move a snapshot.
-# The upload's `--only-changed` scopes the actual rendering to the tools the diff
+# The upload scopes the actual rendering to the tools the diff
 # affects (via the archive's dependency graph), so the broad trigger stays cheap.
 on:
   push:
@@ -57,8 +57,8 @@ jobs:
       - name: Install Chromium
         run: node_modules/.bin/playwright install --with-deps chromium
       # Always capture the full suite so the archive carries the complete
-      # dependency graph (preview-stats.json). The upload runs with
-      # `--only-changed`, which uses that graph to render only the stories whose
+      # dependency graph (preview-stats.json). The upload uses that graph to
+      # render only the stories whose
       # closure includes this commit's changed files (the graph traces into
       # apps/chat, so an app-side change still maps to the tools it renders) and
       # carries every untouched story's baseline forward. Capturing every tool is

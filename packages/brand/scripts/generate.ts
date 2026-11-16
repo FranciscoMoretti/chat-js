@@ -210,51 +210,41 @@ for (const [source, ...destinations] of [
   }
 }
 
-const cover = (width: number, height: number, light = false) => {
-  const background = light ? colors.foreground : colors.background;
-  const foreground = light ? colors.background : colors.foreground;
-  const tile = light ? "#deded3" : colors.surface;
-  const stroke = light ? "#929284" : colors.pattern;
-  const scale = height / 630;
-  const inset = (width - 1200 * scale) / 2;
-
-  return svg(
-    width,
-    height,
-    `<rect width="${width}" height="${height}" fill="${background}"/>
-<g transform="translate(${inset} 0) scale(${scale})">
-  <path d="M88 86H1112M88 544H1112" stroke="${foreground}" stroke-opacity=".24"/>
-  <g fill="${foreground}" transform="translate(88 281) scale(1.55)">
-    <path transform="translate(0 4) scale(1.2)" d="${mark.path}"/>
-    <path transform="translate(49 34) scale(${32 / wordmark.unitsPerEm})" d="${wordmark.path}"/>
-  </g>
-  <g transform="translate(718 118) scale(.77)">
-    ${layout
-      .map(
-        ([x, y], index) =>
-          `<g transform="translate(${x} ${y})"><rect width="160" height="160" fill="${tile}" stroke="${foreground}" stroke-opacity=".24"/><svg width="160" height="160" viewBox="0 0 108 108" fill="none" stroke="${stroke}" stroke-opacity=".62" stroke-width=".85" overflow="hidden">${wavePaths(index)}</svg></g>`
-      )
-      .join("")}
-  </g>
-</g>`
-  );
-};
-const social = Buffer.from(cover(1200, 630));
-appCopy(
-  "site/app/opengraph-image.jpg",
-  await sharp(social).jpeg({ quality: 90 }).toBuffer()
-);
-appCopy("chat/app/opengraph-image.png", await sharp(social).png().toBuffer());
+// Preserve the approved composition and typography from the raster masters.
+// Only the canvas ratio changes: center-crop proportionally, never stretch.
 await Promise.all(
-  ["light", "dark"].map(async (theme) => {
-    appCopy(
-      `docs/public/images/hero-${theme}.png`,
-      await sharp(Buffer.from(cover(1584, 672, theme === "light")))
-        .png()
-        .toBuffer()
+  ["dark", "white"].map(async (theme) => {
+    const source = await readFile(
+      path.join(root, `sources/social/wave-${theme}.png`)
     );
+    const og = await sharp(source)
+      .resize(1200, 630, { fit: "cover", position: "centre" })
+      .png({ compressionLevel: 9 })
+      .toBuffer();
+    const github = await sharp(source)
+      .resize(1280, 640, { fit: "cover", position: "centre" })
+      .png({ compressionLevel: 9 })
+      .toBuffer();
+    asset(`social/og-${theme}.png`, og);
+    asset(`social/github-${theme}.png`, github);
+    appCopy(
+      `docs/public/images/hero-${theme === "white" ? "light" : "dark"}.png`,
+      github
+    );
+    if (theme === "dark") {
+      const jpeg = await sharp(og).jpeg({ quality: 90 }).toBuffer();
+      appCopy("site/app/opengraph-image.jpg", jpeg);
+      appCopy("chat/app/opengraph-image.png", og);
+      appCopy("docs/public/images/opengraph-image.jpg", jpeg);
+    }
   })
 );
+for (const app of ["site", "chat"]) {
+  appCopy(
+    `${app}/app/opengraph-image.alt.txt`,
+    encode("ChatJS — The building blocks for your AI app\n")
+  );
+}
 
 const stale: string[] = [];
 const mirroredBlocks = path.join(repo, "apps/site/public/home/blocks");

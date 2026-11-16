@@ -271,6 +271,9 @@ test.each([
         outcome === "success" &&
         !externalClose
       ) {
+        // The last click leaves the pointer on Save, and whether the disabled button
+        // shows as hovered varies between runs; move the pointer off it.
+        await page.getByRole("button", { exact: true, name: "Save" }).unhover();
         await takeSnapshot("chat-rename-reopened-pending");
         await page.getByRole("dialog").screenshot();
       }

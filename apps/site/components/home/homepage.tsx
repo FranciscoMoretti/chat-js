@@ -31,7 +31,7 @@ export const Homepage = () => (
         <div className="hero-copy">
           <span className="eyebrow">
             <i aria-hidden="true" />
-            OPEN SOURCE. YOURS TO BUILD ON.
+            Open source. Yours to build on.
           </span>
           <h1 id="home-title">
             The building blocks
@@ -39,9 +39,8 @@ export const Homepage = () => (
             for your <em>AI app.</em>
           </h1>
           <p className="deck">
-            A working chat. Your choice of models.
-            <br />
-            Tools and plugins. Code you own.
+            Start with a working AI chat. Choose your models and tools. Own the
+            code.
           </p>
           <Actions />
           <CreateCommand />

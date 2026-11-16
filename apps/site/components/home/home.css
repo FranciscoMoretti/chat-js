@@ -72,6 +72,17 @@
   vertical-align: middle;
   margin-right: 9px;
 }
+.home-page .hero .eyebrow {
+  font:
+    14px/1.5 CarbonGeist,
+    Arial,
+    sans-serif;
+  letter-spacing: 0;
+  color: #bcbcb5;
+}
+.home-page .hero-copy {
+  min-width: 0;
+}
 .home-page .hero h1 {
   font-weight: 510;
   letter-spacing: -3.7px;
@@ -84,24 +95,31 @@
   color: #92928c;
 }
 .home-page .deck {
-  font-size: 16px;
-  line-height: 1.8;
+  max-width: 480px;
+  font-size: 20px;
+  line-height: 1.6;
+  color: #bcbcb5;
   margin: 0;
+}
+.home-page .hero h1 em {
+  color: #bcbcb5;
 }
 .home-page .actions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 10px;
   margin-top: 29px;
 }
 .home-page .button {
-  font-size: 12px;
+  font-size: 16px;
+  min-height: 48px;
   border-radius: 5px;
   padding: 11px 17px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 28px;
+  gap: 20px;
   white-space: nowrap;
   transition:
     background 160ms,
@@ -463,9 +481,6 @@
     font-size: 55px;
     letter-spacing: -3px;
   }
-  .home-page .hero .deck {
-    font-size: 14px;
-  }
   .home-page .foundation-band {
     gap: 18px;
     font-size: 10px;
@@ -565,20 +580,15 @@
     letter-spacing: -2.4px;
     line-height: 1.1;
   }
-  .home-page .hero .eyebrow {
-    font-size: 7px;
-    letter-spacing: 0.5px;
-  }
   .home-page .hero .deck {
-    font-size: 13px;
+    font-size: 18px;
   }
   .home-page .actions {
     gap: 8px;
   }
   .home-page .button {
-    font-size: 11px;
     padding: 10px 13px;
-    gap: 17px;
+    gap: 12px;
   }
   .home-page .split {
     padding-top: 36px;
@@ -934,10 +944,7 @@
   max-width: 510px;
 }
 .home-page .hero-cli > .eyebrow {
-  font-size: 7px;
   margin-bottom: 11px;
-  color: #737368;
-  letter-spacing: 0.6px;
 }
 .home-page .hero-cli .cli-command {
   padding: 12px 13px;
@@ -945,19 +952,15 @@
   border-color: #30302b;
 }
 .home-page .hero-cli .cli-command code {
-  font-size: 10px;
+  font-size: 14px;
 }
 .home-page .hero-cli .copy-command span {
   display: none;
 }
 .home-page .hero-cli .copy-command {
-  min-width: 20px;
-}
-.home-page .hero-cli-note {
-  display: block;
-  font-size: 10px;
-  color: #77776d;
-  margin-top: 10px;
+  min-width: 44px;
+  min-height: 44px;
+  color: #bcbcb5;
 }
 @media (max-width: 1100px) {
   .home-page .cli-command code {
@@ -972,15 +975,6 @@
     padding: 11px 10px;
     gap: 8px;
   }
-  .home-page .hero-cli .cli-command code {
-    font-size: 8px;
-  }
-  .home-page .hero-cli-note {
-    font-size: 9px;
-  }
-  .home-page .hero-cli > .eyebrow {
-    font-size: 6px;
-  }
   .home-page .cli-command {
     padding: 14px 12px;
     gap: 8px;
@@ -993,14 +987,6 @@
   }
   .home-page .copy-command {
     min-width: 18px;
-  }
-}
-.home-page .hero-cli .cli-command code {
-  font-size: 11.5px;
-}
-@media (max-width: 480px) {
-  .home-page .hero-cli .cli-command code {
-    font-size: 10px;
   }
 }
 .home-page {
@@ -1048,14 +1034,6 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-}
-.home-page .hero-cli .cli-command code {
-  font-size: 11.5px;
-}
-@media (max-width: 480px) {
-  .home-page .hero-cli .cli-command code {
-    font-size: 10px;
-  }
 }
 @media (prefers-reduced-motion: reduce) {
   .home-page {

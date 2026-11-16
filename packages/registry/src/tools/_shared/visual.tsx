@@ -5,7 +5,7 @@ import { MotionGlobalConfig } from "motion/react";
 import type { ReactNode } from "react";
 import React, { act } from "react";
 import { createRoot } from "react-dom/client";
-import { commands, page } from "vitest/browser";
+import { page } from "vitest/browser";
 
 import { ThemeProvider } from "@/components/theme-provider";
 import { renderRoot, unmountRoot } from "@/tests/visual/primitive-mount";
@@ -16,12 +16,6 @@ import { renderRoot, unmountRoot } from "@/tests/visual/primitive-mount";
 // utility the rendered components use — otherwise app-only classes are dropped
 // and the snapshot drifts from the real chat.
 import "./visual.css";
-
-declare module "vitest/browser" {
-  interface BrowserCommands {
-    faviconAssets: () => Promise<void>;
-  }
-}
 
 // Build a `data:` URI from a canvas drawing. A canvas `toDataURL()` is already a
 // `data:` URI, so it travels inside the UI Verify archive and replays intact —
@@ -211,9 +205,6 @@ export const captureChatStory = async (
   { skipMotion = true }: CaptureOptions = {}
 ): Promise<void> => {
   await ensureFonts();
-  // Source favicons load from Google; serve the fixed icon the favicon tests
-  // use, so a site changing its favicon can't change the snapshot.
-  await commands.faviconAssets();
   MotionGlobalConfig.skipAnimations = skipMotion;
   document.body.style.margin = "0";
   document.body.className = "bg-background text-foreground font-sans";

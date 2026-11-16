@@ -2,7 +2,7 @@ import type * as SessionModule from "@/providers/session-provider";
 import { takeSnapshot } from "@uiverify/vitest";
 import React, { act } from "react";
 import { beforeEach, expect, test, vi } from "vitest";
-import { commands, page } from "vitest/browser";
+import { page } from "vitest/browser";
 
 import { EveRuntimeRoute } from "@/components/eve/eve-runtime-provider";
 import { NewEveConversation } from "@/components/eve/new-eve-conversation";
@@ -28,7 +28,6 @@ for (const scene of [
   { name: "project", projectId: "00000000-0000-4000-8000-000000000001" },
 ]) {
   test(`native new conversation ${scene.name}`, async () => {
-    await commands.modelAssets();
     const state = await mountNative(
       <div className="mx-auto flex min-h-0 w-full flex-col p-2 md:max-w-3xl">
         <NewEveConversation
