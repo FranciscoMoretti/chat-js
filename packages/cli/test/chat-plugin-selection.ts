@@ -236,13 +236,15 @@ import { installedChat } from "./chatjs/generated/installed-chat";
 import { chat } from "./integrations/chat/server";
 import { installedSessionProfiles } from "./chatjs/generated/installed-session-profiles";
 import { installedCleanupTasks } from "./chatjs/generated/installed-cleanup";
-import { requireSessionProfile } from "./lib/eve/session-profile";
+import { findSessionProfile } from "./lib/eve/session-profile";
 import { requireAccountSession } from "./lib/eve/session-identity";
 assert.equal(installedSessionProfiles.length, ${selection === "guest-chat" ? 1 : 0});
 assert.equal(installedCleanupTasks.length, ${selection === "guest-chat" ? 1 : 0});
-assert.throws(() => requireSessionProfile({ auth: { initiator: { authenticator: "missing" } } }));
+assert.equal(findSessionProfile({ auth: { initiator: { authenticator: "slack-webhook" } } }), undefined);
+assert.throws(() => findSessionProfile({ auth: { initiator: { authenticator: "chatjs-missing" } } }));
 assert.throws(() => requireAccountSession({ auth: { initiator: { authenticator: "chatjs-disposable-guest" } } }));
 for (const profile of installedSessionProfiles) {
+  assert.equal(findSessionProfile({ auth: { initiator: { authenticator: profile.authenticator } } }), profile);
   assert.equal(await profile.authenticate(new Request("http://localhost/eve/v1/session")), null);
 }
 import { billing } from "./integrations/billing";
