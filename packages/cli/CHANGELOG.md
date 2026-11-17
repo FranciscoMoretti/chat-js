@@ -1,5 +1,13 @@
 # chat-js
 
+## 1.0.0-alpha.3
+
+- Generate native EVE agents from builder selections, including registry tools, connections, channels, extensions, memory, observability, and registry-installed skills.
+- Use EVE's native sandbox, approval, session, and channel behavior. Keep application authentication, resource authorization, storage, and optional presentation plugins in ChatJS.
+- Replace custom search wrappers and document execution infrastructure with native EVE capabilities and workspace file attachments.
+- Pin new apps to registry `0.2.0-beta.4` and remove the redundant sandbox package dependency. Verify standalone scaffolds across Bun, npm, pnpm, and Yarn, with and without Electron.
+- Publish under `alpha`. The `latest` tag remains at `1.0.0-alpha.2`. Existing generated apps require a source migration or a fresh scaffold.
+
 ## 1.0.0-alpha.2
 
 Publish the CLI with public versions of its internal gateway and sandbox dependencies so `npx chat-js` can install it outside the monorepo.

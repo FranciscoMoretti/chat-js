@@ -1,5 +1,12 @@
 # @chat-js/registry
 
+## 0.2.0-beta.4
+
+- Publish registry sources for native EVE agents, sandbox configuration, workspace file attachments, and optional file viewers.
+- Use native EVE search connections and agent execution in place of custom search wrappers, code execution providers, and document infrastructure.
+- Keep sandbox installation metadata in the registry and remove the separate `@chat-js/sandboxes` runtime dependency.
+- Pair with `chat-js@1.0.0-alpha.3`. Publish under `beta`, preserving stable `latest`.
+
 ## 0.2.0-beta.3
 
 ### Beta Changes
