@@ -31,6 +31,10 @@ jobs:
         with:
           bun-version: 1.3.1
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
       - uses: actions/cache@v4
         with:
           path: ~/.bun/install/cache
@@ -44,9 +48,9 @@ jobs:
           npm install --global npm@latest --prefix ~/.npm-global
           echo "$HOME/.npm-global/bin" >> "$GITHUB_PATH"
 
-      # Tokens cannot publish these packages. release.yml must be a trusted
-      # publisher on both @chat-js/registry and chat-js. Remove this step after
-      # 0.2.0-beta.3 and 1.0.0-alpha.2 are on npm.
+      # Audited prereleases publish as a matched pair using trusted publishing.
+      # Changesets must not publish them on latest. Update these exact versions
+      # when preparing the next pair, and publish the registry before the CLI.
       - name: Publish matched gateway registry and CLI
         id: gateway-pair
         continue-on-error: true
@@ -84,7 +88,8 @@ jobs:
             fi
           }
 
-          publish_exact packages/registry 0.2.0-beta.3
+          bun run --cwd packages/gateways build
+          publish_exact packages/registry 0.2.0-beta.4
           node -e '
             const fs = require("fs");
             const cli = "packages/cli/package.json";
@@ -97,10 +102,7 @@ jobs:
             }
             fs.writeFileSync(cli, `${JSON.stringify(manifest, null, 2)}\n`);
           '
-          publish_exact packages/cli 1.0.0-alpha.2
-          if [ "$(node -p "require('./packages/cli/package.json').version")" = "1.0.0-alpha.2" ]; then
-            npm dist-tag add chat-js@1.0.0-alpha.2 latest
-          fi
+          publish_exact packages/cli 1.0.0-alpha.3
 
       - name: Create Release Pull Request or Publish
         id: changesets
