@@ -8,13 +8,6 @@ import type { ui as chatjsUi } from "@/integrations/tools/ui";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
-vi.mock(
-  "@/components/eve/eve-document-tool",
-  (): { EveDocumentTool: () => null } => ({
-    EveDocumentTool: (): null => null,
-  })
-);
-
 vi.mock("@/integrations/tools/ui", async (importOriginal) => {
   const { z: zod } = await import("zod");
   const { createElement: reactCreateElement } = await import("react");
@@ -120,24 +113,25 @@ test("validates custom input and output before invoking its typed renderer", () 
   }
 });
 
-test("uses the installed word count renderer and rejects malformed persisted results", () => {
+test("uses the installed workspace attachment renderer and rejects malformed persisted results", () => {
   expect(
     renderResult({
-      input: { text: "one two" },
+      input: { path: "/workspace/sample-notes.md" },
       output: {
-        characters: 7,
-        charactersNoSpaces: 6,
-        sentences: 1,
-        words: 2,
+        fileId: "abcdefghijklmnopqrstuvwx.md",
+        name: "sample-notes.md",
+        mediaType: "text/plain",
+        size: 7,
+        url: "/api/files/abcdefghijklmnopqrstuvwx.md",
       },
-      toolName: "wordCount",
+      toolName: "attach_workspace_file",
     })
-  ).toContain("Words");
+  ).toContain("sample-notes.md");
   expect(
     renderResult({
-      input: { text: "one two" },
-      output: { words: {} },
-      toolName: "wordCount",
+      input: { path: "/workspace/sample-notes.md" },
+      output: { size: {} },
+      toolName: "attach_workspace_file",
     })
   ).toContain("This tool result could not be displayed.");
 });
@@ -150,13 +144,13 @@ test("shows a failed tool instead of its loading skeleton", () => {
       part: {
         error: {
           code: "fixture_error",
-          message: "Weather service unavailable",
+          message: "File storage unavailable",
         },
         input: {},
         state: "failed",
         callId: "call-fixture",
-        name: "getWeather",
-        label: "getWeather",
+        name: "attach_workspace_file",
+        label: "attach_workspace_file",
         type: "tool",
         kind: "tool",
         stepIndex: 0,
@@ -164,7 +158,7 @@ test("shows a failed tool instead of its loading skeleton", () => {
     })
   );
   expect(html).toContain('role="alert"');
-  expect(html).toContain("Weather service unavailable");
+  expect(html).toContain("File storage unavailable");
   expect(html).not.toContain("skeleton");
 });
 

@@ -96,3 +96,47 @@ Keep Turbo for prerequisite ordering and application tasks. A dedicated coordina
 Earlier end-to-end acceptance measured a canonical MCP edit reaching the browser in 752 ms and an isolated EVE tool update in 638 ms. Those timings predate the path-manifest simplification; the two runner fixtures also used different artificial generation delays, so they are not an intrinsic speed comparison.
 
 The shared installation generator also drives [consumer installation validation](VALIDATION.md), with isolated TypeScript checks and packaged CLI parity sentinels.
+
+## Native EVE capability packaging
+
+A capability has one implementation in `src/tools/<id>`. Its normal registry item includes the source and optional ChatJS application contributions. A portable capability also declares `meta.chatjs.native`:
+
+```ts
+native: {
+  files: ["tool.ts", "definition.ts", "schemas.ts"],
+  dependencies: ["eve", "zod"],
+}
+```
+
+The build derives `dist/r/eve/<id>.json` and `dist/r/eve/registry.json` from those same files. These are another distribution view of the same catalog IDs, not separately authored tools. Native implementation files land in `agent/lib/chatjs/<id>`; a generated default export in `agent/tools/<toolName>.ts` lets EVE discover each tool. Consumers can register the published `/eve/{name}.json` URL template with `eve registry add`, then use `eve add`. Publishing the package is required before those new endpoints exist remotely.
+
+The native view excludes renderers, ChatJS descriptors, UI dependencies and ChatJS setup. Its dependency audit allows no inherited application packages or `@/` application imports. Missing declared files, undeclared package imports, and unsupported execution/accounting combinations fail the build. Adding a native declaration requires extending the standalone installer/compiler test; an item without one remains an application-dependent bundle.
+
+The shared descriptor already carries tool exports, workflow placement, provider slots, dependencies, environment requirements, gateway/storage/sandbox requirements, renderer exports and composer contributions. The packaging contract also includes:
+
+- `tools[].readOnly`: action classification used by the approval policy.
+- `tools[].accounting`: `none` explicitly declares no per-call ChatJS tool charge; `unknown` records an unsettled provider cost; `{ costUsd }` declares a fixed application charge; `receipt` describes capabilities that already return application receipts. An omitted value is not a declaration that an arbitrary native tool is free.
+- `native`: the audited standalone source/dependency subset, when supported.
+- `channelSupport`: support in the complete ChatJS application. Curated tools currently support web; Slack remains unverified. Portable EVE installation alone does not certify a channel or a live provider.
+
+Deep Research can be installed into ordinary EVE agents. Tavily and Firecrawl are available through EVE’s connection catalog.
+
+Run `bun run test:native` under Node 24 to install the portable payloads through the real EVE CLI in a fresh project and verify their source, types, discovery and compilation.
+
+## Resolved installation and Agent recipes
+
+Dependency planning captures each complete registry payload with a SHA-256 digest. Installation feeds those payloads to the native shadcn installer through temporary local files, including the complete transitive graph. It does not fetch the source addresses again. Changed payloads and missing dependencies fail before installation.
+
+Fresh Bun creation writes `chatjs/agent-recipe.json`. Replay with `bunx chat-js@<recorded-version> create my-app --yes --recipe ./agent-recipe.json`. The recipe contains the initial public selection, appearance arguments, resolved capability source, native UI source, package manifest and Bun lockfile. It excludes environment files and credentials; do not put secrets in public configuration or instructions. Keep the recipe alongside the generated project. Recipe replay requires the recorded CLI version and Bun, restores the selected sources, and checks the frozen dependency lock. If a package is unavailable, generation fails instead of upgrading it.
+
+The recipe is a starting point, not an export of developer edits. `sync` never rewrites it or authored configuration. Change builder choices and generate a new recipe for an upgrade. Credentials, provisioning, connections and live verification remain separate local setup steps. Recipes are currently emitted by Bun creation; other package managers still support ordinary generation without recipe replay.
+
+## Configuration readiness
+
+`chat-js setup --cwd <app> [--json]` runs the generated application's local capability configuration check using Bun. It reads `.env.local` and prints only missing variable names/descriptions. It does not contact providers, provision resources, or certify credentials. Installation, configuration presence, connection checks, and live verification are separate fields. Re-run after setting values; `bun check-env` validates the whole application and `bun run setup` performs the existing database/runtime setup.
+
+Generated tool requirements also gate runtime availability. Missing tool, storage, gateway, or sandbox credentials disable the affected tool and its dependents; an explicit selection reports the missing configuration. Credentials being present does not mean the service has accepted them.
+
+## Native memory
+
+Memory providers come from EVE’s catalog and use their native storage, identity scopes, and retention behavior. ChatJS does not implement a memory provider. Deleting conversation-derived memory is conditional on support in the selected native EVE provider; it is not an application-wide guarantee or a reason to add a custom provider.

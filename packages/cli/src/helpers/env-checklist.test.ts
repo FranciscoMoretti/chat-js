@@ -14,17 +14,8 @@ describe("collectEnvChecklist", () => {
         google: false,
         vercel: false,
       },
-      builtInTools: {
-        codeExecution: false,
-        deepResearch: false,
-        imageGeneration: false,
-        urlRetrieval: false,
-        videoGeneration: false,
-        webSearch: false,
-      },
       coreFeatures: {
         attachments: false,
-        documents: true,
         followupSuggestions: false,
         feedback: false,
         mcp: false,
@@ -54,17 +45,8 @@ describe("collectEnvChecklist", () => {
         google: false,
         vercel: false,
       },
-      builtInTools: {
-        codeExecution: false,
-        deepResearch: false,
-        imageGeneration: false,
-        urlRetrieval: true,
-        videoGeneration: false,
-        webSearch: false,
-      },
       coreFeatures: {
         attachments: false,
-        documents: true,
         followupSuggestions: false,
         feedback: false,
         mcp: false,
@@ -99,17 +81,8 @@ describe("collectEnvChecklist", () => {
         google: false,
         vercel: false,
       },
-      builtInTools: {
-        codeExecution: false,
-        deepResearch: false,
-        imageGeneration: false,
-        urlRetrieval: false,
-        videoGeneration: false,
-        webSearch: false,
-      },
       coreFeatures: {
         attachments: false,
-        documents: false,
         followupSuggestions: false,
         feedback: false,
         mcp: true,
@@ -139,17 +112,8 @@ describe("collectEnvChecklist", () => {
   it("keeps installable requirements with an empty description", () => {
     const entries = collectEnvChecklist({
       auth: { github: false, google: false, vercel: false },
-      builtInTools: {
-        codeExecution: false,
-        deepResearch: false,
-        imageGeneration: false,
-        urlRetrieval: false,
-        videoGeneration: false,
-        webSearch: false,
-      },
       coreFeatures: {
         attachments: false,
-        documents: false,
         followupSuggestions: false,
         feedback: false,
         mcp: false,
@@ -179,17 +143,8 @@ it("includes every installed MCP requirement and preserves combined and alternat
   try {
     const entries = collectEnvChecklist({
       auth: { github: false, google: false, vercel: false },
-      builtInTools: {
-        codeExecution: false,
-        deepResearch: false,
-        imageGeneration: false,
-        urlRetrieval: false,
-        videoGeneration: false,
-        webSearch: false,
-      },
       coreFeatures: {
         attachments: false,
-        documents: false,
         followupSuggestions: false,
         feedback: false,
         mcp: true,

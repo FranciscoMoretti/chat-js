@@ -68,7 +68,6 @@ test(
         [
           nodePath.join(destination, "lib/ai/tool-renderer-registry.ts"),
           nodePath.join(destination, "components/eve/eve-tool-result.tsx"),
-          nodePath.join(destination, "components/eve/eve-document-body.tsx"),
         ],
         {
           ...parsed.options,

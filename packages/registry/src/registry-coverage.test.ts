@@ -159,25 +159,18 @@ test("every registry tool renderer ships a visual test", () => {
   expect(problems).toEqual([]);
 });
 
-test("research installs an explicit sandbox policy for every shipped subagent", () => {
+test("research execution ships native files without application service imports or isolated subagents", () => {
   const research = registry.items.find((item) => item.name === "deep-research");
   expect(research).toBeDefined();
-  const files = research?.files ?? [];
-  const agents = files.filter(
-    (file) =>
-      file.target?.includes("agent/subagents/") === true &&
-      file.target?.endsWith("/agent.ts")
-  );
-  expect(agents.length).toBeGreaterThan(0);
-  for (const agent of agents) {
-    const target = agent.target?.replace(/agent\.ts$/u, "sandbox.ts");
-    const sandbox = files.find((file) => file.target === target);
-    expect(
-      sandbox,
-      `${target} must be installed to prevent a default independent sandbox`
-    ).toBeDefined();
-    expect(
-      existsSync(path.join(registryDir, sandbox?.path ?? "missing-sandbox"))
-    ).toBe(true);
+  const files =
+    research?.files?.filter(
+      (file) => file.target?.startsWith("~/agent/") === true
+    ) ?? [];
+  expect(files.length).toBeGreaterThan(0);
+  for (const file of files) {
+    expect(file.target).not.toContain("/subagents/");
+    const source = readFileSync(path.join(registryDir, file.path), "utf-8");
+    expect(source).not.toMatch(/from ["']@\//u);
+    expect(source).not.toContain("attachConversationFile");
   }
 });

@@ -35,19 +35,15 @@ test("separates declared composition, native entry points and ordinary framework
   ]);
   expect(result.frameworkFiles).toEqual(["app/(chat)/project/helper.ts"]);
 });
-test("describes custom document and tool definitions without evaluating them", () => {
+test("describes custom tool definitions without evaluating them", () => {
   const result = installationActivation(
     {
       contractVersion: 1,
       id: "diagram",
       kind: "tool",
-      documentKind: "diagram",
       tools: [{ toolExport: "drawDiagram", definitionExport: "diagramTool" }],
     },
     []
-  );
-  expect(result.integrations).toContain(
-    "integrations/documents/definitions.ts"
   );
   expect(result.integrations).toContain("integrations/tools/definitions.ts");
 });

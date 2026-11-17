@@ -1,4 +1,6 @@
 import React from "react";
+import { Plugins } from "@/chatjs/core/ui/slots";
+import { videoViewerClient } from "../../plugins/video-viewer/src/client-plugin";
 import { expect, test } from "vitest";
 
 import { captureChatStory, flush } from "../_shared/visual";
@@ -61,10 +63,14 @@ test("generate-video renders every state in the chat", async () => {
       ),
     },
     {
-      label: "Generated",
+      label: "Generated without viewer",
       // Wait until the first frame is decodable, then pin to frame 0 so the
       // captured (and replayed) poster is deterministic.
       settle: async (section) => {
+        expect(section.querySelector('[aria-label="Open video"]')).toBeNull();
+        expect(
+          section.querySelector('[aria-label="Download video"]')
+        ).not.toBeNull();
         const video = section.querySelector("video");
         if (!video) {
           throw new Error("video player missing");
@@ -88,6 +94,54 @@ test("generate-video renders every state in the chat", async () => {
           }}
         />
       ),
+    },
+    {
+      label: "Generated with optional viewer",
+      ui: (
+        <Plugins plugins={[videoViewerClient]}>
+          <GenerateVideoRenderer
+            isReadonly
+            messageId="video-message"
+            tool={{
+              input: { prompt },
+              output: { prompt, videoUrl },
+              state: "output-available",
+              toolCallId: "video-with-viewer",
+            }}
+          />
+        </Plugins>
+      ),
+      settle: async (section) => {
+        expect(
+          section.querySelector('[aria-label="Open video"]')
+        ).not.toBeNull();
+        await expect
+          .poll(() => section.querySelector("video")?.readyState)
+          .toBeGreaterThanOrEqual(2);
+      },
+    },
+    {
+      label: "Video unavailable (download retained)",
+      ui: (
+        <GenerateVideoRenderer
+          isReadonly
+          messageId="video-message"
+          tool={{
+            input: { prompt },
+            output: { prompt, videoUrl: "data:video/mp4;base64,Zm9v" },
+            state: "output-available",
+            toolCallId: "video-unavailable",
+          }}
+        />
+      ),
+      settle: async (section) => {
+        await expect
+          .poll(() => section.textContent)
+          .toContain("Video unavailable");
+        expect(
+          section.querySelector('[aria-label="Download video"]')
+        ).not.toBeNull();
+      },
     },
   ]);
 });

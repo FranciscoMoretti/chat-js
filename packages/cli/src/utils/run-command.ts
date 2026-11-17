@@ -5,13 +5,14 @@ const EXIT_SUCCESS = 0;
 export const runCommand = async (
   command: string,
   args: readonly string[],
-  cwd: string
+  cwd: string,
+  output: "pipe" | "inherit" = "pipe"
 ): Promise<void> => {
   const { promise, resolve, reject }: PromiseWithResolvers<void> =
     Promise.withResolvers();
-  const child = spawn(command, args, { cwd, stdio: "pipe" });
+  const child = spawn(command, args, { cwd, stdio: output });
   const stderr: string[] = [];
-  child.stderr.on("data", (data) => {
+  child.stderr?.on("data", (data) => {
     stderr.push(String(data));
   });
   child.on("error", reject);

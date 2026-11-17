@@ -2,6 +2,8 @@ import { commandAppPreset, selectPreviewTools } from "./create-fixtures.mts";
 /* eslint-disable no-await-in-loop -- Preset changes must settle before the next interaction. */
 import { test, expect } from "@uiverify/playwright";
 import { checkCreateHistory } from "./create-history.mjs";
+import { encodeAppPreset } from "../../../packages/registry/app-preset";
+import { installationSelectionSchema } from "../../../packages/registry/installation";
 import {
   DEFAULT_PRESET_CONFIG,
   encodePreset,
@@ -71,7 +73,7 @@ for (const base of ["base"] as const) {
       );
       await selectPreviewTools(page);
       await expect(
-        page.getByRole("button", { name: "Show all sources", exact: true })
+        page.getByText("Launch research", { exact: true })
       ).toBeVisible();
       await page.goto(
         `/create/preview?item=preview-02&base=${base}&preset=${preset}`
@@ -140,7 +142,15 @@ test("unsupported library links offer a Base UI recovery without losing selectio
   uiVerify,
 }) => {
   uiVerify.disableAutoSnapshot();
-  await page.goto("/create?base=aria&preset=b27I2r8C&uploads=true");
+  const selection = installationSelectionSchema.parse({
+    gateway: "vercel",
+    storage: { source: "vercel-blob" },
+    sandbox: "vercel",
+    plugins: ["attachment-uploads"],
+  });
+  await page.goto(
+    `/create?base=aria&preset=b27I2r8C&app=${encodeAppPreset(selection)}`
+  );
   await expect(
     page
       .getByRole("alert")
@@ -158,8 +168,9 @@ test("unsupported library links offer a Base UI recovery without losing selectio
   await expect(page.getByTestId("create-command")).toContainText(
     "--preset b27I2r8C"
   );
-  expect(
-    commandAppPreset(await page.getByTestId("create-command").textContent())
-      .sandbox
-  ).toBe("vercel");
+  const recipe = commandAppPreset(
+    await page.getByTestId("create-command").textContent()
+  );
+  expect(recipe.sandbox).toBe("vercel");
+  expect(recipe.plugins).toContain("attachment-uploads");
 });

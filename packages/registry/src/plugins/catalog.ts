@@ -1,3 +1,6 @@
+import { spreadsheetViewerItem } from "./spreadsheet-viewer/manifest";
+import { videoViewerItem } from "./video-viewer/manifest";
+import { imageViewerItem } from "./image-viewer/manifest";
 import { guestChatItem } from "./guest-chat/manifest";
 import { desktopItem } from "./desktop/manifest";
 import { creditsItem } from "./credits/manifest";
@@ -10,9 +13,11 @@ import { feedbackItem } from "./feedback/manifest";
 import { projectsItem } from "./projects/manifest";
 import { mcpItem } from "./mcp/manifest";
 import { attachmentUploadsItem } from "./attachment-uploads/manifest";
-import { observabilityItems } from "./observability";
 
 export const pluginItems = [
+  imageViewerItem,
+  spreadsheetViewerItem,
+  videoViewerItem,
   projectsItem,
   feedbackItem,
   followupSuggestionsItem,
@@ -25,5 +30,4 @@ export const pluginItems = [
   sharingItem,
   mcpItem,
   attachmentUploadsItem,
-  ...observabilityItems,
 ];

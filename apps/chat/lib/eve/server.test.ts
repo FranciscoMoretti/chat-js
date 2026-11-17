@@ -6,11 +6,11 @@ const URL_ARGUMENT = 0;
 const INIT_ARGUMENT = 1;
 
 const mocks = vi.hoisted(() => ({
+  oidc: vi.fn(() => "invocation-token"),
   env: {
     EVE_GATEWAY_SECRET: "eve-secret",
     EVE_INTERNAL_ORIGIN: "https://preview.example.com",
     VERCEL: "",
-    VERCEL_AUTOMATION_BYPASS_SECRET: "deployment-secret",
     VERCEL_BRANCH_URL: "preview.example.com",
     VERCEL_ENV: "",
     VERCEL_URL: "deployment.example.com",
@@ -18,8 +18,10 @@ const mocks = vi.hoisted(() => ({
   },
 }));
 vi.mock("@/lib/env", () => ({ env: mocks.env }));
+vi.mock("@vercel/oidc", () => ({ getVercelOidcTokenSync: mocks.oidc }));
 
 beforeEach(() => {
+  mocks.oidc.mockReset().mockReturnValue("invocation-token");
   mocks.env.VERCEL = "";
   mocks.env.VERCEL_ENV = "";
   mocks.env.WORKFLOW_POSTGRES_URL = "postgres://localhost/test";
@@ -29,17 +31,21 @@ afterEach(() => vi.unstubAllGlobals());
 
 describe("EVE deployment authentication", () => {
   it("authenticates internal requests to this project's protected preview", async () => {
+    mocks.env.VERCEL = "1";
     const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response());
     vi.stubGlobal("fetch", fetcher);
     await eveRequest("owner", "/eve/chat/v1/operation/operation");
     const headers = new Headers(
       (fetcher.mock.calls[FIRST_CALL][INIT_ARGUMENT] ?? {}).headers
     );
-    expect(headers.get("x-vercel-protection-bypass")).toBe("deployment-secret");
+    expect(headers.get("x-vercel-trusted-oidc-idp-token")).toBe(
+      "invocation-token"
+    );
     expect(headers.get("authorization")).toBe("Bearer eve-secret");
     expect(headers.get("x-chatjs-owner")).toBe("owner");
   });
   it("does not send the project deployment credential to a separate worker", async () => {
+    mocks.env.VERCEL = "1";
     mocks.env.EVE_INTERNAL_ORIGIN = "https://worker.example.com";
     const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response());
     vi.stubGlobal("fetch", fetcher);
@@ -47,7 +53,27 @@ describe("EVE deployment authentication", () => {
     const headers = new Headers(
       (fetcher.mock.calls[FIRST_CALL][INIT_ARGUMENT] ?? {}).headers
     );
-    expect(headers.has("x-vercel-protection-bypass")).toBe(false);
+    expect(headers.has("x-vercel-trusted-oidc-idp-token")).toBe(false);
+    expect(mocks.oidc).not.toHaveBeenCalled();
+  });
+  it("reads a fresh invocation identity on each request", async () => {
+    mocks.env.VERCEL = "1";
+    mocks.oidc.mockReturnValueOnce("first").mockReturnValueOnce("second");
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response());
+    vi.stubGlobal("fetch", fetcher);
+    await eveRequest("owner", "/eve/chat/v1/health");
+    await eveRequest("owner", "/eve/chat/v1/health");
+    expect(
+      fetcher.mock.calls.map(([, init]) =>
+        new Headers(init?.headers).get("x-vercel-trusted-oidc-idp-token")
+      )
+    ).toEqual(["first", "second"]);
+  });
+  it("keeps local requests independent of Vercel identity", async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response());
+    vi.stubGlobal("fetch", fetcher);
+    await eveRequest("owner", "/eve/chat/v1/health");
+    expect(mocks.oidc).not.toHaveBeenCalled();
   });
 });
 

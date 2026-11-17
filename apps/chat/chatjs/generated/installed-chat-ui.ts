@@ -4,11 +4,14 @@ import { attachmentUploadsClient as plugin0 } from "@/chatjs/plugins/attachment-
 import { creditsClient as plugin1 } from "@/chatjs/plugins/credits/client-plugin";
 import { feedbackClient as plugin2 } from "@/chatjs/plugins/feedback/client-plugin";
 import { followupSuggestionsClient as plugin3 } from "@/chatjs/plugins/followup-suggestions/client-plugin";
-import { mcpClient as plugin4 } from "@/chatjs/plugins/mcp/client-plugin";
-import { modelPreferencesClient as plugin5 } from "@/chatjs/plugins/model-preferences/client-plugin";
-import { projectsClient as plugin6 } from "@/chatjs/plugins/projects/client-plugin";
-import { searchClient as plugin7 } from "@/chatjs/plugins/search/client-plugin";
-import { sharingClient as plugin8 } from "@/chatjs/plugins/sharing/client-plugin";
+import { imageViewerClient as plugin4 } from "@/chatjs/plugins/image-viewer/client-plugin";
+import { mcpClient as plugin5 } from "@/chatjs/plugins/mcp/client-plugin";
+import { modelPreferencesClient as plugin6 } from "@/chatjs/plugins/model-preferences/client-plugin";
+import { projectsClient as plugin7 } from "@/chatjs/plugins/projects/client-plugin";
+import { searchClient as plugin8 } from "@/chatjs/plugins/search/client-plugin";
+import { sharingClient as plugin9 } from "@/chatjs/plugins/sharing/client-plugin";
+import { spreadsheetViewerClient as plugin10 } from "@/chatjs/plugins/spreadsheet-viewer/client-plugin";
+import { videoViewerClient as plugin11 } from "@/chatjs/plugins/video-viewer/client-plugin";
 import type { UiPlugin } from "@/chatjs/core/ui/slots";
 export const installedChatPlugins: readonly UiPlugin[] = [
   plugin0,
@@ -20,4 +23,7 @@ export const installedChatPlugins: readonly UiPlugin[] = [
   plugin6,
   plugin7,
   plugin8,
+  plugin9,
+  plugin10,
+  plugin11,
 ];

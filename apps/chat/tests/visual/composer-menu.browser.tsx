@@ -117,15 +117,9 @@ vi.mock("@/integrations/tools/catalog", () => ({
   installedToolNames: {
     has: (name: string) =>
       state.featuresEnabled &&
-      (name === "webSearch"
+      (name === "deepResearch"
         ? !state.removedTool
-        : [
-            "createTextDocument",
-            "editTextDocument",
-            "deepResearch",
-            "generateImage",
-            "generateVideo",
-          ].includes(name)),
+        : ["generateImage", "generateVideo"].includes(name)),
   },
 }));
 
@@ -178,11 +172,11 @@ vi.mock("@/integrations/tools/composer", async (importOriginal) => {
   return {
     composerTools: {
       ...actual.composerTools,
-      get webSearch(): (typeof composerTools)["webSearch"] | undefined {
+      get deepResearch(): (typeof composerTools)["deepResearch"] | undefined {
         if (state.removedTool || state.missingMetadata) {
           return undefined;
         }
-        return actual.composerTools.webSearch;
+        return actual.composerTools.deepResearch;
       },
     },
   };
@@ -325,31 +319,33 @@ test("one ordered menu selects and clears tools, attaches files, and toggles con
       )
       .toEqual([
         "Attach files",
-        "Canvas",
-        "Web Search",
         "Deep Research",
         "Create an image",
         "Create a video",
         "Connectors",
       ]);
     await act(async () => {
-      await page.getByRole("menuitemcheckbox", { name: /Web Search/u }).click();
+      await page
+        .getByRole("menuitemcheckbox", { name: /Deep Research/u })
+        .click();
     });
     await expect
-      .element(page.getByRole("button", { name: "Clear Search tool" }))
-      .toHaveTextContent("Search");
+      .element(page.getByRole("button", { name: "Clear Research tool" }))
+      .toHaveTextContent("Research");
     await act(async () => {
       await page.getByRole("button", { name: "Composer options" }).click();
     });
     await expect
-      .element(page.getByRole("menuitemcheckbox", { name: /Web Search/u }))
+      .element(page.getByRole("menuitemcheckbox", { name: /Deep Research/u }))
       .toBeChecked();
     await takeSnapshot("composer-selected-tool");
     await page.screenshot({
       path: "__screenshots__/composer-selected-tool.png",
     });
     await act(async () => {
-      await page.getByRole("menuitemcheckbox", { name: /Web Search/u }).click();
+      await page
+        .getByRole("menuitemcheckbox", { name: /Deep Research/u })
+        .click();
     });
     await expect
       .element(page.getByRole("button", { name: "Composer options" }))
@@ -532,8 +528,6 @@ test("custom ordering and omitted MCP need no placeholder", async () => {
         "Create a video",
         "Create an image",
         "Deep Research",
-        "Web Search",
-        "Canvas",
       ]);
     await takeSnapshot("composer-custom-order-without-mcp");
     await act(async () => {
@@ -575,7 +569,7 @@ for (const status of ["loading", "error", "empty"] as const) {
   });
 }
 
-for (const selected of ["webSearch", "editTextDocument"] as const) {
+for (const selected of ["deepResearch", "generateVideo"] as const) {
   test(`can clear ${selected} after signing out and switching to a model without tools`, async () => {
     state.authenticated = false;
     state.toolCall = false;
@@ -589,11 +583,6 @@ for (const selected of ["webSearch", "editTextDocument"] as const) {
           page.getByRole("menuitemcheckbox", { name: "Create an image" })
         )
         .toHaveAttribute("aria-disabled", "true");
-      if (selected === "editTextDocument") {
-        await expect
-          .element(page.getByRole("menuitemcheckbox", { name: /^Canvas/u }))
-          .toBeChecked();
-      }
       await expect
         .element(
           page.getByRole("menuitemcheckbox", { name: /Create an image/u })
@@ -620,11 +609,13 @@ test("missing catalog capability metadata does not block tool selection", async 
       await page.getByRole("button", { name: "Composer options" }).click();
     });
     await act(async () => {
-      await page.getByRole("menuitemcheckbox", { name: /Web Search/u }).click();
+      await page
+        .getByRole("menuitemcheckbox", { name: /Deep Research/u })
+        .click();
     });
     await expect
-      .element(page.getByRole("button", { name: "Clear Search tool" }))
-      .toHaveTextContent("Search");
+      .element(page.getByRole("button", { name: "Clear Research tool" }))
+      .toHaveTextContent("Research");
   } finally {
     await cleanup();
   }
@@ -663,7 +654,7 @@ test("no available controls hides the menu but still allows clearing a restored 
   } finally {
     await cleanup();
   }
-  const selectedCleanup = await mount(false, "webSearch");
+  const selectedCleanup = await mount(false, "deepResearch");
   try {
     await act(async () => {
       await page.getByRole("button", { name: "Composer options" }).click();
@@ -688,22 +679,22 @@ for (const mobile of [false, true]) {
   test(`active pill clears selection without opening the menu (${mobile ? "mobile" : "desktop"})`, async () => {
     state.mobile = mobile;
     composerControls.reverse();
-    const cleanup = await mount(false, "webSearch");
+    const cleanup = await mount(false, "deepResearch");
     try {
       await expect
         .element(page.getByRole("button", { name: "Composer options" }))
         .toHaveTextContent("Add");
       await expect
-        .element(page.getByRole("button", { name: "Clear Search tool" }))
+        .element(page.getByRole("button", { name: "Clear Research tool" }))
         .toBeVisible();
       await takeSnapshot(
         `composer-active-pill-${mobile ? "mobile" : "desktop"}`
       );
       await act(async () => {
-        await page.getByRole("button", { name: "Clear Search tool" }).click();
+        await page.getByRole("button", { name: "Clear Research tool" }).click();
       });
       await expect
-        .element(page.getByRole("button", { name: "Clear Search tool" }))
+        .element(page.getByRole("button", { name: "Clear Research tool" }))
         .not.toBeInTheDocument();
       await expect.element(page.getByRole("menu")).not.toBeInTheDocument();
     } finally {
@@ -714,7 +705,7 @@ for (const mobile of [false, true]) {
 
 test("removed tool keeps a clearable unavailable pill", async () => {
   state.removedTool = true;
-  const cleanup = await mount(false, "webSearch");
+  const cleanup = await mount(false, "deepResearch");
   try {
     await expect
       .element(page.getByRole("button", { name: "Clear unavailable tool" }))
@@ -735,7 +726,7 @@ test("removed tool keeps a clearable unavailable pill", async () => {
 
 test("unavailable restored tool blocks submission until cleared", async () => {
   state.removedTool = true;
-  const cleanup = await mount(false, "webSearch", true);
+  const cleanup = await mount(false, "deepResearch", true);
   try {
     await expect
       .element(page.getByRole("button", { exact: true, name: "Send" }))
@@ -771,10 +762,10 @@ test("unavailable restored tool blocks submission until cleared", async () => {
 
 test("installed tool without display metadata remains selectable and can send", async () => {
   state.missingMetadata = true;
-  const cleanup = await mount(false, "webSearch", true);
+  const cleanup = await mount(false, "deepResearch", true);
   try {
     await expect
-      .element(page.getByRole("button", { name: "Clear webSearch tool" }))
+      .element(page.getByRole("button", { name: "Clear deepResearch tool" }))
       .toBeVisible();
     await expect
       .element(page.getByRole("button", { exact: true, name: "Send" }))
@@ -788,7 +779,10 @@ test("installed tool without display metadata remains selectable and can send", 
     });
     await expect
       .element(
-        page.getByRole("menuitemcheckbox", { exact: true, name: "webSearch" })
+        page.getByRole("menuitemcheckbox", {
+          exact: true,
+          name: "deepResearch",
+        })
       )
       .toBeChecked();
     await takeSnapshot("composer-missing-display-metadata");

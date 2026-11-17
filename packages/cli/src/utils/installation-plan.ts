@@ -1,7 +1,7 @@
-import { defaultToolProviders } from "../../../registry/installation-catalog";
+import { resolveItemPayload } from "#cli/registry/resolved-items";
 import { assertCurrentInstallationLayout } from "./installation-layout";
 import { readInstalledPlugins } from "./installed-plugins";
-import { sandboxDefinitionSchema } from "@chat-js/sandboxes/definition";
+import { sandboxDefinitionSchema } from "../../../registry/sandbox-definition";
 import type {
   PluginDefinition,
   ToolDefinition,
@@ -23,7 +23,6 @@ import {
 } from "../../../registry/metadata";
 import {
   registryMetadataKind,
-  validateCodeExecutionRequirements,
   validateProviderRequirements,
   validateRequestedKind,
 } from "./installation-requirements";
@@ -45,7 +44,7 @@ const EMPTY_DEPENDENCY_COUNT = 0;
  * Resolve the complete target installation before any source files are written.
  * @param {string} cwd Project directory used for provider, plugin and tool preflight.
  * @param {ReadonlyNative<InstallationSelection>} input Requested registry selections validated before dependency resolution.
- * @param {{ readonly fresh?: boolean; readonly replace?: boolean; readonly documents?: boolean; }} options Whether this is a fresh installation and replacements are permitted.
+ * @param {{ readonly fresh?: boolean; readonly replace?: boolean; }} options Whether this is a fresh installation and replacements are permitted.
  * @returns {ReturnType<typeof planInstallation>} Resolved items, validated selections, target changes and registry sources.
  */
 export const planInstallation = async (
@@ -54,7 +53,6 @@ export const planInstallation = async (
   options: {
     readonly fresh?: boolean;
     readonly replace?: boolean;
-    readonly documents?: boolean;
   } = {}
 ) => {
   if (options.fresh !== true) {
@@ -68,7 +66,6 @@ export const planInstallation = async (
   const plugins = new Map<string, PluginDefinition>();
   const providers = new Map<string, string>();
   let gateway: GatewayDefinition | undefined;
-  let sandboxProviderSource: string | undefined;
   const selectProvider = (definition: {
     readonly kind: string;
     readonly id: string;
@@ -112,7 +109,6 @@ export const planInstallation = async (
       }
       case "tool": {
         const definition = toolDefinitionSchema.parse(metadata);
-        validateCodeExecutionRequirements(definition);
         const previous = expected.get(definition.id);
         if (
           previous &&
@@ -132,9 +128,6 @@ export const planInstallation = async (
       }
       case "sandbox": {
         selectProvider(sandboxDefinitionSchema.parse(metadata));
-        sandboxProviderSource = item.files?.find(
-          (file) => file.target === "~/chatjs/providers/sandbox/provider.ts"
-        )?.content;
         break;
       }
       case "storage": {
@@ -163,9 +156,9 @@ export const planInstallation = async (
     ...(typeof selection.gateway === "string" && selection.gateway !== ""
       ? [visit(itemAddress(selection.gateway, "gateway"), "gateway")]
       : []),
-    ...(typeof selection.sandbox === "string" && selection.sandbox !== ""
-      ? [visit(itemAddress(selection.sandbox, "sandbox"), "sandbox")]
-      : []),
+    ...(selection.sandbox === undefined
+      ? []
+      : [visit(itemAddress(selection.sandbox, "sandbox"), "sandbox")]),
     ...(selection.storage
       ? [visit(itemAddress(selection.storage.source, "storage"), "storage")]
       : []),
@@ -195,16 +188,15 @@ export const planInstallation = async (
       const next = [...expected.values()].find(
         (item: ReadonlyNative<ToolDefinition>) =>
           item.id !== previous.id &&
-          ((typeof item.slot === "string" && item.slot === previous.slot) ||
-            (typeof item.documentKind === "string" &&
-              item.documentKind === previous.documentKind))
+          typeof item.slot === "string" &&
+          item.slot === previous.slot
       );
       if (!next) {
         return [];
       }
       if (!(options.fresh === true) && !(options.replace === true)) {
         throw new Error(
-          `Only one ${previous.slot ?? previous.documentKind} provider can be installed. Replace ${previous.id} with ${next.id} explicitly using --replace.`
+          `Only one ${previous.slot} provider can be installed. Replace ${previous.id} with ${next.id} explicitly using --replace.`
         );
       }
       return [{ next, previous }];
@@ -229,32 +221,6 @@ export const planInstallation = async (
       ...expected.entries(),
     ]).values(),
   ];
-  // ChatJS's two selectable execution dependencies have concrete default providers.
-  for (const [slot, provider] of Object.entries(defaultToolProviders)) {
-    const definitions = target();
-    if (
-      definitions.some((item: ReadonlyNative<ToolDefinition>): boolean =>
-        item.requiresTools.includes(slot)
-      ) &&
-      !definitions.some(
-        (item: ReadonlyNative<ToolDefinition>): boolean => item.slot === slot
-      )
-    ) {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- visit mutates the expected dependency graph; resolve the first default provider before target() decides whether the next slot is still missing.
-      await visit(itemAddress(provider, "tool"));
-    }
-  }
-  if (
-    options.documents === false &&
-    target().some(
-      (tool: ReadonlyNative<ToolDefinition>) =>
-        typeof tool.documentKind === "string"
-    )
-  ) {
-    throw new Error(
-      "The selected tools require documents. Omit --no-documents or omit document-dependent tools."
-    );
-  }
   validateToolInstallation(target());
   const installedPlugins =
     options.fresh === true
@@ -284,7 +250,6 @@ export const planInstallation = async (
     gateway,
     storage: providers.get("storage"),
     sandbox: providers.get("sandbox"),
-    sandboxProviderSource,
     tools: target(),
   });
   return {
@@ -308,5 +273,10 @@ export const planInstallation = async (
     replacements,
     selection,
     sources: [...items.keys()],
+    resolvedItems: await Promise.all(
+      [...items].map(async ([source, item]) =>
+        resolveItemPayload(source, await item)
+      )
+    ),
   };
 };

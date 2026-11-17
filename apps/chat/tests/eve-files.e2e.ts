@@ -25,7 +25,7 @@ import {
   registerEveStoredFile,
   reserveEveGeneratedFile,
   reserveEveUpload,
-  writeEveGeneratedFile,
+  withEveConversationFile,
   writeEveUpload,
 } from "../lib/db/eve-files";
 import { prepareEveOrphanedFilePurge } from "../lib/db/eve-orphaned-files";
@@ -34,6 +34,10 @@ import {
   createEveConversation,
 } from "../lib/db/eve-queries";
 import { env } from "../lib/env";
+import { cleanupRetiredEveWorkspaces } from "../lib/db/eve-workspace-deletion";
+import { readCompletedEveCopyTranscript } from "../lib/eve/completed-copy-source";
+import { eveCopyResources } from "../lib/eve/copy-transcript";
+import { reconcileEveWorkspaceTurn } from "../lib/eve/reconcile-workspace-turn";
 import { insertEveConversationFixtures } from "./eve-conversation-fixture";
 
 if (!["localhost", "127.0.0.1"].includes(new URL(env.DATABASE_URL).hostname)) {
@@ -129,7 +133,7 @@ test("references reject foreign files and become immutable behind the deletion f
   );
 });
 
-test("fork reservation retains the source file references before dispatch", async () => {
+test("fork reservation retains only transcript file references before dispatch", async () => {
   const root = await createEveConversation(
     owner,
     crypto.randomUUID(),
@@ -137,8 +141,30 @@ test("fork reservation retains the source file references before dispatch", asyn
     createEveTestSession
   );
   const key = crypto.randomUUID().replaceAll("-", "").slice(0, 24);
+  const unrelated = crypto.randomUUID().replaceAll("-", "").slice(0, 24);
   await registerEveStoredFile(owner, key);
-  await referenceEveFiles(owner, root.id, [key]);
+  await registerEveStoredFile(owner, unrelated);
+  await referenceEveFiles(owner, root.id, [key, unrelated]);
+  const seed = {
+    messages: [
+      {
+        role: "user" as const,
+        parts: [
+          {
+            type: "file" as const,
+            url: `https://chatjs.test/api/files/${key}`,
+            mediaType: "text/csv",
+            filename: "budget.csv",
+          },
+        ],
+      },
+    ],
+  };
+  vi.mocked(readCompletedEveCopyTranscript).mockResolvedValueOnce({
+    seed,
+    resources: eveCopyResources(seed),
+    projectionHash: "file-transcript-fixture",
+  });
   let dispatched = false;
   const fork = await createEveConversation(
     owner,
@@ -192,6 +218,34 @@ test("attachment creation commits references before dispatch with a single appli
   }
 });
 
+test("conversation file access rejects another conversation and another owner before touching storage", async () => {
+  const first = await createEveConversation(
+    owner,
+    crypto.randomUUID(),
+    "first",
+    createEveTestSession
+  );
+  const second = await createEveConversation(
+    owner,
+    crypto.randomUUID(),
+    "second",
+    createEveTestSession
+  );
+  const key = crypto.randomUUID().replaceAll("-", "").slice(0, 24);
+  await reserveEveGeneratedFile(owner, first.id, key);
+  const access = vi.fn(async () => await Promise.resolve("bytes"));
+  await expect(
+    withEveConversationFile(owner, second.id, key, access)
+  ).rejects.toThrow("unavailable");
+  await expect(
+    withEveConversationFile(stranger, first.id, key, access)
+  ).rejects.toThrow("unavailable");
+  expect(access).not.toHaveBeenCalled();
+  await expect(
+    withEveConversationFile(owner, first.id, key, access)
+  ).resolves.toBe("bytes");
+});
+
 test("generated file reservations survive storage failure and cannot write after deletion begins", async () => {
   const conversation = await createEveConversation(
     owner,
@@ -202,7 +256,7 @@ test("generated file reservations survive storage failure and cannot write after
   const key = crypto.randomUUID().replaceAll("-", "").slice(0, 24);
   await reserveEveGeneratedFile(owner, conversation.id, key);
   await expect(
-    writeEveGeneratedFile(
+    withEveConversationFile(
       owner,
       conversation.id,
       key,
@@ -220,7 +274,7 @@ test("generated file reservations survive storage failure and cannot write after
   await beginEveConversationDeletion(owner, conversation.id);
   const write = vi.fn<() => Promise<void>>().mockResolvedValue();
   await expect(
-    writeEveGeneratedFile(owner, conversation.id, key, write)
+    withEveConversationFile(owner, conversation.id, key, write)
   ).rejects.toThrow("unavailable");
   expect(write).not.toHaveBeenCalled();
   await expect(
@@ -239,7 +293,7 @@ test("deletion waits for an admitted generated-file write before fencing the fam
   await reserveEveGeneratedFile(owner, conversation.id, key);
   const entered: PromiseWithResolvers<void> = Promise.withResolvers();
   const release: PromiseWithResolvers<void> = Promise.withResolvers();
-  const writing = writeEveGeneratedFile(
+  const writing = withEveConversationFile(
     owner,
     conversation.id,
     key,
@@ -386,6 +440,11 @@ test("concurrent family cleanup cannot abandon a shared file", async () => {
     releaseEveFamilyFileReferences(owner, remaining)
   ).rejects.toThrow("cleanup is incomplete");
   await completeEveFilePurge(owner, [key]);
+  await expect(
+    completeEveConversationDeletion(owner, remaining)
+  ).rejects.toThrow("Workspace cleanup is incomplete");
+  await reconcileEveWorkspaceTurn(owner, references[0].conversationId);
+  await cleanupRetiredEveWorkspaces(owner, remaining);
   await expect(
     completeEveConversationDeletion(owner, remaining)
   ).rejects.toThrow("content cleanup is incomplete");

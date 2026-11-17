@@ -12,6 +12,7 @@ import {
   AttachmentAction,
   AttachmentActions,
 } from "@/components/ui/attachment";
+import { ArtifactViewerActions } from "@/components/artifact-actions";
 import { AttachmentCardView } from "./attachment-card-view";
 import { Spinner } from "@/components/ui/spinner";
 import { getFileImageProps } from "@/lib/file-url";
@@ -72,16 +73,21 @@ export const AttachmentCard = ({
       variant={variant}
       state={isUploading ? "uploading" : "done"}
       actions={
-        onRemove &&
-        !isUploading && (
+        !isUploading &&
+        url !== "" && (
           <AttachmentActions>
-            <AttachmentAction
-              aria-label="Remove attachment"
-              onClick={onRemove}
-              type="button"
-            >
-              <XIcon />
-            </AttachmentAction>
+            <ArtifactViewerActions
+              artifact={{ name, url, mediaType: contentType }}
+            />
+            {onRemove && (
+              <AttachmentAction
+                aria-label="Remove attachment"
+                onClick={onRemove}
+                type="button"
+              >
+                <XIcon />
+              </AttachmentAction>
+            )}
           </AttachmentActions>
         )
       }

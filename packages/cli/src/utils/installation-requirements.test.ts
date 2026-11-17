@@ -211,49 +211,26 @@ test("add validates installed provider literals without executing user source", 
   );
 });
 
-test("uploads reject absent and nonpersistent sandboxes, accept compatible external providers", async () => {
-  const cwd = await mkdtemp(path.join(tmpdir(), "chatjs-upload-sandbox-"));
+test("code execution rejects the simulated shell but supports EVE automatic selection", async () => {
+  const cwd = await mkdtemp(path.join(tmpdir(), "native-sandbox-"));
   roots.push(cwd);
   const target = {
-    plugins: [{ id: "attachment-uploads" }],
+    tools: [{ id: "code-execution", requiresNativeProcesses: true as const }],
+    plugins: [],
+  };
+  await validateProviderRequirements(cwd, target);
+  await rejects(
+    validateProviderRequirements(cwd, { ...target, sandbox: "just-bash" }),
+    /native Python/u
+  );
+});
+
+test("uploads require storage but use the native agent sandbox without an app provider", async () => {
+  const cwd = await mkdtemp(path.join(tmpdir(), "chatjs-native-upload-"));
+  roots.push(cwd);
+  await validateProviderRequirements(cwd, {
+    plugins: [{ id: "attachment-uploads", requiresStorage: true }],
     storage: "s3",
     tools: [],
-  };
-  await rejects(
-    validateProviderRequirements(cwd, target),
-    /persistent sandbox/u
-  );
-  await rejects(
-    validateProviderRequirements(cwd, {
-      ...target,
-      sandbox: "daytona",
-      sandboxProviderSource: "export const supportsPersistentSandbox = false;",
-    }),
-    /persistent sandbox/u
-  );
-  await validateProviderRequirements(cwd, {
-    ...target,
-    sandbox: "external",
-    sandboxProviderSource:
-      'throw new Error("must not execute"); export const supportsPersistentSandbox = true;',
   });
-  await mkdir(path.join(cwd, "chatjs/providers/sandbox"), { recursive: true });
-  await writeFile(
-    path.join(cwd, "chatjs/providers/sandbox/options.ts"),
-    'export const sandboxId = "external";'
-  );
-  await writeFile(
-    path.join(cwd, "chatjs/providers/sandbox/provider.ts"),
-    "export const supportsPersistentSandbox = true;"
-  );
-  await validateProviderRequirements(cwd, target);
-  // A replacement must satisfy existing uploads even when the old provider does.
-  await rejects(
-    validateProviderRequirements(cwd, {
-      ...target,
-      sandbox: "daytona",
-      sandboxProviderSource: "export const supportsPersistentSandbox = false;",
-    }),
-    /persistent sandbox/u
-  );
 });

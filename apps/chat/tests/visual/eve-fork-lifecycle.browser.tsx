@@ -96,7 +96,7 @@ const userMessage = (
   parts: readonly ReadonlyEveMessagePart[] = []
 ): EveMessage => ({
   id: "import:imported:0",
-  metadata: { custom: eveToolMetadata("webSearch") },
+  metadata: { custom: eveToolMetadata("deepResearch") },
   parts: [{ text: "Find the answer", type: "text" }, ...parts],
   role: "user" as const,
 });
@@ -176,7 +176,7 @@ describe("useEveFork", () => {
       expect(required(fork).modelSelection.value).toBe(
         "anthropic/claude-sonnet-4"
       );
-      expect(required(fork).selectedTool).toBe("webSearch");
+      expect(required(fork).selectedTool).toBe("deepResearch");
     } finally {
       act(() => {
         if (renderer) {
@@ -195,7 +195,7 @@ describe("useEveFork", () => {
         message: "Find the answer",
         modelIds: ["openai/gpt-4.1", "anthropic/claude-sonnet-4"],
         operationId: "11111111-1111-4111-8111-111111111112",
-        selectedTool: "webSearch",
+        selectedTool: "deepResearch",
       })
     );
     vi.stubGlobal("sessionStorage", pendingStorage);
@@ -220,7 +220,7 @@ describe("useEveFork", () => {
         "anthropic/claude-sonnet-4": 1,
         "openai/gpt-4.1": 1,
       });
-      expect(required(fork).selectedTool).toBe("webSearch");
+      expect(required(fork).selectedTool).toBe("deepResearch");
     } finally {
       act(() => {
         if (renderer) {
@@ -239,7 +239,7 @@ describe("useEveFork", () => {
         message: "Find the answer",
         modelId: "anthropic/claude-sonnet-4",
         operationId: "11111111-1111-4111-8111-111111111113",
-        selectedTool: "webSearch",
+        selectedTool: "deepResearch",
       })
     );
     vi.stubGlobal("sessionStorage", pendingStorage);
@@ -270,7 +270,7 @@ describe("useEveFork", () => {
       expect(required(fork).draft).toBe("Find the answer");
       expect(required(fork).editingBoundary).toBeUndefined();
       expect(required(fork).pending).toBeUndefined();
-      expect(required(fork).selectedTool).toBe("webSearch");
+      expect(required(fork).selectedTool).toBe("deepResearch");
     } finally {
       act(() => {
         if (renderer) {

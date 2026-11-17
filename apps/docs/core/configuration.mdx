@@ -11,7 +11,7 @@ ChatJS separates **installed source**, **runtime policy**, and **deployment infr
 | --- | --- | --- |
 | Core | App behavior such as conversations, authentication, and parallel responses | [Architecture](./architecture) |
 | Plugins | Optional app integrations such as Projects, Credits, and MCP | [Plugins](../plugins/overview) |
-| Tools | Model-facing operations such as search, execution, and document editing | [Tools](../tools/overview) |
+| Tools | Model-facing operations such as search, image generation, and file publication | [Tools](../tools/overview) |
 | Gateway | Inference and model discovery | [Models & Gateways](../gateways/overview) |
 | Storage | Files SDK adapter for durable files | [File Storage](../storage) |
 | Sandbox | Execution infrastructure and persistent EVE session files where supported | [Sandboxes](../deployment/sandboxes) |
@@ -20,7 +20,7 @@ Runtime settings configure the source you installed. They do not install missing
 
 ## Runtime configuration
 
-The generated `chat.config.ts` is parsed by `lib/config-schema.ts` and exported as `config` from `@/lib/config`. Use the installed gateway's discriminator and override only the settings you need. This example applies to a Vercel gateway installation with `deep-research` and `followup-suggestions` installed:
+The generated `chat.config.ts` is parsed by `lib/config-schema.ts` and exported as `config` from `@/lib/config`. Use the installed gateway's discriminator and override only the settings you need. This example applies to a Vercel gateway installation with `followup-suggestions` installed:
 
 ```typescript title="chat.config.ts"
 import type { ConfigInput } from "@/lib/config-schema";
@@ -39,14 +39,6 @@ const config = {
     gateway: "vercel",
     tools: {
       followupSuggestions: { enabled: true, default: "openai/gpt-5-nano" },
-      deepResearch: {
-        defaultModel: "google/gemini-2.5-flash-lite",
-        finalReportModel: "google/gemini-3-flash",
-        allowClarification: true,
-        maxResearcherIterations: 1,
-        maxConcurrentResearchUnits: 2,
-        maxSearchQueries: 2,
-      },
     },
   },
   features: { parallelResponses: true },
@@ -65,21 +57,18 @@ Model settings do not install their tools. Follow-up suggestions retain an `enab
 Run commands inside your generated app, using the CLI version appropriate to your installation:
 
 ```bash
-bunx chat-js@alpha add tavily-search deep-research
-bunx chat-js@alpha add code-documents saved-code-execution --sandbox-provider vercel
+bunx chat-js@alpha add deep-research
+bunx chat-js@alpha add attach-workspace-file spreadsheet-viewer --storage-provider vercel-blob
 bunx chat-js@alpha add attachment-uploads --storage-provider vercel-blob --sandbox-provider vercel
 bunx chat-js@alpha add mcp
 ```
 
 | Installation | Requirements |
 | --- | --- |
-| `tavily-search` or `firecrawl-search` | Selected provider's credentials. One `webSearch` provider serves chat and research. |
-| `deep-research` | Text documents, document reading and a search provider. Missing search defaults to Tavily. |
-| `saved-code-execution` | Code documents, document reading and a compatible `codeExecution` provider. Missing execution installs the built-in code-execution tool, which requires sandbox infrastructure. Select `--sandbox-provider` if none is installed. |
+| `deep-research` | Uses the parent agent’s model and available tools/connections. Returns a sandbox report path. Install `attach-workspace-file` separately for web downloads. |
 | `generate-image` / `generate-video` | Compatible gateway capability, a default media model and persistent storage. Only the built-in Vercel gateway declares video support. |
 | `attachment-uploads` | Persistent storage and a sandbox with persistent-file support. Configure limits separately under `attachments`. |
 | `mcp` | `MCP_ENCRYPTION_KEY`, including installations with no connectors yet. |
-| `vercel-analytics`, `vercel-speed-insights`, `langfuse` | Independently installed telemetry. Langfuse requires its keys. |
 
 Planning resolves transitive registry dependencies and validates the resulting selection before installation. Memory storage is appropriate only when no installed feature needs persistent files. An external adapter's metadata is a declaration, not proof of live provider behavior.
 
@@ -89,18 +78,16 @@ Gateway selection installs `chatjs/providers/gateway.ts` and its typed defaults.
 
 ```bash
 bunx chat-js@alpha add --gateway openai --replace
-bunx chat-js@alpha add firecrawl-search --replace
-bunx chat-js@alpha add tavily-search --replace
 ```
 
 Replacement requires `--replace`. Modified or untracked provider source requires review and explicit `--overwrite`. Keep a version-control checkpoint before replacing customized source. The CLI preserves runtime model overrides, so review their IDs for the selected gateway and run `bun run setup` and `bun run fetch:models` after supplying credentials. Registry addresses can select external providers too. The CLI removes unused dependency entries that its installation receipt owns, and refreshes its marked environment-example sections. It preserves pre-existing dependencies, user-changed versions, dependencies referenced by remaining source and environment entries outside those sections. ChatJS supports new installations rather than upgrades from older templates.
 
-Search replacement uses the same `webSearch` slot for direct search and research. Saved-code execution requires an executor export, in addition to a `codeExecution` tool. The built-in Vercel and Daytona adapters support code execution. Persistent session files require Vercel or a compatible external provider. Hosted lifecycle validation is separate from adapter selection. See [Self-hosted deployment](../deployment/self-hosted) for the infrastructure acceptance boundary.
+Configure [web search connections](../tools/web-search) through EVE. Code execution uses native EVE `bash` in the agent sandbox. EVE owns session files and lifecycle; ChatJS keeps authorization on application resources. See [Sandboxes](../deployment/sandboxes) for the native environment choices.
 
-A reproducible minimal scaffold omits document tools as well as optional integrations:
+A minimal scaffold can omit optional integrations:
 
 ```bash
-bunx chat-js@alpha create minimal-chat --yes --no-documents --no-mcp --no-attachments --no-electron
+bunx chat-js@alpha create minimal-chat --yes --no-mcp --no-attachments --no-electron
 ```
 
 ## Runtime policy and credentials

@@ -1,11 +1,9 @@
 import type { DynamicModelContext } from "eve";
 import { conversationOf } from "eve/client";
+import { emptySessionView, foldEvents } from "eve/events";
 import { beforeEach, expect, it, vi } from "vitest";
 
-import {
-  observeEveModelAccounting,
-  resolveAccountedEveModel,
-} from "./model-accounting";
+import { resolveAccountedEveModel } from "./model-accounting";
 
 const mocks = vi.hoisted(() => ({
   authorize: vi.fn(),
@@ -15,23 +13,6 @@ const mocks = vi.hoisted(() => ({
   register: vi.fn(),
   resolve: vi.fn(),
   scope: vi.fn(),
-}));
-vi.mock("eve/context", () => ({
-  defineState: <Value>(
-    _name: string,
-    initial: () => Value
-  ): {
-    get: () => Value;
-    update: (update: (current: Value) => Value) => void;
-  } => {
-    let value = initial();
-    return {
-      get: () => value,
-      update: (update) => {
-        value = update(value);
-      },
-    };
-  },
 }));
 vi.mock("../db/eve-model-ledger", () => ({
   eveModelLedger: {
@@ -72,6 +53,17 @@ const context: DynamicModelContext = {
     id: "root",
   },
 };
+const activeView = foldEvents(emptySessionView(), [
+  {
+    type: "turn.started",
+    meta: { at: "2026-11-02T00:00:00Z", position: { line: 1, index: 0 } },
+    data: {
+      turnId: "turn_1",
+      cause: { type: "delivery", deliveryId: "delivery" },
+      follows: null,
+    },
+  },
+]);
 const resolved = {
   model: {
     doGenerate: vi.fn(
@@ -99,20 +91,13 @@ const resolved = {
 beforeEach(() => {
   vi.resetAllMocks();
   mocks.resolve.mockResolvedValue(resolved);
-  observeEveModelAccounting(
-    { data: {}, type: "session.started" },
-    { id: "root" }
-  );
 });
 
-it("binds an active turn to its provider attempt", async () => {
-  observeEveModelAccounting(
-    { data: { turnId: "turn_1" }, type: "turn.started" },
-    { id: "root" }
-  );
+it("binds a resumed native turn without replaying ChatJS lifecycle hooks", async () => {
   const active = await resolveAccountedEveModel("selected", {
     ...context,
     turn: { id: "turn_1", status: "running", input: [] },
+    view: activeView,
   });
   await active.model.doGenerate({ prompt: [] });
   expect(mocks.begin).toHaveBeenCalledWith(
@@ -125,14 +110,6 @@ it("binds an active turn to its provider attempt", async () => {
 });
 
 it("puts manual compaction outside a closed turn in maintenance, never the upcoming turn", async () => {
-  observeEveModelAccounting(
-    { data: { turnId: "turn_1" }, type: "turn.started" },
-    { id: "root" }
-  );
-  observeEveModelAccounting(
-    { data: { turnId: "turn_1" }, type: "turn.settled" },
-    { id: "root" }
-  );
   const manual = await resolveAccountedEveModel("selected", {
     ...context,
     turn: { id: "turn_2", status: "running", input: [] },
@@ -145,10 +122,6 @@ it("puts manual compaction outside a closed turn in maintenance, never the upcom
 });
 
 it("registers child lineage before invoking the provider", async () => {
-  observeEveModelAccounting(
-    { data: { turnId: "turn_1" }, type: "turn.started" },
-    { id: "child", parent: { sessionId: "root", turn: { id: "turn_7" } } }
-  );
   mocks.child.mockResolvedValue({
     rootSessionId: "root",
     rootTurnId: "turn_7",
@@ -156,7 +129,17 @@ it("registers child lineage before invoking the provider", async () => {
   const child = await resolveAccountedEveModel("research", {
     ...context,
     turn: { id: "turn_1", status: "running", input: [] },
-    session: { ...context.session, id: "child" },
+    view: activeView,
+    session: {
+      ...context.session,
+      id: "child",
+      parent: {
+        sessionId: "root",
+        rootSessionId: "root",
+        callId: "call",
+        turn: { id: "turn_7", sequence: 7 },
+      },
+    },
   });
   await child.model.doGenerate({ prompt: [] });
   expect(mocks.register).toHaveBeenCalledWith(
@@ -171,11 +154,11 @@ it("registers child lineage before invoking the provider", async () => {
   );
 });
 
-it("fails closed before resolving a provider when the lifecycle or ownership binding is missing", async () => {
+it("fails closed before resolving a provider when owner identity or ownership is missing", async () => {
   await expect(
     resolveAccountedEveModel("selected", {
       ...context,
-      session: { ...context.session, id: "unbound" },
+      session: { ...context.session, auth: { current: null, initiator: null } },
     })
   ).rejects.toThrow("lifecycle");
   mocks.scope.mockRejectedValue(new Error("owner mismatch"));

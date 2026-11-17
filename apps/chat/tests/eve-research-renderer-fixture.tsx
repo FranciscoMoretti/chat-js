@@ -1,13 +1,11 @@
 import type { EveMessagePart } from "eve/client";
-import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
 import { EveToolResult } from "../components/eve/eve-tool-result";
-import { ArtifactProvider } from "../hooks/use-artifact";
 import { createToolResult } from "../lib/eve/tool-result";
 
 const common = {
-  input: {},
+  input: { request: "Research a launch plan" },
   callId: "research",
   name: "deepResearch",
   label: "deepResearch",
@@ -20,7 +18,7 @@ const parts: Extract<EveMessagePart, { type: "tool" }>[] = [
   { ...common, state: "requested" },
   {
     ...common,
-    output: createToolResult({ searches: [] }, 0, [
+    output: createToolResult({ format: "progress" }, 0, [
       {
         type: "started",
         title: "Research started",
@@ -46,13 +44,8 @@ const parts: Extract<EveMessagePart, { type: "tool" }>[] = [
     output: createToolResult(
       {
         format: "report",
-        status: "success",
-        result: "Saved",
-        documentId: "60dbe86a-b2c4-4d32-ae09-a00e90b84e99",
-        revisionId: "663ccf42-10c9-453f-b9da-ebf684a6da97",
+        path: "/workspace/research/example/report.md",
         title: "Research report",
-        kind: "text",
-        date: "2026-09-10",
       },
       0.5
     ),
@@ -77,14 +70,12 @@ const parts: Extract<EveMessagePart, { type: "tool" }>[] = [
 ];
 process.stdout.write(
   renderToStaticMarkup(
-    <ArtifactProvider>
-      <main className="mx-auto max-w-3xl space-y-6 p-6">
-        {parts.map((part) => (
-          <section key={JSON.stringify(part)}>
-            <EveToolResult isReadonly messageId="fixture" part={part} />
-          </section>
-        ))}
-      </main>
-    </ArtifactProvider>
+    <main className="mx-auto max-w-3xl space-y-6 p-6">
+      {parts.map((part) => (
+        <section key={JSON.stringify(part)}>
+          <EveToolResult isReadonly messageId="fixture" part={part} />
+        </section>
+      ))}
+    </main>
   )
 );

@@ -60,7 +60,7 @@ The CLI walks you through gateway, features, and auth choices, generates `chat.c
 - [Motion](https://motion.dev) - Animations
 - [t3-env](https://env.t3.gg) - Environment variables
 - [Pino](https://getpino.io) - Structured Logging
-- [Langfuse](https://langfuse.com) - LLM observability & analytics
+- EVE instrumentation - agent observability
 - [Vercel Analytics](https://vercel.com/analytics) - Web analytics
 - [Oxlint and Oxfmt](https://oxc.rs) - Code linting and formatting
 - [Ultracite](https://ultracite.ai) - Oxlint and Oxfmt presets for humans and AI

@@ -1,6 +1,3 @@
-import { readFile } from "node:fs/promises";
-import path from "node:path";
-
 import { expect, test } from "@playwright/test";
 import type { TestInfo } from "@playwright/test";
 import { z } from "zod";
@@ -10,39 +7,7 @@ import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
 
-test("compiled ChatJS tools exclude optional Eve defaults that bypass application policy", async () => {
-  const pointer = z
-    .object({ runtimeAppRoot: z.string() })
-    .parse(
-      JSON.parse(await readFile(".eve/dev-runtime/current.json", "utf-8"))
-    );
-  const manifest = z
-    .object({
-      dynamicTools: z.array(z.object({ slug: z.string() })),
-      tools: z.array(z.object({ name: z.string() })),
-    })
-    .parse(
-      JSON.parse(
-        await readFile(
-          path.join(
-            pointer.runtimeAppRoot,
-            ".eve/compile/compiled-agent-manifest.json"
-          ),
-          "utf-8"
-        )
-      )
-    );
-  expect(manifest.tools.map((tool) => tool.name).toSorted()).toEqual([
-    "deepResearch",
-  ]);
-  expect(manifest.dynamicTools.map((tool) => tool.slug).toSorted()).toEqual([
-    "connection_search",
-    "installed",
-    "mcp",
-  ]);
-});
-
-test("Canvas selection survives native history and edits while later turns reset to automatic", async ({
+test("Image tool selection survives native history and edits while later turns reset to automatic", async ({
   page,
 }, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
   await page.route("https://unpkg.com/react-scan/**", async (route) => {
@@ -51,10 +16,9 @@ test("Canvas selection survives native history and edits while later turns reset
   await page.goto("/api/dev-login");
   const { origin } = new URL(page.url());
   const intended = {
-    message:
-      'Use wordCount to count "one two three four", then create a text document titled "Tool selection fixture" containing "Four words". If wordCount is unavailable, create the document directly. Finish briefly.',
+    message: "Describe a simple illustration of a fox. Reply in text only.",
     modelId: "google/gemini-2.5-flash",
-    selectedTool: "createTextDocument",
+    selectedTool: "generateImage",
   };
   await page.request.post("/api/chat-model", {
     data: { model: intended.modelId },
@@ -64,7 +28,7 @@ test("Canvas selection survives native history and edits while later turns reset
     .getByRole("button", { exact: true, name: "Composer options" })
     .click();
   await page
-    .getByRole("menuitemcheckbox", { exact: true, name: "Canvas" })
+    .getByRole("menuitemcheckbox", { exact: true, name: "Create an image" })
     .click();
   await page
     .getByRole("textbox", { exact: true, name: "Message" })
@@ -105,17 +69,12 @@ test("Canvas selection survives native history and edits while later turns reset
   await expect(page).toHaveURL(new RegExp(`/chat/${binding.id}$`, "u"));
   await expect(
     page.getByRole("button", { exact: true, name: "Composer options" })
-  ).not.toContainText("Canvas");
-  await expect(
-    page.getByRole("button", {
-      exact: true,
-      name: 'Created "Tool selection fixture"',
-    })
-  ).toBeVisible({ timeout: 90_000 });
-  await expect(page.getByText("Ready", { exact: true })).toBeVisible();
-  await expect(page.getByText("Words", { exact: true })).toHaveCount(0);
+  ).not.toContainText("Create an image");
+  await expect(page.getByText("Ready", { exact: true })).toBeVisible({
+    timeout: 90_000,
+  });
   const conflict = await page.request.post("/api/agent-conversations", {
-    data: { ...operation, selectedTool: "webSearch" },
+    data: { ...operation, selectedTool: null },
     headers: { origin },
   });
   expect(conflict.status()).toBe(409);
@@ -127,10 +86,7 @@ test("Canvas selection survives native history and edits while later turns reset
   expect(conversationBinding.parse(await replay.json())).toEqual(binding);
   await page.reload();
   await expect(
-    page.getByRole("button", {
-      exact: true,
-      name: 'Created "Tool selection fixture"',
-    })
+    page.getByRole("log").getByText(intended.message, { exact: true })
   ).toBeVisible();
   const composer = page.getByRole("group", {
     exact: true,
@@ -139,7 +95,7 @@ test("Canvas selection survives native history and edits while later turns reset
   await composer
     .getByRole("textbox", { exact: true, name: "Message" })
     .fill(
-      'Reply briefly with "Automatic follow-up received". Do not create or edit documents.'
+      'Reply briefly with "Automatic follow-up received". Do not use tools.'
     );
   await composer.getByRole("button", { exact: true, name: "Send" }).click();
   await expect(
@@ -166,7 +122,7 @@ test("Canvas selection survives native history and edits while later turns reset
     .getByRole("log")
     .getByRole("group", { name: "Message composer" });
   await expect(
-    editor.getByRole("button", { exact: true, name: "Clear Canvas tool" })
+    editor.getByRole("button", { exact: true, name: "Clear Image tool" })
   ).toBeVisible();
   await editor.screenshot({
     animations: "disabled",
@@ -175,7 +131,7 @@ test("Canvas selection survives native history and edits while later turns reset
   await page.setViewportSize({ height: 844, width: 390 });
   const clearTool = editor.getByRole("button", {
     exact: true,
-    name: "Clear Canvas tool",
+    name: "Clear Image tool",
   });
   await clearTool.click({ trial: true });
   await editor.screenshot({

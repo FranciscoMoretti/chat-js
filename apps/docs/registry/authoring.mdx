@@ -23,6 +23,17 @@ Publish the generated item files at your registry endpoint. Configure an alias u
 
 Before publishing, follow [Building and Testing](./testing) to check both the source and its installation into an independent app.
 
+## Native EVE distribution
+
+For tools that run independently of ChatJS, declare `meta.chatjs.native` with `layout`, `files` and `dependencies`. The build creates a second distribution under `dist/r/eve/` using the same source files, without UI contributions or application registry dependencies.
+
+- `layout: "tool"` selects filenames relative to `chatjs/tools/<id>/`, including `tool.ts`. The native distribution installs them under `agent/lib/chatjs/<id>/` and adds default-export entry points under `agent/tools/`.
+- `layout: "agent"` selects paths relative to `agent/` and preserves their installation targets. Use it for native workflow bundles such as Deep Research.
+
+Declare every runtime npm dependency, including EVE. The publication audit rejects ChatJS alias imports and undeclared packages. Renderer files stay in the normal ChatJS distribution. Verify the native item with the actual EVE installer, discovery and compiler before publishing it.
+
+Builder placement uses `agentCategory` independently of packaging. `requiresChatJS` describes application service dependencies, while Source identifies the publisher. A tool that needs application storage or document tables can still belong in Agent → Tools.
+
 ## Mirror the reference application
 
 Use [Registry Mirror](./mirror) to preview canonical source changes in `apps/chat` while root `bun dev` runs. The guide covers source locations, generated-file ownership and regeneration commands. Keep core application source in `apps/chat`.

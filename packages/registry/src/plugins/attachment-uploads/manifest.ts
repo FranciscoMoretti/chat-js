@@ -42,7 +42,6 @@ const attachmentUploadsItem: RegistryItem = {
         uploads: true,
       },
       requiresStorage: true,
-      requiresPersistentSandbox: true,
     }),
   },
   name: "attachment-uploads",

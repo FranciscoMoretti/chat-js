@@ -8,7 +8,7 @@ const postgres = new PGlite();
 vi.mock("server-only", () => ({}));
 vi.mock("./client", () => ({ db: drizzle(postgres) }));
 vi.mock("../env", () => ({ env: {} }));
-vi.mock("@/lib/eve/persistent-sandbox-store", () => ({
+vi.mock("@/lib/db/eve-workspace-deletion", () => ({
   checkDeletedWorkspaceMemberships: vi
     .fn<() => Promise<void>>()
     .mockResolvedValue(),

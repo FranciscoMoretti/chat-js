@@ -87,10 +87,8 @@ test("fresh workers reload declarations, preserve transforms, fan out changes an
       "packages/registry-validation/package.json",
       "packages/cli/src",
       "packages/gateways/src",
-      "packages/sandboxes/src",
       "packages/cli/package.json",
       "packages/gateways/package.json",
-      "packages/sandboxes/package.json",
       "packages/registry/package.json",
       "apps/chat/components.json",
       "apps/chat/components/ui",
@@ -152,7 +150,7 @@ process.exit(0);
         })
     );
     await Promise.all(
-      ["gateways", "sandboxes", "registry-validation"].map(async (name) => {
+      ["gateways", "registry-validation"].map(async (name) => {
         await symlink(
           path.join(fixture, "packages", name),
           path.join(fixture, "node_modules/@chat-js", name)
@@ -160,7 +158,7 @@ process.exit(0);
       })
     );
     await Promise.all(
-      ["registry", "cli", "gateways", "sandboxes", "registry-validation"].map(
+      ["registry", "cli", "gateways", "registry-validation"].map(
         async (name) => {
           const modules = path.join("packages", name, "node_modules");
           try {
@@ -260,17 +258,11 @@ process.exit(0);
     // Fresh preset imports remove an installed plugin and its ownership.
     const preset = "packages/registry/installation.ts";
     const previousPreset = await read(preset);
-    await write(
-      preset,
-      previousPreset.replace('    "vercel-analytics",\n', "")
-    );
+    await write(preset, previousPreset.replace('    "feedback",\n', ""));
     await run([preset]);
     expect(
       await Bun.file(
-        path.join(
-          fixture,
-          "apps/chat/chatjs/plugins/vercel-analytics/chatjs.json"
-        )
+        path.join(fixture, "apps/chat/chatjs/plugins/feedback/chatjs.json")
       ).exists()
     ).toBe(false);
     // Exercise the production process adapter, including its incremental cache.

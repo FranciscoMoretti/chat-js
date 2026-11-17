@@ -35,16 +35,7 @@ const generatedSource = (body: string): string => {
     .replace(
       "export const toolAvailability: Record<string, ToolAvailability> = {\n\n};",
       "export const toolAvailability: Record<string, ToolAvailability> = {};"
-    )
-    .replace(
-      "export const documentUi: DocumentUiRegistry = {\n\n};",
-      "export const documentUi: DocumentUiRegistry = {};"
-    )
-    .replace(
-      "export const installedDocumentKinds: ReadonlySet<string> = new Set([\n\n]);",
-      "export const installedDocumentKinds: ReadonlySet<string> = new Set([]);"
-    )
-    .replace(";\n\n\nexport const documentUi", ";\n\nexport const documentUi");
+    );
   const registrations = generatedRegistrationSource(normalizedBody);
   return `${generated}// Content: ${hash(registrations)}\n${registrations}`;
 };
@@ -63,13 +54,7 @@ const checkGenerated = (content: string | null, path: string): void => {
   }
 };
 
-const selectionSlots = [
-  "codeExecution",
-  "generateImage",
-  "generateVideo",
-  "retrieveUrl",
-  "webSearch",
-] as const;
+const selectionSlots = ["generateImage", "generateVideo"] as const;
 const registrationsFor = (
   definitions: readonly ReadonlyInput<ToolDefinition>[]
 ) =>
@@ -112,11 +97,6 @@ const readToolDefinition = async (
     ...definition.tools
       .filter((tool) => tool.workflow)
       .map((tool): string => `agent/tools/${tool.toolExport}.ts`),
-    ...(definition.documentKind !== undefined ||
-    (typeof definition.documentRunExport === "string" &&
-      definition.documentRunExport !== "")
-      ? [`${directory}/${entryName}/document.tsx`]
-      : []),
     ...(definition.tools.some(
       ({ rendererExport }): boolean =>
         typeof rendererExport === "string" && rendererExport !== ""
@@ -134,15 +114,6 @@ const readToolDefinition = async (
             pathModule.join(cwd, "agent/tools", `${tool.toolExport}.ts`)
           )
       ),
-    ...(definition.documentKind !== undefined ||
-    (typeof definition.documentRunExport === "string" &&
-      definition.documentRunExport !== "")
-      ? [
-          fs.readFile(
-            pathModule.join(cwd, directory, entryName, "document.tsx")
-          ),
-        ]
-      : []),
     ...(definition.tools.some(
       ({ rendererExport }): boolean =>
         typeof rendererExport === "string" && rendererExport !== ""
@@ -318,23 +289,35 @@ const sourceFor = (
   const ordinary = registrations.filter(
     (item): boolean => !item.workflow && !item.provider
   );
+  const accountingImport = [...providers, ...ordinary].some(
+    (item) => item.accounting !== undefined && item.accounting !== "receipt"
+  )
+    ? 'import { withToolAccounting } from "@/lib/eve/tool-accounting";\n'
+    : "";
+  const execution = (
+    item: ReadonlyInput<Registration>,
+    index: number
+  ): string =>
+    item.accounting !== undefined && item.accounting !== "receipt"
+      ? `withToolAccounting(tool${index}, ${JSON.stringify(item.accounting)})`
+      : `tool${index}`;
   return {
-    providerBody: `import { defineToolSet } from "@/lib/eve/tool-types";\n${registrationImports(
-      providers.map((item, registrationIndex) => ({
-        alias: `tool${registrationIndex}`,
+    providerBody: `${providers.some((item) => item.accounting !== undefined && item.accounting !== "receipt") ? accountingImport : ""}import { defineToolSet } from "@/lib/eve/tool-types";\n${registrationImports(
+      providers.map((item, index) => ({
+        alias: `tool${index}`,
         id: item.id,
         name: item.toolExport,
       })),
       "tool"
-    )}\n\nexport const providers = defineToolSet(${providers.length > 0 ? `{\n${orderedProperties(providers.map((item, registrationIndex) => ({ key: registrationKey(item), value: `tool${registrationIndex}` })))}\n}` : "{}"});\n`,
-    toolBody: `import { defineToolSet } from "@/lib/eve/tool-types";\n${registrationImports(
+    )}\n\nexport const providers = defineToolSet(${providers.length > 0 ? `{\n${orderedProperties(providers.map((item, registrationIndex) => ({ key: registrationKey(item), value: execution(item, registrationIndex) })))}\n}` : "{}"});\n`,
+    toolBody: `${ordinary.some((item) => item.accounting !== undefined && item.accounting !== "receipt") ? accountingImport : ""}import { defineToolSet } from "@/lib/eve/tool-types";\n${registrationImports(
       ordinary.map((item, index) => ({
         alias: `tool${index}`,
         id: item.id,
         name: item.toolExport,
       })),
       "tool"
-    )}\n\nexport const installedTools = defineToolSet(${ordinary.length > 0 ? `{\n${orderedProperties(ordinary.map((item, index) => ({ key: registrationKey(item), value: `tool${index}` })))}\n}` : "{}"});\n`,
+    )}\n\nexport const installedTools = defineToolSet(${ordinary.length > 0 ? `{\n${orderedProperties(ordinary.map((item, index) => ({ key: registrationKey(item), value: execution(item, index) })))}\n}` : "{}"});\n`,
     uiBody: `import type { ToolRendererRegistry } from "@/lib/ai/tool-renderer-registry";\n${registrationImports(
       renderers.flatMap((item, registrationIndex) => {
         if (
@@ -374,27 +357,6 @@ const validateToolDependencies = (
       );
     }
   }
-  const runners = definitions.filter(
-    ({ documentRunExport }) =>
-      typeof documentRunExport === "string" && documentRunExport !== ""
-  );
-  if (runners.length > 1) {
-    throw new Error("Only one saved-document executor can be installed.");
-  }
-  const executor = definitions.find(
-    (item): boolean => item.slot === "codeExecution"
-  );
-  if (
-    registrationsFor(definitions).some(
-      (item: ReadonlyInput<Registration>): boolean =>
-        registrationKey(item) === "runCodeDocument"
-    ) &&
-    (!executor || (executor.codeExecutorExport ?? "") === "")
-  ) {
-    throw new Error(
-      "Saved code execution requires a compatible codeExecution provider, such as code-execution."
-    );
-  }
 };
 
 const renderToolRegistrations = (
@@ -403,10 +365,30 @@ const renderToolRegistrations = (
 ): Map<string, string> => {
   const files = new Map<string, string>([
     ["chatjs/generated/installed-config.ts", generatedSource(configSource)],
+    [
+      "chatjs/generated/tool-requirements.ts",
+      generatedSource(
+        `import type { ToolRequirements } from "@/lib/tool-readiness";\nexport const toolRequirements: Readonly<Record<string, ToolRequirements>> = ${JSON.stringify(
+          Object.fromEntries(
+            definitions.flatMap((item) =>
+              item.tools.map((tool) => [
+                item.slot ?? tool.toolExport,
+                {
+                  id: item.id,
+                  envRequirements: item.envRequirements,
+                  requiresTools: item.requiresTools,
+                  requiresGateway: (item.requiresGateway?.length ?? 0) > 0,
+                  requiresStorage: item.requiresStorage === true,
+                },
+              ])
+            )
+          ),
+          null,
+          2
+        )};\n`
+      ),
+    ],
   ]);
-  const documents = definitions.filter(
-    (item: ReadonlyInput<ToolDefinition>) => item.documentKind !== undefined
-  );
   const registrations = registrationsFor(definitions);
   const keys = registrations.map((item: ReadonlyInput<Registration>): string =>
     registrationKey(item)
@@ -432,18 +414,6 @@ const renderToolRegistrations = (
     )
   );
 
-  files.set(
-    "chatjs/generated/documents.ts",
-    generatedSource(
-      `${documents.map((item, index) => `import { documentDefinition as document${index} } from "@/chatjs/tools/${item.id}/definition";`).join("\n")}\nexport const installedDocuments = [${documents.map((item, index) => `document${index} satisfies { readonly kind: ${JSON.stringify(item.documentKind)} }`).join(", ")}];\n`
-    )
-  );
-  files.set(
-    "chatjs/generated/document-ui.ts",
-    generatedSource(
-      `"use client";\n${documents.map((item, index) => `import { documentUi as document${index} } from "@/chatjs/tools/${item.id}/document";`).join("\n")}\nexport const documentUi = [${documents.map((_, index) => `document${index}`).join(", ")}];\n`
-    )
-  );
   files.set(
     "chatjs/generated/installed-tools.ts",
     generatedSource(
@@ -484,27 +454,7 @@ const renderToolRegistrations = (
       }import type { LucideIcon } from "lucide-react";\n\nexport const composerTools: Readonly<Record<string, { icon: LucideIcon; name: string; shortName: string } | undefined>> = ${composerTools.length > 0 ? `{\n${composerTools.map((item: ReadonlyInput<Registration>, index): string => `  ${JSON.stringify(item.key)}: { icon: Icon${index}, name: ${JSON.stringify(item.composer?.name)}, shortName: ${JSON.stringify(item.composer?.shortName)} },`).join("\n")}\n}` : "{}"};\n`
     )
   );
-  const runner = definitions.find(
-    ({ documentRunExport }: ReadonlyInput<ToolDefinition>): boolean =>
-      typeof documentRunExport === "string" && documentRunExport !== ""
-  );
-  files.set(
-    "chatjs/generated/document-run.ts",
-    generatedSource(
-      `"use client";\n\nimport type { ComponentType } from "react";\n\nimport type { DocumentRunProps } from "@/chatjs/core/documents/ui";\n${runner ? `\nimport { ${runner.documentRunExport} as InstalledDocumentRun } from "@/chatjs/tools/${runner.id}/document";\n` : ""}\nexport const DocumentRun: ComponentType<DocumentRunProps> | undefined =\n  ${runner ? "InstalledDocumentRun" : "undefined"};\n`
-    )
-  );
   files.set("chatjs/generated/providers.ts", generatedSource(providerBody));
-  const executor = definitions.find(
-    ({ codeExecutorExport }: ReadonlyInput<ToolDefinition>): boolean =>
-      typeof codeExecutorExport === "string" && codeExecutorExport !== ""
-  );
-  files.set(
-    "chatjs/generated/code-executor.ts",
-    generatedSource(
-      `import type { CodeExecutor } from "@/lib/eve/code-executor";\n${executor ? `import { ${executor.codeExecutorExport} as execute } from "@/chatjs/tools/${executor.id}/tool";\n` : ""}\nexport const codeExecutor: CodeExecutor | undefined = ${executor ? "execute" : "undefined"};\n`
-    )
-  );
   const workflows = registrations.filter(
     (item: ReadonlyInput<Registration>) => item.workflow
   );
@@ -590,15 +540,6 @@ const validateToolInstallation = (
   definitions: readonly ReadonlyInput<ToolDefinition>[]
 ): void => {
   validateSelections(definitions);
-  const documents = definitions.filter(
-    (item) => item.documentKind !== undefined
-  );
-  if (
-    new Set(documents.map((item) => item.documentKind)).size !==
-    documents.length
-  ) {
-    throw new Error("Only one bundle per document kind can be installed.");
-  }
   const keys = registrationsFor(definitions).map(
     (item: ReadonlyInput<Registration>): string => registrationKey(item)
   );
@@ -619,24 +560,14 @@ const syncTools = async (
   validateExpected(definitions, options.expected ?? []);
   validateToolInstallation(definitions);
   const configSource = await planToolConfig(cwd, definitions);
-  const documentFiles = definitions.flatMap((item) =>
-    item.documentKind === undefined
-      ? []
-      : [
-          `chatjs/tools/${item.id}/definition.ts`,
-          `chatjs/tools/${item.id}/document.tsx`,
-        ]
-  );
-  documentFiles.push(
-    ...definitions
-      .filter((item) =>
-        item.tools.some((tool) => tool.definitionExport !== undefined)
-      )
-      .map((item) => `chatjs/tools/${item.id}/definition.ts`)
-  );
-  await preflight(cwd, documentFiles);
+  const definitionFiles = definitions
+    .filter((item) =>
+      item.tools.some((tool) => tool.definitionExport !== undefined)
+    )
+    .map((item) => `chatjs/tools/${item.id}/definition.ts`);
+  await preflight(cwd, definitionFiles);
   await Promise.all(
-    documentFiles.map(async (file): Promise<void> => {
+    definitionFiles.map(async (file): Promise<void> => {
       await fs.readFile(pathModule.join(cwd, file), "utf-8");
     })
   );

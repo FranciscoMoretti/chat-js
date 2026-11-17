@@ -21,7 +21,7 @@ See [Creating Tools](../tools/authoring) for native definitions and renderers, o
 
 A tool can require native approval before execution. The interface presents the request and sends the user's decision back to EVE. A chat message saying “yes” is not a substitute for the tool's approval receipt.
 
-For example, [document deletion](../tools/canvas#document-deletion-with-approval) requests the owner's approval for an exact title and revision. Rejection leaves the document unchanged. Changes made before approval can invalidate the request. MCP applies its connector approval policy to external tools.
+EVE owns approval policies and continuation. MCP applies its connector approval policy to external tools. Application tools must recheck access to ChatJS-managed resources when execution resumes.
 
 Approval does not replace authorization or input validation. The tool still checks the caller and the current resource when executing.
 

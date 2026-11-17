@@ -1,26 +1,9 @@
-import React, { act } from "react";
-import { expect, test, vi } from "vitest";
-import { page } from "vitest/browser";
-import { takeSnapshot } from "@uiverify/vitest";
-import { captureChatStory } from "../../../../packages/registry/src/tools/_shared/visual";
+import { BashOutput } from "@/components/eve/bash-output";
 import { McpToolResult } from "@/components/part/mcp-tool-result";
-import { SandboxComposed } from "@/components/sandbox";
-import {
-  DocumentToolCall,
-  DocumentToolResult,
-} from "@/components/part/document-common";
-import { Sources } from "@/components/sources";
 import { ReasoningPart } from "@/components/part/message-reasoning";
-import { mount, unmount } from "@/tests/visual/primitive-mount";
+import { expect, test } from "vitest";
+import { captureChatStory } from "../../../../packages/registry/src/tools/_shared/visual";
 import "./sandbox.css";
-
-const setArtifact = vi.fn();
-vi.mock("@/hooks/use-artifact", () => ({
-  useArtifact: () => ({ setArtifact }),
-}));
-vi.mock("@/components/eve/eve-document-context", () => ({
-  useDocumentConversation: () => "qa-conversation",
-}));
 
 const states = [
   "input-streaming",
@@ -72,134 +55,20 @@ test("native traces preserve all tool states and falsy outputs", async () => {
     {
       label: "Code execution",
       ui: (
-        <SandboxComposed
-          code='print("Hello")'
-          language="python"
-          output="Hello"
-          state="output-available"
-        />
-      ),
-      settle: async (section) => {
-        await expect
-          .poll(() => section.querySelector('[style*="--shiki-light"]'))
-          .not.toBeNull();
-      },
-    },
-  ]);
-});
-
-test.each([1000, 390])(
-  "sources open directly and restore focus at %i pixels",
-  async (width) => {
-    await page.viewport(width, 844);
-    const fixture = await mount(
-      <Sources
-        sources={[
-          {
-            title: "Shadcn documentation",
-            source: "web",
-            content: "Native components",
-            url: "https://ui.shadcn.com",
-          },
-        ]}
-      />
-    );
-    try {
-      const trigger = page.getByRole("button", { name: "Show all sources" });
-      await act(async () => {
-        await trigger.click();
-      });
-      await expect.element(page.getByRole("dialog")).toBeVisible();
-      await expect
-        .element(page.getByRole("link", { name: "Shadcn documentation" }))
-        .toHaveAttribute("href", "https://ui.shadcn.com");
-      await takeSnapshot(`sources-open-${width}`);
-      await act(async () => {
-        await page.getByRole("button", { name: "Close", exact: true }).click();
-      });
-      await expect.element(page.getByRole("dialog")).not.toBeInTheDocument();
-      await expect
-        .poll(() => document.activeElement === trigger.element())
-        .toBe(true);
-    } finally {
-      await unmount(fixture);
-    }
-  }
-);
-
-test("document activity keeps loading, completed, disabled and revision actions", async () => {
-  await captureChatStory("document-activity", [
-    ...(["create", "update", "read"] as const).flatMap((type) => [
-      {
-        label: `${type} in progress`,
-        ui: (
-          <DocumentToolCall
-            type={type}
-            args={{ title: "QA document" }}
-            isReadonly={false}
-          />
-        ),
-      },
-      {
-        label: `${type} completed`,
-        ui: (
-          <DocumentToolResult
-            type={type}
-            isReadonly
-            messageId="message"
-            result={{
-              id: "document",
-              title: "QA document",
-              kind: "text",
-              revisionId: "revision",
-            }}
-          />
-        ),
-      },
-    ]),
-    {
-      label: "Unavailable document",
-      ui: (
-        <DocumentToolResult
-          type="read"
-          disabled
-          isReadonly
-          messageId="message"
-          result={{
-            id: "document",
-            title: "Unavailable document",
-            kind: "text",
+        <BashOutput
+          output={{
+            status: "completed",
+            exitCode: 0,
+            stdout: "Hello",
+            stderr: "",
+            truncated: false,
           }}
         />
       ),
+      settle: (section) => {
+        expect(section.textContent).toContain("Hello");
+        expect(section.textContent).toContain("Exit code: 0");
+      },
     },
   ]);
-  const fixture = await mount(
-    <DocumentToolResult
-      type="read"
-      isReadonly
-      messageId="message"
-      result={{
-        id: "document",
-        title: "QA document",
-        kind: "text",
-        revisionId: "revision",
-      }}
-    />
-  );
-  try {
-    await page
-      .getByRole("button", { name: 'Read "QA document"', exact: true })
-      .click();
-    expect(setArtifact).toHaveBeenCalledWith(
-      expect.objectContaining({
-        documentId: "document",
-        revisionId: "revision",
-        followLive: false,
-        isVisible: true,
-      })
-    );
-  } finally {
-    await unmount(fixture);
-  }
 });

@@ -80,7 +80,7 @@ test.each([
   ["packages/cli/src/index.ts", true],
   ["packages/registry/registry.ts", true],
   ["packages/registry/metadata.ts", true],
-  ["packages/registry/src/tools/word-count/tool.ts", true],
+  ["packages/registry/src/tools/attach-workspace-file/tool.ts", true],
   ["packages/registry/src/gateways/vercel/gateway.ts", true],
   ["packages/cli/scripts/test-scaffold.sh", true],
   ["apps/chat/app/page.tsx", true],

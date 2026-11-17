@@ -1,17 +1,7 @@
-import {
-  AUTH_PROVIDERS,
-  BUILT_IN_TOOL_KEYS,
-  CORE_FEATURE_KEYS,
-} from "#cli/types";
-import type {
-  AuthProvider,
-  BuiltInToolKey,
-  CoreFeatureKey,
-  Gateway,
-} from "#cli/types";
+import { AUTH_PROVIDERS, CORE_FEATURE_KEYS } from "#cli/types";
+import type { AuthProvider, CoreFeatureKey, Gateway } from "#cli/types";
 import {
   authEnvRequirements,
-  builtInToolEnvRequirements,
   coreFeatureEnvRequirements,
   envVarDescriptions,
   gatewayEnvRequirements,
@@ -38,7 +28,6 @@ interface EnvChecklistInput {
   readonly gateway: Gateway;
   readonly gatewayRequirements?: readonly EnvRequirementLike[];
   readonly coreFeatures: Readonly<Record<CoreFeatureKey, boolean>>;
-  readonly builtInTools: Readonly<Record<BuiltInToolKey, boolean>>;
   readonly auth: Readonly<Record<AuthProvider, boolean>>;
   readonly installableToolEnvRequirements?: readonly EnvRequirementLike[];
 }
@@ -126,17 +115,6 @@ const collectCoreFeatureEntries = (
 const collectFeatureEntries = (input: EnvChecklistInput): EnvVarEntry[] => {
   const collector = requirementCollector();
   collectCoreFeatureEntries(input, collector.add);
-  for (const tool of BUILT_IN_TOOL_KEYS) {
-    if (
-      tool !== "webSearch" &&
-      tool !== "urlRetrieval" &&
-      tool !== "deepResearch" &&
-      tool !== "codeExecution" &&
-      input.builtInTools[tool]
-    ) {
-      collector.add(builtInToolEnvRequirements[tool]);
-    }
-  }
   for (const requirement of input.installableToolEnvRequirements ?? []) {
     collector.add(requirement);
   }

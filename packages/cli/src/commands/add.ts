@@ -6,10 +6,7 @@ import { existsSync } from "node:fs";
 import { scaffoldElectron } from "#cli/helpers/scaffold";
 import { assertUiCompatibility } from "#cli/utils/ui-compatibility";
 import { readInstalledPlugins } from "#cli/utils/installed-plugins";
-import {
-  configureSandboxProvider,
-  sandboxProviderTargets,
-} from "#cli/helpers/sandbox-provider";
+import { configureSandboxProvider } from "#cli/helpers/sandbox-provider";
 import { resolveSandbox } from "#cli/registry/sandboxes";
 import { access, writeFile } from "node:fs/promises";
 import { syncPlugins } from "#cli/utils/sync-plugins";
@@ -307,7 +304,7 @@ const logReplacementPlan = ({
 }: Readonly<AddSetup>): void => {
   for (const { previous, next } of plan.replacements) {
     log.info(
-      `Replace ${previous.slot ?? previous.documentKind}: ${previous.id} → ${next.id}. Retire only ${previous.id}'s source; retain unrelated installations and editable UI order.`
+      `Replace ${previous.slot}: ${previous.id} → ${next.id}. Retire only ${previous.id}'s source; retain unrelated installations and editable UI order.`
     );
   }
   for (const { kind, previous, next } of plan.providerChanges) {
@@ -373,7 +370,7 @@ export const add = new Command("add")
   )
   .option(
     "--sandbox-provider <item>",
-    "install or replace optional sandbox infrastructure"
+    "install or replace the native EVE sandbox"
   )
   .option("--gateway <item>", "install or replace the AI gateway")
   .option("--storage-provider <item>", "install or replace file storage")
@@ -446,9 +443,7 @@ export const add = new Command("add")
                   "--write",
                   "package.json",
                   "chatjs/installed-dependencies.json",
-                  ...(selectedSandbox
-                    ? ["chatjs/providers/sandbox/options.ts"]
-                    : []),
+                  ...(selectedSandbox ? ["agent/sandbox.ts"] : []),
                 ],
                 cwd
               );
@@ -457,7 +452,6 @@ export const add = new Command("add")
               ...(selectedGateway
                 ? ["chatjs/providers/gateway-defaults.ts"]
                 : []),
-              ...sandboxProviderTargets(selectedSandbox),
               ...(selectedStorage && !keepStorageOptions
                 ? ["chatjs/providers/storage-options.ts"]
                 : []),

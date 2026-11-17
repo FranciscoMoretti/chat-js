@@ -157,7 +157,7 @@ test("demo check hashes every owned copy and never restores app files; sync is u
   expect(unit.dependencies).toContain("@chat-js/registry#demo:check");
 });
 test.each([
-  ["packages/registry/src/tools/word-count/tool.ts", true],
+  ["packages/registry/src/tools/attach-workspace-file/tool.ts", true],
   ["packages/registry/registry.ts", true],
   ["packages/registry/metadata.ts", true],
   ["packages/registry-validation/src/shadcn.ts", true],
@@ -173,7 +173,7 @@ test.each([
   ["oxfmt.config.ts", true],
   ["apps/chat/oxfmt.config.ts", true],
   ["apps/chat/components.json", true],
-  ["apps/chat/chatjs/tools/word-count/tool.ts", true],
+  ["apps/chat/chatjs/tools/attach-workspace-file/tool.ts", true],
   ["apps/chat/chatjs/generated/tools.ts", true],
   ["apps/chat/.env.local", false],
   ["apps/chat/.next/generated.js", false],
@@ -225,8 +225,8 @@ const verifyAffectedExecution = async (base: string): Promise<void> => {
   ).toHaveLength(EXPECTED_DEMO_CHECK_TASKS);
 };
 test.each([
-  "packages/registry/src/tools/word-count/tool.ts",
-  "apps/chat/chatjs/tools/word-count/tool.ts",
+  "packages/registry/src/tools/attach-workspace-file/tool.ts",
+  "apps/chat/chatjs/tools/attach-workspace-file/tool.ts",
 ])(
   "CI affected query and execution select demo checking for %s",
   async (file) => {

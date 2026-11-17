@@ -53,7 +53,6 @@ const probe = Bun.serve({
 const { port } = probe;
 await probe.stop(true);
 const baseUrl = `http://localhost:${port}`;
-const minimal = process.env.CHATJS_NATIVE_SCENARIO === "minimal";
 const uploads = process.env.CHATJS_NATIVE_SCENARIO === "uploads";
 const live = !uploads && process.env.CHATJS_NATIVE_LIVE === "1";
 if (live) {
@@ -166,7 +165,6 @@ try {
       output,
       live,
       uploads,
-      documents: !minimal,
       createUrl: process.env.CHATJS_CREATE_URL,
       preset: process.env.CHATJS_NATIVE_PRESET ?? "b27I2r8C",
       uiBase: process.env.CHATJS_NATIVE_BASE === "radix" ? "radix" : "base",

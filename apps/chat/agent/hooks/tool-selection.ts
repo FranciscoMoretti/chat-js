@@ -1,3 +1,4 @@
+import { assertToolConfigured } from "../../lib/eve/tool-configuration";
 import { isAccountSession } from "../../lib/eve/session-identity";
 import { eveTurnAccount, eveTurnTool } from "../../lib/eve/turn-tools";
 import type { HookContext } from "eve/hooks";
@@ -14,9 +15,14 @@ export default defineHook({
       }>
     ) => {
       eveTurnAccount.update(() => isAccountSession(context.session));
-      const supplied = context.session.auth.current?.attributes.selectedTool;
+      const supplied = isAccountSession(context.session)
+        ? context.session.auth.current?.attributes.selectedTool
+        : undefined;
       const selected =
         supplied === undefined ? null : frontendToolsSchema.parse(supplied);
+      if (selected !== null && isAccountSession(context.session)) {
+        assertToolConfigured(selected);
+      }
       eveTurnTool.update(() => selected);
     },
   },

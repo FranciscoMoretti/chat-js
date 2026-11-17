@@ -1,7 +1,14 @@
-import { readInstallationInput } from "../../../packages/registry/app-preset";
+import catalogFixture from "./eve-catalog.fixture.json" with { type: "json" };
+import { parseEveCatalog } from "../../../packages/registry/eve-catalog";
+import {
+  encodeAppPreset,
+  readInstallationInput,
+} from "../../../packages/registry/app-preset";
+import { installationSelectionSchema } from "../../../packages/registry/installation";
 import { commandAppPreset } from "./create-fixtures.mts";
 import type { Page } from "playwright/test";
 import { test, expect } from "@uiverify/playwright";
+import { readFile } from "node:fs/promises";
 
 const selectChoice = async (page: Page, label: string, option: string) => {
   await page
@@ -9,14 +16,74 @@ const selectChoice = async (page: Page, label: string, option: string) => {
     .getByRole("radio", { name: option, exact: true })
     .check();
 };
-const checkRequirements = async (page: Page) => {
-  await page.getByRole("button", { name: "Setup requirements" }).click();
-  await expect(page.getByLabel("Installation issues")).toContainText(
-    "persistent sandbox"
-  );
-  await page.keyboard.press("Escape");
-  await expect(page.getByLabel("Installation issues")).toBeHidden();
-};
+test.beforeEach(async ({ page }) => {
+  await page.route("**/api/eve-catalog", async (route) => {
+    await route.fulfill({ json: parseEveCatalog(catalogFixture) });
+  });
+});
+
+for (const width of [1440, 390]) {
+  test(`published file downloads without viewers at ${width}px`, async ({
+    page,
+    uiVerify,
+  }, testInfo) => {
+    uiVerify.disableAutoSnapshot();
+    await page.setViewportSize({ width, height: 1000 });
+    const installation = installationSelectionSchema.parse({
+      gateway: "vercel",
+      storage: { source: "vercel-blob" },
+      tools: ["attach-workspace-file"],
+      plugins: [],
+    });
+    await page.goto(
+      `/create?item=preview-tools&app=${encodeAppPreset(installation)}`,
+      { waitUntil: "domcontentloaded" }
+    );
+    const preview = page.frameLocator('iframe[title="Preview"]');
+    await expect(preview.getByTestId("chat-preview")).toBeVisible();
+    if (width === 390) {
+      await page
+        .getByRole("button", { name: "Mobile preview", exact: true })
+        .click();
+    }
+    await page.getByRole("tab", { name: "Agent", exact: true }).click();
+    const publish = page
+      .locator("#agent-tool")
+      .getByRole("checkbox", { name: "Attach Workspace File", exact: true });
+    await expect(publish).toBeChecked();
+    await publish.scrollIntoViewIfNeeded();
+    await uiVerify.snapshot("publication tool in Agent");
+    await page.getByRole("tab", { name: "Appearance", exact: true }).click();
+    const download = preview.getByRole("button", {
+      name: "Download launch-budget.csv",
+    });
+    await expect(download).toBeVisible();
+    await expect(
+      preview
+        .getByRole("region", { name: "Messages", exact: true })
+        .getByRole("button", { name: /^Open /u })
+    ).toHaveCount(0);
+    await uiVerify.snapshot("published artifact without viewer");
+    await page.screenshot({ path: testInfo.outputPath("published-file.png") });
+    const [file] = await Promise.all([
+      page.waitForEvent("download"),
+      download.click(),
+    ]);
+    expect(await file.failure()).toBeNull();
+    expect(file.suggestedFilename()).toBe("launch-budget.csv");
+    const path = await file.path();
+    if (!path) {
+      throw new Error("Missing download");
+    }
+    expect(await readFile(path, "utf-8")).toContain("Design,120");
+    await page.getByRole("button", { name: "Get Code", exact: true }).click();
+    const recipe = commandAppPreset(
+      await page.getByTestId("create-command").textContent()
+    );
+    expect(recipe.tools).toContain("attach-workspace-file");
+    expect(recipe.plugins).toEqual([]);
+  });
+}
 
 test("Create sections share selections, dependencies and the install command", async ({
   page,
@@ -34,10 +101,9 @@ test("Create sections share selections, dependencies and the install command", a
   const originalDocument = await preview.locator("body").elementHandle();
   await expect(
     page.getByRole("tablist", { name: "Create workspace" }).getByRole("tab")
-  ).toHaveText(["Appearance", "Plugins", "AI tools", "Setup"]);
+  ).toHaveText(["Appearance", "Plugins", "Agent", "Setup"]);
   await page.getByRole("tab", { name: "Plugins", exact: true }).click();
   const panel = page.getByRole("region", { name: "Configure your app" });
-  await expect(panel.getByRole("switch")).toHaveCount(11);
   await expect(panel.getByRole("heading", { level: 3 })).toHaveText([
     "Conversations",
     "Responses",
@@ -48,7 +114,6 @@ test("Create sections share selections, dependencies and the install command", a
   await panel
     .getByRole("switch", { name: "Attachment Uploads", exact: true })
     .check();
-  await checkRequirements(page);
   await uiVerify.snapshot("design features");
   await page.screenshot({ path: testInfo.outputPath("features-desktop.png") });
   await panel
@@ -61,54 +126,46 @@ test("Create sections share selections, dependencies and the install command", a
     page.getByRole("heading", { name: "Set up your app." })
   ).toBeVisible();
   await expect(page.locator('iframe[title="Preview"]')).toBeHidden();
-  const observability = page.getByRole("region", {
-    name: "Observability",
-    exact: true,
-  });
-  await expect(observability.getByRole("checkbox")).toHaveCount(3);
-  await observability
-    .getByRole("checkbox", { name: "Langfuse", exact: true })
-    .check();
+  await expect(
+    page
+      .getByTestId("setup-scroll")
+      .getByRole("region", { name: "Observability", exact: true })
+  ).toHaveCount(0);
   await expect(
     page.getByRole("navigation", { name: "Setup sections" }).getByRole("link")
-  ).toHaveText([
-    "Models & Gateways",
-    "Infrastructure",
-    "Observability",
-    "Platforms",
-  ]);
-  await page.getByRole("tab", { name: "AI tools", exact: true }).click();
-  const tools = page.getByRole("region", { name: "AI tools", exact: true });
-  await expect(tools.getByRole("heading", { level: 3 })).toHaveText([
-    "Search & research",
-    "Documents",
-    "Media",
-    "Execution",
-    "Utilities",
-  ]);
-  await tools
+  ).toHaveText(["Models & Gateways", "Infrastructure", "Platforms"]);
+  await page.getByRole("tab", { name: "Agent", exact: true }).click();
+  const tools = page.getByRole("region", {
+    name: "Tools",
+    exact: true,
+  });
+  await expect(
+    page.getByRole("region", { name: "Application capabilities", exact: true })
+  ).toHaveCount(0);
+  const extensions = page.getByRole("region", {
+    name: "Extensions",
+    exact: true,
+  });
+  await extensions
     .getByRole("checkbox", { name: "Deep Research", exact: true })
     .check();
   await expect(
-    tools.getByRole("checkbox", { name: "Text Documents", exact: true })
-  ).toBeChecked();
-  await expect(
-    tools.getByRole("checkbox", { name: "Text Documents", exact: true })
-  ).toBeDisabled();
-  await tools.getByRole("button", { name: "About Text Documents" }).click();
+    tools.getByRole("checkbox", { name: "Attach Workspace File", exact: true })
+  ).not.toBeChecked();
+  await page
+    .getByRole("button", { name: "About Attach Workspace File", exact: true })
+    .click();
   await expect(
     page.getByText("Required by Deep Research", { exact: true })
-  ).toBeVisible();
+  ).toHaveCount(0);
   await page.keyboard.press("Escape");
-  await tools
+  await extensions
     .getByRole("checkbox", { name: "Deep Research", exact: true })
     .uncheck();
   await expect(
-    tools.getByRole("checkbox", { name: "Text Documents", exact: true })
+    tools.getByRole("checkbox", { name: "Attach Workspace File", exact: true })
   ).not.toBeChecked();
-  await tools
-    .getByRole("checkbox", { name: "Get Weather", exact: true })
-    .check();
+  await page.getByTestId("eve-connection/linear").getByRole("checkbox").check();
   await uiVerify.snapshot("AI tools");
   await page.screenshot({ path: testInfo.outputPath("tools-desktop.png") });
   await page.getByRole("tab", { name: "Setup", exact: true }).click();
@@ -116,16 +173,26 @@ test("Create sections share selections, dependencies and the install command", a
   await page
     .getByLabel("Storage bucket", { exact: true })
     .fill("my-chat-files");
-  await selectChoice(page, "Sandbox", "Daytona");
-  await checkRequirements(page);
-  await selectChoice(page, "Sandbox", "Vercel Sandbox");
+  await page.getByRole("tab", { name: "Agent", exact: true }).click();
+  await page
+    .getByRole("radiogroup", { name: "Sandbox", exact: true })
+    .getByRole("radio", { name: "Vercel Sandbox", exact: true })
+    .check();
+  await page.getByRole("tab", { name: "Setup", exact: true }).click();
+  await expect(page.getByLabel("Storage bucket", { exact: true })).toHaveValue(
+    "my-chat-files"
+  );
+  await page
+    .getByRole("button", { name: "Your app summary", exact: true })
+    .click();
   await expect(
     page.getByRole("complementary", { name: "Your app summary" })
   ).toContainText("Ready to install");
+  await page.keyboard.press("Escape");
   await page
     .getByRole("link", { name: "Models & Gateways", exact: true })
     .click();
-  await uiVerify.snapshot("stack selections");
+  await uiVerify.snapshot("square setup provider tiles light");
   await page.screenshot({ path: testInfo.outputPath("stack-desktop.png") });
   await page.getByRole("tab", { name: "Plugins", exact: true }).click();
   expect(
@@ -135,27 +202,23 @@ test("Create sections share selections, dependencies and the install command", a
   await expect(
     panel.getByRole("switch", { name: "Attachment Uploads", exact: true })
   ).toBeChecked();
-  await page.getByRole("tab", { name: "AI tools", exact: true }).click();
+  await page.getByRole("tab", { name: "Agent", exact: true }).click();
   await expect(
-    tools.getByRole("checkbox", { name: "Get Weather", exact: true })
+    page.getByTestId("eve-connection/linear").getByRole("checkbox")
   ).toBeChecked();
-  await tools
-    .getByRole("button", { name: "Preview tool examples", exact: true })
+  await page.getByRole("tab", { name: "Appearance", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Tool examples", exact: true })
     .click();
-  await expect(
-    page.getByRole("tab", { name: "AI tools", exact: true })
-  ).toHaveAttribute("aria-selected", "true");
   await expect(page).toHaveURL(/item=preview-tools/u);
   await page.reload();
   const selectionQuery = new URL(page.url()).searchParams;
-  expect(selectionQuery.get("app")).toMatch(/^a[0-9A-Za-z]+$/u);
-  const requested = readInstallationInput(
-    selectionQuery.get("app") ?? "",
-    selectionQuery.get("storage-config") ?? undefined
-  );
+  expect(selectionQuery.get("app")).toMatch(/^agent1_[A-Za-z0-9_-]+$/u);
+  const requested = readInstallationInput(selectionQuery.get("app") ?? "");
   expect(requested.storage?.options.bucket).toBe("my-chat-files");
-  expect(requested.plugins).toEqual(["attachment-uploads", "langfuse"]);
-  expect(requested.tools).toEqual(["get-weather"]);
+  expect(requested.plugins).toEqual(["attachment-uploads"]);
+  expect(requested.tools).toEqual([]);
+  expect(requested.eve).toEqual(["connection/linear"]);
   await page
     .getByRole("button", { name: "Get Code", exact: true })
     .first()
@@ -164,12 +227,13 @@ test("Create sections share selections, dependencies and the install command", a
   await expect(command).toContainText("--app-preset");
   expect(commandAppPreset(await command.textContent()).plugins).toEqual([
     "attachment-uploads",
-    "langfuse",
   ]);
   expect(commandAppPreset(await command.textContent()).sandbox).toBe("vercel");
-  await expect(command).toContainText('"bucket":"my-chat-files"');
-  expect(commandAppPreset(await command.textContent()).tools).toEqual([
-    "get-weather",
+  expect(
+    commandAppPreset(await command.textContent()).storage?.options.bucket
+  ).toBe("my-chat-files");
+  expect(commandAppPreset(await command.textContent()).eve).toEqual([
+    "connection/linear",
   ]);
   await page.getByRole("button", { name: "Copy Command", exact: true }).click();
   expect(
@@ -183,7 +247,7 @@ test("invalid links block export and retain a recovery action in both views", as
   uiVerify,
 }) => {
   uiVerify.disableAutoSnapshot();
-  await page.goto("/create?installation=broken");
+  await page.goto("/create?app=broken");
   await page.getByRole("tab", { name: "Plugins", exact: true }).click();
   await expect(
     page.getByRole("link", { name: "Start a new setup" })
@@ -207,7 +271,7 @@ test("namespaced selections and missing providers remain editable", async ({
 }) => {
   uiVerify.disableAutoSnapshot();
   await page.goto(
-    `/create?installation=${encodeURIComponent(JSON.stringify({ plugins: ["@chatjs/feedback"], tools: [] }))}`
+    `/create?app=${encodeAppPreset(installationSelectionSchema.parse({ plugins: ["@chatjs/feedback"], tools: [] }))}`
   );
   await page.getByRole("tab", { name: "Plugins", exact: true }).click();
   const feedback = page.getByRole("switch", { name: "Feedback", exact: true });
@@ -218,9 +282,13 @@ test("namespaced selections and missing providers remain editable", async ({
   const gateway = page.getByRole("radiogroup", { name: "Model gateway" });
   await expect(gateway.getByRole("radio", { checked: true })).toHaveCount(0);
   await selectChoice(page, "Model gateway", "Vercel AI Gateway");
+  await page
+    .getByRole("button", { name: "Your app summary", exact: true })
+    .click();
   await expect(
     page.getByRole("complementary", { name: "Your app summary" })
   ).toContainText("Ready to install");
+  await page.keyboard.press("Escape");
   const storage = page.getByRole("radiogroup", {
     name: "File storage",
     exact: true,
@@ -294,9 +362,10 @@ for (const width of [1440, 390]) {
       expect(await categories.boundingBox()).toEqual(initialCategories);
       expect(await getCode.boundingBox()).toEqual(initialGetCode);
     };
-    await page.getByRole("tab", { name: "AI tools", exact: true }).click();
-    await unchangedFrame();
-    await uiVerify.snapshot("AI tools panel");
+    await page.getByRole("tab", { name: "Agent", exact: true }).click();
+    await expect(frame).toBeHidden();
+    expect(await categories.boundingBox()).toEqual(initialCategories);
+    await uiVerify.snapshot("Agent panel");
     await page.screenshot({
       path: testInfo.outputPath("ai-tools.png"),
       animations: "disabled",
@@ -341,7 +410,7 @@ for (const width of [1440, 390]) {
     await expect(
       page.getByRole("button", { name: "Get Code", exact: true }).first()
     ).toBeInViewport();
-    await uiVerify.snapshot("stack");
+    await uiVerify.snapshot("square setup provider tiles dark");
     await page.screenshot({
       path: testInfo.outputPath("stack.png"),
       animations: "disabled",
@@ -351,23 +420,12 @@ for (const width of [1440, 390]) {
         () => document.documentElement.scrollWidth <= window.innerWidth
       )
     ).toBe(true);
-    await page
-      .getByRole("link", { name: "Observability", exact: true })
-      .click();
-    const observability = page.getByRole("region", {
-      name: "Observability",
-      exact: true,
-    });
-    await expect(observability.getByRole("heading")).toBeInViewport();
-    await observability
-      .getByRole("checkbox", { name: "Langfuse", exact: true })
-      .check();
-    await uiVerify.snapshot("observability");
-    await page.screenshot({
-      path: testInfo.outputPath("observability.png"),
-      animations: "disabled",
-    });
-    await page.getByRole("link", { name: "Platforms", exact: true }).click();
+    const setupNav = page.getByRole("navigation", { name: "Setup sections" });
+    await (width < 1024
+      ? setupNav
+          .getByLabel("Jump to category")
+          .selectOption({ label: "Platforms" })
+      : setupNav.getByRole("link", { name: "Platforms", exact: true }).click());
     await expect(
       page.getByRole("checkbox", { name: "Desktop", exact: true })
     ).toBeInViewport();
@@ -383,7 +441,7 @@ for (const width of [1440, 390]) {
     expect(
       commandAppPreset(await page.getByTestId("create-command").textContent())
         .plugins
-    ).toEqual(["feedback", "langfuse"]);
+    ).toEqual(["feedback"]);
     await unchangedFrame();
   });
 }
@@ -395,12 +453,12 @@ test("Get Code selects either library without replacing the preview", async ({
   uiVerify.disableAutoSnapshot();
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto(
-    `/create?installation=${encodeURIComponent(
-      JSON.stringify({
+    `/create?app=${encodeAppPreset(
+      installationSelectionSchema.parse({
         gateway: "vercel",
         plugins: ["feedback"],
         tools: [],
-        sandbox: "vercel-sandbox",
+        sandbox: "vercel",
       })
     )}`
   );
@@ -435,7 +493,7 @@ test("Get Code selects either library without replacing the preview", async ({
     "feedback",
   ]);
   await expect(dialog.getByTestId("app-preset-code")).toHaveText(
-    /a[0-9A-Za-z]+/u
+    /agent1_[A-Za-z0-9_-]+/u
   );
   await expect(dialog.getByTestId("appearance-preset-code")).toHaveText(
     /b[0-9A-Za-z]+/u
@@ -505,7 +563,7 @@ for (const width of [1440, 1024, 390]) {
       sandbox: "vercel",
     };
     await page.goto(
-      `/create?installation=${encodeURIComponent(JSON.stringify(installation))}`
+      `/create?app=${encodeAppPreset(installationSelectionSchema.parse(installation))}`
     );
     await expect(
       page.frameLocator('iframe[title="Preview"]').getByTestId("chat-preview")
@@ -521,10 +579,11 @@ for (const width of [1440, 1024, 390]) {
       page.getByRole("heading", { name: "Set up your app." })
     ).toBeVisible();
     await page.evaluate(async () => await document.fonts.ready);
-    const tools = page.getByRole("region", { name: "AI tools", exact: true });
-    const scroll = page
-      .getByTestId("tools-scroll")
-      .locator('[data-slot="scroll-area-viewport"]');
+    const tools = page.getByRole("region", {
+      name: "Tools",
+      exact: true,
+    });
+    const scroll = page.getByTestId("agent-scroll");
     const summary = page.getByRole("complementary", {
       name: "Your app summary",
     });
@@ -532,7 +591,7 @@ for (const width of [1440, 1024, 390]) {
       await tools.locator('label[for^="feature-"]').evaluateAll((cards) =>
         cards.map((card) => {
           const rect = card.getBoundingClientRect();
-          const container = card.closest('[data-slot="scroll-area-viewport"]');
+          const container = card.closest('[data-testid="agent-scroll"]');
           return {
             x: rect.x,
             y: rect.y + (container?.scrollTop ?? 0),
@@ -557,26 +616,34 @@ for (const width of [1440, 1024, 390]) {
           }),
         };
       });
+    await page
+      .getByRole("button", { name: "Your app summary", exact: true })
+      .click();
     const beforeSummary = await summaryGeometry();
     await expect(summary).toContainText("Review setup · 1 choice needed");
+    await page.keyboard.press("Escape");
     await page
       .getByLabel("Storage bucket", { exact: true })
       .fill("preview-files");
+    await page
+      .getByRole("button", { name: "Your app summary", exact: true })
+      .click();
     await expect(summary).toContainText("Ready to install");
     expect(await summaryGeometry()).toEqual(beforeSummary);
-    await page.getByRole("tab", { name: "AI tools", exact: true }).click();
+    await page.keyboard.press("Escape");
+    await page.getByRole("tab", { name: "Agent", exact: true }).click();
     const before = await geometry();
     // Each click is explicitly brought into view before measuring: browser scrolling
     // to reach an offscreen control is distinct from a selection shifting the layout.
     for (const checked of [true, false]) {
       const names = [
-        "Text Documents",
-        "Sheet Documents",
-        "Delete Document",
+        "Generate Image",
+        "Generate Video",
+        "Attach Workspace File",
         "Deep Research",
       ];
       for (const name of checked ? names : names.toReversed()) {
-        const control = tools.getByRole("checkbox", { name, exact: true });
+        const control = page.getByRole("checkbox", { name, exact: true });
         await control.scrollIntoViewIfNeeded();
         const scrollBefore = await scroll.evaluate(
           (element) => element.scrollTop
@@ -589,13 +656,12 @@ for (const width of [1440, 1024, 390]) {
         );
       }
       await tools
-        .getByRole("button", { name: "About Read Document", exact: true })
+        .getByRole("button", {
+          name: "About Attach Workspace File",
+          exact: true,
+        })
         .click();
-      if (checked) {
-        await expect(
-          page.getByText(/^Required by .*Text Documents/u)
-        ).toBeVisible();
-      }
+
       await page.screenshot({
         path: testInfo.outputPath(`dependencies-${checked}.png`),
         animations: "disabled",
@@ -604,6 +670,9 @@ for (const width of [1440, 1024, 390]) {
       expect(await geometry()).toEqual(before);
     }
     await page.getByRole("tab", { name: "Setup", exact: true }).click();
+    await page
+      .getByRole("button", { name: "Your app summary", exact: true })
+      .click();
     expect(await summaryGeometry()).toEqual(beforeSummary);
     expect(errors).toEqual([]);
   });
@@ -611,13 +680,12 @@ for (const width of [1440, 1024, 390]) {
 
 /* eslint-enable no-await-in-loop */
 
-test("all built-in examples render and document examples open the right editors", async ({
+test("built-in tool examples render published files without document editors", async ({
   page,
   uiVerify,
 }) => {
   uiVerify.disableAutoSnapshot();
-  await page.setViewportSize({ width: 1440, height: 1000 });
-  const installation = {
+  const installation = installationSelectionSchema.parse({
     gateway: "vercel",
     plugins: [],
     sandbox: "vercel",
@@ -625,51 +693,25 @@ test("all built-in examples render and document examples open the right editors"
     tools: [
       "generate-image",
       "generate-video",
-      "code-execution",
-      "get-weather",
-      "word-count",
-      "tavily-search",
-      "retrieve-url",
-      "text-documents",
-      "code-documents",
-      "sheet-documents",
-      "saved-code-execution",
       "deep-research",
-      "delete-document",
+      "attach-workspace-file",
     ],
-  };
+  });
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto(
-    `/create?item=preview-tools&installation=${encodeURIComponent(JSON.stringify(installation))}`
+    `/create?item=preview-tools&app=${encodeAppPreset(installation)}`
   );
   const preview = page.frameLocator('iframe[title="Preview"]');
-  const messages = preview.getByRole("region", {
-    name: "Messages",
-    exact: true,
-  });
   await expect(
-    preview.getByRole("button", { name: 'Created "launch.py"', exact: true })
-  ).toBeAttached();
-  await expect(messages.getByRole("alert")).toHaveCount(0);
+    preview.getByText("launch-budget.csv", { exact: true })
+  ).toBeVisible();
   await expect(
-    messages.getByText(/not available yet|sample error state/u)
+    preview
+      .getByRole("region", { name: "Messages", exact: true })
+      .getByRole("alert")
   ).toHaveCount(0);
-  await preview
-    .getByRole("button", { name: 'Created "launch.py"', exact: true })
-    .click();
-  const document = preview.getByRole("region", {
-    name: "Document",
-    exact: true,
-  });
-  await expect(document).toContainText("Ready to launch!");
-  await document.getByRole("button", { name: "Close", exact: true }).click();
-  await preview
-    .getByRole("button", { name: 'Created "Launch checklist"', exact: true })
-    .click();
-  await expect(document).toContainText("Design");
-  await expect(document).toContainText("In progress");
-  await uiVerify.snapshot("sheet example");
+  await uiVerify.snapshot("published file examples");
   expect(errors).toEqual([]);
 });
 
@@ -685,12 +727,12 @@ for (const width of [1440, 390]) {
     const installation = {
       gateway: "vercel",
       plugins: [],
-      tools: ["generate-image", "generate-video", "code-execution"],
+      tools: ["generate-image", "generate-video"],
     };
     await page.goto(
-      `/create?item=preview-tools&installation=${encodeURIComponent(JSON.stringify(installation))}`
+      `/create?item=preview-tools&app=${encodeAppPreset(installationSelectionSchema.parse(installation))}`
     );
-    await page.getByRole("tab", { name: "AI tools", exact: true }).click();
+    await page.getByRole("tab", { name: "Appearance", exact: true }).click();
     const preview = page.frameLocator('iframe[title="Preview"]');
     await expect(
       preview.getByText(
@@ -729,9 +771,6 @@ for (const width of [1440, 390]) {
       video.currentTime = 0;
     });
     await expect(
-      preview.getByText("Launch budget", { exact: true })
-    ).toBeAttached();
-    await expect(
       page.getByRole("button", { name: "Get Code", exact: true })
     ).toHaveCount(1);
     await expect(
@@ -747,7 +786,7 @@ for (const width of [1440, 390]) {
     await expect(
       page.getByRole("tab", { name: "Setup", exact: true })
     ).toHaveAttribute("aria-selected", "true");
-    await page.getByRole("tab", { name: "AI tools", exact: true }).click();
+    await page.getByRole("tab", { name: "Appearance", exact: true }).click();
     expect(await page.locator('iframe[title="Preview"]').boundingBox()).toEqual(
       frameBounds
     );
@@ -770,37 +809,42 @@ for (const width of [1440, 390]) {
     await page.setViewportSize({ width, height: 1000 });
     const installation = {
       plugins: ["feedback"],
-      tools: ["code-execution"],
+      tools: ["attach-workspace-file"],
+      sandbox: "just-bash",
       gateway: "vercel",
     };
     await page.goto(
-      `/create?installation=${encodeURIComponent(JSON.stringify(installation))}`
+      `/create?app=${encodeAppPreset(installationSelectionSchema.parse(installation))}`
     );
     await expect(
       page.frameLocator('iframe[title="Preview"]').getByTestId("chat-preview")
     ).toBeVisible();
-    await page.getByRole("tab", { name: "AI tools", exact: true }).click();
-    const tools = page.getByRole("region", { name: "AI tools", exact: true });
-    await tools
-      .getByRole("button", { name: "Choose a sandbox" })
+    await page.getByRole("tab", { name: "Agent", exact: true }).click();
+    await page
+      .getByTestId("agent-scroll")
+      .getByRole("button", { name: "Configure storage" })
       .scrollIntoViewIfNeeded();
     await expect(
-      tools.getByRole("button", { name: "Choose a sandbox" })
+      page
+        .getByTestId("agent-scroll")
+        .getByRole("button", { name: "Configure storage" })
     ).toBeVisible();
-    await expect(
-      page.getByRole("region", { name: "Installation status" })
-    ).toContainText("Review setup · 1 choice needed");
     await uiVerify.snapshot("contextual setup action");
     await page.screenshot({
       path: testInfo.outputPath("contextual-setup.png"),
     });
-    await tools.getByRole("button", { name: "Choose a sandbox" }).click();
+    await page
+      .getByTestId("agent-scroll")
+      .getByRole("button", { name: "Configure storage" })
+      .click();
     await expect(
-      page.getByRole("radiogroup", { name: "Sandbox", exact: true })
+      page.getByRole("radiogroup", { name: "File storage", exact: true })
     ).toBeInViewport();
-    await page.getByRole("tab", { name: "AI tools", exact: true }).click();
+    await page.getByRole("tab", { name: "Agent", exact: true }).click();
     await expect(
-      tools.getByRole("checkbox", { name: "Code Execution", exact: true })
+      page
+        .getByTestId("agent-scroll")
+        .getByRole("checkbox", { name: "Attach Workspace File", exact: true })
     ).toBeChecked();
     await page
       .getByRole("button", { name: "Get Code", exact: true })
@@ -817,22 +861,26 @@ for (const width of [1440, 390]) {
     await page.screenshot({
       path: testInfo.outputPath("installation-review.png"),
     });
-    await dialog.getByRole("button", { name: "Choose a sandbox" }).click();
+    await dialog.getByRole("button", { name: "Configure storage" }).click();
     await expect(dialog).toBeHidden();
     await expect(
-      page.getByRole("radiogroup", { name: "Sandbox", exact: true })
+      page.getByRole("radiogroup", { name: "File storage", exact: true })
     ).toBeInViewport();
-    await selectChoice(page, "Sandbox", "Vercel Sandbox");
-    await page.getByRole("tab", { name: "AI tools", exact: true }).click();
+    await page
+      .getByRole("radiogroup", { name: "File storage", exact: true })
+      .getByRole("radio", { name: "Vercel Blob", exact: true })
+      .check();
+    await page.getByRole("tab", { name: "Agent", exact: true }).click();
     await expect(
-      tools.getByRole("checkbox", { name: "Code Execution", exact: true })
+      page
+        .getByTestId("agent-scroll")
+        .getByRole("checkbox", { name: "Attach Workspace File", exact: true })
     ).toBeChecked();
     await expect(
-      tools.getByRole("button", { name: "Choose a sandbox" })
+      page
+        .getByTestId("agent-scroll")
+        .getByRole("button", { name: "Configure storage" })
     ).toHaveCount(0);
-    await expect(
-      page.getByRole("region", { name: "Installation status" })
-    ).toContainText("Ready to install");
     await page
       .getByRole("button", { name: "Get Code", exact: true })
       .first()
@@ -840,7 +888,7 @@ for (const width of [1440, 390]) {
     expect(
       commandAppPreset(await dialog.getByTestId("create-command").textContent())
         .tools
-    ).toContain("code-execution");
+    ).toContain("attach-workspace-file");
     await expect(
       dialog.getByRole("button", { name: "Copy Command", exact: true })
     ).toBeEnabled();
@@ -848,89 +896,6 @@ for (const width of [1440, 390]) {
       "Add API keys and other credentials after installation."
     );
     await uiVerify.snapshot("ready installation review");
-  });
-}
-
-for (const width of [1440, 390]) {
-  test(`tool cards use content height at ${width}px`, async ({
-    page,
-    uiVerify,
-  }, testInfo) => {
-    uiVerify.disableAutoSnapshot();
-    await page.setViewportSize({ width, height: 1000 });
-    const installation = {
-      plugins: [],
-      tools: ["retrieve-url"],
-      gateway: "vercel",
-    };
-    await page.goto(
-      `/create?item=preview-tools&installation=${encodeURIComponent(JSON.stringify(installation))}`
-    );
-    const preview = page.frameLocator('iframe[title="Preview"]');
-    const title = preview.getByRole("heading", {
-      name: "ChatJS documentation",
-      exact: true,
-    });
-    await expect(title).toBeVisible();
-    const card = preview
-      .locator(".bg-card.overflow-hidden")
-      .filter({ has: title });
-    const intro = preview.getByText(
-      "Sample results for your selected tools. No external services are called.",
-      { exact: true }
-    );
-    const textBox = await intro.boundingBox();
-    const cardBox = await card.boundingBox();
-    expect(textBox).not.toBeNull();
-    expect(cardBox).not.toBeNull();
-    if (!textBox || !cardBox) {
-      throw new Error("Missing message geometry");
-    }
-    expect(cardBox.y - (textBox.y + textBox.height)).toBeLessThanOrEqual(40);
-    expect(
-      await card.evaluate(
-        (element) => element.scrollHeight - element.clientHeight
-      )
-    ).toBeLessThanOrEqual(1);
-    await preview.getByText("View content", { exact: true }).click();
-    await expect(
-      preview.getByText(
-        "Choose your appearance, plugins and AI tools, then configure the services that power your app.",
-        { exact: true }
-      )
-    ).toBeVisible();
-    expect(
-      await card.evaluate(
-        (element) => element.scrollHeight - element.clientHeight
-      )
-    ).toBeLessThanOrEqual(1);
-    await uiVerify.snapshot("expanded tool card fits message");
-    await page.screenshot({ path: testInfo.outputPath("tool-card.png") });
-  });
-
-  test(`setup status fits its summary at ${width}px`, async ({
-    page,
-    uiVerify,
-  }, testInfo) => {
-    uiVerify.disableAutoSnapshot();
-    await page.setViewportSize({ width, height: 1000 });
-    await page.goto(
-      `/create?installation=${encodeURIComponent(JSON.stringify({ plugins: [], tools: ["code-execution"], gateway: "vercel" }))}`
-    );
-    await page.getByRole("tab", { name: "Setup", exact: true }).click();
-    const summary = page.getByRole("complementary", {
-      name: "Your app summary",
-    });
-    const status = summary.getByRole("button", { name: "Setup requirements" });
-    await status.scrollIntoViewIfNeeded();
-    await expect(status).toContainText("Review setup");
-    expect(
-      await status.evaluate(
-        (element) => element.scrollWidth - element.clientWidth
-      )
-    ).toBeLessThanOrEqual(1);
-    await uiVerify.snapshot("setup status wraps inside summary");
-    await page.screenshot({ path: testInfo.outputPath("setup-status.png") });
   });
 }
 
@@ -1028,5 +993,178 @@ for (const width of [390, 740]) {
       )
     ).toBe(true);
     await uiVerify.snapshot("narrow mobile canvas");
+  });
+}
+
+for (const media of ["image", "video"]) {
+  const title = media === "image" ? "Image" : "Video";
+  for (const width of [1440, 390]) {
+    test(`${media} tool and optional viewer compose at ${width}px`, async ({
+      page,
+      uiVerify,
+    }, testInfo) => {
+      uiVerify.disableAutoSnapshot();
+      await page.setViewportSize({ width, height: 1000 });
+      const errors: string[] = [];
+      page.on("pageerror", (error) => errors.push(error.message));
+      const installation = installationSelectionSchema.parse({
+        gateway: "vercel",
+        storage: { source: "vercel-blob" },
+        tools: [`generate-${media}`],
+        plugins: [],
+      });
+      await page.goto(
+        `/create?item=preview-tools&app=${encodeAppPreset(installation)}`,
+        { waitUntil: "domcontentloaded" }
+      );
+      const preview = page.frameLocator('iframe[title="Preview"]');
+      await expect(preview.getByTestId("chat-preview")).toBeVisible();
+      if (width === 390) {
+        await page
+          .getByRole("button", { name: "Mobile preview", exact: true })
+          .click();
+      }
+      await page.getByRole("tab", { name: "Agent", exact: true }).click();
+      const tools = page.locator("#agent-tool");
+      await expect(
+        tools.getByRole("checkbox", { name: `Generate ${title}`, exact: true })
+      ).toBeChecked();
+      await expect(
+        page
+          .locator("#agent-application")
+          .getByRole("checkbox", { name: `Generate ${title}`, exact: true })
+      ).toHaveCount(0);
+      await tools
+        .getByRole("checkbox", { name: `Generate ${title}`, exact: true })
+        .scrollIntoViewIfNeeded();
+      await uiVerify.snapshot(`${media} generation in native Tools category`);
+      await page.screenshot({ path: testInfo.outputPath(`${media}-tool.png`) });
+      await page.getByRole("tab", { name: "Plugins", exact: true }).click();
+      const viewer = page.getByRole("switch", {
+        name: `${title} viewer`,
+        exact: true,
+      });
+      await expect(viewer).not.toBeChecked();
+      const download = preview.getByRole("button", {
+        name: `Download ${media}`,
+        exact: true,
+      });
+      await expect(download).toBeVisible();
+      await expect(
+        preview.getByRole("button", { name: `Open ${media}`, exact: true })
+      ).toHaveCount(0);
+      await uiVerify.snapshot(`${media} card without optional viewer`);
+      await page.screenshot({
+        path: testInfo.outputPath(`${media}-without-viewer.png`),
+      });
+      const [file] = await Promise.all([
+        page.waitForEvent("download"),
+        download.click(),
+      ]);
+      expect(await file.failure()).toBeNull();
+      await viewer.check();
+      const open = preview.getByRole("button", {
+        name: `Open ${media}`,
+        exact: true,
+      });
+      await expect(open).toBeVisible();
+      if (media === "video") {
+        expect(file.suggestedFilename()).toMatch(/\.mp4$/u);
+        await preview.locator("video").evaluate(async (video) => {
+          if (!(video instanceof HTMLVideoElement)) {
+            throw new Error("Expected video player");
+          }
+          await video.play();
+        });
+        await expect(preview.locator("video")).toHaveJSProperty(
+          "paused",
+          false
+        );
+      }
+      await open.click();
+      const dialog = preview.getByRole("dialog");
+      await expect(dialog).toBeVisible();
+      if (media === "image") {
+        await expect(dialog.getByRole("img")).toBeVisible();
+      } else {
+        await expect(preview.locator("video").first()).toHaveJSProperty(
+          "paused",
+          true
+        );
+        await expect(dialog.locator("video")).toBeVisible();
+        await dialog.locator("video").evaluate(async (video) => {
+          if (!(video instanceof HTMLVideoElement)) {
+            throw new Error("Expected video player");
+          }
+          await video.play();
+        });
+        await expect(dialog.locator("video")).toHaveJSProperty("paused", false);
+        await dialog.locator("video").evaluate((video) => {
+          if (!(video instanceof HTMLVideoElement)) {
+            throw new Error("Expected video player");
+          }
+          video.pause();
+          video.currentTime = 0;
+        });
+      }
+      await uiVerify.snapshot(`optional ${media} viewer open`);
+      await page.screenshot({
+        path: testInfo.outputPath(`${media}-viewer-open.png`),
+      });
+      await dialog.getByRole("button", { name: "Close", exact: true }).click();
+      await expect(dialog).toHaveCount(0);
+      await viewer.uncheck();
+      await expect(open).toHaveCount(0);
+      await expect(download).toBeVisible();
+      expect(errors).toEqual([]);
+    });
+  }
+}
+
+for (const width of [1440, 390]) {
+  test(`spreadsheet viewer opens published CSV at ${width}px`, async ({
+    page,
+  }, testInfo) => {
+    await page.setViewportSize({ width, height: 900 });
+    const app = encodeAppPreset(
+      installationSelectionSchema.parse({
+        gateway: "vercel",
+        storage: { source: "vercel-blob", options: {} },
+        plugins: ["spreadsheet-viewer"],
+        tools: ["attach-workspace-file"],
+      })
+    );
+    await page.goto(`/create?item=preview-tools&app=${app}`);
+    if (width === 390) {
+      await page
+        .getByRole("button", { name: "Mobile preview", exact: true })
+        .click();
+    }
+    const preview = page.frameLocator('iframe[title="Preview"]');
+    await expect(preview.getByTestId("chat-preview")).toBeVisible();
+    await preview.getByRole("button", { name: "Open spreadsheet" }).click();
+    await expect(preview.getByRole("dialog")).toBeVisible();
+    await expect(
+      preview.getByRole("gridcell", { name: "Design", exact: true })
+    ).toBeVisible();
+    await expect(preview.getByRole("dialog").getByRole("textbox")).toHaveCount(
+      0
+    );
+    await expect(
+      preview.getByRole("button", { name: "Download spreadsheet" })
+    ).toBeVisible();
+    expect(
+      await preview.getByRole("dialog").evaluate((element) => {
+        const rect = element.getBoundingClientRect();
+        return (
+          rect.left >= 0 &&
+          rect.right <= window.innerWidth &&
+          document.documentElement.scrollWidth <= window.innerWidth
+        );
+      })
+    ).toBe(true);
+    await page.screenshot({
+      path: testInfo.outputPath("spreadsheet-viewer.png"),
+    });
   });
 }

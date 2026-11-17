@@ -66,7 +66,7 @@ vi.mock("./turn-tools", () => ({
   eveTurnTool: {
     get: () => {
       if (mocks.selected) {
-        return "webSearch";
+        return "generateImage";
       }
       return null;
     },

@@ -1,44 +1,43 @@
 "use client";
 
-import { Activity, useEffect, useLayoutEffect, useState, useRef } from "react";
+import { getPresetCode } from "@/vendor/shadcn-create/lib/preset-code";
+import { useTheme } from "next-themes";
+import { Activity, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { decodePreset, DEFAULT_PRESET_CONFIG } from "shadcn/preset";
 import { toast } from "sonner";
-import { attachmentDigest, draftAttachment } from "../../../chat/lib/eve/draft";
-import type { DraftAttachment } from "../../../chat/lib/eve/draft";
-import type { UiToolName } from "../../../chat/lib/ai/types";
-import { ChatSuggestions } from "../../../chat/components/chat-slots";
+import { installationSelectionSchema } from "../../../../packages/registry/installation";
 import type { ChatSuggestionsProps } from "../../../chat/chatjs/core/chat/contracts";
-import { ChatSidebar } from "../../../chat/components/chat/chat-sidebar";
-import { ChatNavigationContext } from "../../../chat/components/chat/chat-navigation";
-import { EveChatHeader } from "../../../chat/components/eve/eve-chat-header";
-import { PreviewComposer } from "./preview-composer";
-import { EveChatError } from "../../../chat/components/eve/eve-chat-error";
-import { EveArtifactLayout } from "../../../chat/components/eve/eve-artifact-layout";
+import { ChatSuggestions } from "../../../chat/components/chat-slots";
 import { ChatMessageEditor } from "../../../chat/components/chat/chat-message-editor";
-import type { ReadonlyEveMessage } from "../../../chat/lib/eve/readonly-message-types";
+import { ChatNavigationContext } from "../../../chat/components/chat/chat-navigation";
+import { ChatSidebar } from "../../../chat/components/chat/chat-sidebar";
+import { EveChatError } from "../../../chat/components/eve/eve-chat-error";
+import { EveChatHeader } from "../../../chat/components/eve/eve-chat-header";
 import { KeyboardShortcuts } from "../../../chat/components/keyboard-shortcuts";
+import type { UiToolName } from "../../../chat/lib/ai/types";
+import type { DraftAttachment } from "../../../chat/lib/eve/draft";
+import { attachmentDigest, draftAttachment } from "../../../chat/lib/eve/draft";
+import type { ReadonlyEveMessage } from "../../../chat/lib/eve/readonly-message-types";
 import { GuestPreview } from "./guest-preview";
+import { PreviewComposer } from "./preview-composer";
 import { PreviewRuntime } from "./preview-runtime";
 import { previewTools } from "./preview-tools";
-import { decodePreset, DEFAULT_PRESET_CONFIG } from "shadcn/preset";
-import { useTheme } from "next-themes";
-import { getPresetCode } from "@/vendor/shadcn-create/lib/preset-code";
-import { installationSelectionSchema } from "../../../../packages/registry/installation";
 
-import { startingInstallation } from "../create-model";
-import { IconLibraryContext } from "./icons";
-import { usePreviewDesignSystem } from "./design-system-context";
-import * as native from "./ui/base";
-import { PreviewPlugins, previewSession } from "./preview-plugins";
-import { sampleConversation } from "./preview-data";
+import { ChatHeaderView } from "../../../chat/components/chat-header-view";
 import { ChatConversationScreen } from "../../../chat/components/chat/chat-conversation-screen";
 import {
   ChatWorkspace,
   ChatWorkspaceContent,
 } from "../../../chat/components/chat/chat-workspace";
-import { ChatHeaderView } from "../../../chat/components/chat-header-view";
+import { startingInstallation } from "../create-model";
+import { usePreviewDesignSystem } from "./design-system-context";
+import { IconLibraryContext } from "./icons";
+import { sampleConversation } from "./preview-data";
+import { PreviewPlugins, previewSession } from "./preview-plugins";
+import * as native from "./ui/base";
 
-import { sceneMessages, submittedMessages } from "./scenarios";
 import "../../app/create/preview/preview.css";
+import { sceneMessages, submittedMessages } from "./scenarios";
 
 const readPreset = (code: string) =>
   decodePreset(code) ?? DEFAULT_PRESET_CONFIG;
@@ -357,154 +356,150 @@ export const ChatPreview = () => {
                   }}
                 />
                 <ChatWorkspaceContent>
-                  <EveArtifactLayout conversationId={sampleConversation.id}>
-                    <ChatConversationScreen
-                      conversationId={params.item}
-                      header={
-                        welcome ? (
-                          <ChatHeaderView breadcrumb={null} />
-                        ) : (
-                          <EveChatHeader
-                            chatId={sampleConversation.id}
-                            conversationId={sampleConversation.id}
-                            fallbackTitle={conversationTitle}
-                            hasMessages
-                          />
-                        )
-                      }
-                      welcome={welcome}
-                      status={status}
-                      transcript={{
-                        conversationId: sampleConversation.id,
-                        messages: transcriptMessages,
-                        suggestions: (
-                          <ChatSuggestions
-                            sessionId="preview-session"
-                            conversationId={sampleConversation.id}
-                            events={completionEvents}
-                            lastMessage={lastMessage}
-                            disabled={status !== "ready"}
-                            onSelect={(suggestion) => {
-                              submit(suggestion, []);
-                            }}
-                          />
-                        ),
-                        isReadonly: false,
-                        disabled: status !== "ready",
-                        respond: () => {
-                          /* Completed fixtures do not request input. */
-                        },
-                        onEdit: (message) => {
-                          setEdit({
-                            id: message.id,
-                            text: message.parts
-                              .filter((part) => part.type === "text")
-                              .map((part) => part.text)
-                              .join("\n"),
-                          });
-                        },
-                        editor: edit
-                          ? {
-                              messageId: edit.id,
-                              disabled: status !== "ready",
-                              onCancel: () => {
-                                setEdit(undefined);
-                              },
-                              content: (
-                                <ChatMessageEditor
-                                  error={error}
-                                  composer={
-                                    <PreviewComposer
-                                      draft={edit.text}
-                                      onDraftChange={(text) => {
-                                        setEdit({ ...edit, text });
-                                      }}
-                                      disabled={false}
-                                      onSubmit={() => {
-                                        if (scenario === "mutation-error") {
-                                          setError(
-                                            "Sample edit failed. Your draft has been kept."
-                                          );
-                                          return;
-                                        }
-                                        setReplacements((previous) => ({
-                                          ...previous,
-                                          [edit.id]: edit.text,
-                                        }));
-                                        setEdit(undefined);
-                                        setError(undefined);
-                                        simulateResponse();
-                                      }}
-                                    />
-                                  }
-                                />
-                              ),
-                            }
-                          : undefined,
-                        onRegenerate: () => {
-                          simulateResponse();
-                        },
-                      }}
-                      notices={
-                        error === undefined ? undefined : (
-                          <EveChatError message={error} />
-                        )
-                      }
-                      composer={
-                        <PreviewComposer
-                          draft={draft}
-                          onDraftChange={setDraft}
-                          onSubmit={send}
-                          disabled={false}
-                          status={status}
-                          onStop={stopResponse}
-                          autoFocus={!welcome && messages.length > 0}
-                          capabilities={{
-                            selectedTool,
-                            onToolChange: setSelectedTool,
-                            files: {
-                              attachments: uploads ? attachments : [],
-                              setAttachments,
-                              uploadQueue: [],
-                              enabled: uploads,
-                              busy: false,
-                              errors: [],
-                              enqueue: async (files) => {
-                                const generation = attachmentGeneration.current;
-                                const digests = await Promise.all(
-                                  files.map(
-                                    async (file) =>
-                                      await attachmentDigest(
-                                        await file.arrayBuffer()
-                                      )
-                                  )
-                                );
-                                if (
-                                  generation !== attachmentGeneration.current
-                                ) {
-                                  return;
-                                }
-                                const added = files.map((file, index) => {
-                                  const url = URL.createObjectURL(file);
-                                  objectUrls.current.push(url);
-                                  return draftAttachment.parse({
-                                    name: file.name,
-                                    contentType: file.type,
-                                    digest: digests[index],
-                                    url,
-                                  });
-                                });
-                                setAttachments((current) => [
-                                  ...current,
-                                  ...added,
-                                ]);
-                              },
-                            },
+                  <ChatConversationScreen
+                    conversationId={params.item}
+                    header={
+                      welcome ? (
+                        <ChatHeaderView breadcrumb={null} />
+                      ) : (
+                        <EveChatHeader
+                          chatId={sampleConversation.id}
+                          conversationId={sampleConversation.id}
+                          fallbackTitle={conversationTitle}
+                          hasMessages
+                        />
+                      )
+                    }
+                    welcome={welcome}
+                    status={status}
+                    transcript={{
+                      conversationId: sampleConversation.id,
+                      messages: transcriptMessages,
+                      suggestions: (
+                        <ChatSuggestions
+                          sessionId="preview-session"
+                          conversationId={sampleConversation.id}
+                          events={completionEvents}
+                          lastMessage={lastMessage}
+                          disabled={status !== "ready"}
+                          onSelect={(suggestion) => {
+                            submit(suggestion, []);
                           }}
                         />
-                      }
-                    />
-                  </EveArtifactLayout>
+                      ),
+                      isReadonly: false,
+                      disabled: status !== "ready",
+                      respond: () => {
+                        /* Completed fixtures do not request input. */
+                      },
+                      onEdit: (message) => {
+                        setEdit({
+                          id: message.id,
+                          text: message.parts
+                            .filter((part) => part.type === "text")
+                            .map((part) => part.text)
+                            .join("\n"),
+                        });
+                      },
+                      editor: edit
+                        ? {
+                            messageId: edit.id,
+                            disabled: status !== "ready",
+                            onCancel: () => {
+                              setEdit(undefined);
+                            },
+                            content: (
+                              <ChatMessageEditor
+                                error={error}
+                                composer={
+                                  <PreviewComposer
+                                    draft={edit.text}
+                                    onDraftChange={(text) => {
+                                      setEdit({ ...edit, text });
+                                    }}
+                                    disabled={false}
+                                    onSubmit={() => {
+                                      if (scenario === "mutation-error") {
+                                        setError(
+                                          "Sample edit failed. Your draft has been kept."
+                                        );
+                                        return;
+                                      }
+                                      setReplacements((previous) => ({
+                                        ...previous,
+                                        [edit.id]: edit.text,
+                                      }));
+                                      setEdit(undefined);
+                                      setError(undefined);
+                                      simulateResponse();
+                                    }}
+                                  />
+                                }
+                              />
+                            ),
+                          }
+                        : undefined,
+                      onRegenerate: () => {
+                        simulateResponse();
+                      },
+                    }}
+                    notices={
+                      error === undefined ? undefined : (
+                        <EveChatError message={error} />
+                      )
+                    }
+                    composer={
+                      <PreviewComposer
+                        draft={draft}
+                        onDraftChange={setDraft}
+                        onSubmit={send}
+                        disabled={false}
+                        status={status}
+                        onStop={stopResponse}
+                        autoFocus={!welcome && messages.length > 0}
+                        capabilities={{
+                          selectedTool,
+                          onToolChange: setSelectedTool,
+                          files: {
+                            attachments: uploads ? attachments : [],
+                            setAttachments,
+                            uploadQueue: [],
+                            enabled: uploads,
+                            busy: false,
+                            errors: [],
+                            enqueue: async (files) => {
+                              const generation = attachmentGeneration.current;
+                              const digests = await Promise.all(
+                                files.map(
+                                  async (file) =>
+                                    await attachmentDigest(
+                                      await file.arrayBuffer()
+                                    )
+                                )
+                              );
+                              if (generation !== attachmentGeneration.current) {
+                                return;
+                              }
+                              const added = files.map((file, index) => {
+                                const url = URL.createObjectURL(file);
+                                objectUrls.current.push(url);
+                                return draftAttachment.parse({
+                                  name: file.name,
+                                  contentType: file.type,
+                                  digest: digests[index],
+                                  url,
+                                });
+                              });
+                              setAttachments((current) => [
+                                ...current,
+                                ...added,
+                              ]);
+                            },
+                          },
+                        }}
+                      />
+                    }
+                  />
                 </ChatWorkspaceContent>
               </ChatWorkspace>
             </ChatNavigationContext>

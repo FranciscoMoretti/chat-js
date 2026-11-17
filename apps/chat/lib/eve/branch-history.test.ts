@@ -8,7 +8,7 @@ it("imports completed content without exporting app metadata or runtime capabili
       messages: [
         {
           role: "user",
-          metadata: { chatjs: { selectedTool: "webSearch" } },
+          metadata: { chatjs: { selectedTool: "generateImage" } },
           parts: [
             {
               type: "file",

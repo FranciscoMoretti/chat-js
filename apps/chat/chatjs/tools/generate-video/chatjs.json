@@ -1,4 +1,6 @@
 {
+  "agentCategory": "tool",
+  "requiresChatJS": true,
   "config": { "key": "video" },
   "envRequirements": [],
   "id": "generate-video",
@@ -18,5 +20,6 @@
       "toolExport": "generateVideoTool"
     }
   ],
-  "contractVersion": 1
+  "contractVersion": 1,
+  "channelSupport": { "web": "supported", "slack": "unverified" }
 }

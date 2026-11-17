@@ -16,46 +16,37 @@ const compiled = ts.transpileModule(source, {
   },
 }).outputText;
 
-for (const runtime of ["nodejs", "edge"]) {
-  for (const fail of [false, true]) {
-    test(`all registrations start despite another instrumentation ${fail ? "failure" : "omission"} on ${runtime}`, async (): Promise<void> => {
-      const events: string[] = [];
-      const received: unknown[] = [];
-      const failure = new Error("Missing credentials for langfuse");
-      const registrations: ((context: unknown) => void)[] = fail
-        ? [
-            (context: unknown): never => {
-              received.push(context);
-              events.push("optional");
-              throw failure;
-            },
-          ]
-        : [];
-      registrations.push(() => {
-        events.push("cleanup");
-      });
-      const exports: { register?: () => Promise<void> } = {};
-      runInNewContext(compiled, {
-        exports,
-        process: { env: { NEXT_RUNTIME: runtime } },
-        require: (name: string) => {
-          if (name === "@/integrations/instrumentation") {
-            return { instrumentation: registrations };
-          }
-          if (name === "@/lib/config") {
-            return { config: { appPrefix: "test" } };
-          }
-          throw new Error(`Unexpected import: ${name}`);
-        },
-      });
-      if (!exports.register) {
-        throw new Error("Missing register export");
-      }
-      await (fail
-        ? rejects(exports.register(), (reason: unknown) => reason === failure)
-        : exports.register());
-      expect(received).toEqual(fail ? [{ appPrefix: "test", runtime }] : []);
-      expect(events).toEqual([...(fail ? ["optional"] : []), "cleanup"]);
+for (const fail of [false, true]) {
+  test(`all registrations start despite another instrumentation ${fail ? "failure" : "omission"}`, async (): Promise<void> => {
+    const events: string[] = [];
+    const failure = new Error("Startup registration failed");
+    const registrations: (() => void)[] = fail
+      ? [
+          (): never => {
+            events.push("optional");
+            throw failure;
+          },
+        ]
+      : [];
+    registrations.push(() => {
+      events.push("cleanup");
     });
-  }
+    const exports: { register?: () => Promise<void> } = {};
+    runInNewContext(compiled, {
+      exports,
+      require: (name: string) => {
+        if (name === "@/integrations/instrumentation") {
+          return { instrumentation: registrations };
+        }
+        throw new Error(`Unexpected import: ${name}`);
+      },
+    });
+    if (!exports.register) {
+      throw new Error("Missing register export");
+    }
+    await (fail
+      ? rejects(exports.register(), (reason: unknown) => reason === failure)
+      : exports.register());
+    expect(events).toEqual([...(fail ? ["optional"] : []), "cleanup"]);
+  });
 }

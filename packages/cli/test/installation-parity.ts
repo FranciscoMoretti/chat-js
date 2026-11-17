@@ -16,9 +16,9 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import type { InstallationSelection } from "../../registry/installation";
+import { writeAgentConfiguration } from "../src/helpers/agent-configuration";
 import { parsePackageJson } from "../src/helpers/package-manifest";
 import gatewayPackage from "@chat-js/gateways/package.json";
-import sandboxPackage from "@chat-js/sandboxes/package.json";
 import formatConfig from "../../../apps/chat/oxfmt.config";
 
 const fixture: { core?: Map<string, Uint8Array> } = {};
@@ -53,6 +53,7 @@ const prepareNativeCore = async (): Promise<Map<string, Uint8Array>> => {
   const directory = await mkdtemp(path.join(tmpdir(), "chatjs-native-parity-"));
   try {
     await scaffoldNativeProject(directory, "bun", []);
+    await writeAgentConfiguration(directory, {});
     return await readInstallationProject(directory);
   } finally {
     await rm(directory, { recursive: true, force: true });
@@ -76,10 +77,8 @@ const manifest = (source: string) => {
     if (!group) {
       continue;
     }
-    for (const pkg of [gatewayPackage, sandboxPackage]) {
-      if (group[pkg.name]?.startsWith("http://127.0.0.1:")) {
-        group[pkg.name] = pkg.version;
-      }
+    if (group[gatewayPackage.name]?.startsWith("http://127.0.0.1:")) {
+      group[gatewayPackage.name] = gatewayPackage.version;
     }
   }
   return parsed;
@@ -122,16 +121,22 @@ export const compareInstallationProjects = async (
 export const verifyInstallationParity = async (
   cwd: string,
   selection: InstallationSelection,
-  name: string
+  name: string,
+  pluginsAtCreation: readonly string[] = []
 ): Promise<void> => {
   fixture.core ??= await prepareNativeCore();
-  const predicted = await renderValidationProject(fixture.core, selection, {
-    name,
-    title: name
-      .split("-")
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(" "),
-  });
+  const predicted = await renderValidationProject(
+    fixture.core,
+    selection,
+    {
+      name,
+      title: name
+        .split("-")
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" "),
+    },
+    pluginsAtCreation
+  );
   if (selection.plugins.includes("desktop")) {
     const bytes = predicted.files.get("tsconfig.json");
     if (!bytes) {

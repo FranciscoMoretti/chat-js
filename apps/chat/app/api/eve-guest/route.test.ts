@@ -38,17 +38,20 @@ const settings = vi.hoisted(
     APP_URL: string | undefined;
     EVE_GATEWAY_SECRET: string;
     EVE_INTERNAL_ORIGIN: string;
-    VERCEL_AUTOMATION_BYPASS_SECRET: string;
+    VERCEL: string;
     VERCEL_URL: string;
   } => ({
     APP_URL: "https://chat.example",
     EVE_GATEWAY_SECRET: "test-guest-signing-secret-at-least-32-characters",
     EVE_INTERNAL_ORIGIN: "https://separate-worker.example",
-    VERCEL_AUTOMATION_BYPASS_SECRET: "deployment-bypass-test",
+    VERCEL: "",
     VERCEL_URL: "",
   })
 );
 vi.mock("@/lib/env", () => ({ env: settings }));
+vi.mock("@vercel/oidc", () => ({
+  getVercelOidcTokenSync: () => "invocation-token",
+}));
 vi.mock("@/chatjs/plugins/guest-chat/guest-queries", () => ({
   createGuestRuntimeSession: mocks.create,
   bindGuestRuntimeSession: mocks.bind,
@@ -76,6 +79,7 @@ beforeEach(() => {
   mocks.bind.mockResolvedValue(true);
   mocks.ip.mockReturnValue("a".repeat(64));
   settings.VERCEL_URL = "";
+  settings.VERCEL = "";
   settings.APP_URL = "https://chat.example";
   vi.stubGlobal("fetch", mocks.fetch);
   mocks.fetch.mockImplementation(() =>
@@ -135,22 +139,23 @@ test("failed native creation never issues a browser credential", async () => {
 });
 
 test("protected custom-domain bootstrap uses this deployment rather than a separate registered worker", async () => {
+  settings.VERCEL = "1";
   settings.VERCEL_URL = "deployment.vercel.app";
   await POST(request({ modelId: "openai/gpt-5-nano" }));
   const [[url, init]] = mocks.fetch.mock.calls;
   expect(url).toEqual(
     new URL("https://deployment.vercel.app/eve/chat/v1/session")
   );
-  expect(new Headers(init.headers).get("x-vercel-protection-bypass")).toBe(
-    "deployment-bypass-test"
+  expect(new Headers(init.headers).get("x-vercel-trusted-oidc-idp-token")).toBe(
+    "invocation-token"
   );
 });
-test("non-Vercel guest bootstrap stays on the application origin without leaking bypass credentials", async () => {
+test("non-Vercel guest bootstrap stays on the application origin without leaking project identity", async () => {
   await POST(request({ modelId: "openai/gpt-5-nano" }));
   const [[url, init]] = mocks.fetch.mock.calls;
   expect(url).toEqual(new URL("https://chat.example/eve/chat/v1/session"));
   expect(
-    new Headers(init.headers).get("x-vercel-protection-bypass")
+    new Headers(init.headers).get("x-vercel-trusted-oidc-idp-token")
   ).toBeNull();
 });
 

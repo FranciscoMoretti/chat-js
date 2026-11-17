@@ -1,14 +1,18 @@
-import type { DynamicContext } from "eve";
 import { isAccountSession } from "../../lib/eve/session-identity";
-import { requireSessionProfile } from "../../lib/eve/session-profile";
 import { defineDynamic, defineInstructions } from "eve/instructions";
-
 import { systemPrompt } from "../../lib/ai/prompts";
 
-export default defineDynamic((context: DynamicContext) =>
-  defineInstructions({
-    content: isAccountSession(context.session)
-      ? systemPrompt()
-      : requireSessionProfile(context.session).instructions,
-  })
-);
+export default defineDynamic(async (context) => {
+  if (isAccountSession(context.session)) {
+    return defineInstructions({ content: systemPrompt() });
+  }
+  if (
+    context.session.auth.initiator?.authenticator?.startsWith("chatjs-") !==
+    true
+  ) {
+    return null;
+  }
+  const { findSessionProfile } = await import("../../lib/eve/session-profile");
+  const content = findSessionProfile(context.session)?.instructions;
+  return content === undefined ? null : defineInstructions({ content });
+});

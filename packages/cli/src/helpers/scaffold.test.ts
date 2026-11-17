@@ -156,7 +156,6 @@ describe("buildConfigTs", (): void => {
       },
       coreFeatures: {
         attachments: false,
-        documents: true,
         followupSuggestions: true,
         feedback: false,
         mcp: false,
@@ -184,7 +183,6 @@ describe("buildConfigTs", (): void => {
       },
       coreFeatures: {
         attachments: false,
-        documents: true,
         followupSuggestions: true,
         feedback: false,
         mcp: false,
@@ -233,18 +231,11 @@ describe("scaffoldFromTemplate", (): void => {
   it("scaffolds without a sandbox SDK or persistent capability", async (): Promise<void> => {
     const destination = makeTempDir("no-sandbox");
     await scaffoldFromTemplate(destination);
-    const provider = z
-      .object({
-        createSandboxProvider: z.undefined(),
-        supportsPersistentSandbox: z.boolean(),
-      })
-      .parse(
-        await import(
-          pathModule.join(destination, "chatjs/providers/sandbox/provider.ts")
-        )
-      );
-    expect(provider.createSandboxProvider).toBeUndefined();
-    expect(provider.supportsPersistentSandbox).toBe(false);
+    expect(
+      existsSync(
+        pathModule.join(destination, "chatjs/providers/sandbox/provider.ts")
+      )
+    ).toBe(false);
     const manifest = z
       .object({ dependencies: z.record(z.string(), z.string()) })
       .parse(
@@ -267,9 +258,9 @@ describe("scaffoldFromTemplate", (): void => {
         pathModule.join(destination, "chatjs/providers/sandbox/persistent.ts")
       )
     ).toBe(false);
-    expect(
-      await readFile(pathModule.join(destination, "agent/sandbox.ts"), "utf-8")
-    ).toContain("createAppSandboxEnvironment");
+    expect(existsSync(pathModule.join(destination, "agent/sandbox.ts"))).toBe(
+      false
+    );
     expect(
       existsSync(pathModule.join(destination, "guest/agent/sandbox.ts"))
     ).toBe(false);
@@ -342,7 +333,6 @@ describe("scaffoldFromTemplate", (): void => {
       "lib/eve/model-runtime.test.ts",
       "lib/eve/local-sandbox-inventory.test.ts",
       "lib/eve/purge-local-sandbox.test.ts",
-      "lib/eve/verify-local-coverage.test.ts",
       "lib/db/eve-document-capabilities.test.ts",
       "lib/db/eve-model-ledger.test.ts",
       "lib/db/eve-billing.test.ts",
@@ -380,7 +370,6 @@ describe("scaffoldFromTemplate", (): void => {
     for (const file of [
       "tests/chat.e2e.ts",
       "tests/reasoning.e2e.ts",
-      "tests/artifacts.e2e.ts",
       "components/eve/eve-conversation.tsx",
       "lib/eve/message-delivery.test.ts",
 
@@ -548,7 +537,7 @@ describe("scaffoldFromTemplate", (): void => {
     ).toBe(true);
     expect(
       existsSync(
-        pathModule.join(destination, "components/chat/chat-layout.tsx")
+        pathModule.join(destination, "components/chat/chat-conversation.tsx")
       )
     ).toBe(true);
   });
@@ -688,31 +677,26 @@ describe("scaffoldFromTemplate", (): void => {
     expect(
       existsSync(pathModule.join(destination, "agent/tools/deepResearch.ts"))
     ).toBe(false);
-    for (const name of [
-      "researchPlanner",
-      "researcher",
-      "researchCompressor",
-      "researchWriter",
-    ]) {
-      expect(
-        existsSync(pathModule.join(destination, "agent/subagents", name))
-      ).toBe(false);
-    }
+    expect(existsSync(pathModule.join(destination, "agent/lib/research"))).toBe(
+      false
+    );
     expect(
-      existsSync(pathModule.join(destination, "chatjs", "tools", "get-weather"))
+      existsSync(
+        pathModule.join(destination, "chatjs", "tools", "attach-workspace-file")
+      )
     ).toBe(false);
     expect(
       await readFile(
         pathModule.join(destination, "chatjs", "generated", "tools.ts"),
         "utf-8"
       )
-    ).not.toContain("getWeather");
+    ).not.toContain("attach_workspace_file");
     expect(
       await readFile(
         pathModule.join(destination, "chatjs", "generated", "ui.ts"),
         "utf-8"
       )
-    ).not.toContain("GetWeatherRenderer");
+    ).not.toContain("AttachWorkspaceFileRenderer");
   });
   it(
     "falls back to repo source apps when synced templates are missing",

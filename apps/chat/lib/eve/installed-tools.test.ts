@@ -151,12 +151,19 @@ test.each([
     principalId: "visitor",
     principalType: "user",
   },
-])("unknown identities receive no installed tools: %o", async (initiator) => {
-  expect(
-    await resolveInstalled(
-      testDynamicContext({
-        session: { auth: { current: null, initiator }, id: "session" },
-      })
-    )
-  ).toEqual({});
-});
+])(
+  "native identities can use ordinary tools without an application profile: %o",
+  async (initiator) => {
+    await expect(
+      resolveInstalled(
+        testDynamicContext({
+          session: { auth: { current: null, initiator }, id: "session" },
+        })
+      )
+    ).resolves.toEqual(definitions);
+  }
+);
+
+vi.mock("@/integrations/chat/session-profiles", () => ({
+  sessionProfiles: [],
+}));

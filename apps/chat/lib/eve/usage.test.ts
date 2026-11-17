@@ -5,6 +5,11 @@ import type { recordEveUsage } from "../db/eve-billing";
 
 import { ingestEveUsage } from "./usage";
 
+const billing = vi.hoisted((): { debit?: () => unknown } => ({
+  debit: vi.fn(),
+}));
+vi.mock("@/integrations/billing", () => ({ billing }));
+
 const record = vi.hoisted(() => vi.fn<typeof recordEveUsage>());
 const register = vi.hoisted(() => vi.fn());
 const logError = vi.hoisted(() => vi.fn());
@@ -14,8 +19,10 @@ vi.mock("../logger", () => ({
 vi.mock("../db/eve-subagents", () => ({ registerEveSubagent: register }));
 vi.mock("../db/eve-billing", () => ({ recordEveUsage: record }));
 beforeEach(() => {
+  billing.debit = vi.fn();
   record.mockReset();
   register.mockReset();
+  logError.mockReset();
 });
 it.each(["completed", "failed"] as const)(
   "never charges model settlement %s through replay",
@@ -153,14 +160,16 @@ it.each([{}, { costUsd: -1 }])(
   }
 );
 
-it("does not infer billing from ordinary tool output", async () => {
-  await ingestEveUsage(
-    "owner",
-    "session",
-    toolEvent({ answer: "ordinary data", costUsd: 5 })
-  );
-  expect(record).not.toHaveBeenCalled();
-});
+it.each([{}, { answer: "ordinary data", costUsd: 5 }, null])(
+  "does not require or infer ChatJS billing from native output %j",
+  async (output) => {
+    expect(await ingestEveUsage("owner", "session", toolEvent(output))).toBe(
+      true
+    );
+    expect(record).not.toHaveBeenCalled();
+    expect(logError).not.toHaveBeenCalled();
+  }
+);
 it("attributes independent child tool receipts to the root turn", async () => {
   const attribution = { sessionId: "root", turnId: "turn_7" };
   await ingestEveUsage(
@@ -184,14 +193,7 @@ it("attributes independent child tool receipts to the root turn", async () => {
   );
 });
 
-it("permits cursor advancement for events without a billable tool receipt", async () => {
-  expect(
-    await ingestEveUsage(
-      "owner",
-      "session",
-      toolEvent({ answer: "ordinary output" })
-    )
-  ).toBe(true);
+it("permits cursor advancement for lifecycle events without tool executions", async () => {
   expect(
     await ingestEveUsage("owner", "session", {
       type: "session.ended",
@@ -201,30 +203,43 @@ it("permits cursor advancement for events without a billable tool receipt", asyn
   expect(record).not.toHaveBeenCalled();
 });
 
-it("registers native local child sessions for independent charging and ignores remote sessions", async () => {
-  const event = {
-    type: "child.opened",
-    scope: { turnId: "turn" },
-    data: {
-      sessionId: "child",
-      owner: { callId: "call" },
-      name: "research",
-      stream: "/eve/v1/session/child/stream",
-    },
-  } satisfies Parameters<typeof ingestEveUsage>[2];
-  await expect(ingestEveUsage("owner", "parent", event)).resolves.toBe(true);
-  expect(register).toHaveBeenCalledExactlyOnceWith(
-    "owner",
-    "parent",
-    "child",
-    "turn"
-  );
+it.each([true, false])(
+  "registers native local children regardless of billing (%s) and ignores remote sessions",
+  async (enabled) => {
+    billing.debit = enabled ? vi.fn() : undefined;
+    const event = {
+      type: "child.opened",
+      scope: { turnId: "turn" },
+      data: {
+        sessionId: "child",
+        owner: { callId: "call" },
+        name: "research",
+        stream: "/eve/v1/session/child/stream",
+      },
+    } satisfies Parameters<typeof ingestEveUsage>[2];
+    await expect(ingestEveUsage("owner", "parent", event)).resolves.toBe(true);
+    expect(register).toHaveBeenCalledExactlyOnceWith(
+      "owner",
+      "parent",
+      "child",
+      "turn"
+    );
+    await expect(
+      ingestEveUsage("owner", "parent", {
+        ...event,
+        data: { ...event.data, stream: "https://remote.test/stream" },
+      })
+    ).resolves.toBe(true);
+    expect(register).toHaveBeenCalledOnce();
+    expect(record).not.toHaveBeenCalled();
+  }
+);
+
+it("does not require a ChatJS cost receipt or write a ledger when billing is absent", async () => {
+  billing.debit = undefined;
   await expect(
-    ingestEveUsage("owner", "parent", {
-      ...event,
-      data: { ...event.data, stream: "https://remote.test/stream" },
-    })
+    ingestEveUsage("owner", "session", toolEvent({ title: "Example Domain" }))
   ).resolves.toBe(true);
-  expect(register).toHaveBeenCalledOnce();
   expect(record).not.toHaveBeenCalled();
+  expect(logError).not.toHaveBeenCalled();
 });

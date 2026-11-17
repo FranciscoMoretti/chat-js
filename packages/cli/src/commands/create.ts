@@ -1,8 +1,13 @@
+import { installEveIntegrations } from "#cli/helpers/eve-integrations";
+import { registryResolution } from "#cli/registry/resolution-context";
+import { parseAgentRecipe, writeAgentRecipe } from "#cli/helpers/agent-recipe";
+import type { AgentRecipe } from "#cli/helpers/agent-recipe";
 import {
   readCreateInstallation,
   assertExclusiveInstallation,
 } from "#cli/helpers/create-installation";
 import { optionalDirectoryFiles } from "#cli/utils/installation-files";
+import { writeAgentConfiguration } from "#cli/helpers/agent-configuration";
 import { recordInstalledSource } from "#cli/utils/source-receipt";
 import { scaffoldNativeProject } from "#cli/helpers/native-scaffold";
 import { createStagedProject } from "#cli/helpers/staged-project";
@@ -16,18 +21,13 @@ import { itemAddress, listTools, readItem } from "#cli/registry/shadcn";
 import {
   promptAssistantTools,
   promptAuth,
-  promptCodeExecutionTool,
   promptSandbox,
   promptCoreFeatures,
-  promptDocumentTypes,
   promptElectron,
   promptGateway,
   promptImageGenerationTool,
-  promptObservability,
   promptProjectName,
-  promptSearchTool,
   promptStorage,
-  promptUrlRetrievalTool,
   promptVideoGenerationTool,
 } from "#cli/helpers/prompts";
 import { readFile, writeFile } from "node:fs/promises";
@@ -49,7 +49,6 @@ import { handleError } from "#cli/utils/handle-error";
 import { highlighter } from "#cli/utils/highlighter";
 import { launcherPackageManager } from "#cli/utils/get-package-manager";
 import { logger } from "#cli/utils/logger";
-import { observabilityItems } from "../../../registry/src/plugins/observability";
 import { parseJsonObject } from "#cli/helpers/json-object";
 import path from "node:path";
 import { planInstallation } from "#cli/utils/installation-plan";
@@ -136,41 +135,20 @@ const printEnvChecklist = (entries: readonly Readonly<EnvVarEntry>[]): void => {
 };
 
 const createOptionsSchema = z.object({
+  recipe: z.string().optional(),
   appPreset: z.string().optional(),
   installation: z.string().optional(),
   attachments: z.boolean().optional(),
-  codeExecutionTool: z.string().optional(),
-  documents: z.boolean().optional(),
   electron: z.boolean().optional(),
   fromGit: z.string().optional(),
   gateway: z.string().optional(),
   imageGenerationTool: z.string().optional(),
   mcp: z.boolean().optional(),
   projects: z.boolean().optional(),
-  observability: z
-    .string()
-    .refine(
-      (value): boolean =>
-        value
-          .split(",")
-          .map((id): string => id.trim())
-          .filter(Boolean)
-          .every((id): boolean =>
-            observabilityItems.some(
-              (
-                item: ReadonlyInput<(typeof observabilityItems)[number]>
-              ): boolean => item.name === id
-            )
-          ),
-      "Observability must select vercel-analytics, vercel-speed-insights or langfuse."
-    )
-    .optional(),
-  searchTool: z.string().optional(),
   storageConfig: z.string().optional(),
   storageProvider: z.string().optional(),
   sandboxProvider: z.string().optional(),
   target: z.string().optional(),
-  urlRetrievalTool: z.string().optional(),
   videoGenerationTool: z.string().optional(),
   yes: z.boolean(),
 });
@@ -206,9 +184,6 @@ const collectToolSources = async (
   const toolSources = assistantTools.installableTools.map((tool): string =>
     itemAddress(tool, "tool")
   );
-  if (assistantTools.builtInTools.deepResearch) {
-    assistantTools.builtInTools.webSearch = true;
-  }
   const selections = [
     {
       plugin: "videoGeneration",
@@ -221,24 +196,6 @@ const collectToolSources = async (
       prompt: promptImageGenerationTool,
       slot: "generateImage",
       source: options.imageGenerationTool,
-    },
-    {
-      plugin: "webSearch",
-      prompt: promptSearchTool,
-      slot: "webSearch",
-      source: options.searchTool,
-    },
-    {
-      plugin: "codeExecution",
-      prompt: promptCodeExecutionTool,
-      slot: "codeExecution",
-      source: options.codeExecutionTool,
-    },
-    {
-      plugin: "urlRetrieval",
-      prompt: promptUrlRetrievalTool,
-      slot: "retrieveUrl",
-      source: options.urlRetrievalTool,
     },
   ] as const;
 
@@ -328,38 +285,6 @@ const loadInstallableTools = async (
     return [];
   }
 };
-const addDocumentToolSources = (
-  toolSources: string[],
-  coreFeatures: ReadonlyInput<CreateSetup["coreFeatures"]>,
-  documentTypes: ReadonlyInput<Awaited<ReturnType<typeof promptDocumentTypes>>>,
-  assistantTools: ReadonlyInput<AssistantTools>,
-  selectedTools: readonly ReadonlyInput<z.output<typeof toolDefinitionSchema>>[]
-): void => {
-  for (const kind of ["text", "code", "sheet"] as const) {
-    if (coreFeatures.documents && documentTypes[kind]) {
-      const source = itemAddress(`${kind}-documents`, "tool");
-      if (!toolSources.includes(source)) {
-        toolSources.push(source);
-      }
-    }
-  }
-  if (assistantTools.builtInTools.deepResearch) {
-    toolSources.push(itemAddress("deep-research", "tool"));
-  }
-  if (
-    coreFeatures.documents &&
-    documentTypes.code &&
-    selectedTools.some(
-      (tool: ReadonlyInput<z.output<typeof toolDefinitionSchema>>) =>
-        tool.slot === "codeExecution" &&
-        typeof tool.codeExecutorExport === "string" &&
-        tool.codeExecutorExport !== ""
-    )
-  ) {
-    toolSources.push(itemAddress("saved-code-execution", "tool"));
-  }
-};
-
 const promptCreateSetup = async (
   options: Readonly<CreateOptions>,
   targetDir: string
@@ -374,28 +299,12 @@ const promptCreateSetup = async (
   if (options.attachments !== undefined) {
     coreFeatures.attachments = options.attachments;
   }
-  const observability =
-    options.observability === undefined
-      ? await promptObservability(options.yes)
-      : options.observability
-          .split(",")
-          .map((id): string => id.trim())
-          .filter(Boolean);
-  coreFeatures.documents = options.documents ?? coreFeatures.documents;
-  const documentTypes = await promptDocumentTypes(
-    options.yes,
-    coreFeatures.documents
-  );
   const registryItems = await loadInstallableTools(options, targetDir);
   const assistantTools = await promptAssistantTools(
     registryItems,
     options.yes,
     gatewaySelection.definition
   );
-  if (assistantTools.builtInTools.deepResearch) {
-    coreFeatures.documents = true;
-    documentTypes.text = true;
-  }
   const toolSources = await collectToolSources(
     options,
     assistantTools,
@@ -407,13 +316,9 @@ const promptCreateSetup = async (
       return toolDefinitionSchema.parse(item.meta?.chatjs);
     })
   );
-  addDocumentToolSources(
-    toolSources,
-    coreFeatures,
-    documentTypes,
-    assistantTools,
-    selectedTools
-  );
+  if (assistantTools.builtInTools.deepResearch) {
+    toolSources.push(itemAddress("deep-research", "tool"));
+  }
   const usesStorage =
     coreFeatures.attachments ||
     selectedTools.some(
@@ -439,7 +344,6 @@ const promptCreateSetup = async (
     targetDir,
     {
       plugins: [
-        ...observability,
         ...(withElectron ? ["desktop"] : []),
         ...(coreFeatures.mcp ? ["mcp"] : []),
         ...(coreFeatures.projects ? ["projects"] : []),
@@ -454,10 +358,8 @@ const promptCreateSetup = async (
       },
       tools: toolSources,
     },
-    { documents: options.documents, fresh: true },
-    async (required, persistent) =>
-      options.sandboxProvider ??
-      (await promptSandbox(options.yes, required, persistent))
+    { fresh: true },
+    async () => options.sandboxProvider ?? (await promptSandbox(options.yes))
   );
 
   return {
@@ -494,7 +396,6 @@ const selectedCreateSetup = async (
     auth: await promptAuth(yes),
     coreFeatures: {
       attachments: plugins.has("attachment-uploads"),
-      documents: plan.expected.some((tool) => tool.documentKind !== undefined),
       feedback: plugins.has("feedback"),
       followupSuggestions: plugins.has("followup-suggestions"),
       mcp: plugins.has("mcp"),
@@ -517,9 +418,15 @@ const scaffoldProject = async (
   project: Readonly<ProjectTarget>,
   packageManager: PackageManager,
   withElectron: boolean,
-  shadcnArgs: readonly string[]
+  shadcnArgs: readonly string[],
+  recipe?: AgentRecipe
 ): Promise<void> => {
-  await scaffoldNativeProject(project.targetDir, packageManager, shadcnArgs);
+  await scaffoldNativeProject(
+    project.targetDir,
+    packageManager,
+    shadcnArgs,
+    recipe
+  );
   if (withElectron) {
     await scaffoldElectron(project.targetDir, {
       packageManager,
@@ -555,6 +462,10 @@ const writeConfiguration = async (
         gatewayDefaults: setup.gatewaySelection.definition.defaults,
       })
     );
+    await writeAgentConfiguration(
+      project.targetDir,
+      setup.plan.selection.agent
+    );
     configSpinner.succeed("Configuration written.");
   } catch (error) {
     configSpinner.fail("Failed to write configuration.");
@@ -586,7 +497,7 @@ const installRegistryItems = async (
     await installPlan(
       project.targetDir,
       plan,
-      { fresh: true, managedTargets: ["chatjs/providers/sandbox/options.ts"] },
+      { fresh: true, managedTargets: [] },
       async (): Promise<void> => {
         await configureGatewayProvider(
           project.targetDir,
@@ -626,7 +537,6 @@ const installRegistryItems = async (
       "chatjs/providers/gateway-defaults.ts",
       "lib/ai/models.generated.ts",
       "chatjs/providers/storage-options.ts",
-      "chatjs/providers/sandbox/options.ts",
       ".env.example",
     ]);
     installSpinner.succeed("Registry items installed and configured.");
@@ -647,14 +557,6 @@ const printNextSteps = (
 ): void => {
   const envEntries = collectEnvChecklist({
     auth: setup.auth,
-    builtInTools: {
-      webSearch: false,
-      urlRetrieval: false,
-      deepResearch: false,
-      codeExecution: false,
-      imageGeneration: false,
-      videoGeneration: false,
-    },
     coreFeatures: setup.coreFeatures,
     gateway: setup.gateway,
     gatewayRequirements: setup.gatewaySelection.definition.envRequirements,
@@ -689,6 +591,14 @@ const printNextSteps = (
     );
   }
   logger.break();
+  logger.info(
+    "Check capability configuration with chat-js setup (requires Bun). This does not verify live services."
+  );
+  if ((setup.plan.selection.eve?.length ?? 0) > 0) {
+    logger.info(
+      "Native EVE capabilities installed. Complete provider setup using chatjs/eve-setup.md; credentials and consent are not configured by Create."
+    );
+  }
   printEnvChecklist(envEntries);
   logger.log(
     "  Postgres setup (Neon, Supabase, or another host): https://www.chatjs.dev/docs/reference/database"
@@ -701,9 +611,15 @@ const printNextSteps = (
 
 const createProject = async (
   options: Readonly<CreateOptions>,
-  shadcnArgs: readonly string[]
+  shadcnArgs: readonly string[],
+  recipe?: AgentRecipe
 ): Promise<void> => {
   const packageManager = launcherPackageManager();
+  if (recipe && packageManager !== "bun") {
+    throw new Error(
+      "Replay this recipe with Bun so its frozen dependency lock is honored."
+    );
+  }
   if (!options.yes) {
     intro("Create ChatJS App");
   }
@@ -752,15 +668,48 @@ const createProject = async (
         stagedProject,
         packageManager,
         setup.withElectron,
-        shadcnArgs
+        shadcnArgs,
+        recipe
       );
       // Resolve only after native init has selected the actual library.
       setup.plan = await planInstallation(stage, setup.plan.selection, {
-        documents: options.documents,
         fresh: true,
       });
       await writeConfiguration(stagedProject, setup);
-      return await installRegistryItems(packageManager, stagedProject, setup);
+      const installed = await installRegistryItems(
+        packageManager,
+        stagedProject,
+        setup
+      );
+      const eve = await installEveIntegrations(
+        stage,
+        setup.plan.selection.eve ?? [],
+        packageManager,
+        recipe?.eve,
+        setup.plan.selection.eveRegistries
+      );
+      if (recipe) {
+        const lockfile = recipe.native.find((file) => file.path === "bun.lock");
+        if (!lockfile) {
+          throw new Error("Recipe is missing its dependency lock.");
+        }
+        await writeFile(path.join(stage, "bun.lock"), lockfile.content);
+        await runCommand("bun", ["install", "--frozen-lockfile"], stage);
+      }
+      if (packageManager === "bun") {
+        await writeAgentRecipe(stage, {
+          selection: setup.plan.selection,
+          appearance: [...shadcnArgs],
+          capabilities: setup.plan.resolvedItems,
+          eve,
+        });
+        await runCommand(
+          "bun",
+          ["run", "oxfmt", "--write", "chatjs/agent-recipe.json"],
+          stage
+        );
+      }
+      return installed;
     }
   );
   printNextSteps(packageManager, project, setup, installedTools);
@@ -770,17 +719,12 @@ export const create = new Command()
   .name("create")
   .option("--app-preset <code>", "App preset code; bypasses feature defaults")
   .option(
+    "--recipe <path>",
+    "replay a saved Agent recipe with frozen capabilities and dependencies"
+  )
+  .option(
     "--installation <json>",
     "complete JSON selection; bypasses feature defaults"
-  )
-  .option(
-    "--code-execution-tool <item>",
-    "code-execution tool name or registry address"
-  )
-  .option("--search-tool <item>", "search tool name or registry address")
-  .option(
-    "--url-retrieval-tool <item>",
-    "URL retrieval tool name or registry address"
   )
   .option(
     "--image-generation-tool <item>",
@@ -804,12 +748,6 @@ export const create = new Command()
   )
   .option("--no-attachments", "omit user attachment uploads")
   .option(
-    "--observability <items>",
-    "comma-separated vercel-analytics, vercel-speed-insights, langfuse (default: none)"
-  )
-  .option("--documents", "install text, code and sheet documents")
-  .option("--no-documents", "omit document tools from the new app")
-  .option(
     "--projects",
     "install Projects pages, chat organization, and shared instructions"
   )
@@ -824,7 +762,7 @@ export const create = new Command()
   )
   .option(
     "--sandbox-provider <item>",
-    "optional sandbox provider: vercel, daytona or registry address"
+    "native EVE environment: default, vercel, docker, just-bash or registry address"
   )
   .option(
     "--storage-provider <item>",
@@ -844,6 +782,37 @@ export const create = new Command()
       try {
         const { target, shadcnArgs } = createShadcnArguments(command);
         const options = createOptionsSchema.parse({ target, ...opts });
+        if (options.recipe !== undefined) {
+          const conflicts = Object.entries(options).filter(
+            ([key, value]) =>
+              !["recipe", "target", "yes"].includes(key) && value !== undefined
+          );
+          if (conflicts.length > 0 || shadcnArgs.length > 0) {
+            throw new Error(
+              "--recipe cannot be combined with selection or appearance options. Edit the builder choices and generate a new recipe for an upgrade."
+            );
+          }
+          const recipe = parseAgentRecipe(
+            JSON.parse(await readFile(path.resolve(options.recipe), "utf-8"))
+          );
+          await registryResolution.run(
+            new Map(
+              recipe.capabilities.map(({ source, item }) => [source, item])
+            ),
+            async () => {
+              await createProject(
+                {
+                  target,
+                  yes: options.yes,
+                  installation: JSON.stringify(recipe.selection),
+                },
+                recipe.appearance,
+                recipe
+              );
+            }
+          );
+          return;
+        }
         assertExclusiveInstallation(options);
         assertCreateShadcnReady(shadcnArgs, options.fromGit);
         await createProject(options, shadcnArgs);

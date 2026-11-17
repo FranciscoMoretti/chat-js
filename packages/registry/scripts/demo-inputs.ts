@@ -10,8 +10,6 @@ export const demoInputs = [
   "packages/cli/package.json",
   "packages/gateways/src/**",
   "packages/gateways/package.json",
-  "packages/sandboxes/src/**",
-  "packages/sandboxes/package.json",
   "apps/chat/{components.json,oxfmt.config.ts}",
   "{package.json,bun.lock,oxfmt.config.ts}",
   "patches/**",

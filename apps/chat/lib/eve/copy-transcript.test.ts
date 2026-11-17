@@ -216,7 +216,7 @@ it("preserves selected tools in copies without publishing unrelated custom metad
         metadata: {
           chatjs: {
             privateToken: "owner-only",
-            selectedTool: "createTextDocument",
+            selectedTool: "generateImage",
           },
           integration: { token: "integration-secret" },
         },
@@ -229,12 +229,12 @@ it("preserves selected tools in copies without publishing unrelated custom metad
         kind: "send",
         deliveryId: "import",
         selectedTool: null,
-        history: [{ role: "user", selectedTool: "createTextDocument" }],
+        history: [{ role: "user", selectedTool: "generateImage" }],
       },
     ]
   );
   expect(result.seed.messages[0]).toEqual({
-    metadata: { chatjs: { selectedTool: "createTextDocument" } },
+    metadata: { chatjs: { selectedTool: "generateImage" } },
     parts: [{ text: "Create a document", type: "text" }],
     role: "user",
   });
@@ -400,7 +400,7 @@ it("copies native completed calls without carrying execution identities", () => 
       data: {
         callId: "private-call",
         owner: { runId: "source-assistant" },
-        capability: { kind: "tool", name: "wordCount" },
+        capability: { kind: "tool", name: "exampleTextStats" },
         input: { text: "hello" },
       },
     },
@@ -447,7 +447,7 @@ it("copies native completed calls without carrying execution identities", () => 
   ]);
   expect(copy.seed.messages[1]?.parts).toContainEqual({
     type: "dynamic-tool",
-    toolName: "wordCount",
+    toolName: "exampleTextStats",
     input: { text: "hello" },
     state: "output-available",
     output: { words: 1 },

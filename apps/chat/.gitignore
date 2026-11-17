@@ -9,3 +9,6 @@ tests/eve-results/
 # ChatJS source backups are not active source. Keep installation receipts tracked.
 /chatjs/removed-plugins/
 /chatjs/replaced-*
+
+# Local connection setup receipts are not part of exported recipes.
+/

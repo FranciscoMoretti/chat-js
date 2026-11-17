@@ -103,8 +103,7 @@ it.each([
   expect(json).not.toContain("option-private");
 });
 it.each([
-  "codeExecution",
-  "webSearch",
+  "bash",
   "runCodeDocument",
   "generateVideo",
   "generateImage",
@@ -256,10 +255,10 @@ it("shares display-safe tool selection only through an exact known delivery", ()
   const receipt = {
     kind: "send",
     deliveryId: "known",
-    selectedTool: "webSearch",
+    selectedTool: "generateImage",
   } satisfies EveMessageDisplayReceipt;
   expect(sharedEveMessages(input, [receipt])[0]?.metadata).toEqual({
-    custom: { chatjs: { selectedTool: "webSearch" } },
+    custom: { chatjs: { selectedTool: "generateImage" } },
   });
   expect(
     sharedEveMessages(input, [{ ...receipt, deliveryId: "other" }])[0]?.metadata

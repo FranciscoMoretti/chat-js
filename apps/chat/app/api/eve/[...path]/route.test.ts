@@ -66,7 +66,7 @@ const request = (headers: Readonly<Record<string, string>> = {}): Request =>
     body: JSON.stringify({
       message: "original",
       modelId: "model",
-      selectedTool: "createTextDocument",
+      selectedTool: "generateImage",
     }),
     headers: {
       "content-type": "application/json",
@@ -125,7 +125,7 @@ test("keeps app correlation out of the native message body", async () => {
       method: "POST",
     }),
     "model",
-    "createTextDocument"
+    "generateImage"
   );
 });
 

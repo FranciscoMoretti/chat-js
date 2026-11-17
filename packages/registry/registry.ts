@@ -8,9 +8,5 @@ const registry = registrySchema.parse({
   name: "chatjs",
   items: [...registryItems, ...builtInStorage].map(versionedRegistryItem),
 });
-export {
-  codeExecutionItem,
-  searchToolItems,
-  toolItems,
-} from "./registry-items";
+export { toolItems } from "./registry-items";
 export { registry };

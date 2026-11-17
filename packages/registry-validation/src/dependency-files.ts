@@ -138,13 +138,39 @@ class DependencyFiles {
     return undefined;
   }
 
+  private effectiveRange(
+    name: string,
+    range: string,
+    directory: string,
+    owner?: MountedPackage
+  ): string {
+    // A peer resolved from the application's tree uses its declared npm alias.
+    const rootRange = this.rootDependencies[name];
+    return owner !== undefined &&
+      typeof rootRange === "string" &&
+      rootRange.startsWith("npm:") &&
+      directory === this.locate(name)?.directory
+      ? rootRange
+      : range;
+  }
+
   private mount(
     name: string,
     range: string,
     owner?: MountedPackage
   ): MountedPackage | undefined {
-    const alias = range.startsWith("npm:")
-      ? range.slice("npm:".length)
+    const resolved = this.locate(name, owner);
+    if (resolved === undefined) {
+      return undefined;
+    }
+    const effectiveRange = this.effectiveRange(
+      name,
+      range,
+      resolved.directory,
+      owner
+    );
+    const alias = effectiveRange.startsWith("npm:")
+      ? effectiveRange.slice("npm:".length)
       : undefined;
     const aliasSeparator = alias?.lastIndexOf("@") ?? -1;
     const expectedName =
@@ -155,10 +181,6 @@ class DependencyFiles {
       alias !== undefined && aliasSeparator > 0
         ? alias.slice(aliasSeparator + 1)
         : range;
-    const resolved = this.locate(name, owner);
-    if (resolved === undefined) {
-      return undefined;
-    }
     const { directory } = resolved;
     const previous = this.physical.get(directory);
     const manifest =

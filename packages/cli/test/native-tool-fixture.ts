@@ -123,7 +123,7 @@ export default eveChannel({
 import { mockModel } from "eve/evals";
 export default defineAgent({
   defaultTools: false,
-  model: mockModel(({ lastUserMessage, toolResults }) => toolResults.length ? "Done" : ({ toolCalls: [{ name: lastUserMessage === "words" ? "wordCount" : "externalPaidCounter", input: lastUserMessage === "words" ? { text: "one two" } : { fail: lastUserMessage === "failure", crash: lastUserMessage === "exception" } }] })),
+  model: mockModel(({ lastUserMessage, toolResults }) => toolResults.length ? "Done" : ({ toolCalls: [{ name: "externalPaidCounter", input: { fail: lastUserMessage === "failure", crash: lastUserMessage === "exception" } }] })),
   modelContextWindowTokens: 128000,
 });`
     ),
@@ -136,13 +136,13 @@ export default defineAgent({
       `import assert from "node:assert/strict";
 import { defineEval } from "eve/evals";
 import { Client } from "eve/client";
-export default ["words", "success", "failure", "exception"].map((scenario) => defineEval({
+export default ["success", "failure", "exception"].map((scenario) => defineEval({
   description: scenario,
   async test(t) {
     const turn = await t.send(scenario);
     turn.succeeded();
     if (!turn.toolCalls.length) t.log(JSON.stringify(turn.events));
-    const name = scenario === "words" ? "wordCount" : "externalPaidCounter";
+    const name = "externalPaidCounter";
     const client = new Client({ baseUrl: t.target.url });
     const snapshot = await client.sessions.attach(turn.sessionId).snapshot();
     const request = snapshot.events.find((event) => event.type === "call.requested" && event.data.capability.kind === "tool" && event.data.capability.name === name);
@@ -154,9 +154,9 @@ export default ["words", "success", "failure", "exception"].map((scenario) => de
     }
     assert.equal(result?.data.outcome, "completed");
     const receipt = turn.requireToolCall(name).output;
-    assert.equal(receipt.usage.costUsd, scenario === "words" ? 0 : 0.02);
+    assert.equal(receipt.usage.costUsd, 0.02);
     assert.equal(receipt.error, scenario === "failure" ? "The tool did not complete." : undefined);
-    assert.deepEqual(receipt.output, scenario === "failure" ? null : scenario === "words" ? { characters: 7, charactersNoSpaces: 6, sentences: 1, words: 2 } : { answer: 42 });
+    assert.deepEqual(receipt.output, scenario === "failure" ? null : { answer: 42 });
     assert.deepEqual(result?.data.output, receipt);
   },
 }));`

@@ -1,21 +1,6 @@
-import {
-  eveWorkspace,
-  eveWorkspaceAttachment,
-  eveConversation,
-  eveFileReference,
-  eveStoredFile,
-} from "./schema";
+import { eveConversation, eveFileReference, eveStoredFile } from "./schema";
 import { eveDeletionScope } from "./eve-deletion-scope";
-import {
-  and,
-  eq,
-  inArray,
-  ne,
-  notExists,
-  notInArray,
-  or,
-  sql,
-} from "drizzle-orm";
+import { and, eq, inArray, ne, notExists, notInArray, sql } from "drizzle-orm";
 
 import { db } from "./client";
 
@@ -57,41 +42,13 @@ const deletingFamilyIds = async (
   return family.map((row: Readonly<{ id: string }>) => row.id);
 };
 
-/** Include originals retained only by a workspace whose final member is being removed. */
-const purgeCandidate = (
-  tx: FilePurgeReadTransaction,
-  ids: readonly string[]
-): ReturnType<typeof or> =>
-  or(
-    inArray(
-      eveStoredFile.key,
-      tx
-        .select({ key: eveFileReference.key })
-        .from(eveFileReference)
-        .where(inArray(eveFileReference.conversationId, ids))
-    ),
-    inArray(
-      eveStoredFile.key,
-      tx
-        .select({ key: eveWorkspaceAttachment.fileKey })
-        .from(eveWorkspaceAttachment)
-        .innerJoin(
-          eveWorkspace,
-          eq(eveWorkspace.id, eveWorkspaceAttachment.workspaceId)
-        )
-        .where(
-          and(
-            eq(eveWorkspace.state, "deleted"),
-            inArray(
-              eveWorkspace.id,
-              tx
-                .select({ id: eveConversation.workspaceId })
-                .from(eveConversation)
-                .where(inArray(eveConversation.id, ids))
-            )
-          )
-        )
-    )
+const purgeCandidate = (tx: FilePurgeReadTransaction, ids: readonly string[]) =>
+  inArray(
+    eveStoredFile.key,
+    tx
+      .select({ key: eveFileReference.key })
+      .from(eveFileReference)
+      .where(inArray(eveFileReference.conversationId, ids))
   );
 
 /**
@@ -118,19 +75,6 @@ const prepareEveFamilyFilePurge = async (
           notInArray(eveFileReference.conversationId, ids)
         )
       );
-    const workspaceReference = tx
-      .select({ key: eveWorkspaceAttachment.fileKey })
-      .from(eveWorkspaceAttachment)
-      .innerJoin(
-        eveWorkspace,
-        eq(eveWorkspace.id, eveWorkspaceAttachment.workspaceId)
-      )
-      .where(
-        and(
-          eq(eveWorkspaceAttachment.fileKey, eveStoredFile.key),
-          ne(eveWorkspace.state, "deleted")
-        )
-      );
     const files = await tx
       .update(eveStoredFile)
       .set({ state: "deleting" })
@@ -139,74 +83,11 @@ const prepareEveFamilyFilePurge = async (
           eq(eveStoredFile.ownerId, ownerId),
           ne(eveStoredFile.state, "deleted"),
           purgeCandidate(tx, ids),
-          notExists(survivingReference),
-          notExists(workspaceReference)
+          notExists(survivingReference)
         )
       )
       .returning({ key: eveStoredFile.key });
     return files.map((file: Readonly<{ key: string }>) => file.key).toSorted();
-  });
-
-/** Fence otherwise unreferenced originals after explicit workspace deletion. */
-const prepareEveWorkspaceFilePurge = async (
-  ownerId: string,
-  workspaceId: string
-): Promise<string[]> =>
-  await db.transaction(async (tx) => {
-    await tx.execute(
-      sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
-    );
-    const [workspace] = await tx
-      .select({ state: eveWorkspace.state })
-      .from(eveWorkspace)
-      .where(
-        and(eq(eveWorkspace.id, workspaceId), eq(eveWorkspace.ownerId, ownerId))
-      );
-    if (workspace?.state !== "deleted") {
-      throw new Error(
-        "Workspace resources must be deleted before file cleanup."
-      );
-    }
-    const historyReference = tx
-      .select({ key: eveFileReference.key })
-      .from(eveFileReference)
-      .where(eq(eveFileReference.key, eveStoredFile.key));
-    const liveWorkspaceReference = tx
-      .select({ key: eveWorkspaceAttachment.fileKey })
-      .from(eveWorkspaceAttachment)
-      .innerJoin(
-        eveWorkspace,
-        eq(eveWorkspace.id, eveWorkspaceAttachment.workspaceId)
-      )
-      .where(
-        and(
-          eq(eveWorkspaceAttachment.fileKey, eveStoredFile.key),
-          ne(eveWorkspace.state, "deleted")
-        )
-      );
-    const catalogKeys = tx
-      .select({ key: eveWorkspaceAttachment.fileKey })
-      .from(eveWorkspaceAttachment)
-      .where(
-        and(
-          eq(eveWorkspaceAttachment.workspaceId, workspaceId),
-          eq(eveWorkspaceAttachment.ownerId, ownerId)
-        )
-      );
-    const files = await tx
-      .update(eveStoredFile)
-      .set({ state: "deleting" })
-      .where(
-        and(
-          eq(eveStoredFile.ownerId, ownerId),
-          ne(eveStoredFile.state, "deleted"),
-          inArray(eveStoredFile.key, catalogKeys),
-          notExists(historyReference),
-          notExists(liveWorkspaceReference)
-        )
-      )
-      .returning({ key: eveStoredFile.key });
-    return files.map((file) => file.key).toSorted();
   });
 
 /**
@@ -261,19 +142,6 @@ const releaseEveFamilyFileReferences = async (
           notInArray(eveFileReference.conversationId, ids)
         )
       );
-    const workspaceReference = tx
-      .select({ key: eveWorkspaceAttachment.fileKey })
-      .from(eveWorkspaceAttachment)
-      .innerJoin(
-        eveWorkspace,
-        eq(eveWorkspace.id, eveWorkspaceAttachment.workspaceId)
-      )
-      .where(
-        and(
-          eq(eveWorkspaceAttachment.fileKey, eveStoredFile.key),
-          ne(eveWorkspace.state, "deleted")
-        )
-      );
     const unremovedRows = await tx
       .select({ key: eveStoredFile.key })
       .from(eveStoredFile)
@@ -282,8 +150,7 @@ const releaseEveFamilyFileReferences = async (
           eq(eveStoredFile.ownerId, ownerId),
           ne(eveStoredFile.state, "deleted"),
           purgeCandidate(tx, ids),
-          notExists(outsideReference),
-          notExists(workspaceReference)
+          notExists(outsideReference)
         )
       )
       .limit(EXISTENCE_QUERY_LIMIT);
@@ -305,7 +172,6 @@ const releaseEveFamilyFileReferences = async (
 };
 export {
   completeEveFilePurge,
-  prepareEveWorkspaceFilePurge,
   prepareEveFamilyFilePurge,
   releaseEveFamilyFileReferences,
 };

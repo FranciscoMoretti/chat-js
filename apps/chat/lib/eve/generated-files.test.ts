@@ -9,7 +9,7 @@ const mocks = vi.hoisted(() => ({
 }));
 vi.mock("../db/eve-files", () => ({
   reserveEveGeneratedFile: mocks.reserve,
-  writeEveGeneratedFile: mocks.write,
+  withEveConversationFile: mocks.write,
 }));
 
 vi.mock("../file-storage", () => ({

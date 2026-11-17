@@ -281,18 +281,18 @@ const reserveEveGeneratedFile = async (
 };
 
 /**
- * Deletion cannot pass an admitted write; the committed reservation survives failures.
- * @param {string} ownerId - Owner whose family lock protects the generated write.
+ * Serialize file access with conversation deletion after validating the active conversation reference.
+ * @param {string} ownerId - Owner whose family lock protects file access.
  * @param {string} conversationId - Bound conversation whose file reference is rechecked.
- * @param {string} key - Active generated-file reservation to validate.
- * @param {() => Promise<Result>} write - Storage operation admitted while the deletion fence is locked.
+ * @param {string} key - Active conversation file reference to validate.
+ * @param {() => Promise<Result>} access - Storage operation admitted while the deletion fence is locked.
  * @returns {Promise<Result>} The storage operation result after the transaction completes.
  */
-const writeEveGeneratedFile = async <Result>(
+const withEveConversationFile = async <Result>(
   ownerId: string,
   conversationId: string,
   key: string,
-  write: () => Promise<Result>
+  access: () => Promise<Result>
 ): Promise<Result> =>
   await db.transaction(async (tx: FileLockTransaction) => {
     await tx.execute(
@@ -312,14 +312,16 @@ const writeEveGeneratedFile = async <Result>(
           eq(eveStoredFile.state, "active"),
           eq(eveFileReference.conversationId, conversationId),
           eq(eveFileReference.ownerId, ownerId),
+          eq(eveStoredFile.ownerId, ownerId),
+          eq(eveConversation.ownerId, ownerId),
           eq(eveConversation.state, "bound")
         )
       );
     const reference = referenceRows.at(FIRST_ROW_INDEX);
     if (!reference) {
-      throw new Error("Conversation is unavailable for generated files.");
+      throw new Error("File is unavailable in this conversation.");
     }
-    return await write();
+    return await access();
   });
 
 export {
@@ -330,6 +332,6 @@ export {
   registerEveStoredFile,
   reserveEveGeneratedFile,
   reserveEveUpload,
-  writeEveGeneratedFile,
+  withEveConversationFile,
   writeEveUpload,
 };

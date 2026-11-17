@@ -53,19 +53,11 @@ test("all resources and native family payloads finish before the application tom
     }
   );
   mocks.native.mockReturnValueOnce(gate.promise);
-  const deletion = deleteLocalEveConversationFamily(
-    "owner",
-    "branch",
-    "/trusted/app"
-  );
+  const deletion = deleteLocalEveConversationFamily("owner", "branch");
   await vi.waitFor(() => {
     expect(mocks.native).toHaveBeenCalledTimes(2);
   });
-  expect(mocks.resources).toHaveBeenCalledWith(
-    "owner",
-    "branch",
-    "/trusted/app"
-  );
+  expect(mocks.resources).toHaveBeenCalledWith("owner", "branch");
   expect(mocks.retire).toHaveBeenCalledWith("owner", "session-root");
 
   expect(
@@ -83,7 +75,7 @@ test("all resources and native family payloads finish before the application tom
 test("resource uncertainty prevents any native payload erasure", async () => {
   mocks.resources.mockRejectedValue(new Error("uncertain allocation"));
   await expect(
-    deleteLocalEveConversationFamily("owner", "root", "/app")
+    deleteLocalEveConversationFamily("owner", "root")
   ).rejects.toThrow("uncertain allocation");
   expect(mocks.native).not.toHaveBeenCalled();
   expect(mocks.complete).not.toHaveBeenCalled();
@@ -93,12 +85,12 @@ test("partial native purge retains pending state and retry runs the full orderin
     .mockResolvedValueOnce()
     .mockRejectedValueOnce(new Error("branch unavailable"));
   await expect(
-    deleteLocalEveConversationFamily("owner", "root", "/app")
+    deleteLocalEveConversationFamily("owner", "root")
   ).rejects.toThrow("branch unavailable");
   expect(mocks.complete).not.toHaveBeenCalled();
-  expect(
-    await deleteLocalEveConversationFamily("owner", "root", "/app")
-  ).toEqual({ rootId: "root" });
+  expect(await deleteLocalEveConversationFamily("owner", "root")).toEqual({
+    rootId: "root",
+  });
   expect(mocks.resources).toHaveBeenCalledTimes(2);
 
   expect(
@@ -117,7 +109,7 @@ test("partial native purge retains pending state and retry runs the full orderin
 test("foreign or missing families cannot erase native or application data", async () => {
   mocks.resources.mockResolvedValue(null);
   expect(
-    await deleteLocalEveConversationFamily("foreign", "root", "/app")
+    await deleteLocalEveConversationFamily("foreign", "root")
   ).toBeUndefined();
   expect(mocks.native).not.toHaveBeenCalled();
   expect(mocks.complete).not.toHaveBeenCalled();
@@ -125,9 +117,9 @@ test("foreign or missing families cannot erase native or application data", asyn
 
 test("an already deleted family is idempotent without resetting native sessions", async () => {
   mocks.resources.mockResolvedValue({ conversations: [], rootId: "root" });
-  expect(
-    await deleteLocalEveConversationFamily("owner", "root", "/app")
-  ).toEqual({ rootId: "root" });
+  expect(await deleteLocalEveConversationFamily("owner", "root")).toEqual({
+    rootId: "root",
+  });
   expect(mocks.native).not.toHaveBeenCalled();
   expect(mocks.retire).not.toHaveBeenCalled();
 });
@@ -137,7 +129,7 @@ test("unsupported native lifecycle cannot enter the local resource coordinator",
     supported: false,
   });
   await expect(
-    deleteLocalEveConversationFamily("owner", "root", "/app")
+    deleteLocalEveConversationFamily("owner", "root")
   ).rejects.toThrow("unverified erasure");
   expect(mocks.check).not.toHaveBeenCalled();
   expect(mocks.resources).not.toHaveBeenCalled();

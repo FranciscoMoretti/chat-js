@@ -4,6 +4,8 @@ import { renderToStaticMarkup } from "react-dom/server";
 
 import { EveToolResult } from "../components/eve/eve-tool-result";
 
+const input = { path: "/workspace/sample-notes.md" };
+
 const states: {
   label: string;
   part: Extract<EveMessagePart, { type: "tool" }>;
@@ -11,11 +13,11 @@ const states: {
   {
     label: "Loading",
     part: {
-      input: { text: "one two" },
+      input,
       state: "requested",
       callId: "loading",
-      name: "wordCount",
-      label: "wordCount",
+      name: "attach_workspace_file",
+      label: "attach_workspace_file",
       type: "tool",
       kind: "tool",
       stepIndex: 0,
@@ -24,12 +26,18 @@ const states: {
   {
     label: "Complete",
     part: {
-      input: { text: "one two" },
-      output: { characters: 7, charactersNoSpaces: 6, sentences: 1, words: 2 },
+      input,
+      output: {
+        fileId: "abcdefghijklmnopqrstuvwx.md",
+        name: "sample-notes.md",
+        mediaType: "text/plain",
+        size: 7,
+        url: "/api/files/abcdefghijklmnopqrstuvwx.md",
+      },
       state: "completed",
       callId: "complete",
-      name: "wordCount",
-      label: "wordCount",
+      name: "attach_workspace_file",
+      label: "attach_workspace_file",
       type: "tool",
       kind: "tool",
       stepIndex: 0,
@@ -38,12 +46,12 @@ const states: {
   {
     label: "Malformed result",
     part: {
-      input: { text: "one two" },
-      output: { words: {} },
+      input,
+      output: { size: {} },
       state: "completed",
       callId: "invalid",
-      name: "wordCount",
-      label: "wordCount",
+      name: "attach_workspace_file",
+      label: "attach_workspace_file",
       type: "tool",
       kind: "tool",
       stepIndex: 0,
@@ -52,12 +60,12 @@ const states: {
   {
     label: "Failed",
     part: {
-      error: { code: "fixture_error", message: "Weather service unavailable" },
-      input: {},
+      error: { code: "fixture_error", message: "File storage unavailable" },
+      input,
       state: "failed",
       callId: "failed",
-      name: "getWeather",
-      label: "getWeather",
+      name: "attach_workspace_file",
+      label: "attach_workspace_file",
       type: "tool",
       kind: "tool",
       stepIndex: 0,
@@ -66,11 +74,11 @@ const states: {
   {
     label: "Declined",
     part: {
-      input: { text: "one two" },
+      input,
       state: "rejected",
       callId: "denied",
-      name: "wordCount",
-      label: "wordCount",
+      name: "attach_workspace_file",
+      label: "attach_workspace_file",
       type: "tool",
       kind: "tool",
       stepIndex: 0,
@@ -87,11 +95,11 @@ const states: {
   {
     label: "Preparing input",
     part: {
-      inputText: '{"text":"one"',
+      inputText: '{"path":"/workspace/sample-notes.md"',
       state: "streaming",
       callId: "streaming",
-      name: "wordCount",
-      label: "wordCount",
+      name: "attach_workspace_file",
+      label: "attach_workspace_file",
       type: "tool",
       kind: "tool",
       stepIndex: 0,
@@ -100,11 +108,11 @@ const states: {
   {
     label: "Approval pending",
     part: {
-      input: { text: "one" },
+      input,
       state: "approval",
       callId: "approval",
-      name: "wordCount",
-      label: "wordCount",
+      name: "attach_workspace_file",
+      label: "attach_workspace_file",
       type: "tool",
       kind: "tool",
       stepIndex: 0,
@@ -120,11 +128,11 @@ const states: {
   {
     label: "Approval received",
     part: {
-      input: { text: "one" },
+      input,
       state: "requested",
       callId: "approved",
-      name: "wordCount",
-      label: "wordCount",
+      name: "attach_workspace_file",
+      label: "attach_workspace_file",
       type: "tool",
       kind: "tool",
       stepIndex: 0,
@@ -136,56 +144,6 @@ const states: {
         outcome: "accepted",
         request: { kind: "approval", prompt: "Approve this tool?" },
       },
-    },
-  },
-  {
-    label: "Retrieving content",
-    part: {
-      input: { url: "https://example.com" },
-      state: "requested",
-      callId: "retrieving",
-      name: "retrieveUrl",
-      label: "retrieveUrl",
-      type: "tool",
-      kind: "tool",
-      stepIndex: 0,
-    },
-  },
-  {
-    label: "Retrieved content",
-    part: {
-      input: { url: "https://example.com" },
-      output: {
-        results: [
-          {
-            title: "Example page",
-            description: "A deterministic renderer fixture.",
-            content: "This is the retrieved content.",
-            url: "https://example.com",
-            language: "en",
-          },
-        ],
-      },
-      state: "completed",
-      callId: "retrieved",
-      name: "retrieveUrl",
-      label: "retrieveUrl",
-      type: "tool",
-      kind: "tool",
-      stepIndex: 0,
-    },
-  },
-  {
-    label: "Weather loading",
-    part: {
-      input: { latitude: 0, longitude: 0 },
-      state: "requested",
-      callId: "weather-loading",
-      name: "getWeather",
-      label: "getWeather",
-      type: "tool",
-      kind: "tool",
-      stepIndex: 0,
     },
   },
 ];

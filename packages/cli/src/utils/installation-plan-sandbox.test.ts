@@ -1,3 +1,4 @@
+import { planInstallation } from "./installation-plan";
 import { planSandboxInstallation } from "../helpers/sandbox-installation";
 import { rejects } from "node:assert/strict";
 import { afterEach, expect, test } from "bun:test";
@@ -5,8 +6,20 @@ import { mkdir, mkdtemp, rm, writeFile, readFile } from "node:fs/promises";
 import path from "node:path";
 import { tmpdir } from "node:os";
 import { builtInSandboxes } from "../../../registry/src/sandboxes/catalog";
-import { codeExecutionItem } from "../../../registry/code-execution";
-import { planInstallation } from "./installation-plan";
+
+const nativeRuntimeItem = {
+  name: "native-runtime",
+  type: "registry:item",
+  meta: {
+    chatjs: {
+      contractVersion: 1,
+      kind: "tool",
+      id: "native-runtime",
+      requiresNativeProcesses: true,
+      tools: [{ toolExport: "nativeRun" }],
+    },
+  },
+};
 
 const roots: string[] = [];
 afterEach(async () => {
@@ -27,20 +40,21 @@ const fixture = async () => {
       const name = new URL(request.url).pathname.slice(1).replace(".json", "");
       const dependentItem = {
         name: "dependent",
+        registryDependencies: ["@chatjs/native-runtime"],
         type: "registry:item",
         meta: {
           chatjs: {
             contractVersion: 1,
             id: "dependent",
             kind: "tool",
-            requiresTools: ["codeExecution"],
+            requiresTools: ["nativeRun"],
             tools: [{ toolExport: "dependent" }],
           },
         },
       };
       const items = [
         dependentItem,
-        codeExecutionItem,
+        nativeRuntimeItem,
         ...builtInSandboxes,
         {
           name: "attachment-uploads",
@@ -83,7 +97,12 @@ const fixture = async () => {
           )
         : [];
       return item
-        ? Response.json({ ...item, files, registryDependencies: [] })
+        ? Response.json({
+            ...item,
+            files,
+            registryDependencies:
+              name === "dependent" ? ["@chatjs/native-runtime"] : [],
+          })
         : new Response("not found", { status: 404 });
     },
   });
@@ -107,7 +126,7 @@ const fixture = async () => {
   return { root, server, address };
 };
 
-test("sandboxes are optional; installing a consumer requires an explicit provider", async () => {
+test("native default needs no explicit selection; code execution rejects just-bash", async () => {
   const f = await fixture();
   try {
     const empty = await planInstallation(
@@ -116,28 +135,38 @@ test("sandboxes are optional; installing a consumer requires an explicit provide
       { fresh: true }
     );
     expect(empty.providerChanges).toEqual([]);
+    const automatic = await planInstallation(
+      f.root,
+      { plugins: [], tools: [f.address("native-runtime")] },
+      { fresh: true }
+    );
+    expect(automatic.expected).toHaveLength(1);
     await rejects(
       planInstallation(
         f.root,
-        { plugins: [], tools: [f.address("code-execution")] },
+        {
+          plugins: [],
+          tools: [f.address("native-runtime")],
+          sandbox: f.address("just-bash-sandbox"),
+        },
         { fresh: true }
       ),
-      /--sandbox-provider/u
+      /native Python/u
     );
     const selected = await planInstallation(
       f.root,
       {
         plugins: [],
-        tools: [f.address("code-execution")],
-        sandbox: f.address("daytona-sandbox"),
+        tools: [f.address("native-runtime")],
+        sandbox: f.address("docker-sandbox"),
       },
       { fresh: true }
     );
     expect(selected.providerChanges).toEqual([
-      { kind: "sandbox", next: "daytona", previous: undefined },
+      { kind: "sandbox", next: "docker", previous: undefined },
     ]);
     expect(selected.expected.map((tool) => tool.id)).toEqual([
-      "code-execution",
+      "native-runtime",
     ]);
   } finally {
     await f.server.stop(true);
@@ -158,7 +187,7 @@ test("provider-only installations expose no model tools and reject ambiguous sel
         f.root,
         {
           plugins: [],
-          tools: [f.address("daytona-sandbox")],
+          tools: [f.address("docker-sandbox")],
           sandbox: f.address("vercel-sandbox"),
         },
         { fresh: true }
@@ -173,38 +202,37 @@ test("provider-only installations expose no model tools and reject ambiguous sel
 test("replacement requires --replace and the existing provider satisfies later consumers", async () => {
   const f = await fixture();
   try {
-    await mkdir(path.join(f.root, "chatjs/providers/sandbox"), {
+    await mkdir(path.join(f.root, "agent"), {
       recursive: true,
     });
     await writeFile(
-      path.join(f.root, "chatjs/providers/sandbox/options.ts"),
-      'export const sandboxId = "vercel";'
+      path.join(f.root, "agent/sandbox.ts"),
+      'import { VercelSandbox } from "eve/sandbox/vercel";'
     );
     const consumer = await planInstallation(f.root, {
       plugins: [],
-      tools: [f.address("code-execution")],
+      tools: [f.address("native-runtime")],
     });
     expect(consumer.expected).toHaveLength(1);
     const selection = {
       plugins: [],
       tools: [],
-      sandbox: f.address("daytona-sandbox"),
+      sandbox: f.address("docker-sandbox"),
     };
     await rejects(planInstallation(f.root, selection), /--replace/u);
     const replaced = await planInstallation(f.root, selection, {
       replace: true,
     });
     expect(replaced.providerChanges).toEqual([
-      { kind: "sandbox", next: "daytona", previous: "vercel" },
+      { kind: "sandbox", next: "docker", previous: "vercel" },
     ]);
   } finally {
     await f.server.stop(true);
   }
 });
 
-test("create requires a sandbox after resolving an indirect code-execution dependency", async () => {
+test("create installs the chosen native environment with indirect code-execution dependencies", async () => {
   const f = await fixture();
-  const requirements: boolean[] = [];
   try {
     const selected = await planSandboxInstallation(
       f.root,
@@ -213,25 +241,20 @@ test("create requires a sandbox after resolving an indirect code-execution depen
         tools: [f.address("dependent")],
       },
       { fresh: true },
-      async (required) => {
-        requirements.push(required);
-        return await Promise.resolve(f.address("daytona-sandbox"));
-      }
+      async () => await Promise.resolve(f.address("docker-sandbox"))
     );
-    expect(requirements).toEqual([true]);
     expect(selected.plan.expected.map((tool) => tool.id)).toEqual([
       "dependent",
-      "code-execution",
+      "native-runtime",
     ]);
-    expect(selected.sandbox?.definition.id).toBe("daytona");
+    expect(selected.sandbox?.definition.id).toBe("docker");
   } finally {
     await f.server.stop(true);
   }
 });
 
-test("create permits no sandbox when the resolved graph has no consumer", async () => {
+test("create defaults to a native EVE environment without tools", async () => {
   const f = await fixture();
-  const requirements: boolean[] = [];
   try {
     const selected = await planSandboxInstallation(
       f.root,
@@ -240,83 +263,33 @@ test("create permits no sandbox when the resolved graph has no consumer", async 
         tools: [],
       },
       { fresh: true },
-      async (required) => {
-        requirements.push(required);
-        await Promise.resolve();
-      }
+      async () => await Promise.resolve("default")
     );
-    expect(requirements).toEqual([false]);
-    expect(selected.sandbox).toBeUndefined();
+    expect(selected.sandbox.definition.id).toBe("default");
   } finally {
     await f.server.stop(true);
   }
 });
 
-test("uploads require a persistent provider through create planning and installed-plugin replacement", async () => {
+test("uploads can use the native sandbox without a ChatJS provider", async () => {
   const f = await fixture();
   try {
     const selection = {
       plugins: [f.address("attachment-uploads")],
-      tools: [f.address("code-execution")],
+      tools: [],
       storage: { source: f.address("storage"), options: {} },
     };
-    await rejects(
-      planInstallation(f.root, selection, { fresh: true }),
-      /persistent sandbox/u
-    );
-    await rejects(
-      planInstallation(
-        f.root,
-        { ...selection, sandbox: f.address("daytona-sandbox") },
-        { fresh: true }
-      ),
-      /persistent sandbox/u
-    );
     const selected = await planSandboxInstallation(
       f.root,
       selection,
       { fresh: true },
-      async (required, persistent) => {
-        expect(required).toBe(true);
-        expect(persistent).toBe(true);
-        return await Promise.resolve(f.address("vercel-sandbox"));
-      }
+      async () => await Promise.resolve("default")
     );
-    expect(selected.sandbox?.definition.id).toBe("vercel");
-    await mkdir(path.join(f.root, "chatjs/plugins/attachment-uploads"), {
-      recursive: true,
-    });
-    await writeFile(
-      path.join(f.root, "chatjs/plugins/attachment-uploads/chatjs.json"),
-      JSON.stringify({
-        kind: "plugin",
-        contractVersion: 1,
-        id: "attachment-uploads",
-        files: [],
-      })
-    );
-    await mkdir(path.join(f.root, "chatjs/providers/sandbox"), {
-      recursive: true,
-    });
-    await writeFile(
-      path.join(f.root, "chatjs/providers/sandbox/options.ts"),
-      'export const sandboxId = "vercel";'
-    );
-    await writeFile(
-      path.join(f.root, "chatjs/providers/sandbox/provider.ts"),
-      "export const supportsPersistentSandbox = true;"
-    );
-    await writeFile(
-      path.join(f.root, "chatjs/providers/storage-options.ts"),
-      'export const storageId = "s3";'
-    );
-    await rejects(
-      planInstallation(
-        f.root,
-        { plugins: [], tools: [], sandbox: f.address("daytona-sandbox") },
-        { replace: true }
-      ),
-      /persistent sandbox/u
+    expect(selected.sandbox.definition.id).toBe("default");
+    await planInstallation(
+      f.root,
+      { ...selection, sandbox: f.address("docker-sandbox") },
+      { fresh: true }
     );
   } finally {
     await f.server.stop(true);

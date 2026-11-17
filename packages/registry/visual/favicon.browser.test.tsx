@@ -3,9 +3,6 @@ import React, { act } from "react";
 import { expect, test, vi } from "vitest";
 import { page } from "vitest/browser";
 import { Favicon } from "@/components/favicon";
-import { FaviconGroup } from "@/components/favicon-group";
-import { WebSourceBadge } from "@/components/source-badge";
-import { Sources } from "@/components/sources";
 import { McpConnectDialog } from "@/chatjs/plugins/mcp/ui/mcp-connect-dialog";
 import { ConnectorHeader } from "@/chatjs/plugins/mcp/ui/connector-header";
 import { mount, renderRoot, unmount } from "@/tests/visual/primitive-mount";
@@ -18,16 +15,9 @@ vi.mock("@tanstack/react-query", () => ({
   useMutation: () => ({ isPending: false, mutate: vi.fn() }),
 }));
 
-const source = {
-  content: "Example source description",
-  source: "web",
-  title: "Example source",
-  url: "https://source.example.test",
-} satisfies React.ComponentProps<typeof WebSourceBadge>["result"];
-
 const faviconUrl = "https://favicon.example.test/icon.svg";
 
-test("favicon sizes, source overlap, and connector fallback gallery", async () => {
+test("favicon sizes and connector fallback gallery", async () => {
   const fixture = await mount(
     <div className="bg-background text-foreground grid w-96 gap-6 p-6">
       <div className="flex items-center gap-4">
@@ -42,15 +32,6 @@ test("favicon sizes, source overlap, and connector fallback gallery", async () =
         <Favicon alt="" url={faviconUrl} />
         <Favicon fallback={<span>Empty source fallback</span>} url="" />
       </div>
-      <FaviconGroup
-        sources={[
-          { title: "First source", url: "https://first.example.test" },
-          { title: "Second source", url: "https://second.example.test" },
-          { title: "Third source", url: "https://third.example.test" },
-        ]}
-      />
-      <WebSourceBadge result={source} />
-      <Sources sources={[source]} />
       <ConnectorHeader
         isCustom
         name="Example connector"
@@ -79,16 +60,6 @@ test("favicon sizes, source overlap, and connector fallback gallery", async () =
       .slice(0, 3)
       .map((image) => image.getBoundingClientRect().width);
     expect(sizes).toEqual([12, 16, 20]);
-    const groupImages = fixture.container
-      .querySelector('img[alt="Favicon for First source"]')
-      ?.parentElement?.querySelectorAll("img");
-    expect(groupImages).toHaveLength(3);
-    expect(groupImages?.[0]?.getAttribute("alt")).toBe(
-      "Favicon for First source"
-    );
-    expect(groupImages?.[1]?.getBoundingClientRect().left).toBeLessThan(
-      groupImages?.[0]?.getBoundingClientRect().right ?? 0
-    );
     const unavailable = fixture.container.querySelector(
       'img[alt="Unavailable icon"]'
     );

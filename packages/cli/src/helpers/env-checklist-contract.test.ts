@@ -2,17 +2,8 @@ import { expect, test } from "bun:test";
 
 import { collectEnvChecklist } from "./env-checklist";
 
-const unselectedTools = {
-  codeExecution: false,
-  deepResearch: false,
-  imageGeneration: false,
-  urlRetrieval: false,
-  videoGeneration: false,
-  webSearch: false,
-} as const;
 const unselectedFeatures = {
   attachments: false,
-  documents: false,
   followupSuggestions: false,
   feedback: false,
   mcp: false,
@@ -37,7 +28,6 @@ test("preserves auth insertion order and skips unused requirement-description ge
         return true;
       },
     },
-    builtInTools: unselectedTools,
     coreFeatures: unselectedFeatures,
     gateway: "vercel",
     gatewayRequirements: [],

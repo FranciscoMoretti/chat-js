@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="0" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#bd9af4"/>
+      <stop offset="1" stop-color="#4a32f9"/>
+    </linearGradient>
+  </defs>
+  <path d="M32 26 L54 42 L32 58 L10 42 Z" fill="url(#g)" opacity="0.55"/>
+  <path d="M32 6 L54 22 L32 38 L10 22 Z" fill="url(#g)" opacity="0.95"/>
+  <g opacity="0.9">
+    <circle cx="17" cy="21" r="1.6" fill="#ef4444"/>
+    <circle cx="20.5" cy="18.5" r="1.6" fill="#f59e0b"/>
+    <circle cx="24" cy="16" r="1.6" fill="#22c55e"/>
+  </g>
+  <g opacity="0.5">
+    <circle cx="17" cy="41" r="1.6" fill="#ef4444"/>
+    <circle cx="20.5" cy="38.5" r="1.6" fill="#f59e0b"/>
+    <circle cx="24" cy="36" r="1.6" fill="#22c55e"/>
+  </g>
+  <g opacity="0.32" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" fill="none">
+    <line x1="23" y1="25.3" x2="31.3" y2="19.2"/>
+    <line x1="26.4" y1="27.5" x2="33" y2="22.7"/>
+    <line x1="30.3" y1="29.3" x2="34.7" y2="26.1"/>
+  </g>
+</svg>

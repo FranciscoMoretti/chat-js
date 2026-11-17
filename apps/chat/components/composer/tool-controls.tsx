@@ -76,38 +76,6 @@ const ToolControl = ({
   );
 };
 
-const canvasTools = {
-  code: "createCodeDocument",
-  sheet: "createSheetDocument",
-  text: "createTextDocument",
-} as const;
-const getCanvasTool = (
-  available = installedToolNames
-): (typeof canvasTools)[keyof typeof canvasTools] | undefined => {
-  const kind = (["text", "code", "sheet"] as const).find((entry) =>
-    available.has(canvasTools[entry])
-  );
-  if (kind) {
-    return canvasTools[kind];
-  }
-  return kind;
-};
-
-const CanvasControl = (
-  props: ComposerControlProps
-): React.JSX.Element | null => {
-  const available = useAvailableTools();
-  const tool = getCanvasTool(available);
-  if (tool) {
-    return <ToolControl {...props} tool={tool} />;
-  }
-  return null;
-};
-
-const SearchControl = (props: ComposerControlProps): React.JSX.Element => (
-  <ToolControl {...props} tool="webSearch" />
-);
-
 const ResearchControl = (props: ComposerControlProps): React.JSX.Element => (
   <ToolControl {...props} tool="deepResearch" />
 );
@@ -119,16 +87,6 @@ const ImageControl = (props: ComposerControlProps): React.JSX.Element => (
 const VideoControl = (props: ComposerControlProps): React.JSX.Element => (
   <ToolControl {...props} tool="generateVideo" />
 );
-
-CanvasControl.isAvailable = (
-  _mobile: boolean,
-  available = installedToolNames
-): boolean => Boolean(getCanvasTool(available));
-
-SearchControl.isAvailable = (
-  _mobile: boolean,
-  available = installedToolNames
-): boolean => available.has("webSearch");
 
 ResearchControl.isAvailable = (
   _mobile: boolean,
@@ -145,10 +103,4 @@ VideoControl.isAvailable = (
   available = installedToolNames
 ): boolean => available.has("generateVideo");
 
-export {
-  CanvasControl,
-  ImageControl,
-  ResearchControl,
-  SearchControl,
-  VideoControl,
-};
+export { ImageControl, ResearchControl, VideoControl };

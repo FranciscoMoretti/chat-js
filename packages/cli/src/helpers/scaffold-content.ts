@@ -1,4 +1,3 @@
-import sandboxPackage from "@chat-js/sandboxes/package.json";
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
@@ -19,6 +18,9 @@ const researchTestFiles = [
 // Runtime regressions, historical migration tools and sample evaluations stay
 // in the reference repository rather than becoming downstream app source.
 const REPOSITORY_ONLY_FILES = new Set([
+  "agent/channels/slack.ts",
+  "agent/connections/notion.ts",
+  "lib/eve/portable-providers.test.ts",
   "lib/db/retire-legacy-guests.test.ts",
   "lib/eve/guest-ip.test.ts",
   "app/api/eve-guest/route.test.ts",
@@ -73,6 +75,8 @@ const REPOSITORY_ONLY_FILES = new Set([
   "scripts/repair-search-preview.sql",
   "lib/db/eve-followup.test.ts",
   "lib/db/feedback-plugin.test.ts",
+  "lib/db/slack.test.ts",
+  "lib/eve/native-agent.test.ts",
   "lib/eve/followup-runtime.test.ts",
   "lib/eve/followup-completion.test.ts",
   "lib/eve/followup-sdk-usage.test.ts",
@@ -81,21 +85,16 @@ const REPOSITORY_ONLY_FILES = new Set([
   "lib/eve/project-instructions.test.ts",
   "lib/project-icons.test.ts",
   "lib/db/eve-subagents.test.ts",
+  "lib/db/eve-upload-retention.test.ts",
   "lib/eve/core-tool-types.test.ts",
   "lib/eve/document-execution.test.ts",
+  "lib/eve/attach-workspace-file.test.ts",
   "lib/eve/document-deletion.test.ts",
   "lib/eve/document-runs.test.ts",
-  "lib/eve/saved-code-executor.test.ts",
   "lib/eve/local-sandbox-inventory.test.ts",
   "lib/eve/purge-local-sandbox.test.ts",
-  "lib/eve/verify-local-coverage.test.ts",
   "lib/eve/tool-selection.test.ts",
   "lib/eve/tool-usage.test.ts",
-  "lib/eve/code-executor.test.ts",
-  "lib/sandbox/sandbox.test.ts",
-  "lib/sandbox/sandbox-auth.test.ts",
-  "lib/sandbox/sandbox-test-environment.ts",
-  "chatjs/providers/sandbox/persistent.test.ts",
   "lib/eve/mcp-setup.test.ts",
   "app/api/mcp/oauth/callback/route.test.ts",
   "lib/db/mcp-oauth-lock.test.ts",
@@ -260,8 +259,7 @@ const isRepositoryOnlyDependency = (name: string): boolean =>
     "diff",
     "papaparse",
     "react-data-grid",
-    "echarts",
-    "echarts-for-react",
+    "read-excel-file",
   ].includes(name);
 
 const normalizePackageManifest = async (packagePath: string): Promise<void> => {
@@ -269,13 +267,6 @@ const normalizePackageManifest = async (packagePath: string): Promise<void> => {
     await readFile(packagePath, "utf-8")
   );
   const dependencies = manifest.dependencies ?? {};
-  const sandboxVersion = dependencies["@chat-js/sandboxes"];
-  if (
-    typeof sandboxVersion === "string" &&
-    sandboxVersion.startsWith("workspace:")
-  ) {
-    dependencies["@chat-js/sandboxes"] = sandboxPackage.version;
-  }
   for (const name of Object.keys(dependencies).filter((dependencyName) =>
     isRepositoryOnlyDependency(dependencyName)
   )) {

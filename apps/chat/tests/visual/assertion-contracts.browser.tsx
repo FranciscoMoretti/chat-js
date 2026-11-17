@@ -17,7 +17,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { SidebarMenu, SidebarProvider } from "@/components/ui/sidebar";
 import type { Project } from "@/chatjs/plugins/projects/db/project-schema";
-import { DiffView } from "@/chatjs/tools/text-documents/diffview";
 
 import "./sandbox.css";
 
@@ -93,7 +92,7 @@ const removedProject: Project = {
   name: "Retired project metadata",
 };
 
-test("form contexts, output narrowing, project fallback, and Lexical diff preserve their visible states", async (): Promise<void> => {
+test("form contexts, output narrowing, and project fallback preserve their visible states", async (): Promise<void> => {
   const container = document.createElement("main");
   container.style.cssText =
     "padding:24px;width:1000px;display:grid;grid-template-columns:1fr 1fr;gap:16px;background:white;color:black";
@@ -124,10 +123,9 @@ test("form contexts, output narrowing, project fallback, and Lexical diff preser
           />
         </SidebarMenu>
       </SidebarProvider>
-      <DiffView oldContent="Original words" newContent="Revised words" />
     </>
   );
-  await expect.poll(() => container.textContent).toContain("Revised");
+  await expect.poll(() => container.textContent).toContain("Name is required");
   expect(container.textContent).toContain("Name is required");
   expect(container.textContent).toContain("Custom element");
   expect(container.querySelector('[aria-invalid="true"]')).toBeTruthy();

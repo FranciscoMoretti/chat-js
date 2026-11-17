@@ -18,8 +18,6 @@ vi.mock("@/chatjs/generated/installed-chat", () => ({
 const { getSharing, setSharing, getPublicEveConversation } =
   await import("@/chatjs/plugins/sharing/queries");
 const { canReadEveFile } = await import("./eve-files");
-const { getAccessibleEveDocument, saveEveDocumentRevision } =
-  await import("./eve-documents");
 const chat = "00000000-0000-4000-8000-000000000001";
 const conversation = "00000000-0000-4000-8000-000000000002";
 beforeAll(async () => {
@@ -41,18 +39,6 @@ beforeAll(async () => {
     INSERT INTO "EveStoredFile" (key,"ownerId") VALUES ('file','owner');
     INSERT INTO "EveFileReference" (key,"ownerId","conversationId") VALUES ('file','owner','${conversation}');
   `);
-  await saveEveDocumentRevision({
-    ownerId: "owner",
-    conversationId: conversation,
-    documentId: chat,
-    expectedRevisionId: null,
-    operationId: "save",
-    content: "Shared content",
-    title: "Document",
-    kind: "text",
-    fileIds: [],
-    turnIndex: 0,
-  });
 }, 30_000);
 afterAll(async () => {
   await postgres.close();
@@ -69,16 +55,10 @@ test("public access requires Sharing, exact conversation ownership, and a live p
     allowed: false,
     managed: true,
   });
-  expect(
-    await getAccessibleEveDocument(undefined, conversation, chat)
-  ).toBeUndefined();
   expect(await canReadEveFile("file", "owner")).toEqual({
     allowed: true,
     managed: true,
   });
-  expect(
-    await getAccessibleEveDocument("owner", conversation, chat)
-  ).toMatchObject({ canEdit: true });
   installed.plugins.push(sharingChat);
   expect(await getPublicEveConversation(conversation)).toMatchObject({
     id: conversation,
@@ -87,21 +67,12 @@ test("public access requires Sharing, exact conversation ownership, and a live p
     allowed: true,
     managed: true,
   });
-  expect(
-    await getAccessibleEveDocument(undefined, conversation, chat)
-  ).toMatchObject({ canEdit: false, revision: { content: "Shared content" } });
-  expect(
-    await getAccessibleEveDocument("other", conversation, chat)
-  ).toMatchObject({ canEdit: false });
   await setSharing("owner", conversation, "private");
   expect(await getPublicEveConversation(conversation)).toBeUndefined();
   expect(await canReadEveFile("file")).toEqual({
     allowed: false,
     managed: true,
   });
-  expect(
-    await getAccessibleEveDocument(undefined, conversation, chat)
-  ).toBeUndefined();
   await setSharing("owner", conversation, "public");
   await postgres.exec(
     `UPDATE "EveConversation" SET state='deleting' WHERE id='${conversation}'`
@@ -112,7 +83,4 @@ test("public access requires Sharing, exact conversation ownership, and a live p
     allowed: false,
     managed: true,
   });
-  expect(
-    await getAccessibleEveDocument("owner", conversation, chat)
-  ).toBeUndefined();
 });

@@ -1,6 +1,5 @@
 "use client";
 import { researchInput, researchOutput } from "./schemas";
-import { EveDocumentTool } from "@/components/eve/eve-document-tool";
 import React from "react";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { ReasonSearchResearchProgress } from "./progress";
@@ -13,33 +12,22 @@ export const DeepResearchRenderer = defineToolRenderer({
   outputSchema: researchOutput,
   render: ({
     tool,
-    messageId,
-    isReadonly,
   }: ReadonlyNativeSurface<
     ToolRendererProps<typeof researchInput, typeof researchOutput>
   >) => {
     const result = tool.state === "output-available" ? tool.output : undefined;
     let content = <output>Researching…</output>;
-    if (result && "format" in result) {
+    if (result && result.format !== "progress") {
       content =
         result.format === "clarifying_questions" ? (
           <p>{result.answer}</p>
         ) : (
-          <EveDocumentTool
-            isReadonly={isReadonly}
-            messageId={messageId}
-            part={{
-              input: {},
-              output: result,
-              state: "completed",
-              callId: tool.toolCallId,
-              kind: "tool",
-              label: "Create document",
-              stepIndex: 0,
-              name: "createTextDocument",
-              type: "tool",
-            }}
-          />
+          <div className="space-y-1">
+            <p className="font-medium">{result.title}</p>
+            <p className="text-muted-foreground text-sm">
+              Research complete. Report saved in the agent workspace.
+            </p>
+          </div>
         );
     }
     return <div className="space-y-3">{content}</div>;

@@ -12,7 +12,7 @@ import { mount, unmount } from "@/tests/visual/primitive-mount";
 import "./sandbox.css";
 
 const primary = config.ai.workflows.title;
-const secondary = config.ai.tools.code.edits;
+const secondary = "openai/gpt-5-mini";
 const createModel = (
   id: AppModelDefinition["id"],
   name: string

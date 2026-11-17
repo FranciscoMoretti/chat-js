@@ -6,7 +6,7 @@ import { afterAll, beforeAll, expect, test, vi } from "vitest";
 const postgres = new PGlite();
 vi.mock("./client", () => ({ db: drizzle(postgres) }));
 vi.mock("@/lib/env", () => ({ env: {} }));
-vi.mock("@/lib/eve/persistent-sandbox-store", () => ({
+vi.mock("@/lib/db/eve-workspace-deletion", () => ({
   checkDeletedWorkspaceMemberships: vi
     .fn<() => Promise<void>>()
     .mockResolvedValue(),

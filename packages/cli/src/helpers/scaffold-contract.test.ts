@@ -17,7 +17,6 @@ const buildConfigFor = (gateway: Gateway): string =>
     },
     coreFeatures: {
       attachments: true,
-      documents: true,
       followupSuggestions: true,
       feedback: false,
       mcp: true,
@@ -32,12 +31,7 @@ describe("scaffold contracts", () => {
     for (const gateway of GATEWAYS) {
       const output = buildConfigFor(gateway);
       expect(output).toContain(`gateway: ${JSON.stringify(gateway)}`);
-      for (const removed of [
-        "documents",
-        "codeExecution",
-        "urlRetrieval",
-        "webSearch",
-      ]) {
+      for (const removed of ["documents", "urlRetrieval", "webSearch"]) {
         expect(output).not.toContain(`${removed}: {`);
       }
       expect(output).not.toContain("maxSearchQueries:");

@@ -1,8 +1,4 @@
 #!/usr/bin/env bun
-import {
-  sandboxEnvRequirements,
-  sandboxId,
-} from "@/chatjs/providers/sandbox/options";
 /**
  * Build-time config validation script.
  * Validates environment requirements for installed integrations.
@@ -290,12 +286,6 @@ const validateConfiguredEnvironment = (
   const storageError = validateStorage(env);
   return [
     ...eveErrors,
-    ...sandboxEnvRequirements.flatMap((requirement) => {
-      const missing = getMissingRequirement(requirement, env);
-      return typeof missing === "string" && missing !== ""
-        ? [{ feature: `sandbox (${sandboxId})`, missing: [missing] }]
-        : [];
-    }),
     ...databaseErrors,
     ...(baseUrlError ? [baseUrlError] : []),
     ...(gatewayError ? [gatewayError] : []),

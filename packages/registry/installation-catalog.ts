@@ -1,7 +1,8 @@
 import { z } from "zod";
+import { eveCompositionIssue } from "./eve-catalog";
 import type { RegistryItem } from "shadcn/schema";
 import { gatewayDefinitionSchema } from "@chat-js/gateways/definition";
-import { sandboxDefinitionSchema } from "@chat-js/sandboxes/definition";
+import { sandboxDefinitionSchema } from "./sandbox-definition";
 import {
   pluginDefinitionSchema,
   storageDefinitionSchema,
@@ -73,12 +74,6 @@ export const installationCatalog = (
         : parseDefinition(item.meta.chatjs),
   }));
 
-// Installation policy shared with the incremental CLI planner.
-export const defaultToolProviders = {
-  codeExecution: "code-execution",
-  webSearch: "tavily-search",
-} as const;
-
 const mediaIssues = (
   definition: Extract<Definition, { kind: "tool" }>,
   gateway: Definition | undefined
@@ -112,20 +107,17 @@ const providerIssues = (
     if (definition.requiresStorage && (!storage || storage.id === "memory")) {
       issues.push(`${definition.id} requires persistent storage.`);
     }
-    if (
-      definition.kind === "plugin" &&
-      definition.requiresPersistentSandbox &&
-      (sandbox?.kind !== "sandbox" || sandbox.capabilities.persistent !== true)
-    ) {
-      issues.push(
-        `${definition.id} requires a persistent sandbox. Choose Vercel Sandbox.`
-      );
-    }
     if (definition.kind !== "tool") {
       continue;
     }
-    if (definition.requiresSandbox && !sandbox) {
-      issues.push(`${definition.id} requires a sandbox.`);
+    if (
+      definition.requiresNativeProcesses &&
+      sandbox?.kind === "sandbox" &&
+      !sandbox.capabilities.runtimes.includes("python")
+    ) {
+      issues.push(
+        `${definition.id} requires native Python and Node processes. Choose Automatic, Vercel Sandbox or Docker in Agent.`
+      );
     }
     issues.push(...mediaIssues(definition, gateway));
   }
@@ -139,7 +131,7 @@ const toolIssues = (definitions: readonly Definition[]): string[] => {
     if (definition.kind !== "tool") {
       continue;
     }
-    for (const key of [definition.slot, definition.documentKind].filter(
+    for (const key of [definition.slot].filter(
       (value) => value !== undefined
     )) {
       const previous = occupied.get(key);
@@ -188,6 +180,37 @@ const storageIssues = (
     }
   }
   return issues;
+};
+
+const nativeCapabilityIssues = (
+  selection: InstallationSelection,
+  catalog: readonly InstallationCatalogItem[],
+  definitions: readonly Definition[]
+): string[] => {
+  const nativeTools = (selection.eve ?? []).flatMap((id) => {
+    if (!id.startsWith("@chatjs/")) {
+      return [];
+    }
+    const definition = catalog.find(
+      (item) => item.name === id.slice("@chatjs/".length)
+    )?.definition;
+    return definition?.kind === "tool" ? [definition] : [];
+  });
+  return nativeTools.flatMap((native) => {
+    const conflicts = (item: Definition) =>
+      item.kind === "tool" &&
+      (item.id === native.id ||
+        (native.slot !== undefined && item.slot === native.slot));
+    if (definitions.some(conflicts)) {
+      return [
+        `${native.id} is selected through EVE and through application features. Choose one installation for this capability.`,
+      ];
+    }
+    if (nativeTools.some((item) => item !== native && conflicts(item))) {
+      return [`Select only one native provider for ${native.slot}.`];
+    }
+    return [];
+  });
 };
 
 export const resolveInstallationSelection = (
@@ -267,27 +290,6 @@ export const resolveInstallationSelection = (
   if (sandbox) {
     selection.sandbox = sandbox.id;
   }
-  // Iterate the growing graph so dependencies of inferred providers are resolved too.
-  for (const item of selected.values()) {
-    if (item.definition?.kind !== "tool") {
-      continue;
-    }
-    for (const [slot, id] of Object.entries(defaultToolProviders)) {
-      if (
-        item.definition.requiresTools.includes(slot) &&
-        ![...selected.values()].some(
-          (candidate) =>
-            candidate.definition?.kind === "tool" &&
-            candidate.definition.slot === slot
-        )
-      ) {
-        const dependency = find(id, "tool");
-        if (dependency) {
-          visit(dependency, item.title);
-        }
-      }
-    }
-  }
   const definitions = [...selected.values()].flatMap((item) =>
     item.definition ? [item.definition] : []
   );
@@ -298,6 +300,11 @@ export const resolveInstallationSelection = (
     .filter((item) => item.kind === "tool")
     .map((item) => item.id);
   issues.push(
+    ...(selection.eve ?? []).flatMap((id) => {
+      const issue = eveCompositionIssue(id);
+      return issue === undefined ? [] : [issue];
+    }),
+    ...nativeCapabilityIssues(selection, catalog, definitions),
     ...providerIssues(definitions, gateway, storage, sandbox),
     ...toolIssues(definitions),
     ...storageIssues(selection, storage)

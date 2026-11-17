@@ -15,7 +15,7 @@ import {
   MessageScrollerButton,
 } from "@/components/ui/message-scroller";
 import { ChatHeaderView } from "@/components/chat-header-view";
-import { ChatLayout, ChatLayoutMain } from "@/components/chat/chat-layout";
+import { ChatConversation } from "@/components/chat/chat-conversation";
 import { ChatWelcomeView } from "@/components/chat/chat-welcome-view";
 import { Button } from "@/components/ui/button";
 import type { ReadonlyEveMessage } from "@/lib/eve/readonly-message-types";
@@ -264,14 +264,10 @@ const GuestChatLayout = ({
 }: {
   readonly children: ReactNode;
 }): ReactJSX.Element => (
-  <ChatLayout isSecondaryPanelVisible={false}>
-    <ChatLayoutMain defaultSize="100%">
-      <section className="flex h-full min-h-0 flex-col">
-        <ChatHeaderView breadcrumb={null} className="h-(--header-height)" />
-        {children}
-      </section>
-    </ChatLayoutMain>
-  </ChatLayout>
+  <ChatConversation className="bg-background @container h-dvh max-h-dvh w-full min-w-0">
+    <ChatHeaderView breadcrumb={null} className="h-(--header-height)" />
+    {children}
+  </ChatConversation>
 );
 
 const GuestWelcomeView = ({

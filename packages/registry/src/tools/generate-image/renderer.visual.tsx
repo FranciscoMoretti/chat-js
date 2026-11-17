@@ -1,7 +1,9 @@
 import React from "react";
 import { expect, test } from "vitest";
 
-import { captureChatStory, flush, makeCanvasDataUri } from "../_shared/visual";
+import { Plugins } from "@/chatjs/core/ui/slots";
+import { imageViewerClient } from "../../plugins/image-viewer/src/client-plugin";
+import { captureChatStory, makeCanvasDataUri } from "../_shared/visual";
 import { GenerateImageRenderer } from "./renderer";
 
 const prompt = "A blue-to-purple gradient sky";
@@ -46,7 +48,7 @@ test("generate-image renders every state in the chat", async () => {
       ),
     },
     {
-      label: "Generated",
+      label: "Generated without viewer",
       settle: async (section) => {
         const img = section.querySelector("img");
         if (!img) {
@@ -54,6 +56,10 @@ test("generate-image renders every state in the chat", async () => {
         }
         await expect.poll(() => img.complete).toBe(true);
         await img.decode();
+        expect(section.querySelector('[aria-label="Open image"]')).toBeNull();
+        expect(
+          section.querySelector('[title="Download image"]')
+        ).not.toBeNull();
       },
       ui: (
         <GenerateImageRenderer
@@ -69,35 +75,26 @@ test("generate-image renders every state in the chat", async () => {
       ),
     },
     {
-      label: "Generated, actions shown on focus",
+      label: "Generated with optional viewer",
       settle: async (section) => {
-        const img = section.querySelector("img");
-        const button = section.querySelector("button");
-        if (!(img && button)) {
-          throw new Error("generated image or its button missing");
-        }
-        await img.decode();
-        await flush(() => {
-          button.focus();
-        });
-        const actions = section.querySelector<HTMLElement>(
-          String.raw`.group-focus-within\:opacity-100`
-        );
         await expect
-          .poll(() => actions && getComputedStyle(actions).opacity)
-          .toBe("1");
+          .poll(() => section.querySelector('[aria-label="Open image"]'))
+          .not.toBeNull();
+        await section.querySelector("img")?.decode();
       },
       ui: (
-        <GenerateImageRenderer
-          isReadonly
-          messageId="image-message"
-          tool={{
-            input: { prompt },
-            output: { imageUrl, prompt },
-            state: "output-available",
-            toolCallId: "generate-image-focused",
-          }}
-        />
+        <Plugins plugins={[imageViewerClient]}>
+          <GenerateImageRenderer
+            isReadonly
+            messageId="image-message"
+            tool={{
+              input: { prompt },
+              output: { imageUrl, prompt },
+              state: "output-available",
+              toolCallId: "generate-image-focused",
+            }}
+          />
+        </Plugins>
       ),
     },
     {

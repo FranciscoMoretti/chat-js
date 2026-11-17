@@ -31,6 +31,12 @@ const composerSchema = z.object({
 });
 
 const toolRegistrationSchema = z.object({
+  accounting: z
+    .union([
+      z.enum(["receipt", "none", "unknown"]),
+      z.strictObject({ costUsd: z.number().nonnegative() }),
+    ])
+    .optional(),
   composer: composerSchema.optional(),
   rendererExport: identifier.optional(),
   definitionExport: identifier.optional(),
@@ -38,49 +44,39 @@ const toolRegistrationSchema = z.object({
   workflow: z.literal(true).optional(),
 });
 
-const executionCapabilities = z.object({
-  cancellation: z.literal("terminate"),
-  cleanup: z.literal("durable-allocation"),
-  files: z.literal("ephemeral"),
-  languages: z
-    .array(z.enum(["python", "javascript"]))
-    .refine(
-      (languages: readonly string[]) =>
-        languages.includes("python") && languages.includes("javascript"),
-      "Code execution requires Python and JavaScript"
-    ),
-  timeout: z.literal("bounded"),
-  usage: z.literal("single-receipt"),
-});
-
 const toolDefinitionBase = z.object({
+  // Builder category is independent of standalone packaging.
+  agentCategory: z.enum(["tool", "extension"]).optional(),
+  requiresChatJS: z.boolean().optional(),
+  channelSupport: z
+    .strictObject({
+      web: z.enum(["supported", "unverified", "unsupported"]),
+      slack: z.enum(["supported", "unverified", "unsupported"]),
+    })
+    .optional(),
+  native: z
+    .strictObject({
+      layout: z.enum(["tool", "agent"]),
+      files: z
+        .array(
+          z
+            .string()
+            .regex(/^(?:[a-zA-Z][a-zA-Z0-9-]*\/)*[a-zA-Z][a-zA-Z0-9-]*\.ts$/u)
+        )
+        .min(1),
+      dependencies: z.array(z.string().min(1)),
+    })
+    .optional(),
   config: z.object({ key: identifier }).optional(),
   availabilityExport: identifier.optional(),
-  codeExecutionCapabilities: executionCapabilities.optional(),
-  codeExecutorExport: identifier.optional(),
-  documentKind: z
-    .string()
-    .regex(/^[a-z][a-z0-9-]*$/u)
-    .max(100)
-    .optional(),
-  documentRunExport: identifier.optional(),
   envRequirements: z.array(envRequirementSchema).default([]),
   id: z.string().regex(/^[a-z][a-z0-9-]*$/u),
   kind: z.literal("tool"),
   requiresGateway: z.array(z.enum(["image", "video"])).optional(),
   requiresStorage: z.literal(true).optional(),
-  requiresPersistentSandbox: z.literal(true).optional(),
-  requiresSandbox: z.literal(true).optional(),
+  requiresNativeProcesses: z.literal(true).optional(),
   requiresTools: z.array(identifier).default([]),
-  slot: z
-    .enum([
-      "webSearch",
-      "codeExecution",
-      "retrieveUrl",
-      "generateImage",
-      "generateVideo",
-    ])
-    .optional(),
+  slot: z.enum(["generateImage", "generateVideo"]).optional(),
   tools: z.array(toolRegistrationSchema).min(REQUIRED_ITEM_COUNT),
 });
 
@@ -99,23 +95,6 @@ const toolDefinitionSchema = toolDefinitionBase
       message:
         "UI-specific tools require contractVersion 2 and an explicit uiBase",
     }
-  )
-  .refine(
-    (item: Readonly<{ codeExecutorExport?: string; slot?: string }>) =>
-      !(
-        typeof item.codeExecutorExport === "string" &&
-        item.codeExecutorExport !== ""
-      ) || item.slot === "codeExecution",
-    {
-      message:
-        "Code executor capabilities apply only to a codeExecution provider",
-    }
-  )
-  .refine(
-    (item: Readonly<{ codeExecutionCapabilities?: unknown; slot?: string }>) =>
-      typeof item.codeExecutionCapabilities !== "object" ||
-      item.slot === "codeExecution",
-    { message: "Code execution capabilities require a codeExecution provider" }
   )
   .refine(
     (
@@ -161,7 +140,6 @@ const pluginDefinitionBase = z.object({
   envRequirements: z.array(envRequirementSchema).optional(),
   requiresPlugins: z.array(pluginIdSchema).optional(),
   requiresStorage: z.literal(true).optional(),
-  requiresPersistentSandbox: z.literal(true).optional(),
   chat: z.object({ export: identifier }).optional(),
   billing: z.object({ export: identifier }).optional(),
   signedOut: z.object({ export: identifier }).optional(),

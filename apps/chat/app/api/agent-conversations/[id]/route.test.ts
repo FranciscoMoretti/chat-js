@@ -55,7 +55,7 @@ it("runs owner-authorized family deletion with a server-controlled worker root",
   expect(response.status).toBe(HTTP_STATUS.ok);
   expect(await response.json()).toEqual({ rootId: id, status: "deleted" });
   expect(response.headers.get("cache-control")).toBe("no-store");
-  expect(mocks.remove).toHaveBeenCalledWith("owner", id, process.cwd());
+  expect(mocks.remove).toHaveBeenCalledWith("owner", id);
 });
 
 it("hides unavailable and foreign bindings without cleanup", async () => {

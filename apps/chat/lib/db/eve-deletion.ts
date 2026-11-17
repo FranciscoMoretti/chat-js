@@ -1,7 +1,6 @@
 import { chat } from "@/integrations/chat/server";
-import { checkDeletedWorkspaceMemberships } from "@/lib/eve/persistent-sandbox-store";
+import { checkDeletedWorkspaceMemberships } from "@/lib/db/eve-workspace-deletion";
 import { eveDeletionScope } from "./eve-deletion-scope";
-import { unretainedEveDocumentRevisionIds } from "./eve-document-retention";
 import { and, eq, exists, inArray, or, sql } from "drizzle-orm";
 import type { QueryPromise } from "drizzle-orm/query-promise";
 
@@ -9,17 +8,8 @@ import { db } from "./client";
 import { tombstoneEveResponseGroups } from "./eve-response-groups";
 import {
   eveChat,
-  eveCodeSandbox,
   eveConversation,
-  eveDocumentCheckpoint,
-  eveDocumentCheckpointEntry,
-  eveDocumentHead,
-  eveDocumentRevision,
   eveFileReference,
-  eveImportedDocumentCheckpoint,
-  eveImportedDocumentCheckpointEntry,
-  eveNamedDocumentCheckpoint,
-  eveNamedDocumentCheckpointEntry,
   eveSubagentSession,
 } from "./schema";
 
@@ -74,31 +64,6 @@ const assertEveFamilyPendingDeletion = (
     throw new Error("The entire conversation family must be pending deletion.");
   }
 };
-
-/** Read the first unresolved native sandbox without changing query construction or execution.
- * @param {Readonly<Pick<typeof db, "select">>} query - Existing transaction select capability; its receiver is forwarded unchanged.
- * @param {readonly string[]} ids - Family conversation IDs already read after response-group tombstoning.
- * @returns {QueryPromise<readonly (Readonly<Pick<typeof eveCodeSandbox.$inferSelect, "name">> | undefined)[]>} The original native query object; an empty result has no first row.
- */
-const findUnresolvedEveFamilySandbox = (
-  query: Readonly<Pick<typeof db, "select">>,
-  ids: readonly string[]
-): QueryPromise<
-  readonly (
-    | Readonly<Pick<typeof eveCodeSandbox.$inferSelect, "name">>
-    | undefined
-  )[]
-> =>
-  query
-    .select({ name: eveCodeSandbox.name })
-    .from(eveCodeSandbox)
-    .where(
-      and(
-        inArray(eveCodeSandbox.conversationId, ids),
-        eq(eveCodeSandbox.state, "unresolved")
-      )
-    )
-    .limit(SINGLE_MATCH_LIMIT);
 
 /** Read the owner-filtered root/member identity before family finalization.
  * @param {Readonly<Pick<typeof db, "select">>} query - Existing transaction select capability, used with its original receiver.
@@ -220,22 +185,9 @@ const completeEveConversationDeletion = async (
     const ids = family.map(
       (row: Readonly<Pick<typeof eveConversation.$inferSelect, "id">>) => row.id
     );
-    const [sandbox] = await findUnresolvedEveFamilySandbox(tx, ids);
-    if (sandbox) {
-      throw new Error("Code sandbox cleanup is incomplete.");
-    }
     await checkDeletedWorkspaceMemberships(ownerId, ids, tx);
 
-    const contentTables = [
-      eveFileReference,
-      eveImportedDocumentCheckpointEntry,
-      eveImportedDocumentCheckpoint,
-      eveNamedDocumentCheckpointEntry,
-      eveNamedDocumentCheckpoint,
-      eveDocumentCheckpointEntry,
-      eveDocumentCheckpoint,
-      eveDocumentHead,
-    ];
+    const contentTables = [eveFileReference];
     // Only existence matters: check the fenced family's content in one snapshot.
     const remaining = await tx
       .select({ id: eveConversation.id })
@@ -244,17 +196,6 @@ const completeEveConversationDeletion = async (
         and(
           inArray(eveConversation.id, ids),
           or(
-            exists(
-              tx
-                .select({ id: eveDocumentRevision.id })
-                .from(eveDocumentRevision)
-                .where(
-                  inArray(
-                    eveDocumentRevision.id,
-                    unretainedEveDocumentRevisionIds(ownerId, ids)
-                  )
-                )
-            ),
             ...contentTables.map((table) =>
               exists(
                 tx

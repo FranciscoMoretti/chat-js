@@ -113,7 +113,6 @@ const runGenerateImageTraditional = async (
     abortSignal: options.abortSignal,
     model: options.modelProvider.createImageModel(modelId),
     prompt,
-    providerOptions: { telemetry: { isEnabled: true } },
   });
   const [firstImage] = res.images;
   log.debug(

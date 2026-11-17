@@ -9,7 +9,7 @@ import { eq } from "drizzle-orm";
 import { afterAll, expect, test, vi } from "vitest";
 
 import { db } from "../lib/db/client";
-import { cleanupWorkspaceIfUnused } from "../lib/eve/persistent-sandbox-store";
+import { cleanupWorkspaceIfUnused } from "../lib/db/eve-workspace-deletion";
 import { reconcileEveWorkspaceTurn } from "../lib/eve/reconcile-workspace-turn";
 import { completeEveConversationDeletion } from "../lib/db/eve-deletion";
 import {
@@ -259,9 +259,7 @@ test("deleting a partial family erases group payloads and fences unstarted candi
   if (!reservation) {
     throw new Error("Missing reservation");
   }
-  await cleanupWorkspaceIfUnused(owner, reservation.workspaceId, () => {
-    throw new Error("No resources were allocated");
-  });
+  await cleanupWorkspaceIfUnused(owner, reservation.workspaceId);
   await completeEveConversationDeletion(owner, root.id);
   await Promise.all(
     [

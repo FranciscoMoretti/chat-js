@@ -5,7 +5,7 @@ import {
 import { dependencyName } from "@chat-js/registry-validation/ownership";
 import { beforeAll, expect, test } from "bun:test";
 import { registry } from "../registry";
-import { pluginDefinitionSchema } from "../metadata";
+import { pluginDefinitionSchema, toolDefinitionSchema } from "../metadata";
 import { itemClaims } from "../src/installation-ownership";
 import { targetPath } from "../src/file-ownership";
 import {
@@ -42,6 +42,64 @@ for (const gateway of GATEWAYS) {
   }, 60_000);
 }
 
+for (const viewers of [
+  [],
+  ["image-viewer", "video-viewer", "spreadsheet-viewer"],
+]) {
+  test(`attach-workspace-file installs with viewers=${viewers.length > 0}`, async () => {
+    const output = await renderValidationProject(prepared.core, {
+      gateway: "openai",
+      storage: { source: "vercel-blob", options: {} },
+      tools: ["attach-workspace-file"],
+      plugins: viewers,
+    });
+    expect(
+      typecheckProject(output.files, validationDependencyFixtures).diagnostics
+    ).toEqual([]);
+    expect(output.files.has("chatjs/tools/attach-workspace-file/tool.ts")).toBe(
+      true
+    );
+    expect(
+      output.files.has("chatjs/tools/attach-workspace-file/import.ts")
+    ).toBe(true);
+    expect(
+      new TextDecoder().decode(output.files.get("chatjs/generated/tools.ts"))
+    ).toContain("import_file");
+    expect(output.files.has("chatjs/tools/text-documents/tool.ts")).toBe(false);
+    expect(output.files.has("components/file-artifact-card.tsx")).toBe(true);
+  }, 60_000);
+}
+
+test("deep-research installs native files without search adapters, provisioned storage, or viewers", async () => {
+  const { files } = await renderValidationProject(prepared.core, {
+    gateway: "vercel",
+    storage: { source: "memory", options: {} },
+    plugins: [],
+    tools: ["deep-research"],
+  });
+  expect(
+    typecheckProject(files, validationDependencyFixtures).diagnostics
+  ).toEqual([]);
+  expect(files.has("chatjs/tools/attach-workspace-file/tool.ts")).toBe(false);
+  expect(files.has("chatjs/tools/tavily-search/tool.ts")).toBe(false);
+  expect(files.has("chatjs/tools/text-documents/tool.ts")).toBe(false);
+  expect(files.has("agent/tools/deepResearch.ts")).toBe(true);
+  expect(files.has("agent/lib/research/configuration.ts")).toBe(true);
+  expect(files.has("agent/subagents/researcher/agent.ts")).toBe(false);
+  expect(files.has("chatjs/tools/deep-research/renderer.tsx")).toBe(true);
+  const descriptor = toolDefinitionSchema.parse(
+    JSON.parse(
+      new TextDecoder().decode(
+        files.get("chatjs/tools/deep-research/chatjs.json")
+      )
+    )
+  );
+  expect(descriptor.requiresChatJS).toBe(false);
+  expect(descriptor.requiresTools).toEqual([]);
+  expect(descriptor.requiresStorage).toBeUndefined();
+  expect(descriptor.native?.dependencies).toEqual(["eve", "zod"]);
+}, 60_000);
+
 for (const plugin of plugins) {
   test(`${plugin.id}: catalog-derived plugin selection typechecks without omitted plugins`, async () => {
     const selected = pluginPrerequisites([plugin.id]);
@@ -49,13 +107,6 @@ for (const plugin of plugins) {
       gateway: "openai",
       tools: [],
       plugins: selected,
-      sandbox: selected.some(
-        (id) =>
-          plugins.find((candidate) => candidate.id === id)
-            ?.requiresPersistentSandbox
-      )
-        ? "vercel"
-        : undefined,
       storage: {
         source: selected.some(
           (id) =>
@@ -102,19 +153,19 @@ test("tool composition retains registry dependencies and cannot borrow undeclare
     gateway: "openai",
     storage: { source: "memory", options: {} },
     plugins: ["feedback"],
-    tools: ["word-count"],
+    tools: ["deep-research"],
   });
   expect(
     output.items
-      .find((item) => item.name === "word-count")
+      .find((item) => item.name === "deep-research")
       ?.dependencies?.map(dependencyName)
-  ).toContain("zod");
+  ).toContain("lucide-react");
   expect(
     typecheckProject(output.files, validationDependencyFixtures).diagnostics
   ).toEqual([]);
   output.files.set(
     "undeclared.ts",
-    new TextEncoder().encode('export { tavily } from "@tavily/core";')
+    new TextEncoder().encode('export { missing } from "@fixture/undeclared";')
   );
   expect(
     typecheckProject(
@@ -196,3 +247,50 @@ test("plugin removal and reinstall preserve a type-correct app with retained sch
     await rm(root, { recursive: true, force: true });
   }
 }, 60_000);
+
+for (const sandbox of ["default", "vercel", "docker", "just-bash"]) {
+  test(`native ${sandbox} environment generates a type-correct agent`, async () => {
+    const output = await renderValidationProject(prepared.core, {
+      gateway: "openai",
+      storage: { source: "memory", options: {} },
+      plugins: [],
+      tools: [],
+      sandbox,
+    });
+    expect(output.files.has("agent/sandbox.ts")).toBe(true);
+    expect(
+      [...output.files.keys()].some((file) =>
+        file.startsWith("chatjs/providers/sandbox/")
+      )
+    ).toBe(false);
+    expect(
+      typecheckProject(output.files, validationDependencyFixtures).diagnostics
+    ).toEqual([]);
+  }, 60_000);
+}
+
+for (const media of ["image", "video"]) {
+  for (const withViewer of [false, true]) {
+    test(`${media} generation installs and typechecks with viewer=${withViewer}`, async () => {
+      const { files } = await renderValidationProject(prepared.core, {
+        gateway: "vercel",
+        storage: { source: "vercel-blob", options: {} },
+        tools: [`generate-${media}`],
+        plugins: withViewer ? [`${media}-viewer`] : [],
+      });
+      expect(files.has(`chatjs/tools/generate-${media}/renderer.tsx`)).toBe(
+        true
+      );
+      expect(
+        files.has(`chatjs/plugins/${media}-viewer/viewer-action.tsx`)
+      ).toBe(withViewer);
+      const registrations = new TextDecoder().decode(
+        files.get("chatjs/generated/installed-chat-ui.ts")
+      );
+      expect(registrations.includes(`${media}ViewerClient`)).toBe(withViewer);
+      expect(
+        typecheckProject(files, validationDependencyFixtures).diagnostics
+      ).toEqual([]);
+    }, 60_000);
+  }
+}

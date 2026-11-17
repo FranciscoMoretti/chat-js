@@ -1,12 +1,12 @@
-import type { inferRouterOutputs } from "@trpc/server";
 import type { ReadonlyEveMessage as EveMessage } from "@/lib/eve/readonly-message-types";
+import type { inferRouterOutputs } from "@trpc/server";
 
 import type { Session } from "@/lib/auth";
 import type { AppRouter } from "@/trpc/routers/_app";
 
 import { assetDataUri } from "../../registry/src/tools/_shared/visual-fonts";
-import { TrpcFixtureError } from "./route";
 import type { ServerData, route } from "./route";
+import { TrpcFixtureError } from "./route";
 
 type Outputs = inferRouterOutputs<AppRouter>;
 type HistoryPage = NonNullable<ServerData["conversations"]>;
@@ -301,6 +301,34 @@ export const invoicesShared: NonNullable<ServerData["transcript"]> = {
 
 export const invoicesTranscripts = { [invoicesSessionId]: invoicesTranscript };
 
+export const invoicesScrollTranscripts: Record<string, EveMessage[]> = {
+  [invoicesSessionId]: [
+    ...invoicesTranscript,
+    {
+      id: "scroll-followup-user",
+      role: "user",
+      parts: [{ type: "text", text: "How should I verify it in production?" }],
+    },
+    {
+      id: "scroll-followup-answer",
+      role: "assistant",
+      parts: [
+        {
+          type: "text",
+          state: "done",
+          text: [
+            "1. Measure how long the invoices query takes for a small account and a large one before the change.",
+            "2. Build the index concurrently and check that the build completes before running comparisons.",
+            "3. Compare query plans for the same accounts and confirm that each plan uses the new index.",
+            "4. Check the query's response times when traffic returns to its usual level.",
+            "5. Watch index usage and write latency for a full traffic cycle before removing any overlapping index.",
+          ].join("\n"),
+        },
+      ],
+    },
+  ],
+};
+
 // Exercises the shared projection through the real observer, store and transcript.
 export const validatedToolTranscripts = {
   [invoicesSessionId]: [
@@ -308,7 +336,7 @@ export const validatedToolTranscripts = {
       id: "tool-user",
       role: "user",
       parts: [
-        { type: "text", text: "Count these words and show the other results." },
+        { type: "text", text: "Attach the notes and show the other results." },
       ],
     },
     {
@@ -320,20 +348,21 @@ export const validatedToolTranscripts = {
           type: "tool",
           kind: "tool",
           stepIndex: 0,
-          name: "wordCount",
-          label: "wordCount",
+          name: "attach_workspace_file",
+          label: "attach_workspace_file",
           callId: "count-success",
           state: "completed",
-          input: { text: "one two" },
+          input: { path: "/workspace/sample-notes.md" },
           output: {
             kind: "chatjs.tool-result",
             version: 1,
             status: "success",
             output: {
-              words: 2,
-              characters: 7,
-              charactersNoSpaces: 6,
-              sentences: 1,
+              fileId: "abcdefghijklmnopqrstuvwx.md",
+              name: "sample-notes.md",
+              mediaType: "text/plain",
+              size: 7,
+              url: "/api/files/abcdefghijklmnopqrstuvwx.md",
             },
           },
         },
@@ -341,25 +370,25 @@ export const validatedToolTranscripts = {
           type: "tool",
           kind: "tool",
           stepIndex: 0,
-          name: "wordCount",
-          label: "wordCount",
+          name: "attach_workspace_file",
+          label: "attach_workspace_file",
           callId: "count-failure",
           state: "completed",
-          input: { text: "one two" },
+          input: { path: "/workspace/sample-notes.md" },
           output: {
             kind: "chatjs.tool-result",
             version: 1,
             status: "error",
             output: null,
-            error: "Counting service unavailable.",
+            error: "File storage unavailable.",
           },
         },
         {
           type: "tool",
           kind: "tool",
           stepIndex: 0,
-          name: "externalLookup",
-          label: "externalLookup",
+          name: "native__lookup",
+          label: "native lookup",
           callId: "external-result",
           state: "completed",
           input: { query: "example" },
@@ -369,11 +398,11 @@ export const validatedToolTranscripts = {
           type: "tool",
           kind: "tool",
           stepIndex: 0,
-          name: "wordCount",
-          label: "wordCount",
+          name: "attach_workspace_file",
+          label: "attach_workspace_file",
           callId: "imported-result",
           state: "completed",
-          input: { text: "one two" },
+          input: { path: "/workspace/sample-notes.md" },
           output: "Historical text output retained.",
         },
       ],
@@ -642,66 +671,6 @@ export const invoicesSearchTrpc = {
   },
 };
 
-const archivedDocumentId = "60dbe86a-b2c4-4d32-ae09-a00e90b84e99";
-const archivedRevisionId = "663ccf42-10c9-453f-b9da-ebf684a6da97";
-export const archivedDiagram = {
-  canEdit: true,
-  history: [
-    {
-      id: archivedRevisionId,
-      createdAt: now,
-      kind: "diagram",
-      title: "Deployment flow",
-      parentRevisionId: null,
-      turnIndex: 0,
-    },
-    {
-      id: "c599092d-4d5a-4f13-bfed-a2e46c8ab675",
-      createdAt: now,
-      kind: "diagram",
-      title: "Deployment flow",
-      parentRevisionId: archivedRevisionId,
-      turnIndex: 1,
-    },
-  ],
-  revision: {
-    id: archivedRevisionId,
-    documentId: archivedDocumentId,
-    createdAt: now,
-    kind: "diagram",
-    title: "Deployment flow",
-    content: "graph TD; Draft-->Review; Review-->Publish",
-  },
-} satisfies Outputs["eve"]["document"];
-export const archivedDiagramTranscript: EveMessage[] = [
-  {
-    id: "archived-diagram-message",
-    role: "assistant",
-    metadata: { status: "complete", turnId: "turn_0" },
-    parts: [
-      {
-        type: "tool",
-        kind: "tool",
-        stepIndex: 0,
-        name: "drawDiagram",
-        label: "drawDiagram",
-        callId: "archived-diagram-call",
-        state: "completed",
-        input: { title: "Deployment flow" },
-        output: {
-          documentId: archivedDocumentId,
-          revisionId: archivedRevisionId,
-          kind: "diagram",
-          title: "Deployment flow",
-          date: now.toISOString(),
-          status: "success",
-          result: "Document saved.",
-        },
-      },
-    ],
-  },
-];
-
 export const chatFailure = `The model provider is unavailable. Request reference: ${"reference".repeat(20)}`;
 export const creationFailure =
   "Unable to start this conversation. Choose another model.";
@@ -727,33 +696,283 @@ export const guestTranscript: EveMessage[] = [
   },
 ];
 
-export const retrievedPageTranscripts = {
+export const connectionResultTranscripts = {
   [invoicesSessionId]: [
     {
-      id: "retrieved-answer",
+      id: "web-search-answer",
       role: "assistant",
-      metadata: { status: "complete", turnId: "retrieved-turn" },
+      metadata: { status: "complete", turnId: "web-search-turn" },
       parts: [
         { type: "text", text: "Here is the page you requested." },
         {
           type: "tool",
           kind: "tool",
           stepIndex: 0,
-          callId: "retrieve-page",
-          name: "retrieveUrl",
-          label: "Read page",
+          callId: "web-search",
+          name: "firecrawl__firecrawl_search",
+          label: "Firecrawl search",
           state: "completed",
-          input: { url: "https://example.com" },
+          input: { query: "Example documentation" },
           output: {
-            results: [
+            web: [
               {
                 url: "https://example.com",
                 title: "Example documentation",
-                description: "A retrieved page with readable details.",
-                language: "en",
-                content: "This content remains visible when expanded.",
+                description: "Documentation for the example project.",
               },
             ],
+          },
+        },
+      ],
+    },
+  ],
+} satisfies Record<string, readonly EveMessage[]>;
+
+export const signInTranscripts = {
+  [invoicesSessionId]: [
+    {
+      id: "notion-sign-in",
+      role: "assistant",
+      parts: [
+        {
+          type: "text",
+          text: "Connect Notion to continue searching your workspace.",
+        },
+        {
+          type: "interaction",
+          interactionId: "notion-consent",
+          turnId: "fixture-turn",
+          stepIndex: 0,
+          status: "open",
+          request: {
+            kind: "sign-in",
+            prompt: "Sign in to Notion",
+            signIn: {
+              name: "notion",
+              displayName: "Notion",
+              url: "https://example.invalid/notion-consent",
+              instructions: "Choose the pages this agent may access.",
+              userCode: "DEMO-CODE",
+            },
+          },
+        },
+        {
+          type: "interaction",
+          interactionId: "invalid-consent",
+          turnId: "fixture-turn",
+          stepIndex: 0,
+          status: "open",
+          request: {
+            kind: "sign-in",
+            prompt: "Connection needs a new sign-in link",
+            signIn: { name: "expired", url: "data:text/plain,unsafe" },
+          },
+        },
+      ],
+    },
+  ],
+} satisfies Record<string, readonly EveMessage[]>;
+
+const generatedImageArtwork = `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360">
+  <defs>
+    <linearGradient id="sky" x2="0" y2="1">
+      <stop stop-color="#e7e5d6"/>
+      <stop offset="1" stop-color="#babfad"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#sky)" d="M0 0h640v360H0z"/>
+  <circle cx="460" cy="100" r="42" fill="#f7f1dc"/>
+  <path d="M0 240Q100 100 240 210T640 190V360H0Z" fill="#89937b"/>
+  <path d="M0 290Q160 170 360 240T640 210V360H0Z" fill="#626e59"/>
+  <path d="M0 320Q180 260 320 300T640 270V360H0Z" fill="#354b3e"/>
+</svg>`)}`;
+
+export const generatedImageTranscripts = {
+  [invoicesSessionId]: [
+    {
+      id: "image-request",
+      role: "user",
+      parts: [{ type: "text", text: "Generate an image for the launch." }],
+    },
+    {
+      id: "image-answer",
+      role: "assistant",
+      metadata: { status: "complete", turnId: "turn-image" },
+      parts: [
+        {
+          type: "tool",
+          kind: "tool",
+          stepIndex: 0,
+          name: "generateImage",
+          label: "Generate image",
+          callId: "image-success",
+          state: "completed",
+          input: { prompt: "Launch artwork" },
+          output: {
+            kind: "chatjs.tool-result",
+            version: 1,
+            status: "success",
+            output: {
+              imageUrl: generatedImageArtwork,
+              prompt: "Launch artwork",
+            },
+          },
+        },
+      ],
+    },
+  ],
+} satisfies Record<string, readonly EveMessage[]>;
+
+export const generatedVideoTranscripts = (videoUrl: string) =>
+  ({
+    [invoicesSessionId]: [
+      {
+        id: "video-request",
+        role: "user",
+        parts: [{ type: "text", text: "Generate a calm blue sky video." }],
+      },
+      {
+        id: "video-answer",
+        role: "assistant",
+        metadata: { status: "complete", turnId: "turn-video" },
+        parts: [
+          {
+            type: "tool",
+            kind: "tool",
+            stepIndex: 0,
+            name: "generateVideo",
+            label: "Generate video",
+            callId: "video-success",
+            state: "completed",
+            input: { prompt: "A calm blue sky" },
+            output: {
+              kind: "chatjs.tool-result",
+              version: 1,
+              status: "success",
+              output: { videoUrl, prompt: "A calm blue sky" },
+            },
+          },
+        ],
+      },
+    ],
+  }) satisfies Record<string, readonly EveMessage[]>;
+
+export const publishedFileTranscripts = {
+  [invoicesSessionId]: [
+    {
+      id: "published-file-answer",
+      role: "assistant",
+      metadata: { status: "complete", turnId: "turn-file" },
+      parts: [
+        {
+          type: "tool",
+          kind: "tool",
+          stepIndex: 0,
+          name: "attach_workspace_file",
+          label: "Attach workspace file",
+          callId: "publish-success",
+          state: "completed",
+          input: { path: "/workspace/report.xlsx" },
+          output: {
+            fileId: "published-file",
+            name: "report.xlsx",
+            mediaType:
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            size: 24_576,
+            url: "data:application/octet-stream;base64,cmVwb3J0",
+          },
+        },
+      ],
+    },
+  ],
+} satisfies Record<string, readonly EveMessage[]>;
+
+export const nativeFileTranscripts = {
+  [invoicesSessionId]: [
+    {
+      id: "uploaded-sheet",
+      role: "user",
+      parts: [
+        {
+          type: "file",
+          filename: "budget.csv",
+          mediaType: "text/csv",
+          url: "data:text/csv,Item%2CCost%0AHosting%2C120",
+        },
+      ],
+    },
+    {
+      id: "native-command",
+      role: "assistant",
+      metadata: { status: "complete", turnId: "turn-native" },
+      parts: [
+        {
+          type: "tool",
+          kind: "tool",
+          stepIndex: 0,
+          name: "bash",
+          label: "Run Python",
+          callId: "native-bash",
+          state: "completed",
+          input: { command: "python3 analysis.py" },
+          output: {
+            status: "completed",
+            exitCode: 0,
+            stdout: "Created budget.csv and chart.png",
+            stderr: "",
+            truncated: false,
+          },
+        },
+      ],
+    },
+  ],
+} satisfies Record<string, readonly EveMessage[]>;
+
+export const researchFileTranscripts = {
+  [invoicesSessionId]: [
+    {
+      id: "research-file-answer",
+      role: "assistant",
+      metadata: { status: "complete", turnId: "turn-research-file" },
+      parts: [
+        {
+          type: "tool",
+          kind: "tool",
+          stepIndex: 0,
+          name: "deepResearch",
+          label: "Deep Research",
+          callId: "research-file",
+          state: "completed",
+          input: { request: "Research a launch plan" },
+          output: {
+            kind: "chatjs.tool-result",
+            version: 1,
+            status: "success",
+            output: {
+              format: "report",
+              path: "/workspace/research/example/report.md",
+              title: "Research report",
+            },
+          },
+        },
+        {
+          type: "tool",
+          kind: "tool",
+          stepIndex: 1,
+          name: "attach_workspace_file",
+          label: "Attach workspace file",
+          callId: "publish-research-file",
+          state: "completed",
+          input: {
+            path: "/workspace/research/example/report.md",
+            name: "Research report.md",
+          },
+          output: {
+            fileId: "research_report_file_0001",
+            name: "Research report.md",
+            url: "/api/files/research_report_file_0001",
+            mediaType: "text/plain",
+            size: 4096,
           },
         },
       ],

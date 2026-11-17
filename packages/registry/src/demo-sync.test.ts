@@ -15,8 +15,8 @@ test(
           target: "chatjs/plugins/mcp/runtime/mcp-tools.ts",
         },
         {
-          source: "./plugins/vercel-speed-insights/src/component.tsx",
-          target: "chatjs/plugins/vercel-speed-insights/component.tsx",
+          source: "./plugins/feedback/src/client-plugin.ts",
+          target: "chatjs/plugins/feedback/client-plugin.ts",
         },
       ].map(
         async ({

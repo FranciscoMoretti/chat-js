@@ -4,19 +4,15 @@ import { fetchEveChannelFile } from "./channel-files";
 
 const mocks = vi.hoisted(() => ({
   download: vi.fn(),
-  retain: vi.fn(),
   owned: vi.fn<typeof assertEveFilesOwned>(),
 }));
 vi.mock("../db/eve-files", () => ({ assertEveFilesOwned: mocks.owned }));
 vi.mock("../file-storage", () => ({ downloadFile: mocks.download }));
-vi.mock("./workspace-attachments", () => ({
-  retainWorkspaceAttachment: mocks.retain,
-}));
 
 const key = "abcdefghijklmnopqrstuvwx.png";
 const owner = {
   attributes: {},
-  authenticator: "test",
+  authenticator: "chatjs-gateway",
   principalId: "destination-owner",
   principalType: "user",
 } satisfies NonNullable<
@@ -49,12 +45,6 @@ it("checks the destination owner before reading local storage, regardless of the
   }
   expect(result.bytes.toString()).toBe("image bytes");
   expect(result.mediaType).toBe("image/png");
-  expect(mocks.retain).toHaveBeenCalledWith({
-    ownerId: owner.principalId,
-    sessionId: "native-session",
-    fileKey: key,
-    content: Buffer.from("image bytes"),
-  });
 });
 
 it("never reads a foreign or deleted file after an ownership rejection", async () => {
@@ -83,3 +73,16 @@ it.each([
     expect(mocks.download).not.toHaveBeenCalled();
   }
 );
+
+it("does not interpret a native-channel principal as a web account", async () => {
+  await expect(
+    fetchEveChannelFile(`/api/files/${key}`, {
+      session: {
+        id: "native",
+        auth: { current: { ...owner, authenticator: "slack-webhook" } },
+      },
+    })
+  ).rejects.toThrow("authenticated owner");
+  expect(mocks.owned).not.toHaveBeenCalled();
+  expect(mocks.download).not.toHaveBeenCalled();
+});

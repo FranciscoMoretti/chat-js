@@ -1,8 +1,8 @@
 (()=>{
  const $=s=>document.querySelector(s),NS='http://www.w3.org/2000/svg',mix=(a,b,t)=>a+(b-a)*t,clamp=x=>Math.max(0,Math.min(1,x));
  function el(tag,attrs,parent){const e=document.createElementNS(NS,tag);for(const[k,v]of Object.entries(attrs))e.setAttribute(k,v);parent.append(e);return e;}
- const modules=[{name:'MCP',x:48,index:0},{name:'Projects',x:212,index:2},{name:'Retrieve URL',x:376,index:4}].map(m=>({...m,move:0,open:0,grow:0,settle:0}));
- const data=[['app/',0,'folder'],['components/chat/',0,'folder'],['lib/ai/',0,'folder'],['plugins/',0,'folder'],['mcp/',1,'module',0],['client-plugin.ts',2,'file',0],['server-plugin.ts',2,'file',0],['projects/',1,'module',1],['client-plugin.ts',2,'file',1],['router.ts',2,'file',1],['tools/chatjs/',0,'folder'],['get-weather/',1,'folder'],['tool.ts',2,'file'],['retrieve-url/',1,'module',2],['tool.ts',2,'file',2],['renderer.tsx',2,'file',2],['chat.config.ts',0,'file']];
+ const modules=[{name:'MCP',x:48,index:0},{name:'Projects',x:212,index:2},{name:'Attach File',x:376,index:4}].map(m=>({...m,move:0,open:0,grow:0,settle:0}));
+ const data=[['app/',0,'folder'],['components/chat/',0,'folder'],['lib/ai/',0,'folder'],['plugins/',0,'folder'],['mcp/',1,'module',0],['client-plugin.ts',2,'file',0],['server-plugin.ts',2,'file',0],['projects/',1,'module',1],['client-plugin.ts',2,'file',1],['router.ts',2,'file',1],['tools/chatjs/',0,'folder'],['generate-image/',1,'folder'],['tool.ts',2,'file'],['attach-workspace-file/',1,'module',2],['tool.ts',2,'file',2],['renderer.tsx',2,'file',2],['chat.config.ts',0,'file']];
  $('#root-mark').innerHTML=CarbonMotion.mark();$('#root-mark').firstElementChild.setAttribute('width',22);$('#root-mark').firstElementChild.setAttribute('height',22);$('#root-mark').setAttribute('transform','translate(636 60)');
  const rows=data.map(([label,depth,type,module],index)=>{
   const x=636+depth*25,g=el('g',{},$('#rows')),guide=el('path',{class:'guide',d:depth?`M${x-14} -28V0H${x-4}`:'M624 0H632'},g),content=el('g',{},g);

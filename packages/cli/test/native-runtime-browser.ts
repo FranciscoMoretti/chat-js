@@ -16,7 +16,6 @@ interface RuntimeOptions {
   readonly createUrl?: string;
   readonly live: boolean;
   readonly uploads: boolean;
-  readonly documents: boolean;
 }
 
 // Tailwind serializes equivalent colors differently in a generated build and
@@ -159,46 +158,6 @@ export const checkNativeRuntime = async (options: RuntimeOptions) => {
         style: "nextjs-portal { display: none !important; }",
       });
       screenshots.push("generated-live-chat.png");
-    }
-    if (options.live && options.documents) {
-      await composer.fill(
-        'Use createTextDocument to create a document titled "Generated W8 note" containing exactly "Native generated document verified."'
-      );
-      await page.getByRole("button", { name: "Send", exact: true }).click();
-      const documentResult = page.getByRole("button", {
-        name: 'Created "Generated W8 note"',
-        exact: true,
-      });
-      await expect(documentResult).toBeVisible({ timeout: 180_000 });
-      await expect(
-        page.getByRole("button", { name: "Stop", exact: true })
-      ).toHaveCount(0);
-      const close = page.getByRole("button", { name: "Close", exact: true });
-      if (await close.isVisible()) {
-        await close.click();
-      }
-      await documentResult.click();
-      await expect(
-        page
-          .getByText("Native generated document verified.", { exact: true })
-          .first()
-      ).toBeVisible();
-      await close.click();
-      await settleQueries();
-      await page.reload({ waitUntil: "domcontentloaded" });
-      await documentResult.click();
-      await expect(
-        page
-          .getByText("Native generated document verified.", { exact: true })
-          .first()
-      ).toBeVisible();
-      await page.screenshot({
-        path: path.join(options.output, "generated-live-document.png"),
-        animations: "disabled",
-        style: "nextjs-portal { display: none !important; }",
-      });
-      screenshots.push("generated-live-document.png");
-      await close.click();
     }
     // Prove installed W5 code works under the selected native preset.
     const activity = await page.context().newPage();
@@ -391,7 +350,6 @@ export const checkNativeRuntime = async (options: RuntimeOptions) => {
       liveChat: options.live,
       activityStates: 7,
       highlightedCodeCopy: true,
-      documents: options.documents,
       isolatedDatabase: true,
       theme,
       darkTheme,

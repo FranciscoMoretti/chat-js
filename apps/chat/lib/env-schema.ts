@@ -37,7 +37,6 @@ const MIN_NONEMPTY_ENV_VALUE_LENGTH = 1;
  * Exported separately so callers can inspect schemas without createEnv validation.
  */
 const serverEnvSchema = {
-  CHATJS_SANDBOX_DEV_RUN_ID: z.uuid().optional(),
   APP_URL: z
     .url()
     .optional()
@@ -111,12 +110,6 @@ const serverEnvSchema = {
     .string()
     .optional()
     .describe("Vercel OAuth integration client secret"),
-  VERCEL_AUTOMATION_BYPASS_SECRET: z
-    .string()
-    .optional()
-    .describe(
-      "Server-only credential for this project's protected Vercel deployments"
-    ),
   VERCEL_BRANCH_URL: z
     .string()
     .optional()

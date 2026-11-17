@@ -143,9 +143,9 @@ it("ordinary owner access cannot manage internal sandbox resources", async () =>
 it("accepts only a known tool selection as a gateway attribute", async () => {
   const command = request("/eve/v1/session", "POST");
   command.headers.delete("x-chatjs-deletion");
-  command.headers.set("x-chatjs-tool", "webSearch");
+  command.headers.set("x-chatjs-tool", "generateImage");
   expect(await authenticateEveGateway(command)).toMatchObject({
-    attributes: { selectedTool: "webSearch" },
+    attributes: { selectedTool: "generateImage" },
   });
   command.headers.set("x-chatjs-tool", "server__arbitrary");
   expect(await authenticateEveGateway(command)).toBeNull();

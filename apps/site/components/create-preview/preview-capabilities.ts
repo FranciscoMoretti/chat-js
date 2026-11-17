@@ -1,6 +1,9 @@
 // Host capabilities, separate from what can be installed. Keep this serializable
 // so the configurator never imports production plugin controllers.
 export const livePreviewPlugins = [
+  "image-viewer",
+  "video-viewer",
+  "spreadsheet-viewer",
   "mcp",
   "sharing",
   "followup-suggestions",
@@ -22,9 +25,6 @@ export const pluginPreviewLabel = (id: string, hasClient: boolean) => {
   }
   if (livePreviewPlugins.some((plugin) => plugin === id)) {
     return "Live preview";
-  }
-  if (id === "vercel-analytics" || id === "vercel-speed-insights") {
-    return "No visible UI";
   }
   if (id === "guest-chat") {
     return "Preview as Guest";

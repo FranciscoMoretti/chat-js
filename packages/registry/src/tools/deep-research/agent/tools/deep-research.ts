@@ -1,7 +1,5 @@
 // ChatJS source: deep-research. Ownership: chatjs/tools/deep-research/chatjs.json.
-import { requireAccountSession } from "@/lib/eve/session-identity";
-import { defineWorkflowTool } from "eve/tools";
-import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
+import { defineWorkflowTool, toolOutput } from "eve/tools";
 import {
   clarifyWithUserInstructions,
   compressResearchSimpleHumanMessage,
@@ -10,11 +8,8 @@ import {
   leadResearcherPrompt,
   researchSystemPrompt,
   transformMessagesIntoResearchTopicPrompt,
-} from "@/chatjs/tools/deep-research/prompts";
-import {
-  prepareResearch,
-  saveResearchReport,
-} from "@/chatjs/tools/deep-research/steps";
+} from "../lib/research/prompts";
+import { prepareResearch, researchCompletedAt } from "../lib/research/steps";
 import {
   researchBrief,
   researchInput,
@@ -22,17 +17,18 @@ import {
   researchDecision,
   researchFindings,
   researchReport,
-  researchOutput,
-} from "@/chatjs/tools/deep-research/schemas";
-import type { ResearchUpdate } from "@/tools/platform/research-updates-schema";
-import type { ToolResult } from "@/lib/eve/tool-result";
+  researchResult,
+} from "../lib/research/schemas";
+import type { ResearchUpdate } from "../lib/research/schemas";
 import type { AgentSession, WorkflowToolContext } from "eve/tools";
-import { createToolResult } from "@/lib/eve/tool-result";
-import { validateToolOutput } from "@/chatjs/core/tools/validate-output";
-import { researchSearchUpdates } from "@/chatjs/tools/deep-research/search-updates";
 import { z } from "zod";
 
-type ResearchOutput = z.infer<typeof researchOutput>;
+import {
+  readResearchFiles,
+  writeResearchFile,
+} from "../lib/research/workspace";
+
+type ResearchResult = ReturnType<typeof researchResult>;
 
 type ResearchWorkflowContext = Readonly<
   Omit<WorkflowToolContext, "abortSignal"> & {
@@ -70,7 +66,6 @@ const researchReply = async (
   return result.data;
 };
 
-const ORCHESTRATION_COST_USD = 0;
 const INITIAL_RESEARCH_ROUND = 0;
 const RESEARCH_ROUND_INCREMENT = 1;
 const BRIEF_UPDATE_INDEX = 1;
@@ -79,27 +74,21 @@ const EMPTY_TOPIC_COUNT = 0;
 export default defineWorkflowTool({
   availableInSubagents: false,
   description:
-    "Conduct deep research using this conversation and installed search, then save a cited report. Use only for explicit deep research requests, at most once per user turn. If research fails, report the failure and let the user choose whether to retry; do not start duplicate research calls. If clarification is needed, ask the returned questions and call again after the user answers. The report is displayed to the user; do not repeat it in full.",
+    "Conduct deep research using installed EVE capabilities and sandbox files. Supply the full task and relevant conversation context in request. Use only for explicit deep research requests, once per turn. Returns a Markdown report path in the shared sandbox. After completion, deliver the file using attach_workspace_file when installed or your channel's native file delivery. If no delivery mechanism exists, explain where the file is and do not invent a download URL. If clarification is needed, ask the returned questions. If research fails, report the error instead of starting duplicate research.",
   async *execute(
-    _input: Readonly<Record<string, never>>,
+    input: Readonly<z.infer<typeof researchInput>>,
     context: ResearchWorkflowContext
-  ): AsyncGenerator<ToolResult<ResearchOutput>, void> {
+  ): AsyncGenerator<ResearchResult, void> {
     "use workflow";
-    requireAccountSession(context.session);
-    const { config, date, messages, timestamp } =
-      await prepareResearch(context);
+    const { config, date, messages, timestamp } = await prepareResearch(
+      input.request
+    );
     const updates: ResearchUpdate[] = [];
-    let searchUpdates: ResearchUpdate[] = [];
-    // Native child events own model/search costs. This orchestration receipt adds no charge.
-    const progress = (): ToolResult<ResearchOutput> =>
-      createToolResult<ResearchOutput>(
-        validateToolOutput(researchOutput, { searches: [] }),
-        ORCHESTRATION_COST_USD,
-        [...updates, ...searchUpdates]
-      );
+    const progress = (): ResearchResult =>
+      researchResult({ format: "progress" }, updates);
     if (config.allow_clarification) {
       const clarification = researchClarification.parse(
-        await researchReply(context.agent("researchPlanner"), {
+        await researchReply(context.agent("agent"), {
           signal: context.abortSignal,
           message: structuredMessage(
             clarifyWithUserInstructions({ date, messages })
@@ -108,13 +97,10 @@ export default defineWorkflowTool({
         })
       );
       if (clarification.need_clarification) {
-        yield createToolResult(
-          validateToolOutput(researchOutput, {
-            answer: clarification.question,
-            format: "clarifying_questions",
-          }),
-          ORCHESTRATION_COST_USD
-        );
+        yield researchResult({
+          answer: clarification.question,
+          format: "clarifying_questions",
+        });
         return;
       }
     }
@@ -134,7 +120,7 @@ export default defineWorkflowTool({
     );
     yield progress();
     const brief = researchBrief.parse(
-      await researchReply(context.agent("researchPlanner"), {
+      await researchReply(context.agent("agent"), {
         signal: context.abortSignal,
         message: structuredMessage(
           transformMessagesIntoResearchTopicPrompt({ date, messages })
@@ -142,6 +128,7 @@ export default defineWorkflowTool({
         outputSchema: outputSchema(researchBrief),
       })
     );
+    await writeResearchFile(context, "brief.md", brief.research_brief);
     updates[BRIEF_UPDATE_INDEX] = {
       message: brief.research_brief,
       status: "completed",
@@ -151,7 +138,7 @@ export default defineWorkflowTool({
     };
     yield progress();
 
-    const notes: { topic: string; findings: string }[] = [];
+    const noteFiles: string[] = [];
     const decisionSchema = researchDecision.extend({
       topics: researchDecision.shape.topics.max(
         config.max_concurrent_research_units
@@ -165,12 +152,17 @@ export default defineWorkflowTool({
       round += RESEARCH_ROUND_INCREMENT
     ) {
       context.abortSignal.throwIfAborted();
+      // oxlint-disable-next-line no-await-in-loop -- Each decision reads the notes completed by preceding research rounds.
+      const findings = await readResearchFiles(context, [
+        "brief.md",
+        ...noteFiles,
+      ]);
       const decision = decisionSchema.parse(
         // oxlint-disable-next-line no-await-in-loop -- Each decision consumes the findings added by the preceding round.
-        await researchReply(context.agent("researchPlanner"), {
+        await researchReply(context.agent("agent"), {
           signal: context.abortSignal,
           message: structuredMessage(
-            `${leadResearcherPrompt({ date, max_concurrent_research_units: config.max_concurrent_research_units })}\n\nResearch brief: ${brief.research_brief}\n\nFindings so far:\n${JSON.stringify(notes)}\n\nDecision round ${round + RESEARCH_ROUND_INCREMENT} of ${config.max_researcher_iterations + RESEARCH_ROUND_INCREMENT}. Return your next decision.`
+            `${leadResearcherPrompt({ date, max_concurrent_research_units: config.max_concurrent_research_units })}\n\nResearch brief: ${findings[0]}\n\nFindings so far:\n${findings.slice(1).join("\n\n")}\n\nDecision round ${round + RESEARCH_ROUND_INCREMENT} of ${config.max_researcher_iterations + RESEARCH_ROUND_INCREMENT}. Return your next decision.`
           ),
           outputSchema: outputSchema(decisionSchema),
         })
@@ -194,44 +186,44 @@ export default defineWorkflowTool({
           type: "thoughts",
         });
         yield progress();
-        let raw: z.infer<typeof researchFindings>;
-        try {
-          raw = researchFindings.parse(
-            // oxlint-disable-next-line no-await-in-loop -- Publish each topic's progress and finish its child before advancing; failure must prevent later topics from starting.
-            await researchReply(context.agent("researcher"), {
-              signal: context.abortSignal,
-              message: structuredMessage(
-                `${researchSystemPrompt({ date, max_search_queries: config.search_api_max_queries, mcp_prompt: "" })}\n\nTopic:\n${topic}\n\nReturn comprehensive raw findings, preserving source URLs, citations, relevant quotations, uncertainties, and conflicting evidence for the compression stage.`
-              ),
-              outputSchema: outputSchema(researchFindings),
-            })
-          );
-        } catch (error) {
-          // Keep completed search evidence even if the researcher later fails.
-          // Cancellation must stop promptly instead of starting more reads.
-          context.abortSignal.throwIfAborted();
-          const previousSearchUpdates = searchUpdates;
-          // oxlint-disable-next-line no-await-in-loop -- Preserve completed search evidence before publishing the failure and terminating the topic loop.
-          searchUpdates = await researchSearchUpdates(context).catch(
-            () => previousSearchUpdates
-          );
-          yield progress();
-          throw error;
-        }
-        // oxlint-disable-next-line no-await-in-loop -- Read the just-completed child's evidence before publishing progress and compressing its findings.
-        searchUpdates = await researchSearchUpdates(context);
-        yield progress();
-        const compressed = researchFindings.parse(
-          // oxlint-disable-next-line no-await-in-loop -- Commit this topic's compressed notes before the next topic and supervisor decision.
-          await researchReply(context.agent("researchCompressor"), {
+        const raw = researchFindings.parse(
+          // oxlint-disable-next-line no-await-in-loop -- Complete the topic before moving to the next research stage.
+          await researchReply(context.agent("agent"), {
             signal: context.abortSignal,
             message: structuredMessage(
-              `${compressResearchSystemPrompt({ date })}\n\n${raw.findings}\n\n${compressResearchSimpleHumanMessage}`
+              `${researchSystemPrompt({ date, max_search_queries: config.search_api_max_queries, mcp_prompt: "Use eve__search to discover installed search/retrieval connections and eve__tool to call them. Use native read_file or bash for relevant sandbox files. Do not call deepResearch recursively. If current external evidence is needed but no search capability is installed, say so explicitly; never fabricate sources." })}\n\nResearch brief:\n${findings[0]}\n\nTopic:\n${topic}\n\nReturn comprehensive raw findings with source URLs, citations, uncertainties, and conflicting evidence.`
             ),
             outputSchema: outputSchema(researchFindings),
           })
         );
-        notes.push({ findings: compressed.findings, topic });
+        const topicNumber = noteFiles.length + 1;
+        const sourceFile = `topic-${topicNumber}-sources.md`;
+        // oxlint-disable-next-line no-await-in-loop -- Preserve cited source findings before compression.
+        await writeResearchFile(
+          context,
+          sourceFile,
+          `# ${topic}\n\n${raw.findings}`
+        );
+        // oxlint-disable-next-line no-await-in-loop -- Compression consumes the saved source file.
+        const [sources] = await readResearchFiles(context, [sourceFile]);
+        const compressed = researchFindings.parse(
+          // oxlint-disable-next-line no-await-in-loop -- Commit this topic's compressed notes before the next topic and supervisor decision.
+          await researchReply(context.agent("agent"), {
+            signal: context.abortSignal,
+            message: structuredMessage(
+              `${compressResearchSystemPrompt({ date })}\n\n${sources}\n\n${compressResearchSimpleHumanMessage}`
+            ),
+            outputSchema: outputSchema(researchFindings),
+          })
+        );
+        const noteFile = `topic-${topicNumber}-notes.md`;
+        // oxlint-disable-next-line no-await-in-loop -- Commit notes before advancing the supervisor.
+        await writeResearchFile(
+          context,
+          noteFile,
+          `# ${topic}\n\n${compressed.findings}`
+        );
+        noteFiles.push(noteFile);
         updates[updateIndex] = {
           message: topic,
           status: "completed",
@@ -250,17 +242,26 @@ export default defineWorkflowTool({
       type: "writing",
     });
     yield progress();
+    const [savedBrief, ...savedNotes] = await readResearchFiles(context, [
+      "brief.md",
+      ...noteFiles,
+    ]);
     const report = researchReport.parse(
-      await researchReply(context.agent("researchWriter"), {
+      await researchReply(context.agent("agent"), {
         signal: context.abortSignal,
         message: structuredMessage(
-          `${finalReportGenerationPrompt({ date, findings: notes.map((note: Readonly<(typeof notes)[number]>): string => note.findings).join("\n"), research_brief: brief.research_brief })}\n\nWrite the complete Markdown report with title ${JSON.stringify(brief.title)}. Return title and content; the workflow will save the document.`
+          `${finalReportGenerationPrompt({ date, findings: savedNotes.join("\n"), research_brief: savedBrief })}\n\nWrite the complete Markdown report with title ${JSON.stringify(brief.title)}. Return title and content; the workflow will publish the report as a Markdown file.`
         ),
         outputSchema: outputSchema(researchReport),
       })
     );
     context.abortSignal.throwIfAborted();
-    const { document, completedAt } = await saveResearchReport(context, report);
+    const reportPath = await writeResearchFile(
+      context,
+      "report.md",
+      report.content
+    );
+    const completedAt = await researchCompletedAt();
     updates[reportUpdateIndex] = {
       status: "completed",
       title: "Writing final report",
@@ -273,12 +274,11 @@ export default defineWorkflowTool({
       toolCallId: context.callId,
       type: "completed",
     });
-    yield createToolResult(
-      validateToolOutput(researchOutput, { ...document, format: "report" }),
-      ORCHESTRATION_COST_USD,
-      [...updates, ...searchUpdates]
+    yield researchResult(
+      { path: reportPath, title: report.title, format: "report" },
+      updates
     );
   },
   inputSchema: researchInput,
-  toModelOutput: toolResultToModelOutput,
+  toModelOutput: (result) => toolOutput.json(result.output),
 });

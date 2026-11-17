@@ -3,20 +3,20 @@ import type { SessionStreamEvent } from "eve/client";
 
 import { useEveDeliveryReceipt } from "./use-eve-delivery-receipt";
 
-import { ParallelResponseModelPicker } from "@/components/parallel-responses/model-picker";
 import { ChatSuggestions, MessageResponses } from "@/components/chat-slots";
+import { ParallelResponseModelPicker } from "@/components/parallel-responses/model-picker";
 
 import { withTaskCleanup } from "@/components/task-cleanup";
 
 import { hasText } from "@/components/text-value";
 
 import type { useEveAgent } from "eve/react";
-import React, { useState } from "react";
 import type { JSX as ReactJSX, ReactNode } from "react";
+import React, { useState } from "react";
 
-import { MessageScrollerItem } from "@/components/ui/message-scroller";
 import { AttachmentList } from "@/components/attachment-list";
 import { Button } from "@/components/ui/button";
+import { MessageScrollerItem } from "@/components/ui/message-scroller";
 import type { SelectedModelValue, UiToolName } from "@/lib/ai/types";
 import {
   expandSelectedModelValue,
@@ -24,10 +24,10 @@ import {
 } from "@/lib/ai/types";
 import { isEveAdmissionBusy } from "@/lib/eve/admission-retry";
 import { isEveCommandRejection } from "@/lib/eve/command-rejection";
-import { draftMessage, restoreDraft } from "@/lib/eve/draft";
 import type { DraftAttachment } from "@/lib/eve/draft";
-import { logicalResponseSlots } from "@/lib/eve/logical-response-slots";
+import { draftMessage, restoreDraft } from "@/lib/eve/draft";
 import type { LogicalChat, LogicalChatSnapshot } from "@/lib/eve/logical-chat";
+import { logicalResponseSlots } from "@/lib/eve/logical-response-slots";
 import type { ActivePendingEveMessage } from "@/lib/eve/message-delivery";
 import { EVE_MESSAGE_OPERATION_HEADER } from "@/lib/eve/message-delivery";
 import type { ReadonlyEveMessage } from "@/lib/eve/readonly-message-types";
@@ -38,7 +38,8 @@ import {
   useModelChange,
 } from "@/providers/default-model-provider";
 
-import { EveArtifactLayout } from "./eve-artifact-layout";
+import { ChatConversationScreen } from "../chat/chat-conversation-screen";
+import { ChatMessageEditor } from "../chat/chat-message-editor";
 import { EveChatError } from "./eve-chat-error";
 import { EveComposer } from "./eve-composer";
 import { EveForkRecovery } from "./eve-fork-recovery";
@@ -54,8 +55,6 @@ import { useEveComposerDraft } from "./use-eve-composer-draft";
 import { useEveFork } from "./use-eve-fork";
 import { useEveMessageDelivery } from "./use-eve-message-delivery";
 import { useLogicalCommands } from "./use-logical-commands";
-import { ChatMessageEditor } from "../chat/chat-message-editor";
-import { ChatConversationScreen } from "../chat/chat-conversation-screen";
 
 const settledError = (
   event: SessionStreamEvent | undefined
@@ -374,7 +373,6 @@ const EveDeliveryRecovery = ({
 const conversationActionLocks = ({
   busy,
   commandPending,
-  cancelPending,
   hasApproval,
   pendingMessage,
   fork,
@@ -383,20 +381,12 @@ const conversationActionLocks = ({
 }: {
   readonly busy: boolean;
   readonly commandPending: boolean;
-  readonly cancelPending: boolean;
   readonly hasApproval: boolean;
   readonly pendingMessage: ReturnType<typeof useEveMessageDelivery>["pending"];
   readonly fork: ReturnType<typeof useConversationInput>["fork"];
   readonly snapshotError: string | undefined;
   readonly editingMessageId: string | undefined;
 }) => ({
-  document:
-    busy ||
-    commandPending ||
-    cancelPending ||
-    hasApproval ||
-    Boolean(pendingMessage) ||
-    fork.locked,
   transcript:
     busy ||
     commandPending ||
@@ -715,7 +705,6 @@ const EveConversation = ({
   const actionLocks = conversationActionLocks({
     busy,
     commandPending,
-    cancelPending,
     hasApproval,
     pendingMessage,
     fork,
@@ -723,233 +712,211 @@ const EveConversation = ({
     editingMessageId,
   });
   return (
-    <EveArtifactLayout
-      replaying={agent.status === "resuming"}
-      onStopExecution={cancelExecution}
-      logicalChatId={controller.chatId}
-      getExecutionMessages={(id) => snapshot.agents.get(id)?.messages ?? []}
-      isExecutionBusy={(id) => {
-        const status = snapshot.agents.get(id)?.status;
-        return isExecutionBusy(status);
-      }}
+    <ChatConversationScreen
       conversationId={conversationId}
-      documentActionsDisabled={actionLocks.document}
-      messages={agent.messages}
-      onDocumentAction={async ({ message, modelId }) => {
-        await run(async () => {
-          await submitMessage(message, [], modelId, false);
-        });
-      }}
-    >
-      <ChatConversationScreen
-        conversationId={conversationId}
-        header={header}
-        transcript={{
-          actionsDisabled: actionLocks.transcript,
-          conversationId,
-          disabled: busy || commandPending,
-          inputDisabled: isAnswerDisabled(agent.status, commandPending),
-          isReadonly: false,
-          messages,
-          editor: hasText(editingMessageId)
-            ? {
-                content: (
-                  <EveConversationEditor
-                    fork={fork}
-                    busy={busy}
-                    commandPending={commandPending}
-                    hasApproval={hasApproval}
-                    pendingMessage={pendingMessage}
-                    onSubmit={() => {
-                      const completion = handleEditSubmit();
-                      startEventAction(async () => {
-                        await completion;
-                      });
-                    }}
-                  />
-                ),
-                disabled: fork.busy || Boolean(fork.pending),
-                messageId: editingMessageId,
-                onCancel: fork.cancelEdit,
-              }
-            : undefined,
-          modelForMessage,
-          renderVersions: (message): React.JSX.Element => (
-            <EveLogicalVersions
-              conversationId={conversationId}
-              messageId={message.id}
-              disabled={actionLocks.navigation}
-            />
-          ),
-          renderResponses: (message): React.JSX.Element => (
-            <MessageResponses
-              conversationId={conversationId}
-              messageId={message.id}
-              disabled={actionLocks.navigation}
-            />
-          ),
-          messageKey: (message) =>
-            controller.logicalId(conversationId, message.id) ??
-            `${sessionId}:${message.id}`,
-          onEdit: (message) => {
-            const following = messages.slice(messages.indexOf(message) + 1);
-            const nextUser = following.findIndex(
-              (candidate) => candidate.role === "user"
-            );
-            const response = following
-              .slice(0, nextUser === -1 ? following.length : nextUser)
-              .find((candidate) => candidate.role === "assistant");
-            const logicalId = controller.logicalId(conversationId, message.id);
-            const group = hasText(logicalId)
-              ? logicalResponseSlots(snapshot, logicalId)
-              : undefined;
-            const groupModels: Record<string, number> = {};
-            for (const slot of group?.slots ?? []) {
-              groupModels[slot.modelId] = (groupModels[slot.modelId] ?? 0) + 1;
+      header={header}
+      transcript={{
+        actionsDisabled: actionLocks.transcript,
+        conversationId,
+        disabled: busy || commandPending,
+        inputDisabled: isAnswerDisabled(agent.status, commandPending),
+        isReadonly: false,
+        messages,
+        editor: hasText(editingMessageId)
+          ? {
+              content: (
+                <EveConversationEditor
+                  fork={fork}
+                  busy={busy}
+                  commandPending={commandPending}
+                  hasApproval={hasApproval}
+                  pendingMessage={pendingMessage}
+                  onSubmit={() => {
+                    const completion = handleEditSubmit();
+                    startEventAction(async () => {
+                      await completion;
+                    });
+                  }}
+                />
+              ),
+              disabled: fork.busy || Boolean(fork.pending),
+              messageId: editingMessageId,
+              onCancel: fork.cancelEdit,
             }
-            const completion = fork.begin(message, undefined, {
-              events: agent.events,
-              modelSelection: group ? groupModels : undefined,
-              response:
-                response && hasText(modelForMessage(response))
-                  ? response
-                  : undefined,
-            });
-            startEventAction(async () => {
-              await completion;
-            });
-          },
-          onRegenerate: (message, response) => {
-            void fork.begin(message, {
-              events: agent.events,
-              response,
-            });
-          },
-          suggestions: (
-            <ChatSuggestions
-              sessionId={sessionId}
-              conversationId={conversationId}
-              events={agent.events}
-              lastMessage={lastMessage}
-              disabled={actionLocks.transcript}
-              onSelect={(suggestion) => {
-                void run(async () => {
-                  await (modelIds.length > 1
-                    ? fork.compare(
-                        draftMessage(suggestion, []),
-                        modelIds,
-                        composerDraft.selectedTool ?? undefined,
-                        false
-                      )
-                    : submitMessage(
-                        suggestion,
-                        [],
-                        modelIds[0],
-                        false,
-                        composerDraft.selectedTool ?? undefined
-                      ));
-                });
-              }}
-            />
-          ),
-          respond: (response) => {
-            startEventAction(async () => {
-              await run(async () => {
-                await send(async () => {
-                  await agent.respond([response]);
-                });
-              });
-            });
-          },
-        }}
-        status={composerStatus(agent.status)}
-        leading={
-          initialMessage !== undefined &&
-          initialMessage !== "" &&
-          messages.length === 0 && (
-            <MessageScrollerItem messageId="initial-message" scrollAnchor>
-              <EveInitialMessage message={initialMessage} />
-            </MessageScrollerItem>
-          )
-        }
-        trailing={
-          comparison &&
-          shouldAppendEveOptimisticResponseGroup(comparison) && (
-            <MessageScrollerItem
-              messageId={`comparison:${comparison.operationId}`}
-              scrollAnchor
-            >
-              <EveOptimisticResponseGroup operation={comparison} />
-            </MessageScrollerItem>
-          )
-        }
-        notices={
-          <>
-            <EveForkRecovery
-              fork={fork}
-              showError={!hasText(editingMessageId)}
-            />
-            <p aria-live="polite" className="sr-only">
-              {statusLabel}
-            </p>
-            {[snapshot.error, displayedError, composerDraft.error]
-              .filter(hasText)
-              .map((message): React.JSX.Element => (
-                <EveChatError key={message} message={message} />
-              ))}
-            {pendingMessage && !commandPending && (
-              <EveDeliveryRecovery
-                pendingMessage={pendingMessage}
-                delivery={delivery}
-                composerDraft={composerDraft}
-                files={files}
-                run={run}
-                sendPendingMessage={sendPendingMessage}
-                setCommandFailure={setCommandFailure}
-              />
-            )}
-          </>
-        }
-        composer={
-          <EveConversationComposer
-            input={input}
-            pendingMessage={pendingMessage}
-            status={agent.status}
-            busy={busy}
-            commandPending={commandPending}
-            cancelPending={cancelPending}
-            hasApproval={hasApproval}
-            displayedError={displayedError}
-            commandFailure={commandFailure}
-            agentError={agent.error}
-            onStop={() => {
-              startEventAction(cancel);
-            }}
-
-            onSubmit={() => {
+          : undefined,
+        modelForMessage,
+        renderVersions: (message): React.JSX.Element => (
+          <EveLogicalVersions
+            conversationId={conversationId}
+            messageId={message.id}
+            disabled={actionLocks.navigation}
+          />
+        ),
+        renderResponses: (message): React.JSX.Element => (
+          <MessageResponses
+            conversationId={conversationId}
+            messageId={message.id}
+            disabled={actionLocks.navigation}
+          />
+        ),
+        messageKey: (message) =>
+          controller.logicalId(conversationId, message.id) ??
+          `${sessionId}:${message.id}`,
+        onEdit: (message) => {
+          const following = messages.slice(messages.indexOf(message) + 1);
+          const nextUser = following.findIndex(
+            (candidate) => candidate.role === "user"
+          );
+          const response = following
+            .slice(0, nextUser === -1 ? following.length : nextUser)
+            .find((candidate) => candidate.role === "assistant");
+          const logicalId = controller.logicalId(conversationId, message.id);
+          const group = hasText(logicalId)
+            ? logicalResponseSlots(snapshot, logicalId)
+            : undefined;
+          const groupModels: Record<string, number> = {};
+          for (const slot of group?.slots ?? []) {
+            groupModels[slot.modelId] = (groupModels[slot.modelId] ?? 0) + 1;
+          }
+          const completion = fork.begin(message, undefined, {
+            events: agent.events,
+            modelSelection: group ? groupModels : undefined,
+            response:
+              response && hasText(modelForMessage(response))
+                ? response
+                : undefined,
+          });
+          startEventAction(async () => {
+            await completion;
+          });
+        },
+        onRegenerate: (message, response) => {
+          void fork.begin(message, {
+            events: agent.events,
+            response,
+          });
+        },
+        suggestions: (
+          <ChatSuggestions
+            sessionId={sessionId}
+            conversationId={conversationId}
+            events={agent.events}
+            lastMessage={lastMessage}
+            disabled={actionLocks.transcript}
+            onSelect={(suggestion) => {
               void run(async () => {
                 await (modelIds.length > 1
                   ? fork.compare(
-                      draftMessage(draft, files.attachments),
+                      draftMessage(suggestion, []),
                       modelIds,
-                      composerDraft.selectedTool ?? undefined
+                      composerDraft.selectedTool ?? undefined,
+                      false
                     )
                   : submitMessage(
-                      draft,
-                      files.attachments,
+                      suggestion,
+                      [],
                       modelIds[0],
-                      true,
+                      false,
                       composerDraft.selectedTool ?? undefined
                     ));
               });
             }}
-            onReconnect={() => {
-              void run(agent.resume);
-            }}
           />
-        }
-      />
-    </EveArtifactLayout>
+        ),
+        respond: (response) => {
+          startEventAction(async () => {
+            await run(async () => {
+              await send(async () => {
+                await agent.respond([response]);
+              });
+            });
+          });
+        },
+      }}
+      status={composerStatus(agent.status)}
+      leading={
+        initialMessage !== undefined &&
+        initialMessage !== "" &&
+        messages.length === 0 && (
+          <MessageScrollerItem messageId="initial-message" scrollAnchor>
+            <EveInitialMessage message={initialMessage} />
+          </MessageScrollerItem>
+        )
+      }
+      trailing={
+        comparison &&
+        shouldAppendEveOptimisticResponseGroup(comparison) && (
+          <MessageScrollerItem
+            messageId={`comparison:${comparison.operationId}`}
+            scrollAnchor
+          >
+            <EveOptimisticResponseGroup operation={comparison} />
+          </MessageScrollerItem>
+        )
+      }
+      notices={
+        <>
+          <EveForkRecovery fork={fork} showError={!hasText(editingMessageId)} />
+          <p aria-live="polite" className="sr-only">
+            {statusLabel}
+          </p>
+          {[snapshot.error, displayedError, composerDraft.error]
+            .filter(hasText)
+            .map((message): React.JSX.Element => (
+              <EveChatError key={message} message={message} />
+            ))}
+          {pendingMessage && !commandPending && (
+            <EveDeliveryRecovery
+              pendingMessage={pendingMessage}
+              delivery={delivery}
+              composerDraft={composerDraft}
+              files={files}
+              run={run}
+              sendPendingMessage={sendPendingMessage}
+              setCommandFailure={setCommandFailure}
+            />
+          )}
+        </>
+      }
+      composer={
+        <EveConversationComposer
+          input={input}
+          pendingMessage={pendingMessage}
+          status={agent.status}
+          busy={busy}
+          commandPending={commandPending}
+          cancelPending={cancelPending}
+          hasApproval={hasApproval}
+          displayedError={displayedError}
+          commandFailure={commandFailure}
+          agentError={agent.error}
+          onStop={() => {
+            startEventAction(cancel);
+          }}
+
+          onSubmit={() => {
+            void run(async () => {
+              await (modelIds.length > 1
+                ? fork.compare(
+                    draftMessage(draft, files.attachments),
+                    modelIds,
+                    composerDraft.selectedTool ?? undefined
+                  )
+                : submitMessage(
+                    draft,
+                    files.attachments,
+                    modelIds[0],
+                    true,
+                    composerDraft.selectedTool ?? undefined
+                  ));
+            });
+          }}
+          onReconnect={() => {
+            void run(agent.resume);
+          }}
+        />
+      }
+    />
   );
 };
 

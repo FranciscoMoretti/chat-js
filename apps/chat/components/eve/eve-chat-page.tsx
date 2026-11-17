@@ -1,8 +1,7 @@
-import { projectCreationScope } from "@/lib/eve/project-creation";
 import { hasText } from "@/components/text-value";
+import { projectCreationScope } from "@/lib/eve/project-creation";
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
-import React from "react";
 import type { JSX as ReactJSX } from "react";
 import { z } from "zod";
 
@@ -12,7 +11,6 @@ import type { CreationScope } from "@/lib/eve/pending-create";
 import { resolveEvePrincipal } from "@/lib/eve/principal";
 
 import { SignedOutScreen } from "@/integrations/auth/signed-out";
-import { EveArtifactLayout } from "./eve-artifact-layout";
 import { EveCreationRecovery } from "./eve-creation-recovery";
 import { EveRuntimeRoute } from "./eve-runtime-provider";
 import { NewEveConversation } from "./new-eve-conversation";
@@ -93,11 +91,9 @@ export const EveChatPage = async ({
     );
   }
   return (
-    <EveArtifactLayout conversationId={conversationId}>
-      <section className="flex h-full min-h-0 flex-col">
-        {header}
-        {content}
-      </section>
-    </EveArtifactLayout>
+    <section className="flex h-full min-h-0 flex-col">
+      {header}
+      {content}
+    </section>
   );
 };

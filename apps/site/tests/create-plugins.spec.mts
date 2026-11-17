@@ -1,4 +1,8 @@
-import { readInstallationInput } from "../../../packages/registry/app-preset";
+import {
+  encodeAppPreset,
+  readInstallationInput,
+} from "../../../packages/registry/app-preset";
+import { installationSelectionSchema } from "../../../packages/registry/installation";
 import type { Page } from "playwright/test";
 import { test, expect } from "@uiverify/playwright";
 
@@ -8,7 +12,7 @@ const setup = async (page: Page) => {
   await page.getByRole("switch", { name: "Feedback", exact: true }).check();
   await page.getByRole("switch", { name: "Projects", exact: true }).check();
   await page.getByRole("tab", { name: "Appearance", exact: true }).click();
-  await expect(page).toHaveURL(/app=a[0-9A-Za-z]+(?:&|$)/u);
+  await expect(page).toHaveURL(/app=agent1_[A-Za-z0-9_-]+(?:&|$)/u);
   const preview = page.frameLocator('iframe[title="Preview"]');
   await expect(preview.getByTestId("message-upvote")).toBeEnabled();
   return preview;
@@ -96,14 +100,14 @@ test("native controls style the open production dialog and Share restores the fu
   const selection = {
     gateway: "openrouter",
     plugins: ["feedback", "projects"],
-    tools: ["get-weather"],
+    tools: ["deep-research"],
     sandbox: "daytona",
     storage: { source: "s3", options: { bucket: "public-files" } },
   };
   await page.goto(
-    `/create?item=preview-02&installation=${encodeURIComponent(JSON.stringify(selection))}&__previewScenario=mutation-error`
+    `/create?item=preview-02&app=${encodeAppPreset(installationSelectionSchema.parse(selection))}&__previewScenario=mutation-error`
   );
-  await expect(page).toHaveURL(/app=a[0-9A-Za-z]+(?:&|$)/u);
+  await expect(page).toHaveURL(/app=agent1_[A-Za-z0-9_-]+(?:&|$)/u);
   const preview = page.frameLocator('iframe[title="Preview"]');
   await expect(preview.getByTestId("message-upvote")).toBeEnabled();
   await preview.getByRole("button", { name: /^Chat menu:/u }).click();
@@ -136,11 +140,8 @@ test("native controls style the open production dialog and Share restores the fu
     async () => await navigator.clipboard.readText()
   );
   const shared = new URL(shareUrl);
-  expect(shared.searchParams.get("app")).toMatch(/^a[0-9A-Za-z]+$/u);
-  const restored = readInstallationInput(
-    shared.searchParams.get("app") ?? "",
-    shared.searchParams.get("storage-config") ?? undefined
-  );
+  expect(shared.searchParams.get("app")).toMatch(/^agent1_[A-Za-z0-9_-]+$/u);
+  const restored = readInstallationInput(shared.searchParams.get("app") ?? "");
   expect({ ...restored, plugins: restored.plugins.toSorted() }).toEqual({
     ...selection,
     plugins: selection.plugins.toSorted(),
@@ -418,7 +419,7 @@ test("plugin toggles mount real MCP, sharing and follow-up UI without backends",
     }
   });
   await page.goto(
-    `/create?item=preview-02&installation=${encodeURIComponent(JSON.stringify({ gateway: "vercel", plugins: [], tools: [] }))}`
+    `/create?item=preview-02&app=${encodeAppPreset(installationSelectionSchema.parse({ gateway: "vercel", plugins: [], tools: [] }))}`
   );
   const preview = page.frameLocator('iframe[title="Preview"]');
   await expect(preview.getByTestId("chat-preview")).toBeVisible();
@@ -643,8 +644,12 @@ test("Guest Chat switches preview identity and uses a temporary local conversati
   });
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto(
-    `/create?item=preview-02&installation=${encodeURIComponent(
-      JSON.stringify({ gateway: "openai", plugins: [], tools: [] })
+    `/create?item=preview-02&app=${encodeAppPreset(
+      installationSelectionSchema.parse({
+        gateway: "openai",
+        plugins: [],
+        tools: [],
+      })
     )}`
   );
   const frame = page.locator('iframe[title="Preview"]');

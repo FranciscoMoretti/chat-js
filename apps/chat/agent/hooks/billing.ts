@@ -1,20 +1,15 @@
 import { isAccountSession } from "../../lib/eve/session-identity";
-import {
-  getEveSubagent,
-  registerEveSubagent,
-} from "../../lib/db/eve-subagents";
 import type { HookContext } from "eve/hooks";
 import { defineHook } from "eve/hooks";
 
-import { observeEveModelAccounting } from "../../lib/eve/model-accounting";
-
-import { ingestEveUsage } from "../../lib/eve/usage";
+import type { ingestEveUsage } from "../../lib/eve/usage";
 
 export default defineHook({
   events: {
     "*": async (
       event: Parameters<typeof ingestEveUsage>[2],
       context: Readonly<{
+        view: HookContext["view"];
         session: Readonly<
           Pick<HookContext["session"], "id" | "auth" | "parent">
         >;
@@ -23,7 +18,15 @@ export default defineHook({
       if (!isAccountSession(context.session)) {
         return;
       }
-      observeEveModelAccounting(event, context.session);
+      const { billing } = await import("../../integrations/billing");
+      if (billing.debit === undefined) {
+        return;
+      }
+      const [{ ingestEveUsage }, { getEveSubagent, registerEveSubagent }] =
+        await Promise.all([
+          import("../../lib/eve/usage"),
+          import("../../lib/db/eve-subagents"),
+        ]);
       const ownerId = context.session.auth.initiator?.principalId;
       if (typeof ownerId !== "string" || ownerId === "") {
         throw new Error("Eve billing requires an authenticated owner.");

@@ -13,13 +13,13 @@ test("selection accepts addresses and rejects unknown presence/config fields", (
       plugins: ["@chatjs/mcp"],
       gateway: "https://example.com/gateway.json",
       storage: { source: "memory" },
-      tools: ["word-count"],
+      tools: ["deep-research"],
     })
   ).toEqual({
     plugins: ["@chatjs/mcp"],
     gateway: "https://example.com/gateway.json",
     storage: { options: {}, source: "memory" },
-    tools: ["word-count"],
+    tools: ["deep-research"],
   });
   expect(() => installationSelectionSchema.parse({ mcp: true })).toThrow();
   expect(() =>

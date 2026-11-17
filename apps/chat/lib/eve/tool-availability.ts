@@ -1,3 +1,4 @@
+import { missingToolConfiguration } from "./tool-configuration";
 import type { LanguageModelMiddleware } from "ai";
 import type { ToolContext } from "eve/tools";
 
@@ -27,7 +28,9 @@ export const installedToolAvailabilityMiddleware = (
       Promise.resolve({
         ...params,
         tools: params.tools?.filter(
-          (tool: { readonly name: string }) => !unavailable.has(tool.name)
+          (tool: { readonly name: string }) =>
+            !unavailable.has(tool.name) &&
+            missingToolConfiguration(tool.name).length === 0
         ),
       }),
   };

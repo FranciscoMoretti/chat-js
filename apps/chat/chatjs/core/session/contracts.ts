@@ -1,3 +1,6 @@
+import type { DynamicModelContext } from "eve";
+import type { HookContext } from "eve/hooks";
+import type { SessionEvent } from "eve/client";
 import type { LanguageModelV4 } from "@ai-sdk/provider";
 import type { z } from "zod";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
@@ -21,12 +24,24 @@ export interface SessionModel {
   };
 }
 
-/** A non-account session owns its authentication, model bounds and instructions together. */
+/** Optional application policies. Native channels and callers execute without one. */
 export interface SessionProfile {
   readonly authenticator: string;
-  readonly authenticate: (
+  readonly authenticate?: (
     request: ReadonlyNativeSurface<Request>
   ) => Promise<SessionAuthentication | null>;
-  readonly resolveModel: () => Promise<SessionModel>;
-  readonly instructions: string;
+  readonly resolveModel?: (
+    context: DynamicModelContext,
+    modelId?: string
+  ) => Promise<SessionModel>;
+  readonly toolNames?: ReadonlySet<string>;
+  readonly specialists?: boolean;
+  readonly observeEvent?: (
+    event: SessionEvent,
+    context: Readonly<{
+      view: HookContext["view"];
+      session: Readonly<Pick<HookContext["session"], "id" | "auth" | "parent">>;
+    }>
+  ) => Promise<void>;
+  readonly instructions?: string;
 }

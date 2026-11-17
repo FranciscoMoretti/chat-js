@@ -5,7 +5,9 @@ import { page } from "vitest/browser";
 import { Favicon } from "@/components/favicon";
 import { AttachmentCard } from "@/components/attachment-card";
 import { GenerateImageRenderer } from "../src/tools/generate-image/renderer";
-import { ImageModal } from "@/components/image-modal";
+import { ImageModal } from "../src/plugins/image-viewer/src/image-modal";
+import { imageViewerClient } from "../src/plugins/image-viewer/src/client-plugin";
+import { Plugins } from "@/chatjs/core/ui/slots";
 import { createRoot } from "react-dom/client";
 import { takeSnapshot } from "@uiverify/vitest";
 import "../../../apps/chat/tests/visual/sandbox.css";
@@ -36,7 +38,7 @@ test("image tool loading, success, and unavailable states", async () => {
   const blobUrl = URL.createObjectURL(imageBlob);
   await renderRoot(
     root,
-    <>
+    <Plugins plugins={[imageViewerClient]}>
       <GenerateImageRenderer
         isReadonly
         messageId="image-fixture"
@@ -86,7 +88,7 @@ test("image tool loading, success, and unavailable states", async () => {
         }}
       />
       <Favicon url={imageUrl} />
-    </>
+    </Plugins>
   );
   try {
     await expect
@@ -95,18 +97,13 @@ test("image tool loading, success, and unavailable states", async () => {
     await expect
       .poll(() => container.querySelector("img")?.complete)
       .toBe(true);
-    const button = container.querySelector<HTMLButtonElement>("button");
+    const button = container.querySelector<HTMLButtonElement>(
+      '[aria-label="Open image"]'
+    );
     if (!button) {
       throw new Error("Image button missing");
     }
     button.focus();
-    const actions = container.querySelector<HTMLElement>(
-      String.raw`.group-focus-within\:opacity-100`
-    );
-    if (!actions) {
-      throw new Error("Image actions missing");
-    }
-    await expect.poll(() => getComputedStyle(actions).opacity).toBe("1");
     const successImage = container.querySelector<HTMLImageElement>(
       'img[alt="Blue sky"]'
     );

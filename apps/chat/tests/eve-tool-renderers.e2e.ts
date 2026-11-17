@@ -26,8 +26,13 @@ test("installed renderer states stay readable at desktop and mobile sizes", asyn
   await page.setContent(
     `<!doctype html><html class="dark"><head>${styles}</head><body class="bg-background text-foreground">${content}</body></html>`
   );
-  await expect(page.getByText("Counting words...").first()).toBeVisible();
-  await expect(page.getByText("Words", { exact: true })).toBeVisible();
+  await expect(
+    page.getByText("sample-notes.md", { exact: true })
+  ).toBeVisible();
+  const approved = page.locator("section").filter({
+    has: page.getByRole("heading", { name: "Approval received", exact: true }),
+  });
+  await expect(approved.getByText("Preparing download…")).toBeVisible();
   await expect(page.getByRole("alert")).toHaveCount(2);
   await expect(page.getByText("Request declined.")).toBeVisible();
   /* oxlint-disable eslint/no-await-in-loop -- Viewport changes and screenshots operate on the same browser page. */
@@ -187,7 +192,10 @@ test("native research renderer covers progress, clarification, report and failur
     page.getByText("Which time period should the research cover?")
   ).toBeVisible();
   await expect(
-    page.getByRole("button", { name: 'Created "Research report"' })
+    page.getByText("Research report", { exact: true })
+  ).toBeVisible();
+  await expect(
+    page.getByText("Research complete. Report saved in the agent workspace.")
   ).toBeVisible();
   await expect(page.getByText("Request declined.")).toBeVisible();
   await expect(page.getByRole("alert")).toHaveCount(3);
@@ -302,14 +310,24 @@ test("public tool projection preserves readable results without approval control
   await page.setContent(
     `<!doctype html><html class="dark"><head>${styles}</head><body class="bg-background text-foreground">${content}</body></html>`
   );
-  await expect(page.getByText("Published note", { exact: true })).toBeVisible();
+  // The static fixture has no client scroller to clear its initial scroll state.
+  await page
+    .locator('[data-slot="message-scroller-viewport"]')
+    .evaluate((viewport) => {
+      if (viewport instanceof HTMLElement) {
+        delete viewport.dataset.pendingScroll;
+      }
+    });
+  await expect(page.getByText(/"note": "Published note"/u)).toBeVisible();
   await expect(
     page.getByText("Waiting for input.", { exact: true })
   ).toBeVisible();
   await expect(
     page.getByText("Request declined.", { exact: true })
   ).toBeVisible();
-  await expect(page.getByText("Words", { exact: true })).toBeVisible();
+  await expect(
+    page.getByText("sample-notes.md", { exact: true })
+  ).toBeVisible();
   await expect(
     page.getByText(
       "This tool result is unavailable in the shared conversation.",

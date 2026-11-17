@@ -2,7 +2,7 @@
 
 import React from "react";
 import type { InteractionRequest, Answer } from "eve/events";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Item,
@@ -112,10 +112,63 @@ const PendingQuestion = ({
   </Questionnaire>
 );
 
+const PendingSignIn = ({
+  request,
+  disabled,
+}: PendingInputProps): React.JSX.Element => {
+  const { signIn } = request;
+  const url = signIn?.url;
+  const safeUrl =
+    url !== undefined && URL.canParse(url) && new URL(url).protocol === "https:"
+      ? url
+      : undefined;
+  return (
+    <Item
+      variant="outline"
+      size="sm"
+      className="flex-col items-start sm:flex-row sm:items-center"
+    >
+      <ItemContent>
+        <ItemTitle>{request.prompt}</ItemTitle>
+        {signIn?.instructions !== undefined && signIn.instructions !== "" && (
+          <p className="text-muted-foreground text-sm">{signIn.instructions}</p>
+        )}
+        {!disabled &&
+          signIn?.userCode !== undefined &&
+          signIn.userCode !== "" && (
+            <p className="font-mono text-sm">{signIn.userCode}</p>
+          )}
+        <p className="text-muted-foreground text-sm">
+          {safeUrl === undefined
+            ? "Follow the sign-in instructions, or send a new message to request another link."
+            : "Complete sign-in in the opened page. This conversation will continue automatically."}
+        </p>
+      </ItemContent>
+      <ItemActions>
+        {safeUrl !== undefined && !disabled ? (
+          <a
+            className={buttonVariants()}
+            href={safeUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Connect {signIn?.displayName ?? "account"}
+          </a>
+        ) : (
+          <Button disabled>Sign-in unavailable</Button>
+        )}
+      </ItemActions>
+    </Item>
+  );
+};
+
 export const EvePendingInput = (
   props: PendingInputProps
 ): React.JSX.Element => {
   const { request, disabled, respond } = props;
+  if (request.kind === "sign-in") {
+    return <PendingSignIn {...props} />;
+  }
   if (request.kind === "question" && request.display !== "confirmation") {
     return <PendingQuestion {...props} />;
   }

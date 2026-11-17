@@ -64,7 +64,7 @@ export const sceneMessages = (
                 {
                   type: "text",
                   state: "done",
-                  text: "Select AI tools to preview their examples.",
+                  text: "Select tools in the Agent tab to preview their examples.",
                 },
               ],
             },

@@ -1,7 +1,19 @@
 "use client";
 
+import { SetupTile, setupTileGrid, setupTileControl } from "./setup-tile";
+import { SetupProviderMark } from "./setup-provider-mark";
+import { ConfigurationSection as Section } from "./configuration-section";
 import { useState } from "react";
-import type { ReactNode } from "react";
+import { Boxes, Cpu, Monitor, ClipboardList } from "lucide-react";
+import { CategoryNavigation, categoryLayout } from "./category-navigation";
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+  PopoverHeader,
+  PopoverTitle,
+} from "@/vendor/shadcn-create/styles/base-nova/ui/popover";
+import type { ConfigureSetup } from "./setup-guidance";
 import { Button } from "@/vendor/shadcn-create/styles/base-nova/ui/button";
 import { Input } from "@/vendor/shadcn-create/styles/base-nova/ui/input";
 import {
@@ -10,10 +22,7 @@ import {
 } from "@/vendor/shadcn-create/styles/base-nova/ui/radio-group";
 import {
   Field,
-  FieldContent,
-  FieldDescription,
   FieldLabel,
-  FieldTitle,
 } from "@/vendor/shadcn-create/styles/base-nova/ui/field";
 import { useInstallation } from "./installation-provider";
 import { FeatureChoices } from "./installation-choices";
@@ -34,51 +43,27 @@ const providers = [
     title: "File storage",
     description: "Choose where attachments and generated files will live.",
   },
-  {
-    kind: "sandbox",
-    title: "Sandbox",
-    description: "Give tools an environment to run code and work with files.",
-  },
 ] as const;
 
-const [gateway, ...infrastructure] = providers;
+const providerCaptions: Readonly<Record<string, string>> = {
+  vercel: "Managed platform",
+  openai: "Direct API",
+  "openai-compatible": "Custom endpoint",
+  openrouter: "Model routing",
+  litellm: "Proxy gateway",
+  "vercel-blob": "Managed storage",
+  s3: "Object storage",
+  r2: "S3-compatible",
+  none: "Skip for now",
+};
 
-const Section = ({
-  id,
-  title,
-  description,
-  children,
-  action,
-}: {
-  readonly id: string;
-  readonly title: string;
-  readonly description: string;
-  readonly children: ReactNode;
-  readonly action?: ReactNode;
-}) => (
-  <section
-    id={`setup-${id}`}
-    aria-label={title}
-    className="scroll-mt-6 border-b pb-9 last:border-0"
-  >
-    <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
-      <div>
-        <h2 className="text-lg font-semibold tracking-tight">{title}</h2>
-        <p className="text-muted-foreground mt-1 text-sm leading-relaxed">
-          {description}
-        </p>
-      </div>
-      {action}
-    </div>
-    {children}
-  </section>
-);
+const [gateway, ...infrastructure] = providers;
 
 const ProviderChoices = ({
   kind,
   title,
 }: {
-  readonly kind: "gateway" | "storage" | "sandbox";
+  readonly kind: "gateway" | "storage";
   readonly title: string;
 }) => {
   const { catalog, installation, resolution, update } = useInstallation();
@@ -98,16 +83,16 @@ const ProviderChoices = ({
     choices.unshift({
       value: "none",
       label: "None",
-      description:
-        kind === "storage"
-          ? "Start without file storage."
-          : "Start without a sandbox.",
+      description: "Start without file storage.",
     });
   }
   const selected = resolution?.selection ?? installation;
   const value =
     (kind === "storage" ? selected.storage?.source : selected[kind]) ??
     (kind === "gateway" ? "" : "none");
+  const selectedDescription = choices.find(
+    (choice) => choice.value === value
+  )?.description;
   // A compact starting set is presentation only; every catalog provider remains selectable.
   const commonStorage = ["none", "vercel-blob", "s3", "r2"];
   const hasMore = kind === "storage" && choices.length > commonStorage.length;
@@ -135,7 +120,7 @@ const ProviderChoices = ({
       <RadioGroup
         aria-label={title}
         value={value}
-        className="grid gap-3 sm:grid-cols-2"
+        className={setupTileGrid}
         onValueChange={(next) => {
           if (typeof next !== "string" || next === value) {
             return;
@@ -151,32 +136,28 @@ const ProviderChoices = ({
         }}
       >
         {visibleChoices.map((choice) => (
-          <FieldLabel
+          <SetupTile
             key={choice.value}
-            htmlFor={`${kind}-${choice.value}`}
-            className="h-full cursor-pointer"
-          >
-            <Field
-              orientation="horizontal"
-              className="h-full min-h-22 items-center! gap-4 p-4!"
-            >
-              <FieldContent className="gap-1.5">
-                <FieldTitle>{choice.label}</FieldTitle>
-                {choice.description && (
-                  <FieldDescription className="text-xs leading-relaxed">
-                    {choice.description}
-                  </FieldDescription>
-                )}
-              </FieldContent>
+            title={choice.label}
+            caption={providerCaptions[choice.value] ?? title}
+            controlId={`${kind}-${choice.value}`}
+            visual={<SetupProviderMark id={choice.value} />}
+            control={
               <RadioGroupItem
                 id={`${kind}-${choice.value}`}
                 value={choice.value}
                 aria-label={choice.label}
+                className={setupTileControl}
               />
-            </Field>
-          </FieldLabel>
+            }
+          />
         ))}
       </RadioGroup>
+      {selectedDescription !== undefined && selectedDescription !== "" && (
+        <p className="text-muted-foreground mt-3 text-xs leading-relaxed">
+          {selectedDescription}
+        </p>
+      )}
       {visibleChoices.length === 0 && (
         <output className="text-muted-foreground block py-6 text-center text-sm">
           No providers match “{query}”.
@@ -252,55 +233,43 @@ const StorageOptions = () => {
   );
 };
 
-export const SetupConfiguration = ({
-  installAction,
-}: {
-  readonly installAction: ReactNode;
-}) => {
+const setupSections = [
+  { id: "gateway", title: "Models & Gateways", Icon: Cpu },
+  { id: "infrastructure", title: "Infrastructure", Icon: Boxes },
+  ...setupPluginGroups.map((group) => ({
+    ...group,
+    Icon: Monitor,
+  })),
+];
+
+export const SetupConfiguration = () => {
   const { catalog, installation, resolution } = useInstallation();
-  const sections = [
-    { id: "gateway", title: "Models & Gateways" },
-    { id: "infrastructure", title: "Infrastructure" },
-    ...setupPluginGroups,
-  ];
   return (
-    <div className="h-full overflow-y-auto" data-testid="setup-scroll">
-      <div className="mx-auto max-w-6xl px-5 py-6 sm:px-8 sm:py-10">
-        <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <p className="text-muted-foreground mb-2 text-xs font-medium">
-              YOUR CHATJS APP
-            </p>
-            <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-              Set up your app.
-            </h1>
-            <p className="text-muted-foreground mt-3 max-w-xl text-sm leading-relaxed">
-              Choose what powers your app. Start with the essentials and add
-              what you need.
-            </p>
-          </div>
-        </div>
+    <div
+      className="h-full overflow-y-auto overscroll-contain"
+      data-testid="setup-scroll"
+    >
+      <div className="mx-auto max-w-6xl space-y-8 px-5 py-6 sm:px-8 sm:py-10">
+        <h1 className="text-2xl font-semibold tracking-tight">
+          Set up your app.
+        </h1>
         {installation && resolution ? (
-          <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_16rem] lg:gap-12">
+          <div className={categoryLayout}>
+            <CategoryNavigation
+              label="Setup sections"
+              prefix="setup"
+              sections={setupSections.map(({ id, title, Icon }) => ({
+                id,
+                title,
+                icon: <Icon aria-hidden="true" className="size-3.5 shrink-0" />,
+              }))}
+            />
             <div className="min-w-0">
-              <nav
-                aria-label="Setup sections"
-                className="mb-8 flex flex-wrap gap-x-5 gap-y-3 border-y py-4 text-xs"
-              >
-                {sections.map((section) => (
-                  <a
-                    key={section.id}
-                    href={`#setup-${section.id}`}
-                    className="text-muted-foreground hover:text-foreground underline-offset-4 hover:underline"
-                  >
-                    {section.title}
-                  </a>
-                ))}
-              </nav>
-              <div className="space-y-9">
+              <div className="space-y-7 [&>section]:scroll-mt-20 [&>section]:lg:scroll-mt-6">
                 <Section
                   id="gateway"
                   title="Models & Gateways"
+                  icon={<Cpu aria-hidden="true" className="size-4 shrink-0" />}
                   description={gateway.description}
                 >
                   <ProviderChoices kind={gateway.kind} title={gateway.title} />
@@ -308,6 +277,9 @@ export const SetupConfiguration = ({
                 <Section
                   id="infrastructure"
                   title="Infrastructure"
+                  icon={
+                    <Boxes aria-hidden="true" className="size-4 shrink-0" />
+                  }
                   description="Choose services for the capabilities you selected."
                 >
                   <div className="space-y-6">
@@ -315,7 +287,7 @@ export const SetupConfiguration = ({
                       <div
                         key={kind}
                         id={`setup-${kind}`}
-                        className="scroll-mt-6"
+                        className="scroll-mt-20 lg:scroll-mt-6"
                       >
                         <h3 className="text-sm font-medium">{title}</h3>
                         <p className="text-muted-foreground mt-1 mb-3 text-sm">
@@ -333,6 +305,9 @@ export const SetupConfiguration = ({
                     id={id}
                     title={title}
                     description={description}
+                    icon={
+                      <Monitor aria-hidden="true" className="size-4 shrink-0" />
+                    }
                   >
                     <FeatureChoices
                       items={choicesInGroup(
@@ -347,64 +322,86 @@ export const SetupConfiguration = ({
                 ))}
               </div>
             </div>
-            <aside
-              aria-label="Your app summary"
-              className="bg-card top-6 flex flex-col gap-5 rounded-2xl border p-5 lg:sticky"
-            >
-              <div>
-                <h2 className="font-semibold">Your app</h2>
-                <p className="text-muted-foreground mt-1 text-xs">
-                  One setup, ready to make your own.
-                </p>
-              </div>
-              <dl className="space-y-4 text-sm">
-                {providers.map(({ kind, title }) => {
-                  const source =
-                    kind === "storage"
-                      ? resolution.selection.storage?.source
-                      : resolution.selection[kind];
-                  const item = catalog.find(
-                    (entry) =>
-                      entry.definition?.kind === kind &&
-                      entry.definition.id === source
-                  );
-                  return (
-                    <div key={kind}>
-                      <dt className="text-muted-foreground text-xs">{title}</dt>
-                      <dd className="mt-1 truncate font-medium">
-                        {item?.title ??
-                          (kind === "gateway" ? "Choose a gateway" : "None")}
-                      </dd>
-                    </div>
-                  );
-                })}
-                <div className="flex items-center justify-between border-t pt-4">
-                  <dt>Plugins</dt>
-                  <dd className="tabular-nums">
-                    {resolution.selection.plugins.length}
-                  </dd>
-                </div>
-                <div className="flex items-center justify-between">
-                  <dt>Tools</dt>
-                  <dd className="tabular-nums">
-                    {resolution.selection.tools.length}
-                  </dd>
-                </div>
-              </dl>
-              <div className="-mx-2">
-                <InstallationRequirements />
-              </div>
-              {installAction}
-              <p className="text-muted-foreground text-xs leading-relaxed">
-                Selections stay with you when you switch views or share your
-                app.
-              </p>
-            </aside>
           </div>
         ) : (
           <InvalidInstallation />
         )}
       </div>
     </div>
+  );
+};
+
+export const SetupSummary = ({
+  onConfigureSetup,
+}: {
+  readonly onConfigureSetup: ConfigureSetup;
+}) => {
+  const { catalog, installation, resolution } = useInstallation();
+  const [open, setOpen] = useState(false);
+  if (!installation || !resolution) {
+    return null;
+  }
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger
+        render={<Button variant="outline" size="sm" />}
+        aria-label="Your app summary"
+      >
+        <ClipboardList aria-hidden="true" className="size-4" />
+        <span className="hidden sm:inline">Your app</span>
+      </PopoverTrigger>
+      <PopoverContent
+        align="end"
+        className="max-h-[calc(100svh-8rem)] w-72 max-w-[calc(100vw-2rem)] overflow-y-auto overscroll-contain p-4 motion-reduce:animate-none!"
+      >
+        <aside aria-label="Your app summary" className="flex flex-col gap-4">
+          <PopoverHeader>
+            <PopoverTitle>Your app</PopoverTitle>
+          </PopoverHeader>
+          <dl className="space-y-4 text-sm">
+            {providers.map(({ kind, title }) => {
+              const source =
+                kind === "storage"
+                  ? resolution.selection.storage?.source
+                  : resolution.selection[kind];
+              const item = catalog.find(
+                (entry) =>
+                  entry.definition?.kind === kind &&
+                  entry.definition.id === source
+              );
+              return (
+                <div key={kind}>
+                  <dt className="text-muted-foreground text-xs">{title}</dt>
+                  <dd className="mt-1 truncate font-medium">
+                    {item?.title ??
+                      (kind === "gateway" ? "Choose a gateway" : "None")}
+                  </dd>
+                </div>
+              );
+            })}
+            <div className="flex items-center justify-between border-t pt-4">
+              <dt>Plugins</dt>
+              <dd className="tabular-nums">
+                {resolution.selection.plugins.length}
+              </dd>
+            </div>
+            <div className="flex items-center justify-between">
+              <dt>Tools</dt>
+              <dd className="tabular-nums">
+                {resolution.selection.tools.length}
+              </dd>
+            </div>
+          </dl>
+          <div className="-mx-2">
+            <InstallationRequirements
+              onConfigureSetup={(destination) => {
+                setOpen(false);
+                onConfigureSetup(destination);
+              }}
+            />
+          </div>
+        </aside>
+      </PopoverContent>
+    </Popover>
   );
 };

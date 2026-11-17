@@ -1,7 +1,6 @@
 import React from "react";
 import { expect, test } from "vitest";
 
-import { ArtifactProvider } from "@/hooks/use-artifact";
 import type { ResearchUpdate } from "@/tools/platform/research-updates-schema";
 
 import { captureChatStory, flush } from "../_shared/visual";
@@ -20,43 +19,16 @@ const started: ResearchUpdate = {
 const searching: ResearchUpdate[] = [
   started,
   {
-    queries: ["espresso grinder burr size", "flat vs conical burrs"],
+    message: "Comparing evidence about espresso grinders.",
     status: "running",
-    title: "Searching for grinder comparisons",
+    title: "Researching topic",
     toolCallId,
-    type: "web",
+    type: "thoughts",
   },
 ];
 
 const finished: ResearchUpdate[] = [
   started,
-  {
-    queries: ["espresso grinder burr size", "flat vs conical burrs"],
-    results: [
-      {
-        content: "Larger flat burrs produce a narrower particle distribution.",
-        source: "web",
-        title: "Flat vs conical burrs, measured",
-        url: "https://coffeeadastra.com/burr-comparison",
-      },
-      {
-        content: "Burr geometry matters less than alignment for home grinders.",
-        source: "web",
-        title: "Grinder alignment explained",
-        url: "https://www.home-barista.com/alignment",
-      },
-      {
-        content: "Particle size distributions across 12 commercial grinders.",
-        source: "academic",
-        title: "Grind size distribution in espresso",
-        url: "https://arxiv.org/abs/2402.04521",
-      },
-    ],
-    status: "completed",
-    title: "Searching for grinder comparisons",
-    toolCallId,
-    type: "web",
-  },
   {
     message:
       "Alignment and burr size both matter; the sources disagree on which matters more below 64mm.",
@@ -76,34 +48,9 @@ const finished: ResearchUpdate[] = [
 ];
 
 const report = {
-  date: "2026-09-30T12:00:00.000Z",
-  documentId: "3f1c2a9e-8b4d-4c6e-9f2a-1b3c4d5e6f70",
   format: "report",
-  kind: "text",
-  result: "Report created.",
-  revisionId: "7a2b3c4d-5e6f-4a1b-8c2d-3e4f5a6b7c8d",
-  status: "success",
-  title: "Choosing an espresso grinder",
-};
-
-const assertSourceLayout = (section: HTMLElement) => {
-  const sources =
-    section.querySelectorAll<HTMLAnchorElement>('a[target="_blank"]');
-  expect(sources).toHaveLength(3);
-  for (const source of sources) {
-    const favicon = source.querySelector("img");
-    const domain = source.querySelector("span.truncate");
-    if (favicon === null || domain === null) {
-      throw new Error("Research source badge must show its favicon and domain");
-    }
-    const bounds = source.getBoundingClientRect();
-    for (const element of [favicon, domain]) {
-      const contentBounds = element.getBoundingClientRect();
-      expect(contentBounds.left).toBeGreaterThanOrEqual(bounds.left);
-      expect(contentBounds.right).toBeLessThanOrEqual(bounds.right);
-      expect(element.scrollWidth).toBeLessThanOrEqual(element.clientWidth);
-    }
-  }
+  path: "/workspace/research/example/report.md",
+  title: "Research report",
 };
 
 test("deep-research renders every state in the chat", async () => {
@@ -114,18 +61,22 @@ test("deep-research renders every state in the chat", async () => {
         <DeepResearchRenderer
           isReadonly
           messageId={messageId}
-          tool={{ input: {}, state: "input-available", toolCallId }}
+          tool={{
+            input: { request: "Research a launch plan" },
+            state: "input-available",
+            toolCallId,
+          }}
         />
       ),
     },
     {
-      label: "Searching",
+      label: "Researching a topic",
       ui: (
         <DeepResearchRenderer
           isReadonly
           messageId={messageId}
           tool={{
-            input: {},
+            input: { request: "Research a launch plan" },
             state: "input-available",
             toolCallId,
             updates: searching,
@@ -134,7 +85,6 @@ test("deep-research renders every state in the chat", async () => {
       ),
     },
     {
-      beforeCapture: assertSourceLayout,
       label: "Report written, steps expanded",
       settle: async (section) => {
         const toggle = section.querySelector("button");
@@ -149,19 +99,17 @@ test("deep-research renders every state in the chat", async () => {
           .toContain("Comparing the findings");
       },
       ui: (
-        <ArtifactProvider>
-          <DeepResearchRenderer
-            isReadonly
-            messageId={messageId}
-            tool={{
-              input: {},
-              output: report,
-              state: "output-available",
-              toolCallId,
-              updates: finished,
-            }}
-          />
-        </ArtifactProvider>
+        <DeepResearchRenderer
+          isReadonly
+          messageId={messageId}
+          tool={{
+            input: { request: "Research a launch plan" },
+            output: report,
+            state: "output-available",
+            toolCallId,
+            updates: finished,
+          }}
+        />
       ),
     },
     {
@@ -171,7 +119,7 @@ test("deep-research renders every state in the chat", async () => {
           isReadonly
           messageId={messageId}
           tool={{
-            input: {},
+            input: { request: "Research a launch plan" },
             output: {
               answer:
                 "Is this for a home setup or a café? And roughly what budget?",
@@ -191,7 +139,7 @@ test("deep-research renders every state in the chat", async () => {
           messageId={messageId}
           tool={{
             errorText: "The research could not be completed.",
-            input: {},
+            input: { request: "Research a launch plan" },
             state: "output-error",
             toolCallId,
           }}

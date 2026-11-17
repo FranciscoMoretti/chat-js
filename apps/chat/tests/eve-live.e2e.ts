@@ -33,9 +33,7 @@ assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
 
 const conversationUrl = /\/chat\/[^/]+$/u;
 
-test("real provider, native application tool and replay-safe usage ledger", async ({
-  page,
-}) => {
+test("real provider and replay-safe usage ledger", async ({ page }) => {
   test.setTimeout(180_000);
   page.setDefaultNavigationTimeout(120_000);
   await page.route("https://unpkg.com/react-scan/**", async (route) => {
@@ -48,9 +46,7 @@ test("real provider, native application tool and replay-safe usage ledger", asyn
   await page.goto("/");
   await page
     .getByRole("textbox", { exact: true, name: "Message" })
-    .fill(
-      'Use the wordCount tool to count "one two three four". Report the result as "4 words".'
-    );
+    .fill("Reply with exactly: Live EVE billing verified.");
   const creation = page.waitForResponse("**/api/agent-conversations");
   await page.getByRole("button", { exact: true, name: "Send" }).click();
   const created = await creation;
@@ -62,12 +58,12 @@ test("real provider, native application tool and replay-safe usage ledger", asyn
     })
   ).toBe(true);
   await expect(page).toHaveURL(conversationUrl);
-  await expect(page.getByText("Words", { exact: true })).toBeVisible({
-    timeout: 90_000,
-  });
-  await expect(page.getByRole("log")).toContainText("4 words", {
-    timeout: 90_000,
-  });
+  await expect(page.getByRole("log")).toContainText(
+    "Live EVE billing verified.",
+    {
+      timeout: 90_000,
+    }
+  );
   const id = new URL(page.url()).pathname.split("/").at(-1);
   if (id === undefined || id === null || id === "") {
     throw new Error("Missing conversation identity.");
@@ -194,15 +190,13 @@ test("real provider, native application tool and replay-safe usage ledger", asyn
     )
   );
   await page.reload();
-  await expect(page.getByRole("log")).toContainText("4 words");
+  await expect(page.getByRole("log")).toContainText(
+    "Live EVE billing verified."
+  );
   await mkdir("tests/eve-results/screenshots", { recursive: true });
-  const toolCard = page
-    .getByText("Words", { exact: true })
-    .locator("..")
-    .locator("..");
-  await toolCard.screenshot({
+  await page.getByRole("log").screenshot({
     animations: "disabled",
-    path: "tests/eve-results/screenshots/tool-word-count.png",
+    path: "tests/eve-results/screenshots/live-eve-billing.png",
   });
 });
 

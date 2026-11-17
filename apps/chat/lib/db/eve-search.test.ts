@@ -363,7 +363,7 @@ it("plugin cleanup removes one branch's index and preserves surviving branches",
   ).toEqual([{ id: familyId, conversationId: survivingId }]);
 });
 
-it("blocks deletion for retained document revisions only within the requested family", async () => {
+it("blocks deletion for retained file references only within the requested family", async () => {
   const deletingChat = crypto.randomUUID();
   const deletingConversation = crypto.randomUUID();
   const unrelatedChat = crypto.randomUUID();
@@ -379,14 +379,15 @@ it("blocks deletion for retained document revisions only within the requested fa
     `insert into "EveConversation" ("workspaceId", id, "chatId", "ownerId", "firstMessage", "operationId", state) values ($2, $1, $2, 'alice', 'Delete me', $1, 'deleting'), ($4, $3, $4, 'alice', 'Keep me', $3, 'bound')`,
     [deletingConversation, deletingChat, unrelatedConversation, unrelatedChat]
   );
+  const deletingKey = crypto.randomUUID();
+  const unrelatedKey = crypto.randomUUID();
   await postgres.query(
-    `insert into "EveDocumentRevision" ("conversationId", "documentId", "ownerId", "operationId", content, kind, title) values ($1, $2, 'alice', 'retain', 'Private payload', 'text', 'Retained'), ($3, $4, 'alice', 'unrelated', 'Other payload', 'text', 'Unrelated')`,
-    [
-      deletingConversation,
-      crypto.randomUUID(),
-      unrelatedConversation,
-      crypto.randomUUID(),
-    ]
+    `insert into "EveStoredFile" (key, "ownerId") values ($1, 'alice'), ($2, 'alice')`,
+    [deletingKey, unrelatedKey]
+  );
+  await postgres.query(
+    `insert into "EveFileReference" ("conversationId", key, "ownerId") values ($1, $2, 'alice'), ($3, $4, 'alice')`,
+    [deletingConversation, deletingKey, unrelatedConversation, unrelatedKey]
   );
   await expect(
     completeEveConversationDeletion("alice", deletingChat)
@@ -397,7 +398,7 @@ it("blocks deletion for retained document revisions only within the requested fa
   );
   expect(pending.rows[0].state).toBe("deleting");
   await postgres.query(
-    `delete from "EveDocumentRevision" where "conversationId" = $1`,
+    `delete from "EveFileReference" where "conversationId" = $1`,
     [deletingConversation]
   );
   await completeEveConversationDeletion("alice", deletingChat);
@@ -408,11 +409,11 @@ it("blocks deletion for retained document revisions only within the requested fa
     deletingConversation,
   ]);
   expect(finalized.rows[0]).toEqual({ firstMessage: "", state: "deleted" });
-  const unrelated = await postgres.query<{ content: string }>(
-    `select content from "EveDocumentRevision" where "conversationId" = $1`,
+  const unrelated = await postgres.query<{ key: string }>(
+    `select key from "EveFileReference" where "conversationId" = $1`,
     [unrelatedConversation]
   );
-  expect(unrelated.rows).toEqual([{ content: "Other payload" }]);
+  expect(unrelated.rows).toEqual([{ key: unrelatedKey }]);
 });
 
 const repairPreviewSearchHistory = async (
@@ -496,7 +497,7 @@ describe("preview search history", (): void => {
   });
 });
 
-vi.mock("@/lib/eve/persistent-sandbox-store", () => ({
+vi.mock("@/lib/db/eve-workspace-deletion", () => ({
   checkDeletedWorkspaceMemberships: vi
     .fn<() => Promise<void>>()
     .mockResolvedValue(),

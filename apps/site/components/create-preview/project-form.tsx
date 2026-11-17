@@ -13,7 +13,7 @@ import { MousePointer2 } from "lucide-react";
 import { decodePreset } from "shadcn/preset";
 import { copyToClipboardWithMeta } from "@/components/create-preview/copy-clipboard";
 import type { InstallationSelection } from "../../../../packages/registry/installation";
-import { encodeInstallationInput } from "../../../../packages/registry/app-preset";
+import { encodeAppPreset } from "../../../../packages/registry/app-preset";
 import { createCommand } from "@/components/create-model";
 import { useInstallation } from "@/components/create-preview/installation-provider";
 import {
@@ -76,7 +76,7 @@ const formatCssVarsRule = (
     .join("\n")}\n}`;
 
 const appPresetForSelection = (selection?: InstallationSelection) =>
-  selection ? encodeInstallationInput(selection).code : null;
+  selection ? encodeAppPreset(selection) : null;
 
 const useCreationOutput = (packageManager: PackageManager) => {
   const [params] = useDesignSystemSearchParams();
@@ -234,14 +234,15 @@ export const ProjectForm = ({
                             className="flex justify-between gap-4"
                           >
                             <dt className="text-muted-foreground capitalize">
-                              {kind}
+                              {kind === "sandbox" ? "Sandbox" : kind}
                             </dt>
                             <dd className="text-right">
                               {catalog.find(
                                 (item) =>
                                   item.definition?.kind === kind &&
                                   item.definition.id === source
-                              )?.title ?? "None"}
+                              )?.title ??
+                                (kind === "sandbox" ? "Automatic" : "None")}
                             </dd>
                           </div>
                         );

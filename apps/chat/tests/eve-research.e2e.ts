@@ -1,3 +1,4 @@
+import { readFile } from "node:fs/promises";
 import { nativeToolEvents } from "./helpers/eve-tool-events";
 import { userCredit } from "@/chatjs/plugins/credits/credits-schema";
 import { expect, test } from "@playwright/test";
@@ -11,6 +12,7 @@ import { db } from "../lib/db/client";
 import { listEveSubagents } from "../lib/db/eve-subagents";
 import { eveConversation, eveUsage } from "../lib/db/schema";
 import { env } from "../lib/env";
+import { config } from "../lib/config";
 import { getEveConnectionOptions } from "../lib/eve/connection-options";
 import { reconcileEveUsage } from "../lib/eve/reconcile-usage";
 import { toolResultSchema } from "../lib/eve/tool-result";
@@ -18,7 +20,7 @@ import { ResearchUpdateSchema } from "../tools/platform/research-updates-schema"
 import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(env.DATABASE_URL);
-const createdReport = /^Created /u;
+const createdReport = /^Download .*\.md$/u;
 const researchSummary = /^Researched for /u;
 
 test.afterEach(
@@ -103,8 +105,8 @@ test("native deep research saves a reloadable report in ChatJS with a usage rece
     },
     {
       message:
-        "Call deepResearch exactly once. Research the purpose of the HTML dialog element and its accessibility behavior, using the current MDN documentation as the primary source. Audience: web developers. Scope: a short report under 300 words with citations, no historical comparison. All requirements are specified; no clarification is needed. Do not call any other tools yourself.",
-      modelId: "openai/gpt-4.1-mini",
+        "Call deepResearch exactly once. Research the purpose of the HTML dialog element and its accessibility behavior, using the current MDN documentation as the primary source. Audience: web developers. Scope: a short report under 300 words with citations, no historical comparison. All requirements are specified; no clarification is needed. Pass this full task as the request. After research returns its report path, call attach_workspace_file to deliver the Markdown file.",
+      modelId: config.ai.workflows.chat,
       operationId: crypto.randomUUID(),
       selectedTool: "deepResearch",
     }
@@ -128,18 +130,20 @@ test("native deep research saves a reloadable report in ChatJS with a usage rece
     animations: "disabled",
     path: "tests/eve-results/screenshots/eve-native-research-timeline.png",
   });
-  const title = await report.textContent();
+  const filename = await report.getAttribute("aria-label");
   await page.reload();
-  await expect(report).toHaveText(title ?? "");
+  await expect(report).toHaveAttribute("aria-label", filename ?? "");
+  const downloadPending = page.waitForEvent("download");
   await report.click();
-  const panel = page.getByTestId("artifact");
-  await expect(panel).toContainText(/dialog/iu);
-  await expect(panel).toContainText("https://developer.mozilla.org/");
-  await expect(panel).toContainText("Version 1 of 1");
-  await panel.screenshot({
-    animations: "disabled",
-    path: "tests/eve-results/screenshots/eve-native-research.png",
-  });
+  const download = await downloadPending;
+  expect(download.suggestedFilename()).toMatch(/\.md$/u);
+  const path = await download.path();
+  if (path === null) {
+    throw new Error("Report download has no local file");
+  }
+  const content = await readFile(path, "utf-8");
+  expect(content).toMatch(/dialog/iu);
+  expect(content).toContain("https://developer.mozilla.org/");
   const [conversation] = await db
     .select()
     .from(eveConversation)
@@ -161,8 +165,8 @@ test("native deep research saves a reloadable report in ChatJS with a usage rece
   const receipt = toolResultSchema.parse(result.data.output);
   expect(receipt.output).toMatchObject({
     format: "report",
-    revisionId: expect.any(String),
-    status: "success",
+    path: expect.any(String),
+    title: expect.any(String),
   });
   expect(receipt.usage.costUsd).toBe(0);
   expect(

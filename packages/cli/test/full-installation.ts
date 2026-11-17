@@ -1,6 +1,7 @@
 import { expect, it } from "bun:test";
 import path from "node:path";
 import { writeFile } from "node:fs/promises";
+import { encodeAppPreset } from "../../registry/app-preset";
 import { demoInstallation } from "../../registry/installation";
 import { combinationCases } from "../../registry/scripts/installation-cases";
 import { verifyInstallationParity } from "./installation-parity";
@@ -11,35 +12,23 @@ export const testFullInstallation = (root: string, cliEntry: string): void => {
     const name = "full-installation";
     const cwd = path.join(root, name);
     const selection = demoInstallation;
+    const preset = encodeAppPreset({
+      ...selection,
+      tools: selection.tools.filter((id) => id !== "deep-research"),
+    });
     await run(root, [
       "node",
       cliEntry,
       "create",
       name,
       "--yes",
-      "--no-electron",
-      "--no-projects",
-      "--no-mcp",
-      "--no-documents",
-      "--no-attachments",
-      "--gateway",
-      selection.gateway ?? "",
-      "--storage-provider",
-      selection.storage?.source ?? "",
-      "--sandbox-provider",
-      selection.sandbox ?? "",
+      "--app-preset",
+      preset,
     ]);
-    await run(cwd, [
-      "node",
-      cliEntry,
-      "add",
-      ...selection.plugins,
-      ...selection.tools,
-      "--yes",
-    ]);
-    await verifyInstallationParity(cwd, selection, name);
+    await run(cwd, ["node", cliEntry, "add", "deep-research", "--yes"]);
+    await verifyInstallationParity(cwd, selection, name, selection.plugins);
     await run(cwd, ["node", cliEntry, "sync"]);
-    await verifyInstallationParity(cwd, selection, name);
+    await verifyInstallationParity(cwd, selection, name, selection.plugins);
     await run(cwd, ["bun", "run", "test:types"]);
     await run(cwd, ["bun", "run", "db:generate", "--name=full_installation"]);
     await writeFile(
@@ -74,7 +63,12 @@ process.env.AI_GATEWAY_API_KEY = "fixture-key";
       // oxlint-disable-next-line no-await-in-loop -- Each replacement is checked against a complete fresh prediction.
       await run(cwd, ["node", cliEntry, "add", ...added, "--replace", "--yes"]);
       // oxlint-disable-next-line no-await-in-loop -- Validate the installed state after each provider mutation.
-      await verifyInstallationParity(cwd, alternative.selection, name);
+      await verifyInstallationParity(
+        cwd,
+        alternative.selection,
+        name,
+        selection.plugins
+      );
     }
   }, 300_000);
 };

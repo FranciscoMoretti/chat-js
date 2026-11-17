@@ -152,8 +152,7 @@ const readProviderId = async (
     name = "gatewayType";
   }
   if (kind === "sandbox") {
-    file = "chatjs/providers/sandbox/options.ts";
-    name = "sandboxId";
+    file = "agent/sandbox.ts";
   }
   const source = await readFile(path.join(cwd, file), "utf-8").catch(
     (error: unknown): string => {
@@ -173,6 +172,42 @@ const readProviderId = async (
     ts.ScriptTarget.Latest,
     true
   );
+  if (kind === "sandbox") {
+    const imports = new Set(
+      parsed.statements
+        .filter(ts.isImportDeclaration)
+        .flatMap((entry) =>
+          ts.isStringLiteral(entry.moduleSpecifier)
+            ? [entry.moduleSpecifier.text]
+            : []
+        )
+    );
+    if (imports.has("eve/sandbox/just-bash")) {
+      return "just-bash";
+    }
+    if (imports.has("eve/sandbox/vercel")) {
+      return "vercel";
+    }
+    if (imports.has("eve/sandbox/docker")) {
+      return "docker";
+    }
+    if (
+      parsed.statements
+        .filter(ts.isImportDeclaration)
+        .some(
+          (entry) =>
+            entry.importClause?.namedBindings !== undefined &&
+            ts.isNamedImports(entry.importClause.namedBindings) &&
+            entry.importClause.namedBindings.elements.some(
+              (item) =>
+                (item.propertyName ?? item.name).text === "DefaultSandbox"
+            )
+        )
+    ) {
+      return "default";
+    }
+    return source.trim() ? "custom" : undefined;
+  }
   const declaration = parsed.statements
     .filter(ts.isVariableStatement)
     .flatMap(

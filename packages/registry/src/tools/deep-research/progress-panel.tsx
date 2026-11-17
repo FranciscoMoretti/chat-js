@@ -7,10 +7,7 @@ import {
   TraceTitle,
 } from "@/components/ui/trace";
 // Type-only imports
-import type {
-  ResearchUpdate,
-  WebSearchUpdate,
-} from "@/tools/platform/research-updates-schema";
+import type { ResearchUpdate } from "@/tools/platform/research-updates-schema";
 import React from "react";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { ResearchTask } from "./task";
@@ -21,7 +18,6 @@ const updateName = {
   completed: "Completed",
   started: "Started",
   thoughts: "Thoughts",
-  web: "Web Search",
   writing: "Writing",
 } as const;
 
@@ -35,31 +31,6 @@ export const ResearchProgress = ({
   const [isExpanded, setIsExpanded] = React.useState(false);
 
   const lastUpdate = updates.length > 0 ? updates.at(-1) : null;
-
-  const searchCount = React.useMemo(
-    (): number =>
-      updates.filter(
-        (update: ReadonlyNativeSurface<ResearchUpdate>) => update.type === "web"
-      ).length,
-    [updates]
-  );
-
-  const sourceCount = React.useMemo(
-    (): number =>
-      updates
-        .filter(
-          (update: ReadonlyNativeSurface<ResearchUpdate>) =>
-            update.type === "web"
-        )
-        .reduce(
-          (
-            acc: number,
-            update: ReadonlyNativeSurface<WebSearchUpdate>
-          ): number => acc + (update.results?.length ?? 0),
-          0
-        ),
-    [updates]
-  );
 
   // Keep the fallback title while no update has been received.
   const lastUpdateTitle = ((): string => {
@@ -104,7 +75,7 @@ export const ResearchProgress = ({
           <TraceLine status={isComplete ? undefined : "running"}>
             <TraceTitle>
               {isComplete
-                ? `Researched for ${timeSpent} seconds, ${searchCount} searches, ${sourceCount} sources`
+                ? `Researched for ${timeSpent} seconds`
                 : lastUpdateTitle}
             </TraceTitle>
           </TraceLine>

@@ -9,8 +9,11 @@ export type SetupDestination =
 export type ConfigureSetup = (destination?: SetupDestination) => void;
 
 export const setupAction = (issue: string) => {
-  if (/sandbox/iu.test(issue)) {
-    return { destination: "sandbox", label: "Choose a sandbox" } as const;
+  if (/sandbox|native Python|native processes/iu.test(issue)) {
+    return {
+      destination: "sandbox",
+      label: "Configure sandbox",
+    } as const;
   }
   if (/storage|public configuration/iu.test(issue)) {
     return { destination: "storage", label: "Configure storage" } as const;

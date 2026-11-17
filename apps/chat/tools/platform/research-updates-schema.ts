@@ -9,24 +9,6 @@ const TaskUpdateSchema = BaseStreamUpdateSchema.extend({
   status: z.enum(["running", "completed"]),
 });
 
-const SearchResultItemSchema = z.object({
-  content: z.string(),
-  source: z.enum(["web", "academic", "x"]),
-  title: z.string(),
-  // Optional `tweetId` field, currently disabled.
-  url: z.string(),
-});
-
-const WebSearchSchema = TaskUpdateSchema.extend({
-  queries: z.array(z.string()),
-  results: z.array(SearchResultItemSchema).optional(),
-  type: z.literal("web"),
-});
-
-type WebSearchUpdate = z.infer<typeof WebSearchSchema>;
-
-type SearchResultItem = NonNullable<WebSearchUpdate["results"]>[number];
-
 const StartedSchema = BaseStreamUpdateSchema.extend({
   timestamp: z.number(),
   type: z.literal("started"),
@@ -48,7 +30,6 @@ const WritingSchema = TaskUpdateSchema.extend({
 });
 
 const ResearchUpdateSchema = z.discriminatedUnion("type", [
-  WebSearchSchema,
   StartedSchema,
   CompletedSchema,
   ThoughtsSchema,
@@ -57,4 +38,4 @@ const ResearchUpdateSchema = z.discriminatedUnion("type", [
 
 type ResearchUpdate = z.infer<typeof ResearchUpdateSchema>;
 export { ResearchUpdateSchema };
-export type { ResearchUpdate, SearchResultItem, WebSearchUpdate };
+export type { ResearchUpdate };

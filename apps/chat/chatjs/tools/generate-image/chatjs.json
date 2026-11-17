@@ -1,4 +1,6 @@
 {
+  "agentCategory": "tool",
+  "requiresChatJS": true,
   "config": { "key": "image" },
   "envRequirements": [],
   "id": "generate-image",
@@ -18,5 +20,6 @@
       "toolExport": "generateImageTool"
     }
   ],
-  "contractVersion": 1
+  "contractVersion": 1,
+  "channelSupport": { "web": "supported", "slack": "unverified" }
 }

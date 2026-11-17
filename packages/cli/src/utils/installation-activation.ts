@@ -83,10 +83,6 @@ const toolIntegrations = (value: ToolDefinition): string[] =>
     ["tools/configuration", value.config],
     ["tools/availability", value.availabilityExport],
     ["tools/providers", value.slot],
-    ["documents/definitions", value.documentKind],
-    ["documents/ui", value.documentKind],
-    ["documents/run", value.documentRunExport],
-    ["tools/code-executor", value.codeExecutorExport],
   ]);
 
 /** Inventory descriptor wiring and known native path conventions; never execute source. */

@@ -162,6 +162,41 @@
       "when": 1793206594637,
       "tag": "0022_hard_photon",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1794554723206,
+      "tag": "0024_abandoned_toxin",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1794559375617,
+      "tag": "0025_cloudy_thunderbolt",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1794561876308,
+      "tag": "0026_loving_mesmero",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1794686052068,
+      "tag": "0027_misty_stephen_strange",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1794774568469,
+      "tag": "0028_faithful_hannibal_king",
+      "breakpoints": true
     }
   ]
 }

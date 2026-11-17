@@ -40,12 +40,6 @@ const pages = [
   { name: "plugin-authoring", path: "/docs/plugins/create-plugin" },
   { name: "mcp-plugin", path: "/docs/plugins/mcp" },
   { name: "attachments-plugin", path: "/docs/plugins/attachments" },
-  { name: "analytics-plugin", path: "/docs/plugins/vercel-analytics" },
-  {
-    name: "speed-insights-plugin",
-    path: "/docs/plugins/vercel-speed-insights",
-  },
-  { name: "langfuse-plugin", path: "/docs/plugins/langfuse" },
   { name: "plugins", path: "/docs/plugins/overview" },
   {
     name: "plugin-api",
@@ -69,9 +63,6 @@ const pages = [
   { name: "registry-mirror", path: "/docs/registry/mirror" },
   { name: "registry-validation", path: "/docs/registry/validation" },
   { name: "registry-testing", path: "/docs/registry/testing" },
-  { name: "word-count", path: "/docs/tools/word-count" },
-  { name: "get-weather", path: "/docs/tools/get-weather" },
-  { name: "retrieve-url", path: "/docs/tools/retrieve-url" },
   { name: "generate-image", path: "/docs/tools/generate-image" },
   { name: "generate-video", path: "/docs/tools/generate-video" },
   { name: "quickstart", path: "/docs/quickstart" },

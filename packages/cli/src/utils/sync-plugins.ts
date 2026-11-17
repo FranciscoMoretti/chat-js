@@ -7,7 +7,6 @@ import type { PluginDefinition } from "../../../registry/metadata";
 import { readInstalledPlugins } from "./installed-plugins";
 import { planDatabaseSchemas } from "./sync-database";
 import { generatedRegistrationSource } from "./generated-registration-source";
-import { initializeObservability } from "./sync-observability";
 import { pluginItems } from "../../../registry/src/plugins/catalog";
 
 const assertPluginDependencies = (
@@ -56,13 +55,7 @@ const assertUniqueContributions = (
   plugins: readonly PluginDefinition[]
 ): void => {
   const routers = new Set(["eve"]);
-  const controls = new Set([
-    "canvas",
-    "web-search",
-    "deep-research",
-    "image",
-    "video",
-  ]);
+  const controls = new Set(["deep-research", "image", "video"]);
   const settings = new Set(["general"]);
   const exclusive = new Set<string>();
   for (const plugin of plugins) {
@@ -276,7 +269,6 @@ const syncPlugins = async (
 
 // Creation removes reference plugins; app-owned composition never needs source edits.
 const initializePluginUi = async (cwd: string): Promise<void> => {
-  await initializeObservability(cwd);
   // The reference preset's plugin sources, including adapters, are explicit.
   await Promise.all(
     pluginItems.flatMap((item) =>

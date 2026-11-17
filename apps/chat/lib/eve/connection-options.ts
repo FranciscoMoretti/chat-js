@@ -1,10 +1,11 @@
 import { env } from "@/lib/env";
+import { getVercelOidcTokenSync } from "@vercel/oidc";
 
 /**
  * Credentials for the app-to-EVE boundary, shared by HTTP and SDK clients.
  * @param {string} ownerId Owner identity sent to the trusted EVE gateway.
- * @param {string} host Gateway URL whose origin determines eligibility for deployment protection bypass.
- * @returns {{ auth: { bearer: string }; headers: Record<string, string>; baseUrl: string; redirect: "error"; }} Gateway credentials and owner headers, with deployment bypass restricted to this deployment.
+ * @param {string} host Gateway URL whose origin determines eligibility for deployment authentication.
+ * @returns {{ auth: { bearer: string }; headers: Record<string, string>; baseUrl: string; redirect: "error"; }} Gateway credentials and owner headers, with project identity restricted to this deployment.
  */
 export const getEveConnectionOptions = (
   ownerId: string,
@@ -25,11 +26,10 @@ export const getEveConnectionOptions = (
         hostname !== "" &&
         new URL(host).origin === `https://${hostname}`
     );
-  if (sameDeployment) {
-    const bypassSecret = env.VERCEL_AUTOMATION_BYPASS_SECRET;
-    if (typeof bypassSecret === "string" && bypassSecret !== "") {
-      headers["x-vercel-protection-bypass"] = bypassSecret;
-    }
+  if (sameDeployment && env.VERCEL === "1") {
+    // Read the current invocation's identity each time; do not cache a token or
+    // require a separately provisioned, long-lived deployment bypass secret.
+    headers["x-vercel-trusted-oidc-idp-token"] = getVercelOidcTokenSync();
   }
   return {
     auth: { bearer: env.EVE_GATEWAY_SECRET ?? "" },

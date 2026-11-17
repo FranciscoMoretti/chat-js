@@ -1,17 +1,9 @@
 import { reconcileEveWorkspaceTurn } from "@/lib/eve/reconcile-workspace-turn";
 import { EveWorkspaceBusyError, lockEveWorkspace } from "./eve-workspace-turns";
-import { getEveDocumentHistory } from "./eve-documents";
-import { eveCopyResources } from "@/lib/eve/copy-transcript";
 import { isNonEmptyString } from "@/lib/is-non-empty-string";
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { db } from "./client";
-import {
-  eveConversation,
-  eveDispatch,
-  eveDocumentHead,
-  eveDocumentRevision,
-  eveFileReference,
-} from "./schema";
+import { eveConversation, eveDispatch, eveFileReference } from "./schema";
 import { getEveMessageDisplayReceipts } from "./eve-dispatch";
 import { readCompletedEveCopyTranscript } from "@/lib/eve/completed-copy-source";
 import { parseEveCopySeed } from "@/lib/eve/copy-seed";
@@ -85,9 +77,6 @@ export const initializeEveCurrentCopy = async (
     ) {
       throw new Error("Source conversation not found.");
     }
-    await tx.execute(
-      sql`select pg_advisory_xact_lock(hashtextextended(${`eve-document:${source.id}`}, 0))`
-    );
     const dispatches = await tx
       .select()
       .from(eveDispatch)
@@ -109,68 +98,6 @@ export const initializeEveCurrentCopy = async (
       receipts,
       target.forkMessageId ?? undefined
     );
-    const heads = await tx
-      .select()
-      .from(eveDocumentHead)
-      .where(
-        and(
-          eq(eveDocumentHead.conversationId, source.id),
-          eq(eveDocumentHead.ownerId, ownerId)
-        )
-      );
-    const selectedHeads: (typeof eveDocumentHead.$inferInsert)[] = [];
-    const selectedFileKeys = new Set(projection.resources.fileKeys);
-    for (const head of heads) {
-      if (
-        target.forkMessageId !== null &&
-        !projection.resources.documentIds.includes(head.documentId)
-      ) {
-        continue;
-      }
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Capture each document's authorized ancestry while its source document fence is held.
-      const history = await getEveDocumentHistory(
-        ownerId,
-        source.id,
-        head.documentId,
-        tx
-      );
-      const selected =
-        target.forkMessageId === null
-          ? history.at(-1)
-          : history.findLast((revision) =>
-              projection.resources.revisionIds.includes(revision.id)
-            );
-      if (selected === undefined) {
-        throw new Error("Selected document revision is unavailable.");
-      }
-      selectedHeads.push({ ...head, conversationId, revisionId: selected.id });
-      const ancestry = history.slice(
-        0,
-        history.findIndex((revision) => revision.id === selected.id) + 1
-      );
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Retain files only from the revisions this captured head authorizes.
-      const revisions = await tx
-        .select()
-        .from(eveDocumentRevision)
-        .where(
-          and(
-            eq(eveDocumentRevision.ownerId, ownerId),
-            eq(eveDocumentRevision.documentId, head.documentId),
-            inArray(
-              eveDocumentRevision.id,
-              ancestry.map((revision) => revision.id)
-            )
-          )
-        );
-      for (const revision of revisions) {
-        for (const key of eveCopyResources(revision).fileKeys) {
-          selectedFileKeys.add(key);
-        }
-      }
-    }
-    if (selectedHeads.length) {
-      await tx.insert(eveDocumentHead).values(selectedHeads);
-    }
     const files = await tx
       .select()
       .from(eveFileReference)
@@ -178,7 +105,7 @@ export const initializeEveCurrentCopy = async (
         and(
           eq(eveFileReference.conversationId, source.id),
           eq(eveFileReference.ownerId, ownerId),
-          inArray(eveFileReference.key, [...selectedFileKeys])
+          inArray(eveFileReference.key, projection.resources.fileKeys)
         )
       );
     if (files.length) {

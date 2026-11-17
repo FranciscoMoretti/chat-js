@@ -1,4 +1,8 @@
-import { readInstallationInput } from "../../../packages/registry/app-preset";
+import { installationSelectionSchema } from "../../../packages/registry/installation";
+import {
+  readInstallationInput,
+  encodeAppPreset,
+} from "../../../packages/registry/app-preset";
 import { commandAppPreset, attachPreviewFile } from "./create-fixtures.mts";
 /* eslint-disable no-await-in-loop -- Each native picker interaction must settle before the next. */
 import assert from "node:assert/strict";
@@ -280,23 +284,23 @@ try {
   await panel
     .getByRole("switch", { name: "Attachment Uploads", exact: true })
     .check();
-  await page.getByRole("tab", { name: "AI tools", exact: true }).click();
+  await page.getByRole("tab", { name: "Agent", exact: true }).click();
   await page
-    .getByRole("checkbox", { name: "Tavily Search", exact: true })
+    .getByRole("checkbox", { name: "Deep Research", exact: true })
     .check();
-  await page.getByRole("tab", { name: "Setup", exact: true }).click();
   const choose = async (label: string, value: string) => {
     await page
       .getByRole("radiogroup", { name: label, exact: true })
       .getByRole("radio", { name: value, exact: true })
       .check();
   };
+  await choose("Sandbox", "Vercel Sandbox");
+  await page.getByRole("tab", { name: "Setup", exact: true }).click();
   await choose("Model gateway", "OpenRouter");
   await choose("File storage", "S3");
   await page
     .getByLabel("Storage bucket", { exact: true })
     .fill("my-chat-uploads");
-  await choose("Sandbox", "Vercel Sandbox");
   await page.getByRole("tab", { name: "Appearance", exact: true }).click();
   await page
     .getByRole("button", { name: "Get Code", exact: true })
@@ -349,9 +353,7 @@ try {
   await page
     .getByRole("button", { name: "Tool examples", exact: true })
     .click();
-  await frame
-    .getByRole("button", { name: "Show all sources", exact: true })
-    .waitFor();
+  await frame.getByText("Launch research", { exact: true }).waitFor();
   await frame.locator('input[type="file"]').waitFor({ state: "attached" });
   await capture("create-tool-states");
   await page.getByRole("button", { name: "New chat", exact: true }).click();
@@ -453,8 +455,11 @@ try {
 
   const publicQuery = new URLSearchParams({
     token: "private",
-    storage: "s3",
-    "storage-config": JSON.stringify({ bucket: "public-bucket" }),
+    app: encodeAppPreset(
+      installationSelectionSchema.parse({
+        storage: { source: "s3", options: { bucket: "public-bucket" } },
+      })
+    ),
   });
   await page.goto(`${origin}/create?${publicQuery}`);
   await waitForPreset("b0");
@@ -464,15 +469,20 @@ try {
   );
   assert.equal(publicLink.searchParams.has("token"), false);
   assert.equal(
-    readInstallationInput(
-      publicLink.searchParams.get("app") ?? "",
-      publicLink.searchParams.get("storage-config") ?? undefined
-    ).storage?.options?.bucket,
+    readInstallationInput(publicLink.searchParams.get("app") ?? "").storage
+      ?.options?.bucket,
     "public-bucket"
   );
   publicQuery.set(
-    "storage-config",
-    JSON.stringify({ bucket: "public-bucket", secret: "private" })
+    "app",
+    encodeAppPreset(
+      installationSelectionSchema.parse({
+        storage: {
+          source: "s3",
+          options: { bucket: "public-bucket", secret: "private" },
+        },
+      })
+    )
   );
   await page.goto(`${origin}/create?${publicQuery}`);
   await expect(

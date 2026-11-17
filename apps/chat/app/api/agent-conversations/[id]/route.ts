@@ -135,11 +135,7 @@ const DELETE = async (
         { headers, status: 503 }
       );
     }
-    const deleted = await deleteLocalEveConversationFamily(
-      ownerId,
-      id,
-      process.cwd()
-    );
+    const deleted = await deleteLocalEveConversationFamily(ownerId, id);
     if (!deleted) {
       return new Response(null, { headers, status: 404 });
     }

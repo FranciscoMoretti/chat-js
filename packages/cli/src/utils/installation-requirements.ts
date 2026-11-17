@@ -2,11 +2,7 @@ import { z } from "zod";
 
 import { preflight } from "./preflight";
 
-import {
-  readProviderId,
-  readProviderLiteral,
-  parseProviderLiteral,
-} from "./provider-config";
+import { readProviderId, readProviderLiteral } from "./provider-config";
 
 type MediaKind = "image" | "video";
 interface MediaGateway {
@@ -18,11 +14,10 @@ interface MediaGateway {
 interface StorageConsumer {
   readonly id: string;
   readonly requiresStorage?: true;
-  readonly requiresPersistentSandbox?: true;
 }
 interface MediaConsumer extends StorageConsumer {
   readonly requiresGateway?: readonly MediaKind[];
-  readonly requiresSandbox?: true;
+  readonly requiresNativeProcesses?: true;
 }
 
 const capabilitiesSchema = z.object({ image: z.boolean(), video: z.boolean() });
@@ -104,58 +99,12 @@ const validateMedia = (
   }
 };
 
-class SandboxRequiredError extends Error {
-  readonly persistent: boolean;
-  constructor(persistent = false) {
-    super(
-      persistent
-        ? "Attachment uploads require a persistent sandbox. Select --sandbox-provider vercel or a compatible external provider."
-        : "This tool requires sandbox infrastructure. Select --sandbox-provider vercel or daytona."
-    );
-    this.name = "SandboxRequiredError";
-    this.persistent = persistent;
-  }
-}
-
-const validatePersistentSandbox = async (
-  cwd: string,
-  selected: string | undefined,
-  providerSource: string | undefined
-): Promise<void> => {
-  const sandbox = selected ?? (await readProviderId(cwd, "sandbox"));
-  if (typeof sandbox !== "string" || sandbox === "") {
-    throw new SandboxRequiredError(true);
-  }
-  const file = "chatjs/providers/sandbox/provider.ts";
-  let persistent: unknown;
-  if (selected === undefined) {
-    await preflight(cwd, [file]);
-    persistent = await readProviderLiteral(
-      cwd,
-      file,
-      "supportsPersistentSandbox"
-    );
-  } else {
-    persistent = parseProviderLiteral(
-      providerSource ?? "",
-      file,
-      "supportsPersistentSandbox"
-    );
-  }
-  if (persistent !== true) {
-    throw new Error(
-      `${sandbox} does not support a persistent sandbox required by uploads. Select --sandbox-provider vercel or a compatible external provider.`
-    );
-  }
-};
-
 const validateProviderRequirements = async (
   cwd: string,
   target: {
     readonly gateway?: MediaGateway;
     readonly storage?: string;
     readonly sandbox?: string;
-    readonly sandboxProviderSource?: string;
     readonly tools: readonly MediaConsumer[];
     readonly plugins: readonly StorageConsumer[];
   }
@@ -164,23 +113,12 @@ const validateProviderRequirements = async (
     requiresStorage(item)
   );
   await validateStorage(cwd, fileConsumers, target.storage);
-  if (
-    [...target.tools, ...target.plugins].some(
-      (item) =>
-        item.requiresPersistentSandbox === true ||
-        item.id === "attachment-uploads"
-    )
-  ) {
-    await validatePersistentSandbox(
-      cwd,
-      target.sandbox,
-      target.sandboxProviderSource
-    );
-  }
-  if (target.tools.some((tool) => tool.requiresSandbox)) {
+  if (target.tools.some((tool) => tool.requiresNativeProcesses)) {
     const sandbox = target.sandbox ?? (await readProviderId(cwd, "sandbox"));
-    if (typeof sandbox !== "string" || sandbox === "") {
-      throw new SandboxRequiredError();
+    if (sandbox === "just-bash") {
+      throw new Error(
+        "Code execution requires native Python and Node processes. Select Automatic, Vercel Sandbox or Docker."
+      );
     }
   }
   const mediaConsumers = target.tools.filter(
@@ -189,24 +127,6 @@ const validateProviderRequirements = async (
   if (mediaConsumers.length > noConsumers) {
     const gateway = target.gateway ?? (await installedMediaGateway(cwd));
     validateMedia(mediaConsumers, gateway);
-  }
-};
-const validateCodeExecutionRequirements = (
-  definition: Readonly<{
-    slot?: string;
-    codeExecutorExport?: string;
-    codeExecutionCapabilities?: unknown;
-  }>
-): void => {
-  if (
-    definition.slot === "codeExecution" &&
-    ((definition.codeExecutorExport ?? "") === "" ||
-      typeof definition.codeExecutionCapabilities !== "object" ||
-      definition.codeExecutionCapabilities === null)
-  ) {
-    throw new Error(
-      "Selected codeExecution provider requires a typed executor and declared execution, cleanup and usage capabilities."
-    );
   }
 };
 
@@ -229,9 +149,7 @@ const validateRequestedKind = (
 };
 
 export {
-  SandboxRequiredError,
   registryMetadataKind,
   validateRequestedKind,
   validateProviderRequirements,
-  validateCodeExecutionRequirements,
 };

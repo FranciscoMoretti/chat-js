@@ -1,12 +1,10 @@
 import {
-  getEveSendReceipt,
   getEveMessageDisplayReceipts,
+  getEveSendReceipt,
 } from "@/lib/db/eve-dispatch";
 import { TRPCError } from "@trpc/server";
-import { headers } from "next/headers";
 import { z } from "zod";
 
-import { getAccessibleEveDocument } from "@/lib/db/eve-documents";
 import {
   getEveChatIdentity,
   listEveConversationBranches,
@@ -14,16 +12,13 @@ import {
   updateEveConversationMetadata,
 } from "@/lib/db/eve-queries";
 import { eveHistoryInput } from "@/lib/eve/history-input";
-import { eveManualDocumentInput } from "@/chatjs/core/documents/contracts";
 
-import { resolveEvePrincipal } from "@/lib/eve/principal";
 import { restoreMessageAttachments } from "@/lib/eve/restore-message-attachments";
-import { saveManualEveDocument } from "@/lib/eve/save-document";
 
 import { eveOwnedProcedure } from "@/trpc/eve-owned-procedure";
 
-import { createTRPCRouter, publicProcedure } from "@/trpc/init";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import { createTRPCRouter } from "@/trpc/init";
 
 const MAX_CONVERSATION_TITLE_LENGTH = 255;
 const MAX_MESSAGE_ID_LENGTH = 512;
@@ -65,43 +60,6 @@ export const eveRouter = createTRPCRouter({
           throw new TRPCError({ code: "NOT_FOUND" });
         }
         return family;
-      }
-    ),
-  document: publicProcedure
-    .input(
-      z.object({
-        conversationId: z.uuid(),
-        documentId: z.uuid(),
-        revisionId: z.uuid().optional(),
-      })
-    )
-    .query(
-      async ({
-        ctx,
-        input,
-      }: {
-        readonly ctx: { readonly user?: { readonly id: string } };
-        readonly input: ReadonlyNativeSurface<{
-          conversationId: string;
-          documentId: string;
-          revisionId?: string | undefined;
-        }>;
-      }) => {
-        let ownerId = ctx.user?.id;
-        if (typeof ownerId !== "string" || ownerId === "") {
-          const principal = await resolveEvePrincipal(await headers());
-          ownerId = principal?.ownerId;
-        }
-        const document = await getAccessibleEveDocument(
-          ownerId,
-          input.conversationId,
-          input.documentId,
-          input.revisionId
-        );
-        if (!document) {
-          throw new TRPCError({ code: "NOT_FOUND" });
-        }
-        return document;
       }
     ),
   get: eveOwnedProcedure
@@ -214,34 +172,4 @@ export const eveRouter = createTRPCRouter({
         }>;
       }) => await restoreMessageAttachments(ctx.eveOwnerId, input)
     ),
-  saveDocument: eveOwnedProcedure.input(eveManualDocumentInput).mutation(
-    async ({
-      ctx,
-      input,
-    }: {
-      readonly ctx: { readonly eveOwnerId: string };
-      readonly input: ReadonlyNativeSurface<{
-        content: string;
-        title: string;
-        documentId: string;
-        expectedRevisionId: string;
-        conversationId: string;
-        fileIds: string[];
-        operationId: string;
-      }>;
-    }) => {
-      try {
-        return await saveManualEveDocument(ctx.eveOwnerId, input);
-      } catch (error) {
-        throw new TRPCError({
-          cause: error,
-          code: "CONFLICT",
-          message:
-            error instanceof Error
-              ? error.message
-              : "Document could not be saved.",
-        });
-      }
-    }
-  ),
 });

@@ -1,7 +1,7 @@
-import { route } from "./route";
-import { expect, onTestFinished, test, vi } from "vitest";
-import { documentDefinitions } from "@/integrations/documents/definitions";
+import { takeSnapshot } from "@uiverify/vitest";
+import { expect, test, vi } from "vitest";
 import { page, userEvent } from "vitest/browser";
+import { route } from "./route";
 
 import ChatPage from "@/app/(chat)/chat/[id]/page";
 import ChatLayout from "@/app/(chat)/layout";
@@ -9,28 +9,28 @@ import SharePage from "@/app/(chat)/share/[id]/page";
 
 import { retainResponseGroupDraft } from "@/lib/eve/create-response-group";
 import {
-  prepareResponseGroupCreation,
   prepareCreation,
+  prepareResponseGroupCreation,
 } from "@/lib/eve/pending-create";
 
 import {
-  history,
   chatFailure,
-  archivedDiagram,
-  archivedDiagramTranscript,
+  connectionResultTranscripts,
+  history,
   invoicesConversation,
+  invoicesFollowupEvents,
+  invoicesFollowupTrpc,
+  invoicesScrollTranscripts,
+  invoicesSearchTrpc,
   invoicesShared,
   invoicesTranscripts,
   invoicesTrpc,
-  invoicesSearchTrpc,
-  invoicesFollowupEvents,
-  invoicesFollowupTrpc,
   launchProject,
   questionTranscripts,
-  validatedToolTranscripts,
-  retrievedPageTranscripts,
   session,
   signedIn,
+  signInTranscripts,
+  validatedToolTranscripts,
 } from "./fixtures";
 import { renderRoute } from "./render";
 
@@ -73,9 +73,11 @@ test("validated tools preserve receipt results, failures and native fallbacks", 
     ...request,
     transcripts: validatedToolTranscripts,
   });
-  await expect.element(page.getByText("Words", { exact: true })).toBeVisible();
   await expect
-    .element(page.getByText("Counting service unavailable."))
+    .element(page.getByText("sample-notes.md", { exact: true }))
+    .toBeVisible();
+  await expect
+    .element(page.getByText("File storage unavailable."))
     .toBeVisible();
   await expect
     .element(page.getByText("External tool result retained.", { exact: false }))
@@ -87,6 +89,13 @@ test("validated tools preserve receipt results, failures and native fallbacks", 
     .toBeVisible();
   await expect
     .element(page.getByText("This tool result could not be displayed."))
+    .not.toBeInTheDocument();
+  await expect
+    .element(
+      page.getByText(
+        "MCP tool failed. Check the connector in settings and try again."
+      )
+    )
     .not.toBeInTheDocument();
   await page.screenshot({ path: "__screenshots__/validated-tools.png" });
 });
@@ -107,7 +116,7 @@ test("active native turn shows thinking before visible content", async () => {
   await page.screenshot({ path: "__screenshots__/native-thinking.png" });
 });
 
-test("cancelled document and saved-code operations show stopped states", async () => {
+test("cancelled native file and command operations show stopped states", async () => {
   await renderRoute(conversation, {
     ...request,
     transcripts: {
@@ -120,18 +129,18 @@ test("cancelled document and saved-code operations show stopped states", async (
               type: "tool",
               kind: "tool",
               stepIndex: 0,
-              callId: "document",
-              name: "createTextDocument",
-              label: "Document",
+              callId: "write-file",
+              name: "write_file",
+              label: "Write file",
               state: "cancelled",
-              input: { title: "Notes" },
+              input: { path: "/workspace/notes.md" },
             },
             {
               type: "tool",
               kind: "tool",
               stepIndex: 0,
               callId: "code",
-              name: "runCodeDocument",
+              name: "bash",
               label: "Code",
               state: "cancelled",
               input: {},
@@ -161,7 +170,7 @@ test("cancelled document and saved-code operations show stopped states", async (
               kind: "tool",
               stepIndex: 0,
               callId: "declined",
-              name: "webSearch",
+              name: "web_search",
               label: "Search",
               state: "rejected",
               input: {},
@@ -172,19 +181,30 @@ test("cancelled document and saved-code operations show stopped states", async (
     },
   });
   await expect
-    .element(page.getByText("Document operation stopped."))
+    .element(
+      page.getByRole("button", { name: "write_file Error", exact: true })
+    )
     .toBeVisible();
-  await expect.element(page.getByText("Tool stopped.")).toBeVisible();
-  await page.getByRole("button", { name: "search Error", exact: true }).click();
-  await expect.element(page.getByText("MCP tool stopped.")).toBeVisible();
+  await expect
+    .element(page.getByRole("button", { name: "bash Error", exact: true }))
+    .toBeVisible();
+  await expect.element(page.getByText("Tool stopped.").first()).toBeVisible();
+  await expect
+    .element(
+      page.getByRole("button", { name: "fixture__search Error", exact: true })
+    )
+    .toBeVisible();
   await expect.element(page.getByText("Waiting for input.")).toBeVisible();
   await expect.element(page.getByText("Request declined.")).toBeVisible();
   await page.screenshot({ path: "__screenshots__/native-stopped.png" });
 });
 
 test("mobile conversation can reveal the transcript below the composer", async () => {
-  // The conversation capture already covers both mobile themes.
-  await renderRoute(conversation, { ...request, viewports: [] });
+  await renderRoute(conversation, {
+    ...request,
+    transcripts: invoicesScrollTranscripts,
+    viewports: [],
+  });
   await expect
     .element(page.getByText("invoices_account_status_due_idx"))
     .toBeVisible();
@@ -195,6 +215,14 @@ test("mobile conversation can reveal the transcript below the composer", async (
   if (!viewport) {
     throw new Error("Missing transcript viewport");
   }
+  const composer = page.getByRole("textbox", { name: "Message" });
+  await expect.element(composer).toBeVisible();
+  await expect
+    .poll(
+      () =>
+        composer.element().getBoundingClientRect().bottom - window.innerHeight
+    )
+    .toBeLessThanOrEqual(0);
   await expect
     .poll(() => viewport.scrollHeight > viewport.clientHeight)
     .toBe(true);
@@ -224,6 +252,7 @@ test("mobile conversation can reveal the transcript below the composer", async (
   await expect
     .element(page.getByRole("button", { name: "Scroll to end", exact: true }))
     .toBeVisible();
+  await takeSnapshot("mobile-transcript-scrolled-up");
   await page
     .getByRole("button", { name: "Scroll to end", exact: true })
     .click();
@@ -1048,89 +1077,42 @@ test("message activity renders reasoning, tool errors and falsy results in the c
     .toHaveTextContent("Checking the inventory before answering.");
 });
 
-test.each(["plugin", "editor"])(
-  "a historical document remains readable after its %s is removed",
-  async (removed) => {
-    if (removed === "editor") {
-      const installed = new Set([...documentDefinitions.kinds, "diagram"]);
-      const kinds = vi
-        .spyOn(documentDefinitions.kinds, "has")
-        .mockImplementation((kind) => installed.has(kind));
-      onTestFinished(() => {
-        kinds.mockRestore();
-      });
-    }
-    const { sessionId } = invoicesConversation;
-    if (sessionId === null) {
-      throw new Error("Missing fixture session");
-    }
-    await renderRoute(conversation, {
-      ...request,
-      transcripts: { [sessionId]: archivedDiagramTranscript },
-      trpc: { ...invoicesTrpc, "eve.document": archivedDiagram },
-    });
-    await expect
-      .element(page.getByRole("button", { name: 'Updated "Deployment flow"' }))
-      .toBeVisible();
-    await page
-      .getByRole("button", { name: 'Updated "Deployment flow"' })
-      .click();
-    await expect
-      .element(
-        page.getByText("Your saved content is preserved.", { exact: false })
-      )
-      .toBeVisible();
-    await expect
-      .element(
-        page.getByText(archivedDiagram.revision.content, { exact: true })
-      )
-      .toBeVisible();
-    await expect
-      .element(
-        page.getByRole("button", { name: "Copy to clipboard", exact: true })
-      )
-      .toBeEnabled();
-    expect(document.querySelector('[aria-label="Diagram source"]')).toBeNull();
-    await expect
-      .element(
-        page.getByRole("button", { name: "Restore this version", exact: true })
-      )
-      .not.toBeInTheDocument();
-    if (removed === "editor") {
-      await page.elementLocator(document.body).screenshot({
-        path: "__screenshots__/document-without-editor.png",
-      });
-    }
-  }
-);
-
-test("text and retrieved page keep their natural height", async () => {
+test("native search connection result uses the generic tool view", async () => {
   await renderRoute(conversation, {
     ...request,
-    transcripts: retrievedPageTranscripts,
+    transcripts: connectionResultTranscripts,
   });
-  const heading = page.getByRole("heading", {
-    name: "Example documentation",
-    exact: true,
-  });
-  await expect.element(heading).toBeVisible();
-  await page.getByText("View content", { exact: true }).click();
   await expect
-    .element(
-      page.getByText("This content remains visible when expanded.", {
-        exact: true,
-      })
-    )
+    .element(page.getByRole("button", { name: /firecrawl__firecrawl_search/u }))
     .toBeVisible();
-  const card = heading.element().closest(".overflow-hidden");
-  if (!card) {
-    throw new Error("Missing retrieved page card");
-  }
-  const intro = page
-    .getByText("Here is the page you requested.", { exact: true })
-    .element();
-  expect(
-    card.getBoundingClientRect().top - intro.getBoundingClientRect().bottom
-  ).toBeLessThanOrEqual(40);
-  expect(card.scrollHeight - card.clientHeight).toBeLessThanOrEqual(1);
+  await expect
+    .element(page.getByText(/Documentation for the example project/u))
+    .toBeVisible();
+  await page.screenshot({
+    path: "__screenshots__/native-search-connection.png",
+  });
+  await page.viewport(390, 900);
+  await expect.poll(() => window.innerWidth).toBe(390);
+  await page.screenshot({
+    path: "__screenshots__/native-search-connection-mobile.png",
+  });
+});
+
+test("native connection sign-in", async () => {
+  await renderRoute(conversation, {
+    ...request,
+    transcripts: signInTranscripts,
+  });
+  await expect
+    .element(page.getByRole("link", { name: "Connect Notion" }))
+    .toHaveAttribute("href", "https://example.invalid/notion-consent");
+  await expect.element(page.getByText("DEMO-CODE")).toBeVisible();
+  await expect
+    .element(page.getByRole("button", { name: "Sign-in unavailable" }))
+    .toBeDisabled();
+  await page.viewport(390, 900);
+  await expect.poll(() => window.innerWidth).toBe(390);
+  await page.screenshot({
+    path: "__screenshots__/native-connection-mobile.png",
+  });
 });

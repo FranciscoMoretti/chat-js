@@ -26,7 +26,7 @@ See [gateway authoring](./src/gateways/README.md) for adapter-specific metadata.
 
 Source folders group items by category. Each gateway has a `gateway.ts`; each tool has a `tool.ts` and `renderer.tsx`. Receipt and renderer helpers are supplied by the ChatJS scaffold. Category-level gateway catalog, metadata, and defaults live directly under `src/gateways/`.
 
-`meta.chatjs.kind` identifies a gateway or tool independently of its public name. Registry namespace aliases such as `@chatjs` identify a configured registry source. Public item names remain `vercel-gateway`, `word-count`, and the other existing names. Source folders do not determine registry addresses or installation targets.
+`meta.chatjs.kind` identifies a gateway or tool independently of its public name. Registry namespace aliases such as `@chatjs` identify a configured registry source. Public item names remain `vercel-gateway`, `deep-research`, and the other existing names. Source folders do not determine registry addresses or installation targets.
 
 The selected gateway installs into the app's `chatjs/providers/gateway.ts` slot. Tools install under `chatjs/tools/<id>/` with generated installation inputs and app-owned integration modules. Third-party destination namespacing is not inferred from registry aliases and is not added by this source reorganization.
 

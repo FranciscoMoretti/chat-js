@@ -1,10 +1,7 @@
 import { withRegistryProject } from "@chat-js/registry-validation/shadcn";
 import { updateEnvironmentExample } from "../../cli/src/utils/environment-example";
 import { assertItemDependencies } from "../dependency-contract";
-import {
-  configureSandboxProvider,
-  sandboxProviderTargets,
-} from "../../cli/src/helpers/sandbox-provider";
+import { configureSandboxProvider } from "../../cli/src/helpers/sandbox-provider";
 import { resolveSandbox } from "../../cli/src/registry/sandboxes";
 import { readFile } from "node:fs/promises";
 import {
@@ -97,10 +94,7 @@ const resolveProviders = async (
       ...(await resolveStorage(storage.source, directory)),
       options: storage.options,
     },
-    sandbox:
-      typeof sandbox === "string" && sandbox !== ""
-        ? await resolveSandbox(sandbox, directory)
-        : undefined,
+    sandbox: await resolveSandbox(sandbox ?? "default", directory),
   };
 };
 
@@ -109,9 +103,7 @@ const configureInstallation = async (
   providers: Awaited<ReturnType<typeof resolveProviders>>,
   plan: Awaited<ReturnType<typeof planInstallation>>
 ): Promise<void> => {
-  if (providers.sandbox) {
-    await configureSandboxProvider(directory, providers.sandbox);
-  }
+  await configureSandboxProvider(directory, providers.sandbox);
   await configureGatewayProvider(directory, providers.gateway);
   await configureStorageProvider(directory, providers.storage);
   await syncTools(directory, { expected: plan.expected });
@@ -241,7 +233,6 @@ const generateInstallation = async (
         ...pluginRegistrationTargets,
         ...gatewayConfigurationTargets,
         ...storageConfigurationTargets,
-        ...sandboxProviderTargets(providers.sandbox),
       ].filter((file) => !excluded.has(file));
       const allowed = new Set(ownedPaths);
       const installedFiles = await project.readFiles();

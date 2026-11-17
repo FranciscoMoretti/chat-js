@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useMemo, useEffect } from "react";
+import { createContext, useContext, useMemo } from "react";
 import type { ReactNode } from "react";
 import { parseAsString, parseAsStringLiteral, useQueryStates } from "nuqs";
 import {
@@ -55,16 +55,11 @@ export const InstallationProvider = ({
   );
   const [params, setParams] = useQueryStates({
     app: parseAsString,
-    installation: parseAsString,
     // Test-only fault injection; never included in shared or installation URLs.
     __previewScenario: parseAsStringLiteral([
       "ready",
       "mutation-error",
     ]).withDefault("ready"),
-    gateway: parseAsString,
-    storage: parseAsString,
-    uploads: parseAsString,
-    "storage-config": parseAsString,
   });
   const installation = useMemo(() => {
     const query = new URLSearchParams();
@@ -80,28 +75,6 @@ export const InstallationProvider = ({
       installation ? resolveInstallationSelection(installation, catalog) : null,
     [installation, catalog]
   );
-  // Replace legacy JSON links without adding history entries or resolving implicit
-  // dependencies into explicit selections. The URL records only user choices.
-  useEffect(() => {
-    if (!installation) {
-      return;
-    }
-    const canonical = encodeInstallationQuery(installation);
-    if (
-      (
-        [
-          "app",
-          "installation",
-          "storage-config",
-          "gateway",
-          "storage",
-          "uploads",
-        ] as const
-      ).some((key) => params[key] !== canonical[key])
-    ) {
-      void setParams(canonical, { history: "replace" });
-    }
-  }, [installation, params, setParams]);
   const value = useMemo<InstallationContextValue>(
     () => ({
       catalog,

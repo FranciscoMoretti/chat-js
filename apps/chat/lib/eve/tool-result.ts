@@ -60,7 +60,7 @@ const hasEveToolReceipt = (value: unknown): boolean =>
 
 const createToolResult = <Output extends ToolOutput>(
   output: Output,
-  costUsd: number | undefined,
+  costUsd?: number,
   updates?: readonly ToolOutput[]
 ): ToolResult<Output> => {
   jsonOutput.parse(output);

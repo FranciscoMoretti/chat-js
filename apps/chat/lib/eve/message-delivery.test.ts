@@ -108,7 +108,7 @@ describe("Eve message delivery recovery", () => {
       ],
       message: "restore me",
       modelId: "model",
-      selectedTool: "createTextDocument",
+      selectedTool: "generateImage",
     });
     const rejected = eveMessageDelivery.reject(
       storage,

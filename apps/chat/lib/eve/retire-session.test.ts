@@ -25,6 +25,7 @@ const mocks = vi.hoisted(() => ({
   end: vi.fn(),
   retireMany: vi.fn(),
   snapshot: vi.fn(),
+  stream: vi.fn(),
   usage: vi.fn(),
 }));
 vi.mock("../env", () => ({ env: mocks.env }));
@@ -43,7 +44,11 @@ vi.mock("eve/client", () => ({
       mocks.client(options);
     }
     public sessions = {
-      attach: () => ({ end: mocks.end, snapshot: mocks.snapshot }),
+      attach: () => ({
+        end: mocks.end,
+        snapshot: mocks.snapshot,
+        stream: mocks.stream,
+      }),
     };
   },
 }));
@@ -58,17 +63,22 @@ beforeEach(() => {
     supported: true,
   });
   mocks.deleting.mockResolvedValue({ id: "conversation" });
-  mocks.end.mockResolvedValue({
-    async *stream() {
-      yield { type: "session.ended" };
-    },
+  mocks.end.mockResolvedValue({});
+  mocks.stream.mockImplementation(async function* terminalEvents() {
+    yield { type: "session.ended" };
   });
-  mocks.snapshot.mockResolvedValue({ events: [{ type: "session.ended" }] });
+  mocks.snapshot.mockResolvedValue({
+    session: { streamIndex: 41 },
+    events: [{ type: "session.ended" }],
+  });
   mocks.usage.mockResolvedValue(true);
 });
 
 it("retires before reading and settling the final snapshot, including retries", async () => {
-  mocks.snapshot.mockResolvedValueOnce({ events: [] });
+  mocks.snapshot.mockResolvedValueOnce({
+    events: [],
+    session: { streamIndex: 41 },
+  });
   await retireEveSessionForDeletion("owner", "session");
   expect(mocks.client).toHaveBeenCalledWith(
     expect.objectContaining({
@@ -77,6 +87,9 @@ it("retires before reading and settling the final snapshot, including retries", 
   );
   expect(mocks.end.mock.invocationCallOrder[0]).toBeLessThan(
     mocks.snapshot.mock.invocationCallOrder[1]
+  );
+  expect(mocks.stream).toHaveBeenCalledExactlyOnceWith(
+    expect.objectContaining({ follow: true, startIndex: 41 })
   );
   const endCalls = mocks.end.mock.calls.length;
   await expect(
@@ -94,12 +107,16 @@ it("rejects non-deleting or foreign sessions before native access", async () => 
 });
 
 it("refuses erasure when retirement or cost settlement is incomplete", async () => {
-  mocks.snapshot.mockResolvedValue({ events: [{ type: "model.settled" }] });
+  mocks.snapshot.mockResolvedValue({
+    session: { streamIndex: 41 },
+    events: [{ type: "model.settled" }],
+  });
   await expect(retireEveSessionForDeletion("owner", "session")).rejects.toThrow(
     "retirement has not completed"
   );
   expect(mocks.usage).not.toHaveBeenCalled();
   mocks.snapshot.mockResolvedValue({
+    session: { streamIndex: 41 },
     events: [{ type: "model.settled" }, { type: "session.ended" }],
   });
   mocks.usage.mockResolvedValueOnce(false);

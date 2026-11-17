@@ -1,18 +1,17 @@
 "use client";
 
 import {
-  Activity,
   ArrowRight,
-  ChartNoAxesColumnIncreasing,
   FileText,
   Folder,
   Info,
+  Images,
+  Video,
   Link2,
   MessageSquare,
   Monitor,
   Plug,
   Puzzle,
-  Route,
   Search,
   SlidersHorizontal,
   TextCursorInput,
@@ -24,13 +23,7 @@ import type { InstallationCatalogItem } from "../../../../packages/registry/inst
 import { Button } from "@/vendor/shadcn-create/styles/base-nova/ui/button";
 import { Checkbox } from "@/vendor/shadcn-create/styles/base-nova/ui/checkbox";
 import { Switch } from "@/vendor/shadcn-create/styles/base-nova/ui/switch";
-import {
-  Field,
-  FieldContent,
-  FieldDescription,
-  FieldLabel,
-  FieldTitle,
-} from "@/vendor/shadcn-create/styles/base-nova/ui/field";
+import { FieldLabel } from "@/vendor/shadcn-create/styles/base-nova/ui/field";
 import {
   Popover,
   PopoverTrigger,
@@ -39,6 +32,10 @@ import {
   PopoverTitle,
   PopoverDescription,
 } from "@/vendor/shadcn-create/styles/base-nova/ui/popover";
+import { SetupTile, setupTileGrid, setupTileControl } from "./setup-tile";
+import { SetupProviderMark } from "./setup-provider-mark";
+import { CapabilityRow } from "./capability-row";
+import type { InstallationSelection } from "../../../../packages/registry/installation";
 import { useInstallation } from "./installation-provider";
 import { setupActions } from "./setup-guidance";
 import type { ConfigureSetup } from "./setup-guidance";
@@ -47,6 +44,8 @@ import { pluginPreviewLabel } from "./preview-capabilities";
 // Use the homepage illustrations’ motifs at the scale of a catalog row.
 const pluginIcons: Readonly<Partial<Record<string, LucideIcon>>> = {
   projects: Folder,
+  "image-viewer": Images,
+  "video-viewer": Video,
   search: Search,
   "ai-titles": TextCursorInput,
   sharing: Link2,
@@ -57,27 +56,70 @@ const pluginIcons: Readonly<Partial<Record<string, LucideIcon>>> = {
   mcp: Plug,
   "guest-chat": MessageSquare,
   credits: Wallet,
-  "vercel-analytics": ChartNoAxesColumnIncreasing,
-  "vercel-speed-insights": Activity,
-  langfuse: Route,
   desktop: Monitor,
+};
+
+const requiresChatjs = (
+  definition: InstallationCatalogItem["definition"]
+): boolean =>
+  definition?.kind === "plugin" ||
+  (definition?.kind === "tool" &&
+    (definition.requiresChatJS ?? definition.native === undefined));
+
+const toolBadge = (definition: InstallationCatalogItem["definition"]) =>
+  definition?.kind === "tool" && definition.agentCategory !== undefined
+    ? "ChatJS"
+    : undefined;
+
+const capabilityCategory = (
+  definition: InstallationCatalogItem["definition"]
+) =>
+  definition?.kind === "tool" ? (definition.agentCategory ?? "tool") : "plugin";
+
+const FeatureIcon = ({
+  definition,
+}: {
+  readonly definition: InstallationCatalogItem["definition"];
+}) => {
+  const Icon =
+    definition?.kind === "plugin"
+      ? (pluginIcons[definition.id] ?? Puzzle)
+      : undefined;
+  return Icon === undefined ? null : (
+    <Icon
+      aria-hidden="true"
+      className="text-muted-foreground size-4 shrink-0"
+    />
+  );
+};
+
+const setupCaptions: Readonly<Record<string, string>> = {
+  desktop: "Desktop app",
 };
 
 export const FeatureChoices = ({
   items,
+  className,
   cards = false,
+  compact = false,
+  onSelectionChange,
   onConfigureSetup,
 }: {
   readonly items: readonly InstallationCatalogItem[];
+  readonly className?: string;
   readonly cards?: boolean;
+  readonly compact?: boolean;
+  readonly onSelectionChange?: (selection: InstallationSelection) => void;
   readonly onConfigureSetup?: ConfigureSetup;
 }) => {
   const { installation, resolution, update } = useInstallation();
   if (!installation || !resolution) {
     return null;
   }
+  const applySelection = onSelectionChange ?? update;
+  const gridClass = compact ? "grid gap-3 md:grid-cols-2" : setupTileGrid;
   return (
-    <div className={cards ? "grid gap-3 sm:grid-cols-2" : "divide-y"}>
+    <div className={className ?? (cards || compact ? gridClass : "divide-y")}>
       {items.map((item) => {
         const { definition } = item;
         if (definition?.kind !== "plugin" && definition?.kind !== "tool") {
@@ -85,17 +127,7 @@ export const FeatureChoices = ({
         }
         const key = definition.kind === "plugin" ? "plugins" : "tools";
         const { id } = definition;
-        const Icon =
-          definition.kind === "plugin"
-            ? (pluginIcons[id] ?? Puzzle)
-            : undefined;
-        const icon =
-          Icon === undefined ? null : (
-            <Icon
-              aria-hidden="true"
-              className="text-muted-foreground size-4 shrink-0"
-            />
-          );
+        const icon = <FeatureIcon definition={definition} />;
         const selected = resolution.selection[key].includes(id);
         const actions = selected
           ? setupActions(
@@ -111,7 +143,7 @@ export const FeatureChoices = ({
           source === `@chatjs/${item.name}`;
         const explicit = installation[key].some(isThisItem);
         const onCheckedChange = (checked: boolean) => {
-          update({
+          applySelection({
             ...installation,
             [key]: checked
               ? [...installation[key], id]
@@ -137,7 +169,7 @@ export const FeatureChoices = ({
                   size="icon"
                   className={
                     cards
-                      ? "text-muted-foreground absolute end-3 top-3 size-7"
+                      ? "text-muted-foreground absolute start-1 top-1 size-7"
                       : "text-muted-foreground size-7"
                   }
                 />
@@ -160,31 +192,36 @@ export const FeatureChoices = ({
             </PopoverContent>
           </Popover>
         );
+        if (compact) {
+          return (
+            <CapabilityRow
+              key={item.name}
+              title={item.title}
+              visualId={`@chatjs/${item.name}`}
+              category={capabilityCategory(definition)}
+              description={item.description}
+              source="ChatJS"
+              badge={toolBadge(definition)}
+              requiresChatJS={requiresChatjs(definition)}
+              controlId={control.id}
+              checked={selected}
+              disabled={control.disabled}
+              onCheckedChange={onCheckedChange}
+              details={dependency === null ? undefined : <p>{dependency}</p>}
+            />
+          );
+        }
         if (cards) {
           return (
-            <div key={item.name} className="relative h-full">
-              <FieldLabel
-                htmlFor={control.id}
-                className="h-full cursor-pointer"
-              >
-                <Field
-                  orientation="horizontal"
-                  className="h-full min-h-28 gap-4 p-4!"
-                >
-                  <FieldContent className="min-w-0 gap-2">
-                    <FieldTitle>
-                      {icon}
-                      {item.title}
-                    </FieldTitle>
-                    <FieldDescription className="text-xs leading-relaxed">
-                      {item.description}
-                    </FieldDescription>
-                  </FieldContent>
-                  <Checkbox {...control} className="me-8 mt-0.5" />
-                </Field>
-              </FieldLabel>
-              {details}
-            </div>
+            <SetupTile
+              key={item.name}
+              title={item.title}
+              caption={setupCaptions[id] ?? "Optional feature"}
+              controlId={control.id}
+              visual={<SetupProviderMark id={id} />}
+              control={<Checkbox {...control} className={setupTileControl} />}
+              action={details}
+            />
           );
         }
         return (

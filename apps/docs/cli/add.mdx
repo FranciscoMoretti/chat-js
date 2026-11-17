@@ -16,14 +16,14 @@ Accepts built-in names, standard `@namespace/item` addresses, complete item URLs
 | `--dry-run` | `false` | Resolve and report declared integrations and native entry paths without installing or writing app files |
 | `--files-only` | `false` | Export source and connection metadata to a temporary review directory |
 | `--replace` | `false` | Explicitly authorize exclusive provider replacement |
-| `--sandbox-provider <item>` | None | Select optional sandbox infrastructure: Vercel, Daytona or a registry address |
+| `--sandbox-provider <item>` | None | Select a native EVE sandbox: Automatic, Vercel, Docker, just-bash or a registry address |
 | `--gateway <item>` | Not applicable | Select an AI gateway |
 | `--storage-provider <item>` | Not applicable | Select file storage |
 | `--storage-config <json>` | Not applicable | Non-secret storage adapter options |
 | `-c, --cwd <cwd>` | Current directory | Destination app |
 
 ```bash
-npx chat-js@alpha add word-count get-weather --yes
+npx chat-js@alpha add deep-research --yes
 npx chat-js@alpha add @acme/my-tool
 npx chat-js@alpha add ./my-tool.json --cwd apps/chat
 ```
@@ -33,10 +33,10 @@ Configure namespaces in `components.json`. The former `--registry` flag is remov
 Install optional implementations together or independently:
 
 ```bash
-npx chat-js@alpha add attachment-uploads mcp vercel-analytics vercel-speed-insights langfuse --sandbox-provider vercel --storage-provider vercel-blob --yes
+npx chat-js@alpha add attachment-uploads mcp --sandbox-provider vercel --storage-provider vercel-blob --yes
 ```
 
-Uploads require durable storage and a sandbox with persistent-file support. Existing compatible providers satisfy these requirements. The CLI rejects replacing that sandbox with an incompatible provider while uploads remain installed.
+Uploads require durable storage. EVE manages the agent sandbox and session files.
 
 UI plugins export typed contributions with `definePlugin`. The CLI updates generated installed-plugin lists and preserves your component edits and app layout JSX. Move slot components or wrap contributed components to customize placement and behavior.
 
@@ -46,12 +46,11 @@ After direct shadcn source installation, regenerate registrations with `sync`:
 npx chat-js@alpha sync --cwd apps/chat
 ```
 
-The command prints the selected integrations' credential requirements. Copy them into `.env.local` and run `bun run setup`. Langfuse needs both `LANGFUSE_PUBLIC_KEY` and `LANGFUSE_SECRET_KEY`, while MCP needs `MCP_ENCRYPTION_KEY`.
+The command prints the selected integrations' credential requirements. Copy them into `.env.local` and run `bun run setup`. MCP needs `MCP_ENCRYPTION_KEY`.
 
 Exclusive alternatives require explicit replacement:
 
 ```bash
-npx chat-js@alpha add firecrawl-search --replace --yes
 npx chat-js@alpha add --storage-provider s3 --storage-config '{"bucket":"uploads","region":"eu-west-1"}' --replace --yes
 ```
 
