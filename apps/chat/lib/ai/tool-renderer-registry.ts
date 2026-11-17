@@ -6,11 +6,16 @@ import { ui } from "@/integrations/tools/ui";
 
 // Execution types constrain registration names only. Each view's payload types
 // come from its shared schemas through defineToolRenderer.
-type ToolRendererRegistry = {
-  [
-    Name in keyof (typeof tools & WorkflowTools) as `tool-${Name}`
-  ]?: ValidatedToolRenderer;
-};
+type ToolNames<Execution, Workflows> = Extract<
+  keyof Execution | keyof Workflows,
+  string
+>;
+type RenderersFor<Names extends string> = [Names] extends [never]
+  ? Record<string, never>
+  : Partial<Record<`tool-${Names}`, ValidatedToolRenderer>>;
+type ToolRendererRegistry = RenderersFor<
+  ToolNames<typeof tools, WorkflowTools>
+>;
 
 const toolRendererRegistry: Readonly<
   Partial<Record<string, ValidatedToolRenderer>>

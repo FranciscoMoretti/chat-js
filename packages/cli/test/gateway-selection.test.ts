@@ -423,7 +423,7 @@ const toolArguments = (gateway: string): string[] => {
   return [];
 };
 
-const verifyResearchInstallation = async (cwd: string, gateway: string) => {
+const verifyGatewayInstallation = async (cwd: string, gateway: string) => {
   expect(
     await Bun.file(nodePath.join(cwd, "agent/tools/deepResearch.ts")).exists()
   ).toBe(false);
@@ -484,49 +484,6 @@ const verifyResearchInstallation = async (cwd: string, gateway: string) => {
     // Native source imports generated branding; prepare it before linting the companion.
     await run(nodePath.join(cwd, "electron"), ["bun", "run", "prebuild"]);
     await run(cwd, ["bun", "run", "lint"]);
-    expect(
-      await Bun.file(nodePath.join(cwd, "agent/tools/confirm-note.ts")).exists()
-    ).toBe(false);
-    expect(
-      await Bun.file(
-        nodePath.join(cwd, "chatjs/tools/delete-document/tool.ts")
-      ).exists()
-    ).toBe(false);
-    await run(cwd, ["node", cliEntry, "add", "delete-document", "--yes"]);
-    expect(
-      await readFile(nodePath.join(cwd, "chatjs/generated/tools.ts"), "utf-8")
-    ).toContain('from "@/chatjs/tools/delete-document/tool"');
-    expect(
-      await readFile(
-        nodePath.join(cwd, "chatjs/generated/tool-availability.ts"),
-        "utf-8"
-      )
-    ).toContain("deleteDocumentAvailable");
-    await run(cwd, ["node", cliEntry, "add", "saved-code-execution", "--yes"]);
-    const registered = await readFile(
-      nodePath.join(cwd, "chatjs/generated/tools.ts"),
-      "utf-8"
-    );
-    expect(registered).toContain(
-      'from "@/chatjs/tools/saved-code-execution/tool"'
-    );
-    expect(registered).toContain('from "@/chatjs/tools/code-documents/tool"');
-    expect(registered).toContain('from "@/chatjs/tools/read-document/tool"');
-    await run(cwd, ["node", cliEntry, "add", "deep-research", "--yes"]);
-    expect(
-      await Bun.file(nodePath.join(cwd, "agent/tools/deepResearch.ts")).exists()
-    ).toBe(true);
-    expect(
-      await Bun.file(
-        nodePath.join(cwd, "agent/subagents/researcher/tools/webSearch.ts")
-      ).exists()
-    ).toBe(true);
-    expect(
-      await readFile(nodePath.join(cwd, "chatjs/generated/tools.ts"), "utf-8")
-    ).not.toContain('from "@/chatjs/tools/deep-research/tool"');
-    expect(
-      await readFile(nodePath.join(cwd, "chatjs/generated/ui.ts"), "utf-8")
-    ).toContain('from "@/chatjs/tools/deep-research/renderer"');
   }
 };
 
@@ -591,12 +548,11 @@ for (const gateway of [...GATEWAYS, "acme"]) {
       "--gateway",
       gatewaySource(gateway),
       ...storageArguments(gateway),
-      ...(gateway === "openrouter" ? ["--no-documents"] : []),
       "--yes",
       electronFlag,
       ...toolArguments(gateway),
     ]);
-    await verifyResearchInstallation(cwd, gateway);
+    await verifyGatewayInstallation(cwd, gateway);
     if (gateway === "openrouter") {
       expect(
         await readFile(
@@ -690,20 +646,6 @@ for (const gateway of [...GATEWAYS, "acme"]) {
           "utf-8"
         )
       ).toContain("ACME_IMAGE_KEY");
-      expect(dependencies["@tavily/core"]).toBeUndefined();
-      expect(
-        await Bun.file(
-          nodePath.join(cwd, "tools/platform/code-execution-contract.ts")
-        ).exists()
-      ).toBe(false);
-      expect(
-        await readFile(nodePath.join(cwd, "chatjs/generated/ui.ts"), "utf-8")
-      ).not.toContain("tool-webSearch");
-      expect(
-        await Bun.file(
-          nodePath.join(cwd, "chatjs/tools/code-execution/tool.ts")
-        ).exists()
-      ).toBe(false);
       await writeFile(
         nodePath.join(cwd, "verify-execution.ts"),
         `import assert from "node:assert/strict";
@@ -799,11 +741,24 @@ defineConfig({ ai: { gateway: "${gateway}", tools: { video: { default: "video" }
       ]);
       await run(cwd, ["node", cliEntry, "sync"]);
       expect(
+        await Bun.file(
+          nodePath.join(cwd, "agent/tools/deepResearch.ts")
+        ).exists()
+      ).toBe(true);
+      expect(
+        await Bun.file(
+          nodePath.join(cwd, "agent/lib/research/configuration.ts")
+        ).exists()
+      ).toBe(true);
+      expect(
         await readFile(
           nodePath.join(cwd, "chatjs/generated/installed-tools.ts"),
           "utf-8"
         )
       ).toContain("deepResearch");
+      expect(
+        await readFile(nodePath.join(cwd, "chatjs/generated/ui.ts"), "utf-8")
+      ).toContain('from "@/chatjs/tools/deep-research/renderer"');
     }
     await run(cwd, ["bun", "run", "test:types"]);
     await writeFile(

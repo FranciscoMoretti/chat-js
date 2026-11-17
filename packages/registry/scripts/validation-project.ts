@@ -44,7 +44,8 @@ const defaultIdentity = { name: "validation-app", title: "Validation App" };
 export const renderValidationProject = async (
   core: ReadonlyMap<string, Uint8Array>,
   selection: InstallationSelection,
-  identity = defaultIdentity
+  identity = defaultIdentity,
+  pluginsAtCreation: readonly string[] = []
 ) => {
   const installation = await generateInstallation(selection, {
     projectFiles: core,
@@ -66,7 +67,7 @@ export const renderValidationProject = async (
     mcp: false,
     projects: false,
     feedback: false,
-    followupSuggestions: false,
+    followupSuggestions: pluginsAtCreation.includes("followup-suggestions"),
     parallelResponses: FEATURES_DEFAULTS.parallelResponses,
   };
   put(

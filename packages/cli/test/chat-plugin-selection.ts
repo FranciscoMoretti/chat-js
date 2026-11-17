@@ -1,5 +1,7 @@
 import { verifyInstallationParity } from "./installation-parity";
 import { generateInstallation } from "../../registry/scripts/installation-generator";
+import { encodeAppPreset } from "../../registry/app-preset";
+import { installationSelectionSchema } from "../../registry/installation";
 import { pluginRegistrationTargets } from "../src/utils/sync-plugins";
 import { pluginDefinitionSchema } from "../../registry/metadata";
 import { parsePackageJson } from "../src/helpers/package-manifest";
@@ -22,6 +24,12 @@ const selections = [
   "credits",
   "guest-chat",
 ] as const;
+const baseSelection = installationSelectionSchema.parse({
+  gateway: "openai",
+  sandbox: "default",
+  storage: { source: "memory" },
+});
+const basePreset = encodeAppPreset(baseSelection);
 const pluginTables = [
   "UserCredit",
   "GuestRuntimeSession",
@@ -57,19 +65,18 @@ export const testChatPluginSelections = (
     async (selection) => {
       const name = `chat-plugin-${selection}`;
       const cwd = path.join(root, name);
+      const installed = {
+        ...baseSelection,
+        plugins: selection === "none" ? [] : [selection],
+      };
       await run(root, [
         "node",
         cliEntry,
         "create",
         name,
-        "--gateway",
-        "openai",
         "--yes",
-        "--no-electron",
-        "--no-projects",
-        "--no-mcp",
-        "--no-documents",
-        "--no-attachments",
+        "--app-preset",
+        basePreset,
       ]);
 
       if (selection !== "none") {
@@ -102,12 +109,7 @@ export const testChatPluginSelections = (
       expect(installedPlugins.toSorted()).toEqual(
         selection === "none" ? [] : [selection]
       );
-      const predicted = await generateInstallation({
-        gateway: "openai",
-        storage: { source: "memory", options: {} },
-        tools: [],
-        plugins: selection === "none" ? [] : [selection],
-      });
+      const predicted = await generateInstallation(installed);
       // Compare the shared renderer with independently packaged registry installation.
       // Targets come from manifests and the real registration generator, not a test inventory.
       const targets = new Set([
@@ -129,16 +131,7 @@ export const testChatPluginSelections = (
         // oxlint-disable-next-line no-await-in-loop -- Report byte parity at the exact declared installation target.
         expect(await readFile(path.join(cwd, file), "utf-8")).toBe(expected);
       }
-      await verifyInstallationParity(
-        cwd,
-        {
-          gateway: "openai",
-          storage: { source: "memory", options: {} },
-          tools: [],
-          plugins: selection === "none" ? [] : [selection],
-        },
-        name
-      );
+      await verifyInstallationParity(cwd, installed, name);
       await run(cwd, ["bun", "run", "test:types"]);
       if (selection === "desktop") {
         const companion = path.join(cwd, "electron");
@@ -166,14 +159,9 @@ export const testChatPluginSelections = (
           cliEntry,
           "create",
           createdName,
-          "--gateway",
-          "openai",
           "--yes",
-          "--electron",
-          "--no-projects",
-          "--no-mcp",
-          "--no-documents",
-          "--no-attachments",
+          "--app-preset",
+          encodeAppPreset({ ...baseSelection, plugins: ["desktop"] }),
         ]);
         const created = path.join(root, createdName);
         expect(existsSync(path.join(created, "electron/package.json"))).toBe(
