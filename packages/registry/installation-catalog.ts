@@ -2,7 +2,7 @@ import { z } from "zod";
 import { eveCompositionIssue } from "./eve-catalog";
 import type { RegistryItem } from "shadcn/schema";
 import { gatewayDefinitionSchema } from "@chat-js/gateways/definition";
-import { sandboxDefinitionSchema } from "@chat-js/sandboxes/definition";
+import { sandboxDefinitionSchema } from "./sandbox-definition";
 import {
   pluginDefinitionSchema,
   storageDefinitionSchema,

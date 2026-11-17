@@ -19,7 +19,6 @@ import type { InstallationSelection } from "../../registry/installation";
 import { writeAgentConfiguration } from "../src/helpers/agent-configuration";
 import { parsePackageJson } from "../src/helpers/package-manifest";
 import gatewayPackage from "@chat-js/gateways/package.json";
-import sandboxPackage from "@chat-js/sandboxes/package.json";
 import formatConfig from "../../../apps/chat/oxfmt.config";
 
 const fixture: { core?: Map<string, Uint8Array> } = {};
@@ -78,10 +77,8 @@ const manifest = (source: string) => {
     if (!group) {
       continue;
     }
-    for (const pkg of [gatewayPackage, sandboxPackage]) {
-      if (group[pkg.name]?.startsWith("http://127.0.0.1:")) {
-        group[pkg.name] = pkg.version;
-      }
+    if (group[gatewayPackage.name]?.startsWith("http://127.0.0.1:")) {
+      group[gatewayPackage.name] = gatewayPackage.version;
     }
   }
   return parsed;

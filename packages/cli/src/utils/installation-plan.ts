@@ -1,7 +1,7 @@
 import { resolveItemPayload } from "#cli/registry/resolved-items";
 import { assertCurrentInstallationLayout } from "./installation-layout";
 import { readInstalledPlugins } from "./installed-plugins";
-import { sandboxDefinitionSchema } from "@chat-js/sandboxes/definition";
+import { sandboxDefinitionSchema } from "../../../registry/sandbox-definition";
 import type {
   PluginDefinition,
   ToolDefinition,

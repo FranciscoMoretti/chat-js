@@ -8,17 +8,12 @@ const URL_PATH_SLASH_LENGTH = 1;
 const registryResponseSchema = z.looseObject({
   dependencies: z.array(z.string()).optional(),
 });
-const [archive, sandboxArchive, addressFile] = process.argv.slice(
-  SCRIPT_ARGUMENTS_START_INDEX
-);
+const [archive, addressFile] = process.argv.slice(SCRIPT_ARGUMENTS_START_INDEX);
 const server = Bun.serve({
   async fetch(request: Readonly<Pick<Request, "url">>) {
     const path = new URL(request.url).pathname;
     if (path === "/contracts.tgz") {
       return new Response(Bun.file(archive));
-    }
-    if (path === "/sandboxes.tgz") {
-      return new Response(Bun.file(sandboxArchive));
     }
     if (await Bun.file(`${addressFile}.offline`).exists()) {
       return new Response("Registry unavailable during recipe replay", {
@@ -44,9 +39,6 @@ const server = Bun.serve({
         if (dependency.startsWith("@chat-js/gateways@")) {
           return `@chat-js/gateways@http://127.0.0.1:${server.port}/contracts.tgz`;
         }
-        if (dependency.startsWith("@chat-js/sandboxes@")) {
-          return `@chat-js/sandboxes@http://127.0.0.1:${server.port}/sandboxes.tgz`;
-        }
         return dependency;
       });
     }
@@ -55,19 +47,6 @@ const server = Bun.serve({
   hostname: "127.0.0.1",
   port: 0,
 });
-// The base template includes the runtime contract even without a selected provider.
-const templateManifest = pathModule.join(
-  import.meta.dir,
-  "../templates/chat-app/package.json"
-);
-const template = await Bun.file(templateManifest).text();
-await writeFile(
-  templateManifest,
-  template.replace(
-    /(?<prefix>"@chat-js\/sandboxes": )"[^"]+"/u,
-    `$<prefix>"http://127.0.0.1:${server.port}/sandboxes.tgz"`
-  )
-);
 const temporaryAddressFile = `${addressFile}.tmp`;
 await writeFile(
   temporaryAddressFile,

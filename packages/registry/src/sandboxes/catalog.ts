@@ -1,4 +1,4 @@
-import { sandboxDefinitionSchema } from "@chat-js/sandboxes/definition";
+import { sandboxDefinitionSchema } from "../../sandbox-definition";
 import registryPackage from "../../package.json";
 
 export const builtInSandboxes = [

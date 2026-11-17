@@ -1,5 +1,4 @@
 import { testFullInstallation } from "./full-installation";
-import sandboxPackage from "@chat-js/sandboxes/package.json";
 import { rejects } from "node:assert/strict";
 import { parsePackageJson } from "../src/helpers/package-manifest";
 import { requireJsonObject } from "../src/helpers/json-object";
@@ -30,13 +29,6 @@ const root = await mkdtemp(
 );
 const packageDirectory = nodePath.dirname(
   fileURLToPath(import.meta.resolve("@chat-js/gateways/package.json"))
-);
-const sandboxDirectory = nodePath.dirname(
-  fileURLToPath(import.meta.resolve("@chat-js/sandboxes/package.json"))
-);
-const sandboxArchive = nodePath.join(
-  root,
-  `chat-js-sandboxes-${sandboxPackage.version}.tgz`
 );
 const cliDirectory = nodePath.join(import.meta.dir, "..");
 const cliEntry = nodePath.join(root, "cli/node_modules/chat-js/dist/index.js");
@@ -169,9 +161,6 @@ export function createStorageAdapter(options: {bucket: string}) {
         type: "registry:item",
       });
     }
-    if (path === "/sandboxes.tgz") {
-      return new Response(Bun.file(sandboxArchive));
-    }
     if (path === "/contracts.tgz") {
       return new Response(Bun.file(archive));
     }
@@ -226,9 +215,6 @@ export function createStorageAdapter(options: {bucket: string}) {
         const item = registryResponseSchema.parse(await file.json());
         if (item.dependencies !== undefined) {
           item.dependencies = item.dependencies.map((dependency: string) => {
-            if (dependency.startsWith("@chat-js/sandboxes@")) {
-              return `@chat-js/sandboxes@http://127.0.0.1:${registryServer.port}/sandboxes.tgz`;
-            }
             if (dependency.startsWith("@chat-js/gateways@")) {
               return `@chat-js/gateways@http://127.0.0.1:${registryServer.port}/contracts.tgz`;
             }
@@ -245,8 +231,6 @@ export function createStorageAdapter(options: {bucket: string}) {
 });
 
 beforeAll(async () => {
-  await run(sandboxDirectory, ["bun", "run", "build"]);
-  await run(sandboxDirectory, ["bun", "pm", "pack", "--destination", root]);
   await run(packageDirectory, ["bun", "run", "build"]);
   await run(packageDirectory, ["bun", "pm", "pack", "--destination", root]);
   await run(nodePath.join(cliDirectory, "../registry"), [
@@ -282,20 +266,7 @@ beforeAll(async () => {
     )
   ).toEqual(first);
   await run(cliDirectory, ["bun", "run", "build"]);
-  const templateManifest = nodePath.join(
-    cliDirectory,
-    "templates/chat-app/package.json"
-  );
-  const templateContent = await readFile(templateManifest, "utf-8");
-  await writeFile(
-    templateManifest,
-    templateContent.replace(
-      `"@chat-js/sandboxes": "${sandboxPackage.version}"`,
-      `"@chat-js/sandboxes": "http://127.0.0.1:${registryServer.port}/sandboxes.tgz"`
-    )
-  );
   await run(cliDirectory, ["bun", "pm", "pack", "--destination", root]);
-  await writeFile(templateManifest, templateContent);
   await mkdir(nodePath.join(root, "cli"));
   await writeFile(
     nodePath.join(root, "cli/package.json"),
@@ -305,7 +276,6 @@ beforeAll(async () => {
       },
       overrides: {
         "@chat-js/gateways": `file:${archive}`,
-        "@chat-js/sandboxes": `file:${sandboxArchive}`,
       },
       private: true,
     })

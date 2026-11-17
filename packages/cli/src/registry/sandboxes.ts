@@ -1,4 +1,4 @@
-import { sandboxDefinitionSchema } from "@chat-js/sandboxes/definition";
+import { sandboxDefinitionSchema } from "../../../registry/sandbox-definition";
 import { itemAddress, readItem } from "./shadcn";
 
 export const resolveSandbox = async (source: string, cwd = process.cwd()) => {

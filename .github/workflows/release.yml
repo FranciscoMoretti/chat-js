@@ -89,7 +89,7 @@ jobs:
             const fs = require("fs");
             const cli = "packages/cli/package.json";
             const manifest = JSON.parse(fs.readFileSync(cli, "utf8"));
-            for (const name of ["@chat-js/gateways", "@chat-js/sandboxes"]) {
+            for (const name of ["@chat-js/gateways"]) {
               if (manifest.dependencies[name]?.startsWith("workspace:")) {
                 const workspace = `packages/${name.split("/")[1]}/package.json`;
                 manifest.dependencies[name] = JSON.parse(fs.readFileSync(workspace, "utf8")).version;

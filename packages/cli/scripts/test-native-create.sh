@@ -29,9 +29,6 @@ fi
 cleanup() {
   kill "${registry_pid:-}" 2>/dev/null || true
   wait "${registry_pid:-}" 2>/dev/null || true
-  if [ -f "$fixture_root/template-package.json" ]; then
-    cp "$fixture_root/template-package.json" "$cli_root/templates/chat-app/package.json"
-  fi
   if [ "${CHATJS_KEEP_NATIVE_FIXTURE:-0}" = 1 ]; then
     echo "Preserved native Create fixture: $fixture_root"
   else
@@ -41,13 +38,10 @@ cleanup() {
 trap cleanup EXIT
 
 bun run --cwd "$cli_root/../gateways" build > "$fixture_root/gateways-build.log" 2>&1
-bun run --cwd "$cli_root/../sandboxes" build > "$fixture_root/sandboxes-build.log" 2>&1
 bun run --cwd "$cli_root/../registry" build > "$fixture_root/registry-build.log" 2>&1
 bun run --cwd "$cli_root" build > "$fixture_root/cli-build.log" 2>&1
 bun pm --cwd "$cli_root/../gateways" pack --filename "$fixture_root/gateways.tgz" > "$fixture_root/gateways-pack.log"
-bun pm --cwd "$cli_root/../sandboxes" pack --filename "$fixture_root/sandboxes.tgz" > "$fixture_root/sandboxes-pack.log"
-cp "$cli_root/templates/chat-app/package.json" "$fixture_root/template-package.json"
-bun "$cli_root/test/serve-registry.ts" "$fixture_root/gateways.tgz" "$fixture_root/sandboxes.tgz" "$fixture_root/address" &
+bun "$cli_root/test/serve-registry.ts" "$fixture_root/gateways.tgz" "$fixture_root/address" &
 registry_pid=$!
 for attempt in {1..100}; do
   test -s "$fixture_root/address" && break
