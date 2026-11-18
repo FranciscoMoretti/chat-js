@@ -55,7 +55,6 @@ jobs:
         id: gateway-pair
         env:
           NPM_CONFIG_PROVENANCE: true
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           set -euo pipefail
           export PATH="$HOME/.npm-global/bin:$PATH"
@@ -80,17 +79,7 @@ jobs:
               echo "${name}@${version} already on npm"
             elif printf '%s' "$lookup" | grep -q 'E404'; then
               echo "Publishing ${name}@${version} on tag ${tag}"
-              if [ "${name}" = "@chat-js/gateways" ]; then
-                (
-                  auth_file="$(mktemp)"
-                  trap 'rm -f "$auth_file"' EXIT
-                  printf '//registry.npmjs.org/:_authToken=%s\n' "$NODE_AUTH_TOKEN" > "$auth_file"
-                  cd "${workspace_dir}"
-                  NPM_CONFIG_USERCONFIG="$auth_file" npm publish --access public --tag "$tag" --provenance=false
-                )
-              else
-                (cd "${workspace_dir}" && npm publish --access public --tag "${tag}")
-              fi
+              (cd "${workspace_dir}" && npm publish --access public --tag "${tag}")
             else
               echo "::error::Could not query npm for ${name}@${version}; refusing to treat a registry/authentication failure as a missing version."
               printf '%s\n' "$lookup"
