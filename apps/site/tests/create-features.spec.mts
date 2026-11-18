@@ -484,6 +484,23 @@ test("Get Code selects either library without replacing the preview", async ({
   await expect(
     dialog.getByRole("group", { name: "Template", exact: true })
   ).toHaveCount(0);
+  const appPresetCode = dialog.getByTestId("app-preset-code");
+  const expectPresetToFit = async () => {
+    await expect(appPresetCode).toHaveAttribute(
+      "title",
+      (await appPresetCode.textContent()) ?? ""
+    );
+    expect(
+      await appPresetCode.evaluate((element) => {
+        const code = element.getBoundingClientRect();
+        const summary = element.closest("dl")?.getBoundingClientRect();
+        return (
+          summary && code.left >= summary.left && code.right <= summary.right
+        );
+      })
+    ).toBe(true);
+  };
+  await expectPresetToFit();
   await uiVerify.snapshot("get code base");
   await page.screenshot({ path: testInfo.outputPath("get-code-base.png") });
   await dialog.getByRole("button", { name: "Radix UI", exact: true }).click();
@@ -513,6 +530,7 @@ test("Get Code selects either library without replacing the preview", async ({
       (element) => element.scrollWidth <= element.clientWidth
     )
   ).toBe(true);
+  await expectPresetToFit();
   await uiVerify.snapshot("get code mobile");
   await page.screenshot({ path: testInfo.outputPath("get-code-mobile.png") });
   await page.keyboard.press("Escape");
