@@ -249,11 +249,14 @@ export const ProjectForm = ({
                       }
                     )}
                     <div className="flex justify-between gap-4">
-                      <dt className="text-muted-foreground">App preset</dt>
-                      <dd>
+                      <dt className="text-muted-foreground shrink-0">
+                        App preset
+                      </dt>
+                      <dd className="min-w-0 text-right">
                         <code
                           data-testid="app-preset-code"
-                          className="select-all"
+                          className="block truncate select-all"
+                          title={appPreset ?? undefined}
                         >
                           {appPreset ?? "Complete setup first"}
                         </code>
