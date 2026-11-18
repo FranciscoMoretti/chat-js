@@ -1,5 +1,9 @@
 # @chat-js/registry
 
+## 0.2.0-beta.5
+
+Install `@chat-js/gateways@0.2.1` so generated gateway defaults match the published contract. Pair with `chat-js@1.0.0-alpha.4` and publish under `beta`.
+
 ## 0.2.0-beta.4
 
 - Publish registry sources for native EVE agents, sandbox configuration, workspace file attachments, and optional file viewers.

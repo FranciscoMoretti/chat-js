@@ -53,9 +53,9 @@ jobs:
       # when preparing the next pair, and publish the registry before the CLI.
       - name: Publish matched gateway registry and CLI
         id: gateway-pair
-        continue-on-error: true
         env:
           NPM_CONFIG_PROVENANCE: true
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           set -euo pipefail
           export PATH="$HOME/.npm-global/bin:$PATH"
@@ -80,7 +80,17 @@ jobs:
               echo "${name}@${version} already on npm"
             elif printf '%s' "$lookup" | grep -q 'E404'; then
               echo "Publishing ${name}@${version} on tag ${tag}"
-              (cd "${workspace_dir}" && npm publish --access public --tag "${tag}")
+              if [ "${name}" = "@chat-js/gateways" ]; then
+                (
+                  auth_file="$(mktemp)"
+                  trap 'rm -f "$auth_file"' EXIT
+                  printf '//registry.npmjs.org/:_authToken=%s\n' "$NODE_AUTH_TOKEN" > "$auth_file"
+                  cd "${workspace_dir}"
+                  NPM_CONFIG_USERCONFIG="$auth_file" npm publish --access public --tag "$tag" --provenance=false
+                )
+              else
+                (cd "${workspace_dir}" && npm publish --access public --tag "${tag}")
+              fi
             else
               echo "::error::Could not query npm for ${name}@${version}; refusing to treat a registry/authentication failure as a missing version."
               printf '%s\n' "$lookup"
@@ -89,7 +99,8 @@ jobs:
           }
 
           bun run --cwd packages/gateways build
-          publish_exact packages/registry 0.2.0-beta.4
+          publish_exact packages/gateways 0.2.1
+          publish_exact packages/registry 0.2.0-beta.5
           node -e '
             const fs = require("fs");
             const cli = "packages/cli/package.json";
@@ -102,11 +113,18 @@ jobs:
             }
             fs.writeFileSync(cli, `${JSON.stringify(manifest, null, 2)}\n`);
           '
-          publish_exact packages/cli 1.0.0-alpha.3
+          bun run --cwd packages/cli build
+          publish_exact packages/cli 1.0.0-alpha.4
+
+      - name: Verify published installation
+        if: steps.gateway-pair.outcome == 'success'
+        env:
+          CHATJS_KEEP_PUBLISHED_FIXTURE: 1
+        run: bun run --cwd packages/cli test:published
 
       - name: Create Release Pull Request or Publish
         id: changesets
-        if: always()
+        if: always() && github.ref == 'refs/heads/main'
         uses: changesets/action@v1
         with:
           publish: ${{ steps.gateway-pair.outcome == 'success' && 'bun run release' || '' }}
@@ -122,7 +140,7 @@ jobs:
       # @chat-js/thread (or similar first releases) off npm. Do not publish
       # the old version while Changesets is still preparing a version PR.
       - name: Publish first-time packages
-        if: always() && steps.changesets.outputs.hasChangesets == 'false' && (steps.changesets.outcome == 'success' || steps.changesets.outcome == 'failure')
+        if: always() && github.ref == 'refs/heads/main' && steps.changesets.outputs.hasChangesets == 'false' && (steps.changesets.outcome == 'success' || steps.changesets.outcome == 'failure')
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

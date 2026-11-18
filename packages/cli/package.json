@@ -1,6 +1,6 @@
 {
   "name": "chat-js",
-  "version": "1.0.0-alpha.3",
+  "version": "1.0.0-alpha.4",
   "private": false,
   "description": "CLI for creating and extending ChatJS apps",
   "keywords": [
@@ -43,6 +43,7 @@
     "prepublishOnly": "bun run build && node ./dist/index.js --help >/dev/null",
     "test:native-create": "bash scripts/test-native-create.sh",
     "test:scaffold": "bash scripts/test-scaffold.sh",
+    "test:published": "bash scripts/test-published.sh",
     "test:gateways": "bun run template:sync && bun test --timeout 180000 ./test/gateway-selection.test.ts",
     "test:types": "tsc --noEmit",
     "lint": "oxlint . && oxfmt --check .",
