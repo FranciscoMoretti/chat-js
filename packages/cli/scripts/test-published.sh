@@ -4,9 +4,13 @@ set -euo pipefail
 # Release boundary: install from npm and the public registry, without local
 # tarball overrides. This deliberately does not use the workspace CLI build.
 cli_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-cli_version="$(cd "$cli_root" && node -p 'require("./package.json").version')"
-gateway_version="$(cd "$cli_root/../gateways" && node -p 'require("./package.json").version')"
-registry_version="$(cd "$cli_root/../registry" && node -p 'require("./package.json").version')"
+if [ "$#" -ne 0 ] && [ "$#" -ne 3 ]; then
+  echo "Usage: $0 [cli-version gateway-version registry-version]" >&2
+  exit 1
+fi
+cli_version="${1:-$(cd "$cli_root" && node -p 'require("./package.json").version')}"
+gateway_version="${2:-$(cd "$cli_root/../gateways" && node -p 'require("./package.json").version')}"
+registry_version="${3:-$(cd "$cli_root/../registry" && node -p 'require("./package.json").version')}"
 fixture_root="$(mktemp -d /tmp/chatjs-published-XXXXXX)"
 cleanup() {
   if [ "${CHATJS_KEEP_PUBLISHED_FIXTURE:-0}" = 1 ]; then
