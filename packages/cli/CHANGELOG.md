@@ -1,5 +1,9 @@
 # chat-js
 
+## 1.0.0-alpha.4
+
+Pin new applications to registry `0.2.0-beta.5` and `@chat-js/gateways@0.2.1`, fixing fresh installations that failed typechecking because the old published contract required `anonymousModels`. Publish under `alpha`, preserving `latest`.
+
 ## 1.0.0-alpha.3
 
 - Generate native EVE agents from builder selections, including registry tools, connections, channels, extensions, memory, observability, and registry-installed skills.

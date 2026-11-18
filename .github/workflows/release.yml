@@ -53,7 +53,6 @@ jobs:
       # when preparing the next pair, and publish the registry before the CLI.
       - name: Publish matched gateway registry and CLI
         id: gateway-pair
-        continue-on-error: true
         env:
           NPM_CONFIG_PROVENANCE: true
         run: |
@@ -89,7 +88,8 @@ jobs:
           }
 
           bun run --cwd packages/gateways build
-          publish_exact packages/registry 0.2.0-beta.4
+          publish_exact packages/gateways 0.2.1
+          publish_exact packages/registry 0.2.0-beta.5
           node -e '
             const fs = require("fs");
             const cli = "packages/cli/package.json";
@@ -102,14 +102,22 @@ jobs:
             }
             fs.writeFileSync(cli, `${JSON.stringify(manifest, null, 2)}\n`);
           '
-          publish_exact packages/cli 1.0.0-alpha.3
+          bun run --cwd packages/cli build
+          publish_exact packages/cli 1.0.0-alpha.4
+
+      - name: Verify published installation
+        id: published-install
+        if: steps.gateway-pair.outcome == 'success'
+        env:
+          CHATJS_KEEP_PUBLISHED_FIXTURE: 1
+        run: bun run --cwd packages/cli test:published 1.0.0-alpha.4 0.2.1 0.2.0-beta.5
 
       - name: Create Release Pull Request or Publish
         id: changesets
-        if: always()
+        if: always() && github.ref == 'refs/heads/main'
         uses: changesets/action@v1
         with:
-          publish: ${{ steps.gateway-pair.outcome == 'success' && 'bun run release' || '' }}
+          publish: ${{ steps.gateway-pair.outcome == 'success' && steps.published-install.outcome == 'success' && 'bun run release' || '' }}
           title: "chore: version releases"
           commit: "chore: version releases"
         env:
@@ -122,7 +130,7 @@ jobs:
       # @chat-js/thread (or similar first releases) off npm. Do not publish
       # the old version while Changesets is still preparing a version PR.
       - name: Publish first-time packages
-        if: always() && steps.changesets.outputs.hasChangesets == 'false' && (steps.changesets.outcome == 'success' || steps.changesets.outcome == 'failure')
+        if: always() && github.ref == 'refs/heads/main' && steps.published-install.outcome == 'success' && steps.changesets.outputs.hasChangesets == 'false' && (steps.changesets.outcome == 'success' || steps.changesets.outcome == 'failure')
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
