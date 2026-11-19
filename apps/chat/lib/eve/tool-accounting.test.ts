@@ -50,11 +50,23 @@ describe("native tool accounting assembly", () => {
       type: "text",
       value: "done",
     });
-    expect(tool.label?.complete?.({ value: "done" }, receipt)).toBe("done");
-    expect(tool.label?.delta?.({ value: "done" }, receipt)).toBe("done");
+    const label = tool.label === false ? undefined : tool.label;
+    expect(label?.complete?.({ value: "done" }, receipt)).toBe("done");
+    expect(label?.delta?.({ value: "done" }, receipt)).toBe("done");
     expect(
       typeof tool.endsTurn === "function" && (await tool.endsTurn(receipt))
     ).toBe(true);
+  });
+
+  it("preserves a tool's disabled label", () => {
+    const tool = defineTool({
+      description: "Example without a label",
+      inputSchema: z.object({}),
+      execute: () => "done",
+      label: false,
+    });
+
+    expect(withToolAccounting(tool, "none").label).toBe(false);
   });
 
   it("retains native failures and prevents execution after cancellation", async () => {

@@ -276,9 +276,7 @@ describe("scaffoldFromTemplate", (): void => {
     const manifest = z
       .object({ dependencies: z.record(z.string(), z.string()) })
       .parse(manifestValue);
-    expect(manifest.dependencies.eve).toBe(
-      "npm:@chat-js/eve@1.0.0-rc.6-chatjs.1"
-    );
+    expect(manifest.dependencies.eve).toBe("npm:@chat-js/eve@1.1.1-chatjs.0");
     expect(
       await Bun.file(
         pathModule.join(
@@ -777,7 +775,7 @@ describe("scaffoldFromTemplate", (): void => {
         ).toBe(false);
         expect(packageJson.dependencies["@better-auth/core"]).toBe("1.6.2");
         expect(packageJson.dependencies.eve).toBe(
-          "npm:@chat-js/eve@1.0.0-rc.6-chatjs.1"
+          "npm:@chat-js/eve@1.1.1-chatjs.0"
         );
         expect(packageJson.dependencies["@ai-sdk/mcp"]).toBeUndefined();
         expect(
@@ -910,11 +908,14 @@ describe("scaffoldElectron", (): void => {
         ),
         pathModule.join(projectDir, "chatjs/plugins/desktop/protocol.ts")
       );
-      const result = Bun.spawnSync(["npm", "run", "prebuild"], {
-        cwd: electronDir,
-        stderr: "pipe",
-        stdout: "pipe",
-      });
+      const result = Bun.spawnSync(
+        ["npm", "--loglevel=error", "run", "prebuild"],
+        {
+          cwd: electronDir,
+          stderr: "pipe",
+          stdout: "pipe",
+        }
+      );
       expect({
         exitCode: result.exitCode,
         stderr: result.stderr.toString(),

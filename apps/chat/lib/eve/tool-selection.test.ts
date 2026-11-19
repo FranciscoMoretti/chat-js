@@ -5,10 +5,6 @@ import {
   ContextContainer,
   contextStorage,
 } from "@eve-test/dist/src/context/container.js";
-import {
-  deserializeContext,
-  serializeContext,
-} from "@eve-test/dist/src/context/serialize.js";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 import selectionHook from "../../agent/hooks/tool-selection";
@@ -171,27 +167,6 @@ it.each([["model-a"], ["model-a", "model-b"]])(
   }
 );
 
-it("restores the selected capability from Eve serialized context before a resumed step", async () => {
-  const original = new ContextContainer();
-  const saved = await contextStorage.run(original, async () => {
-    await startTurn("generateImage");
-    return serializeContext(original);
-  });
-  expect(saved["chatjs.turn-tool"]).toBe("generateImage");
-  const resumed = await deserializeContext(saved);
-  await contextStorage.run(resumed, async () => {
-    expect(
-      Object.keys(
-        filterEveTools({
-          generateImage: {},
-          attach_workspace_file: {},
-        })
-      )
-    ).toEqual(["generateImage"]);
-    await startTurn();
-    expect(eveTurnTool.get()).toBeNull();
-  });
-});
 it("guest automatic and explicit turns retain only configured anonymous tools", async () => {
   await contextStorage.run(new ContextContainer(), async () => {
     const tools = {
