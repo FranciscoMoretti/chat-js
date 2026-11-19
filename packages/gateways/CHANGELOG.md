@@ -1,5 +1,9 @@
 # @chat-js/gateways
 
+## 0.2.2
+
+Align the AI SDK peer dependencies with eve 1.1 so npm can install generated apps.
+
 ## 0.2.1
 
 Publish the current gateway defaults contract without `anonymousModels`. Generated applications keep anonymous access in the Guest Chat plugin. This fixes fresh installations whose gateway configuration failed to satisfy the stale published type in `0.2.0`.

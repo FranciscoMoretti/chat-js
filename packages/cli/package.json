@@ -1,6 +1,6 @@
 {
   "name": "chat-js",
-  "version": "1.0.0-alpha.4",
+  "version": "1.0.0-alpha.5",
   "private": false,
   "description": "CLI for creating and extending ChatJS apps",
   "keywords": [
@@ -67,7 +67,7 @@
     "@types/bun": "latest",
     "@types/node": "22.13.10",
     "@vercel/sandbox": "3.3.0",
-    "eve": "npm:@chat-js/eve@1.0.0-rc.6-chatjs.1",
+    "eve": "npm:@chat-js/eve@1.1.1-chatjs.0",
     "next": "16.3.0",
     "playwright": "^1.59.1",
     "png2icons": "^2.0.1",

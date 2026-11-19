@@ -3,19 +3,19 @@ export const gatewayMetadata = {
     dependency: "@ai-sdk/gateway",
     exportName: "VercelGateway",
     supportsVideo: true,
-    version: "4.0.110",
+    version: "4.0.145",
   },
   openai: {
     dependency: "@ai-sdk/openai",
     exportName: "OpenAIGateway",
     supportsVideo: false,
-    version: "4.0.59",
+    version: "4.0.117",
   },
   "openai-compatible": {
     dependency: "@ai-sdk/openai-compatible",
     exportName: "OpenAICompatibleGateway",
     supportsVideo: false,
-    version: "3.0.44",
+    version: "3.0.92",
   },
   openrouter: {
     dependency: "@openrouter/ai-sdk-provider",
@@ -28,7 +28,7 @@ export const gatewayMetadata = {
     dependency: "@ai-sdk/openai-compatible",
     exportName: "LiteLLMGateway",
     supportsVideo: false,
-    version: "3.0.44",
+    version: "3.0.92",
   },
 } as const;
 

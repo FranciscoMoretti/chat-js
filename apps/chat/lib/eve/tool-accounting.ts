@@ -63,34 +63,35 @@ export const withToolAccounting = <Input, Output extends ToolOutput>(
         ? async (result) =>
             result.status === "success" && (await endsTurn(result.output))
         : endsTurn,
-    label: label
-      ? {
-          start: (input) => label.start(input),
-          ...(label.delta
-            ? {
-                delta: (
-                  input: Readonly<Input>,
-                  result: Readonly<ToolResult<Output>>
-                ) =>
-                  result.status === "success"
-                    ? (label.delta?.(input, result.output) ??
-                      label.start(input))
-                    : label.start(input),
-              }
-            : {}),
-          ...(label.complete
-            ? {
-                complete: (
-                  input: Readonly<Input>,
-                  result: Readonly<ToolResult<Output>>
-                ) =>
-                  result.status === "success"
-                    ? (label.complete?.(input, result.output) ??
-                      label.start(input))
-                    : label.start(input),
-              }
-            : {}),
-        }
-      : undefined,
+    label:
+      label !== undefined && label !== false
+        ? {
+            start: (input) => label.start(input),
+            ...(label.delta
+              ? {
+                  delta: (
+                    input: Readonly<Input>,
+                    result: Readonly<ToolResult<Output>>
+                  ) =>
+                    result.status === "success"
+                      ? (label.delta?.(input, result.output) ??
+                        label.start(input))
+                      : label.start(input),
+                }
+              : {}),
+            ...(label.complete
+              ? {
+                  complete: (
+                    input: Readonly<Input>,
+                    result: Readonly<ToolResult<Output>>
+                  ) =>
+                    result.status === "success"
+                      ? (label.complete?.(input, result.output) ??
+                        label.start(input))
+                      : label.start(input),
+                }
+              : {}),
+          }
+        : label,
   });
 };

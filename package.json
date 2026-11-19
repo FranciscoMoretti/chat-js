@@ -97,7 +97,8 @@
   },
   "overrides": {
     "//astro": "Pinned to Blume's Astro version so workspace hoisting cannot bind Blume integrations to an incompatible copy.",
-    "astro": "7.3.1"
+    "astro": "7.3.1",
+    "eve": "npm:@chat-js/eve@1.1.1-chatjs.0"
   },
   "engines": {
     "node": ">=24"

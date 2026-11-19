@@ -416,7 +416,7 @@ export class MCPClient {
       throw new Error("Client not connected");
     }
     try {
-      return await client.experimental_listPrompts();
+      return await client.listPrompts();
     } catch (error) {
       await this.handlePotentialAuthError(error, client);
       throw error;

@@ -294,7 +294,7 @@ it.each(["tools", "listResources", "listPrompts"] as const)(
     mocks.create
       .mockResolvedValueOnce({
         close: oldClose,
-        experimental_listPrompts: oldMethod,
+        listPrompts: oldMethod,
         listResources: oldMethod,
         tools: oldMethod,
       })

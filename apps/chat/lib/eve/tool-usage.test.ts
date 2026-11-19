@@ -1,7 +1,3 @@
-import {
-  createRuntimeToolResultFromToolError,
-  createToolResultMessagePartFromToolError,
-} from "@eve-test/dist/src/harness/action-result-helpers.js";
 import { expect, test, vi } from "vitest";
 
 import {
@@ -97,34 +93,6 @@ test.each([
   ).rejects.toMatchObject({
     cause: failure,
     message: "Unexpected tool failure.",
-  });
-});
-
-test("EVE projects normalized failures into failed actions and model error text", async () => {
-  const failure: unknown = await executeWithToolUsage(
-    context(),
-    vi.fn<() => Promise<never>>().mockRejectedValue({ credentials: "private" })
-  ).catch((error: unknown) => error);
-  const toolError = {
-    error: failure,
-    input: {},
-    toolCallId: "call-1",
-    toolName: "meteredTool",
-    type: "tool-error",
-  } satisfies Parameters<typeof createRuntimeToolResultFromToolError>[0];
-  expect(createRuntimeToolResultFromToolError(toolError)).toEqual({
-    callId: "call-1",
-    errorName: "Error",
-    isError: true,
-    kind: "tool-result",
-    output: "Unexpected tool failure.",
-    toolName: "meteredTool",
-  });
-  expect(createToolResultMessagePartFromToolError(toolError)).toEqual({
-    output: { type: "error-text", value: "Unexpected tool failure." },
-    toolCallId: "call-1",
-    toolName: "meteredTool",
-    type: "tool-result",
   });
 });
 
