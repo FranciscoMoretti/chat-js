@@ -7,10 +7,10 @@ import {
 } from "../config";
 import { createAuthClient } from "better-auth/client";
 import { electronClient } from "@better-auth/electron/client";
-import { safeStorage } from "electron";
+import { app, safeStorage } from "electron";
 import { storage } from "@better-auth/electron/storage";
 
-if (process.env.NODE_ENV !== "production") {
+if (!app.isPackaged) {
   Object.defineProperty(safeStorage, "isEncryptionAvailable", {
     configurable: true,
     value: (): boolean => false,
@@ -30,8 +30,7 @@ const memoryStorage = (): {
   };
 };
 
-const electronAuthStorage =
-  process.env.NODE_ENV === "production" ? storage() : memoryStorage();
+const electronAuthStorage = app.isPackaged ? storage() : memoryStorage();
 
 const electronAuthClient = createAuthClient({
   baseURL: APP_URL,

@@ -7,6 +7,7 @@ import { MissingCredentialsError } from "@/lib/required-credentials";
 const HTTP_STATUS = {
   temporaryRedirect: 307,
 };
+const PUBLIC_ORIGIN = "https://chat.example.test";
 
 const mocks = vi.hoisted(() => {
   const params: {
@@ -22,6 +23,8 @@ const mocks = vi.hoisted(() => {
   };
   return {
     deleteSession: vi.fn(),
+    finishAuth: vi.fn(),
+    getConnector: vi.fn(),
     getSession: vi.fn(),
     invalidate: vi.fn(),
     params,
@@ -33,7 +36,7 @@ vi.mock("@/chatjs/plugins/mcp/setup", () => ({
   requireMcpCredentials: mocks.requireCredentials,
 }));
 vi.mock("@/chatjs/plugins/mcp/oauth/mcp-client-manager", () => ({
-  createMcpClientForCallback: vi.fn(),
+  createMcpClientForCallback: () => ({ finishAuth: mocks.finishAuth }),
   removeMcpClient: mocks.removeClient,
 }));
 vi.mock("@/chatjs/plugins/mcp/oauth/cache", () => ({
@@ -41,7 +44,7 @@ vi.mock("@/chatjs/plugins/mcp/oauth/cache", () => ({
 }));
 vi.mock("@/chatjs/plugins/mcp/db/mcp-queries", () => ({
   deletePendingSessionByState: mocks.deleteSession,
-  getMcpConnectorById: vi.fn(),
+  getMcpConnectorById: mocks.getConnector,
   getSessionByState: mocks.getSession,
 }));
 vi.mock("@/lib/logger", () => ({
@@ -64,6 +67,40 @@ beforeEach(() => {
   };
 });
 
+it("returns a successful proxy-hosted callback to the browser's origin", async () => {
+  mocks.getSession.mockResolvedValue({ mcpConnectorId: "connector" });
+  mocks.getConnector.mockResolvedValue({ id: "connector" });
+
+  const response = await GET(
+    new NextRequest(
+      "https://deploy.example.test/api/mcp/oauth/callback?code=code&state=state"
+    )
+  );
+
+  expect(mocks.finishAuth).toHaveBeenCalledWith("code", "state");
+  expect(response.status).toBe(HTTP_STATUS.temporaryRedirect);
+  expect(response.headers.get("location")).toBe(
+    "/settings/connectors/connector?connected=1"
+  );
+});
+
+it("rejects an unknown OAuth state before connecting", async () => {
+  const response = await GET(
+    new NextRequest(
+      `${PUBLIC_ORIGIN}/api/mcp/oauth/callback?code=code&state=state`
+    )
+  );
+  const location = new URL(
+    response.headers.get("location") ?? "",
+    PUBLIC_ORIGIN
+  );
+  expect(location.searchParams.get("error")).toBe(
+    "Invalid or expired session. Please try again."
+  );
+  expect(mocks.getConnector).not.toHaveBeenCalled();
+  expect(mocks.finishAuth).not.toHaveBeenCalled();
+});
+
 it("redirects an OAuth callback with an explicit setup error before accessing connector secrets", async () => {
   mocks.requireCredentials.mockImplementation(() => {
     throw new MissingCredentialsError("mcp", [
@@ -76,7 +113,10 @@ it("redirects an OAuth callback with an explicit setup error before accessing co
     )
   );
   expect(response.status).toBe(HTTP_STATUS.temporaryRedirect);
-  const location = new URL(response.headers.get("location") ?? "");
+  const location = new URL(
+    response.headers.get("location") ?? "",
+    PUBLIC_ORIGIN
+  );
   expect(location.pathname).toBe("/settings/connectors");
   expect(location.searchParams.get("error")).toBe(
     "Missing credentials for mcp: MCP_ENCRYPTION_KEY"
@@ -99,7 +139,10 @@ it("provider cancellation deletes only pending state and returns a safe connecto
       "https://chat.example.test/api/mcp/oauth/callback?error=access_denied&state=state"
     )
   );
-  const location = new URL(response.headers.get("location") ?? "");
+  const location = new URL(
+    response.headers.get("location") ?? "",
+    PUBLIC_ORIGIN
+  );
   expect(location.pathname).toBe("/settings/connectors/connector");
   expect(location.searchParams.get("error")).toBe(
     "Authorization was not completed. Please try connecting again."
@@ -141,7 +184,10 @@ it.each([
         "https://chat.example.test/api/mcp/oauth/callback?error=access_denied&state=state"
       )
     );
-    const location = new URL(response.headers.get("location") ?? "");
+    const location = new URL(
+      response.headers.get("location") ?? "",
+      PUBLIC_ORIGIN
+    );
     expect(location.pathname).toBe(
       session ? "/settings/connectors/connector" : "/settings/connectors"
     );
