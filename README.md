@@ -8,137 +8,78 @@
 
 # ChatJS
 
-Stop rebuilding the same AI chat infrastructure. ChatJS gives you an EVE-native foundation with authentication, models, streaming, and tools so you can focus on what makes your app unique.
+**The building blocks for your AI app.**
 
-[**Website**](https://chatjs.dev) · [**Live Demo**](https://demo.chatjs.dev) · [**Documentation**](https://chatjs.dev/docs)
+Start with a working AI chat. Choose your models and tools. Own the code.
 
-![DemosOnly](https://github.com/user-attachments/assets/f12e89dd-c10c-4e06-9b1a-a9fbd809d234)
+[**Create an app**](https://www.chatjs.dev/create) · [**Try the demo**](https://demo.chatjs.dev) · [**Read the docs**](https://www.chatjs.dev/docs)
 
 </div>
 
-<br />
+> **ChatJS 1.0 is in alpha.** Use `chat-js@alpha` to try it. APIs, configuration, and generated code may change before the stable release.
 
-## CLI
+## Quickstart
 
-Create a new ChatJS app:
+Use Node.js 24 or newer. You can scaffold interactively from the terminal. The browser builder lets you preview the UI, configure the agent, and copy a tailored command. [Open the builder](https://www.chatjs.dev/create)
 
-```bash
+```sh
 npx chat-js@alpha create my-app
+cd my-app
+cp .env.example .env.local
 ```
 
-The CLI walks you through gateway, features, and auth choices, generates `chat.config.ts`, and lists the env vars required by your selections.
+The CLI asks which gateway, authentication providers, and optional features to include. Fill in `.env.local` with your PostgreSQL connection, gateway and authentication credentials, and any settings required by your selections. Generate `AUTH_SECRET` and `EVE_GATEWAY_SECRET` separately with `openssl rand -base64 32`. [Full setup guide](https://www.chatjs.dev/docs/quickstart)
 
-## Features
+```sh
+npm run setup
+npm run dev
+```
 
-- **120+ Models**: Claude, GPT, Gemini, Grok via one API
-- **Auth**: GitHub, Google, anonymous. Ready to go.
-- **Attachments**: Images, PDFs, docs. Drag and drop.
-- **Native EVE Runtime**: Durable conversations, approvals, and recovery
-- **Branching**: Fork conversations, explore alternatives
-- **Sharing**: Share conversations with public links
-- **Web Search**: Real-time web search integration
-- **Image Generation**: AI-powered image creation
-- **Code Execution**: Run code snippets in sandbox
-- **MCP**: Model Context Protocol support
-- **Desktop App**: Package as a native macOS, Windows, or Linux app with Electron
+The setup command applies app migrations and prepares EVE's workflow database. Open [localhost:3000](http://localhost:3000) to sign in and send your first message.
 
-## Stack
+## What you get
 
-- [Next.js](https://nextjs.org) - App Router, React Server Components
-- [TypeScript](https://www.typescriptlang.org) - Full type safety
-- [AI SDK](https://ai-sdk.dev/) - The AI Toolkit for TypeScript
-- [AI Gateway](https://vercel.com/ai-gateway) - Unified access to 120+ AI models
-- [Better Auth](https://www.better-auth.com) - Authentication & authorization
-- [Drizzle ORM](https://orm.drizzle.team) - Type-safe database queries
-- [PostgreSQL](https://www.postgresql.org) - Primary database
-- [EVE](https://github.com/openai/eve) - Durable conversation runtime
-- [Vercel Blob](https://vercel.com/storage/blob) - Blob storage
-- [Shadcn/UI](https://ui.shadcn.com) - Beautiful, accessible components
-- [Tailwind CSS](https://tailwindcss.com) - Styling
-- [tRPC](https://trpc.io) - End-to-end type-safe APIs
-- [Zod](https://zod.dev) - Schema validation
-- [Motion](https://motion.dev) - Animations
-- [t3-env](https://env.t3.gg) - Environment variables
-- [Pino](https://getpino.io) - Structured Logging
-- EVE instrumentation - agent observability
-- [Vercel Analytics](https://vercel.com/analytics) - Web analytics
-- [Oxlint and Oxfmt](https://oxc.rs) - Code linting and formatting
-- [Ultracite](https://ultracite.ai) - Oxlint and Oxfmt presets for humans and AI
-- [Streamdown](https://streamdown.ai/) - Markdown for AI streaming
-- [AI Elements](https://elements.ai-sdk.dev/overview) - AI-native Components
-- [AI SDK Tools](https://ai-sdk-tools.dev/) - Developer tools for AI SDK
+- **A working chat app.** Next.js, TypeScript, and shadcn/ui with streaming responses, saved conversations, and Better Auth. Scaffold with Base UI or Radix.
+- **A durable agent runtime.** EVE runs conversations and tools, persists execution state, handles approvals, and lets the client reconnect to an in-progress response. [Architecture](https://www.chatjs.dev/docs/core/architecture)
+- **Your choice of models.** Use Vercel AI Gateway, OpenRouter, OpenAI, LiteLLM, or an OpenAI-compatible endpoint. [Gateways](https://www.chatjs.dev/docs/gateways/overview)
+- **Optional capabilities.** Add uploads, projects, and sharing, or equip the agent with web search, code execution, image generation, or MCP connectors. [Tools](https://www.chatjs.dev/docs/tools/overview) · [Plugins](https://www.chatjs.dev/docs/plugins/overview)
 
-## Monorepo Layout
+## Make it yours
 
-- `apps/site`: Landing page ([chatjs.dev](https://chatjs.dev))
-- `apps/chat`: Next.js chat app ([demo.chatjs.dev](https://demo.chatjs.dev))
-- `apps/docs`: Blume docs ([chatjs.dev/docs](https://chatjs.dev/docs))
-- `packages/cli`: interactive scaffold CLI
-- [`packages/brand`](packages/brand/README.md): approved logo, icons, square patterns, product artwork and export scripts
+Change branding, model defaults, and app settings in `chat.config.ts`. Customize agent behavior in `agent/agent.ts`. Tools and plugins are installed as source files you can edit and commit with your app. [Source ownership](https://www.chatjs.dev/docs/core/source-ownership)
 
-## Development
+To add MCP connectors, run this from inside your app.
 
-- `bun dev`: mirror canonical registry sources into the reference app, watch for edits, and run the chat app
-- `bun dev:query`: run chat with React Query Devtools
-- `bun dev:scan`: run chat with React Scan
-- `bun dev:debug`: run chat with both tools
-- `bun dev:info`: print this worktree's assigned app URLs
-- `bun dev:docs`: run docs
-- `bun lint`: check repository-wide Oxlint rules and Oxfmt formatting, plus docs health
-- `bun format`: format the repository with Oxfmt
-- `bun lint:fix`: apply safe Oxlint fixes
-- `bun test:types`: type-check the workspaces
+```sh
+npx chat-js@alpha add mcp
+```
 
-Ultracite supplies the Oxlint and Oxfmt presets. All files receive the full presets. Necessary exceptions are documented at the affected source lines rather than disabled through file-wide baselines. Oxfmt skips build output and the five generated registration indexes whose exact content hashes are verified by `chat-js sync`.
+Generate `MCP_ENCRYPTION_KEY` with `openssl rand -base64 32` and set it in `.env.local`. Run `npm run db:generate`, review the generated SQL, then apply it with `npm run db:migrate`. [MCP setup](https://www.chatjs.dev/docs/plugins/mcp) · [CLI reference](https://www.chatjs.dev/docs/cli)
 
-Plugin implementations belong in `packages/registry/src/plugins/<id>/src`; framework adapters live beside them in `adapters/`. Save those files while root `bun dev` runs to update the reference app automatically. The selection comes only from `demoInstallation` in `packages/registry/installation.ts`. See [registry-mirror development](packages/registry/DEVELOPMENT.md) for generated-file ownership, file declarations, and the runner comparison.
+Deploy the web app on Vercel or self-host it with Docker or Node.js. Add the Electron companion to package your app for macOS, Windows, and Linux. [Deployment guides](https://www.chatjs.dev/docs/deployment) · [Desktop guide](https://www.chatjs.dev/docs/deployment/desktop)
 
-Stop the dev server before switching debug commands, then reload the page. Both integrations remain available without reinstalling anything; React Scan loads from its existing CDN script. These flags only enable tools in development.
+## Contributing
 
-Set `CHATJS_DEV_SLOT` in `.env.worktree.local` to reserve a stable range of ten ports per worktree. Within each range, chat uses offset `0`, Electron uses `1`, and the site uses `2`, as configured in `.worktree-env.json`. The local file is ignored by Git and kept separate from Vercel-managed `.env.local`. Run `bun dev:info` instead of assuming a port.
+This repository contains the [reference app](apps/chat), [site and builder](apps/site), [docs](apps/docs), [Electron companion](apps/electron), [CLI](packages/cli), and [source registry](packages/registry).
 
-### Native Eve runtime
+For a fresh checkout, use Node.js 24+ and Bun from the repository root.
 
-EVE is the sole ChatJS conversation runtime. It owns the durable transcript, execution state, approvals, checkpoints, and stream recovery. ChatJS owns authenticated access, conversation metadata, projects, sharing, files, documents, and billing evidence around that runtime. Historical ChatJS conversations are not imported.
+```sh
+bun install
+cp apps/chat/.env.example .env.local
+# Fill in the environment variables for the reference app.
+bun run setup
+bun dev
+```
 
-Local EVE development requires Node 24+, Bun, ChatJS and Workflow World Postgres configuration, and the EVE gateway secret specified by the app environment schema. Use isolated local databases while developing or validating lifecycle changes.
+Use `bun dev:info` to find your local app URLs and `bun dev:docs` to work on the docs. For unattended local development on macOS, `bun dev:service start` registers supervision at login. Use `bun dev:health` to check readiness and `bun dev:service stop` to unregister it.
 
-The EVE-only runtime does not itself establish production readiness. Provider deletion coverage and guest-hosting readiness remain release gates. See [the migration report](docs/eve-migration-report.md) for the current boundary and historical validation evidence.
-
-## Releases
-
-Releases are driven by Changesets, except for the CLI during its alpha period.
-
-- Add a changeset for each releasable package you change.
-- Merge the generated version PR from the Changesets workflow.
-- Public packages publish to npm.
-- Desktop installers for `@chat-js/electron` publish to GitHub Releases.
-
-The `chat-js` CLI is excluded from automatic Changesets versioning while its APIs are changing. For each CLI release, update `packages/cli/package.json` to the next unused alpha version and run `bun install` to synchronize the lockfile. Publish the audited prerelease explicitly with `bun publish --tag alpha` from `packages/cli`; consumers use `npx chat-js@alpha`. The `latest` tag intentionally also points to the explicitly approved `1.0.0-alpha.1`; this does not declare a stable release. The release guard permits only that exact prerelease as the default. Before the stable 1.0 launch, remove `chat-js` from `.changeset/config.json`’s `ignore` list, restore the `latest` publish tag, remove the alpha exception from `scripts/release-guard.ts`, and prepare the stable release.
-
-Configure the `chat-js` package’s GitHub Actions trusted publisher on npm for owner `FranciscoMoretti`, repository `chat-js`, and workflow `release.yml`, without a GitHub environment. Trusted publisher settings are specific to each npm package.
+For registry changes, edit `packages/registry/src` and the relevant manifests. The development server mirrors them into `apps/chat`. Run `bun lint`, `bun test:types`, and the relevant tests before opening a PR. [Repository instructions](AGENTS.md) · [Registry development](packages/registry/DEVELOPMENT.md) · [Release process](https://www.chatjs.dev/docs/reference/desktop-releases)
 
 ## License
 
-Apache-2.0
+[Apache 2.0](LICENSE)
 
-<br />
 <a href="https://vercel.com/oss">
   <img alt="Vercel OSS Program" src="https://vercel.com/oss/program-badge.svg" />
 </a>
-<br />
-
-### Local EVE runtime
-
-`bun dev` starts the local application with its EVE runtime. Keep its configured databases isolated from shared environments.
-
-For unattended local development on macOS:
-
-```sh
-bun dev:service start   # launchd supervision for this checkout; also starts at login
-bun dev:health         # bounded ChatJS + Eve + database readiness check
-bun dev:service status # process state and log location
-bun dev:service stop   # stop this checkout and remove its login startup entry
-```
-
-Stop a manually running `bun dev` before starting the service. Each checkout has its own service identity and worktree port. The supervisor checks readiness every ten seconds. Startup gets three minutes initially, then six and at most ten minutes after consecutive unsuccessful launches, so slow compilation can finish. Eve's development startup timeout is also ten minutes. Once healthy, the runtime must remain unavailable for two minutes across at least three failed checks before it is replaced. A successful readiness check resets the startup allowance; process exits still trigger recovery immediately. Restarts back off to sixty seconds. Node heaps are capped at 4 GiB per process; this is not a total system memory cap. Logs are retained under `~/Library/Logs/ChatJS/` (the status command prints the checkout's directory). The Mac must be awake and the database/network available; supervision cannot make a sleeping laptop serve traffic. `bun dev:service stop` leaves other checkouts alone.
