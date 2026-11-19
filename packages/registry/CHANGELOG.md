@@ -1,5 +1,9 @@
 # @chat-js/registry
 
+## 0.2.0-beta.6
+
+Install the gateway contract aligned with AI SDK 7.0.172 and eve 1.1.
+
 ## 0.2.0-beta.5
 
 Install `@chat-js/gateways@0.2.1` so generated gateway defaults match the published contract. Pair with `chat-js@1.0.0-alpha.4` and publish under `beta`.

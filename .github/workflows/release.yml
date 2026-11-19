@@ -88,8 +88,8 @@ jobs:
           }
 
           bun run --cwd packages/gateways build
-          publish_exact packages/gateways 0.2.1
-          publish_exact packages/registry 0.2.0-beta.5
+          publish_exact packages/gateways 0.2.2
+          publish_exact packages/registry 0.2.0-beta.6
           node -e '
             const fs = require("fs");
             const cli = "packages/cli/package.json";
@@ -103,14 +103,14 @@ jobs:
             fs.writeFileSync(cli, `${JSON.stringify(manifest, null, 2)}\n`);
           '
           bun run --cwd packages/cli build
-          publish_exact packages/cli 1.0.0-alpha.4
+          publish_exact packages/cli 1.0.0-alpha.5
 
       - name: Verify published installation
         id: published-install
         if: steps.gateway-pair.outcome == 'success'
         env:
           CHATJS_KEEP_PUBLISHED_FIXTURE: 1
-        run: bun run --cwd packages/cli test:published 1.0.0-alpha.4 0.2.1 0.2.0-beta.5
+        run: bun run --cwd packages/cli test:published 1.0.0-alpha.5 0.2.2 0.2.0-beta.6
 
       - name: Create Release Pull Request or Publish
         id: changesets

@@ -48,11 +48,11 @@
     "test:tools:live": "bunx --bun playwright test --config playwright.eve-live.config.ts eve-research.e2e.ts eve-code-execution.e2e.ts --grep \"native deep research|native code execution\""
   },
   "dependencies": {
-    "@ai-sdk/devtools": "1.0.40",
-    "@ai-sdk/gateway": "4.0.110",
-    "@ai-sdk/mcp": "2.0.73",
-    "@ai-sdk/provider": "4.0.26",
-    "@ai-sdk/provider-utils": "5.0.58",
+    "@ai-sdk/devtools": "1.0.75",
+    "@ai-sdk/gateway": "4.0.145",
+    "@ai-sdk/mcp": "2.0.99",
+    "@ai-sdk/provider": "4.0.38",
+    "@ai-sdk/provider-utils": "5.0.81",
     "@base-ui/react": "^1.9.0",
     "@better-auth/core": "1.6.2",
     "@better-auth/electron": "1.6.2",
@@ -76,7 +76,7 @@
     "@vercel/connect": "2.9.2",
     "@vercel/oidc": "3.2.0",
     "@workflow/world-postgres": "5.1.1",
-    "ai": "7.0.137",
+    "ai": "7.0.172",
     "ajv": "8.18.0",
     "better-auth": "1.6.2",
     "browser-image-compression": "^2.0.2",
@@ -151,6 +151,9 @@
     "vitest": "^4.0.0"
   },
   "overrides": {
+    "@vercel/connect": {
+      "eve": "$eve"
+    },
     "commander": "^14.0.0",
     "files-sdk": {
       "ai": "$ai"

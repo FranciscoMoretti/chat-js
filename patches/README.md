@@ -6,7 +6,7 @@ The former compiled EVE workflow-identity patch is removed: the maintained RC1 s
 
 ## Supported upstream contracts
 
-- `@ai-sdk/mcp@2.0.73` contains upstream commit `4b5cb49`, which coalesces legacy SSE OAuth refresh and reuses newer tokens after late 401 responses. The local MCP patch and its scaffold archive are removed. AI SDK packages use the matching `ai@7.0.137`, `@ai-sdk/gateway@4.0.110` and `@ai-sdk/react@4.0.140` releases to share `@ai-sdk/provider-utils@5.0.58` types. Preserve the transport refresh tests and application cross-client OAuth lock tests on upgrades.
+- `@ai-sdk/mcp@2.0.99` contains upstream commit `4b5cb49`, which coalesces legacy SSE OAuth refresh and reuses newer tokens after late 401 responses. The local MCP patch and its scaffold archive are removed. AI SDK packages use the matching `ai@7.0.172`, `@ai-sdk/gateway@4.0.145` and `@ai-sdk/react@4.0.176` releases to share `@ai-sdk/provider-utils@5.0.81` types. Preserve the transport refresh tests and application cross-client OAuth lock tests on upgrades.
 - `files-sdk@2.5.0` implements private Vercel Blob signed downloads through its supported adapter. ChatJS configures private access and a five-minute default; it no longer implements signing. Contract tests execute the SDK adapter with mocked Blob network calls and cover read-write token credentials, OIDC/store credentials, expiry and abort signals.
 
 ## Remaining compiled patch
