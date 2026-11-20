@@ -1,4 +1,5 @@
 import branding from "../branding.json";
+import { app } from "electron";
 
 const ELECTRON_AUTH_CLIENT_ID = branding.auth.clientId;
 const ELECTRON_AUTH_CALLBACK_PATH = branding.auth.callbackPath;
@@ -9,29 +10,12 @@ const APP_NAME = branding.appName;
 const APP_SCHEME = branding.appPrefix;
 
 const DEFAULT_DEV_APP_URL = "http://localhost:3000";
-const EMPTY_URL_LENGTH = 0;
-
-const resolveAppUrl = (
-  environment: Readonly<
-    Partial<Pick<NodeJS.ProcessEnv, "ELECTRON_APP_URL" | "NODE_ENV">>
-  >
-): string => {
-  const configuredUrl = environment.ELECTRON_APP_URL;
-  if (
-    typeof configuredUrl === "string" &&
-    configuredUrl.length > EMPTY_URL_LENGTH
-  ) {
-    return configuredUrl;
-  }
-
-  if (environment.NODE_ENV === "production") {
-    return branding.appUrl;
-  }
-  return DEFAULT_DEV_APP_URL;
-};
-
-// Passing the process environment here preserves lazy NODE_ENV access in the fallback.
-const APP_URL = resolveAppUrl(process.env);
+const defaultAppUrl = app.isPackaged ? branding.appUrl : DEFAULT_DEV_APP_URL;
+const configuredAppUrl = process.env.ELECTRON_APP_URL;
+const APP_URL =
+  configuredAppUrl !== undefined && configuredAppUrl !== ""
+    ? configuredAppUrl
+    : defaultAppUrl;
 
 const WINDOW_DEFAULTS = {
   height: 800,

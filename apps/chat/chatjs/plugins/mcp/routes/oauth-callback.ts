@@ -21,34 +21,35 @@ const hasNonEmptyValue = (value: string | null | undefined): value is string =>
   typeof value === "string" && value !== "";
 
 const log = createModuleLogger("mcp-oauth-callback");
+const TEMPORARY_REDIRECT = 307;
 
-const redirectToConnector = (
-  request: ReadonlyNativeSurface<Pick<NextRequest, "nextUrl">>,
-  {
-    connectorId,
-    connected,
-    errorMessage,
-  }: {
-    readonly connectorId?: string;
-    readonly connected?: boolean;
-    readonly errorMessage?: string;
-  }
-): NextResponse => {
+const redirectToConnector = ({
+  connectorId,
+  connected,
+  errorMessage,
+}: {
+  readonly connectorId?: string;
+  readonly connected?: boolean;
+  readonly errorMessage?: string;
+}): NextResponse => {
   const path = hasNonEmptyValue(connectorId)
     ? `/settings/connectors/${connectorId}`
     : "/settings/connectors";
-  const url = new URL(path, request.nextUrl.origin);
+  const searchParams = new URLSearchParams();
   if (connected === true) {
-    url.searchParams.set("connected", "1");
+    searchParams.set("connected", "1");
   }
   if (hasNonEmptyValue(errorMessage)) {
-    url.searchParams.set("error", errorMessage);
+    searchParams.set("error", errorMessage);
   }
-  return NextResponse.redirect(url);
+  // Keep the browser on the callback origin when a proxy supplies a different host to Next.
+  return new NextResponse(null, {
+    headers: { Location: `${path}?${searchParams}` },
+    status: TEMPORARY_REDIRECT,
+  });
 };
 
 const oauthFailureResponse = (
-  request: ReadonlyNativeSurface<Pick<NextRequest, "nextUrl">>,
   connector: Readonly<
     Pick<NonNullable<Awaited<ReturnType<typeof getMcpConnectorById>>>, "id">
   >,
@@ -66,7 +67,7 @@ const oauthFailureResponse = (
     "OAuth token exchange failed"
   );
 
-  return redirectToConnector(request, {
+  return redirectToConnector({
     connectorId: connector.id,
     errorMessage:
       "Could not complete connector authorization. Please try again.",
@@ -92,7 +93,7 @@ export const GET = async (
     requireMcpCredentials();
   } catch (setupError) {
     if (setupError instanceof MissingCredentialsError) {
-      return redirectToConnector(request, { errorMessage: setupError.message });
+      return redirectToConnector({ errorMessage: setupError.message });
     }
     throw setupError;
   }
@@ -109,7 +110,7 @@ export const GET = async (
         invalidateAllMcpCaches(deleted.mcpConnectorId);
       }
     }
-    return redirectToConnector(request, {
+    return redirectToConnector({
       connectorId: pending?.mcpConnectorId,
       errorMessage:
         "Authorization was not completed. Please try connecting again.",
@@ -120,7 +121,7 @@ export const GET = async (
       { code: Boolean(code), state: Boolean(state) },
       "Missing code or state"
     );
-    return redirectToConnector(request, {
+    return redirectToConnector({
       errorMessage: "Missing authorization code or state parameter",
     });
   }
@@ -130,7 +131,7 @@ export const GET = async (
 
   if (!session) {
     log.error({ state }, "Session not found for state");
-    return redirectToConnector(request, {
+    return redirectToConnector({
       errorMessage: "Invalid or expired session. Please try again.",
     });
   }
@@ -139,7 +140,7 @@ export const GET = async (
   const connector = await getMcpConnectorById({ id: session.mcpConnectorId });
   if (!connector) {
     log.error({ connectorId: session.mcpConnectorId }, "Connector not found");
-    return redirectToConnector(request, {
+    return redirectToConnector({
       errorMessage: "MCP connector not found",
     });
   }
@@ -170,11 +171,11 @@ export const GET = async (
     // cached clients may still keep an authorization URL in memory.
     await removeMcpClient(connector.id);
 
-    return redirectToConnector(request, {
+    return redirectToConnector({
       connected: true,
       connectorId: connector.id,
     });
   } catch (oauthError) {
-    return oauthFailureResponse(request, connector, oauthError);
+    return oauthFailureResponse(connector, oauthError);
   }
 };
