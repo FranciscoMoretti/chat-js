@@ -16,7 +16,7 @@ if [ "$CHATJS_NATIVE_RTL" = 1 ]; then direction=(--rtl); fi
 export CHATJS_NATIVE_BASE="${CHATJS_NATIVE_BASE:-base}"
 export CHATJS_NATIVE_SCENARIO="${CHATJS_NATIVE_SCENARIO:-uploads}"
 case "$CHATJS_NATIVE_SCENARIO" in
-  selection) installation=(--installation '{"gateway":"vercel","plugins":["feedback","projects"],"eve":["connection/notion","connection/tavily","connection/firecrawl","channel/slack","tool/web_fetch","@skills/vercel-labs/agent-skills/vercel-react-best-practices"],"tools":[],"storage":{"source":"memory"},"agent":{"model":"openai/gpt-5-mini","reasoning":"high"}}') ;;
+  selection) installation=(--installation '{"gateway":"vercel","plugins":["feedback","projects"],"eve":["connection/notion","connection/tavily","connection/firecrawl","channel/slack","tool/web_fetch","@skills/vercel-labs/agent-skills/vercel-react-best-practices"],"tools":["deep-research"],"storage":{"source":"memory"},"agent":{"model":"openai/gpt-5-mini","reasoning":"high"}}') ;;
   acceptance) installation=(--installation '{"gateway":"vercel","plugins":["attachment-uploads"],"tools":["attach-workspace-file"],"storage":{"source":"minio","options":{"bucket":"chatjs-acceptance","endpoint":"http://127.0.0.1:9000"}},"agent":{"model":"openai/gpt-5-mini","defaultTools":true,"approval":"always"}}') ;;
   minimal) installation=(--gateway vercel --no-attachments) ;;
   full) installation=(--gateway vercel --no-attachments --projects --mcp) ;;
@@ -128,6 +128,8 @@ if (scenario === "selection") {
 }
 if (process.env.CHATJS_NATIVE_SCENARIO === "selection") {
   assert.match(await Bun.file("agent/agent.ts").text(), /openai\/gpt-5-mini/);
+  assert.equal(await Bun.file("agent/tools/deepResearch.ts").exists(), true);
+  assert.equal(await Bun.file("chatjs/tools/deep-research/renderer.tsx").exists(), true);
   assert.equal(await Bun.file("agent/instructions/configured.md").exists(), false);
   assert.match(await Bun.file("agent/skills/vercel-react-best-practices/SKILL.md").text(), /React/);
 }
@@ -158,6 +160,7 @@ const info = await Bun.file(`${process.env.CHATJS_NATIVE_FIXTURE}/eve-info.json`
 assert.equal(info.status, "ready");
 assert.equal(info.diagnostics.errors, 0);
 if (["selection", "acceptance"].includes(process.env.CHATJS_NATIVE_SCENARIO)) assert.ok(info.tools.includes("web_fetch"));
+if (process.env.CHATJS_NATIVE_SCENARIO === "selection") assert.ok(info.tools.includes("deepResearch"));
 '
 echo "Native $CHATJS_NATIVE_SCENARIO generation, exact preset, add/sync preservation and standalone typecheck passed."
 if [ "${CHATJS_NATIVE_RUNTIME:-0}" = 1 ]; then
@@ -172,7 +175,7 @@ if [ "$CHATJS_NATIVE_SCENARIO" = selection ]; then
   bun -e '
     import { strict as assert } from "node:assert";
     const root = process.env.CHATJS_NATIVE_FIXTURE;
-    for (const file of ["agent/connections/notion.ts", "agent/agent.ts", "agent/skills/vercel-react-best-practices/SKILL.md", "agent/connections/tavily.ts", "agent/connections/firecrawl.ts", "components/ui/button.tsx"]) {
+    for (const file of ["agent/connections/notion.ts", "agent/agent.ts", "agent/skills/vercel-react-best-practices/SKILL.md", "agent/connections/tavily.ts", "agent/connections/firecrawl.ts", "agent/tools/deepResearch.ts", "chatjs/tools/deep-research/renderer.tsx", "components/ui/button.tsx"]) {
       assert.equal(await Bun.file(file).text(), await Bun.file(`${root}/app/${file}`).text(), file);
     }
     const original = await Bun.file(`${root}/app/chatjs/agent-recipe.json`).json();

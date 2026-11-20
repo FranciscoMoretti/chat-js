@@ -1,5 +1,10 @@
 import { beforeEach, expect, test, vi } from "vitest";
+import { z } from "zod";
 import { testToolContext } from "../../tests/helpers/eve-tool-context";
+import {
+  attachWorkspaceFileInput,
+  importFileInput,
+} from "@/chatjs/tools/attach-workspace-file/schemas";
 import {
   import_file,
   attach_workspace_file,
@@ -46,6 +51,33 @@ const contextFor = (current: typeof owner | null = owner) =>
   });
 beforeEach(() => {
   vi.resetAllMocks();
+});
+
+test("workspace file tools keep Unicode validation out of model schemas", () => {
+  expect(
+    JSON.stringify(z.toJSONSchema(attachWorkspaceFileInput))
+  ).not.toContain("pattern");
+  expect(JSON.stringify(z.toJSONSchema(importFileInput))).not.toContain(
+    "pattern"
+  );
+  expect(
+    attachWorkspaceFileInput.parse({ path: "/workspace/résumé.md" })
+  ).toEqual({ path: "/workspace/résumé.md" });
+  expect(
+    attachWorkspaceFileInput.safeParse({ path: "report\n.md" }).success
+  ).toBe(false);
+  expect(
+    attachWorkspaceFileInput.safeParse({
+      path: "report.md",
+      name: "dir/report.md",
+    }).success
+  ).toBe(false);
+  expect(
+    importFileInput.safeParse({
+      fileId: "abcdefghijklmnopqrstuvwx",
+      name: "report\u0085.md",
+    }).success
+  ).toBe(false);
 });
 
 test.each([
