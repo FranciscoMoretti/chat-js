@@ -3,12 +3,20 @@ import { isFileStorageKey } from "@/lib/file-url";
 
 export const maximumWorkspaceFileBytes = 32 * 1024 * 1024;
 
+// Keep Unicode character validation at runtime so model providers do not have
+// to compile JavaScript Unicode property escapes from the tool's JSON Schema.
+const controlCharacter = /\p{Cc}/u;
+const invalidFilenameCharacter = /[/\\\p{Cc}]/u;
+
 export const attachWorkspaceFileInput = z.object({
   path: z
     .string()
     .min(1)
     .max(4096)
-    .regex(/^[^\p{Cc}]+$/u)
+    .refine(
+      (path) => !controlCharacter.test(path),
+      "Path contains a control character."
+    )
     .describe(
       "File in the current EVE sandbox workspace, e.g. /workspace/report.xlsx."
     ),
@@ -17,7 +25,10 @@ export const attachWorkspaceFileInput = z.object({
     .trim()
     .min(1)
     .max(180)
-    .regex(/^[^/\\\p{Cc}]+$/u)
+    .refine(
+      (name) => !invalidFilenameCharacter.test(name),
+      "Filename contains a separator or control character."
+    )
     .optional()
     .describe("Optional download filename, including its extension."),
 });

@@ -66,7 +66,6 @@ const researchItem: RegistryItem = {
     }),
   },
   name: "deep-research",
-  registryDependencies: ["trace", "badge"],
   type: "registry:item",
 };
 export { researchAgentDirectories, researchAgentFiles, researchItem };
