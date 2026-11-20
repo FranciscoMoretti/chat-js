@@ -1,10 +1,5 @@
 import type { LanguageModelV4 } from "@ai-sdk/provider";
 
-import type {
-  ExtractImageModelIdFromProvider,
-  ExtractModelIdFromProvider,
-} from "@/chatjs/core/gateway/provider-types";
-
 import type { AiGatewayModel } from "@/chatjs/core/gateway/models";
 
 import type { GatewayProvider } from "@/chatjs/core/gateway/gateway-provider";
@@ -15,7 +10,13 @@ import type { ImageModel } from "ai";
 import { createOpenAI } from "@ai-sdk/openai";
 import { z } from "zod";
 
-type OpenaiImageModelId = ExtractImageModelIdFromProvider<typeof createOpenAI>;
+const MODEL_ID_PARAMETER_INDEX = 0;
+type OpenAiLanguageModelId = Parameters<
+  ReturnType<typeof createOpenAI>["languageModel"]
+>[typeof MODEL_ID_PARAMETER_INDEX];
+type OpenAiImageModelId = Parameters<
+  ReturnType<typeof createOpenAI>["image"]
+>[typeof MODEL_ID_PARAMETER_INDEX];
 
 const providerModelSchema = z.object({
   created: z.number().nullish(),
@@ -80,14 +81,12 @@ class OpenAIGateway
     return createOpenAI({ apiKey });
   }
 
-  public createLanguageModel(
-    modelId: ExtractModelIdFromProvider<typeof createOpenAI>
-  ): LanguageModelV4 {
+  public createLanguageModel(modelId: OpenAiLanguageModelId): LanguageModelV4 {
     const provider = this.getProvider();
     return provider(modelId);
   }
 
-  public createImageModel(modelId: OpenaiImageModelId): ImageModel {
+  public createImageModel(modelId: OpenAiImageModelId): ImageModel {
     const provider = this.getProvider();
     return provider.image(modelId);
   }

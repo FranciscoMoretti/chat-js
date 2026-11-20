@@ -3,7 +3,7 @@ import { describe, expect, it, mock } from "bun:test";
 import { VercelGateway } from "./vercel/gateway";
 
 const FIRST_MODEL_INDEX = 0;
-const SUPPORTED_LANGUAGE_MODEL_COUNT = 1;
+const SUPPORTED_MODEL_COUNT = 2;
 const modelCatalogResponse = {
   data: [
     {
@@ -34,6 +34,18 @@ const modelCatalogResponse = {
       tags: ["tool-use", "future-provider-tag"],
       type: "language",
     },
+    {
+      context_window: 0,
+      created: 3,
+      description: "Video model",
+      id: "xai/grok-imagine-video",
+      max_tokens: 0,
+      name: "Video Test",
+      object: "model",
+      owned_by: "xai",
+      pricing: {},
+      type: "video",
+    },
   ],
   object: "list",
 };
@@ -47,7 +59,8 @@ describe("VercelGateway", () => {
       ),
     }).fetchModels();
 
-    expect(models).toHaveLength(SUPPORTED_LANGUAGE_MODEL_COUNT);
+    expect(models).toHaveLength(SUPPORTED_MODEL_COUNT);
+    expect(models.map((model) => model.type)).toEqual(["language", "video"]);
     const model: unknown = models[FIRST_MODEL_INDEX];
     expect(model).toMatchObject({
       id: "openai/gpt-test",

@@ -3,9 +3,7 @@ import type {
   LanguageModelV4,
 } from "@ai-sdk/provider";
 import {
-  aiGatewayModelDiscriminatorSchema,
   aiGatewayModelSchema,
-  aiGatewayModelsEnvelopeSchema,
   isAiGatewayModelType,
 } from "@/chatjs/core/gateway/models";
 import type { AiGatewayModel } from "@/chatjs/core/gateway/models";
@@ -15,6 +13,7 @@ import type { ImageModel } from "ai";
 
 import { createGateway } from "@ai-sdk/gateway";
 import type { gateway } from "@ai-sdk/gateway";
+import { z } from "zod";
 
 const MODEL_ID_PARAMETER_INDEX = 0;
 type VercelImageModelId = Parameters<
@@ -25,6 +24,11 @@ type VercelVideoModelId = Parameters<
 >[typeof MODEL_ID_PARAMETER_INDEX];
 
 const EMPTY_MODEL_TYPE_COUNT = 0;
+const modelDiscriminatorSchema = z.object({ type: z.string() });
+const modelsEnvelopeSchema = z.object({
+  data: z.array(z.unknown()),
+  object: z.literal("list"),
+});
 
 class VercelGateway
   extends GatewayRuntime
@@ -94,15 +98,14 @@ class VercelGateway
       }
 
       const bodyRaw: unknown = await response.json();
-      const body = aiGatewayModelsEnvelopeSchema.parse(bodyRaw);
+      const body = modelsEnvelopeSchema.parse(bodyRaw);
       const unsupportedTypes = new Set<string>();
       const models: AiGatewayModel[] = [];
 
       for (const candidate of body.data) {
-        const { type } = aiGatewayModelDiscriminatorSchema.parse(candidate);
+        const { type } = modelDiscriminatorSchema.parse(candidate);
         if (isAiGatewayModelType(type)) {
-          const model = aiGatewayModelSchema.parse(candidate);
-          models.push({ ...model, type });
+          models.push(aiGatewayModelSchema.parse(candidate));
         } else {
           unsupportedTypes.add(type);
         }
