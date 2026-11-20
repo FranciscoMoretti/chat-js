@@ -7,7 +7,6 @@ export const coreDependencyNames: readonly string[] = [
   "@ai-sdk/provider-utils",
   "@base-ui/react",
   "@better-auth/core",
-  "@chat-js/gateways",
   "@lexical/react",
   "@playwright/test",
   "@radix-ui/react-accordion",
@@ -112,7 +111,6 @@ export const inheritedRegistryDependencies: readonly string[] = [
   "eve",
   "zod",
   "@ai-sdk/provider",
-  "@chat-js/gateways",
 ];
 
 export const selectCoreDependencies = (

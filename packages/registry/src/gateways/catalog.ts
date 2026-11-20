@@ -1,9 +1,7 @@
 import { GATEWAY_MODEL_DEFAULTS } from "./defaults";
-import { gatewayDefinitionSchema } from "@chat-js/gateways/definition";
+import { gatewayDefinitionSchema } from "./definition";
 
 import { gatewayMetadata } from "./metadata";
-
-import gatewayPackage from "@chat-js/gateways/package.json";
 
 const environment = {
   litellm: [["LITELLM_BASE_URL"]],
@@ -20,7 +18,7 @@ const schemaDependencies: Readonly<
   openai: ["zod"],
   "openai-compatible": ["zod"],
   openrouter: ["zod"],
-  vercel: [],
+  vercel: ["zod"],
 };
 
 const isGatewayType = (id: string): id is keyof typeof environment =>
@@ -42,7 +40,6 @@ export const builtInGateways = Object.entries(gatewayMetadata).map(
     return {
       $schema: "https://ui.shadcn.com/schema/registry-item.json",
       dependencies: [
-        `${gatewayPackage.name}@${gatewayPackage.version}`,
         `${metadata.dependency}@${metadata.version}`,
         ...schemaDependencies[id],
       ],

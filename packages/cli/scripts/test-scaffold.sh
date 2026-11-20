@@ -5,8 +5,8 @@ cli_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 # CI selects one matrix case; no arguments retains the full local suite.
 if [ "$#" -ne 0 ]; then
-  if [ "$#" -ne 2 ] && [ "$#" -ne 3 ]; then
-    echo "Usage: $0 [bun|npm|pnpm|yarn true|false [prepared-gateway-archive]]" >&2
+  if [ "$#" -ne 2 ]; then
+    echo "Usage: $0 [bun|npm|pnpm|yarn true|false]" >&2
     exit 1
   fi
   case "$1" in
@@ -20,35 +20,28 @@ if [ "$#" -ne 0 ]; then
 fi
 
 # CI consumes inputs only after the shared preparation job has verified them.
-if [ "$#" -eq 3 ]; then
-  if [ ! -f "$3" ] || [ ! -f "$cli_root/dist/index.js" ] || [ ! -d "$cli_root/templates/chat-app" ] || [ ! -d "$cli_root/../registry/dist/r" ]; then
+if [ "${CHATJS_SCAFFOLD_PREPARED:-0}" = 1 ]; then
+  if [ ! -f "$cli_root/dist/index.js" ] || [ ! -d "$cli_root/templates/chat-app" ] || [ ! -d "$cli_root/../registry/dist/r" ]; then
     echo "Prepared scaffold inputs are missing." >&2
     exit 1
   fi
 else
   # Local runs retain the shared contract verification and build.
   bun run --cwd "$cli_root" test:gateways
-  bun run --cwd "$cli_root/../gateways" build
 fi
-gateway_archive_dir="$(mktemp -d /tmp/chat-js-gateway-package-XXXXXX)"
-trap 'kill "${registry_pid:-}" 2>/dev/null || true; rm -rf "$gateway_archive_dir"' EXIT
-if [ "$#" -eq 3 ]; then
-  gateway_archive="$3"
-else
-  gateway_archive="$gateway_archive_dir/gateways.tgz"
-  bun pm --cwd "$cli_root/../gateways" pack --filename "$gateway_archive"
-fi
-bun "$cli_root/test/serve-registry.ts" "$gateway_archive" "$gateway_archive_dir/address" &
+registry_dir="$(mktemp -d /tmp/chat-js-scaffold-registry-XXXXXX)"
+trap 'kill "${registry_pid:-}" 2>/dev/null || true; rm -rf "$registry_dir"' EXIT
+bun "$cli_root/test/serve-registry.ts" "$registry_dir/address" &
 registry_pid=$!
 for attempt in {1..100}; do
-  test -f "$gateway_archive_dir/address" && break
+  test -f "$registry_dir/address" && break
   sleep 0.1
 done
-if [ ! -s "$gateway_archive_dir/address" ]; then
+if [ ! -s "$registry_dir/address" ]; then
   echo "Registry server did not publish its address within 10 seconds." >&2
   exit 1
 fi
-CHATJS_REGISTRY_URL="$(cat "$gateway_archive_dir/address")"
+CHATJS_REGISTRY_URL="$(cat "$registry_dir/address")"
 export CHATJS_REGISTRY_URL
 
 
@@ -100,13 +93,11 @@ run_case() (
   esac
   node --input-type=module -e '
 import assert from "node:assert/strict";
-import { createRequire } from "node:module";
-const require = createRequire(process.cwd() + "/package.json");
-const name = "@chat-js/gateways";
-const manifest = require(name + "/package.json");
-for (const key of Object.keys(manifest.exports)) {
-  if (key !== "./package.json") await import(name + key.slice(1));
-}
+import { existsSync, readFileSync } from "node:fs";
+const manifest = JSON.parse(readFileSync("package.json", "utf8"));
+assert.equal(manifest.dependencies["@chat-js/gateways"], undefined);
+assert.equal(existsSync("node_modules/@chat-js/gateways"), false);
+assert.equal(existsSync("chatjs/core/gateway/runtime.ts"), true);
 const { defineSandbox, DefaultSandbox } = await import("eve/sandbox");
 assert.equal(typeof defineSandbox, "function");
 assert.equal(typeof DefaultSandbox.environment, "function");

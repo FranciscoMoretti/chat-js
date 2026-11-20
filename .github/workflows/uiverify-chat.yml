@@ -9,7 +9,6 @@ on:
     paths:
       - "apps/chat/**"
       - "packages/chat-visual-tests/**"
-      - "packages/gateways/**"
       - "packages/registry/package.json"
       - "packages/registry/visual/**"
       - "packages/registry/src/tools/_shared/**"
@@ -21,7 +20,6 @@ on:
     paths:
       - "apps/chat/**"
       - "packages/chat-visual-tests/**"
-      - "packages/gateways/**"
       - "packages/registry/package.json"
       - "packages/registry/visual/**"
       - "packages/registry/src/tools/_shared/**"

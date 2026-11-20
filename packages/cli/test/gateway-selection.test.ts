@@ -6,10 +6,6 @@ import { afterAll, beforeAll, expect, it } from "bun:test";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import nodePath from "node:path";
-import { fileURLToPath } from "node:url";
-
-import gatewayPackage from "@chat-js/gateways/package.json";
-import { z } from "zod";
 
 import { gatewayMetadata } from "../../registry/src/gateways/metadata";
 import cliPackage from "../package.json";
@@ -27,15 +23,8 @@ const originalRegistryUrl = process.env.CHATJS_REGISTRY_URL;
 const root = await mkdtemp(
   nodePath.join(tmpdir(), "chatjs-gateway-integration-")
 );
-const packageDirectory = nodePath.dirname(
-  fileURLToPath(import.meta.resolve("@chat-js/gateways/package.json"))
-);
 const cliDirectory = nodePath.join(import.meta.dir, "..");
 const cliEntry = nodePath.join(root, "cli/node_modules/chat-js/dist/index.js");
-const archive = nodePath.join(
-  root,
-  `chat-js-gateways-${gatewayPackage.version}.tgz`
-);
 
 const removeFixtureFiles = async (): Promise<void> => {
   if (process.env.CHATJS_KEEP_GATEWAY_FIXTURE === "1") {
@@ -58,9 +47,6 @@ const removeFixtureFiles = async (): Promise<void> => {
 };
 
 const external = externalGatewayFixture();
-const registryResponseSchema = z.looseObject({
-  dependencies: z.array(z.string()).optional(),
-});
 const registryServer = Bun.serve({
   async fetch(
     request: Readonly<Pick<Request, "url" | "json">> & {
@@ -161,18 +147,9 @@ export function createStorageAdapter(options: {bucket: string}) {
         type: "registry:item",
       });
     }
-    if (path === "/contracts.tgz") {
-      return new Response(Bun.file(archive));
-    }
     if (path === "/gateway.json") {
       return Response.json({
         ...external.root,
-        dependencies: external.root.dependencies.map((dependency) => {
-          if (dependency.startsWith("@chat-js/gateways@")) {
-            return `@chat-js/gateways@http://127.0.0.1:${registryServer.port}/contracts.tgz`;
-          }
-          return dependency;
-        }),
         registryDependencies: [
           `http://127.0.0.1:${registryServer.port}/adapter.json`,
         ],
@@ -212,16 +189,7 @@ export function createStorageAdapter(options: {bucket: string}) {
         nodePath.join(cliDirectory, "../registry/dist/r", path.slice(1))
       );
       if (await file.exists()) {
-        const item = registryResponseSchema.parse(await file.json());
-        if (item.dependencies !== undefined) {
-          item.dependencies = item.dependencies.map((dependency: string) => {
-            if (dependency.startsWith("@chat-js/gateways@")) {
-              return `@chat-js/gateways@http://127.0.0.1:${registryServer.port}/contracts.tgz`;
-            }
-            return dependency;
-          });
-        }
-        return Response.json(item);
+        return new Response(file);
       }
     }
     return new Response("Not found", { status: 404 });
@@ -231,8 +199,6 @@ export function createStorageAdapter(options: {bucket: string}) {
 });
 
 beforeAll(async () => {
-  await run(packageDirectory, ["bun", "run", "build"]);
-  await run(packageDirectory, ["bun", "pm", "pack", "--destination", root]);
   await run(nodePath.join(cliDirectory, "../registry"), [
     "bun",
     "run",
@@ -273,9 +239,6 @@ beforeAll(async () => {
     JSON.stringify({
       dependencies: {
         "chat-js": `file:${nodePath.join(root, `chat-js-${cliPackage.version}.tgz`)}`,
-      },
-      overrides: {
-        "@chat-js/gateways": `file:${archive}`,
       },
       private: true,
     })
@@ -575,29 +538,17 @@ for (const gateway of [...GATEWAYS, "acme"]) {
         expect(dependencies[dependency]).toBeUndefined();
       }
     }
-    // The shared npm archive must not carry any other adapter implementations.
-    await Promise.all(
-      GATEWAYS.map(async (name) => {
-        expect(
-          await Bun.file(
-            nodePath.join(
-              cwd,
-              "node_modules/@chat-js/gateways/src",
-              `${name}.ts`
-            )
-          ).exists()
-        ).toBe(false);
-        expect(
-          await Bun.file(
-            nodePath.join(
-              cwd,
-              "node_modules/@chat-js/gateways/dist",
-              `${name}.js`
-            )
-          ).exists()
-        ).toBe(false);
-      })
-    );
+    expect(dependencies["@chat-js/gateways"]).toBeUndefined();
+    expect(
+      await Bun.file(
+        nodePath.join(cwd, "node_modules/@chat-js/gateways/package.json")
+      ).exists()
+    ).toBe(false);
+    expect(
+      await Bun.file(
+        nodePath.join(cwd, "chatjs/core/gateway/runtime.ts")
+      ).exists()
+    ).toBe(true);
 
     if (gateway === "acme") {
       expect(dependencies["@vercel/sandbox"]).toBeUndefined();
@@ -1046,6 +997,9 @@ requireCredentials("mcp", descriptor.envRequirements, {NODE_ENV: "test", MCP_ENC
     if (!installAtCreation) {
       const previousConfig = `${await readFile(nodePath.join(cwd, "chat.config.ts"), "utf-8")}\n// User model configuration remains editable.\n`;
       await writeFile(nodePath.join(cwd, "chat.config.ts"), previousConfig);
+      const gatewayCore = nodePath.join(cwd, "chatjs/core/gateway/runtime.ts");
+      const editedCore = `${await readFile(gatewayCore, "utf-8")}\n// Local gateway runtime customization.\n`;
+      await writeFile(gatewayCore, editedCore);
       const catalog = nodePath.join(cwd, "lib/ai/models.generated.ts");
       await writeFile(
         catalog,
@@ -1077,6 +1031,13 @@ requireCredentials("mcp", descriptor.envRequirements, {NODE_ENV: "test", MCP_ENC
         "--replace",
         "--yes",
       ]);
+      expect(await readFile(gatewayCore, "utf-8")).toBe(editedCore);
+      const switchedManifest = parsePackageJson(
+        await readFile(nodePath.join(cwd, "package.json"), "utf-8")
+      );
+      expect(
+        switchedManifest.dependencies?.["@chat-js/gateways"]
+      ).toBeUndefined();
       // A gateway-generated env update must not look like a user edit during
       // a subsequent storage replacement.
       await run(cwd, [

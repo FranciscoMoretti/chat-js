@@ -7,9 +7,9 @@ import type {
   ToolDefinition,
 } from "../../../registry/metadata";
 
-import type { GatewayDefinition } from "@chat-js/gateways/definition";
+import type { GatewayDefinition } from "../../../registry/src/gateways/definition";
 
-import { gatewayDefinitionSchema } from "@chat-js/gateways/definition";
+import { gatewayDefinitionSchema } from "../../../registry/src/gateways/definition";
 
 import { itemAddress, readItem } from "#cli/registry/shadcn";
 

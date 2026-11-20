@@ -43,7 +43,6 @@ beforeAll(async (): Promise<void> => {
       "packages/cli",
       "packages/thread",
       "packages/registry",
-      "packages/gateways",
     ].map((workspace): string => `${workspace}/package.json`),
   ];
   await Promise.all(
@@ -82,6 +81,7 @@ test.each([
   ["packages/registry/metadata.ts", true],
   ["packages/registry/src/tools/attach-workspace-file/tool.ts", true],
   ["packages/registry/src/gateways/vercel/gateway.ts", true],
+  ["apps/chat/chatjs/core/gateway/runtime.ts", true],
   ["packages/cli/scripts/test-scaffold.sh", true],
   ["apps/chat/app/page.tsx", true],
   ["apps/chat/package.json", true],

@@ -1,12 +1,12 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, mock } from "bun:test";
 
-import { LiteLLMGateway } from "../../registry/src/gateways/litellm/gateway";
-import { OpenAICompatibleGateway } from "../../registry/src/gateways/openai-compatible/gateway";
-import { OpenAIGateway } from "../../registry/src/gateways/openai/gateway";
-import { OpenRouterGateway } from "../../registry/src/gateways/openrouter/gateway";
-import { VercelGateway } from "../../registry/src/gateways/vercel/gateway";
-import { gatewayMetadata } from "../../registry/src/gateways/metadata";
-import gatewayPackage from "../package.json";
+import { LiteLLMGateway } from "./litellm/gateway";
+import { OpenAICompatibleGateway } from "./openai-compatible/gateway";
+import { OpenAIGateway } from "./openai/gateway";
+import { OpenRouterGateway } from "./openrouter/gateway";
+import { VercelGateway } from "./vercel/gateway";
+import { gatewayMetadata } from "./metadata";
+import registryPackage from "../../package.json";
 
 const OPTIONS_PARAMETER_INDEX = 0;
 type AdapterOptions = NonNullable<
@@ -110,7 +110,7 @@ describe.each(adapters)("$name gateway contract", (adapter) => {
     expect(gateway.createVideoModel !== null).toBe(adapter.video);
     expect(adapter.video).toBe(gatewayMetadata[adapter.name].supportsVideo);
     const { dependency, version } = gatewayMetadata[adapter.name];
-    expect(gatewayPackage.devDependencies[dependency]).toBe(version);
+    expect(registryPackage.devDependencies[dependency]).toBe(version);
     expect(
       adapter.createLanguageModel({ env: adapter.env }).specificationVersion
     ).toBe("v4");
@@ -126,9 +126,9 @@ describe.each(adapters)("$name gateway contract", (adapter) => {
     const requested: string[] = [];
     const gateway = adapter.create({
       env: adapter.env,
-      fetch: vi
-        .fn<typeof fetch>()
-        .mockResolvedValue(new Response(null, { status: 503 })),
+      fetch: mock<typeof fetch>().mockResolvedValue(
+        new Response(null, { status: 503 })
+      ),
       getFallbackModels: (name: string) => {
         requested.push(name);
         return [];

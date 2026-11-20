@@ -1,9 +1,9 @@
 import type { LanguageModelV4 } from "@ai-sdk/provider";
-import type { AiGatewayModel } from "@chat-js/gateways/models";
+import type { AiGatewayModel } from "@/chatjs/core/gateway/models";
 
-import type { GatewayProvider } from "@chat-js/gateways/gateway-provider";
+import type { GatewayProvider } from "@/chatjs/core/gateway/gateway-provider";
 
-import { GatewayRuntime } from "@chat-js/gateways/runtime";
+import { GatewayRuntime } from "@/chatjs/core/gateway/runtime";
 
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 

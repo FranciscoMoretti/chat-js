@@ -22,16 +22,7 @@ const supportedAiGatewayModelTypes = [
 
 type AiGatewayModelType = (typeof supportedAiGatewayModelTypes)[number];
 
-const aiGatewayModelTypeSchema = z.union([
-  z.literal("language"),
-  z.literal("embedding"),
-  z.literal("image"),
-]);
-
-const aiGatewayModelTypeInputSchema = z.union([
-  aiGatewayModelTypeSchema,
-  z.string(),
-]);
+const aiGatewayModelTypeSchema = z.enum(supportedAiGatewayModelTypes);
 
 const MIN_PRICING_TIER_BOUND = 0;
 
@@ -41,7 +32,7 @@ const pricingTierSchema = z.object({
   min: z.number().default(MIN_PRICING_TIER_BOUND),
 });
 
-// Single model schema
+// Model catalog record returned by gateway adapters.
 const aiGatewayModelSchema = z.object({
   context_window: z.number(),
   created: z.number(),
@@ -63,34 +54,14 @@ const aiGatewayModelSchema = z.object({
     web_search: z.string().optional(),
   }),
   tags: z.array(tagSchema).optional(),
-  type: aiGatewayModelTypeInputSchema,
+  type: aiGatewayModelTypeSchema,
 });
 
-type ParsedAiGatewayModel = z.infer<typeof aiGatewayModelSchema>;
-
-type AiGatewayModel = Omit<ParsedAiGatewayModel, "type"> & {
-  type: AiGatewayModelType;
-};
+type AiGatewayModel = z.infer<typeof aiGatewayModelSchema>;
 
 const isAiGatewayModelType = (type: string): type is AiGatewayModelType =>
   supportedAiGatewayModelTypes.some((supportedType) => supportedType === type);
 
-const aiGatewayModelDiscriminatorSchema = z.object({
-  type: z.string(),
-});
-
-// Parse the response envelope before validating individual supported models.
-const aiGatewayModelsEnvelopeSchema = z.object({
-  data: z.array(z.unknown()),
-  object: z.literal("list"),
-});
-
-export {
-  supportedAiGatewayModelTypes,
-  aiGatewayModelSchema,
-  isAiGatewayModelType,
-  aiGatewayModelDiscriminatorSchema,
-  aiGatewayModelsEnvelopeSchema,
-};
+export { aiGatewayModelSchema, isAiGatewayModelType };
 
 export type { AiGatewayModelType, AiGatewayModel };

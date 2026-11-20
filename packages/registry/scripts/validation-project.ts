@@ -11,7 +11,7 @@ import { buildConfigTs } from "../../cli/src/helpers/config-builder";
 import { parsePackageJson } from "../../cli/src/helpers/package-manifest";
 import { readProjectFiles } from "@chat-js/registry-validation";
 import type { CoreFeatureKey } from "../../cli/src/types";
-import { gatewayDefinitionSchema } from "@chat-js/gateways/definition";
+import { gatewayDefinitionSchema } from "../src/gateways/definition";
 import type { InstallationSelection } from "../installation";
 import { generateInstallation } from "./installation-generator";
 

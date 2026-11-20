@@ -1,4 +1,4 @@
-import type { AiGatewayModel } from "@chat-js/gateways/models";
+import type { AiGatewayModel } from "@/chatjs/core/gateway/models";
 
 import { getActiveGateway } from "@/lib/ai/active-gateway";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";

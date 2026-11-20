@@ -1,5 +1,9 @@
 # chat-js
 
+## 1.0.0-alpha.6
+
+Copy the shared gateway runtime and types as editable app source. Pair with registry `0.2.0-beta.7`.
+
 ## 1.0.0-alpha.5
 
 Generate apps with the published eve 1.1 fork and the matching AI SDK and gateway registry versions.

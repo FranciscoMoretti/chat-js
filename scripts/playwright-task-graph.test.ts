@@ -13,7 +13,7 @@ const taskGraphSchema = z.object({
   ),
 });
 
-test("Playwright builds its libraries without building the app beside next dev", () => {
+test("Playwright does not build the app beside next dev", () => {
   // Include every workspace, as CI does. Packages without an e2e script can
   // still pull dependency builds into Turbo's task graph.
   const result = Bun.spawnSync(
@@ -40,5 +40,4 @@ test("Playwright builds its libraries without building the app beside next dev",
   expect(e2eTasks.map((task) => task.taskId)).toEqual([
     "@chatjs/chat#test:e2e",
   ]);
-  expect(e2eTasks[0]?.dependencies).toContain("@chat-js/gateways#build");
 }, 15_000);

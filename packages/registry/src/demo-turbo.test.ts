@@ -34,7 +34,6 @@ const copyFixtureFiles = async (directory: string): Promise<void> => {
       "packages/thread",
       "packages/registry",
       "packages/registry-validation",
-      "packages/gateways",
     ].map((workspace) => `${workspace}/package.json`),
     "packages/registry/mirror-manifest.json",
   ];
@@ -168,7 +167,7 @@ test.each([
   ["packages/cli/src/utils/installation-plan.ts", true],
   ["packages/cli/src/helpers/gateway-provider.ts", true],
   ["packages/cli/src/helpers/storage-provider.ts", true],
-  ["packages/gateways/src/definition.ts", true],
+  ["packages/registry/src/gateways/definition.ts", true],
   ["patches/example.patch", true],
   ["oxfmt.config.ts", true],
   ["apps/chat/oxfmt.config.ts", true],
@@ -251,7 +250,7 @@ test.each([
 );
 test.each([
   "packages/cli/src/utils/installation-plan.ts",
-  "packages/gateways/src/definition.ts",
+  "apps/chat/chatjs/core/gateway/gateway-provider.ts",
 ])("registry typecheck invalidates for imported source %s", async (file) => {
   const before = await taskHash("test:types");
   const target = path.join(fixture, file);
@@ -261,13 +260,4 @@ test.each([
     : "";
   await writeFile(target, `${previous}\n// changed type boundary\n`);
   expect(await taskHash("test:types")).not.toBe(before);
-});
-test("registry typecheck restores gateway declaration outputs on cache hits", async () => {
-  const { tasks } = await run("test:types", "--filter=@chat-js/registry");
-  const registry = findTask(tasks, "@chat-js/registry#test:types");
-  const gateways = findTask(tasks, "@chat-js/gateways#test:types");
-  expect(registry.dependencies).toContain("@chat-js/gateways#test:types");
-  expect(jsonObject(gateways.resolvedTaskDefinition).outputs).toEqual([
-    "dist/**",
-  ]);
 });

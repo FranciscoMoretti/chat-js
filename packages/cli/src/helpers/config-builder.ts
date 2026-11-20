@@ -3,7 +3,7 @@ import {
   applyDefaults,
   configDescriptionSchema,
 } from "../../../../apps/chat/lib/config-schema";
-import type { GatewayDefinition } from "@chat-js/gateways/definition";
+import type { GatewayDefinition } from "../../../registry/src/gateways/definition";
 import type { ReadonlyInput } from "./readonly-input";
 import { builtInGateways } from "#cli/registry/gateways";
 import { z } from "zod";
