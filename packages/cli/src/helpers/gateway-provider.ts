@@ -62,7 +62,7 @@ const gatewayEnvVariables = (
 const gatewayDefaultsSource = (
   definition: ReadonlyInput<GatewaySelection["definition"]>
 ): string =>
-  generatedRegistrationSource(`import type { GatewayModelDefaults } from "@chat-js/gateways/defaults";
+  generatedRegistrationSource(`import type { GatewayModelDefaults } from "@/chatjs/core/gateway/defaults";
 import type { Gateway } from "@/chatjs/providers/gateway";
 
 export const gatewayType = ${JSON.stringify(definition.id)} satisfies InstanceType<typeof Gateway>["type"];
@@ -113,7 +113,7 @@ export const configureGatewayProvider = async (
   ) {
     await writeFile(
       snapshotPath,
-      generatedRegistrationSource(`import type { AiGatewayModel } from "@chat-js/gateways/models";
+      generatedRegistrationSource(`import type { AiGatewayModel } from "@/chatjs/core/gateway/models";
 
 export const generatedForGateway = ${JSON.stringify(definition.id)};
 // Populate this gateway's catalog with the fetch:models script after setting credentials.

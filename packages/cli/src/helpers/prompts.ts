@@ -31,7 +31,7 @@ import {
   select,
   text,
 } from "@clack/prompts";
-import type { GatewayDefinition } from "@chat-js/gateways/definition";
+import type { GatewayDefinition } from "../../../registry/src/gateways/definition";
 import type { Option } from "@clack/prompts";
 import { PROVIDER_NAMES } from "files-sdk/providers";
 import type { ReadonlyInput } from "./readonly-input";

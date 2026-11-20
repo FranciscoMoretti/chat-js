@@ -19,12 +19,12 @@ Use a built item as a starting point. Declare:
 - `type: "registry:item"`, a name, and `files` with source paths and explicit targets. shadcn build embeds the source content in the published JSON.
 - `dependencies` / `devDependencies`: npm names with optional versions.
 - `registryDependencies`: standard shadcn addresses to supporting registry items. Use namespace addresses or absolute URLs for portable dependencies.
-- A file targeting `~/chatjs/providers/gateway.ts`, exporting a `Gateway` constructor. Supporting files live under `~/chatjs/providers/gateway/`.
+- A file targeting `~/chatjs/providers/gateway.ts`, exporting a `Gateway` constructor. Import the shared runtime and types from `@/chatjs/core/gateway/`. Supporting files live under `~/chatjs/providers/gateway/`.
 - `meta.chatjs`: `kind: "gateway"`, `contractVersion: 1`, a unique literal `id`, `capabilities: { image, video }`, `defaults`, and `envRequirements`.
 
 Each environment requirement has `options: string[][]`: outer entries are alternatives, and every variable within one alternative is required. Separate requirements must all be satisfied. `optionalEnv` declares optional variables that the adapter also needs. The app passes only these declared variables to it.
 
-`defaults` contains provider order, model lists, workflow models and generic model roles; its complete validated shape is exported as `GatewayDefinition` from `@chat-js/gateways/definition`. The installer writes selected defaults with `satisfies GatewayModelDefaults<InstanceType<typeof Gateway>>` so the generated app checks them against the actual adapter, not a list of known gateway names.
+`defaults` contains provider order, model lists, workflow models and generic model roles; its complete validated shape is defined in [`definition.ts`](./definition.ts). The installer writes selected defaults with `satisfies GatewayModelDefaults<InstanceType<typeof Gateway>>` so the generated app checks them against the actual adapter, not a list of known gateway names.
 
 `defaults.roles` contains `smart`, `balanced` and `fast` language model IDs, plus optional `image` and `video` IDs. These are default-selection roles, not provider reasoning-effort settings or capability guarantees. Tools own their configuration schemas and select from these roles. Gateways do not define research limits, document actions or other tool-specific settings.
 

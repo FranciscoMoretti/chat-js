@@ -45,7 +45,7 @@ Each provider activates reasoning differently. ChatJS handles this automatically
 
 ### Adjusting reasoning budgets
 
-The defaults live in `packages/gateways/src/provider-options.ts` in the ChatJS repository. In a generated app, customize the returned options in `lib/ai/providers.ts`, after calling the shared `getModelProviderOptions` helper. Override the nested provider budget you want to change:
+Customize the defaults in your app’s `chatjs/core/gateway/provider-options.ts`. Override the nested provider budget you want to change:
 
 ```ts
 // Anthropic thinking budget

@@ -1,5 +1,5 @@
 import type { SessionModel } from "@/chatjs/core/session/contracts";
-import { getModelProviderOptions } from "@chat-js/gateways/provider-options";
+import { getModelProviderOptions } from "@/chatjs/core/gateway/provider-options";
 import { wrapLanguageModel } from "ai";
 import { z } from "zod";
 

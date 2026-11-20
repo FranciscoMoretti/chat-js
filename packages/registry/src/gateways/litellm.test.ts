@@ -1,14 +1,9 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, mock } from "bun:test";
 
-import { LiteLLMGateway } from "../../registry/src/gateways/litellm/gateway";
+import { LiteLLMGateway } from "./litellm/gateway";
 
-afterEach((): void => {
-  vi.unstubAllEnvs();
-  vi.unstubAllGlobals();
-});
-
-const mockModelsFetch = (): ReturnType<typeof vi.fn<typeof fetch>> => {
-  const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
+const mockModelsFetch = () =>
+  mock<typeof fetch>().mockResolvedValue(
     Response.json({
       data: [
         {
@@ -20,18 +15,18 @@ const mockModelsFetch = (): ReturnType<typeof vi.fn<typeof fetch>> => {
       ],
     })
   );
-  vi.stubGlobal("fetch", fetchMock);
-  return fetchMock;
-};
 
 const fetchesModelsFromModelsEndpoint = async (): Promise<void> => {
-  vi.stubEnv("LITELLM_BASE_URL", "http://localhost:4000");
-  vi.stubEnv("LITELLM_API_KEY", "sk-test");
   const fetchMock = mockModelsFetch();
+  const models = await new LiteLLMGateway({
+    env: {
+      LITELLM_BASE_URL: "http://localhost:4000",
+      LITELLM_API_KEY: "sk-test",
+    },
+    fetch: fetchMock,
+  }).fetchModels();
 
-  const models = await new LiteLLMGateway().fetchModels();
-
-  expect(fetchMock).toHaveBeenCalledOnce();
+  expect(fetchMock).toHaveBeenCalledTimes(1);
   const [[url, init]] = fetchMock.mock.calls;
   expect(url).toBe("http://localhost:4000/v1/models");
   expect(init).toMatchObject({
@@ -56,11 +51,11 @@ const fetchesModelsFromModelsEndpoint = async (): Promise<void> => {
   ]);
 };
 const omitsAuthorizationForUnauthenticatedProxies = async (): Promise<void> => {
-  vi.stubEnv("LITELLM_BASE_URL", "http://localhost:4000/");
-  vi.stubEnv("LITELLM_API_KEY", "");
   const fetchMock = mockModelsFetch();
-
-  await new LiteLLMGateway().fetchModels();
+  await new LiteLLMGateway({
+    env: { LITELLM_BASE_URL: "http://localhost:4000/" },
+    fetch: fetchMock,
+  }).fetchModels();
 
   const [[url, init]] = fetchMock.mock.calls;
   expect(url).toBe("http://localhost:4000/v1/models");
@@ -75,11 +70,11 @@ const omitsAuthorizationForUnauthenticatedProxies = async (): Promise<void> => {
   expect(new Headers(init.headers).has("Authorization")).toBe(false);
 };
 const preservesConfiguredVersionPrefix = async (): Promise<void> => {
-  vi.stubEnv("LITELLM_BASE_URL", "http://localhost:4000/v1");
-  vi.stubEnv("LITELLM_API_KEY", "sk-test");
   const fetchMock = mockModelsFetch();
-
-  await new LiteLLMGateway().fetchModels();
+  await new LiteLLMGateway({
+    env: { LITELLM_BASE_URL: "http://localhost:4000/v1" },
+    fetch: fetchMock,
+  }).fetchModels();
 
   const [[url]] = fetchMock.mock.calls;
   expect(url).toBe("http://localhost:4000/v1/models");

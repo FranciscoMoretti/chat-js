@@ -86,9 +86,7 @@ test("fresh workers reload declarations, preserve transforms, fan out changes an
       "packages/registry-validation/src",
       "packages/registry-validation/package.json",
       "packages/cli/src",
-      "packages/gateways/src",
       "packages/cli/package.json",
-      "packages/gateways/package.json",
       "packages/registry/package.json",
       "apps/chat/components.json",
       "apps/chat/components/ui",
@@ -149,33 +147,27 @@ process.exit(0);
           );
         })
     );
-    await Promise.all(
-      ["gateways", "registry-validation"].map(async (name) => {
-        await symlink(
-          path.join(fixture, "packages", name),
-          path.join(fixture, "node_modules/@chat-js", name)
-        );
-      })
+    await symlink(
+      path.join(fixture, "packages/registry-validation"),
+      path.join(fixture, "node_modules/@chat-js/registry-validation")
     );
     await Promise.all(
-      ["registry", "cli", "gateways", "registry-validation"].map(
-        async (name) => {
-          const modules = path.join("packages", name, "node_modules");
-          try {
-            await stat(path.join(root, modules));
-          } catch (error) {
-            if (
-              error instanceof Error &&
-              "code" in error &&
-              error.code === "ENOENT"
-            ) {
-              return;
-            }
-            throw error;
+      ["registry", "cli", "registry-validation"].map(async (name) => {
+        const modules = path.join("packages", name, "node_modules");
+        try {
+          await stat(path.join(root, modules));
+        } catch (error) {
+          if (
+            error instanceof Error &&
+            "code" in error &&
+            error.code === "ENOENT"
+          ) {
+            return;
           }
-          await symlink(path.join(root, modules), path.join(fixture, modules));
+          throw error;
         }
-      )
+        await symlink(path.join(root, modules), path.join(fixture, modules));
+      })
     );
     const invalidSource =
       "packages/registry/src/plugins/mcp/src/ui/connectors-settings.tsx";

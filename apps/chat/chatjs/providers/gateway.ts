@@ -7,10 +7,10 @@ import {
   aiGatewayModelSchema,
   aiGatewayModelsEnvelopeSchema,
   isAiGatewayModelType,
-} from "@chat-js/gateways/models";
-import type { AiGatewayModel } from "@chat-js/gateways/models";
-import type { GatewayProvider } from "@chat-js/gateways/gateway-provider";
-import { GatewayRuntime } from "@chat-js/gateways/runtime";
+} from "@/chatjs/core/gateway/models";
+import type { AiGatewayModel } from "@/chatjs/core/gateway/models";
+import type { GatewayProvider } from "@/chatjs/core/gateway/gateway-provider";
+import { GatewayRuntime } from "@/chatjs/core/gateway/runtime";
 import type { ImageModel } from "ai";
 
 import { createGateway } from "@ai-sdk/gateway";

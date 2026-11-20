@@ -1,6 +1,6 @@
 import { itemAddress, readItem } from "./shadcn";
-import type { GatewayDefinition } from "@chat-js/gateways/definition";
-import { gatewayDefinitionSchema } from "@chat-js/gateways/definition";
+import type { GatewayDefinition } from "../../../registry/src/gateways/definition";
+import { gatewayDefinitionSchema } from "../../../registry/src/gateways/definition";
 
 type RegistryFile = NonNullable<
   Awaited<ReturnType<typeof readItem>>["files"]

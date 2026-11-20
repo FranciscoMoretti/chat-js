@@ -14,7 +14,7 @@ const fetchAndSaveModels = async (): Promise<void> => {
     throw new Error("No models returned from gateway");
   }
 
-  const fileContent = `import type { AiGatewayModel } from "@chat-js/gateways/models";
+  const fileContent = `import type { AiGatewayModel } from "@/chatjs/core/gateway/models";
 
 export const generatedForGateway = "${gateway.type}";
 

@@ -18,7 +18,6 @@ import path from "node:path";
 import type { InstallationSelection } from "../../registry/installation";
 import { writeAgentConfiguration } from "../src/helpers/agent-configuration";
 import { parsePackageJson } from "../src/helpers/package-manifest";
-import gatewayPackage from "@chat-js/gateways/package.json";
 import formatConfig from "../../../apps/chat/oxfmt.config";
 
 const fixture: { core?: Map<string, Uint8Array> } = {};
@@ -29,7 +28,8 @@ const comparable = (file: string): boolean =>
   !(
     file.startsWith("chatjs/") &&
     file !== "chatjs/generated" &&
-    !file.startsWith("chatjs/generated/")
+    !file.startsWith("chatjs/generated/") &&
+    !file.startsWith("chatjs/core/gateway/")
   ) &&
   // Companion contents/build are exercised by the packed desktop fixture.
   !file.startsWith("electron/") &&
@@ -71,19 +71,6 @@ const normalize = (source: string) => {
   return value;
 };
 
-const manifest = (source: string) => {
-  const parsed = parsePackageJson(source);
-  for (const group of [parsed.dependencies, parsed.devDependencies]) {
-    if (!group) {
-      continue;
-    }
-    if (group[gatewayPackage.name]?.startsWith("http://127.0.0.1:")) {
-      group[gatewayPackage.name] = gatewayPackage.version;
-    }
-  }
-  return parsed;
-};
-
 const normalizeFile = async (
   file: string,
   bytes: Uint8Array
@@ -94,7 +81,9 @@ const normalizeFile = async (
     return parseJsonObject(source, "tsconfig.json");
   }
   if (file === "package.json" || file === "components.json") {
-    return file === "package.json" ? manifest(source) : normalize(source);
+    return file === "package.json"
+      ? parsePackageJson(source)
+      : normalize(source);
   }
   if (
     /\.(?:[cm]?[jt]sx?|json|css)$/u.test(file) &&

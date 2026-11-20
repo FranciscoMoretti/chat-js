@@ -14,7 +14,7 @@ import { resolveNativeProjectConfig } from "#cli/helpers/native-project-config";
 import { withRegistryTransport } from "./transport";
 
 const registryUrl =
-  "https://unpkg.com/@chat-js/registry@0.2.0-beta.6/dist/r/{name}.json";
+  "https://unpkg.com/@chat-js/registry@0.2.0-beta.7/dist/r/{name}.json";
 
 const registryConfig = async (
   cwd: string

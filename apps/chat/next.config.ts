@@ -34,7 +34,6 @@ const nextConfig: NextConfig = {
   },
   partialPrefetching: true,
   serverExternalPackages: ["pino", "pino-pretty"],
-  transpilePackages: ["@chat-js/gateways"],
   typedRoutes: true,
 };
 

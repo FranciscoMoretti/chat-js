@@ -2,7 +2,7 @@ import {
   models as fallbackModels,
   generatedForGateway,
 } from "@/lib/ai/models.generated";
-import type { AiGatewayModel } from "@chat-js/gateways/models";
+import type { AiGatewayModel } from "@/chatjs/core/gateway/models";
 import { createModuleLogger } from "@/lib/logger";
 
 const log = createModuleLogger("ai/gateways/fallback");
