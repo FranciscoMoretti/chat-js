@@ -36,7 +36,7 @@ The ChatJS model picker maps a reasoning selection to provider options using the
 
 | Provider | Mechanism | Notes |
 | --- | --- | --- |
-| OpenAI | `reasoningSummary` provider option | gpt-5 family uses `reasoningEffort: "low"` |
+| OpenAI | `reasoningSummary` provider option | `gpt-5`, `gpt-5-mini`, and `gpt-5-nano` also set `reasoningEffort: "low"` |
 | Anthropic | `thinking` provider option | Budget of 4096 tokens |
 | Google | `thinkingConfig` provider option | Budget of 10,000 tokens |
 
