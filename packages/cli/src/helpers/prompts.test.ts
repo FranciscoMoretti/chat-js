@@ -9,7 +9,7 @@ import {
 } from "./prompts";
 import { collectEnvChecklist } from "./env-checklist";
 import { externalGatewayFixture } from "../../test/external-gateway";
-import { gatewayDefinitionSchema } from "@chat-js/gateways/definition";
+import { gatewayDefinitionSchema } from "../../../registry/src/gateways/definition";
 import {
   AUTH_PROVIDERS,
   BUILT_IN_TOOL_KEYS,

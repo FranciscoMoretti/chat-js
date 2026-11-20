@@ -1,7 +1,7 @@
 import { rejects } from "node:assert/strict";
 import { expect, mock, test } from "bun:test";
 
-import type { AiGatewayModel } from "@chat-js/gateways/models";
+import type { AiGatewayModel } from "@/chatjs/core/gateway/models";
 
 import { OpenAICompatibleGateway } from "./openai-compatible/gateway";
 import { LiteLLMGateway } from "./litellm/gateway";

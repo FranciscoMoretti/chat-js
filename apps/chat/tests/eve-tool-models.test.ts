@@ -1,4 +1,4 @@
-import type { GatewayProvider } from "@chat-js/gateways/gateway-provider";
+import type { GatewayProvider } from "@/chatjs/core/gateway/gateway-provider";
 import { describe, expect, it, vi } from "vitest";
 
 import { LiteLLMGateway } from "../../../packages/registry/src/gateways/litellm/gateway";

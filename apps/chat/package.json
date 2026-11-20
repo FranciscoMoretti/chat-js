@@ -4,7 +4,7 @@
   "private": true,
   "license": "Apache-2.0",
   "scripts": {
-    "prebuild": "bun --filter @chat-js/gateways build && bun run check-env",
+    "prebuild": "bun run check-env",
     "dev": "bun run check-env && EVE_SANDBOX_IMAGE_TAG=${EVE_SANDBOX_IMAGE_TAG:-0.80.1} next dev",
     "dev:inspect": "bun run check-env && EVE_SANDBOX_IMAGE_TAG=${EVE_SANDBOX_IMAGE_TAG:-0.80.1} next dev --inspect",
     "build": "tsx lib/db/migrate.ts --deployment && bun run eve:build && EVE_SANDBOX_IMAGE_TAG=${EVE_SANDBOX_IMAGE_TAG:-0.80.1} next build",
@@ -56,7 +56,6 @@
     "@base-ui/react": "^1.9.0",
     "@better-auth/core": "1.6.2",
     "@better-auth/electron": "1.6.2",
-    "@chat-js/gateways": "workspace:*",
     "@hookform/resolvers": "^5.2.1",
     "@lexical/react": "^0.32.1",
     "@modelcontextprotocol/sdk": "^1.24.3",

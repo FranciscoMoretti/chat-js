@@ -1,4 +1,4 @@
-import type { GatewayModelDefaults } from "@chat-js/gateways/defaults";
+import type { GatewayModelDefaults } from "@/chatjs/core/gateway/defaults";
 
 import type { LiteLLMGateway } from "./litellm/gateway.ts";
 import type { OpenAICompatibleGateway } from "./openai-compatible/gateway.ts";

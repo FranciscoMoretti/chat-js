@@ -1,7 +1,4 @@
-import type { AnthropicProviderOptions } from "@ai-sdk/anthropic";
-import type { GoogleLanguageModelOptions } from "@ai-sdk/google";
-import type { OpenAIResponsesProviderOptions } from "@ai-sdk/openai";
-import type { SharedV4ProviderOptions } from "@ai-sdk/provider";
+import type { JSONObject, SharedV4ProviderOptions } from "@ai-sdk/provider";
 
 const ANTHROPIC_REASONING_BUDGET_TOKENS = 4096;
 const GOOGLE_REASONING_BUDGET_TOKENS = 10_000;
@@ -9,13 +6,13 @@ const GOOGLE_REASONING_BUDGET_TOKENS = 10_000;
 const getOpenAIProviderOptions = (
   apiModelId: string,
   reasoning: boolean
-): OpenAIResponsesProviderOptions => {
+): JSONObject => {
   if (!reasoning) {
     return {};
   }
   // Vercel IDs include the provider prefix; direct OpenAI IDs do not.
   const modelName = apiModelId.split("/").pop() ?? apiModelId;
-  const options: OpenAIResponsesProviderOptions = {
+  const options: JSONObject = {
     reasoningSummary: "auto",
   };
   if (
@@ -49,10 +46,10 @@ const getModelProviderOptions = (
               budgetTokens: ANTHROPIC_REASONING_BUDGET_TOKENS,
               type: "enabled",
             },
-          } satisfies AnthropicProviderOptions,
+          },
         };
       }
-      return { anthropic: {} satisfies AnthropicProviderOptions };
+      return { anthropic: {} };
     }
     case "xai": {
       return { xai: {} };
@@ -64,10 +61,10 @@ const getModelProviderOptions = (
             thinkingConfig: {
               thinkingBudget: GOOGLE_REASONING_BUDGET_TOKENS,
             },
-          } satisfies GoogleLanguageModelOptions,
+          },
         };
       }
-      return { google: {} satisfies GoogleLanguageModelOptions };
+      return { google: {} };
     }
     default: {
       return {};

@@ -1,14 +1,9 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, mock } from "bun:test";
 
-import { VercelGateway } from "../../registry/src/gateways/vercel/gateway";
-
-afterEach(() => {
-  vi.unstubAllEnvs();
-  vi.unstubAllGlobals();
-});
+import { VercelGateway } from "./vercel/gateway";
 
 const FIRST_MODEL_INDEX = 0;
-const SUPPORTED_LANGUAGE_MODEL_COUNT = 1;
+const SUPPORTED_MODEL_COUNT = 2;
 const modelCatalogResponse = {
   data: [
     {
@@ -39,23 +34,33 @@ const modelCatalogResponse = {
       tags: ["tool-use", "future-provider-tag"],
       type: "language",
     },
+    {
+      context_window: 0,
+      created: 3,
+      description: "Video model",
+      id: "xai/grok-imagine-video",
+      max_tokens: 0,
+      name: "Video Test",
+      object: "model",
+      owned_by: "xai",
+      pricing: {},
+      type: "video",
+    },
   ],
   object: "list",
 };
 
 describe("VercelGateway", () => {
   it("skips unsupported models before validating supported model metadata", async () => {
-    vi.stubEnv("AI_GATEWAY_API_KEY", "test-key");
-    vi.stubGlobal(
-      "fetch",
-      vi
-        .fn<typeof fetch>()
-        .mockResolvedValue(Response.json(modelCatalogResponse))
-    );
+    const models = await new VercelGateway({
+      env: { AI_GATEWAY_API_KEY: "test-key" },
+      fetch: mock<typeof fetch>().mockResolvedValue(
+        Response.json(modelCatalogResponse)
+      ),
+    }).fetchModels();
 
-    const models = await new VercelGateway().fetchModels();
-
-    expect(models).toHaveLength(SUPPORTED_LANGUAGE_MODEL_COUNT);
+    expect(models).toHaveLength(SUPPORTED_MODEL_COUNT);
+    expect(models.map((model) => model.type)).toEqual(["language", "video"]);
     const model: unknown = models[FIRST_MODEL_INDEX];
     expect(model).toMatchObject({
       id: "openai/gpt-test",

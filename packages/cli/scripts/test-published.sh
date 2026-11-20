@@ -4,13 +4,12 @@ set -euo pipefail
 # Release boundary: install from npm and the public registry, without local
 # tarball overrides. This deliberately does not use the workspace CLI build.
 cli_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-if [ "$#" -ne 0 ] && [ "$#" -ne 3 ]; then
-  echo "Usage: $0 [cli-version gateway-version registry-version]" >&2
+if [ "$#" -ne 0 ] && [ "$#" -ne 2 ]; then
+  echo "Usage: $0 [cli-version registry-version]" >&2
   exit 1
 fi
 cli_version="${1:-$(cd "$cli_root" && node -p 'require("./package.json").version')}"
-gateway_version="${2:-$(cd "$cli_root/../gateways" && node -p 'require("./package.json").version')}"
-registry_version="${3:-$(cd "$cli_root/../registry" && node -p 'require("./package.json").version')}"
+registry_version="${2:-$(cd "$cli_root/../registry" && node -p 'require("./package.json").version')}"
 fixture_root="$(mktemp -d /tmp/chatjs-published-XXXXXX)"
 cleanup() {
   if [ "${CHATJS_KEEP_PUBLISHED_FIXTURE:-0}" = 1 ]; then
@@ -22,7 +21,7 @@ cleanup() {
 trap cleanup EXIT
 
 # npm publication can finish before the versions are publicly readable.
-for package in "@chat-js/gateways@$gateway_version" "@chat-js/registry@$registry_version" "chat-js@$cli_version"; do
+for package in "@chat-js/registry@$registry_version" "chat-js@$cli_version"; do
   for attempt in {1..60}; do
     if npm view "$package" version --json --prefer-online > "$fixture_root/lookup.json" 2> "$fixture_root/lookup.log"; then
       break
@@ -50,12 +49,15 @@ if ! bun run lint > ../lint.log 2>&1; then
   cat ../lint.log >&2
   exit 1
 fi
-GATEWAY_VERSION="$gateway_version" REGISTRY_VERSION="$registry_version" node --input-type=module -e '
+REGISTRY_VERSION="$registry_version" node --input-type=module -e '
 import assert from "node:assert/strict";
+import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
-const manifest = JSON.parse(await readFile("node_modules/@chat-js/gateways/package.json", "utf8"));
+const manifest = JSON.parse(await readFile("package.json", "utf8"));
 const components = JSON.parse(await readFile("components.json", "utf8"));
-assert.equal(manifest.version, process.env.GATEWAY_VERSION);
+assert.equal(manifest.dependencies["@chat-js/gateways"], undefined);
+assert.equal(existsSync("node_modules/@chat-js/gateways"), false);
+assert.equal(existsSync("chatjs/core/gateway/runtime.ts"), true);
 assert.ok(components.registries["@chatjs"].includes(`@${process.env.REGISTRY_VERSION}/`));
 const sandbox = await import("eve/sandbox");
 assert.equal(typeof sandbox.DefaultSandbox.environment, "function");

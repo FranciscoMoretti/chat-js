@@ -8,8 +8,6 @@ export const demoInputs = [
   "packages/registry-validation/package.json",
   "packages/cli/src/**",
   "packages/cli/package.json",
-  "packages/gateways/src/**",
-  "packages/gateways/package.json",
   "apps/chat/{components.json,oxfmt.config.ts}",
   "{package.json,bun.lock,oxfmt.config.ts}",
   "patches/**",

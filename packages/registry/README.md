@@ -30,7 +30,7 @@ Source folders group items by category. Each gateway has a `gateway.ts`; each to
 
 The selected gateway installs into the app's `chatjs/providers/gateway.ts` slot. Tools install under `chatjs/tools/<id>/` with generated installation inputs and app-owned integration modules. Third-party destination namespacing is not inferred from registry aliases and is not added by this source reorganization.
 
-`packages/gateways` owns shared runtime contracts. `packages/cli` owns installation and configuration. `apps/chat` is the reference consumer and app template source. New categories such as layouts and caches should introduce source folders and contracts when their first implementation is added, rather than empty scaffolding.
+`apps/chat/chatjs/core/gateway/` contains the shared gateway runtime and types shipped with each app. `packages/cli` owns installation and configuration. `apps/chat` is the reference consumer and app template source. New categories such as layouts and caches should introduce source folders and contracts when their first implementation is added, rather than empty scaffolding.
 
 ## Ownership inventory
 

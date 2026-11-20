@@ -1,5 +1,9 @@
 # @chat-js/registry
 
+## 0.2.0-beta.7
+
+Built-in gateway adapters import the source shipped with ChatJS rather than the gateway npm package. Pair with `chat-js@1.0.0-alpha.6`.
+
 ## 0.2.0-beta.6
 
 Install the gateway contract aligned with AI SDK 7.0.172 and eve 1.1.

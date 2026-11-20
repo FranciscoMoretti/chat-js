@@ -37,11 +37,9 @@ cleanup() {
 }
 trap cleanup EXIT
 
-bun run --cwd "$cli_root/../gateways" build > "$fixture_root/gateways-build.log" 2>&1
 bun run --cwd "$cli_root/../registry" build > "$fixture_root/registry-build.log" 2>&1
 bun run --cwd "$cli_root" build > "$fixture_root/cli-build.log" 2>&1
-bun pm --cwd "$cli_root/../gateways" pack --filename "$fixture_root/gateways.tgz" > "$fixture_root/gateways-pack.log"
-bun "$cli_root/test/serve-registry.ts" "$fixture_root/gateways.tgz" "$fixture_root/address" &
+bun "$cli_root/test/serve-registry.ts" "$fixture_root/address" &
 registry_pid=$!
 for attempt in {1..100}; do
   test -s "$fixture_root/address" && break
