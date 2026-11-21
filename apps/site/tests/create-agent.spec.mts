@@ -61,7 +61,7 @@ for (const width of [1440, 845, 390]) {
       storage: { source: "vercel-blob" },
       agent: {
         model: "openai/gpt-5-mini",
-        allowedModels: ["openai/gpt-5-nano"],
+        modelIds: ["openai/gpt-5-mini", "openai/gpt-5-nano"],
         reasoning: "high",
         compaction: { model: "openai/gpt-5-nano" },
       },
@@ -117,9 +117,7 @@ for (const width of [1440, 845, 390]) {
         .locator("[data-capability-visual]")
     ).toHaveAttribute("data-capability-visual", "category");
     await expect(
-      page.getByLabel(
-        /^(?:Model|Allowed alternative models|Reasoning|Compaction model)$/u
-      )
+      page.getByLabel(/^(?:Model|Model IDs|Reasoning|Compaction model)$/u)
     ).toHaveCount(0);
     await expect(
       page.getByText("Advanced settings", { exact: true })
@@ -394,7 +392,7 @@ for (const width of [1440, 845, 390]) {
     expect(recipe.agent).toMatchObject({
       compaction: { model: "openai/gpt-5-nano" },
       model: "openai/gpt-5-mini",
-      allowedModels: ["openai/gpt-5-nano"],
+      modelIds: ["openai/gpt-5-mini", "openai/gpt-5-nano"],
       reasoning: "high",
     });
     await page.reload();

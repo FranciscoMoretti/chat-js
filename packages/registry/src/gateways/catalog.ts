@@ -18,7 +18,7 @@ const schemaDependencies: Readonly<
   openai: ["zod"],
   "openai-compatible": ["zod"],
   openrouter: ["zod"],
-  vercel: ["zod"],
+  vercel: ["@vercel/oidc@3.2.0", "zod"],
 };
 
 const isGatewayType = (id: string): id is keyof typeof environment =>

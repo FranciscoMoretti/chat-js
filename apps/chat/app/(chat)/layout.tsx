@@ -1,4 +1,3 @@
-import { webModels } from "@/integrations/chat/models";
 import { cookies, headers } from "next/headers";
 import React, { Suspense } from "react";
 
@@ -12,8 +11,10 @@ import {
   ChatWorkspace,
   ChatWorkspaceContent,
 } from "@/components/chat/chat-workspace";
-import type { AppModelId } from "@/lib/ai/app-model-id";
-import { config } from "@/lib/config";
+import {
+  getConfiguredWebChatModel,
+  getDefaultWebChatModelId,
+} from "@/lib/ai/web-chat-models";
 import { isPlaywrightTestEnvironment } from "@/lib/constants";
 import { resolveEvePrincipal } from "@/lib/eve/principal";
 import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
@@ -25,22 +26,6 @@ import { TRPCReactProvider } from "@/trpc/react";
 import { HydrateClient } from "@/trpc/server";
 
 import { auth } from "@/lib/auth";
-
-const resolveDefaultModel = (
-  cookieModel: string | undefined,
-  chatModels: readonly { readonly id: string }[]
-): AppModelId => {
-  const configuredModel = webModels.model ?? config.ai.workflows.chat;
-  let defaultModel: AppModelId = cookieModel ?? configuredModel;
-
-  if (typeof cookieModel === "string" && cookieModel !== "") {
-    const modelExists = chatModels.some((model) => model.id === cookieModel);
-    if (!modelExists) {
-      defaultModel = configuredModel;
-    }
-  }
-  return defaultModel;
-};
 
 const ChatLayoutDynamic = async ({
   children,
@@ -61,7 +46,10 @@ const ChatLayoutDynamic = async ({
 
   const cookieModel = cookieStore.get("chat-model")?.value;
 
-  const defaultModel = resolveDefaultModel(cookieModel, chatModels);
+  const defaultModel =
+    chatModels.find((model) => model.id === cookieModel)?.id ??
+    getDefaultWebChatModelId(chatModels) ??
+    getConfiguredWebChatModel();
 
   return (
     <HydrateClient>

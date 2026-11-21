@@ -63,7 +63,7 @@ const createAiSchema = <Gateway extends GatewayType>(
   z.object({
     curatedDefaults: z
       .array(gatewayModelId<Gateway>())
-      .describe("Default models enabled for new users"),
+      .describe("Recommended models shown first in the chat catalog"),
     disabledModels: z
       .array(gatewayModelId<Gateway>())
       .describe("Models to hide from all users"),

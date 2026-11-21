@@ -234,11 +234,16 @@ vi.mock("eve/react", () => {
 vi.mock("@/integrations/chat/models", () => ({
   webModels: {
     model: "google/gemini-2.5-flash-lite",
-    allowedModels: [
-      "openai/gpt-5-nano",
-      "openai/gpt-5-mini",
-      "anthropic/claude-sonnet-4",
-    ],
+    get modelIds(): readonly string[] {
+      return (
+        route.server.modelIds ?? [
+          "google/gemini-2.5-flash-lite",
+          "openai/gpt-5-nano",
+          "openai/gpt-5-mini",
+          "anthropic/claude-sonnet-4",
+        ]
+      );
+    },
   },
 }));
 

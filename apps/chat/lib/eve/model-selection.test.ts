@@ -31,6 +31,7 @@ vi.mock("../config", () => ({
   config: {
     ai: {
       disabledModels: ["disabled"],
+      providerOrder: [],
       gateway: "test",
       workflows: { chat: "plain" },
     },
@@ -136,4 +137,9 @@ test("accepts live catalog models absent from the snapshot", async () => {
   expect(await loadEveModelDefinition("live-only")).toMatchObject({
     id: "live-only",
   });
+});
+
+test("chooses a discovered chat model when the gateway's preferred ID is missing", async () => {
+  const { loadDefaultEveWebModelId } = await import("./model-selection");
+  expect(await loadDefaultEveWebModelId("missing-default")).toBe("plain");
 });

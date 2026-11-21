@@ -60,9 +60,6 @@ const save =
       readonly enabled: boolean;
     }) => Promise<void>
   >();
-vi.mock("@/lib/ai/app-models", () => ({
-  getDefaultEnabledModels: (): Set<string> => new Set([primary]),
-}));
 vi.mock("@/providers/session-provider", () => ({
   useSession: (): object => ({ data: { user: { id: "fixture" } } }),
 }));

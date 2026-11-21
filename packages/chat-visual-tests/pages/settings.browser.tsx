@@ -49,7 +49,10 @@ test("general settings", async () => {
 });
 
 test("model settings list every available model", async () => {
-  await renderRoute(settings(<ModelsPage />), request("/settings/models"));
+  await renderRoute(settings(<ModelsPage />), {
+    ...request("/settings/models"),
+    server: { modelIds: [] },
+  });
   await expect
     .element(page.getByRole("link", { name: "Models", exact: true }).first())
     .toHaveAttribute("href", "/settings/models");
@@ -58,6 +61,9 @@ test("model settings list every available model", async () => {
     .not.toBeInTheDocument();
   await expect.element(page.getByText(/^[1-9]\d* models$/u)).toBeVisible();
   await expect.element(page.getByText("GPT-5 mini").first()).toBeVisible();
+  await expect
+    .element(page.getByText("Llama 3.3 70B Instruct", { exact: true }))
+    .toBeInTheDocument();
   await page.viewport(390, 844);
   await expect
     .poll(() => {

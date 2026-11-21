@@ -43,8 +43,8 @@ Every gateway implements `fetchModels()` which returns the list of available mod
 ```mermaid
 flowchart TB
     subgraph Runtime
-        Fetch[fetchModels] -->|Has API key| API[Gateway API]
-        Fetch -->|No key / error| Fallback[models.generated.ts]
+        Fetch[fetchModels] --> API[Gateway API]
+        Fetch -->|Discovery unavailable| Fallback[models.generated.ts]
         API --> Cache["unstable_cache (1 hour)"]
         Fallback --> Cache
         Cache --> App[Application]
@@ -55,7 +55,7 @@ flowchart TB
     end
 ```
 
-When no API key is available, the app falls back to a static snapshot in `models.generated.ts`. Refresh this snapshot periodically:
+When gateway discovery is unavailable, the app falls back to a static snapshot in `models.generated.ts`. Refresh this snapshot periodically:
 
 ```bash
 bun fetch:models

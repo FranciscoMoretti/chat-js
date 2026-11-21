@@ -8,12 +8,17 @@ import { getFallbackModels } from "@/lib/ai/gateways/fallback-models";
 import type { ModelData } from "@/lib/ai/model-data";
 import type { ReadonlyAiGatewayModel } from "@/lib/ai/to-model-data";
 import { toModelData } from "@/lib/ai/to-model-data";
+import {
+  buildWebChatModels,
+  getDefaultWebChatModelId,
+} from "@/lib/ai/web-chat-models";
 import { config } from "@/lib/config";
 
 const serializedOptions = z.record(z.string(), z.record(z.string(), z.json()));
 const MODEL_CATALOG_TTL_MS = 3_600_000;
 type EveModelDefinition = ModelData & {
   apiModelId: string;
+  selectedModelId: string;
 };
 
 class EveModelUnavailableError extends Error {
@@ -47,15 +52,14 @@ const getEveModelDefinition = (
     // The active gateway catalog above validates this ID at the runtime boundary.
     apiModelId: model.id,
     reasoning: model.reasoning && id.endsWith("-reasoning"),
+    selectedModelId: id,
   };
 };
 
 let catalog: { expires: number; models: ModelData[] } | undefined;
 let loading: Promise<ModelData[]> | undefined;
 
-const loadEveModelDefinition = async (
-  requestedId?: string
-): Promise<EveModelDefinition> => {
+const loadEveModelCatalog = async (): Promise<readonly ModelData[]> => {
   if (!catalog || catalog.expires < Date.now()) {
     loading ??= (async (): Promise<ModelData[]> => {
       try {
@@ -72,9 +76,38 @@ const loadEveModelDefinition = async (
         loading = undefined;
       }
     })();
-    return getEveModelDefinition(requestedId, await loading);
+    return await loading;
   }
-  return getEveModelDefinition(requestedId, catalog.models);
+  return catalog.models;
+};
+
+const defaultEveWebModelId = (
+  models: readonly ModelData[],
+  preferredModelId?: string
+): string => {
+  const id = getDefaultWebChatModelId(
+    buildWebChatModels(models),
+    preferredModelId
+  );
+  if (id === undefined) {
+    throw new EveModelUnavailableError("No models are available for chat.");
+  }
+  return id;
+};
+
+const loadDefaultEveWebModelId = async (
+  preferredModelId: string
+): Promise<string> =>
+  defaultEveWebModelId(await loadEveModelCatalog(), preferredModelId);
+
+const loadEveModelDefinition = async (
+  requestedId?: string
+): Promise<EveModelDefinition> => {
+  const models = await loadEveModelCatalog();
+  return getEveModelDefinition(
+    requestedId ?? defaultEveWebModelId(models),
+    models
+  );
 };
 
 const resolveEveModel = async (requestedId?: string): Promise<SessionModel> => {
@@ -83,7 +116,7 @@ const resolveEveModel = async (requestedId?: string): Promise<SessionModel> => {
     model: wrapLanguageModel({
       middleware: { specificationVersion: "v4" },
       model: getActiveGateway().createLanguageModel(model.apiModelId),
-      modelId: requestedId ?? config.ai.workflows.chat,
+      modelId: model.selectedModelId,
     }),
     modelContextWindowTokens: model.context_window,
     modelOptions: {
@@ -94,6 +127,7 @@ const resolveEveModel = async (requestedId?: string): Promise<SessionModel> => {
 export {
   EveModelUnavailableError,
   getEveModelDefinition,
+  loadDefaultEveWebModelId,
   loadEveModelDefinition,
   resolveEveModel,
 };

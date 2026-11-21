@@ -5,6 +5,7 @@ import type { getEnabledFeatures } from "@/lib/features-config";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ModelSelectionIndicator } from "@/components/model-selection-indicator";
 import { PopoverButton } from "@/components/popover-button";
+import { nonEmptyText } from "@/components/text-value";
 import type { AppModelDefinition, AppModelId } from "@/lib/ai/app-models";
 import {
   CheckIcon,
@@ -260,6 +261,7 @@ const PureModelSelector = ({
   allowMultiple = true,
   selectedModelId,
   selectedModelSelection,
+  fallbackModelName,
   className,
   onModelSelectionChangeAction,
   chatModels,
@@ -278,6 +280,7 @@ const PureModelSelector = ({
   readonly allowMultiple?: boolean;
   readonly selectedModelId: AppModelId;
   readonly selectedModelSelection: SelectedModelValue;
+  readonly fallbackModelName?: string;
   readonly onModelSelectionChangeAction?: (
     selection: SelectedModelValue
   ) => void | Promise<void>;
@@ -451,21 +454,11 @@ const PureModelSelector = ({
     () => getSelectionCount(optimisticSelection),
     [optimisticSelection]
   );
-  const triggerLabel = useMemo(() => {
-    if (useMultipleModels && selectedModelCount > 1) {
-      const modelName = selectedItem?.model.name;
-      if (modelName !== undefined && modelName !== "") {
-        return `${modelName} +${selectedModelCount - 1}`;
-      }
-      return `Selected model +${selectedModelCount - 1}`;
-    }
-
-    const modelName = selectedItem?.model.name;
-    if (modelName !== undefined && modelName !== "") {
-      return modelName;
-    }
-    return "Select model";
-  }, [selectedItem?.model.name, selectedModelCount, useMultipleModels]);
+  const modelName = nonEmptyText(selectedItem?.model.name) ?? fallbackModelName;
+  const triggerLabel =
+    useMultipleModels && selectedModelCount > 1
+      ? `${modelName ?? "Selected model"} +${selectedModelCount - 1}`
+      : (modelName ?? "Select model");
 
   const dispatchSelection = useCallback(
     (selection: SelectedModelValue): void => {

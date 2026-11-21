@@ -36,7 +36,7 @@ ai: {
 | `ai.gateway` | Discriminator for the installed gateway |
 | `ai.providerOrder` | Provider order in the picker; unlisted providers follow |
 | `ai.disabledModels` | Models hidden from the application catalog |
-| `ai.curatedDefaults` | Models enabled by default |
+| `ai.curatedDefaults` | Recommended models ordered first and preferred when choosing a fallback |
 | `ai.workflows.chat` | Default conversation model |
 | `ai.workflows.title` | Title-generation model default |
 | `ai.workflows.pdf` | PDF-analysis model default |
@@ -49,7 +49,7 @@ Changing `ai.gateway` alone does not install another provider. Use the [gateway 
 
 `lib/ai/models.ts` asks the active gateway for its catalog, transforms the result into application model data, and caches it for one hour. The cache key includes the gateway type. Provider-specific API handling belongs to the installed gateway.
 
-The host supplies a generated fallback snapshot. For example, the Vercel adapter uses it when credentials are absent or discovery fails. Fallback behavior and available capabilities depend on the selected adapter.
+The host supplies a generated fallback snapshot. The Vercel adapter can discover the public catalog without a credential and uses the snapshot when discovery fails. With a credential it also applies the gateway's model eligibility for the team. Other adapters depend on the connected endpoint for discovery.
 
 Refresh the snapshot after configuring your gateway credentials:
 
@@ -61,7 +61,18 @@ bun run fetch:models
 
 ## Visibility and preferences
 
-Core removes disabled models, then builds default enabled IDs from `ai.curatedDefaults` and newly discovered models that are not in the generated snapshot. When installed, [Model Preferences](../plugins/model-preferences) applies saved user overrides and provides the settings interface. Picker visibility is not an authorization policy.
+ChatJS enables the gateway's discovered text-chat models by default. It removes models listed in `ai.disabledModels` and orders recommended models first. When installed, [Model Preferences](../plugins/model-preferences) lets each user hide models from their picker. These preferences affect picker visibility.
+
+To offer a specific set of models to signed-in users, edit `integrations/chat/models.ts`.
+
+```ts title="integrations/chat/models.ts"
+export const webModels = {
+  model: "openai/gpt-5-mini",
+  modelIds: ["openai/gpt-5-mini", "google/gemini-2.5-flash-lite"],
+};
+```
+
+Omit `modelIds` or leave it empty to use the gateway catalog. A populated list contains the complete set of eligible web chat model IDs. Include your preferred model in that list. If the preferred model is unavailable, ChatJS picks an eligible model from the catalog.
 
 [Guest Chat](../plugins/guest-chat) owns its fixed model and locked picker. Guests do not create multi-model comparisons.
 
