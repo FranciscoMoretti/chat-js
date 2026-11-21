@@ -37,12 +37,6 @@ jobs:
         if: steps.scope.outputs.run == 'true'
         with:
           node-version: 24
-      - uses: actions/cache/restore@v4
-        if: steps.scope.outputs.run == 'true'
-        with:
-          path: ~/.bun/install/cache
-          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
-          restore-keys: ${{ runner.os }}-bun-
       - if: steps.scope.outputs.run == 'true'
         uses: ./.github/actions/cache-electron
       - if: steps.scope.outputs.run == 'true'

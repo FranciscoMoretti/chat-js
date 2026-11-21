@@ -2,12 +2,17 @@ name: Chat CI shadow
 
 on:
   pull_request:
+    paths:
+      - .github/workflows/chat-ci-shadow.yml
+      - apps/chat/playwright.eve-ci-*.config.ts
+      - scripts/chat-ci-scope*.ts
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: chat-ci-shadow-${{ github.event.pull_request.number }}
+  group: chat-ci-shadow-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -31,7 +36,7 @@ jobs:
         id: scope
         shell: bash
         env:
-          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PR_BASE: ${{ github.event.pull_request.base.sha || 'origin/main' }}
         run: |
           set -euo pipefail
           bun test scripts/chat-ci-scope.test.ts
@@ -109,14 +114,8 @@ jobs:
           node-version: 24
       - name: Install Bun
         run: npm install --global bun@1.3.1 --no-audit --no-fund
-      - uses: actions/cache/restore@v4
-        with:
-          path: ~/.bun/install/cache
-          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
-          restore-keys: ${{ runner.os }}-bun-
-      - uses: ./.github/actions/cache-electron
-      - name: Install workspace dependencies
-        run: bun install --frozen-lockfile
+      - name: Install Playwright workspace dependencies
+        run: bun install --frozen-lockfile --filter './' --filter './apps/chat' --filter './packages/registry'
       - if: matrix.lane == 'app'
         name: Migrate isolated test database
         run: bun run --cwd apps/chat db:migrate
