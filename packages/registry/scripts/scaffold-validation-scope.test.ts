@@ -1,5 +1,8 @@
 import { expect, test } from "bun:test";
-import { scaffoldValidationPattern } from "./scaffold-validation-scope";
+import {
+  scaffoldCompatibilityScope,
+  scaffoldValidationPattern,
+} from "./scaffold-validation-scope";
 
 const emptyOpenAI =
   "openai: the manifest-derived empty installation typechecks";
@@ -54,4 +57,26 @@ test("changes to known items select their isolated cases plus the default and fu
     pattern.test("guest-chat: catalog-derived plugin selection typechecks")
   ).toBe(false);
   expect(pattern.test(emptyOpenAI)).toBe(false);
+});
+
+test("shared composition changes run the installation matrix and gateway changes run the external adapter", () => {
+  expect(
+    scaffoldCompatibilityScope([
+      "packages/registry/scripts/installation-generator.ts",
+    ])
+  ).toEqual({ exhaustive: true, externalGateway: false });
+  expect(
+    scaffoldCompatibilityScope([
+      "packages/registry/src/gateways/litellm/gateway.ts",
+    ])
+  ).toEqual({ exhaustive: false, externalGateway: true });
+  expect(
+    scaffoldCompatibilityScope([
+      "packages/registry/src/plugins/projects/chatjs.json",
+    ])
+  ).toEqual({ exhaustive: false, externalGateway: false });
+  expect(scaffoldCompatibilityScope()).toEqual({
+    exhaustive: true,
+    externalGateway: true,
+  });
 });

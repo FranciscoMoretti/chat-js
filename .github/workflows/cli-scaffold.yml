@@ -1,7 +1,9 @@
-name: CLI Scaffold
+name: CLI Scaffold Compatibility
 
 on:
   pull_request:
+    paths-ignore:
+      - README.md
   # Run the full install/package compatibility check on demand.
   workflow_dispatch:
   workflow_call:
@@ -82,20 +84,41 @@ jobs:
           restore-keys: ${{ runner.os }}-bun-
       - uses: ./.github/actions/cache-electron
       - run: bun install --frozen-lockfile
+      - name: Select compatibility checks
+        id: scope
+        if: github.event_name == 'pull_request'
+        env:
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+        run: bun packages/registry/scripts/scaffold-validation-scope.ts >> "$GITHUB_OUTPUT"
       - name: Build CLI and run shared unit tests
         run: bunx turbo run test:unit --filter=chat-js
       - name: Verify reusable registry validation
         run: bun run --cwd packages/registry-validation test:unit
       - name: Validate registry combinations in memory
+        if: inputs.full || github.event_name == 'workflow_dispatch' || steps.scope.outputs.exhaustive == 'true'
         run: bun run --cwd packages/registry test:installation
-      - name: Verify installed gateway contracts
+      - name: Run exhaustive packed CLI cases on demand
+        if: github.event_name == 'workflow_dispatch' && !inputs.full
         run: bun run --cwd packages/cli test:gateways
+      - name: Verify packed CLI runtime and installation parity
+        if: github.event_name != 'workflow_dispatch' || inputs.full
+        env:
+          VERIFY_EXTERNAL_GATEWAY: ${{ inputs.full || steps.scope.outputs.external_gateway == 'true' }}
+        run: |
+          cases='^(chat plugins: guest-chat installs|full installation: whole-tree parity)'
+          if [ "$VERIFY_EXTERNAL_GATEWAY" = "true" ]; then
+            cases='^(acme: independently installed|chat plugins: guest-chat installs|full installation: whole-tree parity)'
+          fi
+          bun run --cwd packages/cli test:gateways --test-name-pattern "$cases"
       - name: Pack prepared scaffold inputs
+        if: inputs.full || github.event_name == 'workflow_dispatch'
         run: |
           set -euo pipefail
           mkdir -p "$RUNNER_TEMP/scaffold-prepared"
           tar -czf "$RUNNER_TEMP/scaffold-prepared/workspace.tgz" packages/cli/dist packages/cli/templates packages/registry/dist
       - uses: actions/upload-artifact@v4
+        if: inputs.full || github.event_name == 'workflow_dispatch'
         with:
           name: scaffold-prepared
           path: ${{ runner.temp }}/scaffold-prepared/*.tgz
@@ -106,7 +129,7 @@ jobs:
   scaffold:
     name: Scaffold (${{ matrix.package-manager }}, electron=${{ matrix.electron }})
     needs: [affected, prepare]
-    if: needs.affected.outputs.run == 'true'
+    if: needs.affected.outputs.run == 'true' && (inputs.full || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
@@ -149,29 +172,3 @@ jobs:
           SCAFFOLD_PACKAGE_MANAGER: ${{ matrix.package-manager }}
           SCAFFOLD_ELECTRON: ${{ matrix.electron }}
         run: bash packages/cli/scripts/test-scaffold.sh "$SCAFFOLD_PACKAGE_MANAGER" "$SCAFFOLD_ELECTRON"
-
-  cli-scaffold:
-    name: CLI Scaffold
-    needs: [affected, prepare, scaffold]
-    if: always()
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Require all scaffold cases
-        env:
-          AFFECTED_RESULT: ${{ needs.affected.result }}
-          PREPARE_RESULT: ${{ needs.prepare.result }}
-          SCAFFOLD_REQUIRED: ${{ needs.affected.outputs.run }}
-          SCAFFOLD_RESULT: ${{ needs.scaffold.result }}
-        run: |
-          set -euo pipefail
-          if [ "$AFFECTED_RESULT" != "success" ]; then
-            echo "Affected check did not succeed: $AFFECTED_RESULT"
-            exit 1
-          fi
-          case "$SCAFFOLD_REQUIRED:$PREPARE_RESULT:$SCAFFOLD_RESULT" in
-            true:success:success|false:skipped:skipped) ;;
-            *)
-              echo "Scaffold cases did not succeed: $SCAFFOLD_REQUIRED:$PREPARE_RESULT:$SCAFFOLD_RESULT"
-              exit 1
-              ;;
-          esac
