@@ -36,7 +36,9 @@ done
 
 unset CHATJS_REGISTRY_URL CHATJS_EVE_REGISTRY_URL
 cd "$fixture_root"
-if ! npx --yes "chat-js@$cli_version" create app --yes --no-electron > create.log 2>&1; then
+if ! npx --yes "chat-js@$cli_version" create app --yes \
+  --installation '{"gateway":"vercel","plugins":[],"tools":["deep-research"],"storage":{"source":"memory"}}' \
+  -- --preset b27I2r8C --base base --no-rtl --pointer > create.log 2>&1; then
   cat create.log >&2
   exit 1
 fi
@@ -59,7 +61,9 @@ assert.equal(manifest.dependencies["@chat-js/gateways"], undefined);
 assert.equal(existsSync("node_modules/@chat-js/gateways"), false);
 assert.equal(existsSync("chatjs/core/gateway/runtime.ts"), true);
 assert.ok(components.registries["@chatjs"].includes(`@${process.env.REGISTRY_VERSION}/`));
+assert.equal(existsSync("agent/tools/deepResearch.ts"), true);
+assert.equal(existsSync("chatjs/tools/deep-research/renderer.tsx"), true);
 const sandbox = await import("eve/sandbox");
 assert.equal(typeof sandbox.DefaultSandbox.environment, "function");
 '
-echo "Published chat-js@$cli_version: create, typecheck, lint and native sandbox imports passed."
+echo "Published chat-js@$cli_version: Deep Research install, typecheck, lint and native sandbox imports passed."
