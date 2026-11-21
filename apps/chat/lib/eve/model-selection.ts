@@ -86,7 +86,7 @@ const defaultEveWebModelId = (
   preferredModelId?: string
 ): string => {
   const id = getDefaultWebChatModelId(
-    buildWebChatModels(models, preferredModelId),
+    buildWebChatModels(models),
     preferredModelId
   );
   if (id === undefined) {

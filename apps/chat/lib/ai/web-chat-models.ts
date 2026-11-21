@@ -4,32 +4,17 @@ import type { ModelData } from "./model-data";
 
 type AppModelDefinition = ModelData & { readonly apiModelId: string };
 
-const settings: {
-  readonly model?: string;
-  readonly modelIds?: readonly string[];
-  readonly allowedModels?: readonly string[];
-} = webModels;
-
 const getConfiguredWebChatModel = (
   defaultModelId: string = config.ai.workflows.chat
-): string => settings.model ?? defaultModelId;
+): string => webModels.model ?? defaultModelId;
 
-const getModelIds = (defaultModelId: string): readonly string[] => {
-  if (settings.modelIds !== undefined) {
-    return settings.modelIds;
-  }
-
-  // Older scaffolds listed alternatives to the default model.
-  const alternatives = settings.allowedModels ?? [];
-  return alternatives.length > 0 ? [defaultModelId, ...alternatives] : [];
-};
-
-const isWebChatModelAllowed = (
-  modelId: string,
-  defaultModelId = getConfiguredWebChatModel()
-): boolean => {
-  const modelIds = getModelIds(defaultModelId);
-  return modelIds.length === 0 || modelIds.includes(modelId);
+const isWebChatModelAllowed = (modelId: string): boolean => {
+  const { modelIds } = webModels;
+  return (
+    modelIds === undefined ||
+    modelIds.length === 0 ||
+    modelIds.includes(modelId)
+  );
 };
 
 const providerRank = (provider: string): number => {
@@ -41,11 +26,9 @@ const recommendedIds = new Set<string>(config.ai.curatedDefaults);
 const disabledIds = new Set<string>(config.ai.disabledModels);
 
 const buildWebChatModels = (
-  models: readonly ModelData[],
-  defaultModelId = getConfiguredWebChatModel()
-): AppModelDefinition[] => {
-  const modelIds = getModelIds(defaultModelId);
-  return models
+  models: readonly ModelData[]
+): AppModelDefinition[] =>
+  models
     .flatMap((model: Readonly<ModelData>): AppModelDefinition[] => {
       if (
         model.type !== "language" ||
@@ -62,14 +45,13 @@ const buildWebChatModels = (
           ]
         : [standard];
     })
-    .filter((model) => modelIds.length === 0 || modelIds.includes(model.id))
+    .filter((model) => isWebChatModelAllowed(model.id))
     .toSorted(
       (left, right) =>
         Number(recommendedIds.has(right.apiModelId)) -
           Number(recommendedIds.has(left.apiModelId)) ||
         providerRank(left.owned_by) - providerRank(right.owned_by)
     );
-};
 
 const getDefaultWebChatModelId = (
   models: readonly Pick<AppModelDefinition, "apiModelId" | "id">[],

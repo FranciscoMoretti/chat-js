@@ -5,9 +5,7 @@ import type { ModelData } from "./model-data";
 import { fetchModels } from "./models";
 import { getDefaultWebChatModelId } from "./web-chat-models";
 
-const modelSettings = vi.hoisted(
-  (): { modelIds?: string[]; allowedModels?: string[] } => ({})
-);
+const modelSettings = vi.hoisted((): { modelIds?: string[] } => ({}));
 
 vi.mock("next/cache", () => ({
   unstable_cache: <Result>(operation: () => Result): (() => Result) =>
@@ -62,7 +60,6 @@ const catalog: ModelData[] = [
 
 beforeEach(() => {
   modelSettings.modelIds = undefined;
-  modelSettings.allowedModels = undefined;
   vi.mocked(fetchModels).mockResolvedValue(catalog);
 });
 
@@ -99,13 +96,4 @@ test("a populated modelIds list restricts the catalog and supplies a usable defa
   const models = await fetchChatModels();
   expect(models.map((model) => model.id)).toEqual(["fixture/new"]);
   expect(getDefaultWebChatModelId(models)).toBe("fixture/new");
-});
-
-test("older restrictions keep the configured default and their explicit alternatives", async () => {
-  modelSettings.allowedModels = ["fixture/known"];
-  const models = await fetchChatModels();
-  expect(models.map((model) => model.id)).toEqual([
-    "openai/gpt-5-mini",
-    "fixture/known",
-  ]);
 });

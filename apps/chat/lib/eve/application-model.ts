@@ -29,12 +29,11 @@ export const applicationModel = (model: string, allowWebSelection = true) =>
         model
       ) ?? model);
     }
-    const preferredModel = getConfiguredWebChatModel(model);
     const requested = allowWebSelection
       ? context.session.auth.current?.attributes.modelId
       : undefined;
     if (typeof requested === "string") {
-      if (!isWebChatModelAllowed(requested, preferredModel)) {
+      if (!isWebChatModelAllowed(requested)) {
         throw new Error("This model is not enabled for web chat.");
       }
       selectedModel.update(() => ({ modelId: requested }));
@@ -48,10 +47,9 @@ export const applicationModel = (model: string, allowWebSelection = true) =>
     let modelId = model;
     if (allowWebSelection) {
       modelId =
-        retainedModel !== undefined &&
-        isWebChatModelAllowed(retainedModel, preferredModel)
+        retainedModel !== undefined && isWebChatModelAllowed(retainedModel)
           ? retainedModel
-          : await loadDefaultEveWebModelId(preferredModel);
+          : await loadDefaultEveWebModelId(getConfiguredWebChatModel(model));
     }
     let resolved;
     if (billing.debit === undefined) {

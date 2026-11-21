@@ -31,8 +31,6 @@ export const eveDefaultToolIds = [
 export const agentConfigurationSchema = z.strictObject({
   model: modelId.optional(),
   modelIds,
-  // Previously exported install presets may still contain additional model IDs.
-  allowedModels: modelIds,
   reasoning: z.enum(agentReasoningLevels).default("provider-default"),
   defaultTools: z.boolean().default(true),
   disabledDefaultTools: z

@@ -1,4 +1,5 @@
-import { describe, expect, it, mock } from "bun:test";
+import { describe, expect, it, mock, spyOn } from "bun:test";
+import * as oidc from "@vercel/oidc";
 
 import { VercelGateway } from "./vercel/gateway";
 
@@ -52,18 +53,25 @@ const modelCatalogResponse = {
 
 describe("VercelGateway", () => {
   it("discovers the public catalog without a credential", async () => {
+    const getToken = spyOn(oidc, "getVercelOidcToken").mockRejectedValue(
+      new Error("No OIDC token")
+    );
     const fetch = mock<typeof globalThis.fetch>().mockResolvedValue(
       Response.json(modelCatalogResponse)
     );
-    const models = await new VercelGateway({ env: {}, fetch }).fetchModels();
-    expect(fetch).toHaveBeenCalledWith(
-      "https://ai-gateway.vercel.sh/v1/models",
-      undefined
-    );
-    expect(models.map((model) => model.id)).toEqual([
-      "openai/gpt-test",
-      "xai/grok-imagine-video",
-    ]);
+    try {
+      const models = await new VercelGateway({ env: {}, fetch }).fetchModels();
+      expect(fetch).toHaveBeenCalledWith(
+        "https://ai-gateway.vercel.sh/v1/models",
+        undefined
+      );
+      expect(models.map((model) => model.id)).toEqual([
+        "openai/gpt-test",
+        "xai/grok-imagine-video",
+      ]);
+    } finally {
+      getToken.mockRestore();
+    }
   });
 
   it("uses deployment OIDC to exclude models blocked by gateway policy", async () => {

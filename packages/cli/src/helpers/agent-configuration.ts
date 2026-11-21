@@ -8,27 +8,15 @@ export const writeAgentConfiguration = async (
   input: unknown
 ): Promise<void> => {
   const configuration = agentConfigurationSchema.parse(input ?? {});
-  const {
-    approval,
-    allowedModels,
-    disabledDefaultTools,
-    model,
-    modelIds,
-    ...nativeOptions
-  } = configuration;
+  const { approval, disabledDefaultTools, model, modelIds, ...nativeOptions } =
+    configuration;
   const modelExpression =
     model === undefined ? "config.ai.workflows.chat" : JSON.stringify(model);
-  const legacyAlternatives =
-    modelIds === undefined ? (allowedModels ?? []) : [];
-  const modelIdsExpression =
-    legacyAlternatives.length > 0
-      ? `[${modelExpression}, ${legacyAlternatives.map((id) => JSON.stringify(id)).join(", ")}]`
-      : JSON.stringify(modelIds?.length === 0 ? undefined : modelIds);
   const webModelSettings = [
     ...(model === undefined ? [] : [`model: ${modelExpression}`]),
-    ...(modelIdsExpression === undefined
+    ...(modelIds === undefined || modelIds.length === 0
       ? []
-      : [`modelIds: ${modelIdsExpression}`]),
+      : [`modelIds: ${JSON.stringify(modelIds)}`]),
   ];
   const approvalExpressions = {
     never: "undefined",
@@ -42,9 +30,6 @@ export const writeAgentConfiguration = async (
   await writeFile(
     path.join(cwd, "integrations/chat/models.ts"),
     [
-      ...(model === undefined && legacyAlternatives.length > 0
-        ? ['import { config } from "@/lib/config";', ""]
-        : []),
       "/** Optional web chat overrides. Omit modelIds to use the gateway catalog. */",
       `export const webModels: { readonly model?: string; readonly modelIds?: readonly string[] } = {${webModelSettings.join(", ")}};`,
       "",

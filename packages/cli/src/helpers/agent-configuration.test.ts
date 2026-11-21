@@ -9,7 +9,7 @@ test("native configuration preserves model settings without generating authored 
   try {
     await writeAgentConfiguration(cwd, {
       model: "test/model",
-      allowedModels: ["test/alternative"],
+      modelIds: ["test/model", "test/alternative"],
       reasoning: "high",
     });
     expect(await readFile(path.join(cwd, "agent/agent.ts"), "utf-8")).toContain(
@@ -17,7 +17,7 @@ test("native configuration preserves model settings without generating authored 
     );
     expect(
       await readFile(path.join(cwd, "integrations/chat/models.ts"), "utf-8")
-    ).toContain('modelIds: ["test/model", "test/alternative"]');
+    ).toContain('modelIds: ["test/model","test/alternative"]');
     for (const directory of ["skills", "subagents", "instructions"]) {
       expect(access(path.join(cwd, "agent", directory))).rejects.toThrow();
     }
