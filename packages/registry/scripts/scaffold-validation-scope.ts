@@ -3,6 +3,8 @@ const allGateways = "the manifest-derived empty installation";
 const fullPreset = "^full feature preset:";
 const commitSha = /^[a-f0-9]{40}$/u;
 const pluginPath = /^packages\/registry\/src\/plugins\/(?<id>[a-z0-9-]+)\//u;
+const sandboxPath =
+  /^packages\/registry\/src\/sandboxes\/(?:(?<id>[a-z0-9-]+)\/)?/u;
 const gatewayPath =
   /^(?:packages\/registry\/src\/gateways\/|apps\/chat\/chatjs\/core\/gateway\/|apps\/chat\/lib\/(?:ai\/.*gateway|config-schema)|packages\/cli\/src\/(?:helpers\/(?:gateway-provider|config-builder)|registry\/gateways|utils\/provider-config))/u;
 const sharedCompositionPath =
@@ -58,6 +60,12 @@ export const scaffoldValidationPattern = (
     const plugin = pluginPath.exec(path)?.groups?.id;
     if (plugin !== undefined) {
       cases.add(`^${plugin}: catalog-derived plugin selection`);
+    }
+    const sandbox = sandboxPath.exec(path);
+    if (sandbox !== null) {
+      cases.add(
+        `^native ${sandbox.groups?.id ?? "[a-z0-9-]+"} environment generates a type-correct agent`
+      );
     }
     for (const [tool, pattern] of Object.entries(toolCases)) {
       if (path.startsWith(`packages/registry/src/tools/${tool}/`)) {

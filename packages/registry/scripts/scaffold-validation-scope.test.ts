@@ -60,6 +60,26 @@ test("changes to known items select their isolated cases plus the default and fu
   expect(pattern.test(emptyOpenAI)).toBe(false);
 });
 
+test("sandbox changes select the affected adapter or all adapters for the shared catalog", () => {
+  const vercelCase = "native vercel environment generates a type-correct agent";
+  const dockerCase = "native docker environment generates a type-correct agent";
+  const adapter = new RegExp(
+    scaffoldValidationPattern([
+      "packages/registry/src/sandboxes/vercel/sandbox.ts",
+    ]) ?? "^$",
+    "u"
+  );
+  const catalog = new RegExp(
+    scaffoldValidationPattern(["packages/registry/src/sandboxes/catalog.ts"]) ??
+      "^$",
+    "u"
+  );
+  expect(adapter.test(vercelCase)).toBe(true);
+  expect(adapter.test(dockerCase)).toBe(false);
+  expect(catalog.test(vercelCase)).toBe(true);
+  expect(catalog.test(dockerCase)).toBe(true);
+});
+
 test("shared composition changes run the installation matrix and gateway changes run the external adapter", () => {
   expect(
     scaffoldCompatibilityScope([
