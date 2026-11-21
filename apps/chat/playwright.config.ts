@@ -108,7 +108,11 @@ export default defineConfig({
     command: "bun dev",
     reuseExistingServer: (process.env.CI ?? "") === "",
     timeout: 120_000,
-    url: baseURL,
+    // Let the tests compile pages on demand instead of warming the chat route as a serial step.
+    url:
+      process.env.CI_PLAYWRIGHT === "true"
+        ? new URL("/favicon.ico", baseURL).href
+        : baseURL,
   },
   /* Opt out of parallel tests on CI. */
   workers: (process.env.CI ?? "") === "" ? undefined : CI_WORKERS,

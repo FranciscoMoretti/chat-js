@@ -1,0 +1,188 @@
+name: Chat CI shadow
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/chat-ci-shadow.yml
+      - apps/chat/playwright.eve-ci-*.config.ts
+      - scripts/chat-ci-scope*.ts
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: chat-ci-shadow-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  plan:
+    name: Select chat tests
+    runs-on: ubuntu-24.04
+    outputs:
+      app_specs: ${{ steps.scope.outputs.app_specs }}
+      base: ${{ steps.scope.outputs.base }}
+      browser: ${{ steps.scope.outputs.browser }}
+      unit: ${{ steps.unit.outputs.unit }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.1
+      - name: Scope the checked-out merge commit
+        id: scope
+        shell: bash
+        env:
+          PR_BASE: ${{ github.event.pull_request.base.sha || 'origin/main' }}
+        run: |
+          set -euo pipefail
+          bun test scripts/chat-ci-scope.test.ts
+          base="$(git merge-base "$PR_BASE" HEAD || true)"
+          if [ -n "$base" ] && git diff --name-status --no-renames -z "$base" HEAD >"$RUNNER_TEMP/chat-ci-diff"; then
+            bun scripts/chat-ci-scope.ts <"$RUNNER_TEMP/chat-ci-diff" | tee -a "$GITHUB_OUTPUT"
+          else
+            bun scripts/chat-ci-scope.ts </dev/null | tee -a "$GITHUB_OUTPUT"
+          fi
+          echo "base=$base" >>"$GITHUB_OUTPUT"
+      - name: Check app workspace scope
+        id: unit
+        shell: bash
+        env:
+          UNIT_MODE: ${{ steps.scope.outputs.unit }}
+          TURBO_SCM_BASE: ${{ steps.scope.outputs.base }}
+          TURBO_SCM_HEAD: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          if [ "$UNIT_MODE" = changed ]; then
+            version="$(bun -p 'require("./package.json").devDependencies.turbo')"
+            if bunx --package "turbo@$version" turbo query affected --tasks test:unit --packages @chatjs/chat --exit-code; then
+              UNIT_MODE=skip
+            elif [ "$?" -ne 1 ]; then
+              UNIT_MODE=full
+            fi
+          fi
+          echo "unit=$UNIT_MODE" | tee -a "$GITHUB_OUTPUT"
+
+  browser:
+    name: Playwright shadow (${{ matrix.lane }})
+    needs: plan
+    if: needs.plan.outputs.browser != 'skip'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        lane: [app, fixtures]
+    container:
+      # Match the Playwright version in bun.lock and the baseline workflow.
+      image: mcr.microsoft.com/playwright:v1.59.1-noble@sha256:eac9b0a5312cdab40ee8c2429df5bf19bffdccf8f3bf3c42268e173f97541645
+      options: --ipc=host
+    defaults:
+      run:
+        shell: bash
+    services:
+      postgres:
+        image: ${{ matrix.lane == 'app' && 'postgres:17' || '' }}
+        env:
+          POSTGRES_DB: chatjs_ci
+          POSTGRES_USER: chatjs
+          POSTGRES_PASSWORD: chatjs
+        options: >-
+          --health-cmd "pg_isready -U chatjs -d chatjs_ci" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      CI_PLAYWRIGHT: ${{ matrix.lane == 'app' && 'true' || '' }}
+      AUTH_SECRET: ${{ matrix.lane == 'app' && secrets.AUTH_SECRET || '' }}
+      DATABASE_URL: ${{ matrix.lane == 'app' && 'postgres://chatjs:chatjs@postgres:5432/chatjs_ci' || '' }}
+      WORKFLOW_POSTGRES_URL: ${{ matrix.lane == 'app' && 'postgres://chatjs:chatjs@postgres:5432/chatjs_ci' || '' }}
+      EVE_ALLOW_REMOTE_DATABASE_TESTS: ${{ matrix.lane == 'app' && 'true' || '' }}
+      EVE_TEST_DATABASE_URL: ${{ matrix.lane == 'app' && 'postgres://chatjs:chatjs@postgres:5432/chatjs_ci' || '' }}
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      EVE_GATEWAY_SECRET: ${{ matrix.lane == 'app' && 'playwright-isolated-eve-gateway-secret' || '' }}
+      # Public test-only AES-256 key for the isolated MCP fixture.
+      MCP_ENCRYPTION_KEY: ${{ matrix.lane == 'app' && 'AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=' || '' }}
+      EVE_INTERNAL_ORIGIN: ${{ matrix.lane == 'app' && 'http://localhost:3000' || '' }}
+      BLOB_READ_WRITE_TOKEN: ${{ matrix.lane == 'app' && secrets.BLOB_READ_WRITE_TOKEN || '' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install Bun
+        run: npm install --global bun@1.3.1 --no-audit --no-fund
+      - name: Install Playwright workspace dependencies
+        run: bun install --frozen-lockfile --filter './' --filter './apps/chat' --filter './packages/registry'
+      - if: matrix.lane == 'app'
+        name: Migrate isolated test database
+        run: bun run --cwd apps/chat db:migrate
+      - if: matrix.lane == 'app'
+        name: Bootstrap isolated EVE workflow database
+        run: bun run --cwd apps/chat eve:setup
+      - if: matrix.lane == 'app'
+        name: Test app routes
+        env:
+          APP_SPECS: ${{ needs.plan.outputs.app_specs }}
+          DEBUG: pw:webserver
+        run: |
+          set -euo pipefail
+          read -r -a specs <<< "$APP_SPECS"
+          bun run --cwd apps/chat test:e2e --config playwright.eve-ci-app.config.ts "${specs[@]}"
+      - if: matrix.lane == 'fixtures'
+        name: Test standalone browser fixtures
+        run: bun run --cwd apps/chat playwright test --config playwright.eve-ci-fixtures.config.ts
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-shadow-${{ matrix.lane }}
+          path: |
+            apps/chat/test-results/
+            apps/chat/tests/eve-results/ci-fixtures/
+          retention-days: 7
+
+  unit:
+    name: Vitest shadow (${{ matrix.install }})
+    needs: plan
+    if: needs.plan.outputs.unit != 'skip'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        install: [fresh, restore]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.1
+      - if: matrix.install == 'restore'
+        name: Restore Bun package archive
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+          restore-keys: ${{ runner.os }}-bun-
+      - uses: ./.github/actions/cache-electron
+      - name: Install workspace dependencies
+        run: bun install --frozen-lockfile
+      - name: Run app unit tests
+        shell: bash
+        env:
+          UNIT_MODE: ${{ needs.plan.outputs.unit }}
+          MERGE_BASE: ${{ needs.plan.outputs.base }}
+        run: |
+          set -euo pipefail
+          if [ "$UNIT_MODE" = changed ]; then
+            bun run --cwd apps/chat test:unit --changed "$MERGE_BASE"
+          else
+            bun run --cwd apps/chat test:unit
+          fi
