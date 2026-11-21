@@ -99,7 +99,7 @@ jobs:
           fi
           export UIVERIFY_API_KEY="$key"
           mkdir -p "$RUNNER_TEMP/clean" && cd "$RUNNER_TEMP/clean"
-          npx -y uiverify@1.8.1 upload \
+          npx -y uiverify@1.11.0 upload \
             --static-dir "$RUNNER_TEMP/archive" \
             --working-directory "$RUNNER_TEMP/repo" \
             "${render_flags[@]}" --auto-accept-changes
