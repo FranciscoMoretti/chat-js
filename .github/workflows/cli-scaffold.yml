@@ -4,12 +4,18 @@ on:
   pull_request:
   # Run the full install/package compatibility check on demand.
   workflow_dispatch:
+  workflow_call:
+    inputs:
+      full:
+        description: Run every compatibility case before publishing.
+        type: boolean
+        default: false
 
 permissions:
   contents: read
 
 concurrency:
-  group: cli-scaffold-${{ github.event.pull_request.number || github.ref }}
+  group: cli-scaffold-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -31,11 +37,12 @@ jobs:
         shell: bash
         env:
           EVENT_NAME: ${{ github.event_name }}
+          RUN_FULL: ${{ inputs.full }}
           TURBO_SCM_BASE: ${{ github.event.pull_request.base.sha }}
           TURBO_SCM_HEAD: ${{ github.event.pull_request.head.sha }}
         run: |
           set -euo pipefail
-          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+          if [ "$RUN_FULL" = "true" ] || [ "$EVENT_NAME" = "workflow_dispatch" ]; then
             echo "run=true" >>"$GITHUB_OUTPUT"
             exit 0
           fi

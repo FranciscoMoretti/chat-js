@@ -14,8 +14,16 @@ permissions:
   pull-requests: write
 
 jobs:
+  scaffold-compatibility:
+    uses: ./.github/workflows/cli-scaffold.yml
+    permissions:
+      contents: read
+    with:
+      full: true
+
   release:
     name: Release
+    needs: scaffold-compatibility
     runs-on: ubuntu-22.04
     permissions:
       contents: write

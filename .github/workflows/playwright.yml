@@ -8,36 +8,16 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  playwright:
-    name: Playwright
+  affected:
+    name: Playwright affected
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
-    services:
-      postgres:
-        image: postgres:17
-        env:
-          POSTGRES_DB: chatjs_ci
-          POSTGRES_USER: chatjs
-          POSTGRES_PASSWORD: chatjs
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U chatjs -d chatjs_ci" --health-interval 5s --health-timeout 5s --health-retries 10
-    env:
-      # CI owns an ephemeral database; never spend shared Neon transfer on tests.
-      CI_PLAYWRIGHT: "true"
-      AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
-      DATABASE_URL: postgres://chatjs:chatjs@127.0.0.1:5432/chatjs_ci
-      WORKFLOW_POSTGRES_URL: postgres://chatjs:chatjs@127.0.0.1:5432/chatjs_ci
-      EVE_GATEWAY_SECRET: playwright-isolated-eve-gateway-secret
-      # Public test-only AES-256 key for the isolated MCP fixture.
-      MCP_ENCRYPTION_KEY: "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8="
-      EVE_INTERNAL_ORIGIN: http://localhost:3000
-      BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
+    outputs:
+      run: ${{ steps.affected.outputs.run }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: 24
@@ -49,6 +29,10 @@ jobs:
           TURBO_SCM_HEAD: ${{ github.event.pull_request.head.sha }}
         run: |
           set -euo pipefail
+          if ! git diff --quiet "$TURBO_SCM_BASE...$TURBO_SCM_HEAD" -- .github/workflows/playwright.yml; then
+            echo "run=true" >>"$GITHUB_OUTPUT"
+            exit 0
+          fi
           TURBO_VERSION="$(node -p "require('./package.json').devDependencies.turbo")"
           if npx -y "turbo@${TURBO_VERSION}" query affected --tasks test:e2e --exit-code >/tmp/playwright-query.json 2>/tmp/playwright-query.log; then
             echo "run=false" >>"$GITHUB_OUTPUT"
@@ -62,49 +46,79 @@ jobs:
               exit "$status"
             fi
           fi
+
+  playwright:
+    name: Playwright
+    needs: affected
+    if: needs.affected.outputs.run == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    container:
+      # Match the Playwright version in bun.lock. Includes Chromium, fonts, and OS libraries.
+      image: mcr.microsoft.com/playwright:v1.59.1-noble@sha256:eac9b0a5312cdab40ee8c2429df5bf19bffdccf8f3bf3c42268e173f97541645
+      options: --ipc=host
+    defaults:
+      run:
+        shell: bash
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: chatjs_ci
+          POSTGRES_USER: chatjs
+          POSTGRES_PASSWORD: chatjs
+        options: >-
+          --health-cmd "pg_isready -U chatjs -d chatjs_ci" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      CI_PLAYWRIGHT: "true"
+      AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
+      # The job container reaches its isolated PostgreSQL service at the service hostname.
+      DATABASE_URL: postgres://chatjs:chatjs@postgres:5432/chatjs_ci
+      WORKFLOW_POSTGRES_URL: postgres://chatjs:chatjs@postgres:5432/chatjs_ci
+      EVE_ALLOW_REMOTE_DATABASE_TESTS: "true"
+      EVE_TEST_DATABASE_URL: postgres://chatjs:chatjs@postgres:5432/chatjs_ci
+      EVE_GATEWAY_SECRET: playwright-isolated-eve-gateway-secret
+      # Public test-only AES-256 key for the isolated MCP fixture.
+      MCP_ENCRYPTION_KEY: "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8="
+      EVE_INTERNAL_ORIGIN: http://localhost:3000
+      BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
       - uses: oven-sh/setup-bun@v2
-        if: steps.affected.outputs.run == 'true'
         with:
           bun-version: 1.3.1
       - uses: actions/cache@v4
-        if: steps.affected.outputs.run == 'true'
         with:
           path: ~/.bun/install/cache
           key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
           restore-keys: ${{ runner.os }}-bun-
-      - if: steps.affected.outputs.run == 'true'
-        uses: ./.github/actions/cache-electron
-      - if: steps.affected.outputs.run == 'true'
-        run: bun install --frozen-lockfile
+      - uses: ./.github/actions/cache-electron
+      - run: bun install --frozen-lockfile
+      - name: Verify the browser image matches Playwright
+        working-directory: apps/chat
+        run: |
+          chromium="$(node -p 'require("playwright").chromium.executablePath()')"
+          if [ ! -x "$chromium" ]; then
+            echo "::error::Update the Playwright image in this workflow to match the browser version in bun.lock."
+            exit 1
+          fi
       - name: Check Playwright task isolation
-        if: steps.affected.outputs.run == 'true'
         run: bun test scripts/playwright-task-graph.test.ts
       - name: Migrate isolated test database
-        if: steps.affected.outputs.run == 'true'
         run: bun run --cwd apps/chat db:migrate
       - name: Bootstrap isolated EVE workflow database
-        if: steps.affected.outputs.run == 'true'
         run: bun run --cwd apps/chat eve:setup
-      - uses: actions/cache@v4
-        if: steps.affected.outputs.run == 'true'
-        id: playwright-cache
-        with:
-          path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ hashFiles('**/bun.lock') }}
-      - name: Install Playwright browsers
-        if: steps.affected.outputs.run == 'true' && steps.playwright-cache.outputs.cache-hit != 'true'
-        run: apps/chat/node_modules/.bin/playwright install --with-deps chromium
-      - if: steps.affected.outputs.run == 'true'
-        env:
-          TURBO_SCM_BASE: ${{ github.event.pull_request.base.sha }}
-          TURBO_SCM_HEAD: ${{ github.event.pull_request.head.sha }}
-        run: bunx turbo run test:e2e --affected
+      - run: bunx turbo run test:e2e --filter=@chatjs/chat
       - name: Test conversation presentation
-        if: steps.affected.outputs.run == 'true'
         working-directory: apps/chat
         run: bunx playwright test --config playwright.eve-presentation.config.ts
       - uses: actions/upload-artifact@v4
-        if: steps.affected.outputs.run == 'true' && always() && !cancelled()
+        if: always() && !cancelled()
         with:
           name: playwright-report
           path: |

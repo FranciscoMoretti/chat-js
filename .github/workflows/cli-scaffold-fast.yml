@@ -1,0 +1,65 @@
+name: CLI Scaffold Fast
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cli-scaffold-fast-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: CLI Scaffold Fast (${{ matrix.check }})
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        check: [packed-install, registry]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.1
+      - name: Select validation cases
+        id: scope
+        env:
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+        run: bun packages/registry/scripts/scaffold-validation-scope.ts >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-node@v4
+        if: steps.scope.outputs.run == 'true'
+        with:
+          node-version: 24
+      - uses: actions/cache/restore@v4
+        if: steps.scope.outputs.run == 'true'
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+          restore-keys: ${{ runner.os }}-bun-
+      - if: steps.scope.outputs.run == 'true'
+        uses: ./.github/actions/cache-electron
+      - if: steps.scope.outputs.run == 'true'
+        run: bun install --frozen-lockfile
+      - name: Verify scope selection
+        if: steps.scope.outputs.run == 'true' && matrix.check == 'registry'
+        run: bun test packages/registry/scripts/scaffold-validation-scope.test.ts
+      - name: Type-check selected generated installations
+        if: steps.scope.outputs.run == 'true' && matrix.check == 'registry'
+        env:
+          SCAFFOLD_CASES: ${{ steps.scope.outputs.cases }}
+        run: bun run --cwd packages/registry test:installation --test-name-pattern "$SCAFFOLD_CASES"
+      - name: Build the registry and CLI
+        if: steps.scope.outputs.run == 'true' && matrix.check == 'packed-install'
+        run: |
+          bun run --cwd packages/registry build
+          bun run --cwd packages/cli build
+      - name: Verify the packed CLI in a standalone app
+        if: steps.scope.outputs.run == 'true' && matrix.check == 'packed-install'
+        run: bash packages/cli/scripts/test-scaffold-smoke.sh
