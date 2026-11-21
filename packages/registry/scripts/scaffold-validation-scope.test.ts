@@ -28,6 +28,7 @@ test("gateway and dependency changes, missing diffs, and empty diffs check all a
     ["packages/registry/package.json"],
     ["packages/registry/src/gateways/litellm/gateway.ts"],
     ["apps/chat/chatjs/core/gateway/runtime.ts"],
+    ["packages/cli/src/helpers/gateway-provider.ts"],
   ]) {
     const pattern = new RegExp(scaffoldValidationPattern(paths) ?? "^$", "u");
     expect(pattern.test(emptyOpenAI)).toBe(true);

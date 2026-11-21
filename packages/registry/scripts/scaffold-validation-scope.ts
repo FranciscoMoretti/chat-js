@@ -4,7 +4,7 @@ const fullPreset = "^full feature preset:";
 const commitSha = /^[a-f0-9]{40}$/u;
 const pluginPath = /^packages\/registry\/src\/plugins\/(?<id>[a-z0-9-]+)\//u;
 const gatewayPath =
-  /^(?:packages\/registry\/src\/gateways\/|apps\/chat\/chatjs\/core\/gateway\/|apps\/chat\/lib\/ai\/.*gateway)/u;
+  /^(?:packages\/registry\/src\/gateways\/|apps\/chat\/chatjs\/core\/gateway\/|apps\/chat\/lib\/(?:ai\/.*gateway|config-schema)|packages\/cli\/src\/(?:helpers\/(?:gateway-provider|config-builder)|registry\/gateways|utils\/provider-config))/u;
 const sharedCompositionPath =
   /^(?:packages\/registry\/(?:installation|metadata|registry|scripts\/installation-|scripts\/validation-project|src\/(?:file-ownership|installation-ownership|ownership-))|packages\/registry-validation\/|packages\/cli\/src\/utils\/(?:install|sync|registration)|scripts\/sync-template)/u;
 const toolCases: Readonly<Record<string, string>> = {
