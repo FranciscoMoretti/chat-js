@@ -36,7 +36,6 @@ export const ModelPreferencesLink = ({
   return (
     <div className="border-t p-2">
       <InternalLink
-        aria-label="Add Models"
         href="/settings/models"
         className={buttonVariants({
           className: "w-full justify-between",
@@ -44,7 +43,7 @@ export const ModelPreferencesLink = ({
           variant: "ghost",
         })}
       >
-        Add Models
+        Manage models
         <ChevronRightIcon className="h-4 w-4" />
       </InternalLink>
     </div>

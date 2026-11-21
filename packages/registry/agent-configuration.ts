@@ -1,6 +1,11 @@
 import { z } from "zod";
 
 const modelId = z.string().trim().min(1).max(200);
+const modelIds = z
+  .array(z.string().trim().max(200))
+  .transform((models) => [...new Set(models.filter(Boolean))])
+  .pipe(z.array(modelId).max(30))
+  .optional();
 
 export const agentReasoningLevels = [
   "provider-default",
@@ -25,11 +30,9 @@ export const eveDefaultToolIds = [
 /** Serializable choices; native executable definitions remain project source. */
 export const agentConfigurationSchema = z.strictObject({
   model: modelId.optional(),
-  allowedModels: z
-    .array(z.string().trim().max(200))
-    .transform((models) => [...new Set(models.filter(Boolean))])
-    .pipe(z.array(modelId).max(30))
-    .default([]),
+  modelIds,
+  // Previously exported install presets may still contain additional model IDs.
+  allowedModels: modelIds,
   reasoning: z.enum(agentReasoningLevels).default("provider-default"),
   defaultTools: z.boolean().default(true),
   disabledDefaultTools: z

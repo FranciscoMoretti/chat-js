@@ -17,7 +17,7 @@ test("native configuration preserves model settings without generating authored 
     );
     expect(
       await readFile(path.join(cwd, "integrations/chat/models.ts"), "utf-8")
-    ).toContain('"test/alternative"');
+    ).toContain('modelIds: ["test/model", "test/alternative"]');
     for (const directory of ["skills", "subagents", "instructions"]) {
       expect(access(path.join(cwd, "agent", directory))).rejects.toThrow();
     }
@@ -25,6 +25,21 @@ test("native configuration preserves model settings without generating authored 
     await rm(cwd, { recursive: true, force: true });
   }
 });
+
+test.each([{ modelIds: undefined }, { modelIds: [] }])(
+  "generates an unrestricted catalog for %j",
+  async ({ modelIds }) => {
+    const cwd = await mkdtemp(path.join(tmpdir(), "chatjs-agent-discovery-"));
+    try {
+      await writeAgentConfiguration(cwd, { modelIds });
+      expect(
+        await readFile(path.join(cwd, "integrations/chat/models.ts"), "utf-8")
+      ).toContain("= {};");
+    } finally {
+      await rm(cwd, { recursive: true, force: true });
+    }
+  }
+);
 
 test.each([undefined, true, false])(
   "generated agent enables native tools by default and honors override %s",

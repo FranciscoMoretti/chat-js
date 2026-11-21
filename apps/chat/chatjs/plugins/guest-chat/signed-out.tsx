@@ -133,7 +133,13 @@ const GuestConversationView = ({
       <EveComposer
         autoFocus
 
-        modelPicker={<EveModelPicker disabled modelId={modelId} />}
+        modelPicker={
+          <EveModelPicker
+            disabled
+            modelId={modelId}
+            fallbackModelName={GUEST_POLICY.modelName}
+          />
+        }
         status={busy ? "streaming" : "ready"}
         disabled={busy || expired}
         draft={draft}
@@ -293,7 +299,13 @@ const GuestWelcomeView = ({
     )}
     <EveComposer
       autoFocus
-      modelPicker={<EveModelPicker disabled modelId={modelId} />}
+      modelPicker={
+        <EveModelPicker
+          disabled
+          modelId={modelId}
+          fallbackModelName={GUEST_POLICY.modelName}
+        />
+      }
       status={busy ? "submitted" : "ready"}
       disabled={busy || !modelId}
       draft={draft}

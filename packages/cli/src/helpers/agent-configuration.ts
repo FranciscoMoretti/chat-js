@@ -13,10 +13,23 @@ export const writeAgentConfiguration = async (
     allowedModels,
     disabledDefaultTools,
     model,
+    modelIds,
     ...nativeOptions
   } = configuration;
   const modelExpression =
     model === undefined ? "config.ai.workflows.chat" : JSON.stringify(model);
+  const legacyAlternatives =
+    modelIds === undefined ? (allowedModels ?? []) : [];
+  const modelIdsExpression =
+    legacyAlternatives.length > 0
+      ? `[${modelExpression}, ${legacyAlternatives.map((id) => JSON.stringify(id)).join(", ")}]`
+      : JSON.stringify(modelIds?.length === 0 ? undefined : modelIds);
+  const webModelSettings = [
+    ...(model === undefined ? [] : [`model: ${modelExpression}`]),
+    ...(modelIdsExpression === undefined
+      ? []
+      : [`modelIds: ${modelIdsExpression}`]),
+  ];
   const approvalExpressions = {
     never: "undefined",
     always: '() => "user-approval"',
@@ -29,10 +42,11 @@ export const writeAgentConfiguration = async (
   await writeFile(
     path.join(cwd, "integrations/chat/models.ts"),
     [
-      ...(model === undefined
+      ...(model === undefined && legacyAlternatives.length > 0
         ? ['import { config } from "@/lib/config";', ""]
         : []),
-      `export const webModels: { readonly model?: string; readonly allowedModels: readonly string[] } = { model: ${modelExpression}, allowedModels: ${JSON.stringify(allowedModels)} };`,
+      "/** Optional web chat overrides. Omit modelIds to use the gateway catalog. */",
+      `export const webModels: { readonly model?: string; readonly modelIds?: readonly string[] } = {${webModelSettings.join(", ")}};`,
       "",
     ].join("\n")
   );

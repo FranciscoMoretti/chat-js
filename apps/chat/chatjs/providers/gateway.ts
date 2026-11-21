@@ -13,6 +13,7 @@ import type { ImageModel } from "ai";
 
 import { createGateway } from "@ai-sdk/gateway";
 import type { gateway } from "@ai-sdk/gateway";
+import { getVercelOidcToken } from "@vercel/oidc";
 import { z } from "zod";
 
 const MODEL_ID_PARAMETER_INDEX = 0;
@@ -28,6 +29,14 @@ const modelDiscriminatorSchema = z.object({ type: z.string() });
 const modelsEnvelopeSchema = z.object({
   data: z.array(z.unknown()),
   object: z.literal("list"),
+});
+const modelAvailability = z.object({
+  model_eligibility: z
+    .object({
+      status: z.string(),
+      category: z.string().optional(),
+    })
+    .optional(),
 });
 
 class VercelGateway
@@ -61,33 +70,33 @@ class VercelGateway
     return this.provider;
   }
 
-  private getApiKey(): string | undefined {
+  private async getApiKey(): Promise<string | null> {
     const apiKey = this.env.AI_GATEWAY_API_KEY;
 
     if (typeof apiKey === "string" && apiKey !== "") {
       return apiKey;
     }
-    return this.env.VERCEL_OIDC_TOKEN;
+    const oidcToken = this.env.VERCEL_OIDC_TOKEN;
+    if (typeof oidcToken === "string" && oidcToken !== "") {
+      return oidcToken;
+    }
+    return await getVercelOidcToken().catch(() => null);
   }
 
   public async fetchModels(): Promise<AiGatewayModel[]> {
-    const apiKey = this.getApiKey();
-
-    if (!(typeof apiKey === "string" && apiKey !== "")) {
-      this.log.warn("No AI gateway API key found, using fallback models");
-      return [...this.getFallbackModels(this.type)];
-    }
-
-    const url = "https://ai-gateway.vercel.sh/v1/models";
+    const apiKey = await this.getApiKey();
+    const catalogUrl = "https://ai-gateway.vercel.sh/v1/models";
+    const url =
+      apiKey === null ? catalogUrl : `${catalogUrl}?include_availability`;
     this.log.debug({ url }, "Fetching models from Vercel AI Gateway");
 
     try {
-      const response = await this.fetch(url, {
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await this.fetch(
+        url,
+        apiKey === null
+          ? undefined
+          : { headers: { Authorization: `Bearer ${apiKey}` } }
+      );
 
       if (!response.ok) {
         this.log.error(
@@ -105,6 +114,15 @@ class VercelGateway
       for (const candidate of body.data) {
         const { type } = modelDiscriminatorSchema.parse(candidate);
         if (isAiGatewayModelType(type)) {
+          const availability = modelAvailability.safeParse(candidate);
+          const eligibility = availability.data?.model_eligibility;
+          if (
+            eligibility?.status === "ineligible" &&
+            (eligibility.category === "policy" ||
+              eligibility.category === "configuration")
+          ) {
+            continue;
+          }
           models.push(aiGatewayModelSchema.parse(candidate));
         } else {
           unsupportedTypes.add(type);

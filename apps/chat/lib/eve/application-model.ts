@@ -1,7 +1,10 @@
 import { defineDynamic } from "eve/models";
 import { defineState } from "eve/context";
 import { wrapLanguageModel } from "ai";
-import { webModels } from "@/integrations/chat/models";
+import {
+  getConfiguredWebChatModel,
+  isWebChatModelAllowed,
+} from "@/lib/ai/web-chat-models";
 import { isAccountSession } from "./session-identity";
 import { installedToolAvailabilityMiddleware } from "./tool-availability";
 
@@ -26,19 +29,30 @@ export const applicationModel = (model: string, allowWebSelection = true) =>
         model
       ) ?? model);
     }
+    const preferredModel = getConfiguredWebChatModel(model);
     const requested = allowWebSelection
       ? context.session.auth.current?.attributes.modelId
       : undefined;
     if (typeof requested === "string") {
-      if (requested !== model && !webModels.allowedModels.includes(requested)) {
+      if (!isWebChatModelAllowed(requested, preferredModel)) {
         throw new Error("This model is not enabled for web chat.");
       }
       selectedModel.update(() => ({ modelId: requested }));
     }
-    const modelId =
-      (allowWebSelection ? selectedModel.get().modelId : undefined) ?? model;
     const { billing } = await import("@/integrations/billing");
-    const { resolveEveModel } = await import("./model-selection");
+    const { loadDefaultEveWebModelId, resolveEveModel } =
+      await import("./model-selection");
+    const retainedModel = allowWebSelection
+      ? selectedModel.get().modelId
+      : undefined;
+    let modelId = model;
+    if (allowWebSelection) {
+      modelId =
+        retainedModel !== undefined &&
+        isWebChatModelAllowed(retainedModel, preferredModel)
+          ? retainedModel
+          : await loadDefaultEveWebModelId(preferredModel);
+    }
     let resolved;
     if (billing.debit === undefined) {
       resolved = await resolveEveModel(modelId);

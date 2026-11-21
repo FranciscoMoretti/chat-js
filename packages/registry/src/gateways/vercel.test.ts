@@ -51,6 +51,60 @@ const modelCatalogResponse = {
 };
 
 describe("VercelGateway", () => {
+  it("discovers the public catalog without a credential", async () => {
+    const fetch = mock<typeof globalThis.fetch>().mockResolvedValue(
+      Response.json(modelCatalogResponse)
+    );
+    const models = await new VercelGateway({ env: {}, fetch }).fetchModels();
+    expect(fetch).toHaveBeenCalledWith(
+      "https://ai-gateway.vercel.sh/v1/models",
+      undefined
+    );
+    expect(models.map((model) => model.id)).toEqual([
+      "openai/gpt-test",
+      "xai/grok-imagine-video",
+    ]);
+  });
+
+  it("uses deployment OIDC to exclude models blocked by gateway policy", async () => {
+    const model = modelCatalogResponse.data.find(
+      ({ type }) => type === "language"
+    );
+    if (!model) {
+      throw new Error("Missing language model fixture");
+    }
+    const fetch = mock<typeof globalThis.fetch>().mockResolvedValue(
+      Response.json({
+        ...modelCatalogResponse,
+        data: [
+          model,
+          {
+            ...model,
+            id: "openai/blocked",
+            model_eligibility: { status: "ineligible", category: "policy" },
+          },
+          {
+            ...model,
+            id: "openai/unknown",
+            model_eligibility: { status: "unknown" },
+          },
+        ],
+      })
+    );
+    const models = await new VercelGateway({
+      env: { VERCEL_OIDC_TOKEN: "test-oidc" },
+      fetch,
+    }).fetchModels();
+    expect(fetch).toHaveBeenCalledWith(
+      "https://ai-gateway.vercel.sh/v1/models?include_availability",
+      { headers: { Authorization: "Bearer test-oidc" } }
+    );
+    expect(models.map((entry) => entry.id)).toEqual([
+      "openai/gpt-test",
+      "openai/unknown",
+    ]);
+  });
+
   it("skips unsupported models before validating supported model metadata", async () => {
     const models = await new VercelGateway({
       env: { AI_GATEWAY_API_KEY: "test-key" },

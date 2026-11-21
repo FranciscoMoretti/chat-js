@@ -20,8 +20,10 @@ const home = (
     <HomePage />
   </ChatLayout>
 );
+const guestServer = { modelIds: ["google/gemini-2.5-flash-lite"] };
+
 test("home with Guest Chat installed has a fixed inexpensive model", async () => {
-  await renderRoute(home);
+  await renderRoute(home, { server: guestServer });
   await expect
     .element(page.getByText("How can I help you today?"))
     .toBeVisible();
@@ -195,6 +197,29 @@ test("account composer supplies parallel model selection", async () => {
     .toBeVisible();
 });
 
+test("the signed-in picker searches the discovered gateway catalog", async () => {
+  await renderRoute(home, { ...signedIn, server: { modelIds: [] } });
+  await page.getByTestId("model-selector").click();
+  await page.getByRole("combobox", { name: "Search models" }).fill("Llama 3.3");
+  await expect
+    .element(page.getByRole("link", { name: "Manage models" }))
+    .toBeVisible();
+  await expect
+    .element(page.getByRole("option", { name: /Llama 3\.3 70B Instruct/u }))
+    .toBeVisible();
+});
+
+test("the composer chooses a usable model when its configured default is absent", async () => {
+  await renderRoute(home, {
+    ...signedIn,
+    server: { modelIds: ["openai/gpt-5-mini"] },
+    viewports: ["desktop"],
+  });
+  await expect
+    .element(page.getByTestId("model-selector"))
+    .toHaveTextContent("GPT-5 mini");
+});
+
 test("home shows a rejected new conversation as a chat alert", async () => {
   const { fetch } = globalThis;
   vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
@@ -236,6 +261,7 @@ test("guest bootstrap displays a fixture conversation without account history", 
     return await fetch(input, init);
   });
   await renderRoute(home, {
+    server: guestServer,
     transcripts: { "guest-session": guestTranscript },
   });
   // This capture checks bootstrap and presentation; EVE replies are fixtures.

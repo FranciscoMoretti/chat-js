@@ -15,6 +15,7 @@ const ConnectedModelSelector = (
   props: Pick<
     ComponentProps<typeof ModelSelectorView>,
     | "allowMultiple"
+    | "fallbackModelName"
     | "selectedModelId"
     | "selectedModelSelection"
     | "onModelSelectionChangeAction"

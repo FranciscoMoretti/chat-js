@@ -29,12 +29,6 @@ vi.mock("@tanstack/react-query", () => ({
   },
 }));
 
-vi.mock("@/lib/ai/app-models", () => ({
-  getDefaultEnabledModels: (
-    models: readonly { readonly id: string }[]
-  ): Set<string> => new Set(models.map((model) => model.id)),
-}));
-
 vi.mock("@/providers/session-provider", () => ({
   useSession: () => ({
     data: preferenceState.authenticated ? { user: { id: "fixture" } } : null,

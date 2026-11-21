@@ -1,8 +1,13 @@
 import { beforeEach, expect, test, vi } from "vitest";
 
-import { fetchChatModels, getDefaultEnabledModels } from "./app-models";
+import { fetchChatModels } from "./app-models";
 import type { ModelData } from "./model-data";
 import { fetchModels } from "./models";
+import { getDefaultWebChatModelId } from "./web-chat-models";
+
+const modelSettings = vi.hoisted(
+  (): { modelIds?: string[]; allowedModels?: string[] } => ({})
+);
 
 vi.mock("next/cache", () => ({
   unstable_cache: <Result>(operation: () => Result): (() => Result) =>
@@ -20,18 +25,7 @@ vi.mock("@/lib/config", () => ({
   },
 }));
 vi.mock("@/integrations/chat/models", () => ({
-  webModels: {
-    allowedModels: [
-      "openai/gpt-5-mini-reasoning",
-      "fixture/known",
-      "fixture/new",
-      "fixture/last",
-    ],
-  },
-}));
-vi.mock("./models.generated", () => ({
-  generatedForGateway: "vercel",
-  models: [{ id: "openai/gpt-5-mini" }, { id: "fixture/known" }],
+  webModels: modelSettings,
 }));
 vi.mock("./models", () => ({
   fetchModels: vi.fn(),
@@ -66,39 +60,52 @@ const catalog: ModelData[] = [
   { ...baseModel, id: "fixture/last" },
 ];
 
-beforeEach(() => vi.mocked(fetchModels).mockResolvedValue(catalog));
-
-test("chat catalogs preserve reasoning variants, disabled filtering, and provider order", async () => {
-  const models = await fetchChatModels();
-  expect(models.map((model: { readonly id: string }) => model.id)).toEqual([
-    "openai/gpt-5-mini-reasoning",
-    "openai/gpt-5-mini",
-    "fixture/known",
-    "fixture/new",
-    "fixture/last",
-  ]);
-  expect(
-    models.find(
-      (model: { readonly id: string }) => model.id === "openai/gpt-5-mini"
-    )
-  ).toMatchObject({
-    apiModelId: "openai/gpt-5-mini",
-    reasoning: false,
-  });
-  expect(
-    catalog.find(
-      (model: { readonly id: string }) => model.id === "openai/gpt-5-mini"
-    )
-  ).toMatchObject({ reasoning: true });
+beforeEach(() => {
+  modelSettings.modelIds = undefined;
+  modelSettings.allowedModels = undefined;
+  vi.mocked(fetchModels).mockResolvedValue(catalog);
 });
-test("readonly catalogs enable configured alternatives alongside curated defaults", async () => {
-  const models = Object.freeze(await fetchChatModels());
-  const enabled = getDefaultEnabledModels(models);
-  expect([...enabled]).toEqual([
+
+test.each([undefined, []])(
+  "discovers chat models with modelIds %j",
+  async (modelIds) => {
+    modelSettings.modelIds = modelIds;
+    const models = await fetchChatModels();
+    expect(models.map((model: { readonly id: string }) => model.id)).toEqual([
+      "openai/gpt-5-mini-reasoning",
+      "openai/gpt-5-mini",
+      "fixture/known",
+      "fixture/new",
+      "fixture/last",
+    ]);
+    expect(
+      models.find(
+        (model: { readonly id: string }) => model.id === "openai/gpt-5-mini"
+      )
+    ).toMatchObject({
+      apiModelId: "openai/gpt-5-mini",
+      reasoning: false,
+    });
+    expect(
+      catalog.find(
+        (model: { readonly id: string }) => model.id === "openai/gpt-5-mini"
+      )
+    ).toMatchObject({ reasoning: true });
+  }
+);
+
+test("a populated modelIds list restricts the catalog and supplies a usable default", async () => {
+  modelSettings.modelIds = ["fixture/new", "fixture/disabled", "fixture/image"];
+  const models = await fetchChatModels();
+  expect(models.map((model) => model.id)).toEqual(["fixture/new"]);
+  expect(getDefaultWebChatModelId(models)).toBe("fixture/new");
+});
+
+test("older restrictions keep the configured default and their explicit alternatives", async () => {
+  modelSettings.allowedModels = ["fixture/known"];
+  const models = await fetchChatModels();
+  expect(models.map((model) => model.id)).toEqual([
     "openai/gpt-5-mini",
-    "openai/gpt-5-mini-reasoning",
     "fixture/known",
-    "fixture/new",
-    "fixture/last",
   ]);
 });

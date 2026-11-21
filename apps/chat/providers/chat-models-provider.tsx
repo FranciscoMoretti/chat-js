@@ -5,7 +5,6 @@ import type { AppModelDefinition } from "@/lib/ai/app-models";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 import { useModelVisibility } from "@/integrations/chat/model-visibility";
-import { getDefaultEnabledModels } from "@/lib/ai/app-models";
 
 interface ChatModelsContextType {
   readonly allModels: readonly ReadonlyNativeSurface<AppModelDefinition>[];
@@ -35,7 +34,7 @@ const ChatModelsProvider = ({
   }, [models]);
 
   const defaultEnabledIds = useMemo(
-    () => getDefaultEnabledModels(models),
+    () => new Set(models.map((model) => model.id)),
     [models]
   );
   const enabledModelsSet = useModelVisibility(defaultEnabledIds);
