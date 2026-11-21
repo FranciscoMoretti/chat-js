@@ -87,6 +87,11 @@
     },
     "@chatjs/chat#test:e2e": {
       "dependsOn": ["^build"],
+      "passThroughEnv": [
+        "PLAYWRIGHT_BROWSERS_PATH",
+        "EVE_ALLOW_REMOTE_DATABASE_TESTS",
+        "EVE_TEST_DATABASE_URL"
+      ],
       "cache": false
     },
     "electron:build": {

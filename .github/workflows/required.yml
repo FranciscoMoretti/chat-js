@@ -24,13 +24,17 @@ jobs:
             // A stack update can trigger two runs on the same head. Judge the
             // latest run and attempt, not cancelled checks from its predecessor.
             const required = [
-              { file: "docs.yml", job: "Docs", allowSkipped: true },
-              { file: "lint.yml", job: "Lint", allowSkipped: true },
-              { file: "typecheck.yml", job: "Typecheck", allowSkipped: true },
-              { file: "unit.yml", job: "Unit", allowSkipped: true },
-              { file: "playwright.yml", job: "Playwright", allowSkipped: true },
-              { file: "cli-scaffold.yml", job: "CLI Scaffold", allowSkipped: false },
-              { file: "native.yml", job: "Native Lifecycle", allowSkipped: false },
+              { file: "docs.yml", jobs: ["Docs"], allowSkipped: true },
+              { file: "lint.yml", jobs: ["Lint"], allowSkipped: true },
+              { file: "typecheck.yml", jobs: ["Typecheck"], allowSkipped: true },
+              { file: "unit.yml", jobs: ["Unit"], allowSkipped: true },
+              { file: "playwright.yml", jobs: ["Playwright"], allowSkipped: true },
+              {
+                file: "cli-scaffold-fast.yml",
+                jobs: ["CLI Scaffold Fast (packed-install)", "CLI Scaffold Fast (registry)"],
+                allowSkipped: false,
+              },
+              { file: "native.yml", jobs: ["Native Lifecycle"], allowSkipped: false },
             ];
             const latestRuns = async () => {
               const runs = await github.paginate(github.rest.actions.listWorkflowRunsForRepo, {
@@ -57,20 +61,23 @@ jobs:
                     per_page: 100,
                   });
                   const requirement = required[index];
-                  const job = jobs.find((entry) => entry.name === requirement.job);
                   const allowed = (conclusion) => conclusion === "success" ||
                     (requirement.allowSkipped && conclusion === "skipped");
-                  return {
-                    passed: allowed(run.conclusion) && job?.status === "completed" && allowed(job.conclusion),
-                    description: `${requirement.job}: run ${run.id}, attempt ${run.run_attempt}, workflow ${run.conclusion}, job ${job?.conclusion ?? "missing"}`,
-                  };
+                  return requirement.jobs.map((name) => {
+                    const job = jobs.find((entry) => entry.name === name);
+                    return {
+                      passed: allowed(run.conclusion) && job?.status === "completed" && allowed(job.conclusion),
+                      description: `${name}: run ${run.id}, attempt ${run.run_attempt}, workflow ${run.conclusion}, job ${job?.conclusion ?? "missing"}`,
+                    };
+                  });
                 }));
                 // A newer run or rerun can start while the job results are read.
                 const current = await latestRuns();
                 if (current.every((run, index) => run?.id === runs[index].id &&
                   run.run_attempt === runs[index].run_attempt && run.status === "completed")) {
-                  for (const result of results) core.info(result.description);
-                  const failures = results.filter((result) => !result.passed);
+                  const checks = results.flat();
+                  for (const check of checks) core.info(check.description);
+                  const failures = checks.filter((check) => !check.passed);
                   if (failures.length) core.setFailed(failures.map((result) => result.description).join("\n"));
                   return;
                 }
