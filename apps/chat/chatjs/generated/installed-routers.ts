@@ -7,62 +7,15 @@ import createModelPreferencesPlugin from "@/chatjs/plugins/model-preferences/ser
 import createProjectsPlugin from "@/chatjs/plugins/projects/server-plugin";
 import createSearchPlugin from "@/chatjs/plugins/search/server-plugin";
 import createSharingPlugin from "@/chatjs/plugins/sharing/server-plugin";
-import {
-  assertUniquePluginRouters,
-  type ChatPlugin,
-} from "@/chatjs/core/installation/plugin";
+import { mergePluginRouters } from "@/chatjs/core/installation/plugin";
 
-const creditsPlugin = Object.assign(
-  { routers: {} },
-  createCreditsPlugin() satisfies ChatPlugin
-);
-const feedbackPlugin = Object.assign(
-  { routers: {} },
-  createFeedbackPlugin() satisfies ChatPlugin
-);
-const followupSuggestionsPlugin = Object.assign(
-  { routers: {} },
-  createFollowupSuggestionsPlugin() satisfies ChatPlugin
-);
-const mcpPlugin = Object.assign(
-  { routers: {} },
-  createMcpPlugin() satisfies ChatPlugin
-);
-const modelPreferencesPlugin = Object.assign(
-  { routers: {} },
-  createModelPreferencesPlugin() satisfies ChatPlugin
-);
-const projectsPlugin = Object.assign(
-  { routers: {} },
-  createProjectsPlugin() satisfies ChatPlugin
-);
-const searchPlugin = Object.assign(
-  { routers: {} },
-  createSearchPlugin() satisfies ChatPlugin
-);
-const sharingPlugin = Object.assign(
-  { routers: {} },
-  createSharingPlugin() satisfies ChatPlugin
-);
-
-assertUniquePluginRouters([
-  creditsPlugin,
-  feedbackPlugin,
-  followupSuggestionsPlugin,
-  mcpPlugin,
-  modelPreferencesPlugin,
-  projectsPlugin,
-  searchPlugin,
-  sharingPlugin,
+export const installedRouters = mergePluginRouters([
+  createCreditsPlugin(),
+  createFeedbackPlugin(),
+  createFollowupSuggestionsPlugin(),
+  createMcpPlugin(),
+  createModelPreferencesPlugin(),
+  createProjectsPlugin(),
+  createSearchPlugin(),
+  createSharingPlugin(),
 ]);
-
-export const installedRouters = {
-  ...creditsPlugin.routers,
-  ...feedbackPlugin.routers,
-  ...followupSuggestionsPlugin.routers,
-  ...mcpPlugin.routers,
-  ...modelPreferencesPlugin.routers,
-  ...projectsPlugin.routers,
-  ...searchPlugin.routers,
-  ...sharingPlugin.routers,
-};

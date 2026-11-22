@@ -152,22 +152,12 @@ const renderRouters = (plugins: readonly PluginDefinition[]): string => {
     })),
     []
   );
-  const bindings = pluginBindings(
-    factories.map(({ id, name: factory }) => ({
-      id,
-      factory,
-      preferred: `${id.charAt(0)}${pluginTitle(id).slice(1)}Plugin`,
-    })),
-    factories.map(({ name }) => name)
-  );
-  return `${bindings.map(({ id, factory }) => `import ${factory} from "@/chatjs/plugins/${id}/server-plugin";`).join("\n")}
-import { assertUniquePluginRouters, type ChatPlugin } from "@/chatjs/core/installation/plugin";
+  return `${factories.map(({ id, name }) => `import ${name} from "@/chatjs/plugins/${id}/server-plugin";`).join("\n")}
+import { mergePluginRouters } from "@/chatjs/core/installation/plugin";
 
-${bindings.map(({ name, factory }) => `const ${name} = Object.assign({ routers: {} }, ${factory}() satisfies ChatPlugin);`).join("\n")}
-
-assertUniquePluginRouters([${bindings.map(({ name }) => name).join(", ")}]);
-
-export const installedRouters = { ${bindings.map(({ name }) => `...${name}.routers`).join(", ")} };`;
+export const installedRouters = mergePluginRouters([
+${factories.map(({ name }) => `  ${name}(),`).join("\n")}
+]);`;
 };
 
 const renderInstrumentation = (

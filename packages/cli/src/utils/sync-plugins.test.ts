@@ -418,7 +418,7 @@ test("third-party plugins contribute without CLI changes or executing their serv
   expect(routers).toContain(
     'import createTeamNotesPlugin from "@/chatjs/plugins/team-notes/server-plugin"'
   );
-  expect(routers).toContain("...teamNotesPlugin.routers");
+  expect(routers).toContain("mergePluginRouters([\n  createTeamNotesPlugin(),");
   const composer = await readFile(
     path.join(root, "chatjs/generated/installed-chat-ui.ts"),
     "utf-8"
@@ -481,6 +481,11 @@ test("server wiring composes typed router maps and supports instrumentation-only
     "team-notes",
     `Object.assign(globalThis, { notesLoaded: true });
 export default () => ({ id: "team-notes", routers: { notes: { label: "notes", list: () => ["first"] }, archive: { label: "archive" } } });`
+  );
+  await writeServerPlugin(
+    root,
+    "policy",
+    'export default () => ({ id: "policy" });'
   );
   const directory = "chatjs/plugins/startup";
   await mkdir(path.join(root, directory), { recursive: true });
