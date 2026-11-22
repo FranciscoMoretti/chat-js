@@ -4,9 +4,14 @@ import { assertCurrentInstallationLayout } from "./installation-layout";
 import { rm } from "node:fs/promises";
 import path from "node:path";
 import type { PluginDefinition } from "../../../registry/metadata";
+import {
+  pluginHasInstrumentationEntry,
+  pluginHasServerEntry,
+} from "../../../registry/metadata";
 import { readInstalledPlugins } from "./installed-plugins";
 import { planDatabaseSchemas } from "./sync-database";
 import { generatedRegistrationSource } from "./generated-registration-source";
+import { pluginBindings } from "./plugin-bindings";
 import { pluginItems } from "../../../registry/src/plugins/catalog";
 
 const assertPluginDependencies = (
@@ -54,13 +59,11 @@ const assertRuntimeContributions = (
 const assertUniqueContributions = (
   plugins: readonly PluginDefinition[]
 ): void => {
-  const routers = new Set(["eve"]);
   const controls = new Set(["deep-research", "image", "video"]);
   const settings = new Set(["general"]);
   const exclusive = new Set<string>();
   for (const plugin of plugins) {
     for (const [keys, seen, label] of [
-      [plugin.server?.routers ?? [], routers, "router"],
       [plugin.client?.composerControls ?? [], controls, "composer control"],
       [plugin.client?.settingsItems ?? [], settings, "settings item"],
     ] as const) {
@@ -92,16 +95,96 @@ const assertUniqueContributions = (
   assertRuntimeContributions(plugins);
 };
 
-const imports = (
-  selected: readonly PluginDefinition[],
-  side: "server" | "client"
-): string =>
-  selected
+const namedEntries = (
+  plugins: readonly PluginDefinition[],
+  module: string,
+  exportedName: (plugin: PluginDefinition) => string | undefined,
+  reserved: readonly string[]
+) => {
+  const sources = plugins.flatMap((plugin) => {
+    const preferred = exportedName(plugin);
+    return preferred === undefined
+      ? []
+      : [{ plugin, id: plugin.id, preferred }];
+  });
+  return pluginBindings(sources, reserved).map(
+    ({ plugin, preferred, name }) => {
+      const binding =
+        name === preferred ? preferred : `${preferred} as ${name}`;
+      return {
+        plugin,
+        name,
+        source: `import { ${binding} } from "@/chatjs/plugins/${plugin.id}/${module}";`,
+      };
+    }
+  );
+};
+
+const clientEntries = (
+  plugins: readonly PluginDefinition[],
+  reserved: readonly string[]
+) =>
+  namedEntries(
+    plugins,
+    "client-plugin",
+    (plugin) => plugin.client?.export,
+    reserved
+  );
+
+const imports = (entries: readonly { readonly source: string }[]): string =>
+  entries.map(({ source }) => source).join("\n");
+
+const pluginTitle = (id: string): string =>
+  id
+    .split("-")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join("");
+
+const renderRouters = (plugins: readonly PluginDefinition[]): string => {
+  const entries = plugins.filter(pluginHasServerEntry);
+  if (entries.length === 0) {
+    return "export const installedRouters = {};";
+  }
+  const factories = pluginBindings(
+    entries.map(({ id }) => ({
+      id,
+      preferred: `create${pluginTitle(id)}Plugin`,
+    })),
+    []
+  );
+  const bindings = pluginBindings(
+    factories.map(({ id, name: factory }) => ({
+      id,
+      factory,
+      preferred: `${id.charAt(0)}${pluginTitle(id).slice(1)}Plugin`,
+    })),
+    factories.map(({ name }) => name)
+  );
+  return `${bindings.map(({ id, factory }) => `import ${factory} from "@/chatjs/plugins/${id}/server-plugin";`).join("\n")}
+import { assertUniquePluginRouters, type ChatPlugin } from "@/chatjs/core/installation/plugin";
+
+${bindings.map(({ name, factory }) => `const ${name} = Object.assign({ routers: {} }, ${factory}() satisfies ChatPlugin);`).join("\n")}
+
+assertUniquePluginRouters([${bindings.map(({ name }) => name).join(", ")}]);
+
+export const installedRouters = { ${bindings.map(({ name }) => `...${name}.routers`).join(", ")} };`;
+};
+
+const renderInstrumentation = (
+  plugins: readonly PluginDefinition[]
+): string => {
+  const entries = plugins.filter(pluginHasInstrumentationEntry);
+  return `import type { InstrumentationRegistration } from "@/chatjs/core/installation/contracts";
+
+export const installedInstrumentation: readonly InstrumentationRegistration[] = [${entries
     .map(
-      (plugin, index) =>
-        `import { ${plugin[side]?.export} as plugin${index} } from "@/chatjs/plugins/${plugin.id}/${side}-plugin";`
+      ({ id }) => `async () => {
+  const { default: register${pluginTitle(id)} } = await import("@/chatjs/plugins/${id}/instrumentation");
+  await register${pluginTitle(id)}();
+}`
     )
-    .join("\n");
+    .join(",\n")}];`;
+};
 
 const billingRegistration = (plugins: readonly PluginDefinition[]): string => {
   const plugin = plugins.find((candidate) => candidate.billing);
@@ -115,30 +198,47 @@ const renderPluginRegistrations = (
   plugins: readonly PluginDefinition[],
   databaseSchemas: string
 ): Map<string, string> => {
-  const routerPlugins = plugins.filter(
-    (plugin) => (plugin.server?.routers.length ?? 0) > 0
+  const layout = clientEntries(
+    plugins.filter((plugin) => plugin.client?.layout),
+    ["UiPlugin", "installedLayoutPlugins"]
   );
-  const instrumented = plugins.filter(
-    (plugin) => plugin.server?.instrumentation
+  const uploads = clientEntries(
+    plugins.filter((plugin) => plugin.client?.uploads),
+    ["AttachmentUploadIntegration", "installedUploads"]
   );
-  const layout = plugins.filter((plugin) => plugin.client?.layout);
-  const uploads = plugins.filter((plugin) => plugin.client?.uploads);
-  const modelVisibility = plugins.filter(
-    (plugin) => plugin.client?.modelVisibility
+  const modelVisibility = clientEntries(
+    plugins.filter((plugin) => plugin.client?.modelVisibility),
+    ["ModelVisibility", "installedModelVisibility"]
   );
-  const chat = plugins.filter((plugin) => plugin.chat);
-  const chatUi = plugins.filter(
-    ({ client }) =>
-      client !== undefined &&
-      (client.layout !== true ||
-        client.chat === true ||
-        client.accountSummary === true ||
-        client.composerControls.length > 0 ||
-        client.settingsItems.length > 0)
+  const chat = namedEntries(plugins, "chat", (plugin) => plugin.chat?.export, [
+    "ChatServerIntegration",
+    "installedChat",
+  ]);
+  const chatUi = clientEntries(
+    plugins.filter(
+      ({ client }) =>
+        client !== undefined &&
+        (client.layout !== true ||
+          client.chat === true ||
+          client.accountSummary === true ||
+          client.composerControls.length > 0 ||
+          client.settingsItems.length > 0)
+    ),
+    ["UiPlugin", "installedChatPlugins"]
   );
   const signedOut = plugins.find((plugin) => plugin.signedOut);
-  const profiles = plugins.filter((plugin) => plugin.sessionProfile);
-  const cleanup = plugins.filter((plugin) => plugin.cleanup);
+  const profiles = namedEntries(
+    plugins,
+    "session-profile",
+    (plugin) => plugin.sessionProfile?.export,
+    ["Error", "SessionProfile", "installedSessionProfiles"]
+  );
+  const cleanup = namedEntries(
+    plugins,
+    "cleanup",
+    (plugin) => plugin.cleanup?.export,
+    ["Error", "CleanupTask", "installedCleanupTasks"]
+  );
   const authentication = plugins.find((plugin) => plugin.authentication);
   const authUi = plugins.find((plugin) => plugin.authenticationUi);
   const navigation = plugins.filter((plugin) => plugin.navigation);
@@ -151,17 +251,17 @@ export const installedSignedOutScreens: readonly ComponentType[] = [${signedOut 
     ],
     [
       "installed-session-profiles",
-      `${profiles.map((plugin, index) => `import { ${plugin.sessionProfile?.export} as profile${index} } from "@/chatjs/plugins/${plugin.id}/session-profile";`).join("\n")}
+      `${imports(profiles)}
 import type { SessionProfile } from "@/chatjs/core/session/contracts";
-${profiles.map((plugin, index) => `if (profile${index}.authenticator !== ${JSON.stringify(plugin.sessionProfile?.authenticator)}) throw new Error("Session profile identity disagrees with its descriptor.");`).join("\n")}
-export const installedSessionProfiles: readonly SessionProfile[] = [${profiles.map((_, index) => `profile${index}`).join(", ")}];`,
+${profiles.map(({ plugin, name }) => `if (${name}.authenticator !== ${JSON.stringify(plugin.sessionProfile?.authenticator)}) throw new Error("Session profile identity disagrees with its descriptor.");`).join("\n")}
+export const installedSessionProfiles: readonly SessionProfile[] = [${profiles.map(({ name }) => name).join(", ")}];`,
     ],
     [
       "installed-cleanup",
-      `${cleanup.map((plugin, index) => `import { ${plugin.cleanup?.export} as cleanup${index} } from "@/chatjs/plugins/${plugin.id}/cleanup";`).join("\n")}
+      `${imports(cleanup)}
 import type { CleanupTask } from "@/lib/cleanup/contracts";
-${cleanup.map((plugin, index) => `if (cleanup${index}.id !== ${JSON.stringify(plugin.cleanup?.id)}) throw new Error("Cleanup identity disagrees with its descriptor.");`).join("\n")}
-export const installedCleanupTasks: readonly CleanupTask[] = [${cleanup.map((_, index) => `cleanup${index}`).join(", ")}];`,
+${cleanup.map(({ plugin, name }) => `if (${name}.id !== ${JSON.stringify(plugin.cleanup?.id)}) throw new Error("Cleanup identity disagrees with its descriptor.");`).join("\n")}
+export const installedCleanupTasks: readonly CleanupTask[] = [${cleanup.map(({ name }) => name).join(", ")}];`,
     ],
     [
       "installed-auth",
@@ -189,35 +289,29 @@ export const installedNavigationHandlers: readonly (() => boolean)[] = [${naviga
     ["installed-billing", billingRegistration(plugins)],
     [
       "installed-model-visibility",
-      `${imports(modelVisibility, "client")}\nimport type { ModelVisibility } from "@/chatjs/core/installation/contracts";\nexport const installedModelVisibility: readonly ModelVisibility[] = [${modelVisibility.length > 0 ? "plugin0.useModelVisibility" : ""}];`,
+      `${imports(modelVisibility)}\nimport type { ModelVisibility } from "@/chatjs/core/installation/contracts";\nexport const installedModelVisibility: readonly ModelVisibility[] = [${modelVisibility.map(({ name }) => `${name}.useModelVisibility`).join(", ")}];`,
     ],
     [
       "installed-chat",
-      `${chat.map((plugin, index) => `import { ${plugin.chat?.export} as chat${index} } from "@/chatjs/plugins/${plugin.id}/chat";`).join("\n")}\nimport type { ChatServerIntegration } from "@/chatjs/core/chat/contracts";\nexport const installedChat: readonly ChatServerIntegration[] = [${chat.map((_, index) => `chat${index}`).join(", ")}];`,
+      `${imports(chat)}\nimport type { ChatServerIntegration } from "@/chatjs/core/chat/contracts";\nexport const installedChat: readonly ChatServerIntegration[] = [${chat.map(({ name }) => name).join(", ")}];`,
     ],
     [
       "installed-chat-ui",
-      `"use client";\n${imports(chatUi, "client")}\nimport type { UiPlugin } from "@/chatjs/core/ui/slots";\nexport const installedChatPlugins: readonly UiPlugin[] = [${chatUi.map((_, index) => `plugin${index}`).join(", ")}];`,
+      `"use client";\n${imports(chatUi)}\nimport type { UiPlugin } from "@/chatjs/core/ui/slots";\nexport const installedChatPlugins: readonly UiPlugin[] = [${chatUi.map(({ name }) => name).join(", ")}];`,
     ],
     [
       "installed",
       `export const installedPlugins: ReadonlySet<string> = new Set(${plugins.length > 0 ? JSON.stringify(plugins.map((plugin) => plugin.id)) : ""});`,
     ],
-    [
-      "installed-routers",
-      `${imports(routerPlugins, "server")}\nimport type { InstalledRouters } from "@/chatjs/core/installation/contracts";\nexport const installedRouters = { ${routerPlugins.flatMap((plugin, index) => plugin.server?.routers.map((key) => `${key}: plugin${index}().routers.${key}`) ?? []).join(", ")} } satisfies InstalledRouters;`,
-    ],
-    [
-      "installed-instrumentation",
-      `${imports(instrumented, "server")}\nimport type { InstrumentationRegistration } from "@/chatjs/core/installation/contracts";\nexport const installedInstrumentation: readonly InstrumentationRegistration[] = [${instrumented.map((_, index) => `plugin${index}().instrumentation`).join(", ")}];`,
-    ],
+    ["installed-routers", renderRouters(plugins)],
+    ["installed-instrumentation", renderInstrumentation(plugins)],
     [
       "installed-layout",
-      `"use client";\n${imports(layout, "client")}\nimport type { UiPlugin } from "@/chatjs/core/ui/slots";\nexport const installedLayoutPlugins: readonly UiPlugin[] = [${layout.map((_, index) => `plugin${index}`).join(", ")}];`,
+      `"use client";\n${imports(layout)}\nimport type { UiPlugin } from "@/chatjs/core/ui/slots";\nexport const installedLayoutPlugins: readonly UiPlugin[] = [${layout.map(({ name }) => name).join(", ")}];`,
     ],
     [
       "installed-uploads",
-      `${imports(uploads, "client")}\nimport type { AttachmentUploadIntegration } from "@/chatjs/core/installation/contracts";\nexport const installedUploads: readonly AttachmentUploadIntegration[] = [${uploads.length > 0 ? "plugin0.uploads" : ""}];`,
+      `${imports(uploads)}\nimport type { AttachmentUploadIntegration } from "@/chatjs/core/installation/contracts";\nexport const installedUploads: readonly AttachmentUploadIntegration[] = [${uploads.map(({ name }) => `${name}.uploads`).join(", ")}];`,
     ],
   ] as const;
   return new Map([

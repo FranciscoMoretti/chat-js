@@ -25,7 +25,6 @@ const modelPreferencesDefinition = pluginDefinitionSchema.parse({
   databaseSchemas: [
     "chatjs/plugins/model-preferences/model-preferences-schema.ts",
   ],
-  server: { export: "modelPreferences", routers: ["modelPreferences"] },
   client: {
     export: "modelPreferencesClient",
     settingsItems: ["models"],

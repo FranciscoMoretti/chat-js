@@ -20,10 +20,6 @@
   ],
   "databaseSchemas": ["chatjs/plugins/followup-suggestions/followup-schema.ts"],
   "chat": { "export": "followupChat" },
-  "server": {
-    "export": "followupSuggestions",
-    "routers": ["followupSuggestions"]
-  },
   "client": {
     "export": "followupSuggestionsClient",
     "composerControls": [],

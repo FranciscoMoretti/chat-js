@@ -27,7 +27,7 @@ test("requested plugins can repair incomplete installations while unrelated inst
     contractVersion: 1,
     id: "team-notes",
     kind: "plugin",
-    server: { export: "teamNotes", routers: ["notes"] },
+    files: ["chatjs/plugins/team-notes/server-plugin.ts"],
   };
   await writeFile(
     path.join(directory, "chatjs.json"),

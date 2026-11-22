@@ -56,7 +56,7 @@ Gateways supply `roles.smart`, `roles.balanced`, `roles.fast`, and optional `rol
 
 ## Plugins and composition
 
-Plugins replace the former installable feature category. Their open ID contract lives in `metadata.ts`. A plugin declares separate server factory and client declaration exports and its router, instrumentation, layout, composer, settings, or upload contributions. The installer reads descriptors without executing plugin entrypoints. Core business logic consumes generated composition rather than importing optional implementations.
+Plugin IDs and descriptors follow the contract in `metadata.ts`. The installer finds the default router factory and startup hook through the owned paths `server-plugin.ts` and `instrumentation.ts`. The descriptor identifies client exports and contributions such as layout, composer, settings, and uploads. The installer generates imports from this information, and the app uses those imports to compose the installed plugins.
 
 MCP and attachment uploads keep manifests beside `src/` and `adapters/`. All plugin runtime source installs under `chatjs/plugins/<id>/`; Next and EVE adapters retain explicit ownership despite their framework-required locations. Plugin entrypoints use `server-plugin.ts` and `client-plugin.ts` to avoid basename collisions with host modules during shadcn installation.
 

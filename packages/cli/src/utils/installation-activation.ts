@@ -1,5 +1,7 @@
 import {
   pluginDefinitionSchema,
+  pluginHasInstrumentationEntry,
+  pluginHasServerEntry,
   toolDefinitionSchema,
 } from "../../../registry/metadata";
 import type {
@@ -57,8 +59,8 @@ const pluginIntegrations = (value: PluginDefinition): string[] => [
     ["auth/sign-out", value.authenticationUi],
     ["navigation", value.navigation],
     ["database", value.databaseSchemas?.length],
-    ["routers", value.server?.routers.length],
-    ["instrumentation", value.server?.instrumentation],
+    ["routers", pluginHasServerEntry(value)],
+    ["instrumentation", pluginHasInstrumentationEntry(value)],
   ]),
   ...clientIntegrations(value.client),
 ];

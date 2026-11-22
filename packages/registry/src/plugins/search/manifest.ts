@@ -27,7 +27,6 @@ const searchDefinition = pluginDefinitionSchema.parse({
   kind: "plugin",
   files: searchFiles,
   databaseSchemas: ["chatjs/plugins/search/search-schema.ts"],
-  server: { export: "search", routers: ["search"] },
   chat: { export: "searchChat" },
   client: { export: "searchClient", chat: true },
 });

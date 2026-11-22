@@ -44,7 +44,6 @@
   "environmentValidation": "mcp-env.ts",
   "databaseSchemas": ["chatjs/plugins/mcp/db/mcp-schema.ts"],
   "envRequirements": [{ "options": [["MCP_ENCRYPTION_KEY"]] }],
-  "server": { "export": "mcp", "routers": ["mcp"] },
   "client": {
     "export": "mcpClient",
     "composerControls": ["mcp"],

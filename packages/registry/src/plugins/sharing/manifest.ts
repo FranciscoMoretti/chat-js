@@ -24,7 +24,6 @@ const sharingDefinition = pluginDefinitionSchema.parse({
   id: "sharing",
   kind: "plugin",
   files: sharingFiles,
-  server: { export: "sharing", routers: ["sharing"] },
   chat: { export: "sharingChat" },
   client: { export: "sharingClient", chat: true },
 });

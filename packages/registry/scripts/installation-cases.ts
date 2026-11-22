@@ -1,7 +1,11 @@
 import { registry } from "../registry";
 import { demoInstallation } from "../installation";
 import type { InstallationSelection } from "../installation";
-import { pluginDefinitionSchema, toolDefinitionSchema } from "../metadata";
+import {
+  pluginDefinitionSchema,
+  pluginHasServerEntry,
+  toolDefinitionSchema,
+} from "../metadata";
 
 const plugins = registry.items.flatMap((item) => {
   const result = pluginDefinitionSchema.safeParse(item.meta?.chatjs);
@@ -28,14 +32,12 @@ for (const plugin of plugins) {
   const points = [
     ...(plugin.chat ? ["chat"] : []),
     ...((plugin.databaseSchemas?.length ?? 0) > 0 ? ["databaseSchemas"] : []),
-    ...["server", "client"].flatMap((kind) => {
-      const values = kind === "server" ? plugin.server : plugin.client;
-      return Object.entries(values ?? {}).flatMap(([key, value]) =>
-        value === true || (Array.isArray(value) && value.length > 0)
-          ? [`${kind}.${key}`]
-          : []
-      );
-    }),
+    ...(pluginHasServerEntry(plugin) ? ["server"] : []),
+    ...Object.entries(plugin.client ?? {}).flatMap(([key, value]) =>
+      value === true || (Array.isArray(value) && value.length > 0)
+        ? [`client.${key}`]
+        : []
+    ),
   ];
   for (const point of points) {
     channels.set(point, [...(channels.get(point) ?? []), plugin.id]);

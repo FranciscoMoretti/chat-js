@@ -14,7 +14,6 @@
   ],
   "databaseSchemas": ["chatjs/plugins/feedback/feedback-schema.ts"],
   "chat": { "export": "feedbackChat" },
-  "server": { "export": "feedback", "routers": ["feedback"] },
   "client": {
     "export": "feedbackClient",
     "composerControls": [],

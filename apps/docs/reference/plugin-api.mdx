@@ -13,7 +13,8 @@ Keep server and browser import graphs separate:
 
 | Entry point | Contract | Contributions |
 | --- | --- | --- |
-| `server-plugin.ts` | `ChatPlugin` | tRPC routers, instrumentation |
+| `server-plugin.ts` | Default factory returning `ChatPlugin` | tRPC routers |
+| `instrumentation.ts` | Default `InstrumentationRegistration` function | Startup hooks |
 | `chat.ts` | `ChatServerIntegration` | Transactional chat integration, safe for EVE and Next.js |
 | `signed-out.tsx` | React component | Optional screen for signed-out chat visitors |
 | `session-profile.ts` | `SessionProfile` | Native authenticator, bounded model, and instructions |
@@ -26,17 +27,18 @@ Keep server and browser import graphs separate:
 
 Keep `chat.ts` and `billing.ts` free of web routers and Next.js request helpers: native EVE loads this entrypoint too.
 
-Factories return concrete types with `satisfies`. Sync generates static imports and registrations from the descriptor without executing server factories during installation.
+List `chatjs/plugins/<id>/server-plugin.ts` in the descriptor's `files` array to register its default factory. Sync generates imports from that path. The app composes the returned router maps and rejects duplicate and reserved keys before merging. Use `satisfies` to preserve concrete procedure types.
 
 ```ts
 import type { ChatPlugin } from "@/chatjs/core/installation/plugin";
 import { projectRouter } from "@/chatjs/plugins/projects/router";
 
-export const projects = () =>
-  ({
+export default function projects() {
+  return {
     id: "projects",
     routers: { project: projectRouter },
-  }) satisfies ChatPlugin;
+  } satisfies ChatPlugin;
+}
 ```
 
 ## Projects creation and recovery
@@ -214,7 +216,7 @@ Declare plugin schema paths in `databaseSchemas`. Drizzle composes installed sch
   "id": "projects",
   "kind": "plugin",
   "databaseSchemas": ["chatjs/plugins/projects/db/project-schema.ts"],
-  "server": { "export": "projects", "routers": ["project"] },
+  "files": ["chatjs/plugins/projects/server-plugin.ts"],
   "chat": { "export": "projectsChat" },
   "client": { "export": "projectsClient", "chat": true }
 }
@@ -246,4 +248,4 @@ A task returns `{ deletedCount, retiredCount?, pendingCount?, skipped }` for one
 
 The authenticated cron endpoint and hosted draining script consume this common result. Plugins own inventory and retry policy. Core retains the native deletion fences and purge verification for providers that support purge. Managed guest retention uses terminal-session evidence instead. The Vercel cron drains progressing batches within a time and batch budget; incomplete work remains retryable. The cleanup contribution does not add a scheduler framework.
 
-Installed application startup registrations use the zero-argument `instrumentation` callback. Next.js starts every registration even if another throws, and propagates failures. Guest Chat uses this callback for development-only cleanup. Agent observability uses native EVE instrumentation under `agent/instrumentation/`.
+Default-export a zero-argument startup function from the plugin's `instrumentation.ts`. Next.js starts every installed registration even if another throws, and propagates failures. Guest Chat uses its startup function for development-only cleanup. Agent observability uses native EVE instrumentation under `agent/instrumentation/`.

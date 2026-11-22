@@ -152,13 +152,6 @@ const pluginDefinitionBase = z.object({
     .object({ form: identifier, signOut: identifier })
     .optional(),
   navigation: z.object({ export: identifier }).optional(),
-  server: z
-    .object({
-      export: identifier,
-      routers: z.array(identifier).default([]),
-      instrumentation: z.literal(true).optional(),
-    })
-    .optional(),
   client: z
     .object({
       export: identifier,
@@ -187,9 +180,26 @@ const pluginDefinitionSchema = z.discriminatedUnion("contractVersion", [
 ]);
 
 type PluginDefinition = z.infer<typeof pluginDefinitionSchema>;
+const pluginHasServerEntry = ({
+  files,
+  id,
+}: {
+  readonly files: readonly string[];
+  readonly id: string;
+}): boolean => files.includes(`chatjs/plugins/${id}/server-plugin.ts`);
+const pluginHasInstrumentationEntry = ({
+  files,
+  id,
+}: {
+  readonly files: readonly string[];
+  readonly id: string;
+}): boolean => files.includes(`chatjs/plugins/${id}/instrumentation.ts`);
+
 export {
   envRequirementSchema,
   pluginDefinitionSchema,
+  pluginHasInstrumentationEntry,
+  pluginHasServerEntry,
   pluginIdSchema,
   storageDefinitionSchema,
   toolDefinitionSchema,

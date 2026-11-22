@@ -19,7 +19,6 @@
     "app/(chat)/share/[id]/page.tsx"
   ],
   "chat": { "export": "sharingChat" },
-  "server": { "export": "sharing", "routers": ["sharing"] },
   "client": {
     "export": "sharingClient",
     "composerControls": [],
