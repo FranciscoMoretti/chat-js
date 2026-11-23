@@ -44,7 +44,7 @@ const BrowserTransfer = ({
   );
 };
 
-export const DesktopAuthForm = ({
+const DesktopAuthForm = ({
   mode,
   children,
 }: {
@@ -79,3 +79,5 @@ export const DesktopAuthForm = ({
   }
   return children;
 };
+
+export default DesktopAuthForm;

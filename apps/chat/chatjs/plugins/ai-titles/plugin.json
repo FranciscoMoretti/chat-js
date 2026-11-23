@@ -6,6 +6,5 @@
     "chatjs/plugins/ai-titles/chat.ts",
     "chatjs/plugins/ai-titles/generate-title.ts",
     "chatjs/plugins/ai-titles/title-queries.ts"
-  ],
-  "chat": { "export": "aiTitlesChat" }
+  ]
 }

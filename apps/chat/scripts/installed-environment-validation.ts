@@ -2,38 +2,37 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { z } from "zod";
 
-// A validator belongs beside its installed descriptor, never outside the item.
-const environmentValidationModuleSchema = z
-  .string()
-  .regex(/^[a-zA-Z0-9_-]+\.(?:ts|js|mjs)$/u);
 const validatorSchema = z.object({
-  validateEnvironment: z.custom<
-    (env: Readonly<NodeJS.ProcessEnv>) => readonly string[]
-  >((value) => typeof value === "function"),
+  default: z.custom<(env: Readonly<NodeJS.ProcessEnv>) => readonly string[]>(
+    (value) => typeof value === "function"
+  ),
 });
 
-const validateInstalledEnvironment = async (
+const validatePluginEnvironment = async (
   itemDirectory: string,
-  moduleName: string | undefined,
+  files: readonly string[],
   env: Readonly<NodeJS.ProcessEnv>
 ): Promise<string[]> => {
-  if (moduleName === undefined) {
+  const entry = "validate-env.ts";
+  if (
+    !files.includes(`chatjs/plugins/${path.basename(itemDirectory)}/${entry}`)
+  ) {
     return [];
   }
   try {
-    const file = environmentValidationModuleSchema.parse(moduleName);
     const loadedModule: unknown = await import(
       /* @vite-ignore */
-      pathToFileURL(path.join(itemDirectory, file)).href
+      pathToFileURL(path.join(itemDirectory, entry)).href
     );
-    const { validateEnvironment } = validatorSchema.parse(loadedModule);
+    const { default: validateEnvironment } =
+      validatorSchema.parse(loadedModule);
     return z.array(z.string()).parse(validateEnvironment(env));
   } catch {
     // Validator exceptions may contain secrets. Keep the aggregate report safe.
     return [
-      "Unable to load or run the environment validator. Check its module and validateEnvironment export.",
+      "Unable to load or run the environment validator. Check validate-env.ts and its default export.",
     ];
   }
 };
 
-export { validateInstalledEnvironment };
+export { validatePluginEnvironment };

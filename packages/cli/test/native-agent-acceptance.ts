@@ -29,7 +29,7 @@ const sandboxProvider = z
   .enum(["just-bash", "vercel"])
   .parse(process.env.CHATJS_NATIVE_SANDBOX ?? "just-bash");
 const billingEnabled = await Bun.file(
-  path.join(app, "chatjs/plugins/credits/chatjs.json")
+  path.join(app, "chatjs/plugins/credits/plugin.json")
 ).exists();
 const cloudCredentials = (() => {
   if (sandboxProvider !== "vercel") {

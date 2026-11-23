@@ -44,7 +44,7 @@ Session identity (`lib/eve/session-identity.ts`) is a core contract. MCP and res
 
 ## Plugin database schemas
 
-A plugin may declare `databaseSchemas` in its `chatjs.json`, using app-relative TypeScript paths beneath `chatjs/plugins/<id>/`. Sync validates the selected descriptors and files, then generates `chatjs/generated/installed-database.ts`. Drizzle consumes that list alongside `lib/db/schema.ts`. This is composition metadata, not a barrel that core runtime modules import. MCP contributes `chatjs/plugins/mcp/db/mcp-schema.ts` and consumes the core user table for its foreign key.
+A plugin may declare `databaseSchemas` in its `plugin.json`, using app-relative TypeScript paths beneath `chatjs/plugins/<id>/`. Sync validates the selected descriptors and files, then generates `chatjs/generated/installed-database.ts`. Drizzle consumes that list alongside `lib/db/schema.ts`. This is composition metadata, not a barrel that core runtime modules import. MCP contributes `chatjs/plugins/mcp/db/mcp-schema.ts` and consumes the core user table for its foreign key.
 
 Fresh scaffolds exclude the demo's historical migrations. After installing dependencies, create runs the offline `db:generate` script to generate the selected schema's initial migration. Only create generates a baseline, and it refuses a nonempty migration directory. Add and sync preserve the app's migration history. Schema generation and applying migrations remain separate actions. ChatJS supports new installations, without migration support for older template versions.
 
@@ -56,7 +56,7 @@ Gateways supply `roles.smart`, `roles.balanced`, `roles.fast`, and optional `rol
 
 ## Plugins and composition
 
-Plugin descriptors use contract version 3. Sync generates imports from the owned paths `router.ts`, `instrumentation.ts`, `chat-ui.ts`, `layout-ui.ts`, `uploads.ts`, and `model-visibility.ts`. React slot declarations place components in the application.
+Built-in manifests use `definePluginItem` to derive each installed `plugin.json` from the shadcn item name and file targets. Plugin descriptors use contract version 3. Sync generates imports from owned paths such as `router.ts`, `instrumentation.ts`, `chat-ui.ts`, `layout-ui.ts`, `uploads.ts`, and `model-visibility.ts`. React slot declarations place components in the application.
 
 MCP and attachment uploads keep manifests beside `src/` and `adapters/`. All plugin runtime source installs under `chatjs/plugins/<id>/`; Next and EVE adapters retain explicit ownership despite their framework-required locations.
 

@@ -226,7 +226,8 @@ export const ProjectForm = ({
                       (kind) => {
                         const source =
                           kind === "storage"
-                            ? resolution?.selection.storage?.source
+                            ? (resolution?.selection.storage?.source ??
+                              "memory")
                             : resolution?.selection[kind];
                         return (
                           <div

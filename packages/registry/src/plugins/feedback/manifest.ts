@@ -1,5 +1,4 @@
-import type { RegistryItem } from "shadcn/schema";
-import { pluginDefinitionSchema } from "../../../metadata";
+import { definePluginItem } from "../define-item";
 
 const feedbackFiles = [
   "chatjs/plugins/feedback/chat.ts",
@@ -11,33 +10,28 @@ const feedbackFiles = [
   "chatjs/plugins/feedback/feedback-schema.ts",
   "chatjs/plugins/feedback/vote-message.ts",
 ];
-const feedbackDefinition = pluginDefinitionSchema.parse({
-  contractVersion: 3,
-  uiBase: "base",
-  id: "feedback",
-  kind: "plugin",
-  files: feedbackFiles,
-  databaseSchemas: ["chatjs/plugins/feedback/feedback-schema.ts"],
-  chat: { export: "feedbackChat" },
-});
-const feedbackItem: RegistryItem = {
-  dependencies: [
-    "@tanstack/react-query",
-    "@trpc/server",
-    "drizzle-orm",
-    "lucide-react",
-    "sonner",
-  ],
-  name: "feedback",
-  type: "registry:item",
-  description: "Private feedback on assistant messages",
-  files: feedbackFiles.map(
-    (file): NonNullable<RegistryItem["files"]>[number] => ({
+
+const feedbackItem = definePluginItem(
+  {
+    dependencies: [
+      "@tanstack/react-query",
+      "@trpc/server",
+      "drizzle-orm",
+      "lucide-react",
+      "sonner",
+    ],
+    name: "feedback",
+    description: "Private feedback on assistant messages",
+    files: feedbackFiles.map((file) => ({
       path: `src/plugins/feedback/src/${file.slice("chatjs/plugins/feedback/".length)}`,
       target: `~/${file}`,
       type: "registry:file",
-    })
-  ),
-  meta: { chatjs: feedbackDefinition },
-};
+    })),
+  },
+  {
+    uiBase: "base",
+    databaseSchemas: ["chatjs/plugins/feedback/feedback-schema.ts"],
+  }
+);
+const feedbackDefinition = feedbackItem.meta.chatjs;
 export { feedbackItem, feedbackFiles, feedbackDefinition };

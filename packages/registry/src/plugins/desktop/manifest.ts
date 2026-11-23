@@ -1,5 +1,4 @@
-import type { RegistryItem } from "shadcn/schema";
-import { pluginDefinitionSchema } from "../../../metadata";
+import { definePluginItem } from "../define-item";
 
 const desktopFiles = [
   "chatjs/plugins/desktop/desktop-auth-client.ts",
@@ -17,34 +16,29 @@ const desktopFiles = [
   "chatjs/plugins/desktop/sign-out.ts",
   "app/(auth)/device-login/page.tsx",
 ];
-const desktopDefinition = pluginDefinitionSchema.parse({
-  contractVersion: 3,
-  uiBase: "base",
-  id: "desktop",
-  kind: "plugin",
-  files: desktopFiles,
-  authentication: { export: "desktopAuth" },
-  navigation: { export: "desktopNavigation" },
-  authenticationUi: { form: "DesktopAuthForm", signOut: "signOutDesktop" },
-});
-const desktopItem: RegistryItem = {
-  name: "desktop",
-  type: "registry:item",
-  description:
-    "Electron authentication, browser handoff and renderer integration",
-  dependencies: [
-    "@better-auth/electron@1.6.2",
-    "better-auth@1.6.2",
-    "lucide-react",
-    "sonner",
-  ],
-  files: desktopFiles.map((file) => ({
-    path: file.startsWith("chatjs/plugins/desktop/")
-      ? `src/plugins/desktop/src/${file.slice("chatjs/plugins/desktop/".length)}`
-      : `src/plugins/desktop/adapters/${file}`,
-    target: `~/${file}`,
-    type: "registry:file" as const,
-  })),
-  meta: { chatjs: desktopDefinition },
-};
+
+const desktopItem = definePluginItem(
+  {
+    name: "desktop",
+    description:
+      "Electron authentication, browser handoff and renderer integration",
+    dependencies: [
+      "@better-auth/electron@1.6.2",
+      "better-auth@1.6.2",
+      "lucide-react",
+      "sonner",
+    ],
+    files: desktopFiles.map((file) => ({
+      path: file.startsWith("chatjs/plugins/desktop/")
+        ? `src/plugins/desktop/src/${file.slice("chatjs/plugins/desktop/".length)}`
+        : `src/plugins/desktop/adapters/${file}`,
+      target: `~/${file}`,
+      type: "registry:file" as const,
+    })),
+  },
+  {
+    uiBase: "base",
+  }
+);
+const desktopDefinition = desktopItem.meta.chatjs;
 export { desktopItem, desktopDefinition, desktopFiles };

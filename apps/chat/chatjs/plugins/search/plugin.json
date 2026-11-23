@@ -21,6 +21,5 @@
     "chatjs/plugins/search/use-debounced-search.ts",
     "agent/hooks/search.ts"
   ],
-  "databaseSchemas": ["chatjs/plugins/search/search-schema.ts"],
-  "chat": { "export": "searchChat" }
+  "databaseSchemas": ["chatjs/plugins/search/search-schema.ts"]
 }

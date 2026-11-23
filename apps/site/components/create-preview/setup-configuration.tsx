@@ -54,7 +54,7 @@ const providerCaptions: Readonly<Record<string, string>> = {
   "vercel-blob": "Managed storage",
   s3: "Object storage",
   r2: "S3-compatible",
-  none: "Skip for now",
+  memory: "Temporary files",
 };
 
 const [gateway, ...infrastructure] = providers;
@@ -79,22 +79,15 @@ const ProviderChoices = ({
       label: item.title,
       description: item.description,
     }));
-  if (kind !== "gateway") {
-    choices.unshift({
-      value: "none",
-      label: "None",
-      description: "Start without file storage.",
-    });
-  }
   const selected = resolution?.selection ?? installation;
   const value =
     (kind === "storage" ? selected.storage?.source : selected[kind]) ??
-    (kind === "gateway" ? "" : "none");
+    (kind === "gateway" ? "" : "memory");
   const selectedDescription = choices.find(
     (choice) => choice.value === value
   )?.description;
   // A compact starting set is presentation only; every catalog provider remains selectable.
-  const commonStorage = ["none", "vercel-blob", "s3", "r2"];
+  const commonStorage = ["memory", "vercel-blob", "s3", "r2"];
   const hasMore = kind === "storage" && choices.length > commonStorage.length;
   const visibleChoices = choices.filter((choice) => {
     if (hasMore && !expanded) {
@@ -125,7 +118,8 @@ const ProviderChoices = ({
           if (typeof next !== "string" || next === value) {
             return;
           }
-          const provider = next === "none" ? undefined : next;
+          const provider =
+            kind === "storage" && next === "memory" ? undefined : next;
           update({
             ...installation,
             [kind]:
@@ -175,7 +169,7 @@ const ProviderChoices = ({
         >
           {expanded
             ? "Show fewer providers"
-            : `Show all ${choices.length - 1} providers`}
+            : `Show all ${choices.length} providers`}
         </Button>
       )}
     </div>
@@ -362,7 +356,7 @@ export const SetupSummary = ({
             {providers.map(({ kind, title }) => {
               const source =
                 kind === "storage"
-                  ? resolution.selection.storage?.source
+                  ? (resolution.selection.storage?.source ?? "memory")
                   : resolution.selection[kind];
               const item = catalog.find(
                 (entry) =>

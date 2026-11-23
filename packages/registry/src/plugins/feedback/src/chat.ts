@@ -2,7 +2,7 @@ import { inArray } from "drizzle-orm";
 import type { ChatServerIntegration } from "@/chatjs/core/chat/contracts";
 import { eveVote } from "./feedback-schema";
 
-export const feedbackChat = {
+const feedbackChat = {
   onDeleteConversations: async (tx, { conversationIds }) => {
     if (conversationIds.length > 0) {
       await tx
@@ -11,3 +11,5 @@ export const feedbackChat = {
     }
   },
 } satisfies ChatServerIntegration;
+
+export default feedbackChat;

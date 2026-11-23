@@ -39,7 +39,7 @@ test("gateway and dependency changes, missing diffs, and empty diffs check all a
 test("changes to known items select their isolated cases plus the default and full preset", () => {
   const pattern = new RegExp(
     scaffoldValidationPattern([
-      "packages/registry/src/plugins/projects/chatjs.json",
+      "packages/registry/src/plugins/projects/plugin.json",
       "packages/registry/src/tools/generate-image/tool.ts",
     ]) ?? "^$",
     "u"
@@ -93,7 +93,7 @@ test("shared composition changes run the installation matrix and gateway changes
   ).toEqual({ exhaustive: false, externalGateway: true });
   expect(
     scaffoldCompatibilityScope([
-      "packages/registry/src/plugins/projects/chatjs.json",
+      "packages/registry/src/plugins/projects/plugin.json",
     ])
   ).toEqual({ exhaustive: false, externalGateway: false });
   expect(scaffoldCompatibilityScope()).toEqual({

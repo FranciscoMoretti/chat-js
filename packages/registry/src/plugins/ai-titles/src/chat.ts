@@ -1,9 +1,11 @@
 import type { ChatServerIntegration } from "@/chatjs/core/chat/contracts";
 
-export const aiTitlesChat = {
+const aiTitlesChat = {
   afterCreate: async (context) => {
     const { persistGeneratedEveConversationTitle } =
       await import("./generate-title");
     await persistGeneratedEveConversationTitle(context);
   },
 } satisfies ChatServerIntegration;
+
+export default aiTitlesChat;

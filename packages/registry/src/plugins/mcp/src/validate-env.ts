@@ -23,4 +23,5 @@ const readMcpEncryptionKey = (): string => {
   }
   return key;
 };
-export { readMcpEncryptionKey, validateEnvironment };
+export { readMcpEncryptionKey };
+export default validateEnvironment;

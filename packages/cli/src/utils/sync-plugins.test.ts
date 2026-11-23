@@ -127,7 +127,7 @@ const install = async (root: string): Promise<void> => {
     })
   );
   await writeFile(
-    path.join(root, "chatjs/plugins/mcp/chatjs.json"),
+    path.join(root, "chatjs/plugins/mcp/plugin.json"),
     JSON.stringify(mcpItem.meta?.chatjs)
   );
 };
@@ -212,7 +212,7 @@ test("MCP installation contributes its schema without modifying core tables", as
   files.push({
     content: JSON.stringify(mcpItem.meta?.chatjs),
     path: "mcp.json",
-    target: "~/chatjs/plugins/mcp/chatjs.json",
+    target: "~/chatjs/plugins/mcp/plugin.json",
     type: "registry:file",
   });
   const server = Bun.serve({
@@ -268,7 +268,7 @@ test("missing descriptors report partial MCP source and how to recover", async (
   const root = await fixture();
   await initializePluginUi(root);
   await install(root);
-  await rm(path.join(root, "chatjs/plugins/mcp/chatjs.json"));
+  await rm(path.join(root, "chatjs/plugins/mcp/plugin.json"));
   await rejects(syncPlugins(root), (reason: unknown) => {
     expect(() => {
       throw reason;
@@ -332,7 +332,7 @@ test("core scaffold omits uploads; shadcn add registers uploads alongside MCP an
   files.push({
     content: JSON.stringify(attachmentUploadsItem.meta?.chatjs),
     path: "uploads.json",
-    target: "~/chatjs/plugins/attachment-uploads/chatjs.json",
+    target: "~/chatjs/plugins/attachment-uploads/plugin.json",
     type: "registry:file",
   });
   const server = Bun.serve({
@@ -385,7 +385,7 @@ test("third-party plugins contribute without CLI changes or executing their serv
   const directory = path.join(root, "chatjs/plugins/team-notes");
   await mkdir(directory, { recursive: true });
   await writeFile(
-    path.join(directory, "chatjs.json"),
+    path.join(directory, "plugin.json"),
     JSON.stringify({
       contractVersion: 3,
       id: "team-notes",
@@ -456,7 +456,7 @@ const writeServerPlugin = async (
   await mkdir(path.join(root, directory), { recursive: true });
   await writeFile(path.join(root, directory, "router.ts"), source);
   await writeFile(
-    path.join(root, directory, "chatjs.json"),
+    path.join(root, directory, "plugin.json"),
     JSON.stringify({
       contractVersion: 3,
       kind: "plugin",
@@ -481,7 +481,7 @@ export const router = { notes: { list: () => ["first"] }, archive: {} };`
     `export default () => { Object.assign(globalThis, { startupRan: true }); };`
   );
   await writeFile(
-    path.join(root, directory, "chatjs.json"),
+    path.join(root, directory, "plugin.json"),
     JSON.stringify({
       contractVersion: 3,
       kind: "plugin",
@@ -520,7 +520,7 @@ test("obsolete plugin descriptors fail before sync rewrites registrations", asyn
   const directory = path.join(root, "chatjs/plugins/old");
   await mkdir(directory, { recursive: true });
   await writeFile(
-    path.join(directory, "chatjs.json"),
+    path.join(directory, "plugin.json"),
     JSON.stringify({
       id: "old",
       kind: "plugin",
@@ -575,7 +575,7 @@ test.each([
       })
     );
     await writeFile(
-      path.join(root, `chatjs/plugins/${item.name}/chatjs.json`),
+      path.join(root, `chatjs/plugins/${item.name}/plugin.json`),
       JSON.stringify(item.meta?.chatjs)
     );
     await syncPlugins(root, { expected: [item.name] });
@@ -633,7 +633,7 @@ test("absent model visibility preserves defaults; conflicting providers fail bef
         ""
       );
       await writeFile(
-        path.join(root, "chatjs/plugins", id, "chatjs.json"),
+        path.join(root, "chatjs/plugins", id, "plugin.json"),
         JSON.stringify({
           contractVersion: 3,
           id,
@@ -664,7 +664,7 @@ test("credits registers native billing and account UI; removing it restores opti
     })
   );
   await writeFile(
-    path.join(root, "chatjs/plugins/credits/chatjs.json"),
+    path.join(root, "chatjs/plugins/credits/plugin.json"),
     JSON.stringify(creditsItem.meta?.chatjs)
   );
   await syncPlugins(root, { expected: ["credits"] });
@@ -708,16 +708,15 @@ test.each(["usageBilling", "canSpend", "UsageBilling"])(
     );
     await writeFile(
       path.join(directory, "billing.ts"),
-      `export const ${exportName} = { allowedOwner: "allowed", canSpend(ownerId: string) { return Promise.resolve(ownerId === this.allowedOwner); } };`
+      `const ${exportName} = { allowedOwner: "allowed", canSpend(ownerId: string) { return Promise.resolve(ownerId === this.allowedOwner); } }; export default ${exportName};`
     );
     await writeFile(
-      path.join(directory, "chatjs.json"),
+      path.join(directory, "plugin.json"),
       JSON.stringify({
         contractVersion: 3,
         kind: "plugin",
         id: "custom-billing",
         files: ["chatjs/plugins/custom-billing/billing.ts"],
-        billing: { export: exportName },
       })
     );
     await syncPlugins(root);
@@ -760,13 +759,12 @@ test("two billing contributors fail before any registration is written", async (
         "export const billing = {};"
       );
       await writeFile(
-        path.join(directory, "chatjs.json"),
+        path.join(directory, "plugin.json"),
         JSON.stringify({
           contractVersion: 3,
           kind: "plugin",
           id,
           files: [`chatjs/plugins/${id}/billing.ts`],
-          billing: { export: "billing" },
         })
       );
     })
@@ -789,23 +787,52 @@ test("signed-out, session policy and cleanup contributions disappear when absent
   }
 });
 
+test("cleanup reports use the IDs of the plugins that own the runners", async () => {
+  const root = await fixture();
+  await initializePluginUi(root);
+  await Promise.all(
+    ["alpha", "beta"].map(async (id, index) => {
+      const directory = path.join(root, "chatjs/plugins", id);
+      await mkdir(directory, { recursive: true });
+      await writeFile(
+        path.join(directory, "cleanup.ts"),
+        `export default async () => ({ deletedCount: ${index}, skipped: false });`
+      );
+      await writeFile(
+        path.join(directory, "plugin.json"),
+        JSON.stringify({
+          id,
+          kind: "plugin",
+          contractVersion: 3,
+          files: [`chatjs/plugins/${id}/cleanup.ts`],
+        })
+      );
+    })
+  );
+  await syncPlugins(root);
+  const result = await runRegistration(
+    root,
+    "cleanup",
+    `
+    const reports = await Promise.all(registration.installedCleanupTasks.map(async ({ id, run }) => [id, await run()]));
+    assert.deepEqual(reports, [["alpha", { deletedCount: 0, skipped: false }], ["beta", { deletedCount: 1, skipped: false }]]);
+  `
+  );
+  expect(result).toEqual({ exitCode: 0, stderr: "" });
+});
+
 const runtimeContributions = [
   {
     entry: "signed-out.tsx",
-    contribution: { signedOut: { export: "Screen" } },
+    contribution: {},
     conflict: "Only one plugin may supply the signed-out screen.",
   },
   {
     entry: "session-profile.ts",
     contribution: {
-      sessionProfile: { export: "profile", authenticator: "same-profile" },
+      sessionAuthenticator: "same-profile",
     },
     conflict: "Duplicate or reserved plugin identity: same-profile",
-  },
-  {
-    entry: "cleanup.ts",
-    contribution: { cleanup: { export: "cleanup", id: "same-task" } },
-    conflict: "Duplicate or reserved plugin identity: same-task",
   },
 ];
 
@@ -820,12 +847,13 @@ test.each(runtimeContributions)(
         await mkdir(directory, { recursive: true });
         await writeFile(path.join(directory, entry), "export {};\n");
         await writeFile(
-          path.join(directory, "chatjs.json"),
+          path.join(directory, "plugin.json"),
           JSON.stringify({
             contractVersion: 3,
             uiBase: "base",
             id,
             kind: "plugin",
+            files: [`chatjs/plugins/${id}/${entry}`],
             ...contribution,
           })
         );
@@ -841,8 +869,8 @@ test.each(runtimeContributions)(
   }
 );
 
-test.each(runtimeContributions)(
-  "missing implied $entry fails before changing registrations",
+test.each([...runtimeContributions, { entry: "cleanup.ts", contribution: {} }])(
+  "missing declared $entry fails before changing registrations",
   async ({ entry, contribution }) => {
     const root = await fixture();
     await initializePluginUi(root);
@@ -856,12 +884,13 @@ test.each(runtimeContributions)(
     const directory = path.join(root, "chatjs/plugins/fixture");
     await mkdir(directory, { recursive: true });
     await writeFile(
-      path.join(directory, "chatjs.json"),
+      path.join(directory, "plugin.json"),
       JSON.stringify({
         contractVersion: 3,
         uiBase: "base",
         kind: "plugin",
         id: "fixture",
+        files: [`chatjs/plugins/fixture/${entry}`],
         ...contribution,
       })
     );
@@ -879,21 +908,18 @@ test.each([
   {
     label: "authentication",
     entry: "auth-server.ts",
-    contribution: { authentication: { export: "auth" } },
   },
   {
     label: "authentication UI",
     entry: "auth-form.tsx",
-    contribution: { authenticationUi: { form: "Form", signOut: "signOut" } },
   },
   {
     label: "modified navigation",
     entry: "navigation.ts",
-    contribution: { navigation: { export: "navigation" } },
   },
 ])(
   "duplicate $label providers leave registrations unchanged",
-  async ({ label, entry, contribution }) => {
+  async ({ label, entry }) => {
     const root = await fixture();
     await initializePluginUi(root);
     const file = path.join(root, "chatjs/generated/installed-auth.ts");
@@ -904,14 +930,13 @@ test.each([
         await mkdir(directory, { recursive: true });
         await writeFile(path.join(directory, entry), "export {};\n");
         await writeFile(
-          path.join(directory, "chatjs.json"),
+          path.join(directory, "plugin.json"),
           JSON.stringify({
             contractVersion: 3,
             uiBase: "base",
             id,
             kind: "plugin",
             files: [`chatjs/plugins/${id}/${entry}`],
-            ...contribution,
           })
         );
       })
@@ -949,18 +974,18 @@ test("sign-out defaults to web and stays independent of auth forms and layout", 
   await Promise.all([
     writeFile(
       path.join(directory, "auth-form.tsx"),
-      'import "missing-form-dependency"; export const Form = () => null;'
+      'import "missing-form-dependency"; export default () => null;'
     ),
     writeFile(
       path.join(directory, "layout-ui.ts"),
-      'import "missing-layout-dependency"; export const client = () => ({});'
+      'import "missing-layout-dependency"; export const layoutUi = { id: "auth-fixture", slots: [] };'
     ),
     writeFile(
       path.join(directory, "sign-out.ts"),
-      "export const signOut = () => Promise.resolve(true);"
+      "export default () => Promise.resolve(true);"
     ),
     writeFile(
-      path.join(directory, "chatjs.json"),
+      path.join(directory, "plugin.json"),
       JSON.stringify({
         contractVersion: 3,
         uiBase: "base",
@@ -971,8 +996,6 @@ test("sign-out defaults to web and stays independent of auth forms and layout", 
           "chatjs/plugins/auth-fixture/sign-out.ts",
           "chatjs/plugins/auth-fixture/layout-ui.ts",
         ],
-
-        authenticationUi: { form: "Form", signOut: "signOut" },
       })
     ),
   ]);
@@ -999,7 +1022,7 @@ test("a plugin with layout and chat UI participates in both scopes", async () =>
     "export const layoutUi = { id: 'mixed', slots: [] };"
   );
   await writeFile(
-    path.join(root, "chatjs/plugins/mixed/chatjs.json"),
+    path.join(root, "chatjs/plugins/mixed/plugin.json"),
     JSON.stringify({
       contractVersion: 3,
       uiBase: "base",

@@ -1,5 +1,4 @@
-import type { RegistryItem } from "shadcn/schema";
-import { pluginDefinitionSchema } from "../../../metadata";
+import { definePluginItem } from "../define-item";
 
 const creditsFiles = [
   "chatjs/plugins/credits/balance.tsx",
@@ -10,25 +9,22 @@ const creditsFiles = [
   "chatjs/plugins/credits/router.ts",
   "chatjs/plugins/credits/use-credits.ts",
 ];
-const creditsDefinition = pluginDefinitionSchema.parse({
-  contractVersion: 3,
-  uiBase: "base",
-  id: "credits",
-  kind: "plugin",
-  files: creditsFiles,
-  databaseSchemas: ["chatjs/plugins/credits/credits-schema.ts"],
-  billing: { export: "creditsBilling" },
-});
-const creditsItem: RegistryItem = {
-  name: "credits",
-  type: "registry:item",
-  dependencies: ["@tanstack/react-query", "drizzle-orm", "lucide-react"],
-  description: "Credit balances, spending admission, and atomic usage debits",
-  files: creditsFiles.map((file) => ({
-    path: `src/plugins/credits/src/${file.slice("chatjs/plugins/credits/".length)}`,
-    target: `~/${file}`,
-    type: "registry:file" as const,
-  })),
-  meta: { chatjs: creditsDefinition },
-};
+
+const creditsItem = definePluginItem(
+  {
+    name: "credits",
+    dependencies: ["@tanstack/react-query", "drizzle-orm", "lucide-react"],
+    description: "Credit balances, spending admission, and atomic usage debits",
+    files: creditsFiles.map((file) => ({
+      path: `src/plugins/credits/src/${file.slice("chatjs/plugins/credits/".length)}`,
+      target: `~/${file}`,
+      type: "registry:file" as const,
+    })),
+  },
+  {
+    uiBase: "base",
+    databaseSchemas: ["chatjs/plugins/credits/credits-schema.ts"],
+  }
+);
+const creditsDefinition = creditsItem.meta.chatjs;
 export { creditsItem, creditsFiles, creditsDefinition };

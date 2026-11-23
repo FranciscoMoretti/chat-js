@@ -28,7 +28,7 @@ const verifyGatewayAndTool = (
 
 const verifyPlugins = (expected: Readonly<Record<string, string>>): void => {
   for (const id of ["mcp", "attachment-uploads"]) {
-    expect(Object.hasOwn(expected, `chatjs/plugins/${id}/chatjs.json`)).toBe(
+    expect(Object.hasOwn(expected, `chatjs/plugins/${id}/plugin.json`)).toBe(
       true
     );
     expect(required(expected, "chatjs/generated/installed.ts")).toContain(
@@ -44,7 +44,7 @@ const verifyEnvironmentBoundaries = (
   expected: Readonly<Record<string, string>>
 ): void => {
   for (const [file, reader] of [
-    ["chatjs/plugins/mcp/setup.ts", "./mcp-env"],
+    ["chatjs/plugins/mcp/setup.ts", "./validate-env"],
   ] as const) {
     expect(required(expected, file)).toContain(`from "${reader}"`);
     expect(required(expected, file)).not.toContain('from "@/lib/env"');

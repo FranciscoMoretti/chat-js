@@ -12,7 +12,7 @@ const providerBrands: Readonly<Record<string, string>> = {
 
 export const SetupProviderMark = ({ id }: { readonly id: string }) => {
   const symbols: Readonly<Record<string, LucideIcon>> = {
-    none: Minus,
+    memory: Minus,
     "openai-compatible": PlugZap,
     litellm: Route,
   };

@@ -40,20 +40,25 @@ type ReadonlyNative<Value> = Value extends (
 
 const EMPTY_DEPENDENCY_COUNT = 0;
 
-/**
- * Resolve the complete target installation before any source files are written.
- * @param {string} cwd Project directory used for provider, plugin and tool preflight.
- * @param {ReadonlyNative<InstallationSelection>} input Requested registry selections validated before dependency resolution.
- * @param {{ readonly fresh?: boolean; readonly replace?: boolean; }} options Whether this is a fresh installation and replacements are permitted.
- * @returns {ReturnType<typeof planInstallation>} Resolved items, validated selections, target changes and registry sources.
- */
-export const planInstallation = async (
+interface PlanOptions {
+  readonly fresh?: boolean;
+  readonly replace?: boolean;
+  readonly requireToolKind?: boolean;
+}
+
+type StorageChoice = InstallationSelection["storage"];
+
+/** Resolve the capability graph before asking Create to choose storage. */
+export const planInstallationWithStorage = async <
+  Storage extends StorageChoice,
+>(
   cwd: string,
   input: ReadonlyNative<InstallationSelection>,
-  options: {
-    readonly fresh?: boolean;
-    readonly replace?: boolean;
-  } = {}
+  options: PlanOptions,
+  chooseStorage: (
+    requiresStorage: boolean,
+    requested: StorageChoice
+  ) => Storage | Promise<Storage>
 ) => {
   if (options.fresh !== true) {
     await assertCurrentInstallationLayout(cwd);
@@ -66,6 +71,7 @@ export const planInstallation = async (
   const plugins = new Map<string, PluginDefinition>();
   const providers = new Map<string, string>();
   let gateway: GatewayDefinition | undefined;
+  let sandbox: ReturnType<typeof sandboxDefinitionSchema.parse> | undefined;
   const selectProvider = (definition: {
     readonly kind: string;
     readonly id: string;
@@ -127,7 +133,8 @@ export const planInstallation = async (
         break;
       }
       case "sandbox": {
-        selectProvider(sandboxDefinitionSchema.parse(metadata));
+        sandbox = sandboxDefinitionSchema.parse(metadata);
+        selectProvider(sandbox);
         break;
       }
       case "storage": {
@@ -148,7 +155,10 @@ export const planInstallation = async (
   };
   await Promise.all([
     ...selection.tools.map(async (source): Promise<void> => {
-      await visit(itemAddress(source, "tool"));
+      await visit(
+        itemAddress(source, "tool"),
+        options.requireToolKind === true ? "tool" : undefined
+      );
     }),
     ...selection.plugins.map(async (source): Promise<void> => {
       await visit(itemAddress(source, "tool"), "plugin");
@@ -159,10 +169,17 @@ export const planInstallation = async (
     ...(selection.sandbox === undefined
       ? []
       : [visit(itemAddress(selection.sandbox, "sandbox"), "sandbox")]),
-    ...(selection.storage
-      ? [visit(itemAddress(selection.storage.source, "storage"), "storage")]
-      : []),
   ]);
+  const storage = await chooseStorage(
+    [...expected.values(), ...plugins.values()].some(
+      (item) => item.requiresStorage === true
+    ),
+    selection.storage
+  );
+  if (storage) {
+    selection.storage = { source: storage.source, options: storage.options };
+    await visit(itemAddress(storage.source, "storage"), "storage");
+  }
   const providerChanges = await Promise.all(
     [...providers].map(async ([kind, next]: readonly [string, string]) => {
       if (kind !== "gateway" && kind !== "storage" && kind !== "sandbox") {
@@ -249,10 +266,10 @@ export const planInstallation = async (
     plugins: [...targetPlugins.values()],
     gateway,
     storage: providers.get("storage"),
-    sandbox: providers.get("sandbox"),
+    sandboxRuntimes: sandbox?.capabilities.runtimes,
     tools: target(),
   });
-  return {
+  const plan = {
     environmentVariables: [
       ...target().flatMap(
         (tool: ReadonlyNative<ToolDefinition>) => tool.envRequirements
@@ -279,4 +296,19 @@ export const planInstallation = async (
       )
     ),
   };
+  return { plan, storage };
+};
+
+export const planInstallation = async (
+  cwd: string,
+  input: ReadonlyNative<InstallationSelection>,
+  options: PlanOptions = {}
+) => {
+  const { plan } = await planInstallationWithStorage(
+    cwd,
+    input,
+    options,
+    (_requiresStorage, requested) => requested
+  );
+  return plan;
 };

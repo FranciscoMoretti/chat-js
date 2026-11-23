@@ -1,5 +1,4 @@
-import type { RegistryItem } from "shadcn/schema";
-import { pluginDefinitionSchema } from "../../../metadata";
+import { definePluginItem } from "../define-item";
 
 const modelPreferencesFiles = [
   "chatjs/plugins/model-preferences/apply-model-preferences.ts",
@@ -15,35 +14,33 @@ const modelPreferencesFiles = [
   "chatjs/plugins/model-preferences/model-visibility.ts",
   "app/(chat)/settings/models/page.tsx",
 ];
-const modelPreferencesDefinition = pluginDefinitionSchema.parse({
-  contractVersion: 3,
-  uiBase: "base",
-  id: "model-preferences",
-  kind: "plugin",
-  files: modelPreferencesFiles,
-  databaseSchemas: [
-    "chatjs/plugins/model-preferences/model-preferences-schema.ts",
-  ],
-});
-const modelPreferencesItem: RegistryItem = {
-  name: "model-preferences",
-  type: "registry:item",
-  dependencies: [
-    "@tanstack/react-query",
-    "drizzle-orm",
-    "lucide-react",
-    "sonner",
-  ],
-  description: "Per-user model visibility and model settings",
-  files: modelPreferencesFiles.map((file) => ({
-    path: file.startsWith("chatjs/plugins/model-preferences/")
-      ? `src/plugins/model-preferences/src/${file.slice("chatjs/plugins/model-preferences/".length)}`
-      : `src/plugins/model-preferences/adapters/${file}`,
-    target: `~/${file}`,
-    type: "registry:file" as const,
-  })),
-  meta: { chatjs: modelPreferencesDefinition },
-};
+
+const modelPreferencesItem = definePluginItem(
+  {
+    name: "model-preferences",
+    dependencies: [
+      "@tanstack/react-query",
+      "drizzle-orm",
+      "lucide-react",
+      "sonner",
+    ],
+    description: "Per-user model visibility and model settings",
+    files: modelPreferencesFiles.map((file) => ({
+      path: file.startsWith("chatjs/plugins/model-preferences/")
+        ? `src/plugins/model-preferences/src/${file.slice("chatjs/plugins/model-preferences/".length)}`
+        : `src/plugins/model-preferences/adapters/${file}`,
+      target: `~/${file}`,
+      type: "registry:file" as const,
+    })),
+  },
+  {
+    uiBase: "base",
+    databaseSchemas: [
+      "chatjs/plugins/model-preferences/model-preferences-schema.ts",
+    ],
+  }
+);
+const modelPreferencesDefinition = modelPreferencesItem.meta.chatjs;
 export {
   modelPreferencesItem,
   modelPreferencesFiles,

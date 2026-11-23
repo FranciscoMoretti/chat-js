@@ -1,5 +1,6 @@
 import type { RegistryItem } from "shadcn/schema";
 import { pluginDefinitionSchema, toolDefinitionSchema } from "./metadata";
+import { descriptorTarget } from "./descriptor-target";
 import { uiImplementations } from "./ui-implementations";
 
 /** Produce native source for a library without changing public item addresses. */
@@ -37,7 +38,7 @@ export const registryItemForUi = (
             }
             if (
               metadata !== original &&
-              file.target?.endsWith("/chatjs.json") === true
+              file.target === descriptorTarget(item)
             ) {
               return {
                 ...file,

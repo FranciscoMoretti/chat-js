@@ -58,7 +58,7 @@ For example, this excerpt from the MCP descriptor shows how the file list regist
 }
 ```
 
-The full manifest lists all installed files and declares `databaseSchemas`, `envRequirements`, and `environmentValidation`. tRPC rejects overlapping namespaces when the app composes its routers. Each UI scope checks that plugin IDs are unique. Only one installed plugin can own uploads or model visibility.
+For built-in plugins, `definePluginItem` derives the installed `plugin.json` file list from the registry targets. MCP declares its database schemas and credential requirements and ships a default-exported format check in `validate-env.ts`. tRPC rejects overlapping namespaces when the app composes its routers. Each UI scope checks that plugin IDs are unique. Only one installed plugin can own uploads or model visibility.
 
 Use `registryDependencies` to install another item and `requiresPlugins` to require its plugin ID in the installed selection. Declare `requiresStorage: true` for plugins requiring durable file storage.
 

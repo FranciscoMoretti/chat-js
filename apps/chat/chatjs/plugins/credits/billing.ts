@@ -4,7 +4,7 @@ import { getBalanceCents } from "./credits-queries";
 import { userCredit } from "./credits-schema";
 
 /** Core supplies its usage transaction, with the registered owner already locked. */
-export const creditsBilling = {
+const creditsBilling = {
   canSpend: async (ownerId) => (await getBalanceCents(ownerId)) > 0,
   debit: async (tx, { ownerId, cents }) => {
     await tx
@@ -17,3 +17,5 @@ export const creditsBilling = {
       .where(eq(userCredit.userId, ownerId));
   },
 } satisfies UsageBilling;
+
+export default creditsBilling;

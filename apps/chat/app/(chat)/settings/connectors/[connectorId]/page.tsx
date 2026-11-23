@@ -1,4 +1,4 @@
-// ChatJS source: mcp. Ownership: chatjs/plugins/mcp/chatjs.json.
+// ChatJS source: mcp. Ownership: chatjs/plugins/mcp/plugin.json.
 import { ConnectorDetailsPage } from "@/chatjs/plugins/mcp/routes/connector-page";
 
 const Page = (props: { readonly params: Promise<{ connectorId: string }> }) => (

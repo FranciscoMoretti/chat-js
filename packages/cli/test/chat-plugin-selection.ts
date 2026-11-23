@@ -168,7 +168,7 @@ export const testChatPluginSelections = (
           true
         );
         expect(
-          existsSync(path.join(created, "chatjs/plugins/desktop/chatjs.json"))
+          existsSync(path.join(created, "chatjs/plugins/desktop/plugin.json"))
         ).toBe(true);
         expect(
           await readFile(

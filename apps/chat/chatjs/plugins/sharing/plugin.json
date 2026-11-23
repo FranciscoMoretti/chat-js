@@ -18,6 +18,5 @@
     "chatjs/plugins/sharing/ui/transcript-messages.tsx",
     "chatjs/plugins/sharing/ui/shared-page.tsx",
     "app/(chat)/share/[id]/page.tsx"
-  ],
-  "chat": { "export": "sharingChat" }
+  ]
 }
