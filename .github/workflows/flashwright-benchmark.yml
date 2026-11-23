@@ -18,13 +18,19 @@ jobs:
         include:
           - runner: Playwright 1.59.1 (current CI)
             package: "@playwright/test@1.59.1"
+          - runner: Playwright 1.59.1 (Ubuntu host)
+            package: "@playwright/test@1.59.1"
+            host_browser: true
+          - runner: Playwright 1.59.1 (2 workers)
+            package: "@playwright/test@1.59.1"
+            app_workers: 2
           - runner: Playwright 1.64.1
             package: "@playwright/test@1.64.1"
           - runner: Flashwright
             package: "@playwright/test@npm:flashwright-test@1.64.1-flashwright.12"
     container:
       # Use the same OS libraries and fonts as the required Playwright job.
-      image: mcr.microsoft.com/playwright:v1.59.1-noble@sha256:eac9b0a5312cdab40ee8c2429df5bf19bffdccf8f3bf3c42268e173f97541645
+      image: ${{ !matrix.host_browser && 'mcr.microsoft.com/playwright:v1.59.1-noble@sha256:eac9b0a5312cdab40ee8c2429df5bf19bffdccf8f3bf3c42268e173f97541645' || '' }}
       options: --ipc=host
     defaults:
       run:
@@ -32,6 +38,8 @@ jobs:
     services:
       postgres:
         image: postgres:17
+        ports:
+          - 127.0.0.1:55432:5432
         env:
           POSTGRES_DB: chatjs_ci
           POSTGRES_USER: chatjs
@@ -41,11 +49,11 @@ jobs:
     env:
       CI_PLAYWRIGHT: "true"
       AUTH_SECRET: flashwright-benchmark-isolated-test-auth-secret
-      DATABASE_URL: postgres://chatjs:chatjs@postgres:5432/chatjs_ci
-      WORKFLOW_POSTGRES_URL: postgres://chatjs:chatjs@postgres:5432/chatjs_ci
+      DATABASE_URL: ${{ format('postgres://chatjs:chatjs@{0}/chatjs_ci', matrix.host_browser && '127.0.0.1:55432' || 'postgres:5432') }}
+      WORKFLOW_POSTGRES_URL: ${{ format('postgres://chatjs:chatjs@{0}/chatjs_ci', matrix.host_browser && '127.0.0.1:55432' || 'postgres:5432') }}
       EVE_ALLOW_REMOTE_DATABASE_TESTS: "true"
-      EVE_TEST_DATABASE_URL: postgres://chatjs:chatjs@postgres:5432/chatjs_ci
-      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      EVE_TEST_DATABASE_URL: ${{ format('postgres://chatjs:chatjs@{0}/chatjs_ci', matrix.host_browser && '127.0.0.1:55432' || 'postgres:5432') }}
+      PLAYWRIGHT_BROWSERS_PATH: ${{ matrix.host_browser && '0' || '/ms-playwright' }}
       EVE_GATEWAY_SECRET: playwright-isolated-eve-gateway-secret
       # Public test-only AES-256 key for the isolated MCP fixture.
       MCP_ENCRYPTION_KEY: "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8="
@@ -86,11 +94,12 @@ jobs:
       - name: Time app routes
         working-directory: apps/chat
         env:
+          APP_WORKERS: ${{ matrix.app_workers || 4 }}
           PLAYWRIGHT: "True"
         run: |
           export PLAYWRIGHT_JSON_OUTPUT_FILE="$RUNNER_TEMP/benchmark-reports/app.json"
           TIMEFORMAT='App routes wall time: %3R seconds'
-          time node node_modules/@playwright/test/cli.js test --config playwright.eve-ci-app.config.ts --workers=4 --reporter=list,json
+          time node node_modules/@playwright/test/cli.js test --config playwright.eve-ci-app.config.ts --workers="$APP_WORKERS" --reporter=list,json
       - name: Time standalone browser fixtures
         if: ${{ !cancelled() && steps.runner.outcome == 'success' }}
         working-directory: apps/chat
