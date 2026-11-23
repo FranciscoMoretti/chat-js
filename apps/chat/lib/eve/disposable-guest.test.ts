@@ -74,6 +74,14 @@ test("every read, send, cancel and retirement is restricted to the signed sessio
   ).not.toBeNull();
   expect(
     await authenticateDisposableGuest(
+      request(token, "session/session-owned", {
+        message: "follow-up",
+        turnPolicy: "steer",
+      })
+    )
+  ).not.toBeNull();
+  expect(
+    await authenticateDisposableGuest(
       request(token, "session/session-owned/cancel", {})
     )
   ).not.toBeNull();
@@ -126,6 +134,7 @@ test("browser credentials cannot create, fork, read checkpoints or submit tools,
   await Promise.all(
     [
       { message: "hello", modelId: "expensive-model" },
+      { message: "hello", turnPolicy: "queue" },
       { clientContext: "override", message: "hello" },
       { fork: { sessionId: "victim" }, message: "hello" },
       { message: [{ data: "https://private.invalid", type: "file" }] },

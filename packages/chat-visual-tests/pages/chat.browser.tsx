@@ -108,7 +108,21 @@ test("validated tools preserve receipt results, failures and native fallbacks", 
   await page.screenshot({ path: "__screenshots__/validated-tools.png" });
 });
 
-test("active native turn shows thinking before visible content", async () => {
+test("active native turn swaps Stop for Send when a follow-up is drafted", async () => {
+  sessionStorage.setItem(
+    `chatjs.eve.composer:${invoicesConversation.ownerId}:${invoicesConversation.chatId}`,
+    JSON.stringify({
+      attachments: [
+        {
+          contentType: "application/pdf",
+          digest: "fixture",
+          name: "Invoices.pdf",
+          url: "/api/files/fixture.pdf",
+        },
+      ],
+      text: "",
+    })
+  );
   await renderRoute(conversation, {
     ...request,
     agentStatus: "streaming",
@@ -121,6 +135,33 @@ test("active native turn shows thinking before visible content", async () => {
   await expect
     .element(page.getByTestId("message-assistant-loading"))
     .toBeVisible();
+  const composer = page.getByRole("textbox", { name: "Message", exact: true });
+  const stop = page.getByRole("button", { name: "Stop", exact: true });
+  const send = page.getByRole("button", { name: "Send", exact: true });
+  await expect.element(composer).toHaveAttribute("contenteditable", "true");
+  await expect.element(send).toBeEnabled();
+  await expect.element(stop).not.toBeInTheDocument();
+  await page
+    .getByRole("button", { name: "Remove attachment", exact: true })
+    .click();
+  await expect.element(stop).toBeEnabled();
+  await expect.element(send).not.toBeInTheDocument();
+  await composer.fill("x".repeat(16_001));
+  await expect
+    .element(page.getByText("Messages must be at most 16,000 characters."))
+    .toBeVisible();
+  await expect.element(stop).toBeEnabled();
+  await expect.element(send).not.toBeInTheDocument();
+  await composer.fill("Can you also check last month?");
+  await expect
+    .element(composer)
+    .toHaveTextContent("Can you also check last month?");
+  await expect.element(send).toBeEnabled();
+  await expect.element(stop).not.toBeInTheDocument();
+  await composer.fill("");
+  await expect.element(stop).toBeEnabled();
+  await composer.fill("Can you also check last month?");
+  await expect.element(send).toBeEnabled();
   await page.screenshot({ path: "__screenshots__/native-thinking.png" });
 });
 

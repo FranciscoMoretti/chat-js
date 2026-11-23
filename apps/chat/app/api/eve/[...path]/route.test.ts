@@ -28,10 +28,10 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("@/lib/db/eve-dispatch", () => ({
   dispatchEveOnce: async (
-    _input: unknown,
+    input: unknown,
     dispatch: () => Promise<{ sessionId: string; deliveryId: string }>
   ) => {
-    mocks.dispatch();
+    mocks.dispatch(input);
     return await dispatch();
   },
   EveDispatchUnknownError: class extends Error {},
@@ -61,12 +61,16 @@ vi.mock("@/lib/eve/reconcile-usage", () => ({
 vi.mock("@/lib/eve/server", () => ({ eveRequest: mocks.eveRequest }));
 
 const operationId = "00000000-0000-4000-8000-000000000001";
-const request = (headers: Readonly<Record<string, string>> = {}): Request =>
+const request = (
+  headers: Readonly<Record<string, string>> = {},
+  turnPolicy?: string
+): Request =>
   new Request("http://localhost:3790/api/eve/v1/session/native", {
     body: JSON.stringify({
       message: "original",
       modelId: "model",
       selectedTool: "generateImage",
+      turnPolicy,
     }),
     headers: {
       "content-type": "application/json",
@@ -106,6 +110,31 @@ test("requires a message operation ID before dispatch", async () => {
     code: "chatjs_command_rejected",
   });
   expect(mocks.eveRequest).not.toHaveBeenCalled();
+});
+
+test("forwards steering through admission for the exact native session", async () => {
+  const response = await POST(
+    request({ [EVE_MESSAGE_OPERATION_HEADER]: operationId }, "steer"),
+    { params: Promise.resolve({ path: ["v1", "session", "native"] }) }
+  );
+
+  expect(response.status).toBe(200);
+  expect(mocks.canSpend).toHaveBeenCalledExactlyOnceWith("owner");
+  expect(mocks.dispatch.mock.calls[0]?.[0]).toMatchObject({
+    steerSessionId: "native",
+    intent: { turnPolicy: "steer" },
+  });
+  expect(mocks.eveRequest.mock.calls[0]?.slice(0, 3)).toEqual([
+    "owner",
+    "/eve/chat/v1/session/native",
+    expect.objectContaining({
+      body: JSON.stringify({ message: "prepared", turnPolicy: "steer" }),
+    }),
+  ]);
+  expect(mocks.eveRequest.mock.calls[0]?.slice(3)).toEqual([
+    undefined,
+    undefined,
+  ]);
 });
 
 test("keeps app correlation out of the native message body", async () => {

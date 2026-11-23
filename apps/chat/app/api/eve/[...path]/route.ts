@@ -92,6 +92,7 @@ const readCommand = async (
     readonly headers: { readonly get: (name: string) => string | null };
   },
   policy: {
+    readonly sessionId: string;
     readonly schema: Readonly<
       Pick<
         NonNullable<ReturnType<typeof parseSessionRequest>>["schema"],
@@ -114,6 +115,8 @@ const readCommand = async (
       message: EveMessageInput | undefined;
       modelId: string | undefined;
       selectedTool: UiToolName | undefined;
+      turnPolicy: "steer" | undefined;
+      steerSessionId: string | undefined;
     }
 > => {
   let body: string | undefined;
@@ -121,6 +124,7 @@ const readCommand = async (
   let message: EveMessageInput | undefined;
   let modelId: string | undefined;
   let selectedTool: UiToolName | undefined;
+  let turnPolicy: "steer" | undefined;
   if (request.method === "POST") {
     const input = policy.schema.safeParse(
       await request.json().catch(() => null)
@@ -129,7 +133,7 @@ const readCommand = async (
       return rejectEveCommand("Invalid command.", HTTP_BAD_REQUEST);
     }
     if ("message" in input.data) {
-      ({ message } = input.data);
+      ({ message, turnPolicy } = input.data);
       const operationId = z
         .uuid()
         .safeParse(request.headers.get(EVE_MESSAGE_OPERATION_HEADER));
@@ -165,6 +169,7 @@ const readCommand = async (
         );
         body = JSON.stringify({
           message: await prepareEveMessage(input.data.message, modelId),
+          turnPolicy,
         });
       } catch (error) {
         return rejectEveCommand(
@@ -177,7 +182,18 @@ const readCommand = async (
     }
     isNewMessage = "message" in input.data;
   }
-  return { body, isNewMessage, message, modelId, selectedTool };
+  const turnOptions =
+    turnPolicy === undefined
+      ? { modelId, selectedTool }
+      : { modelId: undefined, selectedTool: undefined };
+  return {
+    body,
+    isNewMessage,
+    message,
+    ...turnOptions,
+    turnPolicy,
+    steerSessionId: turnPolicy === "steer" ? policy.sessionId : undefined,
+  };
 };
 const handle = async (
   request: ReadonlyNativeSurface<Request>,
@@ -228,7 +244,7 @@ const handle = async (
   if (command instanceof Response) {
     return command;
   }
-  const { body, modelId, selectedTool } = command;
+  const { body, modelId, selectedTool, steerSessionId, turnPolicy } = command;
   try {
     const admission = await checkTurnAdmission(
       { principal, sessionId: policy.sessionId },
@@ -266,11 +282,13 @@ const handle = async (
           operationId,
           conversationId: conversation.id,
           kind: "send",
+          steerSessionId,
           intent: {
             sessionId: policy.sessionId,
             message: command.message,
             modelId: modelId ?? null,
             selectedTool: selectedTool ?? null,
+            turnPolicy,
           },
         },
         async () => {

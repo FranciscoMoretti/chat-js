@@ -15,10 +15,13 @@ import { CreationRejectedError } from "@/lib/eve/create-conversation";
 import { eveMessageTitle } from "@/lib/eve/message-input";
 import {
   moveRejectedContextCreation,
+  readCreationFollowUp,
   readCreationRequest,
+  saveCreationFollowUp,
 } from "@/lib/eve/pending-create";
 import type { CreationScope } from "@/lib/eve/pending-create";
 import { resolveCreationRequest } from "@/lib/eve/resolve-creation-request";
+import { useEveRuntime } from "./eve-logical-context";
 
 const recoveryStatus = (
   loaded: boolean,
@@ -78,6 +81,7 @@ export const EveCreationRecovery = ({
   const contextLabel = context?.label ?? "context";
   const [, startEventAction] = React.useTransition();
   const router = useRouter();
+  const openRuntime = useEveRuntime();
   const lock = useRef(false);
   const [busy, setBusy] = useState(false);
   const store = useMemo(
@@ -143,13 +147,28 @@ export const EveCreationRecovery = ({
     await withTaskCleanup(
       async () => {
         try {
-          const { id } = await resolveCreationRequest(
+          const followUpDraft = readCreationFollowUp(
+            sessionStorage,
+            ownerId,
+            scope
+          );
+          const binding = await resolveCreationRequest(
             sessionStorage,
             ownerId,
             pending,
             scope
           );
-          globalThis.location.assign(`/chat/${id}`);
+          if (hasText(followUpDraft)) {
+            await openRuntime({
+              ...binding,
+              operation: pending,
+              ownerId,
+              getFollowUpDraft: () => followUpDraft,
+            });
+            saveCreationFollowUp(sessionStorage, ownerId, "", scope);
+          } else {
+            globalThis.location.assign(`/chat/${binding.id}`);
+          }
         } catch (error) {
           if (
             error instanceof CreationRejectedError &&

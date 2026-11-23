@@ -1,4 +1,4 @@
-import { expect, test } from "vitest";
+import { expect, test, vi } from "vitest";
 import { page } from "vitest/browser";
 
 import ChatLayout from "@/app/(chat)/layout";
@@ -107,6 +107,30 @@ test("project restores its pending payload using a storage-only scope", async ()
   await expect
     .element(page.getByRole("button", { name: "Retry creation" }))
     .toBeVisible();
+});
+
+test("project accepts a follow-up draft during first-turn startup", async () => {
+  const { fetch } = globalThis;
+  const startup = Promise.withResolvers<Response>();
+  vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
+    if (input === "/api/agent-conversations") {
+      return await startup.promise;
+    }
+    return await fetch(input, init);
+  });
+  await renderRoute(project, request);
+  const composer = page.getByRole("textbox", { name: "Message" });
+  const send = page.getByRole("button", { name: "Send", exact: true });
+  await composer.fill("Draft the launch plan.");
+  await send.click();
+  await expect
+    .element(page.getByText("Draft the launch plan.", { exact: true }))
+    .toBeVisible();
+  await composer.fill("Include the dates from the checklist.");
+  await expect
+    .element(composer)
+    .toHaveTextContent("Include the dates from the checklist.");
+  await expect.element(send).toBeDisabled();
 });
 
 test("project that could not be refreshed", async () => {

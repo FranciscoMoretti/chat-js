@@ -4,6 +4,7 @@ import { and, eq, inArray, isNull, sql } from "drizzle-orm";
 import { db } from "./client";
 import { eveConversation, eveDispatch, eveWorkspace } from "./schema";
 import { EveWorkspaceBusyError, lockEveWorkspace } from "./eve-workspace-turns";
+import type { WorkspaceTransaction } from "./eve-workspace-turns";
 import { reconcileEveWorkspaceTurn } from "../eve/reconcile-workspace-turn";
 import { z } from "zod";
 import { frontendToolsSchema } from "@/lib/ai/types";
@@ -132,6 +133,34 @@ interface DispatchBinding {
   deliveryId?: string;
 }
 
+const canSteerActiveDispatch = async (
+  tx: Pick<WorkspaceTransaction, "select">,
+  activeOperationId: string,
+  input: {
+    readonly ownerId: string;
+    readonly conversationId: string;
+    readonly kind: "create" | "copy" | "send";
+    readonly steerSessionId?: string;
+  }
+): Promise<boolean> => {
+  if (input.kind !== "send" || !isNonEmptyString(input.steerSessionId)) {
+    return false;
+  }
+  const [active] = await tx
+    .select({ deliveryId: eveDispatch.deliveryId })
+    .from(eveDispatch)
+    .where(
+      and(
+        eq(eveDispatch.ownerId, input.ownerId),
+        eq(eveDispatch.operationId, activeOperationId),
+        eq(eveDispatch.conversationId, input.conversationId),
+        eq(eveDispatch.sessionId, input.steerSessionId),
+        inArray(eveDispatch.kind, ["create", "send"])
+      )
+    );
+  return isNonEmptyString(active?.deliveryId);
+};
+
 /** Commits intent before the one allowed dispatch; worker failure leaves it unknown. */
 export const dispatchEveOnce = async (
   input: {
@@ -140,6 +169,7 @@ export const dispatchEveOnce = async (
     readonly conversationId: string;
     readonly kind: "create" | "copy" | "send";
     readonly intent: unknown;
+    readonly steerSessionId?: string;
   },
   dispatch: (
     saveReceipt: (
@@ -194,7 +224,10 @@ export const dispatchEveOnce = async (
     if (hasRow(existing)) {
       return [];
     }
-    if (workspace.activeOperationId !== null) {
+    if (
+      workspace.activeOperationId !== null &&
+      !(await canSteerActiveDispatch(tx, workspace.activeOperationId, input))
+    ) {
       throw new EveWorkspaceBusyError();
     }
     const [current] = await tx
@@ -214,12 +247,15 @@ export const dispatchEveOnce = async (
     ) {
       throw new Error("Conversation is unavailable.");
     }
+    const { steerSessionId: _steerSessionId, ...journalInput } = input;
     const inserted = await tx
       .insert(eveDispatch)
-      .values({ ...input, intent })
+      .values({ ...journalInput, intent })
       .onConflictDoNothing()
       .returning();
     if (inserted.length > 0) {
+      // A steering delivery can become the next turn if the current one ends first.
+      // Keep the workspace fenced until the latest accepted delivery settles.
       await tx
         .update(eveWorkspace)
         .set({ activeOperationId: input.operationId })

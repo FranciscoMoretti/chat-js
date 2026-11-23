@@ -65,11 +65,16 @@ const createGuestSession = async (modelId: string) => {
   return bindingSchema.parse(await response.json());
 };
 
+const restoreFailedDraft = (sent: string, followUp: string): string =>
+  followUp ? `${sent}\n\n${followUp}` : sent;
+
 /** Shared guest presentation, also exercised with deterministic visual fixtures. */
 const GuestConversationView = ({
   messages,
   modelId,
   busy,
+  sending = false,
+  allowSendWhileStreaming,
   failure,
   expired,
   draft,
@@ -80,6 +85,8 @@ const GuestConversationView = ({
   readonly messages: readonly ReadonlyEveMessage[];
   readonly modelId: string;
   readonly busy: boolean;
+  readonly sending?: boolean;
+  readonly allowSendWhileStreaming?: boolean;
   readonly failure?: string;
   readonly expired: boolean;
   readonly draft: string;
@@ -140,8 +147,11 @@ const GuestConversationView = ({
             fallbackModelName={GUEST_POLICY.modelName}
           />
         }
-        status={busy ? "streaming" : "ready"}
-        disabled={busy || expired}
+        status={(busy && "streaming") || (sending && "submitted") || "ready"}
+        disabled={sending || expired}
+        readOnly={expired}
+        allowDraftWhileBusy
+        allowSendWhileStreaming={allowSendWhileStreaming}
         draft={draft}
         onDraftChange={onDraftChange}
         onSubmit={() => {
@@ -161,41 +171,51 @@ const GuestConversationView = ({
 
 const GuestConversation = ({
   binding,
+  initialDraft,
 }: {
   readonly binding: Binding;
+  readonly initialDraft: string;
 }): ReactJSX.Element => {
   const agent = useEveAgent({
     agent: "chat",
     auth: { bearer: binding.credential },
     initialSession: { sessionId: binding.sessionId, streamIndex: 0 },
   });
-  const [draft, setDraft] = useState("");
-
+  const [draft, setDraft] = useState(initialDraft);
   const [commandError, setCommandError] = useState("");
   const [expired, setExpired] = useState(false);
+  const [sending, setSending] = useState(true);
   const started = useRef(false);
   const pending = useRef(false);
   const busy = agent.status === "busy" || agent.status === "resuming";
-  const send = async (text: string): Promise<void> => {
+  const send = async (text: string, clearDraft: boolean): Promise<void> => {
     if (pending.current) {
       return;
     }
     if (Date.now() >= binding.expiresAt) {
       setExpired(true);
+      setSending(false);
       return;
     }
     pending.current = true;
+    setSending(true);
     setCommandError("");
-    setDraft("");
+    if (clearDraft) {
+      setDraft("");
+    }
     try {
-      await agent.send(text);
+      await agent.send(
+        text,
+        agent.status === "busy" ? { turnPolicy: "steer" } : undefined
+      );
     } catch (error) {
       setCommandError(
         error instanceof Error ? error.message : "Message could not be sent."
       );
-      setDraft(text);
+      setDraft((current) => restoreFailedDraft(text, current));
     }
     pending.current = false;
+    setSending(false);
   };
   useEffect(() => {
     // EVE attaches its observer on the next task. Defer the initial send too,
@@ -203,7 +223,7 @@ const GuestConversation = ({
     const timer = setTimeout(() => {
       if (!started.current) {
         started.current = true;
-        void send(binding.firstMessage);
+        void send(binding.firstMessage, false);
       }
     }, 0);
     return (): void => {
@@ -251,12 +271,14 @@ const GuestConversation = ({
       messages={agent.messages}
       modelId={binding.modelId}
       busy={busy}
+      sending={sending}
+      allowSendWhileStreaming={agent.status === "busy"}
       failure={failure}
       expired={expired}
       draft={draft}
       onDraftChange={setDraft}
       onSend={(text) => {
-        void send(text);
+        void send(text, true);
       }}
       onStop={() => {
         void stop();
@@ -308,6 +330,7 @@ const GuestWelcomeView = ({
       }
       status={busy ? "submitted" : "ready"}
       disabled={busy || !modelId}
+      allowDraftWhileBusy
       draft={draft}
       onDraftChange={onDraftChange}
       onSubmit={onSend}
@@ -325,17 +348,19 @@ const GuestChatScreen = (): ReactJSX.Element => {
   const pending = useRef(false);
   const generation = useRef(0);
   const submit = async (): Promise<void> => {
-    if (pending.current || !draft.trim()) {
+    const firstMessage = draft.trim();
+    if (pending.current || !firstMessage) {
       return;
     }
     const currentGeneration = generation.current;
     pending.current = true;
     setBusy(true);
     setCommandError("");
+    setDraft("");
     try {
       const created = {
         ...(await createGuestSession(modelId)),
-        firstMessage: draft.trim(),
+        firstMessage,
         modelId,
       };
       if (generation.current !== currentGeneration) {
@@ -343,7 +368,6 @@ const GuestChatScreen = (): ReactJSX.Element => {
         return;
       }
       setBinding(created);
-      setDraft("");
     } catch (error) {
       if (generation.current !== currentGeneration) {
         return;
@@ -351,6 +375,7 @@ const GuestChatScreen = (): ReactJSX.Element => {
       setCommandError(
         error instanceof Error ? error.message : "Could not start chat."
       );
+      setDraft((current) => restoreFailedDraft(draft, current));
     }
     if (generation.current === currentGeneration) {
       pending.current = false;
@@ -386,7 +411,11 @@ const GuestChatScreen = (): ReactJSX.Element => {
   return (
     <GuestChatLayout>
       {binding ? (
-        <GuestConversation binding={binding} key={binding.sessionId} />
+        <GuestConversation
+          binding={binding}
+          initialDraft={draft}
+          key={binding.sessionId}
+        />
       ) : (
         <GuestWelcomeView
           modelId={modelId}

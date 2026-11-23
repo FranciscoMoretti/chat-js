@@ -438,7 +438,6 @@ const EveConversationComposer = ({
   busy,
   commandPending,
   cancelPending,
-  hasApproval,
   displayedError,
   commandFailure,
   agentError,
@@ -453,7 +452,6 @@ const EveConversationComposer = ({
   readonly busy: boolean;
   readonly commandPending: boolean;
   readonly cancelPending: boolean;
-  readonly hasApproval: boolean;
   readonly displayedError: string | undefined;
   readonly commandFailure: Error | undefined;
   readonly agentError: Error | undefined;
@@ -462,6 +460,7 @@ const EveConversationComposer = ({
   readonly onReconnect: () => void;
 }): ReactJSX.Element => {
   const { composerDraft, files, modelSelection, comparison, fork } = input;
+  const canSteer = input.modelIds.length === 1;
   const handleSelectedToolChange = composerDraft.setSelectedTool;
   const handleDraftChange = composerDraft.setText;
   return (
@@ -475,12 +474,12 @@ const EveConversationComposer = ({
       )}
       <EveComposer
         status={composerStatus(status, turnOpen)}
+        allowSendWhileStreaming={canSteer}
         disabled={
           !composerDraft.loaded ||
-          busy ||
+          (busy && !canSteer) ||
           commandPending ||
           cancelPending ||
-          hasApproval ||
           Boolean(pendingMessage) ||
           fork.locked
         }
@@ -488,6 +487,7 @@ const EveConversationComposer = ({
         capabilities={{
           files,
           onToolChange: handleSelectedToolChange,
+          turnOptionsLocked: busy || turnOpen,
           selectedTool: retainedToolSelection(
             comparison,
             pendingMessage,
@@ -669,6 +669,7 @@ const EveConversation = ({
     try {
       await send(async () => {
         await agent.send(draftMessage(pending.message, pending.attachments), {
+          turnPolicy: pending.turnPolicy,
           headers: {
             [EVE_MESSAGE_OPERATION_HEADER]: pending.operationId,
             ...(hasText(pending.modelId)
@@ -694,7 +695,8 @@ const EveConversation = ({
     attachments: readonly Readonly<DraftAttachment>[],
     modelId: string,
     clearComposer: boolean,
-    selectedTool?: UiToolName
+    selectedTool?: UiToolName,
+    turnPolicy?: ActivePendingEveMessage["turnPolicy"]
   ): Promise<void> => {
     controller.selectBranch(conversationId);
     const pending = delivery.begin({
@@ -702,6 +704,7 @@ const EveConversation = ({
       message: message.trim(),
       modelId,
       selectedTool,
+      turnPolicy,
     });
     if (clearComposer) {
       setDraft("");
@@ -928,7 +931,6 @@ const EveConversation = ({
           busy={busy}
           commandPending={commandPending}
           cancelPending={cancelPending}
-          hasApproval={hasApproval}
           displayedError={displayedError}
           commandFailure={commandFailure}
           agentError={agent.error}
@@ -949,7 +951,10 @@ const EveConversation = ({
                     files.attachments,
                     modelIds[0],
                     true,
-                    composerDraft.selectedTool ?? undefined
+                    composerDraft.selectedTool ?? undefined,
+                    composerStatus(agent.status, turnOpen) === "streaming"
+                      ? "steer"
+                      : undefined
                   ));
             });
           }}

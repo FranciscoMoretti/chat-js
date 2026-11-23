@@ -46,6 +46,8 @@ const {
   getEveSendReceipt,
   getEveMessageDisplayReceipts,
 } = await import("./eve-dispatch");
+const { EveWorkspaceBusyError, releaseSettledEveWorkspaceOperation } =
+  await import("./eve-workspace-turns");
 const conversationId = "00000000-0000-4000-8000-000000000001";
 const input = {
   ownerId: "owner",
@@ -158,9 +160,53 @@ it("fences a concurrent request while the first dispatch is still pending", asyn
   await expect(dispatchEveOnce(operation, duplicate)).rejects.toBeInstanceOf(
     EveDispatchUnknownError
   );
+  await expect(
+    dispatchEveOnce(
+      {
+        ...operation,
+        operationId: crypto.randomUUID(),
+        steerSessionId: "source",
+      },
+      duplicate
+    )
+  ).rejects.toBeInstanceOf(EveWorkspaceBusyError);
   response.resolve({ sessionId: "source", deliveryId: "first" });
   expect(await first).toEqual({ sessionId: "source", deliveryId: "first" });
   expect(duplicate).not.toHaveBeenCalled();
+});
+
+it("lets only the same bound session steer and keeps its successor fenced", async () => {
+  const first = { ...input, operationId: crypto.randomUUID() };
+  const followUp = {
+    ...input,
+    operationId: crypto.randomUUID(),
+    steerSessionId: "source",
+  };
+  const dispatch = vi.fn().mockResolvedValue({
+    sessionId: "source",
+    deliveryId: "follow-up",
+  });
+  await dispatchEveOnce(
+    first,
+    vi.fn().mockResolvedValue({ sessionId: "source", deliveryId: "initial" })
+  );
+  await expect(
+    dispatchEveOnce({ ...followUp, steerSessionId: "other-session" }, dispatch)
+  ).rejects.toBeInstanceOf(EveWorkspaceBusyError);
+
+  expect(await dispatchEveOnce(followUp, dispatch)).toEqual({
+    sessionId: "source",
+    deliveryId: "follow-up",
+  });
+  await releaseSettledEveWorkspaceOperation(
+    input.ownerId,
+    conversationId,
+    first.operationId
+  );
+  await expect(
+    dispatchEveOnce({ ...input, operationId: crypto.randomUUID() }, dispatch)
+  ).rejects.toBeInstanceOf(EveWorkspaceBusyError);
+  expect(dispatch).toHaveBeenCalledTimes(1);
 });
 
 it("keeps the creation fence committed when its binding transaction rolls back", async () => {

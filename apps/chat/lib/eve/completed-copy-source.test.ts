@@ -76,8 +76,18 @@ it("copies a completed transcript without retaining native identities", async ()
         data: { ...history.data, parts: [{ kind: "text", text: "Continue" }] },
       },
       {
-        type: "turn.settled",
+        type: "delivery.admitted",
         meta: { ...meta, position: { line: 4, index: 0 } },
+        data: { deliveryId: "steer" },
+      },
+      {
+        type: "delivery.settled",
+        meta: { ...meta, position: { line: 5, index: 0 } },
+        data: { deliveryId: "steer", outcome: "ignored" },
+      },
+      {
+        type: "turn.settled",
+        meta: { ...meta, position: { line: 6, index: 0 } },
         data: { turnId: "import-turn", outcome: "completed" },
       },
     ],
@@ -85,7 +95,7 @@ it("copies a completed transcript without retaining native identities", async ()
   const result = await readCompletedEveCopyTranscript(
     "owner",
     "source",
-    [],
+    [{ kind: "send", sessionId: "source", deliveryId: "steer" }],
     []
   );
   expect(result.seed.messages).toHaveLength(3);

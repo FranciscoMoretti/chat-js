@@ -34,6 +34,26 @@ const keyFor = (ownerId: string, scope?: Readonly<CreationScope>): string => {
   return `chatjs.eve.pending:${ownerId}${suffix}`;
 };
 
+const readCreationFollowUp = (
+  storage: StorageAccess,
+  ownerId: string,
+  scope?: Readonly<CreationScope>
+): string => storage.getItem(`${keyFor(ownerId, scope)}:follow-up`) ?? "";
+
+const saveCreationFollowUp = (
+  storage: StorageAccess,
+  ownerId: string,
+  text: string,
+  scope?: Readonly<CreationScope>
+): void => {
+  const key = `${keyFor(ownerId, scope)}:follow-up`;
+  if (text) {
+    storage.setItem(key, text);
+  } else {
+    storage.removeItem(key);
+  }
+};
+
 const hasPendingCreation = (
   storage: StorageAccess,
   ownerId: string,
@@ -230,6 +250,11 @@ const moveRejectedContextCreation = (
           undefined,
           pending.selectedTool
         );
+  const followUp = readCreationFollowUp(storage, ownerId, scope);
+  if (followUp) {
+    saveCreationFollowUp(storage, ownerId, followUp);
+    saveCreationFollowUp(storage, ownerId, "", scope);
+  }
   finishCreation(storage, ownerId, scope);
   return next;
 };
@@ -242,5 +267,7 @@ export {
   prepareSelectedCreation,
   readCreation,
   readCreationRequest,
+  readCreationFollowUp,
+  saveCreationFollowUp,
 };
 export type { CreationScope };

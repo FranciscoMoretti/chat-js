@@ -6,6 +6,7 @@ import {
   EveCopyNotReadyError,
 } from "./copy-transcript";
 import type { EveMessageDisplayReceipt } from "./message-display";
+import { ignoredDeliveryId } from "./workspace-turn-evidence";
 
 /** Caller holds the source admission and document locks through capture. */
 export const readCompletedEveCopyTranscript = async (
@@ -33,8 +34,10 @@ export const readCompletedEveCopyTranscript = async (
     .attach(sessionId)
     .snapshot({ signal: AbortSignal.timeout(15_000) });
   const observed = new Set(
-    snapshot.events.flatMap((event) =>
-      event.type === "delivery.consumed" ? [event.data.deliveryId] : []
+    snapshot.events.map((event) =>
+      event.type === "delivery.consumed"
+        ? event.data.deliveryId
+        : ignoredDeliveryId(event)
     )
   );
   if (dispatches.some((entry) => !observed.has(entry.deliveryId ?? ""))) {

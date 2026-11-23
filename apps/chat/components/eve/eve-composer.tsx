@@ -57,6 +57,7 @@ interface ComposerCapabilities {
   };
   readonly selectedTool: UiToolName | null;
   readonly onToolChange: Dispatch<SetStateAction<UiToolName | null>>;
+  readonly turnOptionsLocked?: boolean;
 }
 
 type ComposerProps = Omit<
@@ -75,6 +76,7 @@ const CapableComposer = ({
   modelPicker,
   selectedTool,
   onToolChange,
+  turnOptionsLocked,
   ...props
 }: ComposerProps & ComposerCapabilities): ReactJSX.Element => {
   const selected = useDefaultModel();
@@ -89,6 +91,7 @@ const CapableComposer = ({
   const unavailableTool = isUnavailableTool(selectedTool, available);
   const locked = props.disabled || files.uploadQueue.length > 0;
   const uploadLocked = locked || props.readOnly;
+  const optionsLocked = uploadLocked === true || turnOptionsLocked === true;
   const removeAttachment = (attachment: { readonly url: string }): void => {
     files.setAttachments((current: readonly Readonly<DraftAttachment>[]) =>
       current.filter((file) => file.url !== attachment.url)
@@ -125,6 +128,7 @@ const CapableComposer = ({
           <>
             <ComposerMenu
               disabled={uploadLocked}
+              toolsDisabled={optionsLocked}
               selectedModelId={models[0]?.id ?? ""}
               selectedTool={selectedTool}
               onToolChange={onToolChange}
@@ -132,12 +136,12 @@ const CapableComposer = ({
             />
             <ActiveTool
               selectedTool={selectedTool}
-              disabled={uploadLocked}
+              disabled={optionsLocked}
               onClear={() => {
                 onToolChange(null);
               }}
             />
-            <fieldset className="min-w-0" disabled={uploadLocked}>
+            <fieldset className="min-w-0" disabled={optionsLocked}>
               {modelPicker ?? <EveModelPicker />}
             </fieldset>
           </>

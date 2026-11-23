@@ -4,6 +4,8 @@ import {
   moveRejectedContextCreation,
   prepareCreation,
   readCreation,
+  readCreationFollowUp,
+  saveCreationFollowUp,
 } from "./pending-create";
 
 const storageFixture = (): Pick<
@@ -47,6 +49,7 @@ describe("rejected project draft recovery", () => {
       undefined,
       { projectId }
     );
+    saveCreationFollowUp(storage, "owner", "And next month too", { context });
     const next = moveRejectedContextCreation(
       storage,
       "owner",
@@ -61,6 +64,8 @@ describe("rejected project draft recovery", () => {
     expect(next.projectId).toBeUndefined();
     expect(readCreation(storage, "owner")).toEqual(next);
     expect(readCreation(storage, "owner", { context })).toBeUndefined();
+    expect(readCreationFollowUp(storage, "owner")).toBe("And next month too");
+    expect(readCreationFollowUp(storage, "owner", { context })).toBe("");
   });
   it("preserves both requests if another root draft exists", () => {
     const storage = storageFixture();
