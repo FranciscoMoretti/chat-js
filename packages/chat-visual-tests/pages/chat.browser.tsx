@@ -1,5 +1,5 @@
 import { takeSnapshot } from "@uiverify/vitest";
-import { SessionNotActiveError } from "eve/client";
+import { conversationOf, SessionNotActiveError } from "eve/client";
 import { expect, test, vi } from "vitest";
 import { page, userEvent } from "vitest/browser";
 import { route } from "./route";
@@ -31,6 +31,7 @@ import {
   invoicesTrpc,
   launchProject,
   pendingActivityEvents,
+  pendingActivityWithFirstAnswerEvents,
   questionTranscripts,
   session,
   signedIn,
@@ -79,14 +80,6 @@ test("validated tools preserve receipt results, failures and native fallbacks", 
     ...request,
     transcripts: validatedToolTranscripts,
   });
-  await page.getByRole("button", { name: /Worked.*steps/u }).click();
-  await page.getByRole("button", { name: "native__lookup Completed" }).click();
-  await page
-    .getByRole("button", {
-      name: "attach_workspace_file Completed",
-      exact: true,
-    })
-    .click();
   await expect
     .element(page.getByText("sample-notes.md", { exact: true }))
     .toBeVisible();
@@ -692,6 +685,65 @@ test("native replay keeps submitted answers distinct from settled outcomes", asy
     .element(page.getByRole("button", { name: "Summary", exact: true }))
     .not.toBeInTheDocument();
   await page.screenshot({ path: "__screenshots__/native-activity-replay.png" });
+});
+
+test("the native optimistic answer and its sibling's submitted answer both lock their own question", async () => {
+  const { sessionId } = invoicesConversation;
+  if (sessionId === null || sessionId === "") {
+    throw new Error("The conversation fixture must have a native session.");
+  }
+  const events = pendingActivityWithFirstAnswerEvents[sessionId];
+  const { messages } = conversationOf(events);
+  const liveTranscripts = {
+    [sessionId]: messages.map((message) => ({
+      ...message,
+      parts: message.parts.map((part) => {
+        if (
+          part.type !== "tool" ||
+          part.interaction?.interactionId !== "format"
+        ) {
+          return part;
+        }
+        return {
+          ...part,
+          interaction: {
+            ...part.interaction,
+            answer: { interactionId: "format", optionId: "summary" },
+          },
+        };
+      }),
+    })),
+  };
+  await renderRoute(conversation, {
+    ...request,
+    agentStatus: "streaming",
+    events: pendingActivityWithFirstAnswerEvents,
+    liveTranscripts,
+    transcripts: {},
+    viewports: [],
+  });
+  await expect
+    .element(page.getByText("Last month", { exact: true }))
+    .toBeVisible();
+  await expect
+    .element(page.getByText("Summary", { exact: true }))
+    .toBeVisible();
+  await expect
+    .poll(
+      () => page.getByText("Response submitted", { exact: true }).all().length
+    )
+    .toBe(2);
+  await expect
+    .element(page.getByRole("button", { name: "Last month", exact: true }))
+    .not.toBeInTheDocument();
+  await expect
+    .element(page.getByRole("button", { name: "Summary", exact: true }))
+    .not.toBeInTheDocument();
+  await expect
+    .element(
+      page.getByRole("button", { name: "Approve publication", exact: true })
+    )
+    .toBeEnabled();
 });
 
 test("completed native activity shows timing and keeps the original tool details", async () => {

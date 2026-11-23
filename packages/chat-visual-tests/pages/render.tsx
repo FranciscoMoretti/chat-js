@@ -76,6 +76,7 @@ export const renderRoute = async (
     events: {},
     cookies: {},
     lastLoginMethod: null,
+    liveTranscripts: {},
     missingFixtures: new Set(),
     path: "/",
     search: "",

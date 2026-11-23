@@ -39,6 +39,8 @@ export const route: {
   session: Session | null;
   /** Messages each EVE session replays, keyed by session id. */
   transcripts: Record<string, readonly EveMessage[]>;
+  /** Live hook messages before new answers have reached the replayed stream. */
+  liveTranscripts: Record<string, readonly EveMessage[]>;
   /** Each procedure's result, or a function of its input. */
   trpc: Record<string, unknown>;
 } = {
@@ -56,6 +58,7 @@ export const route: {
   server: {},
   session: null,
   transcripts: {},
+  liveTranscripts: {},
   trpc: {},
 };
 

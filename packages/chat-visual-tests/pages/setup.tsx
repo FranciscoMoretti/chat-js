@@ -214,10 +214,11 @@ vi.mock("eve/react", () => {
         route.transcripts[sessionId] ??
         (events.length > 0 ? history.messages : emptyTranscript(sessionId));
       projections.set(events, messages);
-      const agent = agents.get(messages) ?? {
+      const liveMessages = route.liveTranscripts[sessionId] ?? messages;
+      const agent = agents.get(liveMessages) ?? {
         cancel: idle,
         ...history,
-        messages,
+        messages: liveMessages,
         error:
           typeof route.agentError === "string"
             ? new Error(route.agentError)
@@ -242,7 +243,7 @@ vi.mock("eve/react", () => {
         session: initialSession,
         status: statuses[route.agentStatus],
       };
-      agents.set(messages, agent);
+      agents.set(liveMessages, agent);
       return { ...agent };
     },
   };

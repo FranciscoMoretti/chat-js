@@ -963,6 +963,18 @@ const activityEvents = (
 });
 
 export const pendingActivityEvents = activityEvents(nativeActivity);
+export const pendingActivityWithFirstAnswerEvents = activityEvents([
+  ...nativeActivity,
+  {
+    type: "response.submitted",
+    data: {
+      responseId: "period-answer",
+      interactionId: "period",
+      deliveryId: "answers",
+      value: { optionId: "month" },
+    },
+  },
+]);
 export const submittedActivityEvents = activityEvents(submittedActivity);
 export const completedActivityEvents = activityEvents([
   ...submittedActivity,
@@ -1155,6 +1167,11 @@ export const researchFileTranscripts = {
       role: "assistant",
       metadata: { status: "complete", turnId: "turn-research-file" },
       parts: [
+        {
+          type: "reasoning",
+          text: "Find the launch references and assemble the report.",
+          state: "done",
+        },
         {
           type: "tool",
           kind: "tool",

@@ -30,15 +30,18 @@ type MessageBlock =
   | { readonly kind: "activity"; readonly steps: MessagePart<ActivityPart>[] }
   | {
       readonly kind: "part";
-      readonly entry: MessagePart<
-        Exclude<ReadonlyEveMessagePart, ActivityPart>
-      >;
+      readonly entry: MessagePart;
     };
 
 const messageBlocks = (parts: readonly MessagePart[]): MessageBlock[] => {
   const blocks: MessageBlock[] = [];
   for (const { key, part } of parts) {
-    if (part.type === "reasoning" || part.type === "tool") {
+    // Published file deliverables stay in the transcript when activity is collapsed.
+    const isActivity =
+      part.type === "reasoning" ||
+      (part.type === "tool" &&
+        !(part.name === "attach_workspace_file" && part.state === "completed"));
+    if (isActivity) {
       const last = blocks.at(-1);
       if (last?.kind === "activity") {
         last.steps.push({ key, part });
@@ -142,7 +145,7 @@ const ActivityGroup = ({
 };
 
 const callInteractions = (
-  part: ActivityPart,
+  part: ReadonlyEveMessagePart,
   byCall: ReadonlyMap<string, readonly Interaction[]>
 ): readonly Interaction[] => {
   if (part.type !== "tool") {
@@ -205,12 +208,16 @@ export const EveMessageContent = ({
       return part.type === "interaction" ? (
         renderInteraction(part, key)
       ) : (
-        <EveMessagePart
-          key={key}
-          messageId={messageId}
-          isReadonly={isReadonly}
-          part={part}
-        />
+        <Fragment key={key}>
+          <EveMessagePart
+            messageId={messageId}
+            isReadonly={isReadonly}
+            part={part}
+          />
+          {callInteractions(part, interactionsByCall).map((interaction) =>
+            renderInteraction(interaction, interaction.interactionId)
+          )}
+        </Fragment>
       );
     }
 
