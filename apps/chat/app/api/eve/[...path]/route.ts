@@ -21,15 +21,22 @@ import { getBoundEveConversationForSession } from "@/lib/db/eve-queries";
 import { rejectEveCommand } from "@/lib/eve/command-rejection";
 import { EVE_MESSAGE_OPERATION_HEADER } from "@/lib/eve/message-delivery";
 import { loadEveModelDefinition } from "@/lib/eve/model-selection";
+import { getEveConnectionOptions } from "@/lib/eve/connection-options";
 import { prepareEveMessage } from "@/lib/eve/prepare-message";
 import { resolveEvePrincipal } from "@/lib/eve/principal";
+import {
+  activeResponseModel,
+  responseModelReferences,
+} from "@/lib/eve/response-model";
 import {
   parseSessionRequest,
   safeStreamQuery,
   sameOrigin,
 } from "@/lib/eve/request-policy";
 import { eveRequest } from "@/lib/eve/server";
+import { EveSteerRejectedError } from "@/lib/eve/steer-rejected";
 import { relayResponse } from "./relay-response";
+import { Client, conversationOf } from "eve/client";
 import { z } from "zod";
 
 const HTTP_BAD_REQUEST = 400;
@@ -39,6 +46,8 @@ const HTTP_NOT_FOUND = 404;
 const HTTP_PAYMENT_REQUIRED = 402;
 const NO_QUERY_PARAMETERS = 0;
 const COMMAND_TIMEOUT_MS = 30_000;
+const ATTACHMENT_MODEL_TIMEOUT_MS = 5000;
+const NATIVE_SESSION_CONFLICT = 409;
 const rejectRequest = (
   request: { readonly method: string },
   message: string,
@@ -85,6 +94,78 @@ const parseToolSelection = (
       () => header === null || typeof body !== "string" || header === body
     )
     .safeParse(header ?? body);
+
+const steeringAttachmentModel = async (
+  ownerId: string,
+  sessionId: string,
+  fileKeys: readonly string[]
+): Promise<string | undefined> => {
+  if (fileKeys.length === 0) {
+    return undefined;
+  }
+  const client = new Client(getEveConnectionOptions(ownerId));
+  const { events } = await client.sessions
+    .attach(sessionId)
+    .snapshot({ signal: AbortSignal.timeout(ATTACHMENT_MODEL_TIMEOUT_MS) });
+  const modelId = activeResponseModel(
+    conversationOf(events).view,
+    responseModelReferences(events)
+  );
+  if (modelId === undefined) {
+    throw new Error("Wait for the active model before sending attachments.");
+  }
+  return modelId;
+};
+
+const readSteerRejection = async (
+  response: ReadonlyNativeSurface<Response>
+): Promise<string | undefined> => {
+  if (
+    response.status !== HTTP_BAD_REQUEST &&
+    response.status !== NATIVE_SESSION_CONFLICT
+  ) {
+    return undefined;
+  }
+  const body = z
+    .object({
+      ok: z.literal(false),
+      error: z.string(),
+      code: z.string().optional(),
+    })
+    .safeParse(await response.json().catch(() => null));
+  if (
+    body.success &&
+    (response.status === HTTP_BAD_REQUEST ||
+      body.data.code === "session_not_active" ||
+      body.data.code === "session_not_ready" ||
+      body.data.code === "session_stranded")
+  ) {
+    return body.data.error;
+  }
+  return undefined;
+};
+
+const prepareSteerBody = async (
+  message: ReadonlyNativeSurface<EveMessageInput>,
+  ownerId: string,
+  conversationId: string,
+  sessionId: string
+): Promise<string> => {
+  try {
+    const fileKeys = eveMessageFileKeys(message);
+    const modelId = await steeringAttachmentModel(ownerId, sessionId, fileKeys);
+    await referenceEveFiles(ownerId, conversationId, fileKeys);
+    return JSON.stringify({
+      message: await prepareEveMessage(message, modelId),
+      turnPolicy: "steer",
+    });
+  } catch (error) {
+    throw new EveSteerRejectedError(
+      error instanceof Error ? error.message : "Unable to read attachment."
+    );
+  }
+};
+
 const readCommand = async (
   request: {
     readonly method: string;
@@ -160,22 +241,25 @@ const readCommand = async (
         );
       }
       modelId = selectedModel ?? input.data.modelId;
-      try {
-        await loadEveModelDefinition(modelId);
-        await referenceEveFiles(
-          ownerId,
-          conversationId,
-          eveMessageFileKeys(input.data.message)
-        );
-        body = JSON.stringify({
-          message: await prepareEveMessage(input.data.message, modelId),
-          turnPolicy,
-        });
-      } catch (error) {
-        return rejectEveCommand(
-          error instanceof Error ? error.message : "Unable to read attachment.",
-          HTTP_BAD_REQUEST
-        );
+      if (turnPolicy === undefined) {
+        try {
+          await loadEveModelDefinition(modelId);
+          await referenceEveFiles(
+            ownerId,
+            conversationId,
+            eveMessageFileKeys(message)
+          );
+          body = JSON.stringify({
+            message: await prepareEveMessage(message, modelId),
+          });
+        } catch (error) {
+          return rejectEveCommand(
+            error instanceof Error
+              ? error.message
+              : "Unable to read attachment.",
+            HTTP_BAD_REQUEST
+          );
+        }
       }
     } else {
       body = JSON.stringify(input.data);
@@ -194,6 +278,34 @@ const readCommand = async (
     turnPolicy,
     steerSessionId: turnPolicy === "steer" ? policy.sessionId : undefined,
   };
+};
+const commandFailureResponse = (error: unknown): Response => {
+  if (error instanceof EveWorkspaceBusyError) {
+    return rejectEveCommand(error.message, 409);
+  }
+  if (error instanceof EveUsageReconciliationBusyError) {
+    return eveUsageBusyResponse(error);
+  }
+  if (error instanceof EveSteerRejectedError) {
+    return rejectEveCommand(error.message, HTTP_BAD_REQUEST);
+  }
+  if (error instanceof EveDispatchUnknownError) {
+    return Response.json(
+      {
+        code: "chatjs_delivery_unknown",
+        error:
+          "Message delivery is unknown. This operation will not be sent again.",
+      },
+      { status: 502, headers: { "cache-control": "no-store" } }
+    );
+  }
+  return Response.json(
+    {
+      error:
+        "The agent connection was interrupted. Reconnect to check its status; delivery may remain unknown.",
+    },
+    { status: 502 }
+  );
 };
 const handle = async (
   request: ReadonlyNativeSurface<Request>,
@@ -253,12 +365,12 @@ const handle = async (
     if (admission instanceof Response) {
       return admission;
     }
-    const dispatch = async (): Promise<Response> => {
+    const dispatch = async (dispatchBody = body): Promise<Response> => {
       const result = await eveRequest(
         principal.ownerId,
         `/eve/chat/${path.join("/")}${query.size > NO_QUERY_PARAMETERS ? `?${query}` : ""}`,
         {
-          body,
+          body: dispatchBody,
           method: request.method,
           // Closing the reader must not cancel a validated command before Eve
           // can durably accept it. Streaming reads still follow browser lifetime.
@@ -292,8 +404,25 @@ const handle = async (
           },
         },
         async () => {
-          const result = await dispatch();
+          const { message } = command;
+          const result = await dispatch(
+            turnPolicy === "steer" && message !== undefined
+              ? await prepareSteerBody(
+                  message,
+                  ownerId,
+                  conversation.id,
+                  policy.sessionId
+                )
+              : body
+          );
           if (!result.ok) {
+            const rejection =
+              turnPolicy === "steer"
+                ? await readSteerRejection(result)
+                : undefined;
+            if (rejection !== undefined) {
+              throw new EveSteerRejectedError(rejection);
+            }
             throw new EveDispatchUnknownError();
           }
           return z
@@ -312,34 +441,13 @@ const handle = async (
     return relayResponse(
       await (request.method === "GET"
         ? dispatch()
-        : withEveCopyCaptureFence(ownerId, dispatch))
+        : withEveCopyCaptureFence(ownerId, async () => await dispatch()))
     );
   } catch (error) {
-    if (error instanceof EveWorkspaceBusyError) {
-      return rejectEveCommand(error.message, 409);
-    }
-    if (error instanceof EveUsageReconciliationBusyError) {
-      return eveUsageBusyResponse(error);
-    }
-    if (error instanceof EveDispatchUnknownError) {
-      return Response.json(
-        {
-          code: "chatjs_delivery_unknown",
-          error:
-            "Message delivery is unknown. This operation will not be sent again.",
-        },
-        { status: 502, headers: { "cache-control": "no-store" } }
-      );
-    }
-    return Response.json(
-      {
-        error:
-          "The agent connection was interrupted. Reconnect to check its status; delivery may remain unknown.",
-      },
-      { status: 502 }
-    );
+    return commandFailureResponse(error);
   }
 };
+
 const GET = handle;
 const POST = handle;
 export { GET, POST };

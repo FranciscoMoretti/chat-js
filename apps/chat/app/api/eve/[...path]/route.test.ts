@@ -1,4 +1,6 @@
+/* oxlint-disable eslint/max-classes-per-file -- Independent native client and dispatch error doubles. */
 import { beforeEach, expect, test, vi } from "vitest";
+import type * as EveClient from "eve/client";
 
 import { EVE_MESSAGE_OPERATION_HEADER } from "@/lib/eve/message-delivery";
 import { EveUsageReconciliationBusyError } from "@/lib/eve/usage-reconciliation-busy";
@@ -24,6 +26,17 @@ const mocks = vi.hoisted(() => ({
   principal: vi.fn(),
   reconcile: vi.fn(),
   referenceFiles: vi.fn(),
+  snapshot: vi.fn(),
+}));
+
+vi.mock("eve/client", async (original) => ({
+  ...(await original<typeof EveClient>()),
+  Client: class {
+    sessions = { attach: () => ({ snapshot: mocks.snapshot }) };
+  },
+}));
+vi.mock("@/lib/eve/connection-options", () => ({
+  getEveConnectionOptions: () => ({}),
 }));
 
 vi.mock("@/lib/db/eve-dispatch", () => ({
@@ -63,11 +76,12 @@ vi.mock("@/lib/eve/server", () => ({ eveRequest: mocks.eveRequest }));
 const operationId = "00000000-0000-4000-8000-000000000001";
 const request = (
   headers: Readonly<Record<string, string>> = {},
-  turnPolicy?: string
+  turnPolicy?: string,
+  message: unknown = "original"
 ): Request =>
   new Request("http://localhost:3790/api/eve/v1/session/native", {
     body: JSON.stringify({
-      message: "original",
+      message,
       modelId: "model",
       selectedTool: "generateImage",
       turnPolicy,
@@ -156,6 +170,92 @@ test("keeps app correlation out of the native message body", async () => {
     "model",
     "generateImage"
   );
+});
+
+test("validates steer attachments against the active model", async () => {
+  const events: EveClient.SessionStreamEvent[] = [
+    {
+      type: "session.started",
+      data: {},
+      meta: {
+        at: "2026-11-23T00:00:00Z",
+        position: { line: 0, index: 0 },
+        endOfLine: true,
+      },
+    },
+    {
+      type: "turn.started",
+      data: {
+        turnId: "turn-1",
+        follows: null,
+        cause: { deliveryId: "initial" },
+      },
+      meta: {
+        at: "2026-11-23T00:00:00Z",
+        position: { line: 1, index: 0 },
+        endOfLine: true,
+      },
+    },
+    {
+      type: "model.started",
+      data: { modelId: "openai/gpt-5-mini", runId: "run-1", attempt: 0 },
+      scope: { turnId: "turn-1", runId: "run-1" },
+      meta: {
+        at: "2026-11-23T00:00:00Z",
+        position: { line: 2, index: 0 },
+        endOfLine: true,
+      },
+    },
+  ];
+  mocks.snapshot.mockResolvedValue({ events });
+  const file = {
+    type: "file",
+    data: "/api/files/abcdefghijklmnopqrstuvwx.pdf",
+    filename: "invoice.pdf",
+    mediaType: "application/pdf",
+  };
+  const headers = { [EVE_MESSAGE_OPERATION_HEADER]: operationId };
+  const context = {
+    params: Promise.resolve({ path: ["v1", "session", "native"] }),
+  };
+  const accepted = await POST(request(headers, "steer", [file]), context);
+  expect(accepted.status).toBe(200);
+  expect(mocks.prepare).toHaveBeenCalledExactlyOnceWith(
+    [file],
+    "openai/gpt-5-mini"
+  );
+
+  mocks.snapshot.mockResolvedValue({ events: events.slice(0, 2) });
+  const rejected = await POST(request(headers, "steer", [file]), context);
+  expect(rejected.status).toBe(HTTP_STATUS.badRequest);
+  expect(await rejected.json()).toMatchObject({
+    error: "Wait for the active model before sending attachments.",
+  });
+  expect(mocks.eveRequest).toHaveBeenCalledTimes(1);
+});
+
+test("relays a definite native steer refusal as a rejected message", async () => {
+  mocks.eveRequest.mockResolvedValue(
+    Response.json(
+      {
+        ok: false,
+        code: "session_not_active",
+        error: "The session is no longer active.",
+      },
+      { status: 409 }
+    )
+  );
+  const response = await POST(
+    request({ [EVE_MESSAGE_OPERATION_HEADER]: operationId }, "steer"),
+    {
+      params: Promise.resolve({ path: ["v1", "session", "native"] }),
+    }
+  );
+  expect(response.status).toBe(HTTP_STATUS.badRequest);
+  expect(await response.json()).toMatchObject({
+    code: "chatjs_command_rejected",
+    error: "The session is no longer active.",
+  });
 });
 
 test("keeps a busy admission retryable without dispatching or rejecting its message", async () => {

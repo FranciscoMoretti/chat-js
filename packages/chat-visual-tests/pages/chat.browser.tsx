@@ -31,6 +31,7 @@ import {
   invoicesTrpc,
   launchProject,
   pendingActivityEvents,
+  steeringModelEvents,
   pendingActivityWithFirstAnswerEvents,
   questionTranscripts,
   session,
@@ -126,6 +127,7 @@ test("active native turn swaps Stop for Send when a follow-up is drafted", async
   await renderRoute(conversation, {
     ...request,
     agentStatus: "streaming",
+    events: steeringModelEvents,
     transcripts: {
       [invoicesConversation.sessionId ?? ""]: [
         { id: "pending", role: "assistant", parts: [] },
@@ -139,6 +141,10 @@ test("active native turn swaps Stop for Send when a follow-up is drafted", async
   const stop = page.getByRole("button", { name: "Stop", exact: true });
   const send = page.getByRole("button", { name: "Send", exact: true });
   await expect.element(composer).toHaveAttribute("contenteditable", "true");
+  await expect
+    .element(page.getByTestId("model-selector"))
+    .toHaveTextContent("GPT-5 mini");
+  await expect.element(page.getByTestId("model-selector")).toBeDisabled();
   await expect.element(send).toBeEnabled();
   await expect.element(stop).not.toBeInTheDocument();
   await page

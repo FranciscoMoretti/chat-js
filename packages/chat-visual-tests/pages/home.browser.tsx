@@ -4,6 +4,10 @@ import { page } from "vitest/browser";
 
 import ChatLayout from "@/app/(chat)/layout";
 import HomePage from "@/app/(chat)/page";
+import {
+  readCreationFollowUp,
+  saveCreationFollowUp,
+} from "@/lib/eve/pending-create";
 
 import {
   history,
@@ -14,6 +18,7 @@ import {
   guestTranscript,
   invoicesConversation,
   invoicesTrpc,
+  session,
 } from "./fixtures";
 import { captureVariants, renderRoute } from "./render";
 
@@ -23,6 +28,24 @@ const home = (
   </ChatLayout>
 );
 const guestServer = { modelIds: ["google/gemini-2.5-flash-lite"] };
+
+test("clearing a recovered New Chat draft removes its saved text", async () => {
+  const { id } = session.user;
+  saveCreationFollowUp(
+    sessionStorage,
+    id,
+    "Save this follow-up after recovery"
+  );
+  await renderRoute(home, signedIn);
+  const composer = page.getByTestId("multimodal-input");
+  await expect
+    .element(composer)
+    .toHaveTextContent("Save this follow-up after recovery");
+  await composer.fill("Revised draft");
+  expect(readCreationFollowUp(sessionStorage, id)).toBe("Revised draft");
+  await composer.fill("");
+  expect(readCreationFollowUp(sessionStorage, id)).toBe("");
+});
 
 test("home with Guest Chat installed has a fixed inexpensive model", async () => {
   await renderRoute(home, { server: guestServer });

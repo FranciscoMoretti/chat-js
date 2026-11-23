@@ -1,5 +1,5 @@
 import { alias } from "drizzle-orm/pg-core";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, isNull, sql } from "drizzle-orm";
 import { db } from "./client";
 import { eveConversation, eveDispatch, eveWorkspace } from "./schema";
 
@@ -48,6 +48,35 @@ export const assertEveWorkspaceIdle = async (
   if (workspace.activeOperationId !== null) {
     throw new EveWorkspaceBusyError();
   }
+};
+
+/** Call under the workspace lock before releasing or transferring an active reservation. */
+export const hasUnresolvedWorkspaceSteer = async (
+  tx: Pick<WorkspaceTransaction, "select">,
+  ownerId: string,
+  workspaceId: string
+): Promise<boolean> => {
+  const [pending] = await tx
+    .select({ operationId: eveDispatch.operationId })
+    .from(eveDispatch)
+    .innerJoin(
+      eveConversation,
+      and(
+        eq(eveConversation.id, eveDispatch.conversationId),
+        eq(eveConversation.ownerId, eveDispatch.ownerId)
+      )
+    )
+    .where(
+      and(
+        eq(eveConversation.workspaceId, workspaceId),
+        eq(eveDispatch.ownerId, ownerId),
+        eq(eveDispatch.kind, "send"),
+        isNull(eveDispatch.sessionId),
+        sql`${eveDispatch.intent}->>'turnPolicy' = 'steer'`
+      )
+    )
+    .limit(1);
+  return pending !== undefined;
 };
 
 /** Resolve active work only through owned conversation membership; IDs alone grant no access. */
@@ -106,7 +135,10 @@ export const releaseSettledEveWorkspaceOperation = async (
 ): Promise<void> => {
   await db.transaction(async (tx) => {
     const workspace = await lockEveWorkspace(tx, ownerId, workspaceId);
-    if (workspace.activeOperationId !== operationId) {
+    if (
+      workspace.activeOperationId !== operationId ||
+      (await hasUnresolvedWorkspaceSteer(tx, ownerId, workspaceId))
+    ) {
       return;
     }
     await tx

@@ -73,6 +73,7 @@ export const useNewEveConversation = ({
       createClientSnapshot<{
         draft: string;
         followUpDraft: string;
+        recoveredFollowUp: boolean;
         selectedTool: UiToolName | null;
         retainedOperationId: string | undefined;
         retainedModelId: string | undefined;
@@ -82,6 +83,7 @@ export const useNewEveConversation = ({
         {
           draft: "",
           followUpDraft: "",
+          recoveredFollowUp: false,
           selectedTool: null,
           retainedOperationId: undefined,
           retainedModelId: undefined,
@@ -97,7 +99,11 @@ export const useNewEveConversation = ({
               scope
             );
             if (!pending) {
-              return { ...current, draft: savedFollowUp };
+              return {
+                ...current,
+                draft: savedFollowUp,
+                recoveredFollowUp: hasText(savedFollowUp),
+              };
             }
             const restored = restoreDraft(pending.message);
             setAttachments(restored.attachments);
@@ -125,6 +131,7 @@ export const useNewEveConversation = ({
   const {
     draft,
     followUpDraft,
+    recoveredFollowUp,
     selectedTool,
     retainedOperationId,
     retainedModelId,
@@ -217,12 +224,9 @@ export const useNewEveConversation = ({
             creationInput
           );
           retainOperation(operation);
-          saveCreationFollowUp(
-            sessionStorage,
-            ownerId,
-            store.getSnapshot().followUpDraft,
-            scope
-          );
+          if (recoveredFollowUp) {
+            saveCreationFollowUp(sessionStorage, ownerId, "", scope);
+          }
           const binding = await resolveCreationRequest(
             sessionStorage,
             ownerId,
@@ -335,7 +339,7 @@ export const useNewEveConversation = ({
     ),
     onDraftChange: (value: string) => {
       store.set(busy ? "followUpDraft" : "draft", value);
-      if (busy) {
+      if (busy || recoveredFollowUp) {
         try {
           saveCreationFollowUp(sessionStorage, ownerId, value, scope);
         } catch {

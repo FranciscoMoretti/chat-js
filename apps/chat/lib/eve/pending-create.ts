@@ -232,6 +232,11 @@ const moveRejectedContextCreation = (
       "Finish the saved request in New Chat before recovering this draft."
     );
   }
+  if (readCreationFollowUp(storage, ownerId)) {
+    throw new Error(
+      "Send or clear the draft in New Chat before recovering this project draft."
+    );
+  }
   const next =
     "modelIds" in pending
       ? prepareResponseGroupCreation(

@@ -48,6 +48,9 @@ test("guest errors preserve the message draft", async ({ page }) => {
     .fill("Preserve this draft");
   await fixture.getByRole("button", { exact: true, name: "Send" }).click();
   await expect(fixture.getByRole("alert")).toBeVisible();
+  await expect(
+    fixture.getByRole("textbox", { exact: true, name: "Message" })
+  ).toBeFocused();
   await expect(fixture).toHaveScreenshot("guest-error.png");
 });
 
@@ -63,6 +66,9 @@ test("guest response", async ({ page }) => {
 test("expired guest on mobile", async ({ page }) => {
   await page.setViewportSize({ height: 844, width: 390 });
   await page.getByLabel("Fixture state").selectOption("expired");
+  await expect(
+    page.getByRole("textbox", { exact: true, name: "Message" })
+  ).toHaveAttribute("contenteditable", "false");
   await expect(page.getByTestId("guest-visual")).toHaveScreenshot(
     "guest-expired-mobile.png"
   );
