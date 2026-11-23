@@ -300,7 +300,7 @@ test("home shows a rejected new conversation as a chat alert", async () => {
   await page.screenshot({ path: "__screenshots__/new-conversation-error.png" });
 });
 
-test("signed-in creation retry brings the follow-up draft into the chat", async () => {
+test("signed-in creation retry saves the follow-up even if the destination draft is unreadable", async () => {
   const { fetch } = globalThis;
   const startup = Promise.withResolvers<Response>();
   const binding = {
@@ -309,6 +309,8 @@ test("signed-in creation retry brings the follow-up draft into the chat", async 
   };
   let requests = 0;
   let savedAtNavigation: string | null = null;
+  const destinationKey = `chatjs.eve.composer:${invoicesConversation.ownerId}:${invoicesConversation.chatId}`;
+  sessionStorage.setItem(destinationKey, "{unreadable");
   vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
     if (input === "/api/agent-conversations") {
       requests += 1;
@@ -319,9 +321,7 @@ test("signed-in creation retry brings the follow-up draft into the chat", async 
   vi.spyOn(globalThis.history, "pushState").mockImplementation(
     (_data, _unused, url) => {
       if (typeof url === "string") {
-        savedAtNavigation = sessionStorage.getItem(
-          `chatjs.eve.composer:${invoicesConversation.ownerId}:${invoicesConversation.chatId}`
-        );
+        savedAtNavigation = sessionStorage.getItem(destinationKey);
         route.path = url;
       }
     }

@@ -21,11 +21,19 @@ const emptyDraft: Draft = { attachments: [], selectedTool: null, text: "" };
 const draftKey = (ownerId: string, scopeId: string): string =>
   `chatjs.eve.composer:${ownerId}:${scopeId}`;
 
-const readSavedDraft = (key: string): Draft => {
-  const saved = sessionStorage.getItem(key);
-  return saved === null || saved === ""
+const parseSavedDraft = (saved: string | null): Draft =>
+  saved === null || saved === ""
     ? emptyDraft
     : composerDraft.parse(JSON.parse(saved));
+
+const readHandoffDestination = (key: string): Draft => {
+  const saved = sessionStorage.getItem(key);
+  try {
+    return parseSavedDraft(saved);
+  } catch {
+    // An unreadable destination cannot be merged with the intact follow-up.
+    return emptyDraft;
+  }
 };
 
 /** Transfer text typed in the composer that created this conversation. */
@@ -35,7 +43,7 @@ export const handoffEveComposerDraft = (
   text: string
 ): void => {
   const key = draftKey(ownerId, scopeId);
-  const draft = readSavedDraft(key);
+  const draft = readHandoffDestination(key);
   if (draft.text === text) {
     return;
   }
@@ -94,7 +102,7 @@ const createDraftStore = (key: string) => {
       if (!snapshot.loaded) {
         try {
           publish({
-            value: readSavedDraft(key),
+            value: parseSavedDraft(sessionStorage.getItem(key)),
             loaded: true,
             error: undefined,
           });
