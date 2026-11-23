@@ -49,7 +49,11 @@ test.each(["base", "radix"] as const)(
           .success
       ).toBe(false);
       expect(
-        schema.parse({ ...definition, contractVersion: 2, uiBase: base }).uiBase
+        schema.parse({
+          ...definition,
+          contractVersion: definition.kind === "plugin" ? 3 : 2,
+          uiBase: base,
+        }).uiBase
       ).toBe(base);
       expect(
         schema.safeParse({ ...definition, contractVersion: 2 }).success

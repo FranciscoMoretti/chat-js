@@ -1,4 +1,6 @@
 {
+  "contractVersion": 3,
+  "uiBase": "base",
   "id": "mcp",
   "kind": "plugin",
   "files": [
@@ -38,17 +40,9 @@
     "chatjs/plugins/mcp/search/mcp-search-params.ts",
     "chatjs/plugins/mcp/search/mcp-search-params.server.ts",
     "chatjs/plugins/mcp/router.ts",
-    "chatjs/plugins/mcp/client-plugin.ts",
-    "chatjs/plugins/mcp/server-plugin.ts"
+    "chatjs/plugins/mcp/chat-ui.ts"
   ],
   "environmentValidation": "mcp-env.ts",
   "databaseSchemas": ["chatjs/plugins/mcp/db/mcp-schema.ts"],
-  "envRequirements": [{ "options": [["MCP_ENCRYPTION_KEY"]] }],
-  "client": {
-    "export": "mcpClient",
-    "composerControls": ["mcp"],
-    "settingsItems": ["mcp"]
-  },
-  "contractVersion": 2,
-  "uiBase": "base"
+  "envRequirements": [{ "options": [["MCP_ENCRYPTION_KEY"]] }]
 }

@@ -1,16 +1,10 @@
 {
+  "contractVersion": 3,
+  "uiBase": "base",
   "id": "video-viewer",
   "kind": "plugin",
   "files": [
-    "chatjs/plugins/video-viewer/client-plugin.ts",
+    "chatjs/plugins/video-viewer/chat-ui.ts",
     "chatjs/plugins/video-viewer/viewer-action.tsx"
-  ],
-  "client": {
-    "export": "videoViewerClient",
-    "composerControls": [],
-    "settingsItems": [],
-    "chat": true
-  },
-  "contractVersion": 2,
-  "uiBase": "base"
+  ]
 }

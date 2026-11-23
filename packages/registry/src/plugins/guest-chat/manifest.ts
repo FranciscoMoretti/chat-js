@@ -21,7 +21,7 @@ const guestChatFiles = [
   "chatjs/plugins/guest-chat/signed-out.tsx",
 ];
 const guestChatDefinition = pluginDefinitionSchema.parse({
-  contractVersion: 2,
+  contractVersion: 3,
   uiBase: "base",
   id: "guest-chat",
   kind: "plugin",

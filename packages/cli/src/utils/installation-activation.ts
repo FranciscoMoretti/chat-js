@@ -1,7 +1,6 @@
+import { hasPluginEntry } from "../../../registry/plugin-entry";
 import {
   pluginDefinitionSchema,
-  pluginHasInstrumentationEntry,
-  pluginHasServerEntry,
   toolDefinitionSchema,
 } from "../../../registry/metadata";
 import type {
@@ -24,29 +23,6 @@ const enabledNames = (
 ): string[] =>
   entries.filter(([, enabled]) => Boolean(enabled)).map(([name]) => name);
 
-const clientIntegrations = (client: PluginDefinition["client"]): string[] => {
-  if (!client) {
-    return [];
-  }
-  return enabledNames([
-    ["layout", client.layout],
-    [
-      "chat/ui",
-      [
-        !client.layout,
-        client.chat,
-        client.accountSummary,
-        client.uploads,
-        client.modelVisibility,
-        client.composerControls.length,
-        client.settingsItems.length,
-      ].some(Boolean),
-    ],
-    ["chat/uploads", client.uploads],
-    ["chat/model-visibility", client.modelVisibility],
-  ]);
-};
-
 const pluginIntegrations = (value: PluginDefinition): string[] => [
   ...enabledNames([
     ["chat/server", value.chat],
@@ -59,10 +35,13 @@ const pluginIntegrations = (value: PluginDefinition): string[] => [
     ["auth/sign-out", value.authenticationUi],
     ["navigation", value.navigation],
     ["database", value.databaseSchemas?.length],
-    ["routers", pluginHasServerEntry(value)],
-    ["instrumentation", pluginHasInstrumentationEntry(value)],
+    ["routers", hasPluginEntry(value, "router")],
+    ["instrumentation", hasPluginEntry(value, "instrumentation")],
+    ["layout", hasPluginEntry(value, "layout-ui")],
+    ["chat/ui", hasPluginEntry(value, "chat-ui")],
+    ["chat/uploads", hasPluginEntry(value, "uploads")],
+    ["chat/model-visibility", hasPluginEntry(value, "model-visibility")],
   ]),
-  ...clientIntegrations(value.client),
 ];
 
 const toolIntegrations = (value: ToolDefinition): string[] =>

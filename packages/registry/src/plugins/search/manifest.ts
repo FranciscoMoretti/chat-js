@@ -4,7 +4,7 @@ import { pluginDefinitionSchema } from "../../../metadata";
 const searchFiles = [
   "chatjs/plugins/search/backfill.ts",
   "chatjs/plugins/search/chat.ts",
-  "chatjs/plugins/search/client-plugin.ts",
+  "chatjs/plugins/search/chat-ui.ts",
   "chatjs/plugins/search/sidebar-item.tsx",
   "chatjs/plugins/search/router.ts",
   "chatjs/plugins/search/search-backfill.ts",
@@ -16,19 +16,17 @@ const searchFiles = [
   "chatjs/plugins/search/search-results-view.tsx",
   "chatjs/plugins/search/search-schema.ts",
   "chatjs/plugins/search/search-text.ts",
-  "chatjs/plugins/search/server-plugin.ts",
   "chatjs/plugins/search/use-debounced-search.ts",
   "agent/hooks/search.ts",
 ];
 const searchDefinition = pluginDefinitionSchema.parse({
-  contractVersion: 2,
+  contractVersion: 3,
   uiBase: "base",
   id: "search",
   kind: "plugin",
   files: searchFiles,
   databaseSchemas: ["chatjs/plugins/search/search-schema.ts"],
   chat: { export: "searchChat" },
-  client: { export: "searchClient", chat: true },
 });
 const searchItem: RegistryItem = {
   dependencies: [

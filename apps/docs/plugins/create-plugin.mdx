@@ -13,15 +13,15 @@ Use a working ChatJS app and a shadcn registry. Read [Using plugins](./using-plu
 
 In this repository, keep a plugin's installation manifest in `packages/registry/src/plugins/<id>/manifest.ts`, its implementation in `src/`, and its framework entrypoints in `adapters/`. Map implementation files into `~/chatjs/plugins/<id>/`. Map thin Next and EVE entrypoints into their required `app/` and `agent/` locations. List every distributed file explicitly. Tests and authoring metadata stay in the repository.
 
-`server-plugin.ts` and `client-plugin.ts` use distinct names to avoid shadcn import resolution collisions with host modules such as `lib/db/client.ts` and `trpc/server.ts`.
+Sync generates imports for the conventional entry files listed in each plugin’s descriptor.
 
 ## 2. Define the integrations
 
-Default-export a synchronous factory from `server-plugin.ts` if your plugin contributes tRPC routers. Include the entry point in the descriptor's `files` list. The factory returns an object satisfying `ChatPlugin` from `@/chatjs/core/installation/plugin`. Keep the inferred router types with `satisfies`.
+Export a namespaced tRPC `router` from `router.ts`. For example, the MCP router groups its procedures under `mcp`. Your app merges installed routers with its own in `trpc/routers/_app.ts`.
 
 For startup instrumentation, add `instrumentation.ts` to the descriptor's `files` list and default-export an `InstrumentationRegistration` function. The app loads that entry when it runs startup hooks.
 
-A client entry exports a module-scope `definePlugin` declaration. Bind components to typed slots:
+Export `chatUi` from `chat-ui.ts` and bind its components to typed slots. Use `layout-ui.ts` with a `layoutUi` export for global layout components.
 
 ```tsx
 "use client";
@@ -31,7 +31,7 @@ import { definePlugin, slot } from "@/chatjs/core/ui/slots";
 import { ConnectorsControl } from "./composer";
 import { ConnectorsSettingsLink } from "./settings";
 
-export const mcpClient = definePlugin({
+export const chatUi = definePlugin({
   id: "mcp",
   slots: [
     slot(ComposerExtensions, ConnectorsControl),
@@ -40,7 +40,7 @@ export const mcpClient = definePlugin({
 });
 ```
 
-The built-in MCP server factory is `mcp()`. Its client declaration is `mcpClient`, without a factory call. Keep credentials, database imports, and server implementations outside its import graph. Edit the bound components directly, or register normal React wrappers. Dynamic imports and Suspense can defer expensive components.
+Keep credentials and database imports in server modules. Edit the bound components directly, or wrap them with ordinary React components.
 
 Core keeps explicit optional fields such as `projectId`. Plugins validate them against their own storage and lifecycle behavior. A separate runtime-safe `chat.ts` entrypoint participates in transactional creation, history, navigation, and deletion. See [Plugin integration points](../reference/plugin-api) for signatures and lifecycle guarantees.
 
@@ -50,19 +50,15 @@ For example, this excerpt from the MCP descriptor shows how the file list regist
 
 ```json
 {
-  "contractVersion": 1,
+  "contractVersion": 3,
+  "uiBase": "base",
   "id": "mcp",
   "kind": "plugin",
-  "files": ["chatjs/plugins/mcp/server-plugin.ts"],
-  "client": {
-    "export": "mcpClient",
-    "composerControls": ["mcp"],
-    "settingsItems": ["mcp"]
-  }
+  "files": ["chatjs/plugins/mcp/router.ts", "chatjs/plugins/mcp/chat-ui.ts"]
 }
 ```
 
-The full manifest lists all installed files and also declares `databaseSchemas`, `envRequirements`, and `environmentValidation`. The registry build writes the descriptor beside the installed implementation. The app rejects duplicate and reserved router keys when composing the factories' router maps. Composer and settings IDs must be unique across plugins. The composer IDs `deep-research`, `image`, and `video`, and settings ID `general`, are reserved for the host. Only one plugin can supply uploads.
+The full manifest lists all installed files and declares `databaseSchemas`, `envRequirements`, and `environmentValidation`. tRPC rejects overlapping namespaces when the app composes its routers. Each UI scope checks that plugin IDs are unique. Only one installed plugin can own uploads or model visibility.
 
 Use `registryDependencies` to install another item and `requiresPlugins` to require its plugin ID in the installed selection. Declare `requiresStorage: true` for plugins requiring durable file storage.
 
@@ -70,7 +66,7 @@ Database schema paths must belong to `chatjs/plugins/<id>/`. Sync composes them 
 
 ## 4. Install and verify
 
-Run `chat-js sync` after a direct shadcn installation. Sync discovers plugin directories, validates descriptors and required files, checks conflicts in declared metadata, and generates ordinary TypeScript imports. The app calls the server factories when it composes routers or runs startup registrations.
+Run `chat-js sync` after a direct shadcn installation. Sync validates descriptors, checks owned files, and generates TypeScript imports. At startup, Next.js runs the default function from each installed plugin’s `instrumentation.ts`.
 
 `chat-js add` and `sync` update generated installed-plugin lists. They preserve plugin component edits and application JSX. Move slots or add local components in the layout to change placement. Within a slot, contributions follow the installed list and declaration order.
 

@@ -1,3 +1,3 @@
 import { installedRouters } from "@/chatjs/generated/installed-routers";
 
-export const routers = { ...installedRouters };
+export const routers = [...installedRouters] as const;

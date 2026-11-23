@@ -36,7 +36,7 @@ const verifyPlugins = (expected: Readonly<Record<string, string>>): void => {
     );
   }
   expect(required(expected, "chatjs/generated/installed-uploads.ts")).toContain(
-    "@/chatjs/plugins/attachment-uploads/client-plugin"
+    "@/chatjs/plugins/attachment-uploads/uploads"
   );
 };
 

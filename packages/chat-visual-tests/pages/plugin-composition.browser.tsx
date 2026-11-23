@@ -4,7 +4,7 @@ import { MessageResponses } from "@/components/chat-slots";
 import { chatPlugins } from "@/integrations/chat/ui";
 import { expect, onTestFinished, test } from "vitest";
 import { page } from "vitest/browser";
-import ChatPage from "@/app/(chat)/chat/[id]/page";
+import ChatPage from "@/app/(chat)/chat/[chatId]/page";
 import ChatLayout from "@/app/(chat)/layout";
 import type { ChatMessageProps } from "@/chatjs/core/chat/contracts";
 import {
@@ -52,11 +52,12 @@ test("published file is downloadable without a matching viewer", async () => {
   });
   await renderRoute(
     <ChatLayout>
-      <ChatPage params={Promise.resolve({ id: invoicesConversation.id })} />
+      <ChatPage params={Promise.resolve({ chatId: invoicesConversation.id })} />
     </ChatLayout>,
     {
       ...signedIn,
       path: `/chat/${invoicesConversation.chatId}`,
+      params: { chatId: invoicesConversation.chatId },
       server: { conversation: invoicesConversation, conversations: history },
       transcripts: publishedFileTranscripts,
       trpc: invoicesTrpc,
@@ -83,11 +84,12 @@ test("plugin response content composes with core message actions", async () => {
   });
   await renderRoute(
     <ChatLayout>
-      <ChatPage params={Promise.resolve({ id: invoicesConversation.id })} />
+      <ChatPage params={Promise.resolve({ chatId: invoicesConversation.id })} />
     </ChatLayout>,
     {
       ...signedIn,
       path: `/chat/${invoicesConversation.chatId}`,
+      params: { chatId: invoicesConversation.chatId },
       server: { conversation: invoicesConversation, conversations: history },
       transcripts: invoicesTranscripts,
       trpc: invoicesTrpc,
@@ -126,11 +128,14 @@ for (const media of ["image", "video"]) {
       });
       await renderRoute(
         <ChatLayout>
-          <ChatPage params={Promise.resolve({ id: invoicesConversation.id })} />
+          <ChatPage
+            params={Promise.resolve({ chatId: invoicesConversation.id })}
+          />
         </ChatLayout>,
         {
           ...signedIn,
           path: `/chat/${invoicesConversation.chatId}`,
+          params: { chatId: invoicesConversation.chatId },
           server: {
             conversation: invoicesConversation,
             conversations: history,
@@ -197,11 +202,12 @@ test("published spreadsheet opens through the optional viewer", async () => {
   );
   await renderRoute(
     <ChatLayout>
-      <ChatPage params={Promise.resolve({ id: invoicesConversation.id })} />
+      <ChatPage params={Promise.resolve({ chatId: invoicesConversation.id })} />
     </ChatLayout>,
     {
       ...signedIn,
       path: `/chat/${invoicesConversation.chatId}`,
+      params: { chatId: invoicesConversation.chatId },
       server: { conversation: invoicesConversation, conversations: history },
       transcripts,
       trpc: invoicesTrpc,
@@ -226,11 +232,12 @@ test("published spreadsheet opens through the optional viewer", async () => {
 test("native execution output and uploaded spreadsheet use core presentation", async () => {
   await renderRoute(
     <ChatLayout>
-      <ChatPage params={Promise.resolve({ id: invoicesConversation.id })} />
+      <ChatPage params={Promise.resolve({ chatId: invoicesConversation.id })} />
     </ChatLayout>,
     {
       ...signedIn,
       path: `/chat/${invoicesConversation.chatId}`,
+      params: { chatId: invoicesConversation.chatId },
       server: { conversation: invoicesConversation, conversations: history },
       transcripts: nativeFileTranscripts,
       trpc: invoicesTrpc,
@@ -250,11 +257,12 @@ test("native execution output and uploaded spreadsheet use core presentation", a
 test("native research report is published separately without a document editor", async () => {
   await renderRoute(
     <ChatLayout>
-      <ChatPage params={Promise.resolve({ id: invoicesConversation.id })} />
+      <ChatPage params={Promise.resolve({ chatId: invoicesConversation.id })} />
     </ChatLayout>,
     {
       ...signedIn,
       path: `/chat/${invoicesConversation.chatId}`,
+      params: { chatId: invoicesConversation.chatId },
       server: { conversation: invoicesConversation, conversations: history },
       transcripts: researchFileTranscripts,
       trpc: invoicesTrpc,

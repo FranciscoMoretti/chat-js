@@ -2,7 +2,7 @@ import React from "react";
 import { expect, test } from "vitest";
 
 import { Plugins } from "@/chatjs/core/ui/slots";
-import { imageViewerClient } from "../../plugins/image-viewer/src/client-plugin";
+import { chatUi as imageViewerClient } from "../../plugins/image-viewer/src/chat-ui";
 import { captureChatStory, makeCanvasDataUri } from "../_shared/visual";
 import { GenerateImageRenderer } from "./renderer";
 

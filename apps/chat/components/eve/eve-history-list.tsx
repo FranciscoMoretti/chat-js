@@ -8,8 +8,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { isToday, isYesterday, subMonths, subWeeks } from "date-fns";
-import { usePathname } from "next/navigation";
-import { useChatNavigation } from "../chat/chat-navigation";
+import { useActiveConversationId } from "../chat/chat-navigation";
 import type { JSX as ReactJSX } from "react";
 import React, { useEffect, useRef } from "react";
 
@@ -24,7 +23,6 @@ import {
 import type { listEveConversations } from "@/lib/db/eve-queries";
 import { pendingEveMetadataMutations } from "@/lib/eve/optimistic-metadata";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-import { parseChatIdFromPathname } from "@/providers/parse-chat-id-from-pathname";
 import { useTRPC } from "@/trpc/react";
 
 import { useEveDeletion } from "./eve-deletion-provider";
@@ -107,14 +105,11 @@ export const EveHistoryList = ({
         >
       ) => page.items
     ) ?? [];
-  const pathname = usePathname();
-  const navigation = useChatNavigation();
-  const route = parseChatIdFromPathname(navigation?.pathname ?? pathname);
-  const routeId = route.id;
+  const routeId = useActiveConversationId();
   const selectedIdentity = useQuery(
     trpc.eve.get.queryOptions(
       { id: routeId ?? "" },
-      { enabled: route.type === "chat" || route.type === "pluginChat" }
+      { enabled: routeId !== null }
     )
   );
   const hadPendingTitle = useRef(false);

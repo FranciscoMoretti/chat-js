@@ -90,7 +90,7 @@ assert.equal(await Bun.file("chatjs/plugins/attachment-uploads/chatjs.json").exi
 assert.equal(await Bun.file("chatjs/tools/attach-workspace-file/chatjs.json").exists(), attachesFiles);
 if (attachesFiles) {
   const uploads = await Bun.file("chatjs/plugins/attachment-uploads/chatjs.json").json();
-  assert.equal(uploads.contractVersion, 2);
+  assert.equal(uploads.contractVersion, 3);
   assert.equal(uploads.uiBase, process.env.CHATJS_NATIVE_BASE);
   process.env.DATABASE_URL = "postgresql://fixture:fixture@127.0.0.1:1/fixture";
   process.env.WORKFLOW_POSTGRES_URL = process.env.DATABASE_URL;

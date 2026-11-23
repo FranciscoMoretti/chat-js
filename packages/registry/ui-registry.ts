@@ -17,7 +17,7 @@ export const registryItemForUi = (
     typeof original === "object" &&
     original !== null &&
     "contractVersion" in original &&
-    original.contractVersion === 2 &&
+    "uiBase" in original &&
     "kind" in original
   ) {
     if (original.kind === "plugin") {

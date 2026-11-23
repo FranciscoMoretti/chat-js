@@ -1,3 +1,4 @@
+import { hasPluginEntry } from "../../../../packages/registry/plugin-entry";
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { pluginItems } from "../../../../packages/registry/src/plugins/catalog";
@@ -7,16 +8,7 @@ import { livePreviewPlugins, pluginPreviewLabel } from "./preview-capabilities";
 void test("every built-in signed-in chat UI plugin is registered in Create", () => {
   const visible = pluginItems.flatMap((item) => {
     const definition = pluginDefinitionSchema.parse(item.meta?.chatjs);
-    const { client } = definition;
-    return client &&
-      (client.chat ||
-        client.accountSummary ||
-        client.uploads ||
-        client.modelVisibility ||
-        client.composerControls.length ||
-        client.settingsItems.length)
-      ? [definition.id]
-      : [];
+    return hasPluginEntry(definition, "chat-ui") ? [definition.id] : [];
   });
   assert.deepEqual(livePreviewPlugins.toSorted(), visible.toSorted());
 });

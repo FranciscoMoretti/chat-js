@@ -293,7 +293,7 @@ export const ChatPreview = () => {
           <Activity mode={guest ? "hidden" : "visible"}>
             <ChatNavigationContext
               value={{
-                pathname: welcome ? "/" : `/chat/${sampleConversation.id}`,
+                conversationId: welcome ? null : sampleConversation.id,
                 navigate: (href) => {
                   if (href === "/") {
                     selectScene("preview");

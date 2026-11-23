@@ -123,7 +123,7 @@ test.each(["image", "video"] as const)(
 );
 test("uploads and media reject memory storage, while a minimal installation accepts it", async () => {
   const uploads = pluginDefinitionSchema.parse({
-    contractVersion: 1,
+    contractVersion: 3,
     id: "attachment-uploads",
     kind: "plugin",
     requiresStorage: true,

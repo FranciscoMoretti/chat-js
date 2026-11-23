@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { usePathname, useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 
 import { FolderPlus } from "lucide-react";
 
@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
-import { parseChatIdFromPathname } from "@/providers/parse-chat-id-from-pathname";
+import { useActiveConversationId } from "@/components/chat/chat-navigation";
 import { useTRPC } from "@/trpc/react";
 
 export const SidebarProjects = ({
@@ -33,7 +33,7 @@ export const SidebarProjects = ({
   readonly allowManagement?: boolean;
   readonly onProjectSelect?: (id: string) => void;
 }): ReactJSX.Element => {
-  const pathname = usePathname();
+  const params = useParams();
   const router = useRouter();
   const trpc = useTRPC();
   const queryClient = useQueryClient();
@@ -43,8 +43,8 @@ export const SidebarProjects = ({
   );
   const [newProjectDialogOpen, setNewProjectDialogOpen] = useState(false);
 
-  const route = parseChatIdFromPathname(pathname);
-  const activeConversationId = conversationId ?? route.id;
+  const routeChatId = useActiveConversationId();
+  const activeConversationId = conversationId ?? routeChatId;
   const membership = useQuery(
     trpc.project.forChat.queryOptions(
       { id: activeConversationId ?? "" },
@@ -52,8 +52,9 @@ export const SidebarProjects = ({
     )
   );
   const currentProjectId =
-    (route.pluginId === "projects" ? route.contextId : null) ??
-    membership.data?.id;
+    typeof params?.projectId === "string"
+      ? params.projectId
+      : membership.data?.id;
 
   const createProjectMutation = useMutation(
     trpc.project.create.mutationOptions({

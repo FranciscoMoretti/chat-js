@@ -1,4 +1,6 @@
 {
+  "contractVersion": 3,
+  "uiBase": "base",
   "id": "guest-chat",
   "kind": "plugin",
   "files": [
@@ -28,7 +30,5 @@
     "export": "guestSessionProfile",
     "authenticator": "chatjs-disposable-guest"
   },
-  "cleanup": { "export": "guestCleanup", "id": "guest-chat" },
-  "contractVersion": 2,
-  "uiBase": "base"
+  "cleanup": { "export": "guestCleanup", "id": "guest-chat" }
 }

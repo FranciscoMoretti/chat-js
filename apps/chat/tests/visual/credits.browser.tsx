@@ -7,7 +7,7 @@ import { page } from "vitest/browser";
 
 import { SidebarUserNav } from "@/components/sidebar-user-nav";
 import { SidebarProvider } from "@/components/ui/sidebar";
-import { creditsClient } from "@/chatjs/plugins/credits/client-plugin";
+import { chatUi as creditsClient } from "@/chatjs/plugins/credits/chat-ui";
 import "./sandbox.css";
 
 const Balance = createContext<{

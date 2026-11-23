@@ -4,7 +4,7 @@ import { createRoot } from "react-dom/client";
 import { expect, test, vi } from "vitest";
 import { page } from "vitest/browser";
 import { takeSnapshot } from "@uiverify/vitest";
-import { useAttachmentUploads } from "@/chatjs/plugins/attachment-uploads/integration";
+import { useAttachmentUploads } from "@/chatjs/plugins/attachment-uploads/uploads";
 import { renderRoot, unmountRoot } from "./primitive-mount";
 import "./sandbox.css";
 

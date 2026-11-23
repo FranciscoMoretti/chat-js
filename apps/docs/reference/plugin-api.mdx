@@ -13,7 +13,7 @@ Keep server and browser import graphs separate:
 
 | Entry point | Contract | Contributions |
 | --- | --- | --- |
-| `server-plugin.ts` | Default factory returning `ChatPlugin` | tRPC routers |
+| `router.ts` | Named `router` export from `createTRPCRouter` | tRPC routers |
 | `instrumentation.ts` | Default `InstrumentationRegistration` function | Startup hooks |
 | `chat.ts` | `ChatServerIntegration` | Transactional chat integration, safe for EVE and Next.js |
 | `signed-out.tsx` | React component | Optional screen for signed-out chat visitors |
@@ -23,22 +23,25 @@ Keep server and browser import graphs separate:
 | `auth-server.ts` | `AuthenticationIntegration` | Better Auth plugins, trusted origins, auth route matching |
 | `navigation.ts` | `() => boolean` | Whether core handles modified links as app navigation |
 | `auth-form.tsx`, `sign-out.ts` | `AuthenticationUi` | Authentication form wrapper and sign-out handler, imported independently |
-| `client-plugin.ts` | `definePlugin` | Typed UI slots, uploads, model visibility |
+| `chat-ui.ts`, `layout-ui.ts` | `chatUi`, `layoutUi` | Typed slots in chat or the global layout |
+| `uploads.ts` | `attachmentUploads` | Attachment handling |
+| `model-visibility.ts` | `useModelVisibility` | Model picker visibility |
 
 Keep `chat.ts` and `billing.ts` free of web routers and Next.js request helpers: native EVE loads this entrypoint too.
 
-List `chatjs/plugins/<id>/server-plugin.ts` in the descriptor's `files` array to register its default factory. Sync generates imports from that path. The app composes the returned router maps and rejects duplicate and reserved keys before merging. Use `satisfies` to preserve concrete procedure types.
+List the entry files you ship in the descriptor. Your router owns its namespace and tRPC infers procedure types through the app’s call to `mergeRouters`. For example, this router exposes `trpc.project.list`.
 
 ```ts
-import type { ChatPlugin } from "@/chatjs/core/installation/plugin";
-import { projectRouter } from "@/chatjs/plugins/projects/router";
+import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
+import { getProjectsByUserId } from "./db/project-queries";
 
-export default function projects() {
-  return {
-    id: "projects",
-    routers: { project: projectRouter },
-  } satisfies ChatPlugin;
-}
+export const router = createTRPCRouter({
+  project: {
+    list: protectedProcedure.query(({ ctx }) =>
+      getProjectsByUserId({ userId: ctx.user.id })
+    ),
+  },
+});
 ```
 
 ## Projects creation and recovery
@@ -125,7 +128,7 @@ import { ChatActions } from "@/components/chat-slots";
 import { definePlugin, slot } from "@/chatjs/core/ui/slots";
 import { ProjectChatActions } from "./ui/chat-contributions";
 
-export const projectsClient = definePlugin({
+export const chatUi = definePlugin({
   id: "projects",
   slots: [slot(ChatActions, ProjectChatActions)],
 });
@@ -156,13 +159,13 @@ Plugin components own fetching, mutations, loading, errors, dialogs, and appropr
 
 Lazy components work with `React.lazy` and normal Suspense boundaries. The declaration is imported eagerly, but a dynamic component loader runs when that component renders. Keep expensive dialog content behind its trigger. Client declarations must not import server implementations. Server-rendered children can pass through a client provider, but the slot registry itself is a client API.
 
-The descriptor's client fields still declare installation capabilities. `client.layout: true` selects the global list. Other client declarations enter the chat list. A declaration with both layout and chat UI capabilities enters both lists, so keep its imports appropriate for both scopes. Upload handling and model visibility retain their dedicated generated hooks. Runtime disable switches are not required.
+List `chat-ui.ts` for the chat scope and `layout-ui.ts` for the application shell. A plugin can ship both files. Each scope imports only its own entry.
 
-For account summaries, declare `client.accountSummary: true` and bind a component to `AccountSummary`. Set query `meta: { refreshOnTurnEnd: true }` to refresh when a turn completes, fails, or is cancelled. With no bound component, the sidebar renders only the user name.
+For account summaries, bind a component to `AccountSummary`. Set query `meta: { refreshOnTurnEnd: true }` to refresh when a turn completes, fails, or is cancelled. With no bound component, the sidebar renders only the user name.
 
 ### Model visibility
 
-Declare `client.modelVisibility: true` in your descriptor and include `useModelVisibility` in your client declaration. Sync installs one hook with the type `(defaultEnabledIds: ReadonlySet<string>) => ReadonlySet<string>`. Core calls it unconditionally from the model provider. Only one plugin can supply this contribution, so two providers fail installation before registrations change.
+Export `useModelVisibility` from `model-visibility.ts` and list that file in your descriptor. Sync installs one hook with the type `(defaultEnabledIds: ReadonlySet<string>) => ReadonlySet<string>`. Core calls it unconditionally from the model provider. Only one plugin can supply this contribution, so two providers fail installation before registrations change.
 
 Your hook owns fetching and applying user preferences. Return a stable set when its inputs are unchanged. Core filters its available catalog against the returned IDs, so an unknown ID cannot add a model. With no provider installed, the generated hook returns core defaults unchanged and performs no preference request. This contribution changes picker visibility, not authorization, capability checks, or guest session policy.
 
@@ -172,7 +175,7 @@ The `MessageActions` slot receives `{ conversationId, messageId, disabled }`. Co
 
 ### Response content
 
-Declare `client.chat: true` and bind your component with `slot(MessageResponses, YourResponses)` in a `definePlugin` client declaration. Import `MessageResponses` from `@/components/chat-slots`. Like message actions, the component receives `{ conversationId, messageId, disabled }`, typed as `ChatMessageProps`. Return `null` when your contribution does not apply to that user message. Respect `disabled` for interactions and own your fetching and recovery state.
+In `chat-ui.ts`, bind your component with `slot(MessageResponses, YourResponses)` in a `definePlugin` client declaration. Import `MessageResponses` from `@/components/chat-slots`. Like message actions, the component receives `{ conversationId, messageId, disabled }`, typed as `ChatMessageProps`. Return `null` when your contribution does not apply to that user message. Respect `disabled` for interactions and own your fetching and recovery state.
 
 `integrations/chat/ui.ts` composes installed declarations and the local Parallel Responses declaration in display order using the shared `Plugins` provider. Each is additive. Ordinary version navigation and assistant action buttons remain separate placements. Response content runs inside the account transcript's logical-chat context. Public sharing and guest transcripts do not mount this placement.
 
@@ -212,13 +215,18 @@ Declare plugin schema paths in `databaseSchemas`. Drizzle composes installed sch
 
 ```json
 {
-  "contractVersion": 1,
+  "contractVersion": 3,
+  "uiBase": "base",
   "id": "projects",
   "kind": "plugin",
   "databaseSchemas": ["chatjs/plugins/projects/db/project-schema.ts"],
-  "files": ["chatjs/plugins/projects/server-plugin.ts"],
-  "chat": { "export": "projectsChat" },
-  "client": { "export": "projectsClient", "chat": true }
+  "files": [
+    "chatjs/plugins/projects/router.ts",
+    "chatjs/plugins/projects/chat-ui.ts",
+    "chatjs/plugins/projects/chat.ts",
+    "chatjs/plugins/projects/db/project-schema.ts"
+  ],
+  "chat": { "export": "projectsChat" }
 }
 ```
 

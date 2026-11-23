@@ -1,10 +1,4 @@
-import type { AnyTRPCRouter } from "@trpc/server";
 import type { DraftAttachment } from "@/lib/eve/draft";
-
-/** Preserve inferred procedure types: use `satisfies`, never annotate the map. */
-type InstalledRouters = Record<string, AnyTRPCRouter> & {
-  eve?: never;
-};
 
 /** Installed once; only filters the picker. Core retains catalog and eligibility. */
 type ModelVisibility = (
@@ -37,6 +31,5 @@ export type {
   AttachmentUploadBehavior,
   AttachmentUploadInput,
   AttachmentUploadIntegration,
-  InstalledRouters,
   InstrumentationRegistration,
 };

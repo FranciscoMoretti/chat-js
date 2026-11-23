@@ -10,12 +10,12 @@ import {
   toolDefinitionSchema,
 } from "../../../registry/metadata";
 
-test("legacy descriptors remain readable; Base UI requires explicit version 2", () => {
+test("plugin and tool descriptors validate their own contract versions", () => {
   const plugin = { id: "custom", kind: "plugin", files: [] };
   expect(
-    pluginDefinitionSchema.parse({ ...plugin, contractVersion: 1 })
+    pluginDefinitionSchema.parse({ ...plugin, contractVersion: 3 })
       .contractVersion
-  ).toBe(1);
+  ).toBe(3);
   expect(
     pluginDefinitionSchema.safeParse({
       ...plugin,
@@ -29,7 +29,7 @@ test("legacy descriptors remain readable; Base UI requires explicit version 2", 
   expect(
     pluginDefinitionSchema.parse({
       ...plugin,
-      contractVersion: 2,
+      contractVersion: 3,
       uiBase: "base",
     }).uiBase
   ).toBe("base");
@@ -62,7 +62,7 @@ test.each(["new-york", "radix-rhea", "aria-rhea", undefined])(
       const plugin = pluginDefinitionSchema.parse({
         id: "base-plugin",
         kind: "plugin",
-        contractVersion: 2,
+        contractVersion: 3,
         uiBase: "base",
       });
       let registered = false;
@@ -113,7 +113,7 @@ test("sync validates Base UI plugins before regenerating tool registrations", as
     await writeFile(
       path.join(root, "chatjs/plugins/base-plugin/chatjs.json"),
       JSON.stringify({
-        contractVersion: 2,
+        contractVersion: 3,
         uiBase: "base",
         id: "base-plugin",
         kind: "plugin",
@@ -161,7 +161,7 @@ test("Radix descriptors require Radix and cannot be mixed with Base descriptors"
     const plugin = pluginDefinitionSchema.parse({
       id: "radix-plugin",
       kind: "plugin",
-      contractVersion: 2,
+      contractVersion: 3,
       uiBase: "radix",
     });
     await assertUiCompatibility(root, [plugin]);

@@ -1,17 +1,11 @@
 {
+  "contractVersion": 3,
+  "uiBase": "base",
   "id": "image-viewer",
   "kind": "plugin",
   "files": [
-    "chatjs/plugins/image-viewer/client-plugin.ts",
+    "chatjs/plugins/image-viewer/chat-ui.ts",
     "chatjs/plugins/image-viewer/viewer-action.tsx",
     "chatjs/plugins/image-viewer/image-modal.tsx"
-  ],
-  "client": {
-    "export": "imageViewerClient",
-    "composerControls": [],
-    "settingsItems": [],
-    "chat": true
-  },
-  "contractVersion": 2,
-  "uiBase": "base"
+  ]
 }

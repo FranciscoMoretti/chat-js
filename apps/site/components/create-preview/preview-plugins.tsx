@@ -7,24 +7,24 @@ import { createTRPCClient } from "@trpc/client";
 import type { AppRouter } from "../../../chat/trpc/routers/_app";
 import { TRPCProvider } from "../../../chat/trpc/context";
 import { SessionContext } from "../../../chat/providers/session-context";
-import { spreadsheetViewerClient } from "../../../chat/chatjs/plugins/spreadsheet-viewer/client-plugin";
-import { videoViewerClient } from "../../../chat/chatjs/plugins/video-viewer/client-plugin";
-import { imageViewerClient } from "../../../chat/chatjs/plugins/image-viewer/client-plugin";
+import { chatUi as spreadsheetViewerClient } from "../../../chat/chatjs/plugins/spreadsheet-viewer/chat-ui";
+import { chatUi as videoViewerClient } from "../../../chat/chatjs/plugins/video-viewer/chat-ui";
+import { chatUi as imageViewerClient } from "../../../chat/chatjs/plugins/image-viewer/chat-ui";
 import { Plugins } from "../../../chat/chatjs/core/ui/slots";
-import { feedbackClient } from "../../../chat/chatjs/plugins/feedback/client-plugin";
-import { projectsClient } from "../../../chat/chatjs/plugins/projects/client-plugin";
+import { chatUi as feedbackClient } from "../../../chat/chatjs/plugins/feedback/chat-ui";
+import { chatUi as projectsClient } from "../../../chat/chatjs/plugins/projects/chat-ui";
 import { createFixtureTransport } from "./fixture-transport";
-import { creditsClient } from "../../../chat/chatjs/plugins/credits/client-plugin";
-import { searchClient } from "../../../chat/chatjs/plugins/search/client-plugin";
+import { chatUi as creditsClient } from "../../../chat/chatjs/plugins/credits/chat-ui";
+import { chatUi as searchClient } from "../../../chat/chatjs/plugins/search/chat-ui";
 import { livePreviewPlugins } from "./preview-capabilities";
 import type { UiPlugin } from "../../../chat/chatjs/core/ui/slots";
-import { mcpClient } from "../../../chat/chatjs/plugins/mcp/client-plugin";
-import { sharingClient } from "../../../chat/chatjs/plugins/sharing/client-plugin";
-import { followupSuggestionsClient } from "../../../chat/chatjs/plugins/followup-suggestions/client-plugin";
+import { chatUi as mcpClient } from "../../../chat/chatjs/plugins/mcp/chat-ui";
+import { chatUi as sharingClient } from "../../../chat/chatjs/plugins/sharing/chat-ui";
+import { chatUi as followupSuggestionsClient } from "../../../chat/chatjs/plugins/followup-suggestions/chat-ui";
 import { SharingEnvironmentContext } from "../../../chat/chatjs/plugins/sharing/ui/share-button";
 
-import { modelPreferencesClient } from "../../../chat/chatjs/plugins/model-preferences/client-plugin";
-import { attachmentUploadsClient } from "../../../chat/chatjs/plugins/attachment-uploads/client-plugin";
+import { chatUi as modelPreferencesClient } from "../../../chat/chatjs/plugins/model-preferences/chat-ui";
+import { chatUi as attachmentUploadsClient } from "../../../chat/chatjs/plugins/attachment-uploads/chat-ui";
 
 const FixtureContext = createContext<ReturnType<
   typeof createFixtureTransport

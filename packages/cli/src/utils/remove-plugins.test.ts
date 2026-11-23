@@ -260,7 +260,7 @@ test("required plugins and app-owned imports block removal before mutation", asy
     JSON.stringify({
       id: "dependent",
       kind: "plugin",
-      contractVersion: 1,
+      contractVersion: 3,
       requiresPlugins: ["projects"],
     })
   );
@@ -271,7 +271,7 @@ test("required plugins and app-owned imports block removal before mutation", asy
   await rm(path.join(root, "chatjs/plugins/dependent"), { recursive: true });
   await writeFile(
     path.join(root, "custom.ts"),
-    'export { projectsClient } from "@/chatjs/plugins/projects/client-plugin";'
+    'export { projectsClient } from "@/chatjs/plugins/projects/chat-ui";'
   );
   await rejects(
     removePlugins(root, ["projects"], { backup: true }),

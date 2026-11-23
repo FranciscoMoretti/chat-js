@@ -4,22 +4,20 @@ import { pluginDefinitionSchema } from "../../../metadata";
 const creditsFiles = [
   "chatjs/plugins/credits/balance.tsx",
   "chatjs/plugins/credits/billing.ts",
-  "chatjs/plugins/credits/client-plugin.ts",
+  "chatjs/plugins/credits/chat-ui.ts",
   "chatjs/plugins/credits/credits-queries.ts",
   "chatjs/plugins/credits/credits-schema.ts",
   "chatjs/plugins/credits/router.ts",
-  "chatjs/plugins/credits/server-plugin.ts",
   "chatjs/plugins/credits/use-credits.ts",
 ];
 const creditsDefinition = pluginDefinitionSchema.parse({
-  contractVersion: 2,
+  contractVersion: 3,
   uiBase: "base",
   id: "credits",
   kind: "plugin",
   files: creditsFiles,
   databaseSchemas: ["chatjs/plugins/credits/credits-schema.ts"],
   billing: { export: "creditsBilling" },
-  client: { export: "creditsClient", accountSummary: true },
 });
 const creditsItem: RegistryItem = {
   name: "credits",

@@ -7,7 +7,7 @@ import { getEveMessageVotes } from "./feedback-queries";
 import { voteEveMessage } from "./vote-message";
 
 const MAX_MESSAGE_ID_LENGTH = 512;
-export const feedbackRouter = createTRPCRouter({
+const feedbackProcedures = {
   vote: eveOwnedProcedure
     .input(
       z.object({
@@ -49,4 +49,6 @@ export const feedbackRouter = createTRPCRouter({
         readonly input: { readonly conversationId: string };
       }) => await getEveMessageVotes(ctx.eveOwnerId, input.conversationId)
     ),
-});
+};
+
+export const router = createTRPCRouter({ feedback: feedbackProcedures });

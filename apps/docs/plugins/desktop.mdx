@@ -62,7 +62,7 @@ Repository contributors edit the canonical web plugin in `packages/registry/src/
 
 Desktop provides server authentication, an authentication form wrapper and sign-out handler, modified-link navigation, and a layout component. These are explicit contracts in the [Plugin API](../reference/plugin-api). Each authentication or navigation slot accepts one provider. The layout placement is shared with other plugins.
 
-Navigation and sign-out import renderer detection from the dependency-free bridge module. The form and sign-out handler have separate generated imports; neither navigation nor sign-out imports the client factory, login form, or session overlay. The client factory owns only the layout contribution. Core retains its regular web authentication and form presentation.
+Navigation and sign-out import renderer detection from the dependency-free bridge module. The form and sign-out handler have separate generated imports; neither navigation nor sign-out imports the layout declaration, login form, or session overlay. The global slot binding lives in `layout-ui.ts`. Core retains its regular web authentication and form presentation.
 
 ## Without Desktop
 

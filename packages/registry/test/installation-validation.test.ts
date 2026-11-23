@@ -137,7 +137,7 @@ for (const plugin of plugins) {
       typecheckProject(output.files, validationDependencyFixtures).diagnostics
     ).toEqual([]);
     if (plugin.id === "search") {
-      output.files.delete("chatjs/plugins/search/server-plugin.ts");
+      output.files.delete("chatjs/plugins/search/router.ts");
       expect(
         typecheckProject(
           output.files,

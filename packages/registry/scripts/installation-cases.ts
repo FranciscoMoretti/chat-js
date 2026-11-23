@@ -1,11 +1,8 @@
+import { hasPluginEntry } from "../plugin-entry";
 import { registry } from "../registry";
 import { demoInstallation } from "../installation";
 import type { InstallationSelection } from "../installation";
-import {
-  pluginDefinitionSchema,
-  pluginHasServerEntry,
-  toolDefinitionSchema,
-} from "../metadata";
+import { pluginDefinitionSchema, toolDefinitionSchema } from "../metadata";
 
 const plugins = registry.items.flatMap((item) => {
   const result = pluginDefinitionSchema.safeParse(item.meta?.chatjs);
@@ -32,12 +29,9 @@ for (const plugin of plugins) {
   const points = [
     ...(plugin.chat ? ["chat"] : []),
     ...((plugin.databaseSchemas?.length ?? 0) > 0 ? ["databaseSchemas"] : []),
-    ...(pluginHasServerEntry(plugin) ? ["server"] : []),
-    ...Object.entries(plugin.client ?? {}).flatMap(([key, value]) =>
-      value === true || (Array.isArray(value) && value.length > 0)
-        ? [`client.${key}`]
-        : []
-    ),
+    ...(
+      ["router", "chat-ui", "layout-ui", "uploads", "model-visibility"] as const
+    ).filter((entry) => hasPluginEntry(plugin, entry)),
   ];
   for (const point of points) {
     channels.set(point, [...(channels.get(point) ?? []), plugin.id]);

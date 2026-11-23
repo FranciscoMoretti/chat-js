@@ -1,7 +1,7 @@
 import type { RegistryItem } from "shadcn/schema";
 import { pluginDefinitionSchema } from "../../../metadata";
 
-const files = ["client-plugin.ts", "viewer-action.tsx"];
+const files = ["chat-ui.ts", "viewer-action.tsx"];
 export const videoViewerItem: RegistryItem = {
   name: "video-viewer",
   title: "Video viewer",
@@ -16,12 +16,11 @@ export const videoViewerItem: RegistryItem = {
   })),
   meta: {
     chatjs: pluginDefinitionSchema.parse({
-      contractVersion: 2,
+      contractVersion: 3,
       uiBase: "base",
       id: "video-viewer",
       kind: "plugin",
       files: files.map((file) => `chatjs/plugins/video-viewer/${file}`),
-      client: { export: "videoViewerClient", chat: true },
     }),
   },
 };

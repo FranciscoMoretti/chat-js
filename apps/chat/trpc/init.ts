@@ -84,6 +84,7 @@ const { createCallerFactory } = trpc;
  * @see https://trpc.io/docs/router
  */
 const createTRPCRouter = trpc.router;
+const { mergeRouters } = trpc;
 
 const MIN_DEVELOPMENT_DELAY_MS = 100;
 const DEVELOPMENT_DELAY_RANGE_MS = 400;
@@ -167,6 +168,7 @@ export {
   createCallerFactory,
   createTRPCContext,
   createTRPCRouter,
+  mergeRouters,
   protectedProcedure,
   publicProcedure,
 };

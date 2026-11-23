@@ -4,11 +4,11 @@ import { installationActivation } from "./installation-activation";
 test("separates declared composition, native entry points and ordinary framework source", () => {
   const result = installationActivation(
     {
-      contractVersion: 1,
+      contractVersion: 3,
       id: "projects",
       kind: "plugin",
       chat: { export: "projects" },
-      files: ["chatjs/plugins/projects/server-plugin.ts"],
+      files: ["chatjs/plugins/projects/router.ts"],
       databaseSchemas: ["chatjs/plugins/projects/schema.ts"],
     },
     [
@@ -39,7 +39,7 @@ test("separates declared composition, native entry points and ordinary framework
 test("reports plugin startup wiring from its owned instrumentation entry", () => {
   const result = installationActivation(
     {
-      contractVersion: 1,
+      contractVersion: 3,
       id: "startup",
       kind: "plugin",
       files: ["chatjs/plugins/startup/instrumentation.ts"],

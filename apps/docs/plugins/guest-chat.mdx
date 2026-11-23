@@ -54,7 +54,7 @@ The plugin implementation lives in `chatjs/plugins/guest-chat/`:
 | `guest-policy.ts` | Model, rate, input, output, and expiry policy |
 | `guest-schema.ts`, `guest-queries.ts` | Durable admission, isolation, and cleanup inventory |
 | `cleanup.ts`, `guest-cleanup.ts` | Bounded native session retirement and local policy completion |
-| `server-plugin.ts`, `guest-scheduler.ts` | Local development cleanup registration |
+| `instrumentation.ts`, `guest-scheduler.ts` | Local development cleanup registration |
 
 `app/api/eve-guest/route.ts` is a thin adapter. Core imports generated registrations, not this implementation. Account tools and hooks require the registered account authenticator. Unknown or removed session profiles cannot fall back to account capabilities.
 

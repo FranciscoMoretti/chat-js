@@ -66,6 +66,10 @@ export const assertCurrentInstallationLayout = async (
   // Detect this even when an app has deleted its old custom-tools/custom-ui files.
   const oldExports = [
     [
+      "installed-routers",
+      /export const installedRouters = (?:mergePluginRouters\(|\{\};)/u,
+    ],
+    [
       "installed-auth",
       /export const installedAuth:\s*AuthenticationIntegration\b/u,
     ],
@@ -100,7 +104,7 @@ export const assertCurrentInstallationLayout = async (
   legacy.push(...incompatible.filter((target) => target !== null));
   if (legacy.length > 0) {
     throw new Error(
-      `Legacy ChatJS installation layout detected: ${legacy.join(", ")}. Before add, sync, or remove, move generated registrations to chatjs/generated and installation metadata/backups from .chatjs to chatjs without overwriting existing files. Move installed infrastructure to chatjs/core and selected provider implementations/configuration to chatjs/providers, updating imports and preserving source receipts. Adopt the current app-owned integrations/ modules and move custom tools/renderers there, plugin implementations/descriptors to chatjs/plugins/<id>, and installed tools/descriptors to chatjs/tools/<id>. Update app imports and plugin descriptors/factories to the current template contract, then remove the old registration files. Existing files were not changed.`
+      `Legacy ChatJS installation layout detected: ${legacy.join(", ")}. Before add, sync, or remove, move generated registrations to chatjs/generated and installation metadata/backups from .chatjs to chatjs without overwriting existing files. Move installed infrastructure to chatjs/core and selected provider implementations/configuration to chatjs/providers, updating imports and preserving source receipts. Adopt the current app-owned integrations/ modules and move custom tools/renderers there, plugin implementations/descriptors to chatjs/plugins/<id>, and installed tools/descriptors to chatjs/tools/<id>. Update app imports and plugin descriptors/entry points to the current template contract, then remove the old registration files. Existing files were not changed.`
     );
   }
 };

@@ -81,7 +81,7 @@ test.each([
       "lib/eve/message-delivery.test.ts",
       "chatjs/generated/tools.ts",
       "chatjs/core/ui/slots.tsx",
-      "chatjs/plugins/example/client-plugin.ts",
+      "chatjs/plugins/example/chat-ui.ts",
       "chatjs/tools/example/tool.ts",
       "chatjs/providers/gateway.ts",
     ];

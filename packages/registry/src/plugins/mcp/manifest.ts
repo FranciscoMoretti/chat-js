@@ -40,12 +40,11 @@ const mcpFiles = [
   "chatjs/plugins/mcp/search/mcp-search-params.ts",
   "chatjs/plugins/mcp/search/mcp-search-params.server.ts",
   "chatjs/plugins/mcp/router.ts",
-  "chatjs/plugins/mcp/client-plugin.ts",
-  "chatjs/plugins/mcp/server-plugin.ts",
+  "chatjs/plugins/mcp/chat-ui.ts",
 ];
 
 const mcpDefinition = pluginDefinitionSchema.parse({
-  contractVersion: 2,
+  contractVersion: 3,
   uiBase: "base",
   databaseSchemas: ["chatjs/plugins/mcp/db/mcp-schema.ts"],
   environmentValidation: "mcp-env.ts",
@@ -53,11 +52,6 @@ const mcpDefinition = pluginDefinitionSchema.parse({
   id: "mcp",
   kind: "plugin",
   files: mcpFiles,
-  client: {
-    export: "mcpClient",
-    composerControls: ["mcp"],
-    settingsItems: ["mcp"],
-  },
 });
 
 const mcpItem: RegistryItem = {

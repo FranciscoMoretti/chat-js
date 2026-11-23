@@ -1,6 +1,6 @@
 ---
 title: URL Routing
-description: URL structure and pathname parsing utilities
+description: Conversation and project URLs and their Next.js route parameters
 ---
 
 This page explains the URL routing structure used in ChatJS.
@@ -10,20 +10,17 @@ This page explains the URL routing structure used in ChatJS.
 | Route Pattern | Description |
 | --- | --- |
 | `/` | Home page, draft chat (not yet persisted) |
-| `/chat/:id` | Standalone chat page |
+| `/chat/:chatId` | Standalone chat page |
 | `/share/:id` | Public shared chat page (read-only) |
 | `/project/:projectId` | Project page, draft chat within project |
-| `/project/:projectId/chat/:chatId` | Chat within a project |
+| `/project/:projectId/chat/:chatId` | Validates project membership and redirects to the conversation |
 
-## Parsing Pathnames
+## Reading the active conversation
 
-Use `parseChatIdFromPathname` from `@/providers/parse-chat-id-from-pathname` to classify chat, project chat, shared chat, draft, and passthrough routes.
+Shared chat components use `useActiveConversationId()` from `@/components/chat/chat-navigation`. In a Next.js app it reads the `[chatId]` route parameter. An embedded chat supplies its conversation ID through `ChatNavigationContext`. Public share links use a separate `[id]` parameter.
 
-## Related Hooks
-
-- **`useCurrentChatRoute()`** - Returns the parsed route for client components that need the active chat or project scope
-- **`useDraftChatId()`** - Returns a client-generated draft id for writable home and project routes
+Projects reads `[projectId]` in its own sidebar component. For a conversation with project membership, Projects provides `parentHref` through its chat integration so deletion returns the user to the project.
 
 See [Execution & Recovery](../core/execution) for how conversation creation and recovery preserve state during first-message navigation.
 
-See [Projects](/plugins/projects) for how project-scoped routes work.
+See [Projects](../plugins/projects) for how project-scoped routes work.
