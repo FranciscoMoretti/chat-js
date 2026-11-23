@@ -1,0 +1,132 @@
+name: Flashwright benchmark
+
+on:
+  push:
+    branches: [codex/flashwright-ci]
+
+permissions:
+  contents: read
+
+jobs:
+  benchmark:
+    name: Browser tests (${{ matrix.runner }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: Playwright 1.59.1 (current CI)
+            package: "@playwright/test@1.59.1"
+          - runner: Playwright 1.64.1
+            package: "@playwright/test@1.64.1"
+          - runner: Flashwright
+            package: "@playwright/test@npm:flashwright-test@1.64.1-flashwright.12"
+    container:
+      # Use the same OS libraries and fonts as the required Playwright job.
+      image: mcr.microsoft.com/playwright:v1.59.1-noble@sha256:eac9b0a5312cdab40ee8c2429df5bf19bffdccf8f3bf3c42268e173f97541645
+      options: --ipc=host
+    defaults:
+      run:
+        shell: bash
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: chatjs_ci
+          POSTGRES_USER: chatjs
+          POSTGRES_PASSWORD: chatjs
+        options: >-
+          --health-cmd "pg_isready -U chatjs -d chatjs_ci" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      CI_PLAYWRIGHT: "true"
+      AUTH_SECRET: flashwright-benchmark-isolated-test-auth-secret
+      DATABASE_URL: postgres://chatjs:chatjs@postgres:5432/chatjs_ci
+      WORKFLOW_POSTGRES_URL: postgres://chatjs:chatjs@postgres:5432/chatjs_ci
+      EVE_ALLOW_REMOTE_DATABASE_TESTS: "true"
+      EVE_TEST_DATABASE_URL: postgres://chatjs:chatjs@postgres:5432/chatjs_ci
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      EVE_GATEWAY_SECRET: playwright-isolated-eve-gateway-secret
+      # Public test-only AES-256 key for the isolated MCP fixture.
+      MCP_ENCRYPTION_KEY: "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8="
+      EVE_INTERNAL_ORIGIN: http://localhost:3000
+      FLASHWRIGHT_SESSION: "0"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install Bun
+        run: npm install --global bun@1.3.1 --no-audit --no-fund
+      - name: Install workspace dependencies
+        run: bun install --frozen-lockfile --filter './' --filter './apps/chat' --filter './packages/registry'
+      - name: Install benchmark runner and browser
+        id: runner
+        working-directory: apps/chat
+        env:
+          RUNNER_PACKAGE: ${{ matrix.package }}
+        run: |
+          runner_dir="$RUNNER_TEMP/benchmark-runner"
+          mkdir -p "$runner_dir" node_modules/@playwright
+          printf '{"private":true}\n' > "$runner_dir/package.json"
+          bun add --cwd "$runner_dir" --exact --ignore-scripts "$RUNNER_PACKAGE"
+          # Resolve the same runner from both the CLI and existing test imports.
+          if [ -e node_modules/@playwright/test ] || [ -L node_modules/@playwright/test ]; then
+            mv node_modules/@playwright/test "$RUNNER_TEMP/workspace-playwright"
+          fi
+          ln -s "$runner_dir/node_modules/@playwright/test" node_modules/@playwright/test
+          node node_modules/@playwright/test/cli.js --version
+          node node_modules/@playwright/test/cli.js install --only-shell chromium
+      - name: Migrate isolated test database
+        run: bun run --cwd apps/chat db:migrate
+      - name: Bootstrap isolated EVE workflow database
+        run: bun run --cwd apps/chat eve:setup
+      - name: Time app routes
+        working-directory: apps/chat
+        env:
+          PLAYWRIGHT: "True"
+        run: |
+          export PLAYWRIGHT_JSON_OUTPUT_FILE="$RUNNER_TEMP/app.json"
+          TIMEFORMAT='App routes wall time: %3R seconds'
+          time node node_modules/@playwright/test/cli.js test --config playwright.eve-ci-app.config.ts --workers=4 --reporter=list,json
+      - name: Time standalone browser fixtures
+        if: ${{ !cancelled() && steps.runner.outcome == 'success' }}
+        working-directory: apps/chat
+        run: |
+          export PLAYWRIGHT_JSON_OUTPUT_FILE="$RUNNER_TEMP/fixtures.json"
+          TIMEFORMAT='Standalone browser fixtures wall time: %3R seconds'
+          time node node_modules/@playwright/test/cli.js test --config playwright.eve-ci-fixtures.config.ts --reporter=list,json
+      - name: Summarize test results
+        if: ${{ !cancelled() }}
+        env:
+          BENCHMARK_RUNNER: ${{ matrix.runner }}
+        run: |
+          node --input-type=module >>"$GITHUB_STEP_SUMMARY" <<'JS'
+          import { existsSync, readFileSync } from "node:fs";
+          import { join } from "node:path";
+
+          console.log(`### ${process.env.BENCHMARK_RUNNER}\n`);
+          console.log("| Suite | Runner time | Expected | Unexpected | Flaky | Skipped |");
+          console.log("| --- | ---: | ---: | ---: | ---: | ---: |");
+          for (const [name, report] of [["App routes", "app.json"], ["Standalone browser fixtures", "fixtures.json"]]) {
+            const path = join(process.env.RUNNER_TEMP, report);
+            if (existsSync(path)) {
+              const { stats } = JSON.parse(readFileSync(path, "utf8"));
+              console.log(`| ${name} | ${(stats.duration / 1000).toFixed(2)} s | ${stats.expected} | ${stats.unexpected} | ${stats.flaky} | ${stats.skipped} |`);
+            } else {
+              console.log(`| ${name} | No report | | | | |`);
+            }
+          }
+          JS
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: browser-results-${{ strategy.job-index }}
+          path: |
+            ${{ runner.temp }}/app.json
+            ${{ runner.temp }}/fixtures.json
+            apps/chat/test-results/
+            apps/chat/tests/eve-results/ci-fixtures/
+          retention-days: 7
