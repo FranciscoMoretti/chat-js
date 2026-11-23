@@ -43,11 +43,15 @@ test("guest welcome locks the model picker", async ({ page }) => {
 
 test("guest errors preserve the message draft", async ({ page }) => {
   const fixture = page.getByTestId("guest-visual");
-  await fixture
-    .getByRole("textbox", { exact: true, name: "Message" })
-    .fill("Preserve this draft");
+  const message = fixture.getByRole("textbox", {
+    exact: true,
+    name: "Message",
+  });
+  await message.fill("Preserve this draft");
   await fixture.getByRole("button", { exact: true, name: "Send" }).click();
   await expect(fixture.getByRole("alert")).toBeVisible();
+  await expect(message).toHaveText("Preserve this draft");
+  await message.blur();
   await expect(fixture).toHaveScreenshot("guest-error.png");
 });
 
