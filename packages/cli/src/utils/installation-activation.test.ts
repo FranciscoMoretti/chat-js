@@ -8,7 +8,7 @@ test("separates declared composition, native entry points and ordinary framework
       id: "projects",
       kind: "plugin",
       chat: { export: "projects" },
-      server: { export: "projects", routers: ["projects"] },
+      files: ["chatjs/plugins/projects/server-plugin.ts"],
       databaseSchemas: ["chatjs/plugins/projects/schema.ts"],
     },
     [
@@ -34,6 +34,19 @@ test("separates declared composition, native entry points and ordinary framework
     { path: "app/(chat)/project/[id]/page.tsx", convention: "Next.js page" },
   ]);
   expect(result.frameworkFiles).toEqual(["app/(chat)/project/helper.ts"]);
+});
+
+test("reports plugin startup wiring from its owned instrumentation entry", () => {
+  const result = installationActivation(
+    {
+      contractVersion: 1,
+      id: "startup",
+      kind: "plugin",
+      files: ["chatjs/plugins/startup/instrumentation.ts"],
+    },
+    []
+  );
+  expect(result.integrations).toEqual(["integrations/instrumentation.ts"]);
 });
 test("describes custom tool definitions without evaluating them", () => {
   const result = installationActivation(

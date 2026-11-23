@@ -178,7 +178,7 @@ test("partial MCP installation cannot register routes", async (): Promise<void> 
       path.join(root, "chatjs/generated/installed-routers.ts"),
       "utf-8"
     )
-  ).not.toContain("mcpRouter");
+  ).not.toContain("@/chatjs/plugins/mcp/server-plugin");
 });
 
 test("MCP installation contributes its schema without modifying core tables", async (): Promise<void> => {
@@ -256,7 +256,9 @@ test("MCP installation contributes its schema without modifying core tables", as
         path.join(root, "chatjs/generated/installed-routers.ts"),
         "utf-8"
       )
-    ).toContain("mcp: plugin0().routers.mcp");
+    ).toContain(
+      'import createMcpPlugin from "@/chatjs/plugins/mcp/server-plugin"'
+    );
   } finally {
     await server.stop(true);
   }
@@ -390,7 +392,7 @@ test("third-party plugins contribute without CLI changes or executing their serv
       contractVersion: 1,
       id: "team-notes",
       kind: "plugin",
-      server: { export: "teamNotes", routers: ["notes"] },
+      files: ["chatjs/plugins/team-notes/server-plugin.ts"],
       client: {
         export: "teamNotesClient",
         composerControls: ["team-notes"],
@@ -413,8 +415,10 @@ test("third-party plugins contribute without CLI changes or executing their serv
     path.join(root, "chatjs/generated/installed-routers.ts"),
     "utf-8"
   );
-  expect(routers).toContain('from "@/chatjs/plugins/team-notes/server-plugin"');
-  expect(routers).toContain("notes: plugin0().routers.notes");
+  expect(routers).toContain(
+    'import createTeamNotesPlugin from "@/chatjs/plugins/team-notes/server-plugin"'
+  );
+  expect(routers).toContain("mergePluginRouters([\n  createTeamNotesPlugin(),");
   const composer = await readFile(
     path.join(root, "chatjs/generated/installed-chat-ui.ts"),
     "utf-8"
@@ -436,44 +440,113 @@ test("third-party plugins contribute without CLI changes or executing their serv
   ).toBe(composer);
 });
 
-for (const key of ["eve"]) {
-  test(`plugin router ${key} cannot replace a core router or partially edit UI`, async () => {
-    const root = await fixture();
-    await initializePluginUi(root);
-    const before = await readFile(
-      path.join(root, "composer-controls.ts"),
-      "utf-8"
+const serverFixture = async (): Promise<string> => {
+  const root = await fixture();
+  const core = "chatjs/core/installation";
+  await mkdir(path.join(root, core), { recursive: true });
+  await cp(
+    path.join(demo, core, "plugin.ts"),
+    path.join(root, core, "plugin.ts")
+  );
+  await writeFile(
+    path.join(root, core, "contracts.ts"),
+    "export type InstalledRouters = Record<string, { readonly label: string }> & { eve?: never };\nexport type InstrumentationRegistration = () => void | Promise<void>;"
+  );
+  return root;
+};
+
+const writeServerPlugin = async (
+  root: string,
+  id: string,
+  source: string
+): Promise<void> => {
+  const directory = `chatjs/plugins/${id}`;
+  await mkdir(path.join(root, directory), { recursive: true });
+  await writeFile(path.join(root, directory, "server-plugin.ts"), source);
+  await writeFile(
+    path.join(root, directory, "chatjs.json"),
+    JSON.stringify({
+      contractVersion: 1,
+      kind: "plugin",
+      id,
+      files: [`${directory}/server-plugin.ts`],
+    })
+  );
+};
+
+test("server wiring composes typed router maps and supports instrumentation-only plugins", async () => {
+  const root = await serverFixture();
+  await writeServerPlugin(
+    root,
+    "team-notes",
+    `Object.assign(globalThis, { notesLoaded: true });
+export default () => ({ id: "team-notes", routers: { notes: { label: "notes", list: () => ["first"] }, archive: { label: "archive" } } });`
+  );
+  await writeServerPlugin(
+    root,
+    "policy",
+    'export default () => ({ id: "policy" });'
+  );
+  const directory = "chatjs/plugins/startup";
+  await mkdir(path.join(root, directory), { recursive: true });
+  await writeFile(
+    path.join(root, directory, "instrumentation.ts"),
+    `export default () => { Object.assign(globalThis, { startupRan: true }); };`
+  );
+  await writeFile(
+    path.join(root, directory, "chatjs.json"),
+    JSON.stringify({
+      contractVersion: 1,
+      kind: "plugin",
+      id: "startup",
+      files: [`${directory}/instrumentation.ts`],
+    })
+  );
+  await syncPlugins(root);
+  const config = path.join(root, "chatjs/generated/installed-routers.ts");
+  await writeFile(
+    config,
+    `${await readFile(config, "utf-8")}\ninstalledRouters.notes.list();\n`
+  );
+  expect(registrationDiagnostics(root, "routers")).toEqual([]);
+  expect(
+    await runRegistration(
+      root,
+      "routers",
+      'assert.deepEqual(Object.keys(registration.installedRouters), ["notes", "archive"]);'
+    )
+  ).toEqual({ exitCode: 0, stderr: "" });
+  expect(
+    await runRegistration(
+      root,
+      "instrumentation",
+      "await Promise.all(registration.installedInstrumentation.map((register) => register()));\nassert.equal(globalThis.startupRan, true);\nassert.equal(Object.hasOwn(globalThis, 'notesLoaded'), false);"
+    )
+  ).toEqual({ exitCode: 0, stderr: "" });
+});
+
+test.each(["eve", "notes"])(
+  "composing routers rejects the conflicting key %s",
+  async (key) => {
+    const root = await serverFixture();
+    await writeServerPlugin(
+      root,
+      "first",
+      'export default () => ({ id: "first", routers: { notes: { label: "first" } } });'
     );
-    await mkdir(path.join(root, "chatjs/plugins/conflict"), {
-      recursive: true,
-    });
-    await writeFile(
-      path.join(root, "chatjs/plugins/conflict/server-plugin.ts"),
-      ""
+    await writeServerPlugin(
+      root,
+      "second",
+      `export default () => ({ id: "second", routers: { ${key}: { label: "second" } } });`
     );
-    await writeFile(
-      path.join(root, "chatjs/plugins/conflict/chatjs.json"),
-      JSON.stringify({
-        contractVersion: 1,
-        id: "conflict",
-        kind: "plugin",
-        server: { export: "conflict", routers: [key] },
-      })
+    await syncPlugins(root);
+    const result = await runRegistration(root, "routers", "");
+    expect(result.exitCode).not.toBe(0);
+    expect(result.stderr).toContain(
+      `Duplicate or reserved plugin router: ${key}`
     );
-    expect(syncPlugins(root, {})).rejects.toThrow(
-      "Duplicate or reserved plugin router"
-    );
-    expect(
-      await readFile(path.join(root, "composer-controls.ts"), "utf-8")
-    ).toBe(before);
-    expect(
-      await readFile(
-        path.join(root, "chatjs/generated/installed-routers.ts"),
-        "utf-8"
-      )
-    ).not.toContain("conflict");
-  });
-}
+  }
+);
 
 for (const [contribution, ids] of [
   ["composerControls", ["deep-research", "image", "video"]],
@@ -530,7 +603,7 @@ test.each([
   },
 ])(
   "optional plugin $router installs independently of the other chat plugins",
-  async ({ item, router, schema }) => {
+  async ({ item, schema }) => {
     const root = await fixture();
     await initializePluginUi(root);
     const uninstalled = await Promise.all(
@@ -570,7 +643,7 @@ test.each([
         path.join(root, "chatjs/generated/installed-model-visibility.ts"),
         "utf-8"
       );
-      expect(visibility).toContain("plugin0.useModelVisibility");
+      expect(visibility).toContain("modelPreferencesClient.useModelVisibility");
       expect(visibility).toContain(
         "@/chatjs/plugins/model-preferences/client-plugin"
       );
@@ -584,7 +657,7 @@ test.each([
         path.join(root, "chatjs/generated/installed-routers.ts"),
         "utf-8"
       )
-    ).toContain(`${router}: plugin0().routers.${router}`);
+    ).toContain(`from "@/chatjs/plugins/${item.name}/server-plugin"`);
     expect(
       await readFile(
         path.join(root, "chatjs/generated/installed-database.ts"),
@@ -665,7 +738,7 @@ test("credits registers native billing and account UI; removing it restores opti
     "chatjs/plugins/credits/credits-schema"
   );
   expect(await registration("routers")).toContain(
-    "credits: plugin0().routers.credits"
+    'import createCreditsPlugin from "@/chatjs/plugins/credits/server-plugin"'
   );
   await rm(path.join(root, "chatjs/plugins/credits"), { recursive: true });
   await syncPlugins(root);
@@ -722,8 +795,8 @@ test("UI registration preserves module-scope plugin declarations without invokin
     path.join(root, "chatjs/generated/installed-chat-ui.ts"),
     "utf-8"
   );
-  expect(source).toContain("[plugin0]");
-  expect(source).not.toContain("plugin0()");
+  expect(source).toContain("[mcpClient]");
+  expect(source).not.toContain("mcpClient()");
   expect(source).not.toContain("server-plugin");
 });
 

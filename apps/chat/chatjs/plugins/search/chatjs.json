@@ -22,7 +22,6 @@
   ],
   "databaseSchemas": ["chatjs/plugins/search/search-schema.ts"],
   "chat": { "export": "searchChat" },
-  "server": { "export": "search", "routers": ["search"] },
   "client": {
     "export": "searchClient",
     "composerControls": [],

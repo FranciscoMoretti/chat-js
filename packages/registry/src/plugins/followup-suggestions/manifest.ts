@@ -25,10 +25,6 @@ const followupSuggestionsDefinition = pluginDefinitionSchema.parse({
   kind: "plugin",
   files: followupSuggestionsFiles,
   databaseSchemas: ["chatjs/plugins/followup-suggestions/followup-schema.ts"],
-  server: {
-    export: "followupSuggestions",
-    routers: ["followupSuggestions"],
-  },
   chat: { export: "followupChat" },
   client: { export: "followupSuggestionsClient", chat: true },
 });

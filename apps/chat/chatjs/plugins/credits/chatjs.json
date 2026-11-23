@@ -13,7 +13,6 @@
   ],
   "databaseSchemas": ["chatjs/plugins/credits/credits-schema.ts"],
   "billing": { "export": "creditsBilling" },
-  "server": { "export": "credits", "routers": ["credits"] },
   "client": {
     "export": "creditsClient",
     "composerControls": [],

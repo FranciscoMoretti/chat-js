@@ -53,7 +53,6 @@ const mcpDefinition = pluginDefinitionSchema.parse({
   id: "mcp",
   kind: "plugin",
   files: mcpFiles,
-  server: { export: "mcp", routers: ["mcp"] },
   client: {
     export: "mcpClient",
     composerControls: ["mcp"],

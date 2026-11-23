@@ -1,8 +1,9 @@
 import type { ChatPlugin } from "@/chatjs/core/installation/plugin";
 import { projectRouter } from "./router";
 
-export const projects = () =>
-  ({
+export default function projects() {
+  return {
     id: "projects",
     routers: { project: projectRouter },
-  }) satisfies ChatPlugin;
+  } satisfies ChatPlugin;
+}

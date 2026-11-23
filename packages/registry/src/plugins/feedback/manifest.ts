@@ -19,7 +19,6 @@ const feedbackDefinition = pluginDefinitionSchema.parse({
   kind: "plugin",
   files: feedbackFiles,
   databaseSchemas: ["chatjs/plugins/feedback/feedback-schema.ts"],
-  server: { export: "feedback", routers: ["feedback"] },
   chat: { export: "feedbackChat" },
   client: { export: "feedbackClient", chat: true },
 });

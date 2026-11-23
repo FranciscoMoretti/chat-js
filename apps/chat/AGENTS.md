@@ -8,7 +8,7 @@ These instructions apply to this application directory.
 - Keep shadcn primitives in `components/ui`; its config is `components.json`.
 - EVE is the only chat runtime. Browser commands enter through `app/api/eve/[...path]/route.ts`; agent hooks and tools live in `agent/`.
 - Keep core tables in `lib/db/schema.ts`; installable plugins own their schema and query modules. Declare plugin schemas in their manifests so `chatjs/generated/installed-database.ts` composes the installed selection.
-- Core routers compose in `trpc/routers/_app.ts`. Plugins declare routers in their descriptor and server factory; sync generates their registration.
+- Core routers compose in `trpc/routers/_app.ts`. Plugin routers live in the default factory in `server-plugin.ts`. Sync registers the entry point from its owned file path.
 - Edit plugin implementations in `packages/registry/src/plugins/<id>/src`, run root `bun dev`, and save to update the installed reference copies automatically. Installed registry files in this reference app are disposable registry-mirror output; local edits are overwritten. Use `bun demo:sync` for one-shot regeneration and `bun demo:check` for verification. Keep framework entrypoints thin.
 
 ## Commands

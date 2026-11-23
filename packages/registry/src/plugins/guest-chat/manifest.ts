@@ -15,8 +15,8 @@ const guestChatFiles = [
   "chatjs/plugins/guest-chat/guest-queries.ts",
   "chatjs/plugins/guest-chat/guest-scheduler.ts",
   "chatjs/plugins/guest-chat/guest-schema.ts",
+  "chatjs/plugins/guest-chat/instrumentation.ts",
   "chatjs/plugins/guest-chat/routes/create-session.ts",
-  "chatjs/plugins/guest-chat/server-plugin.ts",
   "chatjs/plugins/guest-chat/session-profile.ts",
   "chatjs/plugins/guest-chat/signed-out.tsx",
 ];
@@ -37,7 +37,6 @@ const guestChatDefinition = pluginDefinitionSchema.parse({
     authenticator: "chatjs-disposable-guest",
   },
   cleanup: { export: "guestCleanup", id: "guest-chat" },
-  server: { export: "guestChat", instrumentation: true },
 });
 const guestChatItem: RegistryItem = {
   name: "guest-chat",

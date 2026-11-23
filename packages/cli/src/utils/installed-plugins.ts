@@ -12,9 +12,6 @@ import { preflight } from "./preflight";
 const pluginSourceFiles = (definition: PluginDefinition): string[] => [
   ...new Set([
     ...definition.files,
-    ...(definition.server
-      ? [`chatjs/plugins/${definition.id}/server-plugin.ts`]
-      : []),
     ...(definition.chat ? [`chatjs/plugins/${definition.id}/chat.ts`] : []),
     ...(definition.billing
       ? [`chatjs/plugins/${definition.id}/billing.ts`]

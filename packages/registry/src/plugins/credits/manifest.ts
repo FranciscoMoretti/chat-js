@@ -18,7 +18,6 @@ const creditsDefinition = pluginDefinitionSchema.parse({
   kind: "plugin",
   files: creditsFiles,
   databaseSchemas: ["chatjs/plugins/credits/credits-schema.ts"],
-  server: { export: "credits", routers: ["credits"] },
   billing: { export: "creditsBilling" },
   client: { export: "creditsClient", accountSummary: true },
 });

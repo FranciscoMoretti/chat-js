@@ -49,7 +49,6 @@ const projectsDefinition = pluginDefinitionSchema.parse({
   kind: "plugin",
   files: projectsFiles,
   databaseSchemas: ["chatjs/plugins/projects/db/project-schema.ts"],
-  server: { export: "projects", routers: ["project"] },
   chat: { export: "projectsChat" },
   client: { export: "projectsClient", chat: true },
 });

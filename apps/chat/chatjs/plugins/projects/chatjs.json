@@ -38,7 +38,6 @@
   ],
   "databaseSchemas": ["chatjs/plugins/projects/db/project-schema.ts"],
   "chat": { "export": "projectsChat" },
-  "server": { "export": "projects", "routers": ["project"] },
   "client": {
     "export": "projectsClient",
     "composerControls": [],

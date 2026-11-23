@@ -964,7 +964,9 @@ for (const installAtCreation of [false, true]) {
         nodePath.join(cwd, "chatjs/generated/installed-routers.ts"),
         "utf-8"
       )
-    ).toContain("mcp: plugin0().routers.mcp");
+    ).toContain(
+      'import createMcpPlugin from "@/chatjs/plugins/mcp/server-plugin"'
+    );
     const composer = await readFile(
       nodePath.join(cwd, "composer-controls.ts"),
       "utf-8"

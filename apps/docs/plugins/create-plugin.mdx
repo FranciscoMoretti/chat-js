@@ -17,7 +17,9 @@ In this repository, keep a plugin's installation manifest in `packages/registry/
 
 ## 2. Define the integrations
 
-A server factory returns an object satisfying `ChatPlugin` from `@/chatjs/core/installation/plugin`. It can contribute typed tRPC `routers` and an `instrumentation` registration. Keep the inferred router types with `satisfies`.
+Default-export a synchronous factory from `server-plugin.ts` if your plugin contributes tRPC routers. Include the entry point in the descriptor's `files` list. The factory returns an object satisfying `ChatPlugin` from `@/chatjs/core/installation/plugin`. Keep the inferred router types with `satisfies`.
+
+For startup instrumentation, add `instrumentation.ts` to the descriptor's `files` list and default-export an `InstrumentationRegistration` function. The app loads that entry when it runs startup hooks.
 
 A client entry exports a module-scope `definePlugin` declaration. Bind components to typed slots:
 
@@ -44,14 +46,14 @@ Core keeps explicit optional fields such as `projectId`. Plugins validate them a
 
 ## 3. Declare the installation
 
-For example, MCP declares these contributions in `chatjs.json`:
+For example, this excerpt from the MCP descriptor shows how the file list registers the server entry point:
 
 ```json
 {
   "contractVersion": 1,
   "id": "mcp",
   "kind": "plugin",
-  "server": { "export": "mcp", "routers": ["mcp"] },
+  "files": ["chatjs/plugins/mcp/server-plugin.ts"],
   "client": {
     "export": "mcpClient",
     "composerControls": ["mcp"],
@@ -60,7 +62,7 @@ For example, MCP declares these contributions in `chatjs.json`:
 }
 ```
 
-The full manifest also declares `files`, `databaseSchemas`, `envRequirements`, and `environmentValidation`. The registry build writes the descriptor beside the installed implementation. Router keys must be unique and cannot replace core routers. Composer and settings IDs must be unique across plugins. The composer IDs `canvas`, `web-search`, `deep-research`, `image`, and `video`, and settings ID `general`, are reserved for the host. Only one plugin can supply uploads.
+The full manifest lists all installed files and also declares `databaseSchemas`, `envRequirements`, and `environmentValidation`. The registry build writes the descriptor beside the installed implementation. The app rejects duplicate and reserved router keys when composing the factories' router maps. Composer and settings IDs must be unique across plugins. The composer IDs `deep-research`, `image`, and `video`, and settings ID `general`, are reserved for the host. Only one plugin can supply uploads.
 
 Use `registryDependencies` to install another item and `requiresPlugins` to require its plugin ID in the installed selection. Declare `requiresStorage: true` for plugins requiring durable file storage.
 
@@ -68,7 +70,7 @@ Database schema paths must belong to `chatjs/plugins/<id>/`. Sync composes them 
 
 ## 4. Install and verify
 
-Run `chat-js sync` after a direct shadcn installation. Sync discovers plugin directories, validates descriptors and required source, checks contribution collisions, and then generates registrations. It reads metadata without importing server factories or requiring their runtime credentials.
+Run `chat-js sync` after a direct shadcn installation. Sync discovers plugin directories, validates descriptors and required files, checks conflicts in declared metadata, and generates ordinary TypeScript imports. The app calls the server factories when it composes routers or runs startup registrations.
 
 `chat-js add` and `sync` update generated installed-plugin lists. They preserve plugin component edits and application JSX. Move slots or add local components in the layout to change placement. Within a slot, contributions follow the installed list and declaration order.
 
