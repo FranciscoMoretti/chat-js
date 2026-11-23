@@ -53,16 +53,11 @@ jobs:
     if: needs.affected.outputs.run == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
-    container:
-      # Match the Playwright version in bun.lock. Includes Chromium, fonts, and OS libraries.
-      image: mcr.microsoft.com/playwright:v1.59.1-noble@sha256:eac9b0a5312cdab40ee8c2429df5bf19bffdccf8f3bf3c42268e173f97541645
-      options: --ipc=host
-    defaults:
-      run:
-        shell: bash
     services:
       postgres:
         image: postgres:17
+        ports:
+          - 127.0.0.1:55432:5432
         env:
           POSTGRES_DB: chatjs_ci
           POSTGRES_USER: chatjs
@@ -72,12 +67,10 @@ jobs:
     env:
       CI_PLAYWRIGHT: "true"
       AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
-      # The job container reaches its isolated PostgreSQL service at the service hostname.
-      DATABASE_URL: postgres://chatjs:chatjs@postgres:5432/chatjs_ci
-      WORKFLOW_POSTGRES_URL: postgres://chatjs:chatjs@postgres:5432/chatjs_ci
+      DATABASE_URL: postgres://chatjs:chatjs@127.0.0.1:55432/chatjs_ci
+      WORKFLOW_POSTGRES_URL: postgres://chatjs:chatjs@127.0.0.1:55432/chatjs_ci
       EVE_ALLOW_REMOTE_DATABASE_TESTS: "true"
-      EVE_TEST_DATABASE_URL: postgres://chatjs:chatjs@postgres:5432/chatjs_ci
-      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      EVE_TEST_DATABASE_URL: postgres://chatjs:chatjs@127.0.0.1:55432/chatjs_ci
       EVE_GATEWAY_SECRET: playwright-isolated-eve-gateway-secret
       # Public test-only AES-256 key for the isolated MCP fixture.
       MCP_ENCRYPTION_KEY: "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8="
@@ -90,35 +83,60 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-      - name: Install Bun
-        # The browser image has no unzip for setup-bun.
-        run: npm install --global bun@1.3.1 --no-audit --no-fund
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.1
       - name: Install Playwright workspace dependencies
-        # The presentation fixtures load fonts from the registry workspace.
         run: bun install --frozen-lockfile --filter './' --filter './apps/chat' --filter './packages/registry'
-      - name: Verify the browser image matches Playwright
+      - name: Install Chromium headless shell
         working-directory: apps/chat
-        run: |
-          chromium="$(node -p 'require("playwright").chromium.executablePath()')"
-          if [ ! -x "$chromium" ]; then
-            echo "::error::Update the Playwright image in this workflow to match the browser version in bun.lock."
-            exit 1
-          fi
+        run: bun run playwright install --only-shell chromium
       - name: Check Playwright task isolation
         run: bun test scripts/playwright-task-graph.test.ts
       - name: Migrate isolated test database
         run: bun run --cwd apps/chat db:migrate
       - name: Bootstrap isolated EVE workflow database
         run: bun run --cwd apps/chat eve:setup
-      - run: bunx turbo run test:e2e --filter=@chatjs/chat
-      - name: Test conversation presentation
+      - name: Test app routes
         working-directory: apps/chat
-        run: bunx playwright test --config playwright.eve-presentation.config.ts
+        env:
+          PLAYWRIGHT: "True"
+        run: bun run playwright test --config playwright.eve-ci-app.config.ts --workers=2 --reporter=list,html
       - uses: actions/upload-artifact@v4
         if: always() && !cancelled()
         with:
           name: playwright-report
-          path: |
-            apps/chat/playwright-report/
-            apps/chat/tests/eve-results/presentation/
+          path: apps/chat/playwright-report/
+          retention-days: 7
+
+  fixtures:
+    name: Playwright fixtures
+    needs: affected
+    if: needs.affected.outputs.run == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.1
+      - name: Install Playwright workspace dependencies
+        # The presentation fixtures load fonts from the registry workspace.
+        run: bun install --frozen-lockfile --filter './' --filter './apps/chat' --filter './packages/registry'
+      - name: Install Chromium headless shell
+        working-directory: apps/chat
+        run: bun run playwright install --only-shell chromium
+      - name: Test standalone browser fixtures
+        working-directory: apps/chat
+        run: bun run playwright test --config playwright.eve-ci-fixtures.config.ts
+      - uses: actions/upload-artifact@v4
+        if: always() && !cancelled()
+        with:
+          name: playwright-fixture-results
+          path: apps/chat/tests/eve-results/ci-fixtures/
           retention-days: 7

@@ -28,7 +28,7 @@ jobs:
               { file: "lint.yml", jobs: ["Lint"], allowSkipped: true },
               { file: "typecheck.yml", jobs: ["Typecheck"], allowSkipped: true },
               { file: "unit.yml", jobs: ["Unit"], allowSkipped: true },
-              { file: "playwright.yml", jobs: ["Playwright"], allowSkipped: true },
+              { file: "playwright.yml", jobs: ["Playwright", "Playwright fixtures"], allowSkipped: true },
               {
                 file: "cli-scaffold-fast.yml",
                 jobs: ["CLI Scaffold Fast (packed-install)", "CLI Scaffold Fast (registry)"],
