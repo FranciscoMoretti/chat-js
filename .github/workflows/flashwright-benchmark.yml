@@ -88,14 +88,14 @@ jobs:
         env:
           PLAYWRIGHT: "True"
         run: |
-          export PLAYWRIGHT_JSON_OUTPUT_FILE="$RUNNER_TEMP/app.json"
+          export PLAYWRIGHT_JSON_OUTPUT_FILE="$RUNNER_TEMP/benchmark-reports/app.json"
           TIMEFORMAT='App routes wall time: %3R seconds'
           time node node_modules/@playwright/test/cli.js test --config playwright.eve-ci-app.config.ts --workers=4 --reporter=list,json
       - name: Time standalone browser fixtures
         if: ${{ !cancelled() && steps.runner.outcome == 'success' }}
         working-directory: apps/chat
         run: |
-          export PLAYWRIGHT_JSON_OUTPUT_FILE="$RUNNER_TEMP/fixtures.json"
+          export PLAYWRIGHT_JSON_OUTPUT_FILE="$RUNNER_TEMP/benchmark-reports/fixtures.json"
           TIMEFORMAT='Standalone browser fixtures wall time: %3R seconds'
           time node node_modules/@playwright/test/cli.js test --config playwright.eve-ci-fixtures.config.ts --reporter=list,json
       - name: Summarize test results
@@ -111,7 +111,7 @@ jobs:
           console.log("| Suite | Runner time | Expected | Unexpected | Flaky | Skipped |");
           console.log("| --- | ---: | ---: | ---: | ---: | ---: |");
           for (const [name, report] of [["App routes", "app.json"], ["Standalone browser fixtures", "fixtures.json"]]) {
-            const path = join(process.env.RUNNER_TEMP, report);
+            const path = join(process.env.RUNNER_TEMP, "benchmark-reports", report);
             if (existsSync(path)) {
               const { stats } = JSON.parse(readFileSync(path, "utf8"));
               console.log(`| ${name} | ${(stats.duration / 1000).toFixed(2)} s | ${stats.expected} | ${stats.unexpected} | ${stats.flaky} | ${stats.skipped} |`);
@@ -125,8 +125,7 @@ jobs:
         with:
           name: browser-results-${{ strategy.job-index }}
           path: |
-            ${{ runner.temp }}/app.json
-            ${{ runner.temp }}/fixtures.json
+            ${{ runner.temp }}/benchmark-reports/
             apps/chat/test-results/
             apps/chat/tests/eve-results/ci-fixtures/
           retention-days: 7
