@@ -8,7 +8,9 @@ import type { EveComposer } from "@/components/eve/eve-composer";
 import { NewEveConversation } from "@/components/eve/new-eve-conversation";
 import {
   prepareResponseGroupCreation,
+  readCreationFollowUp,
   readCreationRequest,
+  saveCreationFollowUp,
 } from "@/lib/eve/pending-create";
 import { CreationRejectedError } from "@/lib/eve/create-conversation";
 import { mount, unmount } from "@/tests/visual/primitive-mount";
@@ -82,6 +84,7 @@ vi.mock("@/components/eve/eve-composer", () => ({
 
 test("creation shows progress before a deferred request completes", async () => {
   sessionStorage.clear();
+  saveCreationFollowUp(sessionStorage, "test-owner", "Keep this draft");
   const pending = Promise.withResolvers<never>();
   runtime.resolve.mockReturnValue(pending.promise);
   const fixture = await mount(<NewEveConversation ownerId="test-owner" />);
@@ -104,6 +107,11 @@ test("creation shows progress before a deferred request completes", async () => 
     await takeSnapshot("creation-pending-request");
     await page.getByRole("main").screenshot();
     await act(async () => {
+      await page
+        .getByRole("textbox", { name: "Message" })
+        .fill("Keep this follow-up");
+    });
+    await act(async () => {
       pending.reject(new CreationRejectedError("Creation rejected"));
       await expect(pending.promise).rejects.toBeInstanceOf(
         CreationRejectedError
@@ -115,6 +123,14 @@ test("creation shows progress before a deferred request completes", async () => 
     await expect
       .element(page.getByRole("button", { name: "Send" }))
       .toBeEnabled();
+    await act(async () => {
+      await page
+        .getByRole("textbox", { name: "Message" })
+        .fill("Edit the rejected request");
+    });
+    expect(readCreationFollowUp(sessionStorage, "test-owner")).toBe(
+      "Keep this follow-up"
+    );
   } finally {
     await act(async () => {
       pending.reject(new CreationRejectedError("Test cleanup"));

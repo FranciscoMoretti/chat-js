@@ -226,6 +226,7 @@ export const useNewEveConversation = ({
           retainOperation(operation);
           if (recoveredFollowUp) {
             saveCreationFollowUp(sessionStorage, ownerId, "", scope);
+            store.set("recoveredFollowUp", false);
           }
           const binding = await resolveCreationRequest(
             sessionStorage,
