@@ -33,14 +33,20 @@ type MessageBlock =
       readonly entry: MessagePart;
     };
 
+const inlineDeliverableTools = new Set([
+  "attach_workspace_file",
+  "generateImage",
+  "generateVideo",
+]);
+
 const messageBlocks = (parts: readonly MessagePart[]): MessageBlock[] => {
   const blocks: MessageBlock[] = [];
   for (const { key, part } of parts) {
-    // Published file deliverables stay in the transcript when activity is collapsed.
+    // Published files and generated media stay visible when activity is collapsed.
     const isActivity =
       part.type === "reasoning" ||
       (part.type === "tool" &&
-        !(part.name === "attach_workspace_file" && part.state === "completed"));
+        !(part.state === "completed" && inlineDeliverableTools.has(part.name)));
     if (isActivity) {
       const last = blocks.at(-1);
       if (last?.kind === "activity") {
