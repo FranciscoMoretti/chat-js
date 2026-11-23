@@ -2,8 +2,8 @@ import React from "react";
 import { expect, test, vi } from "vitest";
 import { page, userEvent } from "vitest/browser";
 import { takeSnapshot } from "@uiverify/vitest";
-import { EvePendingInput } from "@/components/eve/eve-pending-input";
-import type { InteractionRequest, Answer } from "eve/events";
+import { EveInteraction } from "@/components/eve/eve-pending-input";
+import type { Interaction, Answer } from "eve/events";
 
 import {
   Context,
@@ -19,34 +19,40 @@ import { EveSearchResultsView } from "@/chatjs/plugins/search/search-results-vie
 import { mount, unmount } from "./primitive-mount";
 import "./sandbox.css";
 
-type MessageInteraction = InteractionRequest & {
-  readonly interactionId: string;
-};
-
-const question: MessageInteraction = {
+const question: Interaction = {
   interactionId: "fixture-question",
-  kind: "question",
-  display: "select",
-  prompt: "Which topic should we research?",
-  options: [
-    {
-      id: "accessibility",
-      label: "Accessibility",
-      description: "Keyboard and screen reader support",
-    },
-    { id: "performance", label: "Performance" },
-  ],
-  allowFreeform: true,
+  turnId: "fixture-turn",
+  stepIndex: 0,
+  status: "open",
+  request: {
+    kind: "question",
+    display: "select",
+    prompt: "Which topic should we research?",
+    options: [
+      {
+        id: "accessibility",
+        label: "Accessibility",
+        description: "Keyboard and screen reader support",
+      },
+      { id: "performance", label: "Performance" },
+    ],
+    allowFreeform: true,
+  },
 };
-const approval: MessageInteraction = {
+const approval: Interaction = {
   interactionId: "fixture-approval",
-  kind: "approval",
-  display: "confirmation",
-  prompt: "Delete this document?",
-  options: [
-    { id: "deny", label: "Keep document" },
-    { id: "approve", label: "Delete document", style: "danger" },
-  ],
+  turnId: "fixture-turn",
+  stepIndex: 0,
+  status: "open",
+  request: {
+    kind: "approval",
+    display: "confirmation",
+    prompt: "Delete this document?",
+    options: [
+      { id: "deny", label: "Keep document" },
+      { id: "approve", label: "Delete document", style: "danger" },
+    ],
+  },
 };
 
 for (const viewport of [
@@ -62,18 +68,18 @@ for (const viewport of [
         dir={viewport.dir}
         className="mx-auto flex max-w-2xl flex-col gap-6 p-4"
       >
-        <EvePendingInput
-          request={question}
+        <EveInteraction
+          interaction={question}
           disabled={false}
           respond={respond}
         />
-        <EvePendingInput
-          request={approval}
+        <EveInteraction
+          interaction={approval}
           disabled={false}
           respond={respond}
         />
         <section aria-label="Read-only approval">
-          <EvePendingInput request={approval} disabled respond={respond} />
+          <EveInteraction interaction={approval} disabled respond={respond} />
         </section>
         <Context
           usedTokens={2400}
@@ -149,7 +155,7 @@ for (const viewport of [
       await expect
         .element(page.getByText("Input", { exact: true }))
         .toBeVisible();
-      await page.getByText(question.prompt, { exact: true }).hover();
+      await page.getByText(question.request.prompt, { exact: true }).hover();
       await expect
         .poll(() =>
           page.getByRole("progressbar", { name: "Context used" }).query()

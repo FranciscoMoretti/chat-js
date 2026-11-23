@@ -2,8 +2,9 @@
 
 import { hasText } from "@/components/text-value";
 
-import type { Answer } from "eve/events";
-import React from "react";
+import { interactions } from "eve/events";
+import type { Answer, Interaction, SessionView } from "eve/events";
+import React, { useMemo } from "react";
 import type { JSX as ReactJSX, ReactNode } from "react";
 import { toast } from "sonner";
 
@@ -21,7 +22,7 @@ import type {
 import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 
 import { EveAttachment } from "../eve/eve-attachment";
-import { EveMessagePart } from "../eve/eve-message-part";
+import { EveMessageContent } from "../eve/eve-message-content";
 import { MessageActions } from "@/components/chat-slots";
 
 const messagePartIdentity = (part: ReadonlyEveMessagePart): string => {
@@ -77,6 +78,7 @@ interface ChatTranscriptProps {
   ) => string | undefined;
   readonly disabled: boolean;
   readonly inputDisabled?: boolean;
+  readonly view?: SessionView;
   readonly respond: (response: Answer) => void;
 }
 
@@ -88,6 +90,7 @@ interface MessageRowProps extends Omit<
   readonly userMessage: ReadonlyEveMessage | undefined;
   readonly isLast: boolean;
   readonly actionsDisabled: boolean;
+  readonly interactionsByCall: ReadonlyMap<string, readonly Interaction[]>;
 }
 
 const AssistantFeedback = ({
@@ -242,6 +245,8 @@ const EveMessageRow = ({
   disabled,
   actionsDisabled,
   inputDisabled,
+  view,
+  interactionsByCall,
   respond,
   onEdit,
   onRegenerate,
@@ -319,16 +324,15 @@ const EveMessageRow = ({
       actions={actions}
       followUp={isLast && !isReadonly && !actionsDisabled && suggestions}
     >
-      {message.parts.map((part): React.JSX.Element => (
-        <EveMessagePart
-          inputDisabled={responseDisabled(isReadonly, disabled, inputDisabled)}
-          isReadonly={isReadonly}
-          key={nextPartKey(part)}
-          messageId={message.id}
-          part={part}
-          respond={respond}
-        />
-      ))}
+      <EveMessageContent
+        inputDisabled={responseDisabled(isReadonly, disabled, inputDisabled)}
+        interactionsByCall={interactionsByCall}
+        isReadonly={isReadonly}
+        messageId={message.id}
+        parts={message.parts.map((part) => ({ key: nextPartKey(part), part }))}
+        respond={respond}
+        view={view}
+      />
     </ChatMessageView>
   );
 };
@@ -339,8 +343,31 @@ export const ChatTranscript = ({
   messageKey,
   disabled,
   actionsDisabled = disabled,
+  view,
   ...props
 }: ChatTranscriptProps): ReactJSX.Element[] => {
+  const interactionsByCall = useMemo(() => {
+    const byCall = new Map<string, Interaction[]>();
+    if (view !== undefined) {
+      for (const interaction of interactions(view)) {
+        const callId = interaction.call?.callId;
+        const { kind } = interaction.request;
+        if (
+          callId === undefined ||
+          (kind !== "question" && kind !== "approval")
+        ) {
+          continue;
+        }
+        const entries = byCall.get(callId);
+        if (entries) {
+          entries.push(interaction);
+        } else {
+          byCall.set(callId, [interaction]);
+        }
+      }
+    }
+    return byCall;
+  }, [view]);
   const precedingUsers: (ReadonlyEveMessage | undefined)[] = [];
   let precedingUser: ReadonlyEveMessage | undefined;
   for (const message of messages) {
@@ -362,6 +389,8 @@ export const ChatTranscript = ({
         isLast={message.id === messages.at(-1)?.id}
         disabled={disabled}
         actionsDisabled={actionsDisabled}
+        interactionsByCall={interactionsByCall}
+        view={view}
       />
     </MessageScrollerItem>
   ));

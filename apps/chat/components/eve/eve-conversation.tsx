@@ -1,5 +1,14 @@
 "use client";
-import type { SessionStreamEvent } from "eve/client";
+import { SessionNotActiveError } from "eve/client";
+import {
+  activeTurn,
+  failure,
+  openInteractions,
+  session,
+  turn,
+  turns,
+} from "eve/events";
+import type { Answer, SessionView } from "eve/events";
 
 import { useEveDeliveryReceipt } from "./use-eve-delivery-receipt";
 
@@ -26,7 +35,11 @@ import { isEveAdmissionBusy } from "@/lib/eve/admission-retry";
 import { isEveCommandRejection } from "@/lib/eve/command-rejection";
 import type { DraftAttachment } from "@/lib/eve/draft";
 import { draftMessage, restoreDraft } from "@/lib/eve/draft";
-import type { LogicalChat, LogicalChatSnapshot } from "@/lib/eve/logical-chat";
+import type {
+  LogicalChat,
+  LogicalChatSnapshot,
+  NativeChatAgent,
+} from "@/lib/eve/logical-chat";
 import { logicalResponseSlots } from "@/lib/eve/logical-response-slots";
 import type { ActivePendingEveMessage } from "@/lib/eve/message-delivery";
 import { EVE_MESSAGE_OPERATION_HEADER } from "@/lib/eve/message-delivery";
@@ -56,25 +69,48 @@ import { useEveFork } from "./use-eve-fork";
 import { useEveMessageDelivery } from "./use-eve-message-delivery";
 import { useLogicalCommands } from "./use-logical-commands";
 
-const settledError = (
-  event: SessionStreamEvent | undefined
-): string | undefined => {
-  if (event?.type !== "turn.settled") {
-    return undefined;
-  }
-  return event.data.error?.message;
-};
-
 const composerStatus = (
-  status: string
+  status: string,
+  turnOpen = false
 ): "submitted" | "streaming" | "ready" => {
   if (status === "resuming") {
     return "submitted";
   }
-  if (status === "busy") {
+  if (status === "busy" || turnOpen) {
     return "streaming";
   }
   return "ready";
+};
+
+const recordedError = (view: SessionView): string | undefined => {
+  const latestTurn = turns(view).at(-1);
+  return latestTurn?.status === "running"
+    ? undefined
+    : failure(view, latestTurn?.turnId)?.message;
+};
+
+const isInactive = (error: Error | undefined): boolean =>
+  SessionNotActiveError.is(error) && error.code === "session_not_active";
+
+const interactionControls = (
+  agent: Pick<NativeChatAgent, "view" | "error" | "status">,
+  commandFailure: Error | undefined,
+  cancelPending: boolean
+) => {
+  const { view, status, error } = agent;
+  const sessionEnded =
+    session(view).status === "ended" ||
+    isInactive(error) ||
+    isInactive(commandFailure);
+  return {
+    turnOpen: !sessionEnded && activeTurn(view) !== undefined,
+    hasApproval:
+      !sessionEnded &&
+      openInteractions(view).some(
+        ({ turnId }) => turn(view, turnId)?.outcome !== "cancelled"
+      ),
+    inputDisabled: status === "resuming" || cancelPending || sessionEnded,
+  };
 };
 
 const sameComposerDraft = (
@@ -184,11 +220,6 @@ const conversationStatus = (
   }
   return label;
 };
-
-const isAnswerDisabled = (
-  status: string | undefined,
-  commandPending: boolean
-): boolean => commandPending || status === "busy" || status === "resuming";
 
 const isExecutionBusy = (status: string | undefined): boolean =>
   status === "busy" || status === "resuming";
@@ -403,6 +434,7 @@ const EveConversationComposer = ({
   input,
   pendingMessage,
   status,
+  turnOpen,
   busy,
   commandPending,
   cancelPending,
@@ -417,6 +449,7 @@ const EveConversationComposer = ({
   readonly input: ReturnType<typeof useConversationInput>;
   readonly pendingMessage: ReturnType<typeof useEveMessageDelivery>["pending"];
   readonly status: ReturnType<typeof useEveAgent>["status"];
+  readonly turnOpen: boolean;
   readonly busy: boolean;
   readonly commandPending: boolean;
   readonly cancelPending: boolean;
@@ -441,7 +474,7 @@ const EveConversationComposer = ({
         </p>
       )}
       <EveComposer
-        status={composerStatus(status)}
+        status={composerStatus(status, turnOpen)}
         disabled={
           !composerDraft.loaded ||
           busy ||
@@ -524,8 +557,8 @@ const EveConversation = ({
   const commandFailure = command.failure;
   const commandPending = command.pending;
   const cancelPending = command.cancelling;
-  const setCommandFailure = (failure?: Error): void => {
-    controller.commands.update(conversationId, { failure });
+  const setCommandFailure = (error?: Error): void => {
+    controller.commands.update(conversationId, { failure: error });
   };
   const { text: draft, setText: setDraft } = composerDraft;
   const agent = snapshot.agents.get(conversationId);
@@ -537,12 +570,10 @@ const EveConversation = ({
     pendingMessage,
     delivery.accept
   );
-  const latestTurn = agent.events.findLast(
-    (event) => event.type === "turn.started" || event.type === "turn.settled"
-  );
-  const durableError = settledError(latestTurn);
   const displayedError =
-    commandFailure?.message ?? agent.error?.message ?? durableError;
+    commandFailure?.message ??
+    agent.error?.message ??
+    recordedError(agent.view);
   // Failed provisional messages are retained in the recovery panel below.
   // They must not look like accepted transcript entries or survive a retry twice.
   const messages = selectedConversationMessages(
@@ -573,13 +604,26 @@ const EveConversation = ({
     return undefined;
   };
   const busy = isExecutionBusy(agent.status);
-  const hasApproval = agent.messages.some((message) =>
-    message.parts.some(
-      (part) =>
-        (part.type === "tool" && part.interaction?.status === "open") ||
-        (part.type === "interaction" && part.status === "open")
-    )
+  const { hasApproval, inputDisabled, turnOpen } = interactionControls(
+    agent,
+    commandFailure,
+    cancelPending
   );
+  const respond = async (response: Answer): Promise<void> => {
+    if (inputDisabled) {
+      return;
+    }
+    setCommandFailure(undefined);
+    try {
+      await agent.respond([response]);
+    } catch (error) {
+      setCommandFailure(
+        error instanceof Error
+          ? error
+          : new Error("Could not submit your response.")
+      );
+    }
+  };
   const run = async (action: () => Promise<unknown>): Promise<void> => {
     if (!controller.commands.claim(conversationId)) {
       return;
@@ -719,9 +763,10 @@ const EveConversation = ({
         actionsDisabled: actionLocks.transcript,
         conversationId,
         disabled: busy || commandPending,
-        inputDisabled: isAnswerDisabled(agent.status, commandPending),
+        inputDisabled,
         isReadonly: false,
         messages,
+        view: agent.view,
         editor: hasText(editingMessageId)
           ? {
               content: (
@@ -825,11 +870,7 @@ const EveConversation = ({
         ),
         respond: (response) => {
           startEventAction(async () => {
-            await run(async () => {
-              await send(async () => {
-                await agent.respond([response]);
-              });
-            });
+            await respond(response);
           });
         },
       }}
@@ -883,6 +924,7 @@ const EveConversation = ({
           input={input}
           pendingMessage={pendingMessage}
           status={agent.status}
+          turnOpen={turnOpen}
           busy={busy}
           commandPending={commandPending}
           cancelPending={cancelPending}

@@ -2,12 +2,10 @@
 import { eveToolUIState } from "@/lib/eve/tool-ui-state";
 
 import React from "react";
-import type { Answer } from "eve/events";
 import { Response } from "@/components/ai-elements/response";
 import { ToolInput, ToolOutput } from "@/components/part/tool-data";
 import { ToolActivity } from "@/components/part/tool-activity";
 import { ReasoningPart } from "@/components/part/message-reasoning";
-import { EvePendingInput } from "./eve-pending-input";
 import { eveMcpResult } from "@/lib/eve/mcp-result";
 import { getEveInstalledToolRenderer } from "@/lib/ai/tool-renderer-registry";
 import type { ReadonlyEveMessagePart } from "@/lib/eve/readonly-message-types";
@@ -47,32 +45,15 @@ const toolStatus = (
 
 const ToolFallback = ({
   part,
-  disabled,
-  respond,
+  compact,
 }: {
   readonly part: Extract<ReadonlyEveMessagePart, { type: "tool" }>;
-  readonly disabled: boolean;
-  readonly respond: (response: Answer) => void;
+  readonly compact: boolean;
 }): React.JSX.Element => {
-  const request = part.interaction
-    ? {
-        ...part.interaction.request,
-        interactionId: part.interaction.interactionId,
-      }
-    : undefined;
   let content: React.ReactNode = (
     <p className="text-muted-foreground text-sm">{toolStatus(part)}</p>
   );
-  if (part.interaction?.status === "open" && request) {
-    content = (
-      <EvePendingInput
-        disabled={disabled}
-        key={request.interactionId}
-        request={request}
-        respond={respond}
-      />
-    );
-  } else if (part.state === "failed") {
+  if (part.state === "failed") {
     content = <ToolOutput errorText={part.error?.message ?? "Tool failed"} />;
   } else if (part.state === "completed" && part.output !== undefined) {
     const bash =
@@ -90,7 +71,7 @@ const ToolFallback = ({
     <ToolActivity
       title={part.name}
       state={eveToolUIState(part.state)}
-      defaultOpen
+      defaultOpen={!compact}
     >
       {part.name === "bash" &&
       typeof part.input === "object" &&
@@ -99,28 +80,26 @@ const ToolFallback = ({
       typeof part.input.command === "string" ? (
         <CodeSnippet code={part.input.command} language="bash" />
       ) : (
-        <ToolInput input={part.input} />
+        <ToolInput
+          input={part.state === "streaming" ? part.inputText : part.input}
+        />
       )}
       {content}
     </ToolActivity>
   );
 };
 
-// This renderer handles all streamed EVE part variants and their recovery states.
-
 export const EveMessagePart = ({
   messageId,
   isReadonly,
   part,
-  respond,
-  inputDisabled,
+  compact = false,
 }: {
   readonly messageId: string;
   readonly isReadonly: boolean;
-  readonly part: ReadonlyEveMessagePart;
-  readonly inputDisabled: boolean;
-  readonly respond: (response: Answer) => void;
-}): React.JSX.Element | null => {
+  readonly part: Exclude<ReadonlyEveMessagePart, { type: "interaction" }>;
+  readonly compact?: boolean;
+}): React.JSX.Element => {
   if (part.type === "text") {
     return <Response>{part.text}</Response>;
   }
@@ -135,26 +114,8 @@ export const EveMessagePart = ({
       />
     );
   }
-  if (part.type === "interaction") {
-    return part.status === "open" ? (
-      <EvePendingInput
-        request={{ ...part.request, interactionId: part.interactionId }}
-        disabled={inputDisabled || isReadonly}
-        respond={respond}
-      />
-    ) : null;
-  }
-  if (part.type !== "tool") {
-    return <p>Unsupported content in this conversation.</p>;
-  }
   if (part.state === "approval" || part.state === "blocked") {
-    return (
-      <ToolFallback
-        part={part}
-        disabled={inputDisabled || isReadonly}
-        respond={respond}
-      />
-    );
+    return <ToolFallback part={part} compact={compact} />;
   }
   if (hasStructuredToolRenderer(part)) {
     return (
@@ -172,11 +133,5 @@ export const EveMessagePart = ({
   ) {
     return <EveMcpResult part={part} />;
   }
-  return (
-    <ToolFallback
-      part={part}
-      disabled={inputDisabled || isReadonly}
-      respond={respond}
-    />
-  );
+  return <ToolFallback part={part} compact={compact} />;
 };

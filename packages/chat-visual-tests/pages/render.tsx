@@ -71,6 +71,7 @@ export const renderRoute = async (
   Object.assign(route, {
     agentError: null,
     agentStatus: "ready",
+    agentAnswers: [],
     agentEventHandlers: new Map(),
     events: {},
     cookies: {},
