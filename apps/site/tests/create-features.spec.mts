@@ -321,11 +321,11 @@ test("namespaced selections and missing providers remain editable", async ({
   await expect(
     gateway.getByRole("radio", { name: "OpenAI", exact: true })
   ).toBeChecked();
-  await selectChoice(page, "File storage", "None");
+  await selectChoice(page, "File storage", "No persistent storage");
   await expect(
     page
       .getByRole("radiogroup", { name: "File storage" })
-      .getByRole("radio", { name: "None" })
+      .getByRole("radio", { name: "No persistent storage" })
   ).toBeChecked();
 });
 

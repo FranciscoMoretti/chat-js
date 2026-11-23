@@ -1,5 +1,4 @@
-import type { RegistryItem } from "shadcn/schema";
-import { pluginDefinitionSchema } from "../../../metadata";
+import { definePluginItem } from "../define-item";
 
 const guestChatFiles = [
   "chatjs/plugins/guest-chat/cleanup.ts",
@@ -20,47 +19,36 @@ const guestChatFiles = [
   "chatjs/plugins/guest-chat/session-profile.ts",
   "chatjs/plugins/guest-chat/signed-out.tsx",
 ];
-const guestChatDefinition = pluginDefinitionSchema.parse({
-  contractVersion: 3,
-  uiBase: "base",
-  id: "guest-chat",
-  kind: "plugin",
-  files: [
-    ...guestChatFiles,
-    "app/api/eve-guest/route.ts",
-    "agent/instrumentation/guest-retention.ts",
-  ],
-  databaseSchemas: ["chatjs/plugins/guest-chat/guest-schema.ts"],
-  signedOut: { export: "GuestChatScreen" },
-  sessionProfile: {
-    export: "guestSessionProfile",
-    authenticator: "chatjs-disposable-guest",
+
+const guestChatItem = definePluginItem(
+  {
+    name: "guest-chat",
+    description:
+      "Disposable text chat for visitors with isolated sessions and bounded cleanup",
+    dependencies: ["ai", "drizzle-orm", "zod"],
+    files: [
+      ...guestChatFiles.map((file) => ({
+        path: `src/plugins/guest-chat/src/${file.slice("chatjs/plugins/guest-chat/".length)}`,
+        target: `~/${file}`,
+        type: "registry:file" as const,
+      })),
+      {
+        path: "src/plugins/guest-chat/adapters/agent/instrumentation/guest-retention.ts",
+        target: "~/agent/instrumentation/guest-retention.ts",
+        type: "registry:file",
+      },
+      {
+        path: "src/plugins/guest-chat/adapters/app/api/eve-guest/route.ts",
+        target: "~/app/api/eve-guest/route.ts",
+        type: "registry:file",
+      },
+    ],
   },
-  cleanup: { export: "guestCleanup", id: "guest-chat" },
-});
-const guestChatItem: RegistryItem = {
-  name: "guest-chat",
-  type: "registry:item",
-  description:
-    "Disposable text chat for visitors with isolated sessions and bounded cleanup",
-  dependencies: ["ai", "drizzle-orm", "zod"],
-  files: [
-    ...guestChatFiles.map((file) => ({
-      path: `src/plugins/guest-chat/src/${file.slice("chatjs/plugins/guest-chat/".length)}`,
-      target: `~/${file}`,
-      type: "registry:file" as const,
-    })),
-    {
-      path: "src/plugins/guest-chat/adapters/agent/instrumentation/guest-retention.ts",
-      target: "~/agent/instrumentation/guest-retention.ts",
-      type: "registry:file",
-    },
-    {
-      path: "src/plugins/guest-chat/adapters/app/api/eve-guest/route.ts",
-      target: "~/app/api/eve-guest/route.ts",
-      type: "registry:file",
-    },
-  ],
-  meta: { chatjs: guestChatDefinition },
-};
+  {
+    uiBase: "base",
+    databaseSchemas: ["chatjs/plugins/guest-chat/guest-schema.ts"],
+    sessionAuthenticator: "chatjs-disposable-guest",
+  }
+);
+const guestChatDefinition = guestChatItem.meta.chatjs;
 export { guestChatItem, guestChatDefinition, guestChatFiles };

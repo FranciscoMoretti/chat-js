@@ -1,2 +1,2 @@
-// ChatJS source: projects. Ownership: chatjs/plugins/projects/chatjs.json.
+// ChatJS source: projects. Ownership: chatjs/plugins/projects/plugin.json.
 export { default } from "@/chatjs/plugins/projects/routes/project-page";

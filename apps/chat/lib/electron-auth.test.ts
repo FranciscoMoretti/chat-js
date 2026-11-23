@@ -1,4 +1,4 @@
-import { signOutDesktop } from "@/chatjs/plugins/desktop/sign-out";
+import signOutDesktop from "@/chatjs/plugins/desktop/sign-out";
 import {
   ELECTRON_AUTH_CALLBACK_PATH,
   ELECTRON_AUTH_CLIENT_ID,
@@ -13,8 +13,7 @@ import { afterEach, expect, it, vi } from "vitest";
 import authClient from "@/chatjs/plugins/desktop/desktop-auth-client";
 import { betterAuth } from "better-auth";
 import { createHash } from "node:crypto";
-import {
-  desktopAuth,
+import desktopAuth, {
   electronAuthPlugin,
 } from "@/chatjs/plugins/desktop/auth-server";
 import { z } from "zod";

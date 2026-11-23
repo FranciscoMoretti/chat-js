@@ -50,7 +50,7 @@ test("manual export preserves conflicting source and dependencies without readin
         ],
         dependencies: ["example-package@1.0.0"],
         meta: {
-          chatjs: { kind: "plugin", id: name, chat: { export: "chat" } },
+          chatjs: { kind: "plugin", id: name },
         },
         files: [
           {
@@ -206,7 +206,7 @@ test("add dry-run reports activation without changing the app or installing depe
           contractVersion: 3,
           kind: "plugin",
           id: "example",
-          chat: { export: "example" },
+          files: ["chatjs/plugins/example/chat.ts"],
         },
       },
       dependencies: ["never-install-this-fixture"],

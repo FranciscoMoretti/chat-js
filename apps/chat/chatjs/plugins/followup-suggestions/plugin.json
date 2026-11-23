@@ -19,6 +19,5 @@
     "chatjs/plugins/followup-suggestions/use-followups.ts",
     "agent/hooks/followup-suggestions.ts"
   ],
-  "databaseSchemas": ["chatjs/plugins/followup-suggestions/followup-schema.ts"],
-  "chat": { "export": "followupChat" }
+  "databaseSchemas": ["chatjs/plugins/followup-suggestions/followup-schema.ts"]
 }

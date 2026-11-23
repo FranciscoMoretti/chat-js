@@ -9,7 +9,7 @@ import type {
 import { eveChatProject } from "./db/project-schema";
 import { assignCreationProject } from "./creation";
 
-export const projectsChat = {
+const projectsChat = {
   onCreate: assignCreationProject,
   historyFilter: (
     { projectId }: { readonly projectId?: string | null },
@@ -53,3 +53,5 @@ export const projectsChat = {
     await tx.delete(eveChatProject).where(eq(eveChatProject.chatId, chatId));
   },
 } satisfies ChatServerIntegration;
+
+export default projectsChat;

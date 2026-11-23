@@ -49,10 +49,7 @@ const installedIds = async (root: string) => {
 };
 const install = async (root: string, item: typeof projectsItem) => {
   const targets: string[] = [];
-  for (const file of item.files ?? []) {
-    if (file.target?.startsWith("~/") !== true) {
-      throw new Error("Fixture requires explicit targets");
-    }
+  for (const file of item.files) {
     const target = file.target.slice(2);
     targets.push(target);
     // oxlint-disable-next-line no-await-in-loop -- Create a file's parent before copying its source.
@@ -63,7 +60,7 @@ const install = async (root: string, item: typeof projectsItem) => {
       path.join(root, target)
     );
   }
-  const descriptor = `chatjs/plugins/${item.name}/chatjs.json`;
+  const descriptor = `chatjs/plugins/${item.name}/plugin.json`;
   await writeFile(
     path.join(root, descriptor),
     JSON.stringify(item.meta?.chatjs)
@@ -237,7 +234,7 @@ test("MCP removal retains transitive schema helpers and disconnects composer/set
   await install(root, mcpItem);
   const result = await removePlugins(root, ["mcp"]);
   expect(result.preserved).toContain("chatjs/plugins/mcp/db/encrypted-text.ts");
-  expect(result.preserved).toContain("chatjs/plugins/mcp/mcp-env.ts");
+  expect(result.preserved).toContain("chatjs/plugins/mcp/validate-env.ts");
   await syncPlugins(root);
   expect(await readInstalledPlugins(root)).toEqual([]);
   for (const name of ["chat-ui", "routers"]) {
@@ -256,7 +253,7 @@ test("required plugins and app-owned imports block removal before mutation", asy
   await install(root, projectsItem);
   await mkdir(path.join(root, "chatjs/plugins/dependent"));
   await writeFile(
-    path.join(root, "chatjs/plugins/dependent/chatjs.json"),
+    path.join(root, "chatjs/plugins/dependent/plugin.json"),
     JSON.stringify({
       id: "dependent",
       kind: "plugin",

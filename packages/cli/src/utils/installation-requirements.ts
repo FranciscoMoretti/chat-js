@@ -4,13 +4,16 @@ import { preflight } from "./preflight";
 
 import { readProviderId, readProviderLiteral } from "./provider-config";
 
-type MediaKind = "image" | "video";
-interface MediaGateway {
-  readonly capabilities: Readonly<Record<MediaKind, boolean>>;
-  readonly defaults: {
-    readonly roles: Readonly<Partial<Record<MediaKind, string>>>;
-  };
-}
+import {
+  supportsMedia,
+  supportsNativeProcesses,
+  hasPersistentStorage,
+} from "../../../registry/provider-capabilities";
+import type {
+  MediaGateway,
+  MediaKind,
+} from "../../../registry/provider-capabilities";
+
 interface StorageConsumer {
   readonly id: string;
   readonly requiresStorage?: true;
@@ -29,24 +32,6 @@ const mediaDefaultsSchema = z.object({
 });
 const noConsumers = 0;
 
-// These built-in IDs predate declarative requirements in installed descriptors.
-const requiredMedia = (tool: MediaConsumer): readonly MediaKind[] => {
-  if (tool.requiresGateway) {
-    return tool.requiresGateway;
-  }
-  if (tool.id === "generate-image") {
-    return ["image"];
-  }
-  if (tool.id === "generate-video") {
-    return ["video"];
-  }
-  return [];
-};
-
-const requiresStorage = (item: StorageConsumer): boolean =>
-  item.requiresStorage === true ||
-  ["generate-image", "generate-video", "attachment-uploads"].includes(item.id);
-
 const validateStorage = async (
   cwd: string,
   consumers: readonly StorageConsumer[],
@@ -59,7 +44,7 @@ const validateStorage = async (
     await preflight(cwd, ["chatjs/providers/storage-options.ts"]);
   }
   const storage = selected ?? (await readProviderId(cwd, "storage"));
-  if (typeof storage !== "string" || storage === "" || storage === "memory") {
+  if (!hasPersistentStorage(storage)) {
     throw new Error(
       `${consumers.map((item) => item.id).join(", ")} requires persistent storage. Select --storage-provider before installing file-backed plugins.`
     );
@@ -84,13 +69,8 @@ const validateMedia = (
   gateway: MediaGateway
 ): void => {
   for (const tool of tools) {
-    for (const kind of requiredMedia(tool)) {
-      const model = gateway.defaults.roles[kind];
-      if (
-        !gateway.capabilities[kind] ||
-        typeof model !== "string" ||
-        model.trim() === ""
-      ) {
+    for (const kind of tool.requiresGateway ?? []) {
+      if (!supportsMedia(gateway, kind)) {
         throw new Error(
           `${tool.id} requires a gateway supporting ${kind} generation with a nonempty default model. Select a compatible gateway or omit this tool.`
         );
@@ -104,25 +84,28 @@ const validateProviderRequirements = async (
   target: {
     readonly gateway?: MediaGateway;
     readonly storage?: string;
-    readonly sandbox?: string;
+    readonly sandboxRuntimes?: readonly string[];
     readonly tools: readonly MediaConsumer[];
     readonly plugins: readonly StorageConsumer[];
   }
 ): Promise<void> => {
-  const fileConsumers = [...target.tools, ...target.plugins].filter((item) =>
-    requiresStorage(item)
+  const fileConsumers = [...target.tools, ...target.plugins].filter(
+    (item) => item.requiresStorage === true
   );
   await validateStorage(cwd, fileConsumers, target.storage);
   if (target.tools.some((tool) => tool.requiresNativeProcesses)) {
-    const sandbox = target.sandbox ?? (await readProviderId(cwd, "sandbox"));
-    if (sandbox === "just-bash") {
+    const supportsNative =
+      target.sandboxRuntimes === undefined
+        ? (await readProviderId(cwd, "sandbox")) !== "just-bash"
+        : supportsNativeProcesses(target.sandboxRuntimes);
+    if (!supportsNative) {
       throw new Error(
         "Code execution requires native Python and Node processes. Select Automatic, Vercel Sandbox or Docker."
       );
     }
   }
   const mediaConsumers = target.tools.filter(
-    (item) => requiredMedia(item).length > noConsumers
+    (item) => (item.requiresGateway?.length ?? noConsumers) > noConsumers
   );
   if (mediaConsumers.length > noConsumers) {
     const gateway = target.gateway ?? (await installedMediaGateway(cwd));

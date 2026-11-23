@@ -27,11 +27,17 @@ export const pluginPrerequisites = (ids: readonly string[]): string[] => {
 const channels = new Map<string, string[]>();
 for (const plugin of plugins) {
   const points = [
-    ...(plugin.chat ? ["chat"] : []),
     ...((plugin.databaseSchemas?.length ?? 0) > 0 ? ["databaseSchemas"] : []),
     ...(
-      ["router", "chat-ui", "layout-ui", "uploads", "model-visibility"] as const
-    ).filter((entry) => hasPluginEntry(plugin, entry)),
+      [
+        "chat",
+        "router",
+        "chat-ui",
+        "layout-ui",
+        "uploads",
+        "model-visibility",
+      ] as const
+    ).filter((entry) => hasPluginEntry(plugin, `${entry}.ts`)),
   ];
   for (const point of points) {
     channels.set(point, [...(channels.get(point) ?? []), plugin.id]);

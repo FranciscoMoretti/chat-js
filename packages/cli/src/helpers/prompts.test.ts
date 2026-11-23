@@ -3,6 +3,7 @@ import * as clack from "@clack/prompts";
 
 import {
   promptAssistantTools,
+  promptMediaTool,
   promptSandbox,
   promptAuth,
   promptCoreFeatures,
@@ -27,7 +28,6 @@ it("returns complete selections from interactive prompts in catalog order", asyn
     expect(auth).toEqual({ github: true, google: false, vercel: false });
     expect(Object.keys(auth)).toEqual([...AUTH_PROVIDERS]);
 
-    const definition = externalGatewayFixture().root.meta.chatjs;
     const plugins = await promptCoreFeatures(false, true);
     expect(plugins).toEqual({
       attachments: false,
@@ -41,8 +41,7 @@ it("returns complete selections from interactive prompts in catalog order", asyn
 
     const { builtInTools, installableTools } = await promptAssistantTools(
       [],
-      false,
-      definition
+      false
     );
     expect(builtInTools).toEqual({
       deepResearch: true,
@@ -94,11 +93,7 @@ it("rejects a default for media the gateway cannot support", () => {
 });
 
 it("defaults media tool installation selections to false with --yes", async () => {
-  const { builtInTools } = await promptAssistantTools(
-    [],
-    true,
-    externalGatewayFixture().root.meta.chatjs
-  );
+  const { builtInTools } = await promptAssistantTools([], true);
   expect(builtInTools.imageGeneration).toBe(false);
   expect(builtInTools.videoGeneration).toBe(false);
 });
@@ -120,5 +115,18 @@ it("offers native environments and defaults noninteractive creation to Automatic
     expect(await promptSandbox(true)).toBe("default");
   } finally {
     select.mockRestore();
+  }
+});
+
+it("offers an external media tool when the gateway lacks that capability", async () => {
+  const gateway = externalGatewayFixture().root.meta.chatjs;
+  gateway.capabilities.video = false;
+  const address = spyOn(clack, "text").mockResolvedValue("@studio/video");
+  try {
+    expect(await promptMediaTool("video", gateway, false)).toBe(
+      "@studio/video"
+    );
+  } finally {
+    address.mockRestore();
   }
 });

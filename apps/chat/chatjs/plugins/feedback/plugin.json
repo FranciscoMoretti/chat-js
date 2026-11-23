@@ -13,6 +13,5 @@
     "chatjs/plugins/feedback/feedback-schema.ts",
     "chatjs/plugins/feedback/vote-message.ts"
   ],
-  "databaseSchemas": ["chatjs/plugins/feedback/feedback-schema.ts"],
-  "chat": { "export": "feedbackChat" }
+  "databaseSchemas": ["chatjs/plugins/feedback/feedback-schema.ts"]
 }

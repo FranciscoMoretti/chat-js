@@ -30,7 +30,7 @@ test("requested plugins can repair incomplete installations while unrelated inst
     files: ["chatjs/plugins/team-notes/router.ts"],
   };
   await writeFile(
-    path.join(directory, "chatjs.json"),
+    path.join(directory, "plugin.json"),
     JSON.stringify(definition)
   );
   const server = Bun.serve({
@@ -209,7 +209,7 @@ test("validates plugin dependencies and exclusive storage slots before writing",
     const dir = path.join(root, "chatjs/plugins/mcp");
     await mkdir(dir, { recursive: true });
     await writeFile(
-      path.join(dir, "chatjs.json"),
+      path.join(dir, "plugin.json"),
       JSON.stringify({ contractVersion: 3, id: "mcp", kind: "plugin" })
     );
     expect(

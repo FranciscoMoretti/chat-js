@@ -7,8 +7,10 @@ test("separates declared composition, native entry points and ordinary framework
       contractVersion: 3,
       id: "projects",
       kind: "plugin",
-      chat: { export: "projects" },
-      files: ["chatjs/plugins/projects/router.ts"],
+      files: [
+        "chatjs/plugins/projects/router.ts",
+        "chatjs/plugins/projects/chat.ts",
+      ],
       databaseSchemas: ["chatjs/plugins/projects/schema.ts"],
     },
     [

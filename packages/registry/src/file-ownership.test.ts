@@ -122,7 +122,7 @@ test("plugin descriptors are owned and implicit shadcn targets fail explicitly",
     {
       owner: "mcp",
       source: "descriptor:mcp",
-      target: "chatjs/plugins/mcp/chatjs.json",
+      target: "chatjs/plugins/mcp/plugin.json",
     },
   ]);
   expect(() =>

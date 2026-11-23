@@ -19,7 +19,8 @@ vi.mock("@/integrations/billing", async () => {
     },
   };
 });
-const { creditsBilling } = await import("@/chatjs/plugins/credits/billing");
+const { default: creditsBilling } =
+  await import("@/chatjs/plugins/credits/billing");
 const { recordEveUsage } = await import("./eve-billing");
 const rows = async (query: string): Promise<unknown[]> => {
   const result = await postgres.query(query);

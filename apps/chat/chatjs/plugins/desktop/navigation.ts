@@ -1,3 +1,5 @@
 import { isElectronRenderer } from "./bridge";
 
-export const desktopNavigation = (): boolean => isElectronRenderer();
+const desktopNavigation = (): boolean => isElectronRenderer();
+
+export default desktopNavigation;

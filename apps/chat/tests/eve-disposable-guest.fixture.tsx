@@ -4,8 +4,7 @@ import type { EveMessage } from "eve/client";
 import React, { useState } from "react";
 
 import { ChatHeaderView } from "@/components/chat-header-view";
-import {
-  GuestChatScreen,
+import GuestChatScreen, {
   GuestConversationView,
 } from "@/chatjs/plugins/guest-chat/signed-out";
 import type { AppModelDefinition } from "@/lib/ai/app-models";

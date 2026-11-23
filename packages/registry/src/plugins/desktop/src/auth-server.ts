@@ -39,7 +39,7 @@ const electronAuthPlugin = {
   },
 };
 
-export const desktopAuth = {
+const desktopAuth = {
   plugins: [electronAuthPlugin],
   trustedOrigins: [`${ELECTRON_APP_SCHEME}:/`],
   isAuthRoute: (url) =>
@@ -48,3 +48,5 @@ export const desktopAuth = {
       url.searchParams.get("client_id") === ELECTRON_AUTH_CLIENT_ID),
 } satisfies AuthenticationIntegration;
 export { electronAuthPlugin };
+
+export default desktopAuth;

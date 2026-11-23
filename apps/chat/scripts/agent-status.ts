@@ -3,7 +3,7 @@ import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { z } from "zod";
 import { getMissingRequirement } from "../lib/config-requirements";
-import { validateInstalledEnvironment } from "./installed-environment-validation";
+import { validatePluginEnvironment } from "./installed-environment-validation";
 import { config as loadEnv } from "dotenv";
 import { toolRequirements } from "../chatjs/generated/tool-requirements";
 import { missingToolConfiguration } from "../lib/eve/tool-configuration";
@@ -25,7 +25,6 @@ const tools = Object.entries(toolRequirements).map(([name, definition]) => {
 });
 const descriptor = z.object({
   id: z.string(),
-  connection: z.object({ setupItem: z.string() }).optional(),
   envRequirements: z
     .array(
       z.object({
@@ -34,7 +33,7 @@ const descriptor = z.object({
       })
     )
     .default([]),
-  environmentValidation: z.string().optional(),
+  files: z.array(z.string()).default([]),
 });
 const directory = path.resolve(import.meta.dirname, "../chatjs/plugins");
 const entries = await readdir(directory, { withFileTypes: true });
@@ -45,7 +44,7 @@ const pluginGroups = await Promise.all(
     }
     const itemDirectory = path.join(directory, entry.name);
     const source = await readFile(
-      path.join(itemDirectory, "chatjs.json"),
+      path.join(itemDirectory, "plugin.json"),
       "utf-8"
     ).catch((error: unknown) => {
       if (
@@ -67,26 +66,19 @@ const pluginGroups = await Promise.all(
     });
     if (missing.length === 0) {
       missing.push(
-        ...(await validateInstalledEnvironment(
+        ...(await validatePluginEnvironment(
           itemDirectory,
-          definition.environmentValidation,
+          definition.files,
           process.env
         ))
       );
     }
     return [
       {
-        resume:
-          definition.connection === undefined
-            ? undefined
-            : `eve add ${definition.connection.setupItem}`,
         name: definition.id,
         installation: "installed",
         configuration: missing.length > 0 ? "incomplete" : "present",
-        connection:
-          definition.connection === undefined
-            ? "not-checked"
-            : "requires-user-consent",
+        connection: "not-checked",
         verification: "not-run",
         missing,
       },
@@ -104,11 +96,6 @@ if (process.argv.includes("--json")) {
     console.log(
       `${tool.name}: installed; configuration ${tool.configuration}; connection ${tool.connection}; verification ${tool.verification}`
     );
-    if ("resume" in tool && tool.resume !== undefined) {
-      console.log(
-        `  Native setup: ${tool.resume}. User consent happens through EVE.`
-      );
-    }
     for (const requirement of tool.missing) {
       console.log(`  Configure ${requirement} in .env.local.`);
     }

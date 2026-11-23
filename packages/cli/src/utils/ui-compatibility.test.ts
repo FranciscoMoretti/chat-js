@@ -111,7 +111,7 @@ test("sync validates Base UI plugins before regenerating tool registrations", as
       JSON.stringify({ style: "new-york" })
     );
     await writeFile(
-      path.join(root, "chatjs/plugins/base-plugin/chatjs.json"),
+      path.join(root, "chatjs/plugins/base-plugin/plugin.json"),
       JSON.stringify({
         contractVersion: 3,
         uiBase: "base",

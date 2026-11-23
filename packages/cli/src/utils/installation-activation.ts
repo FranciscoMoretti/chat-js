@@ -23,26 +23,25 @@ const enabledNames = (
 ): string[] =>
   entries.filter(([, enabled]) => Boolean(enabled)).map(([name]) => name);
 
-const pluginIntegrations = (value: PluginDefinition): string[] => [
-  ...enabledNames([
-    ["chat/server", value.chat],
-    ["billing", value.billing],
-    ["auth/signed-out", value.signedOut],
-    ["chat/session-profiles", value.sessionProfile],
-    ["cleanup", value.cleanup],
-    ["auth/server", value.authentication],
-    ["auth/form", value.authenticationUi],
-    ["auth/sign-out", value.authenticationUi],
-    ["navigation", value.navigation],
+const pluginIntegrations = (value: PluginDefinition): string[] =>
+  enabledNames([
+    ["chat/server", hasPluginEntry(value, "chat.ts")],
+    ["billing", hasPluginEntry(value, "billing.ts")],
+    ["auth/signed-out", hasPluginEntry(value, "signed-out.tsx")],
+    ["chat/session-profiles", value.sessionAuthenticator],
+    ["cleanup", hasPluginEntry(value, "cleanup.ts")],
+    ["auth/server", hasPluginEntry(value, "auth-server.ts")],
+    ["auth/form", hasPluginEntry(value, "auth-form.tsx")],
+    ["auth/sign-out", hasPluginEntry(value, "sign-out.ts")],
+    ["navigation", hasPluginEntry(value, "navigation.ts")],
     ["database", value.databaseSchemas?.length],
-    ["routers", hasPluginEntry(value, "router")],
-    ["instrumentation", hasPluginEntry(value, "instrumentation")],
-    ["layout", hasPluginEntry(value, "layout-ui")],
-    ["chat/ui", hasPluginEntry(value, "chat-ui")],
-    ["chat/uploads", hasPluginEntry(value, "uploads")],
-    ["chat/model-visibility", hasPluginEntry(value, "model-visibility")],
-  ]),
-];
+    ["routers", hasPluginEntry(value, "router.ts")],
+    ["instrumentation", hasPluginEntry(value, "instrumentation.ts")],
+    ["layout", hasPluginEntry(value, "layout-ui.ts")],
+    ["chat/ui", hasPluginEntry(value, "chat-ui.ts")],
+    ["chat/uploads", hasPluginEntry(value, "uploads.ts")],
+    ["chat/model-visibility", hasPluginEntry(value, "model-visibility.ts")],
+  ]);
 
 const toolIntegrations = (value: ToolDefinition): string[] =>
   enabledNames([

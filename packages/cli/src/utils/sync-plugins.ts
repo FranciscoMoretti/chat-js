@@ -1,5 +1,4 @@
 import { hasPluginEntry } from "../../../registry/plugin-entry";
-import type { PluginEntry } from "../../../registry/plugin-entry";
 import { assertUiCompatibility } from "./ui-compatibility";
 import { writeGeneratedFiles } from "./write-generated-files";
 import { assertCurrentInstallationLayout } from "./installation-layout";
@@ -27,30 +26,20 @@ const assertPluginDependencies = (
   }
 };
 
-const assertRuntimeContributions = (
+const assertUniqueAuthenticators = (
   plugins: readonly PluginDefinition[]
 ): void => {
   const authenticators = new Set(["chatjs-gateway"]);
-  const cleanupIds = new Set(["orphanedAttachments"]);
-  let signedOut = false;
-  for (const plugin of plugins) {
-    if (plugin.signedOut) {
-      if (signedOut) {
-        throw new Error("Only one plugin may supply the signed-out screen.");
-      }
-      signedOut = true;
+  for (const { sessionAuthenticator } of plugins) {
+    if (sessionAuthenticator === undefined) {
+      continue;
     }
-    for (const [key, seen] of [
-      [plugin.sessionProfile?.authenticator, authenticators],
-      [plugin.cleanup?.id, cleanupIds],
-    ] as const) {
-      if (typeof key === "string" && key !== "") {
-        if (seen.has(key)) {
-          throw new Error(`Duplicate or reserved plugin identity: ${key}`);
-        }
-        seen.add(key);
-      }
+    if (authenticators.has(sessionAuthenticator)) {
+      throw new Error(
+        `Duplicate or reserved plugin identity: ${sessionAuthenticator}`
+      );
     }
+    authenticators.add(sessionAuthenticator);
   }
 };
 
@@ -60,14 +49,19 @@ const assertUniqueContributions = (
   const exclusive = new Set<string>();
   for (const plugin of plugins) {
     for (const [present, label] of [
-      [plugin.authentication, "authentication"],
-      [plugin.authenticationUi, "authentication UI"],
-      [plugin.navigation, "modified navigation"],
-      [plugin.billing, "usage billing"],
-      [hasPluginEntry(plugin, "model-visibility"), "model visibility"],
-      [hasPluginEntry(plugin, "uploads"), "attachment uploads"],
+      [hasPluginEntry(plugin, "signed-out.tsx"), "the signed-out screen"],
+      [hasPluginEntry(plugin, "auth-server.ts"), "authentication"],
+      [
+        hasPluginEntry(plugin, "auth-form.tsx") ||
+          hasPluginEntry(plugin, "sign-out.ts"),
+        "authentication UI",
+      ],
+      [hasPluginEntry(plugin, "navigation.ts"), "modified navigation"],
+      [hasPluginEntry(plugin, "billing.ts"), "usage billing"],
+      [hasPluginEntry(plugin, "model-visibility.ts"), "model visibility"],
+      [hasPluginEntry(plugin, "uploads.ts"), "attachment uploads"],
     ] as const) {
-      if (present === undefined || present === false) {
+      if (!present) {
         continue;
       }
       if (exclusive.has(label)) {
@@ -77,32 +71,7 @@ const assertUniqueContributions = (
     }
   }
   assertPluginDependencies(plugins);
-  assertRuntimeContributions(plugins);
-};
-
-const namedEntries = (
-  plugins: readonly PluginDefinition[],
-  module: string,
-  exportedName: (plugin: PluginDefinition) => string | undefined,
-  reserved: readonly string[]
-) => {
-  const sources = plugins.flatMap((plugin) => {
-    const preferred = exportedName(plugin);
-    return preferred === undefined
-      ? []
-      : [{ plugin, id: plugin.id, preferred }];
-  });
-  return pluginBindings(sources, reserved).map(
-    ({ plugin, preferred, name }) => {
-      const binding =
-        name === preferred ? preferred : `${preferred} as ${name}`;
-      return {
-        plugin,
-        name,
-        source: `import { ${binding} } from "@/chatjs/plugins/${plugin.id}/${module}";`,
-      };
-    }
-  );
+  assertUniqueAuthenticators(plugins);
 };
 
 const imports = (entries: readonly { readonly source: string }[]): string =>
@@ -114,15 +83,43 @@ const pluginTitle = (id: string): string =>
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join("");
 
+const defaultEntries = (
+  plugins: readonly PluginDefinition[],
+  file: string,
+  suffix: string,
+  reserved: string,
+  enabled = (plugin: PluginDefinition) => hasPluginEntry(plugin, file)
+) => {
+  const moduleName = path.basename(file, path.extname(file));
+  const entries = plugins.filter(enabled);
+  const bindings = pluginBindings(
+    entries.map((plugin) => {
+      const { id } = plugin;
+      const title = pluginTitle(id);
+      return {
+        id,
+        plugin,
+        preferred: title.charAt(0).toLowerCase() + title.slice(1) + suffix,
+      };
+    }),
+    [reserved]
+  );
+  return bindings.map(({ id, name, plugin }) => ({
+    plugin,
+    name,
+    source: `import ${name} from "@/chatjs/plugins/${id}/${moduleName}";`,
+  }));
+};
+
 const fileEntries = (
   plugins: readonly PluginDefinition[],
-  entry: PluginEntry,
+  entry: string,
   exported: string,
   suffix?: string
 ) => {
   const bindings = pluginBindings(
     plugins
-      .filter((plugin) => hasPluginEntry(plugin, entry))
+      .filter((plugin) => hasPluginEntry(plugin, `${entry}.ts`))
       .map(({ id }) => {
         const title = pluginTitle(id);
         return {
@@ -151,7 +148,7 @@ const renderInstrumentation = (
   plugins: readonly PluginDefinition[]
 ): string => {
   const entries = plugins.filter((plugin) =>
-    hasPluginEntry(plugin, "instrumentation")
+    hasPluginEntry(plugin, "instrumentation.ts")
   );
   return `import type { InstrumentationRegistration } from "@/chatjs/core/installation/contracts";
 
@@ -165,18 +162,12 @@ export const installedInstrumentation: readonly InstrumentationRegistration[] = 
     .join(",\n")}];`;
 };
 
-const billingRegistration = (plugins: readonly PluginDefinition[]): string => {
-  const plugin = plugins.find((candidate) => candidate.billing);
-  const billing = plugin?.billing;
-  return `${billing ? `import { ${billing.export} as pluginBilling } from "@/chatjs/plugins/${plugin?.id}/billing";` : ""}
-import type { UsageBilling } from "@/chatjs/core/billing/contracts";
-export const installedBilling: readonly UsageBilling[] = [${billing ? "pluginBilling" : ""}];`;
-};
-
 const renderPluginRegistrations = (
   plugins: readonly PluginDefinition[],
   databaseSchemas: string
 ): Map<string, string> => {
+  const entries = (file: string, suffix: string, reserved: string) =>
+    defaultEntries(plugins, file, suffix, reserved);
   const layout = fileEntries(plugins, "layout-ui", "layoutUi", "Layout");
   const uploads = fileEntries(plugins, "uploads", "attachmentUploads");
   const modelVisibility = fileEntries(
@@ -184,72 +175,83 @@ const renderPluginRegistrations = (
     "model-visibility",
     "useModelVisibility"
   );
-  const chat = namedEntries(plugins, "chat", (plugin) => plugin.chat?.export, [
-    "ChatServerIntegration",
-    "installedChat",
-  ]);
+  const chat = entries("chat.ts", "Chat", "installedChat");
   const chatUi = fileEntries(plugins, "chat-ui", "chatUi", "Client");
-  const signedOut = plugins.find((plugin) => plugin.signedOut);
-  const profiles = namedEntries(
-    plugins,
-    "session-profile",
-    (plugin) => plugin.sessionProfile?.export,
-    ["Error", "SessionProfile", "installedSessionProfiles"]
+  const signedOut = entries(
+    "signed-out.tsx",
+    "Screen",
+    "installedSignedOutScreens"
   );
-  const cleanup = namedEntries(
+  const profiles = defaultEntries(
     plugins,
-    "cleanup",
-    (plugin) => plugin.cleanup?.export,
-    ["Error", "CleanupTask", "installedCleanupTasks"]
+    "session-profile.ts",
+    "Profile",
+    "installedSessionProfiles",
+    (plugin) => plugin.sessionAuthenticator !== undefined
   );
-  const authentication = plugins.find((plugin) => plugin.authentication);
-  const authUi = plugins.find((plugin) => plugin.authenticationUi);
-  const navigation = plugins.filter((plugin) => plugin.navigation);
+  const cleanup = entries("cleanup.ts", "Cleanup", "installedCleanupTasks");
+  const authentication = entries("auth-server.ts", "Auth", "installedAuth");
+  const forms = entries(
+    "auth-form.tsx",
+    "Form",
+    "installedAuthenticationForms"
+  );
+  const signOut = entries("sign-out.ts", "SignOut", "installedSignOutHandlers");
+  const navigation = entries(
+    "navigation.ts",
+    "Navigation",
+    "installedNavigationHandlers"
+  );
+  const billing = entries("billing.ts", "Billing", "installedBilling");
   const contents = [
     [
       "installed-signed-out",
-      `${signedOut ? `import { ${signedOut.signedOut?.export} as pluginScreen } from "@/chatjs/plugins/${signedOut.id}/signed-out";` : ""}
+      `${imports(signedOut)}
 import type { ComponentType } from "react";
-export const installedSignedOutScreens: readonly ComponentType[] = [${signedOut ? "pluginScreen" : ""}];`,
+export const installedSignedOutScreens: readonly ComponentType[] = [${signedOut.map(({ name }) => name).join(", ")}];`,
     ],
     [
       "installed-session-profiles",
       `${imports(profiles)}
 import type { SessionProfile } from "@/chatjs/core/session/contracts";
-${profiles.map(({ plugin, name }) => `if (${name}.authenticator !== ${JSON.stringify(plugin.sessionProfile?.authenticator)}) throw new Error("Session profile identity disagrees with its descriptor.");`).join("\n")}
+${profiles.map(({ plugin, name }) => `if (${name}.authenticator !== ${JSON.stringify(plugin.sessionAuthenticator)}) throw new Error("Session profile identity disagrees with its descriptor.");`).join("\n")}
 export const installedSessionProfiles: readonly SessionProfile[] = [${profiles.map(({ name }) => name).join(", ")}];`,
     ],
     [
       "installed-cleanup",
       `${imports(cleanup)}
 import type { CleanupTask } from "@/lib/cleanup/contracts";
-${cleanup.map(({ plugin, name }) => `if (${name}.id !== ${JSON.stringify(plugin.cleanup?.id)}) throw new Error("Cleanup identity disagrees with its descriptor.");`).join("\n")}
-export const installedCleanupTasks: readonly CleanupTask[] = [${cleanup.map(({ name }) => name).join(", ")}];`,
+export const installedCleanupTasks: readonly CleanupTask[] = [${cleanup.map(({ plugin, name }) => `{ id: ${JSON.stringify(plugin.id)}, run: ${name} }`).join(", ")}];`,
     ],
     [
       "installed-auth",
-      `${authentication ? `import { ${authentication.authentication?.export} as pluginAuth } from "@/chatjs/plugins/${authentication.id}/auth-server";` : ""}
+      `${imports(authentication)}
 import type { AuthenticationIntegration } from "@/chatjs/core/authentication/contracts";
-export const installedAuth: readonly AuthenticationIntegration[] = [${authentication ? "pluginAuth" : ""}];`,
+export const installedAuth: readonly AuthenticationIntegration[] = [${authentication.map(({ name }) => name).join(", ")}];`,
     ],
     [
       "installed-auth-ui",
-      `${authUi ? `import { ${authUi.authenticationUi?.form} as pluginForm } from "@/chatjs/plugins/${authUi.id}/auth-form";` : ""}
+      `${imports(forms)}
 import type { AuthenticationUi } from "@/chatjs/core/authentication/contracts";
-export const installedAuthenticationForms: readonly AuthenticationUi["Form"][] = [${authUi ? "pluginForm" : ""}];`,
+export const installedAuthenticationForms: readonly AuthenticationUi["Form"][] = [${forms.map(({ name }) => name).join(", ")}];`,
     ],
     [
       "installed-sign-out",
-      `${authUi ? `import { ${authUi.authenticationUi?.signOut} as pluginSignOut } from "@/chatjs/plugins/${authUi.id}/sign-out";` : ""}
+      `${imports(signOut)}
 import type { AuthenticationUi } from "@/chatjs/core/authentication/contracts";
-export const installedSignOutHandlers: readonly AuthenticationUi["signOut"][] = [${authUi ? "pluginSignOut" : ""}];`,
+export const installedSignOutHandlers: readonly AuthenticationUi["signOut"][] = [${signOut.map(({ name }) => name).join(", ")}];`,
     ],
     [
       "installed-navigation",
-      `${navigation.map((plugin) => `import { ${plugin.navigation?.export} as navigate } from "@/chatjs/plugins/${plugin.id}/navigation";`).join("\n")}
-export const installedNavigationHandlers: readonly (() => boolean)[] = [${navigation.length > 0 ? "navigate" : ""}];`,
+      `${imports(navigation)}
+export const installedNavigationHandlers: readonly (() => boolean)[] = [${navigation.map(({ name }) => name).join(", ")}];`,
     ],
-    ["installed-billing", billingRegistration(plugins)],
+    [
+      "installed-billing",
+      `${imports(billing)}
+import type { UsageBilling } from "@/chatjs/core/billing/contracts";
+export const installedBilling: readonly UsageBilling[] = [${billing.map(({ name }) => name).join(", ")}];`,
+    ],
     [
       "installed-model-visibility",
       `${imports(modelVisibility)}\nimport type { ModelVisibility } from "@/chatjs/core/installation/contracts";\nexport const installedModelVisibility: readonly ModelVisibility[] = [${modelVisibility.map(({ name }) => name).join(", ")}];`,
@@ -317,7 +319,7 @@ const syncPlugins = async (
   for (const id of options.expected ?? []) {
     if (!plugins.some((plugin) => plugin.id === id)) {
       throw new Error(
-        `Missing plugin descriptor: chatjs/plugins/${id}/chatjs.json`
+        `Missing plugin descriptor: chatjs/plugins/${id}/plugin.json`
       );
     }
   }
@@ -329,10 +331,8 @@ const initializePluginUi = async (cwd: string): Promise<void> => {
   // The reference preset's plugin sources, including adapters, are explicit.
   await Promise.all(
     pluginItems.flatMap((item) =>
-      (item.files ?? []).map(async (file) => {
-        if (file.target?.startsWith("~/") === true) {
-          await rm(path.join(cwd, file.target.slice(2)), { force: true });
-        }
+      item.files.map(async (file) => {
+        await rm(path.join(cwd, file.target.slice(2)), { force: true });
       })
     )
   );

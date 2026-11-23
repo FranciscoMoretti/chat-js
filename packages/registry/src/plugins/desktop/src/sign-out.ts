@@ -1,6 +1,6 @@
 import { isElectronRenderer } from "./bridge";
 
-export const signOutDesktop = async (): Promise<boolean> => {
+const signOutDesktop = async (): Promise<boolean> => {
   if (!isElectronRenderer()) {
     return false;
   }
@@ -16,3 +16,5 @@ export const signOutDesktop = async (): Promise<boolean> => {
   }
   return true;
 };
+
+export default signOutDesktop;

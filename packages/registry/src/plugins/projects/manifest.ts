@@ -1,5 +1,4 @@
-import type { RegistryItem } from "shadcn/schema";
-import { pluginDefinitionSchema } from "../../../metadata";
+import { definePluginItem } from "../define-item";
 
 const sourceFiles = [
   "chat.ts",
@@ -41,49 +40,46 @@ const projectsFiles = [
   ...sourceFiles.map((file) => `chatjs/plugins/projects/${file}`),
   ...adapterFiles,
 ];
-const projectsDefinition = pluginDefinitionSchema.parse({
-  contractVersion: 3,
-  uiBase: "base",
-  id: "projects",
-  kind: "plugin",
-  files: projectsFiles,
-  databaseSchemas: ["chatjs/plugins/projects/db/project-schema.ts"],
-  chat: { export: "projectsChat" },
-});
-const projectsItem: RegistryItem = {
-  dependencies: [
-    "@tanstack/react-query",
-    "@trpc/client",
-    "@trpc/server",
-    "date-fns",
-    "drizzle-orm",
-    "lucide-react",
-    "sonner",
-  ],
-  name: "projects",
-  type: "registry:item",
-  registryDependencies: [
-    "alert-dialog",
-    "breadcrumb",
-    "button",
-    "dialog",
-    "dropdown-menu",
-    "empty",
-    "input",
-    "label",
-    "popover",
-    "separator",
-    "sidebar",
-    "textarea",
-  ],
-  description: "Projects, chat organization, and shared project instructions",
-  files: projectsFiles.map((file) => ({
-    path: file.startsWith("chatjs/plugins/projects/")
-      ? `src/plugins/projects/src/${file.slice("chatjs/plugins/projects/".length)}`
-      : `src/plugins/projects/adapters/${file}`,
-    target: `~/${file}`,
-    type: "registry:file" as const,
-  })),
-  meta: { chatjs: projectsDefinition },
-};
+
+const projectsItem = definePluginItem(
+  {
+    dependencies: [
+      "@tanstack/react-query",
+      "@trpc/client",
+      "@trpc/server",
+      "date-fns",
+      "drizzle-orm",
+      "lucide-react",
+      "sonner",
+    ],
+    name: "projects",
+    registryDependencies: [
+      "alert-dialog",
+      "breadcrumb",
+      "button",
+      "dialog",
+      "dropdown-menu",
+      "empty",
+      "input",
+      "label",
+      "popover",
+      "separator",
+      "sidebar",
+      "textarea",
+    ],
+    description: "Projects, chat organization, and shared project instructions",
+    files: projectsFiles.map((file) => ({
+      path: file.startsWith("chatjs/plugins/projects/")
+        ? `src/plugins/projects/src/${file.slice("chatjs/plugins/projects/".length)}`
+        : `src/plugins/projects/adapters/${file}`,
+      target: `~/${file}`,
+      type: "registry:file" as const,
+    })),
+  },
+  {
+    uiBase: "base",
+    databaseSchemas: ["chatjs/plugins/projects/db/project-schema.ts"],
+  }
+);
+const projectsDefinition = projectsItem.meta.chatjs;
 export { projectsItem, projectsFiles, projectsDefinition };

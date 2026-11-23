@@ -28,7 +28,7 @@ Use `config` from `@/lib/config` for runtime access. See [Configuration](../core
 | `chatjs/generated/tool-definitions.ts` | Browser-safe tool schemas and display metadata |
 | `chatjs/generated/providers.ts` | Shared search, retrieval and media provider registrations |
 | `integrations/tools/execution.ts`, `integrations/tools/ui.ts` | User-authored tool and renderer registrations |
-| `chatjs/plugins/*/chatjs.json`, generated plugin registrations | Installed application plugin contributions, such as uploads and MCP |
+| `chatjs/plugins/*/plugin.json`, generated plugin registrations | Installed application plugin contributions, such as uploads and MCP |
 
 Tools can declare `requiresTools`, `requiresGateway` (`image` or `video`) and `requiresStorage`. Plugins can declare `requiresPlugins` and `requiresStorage`. Provider slots are exclusive. The planner validates the complete resulting installation, including existing tools during replacement. Declared external capabilities still need adapter and lifecycle tests.
 

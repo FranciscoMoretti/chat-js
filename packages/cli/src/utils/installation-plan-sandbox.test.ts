@@ -1,5 +1,6 @@
 import { planInstallation } from "./installation-plan";
-import { planSandboxInstallation } from "../helpers/sandbox-installation";
+import { planInteractiveInstallation } from "../helpers/interactive-installation";
+import { resolveStorage } from "../registry/storage";
 import { rejects } from "node:assert/strict";
 import { afterEach, expect, test } from "bun:test";
 import { mkdir, mkdtemp, rm, writeFile, readFile } from "node:fs/promises";
@@ -53,9 +54,33 @@ const fixture = async () => {
         },
       };
       const items = [
+        {
+          name: "archive",
+          type: "registry:item",
+          registryDependencies: ["@chatjs/attachment-uploads"],
+          meta: {
+            chatjs: { contractVersion: 3, id: "archive", kind: "plugin" },
+          },
+        },
         dependentItem,
         nativeRuntimeItem,
         ...builtInSandboxes,
+        {
+          name: "python-only",
+          type: "registry:item",
+          meta: {
+            chatjs: {
+              kind: "sandbox",
+              contractVersion: 1,
+              id: "external-runtime",
+              capabilities: {
+                runtimes: ["python"],
+                cleanup: "eve-session",
+                cancellation: "eve",
+              },
+            },
+          },
+        },
         {
           name: "attachment-uploads",
           type: "registry:item",
@@ -96,12 +121,23 @@ const fixture = async () => {
             }))
           )
         : [];
+      if (name === "storage") {
+        return Response.json({
+          ...item,
+          files: [
+            {
+              path: "storage.ts",
+              type: "registry:file",
+              target: "~/chatjs/providers/storage.ts",
+              content: "export {};",
+            },
+          ],
+        });
+      }
       return item
         ? Response.json({
             ...item,
             files,
-            registryDependencies:
-              name === "dependent" ? ["@chatjs/native-runtime"] : [],
           })
         : new Response("not found", { status: 404 });
     },
@@ -152,6 +188,18 @@ test("native default needs no explicit selection; code execution rejects just-ba
         { fresh: true }
       ),
       /native Python/u
+    );
+    await rejects(
+      planInstallation(
+        f.root,
+        {
+          plugins: [],
+          tools: [f.address("native-runtime")],
+          sandbox: f.address("python-only"),
+        },
+        { fresh: true }
+      ),
+      /native Python and Node/u
     );
     const selected = await planInstallation(
       f.root,
@@ -234,14 +282,17 @@ test("replacement requires --replace and the existing provider satisfies later c
 test("create installs the chosen native environment with indirect code-execution dependencies", async () => {
   const f = await fixture();
   try {
-    const selected = await planSandboxInstallation(
+    const selected = await planInteractiveInstallation(
       f.root,
       {
         plugins: [],
         tools: [f.address("dependent")],
       },
-      { fresh: true },
-      async () => await Promise.resolve(f.address("docker-sandbox"))
+      async () => await Promise.resolve(f.address("docker-sandbox")),
+      async (required) => {
+        expect(required).toBe(false);
+        return await resolveStorage(f.address("storage"), f.root);
+      }
     );
     expect(selected.plan.expected.map((tool) => tool.id)).toEqual([
       "dependent",
@@ -256,14 +307,17 @@ test("create installs the chosen native environment with indirect code-execution
 test("create defaults to a native EVE environment without tools", async () => {
   const f = await fixture();
   try {
-    const selected = await planSandboxInstallation(
+    const selected = await planInteractiveInstallation(
       f.root,
       {
         plugins: [],
         tools: [],
       },
-      { fresh: true },
-      async () => await Promise.resolve("default")
+      async () => await Promise.resolve("default"),
+      async (required) => {
+        expect(required).toBe(false);
+        return await resolveStorage(f.address("storage"), f.root);
+      }
     );
     expect(selected.sandbox.definition.id).toBe("default");
   } finally {
@@ -271,24 +325,30 @@ test("create defaults to a native EVE environment without tools", async () => {
   }
 });
 
-test("uploads can use the native sandbox without a ChatJS provider", async () => {
+test("create sees storage requirements from a transitive plugin before choosing a provider", async () => {
   const f = await fixture();
   try {
     const selection = {
-      plugins: [f.address("attachment-uploads")],
+      plugins: [f.address("archive")],
       tools: [],
-      storage: { source: f.address("storage"), options: {} },
     };
-    const selected = await planSandboxInstallation(
+    const selected = await planInteractiveInstallation(
       f.root,
       selection,
-      { fresh: true },
-      async () => await Promise.resolve("default")
+      async () => await Promise.resolve("default"),
+      async (required) => {
+        expect(required).toBe(true);
+        return await resolveStorage(f.address("storage"), f.root);
+      }
     );
     expect(selected.sandbox.definition.id).toBe("default");
+    expect(selected.plan.selection.storage).toEqual({
+      source: f.address("storage"),
+      options: {},
+    });
     await planInstallation(
       f.root,
-      { ...selection, sandbox: f.address("docker-sandbox") },
+      { ...selected.plan.selection, sandbox: f.address("docker-sandbox") },
       { fresh: true }
     );
   } finally {

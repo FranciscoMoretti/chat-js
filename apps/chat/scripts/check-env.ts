@@ -25,14 +25,12 @@ import fs from "node:fs/promises";
 import { gatewayEnvRequirements } from "@/chatjs/providers/gateway-defaults";
 import { generatedForGateway } from "@/lib/ai/models.generated";
 import { getEveRuntimeEnvOptions } from "@/lib/env-schema";
-import { installedPlugins } from "@/integrations/plugin-catalog";
-import { installedToolNames } from "@/integrations/tools/catalog";
 import { isPlaywrightTestEnvironment } from "@/lib/playwright-test-environment";
 import { config as loadEnvConfig } from "dotenv";
 import path from "node:path";
 import { resolveEveEnvironment } from "@/lib/eve/environment";
 import { z } from "zod";
-import { validateInstalledEnvironment } from "./installed-environment-validation";
+import { validatePluginEnvironment } from "./installed-environment-validation";
 
 loadEnvConfig({ path: ".env.local" });
 loadEnvConfig();
@@ -60,8 +58,9 @@ const toolEnvironmentRequirementSchema = z.object({
   runtimeAuth: z.literal("vercel-oidc").optional(),
 });
 const toolEnvironmentSchema = z.object({
-  environmentValidation: z.string().optional(),
   envRequirements: z.array(toolEnvironmentRequirementSchema).default([]),
+  requiresStorage: z.literal(true).optional(),
+  files: z.array(z.string()).default([]),
 });
 
 const validateGatewayKey = (
@@ -85,15 +84,6 @@ const validateGatewayKey = (
 const validateStorage = (
   env: Readonly<NodeJS.ProcessEnv>
 ): ValidationError | null => {
-  if (
-    !(
-      installedPlugins.has("attachment-uploads") ||
-      installedToolNames.has("generateImage") ||
-      installedToolNames.has("generateVideo")
-    )
-  ) {
-    return null;
-  }
   const missing = storageEnvRequirements
     .map((requirement: RequirementInput) =>
       getMissingRequirement(requirement, env)
@@ -142,10 +132,9 @@ const validateAuthentication = (
   return errors;
 };
 
-const validateInstalledItems = async (
-  env: Readonly<NodeJS.ProcessEnv>,
+const readInstalledItems = async (
   directory: "chatjs/tools" | "chatjs/plugins"
-): Promise<ValidationError[]> => {
+) => {
   const toolsDir = path.join(projectRoot, directory);
   const entries = await fs
     .readdir(toolsDir, { withFileTypes: true })
@@ -159,13 +148,17 @@ const validateInstalledItems = async (
       }
       throw error;
     });
-  const toolErrors = await Promise.all(
+  const items = await Promise.all(
     entries.map(async (entry: Readonly<(typeof entries)[number]>) => {
       if (!entry.isDirectory() || entry.name.startsWith("_")) {
         return [];
       }
 
-      const toolPath = path.join(toolsDir, entry.name, "chatjs.json");
+      const toolPath = path.join(
+        toolsDir,
+        entry.name,
+        directory === "chatjs/plugins" ? "plugin.json" : "chatjs.json"
+      );
       try {
         await fs.access(toolPath);
       } catch {
@@ -173,42 +166,58 @@ const validateInstalledItems = async (
       }
 
       const toolSource = await fs.readFile(toolPath, "utf-8");
-      const mod = toolEnvironmentSchema.parse(JSON.parse(toolSource));
-      const missingRequirements = mod.envRequirements.flatMap(
-        (toolEnvVar: RequirementInput) => {
-          const missing = getMissingRequirement(toolEnvVar, env);
-
-          if (typeof missing !== "string" || missing === "") {
-            return [];
-          }
-          return [
-            {
-              feature: `${directory === "chatjs/tools" ? "tools" : "plugins"}.${entry.name}`,
-              missing: [missing],
-            },
-          ];
-        }
-      );
-      if (missingRequirements.length > 0) {
-        return missingRequirements;
-      }
-      const invalid = await validateInstalledEnvironment(
-        path.join(toolsDir, entry.name),
-        mod.environmentValidation,
-        env
-      );
-      return invalid.length > 0
-        ? [
-            {
-              feature: `${directory === "chatjs/tools" ? "tools" : "plugins"}.${entry.name}`,
-              missing: invalid,
-            },
-          ]
-        : [];
+      const descriptor: unknown = JSON.parse(toolSource);
+      return [
+        {
+          name: entry.name,
+          directory,
+          definition: toolEnvironmentSchema.parse(descriptor),
+        },
+      ];
     })
   );
+  return items.flat();
+};
 
-  return toolErrors.flat();
+const validateInstalledItem = async (
+  {
+    name,
+    directory,
+    definition,
+  }: Awaited<ReturnType<typeof readInstalledItems>>[number],
+  env: Readonly<NodeJS.ProcessEnv>
+): Promise<ValidationError[]> => {
+  const missingRequirements = definition.envRequirements.flatMap(
+    (toolEnvVar: RequirementInput) => {
+      const missing = getMissingRequirement(toolEnvVar, env);
+
+      if (typeof missing !== "string" || missing === "") {
+        return [];
+      }
+      return [
+        {
+          feature: `${directory === "chatjs/tools" ? "tools" : "plugins"}.${name}`,
+          missing: [missing],
+        },
+      ];
+    }
+  );
+  if (missingRequirements.length > 0 || directory === "chatjs/tools") {
+    return missingRequirements;
+  }
+  const invalid = await validatePluginEnvironment(
+    path.join(projectRoot, directory, name),
+    definition.files,
+    env
+  );
+  return invalid.length > 0
+    ? [
+        {
+          feature: `plugins.${name}`,
+          missing: invalid,
+        },
+      ]
+    : [];
 };
 
 const validateBaseUrl = (
@@ -283,13 +292,11 @@ const validateConfiguredEnvironment = (
   const eveErrors = validateEveEnvironment(env);
   const baseUrlError = validateBaseUrl(env);
   const gatewayError = validateGatewayKey(env);
-  const storageError = validateStorage(env);
   return [
     ...eveErrors,
     ...databaseErrors,
     ...(baseUrlError ? [baseUrlError] : []),
     ...(gatewayError ? [gatewayError] : []),
-    ...(storageError ? [storageError] : []),
   ];
 };
 
@@ -305,12 +312,24 @@ const checkEnv = async (): Promise<void> => {
   }
 
   const configuredErrors = validateConfiguredEnvironment(env);
-  const installedToolErrors = await validateInstalledItems(env, "chatjs/tools");
+  const groups = await Promise.all([
+    readInstalledItems("chatjs/tools"),
+    readInstalledItems("chatjs/plugins"),
+  ]);
+  const items = groups.flat();
+  const storageError = items.some(
+    ({ definition }) => definition.requiresStorage === true
+  )
+    ? validateStorage(env)
+    : null;
+  const itemErrors = await Promise.all(
+    items.map(async (item) => await validateInstalledItem(item, env))
+  );
   const errors = [
     ...configuredErrors,
     ...validateAuthentication(env),
-    ...installedToolErrors,
-    ...(await validateInstalledItems(env, "chatjs/plugins")),
+    ...(storageError ? [storageError] : []),
+    ...itemErrors.flat(),
   ];
 
   if (reportEnvironmentFailure(errors)) {

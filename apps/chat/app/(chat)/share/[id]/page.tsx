@@ -1,4 +1,4 @@
-// ChatJS source: sharing. Ownership: chatjs/plugins/sharing/chatjs.json.
+// ChatJS source: sharing. Ownership: chatjs/plugins/sharing/plugin.json.
 import React, { Suspense } from "react";
 
 import { ChatLoadingShell } from "@/components/chat-loading-shell";

@@ -18,11 +18,5 @@
     "chatjs/plugins/desktop/electron-auth.ts",
     "chatjs/plugins/desktop/sign-out.ts",
     "app/(auth)/device-login/page.tsx"
-  ],
-  "authentication": { "export": "desktopAuth" },
-  "authenticationUi": {
-    "form": "DesktopAuthForm",
-    "signOut": "signOutDesktop"
-  },
-  "navigation": { "export": "desktopNavigation" }
+  ]
 }

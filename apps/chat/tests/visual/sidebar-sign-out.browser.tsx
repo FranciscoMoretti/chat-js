@@ -1,4 +1,4 @@
-import { signOutDesktop } from "@/chatjs/plugins/desktop/sign-out";
+import signOutDesktop from "@/chatjs/plugins/desktop/sign-out";
 import { takeSnapshot } from "@uiverify/vitest";
 import React, { act } from "react";
 import { createRoot } from "react-dom/client";

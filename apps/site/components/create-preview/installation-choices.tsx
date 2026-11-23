@@ -189,8 +189,8 @@ export const FeatureChoices = ({
                 {definition.kind === "plugin"
                   ? pluginPreviewLabel(
                       id,
-                      hasPluginEntry(definition, "chat-ui") ||
-                        hasPluginEntry(definition, "layout-ui")
+                      hasPluginEntry(definition, "chat-ui.ts") ||
+                        hasPluginEntry(definition, "layout-ui.ts")
                     )
                   : "Tool examples"}
               </p>

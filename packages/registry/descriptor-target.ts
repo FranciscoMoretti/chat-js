@@ -12,7 +12,7 @@ export const descriptorTarget = (
     return undefined;
   }
   if (metadata.kind === "plugin") {
-    return `~/chatjs/plugins/${item.name}/chatjs.json`;
+    return `~/chatjs/plugins/${item.name}/plugin.json`;
   }
   if (metadata.kind === "tool") {
     return `~/chatjs/tools/${item.name}/chatjs.json`;

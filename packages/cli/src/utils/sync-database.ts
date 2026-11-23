@@ -11,7 +11,7 @@ const planDatabaseSchemas = async (
 ): Promise<string> => {
   const contributions = await Promise.all(
     installed.map(async (id): Promise<string[]> => {
-      const descriptor = `chatjs/plugins/${id}/chatjs.json`;
+      const descriptor = `chatjs/plugins/${id}/plugin.json`;
       await preflight(cwd, [descriptor]);
       const definition = pluginDefinitionSchema.parse(
         JSON.parse(await readFile(path.join(cwd, descriptor), "utf-8"))

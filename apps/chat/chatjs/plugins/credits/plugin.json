@@ -12,6 +12,5 @@
     "chatjs/plugins/credits/router.ts",
     "chatjs/plugins/credits/use-credits.ts"
   ],
-  "databaseSchemas": ["chatjs/plugins/credits/credits-schema.ts"],
-  "billing": { "export": "creditsBilling" }
+  "databaseSchemas": ["chatjs/plugins/credits/credits-schema.ts"]
 }

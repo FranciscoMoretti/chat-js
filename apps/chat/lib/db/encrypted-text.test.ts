@@ -11,7 +11,7 @@ const { encryptionKey } = vi.hoisted(() => {
   return { encryptionKey: Buffer.alloc(AES_256_KEY_BYTES).toString("base64") };
 });
 
-vi.mock("@/chatjs/plugins/mcp/mcp-env", () => ({
+vi.mock("@/chatjs/plugins/mcp/validate-env", () => ({
   readMcpEncryptionKey: () => encryptionKey,
 }));
 const table = pgTable("encrypted_fixture", {

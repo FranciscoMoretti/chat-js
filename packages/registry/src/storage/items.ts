@@ -18,7 +18,10 @@ type StorageEnvironmentRequirementReader = Readonly<{
 export const storageItems = builtInStorageProviders.map((provider) => {
   const id = provider.slug;
   return {
-    description: provider.description,
+    description:
+      id === "memory"
+        ? "Files are temporary and disappear when the server restarts."
+        : provider.description,
     files: [
       {
         path: `src/storage/${id}/storage-provider.ts`,
@@ -45,7 +48,7 @@ export const storageItems = builtInStorageProviders.map((provider) => {
       }),
     },
     name: `${id}-storage`,
-    title: provider.name,
+    title: id === "memory" ? "No persistent storage" : provider.name,
     type: "registry:item" as const,
   };
 });
