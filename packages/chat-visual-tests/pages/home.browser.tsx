@@ -308,6 +308,7 @@ test("signed-in creation retry brings the follow-up draft into the chat", async 
     sessionId: invoicesConversation.sessionId,
   };
   let requests = 0;
+  let savedAtNavigation: string | null = null;
   vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
     if (input === "/api/agent-conversations") {
       requests += 1;
@@ -318,6 +319,9 @@ test("signed-in creation retry brings the follow-up draft into the chat", async 
   vi.spyOn(globalThis.history, "pushState").mockImplementation(
     (_data, _unused, url) => {
       if (typeof url === "string") {
+        savedAtNavigation = sessionStorage.getItem(
+          `chatjs.eve.composer:${invoicesConversation.ownerId}:${invoicesConversation.chatId}`
+        );
         route.path = url;
       }
     }
@@ -341,6 +345,7 @@ test("signed-in creation retry brings the follow-up draft into the chat", async 
     .element(page.getByRole("button", { name: "Send", exact: true }))
     .toBeEnabled();
   expect(route.path).toBe(`/chat/${invoicesConversation.chatId}`);
+  expect(savedAtNavigation).toContain(followUp);
   expect(requests).toBe(2);
 });
 

@@ -18,9 +18,15 @@ const composerDraft = z.object({
 type Draft = ReadonlyNativeSurface<z.infer<typeof composerDraft>>;
 
 const emptyDraft: Draft = { attachments: [], selectedTool: null, text: "" };
-const incomingDrafts = new Map<string, string>();
 const draftKey = (ownerId: string, scopeId: string): string =>
   `chatjs.eve.composer:${ownerId}:${scopeId}`;
+
+const readSavedDraft = (key: string): Draft => {
+  const saved = sessionStorage.getItem(key);
+  return saved === null || saved === ""
+    ? emptyDraft
+    : composerDraft.parse(JSON.parse(saved));
+};
 
 /** Transfer text typed in the composer that created this conversation. */
 export const handoffEveComposerDraft = (
@@ -28,7 +34,18 @@ export const handoffEveComposerDraft = (
   scopeId: string,
   text: string
 ): void => {
-  incomingDrafts.set(draftKey(ownerId, scopeId), text);
+  const key = draftKey(ownerId, scopeId);
+  const draft = readSavedDraft(key);
+  if (draft.text === text) {
+    return;
+  }
+  sessionStorage.setItem(
+    key,
+    JSON.stringify({
+      ...draft,
+      text: draft.text ? `${draft.text}\n\n${text}` : text,
+    })
+  );
 };
 
 interface DraftSnapshot {
@@ -75,15 +92,12 @@ const createDraftStore = (key: string) => {
     subscribe: (listener: () => void) => {
       listeners.add(listener);
       if (!snapshot.loaded) {
-        const incoming = incomingDrafts.get(key);
-        incomingDrafts.delete(key);
         try {
-          const saved = sessionStorage.getItem(key);
-          const value =
-            typeof saved === "string" && saved !== ""
-              ? composerDraft.parse(JSON.parse(saved))
-              : emptyDraft;
-          publish({ value, loaded: true, error: undefined });
+          publish({
+            value: readSavedDraft(key),
+            loaded: true,
+            error: undefined,
+          });
         } catch {
           publish({
             ...snapshot,
@@ -91,9 +105,6 @@ const createDraftStore = (key: string) => {
             error:
               "The saved draft could not be restored. Keep this tab open for recovery.",
           });
-        }
-        if (incoming !== undefined && !snapshot.value.text) {
-          update((draft) => ({ ...draft, text: incoming }));
         }
       }
       return () => {
