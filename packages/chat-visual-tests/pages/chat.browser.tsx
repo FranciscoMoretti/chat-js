@@ -774,11 +774,11 @@ test("completed native activity shows timing and keeps the original tool details
     .element(page.getByText("Invoice lookup is unavailable."))
     .toBeVisible();
   await expect.element(page.getByText(/"status": "overdue"/u)).toBeVisible();
-  await page.viewport(1440, 1080);
-  await expect.poll(() => window.innerHeight).toBe(1080);
   await page.screenshot({
     path: "__screenshots__/native-activity-expanded.png",
   });
+  await activity.click();
+  await expect.element(activity).toHaveAttribute("aria-expanded", "false");
 });
 
 test.each([
