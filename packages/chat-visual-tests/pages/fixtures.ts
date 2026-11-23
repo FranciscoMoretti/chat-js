@@ -1,5 +1,6 @@
 import type { ReadonlyEveMessage as EveMessage } from "@/lib/eve/readonly-message-types";
 import type { inferRouterOutputs } from "@trpc/server";
+import type { SessionEvent } from "eve/client";
 
 import type { Session } from "@/lib/auth";
 import type { AppRouter } from "@/trpc/routers/_app";
@@ -773,6 +774,237 @@ export const signInTranscripts = {
   ],
 } satisfies Record<string, readonly EveMessage[]>;
 
+const activityTurn = { turnId: "activity-turn" };
+const nativeActivity: readonly SessionEvent[] = [
+  { type: "session.started", data: {} },
+  { type: "delivery.admitted", data: { deliveryId: "request" } },
+  {
+    type: "turn.started",
+    data: { ...activityTurn, cause: { deliveryId: "request" }, follows: null },
+  },
+  {
+    type: "delivery.consumed",
+    data: {
+      ...activityTurn,
+      deliveryId: "request",
+      parts: [
+        { kind: "text", text: "Put together an invoice activity report." },
+      ],
+    },
+  },
+  {
+    type: "content.completed",
+    data: {
+      partId: "reasoning",
+      kind: "reasoning",
+      phase: "narration",
+      value: "Check the reporting preferences and look up eligible invoices.",
+    },
+  },
+  {
+    type: "call.requested",
+    data: {
+      callId: "questions",
+      owner: activityTurn,
+      capability: { kind: "tool", name: "request_preferences" },
+    },
+  },
+  { type: "call.started", data: { callId: "questions" } },
+  {
+    type: "interaction.opened",
+    data: {
+      interactionId: "period",
+      subject: { callId: "questions" },
+      request: {
+        kind: "question",
+        display: "confirmation",
+        prompt: "Which period should the report cover?",
+        options: [{ id: "month", label: "Last month" }],
+      },
+    },
+  },
+  {
+    type: "interaction.opened",
+    data: {
+      interactionId: "format",
+      subject: { callId: "questions" },
+      request: {
+        kind: "question",
+        display: "confirmation",
+        prompt: "Which format should I use?",
+        options: [{ id: "summary", label: "Summary" }],
+      },
+    },
+  },
+  {
+    type: "call.requested",
+    data: {
+      callId: "lookup",
+      owner: activityTurn,
+      capability: { kind: "tool", name: "lookup_invoices" },
+      input: { status: "overdue" },
+    },
+  },
+  { type: "call.started", data: { callId: "lookup" } },
+  {
+    type: "call.requested",
+    data: {
+      callId: "publish",
+      owner: activityTurn,
+      capability: { kind: "tool", name: "publish_report" },
+    },
+  },
+  {
+    type: "interaction.opened",
+    data: {
+      interactionId: "publish-approval",
+      subject: { callId: "publish" },
+      request: {
+        kind: "approval",
+        prompt: "Publish the invoice report?",
+        options: [
+          { id: "approve", label: "Approve publication" },
+          { id: "deny", label: "Decline publication" },
+        ],
+      },
+    },
+  },
+];
+
+const submittedActivity: readonly SessionEvent[] = [
+  ...nativeActivity,
+  {
+    type: "interaction.settled",
+    data: {
+      interactionId: "period",
+      outcome: "accepted",
+      response: { optionId: "month" },
+    },
+  },
+  {
+    type: "response.submitted",
+    data: {
+      responseId: "format-answer",
+      interactionId: "format",
+      deliveryId: "answers",
+      value: { optionId: "summary" },
+    },
+  },
+  {
+    type: "interaction.settled",
+    data: {
+      interactionId: "publish-approval",
+      outcome: "declined",
+      response: { optionId: "deny" },
+    },
+  },
+  {
+    type: "call.settled",
+    data: {
+      callId: "publish",
+      outcome: "rejected",
+      cause: { interactionId: "publish-approval" },
+    },
+  },
+  {
+    type: "call.settled",
+    data: {
+      callId: "lookup",
+      outcome: "failed",
+      error: { code: "unavailable", message: "Invoice lookup is unavailable." },
+    },
+  },
+  {
+    type: "interaction.opened",
+    data: {
+      interactionId: "connect",
+      subject: activityTurn,
+      request: {
+        kind: "sign-in",
+        prompt: "Sign in to Notion",
+        signIn: { name: "notion", displayName: "Notion" },
+      },
+    },
+  },
+  {
+    type: "interaction.settled",
+    data: { interactionId: "connect", outcome: "accepted" },
+  },
+  {
+    type: "interaction.opened",
+    data: {
+      interactionId: "expired-connect",
+      subject: activityTurn,
+      request: {
+        kind: "sign-in",
+        prompt: "Sign in to Linear",
+        signIn: { name: "linear", displayName: "Linear" },
+      },
+    },
+  },
+  {
+    type: "interaction.settled",
+    data: { interactionId: "expired-connect", outcome: "expired" },
+  },
+];
+
+const activityEvents = (
+  events: readonly SessionEvent[]
+): typeof route.events => ({
+  [invoicesSessionId]: events.map((event, line) => ({
+    scope: activityTurn,
+    ...event,
+    meta: {
+      at: new Date(Date.UTC(2026, 8, 24, 15, 29, line)).toISOString(),
+      position: { line, index: 0 },
+      endOfLine: true,
+    },
+  })),
+});
+
+export const pendingActivityEvents = activityEvents(nativeActivity);
+export const pendingActivityWithFirstAnswerEvents = activityEvents([
+  ...nativeActivity,
+  {
+    type: "response.submitted",
+    data: {
+      responseId: "period-answer",
+      interactionId: "period",
+      deliveryId: "answers",
+      value: { optionId: "month" },
+    },
+  },
+]);
+export const submittedActivityEvents = activityEvents(submittedActivity);
+export const completedActivityEvents = activityEvents([
+  ...submittedActivity,
+  {
+    type: "interaction.settled",
+    data: {
+      interactionId: "format",
+      outcome: "accepted",
+      response: { optionId: "summary" },
+    },
+  },
+  {
+    type: "call.settled",
+    data: {
+      callId: "questions",
+      outcome: "completed",
+      output: { format: "summary" },
+    },
+  },
+  { type: "turn.settled", data: { ...activityTurn, outcome: "completed" } },
+]);
+export const cancelledActivityEvents = activityEvents([
+  ...nativeActivity,
+  { type: "turn.settled", data: { ...activityTurn, outcome: "cancelled" } },
+]);
+export const endedActivityEvents = activityEvents([
+  ...nativeActivity,
+  { type: "session.ended", data: { outcome: "completed" } },
+]);
+
 const generatedImageArtwork = `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360">
   <defs>
     <linearGradient id="sky" x2="0" y2="1">
@@ -935,6 +1167,11 @@ export const researchFileTranscripts = {
       role: "assistant",
       metadata: { status: "complete", turnId: "turn-research-file" },
       parts: [
+        {
+          type: "reasoning",
+          text: "Find the launch references and assemble the report.",
+          state: "done",
+        },
         {
           type: "tool",
           kind: "tool",

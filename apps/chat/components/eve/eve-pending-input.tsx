@@ -1,13 +1,20 @@
 "use client";
 
 import React from "react";
-import type { InteractionRequest, Answer } from "eve/events";
+import { signInEnding } from "eve/events";
+import type {
+  Interaction,
+  InteractionOutcome,
+  InteractionRequest,
+  Answer,
+} from "eve/events";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Item,
   ItemActions,
   ItemContent,
+  ItemDescription,
   ItemTitle,
 } from "@/components/ui/item";
 import {
@@ -117,6 +124,7 @@ const PendingSignIn = ({
   disabled,
 }: PendingInputProps): React.JSX.Element => {
   const { signIn } = request;
+  const name = signIn?.displayName ?? signIn?.name ?? "account";
   const url = signIn?.url;
   const safeUrl =
     url !== undefined && URL.canParse(url) && new URL(url).protocol === "https:"
@@ -152,7 +160,7 @@ const PendingSignIn = ({
             target="_blank"
             rel="noopener noreferrer"
           >
-            Connect {signIn?.displayName ?? "account"}
+            Connect {name}
           </a>
         ) : (
           <Button disabled>Sign-in unavailable</Button>
@@ -162,9 +170,7 @@ const PendingSignIn = ({
   );
 };
 
-export const EvePendingInput = (
-  props: PendingInputProps
-): React.JSX.Element => {
+const PendingInput = (props: PendingInputProps): React.JSX.Element => {
   const { request, disabled, respond } = props;
   if (request.kind === "sign-in") {
     return <PendingSignIn {...props} />;
@@ -204,6 +210,77 @@ export const EvePendingInput = (
           request={{ ...request, options: [], prompt: "Or write an answer" }}
         />
       )}
+    </Item>
+  );
+};
+
+const outcomeLabels = {
+  accepted: "Answered",
+  declined: "Declined",
+  invalid: "Invalid response",
+  failed: "Failed",
+  expired: "Timed out",
+  abandoned: "Cancelled",
+  interrupted: "Cancelled",
+  withdrawn: "Cancelled",
+} satisfies Record<InteractionOutcome, string>;
+
+const interactionResult = (interaction: Interaction): string => {
+  if (interaction.status === "open") {
+    return "Response submitted";
+  }
+
+  if (
+    interaction.outcome === "accepted" &&
+    interaction.request.kind === "approval"
+  ) {
+    return "Approved";
+  }
+  return outcomeLabels[interaction.outcome ?? "withdrawn"];
+};
+
+export const EveInteraction = ({
+  interaction,
+  disabled,
+  respond,
+}: {
+  readonly interaction: Interaction;
+  readonly disabled: boolean;
+  readonly respond: (response: Answer) => void;
+}): React.JSX.Element => {
+  const { answer, interactionId, outcome, request, status } = interaction;
+  if (status === "open" && answer === undefined) {
+    return (
+      <PendingInput
+        request={{ ...request, interactionId }}
+        disabled={disabled}
+        respond={respond}
+      />
+    );
+  }
+
+  const answerLabel =
+    answer?.text ??
+    request.options?.find((option) => option.id === answer?.optionId)?.label ??
+    answer?.optionId;
+  const service =
+    request.signIn?.displayName ?? request.signIn?.name ?? "Account";
+  const result =
+    request.kind === "sign-in" && status === "settled"
+      ? `${service}${outcome === "accepted" ? "" : " authorization"} ${signInEnding(outcome ?? "withdrawn")}.`
+      : interactionResult(interaction);
+
+  return (
+    <Item variant="outline" size="sm">
+      <ItemContent>
+        <ItemTitle>{request.prompt}</ItemTitle>
+        {answerLabel !== undefined && (
+          <p className="text-sm break-words whitespace-pre-wrap">
+            {answerLabel}
+          </p>
+        )}
+        <ItemDescription>{result}</ItemDescription>
+      </ItemContent>
     </Item>
   );
 };

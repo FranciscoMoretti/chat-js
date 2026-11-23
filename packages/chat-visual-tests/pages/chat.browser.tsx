@@ -1,4 +1,5 @@
 import { takeSnapshot } from "@uiverify/vitest";
+import { conversationOf, SessionNotActiveError } from "eve/client";
 import { expect, test, vi } from "vitest";
 import { page, userEvent } from "vitest/browser";
 import { route } from "./route";
@@ -14,8 +15,11 @@ import {
 } from "@/lib/eve/pending-create";
 
 import {
+  cancelledActivityEvents,
   chatFailure,
+  completedActivityEvents,
   connectionResultTranscripts,
+  endedActivityEvents,
   history,
   invoicesConversation,
   invoicesFollowupEvents,
@@ -26,10 +30,13 @@ import {
   invoicesTranscripts,
   invoicesTrpc,
   launchProject,
+  pendingActivityEvents,
+  pendingActivityWithFirstAnswerEvents,
   questionTranscripts,
   session,
   signedIn,
   signInTranscripts,
+  submittedActivityEvents,
   validatedToolTranscripts,
 } from "./fixtures";
 import { renderRoute } from "./render";
@@ -188,13 +195,20 @@ test("cancelled native file and command operations show stopped states", async (
   await expect
     .element(page.getByRole("button", { name: "bash Error", exact: true }))
     .toBeVisible();
+  await page.getByRole("button", { name: "bash Error", exact: true }).click();
   await expect.element(page.getByText("Tool stopped.").first()).toBeVisible();
   await expect
     .element(
       page.getByRole("button", { name: "fixture__search Error", exact: true })
     )
     .toBeVisible();
+  await page
+    .getByRole("button", { name: "awaitingTool Awaiting approval" })
+    .click();
   await expect.element(page.getByText("Waiting for input.")).toBeVisible();
+  await page
+    .getByRole("button", { name: "web_search Denied", exact: true })
+    .click();
   await expect.element(page.getByText("Request declined.")).toBeVisible();
   await page.screenshot({ path: "__screenshots__/native-stopped.png" });
 });
@@ -593,6 +607,212 @@ test("owner can answer approval while the native turn stays open", async () => {
     .element(page.getByRole("button", { name: "Cancel", exact: true }))
     .toBeEnabled();
 });
+
+test("native activity keeps both questions and approval answerable while working", async () => {
+  await renderRoute(conversation, {
+    ...request,
+    agentStatus: "streaming",
+    events: pendingActivityEvents,
+    transcripts: {},
+  });
+  const activity = page.getByRole("button", { name: "Working 4 steps" });
+  await expect.element(activity).toHaveAttribute("aria-expanded", "true");
+  await activity.click();
+  await expect.element(activity).toHaveAttribute("aria-expanded", "false");
+  await expect
+    .element(page.getByRole("button", { name: /lookup_invoices/u }))
+    .not.toBeInTheDocument();
+
+  const period = page.getByRole("button", { name: "Last month", exact: true });
+  const format = page.getByRole("button", { name: "Summary", exact: true });
+  const approve = page.getByRole("button", {
+    name: "Approve publication",
+    exact: true,
+  });
+  await expect.element(period).toBeEnabled();
+  await expect.element(format).toBeEnabled();
+  await expect.element(approve).toBeEnabled();
+  await page.screenshot({ path: "__screenshots__/native-activity-busy.png" });
+
+  await period.click();
+  await format.click();
+  await approve.click();
+  await expect
+    .poll(() => route.agentAnswers)
+    .toEqual([
+      { interactionId: "period", optionId: "month" },
+      { interactionId: "format", optionId: "summary" },
+      { interactionId: "publish-approval", optionId: "approve" },
+    ]);
+});
+
+test("native replay keeps submitted answers distinct from settled outcomes", async () => {
+  await renderRoute(conversation, {
+    ...request,
+    events: submittedActivityEvents,
+    transcripts: {},
+  });
+  const activity = page.getByRole("button", {
+    name: /Waiting for you.*1 of 4 failed/u,
+  });
+  await expect.element(activity).toHaveAttribute("aria-expanded", "true");
+  await activity.click();
+  await expect
+    .element(page.getByRole("button", { name: "Stop", exact: true }))
+    .toBeEnabled();
+  await expect
+    .element(page.getByText("Last month", { exact: true }))
+    .toBeVisible();
+  await expect
+    .element(page.getByText("Answered", { exact: true }))
+    .toBeVisible();
+  await expect
+    .element(page.getByText("Summary", { exact: true }))
+    .toBeVisible();
+  await expect
+    .element(page.getByText("Response submitted", { exact: true }))
+    .toBeVisible();
+  await expect
+    .element(page.getByText("Declined", { exact: true }))
+    .toBeVisible();
+  await expect
+    .element(page.getByText("Notion connected.", { exact: true }))
+    .toBeVisible();
+  await expect
+    .element(page.getByText("Linear authorization timed out.", { exact: true }))
+    .toBeVisible();
+  await expect
+    .element(page.getByRole("button", { name: "Summary", exact: true }))
+    .not.toBeInTheDocument();
+  await page.screenshot({ path: "__screenshots__/native-activity-replay.png" });
+});
+
+test("the native optimistic answer and its sibling's submitted answer both lock their own question", async () => {
+  const { sessionId } = invoicesConversation;
+  if (sessionId === null || sessionId === "") {
+    throw new Error("The conversation fixture must have a native session.");
+  }
+  const events = pendingActivityWithFirstAnswerEvents[sessionId];
+  const { messages } = conversationOf(events);
+  const liveTranscripts = {
+    [sessionId]: messages.map((message) => ({
+      ...message,
+      parts: message.parts.map((part) => {
+        if (
+          part.type !== "tool" ||
+          part.interaction?.interactionId !== "format"
+        ) {
+          return part;
+        }
+        return {
+          ...part,
+          interaction: {
+            ...part.interaction,
+            answer: { interactionId: "format", optionId: "summary" },
+          },
+        };
+      }),
+    })),
+  };
+  await renderRoute(conversation, {
+    ...request,
+    agentStatus: "streaming",
+    events: pendingActivityWithFirstAnswerEvents,
+    liveTranscripts,
+    transcripts: {},
+    viewports: [],
+  });
+  await expect
+    .element(page.getByText("Last month", { exact: true }))
+    .toBeVisible();
+  await expect
+    .element(page.getByText("Summary", { exact: true }))
+    .toBeVisible();
+  await expect
+    .poll(
+      () => page.getByText("Response submitted", { exact: true }).all().length
+    )
+    .toBe(2);
+  await expect
+    .element(page.getByRole("button", { name: "Last month", exact: true }))
+    .not.toBeInTheDocument();
+  await expect
+    .element(page.getByRole("button", { name: "Summary", exact: true }))
+    .not.toBeInTheDocument();
+  await expect
+    .element(
+      page.getByRole("button", { name: "Approve publication", exact: true })
+    )
+    .toBeEnabled();
+});
+
+test("completed native activity shows timing and keeps the original tool details", async () => {
+  await renderRoute(conversation, {
+    ...request,
+    events: completedActivityEvents,
+    transcripts: {},
+    trpc: { ...request.trpc, "followupSuggestions.get": null },
+  });
+  const activity = page.getByRole("button", {
+    name: /Worked for \d+s 1 of 4 failed/u,
+  });
+  await expect.element(activity).toHaveAttribute("aria-expanded", "false");
+  await expect
+    .element(page.getByText("Answered", { exact: true }).last())
+    .toBeVisible();
+  await expect
+    .element(page.getByText("Response submitted", { exact: true }))
+    .not.toBeInTheDocument();
+  await page.screenshot({
+    path: "__screenshots__/native-activity-summary.png",
+  });
+  await activity.click();
+  await page
+    .getByRole("button", { name: "lookup_invoices Error", exact: true })
+    .click();
+  await expect
+    .element(page.getByText("Invoice lookup is unavailable."))
+    .toBeVisible();
+  await expect.element(page.getByText(/"status": "overdue"/u)).toBeVisible();
+  await page.screenshot({
+    path: "__screenshots__/native-activity-expanded.png",
+  });
+  await activity.click();
+  await expect.element(activity).toHaveAttribute("aria-expanded", "false");
+});
+
+test.each([
+  ["restoring", { agentStatus: "resuming", events: pendingActivityEvents }],
+  ["cancelled", { events: cancelledActivityEvents }],
+  ["ended", { events: endedActivityEvents }],
+  [
+    "inactive",
+    { agentError: new SessionNotActiveError(), events: pendingActivityEvents },
+  ],
+] satisfies readonly [string, Parameters<typeof renderRoute>[1]][])(
+  "native interaction controls are disabled when %s",
+  async (state, agent) => {
+    await renderRoute(conversation, {
+      ...request,
+      ...agent,
+      transcripts: {},
+      viewports: state === "restoring" ? ["desktop", "mobile"] : [],
+    });
+    await expect
+      .element(page.getByRole("button", { name: "Last month", exact: true }))
+      .toBeDisabled();
+    await expect
+      .element(
+        page.getByRole("button", { name: "Approve publication", exact: true })
+      )
+      .toBeDisabled();
+    if (state === "restoring") {
+      await page.screenshot({
+        path: "__screenshots__/native-activity-restoring.png",
+      });
+    }
+  }
+);
 
 test("lost branch response keeps source recovery visible instead of selecting the newest branch", async () => {
   prepareCreation(
@@ -1063,6 +1283,10 @@ test("message activity renders reasoning, tool errors and falsy results in the c
       ],
     },
   });
+  await page.getByRole("button", { name: /Worked.*1 of 3 failed/u }).click();
+  await page
+    .getByRole("button", { name: "Warehouse lookup Error", exact: true })
+    .click();
   await expect
     .element(
       page.getByRole("alert").filter({ hasText: "Warehouse unavailable" })

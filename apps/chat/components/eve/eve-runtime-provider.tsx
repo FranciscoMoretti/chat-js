@@ -1,12 +1,17 @@
 "use client";
 
 import { idle } from "eve/events";
+import type { Answer } from "eve/events";
 
 import { hasText } from "@/components/text-value";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { conversationOf } from "eve/client";
-import type { SessionStreamEvent } from "eve/client";
+import type {
+  EveMessage,
+  EveMessagePart,
+  SessionStreamEvent,
+} from "eve/client";
 import { useEveAgent } from "eve/react";
 import { usePathname } from "next/navigation";
 import React, {
@@ -39,6 +44,47 @@ import {
 import type { OpenRequest } from "./eve-logical-context";
 
 type Runtime = OpenRequest & { chatId: string; controller: LogicalChat };
+
+const partInteraction = (part: EveMessagePart) => {
+  if (part.type === "tool") {
+    return part.interaction;
+  }
+  return part.type === "interaction" ? part : undefined;
+};
+
+const withLiveAnswers = (
+  confirmed: readonly EveMessage[],
+  live: readonly EveMessage[]
+): readonly EveMessage[] => {
+  const answers = new Map<string, Answer>();
+  for (const message of live) {
+    for (const part of message.parts) {
+      const interaction = partInteraction(part);
+      if (interaction?.status === "open" && interaction.answer !== undefined) {
+        answers.set(interaction.interactionId, interaction.answer);
+      }
+    }
+  }
+  if (answers.size === 0) {
+    return confirmed;
+  }
+  return confirmed.map((message) => ({
+    ...message,
+    parts: message.parts.map((part) => {
+      const interaction = partInteraction(part);
+      if (interaction?.status !== "open" || interaction.answer !== undefined) {
+        return part;
+      }
+      const answer = answers.get(interaction.interactionId);
+      if (answer === undefined) {
+        return part;
+      }
+      return part.type === "tool"
+        ? { ...part, interaction: { ...interaction, answer } }
+        : { ...interaction, type: "interaction", answer };
+    }),
+  }));
+};
 
 const NativeObserver = ({
   controller,
@@ -123,7 +169,8 @@ const NativeObserver = ({
       (message) => message.metadata?.optimistic
     );
     return projectEveMessageDisplay(
-      { messages: [...confirmed, ...pending] },
+      // Attach the native hook's immediate answers to confirmed parts by interaction ID.
+      { messages: [...withLiveAnswers(confirmed, agent.messages), ...pending] },
       agent.events,
       display.data ?? []
     );

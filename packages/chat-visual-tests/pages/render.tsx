@@ -71,10 +71,12 @@ export const renderRoute = async (
   Object.assign(route, {
     agentError: null,
     agentStatus: "ready",
+    agentAnswers: [],
     agentEventHandlers: new Map(),
     events: {},
     cookies: {},
     lastLoginMethod: null,
+    liveTranscripts: {},
     missingFixtures: new Set(),
     path: "/",
     search: "",

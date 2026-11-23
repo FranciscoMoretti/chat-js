@@ -1,5 +1,6 @@
 import type { QueryClient } from "@tanstack/react-query";
 import type { EveMessage, SessionStreamEvent } from "eve/client";
+import type { Answer } from "eve/events";
 
 import type { Session } from "@/lib/auth";
 import type {
@@ -21,8 +22,9 @@ export interface ServerData {
 /** The request a page test renders: read by the next/*, auth, data, and tRPC doubles in setup.tsx. */
 export const route: {
   /** The error the replayed EVE session reports, as when the last reply failed. */
-  agentError: string | null;
-  agentStatus: "ready" | "streaming";
+  agentError: Error | string | null;
+  agentStatus: "ready" | "streaming" | "resuming";
+  agentAnswers: Answer[];
   agentEventHandlers: Map<string, (event: SessionStreamEvent) => void>;
   events: Record<string, readonly SessionStreamEvent[]>;
   cookies: Record<string, string>;
@@ -37,11 +39,14 @@ export const route: {
   session: Session | null;
   /** Messages each EVE session replays, keyed by session id. */
   transcripts: Record<string, readonly EveMessage[]>;
+  /** Live hook messages before new answers have reached the replayed stream. */
+  liveTranscripts: Record<string, readonly EveMessage[]>;
   /** Each procedure's result, or a function of its input. */
   trpc: Record<string, unknown>;
 } = {
   agentError: null,
   agentStatus: "ready",
+  agentAnswers: [],
   agentEventHandlers: new Map(),
   events: {},
   cookies: {},
@@ -53,6 +58,7 @@ export const route: {
   server: {},
   session: null,
   transcripts: {},
+  liveTranscripts: {},
   trpc: {},
 };
 

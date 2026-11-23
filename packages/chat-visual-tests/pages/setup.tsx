@@ -1,6 +1,7 @@
 import { conversationOf } from "eve/client";
 import "../../registry/visual/setup";
 import type * as EveClient from "eve/client";
+import type { Answer } from "eve/events";
 import { MotionGlobalConfig } from "motion/react";
 import type { AnchorHTMLAttributes } from "react";
 import superjson, { serialize } from "superjson";
@@ -167,11 +168,17 @@ vi.mock("eve/client", async (importOriginal) => {
 // EVE streams a session's events from its server; a page test replays a finished transcript. The
 // native data stays stable between events, but the real hook returns a new wrapper on every render.
 vi.mock("eve/react", () => {
+  const statuses = { ready: "idle", streaming: "busy", resuming: "resuming" };
   let agents = new WeakMap<readonly EveClient.EveMessage[], object>();
+  let histories = new WeakMap<
+    readonly EveClient.SessionStreamEvent[],
+    EveClient.ConversationState
+  >();
   // One empty list per session, so a session with no transcript keeps its own agent across renders.
   let noTranscripts = new Map<string, readonly EveClient.EveMessage[]>();
   beforeEach(() => {
     agents = new WeakMap();
+    histories = new WeakMap();
     noTranscripts = new Map();
   });
   const emptyTranscript = (
@@ -197,16 +204,25 @@ vi.mock("eve/react", () => {
       if (onEvent) {
         route.agentEventHandlers.set(sessionId, onEvent);
       }
-      const messages =
-        route.transcripts[sessionId] ?? emptyTranscript(sessionId);
       const events = route.events[sessionId] ?? [];
+      let history = histories.get(events);
+      if (!history) {
+        history = conversationOf(events);
+        histories.set(events, history);
+      }
+      const messages =
+        route.transcripts[sessionId] ??
+        (events.length > 0 ? history.messages : emptyTranscript(sessionId));
       projections.set(events, messages);
-      const agent = agents.get(messages) ?? {
+      const liveMessages = route.liveTranscripts[sessionId] ?? messages;
+      const agent = agents.get(liveMessages) ?? {
         cancel: idle,
-        ...conversationOf([]),
-        messages,
+        ...history,
+        messages: liveMessages,
         error:
-          route.agentError === null ? undefined : new Error(route.agentError),
+          typeof route.agentError === "string"
+            ? new Error(route.agentError)
+            : (route.agentError ?? undefined),
         events,
         prewarm: idle,
         newSession: () => {
@@ -218,13 +234,16 @@ vi.mock("eve/react", () => {
         clear: idle,
         compact: idle,
         end: idle,
-        respond: idle,
+        respond: (answers: readonly Answer[]) => {
+          route.agentAnswers.push(...answers);
+          return idle();
+        },
         resume: idle,
         send: idle,
         session: initialSession,
-        status: route.agentStatus === "ready" ? "idle" : "busy",
+        status: statuses[route.agentStatus],
       };
-      agents.set(messages, agent);
+      agents.set(liveMessages, agent);
       return { ...agent };
     },
   };
