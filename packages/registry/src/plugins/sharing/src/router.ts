@@ -3,7 +3,7 @@ import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 import { getSharing, setSharing } from "./queries";
 
-export const sharingRouter = createTRPCRouter({
+const sharingProcedures = {
   get: protectedProcedure
     .input(z.object({ id: z.uuid() }))
     .query(async ({ ctx, input }) => {
@@ -24,4 +24,6 @@ export const sharingRouter = createTRPCRouter({
       }
       return row;
     }),
-});
+};
+
+export const router = createTRPCRouter({ sharing: sharingProcedures });

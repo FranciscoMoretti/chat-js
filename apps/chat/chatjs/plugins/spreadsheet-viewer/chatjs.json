@@ -1,18 +1,12 @@
 {
+  "contractVersion": 3,
+  "uiBase": "base",
   "id": "spreadsheet-viewer",
   "kind": "plugin",
   "files": [
-    "chatjs/plugins/spreadsheet-viewer/client-plugin.ts",
+    "chatjs/plugins/spreadsheet-viewer/chat-ui.ts",
     "chatjs/plugins/spreadsheet-viewer/viewer-action.tsx",
     "chatjs/plugins/spreadsheet-viewer/load.ts",
     "chatjs/plugins/spreadsheet-viewer/preview.tsx"
-  ],
-  "client": {
-    "export": "spreadsheetViewerClient",
-    "composerControls": [],
-    "settingsItems": [],
-    "chat": true
-  },
-  "contractVersion": 2,
-  "uiBase": "base"
+  ]
 }

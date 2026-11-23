@@ -7,7 +7,7 @@ const aiTitlesFiles = [
   "chatjs/plugins/ai-titles/title-queries.ts",
 ];
 const aiTitlesDefinition = pluginDefinitionSchema.parse({
-  contractVersion: 1,
+  contractVersion: 3,
   id: "ai-titles",
   kind: "plugin",
   files: aiTitlesFiles,

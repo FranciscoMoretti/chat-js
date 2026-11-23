@@ -29,6 +29,7 @@ const project = (
 const request = {
   ...signedIn,
   path: `/project/${launchProject.id}`,
+  params: { projectId: launchProject.id },
   server: { conversations: withLaunchChats, project: launchProject },
   trpc: {
     ...signedInTrpc,
@@ -44,6 +45,11 @@ test("project with instructions and chats", async () => {
     .element(page.getByText("Press release first draft"))
     .toBeVisible();
   await expect.element(page.getByText("✓")).toBeInTheDocument();
+  await expect
+    .element(
+      page.getByRole("link", { name: launchProject.name, exact: true }).first()
+    )
+    .toHaveAttribute("data-active");
   // Environment overrides used by Create must not remove app management actions.
   await expect
     .element(page.getByRole("button", { name: "New project", exact: true }))

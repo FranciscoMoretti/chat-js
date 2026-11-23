@@ -62,7 +62,7 @@ const fixture = async () => {
           meta: {
             chatjs: {
               kind: "plugin",
-              contractVersion: 1,
+              contractVersion: 3,
               id: "attachment-uploads",
               requiresStorage: true,
             },

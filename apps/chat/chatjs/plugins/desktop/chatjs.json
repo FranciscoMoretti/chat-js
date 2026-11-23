@@ -1,4 +1,6 @@
 {
+  "contractVersion": 3,
+  "uiBase": "base",
   "id": "desktop",
   "kind": "plugin",
   "files": [
@@ -8,7 +10,7 @@
     "chatjs/plugins/desktop/auth-server.ts",
     "chatjs/plugins/desktop/auth-ui.tsx",
     "chatjs/plugins/desktop/bridge.ts",
-    "chatjs/plugins/desktop/client-plugin.ts",
+    "chatjs/plugins/desktop/layout-ui.ts",
     "chatjs/plugins/desktop/navigation.ts",
     "chatjs/plugins/desktop/protocol.ts",
     "chatjs/plugins/desktop/device-login-page.tsx",
@@ -22,13 +24,5 @@
     "form": "DesktopAuthForm",
     "signOut": "signOutDesktop"
   },
-  "navigation": { "export": "desktopNavigation" },
-  "client": {
-    "export": "desktopClient",
-    "composerControls": [],
-    "settingsItems": [],
-    "layout": true
-  },
-  "contractVersion": 2,
-  "uiBase": "base"
+  "navigation": { "export": "desktopNavigation" }
 }

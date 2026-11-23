@@ -6,12 +6,12 @@ import { pluginDefinitionSchema } from "../../../metadata";
 // Canonical upload implementation; apps/chat contains installed demo copies.
 const attachmentUploadFiles = [
   "chatjs/plugins/attachment-uploads/controls.tsx",
-  "chatjs/plugins/attachment-uploads/integration.tsx",
+  "chatjs/plugins/attachment-uploads/uploads.ts",
   "chatjs/plugins/attachment-uploads/upload.ts",
   "chatjs/plugins/attachment-uploads/upload-prep.ts",
   "app/(chat)/api/files/upload/route.ts",
   "chatjs/plugins/attachment-uploads/routes/upload.ts",
-  "chatjs/plugins/attachment-uploads/client-plugin.ts",
+  "chatjs/plugins/attachment-uploads/chat-ui.ts",
 ];
 
 const attachmentUploadsItem: RegistryItem = {
@@ -31,16 +31,11 @@ const attachmentUploadsItem: RegistryItem = {
   })),
   meta: {
     chatjs: pluginDefinitionSchema.parse({
-      contractVersion: 2,
+      contractVersion: 3,
       uiBase: "base",
       id: "attachment-uploads",
       kind: "plugin",
       files: attachmentUploadFiles,
-      client: {
-        export: "attachmentUploadsClient",
-        composerControls: ["attach-files", "take-photo"],
-        uploads: true,
-      },
       requiresStorage: true,
     }),
   },

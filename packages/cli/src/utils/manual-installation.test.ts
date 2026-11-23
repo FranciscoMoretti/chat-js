@@ -203,7 +203,7 @@ test("add dry-run reports activation without changing the app or installing depe
       type: "registry:item",
       meta: {
         chatjs: {
-          contractVersion: 1,
+          contractVersion: 3,
           kind: "plugin",
           id: "example",
           chat: { export: "example" },

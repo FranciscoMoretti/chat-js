@@ -1,7 +1,7 @@
 import { Plugins } from "@/chatjs/core/ui/slots";
-import { attachmentUploadsClient } from "@/chatjs/plugins/attachment-uploads/client-plugin";
-import { mcpClient } from "@/chatjs/plugins/mcp/client-plugin";
-import { modelPreferencesClient } from "@/chatjs/plugins/model-preferences/client-plugin";
+import { chatUi as attachmentUploadsClient } from "@/chatjs/plugins/attachment-uploads/chat-ui";
+import { chatUi as mcpClient } from "@/chatjs/plugins/mcp/chat-ui";
+import { chatUi as modelPreferencesClient } from "@/chatjs/plugins/model-preferences/chat-ui";
 import { renderRoot, unmountRoot } from "./primitive-mount";
 import { disableAutoSnapshot, takeSnapshot } from "@uiverify/vitest";
 import React, { act, useState } from "react";
@@ -48,7 +48,7 @@ const state = vi.hoisted(() => ({
 
 vi.mock("@/integrations/chat/uploads", async () => {
   const { attachmentUploads } =
-    await import("@/chatjs/plugins/attachment-uploads/integration");
+    await import("@/chatjs/plugins/attachment-uploads/uploads");
   const useFixtureUploads = (files: AttachmentUploadInput) => {
     const behavior = attachmentUploads.useUploads(files);
     if (state.uploadsInstalled) {

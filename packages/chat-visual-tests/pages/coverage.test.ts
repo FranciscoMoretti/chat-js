@@ -12,7 +12,7 @@ const ROUTE_FILE =
 const NOT_RENDERED = new Set([
   // The <html> shell; renderRoute mounts its body providers around every page.
   "layout.tsx",
-  // Redirects to /chat/[id].
+  // Redirects to /chat/[chatId].
   "(chat)/project/[projectId]/chat/[chatId]/page.tsx",
 ]);
 

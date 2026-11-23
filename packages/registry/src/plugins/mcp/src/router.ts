@@ -217,7 +217,7 @@ const publicConnector = (connector: PublicConnectorInput): PublicConnector => ({
   userId: connector.userId,
 });
 
-export const mcpRouter = createTRPCRouter({
+const mcpProcedures = {
   /**
    * Initiate OAuth authorization for an MCP connector.
    * Returns the authorization URL that the client should open in a popup.
@@ -849,4 +849,6 @@ export const mcpRouter = createTRPCRouter({
         return { success: true };
       }
     ),
-});
+};
+
+export const router = createTRPCRouter({ mcp: mcpProcedures });

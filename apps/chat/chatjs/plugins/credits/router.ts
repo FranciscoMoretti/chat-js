@@ -1,7 +1,7 @@
 import { getBalanceCents } from "./credits-queries";
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 
-export const creditsRouter = createTRPCRouter({
+const creditsProcedures = {
   getAvailableCredits: protectedProcedure.query(
     async ({
       ctx,
@@ -12,4 +12,6 @@ export const creditsRouter = createTRPCRouter({
       return { balanceCents };
     }
   ),
-});
+};
+
+export const router = createTRPCRouter({ credits: creditsProcedures });

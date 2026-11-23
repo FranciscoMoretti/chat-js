@@ -3,7 +3,7 @@ import { pluginDefinitionSchema } from "../../../metadata";
 
 const followupSuggestionsFiles = [
   "chatjs/plugins/followup-suggestions/chat.ts",
-  "chatjs/plugins/followup-suggestions/client-plugin.ts",
+  "chatjs/plugins/followup-suggestions/chat-ui.ts",
   "chatjs/plugins/followup-suggestions/followup-completion.ts",
   "chatjs/plugins/followup-suggestions/followup-context.ts",
   "chatjs/plugins/followup-suggestions/followup-hook.ts",
@@ -12,21 +12,19 @@ const followupSuggestionsFiles = [
   "chatjs/plugins/followup-suggestions/followup-suggestions-view.tsx",
   "chatjs/plugins/followup-suggestions/generate-suggestions.ts",
   "chatjs/plugins/followup-suggestions/router.ts",
-  "chatjs/plugins/followup-suggestions/server-plugin.ts",
   "chatjs/plugins/followup-suggestions/suggestion-output.ts",
   "chatjs/plugins/followup-suggestions/suggestions.tsx",
   "chatjs/plugins/followup-suggestions/use-followups.ts",
   "agent/hooks/followup-suggestions.ts",
 ];
 const followupSuggestionsDefinition = pluginDefinitionSchema.parse({
-  contractVersion: 2,
+  contractVersion: 3,
   uiBase: "base",
   id: "followup-suggestions",
   kind: "plugin",
   files: followupSuggestionsFiles,
   databaseSchemas: ["chatjs/plugins/followup-suggestions/followup-schema.ts"],
   chat: { export: "followupChat" },
-  client: { export: "followupSuggestionsClient", chat: true },
 });
 const followupSuggestionsItem: RegistryItem = {
   dependencies: ["@tanstack/react-query", "drizzle-orm", "lucide-react"],

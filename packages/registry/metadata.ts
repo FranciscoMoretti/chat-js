@@ -129,7 +129,12 @@ type StorageDefinition = z.infer<typeof storageDefinitionSchema>;
 // Plugin IDs are open to external registries; contributions use the same contract.
 const pluginIdSchema = z.string().regex(/^[a-z][a-z0-9-]*$/u);
 const pluginModuleSchema = z.string().regex(/^[a-zA-Z0-9_-]+\.(?:ts|js|mjs)$/u);
-const pluginDefinitionBase = z.object({
+const pluginDefinitionSchema = z.strictObject({
+  contractVersion: z.literal(3, {
+    error:
+      "Use plugin contractVersion 3 with file-based router and UI entries. Reinstall the plugin from a matching registry or update its descriptor and source.",
+  }),
+  uiBase: z.enum(["base", "radix"]).optional(),
   id: pluginIdSchema,
   kind: z.literal("plugin"),
   files: z.array(z.string().min(1)).default([]),
@@ -152,54 +157,12 @@ const pluginDefinitionBase = z.object({
     .object({ form: identifier, signOut: identifier })
     .optional(),
   navigation: z.object({ export: identifier }).optional(),
-  client: z
-    .object({
-      export: identifier,
-      composerControls: z.array(pluginIdSchema).default([]),
-      settingsItems: z.array(pluginIdSchema).default([]),
-      chat: z.literal(true).optional(),
-      layout: z.literal(true).optional(),
-      accountSummary: z.literal(true).optional(),
-      uploads: z.literal(true).optional(),
-      modelVisibility: z.literal(true).optional(),
-    })
-    .optional(),
 });
 
-// Version 2 explicitly identifies the native UI host. A CLI that only supports
-// Base rejects Radix descriptors before installing source; v1 stays readable.
-const pluginDefinitionSchema = z.discriminatedUnion("contractVersion", [
-  pluginDefinitionBase.extend({
-    contractVersion: z.literal(1),
-    uiBase: z.never().optional(),
-  }),
-  pluginDefinitionBase.extend({
-    contractVersion: z.literal(2),
-    uiBase: z.enum(["base", "radix"]),
-  }),
-]);
-
 type PluginDefinition = z.infer<typeof pluginDefinitionSchema>;
-const pluginHasServerEntry = ({
-  files,
-  id,
-}: {
-  readonly files: readonly string[];
-  readonly id: string;
-}): boolean => files.includes(`chatjs/plugins/${id}/server-plugin.ts`);
-const pluginHasInstrumentationEntry = ({
-  files,
-  id,
-}: {
-  readonly files: readonly string[];
-  readonly id: string;
-}): boolean => files.includes(`chatjs/plugins/${id}/instrumentation.ts`);
-
 export {
   envRequirementSchema,
   pluginDefinitionSchema,
-  pluginHasInstrumentationEntry,
-  pluginHasServerEntry,
   pluginIdSchema,
   storageDefinitionSchema,
   toolDefinitionSchema,

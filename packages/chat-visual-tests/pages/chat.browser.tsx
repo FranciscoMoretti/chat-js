@@ -4,7 +4,7 @@ import { expect, test, vi } from "vitest";
 import { page, userEvent } from "vitest/browser";
 import { route } from "./route";
 
-import ChatPage from "@/app/(chat)/chat/[id]/page";
+import ChatPage from "@/app/(chat)/chat/[chatId]/page";
 import ChatLayout from "@/app/(chat)/layout";
 import SharePage from "@/app/(chat)/share/[id]/page";
 
@@ -43,12 +43,13 @@ import { renderRoute } from "./render";
 
 const conversation = (
   <ChatLayout>
-    <ChatPage params={Promise.resolve({ id: invoicesConversation.id })} />
+    <ChatPage params={Promise.resolve({ chatId: invoicesConversation.id })} />
   </ChatLayout>
 );
 const request = {
   ...signedIn,
   path: `/chat/${invoicesConversation.chatId}`,
+  params: { chatId: invoicesConversation.chatId },
   server: { conversation: invoicesConversation, conversations: history },
   transcripts: invoicesTranscripts,
   trpc: invoicesTrpc,

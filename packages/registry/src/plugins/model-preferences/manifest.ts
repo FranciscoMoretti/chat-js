@@ -3,7 +3,7 @@ import { pluginDefinitionSchema } from "../../../metadata";
 
 const modelPreferencesFiles = [
   "chatjs/plugins/model-preferences/apply-model-preferences.ts",
-  "chatjs/plugins/model-preferences/client-plugin.ts",
+  "chatjs/plugins/model-preferences/chat-ui.ts",
   "chatjs/plugins/model-preferences/settings-link.tsx",
   "chatjs/plugins/model-preferences/model-preferences-queries.ts",
   "chatjs/plugins/model-preferences/model-preferences-schema.ts",
@@ -12,12 +12,11 @@ const modelPreferencesFiles = [
   "chatjs/plugins/model-preferences/models-settings.tsx",
   "chatjs/plugins/model-preferences/models-table.tsx",
   "chatjs/plugins/model-preferences/router.ts",
-  "chatjs/plugins/model-preferences/server-plugin.ts",
-  "chatjs/plugins/model-preferences/use-model-preferences.ts",
+  "chatjs/plugins/model-preferences/model-visibility.ts",
   "app/(chat)/settings/models/page.tsx",
 ];
 const modelPreferencesDefinition = pluginDefinitionSchema.parse({
-  contractVersion: 2,
+  contractVersion: 3,
   uiBase: "base",
   id: "model-preferences",
   kind: "plugin",
@@ -25,11 +24,6 @@ const modelPreferencesDefinition = pluginDefinitionSchema.parse({
   databaseSchemas: [
     "chatjs/plugins/model-preferences/model-preferences-schema.ts",
   ],
-  client: {
-    export: "modelPreferencesClient",
-    settingsItems: ["models"],
-    modelVisibility: true,
-  },
 });
 const modelPreferencesItem: RegistryItem = {
   name: "model-preferences",

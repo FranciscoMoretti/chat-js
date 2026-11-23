@@ -1,6 +1,6 @@
 import React from "react";
 import { Plugins } from "@/chatjs/core/ui/slots";
-import { videoViewerClient } from "../../plugins/video-viewer/src/client-plugin";
+import { chatUi as videoViewerClient } from "../../plugins/video-viewer/src/chat-ui";
 import { expect, test } from "vitest";
 
 import { captureChatStory, flush } from "../_shared/visual";

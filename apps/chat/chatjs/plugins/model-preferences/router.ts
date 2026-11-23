@@ -8,7 +8,7 @@ import {
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
-export const modelPreferencesRouter = createTRPCRouter({
+const modelPreferencesProcedures = {
   getModelPreferences: protectedProcedure.query(
     async ({
       ctx,
@@ -43,4 +43,8 @@ export const modelPreferencesRouter = createTRPCRouter({
         return { success: true };
       }
     ),
+};
+
+export const router = createTRPCRouter({
+  modelPreferences: modelPreferencesProcedures,
 });

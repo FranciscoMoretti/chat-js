@@ -79,6 +79,7 @@ export const renderRoute = async (
     liveTranscripts: {},
     missingFixtures: new Set(),
     path: "/",
+    params: {},
     search: "",
     server: {},
     session: null,

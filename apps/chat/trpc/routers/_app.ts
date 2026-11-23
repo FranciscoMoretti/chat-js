@@ -1,18 +1,19 @@
 import { routers } from "@/integrations/routers";
-import { createCallerFactory, createTRPCRouter } from "@/trpc/init";
+import {
+  createCallerFactory,
+  createTRPCRouter,
+  mergeRouters,
+} from "@/trpc/init";
 
 import { eveRouter } from "./eve.router";
 
-/**
- * This is the primary router for your server.
- *
- * All routers added in /api/routers should be manually added here.
- */
-
-const appRouter = createTRPCRouter({
-  eve: eveRouter,
-  ...routers,
-});
+const coreRouter = createTRPCRouter({ eve: eveRouter });
+for (const router of routers) {
+  if (Object.hasOwn(router, "__proto__")) {
+    throw new Error("Reserved plugin router key: __proto__");
+  }
+}
+const appRouter = mergeRouters(coreRouter, ...routers);
 
 // Export the type definition for the API.
 type AppRouter = typeof appRouter;

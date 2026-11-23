@@ -1,4 +1,5 @@
 {
+  "contractVersion": 3,
   "id": "ai-titles",
   "kind": "plugin",
   "files": [
@@ -6,6 +7,5 @@
     "chatjs/plugins/ai-titles/generate-title.ts",
     "chatjs/plugins/ai-titles/title-queries.ts"
   ],
-  "chat": { "export": "aiTitlesChat" },
-  "contractVersion": 1
+  "chat": { "export": "aiTitlesChat" }
 }

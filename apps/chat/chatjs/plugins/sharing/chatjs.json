@@ -1,13 +1,14 @@
 {
+  "contractVersion": 3,
+  "uiBase": "base",
   "id": "sharing",
   "kind": "plugin",
   "files": [
     "chatjs/plugins/sharing/chat.ts",
-    "chatjs/plugins/sharing/client-plugin.ts",
+    "chatjs/plugins/sharing/chat-ui.ts",
     "chatjs/plugins/sharing/public-conversation.ts",
     "chatjs/plugins/sharing/queries.ts",
     "chatjs/plugins/sharing/router.ts",
-    "chatjs/plugins/sharing/server-plugin.ts",
     "chatjs/plugins/sharing/ui/chat-contributions.tsx",
     "chatjs/plugins/sharing/ui/share-button.tsx",
     "chatjs/plugins/sharing/ui/share-dialog.tsx",
@@ -18,13 +19,5 @@
     "chatjs/plugins/sharing/ui/shared-page.tsx",
     "app/(chat)/share/[id]/page.tsx"
   ],
-  "chat": { "export": "sharingChat" },
-  "client": {
-    "export": "sharingClient",
-    "composerControls": [],
-    "settingsItems": [],
-    "chat": true
-  },
-  "contractVersion": 2,
-  "uiBase": "base"
+  "chat": { "export": "sharingChat" }
 }

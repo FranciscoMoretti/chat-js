@@ -3,11 +3,10 @@ import { pluginDefinitionSchema } from "../../../metadata";
 
 const sharingFiles = [
   "chatjs/plugins/sharing/chat.ts",
-  "chatjs/plugins/sharing/client-plugin.ts",
+  "chatjs/plugins/sharing/chat-ui.ts",
   "chatjs/plugins/sharing/public-conversation.ts",
   "chatjs/plugins/sharing/queries.ts",
   "chatjs/plugins/sharing/router.ts",
-  "chatjs/plugins/sharing/server-plugin.ts",
   "chatjs/plugins/sharing/ui/chat-contributions.tsx",
   "chatjs/plugins/sharing/ui/share-button.tsx",
   "chatjs/plugins/sharing/ui/share-dialog.tsx",
@@ -19,13 +18,12 @@ const sharingFiles = [
   "app/(chat)/share/[id]/page.tsx",
 ];
 const sharingDefinition = pluginDefinitionSchema.parse({
-  contractVersion: 2,
+  contractVersion: 3,
   uiBase: "base",
   id: "sharing",
   kind: "plugin",
   files: sharingFiles,
   chat: { export: "sharingChat" },
-  client: { export: "sharingClient", chat: true },
 });
 const sharingItem: RegistryItem = {
   name: "sharing",

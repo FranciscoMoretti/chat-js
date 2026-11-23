@@ -2,12 +2,7 @@ import type { RegistryItem } from "shadcn/schema";
 import { pluginDefinitionSchema } from "../../../metadata";
 import registryPackage from "../../../package.json";
 
-const files = [
-  "client-plugin.ts",
-  "viewer-action.tsx",
-  "load.ts",
-  "preview.tsx",
-];
+const files = ["chat-ui.ts", "viewer-action.tsx", "load.ts", "preview.tsx"];
 export const spreadsheetViewerItem: RegistryItem = {
   name: "spreadsheet-viewer",
   title: "Spreadsheet viewer",
@@ -28,12 +23,11 @@ export const spreadsheetViewerItem: RegistryItem = {
   })),
   meta: {
     chatjs: pluginDefinitionSchema.parse({
-      contractVersion: 2,
+      contractVersion: 3,
       uiBase: "base",
       id: "spreadsheet-viewer",
       kind: "plugin",
       files: files.map((file) => `chatjs/plugins/spreadsheet-viewer/${file}`),
-      client: { export: "spreadsheetViewerClient", chat: true },
     }),
   },
 };

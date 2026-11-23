@@ -3,7 +3,7 @@ import { pluginDefinitionSchema } from "../../../metadata";
 
 const sourceFiles = [
   "chat.ts",
-  "client-plugin.ts",
+  "chat-ui.ts",
   "conversation-hook.ts",
   "creation.ts",
   "db/project-queries.ts",
@@ -14,7 +14,6 @@ const sourceFiles = [
   "router.ts",
   "routes/project-chat-page.tsx",
   "routes/project-page.tsx",
-  "server-plugin.ts",
   "ui/chat-contributions.tsx",
   "ui/move-menu-item.tsx",
   "ui/delete-project-dialog.tsx",
@@ -43,14 +42,13 @@ const projectsFiles = [
   ...adapterFiles,
 ];
 const projectsDefinition = pluginDefinitionSchema.parse({
-  contractVersion: 2,
+  contractVersion: 3,
   uiBase: "base",
   id: "projects",
   kind: "plugin",
   files: projectsFiles,
   databaseSchemas: ["chatjs/plugins/projects/db/project-schema.ts"],
   chat: { export: "projectsChat" },
-  client: { export: "projectsClient", chat: true },
 });
 const projectsItem: RegistryItem = {
   dependencies: [

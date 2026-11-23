@@ -33,6 +33,7 @@ export const route: {
   /** Procedures the page called that have no fixture; the test fails on any. */
   missingFixtures: Set<string>;
   path: string;
+  params: Record<string, string>;
   queryClients: Set<QueryClient>;
   search: string;
   server: ServerData;
@@ -53,6 +54,7 @@ export const route: {
   lastLoginMethod: null,
   missingFixtures: new Set(),
   path: "/",
+  params: {},
   queryClients: new Set(),
   search: "",
   server: {},

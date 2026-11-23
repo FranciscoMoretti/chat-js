@@ -3,7 +3,7 @@ import { createTRPCRouter } from "@/trpc/init";
 import { eveOwnedProcedure } from "@/trpc/eve-owned-procedure";
 import { getEveFollowup } from "./followup-queries";
 
-export const followupSuggestionsRouter = createTRPCRouter({
+const followupSuggestionsProcedures = {
   get: eveOwnedProcedure
     .input(
       z.object({
@@ -28,4 +28,8 @@ export const followupSuggestionsRouter = createTRPCRouter({
           input.eventId
         )
     ),
+};
+
+export const router = createTRPCRouter({
+  followupSuggestions: followupSuggestionsProcedures,
 });

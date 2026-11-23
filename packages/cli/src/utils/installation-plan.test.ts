@@ -24,10 +24,10 @@ test("requested plugins can repair incomplete installations while unrelated inst
   const directory = path.join(root, "chatjs/plugins/team-notes");
   await mkdir(directory, { recursive: true });
   const definition = {
-    contractVersion: 1,
+    contractVersion: 3,
     id: "team-notes",
     kind: "plugin",
-    files: ["chatjs/plugins/team-notes/server-plugin.ts"],
+    files: ["chatjs/plugins/team-notes/router.ts"],
   };
   await writeFile(
     path.join(directory, "chatjs.json"),
@@ -54,9 +54,9 @@ test("requested plugins can repair incomplete installations while unrelated inst
       tools: [],
     });
     expect(plan.plugins.map((plugin) => plugin.id)).toEqual(["team-notes"]);
-    expect(
-      await Bun.file(path.join(directory, "server-plugin.ts")).exists()
-    ).toBe(false);
+    expect(await Bun.file(path.join(directory, "router.ts")).exists()).toBe(
+      false
+    );
   } finally {
     await server.stop(true);
   }
@@ -147,13 +147,13 @@ test("validates plugin dependencies and exclusive storage slots before writing",
       const chatjs =
         name === "custom-service"
           ? {
-              contractVersion: 1,
+              contractVersion: 3,
               id: "custom-service",
               kind: "plugin",
               requiresPlugins: ["mcp"],
             }
           : {
-              contractVersion: 1,
+              contractVersion: name === "mcp" ? 3 : 1,
               id: name,
               kind: name === "mcp" ? "plugin" : "storage",
             };
@@ -210,7 +210,7 @@ test("validates plugin dependencies and exclusive storage slots before writing",
     await mkdir(dir, { recursive: true });
     await writeFile(
       path.join(dir, "chatjs.json"),
-      JSON.stringify({ contractVersion: 1, id: "mcp", kind: "plugin" })
+      JSON.stringify({ contractVersion: 3, id: "mcp", kind: "plugin" })
     );
     expect(
       await planInstallation(root, {

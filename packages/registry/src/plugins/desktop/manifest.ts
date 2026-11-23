@@ -8,7 +8,7 @@ const desktopFiles = [
   "chatjs/plugins/desktop/auth-server.ts",
   "chatjs/plugins/desktop/auth-ui.tsx",
   "chatjs/plugins/desktop/bridge.ts",
-  "chatjs/plugins/desktop/client-plugin.ts",
+  "chatjs/plugins/desktop/layout-ui.ts",
   "chatjs/plugins/desktop/navigation.ts",
   "chatjs/plugins/desktop/protocol.ts",
   "chatjs/plugins/desktop/device-login-page.tsx",
@@ -18,7 +18,7 @@ const desktopFiles = [
   "app/(auth)/device-login/page.tsx",
 ];
 const desktopDefinition = pluginDefinitionSchema.parse({
-  contractVersion: 2,
+  contractVersion: 3,
   uiBase: "base",
   id: "desktop",
   kind: "plugin",
@@ -26,10 +26,6 @@ const desktopDefinition = pluginDefinitionSchema.parse({
   authentication: { export: "desktopAuth" },
   navigation: { export: "desktopNavigation" },
   authenticationUi: { form: "DesktopAuthForm", signOut: "signOutDesktop" },
-  client: {
-    export: "desktopClient",
-    layout: true,
-  },
 });
 const desktopItem: RegistryItem = {
   name: "desktop",

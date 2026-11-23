@@ -1,13 +1,11 @@
+import { hasPluginEntry } from "../../../registry/plugin-entry";
+import type { PluginEntry } from "../../../registry/plugin-entry";
 import { assertUiCompatibility } from "./ui-compatibility";
 import { writeGeneratedFiles } from "./write-generated-files";
 import { assertCurrentInstallationLayout } from "./installation-layout";
 import { rm } from "node:fs/promises";
 import path from "node:path";
 import type { PluginDefinition } from "../../../registry/metadata";
-import {
-  pluginHasInstrumentationEntry,
-  pluginHasServerEntry,
-} from "../../../registry/metadata";
 import { readInstalledPlugins } from "./installed-plugins";
 import { planDatabaseSchemas } from "./sync-database";
 import { generatedRegistrationSource } from "./generated-registration-source";
@@ -59,30 +57,17 @@ const assertRuntimeContributions = (
 const assertUniqueContributions = (
   plugins: readonly PluginDefinition[]
 ): void => {
-  const controls = new Set(["deep-research", "image", "video"]);
-  const settings = new Set(["general"]);
   const exclusive = new Set<string>();
   for (const plugin of plugins) {
-    for (const [keys, seen, label] of [
-      [plugin.client?.composerControls ?? [], controls, "composer control"],
-      [plugin.client?.settingsItems ?? [], settings, "settings item"],
-    ] as const) {
-      for (const key of keys) {
-        if (seen.has(key)) {
-          throw new Error(`Duplicate or reserved plugin ${label}: ${key}`);
-        }
-        seen.add(key);
-      }
-    }
     for (const [present, label] of [
       [plugin.authentication, "authentication"],
       [plugin.authenticationUi, "authentication UI"],
       [plugin.navigation, "modified navigation"],
       [plugin.billing, "usage billing"],
-      [plugin.client?.modelVisibility, "model visibility"],
-      [plugin.client?.uploads, "attachment uploads"],
+      [hasPluginEntry(plugin, "model-visibility"), "model visibility"],
+      [hasPluginEntry(plugin, "uploads"), "attachment uploads"],
     ] as const) {
-      if (present === undefined) {
+      if (present === undefined || present === false) {
         continue;
       }
       if (exclusive.has(label)) {
@@ -120,17 +105,6 @@ const namedEntries = (
   );
 };
 
-const clientEntries = (
-  plugins: readonly PluginDefinition[],
-  reserved: readonly string[]
-) =>
-  namedEntries(
-    plugins,
-    "client-plugin",
-    (plugin) => plugin.client?.export,
-    reserved
-  );
-
 const imports = (entries: readonly { readonly source: string }[]): string =>
   entries.map(({ source }) => source).join("\n");
 
@@ -140,30 +114,45 @@ const pluginTitle = (id: string): string =>
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join("");
 
-const renderRouters = (plugins: readonly PluginDefinition[]): string => {
-  const entries = plugins.filter(pluginHasServerEntry);
-  if (entries.length === 0) {
-    return "export const installedRouters = {};";
-  }
-  const factories = pluginBindings(
-    entries.map(({ id }) => ({
-      id,
-      preferred: `create${pluginTitle(id)}Plugin`,
-    })),
+const fileEntries = (
+  plugins: readonly PluginDefinition[],
+  entry: PluginEntry,
+  exported: string,
+  suffix?: string
+) => {
+  const bindings = pluginBindings(
+    plugins
+      .filter((plugin) => hasPluginEntry(plugin, entry))
+      .map(({ id }) => {
+        const title = pluginTitle(id);
+        return {
+          id,
+          preferred:
+            suffix === undefined
+              ? exported
+              : title.charAt(0).toLowerCase() + title.slice(1) + suffix,
+        };
+      }),
     []
   );
-  return `${factories.map(({ id, name }) => `import ${name} from "@/chatjs/plugins/${id}/server-plugin";`).join("\n")}
-import { mergePluginRouters } from "@/chatjs/core/installation/plugin";
+  return bindings.map(({ id, name }) => ({
+    name,
+    source: `import { ${exported === name ? name : `${exported} as ${name}`} } from "@/chatjs/plugins/${id}/${entry}";`,
+  }));
+};
 
-export const installedRouters = mergePluginRouters([
-${factories.map(({ name }) => `  ${name}(),`).join("\n")}
-]);`;
+const renderRouters = (plugins: readonly PluginDefinition[]): string => {
+  const routers = fileEntries(plugins, "router", "router", "Router");
+  return `${imports(routers)}
+export const installedRouters = [${routers.map(({ name }) => name).join(", ")}] as const;`;
 };
 
 const renderInstrumentation = (
   plugins: readonly PluginDefinition[]
 ): string => {
-  const entries = plugins.filter(pluginHasInstrumentationEntry);
+  const entries = plugins.filter((plugin) =>
+    hasPluginEntry(plugin, "instrumentation")
+  );
   return `import type { InstrumentationRegistration } from "@/chatjs/core/installation/contracts";
 
 export const installedInstrumentation: readonly InstrumentationRegistration[] = [${entries
@@ -188,34 +177,18 @@ const renderPluginRegistrations = (
   plugins: readonly PluginDefinition[],
   databaseSchemas: string
 ): Map<string, string> => {
-  const layout = clientEntries(
-    plugins.filter((plugin) => plugin.client?.layout),
-    ["UiPlugin", "installedLayoutPlugins"]
-  );
-  const uploads = clientEntries(
-    plugins.filter((plugin) => plugin.client?.uploads),
-    ["AttachmentUploadIntegration", "installedUploads"]
-  );
-  const modelVisibility = clientEntries(
-    plugins.filter((plugin) => plugin.client?.modelVisibility),
-    ["ModelVisibility", "installedModelVisibility"]
+  const layout = fileEntries(plugins, "layout-ui", "layoutUi", "Layout");
+  const uploads = fileEntries(plugins, "uploads", "attachmentUploads");
+  const modelVisibility = fileEntries(
+    plugins,
+    "model-visibility",
+    "useModelVisibility"
   );
   const chat = namedEntries(plugins, "chat", (plugin) => plugin.chat?.export, [
     "ChatServerIntegration",
     "installedChat",
   ]);
-  const chatUi = clientEntries(
-    plugins.filter(
-      ({ client }) =>
-        client !== undefined &&
-        (client.layout !== true ||
-          client.chat === true ||
-          client.accountSummary === true ||
-          client.composerControls.length > 0 ||
-          client.settingsItems.length > 0)
-    ),
-    ["UiPlugin", "installedChatPlugins"]
-  );
+  const chatUi = fileEntries(plugins, "chat-ui", "chatUi", "Client");
   const signedOut = plugins.find((plugin) => plugin.signedOut);
   const profiles = namedEntries(
     plugins,
@@ -279,7 +252,7 @@ export const installedNavigationHandlers: readonly (() => boolean)[] = [${naviga
     ["installed-billing", billingRegistration(plugins)],
     [
       "installed-model-visibility",
-      `${imports(modelVisibility)}\nimport type { ModelVisibility } from "@/chatjs/core/installation/contracts";\nexport const installedModelVisibility: readonly ModelVisibility[] = [${modelVisibility.map(({ name }) => `${name}.useModelVisibility`).join(", ")}];`,
+      `${imports(modelVisibility)}\nimport type { ModelVisibility } from "@/chatjs/core/installation/contracts";\nexport const installedModelVisibility: readonly ModelVisibility[] = [${modelVisibility.map(({ name }) => name).join(", ")}];`,
     ],
     [
       "installed-chat",
@@ -301,7 +274,7 @@ export const installedNavigationHandlers: readonly (() => boolean)[] = [${naviga
     ],
     [
       "installed-uploads",
-      `${imports(uploads)}\nimport type { AttachmentUploadIntegration } from "@/chatjs/core/installation/contracts";\nexport const installedUploads: readonly AttachmentUploadIntegration[] = [${uploads.map(({ name }) => `${name}.uploads`).join(", ")}];`,
+      `${imports(uploads)}\nimport type { AttachmentUploadIntegration } from "@/chatjs/core/installation/contracts";\nexport const installedUploads: readonly AttachmentUploadIntegration[] = [${uploads.map(({ name }) => name).join(", ")}];`,
     ],
   ] as const;
   return new Map([

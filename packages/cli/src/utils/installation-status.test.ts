@@ -59,7 +59,7 @@ test("status identifies edits, missing files, local files, framework ownership a
   await put(
     root,
     "chatjs/plugins/alpha/chatjs.json",
-    JSON.stringify({ contractVersion: 1, kind: "plugin", id: "alpha", files })
+    JSON.stringify({ contractVersion: 3, kind: "plugin", id: "alpha", files })
   );
   await Promise.all(
     files.map(async (file) => {
@@ -81,7 +81,7 @@ test("status identifies edits, missing files, local files, framework ownership a
     root,
     "chatjs/plugins/beta/chatjs.json",
     JSON.stringify({
-      contractVersion: 1,
+      contractVersion: 3,
       kind: "plugin",
       id: "beta",
       files: [],
@@ -151,7 +151,7 @@ test("native installs without receipts stay untracked, and status reports missin
     root,
     "chatjs/plugins/alpha/chatjs.json",
     JSON.stringify({
-      contractVersion: 1,
+      contractVersion: 3,
       kind: "plugin",
       id: "alpha",
       files: ["chatjs/plugins/alpha/schema.ts"],
@@ -180,7 +180,7 @@ test("status refuses symlinked plugin source instead of reading outside the proj
     root,
     "chatjs/plugins/alpha/chatjs.json",
     JSON.stringify({
-      contractVersion: 1,
+      contractVersion: 3,
       kind: "plugin",
       id: "alpha",
       files: ["chatjs/plugins/alpha/source.ts"],
@@ -200,7 +200,7 @@ test("project formatter classifies formatting without changing receipts or remov
     root,
     "chatjs/plugins/alpha/chatjs.json",
     JSON.stringify({
-      contractVersion: 1,
+      contractVersion: 3,
       kind: "plugin",
       id: "alpha",
       files: [file],
@@ -263,7 +263,7 @@ test("old or mismatched baselines and invalid UTF-8 cannot be blessed by formatt
     root,
     "chatjs/plugins/alpha/chatjs.json",
     JSON.stringify({
-      contractVersion: 1,
+      contractVersion: 3,
       kind: "plugin",
       id: "alpha",
       files: [file],
@@ -305,7 +305,7 @@ test("file kinds separate application policy, installed source, generated wiring
     root,
     "chatjs/plugins/alpha/chatjs.json",
     JSON.stringify({
-      contractVersion: 1,
+      contractVersion: 3,
       kind: "plugin",
       id: "alpha",
       files: ["app/api/alpha/route.ts"],

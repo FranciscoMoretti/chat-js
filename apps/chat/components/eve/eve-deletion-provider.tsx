@@ -11,7 +11,7 @@ import React, { createContext, useCallback, useContext, useState } from "react";
 import type { JSX as ReactJSX } from "react";
 
 import { useSidebar } from "@/components/ui/sidebar";
-import { useCurrentChatRoute } from "@/lib/chat-route";
+import { useActiveConversationId } from "@/components/chat/chat-navigation";
 import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 import { useTRPC } from "@/trpc/react";
 
@@ -43,7 +43,7 @@ const EveDeletionProvider = ({
   readonly children: ReadonlyReactNode;
 }): ReactJSX.Element => {
   const [conversation, setConversation] = useState<Conversation>();
-  const route = useCurrentChatRoute();
+  const activeConversationId = useActiveConversationId();
   const router = useRouter();
   const cache = useQueryClient();
   const trpc = useTRPC();
@@ -58,13 +58,13 @@ const EveDeletionProvider = ({
   const changed = async (rootId: string): Promise<void> => {
     await withTaskCleanup(
       async () => {
-        if (
-          hasText(route.id) &&
-          (route.type === "chat" || route.type === "pluginChat")
-        ) {
-          const response = await fetch(`/api/agent-conversations/${route.id}`, {
-            signal: AbortSignal.timeout(10_000),
-          });
+        if (hasText(activeConversationId)) {
+          const response = await fetch(
+            `/api/agent-conversations/${activeConversationId}`,
+            {
+              signal: AbortSignal.timeout(10_000),
+            }
+          );
           const status: unknown = await response.json();
           if (
             response.ok &&
@@ -73,9 +73,7 @@ const EveDeletionProvider = ({
             "rootId" in status &&
             status.rootId === rootId
           ) {
-            router.replace(
-              pluginRoute(conversation?.parentHref ?? route.parentHref)
-            );
+            router.replace(pluginRoute(conversation?.parentHref ?? "/"));
           }
         }
       },

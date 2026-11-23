@@ -6,7 +6,7 @@ import { Favicon } from "@/components/favicon";
 import { AttachmentCard } from "@/components/attachment-card";
 import { GenerateImageRenderer } from "../src/tools/generate-image/renderer";
 import { ImageModal } from "../src/plugins/image-viewer/src/image-modal";
-import { imageViewerClient } from "../src/plugins/image-viewer/src/client-plugin";
+import { chatUi as imageViewerClient } from "../src/plugins/image-viewer/src/chat-ui";
 import { Plugins } from "@/chatjs/core/ui/slots";
 import { createRoot } from "react-dom/client";
 import { takeSnapshot } from "@uiverify/vitest";

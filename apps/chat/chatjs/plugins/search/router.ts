@@ -7,7 +7,7 @@ import { MAX_SEARCH_QUERY_LENGTH } from "./search-text";
 import { searchEveConversations } from "./search-queries";
 
 const MAX_OWNER_SCOPE_LENGTH = 128;
-export const searchRouter = createTRPCRouter({
+const searchProcedures = {
   query: eveOwnedProcedure
     .input(
       z.object({
@@ -43,4 +43,6 @@ export const searchRouter = createTRPCRouter({
         return await searchEveConversations(ctx.eveOwnerId, input);
       }
     ),
-});
+};
+
+export const router = createTRPCRouter({ search: searchProcedures });

@@ -1,9 +1,11 @@
 {
+  "contractVersion": 3,
+  "uiBase": "base",
   "id": "projects",
   "kind": "plugin",
   "files": [
     "chatjs/plugins/projects/chat.ts",
-    "chatjs/plugins/projects/client-plugin.ts",
+    "chatjs/plugins/projects/chat-ui.ts",
     "chatjs/plugins/projects/conversation-hook.ts",
     "chatjs/plugins/projects/creation.ts",
     "chatjs/plugins/projects/db/project-queries.ts",
@@ -14,7 +16,6 @@
     "chatjs/plugins/projects/router.ts",
     "chatjs/plugins/projects/routes/project-chat-page.tsx",
     "chatjs/plugins/projects/routes/project-page.tsx",
-    "chatjs/plugins/projects/server-plugin.ts",
     "chatjs/plugins/projects/ui/chat-contributions.tsx",
     "chatjs/plugins/projects/ui/move-menu-item.tsx",
     "chatjs/plugins/projects/ui/delete-project-dialog.tsx",
@@ -37,13 +38,5 @@
     "app/(chat)/project/[projectId]/page.tsx"
   ],
   "databaseSchemas": ["chatjs/plugins/projects/db/project-schema.ts"],
-  "chat": { "export": "projectsChat" },
-  "client": {
-    "export": "projectsClient",
-    "composerControls": [],
-    "settingsItems": [],
-    "chat": true
-  },
-  "contractVersion": 2,
-  "uiBase": "base"
+  "chat": { "export": "projectsChat" }
 }

@@ -19,7 +19,7 @@ import { generateUUID } from "@/lib/id";
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
-export const projectRouter = createTRPCRouter({
+const projectProcedures = {
   assign: protectedProcedure
     .input(
       z.object({ conversationId: z.uuid(), projectId: z.uuid().nullable() })
@@ -313,4 +313,6 @@ export const projectRouter = createTRPCRouter({
         return { success: true };
       }
     ),
-});
+};
+
+export const router = createTRPCRouter({ project: projectProcedures });

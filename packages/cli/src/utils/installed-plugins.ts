@@ -25,9 +25,6 @@ const pluginSourceFiles = (definition: PluginDefinition): string[] => [
     ...(definition.cleanup
       ? [`chatjs/plugins/${definition.id}/cleanup.ts`]
       : []),
-    ...(definition.client
-      ? [`chatjs/plugins/${definition.id}/client-plugin.ts`]
-      : []),
     ...(definition.environmentValidation === undefined
       ? []
       : [

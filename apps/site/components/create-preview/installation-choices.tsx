@@ -1,5 +1,6 @@
 "use client";
 
+import { hasPluginEntry } from "../../../../packages/registry/plugin-entry";
 import {
   ArrowRight,
   FileText,
@@ -186,7 +187,11 @@ export const FeatureChoices = ({
               {dependency !== null && <p className="text-xs">{dependency}</p>}
               <p className="text-muted-foreground text-xs">
                 {definition.kind === "plugin"
-                  ? pluginPreviewLabel(id, Boolean(definition.client))
+                  ? pluginPreviewLabel(
+                      id,
+                      hasPluginEntry(definition, "chat-ui") ||
+                        hasPluginEntry(definition, "layout-ui")
+                    )
                   : "Tool examples"}
               </p>
             </PopoverContent>

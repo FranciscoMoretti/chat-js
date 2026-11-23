@@ -5,7 +5,6 @@ import type { OwnedFile } from "./file-ownership";
 const publicCoreContracts: ReadonlySet<string> = new Set([
   "lib/eve/session-identity.ts",
   "lib/config-models.ts",
-  "chatjs/core/installation/plugin.ts",
   "chatjs/core/gateway/defaults.ts",
   "chatjs/core/gateway/gateway-provider.ts",
   "chatjs/core/gateway/models.ts",
