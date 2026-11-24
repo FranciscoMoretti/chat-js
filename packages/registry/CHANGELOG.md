@@ -1,5 +1,9 @@
 # @chat-js/registry
 
+## 0.2.0-beta.9
+
+Ship matching plugin source for `chat-js@1.0.0-alpha.8`, including the `chat-server.ts` entry point, native tRPC router composition, and branch IDs.
+
 ## 0.2.0-beta.8
 
 Install Deep Research with the scaffold's existing Trace component. Validate workspace paths and names at runtime so their JSON Schemas work with model providers. Pair with `chat-js@1.0.0-alpha.7`.

@@ -1,5 +1,9 @@
 # chat-js
 
+## 1.0.0-alpha.8
+
+Generate apps that use branch IDs for ChatJS branches and connect plugins through file-based entry points. Install plugins from registry `0.2.0-beta.9`.
+
 ## 1.0.0-alpha.7
 
 Use registry `0.2.0-beta.8` for Deep Research installation and workspace report publication.
