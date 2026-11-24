@@ -133,7 +133,7 @@ const inspectOpening = async (page: Page) =>
         box.right > 0 &&
         box.left < innerWidth
     );
-    // Use the complete, unobscured tiles below the quickstart as the comparable count.
+    // Count complete tiles below the quickstart.
     const readable = visible.filter(
       ({ box }) =>
         box.top >= command.bottom &&
@@ -229,6 +229,12 @@ const checkBuild = async (page: Page) => {
   const build = page.getByRole("link", { name: "Build your app", exact: true });
   const original = await projects.getAttribute("aria-pressed");
   const initialHref = await build.getAttribute("href");
+  await projects.hover();
+  await projects.locator(".canopy-tile-preview").waitFor();
+  await projects.screenshot({
+    animations: "disabled",
+    path: `${output}canopy-projects-preview.png`,
+  });
   await projects.click();
   const updated = await projects.getAttribute("aria-pressed");
   assert.equal(updated, String(original !== "true"));

@@ -1,5 +1,6 @@
 "use client";
 
+import { Check } from "lucide-react";
 import type { CSSProperties, KeyboardEvent, PointerEvent } from "react";
 import {
   useCallback,
@@ -16,7 +17,12 @@ import { canopySymbol } from "./canopy-symbol";
 import "./canopy-field.css";
 
 interface FieldProps {
-  blocks: readonly { id: string; name: string; icon?: string }[];
+  blocks: readonly {
+    id: string;
+    name: string;
+    icon?: string;
+    preview?: string;
+  }[];
   selected: ReadonlySet<string>;
   onToggle: (id: string) => void;
 }
@@ -290,6 +296,12 @@ export const CanopyField = ({ blocks, selected, onToggle }: FieldProps) => {
           contentWidth / wordWidth
         );
         const key = cellKey(cell.column, cell.row);
+        const contour = (((cell.column * 3 + cell.row * 5) % 7) + 7) % 7;
+        const tileStyle: CSSProperties & { "--canopy-contour-offset": string } =
+          {
+            "--canopy-contour-offset": `${(contour / 6) * 100}%`,
+            transform: `translate3d(${cell.left}px,${cell.top}px,0)`,
+          };
         return (
           <button
             key={key}
@@ -300,7 +312,7 @@ export const CanopyField = ({ blocks, selected, onToggle }: FieldProps) => {
             data-priority={cell.index + 1}
             aria-pressed={selected.has(block.id)}
             tabIndex={cell === activeCell ? 0 : -1}
-            style={{ transform: `translate3d(${cell.left}px,${cell.top}px,0)` }}
+            style={tileStyle}
             onFocus={() => {
               setFocused(key);
             }}
@@ -321,7 +333,16 @@ export const CanopyField = ({ blocks, selected, onToggle }: FieldProps) => {
                 />
               )}
             </span>
-            <span className="canopy-tile-state" aria-hidden="true" />
+            <span className="canopy-tile-state" aria-hidden="true">
+              {selected.has(block.id) && <Check strokeWidth={3} />}
+            </span>
+            {block.preview !== undefined && (
+              <span
+                className="canopy-tile-preview"
+                aria-hidden="true"
+                style={{ backgroundImage: `url("${block.preview}")` }}
+              />
+            )}
             <span className="canopy-tile-name" style={{ fontSize }}>
               {block.name}
             </span>
