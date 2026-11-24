@@ -1,5 +1,5 @@
 import type { ChatServerIntegration } from "@/chatjs/core/chat/contracts";
-import { sharingChat } from "@/chatjs/plugins/sharing/chat";
+import sharingChat from "@/chatjs/plugins/sharing/chat";
 import { readFile, readdir } from "node:fs/promises";
 import { PGlite } from "@electric-sql/pglite";
 import { drizzle } from "drizzle-orm/pglite";

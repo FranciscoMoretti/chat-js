@@ -432,9 +432,6 @@ const GuestChatScreen = (): ReactJSX.Element => {
   );
 };
 
-export {
-  GuestChatScreen,
-  GuestChatLayout,
-  GuestWelcomeView,
-  GuestConversationView,
-};
+export { GuestChatLayout, GuestWelcomeView, GuestConversationView };
+
+export default GuestChatScreen;

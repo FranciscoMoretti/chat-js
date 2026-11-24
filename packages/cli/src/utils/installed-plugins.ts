@@ -12,24 +12,9 @@ import { preflight } from "./preflight";
 const pluginSourceFiles = (definition: PluginDefinition): string[] => [
   ...new Set([
     ...definition.files,
-    ...(definition.chat ? [`chatjs/plugins/${definition.id}/chat.ts`] : []),
-    ...(definition.billing
-      ? [`chatjs/plugins/${definition.id}/billing.ts`]
-      : []),
-    ...(definition.signedOut
-      ? [`chatjs/plugins/${definition.id}/signed-out.tsx`]
-      : []),
-    ...(definition.sessionProfile
-      ? [`chatjs/plugins/${definition.id}/session-profile.ts`]
-      : []),
-    ...(definition.cleanup
-      ? [`chatjs/plugins/${definition.id}/cleanup.ts`]
-      : []),
-    ...(definition.environmentValidation === undefined
+    ...(definition.sessionAuthenticator === undefined
       ? []
-      : [
-          `chatjs/plugins/${definition.id}/${definition.environmentValidation}`,
-        ]),
+      : [`chatjs/plugins/${definition.id}/session-profile.ts`]),
   ]),
 ];
 
@@ -56,7 +41,7 @@ const readPluginDescriptors = async (
       .toSorted((a, b) => a.name.localeCompare(b.name))
       .map(async (entry) => {
         const id = pluginIdSchema.parse(entry.name);
-        const descriptor = `chatjs/plugins/${id}/chatjs.json`;
+        const descriptor = `chatjs/plugins/${id}/plugin.json`;
         await preflight(cwd, [descriptor]);
         const content = await readFile(
           path.join(cwd, descriptor),

@@ -98,11 +98,11 @@ test("offline baseline omits uninstalled schemas and adding MCP extends the same
     { recursive: true }
   );
   await cp(
-    path.join(demo, "chatjs/plugins/mcp/mcp-env.ts"),
-    path.join(root, "chatjs/plugins/mcp/mcp-env.ts")
+    path.join(demo, "chatjs/plugins/mcp/validate-env.ts"),
+    path.join(root, "chatjs/plugins/mcp/validate-env.ts")
   );
   await writeFile(
-    path.join(root, "chatjs/plugins/mcp/chatjs.json"),
+    path.join(root, "chatjs/plugins/mcp/plugin.json"),
     JSON.stringify(mcpDefinition)
   );
   await writeFile(
@@ -132,7 +132,7 @@ test("offline baseline omits uninstalled schemas and adding MCP extends the same
     { recursive: true }
   );
   await writeFile(
-    path.join(root, "chatjs/plugins/projects/chatjs.json"),
+    path.join(root, "chatjs/plugins/projects/plugin.json"),
     JSON.stringify(projectsDefinition)
   );
   await writeFile(
@@ -185,7 +185,7 @@ test.each([
   async (schema): Promise<void> => {
     const root = await fixture();
     await writeFile(
-      path.join(root, "chatjs/plugins/mcp/chatjs.json"),
+      path.join(root, "chatjs/plugins/mcp/plugin.json"),
       JSON.stringify({ ...mcpDefinition, databaseSchemas: [schema] })
     );
     await rejects(planDatabaseSchemas(root, ["mcp"]));
@@ -195,7 +195,7 @@ test.each([
 test("a selected schema must exist before registration", async (): Promise<void> => {
   const root = await fixture();
   await writeFile(
-    path.join(root, "chatjs/plugins/mcp/chatjs.json"),
+    path.join(root, "chatjs/plugins/mcp/plugin.json"),
     JSON.stringify(mcpDefinition)
   );
   await rejects(planDatabaseSchemas(root, ["mcp"]), /ENOENT/u);

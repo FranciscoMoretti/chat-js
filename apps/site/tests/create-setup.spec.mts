@@ -118,6 +118,17 @@ for (const width of [1440, 845, 390]) {
       name: "File storage",
       exact: true,
     });
+    await page.getByRole("button", { name: /Show all .* providers/u }).click();
+    const temporary = storage.getByRole("radio", {
+      name: "No persistent storage",
+      exact: true,
+    });
+    await temporary.check();
+    await expect(temporary).toBeChecked();
+    await expect(
+      storage.getByRole("radio", { name: /^(?:None|In-Memory)$/u })
+    ).toHaveCount(0);
+    await page.getByRole("button", { name: "Show fewer providers" }).click();
     await storage
       .getByRole("radio", { name: "Cloudflare R2", exact: true })
       .check();

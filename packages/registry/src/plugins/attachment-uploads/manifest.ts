@@ -1,7 +1,6 @@
 import registryPackage from "../../../package.json";
-import type { RegistryItem } from "shadcn/schema";
 
-import { pluginDefinitionSchema } from "../../../metadata";
+import { definePluginItem } from "../define-item";
 
 // Canonical upload implementation; apps/chat contains installed demo copies.
 const attachmentUploadFiles = [
@@ -14,32 +13,27 @@ const attachmentUploadFiles = [
   "chatjs/plugins/attachment-uploads/chat-ui.ts",
 ];
 
-const attachmentUploadsItem: RegistryItem = {
-  dependencies: [
-    "lucide-react",
-    "sonner",
-    `browser-image-compression@${registryPackage.devDependencies["browser-image-compression"]}`,
-  ],
-  description:
-    "User attachment picker, camera, paste/drop, preprocessing and upload endpoint",
-  files: attachmentUploadFiles.map((file) => ({
-    path: file.startsWith("chatjs/plugins/attachment-uploads/")
-      ? `src/plugins/attachment-uploads/src/${file.slice("chatjs/plugins/attachment-uploads/".length)}`
-      : `src/plugins/attachment-uploads/adapters/${file}`,
-    target: `~/${file}`,
-    type: "registry:file",
-  })),
-  meta: {
-    chatjs: pluginDefinitionSchema.parse({
-      contractVersion: 3,
-      uiBase: "base",
-      id: "attachment-uploads",
-      kind: "plugin",
-      files: attachmentUploadFiles,
-      requiresStorage: true,
-    }),
+const attachmentUploadsItem = definePluginItem(
+  {
+    dependencies: [
+      "lucide-react",
+      "sonner",
+      `browser-image-compression@${registryPackage.devDependencies["browser-image-compression"]}`,
+    ],
+    description:
+      "User attachment picker, camera, paste/drop, preprocessing and upload endpoint",
+    files: attachmentUploadFiles.map((file) => ({
+      path: file.startsWith("chatjs/plugins/attachment-uploads/")
+        ? `src/plugins/attachment-uploads/src/${file.slice("chatjs/plugins/attachment-uploads/".length)}`
+        : `src/plugins/attachment-uploads/adapters/${file}`,
+      target: `~/${file}`,
+      type: "registry:file",
+    })),
+    name: "attachment-uploads",
   },
-  name: "attachment-uploads",
-  type: "registry:item",
-};
+  {
+    uiBase: "base",
+    requiresStorage: true,
+  }
+);
 export { attachmentUploadFiles, attachmentUploadsItem };

@@ -3,7 +3,7 @@ import { authenticateDisposableGuest } from "./guest-auth";
 import { resolveGuestModel } from "./guest-model";
 import { GUEST_INSTRUCTIONS } from "./guest-policy";
 
-export const guestSessionProfile = {
+const guestSessionProfile = {
   authenticator: "chatjs-disposable-guest",
   authenticate: authenticateDisposableGuest,
   toolNames: new Set<string>(),
@@ -11,3 +11,5 @@ export const guestSessionProfile = {
   resolveModel: resolveGuestModel,
   instructions: GUEST_INSTRUCTIONS,
 } satisfies SessionProfile;
+
+export default guestSessionProfile;

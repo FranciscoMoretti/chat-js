@@ -86,10 +86,10 @@ const attachesFiles = ["uploads", "acceptance"].includes(scenario);
 assert.equal(await Bun.file("agent/channels/slack.ts").exists(), false);
 assert.equal(await Bun.file("agent/connections/notion.ts").exists(), scenario === "selection");
 assert.equal(await Bun.file("agent/channels/eve.ts").exists(), true);
-assert.equal(await Bun.file("chatjs/plugins/attachment-uploads/chatjs.json").exists(), attachesFiles);
+assert.equal(await Bun.file("chatjs/plugins/attachment-uploads/plugin.json").exists(), attachesFiles);
 assert.equal(await Bun.file("chatjs/tools/attach-workspace-file/chatjs.json").exists(), attachesFiles);
 if (attachesFiles) {
-  const uploads = await Bun.file("chatjs/plugins/attachment-uploads/chatjs.json").json();
+  const uploads = await Bun.file("chatjs/plugins/attachment-uploads/plugin.json").json();
   assert.equal(uploads.contractVersion, 3);
   assert.equal(uploads.uiBase, process.env.CHATJS_NATIVE_BASE);
   process.env.DATABASE_URL = "postgresql://fixture:fixture@127.0.0.1:1/fixture";

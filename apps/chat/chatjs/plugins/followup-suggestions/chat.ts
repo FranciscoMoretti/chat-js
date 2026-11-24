@@ -2,7 +2,7 @@ import { inArray } from "drizzle-orm";
 import type { ChatServerIntegration } from "@/chatjs/core/chat/contracts";
 import { eveFollowup } from "./followup-schema";
 
-export const followupChat = {
+const followupChat = {
   onDeleteConversations: async (tx, { sessionIds }) => {
     if (sessionIds.length > 0) {
       await tx
@@ -11,3 +11,5 @@ export const followupChat = {
     }
   },
 } satisfies ChatServerIntegration;
+
+export default followupChat;

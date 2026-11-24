@@ -18,7 +18,7 @@ Keep server and browser import graphs separate:
 | `chat.ts` | `ChatServerIntegration` | Transactional chat integration, safe for EVE and Next.js |
 | `signed-out.tsx` | React component | Optional screen for signed-out chat visitors |
 | `session-profile.ts` | `SessionProfile` | Native authenticator, bounded model, and instructions |
-| `cleanup.ts` | `CleanupTask` | Bounded cleanup with progress and pending inventory |
+| `cleanup.ts` | `CleanupTask["run"]` | Bounded cleanup with progress and pending inventory |
 | `billing.ts` | `UsageBilling` | Spending admission and transactional debits, safe for EVE and Next.js |
 | `auth-server.ts` | `AuthenticationIntegration` | Better Auth plugins, trusted origins, auth route matching |
 | `navigation.ts` | `() => boolean` | Whether core handles modified links as app navigation |
@@ -109,7 +109,7 @@ Both callbacks run inside the core deletion transaction under its lifecycle lock
 
 ## Usage billing
 
-Declare `billing: { export: "creditsBilling" }` in the descriptor and export a `UsageBilling` object from `billing.ts`. Sync allows at most one billing contributor. The generated `installed-billing.ts` contains only the typed `installedBilling` adapter list. App-owned `integrations/billing.ts` selects the policy with `composeBilling`. Callers use `billing.canSpend(ownerId)` and the optional `billing.debit`. Without an adapter, admission resolves to `true`, debit is absent, and core leaves receipts uncharged.
+Default-export a `UsageBilling` object from `billing.ts`. Sync allows at most one billing contributor. The generated `installed-billing.ts` contains only the typed `installedBilling` adapter list. App-owned `integrations/billing.ts` selects the policy with `composeBilling`. Callers use `billing.canSpend(ownerId)` and the optional `billing.debit`. Without an adapter, admission resolves to `true`, debit is absent, and core leaves receipts uncharged.
 
 `canSpend(ownerId)` checks admission; it does not reserve funds. `debit(tx, { ownerId, cents })` applies a positive whole-cent debit using the supplied transaction. Core has already locked the registered owner, deduplicated evidence, and calculated the unpaid rounded turn total. A failure rolls back the receipt, debit, and settlement marker together. Do not open another transaction or call external services from `debit`.
 
@@ -197,11 +197,11 @@ Follow-up Suggestions uses native EVE hooks for generation and the per-conversat
 
 ## Authentication and desktop navigation
 
-Declare `authentication: { export: "desktopAuth" }` for an `AuthenticationIntegration` exported from `auth-server.ts`. Core adds its Better Auth `plugins` and `trustedOrigins`, and consults `isAuthRoute(url)` before redirecting page requests. Match routes narrowly: this predicate lets unauthenticated visitors reach the page and keeps signed-in users on authentication handoff pages. It does not replace endpoint authentication or authorize data access.
+Default-export an authentication integration from `auth-server.ts`. Core adds its Better Auth `plugins` and `trustedOrigins`, and consults `isAuthRoute(url)` before redirecting page requests. Match routes narrowly: this predicate lets unauthenticated visitors reach the page and keeps signed-in users on authentication handoff pages. It does not replace endpoint authentication or authorize data access.
 
-Declare `authenticationUi: { form: "DesktopAuthForm", signOut: "signOutDesktop" }` in the descriptor. Export the form from `auth-form.tsx` and the handler from `sign-out.ts`. Sync imports them independently, so signing out does not load the login form or layout. The form receives `mode: "login" | "register"` and the normal web form as `children`. Render the children when your integration does not apply. The asynchronous sign-out handler returns `true` after handling sign-out, `false` to use core web sign-out, and rejects on failure. Core clears cached account data and navigates only after success.
+Default-export the form from `auth-form.tsx` and the handler from `sign-out.ts`. Sync imports them independently, so signing out does not load the login form or layout. The form receives `mode: "login" | "register"` and the normal web form as `children`. Render the children when your integration does not apply. The asynchronous sign-out handler returns `true` after handling sign-out, `false` to use core web sign-out, and rejects on failure. Core clears cached account data and navigates only after success.
 
-Declare `navigation: { export: "desktopNavigation" }` for a function exported from `navigation.ts`. Return `true` when core should handle modified internal links as normal app navigation. With no contribution, core preserves browser modifier behavior. Keep this entry independent of auth UI and client declarations to avoid an import cycle through the shared link component.
+Default-export a function from `navigation.ts`. Return `true` when core should handle modified internal links as normal app navigation. With no contribution, core preserves browser modifier behavior. Keep this entry independent of auth UI and client declarations to avoid an import cycle through the shared link component.
 
 Each of these slots accepts one provider. Without contributions, generated registrations add no auth plugins or origins, recognize no extra auth routes, render the web form unchanged, and defer to web sign-out. [Desktop](../plugins/desktop) also uses the existing layout contribution for renderer session synchronization. It introduces no plugin database schema.
 
@@ -225,8 +225,7 @@ Declare plugin schema paths in `databaseSchemas`. Drizzle composes installed sch
     "chatjs/plugins/projects/chat-ui.ts",
     "chatjs/plugins/projects/chat.ts",
     "chatjs/plugins/projects/db/project-schema.ts"
-  ],
-  "chat": { "export": "projectsChat" }
+  ]
 }
 ```
 
@@ -236,13 +235,13 @@ Generated modules register routers, database schemas, instrumentation, layout, u
 
 ## Signed-out chat
 
-Declare `signedOut: { export: "GuestChatScreen" }` and export a no-prop component from `signed-out.tsx`. Only one plugin may own this screen. Core renders it at the signed-out chat entrypoint. Without it, core redirects to `/login`.
+Default-export a no-prop component from `signed-out.tsx`. Only one plugin may own this screen. Core renders it at the signed-out chat entrypoint. Without it, core redirects to `/login`.
 
 The screen owns its conversation state and policy. It can reuse core presentation components without making the account model picker or account conversation APIs depend on guest behavior. `EveComposer` is text-only by default. Account callers supply the optional `capabilities` object containing attachment state, selected tool, and tool-change callback; text-only screens do not create those states or mount upload controls.
 
 ## Native session profiles
 
-Declare `sessionProfile: { export: "guestSessionProfile", authenticator: "chatjs-disposable-guest" }`. Export a `SessionProfile` from `session-profile.ts`, which must be safe to load in the native EVE graph. It contains `authenticator`, `authenticate(request)`, `resolveModel()`, and `instructions`. Shared `SessionAuthentication` and `SessionModel` types in `chatjs/core/session/contracts.ts` define the returned identity and model settings independently of account implementations. A profile resolves its own model without accepting an account model-selection argument.
+Declare `sessionAuthenticator: "chatjs-disposable-guest"`. Default-export a `SessionProfile` from `session-profile.ts`, which must be safe to load in the native EVE graph. It contains `authenticator`, `authenticate(request)`, `resolveModel()`, and `instructions`. Shared `SessionAuthentication` and `SessionModel` types in `chatjs/core/session/contracts.ts` define the returned identity and model settings independently of account implementations. A profile resolves its own model without accepting an account model-selection argument.
 
 The channel composes installed authenticators. Model and instruction selection uses the persisted initiator's authenticator, never reconnect credentials or caller-supplied attributes. Unknown or removed profiles throw. Account hooks, tool execution, billing, and workspace access require the account authenticator explicitly. A profile does not grant those account capabilities.
 
@@ -250,7 +249,7 @@ Authenticator names must be unique and cannot use the reserved account identity 
 
 ## Scheduled cleanup
 
-Declare `cleanup: { export: "guestCleanup", id: "guest-chat" }`. Export a `CleanupTask` with a matching `id` and `run()` from `cleanup.ts`. Task IDs must be unique. Core reserves `orphanedAttachments` for its storage sweep.
+Default-export a function matching `CleanupTask["run"]` from your plugin’s `cleanup.ts` and include the file in `plugin.json`. Sync registers the function under your plugin ID. For example, a sweep from Guest Chat appears as `guest-chat` in the cleanup report.
 
 A task returns `{ deletedCount, retiredCount?, pendingCount?, skipped }` for one bounded sweep. `deletedCount` reports payload deletion; optional `retiredCount` reports ended or expired sessions whose payloads remain under provider retention. Retirement is not proof of erasure. Counts must be nonnegative safe integers. Omit `pendingCount` only when the sweep has no remaining work. Skipped tasks, pending work, invalid counts, and errors make the job unsuccessful. Independent tasks still run, and responses contain safe error messages.
 

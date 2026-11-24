@@ -33,55 +33,33 @@ const media = (
     tools: [{ toolExport: "generateMedia" }],
   });
 
-test("legacy built-in descriptors retain mandatory media and storage requirements", async () => {
-  const gateway = externalGatewayFixture().root.meta.chatjs;
-  const video = media("video");
-  delete video.requiresGateway;
-  delete video.requiresStorage;
-  gateway.capabilities.video = false;
-
+test("storage requirements come from the descriptor for every tool and plugin ID", async () => {
+  await validateProviderRequirements(tmpdir(), {
+    plugins: [{ id: "attachment-uploads" }],
+    tools: [{ id: "generate-image" }, { id: "generate-video" }],
+    storage: "memory",
+  });
   await rejects(
     validateProviderRequirements(tmpdir(), {
-      plugins: [],
-      gateway,
-      storage: "s3",
-      tools: [video],
-    }),
-    (reason: unknown) => {
-      expect(() => {
-        throw reason;
-      }).toThrow("supporting video");
-      return true;
-    }
-  );
-
-  await rejects(
-    validateProviderRequirements(tmpdir(), {
-      plugins: [],
-      gateway,
-      storage: "memory",
-      tools: [video],
-    }),
-    (reason: unknown) => {
-      expect(() => {
-        throw reason;
-      }).toThrow("persistent storage");
-      return true;
-    }
-  );
-
-  await rejects(
-    validateProviderRequirements(tmpdir(), {
-      plugins: [{ id: "attachment-uploads" }],
-      storage: "memory",
+      plugins: [{ id: "custom-uploads", requiresStorage: true }],
       tools: [],
+      storage: "memory",
     }),
-    (reason: unknown) => {
-      expect(() => {
-        throw reason;
-      }).toThrow("persistent storage");
-      return true;
-    }
+    /custom-uploads requires persistent storage/u
+  );
+});
+
+test("a third-party tool can require gateway media support under any ID", async () => {
+  const gateway = externalGatewayFixture().root.meta.chatjs;
+  gateway.capabilities.video = false;
+  await rejects(
+    validateProviderRequirements(tmpdir(), {
+      plugins: [],
+      gateway,
+      storage: "memory",
+      tools: [{ id: "storyboard", requiresGateway: ["video"] }],
+    }),
+    /storyboard requires a gateway supporting video/u
   );
 });
 test.each(["image", "video"] as const)(
@@ -220,7 +198,7 @@ test("code execution rejects the simulated shell but supports EVE automatic sele
   };
   await validateProviderRequirements(cwd, target);
   await rejects(
-    validateProviderRequirements(cwd, { ...target, sandbox: "just-bash" }),
+    validateProviderRequirements(cwd, { ...target, sandboxRuntimes: [] }),
     /native Python/u
   );
 });

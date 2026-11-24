@@ -1,3 +1,5 @@
+import { supportsMedia } from "../../../registry/provider-capabilities";
+import type { MediaKind } from "../../../registry/provider-capabilities";
 import {
   AUTHENTICATION_DEFAULTS,
   FEATURES_DEFAULTS,
@@ -358,27 +360,9 @@ const assistantToolOptions = (
   })),
 ];
 
-const supportedAssistantTools = (
-  gateway: ReadonlyInput<GatewayDefinition>
-): BuiltInToolKey[] =>
-  BUILT_IN_TOOL_KEYS.filter((key) => {
-    if (key === "imageGeneration") {
-      return (
-        gateway.capabilities.image && Boolean(gateway.defaults.roles.image)
-      );
-    }
-    if (key === "videoGeneration") {
-      return (
-        gateway.capabilities.video && Boolean(gateway.defaults.roles.video)
-      );
-    }
-    return true;
-  });
-
 const promptAssistantTools = async (
   registryItems: readonly ReadonlyInput<RegistryIndexItem>[],
-  skipPrompt: boolean,
-  gateway: ReadonlyInput<GatewayDefinition>
+  skipPrompt: boolean
 ): Promise<{
   builtInTools: Record<BuiltInToolKey, boolean>;
   installableTools: string[];
@@ -386,7 +370,6 @@ const promptAssistantTools = async (
   const installableItems = registryItems.filter((item) =>
     isInstallableTool(item)
   );
-  const supportedBuiltInTools = supportedAssistantTools(gateway);
 
   if (skipPrompt) {
     return {
@@ -396,11 +379,11 @@ const promptAssistantTools = async (
   }
 
   const selected = await multiselect({
-    initialValues: supportedBuiltInTools.filter(
+    initialValues: BUILT_IN_TOOL_KEYS.filter(
       (key) => BUILT_IN_TOOL_DEFAULTS[key]
     ),
     message: `Which ${highlighter.info("assistant tools")} would you like to enable? ${highlighter.dim("(space to toggle, enter to submit)")}`,
-    options: assistantToolOptions(installableItems, supportedBuiltInTools),
+    options: assistantToolOptions(installableItems, BUILT_IN_TOOL_KEYS),
     required: false,
   });
   handleCancel(selected);
@@ -486,68 +469,36 @@ const promptSandbox = async (
   handleCancel(choice);
   return choice;
 };
-const promptImageGenerationTool = async (
+const promptMediaTool = async (
+  kind: MediaKind,
+  gateway: ReadonlyInput<GatewayDefinition>,
   skipPrompt: boolean
 ): Promise<string> => {
+  const builtin = `generate-${kind}`;
   if (skipPrompt) {
-    return "generate-image";
+    return builtin;
   }
-  const choice = await select({
-    message: "Which image generation tool should chat use?",
-    options: [
-      {
-        hint: "Uses your gateway and file storage",
-        label: "Selected AI gateway",
-        value: "generate-image",
-      },
-      { label: "External registry item", value: "external" },
-    ],
-  });
-  handleCancel(choice);
-  if (choice !== "external") {
-    return choice;
+  if (supportsMedia(gateway, kind)) {
+    const choice = await select({
+      message: `Which ${kind} generation tool should chat use?`,
+      options: [
+        {
+          hint: "Uses your gateway and file storage",
+          label: "Selected AI gateway",
+          value: builtin,
+        },
+        { label: "External registry item", value: "external" },
+      ],
+    });
+    handleCancel(choice);
+    if (choice === builtin) {
+      return builtin;
+    }
   }
   const address = await text({
-    message: "image generation tool registry address:",
-    validate: (value): "Enter an address" | undefined => {
-      if (typeof value !== "string" || value.trim() === "") {
-        return "Enter an address";
-      }
-      return undefined;
-    },
-  });
-  handleCancel(address);
-  return address.trim();
-};
-const promptVideoGenerationTool = async (
-  skipPrompt: boolean
-): Promise<string> => {
-  if (skipPrompt) {
-    return "generate-video";
-  }
-  const choice = await select({
-    message: "Which video generation tool should chat use?",
-    options: [
-      {
-        hint: "Uses your gateway and file storage",
-        label: "Selected AI gateway",
-        value: "generate-video",
-      },
-      { label: "External registry item", value: "external" },
-    ],
-  });
-  handleCancel(choice);
-  if (choice !== "external") {
-    return choice;
-  }
-  const address = await text({
-    message: "video generation tool registry address:",
-    validate: (value): "Enter an address" | undefined => {
-      if (typeof value !== "string" || value.trim() === "") {
-        return "Enter an address";
-      }
-      return undefined;
-    },
+    message: `External ${kind} generation tool registry address:`,
+    validate: (value) =>
+      (value?.trim() ?? "") === "" ? "Enter an address" : undefined,
   });
   handleCancel(address);
   return address.trim();
@@ -559,8 +510,7 @@ export {
   promptCoreFeatures,
   promptElectron,
   promptGateway,
-  promptImageGenerationTool,
+  promptMediaTool,
   promptProjectName,
   promptStorage,
-  promptVideoGenerationTool,
 };

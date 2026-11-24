@@ -1,5 +1,4 @@
-import type { RegistryItem } from "shadcn/schema";
-import { pluginDefinitionSchema } from "../../../metadata";
+import { definePluginItem } from "../define-item";
 
 const sharingFiles = [
   "chatjs/plugins/sharing/chat.ts",
@@ -17,41 +16,38 @@ const sharingFiles = [
   "chatjs/plugins/sharing/ui/shared-page.tsx",
   "app/(chat)/share/[id]/page.tsx",
 ];
-const sharingDefinition = pluginDefinitionSchema.parse({
-  contractVersion: 3,
-  uiBase: "base",
-  id: "sharing",
-  kind: "plugin",
-  files: sharingFiles,
-  chat: { export: "sharingChat" },
-});
-const sharingItem: RegistryItem = {
-  name: "sharing",
-  type: "registry:item",
-  registryDependencies: [
-    "breadcrumb",
-    "button",
-    "dialog",
-    "dropdown-menu",
-    "message-scroller",
-    "popover",
-    "tooltip",
-  ],
-  dependencies: [
-    "@tanstack/react-query",
-    "@trpc/server",
-    "drizzle-orm",
-    "lucide-react",
-    "sonner",
-  ],
-  description: "Share read-only conversations with revocable public access",
-  files: sharingFiles.map((file) => ({
-    path: file.startsWith("chatjs/plugins/sharing/")
-      ? `src/plugins/sharing/src/${file.slice("chatjs/plugins/sharing/".length)}`
-      : `src/plugins/sharing/adapters/${file}`,
-    target: `~/${file}`,
-    type: "registry:file" as const,
-  })),
-  meta: { chatjs: sharingDefinition },
-};
+
+const sharingItem = definePluginItem(
+  {
+    name: "sharing",
+    registryDependencies: [
+      "breadcrumb",
+      "button",
+      "dialog",
+      "dropdown-menu",
+      "message-scroller",
+      "popover",
+      "tooltip",
+    ],
+    dependencies: [
+      "@tanstack/react-query",
+      "@trpc/server",
+      "drizzle-orm",
+      "lucide-react",
+      "sonner",
+    ],
+    description: "Share read-only conversations with revocable public access",
+    files: sharingFiles.map((file) => ({
+      path: file.startsWith("chatjs/plugins/sharing/")
+        ? `src/plugins/sharing/src/${file.slice("chatjs/plugins/sharing/".length)}`
+        : `src/plugins/sharing/adapters/${file}`,
+      target: `~/${file}`,
+      type: "registry:file" as const,
+    })),
+  },
+  {
+    uiBase: "base",
+  }
+);
+const sharingDefinition = sharingItem.meta.chatjs;
 export { sharingItem, sharingFiles, sharingDefinition };

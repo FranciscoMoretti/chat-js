@@ -254,7 +254,7 @@ process.exit(0);
     await run([preset]);
     expect(
       await Bun.file(
-        path.join(fixture, "apps/chat/chatjs/plugins/feedback/chatjs.json")
+        path.join(fixture, "apps/chat/chatjs/plugins/feedback/plugin.json")
       ).exists()
     ).toBe(false);
     // Exercise the production process adapter, including its incremental cache.

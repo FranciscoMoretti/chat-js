@@ -1,6 +1,4 @@
-import type { RegistryItem } from "shadcn/schema";
-
-import { pluginDefinitionSchema } from "../../../metadata";
+import { definePluginItem } from "../define-item";
 
 // Canonical MCP implementation; apps/chat contains installed demo copies.
 const mcpFiles = [
@@ -22,9 +20,9 @@ const mcpFiles = [
   "chatjs/plugins/mcp/connector-menu-item.tsx",
   "chatjs/plugins/mcp/db/mcp-schema.ts",
   "chatjs/plugins/mcp/db/encrypted-text.ts",
-  "chatjs/plugins/mcp/mcp-env.ts",
   "chatjs/plugins/mcp/settings.tsx",
   "chatjs/plugins/mcp/setup.ts",
+  "chatjs/plugins/mcp/validate-env.ts",
   "chatjs/plugins/mcp/oauth/cache.ts",
   "chatjs/plugins/mcp/oauth/mcp-client-manager.ts",
   "chatjs/plugins/mcp/oauth/mcp-client.ts",
@@ -43,62 +41,55 @@ const mcpFiles = [
   "chatjs/plugins/mcp/chat-ui.ts",
 ];
 
-const mcpDefinition = pluginDefinitionSchema.parse({
-  contractVersion: 3,
-  uiBase: "base",
-  databaseSchemas: ["chatjs/plugins/mcp/db/mcp-schema.ts"],
-  environmentValidation: "mcp-env.ts",
-  envRequirements: [{ options: [["MCP_ENCRYPTION_KEY"]] }],
-  id: "mcp",
-  kind: "plugin",
-  files: mcpFiles,
-});
-
-const mcpItem: RegistryItem = {
-  dependencies: [
-    "@ai-sdk/mcp",
-    "@hookform/resolvers",
-    "@modelcontextprotocol/sdk",
-    "@tanstack/react-query",
-    "@trpc/server",
-    "ajv",
-    "drizzle-orm",
-    "guarded-fetch",
-    "lucide-react",
-    "nuqs",
-    "postgres",
-    "react-hook-form",
-    "sonner",
-    "superjson",
-  ],
-  description: "MCP connectors, management pages, OAuth and composer control",
-  files: mcpFiles.map((file) => ({
-    path: file.startsWith("chatjs/plugins/mcp/")
-      ? `src/plugins/mcp/src/${file.slice("chatjs/plugins/mcp/".length)}`
-      : `src/plugins/mcp/adapters/${file}`,
-    target: `~/${file}`,
-    type: "registry:file" as const,
-  })),
-  meta: {
-    chatjs: mcpDefinition,
+const mcpItem = definePluginItem(
+  {
+    dependencies: [
+      "@ai-sdk/mcp",
+      "@hookform/resolvers",
+      "@modelcontextprotocol/sdk",
+      "@tanstack/react-query",
+      "@trpc/server",
+      "ajv",
+      "drizzle-orm",
+      "guarded-fetch",
+      "lucide-react",
+      "nuqs",
+      "postgres",
+      "react-hook-form",
+      "sonner",
+      "superjson",
+    ],
+    description: "MCP connectors, management pages, OAuth and composer control",
+    files: mcpFiles.map((file) => ({
+      path: file.startsWith("chatjs/plugins/mcp/")
+        ? `src/plugins/mcp/src/${file.slice("chatjs/plugins/mcp/".length)}`
+        : `src/plugins/mcp/adapters/${file}`,
+      target: `~/${file}`,
+      type: "registry:file" as const,
+    })),
+    name: "mcp",
+    registryDependencies: [
+      "badge",
+      "button",
+      "collapsible",
+      "dialog",
+      "dropdown-menu",
+      "field",
+      "input",
+      "label",
+      "scroll-area",
+      "select",
+      "separator",
+      "skeleton",
+      "spinner",
+      "switch",
+    ],
   },
-  name: "mcp",
-  type: "registry:item",
-  registryDependencies: [
-    "badge",
-    "button",
-    "collapsible",
-    "dialog",
-    "dropdown-menu",
-    "field",
-    "input",
-    "label",
-    "scroll-area",
-    "select",
-    "separator",
-    "skeleton",
-    "spinner",
-    "switch",
-  ],
-};
+  {
+    uiBase: "base",
+    databaseSchemas: ["chatjs/plugins/mcp/db/mcp-schema.ts"],
+    envRequirements: [{ options: [["MCP_ENCRYPTION_KEY"]] }],
+  }
+);
+const mcpDefinition = mcpItem.meta.chatjs;
 export { mcpDefinition, mcpFiles, mcpItem };

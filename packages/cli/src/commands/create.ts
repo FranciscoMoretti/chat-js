@@ -12,7 +12,7 @@ import { recordInstalledSource } from "#cli/utils/source-receipt";
 import { scaffoldNativeProject } from "#cli/helpers/native-scaffold";
 import { createStagedProject } from "#cli/helpers/staged-project";
 import { generateBaseline } from "#cli/utils/generate-baseline";
-import { planSandboxInstallation } from "#cli/helpers/sandbox-installation";
+import { planInteractiveInstallation } from "#cli/helpers/interactive-installation";
 import { configureSandboxProvider } from "#cli/helpers/sandbox-provider";
 import { resolveSandbox } from "#cli/registry/sandboxes";
 import { installPlan, plannedSourceTargets } from "#cli/utils/install-plan";
@@ -25,10 +25,9 @@ import {
   promptCoreFeatures,
   promptElectron,
   promptGateway,
-  promptImageGenerationTool,
+  promptMediaTool,
   promptProjectName,
   promptStorage,
-  promptVideoGenerationTool,
 } from "#cli/helpers/prompts";
 import { readFile, writeFile } from "node:fs/promises";
 import { scaffoldElectron, scaffoldFromGit } from "#cli/helpers/scaffold";
@@ -179,6 +178,7 @@ interface ProjectTarget {
 const collectToolSources = async (
   options: Readonly<CreateOptions>,
   assistantTools: AssistantTools,
+  gateway: ReadonlyInput<CreateSetup["gatewaySelection"]["definition"]>,
   targetDir: string
 ): Promise<string[]> => {
   const toolSources = assistantTools.installableTools.map((tool): string =>
@@ -187,13 +187,13 @@ const collectToolSources = async (
   const selections = [
     {
       plugin: "videoGeneration",
-      prompt: promptVideoGenerationTool,
+      kind: "video",
       slot: "generateVideo",
       source: options.videoGenerationTool,
     },
     {
       plugin: "imageGeneration",
-      prompt: promptImageGenerationTool,
+      kind: "image",
       slot: "generateImage",
       source: options.imageGenerationTool,
     },
@@ -209,7 +209,8 @@ const collectToolSources = async (
     }
     if (assistantTools.builtInTools[selection.plugin]) {
       const source = itemAddress(
-        selection.source ?? (await selection.prompt(options.yes)),
+        selection.source ??
+          (await promptMediaTool(selection.kind, gateway, options.yes)),
         "tool"
       );
       const item = await readItem(source, targetDir);
@@ -300,47 +301,20 @@ const promptCreateSetup = async (
     coreFeatures.attachments = options.attachments;
   }
   const registryItems = await loadInstallableTools(options, targetDir);
-  const assistantTools = await promptAssistantTools(
-    registryItems,
-    options.yes,
-    gatewaySelection.definition
-  );
+  const assistantTools = await promptAssistantTools(registryItems, options.yes);
   const toolSources = await collectToolSources(
     options,
     assistantTools,
+    gatewaySelection.definition,
     targetDir
-  );
-  const selectedTools = await Promise.all(
-    toolSources.map(async (source) => {
-      const item = await readItem(source, targetDir);
-      return toolDefinitionSchema.parse(item.meta?.chatjs);
-    })
   );
   if (assistantTools.builtInTools.deepResearch) {
     toolSources.push(itemAddress("deep-research", "tool"));
   }
-  const usesStorage =
-    coreFeatures.attachments ||
-    selectedTools.some(
-      (tool: ReadonlyInput<z.output<typeof toolDefinitionSchema>>) =>
-        tool.requiresStorage === true
-    ) ||
-    assistantTools.builtInTools.imageGeneration ||
-    assistantTools.builtInTools.videoGeneration ||
-    options.storageProvider !== undefined ||
-    options.storageConfig !== undefined;
-  const storage = usesStorage
-    ? await promptStorage(
-        options.yes,
-        options.storageProvider,
-        options.storageConfig,
-        targetDir
-      )
-    : await resolveStorage("memory", targetDir);
   const auth = await promptAuth(options.yes);
   const withElectron = await promptElectron(options.yes, options.electron);
 
-  const { plan, sandbox } = await planSandboxInstallation(
+  const { plan, sandbox, storage } = await planInteractiveInstallation(
     targetDir,
     {
       plugins: [
@@ -352,14 +326,20 @@ const promptCreateSetup = async (
         ...(coreFeatures.attachments ? ["attachment-uploads"] : []),
       ],
       gateway: gatewaySelection.source,
-      storage: {
-        options: storage.options,
-        source: storage.source,
-      },
       tools: toolSources,
     },
-    { fresh: true },
-    async () => options.sandboxProvider ?? (await promptSandbox(options.yes))
+    async () => options.sandboxProvider ?? (await promptSandbox(options.yes)),
+    async (requiresStorage) =>
+      requiresStorage ||
+      options.storageProvider !== undefined ||
+      options.storageConfig !== undefined
+        ? await promptStorage(
+            options.yes,
+            options.storageProvider,
+            options.storageConfig,
+            targetDir
+          )
+        : await resolveStorage("memory", targetDir)
   );
 
   return {

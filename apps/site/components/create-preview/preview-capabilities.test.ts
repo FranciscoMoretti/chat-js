@@ -8,7 +8,7 @@ import { livePreviewPlugins, pluginPreviewLabel } from "./preview-capabilities";
 void test("every built-in signed-in chat UI plugin is registered in Create", () => {
   const visible = pluginItems.flatMap((item) => {
     const definition = pluginDefinitionSchema.parse(item.meta?.chatjs);
-    return hasPluginEntry(definition, "chat-ui") ? [definition.id] : [];
+    return hasPluginEntry(definition, "chat-ui.ts") ? [definition.id] : [];
   });
   assert.deepEqual(livePreviewPlugins.toSorted(), visible.toSorted());
 });

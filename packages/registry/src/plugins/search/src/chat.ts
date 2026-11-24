@@ -2,7 +2,7 @@ import { inArray } from "drizzle-orm";
 import type { ChatServerIntegration } from "@/chatjs/core/chat/contracts";
 import { eveSearchText } from "./search-schema";
 
-export const searchChat = {
+const searchChat = {
   afterBranch: async ({ ownerId, conversationId, sessionId }) => {
     const { backfillEveSearchConversation } = await import("./search-backfill");
     await backfillEveSearchConversation(ownerId, conversationId, sessionId);
@@ -16,3 +16,5 @@ export const searchChat = {
       .where(inArray(eveSearchText.conversationId, [...conversationIds]));
   },
 } satisfies ChatServerIntegration;
+
+export default searchChat;

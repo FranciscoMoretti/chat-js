@@ -12,7 +12,7 @@ import {
 const postgres = new PGlite();
 const database = drizzle(postgres);
 vi.mock("./client", () => ({ db: database }));
-vi.mock("@/chatjs/plugins/mcp/mcp-env", () => ({
+vi.mock("@/chatjs/plugins/mcp/validate-env", () => ({
   readMcpEncryptionKey: () => Buffer.alloc(32, 1).toString("base64"),
 }));
 const {

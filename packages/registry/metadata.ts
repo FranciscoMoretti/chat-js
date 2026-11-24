@@ -128,7 +128,6 @@ type StorageDefinition = z.infer<typeof storageDefinitionSchema>;
 
 // Plugin IDs are open to external registries; contributions use the same contract.
 const pluginIdSchema = z.string().regex(/^[a-z][a-z0-9-]*$/u);
-const pluginModuleSchema = z.string().regex(/^[a-zA-Z0-9_-]+\.(?:ts|js|mjs)$/u);
 const pluginDefinitionSchema = z.strictObject({
   contractVersion: z.literal(3, {
     error:
@@ -138,25 +137,13 @@ const pluginDefinitionSchema = z.strictObject({
   id: pluginIdSchema,
   kind: z.literal("plugin"),
   files: z.array(z.string().min(1)).default([]),
-  environmentValidation: pluginModuleSchema.optional(),
   databaseSchemas: z
     .array(z.string().regex(/^(?:[a-zA-Z0-9_-]+\/)+[a-zA-Z0-9_-]+\.ts$/u))
     .optional(),
   envRequirements: z.array(envRequirementSchema).optional(),
   requiresPlugins: z.array(pluginIdSchema).optional(),
   requiresStorage: z.literal(true).optional(),
-  chat: z.object({ export: identifier }).optional(),
-  billing: z.object({ export: identifier }).optional(),
-  signedOut: z.object({ export: identifier }).optional(),
-  sessionProfile: z
-    .object({ export: identifier, authenticator: z.string().min(1) })
-    .optional(),
-  cleanup: z.object({ export: identifier, id: pluginIdSchema }).optional(),
-  authentication: z.object({ export: identifier }).optional(),
-  authenticationUi: z
-    .object({ form: identifier, signOut: identifier })
-    .optional(),
-  navigation: z.object({ export: identifier }).optional(),
+  sessionAuthenticator: z.string().min(1).optional(),
 });
 
 type PluginDefinition = z.infer<typeof pluginDefinitionSchema>;

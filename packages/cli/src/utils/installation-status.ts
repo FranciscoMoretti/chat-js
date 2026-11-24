@@ -57,7 +57,7 @@ export const installationStatus = async (
     plugins.map(async (plugin) => {
       const files = [
         ...new Set([
-          `chatjs/plugins/${plugin.id}/chatjs.json`,
+          `chatjs/plugins/${plugin.id}/plugin.json`,
           ...pluginSourceFiles(plugin),
           ...(await directoryFiles(cwd, `chatjs/plugins/${plugin.id}`)),
         ]),
@@ -158,7 +158,7 @@ export const installationStatus = async (
   );
   const items = owners.map(({ plugin, files, preserved, removalIssue }) => ({
     id: plugin.id,
-    descriptor: `chatjs/plugins/${plugin.id}/chatjs.json`,
+    descriptor: `chatjs/plugins/${plugin.id}/plugin.json`,
     activation: installationActivation(plugin, files),
     removalIssue,
     requires: plugin.requiresPlugins ?? [],

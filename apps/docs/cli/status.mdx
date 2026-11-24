@@ -30,7 +30,7 @@ Files have four lifecycle kinds. Kind describes how installation treats a file, 
 chatjs/
   core/                        source: composition helpers and contracts
   providers/                   source: selected providers and configuration
-  plugins/<id>/                source: plugin implementation and chatjs.json
+  plugins/<id>/                source: plugin implementation and plugin.json
   tools/<id>/                  source: tool implementation and chatjs.json
   generated/                   generated: installation wiring
   installed-source.json        record: installed file hashes
@@ -55,7 +55,7 @@ Scaffolded application files become your application code. Their ChatJS origin d
 Next.js routes and EVE entries can belong to installed plugins even though they live outside these source directories. Built-in adapters carry a short exception header:
 
 ```ts
-// ChatJS source: attachment-uploads. Ownership: chatjs/plugins/attachment-uploads/chatjs.json.
+// ChatJS source: attachment-uploads. Ownership: chatjs/plugins/attachment-uploads/plugin.json.
 export { POST } from "@/chatjs/plugins/attachment-uploads/routes/upload";
 ```
 

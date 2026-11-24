@@ -61,7 +61,7 @@ const checkStatusInventory = async (): Promise<void> => {
   ];
   await put(
     root,
-    "chatjs/plugins/alpha/chatjs.json",
+    "chatjs/plugins/alpha/plugin.json",
     JSON.stringify({ contractVersion: 3, kind: "plugin", id: "alpha", files })
   );
   await Promise.all(
@@ -71,7 +71,7 @@ const checkStatusInventory = async (): Promise<void> => {
   );
   await recordInstalledSource(root, [
     ...files,
-    "chatjs/plugins/alpha/chatjs.json",
+    "chatjs/plugins/alpha/plugin.json",
   ]);
   await put(root, files[0], "export const value = 2;\n");
   await rm(path.join(root, files[1]));
@@ -82,7 +82,7 @@ const checkStatusInventory = async (): Promise<void> => {
   );
   await put(
     root,
-    "chatjs/plugins/beta/chatjs.json",
+    "chatjs/plugins/beta/plugin.json",
     JSON.stringify({
       contractVersion: 3,
       kind: "plugin",
@@ -157,7 +157,7 @@ test("native installs without receipts stay untracked, and status reports missin
   const root = await fixture();
   await put(
     root,
-    "chatjs/plugins/alpha/chatjs.json",
+    "chatjs/plugins/alpha/plugin.json",
     JSON.stringify({
       contractVersion: 3,
       kind: "plugin",
@@ -170,7 +170,7 @@ test("native installs without receipts stay untracked, and status reports missin
   const report = await installationStatus(root);
   expect(
     report.plugins[0]?.files.find(
-      (file) => file.path === "chatjs/plugins/alpha/chatjs.json"
+      (file) => file.path === "chatjs/plugins/alpha/plugin.json"
     )
   ).toMatchObject({ state: "untracked" });
   expect(
@@ -186,7 +186,7 @@ test("status refuses symlinked plugin source instead of reading outside the proj
   const root = await fixture();
   await put(
     root,
-    "chatjs/plugins/alpha/chatjs.json",
+    "chatjs/plugins/alpha/plugin.json",
     JSON.stringify({
       contractVersion: 3,
       kind: "plugin",
@@ -195,7 +195,7 @@ test("status refuses symlinked plugin source instead of reading outside the proj
     })
   );
   await symlink(
-    path.join(root, "chatjs/plugins/alpha/chatjs.json"),
+    path.join(root, "chatjs/plugins/alpha/plugin.json"),
     path.join(root, "chatjs/plugins/alpha/source.ts")
   );
   await rejects(installationStatus(root), /symlinked ChatJS target/u);
@@ -206,7 +206,7 @@ const checkFormattingStatus = async (): Promise<void> => {
   const file = "chatjs/plugins/alpha/settings.json";
   await put(
     root,
-    "chatjs/plugins/alpha/chatjs.json",
+    "chatjs/plugins/alpha/plugin.json",
     JSON.stringify({
       contractVersion: 3,
       kind: "plugin",
@@ -215,7 +215,7 @@ const checkFormattingStatus = async (): Promise<void> => {
     })
   );
   await put(root, file, '{"label":"hello world"}');
-  await recordInstalledSource(root, [file, "chatjs/plugins/alpha/chatjs.json"]);
+  await recordInstalledSource(root, [file, "chatjs/plugins/alpha/plugin.json"]);
   await put(root, file, '{ "label": "hello world" }\n');
   await put(
     root,
@@ -274,7 +274,7 @@ test("old or mismatched baselines and invalid UTF-8 cannot be blessed by formatt
   const file = "chatjs/plugins/alpha/data.json";
   await put(
     root,
-    "chatjs/plugins/alpha/chatjs.json",
+    "chatjs/plugins/alpha/plugin.json",
     JSON.stringify({
       contractVersion: 3,
       kind: "plugin",
@@ -316,7 +316,7 @@ test("file kinds separate application policy, installed source, generated wiring
   const root = await fixture();
   await put(
     root,
-    "chatjs/plugins/alpha/chatjs.json",
+    "chatjs/plugins/alpha/plugin.json",
     JSON.stringify({
       contractVersion: 3,
       kind: "plugin",

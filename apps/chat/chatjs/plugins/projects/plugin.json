@@ -37,6 +37,5 @@
     "app/(chat)/project/[projectId]/chat/[chatId]/page.tsx",
     "app/(chat)/project/[projectId]/page.tsx"
   ],
-  "databaseSchemas": ["chatjs/plugins/projects/db/project-schema.ts"],
-  "chat": { "export": "projectsChat" }
+  "databaseSchemas": ["chatjs/plugins/projects/db/project-schema.ts"]
 }

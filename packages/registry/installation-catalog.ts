@@ -1,3 +1,8 @@
+import {
+  hasPersistentStorage,
+  supportsMedia,
+  supportsNativeProcesses,
+} from "./provider-capabilities";
 import { z } from "zod";
 import { eveCompositionIssue } from "./eve-catalog";
 import type { RegistryItem } from "shadcn/schema";
@@ -80,11 +85,7 @@ const mediaIssues = (
 ): string[] => {
   const issues: string[] = [];
   for (const kind of definition.requiresGateway ?? []) {
-    if (
-      gateway?.kind !== "gateway" ||
-      !gateway.capabilities[kind] ||
-      (gateway.defaults.roles[kind]?.trim() ?? "") === ""
-    ) {
+    if (gateway?.kind !== "gateway" || !supportsMedia(gateway, kind)) {
       issues.push(
         `${definition.id} requires a gateway with ${kind} generation and a default model.`
       );
@@ -104,7 +105,7 @@ const providerIssues = (
     if (definition.kind !== "plugin" && definition.kind !== "tool") {
       continue;
     }
-    if (definition.requiresStorage && (!storage || storage.id === "memory")) {
+    if (definition.requiresStorage && !hasPersistentStorage(storage?.id)) {
       issues.push(`${definition.id} requires persistent storage.`);
     }
     if (definition.kind !== "tool") {
@@ -113,7 +114,7 @@ const providerIssues = (
     if (
       definition.requiresNativeProcesses &&
       sandbox?.kind === "sandbox" &&
-      !sandbox.capabilities.runtimes.includes("python")
+      !supportsNativeProcesses(sandbox.capabilities.runtimes)
     ) {
       issues.push(
         `${definition.id} requires native Python and Node processes. Choose Automatic, Vercel Sandbox or Docker in Agent.`
