@@ -319,7 +319,7 @@ test("comparison retries ignore initial plugin choices but retain message and mo
   ).rejects.toThrow("different message");
 });
 
-test("a fork retry finds its comparison reserved before the branch ID rename", async () => {
+test("comparison fork retries use the current branch ID and message boundary", async () => {
   const { reserveEveResponseGroup } = await import("./eve-response-groups");
   const { createEveConversation } = await import("./eve-queries");
   const source = await createEveConversation(
@@ -337,17 +337,8 @@ test("a fork retry finds its comparison reserved before the branch ID rename", a
     fork: { branchId: source.id, beforeMessageId: "message" },
   };
   const group = await reserveEveResponseGroup("owner", input);
-  const storedHash = createHash("sha256")
-    .update(
-      JSON.stringify({
-        ...input,
-        fork: { conversationId: source.id, beforeMessageId: "message" },
-      })
-    )
-    .digest("hex");
-  await postgres.query(
-    `UPDATE "EveResponseGroup" SET "inputHash"=$1 WHERE id=$2`,
-    [storedHash, group.id]
+  expect(group.inputHash).toBe(
+    createHash("sha256").update(JSON.stringify(input)).digest("hex")
   );
   const retried = await reserveEveResponseGroup("owner", input);
   expect(retried.id).toBe(group.id);
@@ -357,35 +348,6 @@ test("a fork retry finds its comparison reserved before the branch ID rename", a
       fork: { ...input.fork, beforeMessageId: "different" },
     })
   ).rejects.toThrow("different message");
-});
-
-test("legacy comparison retries recover the original assignment without weakening message checks", async () => {
-  const { reserveEveResponseGroup } = await import("./eve-response-groups");
-  const input = {
-    operationId: crypto.randomUUID(),
-    modelIds: ["one", "two"],
-    message: "Legacy comparison",
-    selectedTool: "generateImage" as const,
-    projectId: crypto.randomUUID(),
-  };
-  const group = await reserveEveResponseGroup("owner", input);
-  const legacyHash = createHash("sha256")
-    .update(JSON.stringify(input))
-    .digest("hex");
-  await postgres.query(
-    `UPDATE "EveResponseGroup" SET "inputHash"=$1 WHERE id=$2`,
-    [legacyHash, group.id]
-  );
-  await postgres.query(
-    `INSERT INTO "EveConversation" ("workspaceId","chatId","ownerId","operationId","firstMessage","initialRequest",state) VALUES ($1,$1,'owner',$2,'Legacy comparison',$3,'creating')`,
-    [branchId, group.candidateOperationIds[0], input]
-  );
-  const retry = { ...input, projectId: crypto.randomUUID() };
-  await expect(
-    reserveEveResponseGroup("owner", { ...retry, message: "Different" })
-  ).rejects.toThrow("different message");
-  const retried = await reserveEveResponseGroup("owner", retry);
-  expect(retried.id).toBe(group.id);
 });
 
 test("plugin history filtering preserves ownership and supplies project navigation", async () => {

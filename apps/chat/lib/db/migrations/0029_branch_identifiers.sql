@@ -12,12 +12,4 @@ ALTER TABLE "EveVote" RENAME CONSTRAINT "EveVote_conversationId_EveConversation_
 ALTER TABLE "EveSearchText" RENAME CONSTRAINT "EveSearchText_conversationId_ownerId_EveConversation_id_ownerId_fk" TO "EveSearchText_branchId_ownerId_EveConversation_id_ownerId_fk";--> statement-breakpoint
 ALTER TABLE "EveFileReference" RENAME CONSTRAINT "EveFileReference_conversationId_key_pk" TO "EveFileReference_branchId_key_pk";--> statement-breakpoint
 ALTER TABLE "EveVote" RENAME CONSTRAINT "EveVote_conversationId_messageId_pk" TO "EveVote_branchId_messageId_pk";--> statement-breakpoint
-ALTER TABLE "EveSearchText" RENAME CONSTRAINT "EveSearchText_conversationId_key_pk" TO "EveSearchText_branchId_key_pk";--> statement-breakpoint
-UPDATE "EveConversation"
-SET "initialRequest" = jsonb_set("initialRequest", '{fork}',
-  (("initialRequest"->'fork') - 'conversationId') || jsonb_build_object('branchId', "initialRequest"#>'{fork,conversationId}'))
-WHERE "initialRequest"#>'{fork,conversationId}' IS NOT NULL;--> statement-breakpoint
-UPDATE "EveDispatch"
-SET "intent" = jsonb_set("intent", '{fork}',
-  (("intent"->'fork') - 'conversationId') || jsonb_build_object('branchId', "intent"#>'{fork,conversationId}'))
-WHERE "intent"#>'{fork,conversationId}' IS NOT NULL;
+ALTER TABLE "EveSearchText" RENAME CONSTRAINT "EveSearchText_conversationId_key_pk" TO "EveSearchText_branchId_key_pk";

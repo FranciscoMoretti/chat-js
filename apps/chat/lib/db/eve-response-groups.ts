@@ -16,7 +16,7 @@ import { eveResponseGroupResult } from "@/lib/eve/response-group-contracts";
 import { resolveEveResponseGroupLineage } from "@/lib/eve/response-group-lineage";
 
 import { db } from "./client";
-import { eveConversation, eveResponseGroup, eveDispatch } from "./schema";
+import { eveConversation, eveResponseGroup } from "./schema";
 import type { z } from "zod";
 
 const hasQueryRow: (row: unknown) => boolean = Boolean;
@@ -48,68 +48,16 @@ type ReservedResponseGroup = ReadonlyNativeSurface<
 
 type GroupInput = ReadonlyNativeSurface<z.infer<typeof eveResponseGroupInput>>;
 
-const hash = (request: GroupInput): string => {
-  // The digest is persisted. Keep its original fork encoding across API renames.
-  const fork = request.fork && {
-    conversationId: request.fork.branchId,
-    beforeMessageId: request.fork.beforeMessageId,
-  };
-  return createHash("sha256")
-    .update(JSON.stringify({ ...request, fork }))
-    .digest("hex");
-};
-
-const legacyGroupHash = async (
-  tx: ResponseGroupWriteTransaction,
-  ownerId: string,
-  existing: ReadonlyNativeSurface<ResponseGroupRow>,
-  input: ReadonlyNativeSurface<z.infer<typeof eveResponseGroupInput>>,
-  coreInput: Readonly<Record<string, unknown>>
-): Promise<string> => {
-  // Upgrade legacy hashes only after proving every non-plugin input matches.
-  // The first candidate's pending request or dispatch journal retains its original assignment.
-  const [original] = await tx
-    .select({
-      request: eveConversation.initialRequest,
-      intent: eveDispatch.intent,
-    })
-    .from(eveConversation)
-    .leftJoin(
-      eveDispatch,
-      and(
-        eq(eveDispatch.branchId, eveConversation.id),
-        eq(eveDispatch.kind, "create")
-      )
-    )
-    .where(
-      and(
-        eq(eveConversation.ownerId, ownerId),
-        eq(
-          eveConversation.operationId,
-          existing.candidateOperationIds[0] ?? input.operationId
-        )
-      )
-    );
-  const originalInput = original?.request ?? original?.intent;
-  const restored =
-    originalInput !== null && typeof originalInput === "object"
-      ? eveResponseGroupInput.parse({
-          ...coreInput,
-          projectId:
-            "projectId" in originalInput ? originalInput.projectId : undefined,
-        })
-      : input;
-  return hash(restored);
-};
+const hash = (request: GroupInput): string =>
+  createHash("sha256").update(JSON.stringify(request)).digest("hex");
 
 const reserveGroupRow = async (
   tx: ResponseGroupWriteTransaction,
   ownerId: string,
-  value: ReadonlyNativeSurface<z.infer<typeof eveResponseGroupInput>>
+  value: GroupInput
 ): Promise<ResponseGroupRow | undefined> => {
   const input = eveResponseGroupInput.parse(value);
-  const coreInput = { ...input, projectId: undefined };
-  const inputHash = hash(coreInput);
+  const inputHash = hash({ ...input, projectId: undefined });
   await tx.execute(
     sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
   );
@@ -122,16 +70,9 @@ const reserveGroupRow = async (
     throw new Error("This response group has been deleted.");
   }
   if (hasQueryRow(existing) && existing.inputHash !== inputHash) {
-    if (
-      existing.inputHash !==
-      (await legacyGroupHash(tx, ownerId, existing, input, coreInput))
-    ) {
-      throw new Error(
-        "This response group already has a different message, model order, tool selection, or source."
-      );
-    }
-    await tx.update(eveResponseGroup).set({ inputHash }).where(condition);
-    existing.inputHash = inputHash;
+    throw new Error(
+      "This response group already has a different message, model order, tool selection, or source."
+    );
   }
 
   const sourceId = input.fork?.branchId ?? null;
@@ -210,7 +151,7 @@ const requireGroup = (
  */
 const reserveEveResponseGroup = async (
   ownerId: string,
-  value: ReadonlyNativeSurface<z.infer<typeof eveResponseGroupInput>>
+  value: GroupInput
 ): Promise<ReservedResponseGroup> => {
   const result = await db.transaction(
     async (tx: ResponseGroupWriteTransaction) =>
