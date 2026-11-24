@@ -1,0 +1,10 @@
+{
+  "name": "chatjs-e2e-trial",
+  "private": true,
+  "type": "module",
+  "devDependencies": {
+    "@e2e-dev/web": "0.16.1",
+    "@playwright/test": "1.65.1",
+    "e2e": "0.24.0"
+  }
+}
