@@ -1,0 +1,106 @@
+name: e2e runner trial
+
+on:
+  push:
+    branches: [codex/e2e-runner-trial]
+
+permissions:
+  contents: read
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17
+        ports:
+          - 127.0.0.1:55432:5432
+        env:
+          POSTGRES_DB: chatjs_ci
+          POSTGRES_USER: chatjs
+          POSTGRES_PASSWORD: chatjs
+        options: >-
+          --health-cmd "pg_isready -U chatjs -d chatjs_ci" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      AUTH_SECRET: e2e-runner-trial-isolated-test-auth-secret
+      CI_PLAYWRIGHT: "true"
+      PLAYWRIGHT: "True"
+      DATABASE_URL: postgres://chatjs:chatjs@127.0.0.1:55432/chatjs_ci
+      WORKFLOW_POSTGRES_URL: postgres://chatjs:chatjs@127.0.0.1:55432/chatjs_ci
+      EVE_GATEWAY_SECRET: playwright-isolated-eve-gateway-secret
+      EVE_INTERNAL_ORIGIN: http://localhost:3000
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.1
+      - name: Install ChatJS workspace dependencies
+        run: bun install --frozen-lockfile --filter './' --filter './apps/chat' --filter './packages/registry'
+      - name: Install both runners and their shared Chromium build
+        shell: bash
+        run: |
+          trial_dir="$RUNNER_TEMP/e2e-trial"
+          mkdir -p "$trial_dir/playwright-tests"
+          cp -R .github/e2e-trial/. "$trial_dir/"
+          cp apps/chat/tests/{chat.e2e.ts,model-toolbar.visual.e2e.ts} "$trial_dir/playwright-tests/"
+          printf '{"private":true,"type":"module","name":"chatjs-e2e-trial"}\n' > "$trial_dir/package.json"
+          bun add --cwd "$trial_dir" --exact --ignore-scripts e2e@0.24.0 @e2e-dev/web@0.16.1 @playwright/test@1.65.1
+          "$trial_dir/node_modules/.bin/playwright" install --only-shell chromium
+      - name: Migrate the test database
+        run: bun run --cwd apps/chat db:migrate
+      - name: Bootstrap the EVE workflow database
+        run: bun run --cwd apps/chat eve:setup
+      - name: Compare the runners on one warmed app server
+        shell: bash
+        run: |
+          trial_dir="$RUNNER_TEMP/e2e-trial"
+          results="$RUNNER_TEMP/e2e-trial-results"
+          mkdir -p "$results"
+          bun run --cwd apps/chat dev > "$results/next.log" 2>&1 &
+          app_pid=$!
+          trap 'kill "$app_pid" 2>/dev/null || true' EXIT
+          curl --fail --silent --show-error --retry 60 --retry-connrefused --retry-delay 1 \
+            http://localhost:3000/favicon.ico --output /dev/null
+          cd "$trial_dir"
+
+          run_playwright() {
+            PLAYWRIGHT_JSON_OUTPUT_FILE="$results/playwright-$1.json" \
+              node_modules/.bin/playwright test --reporter=list,json --output="$results/playwright-$1"
+          }
+
+          run_e2e() {
+            node_modules/.bin/e2e run --no-cache --output "$results/e2e-$1"
+          }
+
+          measure() {
+            local runner="$1" round="$2" start end
+            start=$(date +%s%3N)
+            "run_$runner" "$round"
+            end=$(date +%s%3N)
+            printf '| %s | %s | %s ms |\n' "$round" "$runner" "$((end - start))" | tee -a "$GITHUB_STEP_SUMMARY"
+          }
+
+          run_playwright warmup
+          run_e2e warmup
+          printf '| Round | Runner | Wall time |\n| ---: | --- | ---: |\n' >> "$GITHUB_STEP_SUMMARY"
+          for round in 1 2 3 4; do
+            if (( round % 2 )); then
+              measure playwright "$round"
+              measure e2e "$round"
+            else
+              measure e2e "$round"
+              measure playwright "$round"
+            fi
+          done
+      - uses: actions/upload-artifact@v4
+        if: always() && !cancelled()
+        with:
+          name: e2e-trial-results
+          path: ${{ runner.temp }}/e2e-trial-results/
+          retention-days: 7
