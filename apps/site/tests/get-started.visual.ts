@@ -9,7 +9,7 @@ const output = fileURLToPath(
   new URL("../uiverify-screenshots/get-started/", import.meta.url)
 );
 await mkdir(output, { recursive: true });
-const command = "npx chat-js@alpha create my-app";
+const command = "npx chat-js@alpha create";
 
 const captureViewport = async (width: number): Promise<void> => {
   const page = await browser.newPage({
@@ -20,7 +20,7 @@ const captureViewport = async (width: number): Promise<void> => {
   await page.goto(`http://localhost:${process.env.PORT}`, {
     waitUntil: "domcontentloaded",
   });
-  const section = page.locator(".hero-cli");
+  const section = page.locator(".canopy-command");
   await section.waitFor();
   await page.evaluate(async () => await document.fonts.ready);
   assert.equal(await section.locator("code").textContent(), command);
@@ -29,9 +29,11 @@ const captureViewport = async (width: number): Promise<void> => {
     path: `${output}${width}-default.png`,
     style: "nextjs-portal { visibility: hidden !important; }",
   });
-  await section.getByRole("button", { name: "Copy create command" }).click();
   await section
-    .getByText("Copied", { exact: true })
+    .getByRole("button", { name: "Copy quickstart command" })
+    .click();
+  await page
+    .getByText("Command copied.", { exact: true })
     .waitFor({ state: "attached" });
   assert.equal(
     await page.evaluate(async () => await navigator.clipboard.readText()),

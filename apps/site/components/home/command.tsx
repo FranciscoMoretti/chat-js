@@ -1,14 +1,20 @@
 "use client";
 
-import { Check, Copy } from "lucide-react";
+import { Check, Copy, Terminal } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
-const command = "npx chat-js@alpha create my-app";
+import {
+  CodeBlock,
+  CodeBlockContent,
+} from "@/components/create-preview/ui/base/code-block";
+import { Button } from "@/vendor/shadcn-create/styles/base-nova/ui/button";
+
+const command = "npx chat-js@alpha create";
 
 export const CreateCommand = () => {
   const [status, setStatus] = useState("");
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const code = useRef<HTMLElement>(null);
+  const code = useRef<HTMLPreElement>(null);
   useEffect(
     () => () => {
       clearTimeout(timer.current ?? undefined);
@@ -37,29 +43,32 @@ export const CreateCommand = () => {
   };
 
   return (
-    <div className="hero-cli">
-      <span className="eyebrow">Or start in your terminal</span>
-      <div className="cli-command">
-        <span className="prompt" aria-hidden="true">
-          $
-        </span>
-        <code ref={code}>{command}</code>
-        <button
+    <div className="canopy-terminal">
+      <CodeBlock
+        size="sm"
+        className="canopy-command"
+        aria-label="Terminal quickstart"
+      >
+        <Terminal size={15} aria-hidden="true" />
+        <CodeBlockContent ref={code} tabIndex={-1}>
+          {command}
+        </CodeBlockContent>
+        <Button
+          variant="ghost"
+          size="icon"
           type="button"
-          className="copy-command"
+          aria-label="Copy quickstart command"
           onClick={() => {
             void copy();
           }}
-          aria-label="Copy create command"
         >
           {status === "Command copied." ? (
-            <Check size={15} />
+            <Check aria-hidden="true" />
           ) : (
-            <Copy size={15} />
+            <Copy aria-hidden="true" />
           )}
-          <span>{status === "Command copied." ? "Copied" : "Copy"}</span>
-        </button>
-      </div>
+        </Button>
+      </CodeBlock>
       <output className="sr-only" aria-live="polite">
         {status}
       </output>
