@@ -24,7 +24,7 @@ vi.mock("./conversation-scope", () => ({
 beforeEach(() => {
   vi.resetAllMocks();
   mocks.resolve.mockResolvedValue({
-    conversationId: "conversation",
+    branchId: "conversation",
     ownerId: "owner",
   });
   mocks.write.mockImplementation(

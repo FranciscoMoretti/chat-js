@@ -13,7 +13,7 @@ const ConversationPage = async ({
   >;
 }): Promise<React.JSX.Element> => {
   const { chatId } = await params;
-  return <EveChatPage conversationId={chatId} />;
+  return <EveChatPage chatId={chatId} />;
 };
 
 const ChatPageRoute = ({

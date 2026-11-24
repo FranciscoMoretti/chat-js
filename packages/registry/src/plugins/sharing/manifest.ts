@@ -1,7 +1,7 @@
 import { definePluginItem } from "../define-item";
 
 const sharingFiles = [
-  "chatjs/plugins/sharing/chat.ts",
+  "chatjs/plugins/sharing/chat-server.ts",
   "chatjs/plugins/sharing/chat-ui.ts",
   "chatjs/plugins/sharing/public-conversation.ts",
   "chatjs/plugins/sharing/queries.ts",

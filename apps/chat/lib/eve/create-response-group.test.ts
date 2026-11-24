@@ -40,7 +40,7 @@ const fixture = () => {
     candidates: operation.modelIds.map((modelId, index) => {
       if (index === 0) {
         return {
-          conversationId: crypto.randomUUID(),
+          branchId: crypto.randomUUID(),
           modelId,
           operationId: crypto.randomUUID(),
           sessionId: "native-first",
@@ -91,7 +91,7 @@ test("partial binding moves recovery before releasing the composer and preserves
     ...result,
     candidates: result.candidates.map((candidate) => ({
       ...candidate,
-      conversationId: crypto.randomUUID(),
+      branchId: crypto.randomUUID(),
       sessionId: `native-${candidate.operationId}`,
       state: "bound",
     })),
@@ -212,7 +212,7 @@ test("certified waiting progresses with immutable input and stops after binding"
     ...result,
     candidates: result.candidates.map((candidate) => ({
       ...candidate,
-      conversationId: crypto.randomUUID(),
+      branchId: crypto.randomUUID(),
       sessionId: `native-${candidate.operationId}`,
       state: "bound",
     })),

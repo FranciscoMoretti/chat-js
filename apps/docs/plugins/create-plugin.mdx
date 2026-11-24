@@ -42,7 +42,7 @@ export const chatUi = definePlugin({
 
 Keep credentials and database imports in server modules. Edit the bound components directly, or wrap them with ordinary React components.
 
-Core keeps explicit optional fields such as `projectId`. Plugins validate them against their own storage and lifecycle behavior. A separate runtime-safe `chat.ts` entrypoint participates in transactional creation, history, navigation, and deletion. See [Plugin integration points](../reference/plugin-api) for signatures and lifecycle guarantees.
+Core keeps explicit optional fields such as `projectId`. Plugins validate them against their own storage and lifecycle behavior. A separate runtime-safe `chat-server.ts` entrypoint participates in transactional creation, history, navigation, and deletion. See [Plugin integration points](../reference/plugin-api) for signatures and lifecycle guarantees.
 
 ## 3. Declare the installation
 

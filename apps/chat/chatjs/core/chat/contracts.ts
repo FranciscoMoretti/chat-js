@@ -16,7 +16,7 @@ export interface ChatLinks {
 
 export interface ChatCreatedContext {
   readonly ownerId: string;
-  readonly conversationId: string;
+  readonly branchId: string;
   readonly message: ReadonlyEveMessageInput;
 }
 
@@ -28,7 +28,7 @@ export interface ChatServerIntegration {
   /** After a branch is bound, outside its transaction. May repeat on recovery. */
   readonly afterBranch?: (context: {
     readonly ownerId: string;
-    readonly conversationId: string;
+    readonly branchId: string;
     readonly sessionId: string;
   }) => Promise<void>;
   /** Called only for a newly inserted logical chat, before its transaction commits. */
@@ -52,7 +52,7 @@ export interface ChatServerIntegration {
   readonly onDeleteConversations?: (
     tx: Readonly<Pick<typeof db, "delete">>,
     context: {
-      readonly conversationIds: readonly string[];
+      readonly branchIds: readonly string[];
       readonly sessionIds: readonly string[];
     }
   ) => Promise<void>;
@@ -67,18 +67,18 @@ export interface ChatActionProps {
   readonly chat: {
     readonly id: string;
     readonly title: string;
-    readonly conversationId?: string | null;
+    readonly branchId?: string | null;
     readonly state?: string;
   };
 }
 export interface ChatMessageProps {
-  readonly conversationId: string;
+  readonly branchId: string;
   readonly messageId: string;
   readonly disabled: boolean;
 }
 export interface ChatSuggestionsProps {
   readonly sessionId: string;
-  readonly conversationId: string;
+  readonly branchId: string;
   readonly events: readonly SessionStreamEvent[];
   readonly lastMessage?: {
     readonly role: string;

@@ -20,14 +20,14 @@ const creationRequest = z.union([
 type StorageAccess = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
 type CreationScope =
-  | { conversationId: string; context?: never }
-  | { context: ChatCreationScope; conversationId?: never };
+  | { branchId: string; context?: never }
+  | { context: ChatCreationScope; branchId?: never };
 
 const keyFor = (ownerId: string, scope?: Readonly<CreationScope>): string => {
   let suffix = "";
 
-  if (scope && isNonEmptyString(scope.conversationId)) {
-    suffix = `:fork:${scope.conversationId}`;
+  if (scope && isNonEmptyString(scope.branchId)) {
+    suffix = `:fork:${scope.branchId}`;
   } else if (scope?.context) {
     suffix = `:${scope.context.key}`;
   }

@@ -146,7 +146,7 @@ const conversation = async () =>
 test("native assistant feedback persists, replaces a vote and stays private when shared", async () => {
   const row = await conversation();
   const input: Parameters<typeof voteEveMessage>[1] = {
-    conversationId: row.id,
+    branchId: row.id,
     messageId: "import:imported:1",
     type: "up",
   };
@@ -172,7 +172,7 @@ test("unknown messages and native user messages cannot receive feedback", async 
     ["import:imported:0", "turn_99:assistant"].map(async (messageId) => {
       expect(
         await voteEveMessage(owner, {
-          conversationId: row.id,
+          branchId: row.id,
           messageId,
           type: "up",
         })
@@ -184,7 +184,7 @@ test("unknown messages and native user messages cannot receive feedback", async 
 test("deletion erases existing feedback and rejects a vote whose snapshot finishes after deletion", async () => {
   const row = await conversation();
   const input: Parameters<typeof voteEveMessage>[1] = {
-    conversationId: row.id,
+    branchId: row.id,
     messageId: "import:imported:1",
     type: "up",
   };
@@ -199,7 +199,7 @@ test("deletion erases existing feedback and rejects a vote whose snapshot finish
   });
   expect(await voteEveMessage(owner, input)).toBeNull();
   expect(
-    await db.select().from(eveVote).where(eq(eveVote.conversationId, row.id))
+    await db.select().from(eveVote).where(eq(eveVote.branchId, row.id))
   ).toEqual([]);
   native.attach.mockClear();
   expect(await voteEveMessage(owner, input)).toBeNull();
@@ -210,13 +210,13 @@ test("the same native message ID in a different conversation has independent fee
   const first = await conversation();
   const second = await conversation();
   await voteEveMessage(owner, {
-    conversationId: first.id,
+    branchId: first.id,
     messageId: "import:imported:1",
     type: "up",
   });
   expect(await getEveMessageVotes(owner, second.id)).toEqual([]);
   await voteEveMessage(owner, {
-    conversationId: second.id,
+    branchId: second.id,
     messageId: "import:imported:1",
     type: "down",
   });
@@ -228,7 +228,7 @@ test("the same native message ID in a different conversation has independent fee
   );
   await expect(
     voteEveMessage(owner, {
-      conversationId: second.id,
+      branchId: second.id,
       messageId: "import:imported:1",
       type: "up",
     })

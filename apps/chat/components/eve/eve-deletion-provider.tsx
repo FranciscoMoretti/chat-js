@@ -11,7 +11,7 @@ import React, { createContext, useCallback, useContext, useState } from "react";
 import type { JSX as ReactJSX } from "react";
 
 import { useSidebar } from "@/components/ui/sidebar";
-import { useActiveConversationId } from "@/components/chat/chat-navigation";
+import { useActiveChatId } from "@/components/chat/chat-navigation";
 import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 import { useTRPC } from "@/trpc/react";
 
@@ -43,7 +43,7 @@ const EveDeletionProvider = ({
   readonly children: ReadonlyReactNode;
 }): ReactJSX.Element => {
   const [conversation, setConversation] = useState<Conversation>();
-  const activeConversationId = useActiveConversationId();
+  const activeChatId = useActiveChatId();
   const router = useRouter();
   const cache = useQueryClient();
   const trpc = useTRPC();
@@ -58,9 +58,9 @@ const EveDeletionProvider = ({
   const changed = async (rootId: string): Promise<void> => {
     await withTaskCleanup(
       async () => {
-        if (hasText(activeConversationId)) {
+        if (hasText(activeChatId)) {
           const response = await fetch(
-            `/api/agent-conversations/${activeConversationId}`,
+            `/api/agent-conversations/${activeChatId}`,
             {
               signal: AbortSignal.timeout(10_000),
             }

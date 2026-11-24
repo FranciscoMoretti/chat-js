@@ -33,7 +33,7 @@ beforeEach(() => {
 });
 it("binds the exact accepted session before the HTTP caller receives its reply", async () => {
   expect(await resolve()).toEqual({
-    conversationId: reservationId,
+    branchId: reservationId,
     ownerId: "owner",
   });
   expect(mocks.read).toHaveBeenCalledWith({ reservationId });
@@ -84,7 +84,7 @@ it("uses the existing reverse binding for sessions created before the attribute 
       "native",
       AbortSignal.timeout(1000)
     )
-  ).toEqual({ conversationId: reservationId, ownerId: "owner" });
+  ).toEqual({ branchId: reservationId, ownerId: "owner" });
   expect(mocks.request).not.toHaveBeenCalled();
 });
 it.each([

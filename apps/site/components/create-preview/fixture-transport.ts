@@ -14,7 +14,7 @@ const date = new Date("2026-01-01T00:00:00Z");
 type Outputs = inferRouterOutputs<AppRouter>;
 
 const voteInput = z.object({
-  conversationId: z.literal(sampleConversation.id),
+  branchId: z.literal(sampleConversation.id),
   messageId: z.union([
     z.literal(sampleMessageId),
     z.string().regex(/^preview-assistant-\d+$/u),
@@ -75,7 +75,7 @@ export const createFixtureTransport = (
       }
       case "followupSuggestions.get": {
         z.object({
-          conversationId: z.literal(sampleConversation.id),
+          branchId: z.literal(sampleConversation.id),
           eventId: z
             .string()
             .refine(
@@ -110,7 +110,7 @@ export const createFixtureTransport = (
                   ...sampleConversation,
                   ...title,
                   state: "bound",
-                  conversationId: sampleConversation.id,
+                  branchId: sampleConversation.id,
                   createdAt: date,
                   updatedAt,
                   isPinned,
@@ -169,7 +169,7 @@ export const createFixtureTransport = (
             ? [
                 {
                   id: sampleConversation.id,
-                  conversationId: sampleConversation.id,
+                  branchId: sampleConversation.id,
                   title: title.title,
                   excerpt: text,
                   updatedAt: date.toISOString(),
@@ -181,9 +181,7 @@ export const createFixtureTransport = (
         } satisfies Outputs["search"]["query"];
       }
       case "feedback.votes": {
-        z.object({ conversationId: z.literal(sampleConversation.id) }).parse(
-          input
-        );
+        z.object({ branchId: z.literal(sampleConversation.id) }).parse(input);
         return votes;
       }
       case "feedback.vote": {

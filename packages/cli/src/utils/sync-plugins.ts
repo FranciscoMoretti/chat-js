@@ -175,7 +175,7 @@ const renderPluginRegistrations = (
     "model-visibility",
     "useModelVisibility"
   );
-  const chat = entries("chat.ts", "Chat", "installedChat");
+  const chat = entries("chat-server.ts", "Chat", "installedChat");
   const chatUi = fileEntries(plugins, "chat-ui", "chatUi", "Client");
   const signedOut = entries(
     "signed-out.tsx",

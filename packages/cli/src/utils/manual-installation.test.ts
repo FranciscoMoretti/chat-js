@@ -206,7 +206,7 @@ test("add dry-run reports activation without changing the app or installing depe
           contractVersion: 3,
           kind: "plugin",
           id: "example",
-          files: ["chatjs/plugins/example/chat.ts"],
+          files: ["chatjs/plugins/example/chat-server.ts"],
         },
       },
       dependencies: ["never-install-this-fixture"],

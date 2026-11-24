@@ -39,7 +39,7 @@ beforeEach(async () => {
     DELETE FROM "EveFileReference"; DELETE FROM "EveStoredFile";
     UPDATE "EveConversation" SET state='bound'; UPDATE "EveWorkspace" SET state='active',"activeOperationId"=NULL;
     INSERT INTO "EveStoredFile" (key,"ownerId","createdAt") VALUES ('shared','owner','2020-01-01'),('unreferenced','owner','2020-01-01'),('foreign','foreign','2020-01-01');
-    INSERT INTO "EveFileReference" ("conversationId",key,"ownerId") VALUES ('${source}','shared','owner'),('${fork}','shared','owner');
+    INSERT INTO "EveFileReference" ("branchId",key,"ownerId") VALUES ('${source}','shared','owner'),('${fork}','shared','owner');
   `);
 });
 afterAll(async () => {

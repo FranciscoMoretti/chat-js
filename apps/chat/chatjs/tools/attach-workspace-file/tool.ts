@@ -40,14 +40,14 @@ export const import_file = defineTool({
         "File import requires the current ChatJS conversation owner's authority."
       );
     }
-    const { ownerId, conversationId } = await resolveEveConversationScope(
+    const { ownerId, branchId } = await resolveEveConversationScope(
       current.principalId,
       context.session.id,
       context.abortSignal
     );
     return await withEveConversationFile(
       ownerId,
-      conversationId,
+      branchId,
       input.fileId,
       async () =>
         await importStoredFile(input, {

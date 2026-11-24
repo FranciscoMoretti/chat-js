@@ -50,7 +50,7 @@ test("two cheap native responses bind, render, and preserve an unsent draft whil
         value: "openai/gpt-5-mini",
       },
     ]);
-    await page.goto(`/chat/${first.conversationId}`);
+    await page.goto(`/chat/${first.branchId}`);
     const activeChat = page.locator(
       'a[data-sidebar="menu-button"][data-active="true"]'
     );
@@ -78,7 +78,7 @@ test("two cheap native responses bind, render, and preserve an unsent draft whil
       })
       .click();
     await expect(page).toHaveURL(
-      new URL(`/chat/${second.conversationId}`, page.url()).href
+      new URL(`/chat/${second.branchId}`, page.url()).href
     );
     await expect(
       page.getByText(marker, { exact: true }).filter({ visible: true })
@@ -157,7 +157,7 @@ test("two cheap native responses bind, render, and preserve an unsent draft whil
       })
       .click();
     await expect(page).toHaveURL(
-      new URL(`/chat/${first.conversationId}`, page.url()).href
+      new URL(`/chat/${first.branchId}`, page.url()).href
     );
     await expect(
       page.getByText("Ready", { exact: true }).filter({ visible: true })
@@ -183,7 +183,7 @@ test("two cheap native responses bind, render, and preserve an unsent draft whil
       .poll(
         async () => {
           const deletion = await page.request.delete(
-            `/api/agent-conversations/${first.conversationId}`,
+            `/api/agent-conversations/${first.branchId}`,
             {
               headers: { origin: new URL(page.url()).origin },
               timeout: 30_000,

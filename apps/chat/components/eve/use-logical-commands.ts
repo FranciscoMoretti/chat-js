@@ -6,11 +6,11 @@ import type { LogicalCommands } from "@/lib/eve/logical-commands";
 
 export const useLogicalCommands = (
   commands: Readonly<Pick<LogicalCommands, "get" | "subscribe">>,
-  conversationId: string
+  branchId: string
 ) => {
   const getSnapshot = useCallback(
-    () => commands.get(conversationId),
-    [commands, conversationId]
+    () => commands.get(branchId),
+    [commands, branchId]
   );
   return useSyncExternalStore(commands.subscribe, getSnapshot, getSnapshot);
 };

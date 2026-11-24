@@ -49,7 +49,7 @@ test("share link confirms a completed copy and reports clipboard rejection", asy
             open
             renderContent={(onClose): React.JSX.Element => (
               <ShareDialogView
-                chatId="clipboard-fixture"
+                branchId="clipboard-fixture"
                 isPending={false}
                 isPublic
                 onClose={onClose}

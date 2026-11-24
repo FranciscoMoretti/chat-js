@@ -21,9 +21,7 @@ import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 const projectProcedures = {
   assign: protectedProcedure
-    .input(
-      z.object({ conversationId: z.uuid(), projectId: z.uuid().nullable() })
-    )
+    .input(z.object({ id: z.uuid(), projectId: z.uuid().nullable() }))
     .mutation(
       async ({
         ctx,
@@ -31,13 +29,13 @@ const projectProcedures = {
       }: {
         readonly ctx: { readonly user: { readonly id: string } };
         readonly input: ReadonlyNativeSurface<{
-          conversationId: string;
+          id: string;
           projectId: string | null;
         }>;
       }) => {
         const assigned = await assignEveConversationProject(
           ctx.user.id,
-          input.conversationId,
+          input.id,
           input.projectId
         );
         if (!assigned) {

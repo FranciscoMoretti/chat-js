@@ -26,7 +26,7 @@ vi.mock("@tanstack/react-query", () => ({
         {
           forkTurnId: null,
           id: "11111111-1111-4111-8111-111111111111",
-          parentConversationId: null,
+          parentBranchId: null,
         },
       ],
     },
@@ -76,7 +76,7 @@ declare global {
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
-const conversationId = "11111111-1111-4111-8111-111111111111";
+const branchId = "11111111-1111-4111-8111-111111111111";
 const ownerId = "test-owner";
 
 const storage = () => {
@@ -115,7 +115,7 @@ const ForkProbe = ({
     value: ReadonlyNativeSurface<ReturnType<typeof useEveFork>>
   ) => void;
 }): null => {
-  onValue(useEveFork(ownerId, conversationId));
+  onValue(useEveFork(ownerId, branchId));
   return null;
 };
 
@@ -188,9 +188,9 @@ describe("useEveFork", () => {
   it("restores a saved edit's multi-model selection", async () => {
     const pendingStorage = storage();
     pendingStorage.setItem(
-      `chatjs.eve.pending:${ownerId}:fork:${conversationId}`,
+      `chatjs.eve.pending:${ownerId}:fork:${branchId}`,
       JSON.stringify({
-        fork: { conversationId },
+        fork: { branchId },
         forkKind: "edit",
         message: "Find the answer",
         modelIds: ["openai/gpt-4.1", "anthropic/claude-sonnet-4"],
@@ -232,9 +232,9 @@ describe("useEveFork", () => {
   it("keeps a restored copy prompt after rejection without a historical boundary", async () => {
     const pendingStorage = storage();
     pendingStorage.setItem(
-      `chatjs.eve.pending:${ownerId}:fork:${conversationId}`,
+      `chatjs.eve.pending:${ownerId}:fork:${branchId}`,
       JSON.stringify({
-        fork: { conversationId },
+        fork: { branchId },
         forkKind: "edit",
         message: "Find the answer",
         modelId: "anthropic/claude-sonnet-4",
@@ -428,7 +428,7 @@ describe("useEveFork", () => {
     mocks.resolveCreationRequest.mockImplementation(
       (currentStorage: Readonly<Pick<Storage, "removeItem">>) => {
         currentStorage.removeItem(
-          `chatjs.eve.pending:${ownerId}:fork:${conversationId}`
+          `chatjs.eve.pending:${ownerId}:fork:${branchId}`
         );
         return {
           group: undefined,
@@ -461,7 +461,7 @@ describe("useEveFork", () => {
       });
 
       expect(mocks.resolveCreationRequest.mock.calls[0]?.[2]).toMatchObject({
-        fork: { conversationId, beforeMessageId: "import:imported:0" },
+        fork: { branchId, beforeMessageId: "import:imported:0" },
         forkKind: "edit",
       });
       expect(mocks.openRuntime).toHaveBeenCalledWith(
@@ -477,9 +477,7 @@ describe("useEveFork", () => {
       expect(required(fork).selectedTool).toBeNull();
       expect(required(fork).files.attachments).toEqual([]);
       expect(
-        pendingStorage.getItem(
-          `chatjs.eve.pending:${ownerId}:fork:${conversationId}`
-        )
+        pendingStorage.getItem(`chatjs.eve.pending:${ownerId}:fork:${branchId}`)
       ).toBeNull();
     } finally {
       act(() => {
@@ -539,7 +537,7 @@ describe("useEveFork", () => {
       async (currentStorage: Readonly<Pick<Storage, "removeItem">>) => {
         const id = await delayed.promise;
         currentStorage.removeItem(
-          `chatjs.eve.pending:${ownerId}:fork:${conversationId}`
+          `chatjs.eve.pending:${ownerId}:fork:${branchId}`
         );
         return { group: undefined, id, sessionId: "session" };
       }
@@ -576,9 +574,7 @@ describe("useEveFork", () => {
         modelIds: ["openai/gpt-4.1", "anthropic/claude-sonnet-4"],
       });
       expect(
-        pendingStorage.getItem(
-          `chatjs.eve.pending:${ownerId}:fork:${conversationId}`
-        )
+        pendingStorage.getItem(`chatjs.eve.pending:${ownerId}:fork:${branchId}`)
       ).toContain(operation.operationId);
 
       delayed.resolve("11111111-1111-4111-8111-111111111115");
@@ -587,9 +583,7 @@ describe("useEveFork", () => {
       });
       expect(required(fork).pending).toBeUndefined();
       expect(
-        pendingStorage.getItem(
-          `chatjs.eve.pending:${ownerId}:fork:${conversationId}`
-        )
+        pendingStorage.getItem(`chatjs.eve.pending:${ownerId}:fork:${branchId}`)
       ).toBeNull();
     } finally {
       act(() => {
@@ -685,7 +679,7 @@ describe("useEveFork", () => {
         );
       });
       expect(mocks.restoreAttachments).toHaveBeenCalledExactlyOnceWith({
-        conversationId,
+        branchId,
         messageId: "import:imported:0",
       });
       expect(required(fork).files.attachments).toEqual([attachment]);
@@ -738,7 +732,7 @@ describe("useEveFork", () => {
       expect(required(fork).locked).toBe(true);
       expect(required(fork).error).toBe("Unable to restore attachment.");
       expect(mocks.restoreAttachments).toHaveBeenCalledWith({
-        conversationId,
+        branchId,
         messageId: "import:imported:0",
       });
     } finally {

@@ -135,7 +135,7 @@ test("a multi-owner fence waits for family writers and rechecks references befor
     "00000000-0000-4000-8000-000000000002",
   ];
   const keys = [crypto.randomUUID(), crypto.randomUUID()];
-  const conversationId = crypto.randomUUID();
+  const branchId = crypto.randomUUID();
   const cutoff = new Date("2026-01-01");
   const query = postgres(env.DATABASE_URL, { max: 2 });
   let pendingPurge: ReturnType<typeof prepareEveOrphanedFilePurge> | undefined;
@@ -148,21 +148,19 @@ test("a multi-owner fence waits for family writers and rechecks references befor
   );
   try {
     await db.insert(eveChat).values({
-      id: conversationId,
+      id: branchId,
       ownerId: owners[1],
       title: "Retain attachment",
     });
-    await db
-      .insert(eveWorkspace)
-      .values({ id: conversationId, ownerId: owners[1] });
+    await db.insert(eveWorkspace).values({ id: branchId, ownerId: owners[1] });
     await db.insert(eveConversation).values({
-      workspaceId: conversationId,
-      chatId: conversationId,
-      id: conversationId,
+      workspaceId: branchId,
+      chatId: branchId,
+      id: branchId,
       ownerId: owners[1],
       firstMessage: "Retain attachment",
-      operationId: conversationId,
-      sessionId: conversationId,
+      operationId: branchId,
+      sessionId: branchId,
       state: "bound",
     });
     await db.insert(eveStoredFile).values(
@@ -189,8 +187,8 @@ test("a multi-owner fence waits for family writers and rechecks references befor
         })
         .toBe(1);
       await tx`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${owners[1]}`}, 0))`;
-      await tx`insert into "EveFileReference" ("conversationId", "key", "ownerId")
-        values (${conversationId}, ${keys[1]}, ${owners[1]})`;
+      await tx`insert into "EveFileReference" ("branchId", "key", "ownerId")
+        values (${branchId}, ${keys[1]}, ${owners[1]})`;
     });
     await expect(pendingPurge).resolves.toEqual([
       { key: keys[0], ownerId: owners[0] },
@@ -221,10 +219,8 @@ test("a multi-owner fence waits for family writers and rechecks references befor
     await db
       .delete(eveFileReference)
       .where(inArray(eveFileReference.ownerId, owners));
-    await db
-      .delete(eveConversation)
-      .where(eq(eveConversation.id, conversationId));
-    await db.delete(eveChat).where(eq(eveChat.id, conversationId));
+    await db.delete(eveConversation).where(eq(eveConversation.id, branchId));
+    await db.delete(eveChat).where(eq(eveChat.id, branchId));
     await db
       .delete(eveStoredFile)
       .where(inArray(eveStoredFile.ownerId, owners));

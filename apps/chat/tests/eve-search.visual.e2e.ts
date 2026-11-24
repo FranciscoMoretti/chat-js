@@ -79,7 +79,7 @@ test("debounces requests, hides obsolete results, and navigates to the matching 
             data: serialize({
               items: [
                 {
-                  conversationId: "00000000-0000-4000-8000-000000000002",
+                  branchId: "00000000-0000-4000-8000-000000000002",
                   excerpt: "Toast the ⟦saffron⟧ gently before adding broth.",
                   id: "00000000-0000-4000-8000-000000000001",
                   rank: 1,
@@ -169,7 +169,7 @@ test("does not publish a response for text superseded during the debounce window
             data: serialize({
               items: [
                 {
-                  conversationId: "00000000-0000-4000-8000-000000000002",
+                  branchId: "00000000-0000-4000-8000-000000000002",
                   excerpt: "",
                   id: "00000000-0000-4000-8000-000000000001",
                   rank: 1,
@@ -252,7 +252,7 @@ test("recent-chat skeletons reserve the loaded dialog height", async ({
               result: {
                 data: serialize({
                   items: Array.from({ length: 8 }, (_, index) => ({
-                    conversationId: `branch-${index}`,
+                    branchId: `branch-${index}`,
                     createdAt: "2026-09-25T10:00:00Z",
                     id: `chat-${index}`,
                     state: "bound",

@@ -21,7 +21,7 @@ const partialGroup: EveResponseGroupResult = {
       operationId: "00000000-0000-4000-8000-000000000093",
       modelId: firstModel,
       state: "bound",
-      conversationId: firstConversation,
+      branchId: firstConversation,
       sessionId: "first-native",
     },
     {
@@ -38,7 +38,7 @@ const completeGroup: EveResponseGroupResult = {
   candidates: [
     partialGroup.candidates[0],
     {
-      conversationId: secondConversation,
+      branchId: secondConversation,
       modelId: secondModel,
       operationId: partialGroup.candidates[1].operationId,
       sessionId: "second-native",

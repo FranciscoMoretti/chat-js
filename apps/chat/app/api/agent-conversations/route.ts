@@ -46,13 +46,13 @@ export const POST = async (
         if (input.data.fork) {
           await chat.afterBranch({
             ownerId: principal.ownerId,
-            conversationId: binding.data.id,
+            branchId: binding.data.id,
             sessionId: binding.data.sessionId,
           });
           return;
         }
         await runChatAfterCreate({
-          conversationId: binding.data.id,
+          branchId: binding.data.id,
           message: input.data.message,
           ownerId: principal.ownerId,
         });

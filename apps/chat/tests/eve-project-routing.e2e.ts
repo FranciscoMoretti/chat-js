@@ -45,12 +45,12 @@ test("assigned Eve conversations resolve through project URLs and remain accessi
     expect(created.ok(), await created.text()).toBe(true);
     const binding = z.object({ id: z.uuid() }).parse(await created.json());
     const assignment = await page.request.post("/api/trpc/project.assign", {
-      data: { json: { conversationId: binding.id, projectId } },
+      data: { json: { id: binding.id, projectId } },
     });
     expect(assignment.ok(), await assignment.text()).toBe(true);
     const forbidden = await anonymous.request.post(
       `${new URL(page.url()).origin}/api/trpc/project.assign`,
-      { data: { json: { conversationId: binding.id, projectId: null } } }
+      { data: { json: { id: binding.id, projectId: null } } }
     );
     expect(forbidden.status()).toBe(401);
     await page.goto(`/project/${projectId}/chat/${binding.id}`);
@@ -80,8 +80,8 @@ test("assigned Eve conversations resolve through project URLs and remain accessi
       id: pendingId,
       operationId: crypto.randomUUID(),
       ownerId: root.ownerId,
-      parentConversationId: root.id,
-      rootConversationId: root.id,
+      parentBranchId: root.id,
+      rootBranchId: root.id,
       state: "uncertain",
     });
     await page.goto(`/project/${projectId}/chat/${pendingId}`);

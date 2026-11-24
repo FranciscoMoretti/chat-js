@@ -16,7 +16,7 @@ vi.mock("./logger", () => ({
 }));
 const context = {
   ownerId: "owner",
-  conversationId: "bound",
+  branchId: "bound",
   message: "Private message",
 };
 beforeEach(() => {

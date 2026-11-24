@@ -99,7 +99,7 @@ afterAll(async () => {
 it("rejects malformed database rows before returning search results or cursors", async () => {
   mocks.execute.mockResolvedValueOnce([
     {
-      conversationId: branch,
+      branchId: branch,
       excerpt: "Try saffron in the rice.",
       highlightQuery: "'saffron'",
       highlightWords: {},
@@ -127,10 +127,10 @@ it("finds message-only matches, boosts titles, highlights excerpts and deduplica
   ]);
   const result = await searchEveConversations("alice", { search: "saffron" });
   expect(result.items.map((item) => item.id)).toEqual([titleChat, chat]);
-  expect(result.items[1]).toMatchObject({ conversationId: branch });
+  expect(result.items[1]).toMatchObject({ branchId: branch });
   expect(result.items[1].excerpt).toContain("⟦saffron⟧");
   const count = await postgres.query<{ count: number }>(
-    `select count(*)::int as count from "EveSearchText" where "conversationId" = $1`,
+    `select count(*)::int as count from "EveSearchText" where "branchId" = $1`,
     [branch]
   );
   expect(count.rows[0].count).toBe(2);
@@ -186,7 +186,7 @@ it("keeps the title boost while selecting the branch and excerpt with matching t
   ]);
   const result = await searchEveConversations("alice", { search: "saff" });
   expect(result.items[0]).toMatchObject({
-    conversationId: matchingBranch,
+    branchId: matchingBranch,
     id: titleChat,
   });
   expect(result.items[0].rank).toBeGreaterThan(2);
@@ -230,7 +230,7 @@ it("shows an assistant-only Hello match even when the title also matches", async
   const result = await searchEveConversations("alice", { search: "hello" });
   expect(result.items).toHaveLength(1);
   expect(result.items[0]).toMatchObject({
-    conversationId: titleBranch,
+    branchId: titleBranch,
     id: titleChat,
   });
   expect(result.items[0].excerpt).toContain("⟦Hello⟧");
@@ -313,7 +313,7 @@ it("hides deleting chats and permanently erases text without allowing a late bac
   await completeEveConversationDeletion("alice", chat);
   await indexEveSearchText("alice", branch, [{ key: "late", text: "saffron" }]);
   const count = await postgres.query<{ count: number }>(
-    `select count(*)::int as count from "EveSearchText" where "conversationId" = $1`,
+    `select count(*)::int as count from "EveSearchText" where "branchId" = $1`,
     [branch]
   );
   expect(count.rows[0].count).toBe(0);
@@ -351,16 +351,16 @@ it("plugin cleanup removes one branch's index and preserves surviving branches",
     { key: "late-event", text: "branchcleanupword" },
   ]);
   const rows = await postgres.query(
-    `select "conversationId" from "EveSearchText" where "conversationId" in ($1,$2)`,
+    `select "branchId" from "EveSearchText" where "branchId" in ($1,$2)`,
     [deletedId, survivingId]
   );
-  expect(rows.rows).toEqual([{ conversationId: survivingId }]);
+  expect(rows.rows).toEqual([{ branchId: survivingId }]);
   const results = await searchEveConversations("alice", {
     search: "branchcleanupword",
   });
-  expect(
-    results.items.map(({ id, conversationId }) => ({ id, conversationId }))
-  ).toEqual([{ id: familyId, conversationId: survivingId }]);
+  expect(results.items.map(({ id, branchId }) => ({ id, branchId }))).toEqual([
+    { id: familyId, branchId: survivingId },
+  ]);
 });
 
 it("blocks deletion for retained file references only within the requested family", async () => {
@@ -386,7 +386,7 @@ it("blocks deletion for retained file references only within the requested famil
     [deletingKey, unrelatedKey]
   );
   await postgres.query(
-    `insert into "EveFileReference" ("conversationId", key, "ownerId") values ($1, $2, 'alice'), ($3, $4, 'alice')`,
+    `insert into "EveFileReference" ("branchId", key, "ownerId") values ($1, $2, 'alice'), ($3, $4, 'alice')`,
     [deletingConversation, deletingKey, unrelatedConversation, unrelatedKey]
   );
   await expect(
@@ -397,10 +397,9 @@ it("blocks deletion for retained file references only within the requested famil
     [deletingConversation]
   );
   expect(pending.rows[0].state).toBe("deleting");
-  await postgres.query(
-    `delete from "EveFileReference" where "conversationId" = $1`,
-    [deletingConversation]
-  );
+  await postgres.query(`delete from "EveFileReference" where "branchId" = $1`, [
+    deletingConversation,
+  ]);
   await completeEveConversationDeletion("alice", deletingChat);
   const finalized = await postgres.query<{
     state: string;
@@ -410,7 +409,7 @@ it("blocks deletion for retained file references only within the requested famil
   ]);
   expect(finalized.rows[0]).toEqual({ firstMessage: "", state: "deleted" });
   const unrelated = await postgres.query<{ key: string }>(
-    `select key from "EveFileReference" where "conversationId" = $1`,
+    `select key from "EveFileReference" where "branchId" = $1`,
     [unrelatedConversation]
   );
   expect(unrelated.rows).toEqual([{ key: unrelatedKey }]);

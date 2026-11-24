@@ -7,7 +7,7 @@ type Outputs = inferRouterOutputs<AppRouter>;
 const date = new Date("2026-01-01T00:00:00Z");
 const projectId = "00000000-0000-4000-8000-000000000002";
 const assignmentInput = z.object({
-  conversationId: z.literal(sampleConversation.id),
+  id: z.literal(sampleConversation.id),
   projectId: z.string().nullable(),
 });
 

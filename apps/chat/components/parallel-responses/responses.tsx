@@ -63,14 +63,14 @@ const createResponseSelection = (
 };
 
 export const ParallelResponses = ({
-  conversationId,
+  branchId,
   messageId,
   disabled,
 }: ChatMessageProps): ReactJSX.Element | null => {
   const { controller, snapshot, ownerId } = useLogicalChat();
   const { getModelById } = useChatModels();
   const changeModel = useModelChange();
-  const userId = controller.logicalId(conversationId, messageId);
+  const userId = controller.logicalId(branchId, messageId);
   const selection = useMemo(
     () => createResponseSelection(controller, userId),
     [controller, userId]

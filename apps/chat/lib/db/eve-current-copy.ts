@@ -11,9 +11,9 @@ import { parseEveCopySeed } from "@/lib/eve/copy-seed";
 /** Capture current completed history and owned resources once, before native dispatch. */
 export const initializeEveCurrentCopy = async (
   ownerId: string,
-  conversationId: string
+  branchId: string
 ): Promise<void> => {
-  await reconcileEveWorkspaceTurn(ownerId, conversationId);
+  await reconcileEveWorkspaceTurn(ownerId, branchId);
   await db.transaction(async (tx) => {
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
@@ -23,7 +23,7 @@ export const initializeEveCurrentCopy = async (
       .from(eveConversation)
       .where(
         and(
-          eq(eveConversation.id, conversationId),
+          eq(eveConversation.id, branchId),
           eq(eveConversation.ownerId, ownerId)
         )
       );
@@ -42,14 +42,14 @@ export const initializeEveCurrentCopy = async (
       .from(eveConversation)
       .where(
         and(
-          eq(eveConversation.id, conversationId),
+          eq(eveConversation.id, branchId),
           eq(eveConversation.ownerId, ownerId),
           eq(eveConversation.workspaceId, membership.workspaceId)
         )
       )
       .for("update");
     if (
-      !isNonEmptyString(target?.parentConversationId) ||
+      !isNonEmptyString(target?.parentBranchId) ||
       !["creating", "uncertain"].includes(target.state)
     ) {
       throw new Error("Copy conversation not found.");
@@ -65,7 +65,7 @@ export const initializeEveCurrentCopy = async (
       .from(eveConversation)
       .where(
         and(
-          eq(eveConversation.id, target.parentConversationId),
+          eq(eveConversation.id, target.parentBranchId),
           eq(eveConversation.ownerId, ownerId),
           eq(eveConversation.state, "bound")
         )
@@ -82,7 +82,7 @@ export const initializeEveCurrentCopy = async (
       .from(eveDispatch)
       .where(
         and(
-          eq(eveDispatch.conversationId, source.id),
+          eq(eveDispatch.branchId, source.id),
           eq(eveDispatch.ownerId, ownerId)
         )
       );
@@ -103,7 +103,7 @@ export const initializeEveCurrentCopy = async (
       .from(eveFileReference)
       .where(
         and(
-          eq(eveFileReference.conversationId, source.id),
+          eq(eveFileReference.branchId, source.id),
           eq(eveFileReference.ownerId, ownerId),
           inArray(eveFileReference.key, projection.resources.fileKeys)
         )
@@ -111,13 +111,13 @@ export const initializeEveCurrentCopy = async (
     if (files.length) {
       await tx
         .insert(eveFileReference)
-        .values(files.map((file) => ({ ...file, conversationId })))
+        .values(files.map((file) => ({ ...file, branchId })))
         .onConflictDoNothing();
     }
     await tx
       .update(eveConversation)
       .set({ initialSeed: parseEveCopySeed(projection.seed) })
-      .where(eq(eveConversation.id, conversationId));
+      .where(eq(eveConversation.id, branchId));
   });
 };
 
@@ -138,7 +138,7 @@ export const resolveEveBranchHistory = async (
   if (row === undefined || !["creating", "uncertain"].includes(row.state)) {
     throw new Error("Branch initialization is unavailable.");
   }
-  if (row.parentConversationId === null) {
+  if (row.parentBranchId === null) {
     return null;
   }
   if (row.initialSeed === null) {

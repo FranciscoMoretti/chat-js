@@ -65,7 +65,7 @@ vi.mock("eve/client", () => ({
     return { messages: mocks.messages };
   },
 }));
-const input = { conversationId: "conversation", messageId: "message" };
+const input = { branchId: "conversation", messageId: "message" };
 const replayEvents = [
   {
     data: { messages: [] },

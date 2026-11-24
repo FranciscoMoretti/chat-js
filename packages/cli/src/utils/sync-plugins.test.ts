@@ -594,7 +594,7 @@ test.each([
         "@/chatjs/plugins/model-preferences/model-visibility"
       );
     } else {
-      expect(lifecycle).toContain(`@/chatjs/plugins/${item.name}/chat`);
+      expect(lifecycle).toContain(`@/chatjs/plugins/${item.name}/chat-server`);
     }
     expect(lifecycle).not.toContain("router");
     expect(lifecycle).not.toContain("routers");

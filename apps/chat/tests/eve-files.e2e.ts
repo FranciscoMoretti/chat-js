@@ -114,7 +114,7 @@ test("references reject foreign files and become immutable behind the deletion f
     await db
       .select()
       .from(eveFileReference)
-      .where(eq(eveFileReference.conversationId, id))
+      .where(eq(eveFileReference.branchId, id))
   ).toEqual([]);
   await referenceEveFiles(owner, id, [key, key]);
   await referenceEveFiles(owner, id, [key]);
@@ -122,7 +122,7 @@ test("references reject foreign files and become immutable behind the deletion f
     await db
       .select()
       .from(eveFileReference)
-      .where(eq(eveFileReference.conversationId, id))
+      .where(eq(eveFileReference.branchId, id))
   ).toHaveLength(1);
   await db
     .update(eveConversation)
@@ -175,19 +175,19 @@ test("fork reservation retains only transcript file references before dispatch",
         await db
           .select({ key: eveFileReference.key })
           .from(eveFileReference)
-          .where(eq(eveFileReference.conversationId, id))
+          .where(eq(eveFileReference.branchId, id))
       ).toEqual([{ key }]);
       dispatched = true;
       return { sessionId: crypto.randomUUID() };
     },
-    { fork: { conversationId: root.id } }
+    { fork: { branchId: root.id } }
   );
   expect(dispatched).toBe(true);
   expect(
     await db
       .select({ key: eveFileReference.key })
       .from(eveFileReference)
-      .where(eq(eveFileReference.conversationId, fork.id))
+      .where(eq(eveFileReference.branchId, fork.id))
   ).toEqual([{ key }]);
 });
 
@@ -204,7 +204,7 @@ test("attachment creation commits references before dispatch with a single appli
       async (id) => {
         const references = await worker<
           { key: string }[]
-        >`select key from "EveFileReference" where "conversationId" = ${id}`;
+        >`select key from "EveFileReference" where "branchId" = ${id}`;
         expect(
           references.map((row: Readonly<{ key: string }>) => row.key)
         ).toEqual([key]);
@@ -269,7 +269,7 @@ test("generated file reservations survive storage failure and cannot write after
     await db
       .select({ key: eveFileReference.key })
       .from(eveFileReference)
-      .where(eq(eveFileReference.conversationId, conversation.id))
+      .where(eq(eveFileReference.branchId, conversation.id))
   ).toEqual([{ key }]);
   await beginEveConversationDeletion(owner, conversation.id);
   const write = vi.fn<() => Promise<void>>().mockResolvedValue();
@@ -429,9 +429,7 @@ test("concurrent family cleanup cannot abandon a shared file", async () => {
     .where(eq(eveFileReference.key, key));
   expect(references).toHaveLength(1);
   const remaining =
-    references[0].conversationId === first.id
-      ? firstRow.chatId
-      : secondRow.chatId;
+    references[0].branchId === first.id ? firstRow.chatId : secondRow.chatId;
   await expect(
     releaseEveFamilyFileReferences(stranger, remaining)
   ).rejects.toThrow("pending deletion");
@@ -443,7 +441,7 @@ test("concurrent family cleanup cannot abandon a shared file", async () => {
   await expect(
     completeEveConversationDeletion(owner, remaining)
   ).rejects.toThrow("Workspace cleanup is incomplete");
-  await reconcileEveWorkspaceTurn(owner, references[0].conversationId);
+  await reconcileEveWorkspaceTurn(owner, references[0].branchId);
   await cleanupRetiredEveWorkspaces(owner, remaining);
   await expect(
     completeEveConversationDeletion(owner, remaining)

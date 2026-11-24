@@ -61,7 +61,7 @@ const canReadEveFile = async (
     .from(eveFileReference)
     .innerJoin(
       eveConversation,
-      eq(eveConversation.id, eveFileReference.conversationId)
+      eq(eveConversation.id, eveFileReference.branchId)
     )
     .where(
       and(
@@ -147,12 +147,12 @@ const registerEveStoredFile = async (
 /**
  * Claim before dispatch; failed/uncertain sends retain their references safely.
  * @param {string} ownerId - Owner of the conversation and every attachment.
- * @param {string} conversationId - Conversation that receives durable attachment references.
+ * @param {string} branchId - Conversation that receives durable attachment references.
  * @param {readonly string[]} keys - Storage keys to validate and retain before dispatch.
  */
 const referenceEveFiles = async (
   ownerId: string,
-  conversationId: string,
+  branchId: string,
   keys: readonly string[]
 ): Promise<void> => {
   const uniqueKeys = [...new Set(keys)].toSorted();
@@ -175,7 +175,7 @@ const referenceEveFiles = async (
       .from(eveConversation)
       .where(
         and(
-          eq(eveConversation.id, conversationId),
+          eq(eveConversation.id, branchId),
           eq(eveConversation.ownerId, ownerId)
         )
       );
@@ -204,7 +204,7 @@ const referenceEveFiles = async (
     }
     await tx
       .insert(eveFileReference)
-      .values(uniqueKeys.map((key) => ({ conversationId, key, ownerId })))
+      .values(uniqueKeys.map((key) => ({ branchId, key, ownerId })))
       .onConflictDoNothing();
   });
 };
@@ -246,12 +246,12 @@ const assertEveFilesOwned = async (
 /**
  * Persist the key before storage I/O so a failed upload remains discoverable.
  * @param {string} ownerId - Owner of the bound conversation and generated file.
- * @param {string} conversationId - Bound conversation that retains the generated file.
+ * @param {string} branchId - Bound conversation that retains the generated file.
  * @param {string} key - Fresh storage key reserved before the upload.
  */
 const reserveEveGeneratedFile = async (
   ownerId: string,
-  conversationId: string,
+  branchId: string,
   key: string
 ): Promise<void> => {
   if (!isFileStorageKey(key)) {
@@ -266,7 +266,7 @@ const reserveEveGeneratedFile = async (
       .from(eveConversation)
       .where(
         and(
-          eq(eveConversation.id, conversationId),
+          eq(eveConversation.id, branchId),
           eq(eveConversation.ownerId, ownerId),
           eq(eveConversation.state, "bound")
         )
@@ -276,21 +276,21 @@ const reserveEveGeneratedFile = async (
       throw new Error("Conversation is unavailable for generated files.");
     }
     await tx.insert(eveStoredFile).values({ key, ownerId });
-    await tx.insert(eveFileReference).values({ conversationId, key, ownerId });
+    await tx.insert(eveFileReference).values({ branchId, key, ownerId });
   });
 };
 
 /**
  * Serialize file access with conversation deletion after validating the active conversation reference.
  * @param {string} ownerId - Owner whose family lock protects file access.
- * @param {string} conversationId - Bound conversation whose file reference is rechecked.
+ * @param {string} branchId - Bound conversation whose file reference is rechecked.
  * @param {string} key - Active conversation file reference to validate.
  * @param {() => Promise<Result>} access - Storage operation admitted while the deletion fence is locked.
  * @returns {Promise<Result>} The storage operation result after the transaction completes.
  */
 const withEveConversationFile = async <Result>(
   ownerId: string,
-  conversationId: string,
+  branchId: string,
   key: string,
   access: () => Promise<Result>
 ): Promise<Result> =>
@@ -304,13 +304,13 @@ const withEveConversationFile = async <Result>(
       .innerJoin(eveStoredFile, eq(eveStoredFile.key, eveFileReference.key))
       .innerJoin(
         eveConversation,
-        eq(eveConversation.id, eveFileReference.conversationId)
+        eq(eveConversation.id, eveFileReference.branchId)
       )
       .where(
         and(
           eq(eveFileReference.key, key),
           eq(eveStoredFile.state, "active"),
-          eq(eveFileReference.conversationId, conversationId),
+          eq(eveFileReference.branchId, branchId),
           eq(eveFileReference.ownerId, ownerId),
           eq(eveStoredFile.ownerId, ownerId),
           eq(eveConversation.ownerId, ownerId),

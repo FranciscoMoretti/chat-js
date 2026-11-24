@@ -59,7 +59,7 @@ type ConversationListItem = Pick<
   ChatRow,
   "createdAt" | "id" | "isPinned" | "title" | "titleStatus"
 > & {
-  conversationId: string;
+  branchId: string;
   href: string;
   parentHref: string;
   state: Exclude<ConversationRow["state"], "deleted">;
@@ -81,7 +81,7 @@ type ConversationBranch = Pick<
   | "id"
   | "initialModelId"
   | "operationId"
-  | "parentConversationId"
+  | "parentBranchId"
   | "sessionId"
 > & {
   groupCandidates: typeof eveResponseGroup.$inferSelect.candidates | null;
@@ -117,23 +117,18 @@ const getBoundEveConversationForSession = async (
 /**
  * Internal mapping lookup includes tombstones so deletion cannot look like pending delivery.
  * @param {Readonly<{ reservationId: string } | { sessionId: string }>} identity Exact reservation or native session whose durable mapping is inspected.
- * @returns {Promise<Pick<ConversationRow, "creationKind" | "id" | "ownerId" | "sessionId" | "state" | "parentConversationId"> | null>} The durable identity and state, including tombstones, or null when no mapping exists.
+ * @returns {Promise<Pick<ConversationRow, "creationKind" | "id" | "ownerId" | "sessionId" | "state" | "parentBranchId"> | null>} The durable identity and state, including tombstones, or null when no mapping exists.
  */
 const readEveSessionMapping = async (
   identity: Readonly<{ reservationId: string } | { sessionId: string }>
 ): Promise<Pick<
   ConversationRow,
-  | "creationKind"
-  | "id"
-  | "ownerId"
-  | "sessionId"
-  | "state"
-  | "parentConversationId"
+  "creationKind" | "id" | "ownerId" | "sessionId" | "state" | "parentBranchId"
 > | null> => {
   const [row] = await db
     .select({
       creationKind: eveConversation.creationKind,
-      parentConversationId: eveConversation.parentConversationId,
+      parentBranchId: eveConversation.parentBranchId,
       id: eveConversation.id,
       ownerId: eveConversation.ownerId,
       sessionId: eveConversation.sessionId,
@@ -169,9 +164,9 @@ const listEveConversations = async (
   const updatedAt = sql<string>`to_char(${eveChat.updatedAt}, 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')`;
   // Qualify correlated references explicitly: Drizzle strips column qualifiers
   // from selected SQL expressions when the outer query has only one table.
-  const routeConversationId = sql<string>`coalesce((
+  const routeBranchId = sql<string>`coalesce((
     select active."id" from "EveConversation" active
-    where active."id" = ${eveChat}."activeConversationId"
+    where active."id" = ${eveChat}."activeBranchId"
       and active."chatId" = ${eveChat}."id"
       and active."ownerId" = ${ownerId}
       and active."state" in ('creating', 'bound', 'uncertain', 'deleting')
@@ -213,7 +208,7 @@ const listEveConversations = async (
   const escapedSearch = search.replaceAll(/[\\%_]/gu, String.raw`\$&`);
   const rows = await db
     .select({
-      conversationId: routeConversationId,
+      branchId: routeBranchId,
       createdAt: eveChat.createdAt,
       id: eveChat.id,
       isPinned: eveChat.isPinned,
@@ -319,18 +314,15 @@ const getEveChatPageConversation = async (
     return exact;
   }
   const [logical] = await db
-    .select({ activeConversationId: eveChat.activeConversationId })
+    .select({ activeBranchId: eveChat.activeBranchId })
     .from(eveChat)
     .where(and(eq(eveChat.id, routeId), eq(eveChat.ownerId, ownerId)))
     .limit(SINGLE_MATCH_LIMIT);
   if (!hasQueryRow(logical)) {
     return null;
   }
-  if (isNonemptyString(logical.activeConversationId)) {
-    const active = await getEveConversation(
-      ownerId,
-      logical.activeConversationId
-    );
+  if (isNonemptyString(logical.activeBranchId)) {
+    const active = await getEveConversation(ownerId, logical.activeBranchId);
     if (active?.chatId === routeId) {
       return active;
     }
@@ -474,7 +466,7 @@ const resolveCreationChat = async (
         .from(eveConversation)
         .where(
           and(
-            eq(eveConversation.id, fork.conversationId),
+            eq(eveConversation.id, fork.branchId),
             eq(eveConversation.ownerId, value.ownerId),
             eq(eveConversation.state, "bound")
           )
@@ -494,7 +486,7 @@ const resolveCreationChat = async (
           and(
             eq(eveResponseGroup.ownerId, value.ownerId),
             eq(eveResponseGroup.deleted, false),
-            isNull(eveResponseGroup.sourceConversationId),
+            isNull(eveResponseGroup.sourceBranchId),
             sql`${value.operationId}::uuid = ANY(${eveResponseGroup.candidateOperationIds})`
           )
         )
@@ -562,12 +554,10 @@ const reserveEveConversation = async (
         chatId,
         workspaceId,
         forkKind: value.forkKind,
-        parentConversationId: fork?.conversationId,
+        parentBranchId: fork?.branchId,
         forkMessageId: fork?.beforeMessageId,
-        rootConversationId:
-          source === undefined
-            ? undefined
-            : (source.rootConversationId ?? source.id),
+        rootBranchId:
+          source === undefined ? undefined : (source.rootBranchId ?? source.id),
       })
       .onConflictDoNothing()
       .returning();
@@ -643,20 +633,18 @@ const beginEveConversationDeletion = async (
       // call. A creating/deleting row with no journal/binding can skip native cleanup,
       // but remains deleting through resource cleanup. Dispatched uncertainty stays fenced.
       const dispatched = await tx
-        .select({ conversationId: eveDispatch.conversationId })
+        .select({ branchId: eveDispatch.branchId })
         .from(eveDispatch)
         .where(
           and(
             eq(eveDispatch.ownerId, ownerId),
             inArray(
-              eveDispatch.conversationId,
+              eveDispatch.branchId,
               family.map((row) => row.id)
             )
           )
         );
-      const dispatchedIds = new Set(
-        dispatched.map((row) => row.conversationId)
-      );
+      const dispatchedIds = new Set(dispatched.map((row) => row.branchId));
       const undispatched = new Set(
         family
           .filter(
@@ -712,7 +700,7 @@ const beginEveConversationDeletion = async (
 const matchesEveFork = (
   existing: Pick<
     typeof eveConversation.$inferSelect,
-    | "parentConversationId"
+    | "parentBranchId"
     | "forkTurnId"
     | "forkMessageId"
     | "forkCheckpointId"
@@ -721,7 +709,7 @@ const matchesEveFork = (
   fork: EveForkInput | undefined,
   forkKind: typeof eveConversation.$inferSelect.forkKind
 ): boolean =>
-  existing.parentConversationId === (fork?.conversationId ?? null) &&
+  existing.parentBranchId === (fork?.branchId ?? null) &&
   existing.forkKind === forkKind &&
   existing.forkMessageId === (fork?.beforeMessageId ?? null);
 
@@ -787,7 +775,7 @@ const bindConversationSession = async (
   await tx
     .update(eveChat)
     .set({
-      activeConversationId: sql`coalesce(${eveChat.activeConversationId}, ${bound.id}::uuid)`,
+      activeBranchId: sql`coalesce(${eveChat.activeBranchId}, ${bound.id}::uuid)`,
       updatedAt: new Date(),
     })
     .where(and(eq(eveChat.id, bound.chatId), eq(eveChat.ownerId, ownerId)));
@@ -905,7 +893,7 @@ const createEveConversation = async (
           and(
             eq(eveDispatch.ownerId, ownerId),
             eq(eveDispatch.operationId, matching.id),
-            eq(eveDispatch.conversationId, matching.id),
+            eq(eveDispatch.branchId, matching.id),
             eq(eveDispatch.sessionId, binding.sessionId),
             eq(eveDispatch.kind, "create")
           )
@@ -928,7 +916,7 @@ const createEveConversation = async (
       {
         ownerId,
         operationId: reservation.id,
-        conversationId: reservation.id,
+        branchId: reservation.id,
         kind: "create",
         intent: reservation.initialRequest ?? {
           message,
@@ -1074,16 +1062,13 @@ const recordEveConversationActivity = async (
 
 const listEveConversationBranches = async (
   ownerId: string,
-  conversationId: string
+  branchId: string
 ): Promise<ConversationBranchListing | undefined> => {
-  const conversation = await getEveChatPageConversation(
-    ownerId,
-    conversationId
-  );
+  const conversation = await getEveChatPageConversation(ownerId, branchId);
   if (!conversation) {
     return undefined;
   }
-  const rootId = conversation.rootConversationId ?? conversation.id;
+  const rootId = conversation.rootBranchId ?? conversation.id;
   const branches = await db
     .select({
       createdAt: eveConversation.createdAt,
@@ -1095,7 +1080,7 @@ const listEveConversationBranches = async (
       id: eveConversation.id,
       initialModelId: eveConversation.initialModelId,
       operationId: eveConversation.operationId,
-      parentConversationId: eveConversation.parentConversationId,
+      parentBranchId: eveConversation.parentBranchId,
       responseGroupId: eveResponseGroup.id,
       responseGroupIndex: sql<
         number | null

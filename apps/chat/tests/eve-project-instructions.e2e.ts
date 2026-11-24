@@ -73,7 +73,7 @@ test("project instructions apply from the first native turn, refresh, and clear 
       { timeout: 90_000 }
     );
     const detached = await page.request.post("/api/trpc/project.assign", {
-      data: { json: { conversationId: id, projectId: null } },
+      data: { json: { id, projectId: null } },
     });
     expect(detached.ok(), await detached.text()).toBe(true);
     await page.reload();

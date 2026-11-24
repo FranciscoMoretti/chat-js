@@ -25,7 +25,7 @@ const enabledNames = (
 
 const pluginIntegrations = (value: PluginDefinition): string[] =>
   enabledNames([
-    ["chat/server", hasPluginEntry(value, "chat.ts")],
+    ["chat/server", hasPluginEntry(value, "chat-server.ts")],
     ["billing", hasPluginEntry(value, "billing.ts")],
     ["auth/signed-out", hasPluginEntry(value, "signed-out.tsx")],
     ["chat/session-profiles", value.sessionAuthenticator],

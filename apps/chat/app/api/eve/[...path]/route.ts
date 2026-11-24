@@ -148,13 +148,13 @@ const readSteerRejection = async (
 const prepareSteerBody = async (
   message: ReadonlyNativeSurface<EveMessageInput>,
   ownerId: string,
-  conversationId: string,
+  branchId: string,
   sessionId: string
 ): Promise<string> => {
   try {
     const fileKeys = eveMessageFileKeys(message);
     const modelId = await steeringAttachmentModel(ownerId, sessionId, fileKeys);
-    await referenceEveFiles(ownerId, conversationId, fileKeys);
+    await referenceEveFiles(ownerId, branchId, fileKeys);
     return JSON.stringify({
       message: await prepareEveMessage(message, modelId),
       turnPolicy: "steer",
@@ -182,10 +182,10 @@ const readCommand = async (
     >;
   },
   {
-    conversationId,
+    branchId,
     ownerId,
   }: {
-    readonly conversationId: string;
+    readonly branchId: string;
     readonly ownerId: string;
   }
 ): Promise<
@@ -246,7 +246,7 @@ const readCommand = async (
           await loadEveModelDefinition(modelId);
           await referenceEveFiles(
             ownerId,
-            conversationId,
+            branchId,
             eveMessageFileKeys(message)
           );
           body = JSON.stringify({
@@ -350,7 +350,7 @@ const handle = async (
   // Capture owner before the conversation getter, matching the original argument order.
   const { ownerId } = principal;
   const command = await readCommand(request, policy, {
-    conversationId: conversation.id,
+    branchId: conversation.id,
     ownerId,
   });
   if (command instanceof Response) {
@@ -392,7 +392,7 @@ const handle = async (
         {
           ownerId,
           operationId,
-          conversationId: conversation.id,
+          branchId: conversation.id,
           kind: "send",
           steerSessionId,
           intent: {

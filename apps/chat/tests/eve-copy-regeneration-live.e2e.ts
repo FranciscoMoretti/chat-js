@@ -58,7 +58,7 @@ test("copied responses regenerate with their original model after reload", async
   const copyInput = {
     modelId: selectedModel,
     operationId: crypto.randomUUID(),
-    fork: { conversationId: source.id },
+    fork: { branchId: source.id },
     message: "Continue briefly without using tools.",
   };
   let copied = await page.request.post("/api/agent-conversations", {
@@ -109,7 +109,7 @@ test("copied responses regenerate with their original model after reload", async
         route.request().postDataJSON()
       );
       expect(input.fork).toEqual({
-        conversationId: destination.id,
+        branchId: destination.id,
         beforeMessageId: expect.any(String),
       });
       expect(input.modelId).toBe(originalModel);

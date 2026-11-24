@@ -6,16 +6,16 @@ import { MessageSiblingsView } from "@/components/message-siblings-view";
 import { useLogicalChat } from "./eve-logical-context";
 
 export const EveLogicalVersions = ({
-  conversationId,
+  branchId,
   messageId,
   disabled,
 }: {
-  readonly conversationId: string;
+  readonly branchId: string;
   readonly messageId: string;
   readonly disabled: boolean;
 }): ReactJSX.Element => {
   const { controller } = useLogicalChat();
-  const { ids, index } = controller.siblings(conversationId, messageId);
+  const { ids, index } = controller.siblings(branchId, messageId);
   const select = (offset: number): void => {
     const id = ids[index + offset];
     if (!disabled && id) {

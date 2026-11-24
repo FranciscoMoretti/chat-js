@@ -73,7 +73,7 @@ test("removal checks generated files it will not regenerate and ignores inactive
   const root = await fixture();
   await install(root, projectsItem);
   const source =
-    'export { projectsChat } from "@/chatjs/plugins/projects/chat";\n';
+    'export { projectsChat } from "@/chatjs/plugins/projects/chat-server";\n';
   const generated = path.join(root, "chatjs/generated/tools.ts");
   await writeFile(generated, source);
   await rejects(
@@ -85,7 +85,7 @@ test("removal checks generated files it will not regenerate and ignores inactive
   await mkdir(path.dirname(backup), { recursive: true });
   await writeFile(backup, source);
   const plan = await removePlugins(root, ["projects"], { dryRun: true });
-  expect(plan.files).toContain("chatjs/plugins/projects/chat.ts");
+  expect(plan.files).toContain("chatjs/plugins/projects/chat-server.ts");
 });
 
 test("later installation, removal and sync preserve every app-owned integration", async () => {
@@ -144,8 +144,8 @@ export const billing = { ...selected, canSpend: (ownerId: string) => selected.ca
     path.join(root, "chatjs/generated/installed-chat.ts"),
     "utf-8"
   );
-  expect(chat).toContain("@/chatjs/plugins/sharing/chat");
-  expect(chat).not.toContain("@/chatjs/plugins/projects/chat");
+  expect(chat).toContain("@/chatjs/plugins/sharing/chat-server");
+  expect(chat).not.toContain("@/chatjs/plugins/projects/chat-server");
   expect(
     await readFile(
       path.join(root, "chatjs/generated/installed-billing.ts"),

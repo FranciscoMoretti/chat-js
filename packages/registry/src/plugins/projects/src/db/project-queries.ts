@@ -95,7 +95,7 @@ const assignEveConversationProject = async (
   ownerId: string,
   routeId: string,
   projectId: string | null
-): Promise<{ conversationId: string; projectId: string | null } | null> =>
+): Promise<{ id: string; projectId: string | null } | null> =>
   await updateOwnedChat(
     { ownerId, chatId: routeId },
     async ({ tx, chatId }) => {
@@ -120,7 +120,7 @@ const assignEveConversationProject = async (
             target: eveChatProject.chatId,
           });
       }
-      return { conversationId: routeId, projectId };
+      return { id: routeId, projectId };
     }
   );
 const getEveConversationProject = async (

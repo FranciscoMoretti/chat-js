@@ -240,7 +240,7 @@ test("fork reservations retain ancestry and reject changed sources on retry", as
     start
   );
   const operation = crypto.randomUUID();
-  const fork = { conversationId: root.id };
+  const fork = { branchId: root.id };
   const branch = await createEveConversation(
     owner,
     operation,
@@ -256,7 +256,7 @@ test("fork reservations retain ancestry and reject changed sources on retry", as
   expect(starts).toBe(2);
   await expect(
     createEveConversation(owner, operation, "replacement", start, {
-      fork: { conversationId: crypto.randomUUID() },
+      fork: { branchId: crypto.randomUUID() },
     })
   ).rejects.toThrow("source conversation");
   await expect(
@@ -269,11 +269,11 @@ test("fork reservations retain ancestry and reject changed sources on retry", as
     crypto.randomUUID(),
     "nested replacement",
     start,
-    { fork: { conversationId: branch.id } }
+    { fork: { branchId: branch.id } }
   );
   const row = await getEveConversation(owner, nested.id);
-  expect(row?.rootConversationId).toBe(root.id);
-  expect(row?.parentConversationId).toBe(branch.id);
+  expect(row?.rootBranchId).toBe(root.id);
+  expect(row?.parentBranchId).toBe(branch.id);
   expect(row?.forkTurnId).toBeNull();
   expect(row?.visibility).toBe("private");
   const family = await listEveConversationBranches(owner, nested.id);
@@ -304,7 +304,7 @@ test("database constraints reject partial and cross-owner branch ancestry", asyn
       firstMessage: "partial branch",
       operationId: crypto.randomUUID(),
       ownerId: owner,
-      parentConversationId: root.id,
+      parentBranchId: root.id,
     })
   ).rejects.toThrow();
   const foreignOwner = crypto.randomUUID();
@@ -320,8 +320,8 @@ test("database constraints reject partial and cross-owner branch ancestry", asyn
         forkTurnId: "turn_0",
         operationId: crypto.randomUUID(),
         ownerId: foreignOwner,
-        parentConversationId: root.id,
-        rootConversationId: root.id,
+        parentBranchId: root.id,
+        rootBranchId: root.id,
       })
     ).rejects.toThrow();
   } finally {
@@ -416,14 +416,13 @@ test.each(["deleting", "deleted"] as const)(
 
     const recoveryConversations = await listEveConversations(owner);
     const recoveryRow = recoveryConversations.items.find(
-      (row: Readonly<{ conversationId: string }>) =>
-        row.conversationId === bound.id
+      (row: Readonly<{ branchId: string }>) => row.branchId === bound.id
     );
     // Pending deletion remains discoverable so its owner can resume cleanup.
     // The transcript and native access above remain fenced throughout.
     if (state === "deleting") {
       expect(recoveryRow).toMatchObject({
-        conversationId: bound.id,
+        branchId: bound.id,
         state: "deleting",
       });
       expect(recoveryRow).not.toHaveProperty("sessionId");
@@ -451,7 +450,7 @@ test.each(["deleting", "deleted"] as const)(
     ).rejects.toThrow("can no longer be created");
     await expect(
       createEveConversation(owner, crypto.randomUUID(), "fork", start, {
-        fork: { conversationId: bound.id },
+        fork: { branchId: bound.id },
       })
     ).rejects.toThrow("not available");
     expect(starts).toBe(1);
@@ -476,7 +475,7 @@ test("deletion fences the entire owned family and is retryable", async () => {
     crypto.randomUUID(),
     "child",
     createEveTestSession,
-    { fork: { conversationId: root.id } }
+    { fork: { branchId: root.id } }
   );
   await setSharing(owner, root.id, "public");
   expect(await beginEveConversationDeletion("other", root.id)).toBeNull();
@@ -532,7 +531,7 @@ test("deletion waits for document commits and fences a concurrent fork", async (
       crypto.randomUUID(),
       "late fork",
       start,
-      { fork: { conversationId: root.id } }
+      { fork: { branchId: root.id } }
     );
     const rejected = expect(fork).rejects.toThrow("not available");
     release.resolve();
@@ -562,7 +561,7 @@ test("unresolved creation prevents a partial family deletion", async () => {
       vi
         .fn<() => Promise<{ sessionId: string }>>()
         .mockRejectedValue(new Error("offline")),
-      { fork: { conversationId: root.id } }
+      { fork: { branchId: root.id } }
     )
   ).rejects.toThrow("offline");
   const rootCreation = await getEveConversation(owner, root.id);
@@ -587,7 +586,7 @@ test("final application deletion erases family content, preserves accounting and
     crypto.randomUUID(),
     "Child text",
     start,
-    { fork: { conversationId: root.id } }
+    { fork: { branchId: root.id } }
   );
   const unrelated = await createEveConversation(
     owner,
@@ -660,7 +659,7 @@ test("final application deletion erases family content, preserves accounting and
   expect(deletedChat).toMatchObject({
     title: "",
     isPinned: false,
-    activeConversationId: null,
+    activeBranchId: null,
   });
   const tombstonedCreationReplay = await getEveCreation(owner, operation);
   expect(tombstonedCreationReplay?.operationId).toBe(operation);
@@ -728,11 +727,11 @@ test("copy reservations retain shared ancestry and creation kinds are enforced b
     forkTurnId: "turn_0",
     operationId: crypto.randomUUID(),
     ownerId: owner,
-    parentConversationId: source.id,
-    rootConversationId: source.id,
+    parentBranchId: source.id,
+    rootBranchId: source.id,
   });
   const sourceRow = await getEveConversation(owner, source.id);
-  expect(copy.parentConversationId).toBe(source.id);
+  expect(copy.parentBranchId).toBe(source.id);
   expect(copy.workspaceId).toBe(sourceRow?.workspaceId);
   await expect(
     db.execute(sql`insert into "EveConversation" ("ownerId", "operationId", "firstMessage", "creationKind")
@@ -851,7 +850,7 @@ test("completed-copy capture fences a concurrent send and admits only one worksp
     crypto.randomUUID(),
     "Copy",
     copyDispatch,
-    { fork: { conversationId: source.id } }
+    { fork: { branchId: source.id } }
   );
   await entered.promise;
   const send = vi
@@ -864,7 +863,7 @@ test("completed-copy capture fences a concurrent send and admits only one worksp
     {
       ownerId: owner,
       operationId: crypto.randomUUID(),
-      conversationId: source.id,
+      branchId: source.id,
       kind: "send",
       intent: { message: "Concurrent" },
     },

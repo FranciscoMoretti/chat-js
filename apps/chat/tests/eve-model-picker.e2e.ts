@@ -23,7 +23,7 @@ test("the single-model picker dispatches and retains the selected native model",
   page,
 }, testInfo) => {
   test.setTimeout(120_000);
-  let conversationId: string | undefined;
+  let branchId: string | undefined;
   let origin: string | undefined;
   try {
     await page.route("https://unpkg.com/react-scan/**", async (route) => {
@@ -69,9 +69,7 @@ test("the single-model picker dispatches and retains the selected native model",
       timeout: 60_000,
       waitUntil: "commit",
     });
-    conversationId = z
-      .uuid()
-      .parse(new URL(page.url()).pathname.split("/").at(-1));
+    branchId = z.uuid().parse(new URL(page.url()).pathname.split("/").at(-1));
     expect(created.request().postDataJSON()).toMatchObject({ modelId });
 
     const [conversation] = await db
@@ -80,7 +78,7 @@ test("the single-model picker dispatches and retains the selected native model",
         sessionId: eveConversation.sessionId,
       })
       .from(eveConversation)
-      .where(eq(eveConversation.id, conversationId));
+      .where(eq(eveConversation.id, branchId));
     expect(conversation?.initialModelId).toBe(modelId);
     if (
       conversation === undefined ||
@@ -92,7 +90,7 @@ test("the single-model picker dispatches and retains the selected native model",
       throw new Error("Missing native session binding.");
     }
 
-    await expect(page).toHaveURL(new RegExp(`/chat/${conversationId}$`, "u"));
+    await expect(page).toHaveURL(new RegExp(`/chat/${branchId}$`, "u"));
     await expect(
       page.getByRole("log").locator('[data-role="assistant"]').last()
     ).toContainText(marker, { timeout: 90_000 });
@@ -116,14 +114,14 @@ test("the single-model picker dispatches and retains the selected native model",
   } finally {
     testInfo.setTimeout(testInfo.timeout + 60_000);
     if (
-      conversationId !== undefined &&
-      conversationId !== null &&
-      conversationId !== "" &&
+      branchId !== undefined &&
+      branchId !== null &&
+      branchId !== "" &&
       origin !== undefined &&
       origin !== null &&
       origin !== ""
     ) {
-      const url = `/api/agent-conversations/${conversationId}`;
+      const url = `/api/agent-conversations/${branchId}`;
       const headers = { origin };
       await expect
         .poll(

@@ -34,7 +34,7 @@ export default defineHook({
       );
       const project = await getEveConversationProject(
         scope.ownerId,
-        scope.conversationId
+        scope.branchId
       );
       projectInstructions.update(() => ({
         content: project?.instructions ?? null,

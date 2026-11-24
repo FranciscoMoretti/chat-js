@@ -16,7 +16,7 @@ const {
   listEveSubagents,
 } = await import("./eve-subagents");
 const { ingestEveUsage } = await import("../eve/usage");
-const conversationId = "00000000-0000-4000-8000-000000000001";
+const branchId = "00000000-0000-4000-8000-000000000001";
 const otherId = "00000000-0000-4000-8000-000000000002";
 const MIGRATION_FIXTURE_SETUP_TIMEOUT_MS = 30_000;
 beforeAll(async () => {
@@ -48,15 +48,15 @@ beforeAll(async () => {
   );
   await postgres.query(
     `insert into "EveChat" (id,"ownerId",title) values ($1,'owner','Research'), ($2,'other','Research')`,
-    [conversationId, otherId]
+    [branchId, otherId]
   );
   await postgres.query(
     `insert into "EveWorkspace" (id,"ownerId") values ($1,'owner'), ($2,'other')`,
-    [conversationId, otherId]
+    [branchId, otherId]
   );
   await postgres.query(
     `insert into "EveConversation" ("workspaceId",id,"chatId","ownerId","operationId","firstMessage","sessionId",state) values ($1,$1,$1,'owner',$1,'Research','root','bound'), ($2,$2,$2,'other',$2,'Research','foreign-root','bound')`,
-    [conversationId, otherId]
+    [branchId, otherId]
   );
 }, MIGRATION_FIXTURE_SETUP_TIMEOUT_MS);
 afterAll(async () => {
@@ -69,7 +69,7 @@ it("binds descendants idempotently and rejects foreign parents or identity chang
   expectTypeOf(missing).toEqualTypeOf<typeof child | null>();
   expect(missing).toBeNull();
   expect(child).toMatchObject({
-    conversationId,
+    branchId,
     rootSessionId: "root",
     rootTurnId: "turn_1",
   });

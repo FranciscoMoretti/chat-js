@@ -15,7 +15,7 @@ Keep server and browser import graphs separate:
 | --- | --- | --- |
 | `router.ts` | Named `router` export from `createTRPCRouter` | tRPC routers |
 | `instrumentation.ts` | Default `InstrumentationRegistration` function | Startup hooks |
-| `chat.ts` | `ChatServerIntegration` | Transactional chat integration, safe for EVE and Next.js |
+| `chat-server.ts` | `ChatServerIntegration` | Transactional chat integration, safe for EVE and Next.js |
 | `signed-out.tsx` | React component | Optional screen for signed-out chat visitors |
 | `session-profile.ts` | `SessionProfile` | Native authenticator, bounded model, and instructions |
 | `cleanup.ts` | `CleanupTask["run"]` | Bounded cleanup with progress and pending inventory |
@@ -27,7 +27,7 @@ Keep server and browser import graphs separate:
 | `uploads.ts` | `attachmentUploads` | Attachment handling |
 | `model-visibility.ts` | `useModelVisibility` | Model picker visibility |
 
-Keep `chat.ts` and `billing.ts` free of web routers and Next.js request helpers: native EVE loads this entrypoint too.
+Keep `chat-server.ts` and `billing.ts` free of web routers and Next.js request helpers: native EVE loads this entrypoint too.
 
 List the entry files you ship in the descriptor. Your router owns its namespace and tRPC infers procedure types through the app’s call to `mergeRouters`. For example, this router exposes `trpc.project.list`.
 
@@ -58,7 +58,7 @@ These are explicit core contracts. There is no registry of arbitrary creation fi
 
 ## After creation
 
-Use `chat.afterCreate({ ownerId, conversationId, message })` for optional work after a successful root creation response. It runs outside the creation transaction through Next.js `after`, using a bound conversation from the initial chat or response group. Forks do not invoke it.
+Use `chat.afterCreate({ ownerId, branchId, message })` for optional work after a successful root creation response. It runs outside the creation transaction through Next.js `after`, using a bound conversation from the initial chat or response group. Forks do not invoke it.
 
 Recovery requests may invoke the callback again. Make your contribution idempotent and recheck ownership and state before writing. Core catches each contribution's failure so later contributions still run. This callback does not guarantee durable execution. [AI Titles](../plugins/ai-titles) uses it for guarded title enrichment.
 
@@ -96,13 +96,13 @@ History predicates combine with AND. Return `undefined` when your restriction do
 
 [Sharing](../plugins/sharing) contributes the public visibility predicate. Its public transcript route belongs to the plugin and rechecks visibility after reading the native snapshot. Core retains the visibility column and resets it during deletion.
 
-Client actions receive the logical chat `id` and, when available, the exact `conversationId`. Use the latter for branch-specific sharing. Header menus omit it when there is no transcript to share. Plugin actions own their dialogs and preserve the menu while a dialog is open.
+Client actions receive the logical chat `id` and, when available, the exact `branchId`. Use the latter for branch-specific sharing. Header menus omit it when there is no transcript to share. Plugin actions own their dialogs and preserve the menu while a dialog is open.
 
 ## Deletion
 
 | Callback | When it runs | Typical data |
 | --- | --- | --- |
-| `onDeleteConversations(tx, { conversationIds, sessionIds })` | Before selected conversations are tombstoned | Feedback votes and session-owned suggestions |
+| `onDeleteConversations(tx, { branchIds, sessionIds })` | Before selected conversations are tombstoned | Feedback votes and session-owned suggestions |
 | `onDelete(tx, chatId)` | When the final session of a logical chat is deleted | Project membership |
 
 Both callbacks run inside the core deletion transaction under its lifecycle lock. A failure rolls back database cleanup. Use the supplied transaction. Removing a project detaches its chats without deleting their sessions.
@@ -145,7 +145,7 @@ export const chatUi = definePlugin({
 | `AccountSummary` | Content beneath the signed-in user name |
 | `SidebarSections` | Sidebar content |
 | `SidebarHeaderItems` | Fixed sidebar menu items with server-resolved `ownerId` |
-| `ChatActions` | Menu actions receiving `{ chat: { id, title, state, conversationId? } }` |
+| `ChatActions` | Menu actions receiving `{ chat: { id, title, state, branchId? } }` |
 | `ChatHeaderActions` | Header controls receiving the same chat context |
 | `ChatBreadcrumbs` | Context receiving `{ chatId }` |
 | `MessageActions` | Assistant-message actions |
@@ -171,11 +171,11 @@ Your hook owns fetching and applying user preferences. Return a stable set when 
 
 ### Message actions
 
-The `MessageActions` slot receives `{ conversationId, messageId, disabled }`. Core renders it for editable assistant messages; each plugin owns its queries and mutations. Feedback uses a conversation-specific write with a lock and state recheck, because voting must not change the logical chat's update timestamp.
+The `MessageActions` slot receives `{ branchId, messageId, disabled }`. Core renders it for editable assistant messages; each plugin owns its queries and mutations. Feedback uses a conversation-specific write with a lock and state recheck, because voting must not change the logical chat's update timestamp.
 
 ### Response content
 
-In `chat-ui.ts`, bind your component with `slot(MessageResponses, YourResponses)` in a `definePlugin` client declaration. Import `MessageResponses` from `@/components/chat-slots`. Like message actions, the component receives `{ conversationId, messageId, disabled }`, typed as `ChatMessageProps`. Return `null` when your contribution does not apply to that user message. Respect `disabled` for interactions and own your fetching and recovery state.
+In `chat-ui.ts`, bind your component with `slot(MessageResponses, YourResponses)` in a `definePlugin` client declaration. Import `MessageResponses` from `@/components/chat-slots`. Like message actions, the component receives `{ branchId, messageId, disabled }`, typed as `ChatMessageProps`. Return `null` when your contribution does not apply to that user message. Respect `disabled` for interactions and own your fetching and recovery state.
 
 `integrations/chat/ui.ts` composes installed declarations and the local Parallel Responses declaration in display order using the shared `Plugins` provider. Each is additive. Ordinary version navigation and assistant action buttons remain separate placements. Response content runs inside the account transcript's logical-chat context. Public sharing and guest transcripts do not mount this placement.
 
@@ -191,7 +191,7 @@ These are React composition seams, not global registration hooks for arbitrary s
 
 ### Suggestions
 
-When you contribute to `ChatSuggestions`, it receives `sessionId`, `conversationId`, native `events`, `lastMessage?: { role, metadata?: { turnId?: string } }`, `disabled`, and `onSelect`. It renders beneath the last editable message when transcript actions are available. Handle a missing `lastMessage`, `metadata`, or `turnId` without assuming completion identity. Your plugin owns completion matching, storage reads, and polling. The callback returns the selected text to core's existing send/compare flow.
+When you contribute to `ChatSuggestions`, it receives `sessionId`, `branchId`, native `events`, `lastMessage?: { role, metadata?: { turnId?: string } }`, `disabled`, and `onSelect`. It renders beneath the last editable message when transcript actions are available. Handle a missing `lastMessage`, `metadata`, or `turnId` without assuming completion identity. Your plugin owns completion matching, storage reads, and polling. The callback returns the selected text to core's existing send/compare flow.
 
 Follow-up Suggestions uses native EVE hooks for generation and the per-conversation cleanup callback for session-owned records. Its claim-before-generation rule and core usage accounting survive extraction; no new event bus or generic mutation wrapper is involved.
 
@@ -223,7 +223,7 @@ Declare plugin schema paths in `databaseSchemas`. Drizzle composes installed sch
   "files": [
     "chatjs/plugins/projects/router.ts",
     "chatjs/plugins/projects/chat-ui.ts",
-    "chatjs/plugins/projects/chat.ts",
+    "chatjs/plugins/projects/chat-server.ts",
     "chatjs/plugins/projects/db/project-schema.ts"
   ]
 }

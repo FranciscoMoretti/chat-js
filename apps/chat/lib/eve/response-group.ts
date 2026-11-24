@@ -91,7 +91,7 @@ export const createEveResponseGroup = async (
       const binding = conversationBinding.parse(await response.json());
       return {
         ...candidate,
-        conversationId: binding.id,
+        branchId: binding.id,
         sessionId: binding.sessionId,
         state: "bound",
       };

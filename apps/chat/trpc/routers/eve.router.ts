@@ -156,7 +156,7 @@ export const eveRouter = createTRPCRouter({
   restoreAttachments: eveOwnedProcedure
     .input(
       z.object({
-        conversationId: z.uuid(),
+        branchId: z.uuid(),
         messageId: z.string().nonempty().max(MAX_MESSAGE_ID_LENGTH),
       })
     )
@@ -167,7 +167,7 @@ export const eveRouter = createTRPCRouter({
       }: {
         readonly ctx: { readonly eveOwnerId: string };
         readonly input: ReadonlyNativeSurface<{
-          conversationId: string;
+          branchId: string;
           messageId: string;
         }>;
       }) => await restoreMessageAttachments(ctx.eveOwnerId, input)

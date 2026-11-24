@@ -141,11 +141,11 @@ describe("rejected project draft recovery", () => {
 
 it("keeps owner-scoped unresolved forks discoverable, including damaged drafts", () => {
   const storage = storageFixture();
-  const conversationId = crypto.randomUUID();
-  expect(hasPendingCreation(storage, "owner", { conversationId })).toBe(false);
-  prepareCreation(storage, "owner", "edit", undefined, { conversationId });
-  expect(hasPendingCreation(storage, "owner", { conversationId })).toBe(true);
-  expect(hasPendingCreation(storage, "other", { conversationId })).toBe(false);
-  storage.setItem(`chatjs.eve.pending:owner:fork:${conversationId}`, "damaged");
-  expect(hasPendingCreation(storage, "owner", { conversationId })).toBe(true);
+  const branchId = crypto.randomUUID();
+  expect(hasPendingCreation(storage, "owner", { branchId })).toBe(false);
+  prepareCreation(storage, "owner", "edit", undefined, { branchId });
+  expect(hasPendingCreation(storage, "owner", { branchId })).toBe(true);
+  expect(hasPendingCreation(storage, "other", { branchId })).toBe(false);
+  storage.setItem(`chatjs.eve.pending:owner:fork:${branchId}`, "damaged");
+  expect(hasPendingCreation(storage, "owner", { branchId })).toBe(true);
 });

@@ -14,7 +14,7 @@ import { unmount } from "@/tests/visual/primitive-mount";
 
 const singleInvocation = 1;
 const header = <div />;
-const conversationId = "11111111-1111-4111-8111-111111111111";
+const branchId = "11111111-1111-4111-8111-111111111111";
 const sessionId = "fixture-conversation-session";
 const ownerId = "fixture-user";
 
@@ -45,13 +45,13 @@ test("conversation retains its draft across rerenders and shows delivery recover
     session: undefined,
     status: "idle",
   };
-  const controller = new LogicalChat(conversationId, conversationId);
-  controller.observe(conversationId, agent);
+  const controller = new LogicalChat(branchId, branchId);
+  controller.observe(branchId, agent);
   const value = { controller, ownerId, snapshot: controller.getSnapshot() };
   const state = await mountNative(
     <EveLogicalContext value={value}>
       <EveConversation
-        conversationId={conversationId}
+        branchId={branchId}
         header={header}
         ownerId={ownerId}
         sessionId={sessionId}
@@ -66,7 +66,7 @@ test("conversation retains its draft across rerenders and shows delivery recover
         .fill("Preserve this draft across a render");
     });
     act((): void => {
-      controller.commands.update(conversationId, { cancelling: false });
+      controller.commands.update(branchId, { cancelling: false });
     });
     await expect
       .element(page.getByRole("textbox"))

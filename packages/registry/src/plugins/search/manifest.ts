@@ -2,7 +2,7 @@ import { definePluginItem } from "../define-item";
 
 const searchFiles = [
   "chatjs/plugins/search/backfill.ts",
-  "chatjs/plugins/search/chat.ts",
+  "chatjs/plugins/search/chat-server.ts",
   "chatjs/plugins/search/chat-ui.ts",
   "chatjs/plugins/search/sidebar-item.tsx",
   "chatjs/plugins/search/router.ts",

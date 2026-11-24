@@ -170,7 +170,7 @@ it("accepts current conversation copies and rejects native identities or histori
   expect(
     createConversationInput.safeParse({
       ...input,
-      fork: { conversationId: crypto.randomUUID() },
+      fork: { branchId: crypto.randomUUID() },
     }).success
   ).toBe(true);
   expect(
@@ -182,7 +182,7 @@ it("accepts current conversation copies and rejects native identities or histori
   expect(
     createConversationInput.safeParse({
       ...input,
-      fork: { beforeTurnId: "turn_-1", conversationId: crypto.randomUUID() },
+      fork: { beforeTurnId: "turn_-1", branchId: crypto.randomUUID() },
     }).success
   ).toBe(false);
   expect(
@@ -191,7 +191,7 @@ it("accepts current conversation copies and rejects native identities or histori
   expect(
     createConversationInput.safeParse({
       ...input,
-      fork: { conversationId: crypto.randomUUID() },
+      fork: { branchId: crypto.randomUUID() },
       forkKind: "regenerate",
     }).success
   ).toBe(true);
@@ -211,7 +211,7 @@ it("allows a project for new conversations while forks inherit their existing pr
   expect(
     createConversationInput.safeParse({
       ...input,
-      fork: { beforeTurnId: "turn_0", conversationId: crypto.randomUUID() },
+      fork: { beforeTurnId: "turn_0", branchId: crypto.randomUUID() },
     }).success
   ).toBe(false);
 });
@@ -219,7 +219,7 @@ it("allows a project for new conversations while forks inherit their existing pr
 it("accepts message edit boundaries but rejects historical runtime checkpoints", () => {
   const input = {
     fork: {
-      conversationId: crypto.randomUUID(),
+      branchId: crypto.randomUUID(),
     },
     message: "Replacement question",
     operationId: crypto.randomUUID(),

@@ -3,17 +3,17 @@ import type { ChatServerIntegration } from "@/chatjs/core/chat/contracts";
 import { eveSearchText } from "./search-schema";
 
 const searchChat = {
-  afterBranch: async ({ ownerId, conversationId, sessionId }) => {
+  afterBranch: async ({ ownerId, branchId, sessionId }) => {
     const { backfillEveSearchConversation } = await import("./search-backfill");
-    await backfillEveSearchConversation(ownerId, conversationId, sessionId);
+    await backfillEveSearchConversation(ownerId, branchId, sessionId);
   },
-  onDeleteConversations: async (tx, { conversationIds }) => {
-    if (conversationIds.length === 0) {
+  onDeleteConversations: async (tx, { branchIds }) => {
+    if (branchIds.length === 0) {
       return;
     }
     await tx
       .delete(eveSearchText)
-      .where(inArray(eveSearchText.conversationId, [...conversationIds]));
+      .where(inArray(eveSearchText.branchId, [...branchIds]));
   },
 } satisfies ChatServerIntegration;
 

@@ -6,15 +6,15 @@ import { eveConversation, eveWorkspace } from "./schema";
 export const reserveConversationWorkspace = async (
   tx: Pick<typeof db, "execute" | "select" | "insert">,
   ownerId: string,
-  sourceConversationId?: string
+  sourceBranchId?: string
 ): Promise<string> => {
-  if (sourceConversationId !== undefined) {
+  if (sourceBranchId !== undefined) {
     const [source] = await tx
       .select()
       .from(eveConversation)
       .where(
         and(
-          eq(eveConversation.id, sourceConversationId),
+          eq(eveConversation.id, sourceBranchId),
           eq(eveConversation.ownerId, ownerId),
           eq(eveConversation.state, "bound")
         )

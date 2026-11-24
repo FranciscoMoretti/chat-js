@@ -1,7 +1,7 @@
 import { definePluginItem } from "../define-item";
 
 const aiTitlesFiles = [
-  "chatjs/plugins/ai-titles/chat.ts",
+  "chatjs/plugins/ai-titles/chat-server.ts",
   "chatjs/plugins/ai-titles/generate-title.ts",
   "chatjs/plugins/ai-titles/title-queries.ts",
 ];

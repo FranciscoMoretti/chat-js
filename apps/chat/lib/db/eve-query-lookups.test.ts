@@ -28,7 +28,7 @@ const {
 
 const { getEveDeletionState } = await import("./eve-deletion");
 
-const conversationId = "00000000-0000-4000-8000-000000000001";
+const branchId = "00000000-0000-4000-8000-000000000001";
 const missingId = "00000000-0000-4000-8000-000000000002";
 
 beforeAll(async () => {
@@ -46,15 +46,15 @@ beforeAll(async () => {
   );
   await postgres.query(
     `insert into "EveChat" (id,"ownerId",title) values ($1,'owner','Research')`,
-    [conversationId]
+    [branchId]
   );
   await postgres.query(
     `insert into "EveWorkspace" (id,"ownerId") values ($1,'owner')`,
-    [conversationId]
+    [branchId]
   );
   await postgres.query(
     `insert into "EveConversation" ("workspaceId",id,"chatId","ownerId","operationId","firstMessage","sessionId",state) values ($1,$1,$1,'owner',$1,'Research','native','bound')`,
-    [conversationId]
+    [branchId]
   );
 }, 30_000);
 
@@ -64,18 +64,13 @@ afterAll(async () => {
 
 test("session mappings preserve exact identity and tombstones while absent identities stay missing", async () => {
   const mapping = await readEveSessionMapping({
-    reservationId: conversationId,
+    reservationId: branchId,
   });
   expectTypeOf(mapping).toEqualTypeOf<Pick<
     typeof eveConversation.$inferSelect,
-    | "creationKind"
-    | "id"
-    | "ownerId"
-    | "sessionId"
-    | "state"
-    | "parentConversationId"
+    "creationKind" | "id" | "ownerId" | "sessionId" | "state" | "parentBranchId"
   > | null>();
-  expect(mapping).toMatchObject({ id: conversationId, state: "bound" });
+  expect(mapping).toMatchObject({ id: branchId, state: "bound" });
   expect(await readEveSessionMapping({ sessionId: "native" })).toEqual(mapping);
   expect(await readEveSessionMapping({ reservationId: missingId })).toBeNull();
   expect(await readEveSessionMapping({ sessionId: "unknown" })).toBeNull();
@@ -86,7 +81,7 @@ test("session mappings preserve exact identity and tombstones while absent ident
     `update "EveConversation" set state='deleted' where "sessionId"='native'`
   );
   expect(await readEveSessionMapping({ sessionId: "native" })).toMatchObject({
-    id: conversationId,
+    id: branchId,
     state: "deleted",
   });
   expect(await ownsEveSession("owner", "native")).toBe(false);
@@ -107,7 +102,7 @@ test("deletion lookup returns only an owned deleting session", async () => {
   );
   expect(await getDeletingEveConversationForSession("owner", "native")).toEqual(
     {
-      id: conversationId,
+      id: branchId,
     }
   );
   expect(
@@ -127,9 +122,9 @@ test("creation and metadata lookups preserve no-match results", async () => {
     typeof eveConversation.$inferSelect | undefined
   >();
   expect(missingCreation).toBeUndefined();
-  expect(await getEveCreation("other", conversationId)).toBeUndefined();
-  expect(await getEveCreation("owner", conversationId)).toMatchObject({
-    id: conversationId,
+  expect(await getEveCreation("other", branchId)).toBeUndefined();
+  expect(await getEveCreation("owner", branchId)).toMatchObject({
+    id: branchId,
     state: "bound",
   });
 
@@ -145,17 +140,17 @@ test("creation and metadata lookups preserve no-match results", async () => {
   >();
   expect(missingUpdate).toBeUndefined();
   expect(
-    await updateEveConversationMetadata("other", conversationId, {
+    await updateEveConversationMetadata("other", branchId, {
       title: "Unauthorized",
     })
   ).toBeUndefined();
   expect(
-    await updateEveConversationMetadata("owner", conversationId, {
+    await updateEveConversationMetadata("owner", branchId, {
       title: "Updated",
     })
-  ).toEqual({ id: conversationId });
+  ).toEqual({ id: branchId });
 
-  const unassigned = await getEveConversationProject("owner", conversationId);
+  const unassigned = await getEveConversationProject("owner", branchId);
   expectTypeOf(unassigned).toEqualTypeOf<Pick<
     typeof project.$inferSelect,
     "id" | "instructions" | "name" | "icon" | "iconColor"
@@ -165,24 +160,24 @@ test("creation and metadata lookups preserve no-match results", async () => {
 
 test("owner-visible lookup boundaries return null for missing and foreign identities", async () => {
   expect(await getBoundEveConversationForSession("owner", "native")).toEqual({
-    id: conversationId,
+    id: branchId,
   });
   expect(await getBoundEveConversationForSession("other", "native")).toBeNull();
   expect(
     await getBoundEveConversationForSession("owner", "missing")
   ).toBeNull();
-  expect(await getEveConversation("owner", conversationId)).toMatchObject({
-    id: conversationId,
+  expect(await getEveConversation("owner", branchId)).toMatchObject({
+    id: branchId,
   });
-  expect(await getEveConversation("other", conversationId)).toBeNull();
+  expect(await getEveConversation("other", branchId)).toBeNull();
   expect(await getEveConversation("owner", missingId)).toBeNull();
-  expect(await getEveChatPageConversation("other", conversationId)).toBeNull();
+  expect(await getEveChatPageConversation("other", branchId)).toBeNull();
   expect(await getEveChatPageConversation("owner", missingId)).toBeNull();
-  expect(await getEveDeletionState("owner", conversationId)).toEqual({
-    rootId: conversationId,
+  expect(await getEveDeletionState("owner", branchId)).toEqual({
+    rootId: branchId,
     state: "bound",
   });
-  expect(await getEveDeletionState("other", conversationId)).toBeNull();
+  expect(await getEveDeletionState("other", branchId)).toBeNull();
   expect(await getEveDeletionState("owner", missingId)).toBeNull();
 });
 
@@ -286,7 +281,7 @@ test("the extraction migration retains pending recovery context before dropping 
     [
       projectId,
       { message: "Original payload", modelId: "original-model" },
-      conversationId,
+      branchId,
     ]
   );
   const migration = await readFile(
@@ -294,7 +289,7 @@ test("the extraction migration retains pending recovery context before dropping 
     "utf-8"
   );
   await postgres.exec(migration);
-  const recovered = await getEveConversation("owner", conversationId);
+  const recovered = await getEveConversation("owner", branchId);
   expect(recovered?.initialRequest).toEqual({
     message: "Original payload",
     modelId: "original-model",
@@ -324,33 +319,35 @@ test("comparison retries ignore initial plugin choices but retain message and mo
   ).rejects.toThrow("different message");
 });
 
-test("legacy comparison retries recover the original assignment without weakening message checks", async () => {
+test("comparison fork retries use the current branch ID and message boundary", async () => {
   const { reserveEveResponseGroup } = await import("./eve-response-groups");
+  const { createEveConversation } = await import("./eve-queries");
+  const source = await createEveConversation(
+    "owner",
+    crypto.randomUUID(),
+    "Source",
+    vi
+      .fn<() => Promise<{ sessionId: string }>>()
+      .mockResolvedValue({ sessionId: crypto.randomUUID() })
+  );
   const input = {
     operationId: crypto.randomUUID(),
     modelIds: ["one", "two"],
-    message: "Legacy comparison",
-    selectedTool: "generateImage" as const,
-    projectId: crypto.randomUUID(),
+    message: "Compare from here",
+    fork: { branchId: source.id, beforeMessageId: "message" },
   };
   const group = await reserveEveResponseGroup("owner", input);
-  const legacyHash = createHash("sha256")
-    .update(JSON.stringify(input))
-    .digest("hex");
-  await postgres.query(
-    `UPDATE "EveResponseGroup" SET "inputHash"=$1 WHERE id=$2`,
-    [legacyHash, group.id]
+  expect(group.inputHash).toBe(
+    createHash("sha256").update(JSON.stringify(input)).digest("hex")
   );
-  await postgres.query(
-    `INSERT INTO "EveConversation" ("workspaceId","chatId","ownerId","operationId","firstMessage","initialRequest",state) VALUES ($1,$1,'owner',$2,'Legacy comparison',$3,'creating')`,
-    [conversationId, group.candidateOperationIds[0], input]
-  );
-  const retry = { ...input, projectId: crypto.randomUUID() };
-  await expect(
-    reserveEveResponseGroup("owner", { ...retry, message: "Different" })
-  ).rejects.toThrow("different message");
-  const retried = await reserveEveResponseGroup("owner", retry);
+  const retried = await reserveEveResponseGroup("owner", input);
   expect(retried.id).toBe(group.id);
+  await expect(
+    reserveEveResponseGroup("owner", {
+      ...input,
+      fork: { ...input.fork, beforeMessageId: "different" },
+    })
+  ).rejects.toThrow("different message");
 });
 
 test("plugin history filtering preserves ownership and supplies project navigation", async () => {
@@ -377,7 +374,7 @@ test("plugin history filtering preserves ownership and supplies project navigati
   expect(scoped.items).toEqual([
     expect.objectContaining({
       id: chatId,
-      conversationId: chat.id,
+      branchId: chat.id,
       state: "bound",
       href: `/project/${projectId}/chat/${chatId}`,
       parentHref: `/project/${projectId}`,

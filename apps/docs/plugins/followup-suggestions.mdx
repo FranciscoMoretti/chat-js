@@ -71,6 +71,6 @@ The `Suggestions` placement receives the native session ID, conversation ID, nat
 
 ## Preserve cleanup
 
-The plugin's `chat.ts` removes results for deleted native sessions inside the existing deletion transaction. Keep this callback when changing storage so deleting one branch preserves surviving results and late generation cannot recreate a deleted claim.
+The plugin's `chat-server.ts` removes results for deleted native sessions inside the existing deletion transaction. Keep this callback when changing storage so deleting one branch preserves surviving results and late generation cannot recreate a deleted claim.
 
 See the [Plugin API](../reference/plugin-api) for the lifecycle and UI contracts.

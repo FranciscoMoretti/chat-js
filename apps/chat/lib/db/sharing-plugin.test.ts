@@ -1,5 +1,5 @@
 import type { ChatServerIntegration } from "@/chatjs/core/chat/contracts";
-import sharingChat from "@/chatjs/plugins/sharing/chat";
+import sharingChat from "@/chatjs/plugins/sharing/chat-server";
 import { readFile, readdir } from "node:fs/promises";
 import { PGlite } from "@electric-sql/pglite";
 import { drizzle } from "drizzle-orm/pglite";
@@ -37,7 +37,7 @@ beforeAll(async () => {
   `);
   await postgres.exec(`
     INSERT INTO "EveStoredFile" (key,"ownerId") VALUES ('file','owner');
-    INSERT INTO "EveFileReference" (key,"ownerId","conversationId") VALUES ('file','owner','${conversation}');
+    INSERT INTO "EveFileReference" (key,"ownerId","branchId") VALUES ('file','owner','${conversation}');
   `);
 }, 30_000);
 afterAll(async () => {

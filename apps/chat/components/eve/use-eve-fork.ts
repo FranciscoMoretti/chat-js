@@ -97,7 +97,7 @@ const operationModelSelection = (
 
 export const useEveFork = (
   ownerId: string,
-  conversationId: string,
+  branchId: string,
   onComparisonStarted?: (
     message: ReadonlyEveMessageInput,
     selectedTool: UiToolName | undefined,
@@ -109,9 +109,7 @@ export const useEveFork = (
   const restoreAttachments = useMutation(
     trpc.eve.restoreAttachments.mutationOptions()
   );
-  const family = useQuery(
-    trpc.eve.branches.queryOptions({ id: conversationId })
-  );
+  const family = useQuery(trpc.eve.branches.queryOptions({ id: branchId }));
   const openRuntime = useEveRuntime();
   const [isNavigating, startTransition] = useTransition();
   const selectedModel = useDefaultModel();
@@ -159,7 +157,7 @@ export const useEveFork = (
             const operation: Operation | undefined = readCreationRequest(
               sessionStorage,
               ownerId,
-              { conversationId }
+              { branchId }
             );
             if (!operation) {
               return { ...current, loaded: true };
@@ -184,7 +182,7 @@ export const useEveFork = (
           }
         }
       ),
-    [conversationId, ownerId, setAttachments]
+    [branchId, ownerId, setAttachments]
   );
   const {
     draft,
@@ -249,7 +247,7 @@ export const useEveFork = (
       ownerId,
       operation,
       {
-        conversationId,
+        branchId,
       }
     );
     await Promise.all([
@@ -290,7 +288,7 @@ export const useEveFork = (
           if (error instanceof CreationRejectedError) {
             setRejected(true);
             try {
-              finishCreation(sessionStorage, ownerId, { conversationId });
+              finishCreation(sessionStorage, ownerId, { branchId });
               setPending(undefined);
               setRejected(false);
             } catch {
@@ -340,7 +338,7 @@ export const useEveFork = (
         ? responseModelSelection(regeneration.response, regeneration.events)
         : undefined;
       const fork = {
-        conversationId,
+        branchId,
         beforeMessageId: boundary,
       };
       const text = message.parts
@@ -365,7 +363,7 @@ export const useEveFork = (
           (part: ReadonlyEveMessagePart) => part.type === "file"
         )
           ? await restoreAttachments.mutateAsync({
-              conversationId,
+              branchId,
               messageId: message.id,
             })
           : [];
@@ -387,7 +385,7 @@ export const useEveFork = (
           ownerId,
           draftMessage(text, attachments),
           modelId,
-          { conversationId, fork, forkKind: "regenerate" },
+          { branchId, fork, forkKind: "regenerate" },
           originalTool ?? undefined
         );
         setPending(operation);
@@ -426,9 +424,9 @@ export const useEveFork = (
           message,
           modelIds,
           {
-            conversationId,
+            branchId,
             fork: {
-              conversationId,
+              branchId,
             },
           },
           requestedTool
@@ -479,7 +477,7 @@ export const useEveFork = (
       await run(async () => {
         if (pending && rejected) {
           try {
-            finishCreation(sessionStorage, ownerId, { conversationId });
+            finishCreation(sessionStorage, ownerId, { branchId });
             setPending(undefined);
             setRejected(false);
           } catch {
@@ -518,7 +516,7 @@ export const useEveFork = (
                 ownerId,
                 message,
                 modelIds,
-                { conversationId, fork: source, forkKind: "edit" },
+                { branchId, fork: source, forkKind: "edit" },
                 selectedTool ?? undefined
               )
             : prepareCreation(
@@ -526,7 +524,7 @@ export const useEveFork = (
                 ownerId,
                 message,
                 modelIds[0],
-                { conversationId, fork: source, forkKind: "edit" },
+                { branchId, fork: source, forkKind: "edit" },
                 selectedTool ?? undefined
               );
         setPending(operation);

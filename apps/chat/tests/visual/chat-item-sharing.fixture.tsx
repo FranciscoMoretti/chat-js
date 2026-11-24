@@ -23,15 +23,15 @@ vi.mock("@/providers/session-provider", () => ({
 vi.mock("@/chatjs/plugins/sharing/ui/share-dialog", () => ({
   EveShareButton: () => null,
   EveShareDialogContent: ({
-    chatId,
+    branchId,
     onClose,
   }: {
-    chatId: string;
+    branchId: string;
     onClose: () => void;
   }) => (
     <>
       <DialogTitle>Share conversation</DialogTitle>
-      <DialogDescription>Share settings for {chatId}</DialogDescription>
+      <DialogDescription>Share settings for {branchId}</DialogDescription>
       <button onClick={onClose} type="button">
         Close sharing
       </button>
@@ -60,7 +60,7 @@ const checkChatItemSharing = async (
               chat={{
                 id: chatId,
                 title: "Notes",
-                conversationId: chatId,
+                branchId: chatId,
                 state: "bound",
               }}
             />
@@ -84,7 +84,7 @@ const checkChatItemSharing = async (
                 chat={{
                   id: chatId,
                   title: "Notes",
-                  conversationId: chatId,
+                  branchId: chatId,
                   state: "bound",
                 }}
               />

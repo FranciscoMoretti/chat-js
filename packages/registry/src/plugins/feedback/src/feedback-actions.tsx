@@ -8,11 +8,11 @@ import { MessageVoteActions } from "./message-vote-actions";
 import { useTRPC } from "@/trpc/react";
 
 export const FeedbackActions = ({
-  conversationId,
+  branchId,
   messageId,
   disabled,
 }: {
-  readonly conversationId: string;
+  readonly branchId: string;
   readonly messageId: string;
   readonly disabled: boolean;
 }): ReactJSX.Element => {
@@ -20,7 +20,7 @@ export const FeedbackActions = ({
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   // All messages share one cached query and one request per conversation.
-  const options = trpc.feedback.votes.queryOptions({ conversationId });
+  const options = trpc.feedback.votes.queryOptions({ branchId });
   const votes = useQuery(options);
   const mutation = useMutation(
     trpc.feedback.vote.mutationOptions({
@@ -60,7 +60,7 @@ export const FeedbackActions = ({
     <MessageVoteActions
       disabled={disabled || votes.isPending || mutation.isPending}
       onVote={async (type) =>
-        await mutation.mutateAsync({ conversationId, messageId, type })
+        await mutation.mutateAsync({ branchId, messageId, type })
       }
       vote={votes.data?.find((vote) => vote.messageId === messageId)}
     />

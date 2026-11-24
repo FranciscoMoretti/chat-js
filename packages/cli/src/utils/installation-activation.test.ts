@@ -9,7 +9,7 @@ test("separates declared composition, native entry points and ordinary framework
       kind: "plugin",
       files: [
         "chatjs/plugins/projects/router.ts",
-        "chatjs/plugins/projects/chat.ts",
+        "chatjs/plugins/projects/chat-server.ts",
       ],
       databaseSchemas: ["chatjs/plugins/projects/schema.ts"],
     },

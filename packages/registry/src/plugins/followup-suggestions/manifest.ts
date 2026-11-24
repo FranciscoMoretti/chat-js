@@ -1,7 +1,7 @@
 import { definePluginItem } from "../define-item";
 
 const followupSuggestionsFiles = [
-  "chatjs/plugins/followup-suggestions/chat.ts",
+  "chatjs/plugins/followup-suggestions/chat-server.ts",
   "chatjs/plugins/followup-suggestions/chat-ui.ts",
   "chatjs/plugins/followup-suggestions/followup-completion.ts",
   "chatjs/plugins/followup-suggestions/followup-context.ts",

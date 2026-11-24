@@ -115,8 +115,8 @@ test("parallel reservations and partial dispatch retries keep ordered exact iden
   await Promise.all(
     left.candidates.slice(1).map(async (candidate) => {
       const child = await getEveCreation(owner, candidate.operationId);
-      expect(child?.parentConversationId).toBeNull();
-      expect(child?.rootConversationId).toBeNull();
+      expect(child?.parentBranchId).toBeNull();
+      expect(child?.rootBranchId).toBeNull();
       expect(child?.forkTurnId).toBeNull();
     })
   );
@@ -160,7 +160,7 @@ test("continuation candidates copy the current completed source and reject inacc
       );
       return Response.json(binding);
     });
-  const fork = { conversationId: source.id };
+  const fork = { branchId: source.id };
   const input = {
     fork,
     message: "Continue",
@@ -174,14 +174,14 @@ test("continuation candidates copy the current completed source and reject inacc
   await Promise.all(
     result.candidates.map(async (candidate) => {
       const row = await getEveCreation(owner, candidate.operationId);
-      expect(row?.parentConversationId).toBe(source.id);
+      expect(row?.parentBranchId).toBe(source.id);
       expect(row?.forkTurnId).toBeNull();
     })
   );
   await expect(
     createEveResponseGroup(owner, {
       ...input,
-      fork: { ...fork, conversationId: crypto.randomUUID() },
+      fork: { ...fork, branchId: crypto.randomUUID() },
       operationId: crypto.randomUUID(),
     })
   ).rejects.toThrow("Source conversation not found");
@@ -242,7 +242,7 @@ test("deleting a partial family erases group payloads and fences unstarted candi
   );
   const forkInput = {
     ...input,
-    fork: { conversationId: root.id },
+    fork: { branchId: root.id },
     operationId: crypto.randomUUID(),
   };
   const pendingFork = await reserveEveResponseGroup(owner, forkInput);
@@ -289,7 +289,7 @@ test("deleting a partial family erases group payloads and fences unstarted candi
       vi
         .fn<() => Promise<{ sessionId: string }>>()
         .mockResolvedValue({ sessionId: "must-not-create" }),
-      { fork: { conversationId: root.id } }
+      { fork: { branchId: root.id } }
     )
   ).rejects.toThrow();
   await expect(
@@ -319,7 +319,7 @@ test("group reservation racing retirement cannot leave an active unstarted group
     createEveTestSession
   );
   const input = {
-    fork: { conversationId: root.id },
+    fork: { branchId: root.id },
     message: "Concurrent",
     modelIds: ["model-a", "model-b"],
     operationId: crypto.randomUUID(),
@@ -349,41 +349,6 @@ test("group reservation racing retirement cannot leave an active unstarted group
       operationId: crypto.randomUUID(),
     })
   ).rejects.toThrow("unavailable");
-});
-
-test("pre-contract groups block erasure until an exact replay recovers their source identity", async () => {
-  const root = await createEveConversation(
-    owner,
-    crypto.randomUUID(),
-    "Old group",
-
-    createEveTestSession
-  );
-  const input = {
-    fork: { conversationId: root.id },
-    message: "Preserved",
-    modelIds: ["model-a", "model-b"],
-    operationId: crypto.randomUUID(),
-  };
-  const group = await reserveEveResponseGroup(owner, input);
-  await db
-    .update(eveResponseGroup)
-    .set({ sourceConversationId: null, sourceIdentityKnown: false })
-    .where(eq(eveResponseGroup.id, group.id));
-  await expect(beginEveConversationDeletion(owner, root.id)).rejects.toThrow(
-    "Recover saved response group"
-  );
-  await reserveEveResponseGroup(owner, input);
-  await beginEveConversationDeletion(owner, root.id);
-  const [row] = await db
-    .select()
-    .from(eveResponseGroup)
-    .where(eq(eveResponseGroup.id, group.id));
-  expect(row).toMatchObject({
-    deleted: true,
-    sourceConversationId: root.id,
-    sourceIdentityKnown: true,
-  });
 });
 
 test("owner-only group reads preserve order and rejection recovery without exposing intent hashes", async () => {

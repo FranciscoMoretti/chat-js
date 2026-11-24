@@ -92,12 +92,12 @@ const withLiveAnswers = (
 
 const NativeObserver = ({
   controller,
-  conversationId,
+  branchId,
   sessionId,
   selected,
 }: {
   readonly controller: LogicalChat;
-  readonly conversationId: string;
+  readonly branchId: string;
   readonly sessionId: string;
   readonly selected: boolean;
 }): null => {
@@ -180,11 +180,11 @@ const NativeObserver = ({
     );
   }, [agent.messages, agent.events, display.data]);
   useEffect(() => {
-    controller.observe(conversationId, {
+    controller.observe(branchId, {
       ...agent,
       messages: displayedData.messages,
     });
-  }, [agent, displayedData, controller, conversationId]);
+  }, [agent, displayedData, controller, branchId]);
   return null;
 };
 
@@ -222,13 +222,13 @@ const RuntimeSlot = ({
     [runtime.controller, runtime.ownerId, snapshot]
   );
   const selected = snapshot.branches.find(
-    (branch: { readonly id: string }) => branch.id === snapshot.conversationId
+    (branch: { readonly id: string }) => branch.id === snapshot.branchId
   );
-  const agent = snapshot.agents.get(snapshot.conversationId);
+  const agent = snapshot.agents.get(snapshot.branchId);
   const header = (
     <EveChatHeader
       chatId={runtime.chatId}
-      conversationId={snapshot.conversationId}
+      branchId={snapshot.branchId}
       fallbackTitle={
         identity.data?.title ??
         runtime.title ??
@@ -247,9 +247,9 @@ const RuntimeSlot = ({
             <NativeObserver
               key={branch.sessionId}
               controller={runtime.controller}
-              conversationId={branch.id}
+              branchId={branch.id}
               sessionId={branch.sessionId}
-              selected={active && branch.id === snapshot.conversationId}
+              selected={active && branch.id === snapshot.branchId}
             />
           )
       )}
@@ -257,7 +257,7 @@ const RuntimeSlot = ({
         <EveLogicalContext.Provider value={context}>
           {agent && hasText(selected?.sessionId) ? (
             <EveConversation
-              conversationId={selected.id}
+              branchId={selected.id}
               sessionId={selected.sessionId}
               ownerId={runtime.ownerId}
               draftScopeId={runtime.chatId}
@@ -322,7 +322,7 @@ const EveRuntimeProvider = ({
             )
             .find((branch) =>
               hasPendingCreation(sessionStorage, request.ownerId, {
-                conversationId: branch.id,
+                branchId: branch.id,
               })
             );
       const controller =

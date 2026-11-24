@@ -31,7 +31,7 @@ const scheduleResponseGroupContributions = (
     if (source?.state === "bound") {
       after(async () => {
         await runChatAfterCreate({
-          conversationId: source.conversationId,
+          branchId: source.branchId,
           message: input.data.message,
           ownerId: principal.ownerId,
         });

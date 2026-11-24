@@ -26,11 +26,11 @@ const responseDetails = definePlugin({
   slots: [
     slot(
       MessageResponses,
-      ({ conversationId, messageId, disabled }: ChatMessageProps) => (
+      ({ branchId, messageId, disabled }: ChatMessageProps) => (
         <button
           type="button"
           disabled={disabled}
-          data-conversation-id={conversationId}
+          data-branch-id={branchId}
           data-message-id={messageId}
         >
           Inspect response details
@@ -102,7 +102,7 @@ test("plugin response content composes with core message actions", async () => {
   await expect.element(response).toBeEnabled();
   await expect
     .element(response)
-    .toHaveAttribute("data-conversation-id", invoicesConversation.id);
+    .toHaveAttribute("data-branch-id", invoicesConversation.id);
   await expect.element(response).toHaveAttribute("data-message-id");
   await expect
     .element(page.getByRole("button", { name: "Edit message" }).first())

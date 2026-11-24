@@ -21,15 +21,15 @@ import {
 } from "@/components/ui/sidebar";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
-import { useActiveConversationId } from "@/components/chat/chat-navigation";
+import { useActiveChatId } from "@/components/chat/chat-navigation";
 import { useTRPC } from "@/trpc/react";
 
 export const SidebarProjects = ({
-  conversationId,
+  chatId,
   allowManagement = true,
   onProjectSelect,
 }: {
-  readonly conversationId?: string;
+  readonly chatId?: string;
   readonly allowManagement?: boolean;
   readonly onProjectSelect?: (id: string) => void;
 }): ReactJSX.Element => {
@@ -43,12 +43,12 @@ export const SidebarProjects = ({
   );
   const [newProjectDialogOpen, setNewProjectDialogOpen] = useState(false);
 
-  const routeChatId = useActiveConversationId();
-  const activeConversationId = conversationId ?? routeChatId;
+  const routeChatId = useActiveChatId();
+  const activeChatId = chatId ?? routeChatId;
   const membership = useQuery(
     trpc.project.forChat.queryOptions(
-      { id: activeConversationId ?? "" },
-      { enabled: Boolean(activeConversationId) }
+      { id: activeChatId ?? "" },
+      { enabled: Boolean(activeChatId) }
     )
   );
   const currentProjectId =

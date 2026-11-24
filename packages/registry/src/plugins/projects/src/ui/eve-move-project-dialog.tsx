@@ -138,7 +138,7 @@ export const EveMoveProjectDialog = ({
             }
             onClick={() => {
               move.mutate({
-                conversationId: conversation.id,
+                id: conversation.id,
                 projectId: projectId || null,
               });
             }}

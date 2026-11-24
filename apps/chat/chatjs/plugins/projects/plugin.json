@@ -4,7 +4,7 @@
   "id": "projects",
   "kind": "plugin",
   "files": [
-    "chatjs/plugins/projects/chat.ts",
+    "chatjs/plugins/projects/chat-server.ts",
     "chatjs/plugins/projects/chat-ui.ts",
     "chatjs/plugins/projects/conversation-hook.ts",
     "chatjs/plugins/projects/creation.ts",

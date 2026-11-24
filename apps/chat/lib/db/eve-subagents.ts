@@ -9,7 +9,7 @@ const hasQueryRow: (row: unknown) => boolean = Boolean;
 
 type EveSubagentBinding = Pick<
   typeof eveSubagentSession.$inferSelect,
-  | "conversationId"
+  | "branchId"
   | "parentSessionId"
   | "rootTurnId"
   | "sessionId"
@@ -22,7 +22,7 @@ const getEveSubagent = async (
 ): Promise<EveSubagentBinding | null> => {
   const [binding] = await db
     .select({
-      conversationId: eveSubagentSession.conversationId,
+      branchId: eveSubagentSession.branchId,
       parentSessionId: eveSubagentSession.parentSessionId,
       rootSessionId: eveConversation.sessionId,
       rootTurnId: eveSubagentSession.rootTurnId,
@@ -33,7 +33,7 @@ const getEveSubagent = async (
     .innerJoin(
       eveConversation,
       and(
-        eq(eveConversation.id, eveSubagentSession.conversationId),
+        eq(eveConversation.id, eveSubagentSession.branchId),
         eq(eveConversation.ownerId, eveSubagentSession.ownerId)
       )
     )
@@ -77,10 +77,10 @@ const registerEveSubagent = async (
   const parent = hasQueryRow(root)
     ? undefined
     : await getEveSubagent(ownerId, parentSessionId);
-  const conversationId = root?.id ?? parent?.conversationId;
+  const branchId = root?.id ?? parent?.branchId;
   const rootTurnId = hasQueryRow(root) ? parentTurnId : parent?.rootTurnId;
   if (
-    !conversationId ||
+    !branchId ||
     typeof rootTurnId !== "string" ||
     rootTurnId === "" ||
     sessionId === parentSessionId
@@ -89,12 +89,12 @@ const registerEveSubagent = async (
   }
   await db
     .insert(eveSubagentSession)
-    .values({ conversationId, ownerId, parentSessionId, rootTurnId, sessionId })
+    .values({ branchId, ownerId, parentSessionId, rootTurnId, sessionId })
     .onConflictDoNothing();
   const bound = await getEveSubagent(ownerId, sessionId);
   if (
     bound === null ||
-    bound.conversationId !== conversationId ||
+    bound.branchId !== branchId ||
     bound.parentSessionId !== parentSessionId ||
     bound.rootTurnId !== rootTurnId
   ) {
@@ -125,7 +125,7 @@ const listEveSubagents = async (
     .innerJoin(
       eveConversation,
       and(
-        eq(eveConversation.id, eveSubagentSession.conversationId),
+        eq(eveConversation.id, eveSubagentSession.branchId),
         eq(eveConversation.ownerId, eveSubagentSession.ownerId)
       )
     )

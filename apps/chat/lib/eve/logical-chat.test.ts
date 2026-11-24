@@ -29,7 +29,7 @@ const branch = (
   id,
   initialModelId: "same-model",
   operationId: id,
-  parentConversationId: null,
+  parentBranchId: null,
   sessionId: `session-${id}`,
   ...extra,
 });
@@ -81,12 +81,12 @@ describe("logical chat over native sessions", () => {
       branch("retry", {
         forkKind: "regenerate",
         forkTurnId: "turn_1",
-        parentConversationId: "root",
+        parentBranchId: "root",
       }),
       branch("edit", {
         forkKind: "edit",
         forkTurnId: "turn_1",
-        parentConversationId: "root",
+        parentBranchId: "root",
       }),
     ]);
     chat.observe(
@@ -115,7 +115,7 @@ describe("logical chat over native sessions", () => {
     expect(chat.siblings("root", "turn_1:assistant").ids).toHaveLength(1);
     expect(chat.siblings("root", "u2").ids).toHaveLength(1);
     chat.selectNode(chat.logicalId("retry", "turn_1:assistant") ?? "missing");
-    expect(chat.getSnapshot().conversationId).toBe("retry");
+    expect(chat.getSnapshot().branchId).toBe("retry");
     const reload = new LogicalChat("chat", "retry");
     reload.setBranches(chat.getSnapshot().branches);
     for (const [id, native] of chat.getSnapshot().agents) {
@@ -160,7 +160,7 @@ describe("logical chat over native sessions", () => {
         "busy"
       )
     );
-    expect(chat.getSnapshot().conversationId).toBe("left");
+    expect(chat.getSnapshot().branchId).toBe("left");
     expect(logicalChatBusy(chat.getSnapshot())).toBe(true);
   });
   it("selects rightmost descendants with atomic path/index publication", () => {
@@ -170,7 +170,7 @@ describe("logical chat over native sessions", () => {
       branch("retry", {
         forkKind: "regenerate",
         forkTurnId: "turn_1",
-        parentConversationId: "root",
+        parentBranchId: "root",
       }),
     ]);
     chat.observe("root", agent(original));
@@ -205,7 +205,7 @@ describe("logical chat over native sessions", () => {
       branch("retry", {
         forkKind: "regenerate",
         forkTurnId: "turn_1",
-        parentConversationId: "root",
+        parentBranchId: "root",
       }),
     ]);
     chat.observe("root", agent(original));
@@ -241,7 +241,7 @@ it("keeps a selected retry pending until its assistant binds", () => {
     branch("retry", {
       forkKind: "regenerate",
       forkTurnId: "turn_1",
-      parentConversationId: "root",
+      parentBranchId: "root",
     }),
   ]);
   chat.observe("root", agent(original));
@@ -250,7 +250,7 @@ it("keeps a selected retry pending until its assistant binds", () => {
     agent([...seededPrefix, message("retry-u", "user", "turn_1")], "busy")
   );
   chat.selectBranch("retry");
-  expect(chat.getSnapshot().conversationId).toBe("root");
+  expect(chat.getSnapshot().branchId).toBe("root");
   chat.observe(
     "retry",
     agent(
@@ -262,7 +262,7 @@ it("keeps a selected retry pending until its assistant binds", () => {
       "busy"
     )
   );
-  expect(chat.getSnapshot().conversationId).toBe("retry");
+  expect(chat.getSnapshot().branchId).toBe("retry");
 });
 
 it("navigation revokes a delayed pending response without affecting its native observer", () => {
@@ -272,7 +272,7 @@ it("navigation revokes a delayed pending response without affecting its native o
     branch("retry", {
       forkKind: "regenerate",
       forkTurnId: "turn_1",
-      parentConversationId: "root",
+      parentBranchId: "root",
     }),
   ]);
   chat.observe("root", agent(original));
@@ -290,7 +290,7 @@ it("navigation revokes a delayed pending response without affecting its native o
       "busy"
     )
   );
-  expect(chat.getSnapshot().conversationId).toBe("root");
+  expect(chat.getSnapshot().branchId).toBe("root");
   expect(chat.getSnapshot().agents.get("retry")?.status).toBe("busy");
 });
 
@@ -326,12 +326,12 @@ it("places edit and regenerated versions at the selected message, preserving pre
   chat.setBranches([
     branch("root"),
     branch("edit", {
-      parentConversationId: "root",
+      parentBranchId: "root",
       forkKind: "edit",
       forkMessageId: "u2",
     }),
     branch("retry", {
-      parentConversationId: "root",
+      parentBranchId: "root",
       forkKind: "regenerate",
       forkMessageId: "u2",
     }),
@@ -369,12 +369,12 @@ it("resolves edits of inherited seed messages through their source aliases", () 
   chat.setBranches([
     branch("root"),
     branch("edit", {
-      parentConversationId: "root",
+      parentBranchId: "root",
       forkKind: "edit",
       forkMessageId: "u2",
     }),
     branch("nested", {
-      parentConversationId: "edit",
+      parentBranchId: "edit",
       forkKind: "edit",
       forkMessageId: "import:imported:0",
     }),
@@ -396,6 +396,6 @@ it("resolves edits of inherited seed messages through their source aliases", () 
   expect(snapshot.paths.get("nested")).toHaveLength(2);
   expect(snapshot.children.get(null)).toHaveLength(2);
   expect(
-    snapshot.nodes.get(snapshot.paths.get("edit")?.[0] ?? "")?.conversationId
+    snapshot.nodes.get(snapshot.paths.get("edit")?.[0] ?? "")?.branchId
   ).toBe("root");
 });

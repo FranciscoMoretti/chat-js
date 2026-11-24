@@ -51,7 +51,7 @@ const messagePartIdentity = (part: ReadonlyEveMessagePart): string => {
 };
 
 interface ChatTranscriptProps {
-  readonly conversationId?: string;
+  readonly branchId?: string;
   readonly messageKey?: (message: ReadonlyEveMessage) => string;
   readonly messages: readonly ReadonlyEveMessage[];
   readonly isReadonly: boolean;
@@ -96,7 +96,7 @@ interface MessageRowProps extends Omit<
 const AssistantFeedback = ({
   message,
   userMessage,
-  conversationId,
+  branchId,
   disabled,
   actionsDisabled,
   editor,
@@ -106,16 +106,16 @@ const AssistantFeedback = ({
   MessageRowProps,
   | "message"
   | "userMessage"
-  | "conversationId"
+  | "branchId"
   | "disabled"
   | "actionsDisabled"
   | "editor"
   | "onRegenerate"
 > & { readonly modelId: string | undefined }): ReactJSX.Element => (
   <>
-    {hasText(conversationId) && (
+    {hasText(branchId) && (
       <MessageActions
-        conversationId={conversationId}
+        branchId={branchId}
         disabled={disabled}
         messageId={message.id}
       />
@@ -149,7 +149,7 @@ const AssistantFeedback = ({
 const EveMessageActions = ({
   message,
   userMessage,
-  conversationId,
+  branchId,
   isReadonly,
   disabled,
   actionsDisabled,
@@ -164,7 +164,7 @@ const EveMessageActions = ({
   MessageRowProps,
   | "message"
   | "userMessage"
-  | "conversationId"
+  | "branchId"
   | "isReadonly"
   | "disabled"
   | "actionsDisabled"
@@ -217,7 +217,7 @@ const EveMessageActions = ({
           <AssistantFeedback
             message={message}
             userMessage={userMessage}
-            conversationId={conversationId}
+            branchId={branchId}
             disabled={disabled}
             actionsDisabled={actionsDisabled}
             editor={editor}
@@ -240,7 +240,7 @@ const EveMessageRow = ({
   message,
   userMessage,
   isLast,
-  conversationId,
+  branchId,
   isReadonly,
   disabled,
   actionsDisabled,
@@ -279,7 +279,7 @@ const EveMessageRow = ({
     <EveMessageActions
       message={message}
       userMessage={userMessage}
-      conversationId={conversationId}
+      branchId={branchId}
       isReadonly={isReadonly}
       disabled={disabled}
       actionsDisabled={actionsDisabled}

@@ -293,7 +293,7 @@ export const ChatPreview = () => {
           <Activity mode={guest ? "hidden" : "visible"}>
             <ChatNavigationContext
               value={{
-                conversationId: welcome ? null : sampleConversation.id,
+                chatId: welcome ? null : sampleConversation.id,
                 navigate: (href) => {
                   if (href === "/") {
                     selectScene("preview");
@@ -329,7 +329,7 @@ export const ChatPreview = () => {
                 <KeyboardShortcuts />
                 <ChatSidebar
                   direction={direction}
-                  conversationId={sampleConversation.id}
+                  chatId={sampleConversation.id}
                   history={{ ownerId: "preview-user", history: undefined }}
                   ownerId="preview-user"
                   onChatSelect={() => {
@@ -357,14 +357,14 @@ export const ChatPreview = () => {
                 />
                 <ChatWorkspaceContent>
                   <ChatConversationScreen
-                    conversationId={params.item}
+                    branchId={params.item}
                     header={
                       welcome ? (
                         <ChatHeaderView breadcrumb={null} />
                       ) : (
                         <EveChatHeader
                           chatId={sampleConversation.id}
-                          conversationId={sampleConversation.id}
+                          branchId={sampleConversation.id}
                           fallbackTitle={conversationTitle}
                           hasMessages
                         />
@@ -373,12 +373,12 @@ export const ChatPreview = () => {
                     welcome={welcome}
                     status={status}
                     transcript={{
-                      conversationId: sampleConversation.id,
+                      branchId: sampleConversation.id,
                       messages: transcriptMessages,
                       suggestions: (
                         <ChatSuggestions
                           sessionId="preview-session"
-                          conversationId={sampleConversation.id}
+                          branchId={sampleConversation.id}
                           events={completionEvents}
                           lastMessage={lastMessage}
                           disabled={status !== "ready"}

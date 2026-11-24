@@ -102,7 +102,7 @@ beforeEach(() => {
   mocks.state = [];
   mocks.recovery = false;
   mocks.resolve.mockResolvedValue({
-    conversationId: "branch",
+    branchId: "branch",
     ownerId: "owner",
   });
 });

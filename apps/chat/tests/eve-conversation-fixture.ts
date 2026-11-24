@@ -39,9 +39,9 @@ export const insertEveConversationFixtures = async (
         ...conversation
       } = fixture;
       const [parent] =
-        conversation.parentConversationId === undefined ||
-        conversation.parentConversationId === null ||
-        conversation.parentConversationId === ""
+        conversation.parentBranchId === undefined ||
+        conversation.parentBranchId === null ||
+        conversation.parentBranchId === ""
           ? []
           : await tx
               .select({
@@ -51,7 +51,7 @@ export const insertEveConversationFixtures = async (
               .from(eveConversation)
               .where(
                 and(
-                  eq(eveConversation.id, conversation.parentConversationId),
+                  eq(eveConversation.id, conversation.parentBranchId),
                   eq(eveConversation.ownerId, conversation.ownerId)
                 )
               );

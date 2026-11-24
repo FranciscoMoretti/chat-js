@@ -15,9 +15,11 @@ This page explains the URL routing structure used in ChatJS.
 | `/project/:projectId` | Project page, draft chat within project |
 | `/project/:projectId/chat/:chatId` | Validates project membership and redirects to the conversation |
 
-## Reading the active conversation
+A `chatId` identifies the sidebar chat. A `branchId` identifies one branch within that chat. A `sessionId` identifies the native EVE session bound to that branch.
 
-Shared chat components use `useActiveConversationId()` from `@/components/chat/chat-navigation`. In a Next.js app it reads the `[chatId]` route parameter. An embedded chat supplies its conversation ID through `ChatNavigationContext`. Public share links use a separate `[id]` parameter.
+## Reading the active chat
+
+Shared chat components use `useActiveChatId()` from `@/components/chat/chat-navigation`. In a Next.js app it reads the `[chatId]` route parameter. An embedded chat supplies its chat ID through `ChatNavigationContext`. Public share links use a separate `[id]` parameter.
 
 Projects reads `[projectId]` in its own sidebar component. For a conversation with project membership, Projects provides `parentHref` through its chat integration so deletion returns the user to the project.
 

@@ -77,8 +77,8 @@ const fixture = async (parentId?: string) => {
     firstMessage: "Private fixture",
     sessionId,
     state: "bound",
-    parentConversationId: parentId,
-    rootConversationId: parentId,
+    parentBranchId: parentId,
+    rootBranchId: parentId,
   });
   return { ...conversation, sessionId };
 };
@@ -116,7 +116,7 @@ test("full deletion erases only its family and retries after payload removal", a
     .from(eveChat)
     .where(eq(eveChat.id, target.chatId));
   expect(deletedChat).toMatchObject({
-    activeConversationId: null,
+    activeBranchId: null,
     title: "",
   });
   expect(
@@ -157,14 +157,14 @@ test("deleting original keeps shared workspace and original upload until final f
   const fork = await fixture(original.id);
   await db
     .update(eveChat)
-    .set({ activeConversationId: original.id })
+    .set({ activeBranchId: original.id })
     .where(eq(eveChat.id, original.chatId));
   const key = crypto.randomUUID();
   await db.insert(eveStoredFile).values({ key, ownerId: owner });
   await db.insert(eveFileReference).values(
     [original, fork].map(({ id }) => ({
       key,
-      conversationId: id,
+      branchId: id,
       ownerId: owner,
     }))
   );
@@ -192,13 +192,13 @@ test("deleting original keeps shared workspace and original upload until final f
   expect(workspace.state).toBe("active");
   expect(file.state).toBe("active");
   expect(survivor.state).toBe("bound");
-  expect(chat.activeConversationId).toBe(fork.id);
+  expect(chat.activeBranchId).toBe(fork.id);
   expect(
     await db
       .select()
       .from(eveFileReference)
       .where(eq(eveFileReference.key, key))
-  ).toEqual([expect.objectContaining({ conversationId: fork.id, key })]);
+  ).toEqual([expect.objectContaining({ branchId: fork.id, key })]);
   expect(
     await native`select id from workflow.workflow_runs where id = ${fork.sessionId}`
   ).toHaveLength(1);
@@ -233,14 +233,14 @@ test("deleting the last never-dispatched fork cleans its retained workspace and 
     operationId: crypto.randomUUID(),
     firstMessage: "Waiting fork",
     state: "creating",
-    parentConversationId: original.id,
-    rootConversationId: original.id,
+    parentBranchId: original.id,
+    rootBranchId: original.id,
   });
   const key = crypto.randomUUID();
   await db.insert(eveStoredFile).values({ key, ownerId: owner });
   await db
     .insert(eveFileReference)
-    .values({ key, conversationId: waiting.id, ownerId: owner });
+    .values({ key, branchId: waiting.id, ownerId: owner });
   providers.files.mockClear();
   await deleteLocalEveConversationFamily(owner, original.id);
   expect(providers.files).not.toHaveBeenCalled();

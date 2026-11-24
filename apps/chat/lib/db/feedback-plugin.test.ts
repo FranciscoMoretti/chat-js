@@ -72,8 +72,8 @@ test("reads and writes require the owner and a currently bound conversation", as
 });
 test("deleting one branch cleans its votes while preserving the surviving chat and its votes", async () => {
   await completeEveConversationDeletion("owner", branchId);
-  const votes = await postgres.query('SELECT "conversationId" FROM "EveVote"');
-  expect(votes.rows).toEqual([{ conversationId: chatId }]);
+  const votes = await postgres.query('SELECT "branchId" FROM "EveVote"');
+  expect(votes.rows).toEqual([{ branchId: chatId }]);
   expect(await getEveMessageVotes("owner", chatId)).toHaveLength(1);
   const branch = await postgres.query(
     `SELECT state FROM "EveConversation" WHERE id='${branchId}'`

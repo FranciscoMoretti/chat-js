@@ -61,25 +61,23 @@ Rules (strictly follow all):
   }
 };
 const persistGeneratedEveConversationTitle = async ({
-  conversationId,
+  branchId,
   message,
   ownerId,
 }: Readonly<{
-  conversationId: string;
+  branchId: string;
   message: ReadonlyEveMessageInput;
   ownerId: string;
 }>): Promise<EveTitleResult | undefined> => {
   const fallbackTitle = eveConversationTitleFallback(message);
   try {
-    if (
-      !(await isEveRootTitlePending(ownerId, conversationId, fallbackTitle))
-    ) {
+    if (!(await isEveRootTitlePending(ownerId, branchId, fallbackTitle))) {
       return undefined;
     }
   } catch (error) {
     log.warn(
       {
-        conversationId,
+        branchId,
         errorName: error instanceof Error ? error.name : typeof error,
       },
       "Eve title eligibility check failed"
@@ -91,15 +89,15 @@ const persistGeneratedEveConversationTitle = async ({
     await (generated.source === "generated"
       ? replaceEveRootFallbackTitle(
           ownerId,
-          conversationId,
+          branchId,
           fallbackTitle,
           generated.title
         )
-      : settleEveRootFallbackTitle(ownerId, conversationId, fallbackTitle));
+      : settleEveRootFallbackTitle(ownerId, branchId, fallbackTitle));
   } catch (error) {
     log.warn(
       {
-        conversationId,
+        branchId,
         errorName: error instanceof Error ? error.name : typeof error,
       },
       "Eve title persistence failed"

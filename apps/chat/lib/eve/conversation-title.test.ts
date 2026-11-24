@@ -90,7 +90,7 @@ it("writes only a successful generated title through the canonical root update",
 
   await expect(
     persistGeneratedEveConversationTitle({
-      conversationId: "conversation-id",
+      branchId: "conversation-id",
       message: "Compare server rendering strategies",
       ownerId: "owner-id",
     })
@@ -109,7 +109,7 @@ it("does not mark a fallback as generated when the provider fails", async () => 
   mocks.generate.mockRejectedValue(new Error("provider unavailable"));
 
   await persistGeneratedEveConversationTitle({
-    conversationId: "conversation-id",
+    branchId: "conversation-id",
     message: "A message that stays a fallback title",
     ownerId: "owner-id",
   });
@@ -127,7 +127,7 @@ it("contains persistence failures after a title has been generated", async () =>
 
   await expect(
     persistGeneratedEveConversationTitle({
-      conversationId: "conversation-id",
+      branchId: "conversation-id",
       message: "message",
       ownerId: "owner-id",
     })
@@ -137,7 +137,7 @@ it("does not spend a title generation after the canonical title settles", async 
   mocks.pending.mockResolvedValue(false);
 
   await persistGeneratedEveConversationTitle({
-    conversationId: "conversation-id",
+    branchId: "conversation-id",
     message: "message",
     ownerId: "owner-id",
   });

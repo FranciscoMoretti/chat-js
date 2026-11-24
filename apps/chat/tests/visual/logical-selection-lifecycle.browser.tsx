@@ -95,7 +95,7 @@ it("confirms a pending response once, clears it before recursive selection event
   act(() => {
     harness = createDomHarness(
       <ParallelResponses
-        conversationId="conversation"
+        branchId="conversation"
         messageId="message"
         disabled={false}
       />
@@ -137,7 +137,7 @@ it("confirms a pending response once, clears it before recursive selection event
       fixture.emit();
       rendered.update(
         <ParallelResponses
-          conversationId="conversation"
+          branchId="conversation"
           messageId="message"
           disabled={false}
         />
@@ -157,7 +157,7 @@ it("confirms a pending response once, clears it before recursive selection event
       fixture.controller = { ...fixture.controller };
       rendered.update(
         <ParallelResponses
-          conversationId="conversation"
+          branchId="conversation"
           messageId="message"
           disabled={false}
         />

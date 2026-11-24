@@ -1,7 +1,7 @@
 import { definePluginItem } from "../define-item";
 
 const feedbackFiles = [
-  "chatjs/plugins/feedback/chat.ts",
+  "chatjs/plugins/feedback/chat-server.ts",
   "chatjs/plugins/feedback/chat-ui.ts",
   "chatjs/plugins/feedback/feedback-actions.tsx",
   "chatjs/plugins/feedback/message-vote-actions.tsx",

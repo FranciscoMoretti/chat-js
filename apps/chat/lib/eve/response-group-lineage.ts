@@ -9,7 +9,7 @@ interface EveResponseGroupLineageConversation {
   forkTurnId: string | null;
   id: string;
   operationId: string;
-  parentConversationId: string | null;
+  parentBranchId: string | null;
   sessionId: string;
 }
 
@@ -19,17 +19,14 @@ type LineageConversation = Readonly<
 
 interface EveResponseGroupLineage {
   groupId: string;
-  replacements: ReadonlyMap<
-    string,
-    { conversationId: string; sessionId: string }
-  >;
+  replacements: ReadonlyMap<string, { branchId: string; sessionId: string }>;
 }
 
 const localTurnBoundary = (
   conversation: LineageConversation
 ): string | null => {
-  const { parentConversationId } = conversation;
-  if (parentConversationId === null || parentConversationId === "") {
+  const { parentBranchId } = conversation;
+  if (parentBranchId === null || parentBranchId === "") {
     return "turn_0";
   }
   const { forkMessageId } = conversation;
@@ -53,7 +50,7 @@ const latestRegeneration = (
   original: LineageConversation,
   originalBoundary: string,
   children: ReadonlyMap<string, readonly LineageConversation[]>,
-  selectedConversationId: string,
+  selectedBranchId: string,
   conversationsById: ReadonlyMap<string, LineageConversation>
 ): LineageConversation | undefined => {
   let latest = original;
@@ -76,32 +73,32 @@ const latestRegeneration = (
       }
     }
   }
-  return valid.has(selectedConversationId)
-    ? conversationsById.get(selectedConversationId)
+  return valid.has(selectedBranchId)
+    ? conversationsById.get(selectedBranchId)
     : latest;
 };
 
 const lineageReplacements = (
-  selectedConversationId: string,
+  selectedBranchId: string,
   conversations: readonly LineageConversation[],
   candidateOperationIds: readonly string[],
   conversationsById: ReadonlyMap<string, LineageConversation>
-): Map<string, { conversationId: string; sessionId: string }> => {
+): Map<string, { branchId: string; sessionId: string }> => {
   const children = new Map<string, LineageConversation[]>();
   for (const conversation of conversations) {
-    if (!isNonEmptyString(conversation.parentConversationId)) {
+    if (!isNonEmptyString(conversation.parentBranchId)) {
       continue;
     }
-    const existing = children.get(conversation.parentConversationId);
+    const existing = children.get(conversation.parentBranchId);
     if (existing) {
       existing.push(conversation);
     } else {
-      children.set(conversation.parentConversationId, [conversation]);
+      children.set(conversation.parentBranchId, [conversation]);
     }
   }
   const replacements = new Map<
     string,
-    { conversationId: string; sessionId: string }
+    { branchId: string; sessionId: string }
   >();
   for (const operationId of candidateOperationIds) {
     const original = conversations.find(
@@ -115,12 +112,12 @@ const lineageReplacements = (
       original,
       originalBoundary,
       children,
-      selectedConversationId,
+      selectedBranchId,
       conversationsById
     );
     if (replacement) {
       replacements.set(operationId, {
-        conversationId: replacement.id,
+        branchId: replacement.id,
         sessionId: replacement.sessionId,
       });
     }
@@ -130,13 +127,13 @@ const lineageReplacements = (
 
 /**
  * Resolve comparison ownership without treating edits or later turns as cards.
- * @param {string} selectedConversationId Selected conversation whose ancestry determines comparison ownership.
+ * @param {string} selectedBranchId Selected conversation whose ancestry determines comparison ownership.
  * @param {readonly LineageConversation[]} conversations Family ancestry and retry conversations available to validate regeneration lineage.
  * @param {readonly { readonly candidateOperationIds: readonly string[]; readonly id: string; }[]} groups Comparison groups with their original candidate operation identities.
  * @returns {EveResponseGroupLineage | undefined} The owning group and valid latest retry replacements, or absence for missing, cyclic, or inapplicable lineage.
  */
 const resolveEveResponseGroupLineage = (
-  selectedConversationId: string,
+  selectedBranchId: string,
   conversations: readonly LineageConversation[],
   groups: readonly {
     readonly candidateOperationIds: readonly string[];
@@ -148,12 +145,12 @@ const resolveEveResponseGroupLineage = (
   );
   const reversedLineage: LineageConversation[] = [];
   const visited = new Set<string>();
-  let current = conversationsById.get(selectedConversationId);
+  let current = conversationsById.get(selectedBranchId);
   while (current && !visited.has(current.id)) {
     reversedLineage.push(current);
     visited.add(current.id);
-    current = isNonEmptyString(current.parentConversationId)
-      ? conversationsById.get(current.parentConversationId)
+    current = isNonEmptyString(current.parentBranchId)
+      ? conversationsById.get(current.parentBranchId)
       : undefined;
   }
   if (reversedLineage.length === 0 || current) {
@@ -189,7 +186,7 @@ const resolveEveResponseGroupLineage = (
   }
 
   const replacements = lineageReplacements(
-    selectedConversationId,
+    selectedBranchId,
     conversations,
     group.candidateOperationIds,
     conversationsById

@@ -10,7 +10,7 @@ const log = createModuleLogger("chat.after-create");
 const runAfter = async (
   adapters: readonly ChatServerIntegration[],
   invoke: (adapter: ChatServerIntegration) => Promise<void>,
-  branchConversationId?: string
+  branchId?: string
 ): Promise<void> => {
   for (const [adapterIndex, adapter] of adapters.entries()) {
     try {
@@ -18,11 +18,11 @@ const runAfter = async (
       await invoke(adapter);
     } catch (error) {
       const errorName = error instanceof Error ? error.name : typeof error;
-      if (branchConversationId === undefined) {
+      if (branchId === undefined) {
         log.warn({ errorName }, "Chat afterCreate contribution failed");
       } else {
         log.warn(
-          { errorName, adapterIndex, conversationId: branchConversationId },
+          { errorName, adapterIndex, branchId },
           "Chat afterBranch contribution failed"
         );
       }
@@ -63,7 +63,7 @@ export const composeChat = (
       async (adapter) => {
         await adapter.afterBranch?.(context);
       },
-      context.conversationId
+      context.branchId
     );
   },
   historyFilter: (input, surface) =>

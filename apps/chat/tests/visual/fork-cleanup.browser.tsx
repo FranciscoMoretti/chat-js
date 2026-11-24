@@ -24,7 +24,7 @@ vi.mock("@tanstack/react-query", () => ({
         {
           forkTurnId: null,
           id: "11111111-1111-4111-8111-111111111111",
-          parentConversationId: null,
+          parentBranchId: null,
         },
       ],
     },

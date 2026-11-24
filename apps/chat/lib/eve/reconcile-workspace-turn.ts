@@ -44,9 +44,9 @@ const hasSettledDescendants = async (
 /** Reconcile known receipts only. Failure/absence leaves the durable workspace reservation intact. */
 export const reconcileEveWorkspaceTurn = async (
   ownerId: string,
-  conversationId: string
+  branchId: string
 ): Promise<void> => {
-  const active = await readActiveEveWorkspaceOperation(ownerId, conversationId);
+  const active = await readActiveEveWorkspaceOperation(ownerId, branchId);
   const sessionId = active?.operation.sessionId;
   if (
     active === undefined ||

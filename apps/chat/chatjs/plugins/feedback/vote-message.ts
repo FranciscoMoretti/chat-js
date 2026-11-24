@@ -11,15 +11,12 @@ const VOTE_SNAPSHOT_TIMEOUT_MS = 15_000;
 export const voteEveMessage = async (
   ownerId: string,
   input: {
-    readonly conversationId: string;
+    readonly branchId: string;
     readonly messageId: string;
     readonly type: "up" | "down";
   }
 ): Promise<Awaited<ReturnType<typeof saveEveMessageVote>>> => {
-  const conversation = await getFeedbackConversation(
-    ownerId,
-    input.conversationId
-  );
+  const conversation = await getFeedbackConversation(ownerId, input.branchId);
 
   if (
     !conversation ||
@@ -45,7 +42,7 @@ export const voteEveMessage = async (
   }
   return await saveEveMessageVote(
     ownerId,
-    input.conversationId,
+    input.branchId,
     input.messageId,
     input.type === "up"
   );

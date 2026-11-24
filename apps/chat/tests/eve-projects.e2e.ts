@@ -74,7 +74,7 @@ const conversation = async () =>
 test("assignment, filtered history and removal retain native identity", async () => {
   const row = await conversation();
   expect(await assignEveConversationProject(owner, row.id, ownProject)).toEqual(
-    { conversationId: row.id, projectId: ownProject }
+    { id: row.id, projectId: ownProject }
   );
   expect(await getEveConversationProject(owner, row.id)).toEqual({
     id: ownProject,
@@ -88,7 +88,7 @@ test("assignment, filtered history and removal retain native identity", async ()
     search: "",
   });
   expect(conversationsInProject.items).toEqual([
-    expect.objectContaining({ conversationId: row.id }),
+    expect.objectContaining({ branchId: row.id }),
   ]);
   const conversationsWithoutProject = await listEveConversations(owner, {
     projectId: null,
@@ -96,8 +96,7 @@ test("assignment, filtered history and removal retain native identity", async ()
   });
   expect(
     conversationsWithoutProject.items.some(
-      (item: Readonly<{ conversationId: string }>) =>
-        item.conversationId === row.id
+      (item: Readonly<{ branchId: string }>) => item.branchId === row.id
     )
   ).toBe(false);
   await assignEveConversationProject(owner, row.id, null);
@@ -157,8 +156,7 @@ test("deleting a project detaches its Eve conversations without erasing their se
   });
   expect(
     conversationsWithoutProject.items.some(
-      (item: Readonly<{ conversationId: string }>) =>
-        item.conversationId === row.id
+      (item: Readonly<{ branchId: string }>) => item.branchId === row.id
     )
   ).toBe(true);
   expect(
@@ -205,7 +203,7 @@ test("fork paths share their chat project and retry cannot restore an old assign
       operationId,
       "Fork fixture",
       createEveTestSession,
-      { fork: { conversationId: source.id } }
+      { fork: { branchId: source.id } }
     );
   const fork = await createFork();
   const forkProject = await getEveConversationProject(owner, fork.id);
@@ -244,7 +242,7 @@ test("an unresolved copy follows changes to its chat project", async () => {
       vi
         .fn<() => Promise<{ sessionId: string }>>()
         .mockRejectedValue(new Error("Lost creation reply")),
-      { fork: { conversationId: source.id } }
+      { fork: { branchId: source.id } }
     )
   ).rejects.toThrow("Lost creation reply");
   const pending = await getEveCreation(owner, operationId);
@@ -256,7 +254,7 @@ test("an unresolved copy follows changes to its chat project", async () => {
   expect(pendingProject?.id).toBe(ownProject);
   expect(
     await assignEveConversationProject(owner, pending.id, null)
-  ).toMatchObject({ conversationId: pending.id, projectId: null });
+  ).toMatchObject({ id: pending.id, projectId: null });
 });
 
 test("project creation binds before dispatch and preserves its initial intent through moves and deletion", async () => {

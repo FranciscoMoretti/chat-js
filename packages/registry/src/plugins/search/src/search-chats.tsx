@@ -99,7 +99,7 @@ const SearchResults = ({
           >
         ) => ({
           ...item,
-          conversationId: item.conversationId ?? item.id,
+          branchId: item.branchId ?? item.id,
           excerpt: "",
         })
       ) ?? [];

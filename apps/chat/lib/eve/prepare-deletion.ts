@@ -6,12 +6,12 @@ import {
 
 /** Authorize and retire the whole family before fencing work for external-resource inventory.
  * @param {string} ownerId Owner whose conversation family is authorized and retired.
- * @param {string} conversationId Conversation used to resolve the deletion family.
+ * @param {string} branchId Conversation used to resolve the deletion family.
  * @returns {ReturnType<typeof prepareEveFamilyDeletion>} The retired family with each native session inventory and sorted distinct run/stream identities, or no result for an absent family. Missing session bindings and lifecycle preparation failures reject before external-resource cleanup.
  */
 export const prepareEveFamilyDeletion = async (
   ownerId: string,
-  conversationId: string
+  branchId: string
 ): Promise<
   | (NonNullable<Awaited<ReturnType<typeof retireEveFamilyForDeletion>>> & {
       nativeInventories: {
@@ -25,7 +25,7 @@ export const prepareEveFamilyDeletion = async (
   | undefined
 > => {
   const lifecycle = requireEveDeletionLifecycle();
-  const family = await retireEveFamilyForDeletion(ownerId, conversationId);
+  const family = await retireEveFamilyForDeletion(ownerId, branchId);
   if (!family) {
     return undefined;
   }
