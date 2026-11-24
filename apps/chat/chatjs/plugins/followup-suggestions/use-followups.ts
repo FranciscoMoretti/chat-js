@@ -11,7 +11,7 @@ const POLL_INTERVAL_MS = 1000;
 const MAX_POLLS = 20;
 
 export const useEveFollowups = (
-  conversationId: string,
+  branchId: string,
   sessionId: string,
   events: Parameters<typeof followupCompletion>[0],
   message: ChatSuggestionsProps["lastMessage"]
@@ -23,7 +23,7 @@ export const useEveFollowups = (
       : undefined;
   const query = useQuery({
     ...trpc.followupSuggestions.get.queryOptions({
-      conversationId,
+      branchId,
       eventId: eventId ?? "",
     }),
     enabled:

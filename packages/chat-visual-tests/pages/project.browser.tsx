@@ -176,7 +176,7 @@ test.each(["desktop", "mobile"] as const)(
         ...request.trpc,
         "sharing.get": (input: { id: string }) => {
           expect(
-            launchChats.items.some((item) => item.conversationId === input.id)
+            launchChats.items.some((item) => item.branchId === input.id)
           ).toBe(true);
           return { id: input.id, visibility: "public" };
         },

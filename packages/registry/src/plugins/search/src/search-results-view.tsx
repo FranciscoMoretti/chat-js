@@ -68,7 +68,7 @@ export const EveSearchResultsView = ({
   readonly error: boolean;
   readonly items: readonly {
     readonly id: string;
-    readonly conversationId: string;
+    readonly branchId: string;
     readonly title: string;
     readonly excerpt: string;
   }[];
@@ -184,7 +184,7 @@ export const EveSearchResultsView = ({
                 key={item.id}
                 value={item.id}
                 onSelect={() => {
-                  onSelect(item.conversationId);
+                  onSelect(item.branchId);
                 }}
               >
                 <MessageSquare className="text-muted-foreground mt-0.5 size-4 shrink-0" />

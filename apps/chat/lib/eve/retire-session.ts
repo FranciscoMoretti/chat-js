@@ -115,12 +115,12 @@ const retireEveSessionForDeletion = async (
 /**
  * Revokes family access and settles every bound session before resource erasure starts.
  * @param {string} ownerId Owner whose conversation family is placed into deletion state.
- * @param {string} conversationId Conversation identifying the family whose bound sessions are retired.
+ * @param {string} branchId Conversation identifying the family whose bound sessions are retired.
  * @returns {Promise< | NonNullable<Awaited<ReturnType<typeof beginEveConversationDeletion>>> | undefined >} The deletion family after session retirement, or no result when no family is available.
  */
 const retireEveFamilyForDeletion = async (
   ownerId: string,
-  conversationId: string
+  branchId: string
 ): Promise<
   | NonNullable<Awaited<ReturnType<typeof beginEveConversationDeletion>>>
   | undefined
@@ -128,7 +128,7 @@ const retireEveFamilyForDeletion = async (
   assertEveConfigured();
   const lifecycle = requireEveDeletionLifecycle();
   await lifecycle.check();
-  const family = await beginEveConversationDeletion(ownerId, conversationId);
+  const family = await beginEveConversationDeletion(ownerId, branchId);
   if (!family) {
     return undefined;
   }

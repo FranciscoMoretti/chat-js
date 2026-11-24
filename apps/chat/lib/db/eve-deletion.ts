@@ -20,16 +20,16 @@ type DeletionTransaction = Readonly<
 >;
 /** Select the requested root or joined member while retaining the owner filter.
  * @param {string} ownerId - Owner required for either identity alternative.
- * @param {string} conversationId - Root chat ID or joined member conversation ID.
+ * @param {string} branchId - Root chat ID or joined member conversation ID.
  * @returns {ReturnType<typeof and>} Native Drizzle owner-and-identity predicate, with the root alternative evaluated before the member alternative.
  */
 const ownerVisibleEveIdentityCondition = (
   ownerId: string,
-  conversationId: string
+  branchId: string
 ): ReturnType<typeof and> =>
   and(
     eq(eveChat.ownerId, ownerId),
-    or(eq(eveChat.id, conversationId), eq(eveConversation.id, conversationId))
+    or(eq(eveChat.id, branchId), eq(eveConversation.id, branchId))
   );
 
 /** Require an identity before looking up or mutating its conversation family.
@@ -94,13 +94,13 @@ const readOwnedEveDeletionIdentity = (
 /** Read the first owner-visible identity and joined member state for a deletion receipt.
  * @param {Readonly<Pick<typeof db, "select">>} query - Existing select capability, forwarded without cloning or rebinding.
  * @param {string} ownerId - Owner required by the joined identity predicate.
- * @param {string} conversationId - Root chat ID or joined member conversation ID.
+ * @param {string} branchId - Root chat ID or joined member conversation ID.
  * @returns {QueryPromise<readonly ({ readonly chatId: typeof eveChat.$inferSelect.id; readonly state: typeof eveConversation.$inferSelect.state | null } | undefined)[]>} Original native query object; an empty result has no first row.
  */
 const readOwnedEveDeletionReceipt = (
   query: Readonly<Pick<typeof db, "select">>,
   ownerId: string,
-  conversationId: string
+  branchId: string
 ): QueryPromise<
   readonly (
     | {
@@ -121,10 +121,10 @@ const readOwnedEveDeletionReceipt = (
       and(
         eq(eveConversation.chatId, eveChat.id),
         eq(eveConversation.ownerId, eveChat.ownerId),
-        eq(eveConversation.id, conversationId)
+        eq(eveConversation.id, branchId)
       )
     )
-    .where(ownerVisibleEveIdentityCondition(ownerId, conversationId))
+    .where(ownerVisibleEveIdentityCondition(ownerId, branchId))
     .limit(SINGLE_MATCH_LIMIT);
 
 /** Read the owner-visible member state when a root receipt has no joined member state.
@@ -199,9 +199,9 @@ const completeEveConversationDeletion = async (
             ...contentTables.map((table) =>
               exists(
                 tx
-                  .select({ conversationId: table.conversationId })
+                  .select({ branchId: table.branchId })
                   .from(table)
-                  .where(eq(table.conversationId, eveConversation.id))
+                  .where(eq(table.branchId, eveConversation.id))
               )
             )
           )
@@ -213,9 +213,9 @@ const completeEveConversationDeletion = async (
     }
     await tx
       .delete(eveSubagentSession)
-      .where(inArray(eveSubagentSession.conversationId, ids));
+      .where(inArray(eveSubagentSession.branchId, ids));
     await chat.onDeleteConversations(tx, {
-      conversationIds: ids,
+      branchIds: ids,
       sessionIds: family.flatMap((row) =>
         row.sessionId === null ? [] : [row.sessionId]
       ),
@@ -248,12 +248,12 @@ const completeEveConversationDeletion = async (
     if (survivor) {
       await tx
         .update(eveChat)
-        .set({ activeConversationId: survivor.id })
+        .set({ activeBranchId: survivor.id })
         .where(
           and(
             eq(eveChat.id, identity.chatId),
             eq(eveChat.ownerId, ownerId),
-            inArray(eveChat.activeConversationId, ids)
+            inArray(eveChat.activeBranchId, ids)
           )
         );
     } else {
@@ -261,7 +261,7 @@ const completeEveConversationDeletion = async (
       await tx
         .update(eveChat)
         .set({
-          activeConversationId: null,
+          activeBranchId: null,
           isPinned: false,
           title: "",
           titleStatus: "fallback",
@@ -279,19 +279,19 @@ interface EveDeletionState {
 
 /** Read the owner-visible root and native deletion state, including identity tombstones.
  * @param {string} ownerId - Owner required by both identity and member queries.
- * @param {string} conversationId - Root chat ID or member conversation ID to inspect.
+ * @param {string} branchId - Root chat ID or member conversation ID to inspect.
  * @returns {Promise<EveDeletionState | null>} Root identity and state, or no receipt when the owner has no matching identity or member.
  */
 const getEveDeletionState = async (
   ownerId: string,
-  conversationId: string
+  branchId: string
 ): Promise<EveDeletionState | null> => {
-  const [row] = await readOwnedEveDeletionReceipt(db, ownerId, conversationId);
+  const [row] = await readOwnedEveDeletionReceipt(db, ownerId, branchId);
   if (!row) {
     return null;
   }
   if (row.state) {
-    return { rootId: conversationId, state: row.state };
+    return { rootId: branchId, state: row.state };
   }
   const members = await readOwnedEveDeletionMemberState(db, ownerId, row);
   const states = members.flatMap((member) => (member ? [member.state] : []));
@@ -303,6 +303,6 @@ const getEveDeletionState = async (
   );
   const state =
     active ?? (states.includes("deleting") ? "deleting" : "deleted");
-  return { rootId: conversationId, state };
+  return { rootId: branchId, state };
 };
 export { completeEveConversationDeletion, getEveDeletionState };

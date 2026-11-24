@@ -128,7 +128,7 @@ test.each([
 test("file import checks the current conversation reference before reading storage or acquiring a sandbox", async () => {
   mocks.resolve.mockResolvedValue({
     ownerId: "owner",
-    conversationId: "conversation",
+    branchId: "conversation",
   });
   mocks.access.mockRejectedValue(
     new Error("File unavailable in this conversation")
@@ -148,7 +148,7 @@ test("file import checks the current conversation reference before reading stora
 test("file import copies an authorized artifact without requiring its original sandbox", async () => {
   mocks.resolve.mockResolvedValue({
     ownerId: "owner",
-    conversationId: "conversation",
+    branchId: "conversation",
   });
   mocks.access.mockImplementation(
     async (_owner, _conversation, _key, access: () => Promise<unknown>) =>

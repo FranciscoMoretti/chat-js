@@ -189,7 +189,7 @@ test("a verified native hook binds while dispatch is in flight without conflicti
           AbortSignal.timeout(1000),
           reservationId
         )
-      ).toEqual({ conversationId: reservationId, ownerId: owner });
+      ).toEqual({ branchId: reservationId, ownerId: owner });
       return { sessionId: nativeSession };
     },
     { initialRequest: { message: "race", operationId } }

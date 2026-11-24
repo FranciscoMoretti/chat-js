@@ -41,7 +41,7 @@ vi.mock("@/lib/eve/reconcile-usage", () => ({
 vi.mock("@/lib/eve/server", () => ({ eveRequest: mocks.eveRequest }));
 
 const { POST } = await import("./route");
-const conversationId = "00000000-0000-4000-8000-000000000011";
+const branchId = "00000000-0000-4000-8000-000000000011";
 beforeAll(async () => {
   const journal = z
     .object({ entries: z.array(z.object({ tag: z.string() })) })
@@ -70,11 +70,11 @@ beforeAll(async () => {
   }
   /* oxlint-enable no-await-in-loop */
   await postgres.exec(`INSERT INTO "user" (id,name,email) VALUES ('owner','owner','owner');
-    INSERT INTO "EveChat" (id,"ownerId",title) VALUES ('${conversationId}','owner','Test');
-    INSERT INTO "EveWorkspace" (id, "ownerId") VALUES ('${conversationId}', 'owner');
+    INSERT INTO "EveChat" (id,"ownerId",title) VALUES ('${branchId}','owner','Test');
+    INSERT INTO "EveWorkspace" (id, "ownerId") VALUES ('${branchId}', 'owner');
     INSERT INTO "EveConversation" ("workspaceId", id,"chatId","ownerId","operationId","firstMessage","sessionId",state)
-    VALUES ('${conversationId}','${conversationId}','${conversationId}','owner','${conversationId}','Test','native','bound');`);
-  mocks.bound.mockResolvedValue({ id: conversationId });
+    VALUES ('${branchId}','${branchId}','${branchId}','owner','${branchId}','Test','native','bound');`);
+  mocks.bound.mockResolvedValue({ id: branchId });
   mocks.principal.mockResolvedValue({ kind: "registered", ownerId: "owner" });
   mocks.canSpend.mockResolvedValue(true);
   mocks.prepare.mockResolvedValue("prepared");

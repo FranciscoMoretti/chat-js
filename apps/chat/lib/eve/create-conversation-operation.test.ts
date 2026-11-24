@@ -60,7 +60,7 @@ vi.mock("./conversation-title", () => ({
 }));
 
 const input = {
-  fork: { conversationId: "source-chat" },
+  fork: { branchId: "source-chat" },
   message: "compare",
   modelId: "openai/gpt-4o",
   operationId: "ba1d7f02-597b-47a7-a8de-20f700500f0d",

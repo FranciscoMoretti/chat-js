@@ -13,15 +13,15 @@ import { eveConversation } from "@/lib/db/schema";
 export const eveSearchText = pgTable(
   "EveSearchText",
   {
-    conversationId: uuid("conversationId").notNull(),
+    branchId: uuid("branchId").notNull(),
     key: text("key").notNull(),
     ownerId: text("ownerId").notNull(),
     text: text("text").notNull(),
   },
   (table) => [
-    primaryKey({ columns: [table.conversationId, table.key] }),
+    primaryKey({ columns: [table.branchId, table.key] }),
     foreignKey({
-      columns: [table.conversationId, table.ownerId],
+      columns: [table.branchId, table.ownerId],
       foreignColumns: [eveConversation.id, eveConversation.ownerId],
     }).onDelete("cascade"),
     index("EveSearchText_owner").on(table.ownerId),

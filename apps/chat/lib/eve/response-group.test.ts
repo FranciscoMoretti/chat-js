@@ -40,7 +40,7 @@ it("marks every multi-model edited candidate with the shared user intent", async
   mocks.reserve.mockResolvedValue(group);
   await createEveResponseGroup("owner", {
     ...input,
-    fork: { conversationId: crypto.randomUUID() },
+    fork: { branchId: crypto.randomUUID() },
     forkKind: "edit",
   });
   expect(mocks.create).toHaveBeenCalledTimes(2);
@@ -57,7 +57,7 @@ it("keeps shared-workspace backpressure waiting and retries only the saved order
   const shared = {
     ...input,
     modelIds: ["one", "two", "three"],
-    fork: { conversationId: crypto.randomUUID() },
+    fork: { branchId: crypto.randomUUID() },
   };
   const reserved = {
     id: crypto.randomUUID(),

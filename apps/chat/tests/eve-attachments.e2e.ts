@@ -94,7 +94,7 @@ test("ChatJS upload remains durable through creation retries and message editing
       await db
         .select({ key: eveFileReference.key })
         .from(eveFileReference)
-        .where(eq(eveFileReference.conversationId, binding.id))
+        .where(eq(eveFileReference.branchId, binding.id))
     ).toEqual([{ key: keyFromFileUrl(file.url) }]);
     await page.goto(`/chat/${binding.id}`);
     await expect(page.getByText("Ready", { exact: true })).toBeVisible({
@@ -400,7 +400,7 @@ test("composer uploads and clears attachments, then reload confirms an in-flight
           .from(eveFileReference)
           .innerJoin(
             eveChat,
-            eq(eveChat.activeConversationId, eveFileReference.conversationId)
+            eq(eveChat.activeBranchId, eveFileReference.branchId)
           )
           .where(eq(eveChat.id, chatId));
         return rows

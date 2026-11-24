@@ -134,20 +134,17 @@ const sameComposerDraft = (
 
 const useConversationInput = (
   ownerId: string,
-  conversationId: string,
+  branchId: string,
   draftScopeId?: string
 ) => {
   const changeModel = useModelChange();
   const [selection, setSelection] = useState<SelectedModelValue>();
   const selectedModel = useDefaultModel();
-  const composerDraft = useEveComposerDraft(
-    ownerId,
-    draftScopeId ?? conversationId
-  );
+  const composerDraft = useEveComposerDraft(ownerId, draftScopeId ?? branchId);
   const files = useEveAttachments(composerDraft);
   const fork = useEveFork(
     ownerId,
-    conversationId,
+    branchId,
     (message, selectedTool, clearComposer) => {
       const sent = restoreDraft(message);
       if (
@@ -231,7 +228,7 @@ const selectedConversationMessages = (
   messages: readonly ReadonlyEveMessage[],
   controller: Readonly<Pick<LogicalChat, "logicalId">>,
   snapshot: Readonly<Pick<LogicalChatSnapshot, "cursorId" | "nodes">>,
-  conversationId: string
+  branchId: string
 ): readonly ReadonlyEveMessage[] => {
   const selectedPath = new Set<string>();
   let selectedNode = hasText(snapshot.cursorId)
@@ -251,14 +248,14 @@ const selectedConversationMessages = (
       ) {
         return false;
       }
-      const logicalId = controller.logicalId(conversationId, message.id);
+      const logicalId = controller.logicalId(branchId, message.id);
       return (
         !hasText(snapshot.cursorId) ||
         (hasText(logicalId) && selectedPath.has(logicalId))
       );
     })
     .map((message) => {
-      const id = controller.logicalId(conversationId, message.id);
+      const id = controller.logicalId(branchId, message.id);
       const canonical =
         typeof id === "string" && id !== ""
           ? snapshot.nodes.get(id)?.message
@@ -553,34 +550,34 @@ const EveConversationComposer = ({
 
 const EveConversation = ({
   sessionId,
-  conversationId,
+  branchId,
   ownerId,
   header,
   draftScopeId,
   initialMessage,
 }: {
   sessionId: string;
-  conversationId: string;
+  branchId: string;
   ownerId: string;
   header: ReactNode;
   readonly initialMessage?: Parameters<typeof restoreDraft>[0];
   draftScopeId?: string;
 }): ReactJSX.Element => {
   const [, startEventAction] = React.useTransition();
-  const input = useConversationInput(ownerId, conversationId, draftScopeId);
+  const input = useConversationInput(ownerId, branchId, draftScopeId);
   const { fork, composerDraft, files, comparison, modelIds } = input;
   const delivery = useEveMessageDelivery(sessionId);
   const pendingMessage = delivery.pending;
   const { controller, snapshot } = useLogicalChat();
-  const command = useLogicalCommands(controller.commands, conversationId);
+  const command = useLogicalCommands(controller.commands, branchId);
   const commandFailure = command.failure;
   const commandPending = command.pending;
   const cancelPending = command.cancelling;
   const setCommandFailure = (error?: Error): void => {
-    controller.commands.update(conversationId, { failure: error });
+    controller.commands.update(branchId, { failure: error });
   };
   const { text: draft, setText: setDraft } = composerDraft;
-  const agent = snapshot.agents.get(conversationId);
+  const agent = snapshot.agents.get(branchId);
   if (!agent) {
     throw new Error("Native observer is not ready.");
   }
@@ -599,7 +596,7 @@ const EveConversation = ({
     agent.messages,
     controller,
     snapshot,
-    conversationId
+    branchId
   );
   const lastMessage = messages.at(-1);
   const editingMessageId =
@@ -646,7 +643,7 @@ const EveConversation = ({
     }
   };
   const run = async (action: () => Promise<unknown>): Promise<void> => {
-    if (!controller.commands.claim(conversationId)) {
+    if (!controller.commands.claim(branchId)) {
       return;
     }
     setCommandFailure(undefined);
@@ -664,7 +661,7 @@ const EveConversation = ({
         }
       },
       () => {
-        controller.commands.update(conversationId, { pending: false });
+        controller.commands.update(branchId, { pending: false });
       }
     );
   };
@@ -672,16 +669,16 @@ const EveConversation = ({
     action: () => Promise<void>,
     operationId?: string
   ): Promise<void> => {
-    const { cancellation } = controller.commands.get(conversationId);
+    const { cancellation } = controller.commands.get(branchId);
     await sendCommand(
       action,
       agent.resume,
       cancellation > 0,
-      () => controller.getSnapshot().agents.get(conversationId)?.error,
+      () => controller.getSnapshot().agents.get(branchId)?.error,
       () => !hasText(operationId) || delivery.hasAcknowledged(operationId)
     );
-    if (controller.commands.get(conversationId).cancellation === cancellation) {
-      controller.commands.update(conversationId, { cancellation: 0 });
+    if (controller.commands.get(branchId).cancellation === cancellation) {
+      controller.commands.update(branchId, { cancellation: 0 });
     }
   };
   const sendPendingMessage = async (
@@ -719,7 +716,7 @@ const EveConversation = ({
     selectedTool?: UiToolName,
     turnPolicy?: ActivePendingEveMessage["turnPolicy"]
   ): Promise<void> => {
-    controller.selectBranch(conversationId);
+    controller.selectBranch(branchId);
     const pending = delivery.begin({
       attachments,
       message: message.trim(),
@@ -761,7 +758,7 @@ const EveConversation = ({
     );
   };
   const cancel = async (): Promise<void> => {
-    await cancelExecution(conversationId);
+    await cancelExecution(branchId);
   };
   const handleEditSubmit = fork.submit;
   const statusLabel = conversationStatus(
@@ -781,11 +778,11 @@ const EveConversation = ({
   });
   return (
     <ChatConversationScreen
-      conversationId={conversationId}
+      branchId={branchId}
       header={header}
       transcript={{
         actionsDisabled: actionLocks.transcript,
-        conversationId,
+        branchId,
         disabled: busy || commandPending,
         inputDisabled,
         isReadonly: false,
@@ -816,20 +813,20 @@ const EveConversation = ({
         modelForMessage,
         renderVersions: (message): React.JSX.Element => (
           <EveLogicalVersions
-            conversationId={conversationId}
+            branchId={branchId}
             messageId={message.id}
             disabled={actionLocks.navigation}
           />
         ),
         renderResponses: (message): React.JSX.Element => (
           <MessageResponses
-            conversationId={conversationId}
+            branchId={branchId}
             messageId={message.id}
             disabled={actionLocks.navigation}
           />
         ),
         messageKey: (message) =>
-          controller.logicalId(conversationId, message.id) ??
+          controller.logicalId(branchId, message.id) ??
           `${sessionId}:${message.id}`,
         onEdit: (message) => {
           const following = messages.slice(messages.indexOf(message) + 1);
@@ -839,7 +836,7 @@ const EveConversation = ({
           const response = following
             .slice(0, nextUser === -1 ? following.length : nextUser)
             .find((candidate) => candidate.role === "assistant");
-          const logicalId = controller.logicalId(conversationId, message.id);
+          const logicalId = controller.logicalId(branchId, message.id);
           const group = hasText(logicalId)
             ? logicalResponseSlots(snapshot, logicalId)
             : undefined;
@@ -868,7 +865,7 @@ const EveConversation = ({
         suggestions: (
           <ChatSuggestions
             sessionId={sessionId}
-            conversationId={conversationId}
+            branchId={branchId}
             events={agent.events}
             lastMessage={lastMessage}
             disabled={actionLocks.transcript}

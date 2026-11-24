@@ -14,12 +14,12 @@ type WriteTransaction = Readonly<
  * Reads vote state for messages in one bound conversation owned by the user.
  * Public sharing does not grant access to these owner-only votes.
  * @param {string} ownerId Owner whose vote state is requested.
- * @param {string} conversationId Bound conversation to read.
+ * @param {string} branchId Bound conversation to read.
  * @returns {PromiseLike<Pick<typeof eveVote.$inferSelect, "isUpvoted" | "messageId">[]>} Lazy owner-filtered query. Await it or consume it with .then or .execute to read matching rows; Drizzle query methods remain available before consumption.
  */
 export const getEveMessageVotes = (
   ownerId: string,
-  conversationId: string
+  branchId: string
 ): PgSelectWithout<
   PgSelectBase<
     GetSelectTableName<typeof eveVote>,
@@ -37,10 +37,10 @@ export const getEveMessageVotes = (
   db
     .select({ isUpvoted: eveVote.isUpvoted, messageId: eveVote.messageId })
     .from(eveVote)
-    .innerJoin(eveConversation, eq(eveConversation.id, eveVote.conversationId))
+    .innerJoin(eveConversation, eq(eveConversation.id, eveVote.branchId))
     .where(
       and(
-        eq(eveConversation.id, conversationId),
+        eq(eveConversation.id, branchId),
         eq(eveConversation.ownerId, ownerId),
         eq(eveConversation.state, "bound")
       )
@@ -50,14 +50,14 @@ export const getEveMessageVotes = (
  * Saves a message vote after validating the message against the native Eve snapshot.
  * The owner and bound-conversation check runs under the conversation-family lock.
  * @param {string} ownerId Owner submitting the vote.
- * @param {string} conversationId Bound conversation containing the message.
+ * @param {string} branchId Bound conversation containing the message.
  * @param {string} messageId Native message ID being rated.
  * @param {boolean} isUpvoted Whether the message received a positive vote.
  * @returns {Promise<{ isUpvoted: boolean; messageId: string } | null>} The saved vote, or null when the conversation is no longer bound to the owner.
  */
 export const saveEveMessageVote = async (
   ownerId: string,
-  conversationId: string,
+  branchId: string,
   messageId: string,
   isUpvoted: boolean
 ): Promise<Pick<
@@ -73,7 +73,7 @@ export const saveEveMessageVote = async (
       .from(eveConversation)
       .where(
         and(
-          eq(eveConversation.id, conversationId),
+          eq(eveConversation.id, branchId),
           eq(eveConversation.ownerId, ownerId),
           eq(eveConversation.state, "bound")
         )
@@ -83,10 +83,10 @@ export const saveEveMessageVote = async (
     }
     const [saved] = await tx
       .insert(eveVote)
-      .values({ conversationId, isUpvoted, messageId })
+      .values({ branchId, isUpvoted, messageId })
       .onConflictDoUpdate({
         set: { isUpvoted },
-        target: [eveVote.conversationId, eveVote.messageId],
+        target: [eveVote.branchId, eveVote.messageId],
       })
       .returning({
         isUpvoted: eveVote.isUpvoted,
@@ -97,7 +97,7 @@ export const saveEveMessageVote = async (
 
 export const getFeedbackConversation = async (
   ownerId: string,
-  conversationId: string
+  branchId: string
 ) => {
   const conversations = await db
     .select({
@@ -107,7 +107,7 @@ export const getFeedbackConversation = async (
     .from(eveConversation)
     .where(
       and(
-        eq(eveConversation.id, conversationId),
+        eq(eveConversation.id, branchId),
         eq(eveConversation.ownerId, ownerId),
         eq(eveConversation.state, "bound")
       )

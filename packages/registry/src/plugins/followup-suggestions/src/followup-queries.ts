@@ -54,7 +54,7 @@ export const finishEveFollowup = async (
 
 export const getEveFollowup = async (
   ownerId: string,
-  conversationId: string,
+  branchId: string,
   eventId: string
 ): Promise<readonly string[] | null> => {
   const [row] = await db
@@ -69,7 +69,7 @@ export const getEveFollowup = async (
     )
     .where(
       and(
-        eq(eveConversation.id, conversationId),
+        eq(eveConversation.id, branchId),
         eq(eveConversation.ownerId, ownerId),
         eq(eveConversation.state, "bound"),
         eq(eveFollowup.eventId, eventId)

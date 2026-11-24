@@ -869,8 +869,8 @@ test("lost branch response keeps source recovery visible instead of selecting th
     "Replacement awaiting recovery",
     invoicesConversation.initialModelId ?? undefined,
     {
-      conversationId: invoicesConversation.id,
-      fork: { conversationId: invoicesConversation.id },
+      branchId: invoicesConversation.id,
+      fork: { branchId: invoicesConversation.id },
       forkKind: "edit",
     }
   );
@@ -881,8 +881,8 @@ test("lost branch response keeps source recovery visible instead of selecting th
     "Other pending branch",
     undefined,
     {
-      conversationId: otherId,
-      fork: { conversationId: otherId },
+      branchId: otherId,
+      fork: { branchId: otherId },
       forkKind: "edit",
     }
   );
@@ -902,7 +902,7 @@ test("lost branch response keeps source recovery visible instead of selecting th
             ...source,
             id: otherId,
             sessionId: "ses_newer",
-            parentConversationId: source.id,
+            parentBranchId: source.id,
             createdAt: new Date("2027-01-01"),
           },
           source,
@@ -977,7 +977,7 @@ test.each(["waiting", "lost reply"])(
           state: "bound" as const,
           modelId,
           operationId: invoicesConversation.operationId,
-          conversationId: invoicesConversation.id,
+          branchId: invoicesConversation.id,
           sessionId: invoicesConversation.sessionId ?? "",
         },
         { state: "waiting" as const, modelId, operationId: waitingId },

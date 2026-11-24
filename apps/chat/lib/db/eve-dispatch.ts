@@ -35,7 +35,7 @@ export const getEveMessageDisplayReceipts = async (
     .innerJoin(
       eveConversation,
       and(
-        eq(eveDispatch.conversationId, eveConversation.id),
+        eq(eveDispatch.branchId, eveConversation.id),
         eq(eveDispatch.ownerId, eveConversation.ownerId)
       )
     )
@@ -97,7 +97,7 @@ export class EveDispatchUnknownError extends Error {
 const readEveDispatch = async (input: {
   readonly ownerId: string;
   readonly operationId: string;
-  readonly conversationId: string;
+  readonly branchId: string;
   readonly kind: "create" | "copy" | "send";
   readonly intent: unknown;
 }): Promise<{ sessionId: string; deliveryId?: string } | undefined> => {
@@ -116,7 +116,7 @@ const readEveDispatch = async (input: {
   // oxlint-disable-next-line unicorn/prefer-structured-clone -- Match JSON persistence semantics, including omission of undefined object fields.
   const intent: unknown = JSON.parse(JSON.stringify(input.intent));
   if (
-    existing.conversationId !== input.conversationId ||
+    existing.branchId !== input.branchId ||
     existing.kind !== input.kind ||
     !isDeepStrictEqual(existing.intent, intent)
   ) {
@@ -143,7 +143,7 @@ const canSteerActiveDispatch = async (
   activeOperationId: string,
   input: {
     readonly ownerId: string;
-    readonly conversationId: string;
+    readonly branchId: string;
     readonly kind: "create" | "copy" | "send";
     readonly steerSessionId?: string;
   }
@@ -158,7 +158,7 @@ const canSteerActiveDispatch = async (
       and(
         eq(eveDispatch.ownerId, input.ownerId),
         eq(eveDispatch.operationId, activeOperationId),
-        eq(eveDispatch.conversationId, input.conversationId),
+        eq(eveDispatch.branchId, input.branchId),
         eq(eveDispatch.sessionId, input.steerSessionId),
         inArray(eveDispatch.kind, ["create", "send"])
       )
@@ -171,7 +171,7 @@ export const dispatchEveOnce = async (
   input: {
     readonly ownerId: string;
     readonly operationId: string;
-    readonly conversationId: string;
+    readonly branchId: string;
     readonly kind: "create" | "copy" | "send";
     readonly intent: unknown;
     readonly steerSessionId?: string;
@@ -187,7 +187,7 @@ export const dispatchEveOnce = async (
   if (replay) {
     return replay;
   }
-  await reconcileEveWorkspaceTurn(input.ownerId, input.conversationId);
+  await reconcileEveWorkspaceTurn(input.ownerId, input.branchId);
   const [conversation] = await db
     .select({
       id: eveConversation.id,
@@ -196,7 +196,7 @@ export const dispatchEveOnce = async (
     .from(eveConversation)
     .where(
       and(
-        eq(eveConversation.id, input.conversationId),
+        eq(eveConversation.id, input.branchId),
         eq(eveConversation.ownerId, input.ownerId)
       )
     );
@@ -245,7 +245,7 @@ export const dispatchEveOnce = async (
       .from(eveConversation)
       .where(
         and(
-          eq(eveConversation.id, input.conversationId),
+          eq(eveConversation.id, input.branchId),
           eq(eveConversation.ownerId, input.ownerId),
           eq(eveConversation.workspaceId, workspace.id)
         )
@@ -385,7 +385,7 @@ export const getEveSendReceipt = async (
     .innerJoin(
       eveConversation,
       and(
-        eq(eveDispatch.conversationId, eveConversation.id),
+        eq(eveDispatch.branchId, eveConversation.id),
         eq(eveDispatch.ownerId, eveConversation.ownerId)
       )
     )

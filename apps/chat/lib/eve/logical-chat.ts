@@ -11,7 +11,7 @@ interface EveBranchReference {
   forkMessageId?: string | null;
   forkTurnId: string | null;
   id: string;
-  parentConversationId: string | null;
+  parentBranchId: string | null;
   responseGroupId?: string | null;
   responseGroupIndex?: number | null;
 }
@@ -38,13 +38,13 @@ type LogicalBranch = EveBranchReference & {
 interface LogicalNode {
   id: string;
   parentId: string | null;
-  conversationId: string;
+  branchId: string;
   message: EveMessage;
 }
 interface LogicalChatSnapshot {
   readyBranches: ReadonlySet<string>;
   chatId: string;
-  conversationId: string;
+  branchId: string;
   cursorId: string | null;
   nodes: ReadonlyMap<string, LogicalNode>;
   paths: ReadonlyMap<string, readonly string[]>;
@@ -94,14 +94,14 @@ const branchPrefix = (
   aliases: ReadonlyMap<string, string>
 ): { prefix: readonly string[]; replaced?: string } => {
   if (
-    !isNonEmptyString(branch.parentConversationId) ||
+    !isNonEmptyString(branch.parentBranchId) ||
     !isNonEmptyString(branch.forkMessageId)
   ) {
     return { prefix: [] };
   }
-  const source = paths.get(branch.parentConversationId) ?? [];
+  const source = paths.get(branch.parentBranchId) ?? [];
   const boundary = aliases.get(
-    aliasKey(branch.parentConversationId, branch.forkMessageId)
+    aliasKey(branch.parentBranchId, branch.forkMessageId)
   );
   const index = boundary === undefined ? -1 : source.indexOf(boundary);
   if (index < 0) {
@@ -160,7 +160,7 @@ const projectBranch = (
         : logicalNativeId(branch.sessionId ?? branch.id, message));
     if (!nodes.has(id)) {
       nodes.set(id, {
-        conversationId: branch.id,
+        branchId: branch.id,
         id,
         message,
         parentId: path.at(-1) ?? null,
@@ -206,19 +206,19 @@ class LogicalChat {
   public readonly chatId: string;
   public constructor(
     chatId: string,
-    initialConversationId: string,
+    initialBranchId: string,
     hydrateLatest = false
   ) {
     this.hydrateLatest = hydrateLatest;
     this.chatId = chatId;
-    this.selected = initialConversationId;
+    this.selected = initialBranchId;
     this.snapshot = {
       agents: new Map(),
       aliases: new Map(),
       branches: [],
       chatId,
       children: new Map(),
-      conversationId: initialConversationId,
+      branchId: initialBranchId,
       cursorId: null,
       nodes: new Map(),
       paths: new Map(),
@@ -246,8 +246,8 @@ class LogicalChat {
     this.publish();
   }
 
-  public observe(conversationId: string, agent: NativeChatAgent): void {
-    const previous = this.agents.get(conversationId);
+  public observe(branchId: string, agent: NativeChatAgent): void {
+    const previous = this.agents.get(branchId);
     if (
       previous?.messages === agent.messages &&
       previous.events === agent.events &&
@@ -256,7 +256,7 @@ class LogicalChat {
     ) {
       return;
     }
-    this.agents.set(conversationId, agent);
+    this.agents.set(branchId, agent);
     this.publish();
   }
 
@@ -273,20 +273,20 @@ class LogicalChat {
     this.pendingSelection = undefined;
   }
 
-  public selectBranch(conversationId: string): void {
+  public selectBranch(branchId: string): void {
     this.hydrateLatest = false;
     this.follow = true;
-    const path = this.snapshot.paths.get(conversationId);
+    const path = this.snapshot.paths.get(branchId);
     if (
       path !== undefined &&
       path.length > 0 &&
-      this.snapshot.readyBranches.has(conversationId)
+      this.snapshot.readyBranches.has(branchId)
     ) {
       this.pendingSelection = undefined;
-      this.selected = conversationId;
+      this.selected = branchId;
       this.cursor = path.at(-1) ?? null;
     } else {
-      this.pendingSelection = conversationId;
+      this.pendingSelection = branchId;
     }
     this.publish();
   }
@@ -303,26 +303,22 @@ class LogicalChat {
       last = (this.snapshot.children.get(node.id) ?? []).at(-1);
     }
     this.pendingSelection = undefined;
-    this.selected = node.conversationId;
+    this.selected = node.branchId;
     this.cursor = node.id;
     this.follow =
-      node.message.role === "user" &&
-      busy(this.agents.get(node.conversationId));
+      node.message.role === "user" && busy(this.agents.get(node.branchId));
     this.publish();
   }
 
-  public logicalId(
-    conversationId: string,
-    nativeId: string
-  ): string | undefined {
-    return this.snapshot.aliases.get(aliasKey(conversationId, nativeId));
+  public logicalId(branchId: string, nativeId: string): string | undefined {
+    return this.snapshot.aliases.get(aliasKey(branchId, nativeId));
   }
 
   public siblings(
-    conversationId: string,
+    branchId: string,
     nativeId: string
   ): { ids: readonly string[]; index: number } {
-    const id = this.logicalId(conversationId, nativeId);
+    const id = this.logicalId(branchId, nativeId);
     if (!isNonEmptyString(id)) {
       return { ids: [], index: -1 };
     }
@@ -400,8 +396,8 @@ class LogicalChat {
       let progressed = false;
       for (const [id, branch] of waiting) {
         if (
-          isNonEmptyString(branch.parentConversationId) &&
-          !paths.has(branch.parentConversationId)
+          isNonEmptyString(branch.parentBranchId) &&
+          !paths.has(branch.parentBranchId)
         ) {
           continue;
         }
@@ -457,7 +453,7 @@ class LogicalChat {
       branches: this.branches,
       chatId: this.chatId,
       children,
-      conversationId: this.selected,
+      branchId: this.selected,
       cursorId: this.cursor,
       error,
       nodes,

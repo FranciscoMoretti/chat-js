@@ -78,7 +78,7 @@ export const ChatSidebar = ({
   ownerId,
   history,
   account,
-  conversationId,
+  chatId,
   onProjectSelect,
   onChatSelect,
 }: {
@@ -87,7 +87,7 @@ export const ChatSidebar = ({
   readonly history: SidebarData | Promise<SidebarData>;
   readonly account: ComponentProps<typeof ChatAccount>;
   readonly onChatSelect?: (id: string) => void;
-  readonly conversationId?: string;
+  readonly chatId?: string;
   readonly onProjectSelect?: (id: string) => void;
 }) => (
   <Sidebar
@@ -117,10 +117,7 @@ export const ChatSidebar = ({
     <SidebarSeparator />
     <ScrollArea className="relative flex-1 overflow-y-auto">
       <SidebarContent className="max-w-(--sidebar-width) pr-2 group-data-[collapsible=icon]:hidden">
-        <SidebarSections
-          conversationId={conversationId}
-          onProjectSelect={onProjectSelect}
-        />
+        <SidebarSections chatId={chatId} onProjectSelect={onProjectSelect} />
         <Suspense fallback={<HistorySkeleton />}>
           <History data={history} />
         </Suspense>

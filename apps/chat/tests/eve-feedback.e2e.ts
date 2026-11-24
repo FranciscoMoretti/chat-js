@@ -191,7 +191,7 @@ test("assistant feedback survives reload, recovers from errors and stays out of 
     });
   } finally {
     await anonymous.close();
-    await db.delete(eveVote).where(eq(eveVote.conversationId, binding.id));
+    await db.delete(eveVote).where(eq(eveVote.branchId, binding.id));
     await db
       .update(eveConversation)
       .set({ visibility: "private" })

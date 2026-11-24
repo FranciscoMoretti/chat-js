@@ -117,7 +117,7 @@ test("logical header metadata is optimistic, rolls back, and preserves project a
   const projectAssignmentResponse = await page.request.post(
     "/api/trpc/project.assign",
     {
-      data: { json: { conversationId: id, projectId: project.id } },
+      data: { json: { id, projectId: project.id } },
     }
   );
   expect(projectAssignmentResponse.ok()).toBe(true);

@@ -8,7 +8,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { isToday, isYesterday, subMonths, subWeeks } from "date-fns";
-import { useActiveConversationId } from "../chat/chat-navigation";
+import { useActiveChatId } from "../chat/chat-navigation";
 import type { JSX as ReactJSX } from "react";
 import React, { useEffect, useRef } from "react";
 
@@ -105,7 +105,7 @@ export const EveHistoryList = ({
         >
       ) => page.items
     ) ?? [];
-  const routeId = useActiveConversationId();
+  const routeId = useActiveChatId();
   const selectedIdentity = useQuery(
     trpc.eve.get.queryOptions(
       { id: routeId ?? "" },

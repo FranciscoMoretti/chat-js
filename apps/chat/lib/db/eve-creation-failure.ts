@@ -5,7 +5,7 @@ import { eveConversation, eveFileReference } from "./schema";
 import { EveWorkspaceBusyError } from "./eve-workspace-turns";
 
 export const markEveCreationFailure = async (
-  conversationId: string,
+  branchId: string,
   error: unknown
 ): Promise<void> => {
   if (error instanceof EveWorkspaceBusyError) {
@@ -21,7 +21,7 @@ export const markEveCreationFailure = async (
       })
       .where(
         and(
-          eq(eveConversation.id, conversationId),
+          eq(eveConversation.id, branchId),
           inArray(eveConversation.state, ["creating", "uncertain"])
         )
       )
@@ -31,7 +31,7 @@ export const markEveCreationFailure = async (
       // this reservation's references; workspace retention is independent.
       await tx
         .delete(eveFileReference)
-        .where(eq(eveFileReference.conversationId, conversationId));
+        .where(eq(eveFileReference.branchId, branchId));
     }
   });
 };

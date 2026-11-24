@@ -11,27 +11,27 @@ import {
 import { useTRPC } from "@/trpc/react";
 
 const EveShareDialogContent = ({
-  chatId,
+  branchId,
   onClose,
 }: {
-  readonly chatId: string;
+  readonly branchId: string;
   readonly onClose: () => void;
 }): ReactJSX.Element => {
   const trpc = useTRPC();
   const cache = useQueryClient();
-  const query = useQuery(trpc.sharing.get.queryOptions({ id: chatId }));
+  const query = useQuery(trpc.sharing.get.queryOptions({ id: branchId }));
   const mutation = useMutation(trpc.sharing.setVisibility.mutationOptions());
   return (
     <>
       <ShareDialogView
-        chatId={chatId}
+        branchId={branchId}
         isPending={query.isPending || mutation.isPending || query.isError}
         isPublic={query.data?.visibility === "public"}
         onClose={onClose}
         setVisibility={async (visibility) => {
-          await mutation.mutateAsync({ id: chatId, visibility });
+          await mutation.mutateAsync({ id: branchId, visibility });
           await cache.invalidateQueries({
-            queryKey: trpc.sharing.get.queryKey({ id: chatId }),
+            queryKey: trpc.sharing.get.queryKey({ id: branchId }),
           });
         }}
       />
@@ -41,16 +41,16 @@ const EveShareDialogContent = ({
 };
 
 const EveShareButton = ({
-  chatId,
+  branchId,
   className,
 }: {
-  readonly chatId: string;
+  readonly branchId: string;
   readonly className?: string;
 }): React.JSX.Element => (
   <ShareButton
     className={className}
     renderContent={(onClose): React.JSX.Element => (
-      <EveShareDialogContent chatId={chatId} onClose={onClose} />
+      <EveShareDialogContent branchId={branchId} onClose={onClose} />
     )}
   />
 );

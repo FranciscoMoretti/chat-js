@@ -87,7 +87,7 @@ export const cleanupRetiredEveWorkspaces = async (
 /** Finalization retains ownership and pending-operation checks for application workspaces. */
 export const checkDeletedWorkspaceMemberships = async (
   ownerId: string,
-  conversationIds: readonly string[],
+  branchIds: readonly string[],
   transaction?: Readonly<Pick<Transaction, "execute" | "select">>
 ): Promise<void> => {
   const check = async (
@@ -99,11 +99,11 @@ export const checkDeletedWorkspaceMemberships = async (
       .where(
         and(
           eq(eveConversation.ownerId, ownerId),
-          inArray(eveConversation.id, [...conversationIds])
+          inArray(eveConversation.id, [...branchIds])
         )
       );
     if (
-      conversations.length !== new Set(conversationIds).size ||
+      conversations.length !== new Set(branchIds).size ||
       conversations.some(
         (member) => !["deleting", "deleted"].includes(member.state)
       )

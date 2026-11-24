@@ -33,10 +33,10 @@ export const eveGeneratedFileUploader =
       context.abortSignal
     );
     const key = createFileId();
-    await reserveEveGeneratedFile(scope.ownerId, scope.conversationId, key);
+    await reserveEveGeneratedFile(scope.ownerId, scope.branchId, key);
     return await withEveConversationFile(
       scope.ownerId,
-      scope.conversationId,
+      scope.branchId,
       key,
       async () => {
         context.abortSignal.throwIfAborted();

@@ -8,7 +8,7 @@ import type {
 import type { ComposerControlProps } from "@/components/composer/control";
 
 export const SidebarSections = defineSlot<{
-  readonly conversationId?: string;
+  readonly chatId?: string;
   readonly allowManagement?: boolean;
   readonly onProjectSelect?: (id: string) => void;
 }>();

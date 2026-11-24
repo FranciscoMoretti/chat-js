@@ -4,7 +4,7 @@ import { eveChat, eveConversation } from "./schema";
 
 export const settleEveRootFallbackTitle = async (
   ownerId: string,
-  conversationId: string,
+  branchId: string,
   fallbackTitle: string
 ): Promise<boolean> => {
   const [row] = await db
@@ -13,7 +13,7 @@ export const settleEveRootFallbackTitle = async (
     .from(eveConversation)
     .where(
       and(
-        eq(eveConversation.id, conversationId),
+        eq(eveConversation.id, branchId),
         eq(eveConversation.ownerId, ownerId),
         eq(eveConversation.state, "bound"),
         eq(eveChat.id, eveConversation.chatId),

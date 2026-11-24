@@ -147,7 +147,7 @@ test("native image generation, editing and sharing preserve stored results", asy
     .select({ key: eveFileReference.key, ownerId: eveStoredFile.ownerId })
     .from(eveFileReference)
     .innerJoin(eveStoredFile, eq(eveStoredFile.key, eveFileReference.key))
-    .where(eq(eveFileReference.conversationId, binding.id));
+    .where(eq(eveFileReference.branchId, binding.id));
   expect(
     registered
       .map((file) => file.key)

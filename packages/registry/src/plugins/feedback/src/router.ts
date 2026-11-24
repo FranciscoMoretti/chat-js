@@ -11,7 +11,7 @@ const feedbackProcedures = {
   vote: eveOwnedProcedure
     .input(
       z.object({
-        conversationId: z.uuid(),
+        branchId: z.uuid(),
         messageId: z.string().nonempty().max(MAX_MESSAGE_ID_LENGTH),
         type: z.enum(["up", "down"]),
       })
@@ -23,7 +23,7 @@ const feedbackProcedures = {
       }: {
         readonly ctx: { readonly eveOwnerId: string };
         readonly input: ReadonlyNativeSurface<{
-          conversationId: string;
+          branchId: string;
           messageId: string;
           type: "up" | "down";
         }>;
@@ -39,15 +39,15 @@ const feedbackProcedures = {
       }
     ),
   votes: eveOwnedProcedure
-    .input(z.object({ conversationId: z.uuid() }))
+    .input(z.object({ branchId: z.uuid() }))
     .query(
       async ({
         ctx,
         input,
       }: {
         readonly ctx: { readonly eveOwnerId: string };
-        readonly input: { readonly conversationId: string };
-      }) => await getEveMessageVotes(ctx.eveOwnerId, input.conversationId)
+        readonly input: { readonly branchId: string };
+      }) => await getEveMessageVotes(ctx.eveOwnerId, input.branchId)
     ),
 };
 

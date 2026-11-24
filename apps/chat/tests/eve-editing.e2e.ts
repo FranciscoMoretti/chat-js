@@ -249,7 +249,7 @@ test("edit recovery and regeneration replace the selected turn", async ({
     await editor.getByRole("button", { exact: true, name: "Send" }).click();
     await expect(userMessage).toContainText("End of test");
     expect(replacement).toMatchObject({
-      fork: { conversationId: source.id },
+      fork: { branchId: source.id },
       message: "Keep this edited violet draft.",
     });
   } catch (error) {

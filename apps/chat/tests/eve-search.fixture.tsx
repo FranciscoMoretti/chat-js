@@ -6,7 +6,7 @@ import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { EveSearchResultsView } from "@/chatjs/plugins/search/search-results-view";
 
 const item = {
-  conversationId: "branch",
+  branchId: "branch",
   excerpt:
     "Try ⟦saffron⟧ in the rice. Toast it gently before adding the broth.",
   id: "chat",

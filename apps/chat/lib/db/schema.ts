@@ -137,7 +137,7 @@ const eveWorkspace = pgTable(
 const eveChat = pgTable(
   "EveChat",
   {
-    activeConversationId: uuid("activeConversationId"),
+    activeBranchId: uuid("activeBranchId"),
     createdAt: timestamp("createdAt").notNull().defaultNow(),
     id: uuid("id").primaryKey().defaultRandom(),
     isPinned: boolean("isPinned").notNull().default(false),
@@ -198,8 +198,8 @@ const eveConversation = pgTable(
     ownerId: text("ownerId")
       .notNull()
       .references(() => user.id),
-    parentConversationId: uuid("parentConversationId"),
-    rootConversationId: uuid("rootConversationId"),
+    parentBranchId: uuid("parentBranchId"),
+    rootBranchId: uuid("rootBranchId"),
     sessionId: text("sessionId").unique(),
     state: text("state", {
       enum: ["creating", "bound", "uncertain", "deleting", "deleted"],
@@ -236,39 +236,36 @@ const eveConversation = pgTable(
       foreignColumns: [eveChat.id, eveChat.ownerId],
       name: "EveConversation_chat_owner_fk",
     }),
-    index("EveConversation_owner_root").on(
-      table.ownerId,
-      table.rootConversationId
-    ),
+    index("EveConversation_owner_root").on(table.ownerId, table.rootBranchId),
     foreignKey({
-      columns: [table.parentConversationId, table.ownerId, table.chatId],
+      columns: [table.parentBranchId, table.ownerId, table.chatId],
       foreignColumns: [table.id, table.ownerId, table.chatId],
       name: "EveConversation_parent_owner_fk",
     }),
     foreignKey({
-      columns: [table.rootConversationId, table.ownerId, table.chatId],
+      columns: [table.rootBranchId, table.ownerId, table.chatId],
       foreignColumns: [table.id, table.ownerId, table.chatId],
       name: "EveConversation_root_owner_fk",
     }),
     check(
       "EveConversation_named_fork_shape",
       sql`${table.forkCheckpointId} is null or (
-      ${table.parentConversationId} is not null and ${table.forkMessageId} is null
+      ${table.parentBranchId} is not null and ${table.forkMessageId} is null
     )`
     ),
     check(
       "EveConversation_fork_shape",
       sql`(
-      ${table.parentConversationId} is null and ${table.rootConversationId} is null and
+      ${table.parentBranchId} is null and ${table.rootBranchId} is null and
       ${table.forkTurnId} is null and ${table.forkMessageId} is null and ${table.forkKind} is null
     ) or (
-      ${table.parentConversationId} is not null and ${table.rootConversationId} is not null and
+      ${table.parentBranchId} is not null and ${table.rootBranchId} is not null and
       (
         (${table.forkTurnId} is null and ${table.forkMessageId} is null) or
         (${table.forkTurnId} is not null and ${table.forkTurnId} ~ '^turn_(0|[1-9][0-9]*)$' and ${table.forkMessageId} is null) or
         (${table.forkMessageId} is not null and length(${table.forkMessageId}) between 1 and 512 and ${table.forkTurnId} is null)
       ) and
-      ${table.parentConversationId} <> ${table.id} and ${table.rootConversationId} <> ${table.id}
+      ${table.parentBranchId} <> ${table.id} and ${table.rootBranchId} <> ${table.id}
     )`
     ),
     check(
@@ -290,7 +287,7 @@ const eveDispatch = pgTable(
       .notNull()
       .references(() => user.id),
     operationId: uuid("operationId").notNull(),
-    conversationId: uuid("conversationId").notNull(),
+    branchId: uuid("branchId").notNull(),
     kind: text("kind", { enum: ["create", "copy", "send"] }).notNull(),
     intent: jsonb("intent").$type<unknown>().notNull(),
     sessionId: text("sessionId"),
@@ -300,7 +297,7 @@ const eveDispatch = pgTable(
   (table) => [
     primaryKey({ columns: [table.ownerId, table.operationId] }),
     foreignKey({
-      columns: [table.conversationId, table.ownerId],
+      columns: [table.branchId, table.ownerId],
       foreignColumns: [eveConversation.id, eveConversation.ownerId],
       name: "EveDispatch_conversation_owner_fk",
     }),
@@ -332,7 +329,7 @@ const eveResponseGroup = pgTable(
     ownerId: text("ownerId")
       .notNull()
       .references(() => user.id),
-    sourceConversationId: uuid("sourceConversationId"),
+    sourceBranchId: uuid("sourceBranchId"),
     sourceIdentityKnown: boolean("sourceIdentityKnown")
       .notNull()
       .default(false),
@@ -372,15 +369,15 @@ const eveStoredFile = pgTable(
 const eveFileReference = pgTable(
   "EveFileReference",
   {
-    conversationId: uuid("conversationId").notNull(),
+    branchId: uuid("branchId").notNull(),
     key: text("key").notNull(),
     ownerId: text("ownerId").notNull(),
   },
   (table) => [
-    primaryKey({ columns: [table.conversationId, table.key] }),
+    primaryKey({ columns: [table.branchId, table.key] }),
     index("EveFileReference_key").on(table.key),
     foreignKey({
-      columns: [table.conversationId, table.ownerId],
+      columns: [table.branchId, table.ownerId],
       foreignColumns: [eveConversation.id, eveConversation.ownerId],
     }),
     foreignKey({
@@ -394,7 +391,7 @@ const eveFileReference = pgTable(
 const eveSubagentSession = pgTable(
   "EveSubagentSession",
   {
-    conversationId: uuid("conversationId").notNull(),
+    branchId: uuid("branchId").notNull(),
     ownerId: text("ownerId").notNull(),
     parentSessionId: text("parentSessionId").notNull(),
     rootTurnId: text("rootTurnId").notNull(),
@@ -405,11 +402,11 @@ const eveSubagentSession = pgTable(
   },
   (table) => [
     foreignKey({
-      columns: [table.conversationId, table.ownerId],
+      columns: [table.branchId, table.ownerId],
       foreignColumns: [eveConversation.id, eveConversation.ownerId],
       name: "EveSubagentSession_conversation_owner_fk",
     }).onDelete("cascade"),
-    index("EveSubagentSession_conversation").on(table.conversationId),
+    index("EveSubagentSession_conversation").on(table.branchId),
     check(
       "EveSubagentSession_not_self",
       sql`${table.sessionId} <> ${table.parentSessionId}`

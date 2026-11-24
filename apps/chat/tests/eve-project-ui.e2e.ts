@@ -73,7 +73,7 @@ test("project UI edits instructions, creates a native conversation and lists it 
   await expect(page).toHaveURL(projectUrl);
   const projectId = z.uuid().parse(page.url().split("/").at(-1));
   let deletedInUI = false;
-  let conversationId: string | undefined;
+  let chatId: string | undefined;
   let bodyFailed = false;
   let cleanupFailure: { error: unknown } | undefined;
   try {
@@ -246,7 +246,7 @@ test("project UI edits instructions, creates a native conversation and lists it 
       .fill("Follow the project instruction.");
     await page.getByRole("button", { exact: true, name: "Send" }).click();
     await expect(page).toHaveURL(conversationUrl);
-    conversationId = page.url().split("/").at(-1);
+    chatId = page.url().split("/").at(-1);
     await expect(page.locator('[data-role="assistant"]')).toContainText(
       "PROJECT_UI_7238",
       { timeout: 90_000 }
@@ -260,12 +260,12 @@ test("project UI edits instructions, creates a native conversation and lists it 
       .filter({
         has: page.getByRole("textbox", { exact: true, name: "Message" }),
       })
-      .locator(`a[href="/project/${projectId}/chat/${conversationId}"]`);
+      .locator(`a[href="/project/${projectId}/chat/${chatId}"]`);
     await expect(row).toBeVisible();
     await expect(row).toHaveAccessibleName(/\S/u);
     await expect(row).toHaveAttribute(
       "href",
-      `/project/${projectId}/chat/${conversationId}`
+      `/project/${projectId}/chat/${chatId}`
     );
     await page
       .locator("section")
@@ -279,7 +279,7 @@ test("project UI edits instructions, creates a native conversation and lists it 
           'nextjs-portal, [aria-label="Open Tanstack query devtools"] { display: none !important; }',
       });
     await row.click();
-    await expect(page).toHaveURL(new RegExp(`/chat/${conversationId}$`, "u"));
+    await expect(page).toHaveURL(new RegExp(`/chat/${chatId}$`, "u"));
     await page.goto(`/project/${projectId}`);
     if (
       await page
@@ -325,8 +325,8 @@ test("project UI edits instructions, creates a native conversation and lists it 
       .click();
     await expect(page).toHaveURL(new URL("/", page.url()).href);
     deletedInUI = true;
-    const surviving = page.locator(`a[href="/chat/${conversationId}"]`);
-    await expect(surviving).toHaveAttribute("href", `/chat/${conversationId}`);
+    const surviving = page.locator(`a[href="/chat/${chatId}"]`);
+    await expect(surviving).toHaveAttribute("href", `/chat/${chatId}`);
     await surviving.click();
     await expect(page.locator('[data-role="assistant"]')).toContainText(
       "PROJECT_UI_7238"
@@ -345,12 +345,8 @@ test("project UI edits instructions, creates a native conversation and lists it 
           expect(removed.ok(), await removed.text()).toBe(true);
         }
       } finally {
-        if (
-          conversationId !== undefined &&
-          conversationId !== null &&
-          conversationId !== ""
-        ) {
-          const url = `/api/agent-conversations/${conversationId}`;
+        if (chatId !== undefined && chatId !== null && chatId !== "") {
+          const url = `/api/agent-conversations/${chatId}`;
           await expect
             .poll(
               async () => {
@@ -365,7 +361,7 @@ test("project UI edits instructions, creates a native conversation and lists it 
               },
               { intervals: [1000, 2000, 5000], timeout: 90_000 }
             )
-            .toEqual({ rootId: conversationId, status: "deleted" });
+            .toEqual({ rootId: chatId, status: "deleted" });
         }
       }
     } catch (error) {

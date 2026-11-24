@@ -7,7 +7,7 @@ const followupSuggestionsProcedures = {
   get: eveOwnedProcedure
     .input(
       z.object({
-        conversationId: z.uuid(),
+        branchId: z.uuid(),
         eventId: z.string().min(1).max(512),
       })
     )
@@ -18,15 +18,10 @@ const followupSuggestionsProcedures = {
       }: {
         readonly ctx: { readonly eveOwnerId: string };
         readonly input: {
-          readonly conversationId: string;
+          readonly branchId: string;
           readonly eventId: string;
         };
-      }) =>
-        await getEveFollowup(
-          ctx.eveOwnerId,
-          input.conversationId,
-          input.eventId
-        )
+      }) => await getEveFollowup(ctx.eveOwnerId, input.branchId, input.eventId)
     ),
 };
 

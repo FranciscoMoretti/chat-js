@@ -20,7 +20,7 @@ export const runChatAfterCreate = async (
     const { settleEveRootFallbackTitle } = await import("./db/eve-title");
     await settleEveRootFallbackTitle(
       context.ownerId,
-      context.conversationId,
+      context.branchId,
       eveConversationTitleFallback(context.message)
     );
   } catch (error) {

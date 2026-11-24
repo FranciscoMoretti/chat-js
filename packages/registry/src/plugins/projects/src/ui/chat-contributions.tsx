@@ -24,11 +24,11 @@ import { getProjectColorName, getProjectIconName } from "../project-icons";
 import { EveMoveProjectDialog } from "./eve-move-project-dialog";
 
 export const ProjectsSidebar = ({
-  conversationId,
+  chatId,
   allowManagement = true,
   onProjectSelect,
 }: {
-  readonly conversationId?: string;
+  readonly chatId?: string;
   readonly allowManagement?: boolean;
   readonly onProjectSelect?: (id: string) => void;
 }): React.JSX.Element | null => {
@@ -38,7 +38,7 @@ export const ProjectsSidebar = ({
       <SidebarGroupLabel>Projects</SidebarGroupLabel>
       <SidebarMenu>
         <SidebarProjects
-          conversationId={conversationId}
+          chatId={chatId}
           allowManagement={allowManagement}
           onProjectSelect={onProjectSelect}
         />

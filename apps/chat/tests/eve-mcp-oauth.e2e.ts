@@ -23,7 +23,7 @@ test("MCP OAuth callback persists credentials for fresh Eve clients and native e
   const fixture = await startEveOAuthMcpServer();
   const connectorId = crypto.randomUUID();
   const nameId = `oauth_${connectorId.slice(0, 8)}`;
-  let conversationId: string | undefined;
+  let branchId: string | undefined;
   let origin: string | undefined;
   try {
     await page.route("https://unpkg.com/react-scan/**", async (route) => {
@@ -153,7 +153,7 @@ test("MCP OAuth callback persists credentials for fresh Eve clients and native e
     });
     expect(created.status(), await created.text()).toBe(200);
     const binding = conversationBinding.parse(await created.json());
-    conversationId = binding.id;
+    branchId = binding.id;
     await page.goto(`/chat/${binding.id}`);
     const approve = page.getByRole("button", { exact: true, name: "Approve" });
     await expect(approve).toBeVisible({ timeout: 90_000 });
@@ -175,15 +175,15 @@ test("MCP OAuth callback persists credentials for fresh Eve clients and native e
     testInfo.setTimeout(testInfo.timeout + 60_000);
     try {
       if (
-        conversationId !== undefined &&
-        conversationId !== null &&
-        conversationId !== "" &&
+        branchId !== undefined &&
+        branchId !== null &&
+        branchId !== "" &&
         origin !== undefined &&
         origin !== null &&
         origin !== ""
       ) {
         const requestOrigin = origin;
-        const url = `/api/agent-conversations/${conversationId}`;
+        const url = `/api/agent-conversations/${branchId}`;
         await expect
           .poll(
             async () => {

@@ -8,7 +8,7 @@ const MIN_IDENTIFIER_LENGTH = 1;
 const MAX_MODEL_IDENTIFIER_LENGTH = 200;
 
 const eveForkInput = z.strictObject({
-  conversationId: z.uuid(),
+  branchId: z.uuid(),
   beforeMessageId: z.string().min(1).max(512).optional(),
 });
 

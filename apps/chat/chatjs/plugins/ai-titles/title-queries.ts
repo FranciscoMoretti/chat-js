@@ -5,7 +5,7 @@ import { eveChat, eveConversation } from "@/lib/db/schema";
 const SINGLE_MATCH_LIMIT = 1;
 const isEveRootTitlePending = async (
   ownerId: string,
-  conversationId: string,
+  branchId: string,
   fallbackTitle: string
 ): Promise<boolean> => {
   const [row] = await db
@@ -20,7 +20,7 @@ const isEveRootTitlePending = async (
     )
     .where(
       and(
-        eq(eveConversation.id, conversationId),
+        eq(eveConversation.id, branchId),
         eq(eveConversation.ownerId, ownerId),
         eq(eveConversation.state, "bound"),
         eq(eveChat.title, fallbackTitle),
@@ -33,7 +33,7 @@ const isEveRootTitlePending = async (
 
 const replaceEveRootFallbackTitle = async (
   ownerId: string,
-  conversationId: string,
+  branchId: string,
   fallbackTitle: string,
   generatedTitle: string
 ): Promise<boolean> => {
@@ -43,7 +43,7 @@ const replaceEveRootFallbackTitle = async (
     .from(eveConversation)
     .where(
       and(
-        eq(eveConversation.id, conversationId),
+        eq(eveConversation.id, branchId),
         eq(eveConversation.ownerId, ownerId),
         eq(eveConversation.state, "bound"),
         eq(eveChat.id, eveConversation.chatId),

@@ -295,14 +295,14 @@ export default defineSandbox(() => environment.open());
   await page.getByRole("button", { name: "Send", exact: true }).click();
   const createdResponse = await creation;
   assert.ok(createdResponse.ok());
-  const { id: conversationId } = z
+  const { id: branchId } = z
     .object({ id: z.string() })
     .parse(await createdResponse.json());
   await expect(page).toHaveURL(/\/chat\//u);
   await expect
     .poll(async () => {
       const rows =
-        await database`select "sessionId" from "EveConversation" where id=${conversationId ?? ""}`;
+        await database`select "sessionId" from "EveConversation" where id=${branchId ?? ""}`;
       return z
         .object({ sessionId: z.string().nullable() })
         .optional()
@@ -310,7 +310,7 @@ export default defineSandbox(() => environment.open());
     })
     .toBeTruthy();
   const rows =
-    await database`select "ownerId", "sessionId" from "EveConversation" where id=${conversationId ?? ""}`;
+    await database`select "ownerId", "sessionId" from "EveConversation" where id=${branchId ?? ""}`;
   const row = z
     .object({ ownerId: z.string(), sessionId: z.string() })
     .parse(rows.at(0));
@@ -568,7 +568,7 @@ export default defineSandbox(() => environment.open());
     JSON.stringify(beforeEnd, null, 2)
   );
   const deletion = await context.request.delete(
-    `${baseUrl}/api/agent-conversations/${conversationId}`,
+    `${baseUrl}/api/agent-conversations/${branchId}`,
     { headers: { origin: baseUrl }, timeout: 180_000 }
   );
   assert.equal(
@@ -598,7 +598,7 @@ export default defineSandbox(() => environment.open());
   );
   assert.equal(deletedDownload.status(), 404);
   const final =
-    await database`select state from "EveConversation" where id=${conversationId ?? ""}`;
+    await database`select state from "EveConversation" where id=${branchId ?? ""}`;
   assert.equal(final.at(0)?.state, "deleted");
   await writeFile(
     path.join(output, "report.json"),

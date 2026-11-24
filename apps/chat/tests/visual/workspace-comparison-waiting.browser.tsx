@@ -40,7 +40,7 @@ test.each([true, false])(
         {
           modelId: "model-a",
           operationId: crypto.randomUUID(),
-          conversationId: crypto.randomUUID(),
+          branchId: crypto.randomUUID(),
           sessionId: "native-a",
           state: "bound",
         },

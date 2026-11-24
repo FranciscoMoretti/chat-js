@@ -18,8 +18,8 @@ import { NewEveConversation } from "./new-eve-conversation";
 const creationRecoveryScope = (
   selected: Awaited<ReturnType<typeof getEveChatPageConversation>> | undefined
 ): CreationScope | undefined => {
-  if (hasText(selected?.parentConversationId)) {
-    return { conversationId: selected.parentConversationId };
+  if (hasText(selected?.parentBranchId)) {
+    return { branchId: selected.parentBranchId };
   }
   const context = projectCreationScope(selected?.initialRequest);
   if (context) {
@@ -29,13 +29,13 @@ const creationRecoveryScope = (
 };
 
 export const EveChatPage = async ({
-  conversationId,
+  chatId,
 }: {
-  readonly conversationId?: string;
+  readonly chatId?: string;
 }): Promise<ReactJSX.Element> => {
   const principal = await resolveEvePrincipal(await headers());
   if (!principal) {
-    if (hasText(conversationId)) {
+    if (hasText(chatId)) {
       redirect("/");
     }
     if (!SignedOutScreen) {
@@ -43,13 +43,13 @@ export const EveChatPage = async ({
     }
     return <SignedOutScreen />;
   }
-  if (hasText(conversationId) && !z.uuid().safeParse(conversationId).success) {
+  if (hasText(chatId) && !z.uuid().safeParse(chatId).success) {
     notFound();
   }
-  const selected = hasText(conversationId)
-    ? await getEveChatPageConversation(principal.ownerId, conversationId)
+  const selected = hasText(chatId)
+    ? await getEveChatPageConversation(principal.ownerId, chatId)
     : undefined;
-  if (hasText(conversationId) && !selected) {
+  if (hasText(chatId) && !selected) {
     notFound();
   }
   const recoveryScope = creationRecoveryScope(selected);

@@ -25,18 +25,18 @@ type ShareStep = "info" | "shared";
 
 /** Runtime-owned link destination; the dialog and visibility controller stay shared. */
 export const SharingEnvironmentContext = createContext<{
-  readonly getUrl: (chatId: string) => string;
+  readonly getUrl: (branchId: string) => string;
   readonly notice?: string;
-}>({ getUrl: (chatId) => `${globalThis.location.origin}/share/${chatId}` });
+}>({ getUrl: (branchId) => `${globalThis.location.origin}/share/${branchId}` });
 
 const ShareDialogView = ({
-  chatId,
+  branchId,
   isPublic,
   isPending,
   onClose,
   setVisibility,
 }: {
-  readonly chatId: string;
+  readonly branchId: string;
   readonly isPublic: boolean;
   readonly isPending: boolean;
   readonly onClose: () => void;
@@ -67,7 +67,7 @@ const ShareDialogView = ({
     }
   };
   const handleCopyLink = async (): Promise<void> => {
-    const shareUrl = environment.getUrl(chatId);
+    const shareUrl = environment.getUrl(branchId);
     try {
       await navigator.clipboard.writeText(shareUrl);
       toast.success("Share link copied to clipboard");
@@ -192,7 +192,7 @@ const ShareDialogView = ({
               </label>
               <input
                 className="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex h-10 w-full rounded-md border px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
-                value={environment.getUrl(chatId)}
+                value={environment.getUrl(branchId)}
                 id="link"
                 readOnly
               />

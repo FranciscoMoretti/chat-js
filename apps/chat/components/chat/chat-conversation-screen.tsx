@@ -20,7 +20,7 @@ import {
 /** One transcript and placement contract. Runtime-owned recovery and composer
  * controllers occupy fixed slots; callers cannot replace message rendering. */
 export const ChatConversationScreen = ({
-  conversationId,
+  branchId,
   welcome = false,
   header,
   transcript,
@@ -30,7 +30,7 @@ export const ChatConversationScreen = ({
   leading,
   trailing,
 }: {
-  readonly conversationId: string;
+  readonly branchId: string;
   readonly welcome?: boolean;
   readonly header?: ReactNode;
   readonly transcript: ComponentProps<typeof ChatTranscript>;
@@ -49,7 +49,7 @@ export const ChatConversationScreen = ({
       </ChatWelcomeView>
     ) : (
       <ChatConversationBody>
-        <MessageScrollerProvider autoScroll key={conversationId}>
+        <MessageScrollerProvider autoScroll key={branchId}>
           <MessageScroller className="flex-1">
             <MessageScrollerViewport preserveScrollOnPrepend>
               <MessageScrollerContent className="mx-auto w-full max-w-3xl p-4">

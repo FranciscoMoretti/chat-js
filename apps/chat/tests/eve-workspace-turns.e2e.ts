@@ -51,9 +51,9 @@ const { reconcileEveWorkspaceTurn } =
 const workspaceId = randomUUID();
 const firstConversation = randomUUID();
 const secondConversation = randomUUID();
-const operation = (conversationId = firstConversation) => ({
+const operation = (branchId = firstConversation) => ({
   ownerId: "owner",
-  conversationId,
+  branchId,
   operationId: randomUUID(),
   kind: "send" as const,
   intent: { message: "Preserve this intent", modelId: "model" },
@@ -106,7 +106,7 @@ beforeAll(async () => {
   // fields match schema.ts; no application migration or shared test data is touched.
   await client`create table "EveWorkspace" (id uuid primary key,"ownerId" text not null,state text not null default 'active',"activeOperationId" uuid,unique(id,"ownerId"))`;
   await client`create table "EveConversation" (id uuid primary key,"ownerId" text not null,"workspaceId" uuid not null,state text not null default 'bound',"sessionId" text,unique(id,"ownerId"),foreign key("workspaceId","ownerId") references "EveWorkspace"(id,"ownerId"))`;
-  await client`create table "EveDispatch" ("ownerId" text not null,"operationId" uuid not null,"conversationId" uuid not null,kind text not null check(kind in ('create','copy','send')),intent jsonb not null,"sessionId" text,"deliveryId" text,"createdAt" timestamp not null default now(),primary key("ownerId","operationId"),foreign key("conversationId","ownerId") references "EveConversation"(id,"ownerId"),check("deliveryId" is null or "sessionId" is not null))`;
+  await client`create table "EveDispatch" ("ownerId" text not null,"operationId" uuid not null,"branchId" uuid not null,kind text not null check(kind in ('create','copy','send')),intent jsonb not null,"sessionId" text,"deliveryId" text,"createdAt" timestamp not null default now(),primary key("ownerId","operationId"),foreign key("branchId","ownerId") references "EveConversation"(id,"ownerId"),check("deliveryId" is null or "sessionId" is not null))`;
   await client`insert into "EveWorkspace" (id,"ownerId") values (${workspaceId},'owner')`;
   await client`insert into "EveConversation" (id,"ownerId","workspaceId") values (${firstConversation},'owner',${workspaceId}),(${secondConversation},'owner',${workspaceId})`;
 });
@@ -240,7 +240,7 @@ test("a branch creation stays fenced until its first delivery settles", async ()
   const creation = {
     ...operation(),
     kind: "create" as const,
-    intent: { fork: { conversationId: secondConversation } },
+    intent: { fork: { branchId: secondConversation } },
   };
   await dispatchEveOnce(
     creation,

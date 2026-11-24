@@ -36,8 +36,8 @@ import { createModuleLogger } from "@/lib/logger";
 
 const log = createModuleLogger("app.chat");
 const creationLog = {
-  afterCreate: ({ conversationId }) => {
-    log.info({ conversationId }, "Chat created");
+  afterCreate: ({ branchId }) => {
+    log.info({ branchId }, "Chat created");
     return Promise.resolve();
   },
 } satisfies ChatServerIntegration;

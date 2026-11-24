@@ -82,14 +82,14 @@ test("schedules one plugin work for an initial comparison chat", async () => {
   mocks.create.mockResolvedValue({
     candidates: [
       {
-        conversationId: "00000000-0000-4000-8000-000000000002",
+        branchId: "00000000-0000-4000-8000-000000000002",
         modelId: "a",
         operationId: input.operationId,
         sessionId: "session-a",
         state: "bound",
       },
       {
-        conversationId: "00000000-0000-4000-8000-000000000003",
+        branchId: "00000000-0000-4000-8000-000000000003",
         modelId: "b",
         operationId: "00000000-0000-4000-8000-000000000004",
         sessionId: "session-b",
@@ -106,7 +106,7 @@ test("schedules one plugin work for an initial comparison chat", async () => {
   const [[afterResponseCallback]] = mocks.after.mock.calls;
   await afterResponseCallback();
   expect(mocks.afterCreate).toHaveBeenCalledWith({
-    conversationId: "00000000-0000-4000-8000-000000000002",
+    branchId: "00000000-0000-4000-8000-000000000002",
     message: "Compare",
     ownerId: "owner",
   });
@@ -116,7 +116,7 @@ test("does not retitle a forked comparison chat", async () => {
   mocks.create.mockResolvedValue({
     candidates: [
       {
-        conversationId: "00000000-0000-4000-8000-000000000002",
+        branchId: "00000000-0000-4000-8000-000000000002",
         modelId: "a",
         operationId: input.operationId,
         sessionId: "session-a",
@@ -132,7 +132,7 @@ test("does not retitle a forked comparison chat", async () => {
         ...input,
         fork: {
           beforeTurnId: "turn_0",
-          conversationId: "00000000-0000-4000-8000-000000000005",
+          branchId: "00000000-0000-4000-8000-000000000005",
         },
         forkKind: "comparison",
       }),

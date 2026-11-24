@@ -5,11 +5,11 @@ import { eveConversation } from "@/lib/db/schema";
 export const eveVote = pgTable(
   "EveVote",
   {
-    conversationId: uuid("conversationId")
+    branchId: uuid("branchId")
       .notNull()
       .references(() => eveConversation.id, { onDelete: "cascade" }),
     isUpvoted: boolean("isUpvoted").notNull(),
     messageId: text("messageId").notNull(),
   },
-  (table) => [primaryKey({ columns: [table.conversationId, table.messageId] })]
+  (table) => [primaryKey({ columns: [table.branchId, table.messageId] })]
 );

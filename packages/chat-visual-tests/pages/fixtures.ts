@@ -76,7 +76,7 @@ const chat = (
   updatedAt: Date,
   extra: Partial<HistoryPage["items"][number]> = {}
 ): HistoryPage["items"][number] => ({
-  conversationId: id,
+  branchId: id,
   createdAt: updatedAt,
   id,
   isPinned: false,
@@ -236,8 +236,8 @@ export const invoicesConversation: NonNullable<ServerData["conversation"]> = {
   isPinned: false,
   operationId: "9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a",
   ownerId,
-  parentConversationId: null,
-  rootConversationId: null,
+  parentBranchId: null,
+  rootBranchId: null,
   sessionId: invoicesSessionId,
   state: "bound",
   title: "Postgres index for slow invoices query",
@@ -262,7 +262,7 @@ export const invoicesTrpc = {
         id: invoicesConversation.id,
         initialModelId: invoicesConversation.initialModelId,
         operationId: invoicesConversation.operationId,
-        parentConversationId: null,
+        parentBranchId: null,
         responseGroupId: null,
         responseGroupIndex: null,
         sessionId: invoicesSessionId,
@@ -633,12 +633,9 @@ export const invoicesFollowupEvents: typeof route.events = {
 };
 export const invoicesFollowupTrpc = {
   ...invoicesTrpc,
-  "followupSuggestions.get": (input: {
-    conversationId: string;
-    eventId: string;
-  }) => {
+  "followupSuggestions.get": (input: { branchId: string; eventId: string }) => {
     if (
-      input.conversationId !== invoicesConversation.id ||
+      input.branchId !== invoicesConversation.id ||
       input.eventId !==
         JSON.stringify([invoicesConversation.sessionId, "turn_0", "completed"])
     ) {
@@ -661,7 +658,7 @@ export const invoicesSearchTrpc = {
     items: [
       {
         id: invoicesConversation.chatId,
-        conversationId: invoicesConversation.id,
+        branchId: invoicesConversation.id,
         title: "Speed up our invoice query",
         excerpt: "Add an index to speed up your ⟦invoice⟧ query.",
         updatedAt: "2026-10-18T10:00:00.000Z",

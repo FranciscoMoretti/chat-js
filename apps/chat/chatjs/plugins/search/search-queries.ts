@@ -48,13 +48,13 @@ const splitSearchChunks = (
  * updated when their indexed text changes.
  * @param {SearchTransaction} tx Transaction shared with the caller’s conversation update.
  * @param {string} ownerId Owner whose active conversation is being indexed.
- * @param {string} conversationId Bound conversation that owns the chunks.
+ * @param {string} branchId Bound conversation that owns the chunks.
  * @param {readonly EveSearchText[]} entries Search keys and text chunks to persist.
  */
 const writeEveSearchText = async (
   tx: SearchTransaction,
   ownerId: string,
-  conversationId: string,
+  branchId: string,
   entries: readonly EveSearchText[]
 ): Promise<void> => {
   const [conversation] = await tx
@@ -62,7 +62,7 @@ const writeEveSearchText = async (
     .from(eveConversation)
     .where(
       and(
-        eq(eveConversation.id, conversationId),
+        eq(eveConversation.id, branchId),
         eq(eveConversation.ownerId, ownerId),
         eq(eveConversation.state, "bound")
       )
@@ -87,33 +87,33 @@ const writeEveSearchText = async (
           .slice(index, index + SEARCH_WRITE_BATCH_SIZE)
           .map((entry: EveSearchText) => ({
             ...entry,
-            conversationId,
+            branchId,
             ownerId,
           }))
       )
       .onConflictDoUpdate({
         set: { text: sql`excluded.text` },
         setWhere: sql`${eveSearchText.text} is distinct from excluded.text`,
-        target: [eveSearchText.conversationId, eveSearchText.key],
+        target: [eveSearchText.branchId, eveSearchText.key],
       });
   }
 };
 
 const indexEveSearchText = async (
   ownerId: string,
-  conversationId: string,
+  branchId: string,
   entries: readonly EveSearchText[]
 ): Promise<void> => {
   if (entries.length > EMPTY_RESULT_COUNT) {
     await db.transaction(async (tx: SearchTransaction) => {
-      await writeEveSearchText(tx, ownerId, conversationId, entries);
+      await writeEveSearchText(tx, ownerId, branchId, entries);
     });
   }
 };
 
 const eveSearchResult = z.object({
   id: z.string(),
-  conversationId: z.string(),
+  branchId: z.string(),
   title: z.string(),
   excerpt: z.string(),
   updatedAt: z.string(),
@@ -220,14 +220,14 @@ const searchEveConversations = async (
       from parsed
     ),
     matches as (
-      select chat.id, branch.id as "conversationId", chat.title, chat."updatedAt",
+      select chat.id, branch.id as "branchId", chat.title, chat."updatedAt",
         2 + ts_rank_cd(to_tsvector('simple', chat.title), query.terms) as rank,
         ''::text as body
       from "EveChat" chat cross join query
       join lateral (
         select id from "EveConversation"
         where "chatId" = chat.id and "ownerId" = ${ownerId} and state = 'bound'
-        order by (id = chat."activeConversationId") desc, "createdAt", id limit 1
+        order by (id = chat."activeBranchId") desc, "createdAt", id limit 1
       ) branch on true
       where chat."ownerId" = ${ownerId} and to_tsvector('simple', chat.title) @@ query.terms
       union all
@@ -235,15 +235,15 @@ const searchEveConversations = async (
         ts_rank_cd(to_tsvector('simple', content.text), query.terms) as rank,
         content.text as body
       from "EveSearchText" content cross join query
-      join "EveConversation" branch on branch.id = content."conversationId" and branch."ownerId" = ${ownerId} and branch.state = 'bound'
+      join "EveConversation" branch on branch.id = content."branchId" and branch."ownerId" = ${ownerId} and branch.state = 'bound'
       join "EveChat" chat on chat.id = branch."chatId" and chat."ownerId" = ${ownerId}
       where content."ownerId" = ${ownerId} and to_tsvector('simple', content.text) @@ query.terms
     ), best as (
       select distinct on (id) *, max(rank) over (partition by id) as "chatRank"
       from matches
-      order by id, (body <> '') desc, rank desc, "conversationId", body
+      order by id, (body <> '') desc, rank desc, "branchId", body
     ), headlines as (
-    select id, "conversationId", title, query.terms::text as "highlightQuery",
+    select id, "branchId", title, query.terms::text as "highlightQuery",
       to_char("updatedAt", 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') as "updatedAt",
       "chatRank"::double precision as rank,
       case when body = '' then '' else ts_headline('simple', body, query.terms,

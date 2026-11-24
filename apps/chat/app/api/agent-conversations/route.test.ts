@@ -93,22 +93,22 @@ test("defers root plugin work until after the creation response", async () => {
   const [[afterResponseCallback]] = mocks.after.mock.calls;
   await afterResponseCallback();
   expect(mocks.afterCreate).toHaveBeenCalledWith({
-    conversationId: "00000000-0000-4000-8000-000000000002",
+    branchId: "00000000-0000-4000-8000-000000000002",
     message: "hello",
     ownerId: "account",
   });
 });
 
 test("runs the branch callback after returning the bound session", async () => {
-  const conversationId = "00000000-0000-4000-8000-000000000002";
+  const branchId = "00000000-0000-4000-8000-000000000002";
   mocks.create.mockResolvedValue(
-    Response.json({ id: conversationId, sessionId: "branch-session" })
+    Response.json({ id: branchId, sessionId: "branch-session" })
   );
 
   const response = await POST(
     request({
       ...input,
-      fork: { conversationId: "00000000-0000-4000-8000-000000000003" },
+      fork: { branchId: "00000000-0000-4000-8000-000000000003" },
     })
   );
 
@@ -118,7 +118,7 @@ test("runs the branch callback after returning the bound session", async () => {
   await afterResponseCallback();
   expect(mocks.afterBranch).toHaveBeenCalledExactlyOnceWith({
     ownerId: "account",
-    conversationId,
+    branchId,
     sessionId: "branch-session",
   });
   expect(mocks.afterCreate).not.toHaveBeenCalled();

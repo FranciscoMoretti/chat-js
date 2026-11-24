@@ -74,7 +74,7 @@ test("fork API preserves native history in ChatJS and rejects changed retries an
     await expect(page.getByText("Ready", { exact: true })).toBeVisible();
 
     const operation = {
-      fork: { conversationId: source.id },
+      fork: { branchId: source.id },
       message:
         "What token did I ask you to remember? Reply only with the token. Do not call tools.",
       modelId,
@@ -143,8 +143,8 @@ test("fork API preserves native history in ChatJS and rejects changed retries an
       .select()
       .from(eveConversation)
       .where(eq(eveConversation.id, branch.id));
-    expect(stored?.parentConversationId).toBe(source.id);
-    expect(stored?.rootConversationId).toBe(source.id);
+    expect(stored?.parentBranchId).toBe(source.id);
+    expect(stored?.rootBranchId).toBe(source.id);
     await page.goto(`/chat/${source.id}`);
     await expect(page.getByRole("log")).toContainText(
       "original-second-response"
@@ -170,7 +170,7 @@ test("fork API preserves native history in ChatJS and rejects changed retries an
       const forbidden = await page.request.post("/api/agent-conversations", {
         data: {
           ...operation,
-          fork: { ...operation.fork, conversationId: foreignId },
+          fork: { ...operation.fork, branchId: foreignId },
           operationId: crypto.randomUUID(),
         },
         headers,

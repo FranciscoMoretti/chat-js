@@ -11,7 +11,7 @@ Run `chat-js status` to inspect the ownership and local-edit state of installed 
 
 | Location | Owner | What belongs here |
 | --- | --- | --- |
-| `chatjs/plugins/<id>/chat.ts`, `chatjs/plugins/<id>/billing.ts` | Installed plugin source, editable in your app | Plugin implementations |
+| `chatjs/plugins/<id>/chat-server.ts`, `chatjs/plugins/<id>/billing.ts` | Installed plugin source, editable in your app | Plugin implementations |
 | `chatjs/generated/installed-chat.ts`, `chatjs/generated/installed-billing.ts` | Installer | Static imports and typed adapter lists |
 | `integrations/chat/server.ts`, `integrations/billing.ts` | Your app | Selection, ordering, wrappers, and local adapters |
 | `chatjs/core/chat/compose.ts`, `chatjs/core/billing/compose.ts` | Installed source | Shared composition rules and defaults |

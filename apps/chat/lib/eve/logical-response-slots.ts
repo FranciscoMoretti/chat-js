@@ -43,7 +43,7 @@ const belongsToSlot = (
       return false;
     }
     seen.add(current.id);
-    const parentId: string | null = current.parentConversationId;
+    const parentId: string | null = current.parentBranchId;
     current = branches.find((value) => value.id === parentId);
   }
   return false;
@@ -61,7 +61,7 @@ const slotReadAccess = (
   answerMatches: (nodeId, branchId, userId) => {
     const value = node(nodeId);
     return (
-      value?.conversationId === branchId &&
+      value?.branchId === branchId &&
       value.parentId === userId &&
       value.message.role === "assistant"
     );
@@ -118,10 +118,7 @@ const selectedSlotAttempt = (
 export const logicalResponseSlots = (
   snapshot: ReadonlyNativeSurface<
     Readonly<
-      Pick<
-        LogicalChatSnapshot,
-        "branches" | "paths" | "conversationId" | "nodes"
-      >
+      Pick<LogicalChatSnapshot, "branches" | "paths" | "branchId" | "nodes">
     >
   >,
   userId: string
@@ -153,7 +150,7 @@ export const logicalResponseSlots = (
           rejection: undefined,
         })
       );
-  const selectedPath = snapshot.paths.get(snapshot.conversationId) ?? [];
+  const selectedPath = snapshot.paths.get(snapshot.branchId) ?? [];
   const read = slotReadAccess(
     () => snapshot.branches,
     (branchId) => snapshot.paths.get(branchId),

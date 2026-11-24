@@ -1,7 +1,7 @@
 import { definePluginItem } from "../define-item";
 
 const sourceFiles = [
-  "chat.ts",
+  "chat-server.ts",
   "chat-ui.ts",
   "conversation-hook.ts",
   "creation.ts",

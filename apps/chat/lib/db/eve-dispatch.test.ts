@@ -52,10 +52,10 @@ const {
   readActiveEveWorkspaceOperation,
   releaseSettledEveWorkspaceOperation,
 } = await import("./eve-workspace-turns");
-const conversationId = "00000000-0000-4000-8000-000000000001";
+const branchId = "00000000-0000-4000-8000-000000000001";
 const input = {
   ownerId: "owner",
-  conversationId,
+  branchId,
   kind: "send",
   intent: { sessionId: "source", message: "same message", modelId: "model" },
 } satisfies Omit<Parameters<typeof dispatchEveOnce>[0], "operationId">;
@@ -81,10 +81,10 @@ beforeAll(async () => {
   }
   /* oxlint-enable no-await-in-loop */
   await postgres.exec(`INSERT INTO "user" (id,name,email) VALUES ('owner','owner','owner'), ('foreign','foreign','foreign');
-    INSERT INTO "EveChat" (id,"ownerId",title) VALUES ('${conversationId}','owner','Test');
-    INSERT INTO "EveWorkspace" (id,"ownerId") VALUES ('${conversationId}','owner');
+    INSERT INTO "EveChat" (id,"ownerId",title) VALUES ('${branchId}','owner','Test');
+    INSERT INTO "EveWorkspace" (id,"ownerId") VALUES ('${branchId}','owner');
     INSERT INTO "EveConversation" (id,"chatId","workspaceId","ownerId","operationId","firstMessage","sessionId",state)
-    VALUES ('${conversationId}','${conversationId}','${conversationId}','owner','${conversationId}','Test','source','bound');`);
+    VALUES ('${branchId}','${branchId}','${branchId}','owner','${branchId}','Test','source','bound');`);
 }, 30_000);
 beforeEach(async () => {
   await postgres.exec(`UPDATE "EveWorkspace" SET "activeOperationId" = null`);
@@ -205,7 +205,7 @@ it("lets only the same bound session steer and keeps its successor fenced", asyn
   });
   await releaseSettledEveWorkspaceOperation(
     input.ownerId,
-    conversationId,
+    branchId,
     first.operationId
   );
   await expect(
@@ -238,13 +238,10 @@ it("keeps the original reservation through a steer and releases it after a defin
   await started.promise;
   await releaseSettledEveWorkspaceOperation(
     input.ownerId,
-    conversationId,
+    branchId,
     first.operationId
   );
-  const active = await readActiveEveWorkspaceOperation(
-    input.ownerId,
-    conversationId
-  );
+  const active = await readActiveEveWorkspaceOperation(input.ownerId, branchId);
   expect(active?.operation.operationId).toBe(first.operationId);
   const anotherSend = vi.fn();
   await expect(
@@ -259,11 +256,11 @@ it("keeps the original reservation through a steer and releases it after a defin
   await result;
   await releaseSettledEveWorkspaceOperation(
     input.ownerId,
-    conversationId,
+    branchId,
     first.operationId
   );
   expect(
-    await readActiveEveWorkspaceOperation(input.ownerId, conversationId)
+    await readActiveEveWorkspaceOperation(input.ownerId, branchId)
   ).toBeUndefined();
 });
 
@@ -291,12 +288,12 @@ it("retains the original reservation when a steer receipt is lost", async () => 
     ).rejects.toBeInstanceOf(EveDispatchUnknownError);
     await releaseSettledEveWorkspaceOperation(
       input.ownerId,
-      conversationId,
+      branchId,
       first.operationId
     );
     const active = await readActiveEveWorkspaceOperation(
       input.ownerId,
-      conversationId
+      branchId
     );
     expect(active?.operation.operationId).toBe(first.operationId);
     expect(
@@ -427,7 +424,7 @@ it("exposes captured history only for the bound creation receipt", async () => {
   await dispatchEveOnce(
     {
       ...input,
-      conversationId: binding.id,
+      branchId: binding.id,
       operationId: "00000000-0000-4000-8000-000000000073",
       intent: { ...input.intent, sessionId: "initial-session" },
     },

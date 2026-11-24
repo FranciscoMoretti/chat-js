@@ -109,7 +109,7 @@ test("without title enrichment, creation settles the fallback without changing r
   const before = await postgres.query('SELECT "updatedAt" FROM "EveChat"');
   await runChatAfterCreate({
     ownerId: "other",
-    conversationId: conversation,
+    branchId: conversation,
     message: "Fallback",
   });
   expect(await isEveRootTitlePending("owner", conversation, "Fallback")).toBe(
@@ -117,7 +117,7 @@ test("without title enrichment, creation settles the fallback without changing r
   );
   await runChatAfterCreate({
     ownerId: "owner",
-    conversationId: conversation,
+    branchId: conversation,
     message: "Fallback",
   });
   const result = await postgres.query(

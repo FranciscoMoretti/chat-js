@@ -29,16 +29,16 @@ const purgeConversationSessions = async (
 
 /** Purge an owner-authorized local conversation family and complete its deletion.
  * @param {string} ownerId Owner whose conversation family and sessions may be retired.
- * @param {string} conversationId Conversation used to resolve the deletion family.
+ * @param {string} branchId Conversation used to resolve the deletion family.
  * @returns {Promise<{ rootId: string } | undefined>} Root identity after native session purges and deletion completion, or no result when the resource purge finds no family. Rejects on missing session bindings or cleanup failure.
  */
 export const deleteLocalEveConversationFamily = async (
   ownerId: string,
-  conversationId: string
+  branchId: string
 ): Promise<{ rootId: string } | undefined> => {
   const lifecycle = requireEveDeletionLifecycle();
   // Retirement receipts make this replayable even after some native payloads were erased.
-  const family = await purgeLocalEveFamilyResources(ownerId, conversationId);
+  const family = await purgeLocalEveFamilyResources(ownerId, branchId);
   if (!family) {
     return undefined;
   }

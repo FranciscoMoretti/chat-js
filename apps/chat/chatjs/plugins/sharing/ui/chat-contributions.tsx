@@ -9,11 +9,11 @@ export const SharingActions = ({
   chat,
 }: ChatActionProps): React.JSX.Element | null => {
   const [open, setOpen] = useState(false);
-  const { conversationId } = chat;
+  const { branchId } = chat;
   if (
-    conversationId === undefined ||
-    conversationId === null ||
-    conversationId === "" ||
+    branchId === undefined ||
+    branchId === null ||
+    branchId === "" ||
     chat.state !== "bound"
   ) {
     return null;
@@ -30,7 +30,7 @@ export const SharingActions = ({
           open={open}
           onOpenChange={setOpen}
           renderContent={(onClose) => (
-            <EveShareDialogContent chatId={conversationId} onClose={onClose} />
+            <EveShareDialogContent branchId={branchId} onClose={onClose} />
           )}
         />
       )}
@@ -41,14 +41,12 @@ export const SharingHeaderActions = ({
   chat,
 }: ChatActionProps): React.JSX.Element | null => {
   if (
-    chat.conversationId === undefined ||
-    chat.conversationId === null ||
-    chat.conversationId === "" ||
+    chat.branchId === undefined ||
+    chat.branchId === null ||
+    chat.branchId === "" ||
     chat.state !== "bound"
   ) {
     return null;
   }
-  return (
-    <EveShareButton chatId={chat.conversationId} className="hidden md:flex" />
-  );
+  return <EveShareButton branchId={chat.branchId} className="hidden md:flex" />;
 };

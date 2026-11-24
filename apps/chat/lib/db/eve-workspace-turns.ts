@@ -62,7 +62,7 @@ export const hasUnresolvedWorkspaceSteer = async (
     .innerJoin(
       eveConversation,
       and(
-        eq(eveConversation.id, eveDispatch.conversationId),
+        eq(eveConversation.id, eveDispatch.branchId),
         eq(eveConversation.ownerId, eveDispatch.ownerId)
       )
     )
@@ -82,7 +82,7 @@ export const hasUnresolvedWorkspaceSteer = async (
 /** Resolve active work only through owned conversation membership; IDs alone grant no access. */
 export const readActiveEveWorkspaceOperation = async (
   ownerId: string,
-  conversationId: string
+  branchId: string
 ) => {
   const activeConversation = alias(
     eveConversation,
@@ -112,14 +112,14 @@ export const readActiveEveWorkspaceOperation = async (
     .innerJoin(
       activeConversation,
       and(
-        eq(activeConversation.id, eveDispatch.conversationId),
+        eq(activeConversation.id, eveDispatch.branchId),
         eq(activeConversation.ownerId, eveWorkspace.ownerId),
         eq(activeConversation.workspaceId, eveWorkspace.id)
       )
     )
     .where(
       and(
-        eq(eveConversation.id, conversationId),
+        eq(eveConversation.id, branchId),
         eq(eveConversation.ownerId, ownerId),
         eq(eveWorkspace.state, "active")
       )

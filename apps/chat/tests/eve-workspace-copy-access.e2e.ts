@@ -78,7 +78,7 @@ test.each(["import:imported:0", "import:imported:1"])(
     await db.insert(eveFileReference).values(
       [earlyKey, laterKey].map((key) => ({
         key,
-        conversationId: source.id,
+        branchId: source.id,
         ownerId,
       }))
     );
@@ -169,11 +169,11 @@ test.each(["import:imported:0", "import:imported:1"])(
         const references = await db
           .select({ key: eveFileReference.key })
           .from(eveFileReference)
-          .where(eq(eveFileReference.conversationId, reservationId));
+          .where(eq(eveFileReference.branchId, reservationId));
         expect(references.map((row) => row.key)).toEqual(selectedKeys);
         return { sessionId: crypto.randomUUID() };
       },
-      { fork: { conversationId: source.id, beforeMessageId } }
+      { fork: { branchId: source.id, beforeMessageId } }
     );
     await db
       .update(eveConversation)
@@ -208,8 +208,8 @@ test("an already captured seed remains replayable while its delivery is fenced",
     firstMessage: "Fork",
     operationId: crypto.randomUUID(),
     state: "uncertain",
-    parentConversationId: source.id,
-    rootConversationId: source.id,
+    parentBranchId: source.id,
+    rootBranchId: source.id,
     workspaceId: source.workspaceId,
     initialSeed: {
       messages: [{ role: "user", parts: [{ type: "text", text: "Captured" }] }],
@@ -248,7 +248,7 @@ test.each(["retry", "delete"])(
       operationId: crypto.randomUUID(),
       message: "blocked fork",
       modelIds: ["model-a", "model-b"],
-      fork: { conversationId: source.id },
+      fork: { branchId: source.id },
     });
     const [{ operationId }] = group.candidates;
     const dispatch = vi.fn(
@@ -256,7 +256,7 @@ test.each(["retry", "delete"])(
     );
     await expect(
       createEveConversation(ownerId, operationId, "blocked fork", dispatch, {
-        fork: { conversationId: source.id },
+        fork: { branchId: source.id },
       })
     ).rejects.toThrow("workspace");
     expect(dispatch).not.toHaveBeenCalled();
@@ -274,11 +274,11 @@ test.each(["retry", "delete"])(
       await db
         .select()
         .from(eveDispatch)
-        .where(eq(eveDispatch.conversationId, reservation.id))
+        .where(eq(eveDispatch.branchId, reservation.id))
     ).toHaveLength(0);
     await expect(
       createEveConversation(ownerId, operationId, "changed intent", dispatch, {
-        fork: { conversationId: source.id },
+        fork: { branchId: source.id },
       })
     ).rejects.toThrow("different");
     if (action === "retry") {
@@ -305,7 +305,7 @@ test.each(["retry", "delete"])(
         "blocked fork",
         dispatch,
         {
-          fork: { conversationId: source.id },
+          fork: { branchId: source.id },
         }
       );
       expect(result.id).toBe(reservation.id);
@@ -313,7 +313,7 @@ test.each(["retry", "delete"])(
       expect(boundGroup?.candidates[0]).toMatchObject({
         operationId,
         state: "bound",
-        conversationId: reservation.id,
+        branchId: reservation.id,
       });
       expect(dispatch).toHaveBeenCalledOnce();
     } else {

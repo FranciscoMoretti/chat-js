@@ -30,7 +30,7 @@ const noop = (): void => {
 };
 const searchItems = [
   {
-    conversationId: "conversation-1",
+    branchId: "conversation-1",
     excerpt: "The report mentions ⟦identity⟧ twice, then ⟦identity⟧ again.",
     id: "result-1",
     title: "Research report",

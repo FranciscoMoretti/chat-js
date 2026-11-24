@@ -33,12 +33,12 @@ import { useEveMetadataMutations } from "./use-eve-metadata-mutations";
 
 const EveChatHeader = ({
   chatId,
-  conversationId,
+  branchId,
   fallbackTitle,
   hasMessages,
 }: {
   readonly chatId: string;
-  readonly conversationId: string;
+  readonly branchId: string;
   readonly fallbackTitle: string;
   readonly hasMessages: boolean;
 }): ReactJSX.Element => {
@@ -70,7 +70,7 @@ const EveChatHeader = ({
       actions={
         hasMessages && (
           <ChatHeaderActions
-            chat={{ id: chatId, title, conversationId, state: "bound" }}
+            chat={{ id: chatId, title, branchId, state: "bound" }}
           />
         )
       }
@@ -100,9 +100,7 @@ const EveChatHeader = ({
                             chat={{
                               id: chatId,
                               title,
-                              conversationId: hasMessages
-                                ? conversationId
-                                : undefined,
+                              branchId: hasMessages ? branchId : undefined,
                               state: "bound",
                             }}
                           />
@@ -119,7 +117,7 @@ const EveChatHeader = ({
                         }}
                         onDelete={() => {
                           openDeletion({
-                            id: conversationId,
+                            id: branchId,
                             scope: "conversation",
                             parentHref: identity.data?.parentHref,
                             state: "bound",

@@ -29,7 +29,7 @@ test("nested comparisons retain both groups, duplicate-model slots and retry att
   if (first.state !== "bound") {
     throw new Error("First candidate did not bind");
   }
-  await page.goto(`/chat/${first.conversationId}`);
+  await page.goto(`/chat/${first.branchId}`);
   const cards = page.getByRole("log").getByRole("button", { name: nano });
   await expect(cards).toHaveCount(2);
   await expect(page.getByText("Ready", { exact: true })).toBeVisible({
@@ -56,7 +56,7 @@ test("nested comparisons retain both groups, duplicate-model slots and retry att
   const later = await page.request.post("/api/agent-response-groups", {
     data: {
       fork: {
-        conversationId: first.conversationId,
+        branchId: first.branchId,
       },
       message: "Do not use tools. Reply with exactly cobalt.",
       modelIds: ["openai/gpt-5-nano", "openai/gpt-5-nano"],

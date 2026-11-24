@@ -48,7 +48,7 @@ const purgeCandidate = (tx: FilePurgeReadTransaction, ids: readonly string[]) =>
     tx
       .select({ key: eveFileReference.key })
       .from(eveFileReference)
-      .where(inArray(eveFileReference.conversationId, ids))
+      .where(inArray(eveFileReference.branchId, ids))
   );
 
 /**
@@ -72,7 +72,7 @@ const prepareEveFamilyFilePurge = async (
       .where(
         and(
           eq(eveFileReference.key, eveStoredFile.key),
-          notInArray(eveFileReference.conversationId, ids)
+          notInArray(eveFileReference.branchId, ids)
         )
       );
     const files = await tx
@@ -139,7 +139,7 @@ const releaseEveFamilyFileReferences = async (
       .where(
         and(
           eq(eveFileReference.key, eveStoredFile.key),
-          notInArray(eveFileReference.conversationId, ids)
+          notInArray(eveFileReference.branchId, ids)
         )
       );
     const unremovedRows = await tx
@@ -165,7 +165,7 @@ const releaseEveFamilyFileReferences = async (
       .where(
         and(
           eq(eveFileReference.ownerId, ownerId),
-          inArray(eveFileReference.conversationId, ids)
+          inArray(eveFileReference.branchId, ids)
         )
       );
   });

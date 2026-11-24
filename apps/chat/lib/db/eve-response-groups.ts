@@ -46,8 +46,18 @@ type ReservedResponseGroup = ReadonlyNativeSurface<
   }
 >;
 
-const hash = (request: unknown): string =>
-  createHash("sha256").update(JSON.stringify(request)).digest("hex");
+type GroupInput = ReadonlyNativeSurface<z.infer<typeof eveResponseGroupInput>>;
+
+const hash = (request: GroupInput): string => {
+  // The digest is persisted. Keep its original fork encoding across API renames.
+  const fork = request.fork && {
+    conversationId: request.fork.branchId,
+    beforeMessageId: request.fork.beforeMessageId,
+  };
+  return createHash("sha256")
+    .update(JSON.stringify({ ...request, fork }))
+    .digest("hex");
+};
 
 const legacyGroupHash = async (
   tx: ResponseGroupWriteTransaction,
@@ -67,7 +77,7 @@ const legacyGroupHash = async (
     .leftJoin(
       eveDispatch,
       and(
-        eq(eveDispatch.conversationId, eveConversation.id),
+        eq(eveDispatch.branchId, eveConversation.id),
         eq(eveDispatch.kind, "create")
       )
     )
@@ -98,9 +108,7 @@ const reserveGroupRow = async (
   value: ReadonlyNativeSurface<z.infer<typeof eveResponseGroupInput>>
 ): Promise<ResponseGroupRow | undefined> => {
   const input = eveResponseGroupInput.parse(value);
-  const coreInput = Object.fromEntries(
-    Object.entries(input).filter(([key]) => key !== "projectId")
-  );
+  const coreInput = { ...input, projectId: undefined };
   const inputHash = hash(coreInput);
   await tx.execute(
     sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
@@ -126,7 +134,7 @@ const reserveGroupRow = async (
     existing.inputHash = inputHash;
   }
 
-  const sourceId = input.fork?.conversationId ?? null;
+  const sourceId = input.fork?.branchId ?? null;
   const [source] =
     typeof sourceId === "string" && sourceId !== ""
       ? await tx
@@ -147,7 +155,7 @@ const reserveGroupRow = async (
   if (hasQueryRow(existing) && !existing.sourceIdentityKnown) {
     await tx
       .update(eveResponseGroup)
-      .set({ sourceConversationId: sourceId, sourceIdentityKnown: true })
+      .set({ sourceBranchId: sourceId, sourceIdentityKnown: true })
       .where(condition);
   }
   if (hasQueryRow(source) && source.state !== "bound") {
@@ -171,7 +179,7 @@ const reserveGroupRow = async (
       inputHash,
       operationId: input.operationId,
       ownerId,
-      sourceConversationId: sourceId,
+      sourceBranchId: sourceId,
       sourceIdentityKnown: true,
     })
     .returning();
@@ -254,7 +262,7 @@ const tombstoneEveResponseGroups = async (
         eq(eveResponseGroup.ownerId, ownerId),
         or(
           inArray(
-            eveResponseGroup.sourceConversationId,
+            eveResponseGroup.sourceBranchId,
             family.map((row) => row.id)
           ),
           sql`${eveResponseGroup.candidateOperationIds} && ${operations}`
@@ -344,7 +352,7 @@ const getEveResponseGroup = async (
     .select({
       ...getTableColumns(eveConversation),
       dispatched: sql<boolean>`exists (
-      select 1 from "EveDispatch" dispatch where dispatch."conversationId" = ${eveConversation.id}
+      select 1 from "EveDispatch" dispatch where dispatch."branchId" = ${eveConversation.id}
         and dispatch."ownerId" = ${ownerId}
     )`,
     })
@@ -381,7 +389,7 @@ const getEveResponseGroup = async (
         if (row?.state === "bound" && isNonemptyString(row.sessionId)) {
           return {
             ...identity,
-            conversationId: row.id,
+            branchId: row.id,
             sessionId: row.sessionId,
             state: "bound",
           };
@@ -410,17 +418,17 @@ const getEveResponseGroup = async (
 
 const getEveResponseGroupForConversation = async (
   ownerId: string,
-  conversationId: string
+  branchId: string
 ): Promise<z.output<typeof eveResponseGroupResult> | undefined> => {
   const [conversation] = await db
     .select({
       id: eveConversation.id,
-      rootConversationId: eveConversation.rootConversationId,
+      rootBranchId: eveConversation.rootBranchId,
     })
     .from(eveConversation)
     .where(
       and(
-        eq(eveConversation.id, conversationId),
+        eq(eveConversation.id, branchId),
         eq(eveConversation.ownerId, ownerId),
         eq(eveConversation.state, "bound")
       )
@@ -428,7 +436,7 @@ const getEveResponseGroupForConversation = async (
   if (!hasQueryRow(conversation)) {
     return undefined;
   }
-  const rootId = conversation.rootConversationId ?? conversation.id;
+  const rootId = conversation.rootBranchId ?? conversation.id;
   const family = await db
     .select({
       createdAt: eveConversation.createdAt,
@@ -437,7 +445,7 @@ const getEveResponseGroupForConversation = async (
       forkTurnId: eveConversation.forkTurnId,
       id: eveConversation.id,
       operationId: eveConversation.operationId,
-      parentConversationId: eveConversation.parentConversationId,
+      parentBranchId: eveConversation.parentBranchId,
       sessionId: eveConversation.sessionId,
     })
     .from(eveConversation)
@@ -447,7 +455,7 @@ const getEveResponseGroupForConversation = async (
         eq(eveConversation.state, "bound"),
         or(
           eq(eveConversation.id, rootId),
-          eq(eveConversation.rootConversationId, rootId)
+          eq(eveConversation.rootBranchId, rootId)
         )
       )
     );
@@ -481,9 +489,9 @@ const getEveResponseGroupForConversation = async (
         eq(eveResponseGroup.deleted, false),
         sql`${eveResponseGroup.candidateOperationIds} && ${operationIds}`,
         or(
-          isNull(eveResponseGroup.sourceConversationId),
+          isNull(eveResponseGroup.sourceBranchId),
           inArray(
-            eveResponseGroup.sourceConversationId,
+            eveResponseGroup.sourceBranchId,
             boundFamily.map(
               (member: ReadonlyNativeSurface<(typeof boundFamily)[number]>) =>
                 member.id
@@ -492,11 +500,7 @@ const getEveResponseGroupForConversation = async (
         )
       )
     );
-  const lineage = resolveEveResponseGroupLineage(
-    conversationId,
-    boundFamily,
-    groups
-  );
+  const lineage = resolveEveResponseGroupLineage(branchId, boundFamily, groups);
   if (!lineage) {
     return undefined;
   }
@@ -510,7 +514,7 @@ const getEveResponseGroupForConversation = async (
   const candidateConversations = await db
     .select({
       id: eveConversation.id,
-      rootConversationId: eveConversation.rootConversationId,
+      rootBranchId: eveConversation.rootBranchId,
     })
     .from(eveConversation)
     .where(
@@ -524,7 +528,7 @@ const getEveResponseGroupForConversation = async (
     ...new Set(
       candidateConversations.map(
         (candidate: Readonly<(typeof candidateConversations)[number]>) =>
-          candidate.rootConversationId ?? candidate.id
+          candidate.rootBranchId ?? candidate.id
       )
     ),
   ];
@@ -539,7 +543,7 @@ const getEveResponseGroupForConversation = async (
       forkTurnId: eveConversation.forkTurnId,
       id: eveConversation.id,
       operationId: eveConversation.operationId,
-      parentConversationId: eveConversation.parentConversationId,
+      parentBranchId: eveConversation.parentBranchId,
       sessionId: eveConversation.sessionId,
     })
     .from(eveConversation)
@@ -549,7 +553,7 @@ const getEveResponseGroupForConversation = async (
         eq(eveConversation.state, "bound"),
         or(
           inArray(eveConversation.id, candidateRootIds),
-          inArray(eveConversation.rootConversationId, candidateRootIds)
+          inArray(eveConversation.rootBranchId, candidateRootIds)
         )
       )
     );
@@ -562,7 +566,7 @@ const getEveResponseGroupForConversation = async (
     }
   );
   const groupLineage = resolveEveResponseGroupLineage(
-    conversationId,
+    branchId,
     boundGroupFamilies,
     [lineageGroup]
   );

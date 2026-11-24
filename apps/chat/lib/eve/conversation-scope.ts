@@ -48,14 +48,14 @@ const assertNativeReceipt = async (
  * @param {string} sessionId - Native session identity that must match the durable binding or receipt.
  * @param {ReadonlyNativeSurface<AbortSignal>} abortSignal - Cancellation checked before lookup and after native receipt failures.
  * @param {unknown | undefined} reservationId - Optional creation UUID from auth attributes, validated before lookup.
- * @returns {Promise<{ conversationId: string; ownerId: string }>} Durable conversation identity and the authenticated owner after receipt reconciliation.
+ * @returns {Promise<{ branchId: string; ownerId: string }>} Durable conversation identity and the authenticated owner after receipt reconciliation.
  */
 export const resolveEveConversationScope = async (
   ownerId: string | undefined,
   sessionId: string,
   abortSignal: ReadonlyNativeSurface<AbortSignal>,
   reservationId?: unknown
-): Promise<{ conversationId: string; ownerId: string }> => {
+): Promise<{ branchId: string; ownerId: string }> => {
   abortSignal.throwIfAborted();
   if (!isNonEmptyString(ownerId)) {
     throw new EveSessionMappingError("unauthenticated");
@@ -87,7 +87,7 @@ export const resolveEveConversationScope = async (
     if (!isNonEmptyString(row.sessionId)) {
       throw new EveSessionMappingError("binding_conflict");
     }
-    return { conversationId: row.id, ownerId };
+    return { branchId: row.id, ownerId };
   }
   if (isNonEmptyString(row.sessionId)) {
     throw new EveSessionMappingError("binding_conflict");
@@ -98,5 +98,5 @@ export const resolveEveConversationScope = async (
   }
   await assertNativeReceipt(ownerId, row.id, sessionId, abortSignal);
   await bindAcceptedEveConversation(ownerId, row.id, sessionId);
-  return { conversationId: row.id, ownerId };
+  return { branchId: row.id, ownerId };
 };

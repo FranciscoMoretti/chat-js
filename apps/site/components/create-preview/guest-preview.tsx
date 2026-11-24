@@ -105,7 +105,7 @@ export const GuestPreview = ({
       <Plugins plugins={noPlugins}>
         <ChatNavigationContext
           value={{
-            conversationId: null,
+            chatId: null,
             navigate: (href) => {
               if (href === "/login") {
                 signIn();

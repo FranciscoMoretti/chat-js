@@ -53,13 +53,13 @@ test("document migration backfills owned attachments and retention from existing
   );
   await db.transaction(async (tx) => {
     await tx.execute(
-      sql`CREATE TEMP TABLE "EveDocumentRevision" ("id" text, "conversationId" text, "ownerId" text, "content" text) ON COMMIT DROP`
+      sql`CREATE TEMP TABLE "EveDocumentRevision" ("id" text, "branchId" text, "ownerId" text, "content" text) ON COMMIT DROP`
     );
     await tx.execute(
       sql`CREATE TEMP TABLE "EveStoredFile" ("key" text, "ownerId" text, "state" text) ON COMMIT DROP`
     );
     await tx.execute(
-      sql`CREATE TEMP TABLE "EveFileReference" ("conversationId" text, "key" text, "ownerId" text, PRIMARY KEY ("conversationId", "key")) ON COMMIT DROP`
+      sql`CREATE TEMP TABLE "EveFileReference" ("branchId" text, "key" text, "ownerId" text, PRIMARY KEY ("branchId", "key")) ON COMMIT DROP`
     );
     const image = "abcdefghijklmnopqrstuvwx.png";
     const video = "zyxwvutsrqponmlkjihgfedc.mp4";

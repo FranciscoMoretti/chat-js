@@ -44,7 +44,7 @@ export const resolveCreationRequest = async (
     retainResponseGroupDraft(storage, ownerId, operation, result, scope);
     return {
       group: result,
-      id: bound.conversationId,
+      id: bound.branchId,
       sessionId: bound.sessionId,
     };
   }

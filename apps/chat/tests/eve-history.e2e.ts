@@ -61,7 +61,7 @@ test("history pages and searches older conversations without exposing other owne
     const literal = await listEveConversations(owner.id, {
       search: "100%_literal",
     });
-    expect(literal.items.map((row) => row.conversationId)).toContain(ids[54]);
+    expect(literal.items.map((row) => row.branchId)).toContain(ids[54]);
     const last = second.items.at(-1);
     if (!last) {
       throw new Error("Missing last page fixture");

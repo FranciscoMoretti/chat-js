@@ -18,7 +18,7 @@ const row = (
   forkTurnId: null,
   id,
   operationId,
-  parentConversationId: null,
+  parentBranchId: null,
   sessionId: `session-${id}`,
   ...overrides,
 });
@@ -37,20 +37,20 @@ describe("response group lineage", () => {
         createdAt: new Date("2026-01-02"),
         forkKind: "regenerate",
         forkTurnId: "turn_0",
-        parentConversationId: "a",
+        parentBranchId: "a",
       }),
       row("a-newest", "regenerate-a-again", {
         createdAt: new Date("2026-01-03"),
         forkKind: "regenerate",
         forkTurnId: "turn_0",
-        parentConversationId: "a-new",
+        parentBranchId: "a-new",
       }),
     ];
     const fromOtherSlot = resolveEveResponseGroupLineage("b", conversations, [
       group,
     ]);
     expect(fromOtherSlot?.replacements.get("operation-a")).toEqual({
-      conversationId: "a-newest",
+      branchId: "a-newest",
       sessionId: "session-a-newest",
     });
     expect(
@@ -58,7 +58,7 @@ describe("response group lineage", () => {
         group,
       ])?.replacements.get("operation-a")
     ).toEqual({
-      conversationId: "a-new",
+      branchId: "a-new",
       sessionId: "session-a-new",
     });
   });
@@ -69,12 +69,12 @@ describe("response group lineage", () => {
       row("edit", "edit-operation", {
         forkKind: "edit",
         forkTurnId: "turn_0",
-        parentConversationId: "root",
+        parentBranchId: "root",
       }),
       row("later", "later-operation", {
         forkKind: "regenerate",
         forkTurnId: "turn_1",
-        parentConversationId: "root",
+        parentBranchId: "root",
       }),
     ]) {
       expect(
@@ -91,13 +91,13 @@ describe("response group lineage", () => {
     const candidate = row("imported", "operation-a", {
       forkKind: "comparison",
       forkMessageId: "import:imported:2",
-      parentConversationId: "copy",
+      parentBranchId: "copy",
     });
     const copy = row("copy", "copy-operation");
     const regenerated = row("regenerated", "regeneration", {
       forkKind: "regenerate",
       forkTurnId: "turn_0",
-      parentConversationId: "imported",
+      parentBranchId: "imported",
     });
     expect(
       resolveEveResponseGroupLineage(
@@ -106,7 +106,7 @@ describe("response group lineage", () => {
         [group]
       )?.replacements.get("operation-a")
     ).toEqual({
-      conversationId: "regenerated",
+      branchId: "regenerated",
       sessionId: "session-regenerated",
     });
   });
@@ -115,12 +115,12 @@ describe("response group lineage", () => {
     const candidate = row("imported", "operation-a", {
       forkKind: "comparison",
       forkMessageId: "import:imported:2",
-      parentConversationId: copy.id,
+      parentBranchId: copy.id,
     });
     const prefixRegeneration = row("prefix-regeneration", "retry-prefix", {
       forkKind: "regenerate",
       forkMessageId: "import:imported:2",
-      parentConversationId: candidate.id,
+      parentBranchId: candidate.id,
     });
     expect(
       resolveEveResponseGroupLineage(

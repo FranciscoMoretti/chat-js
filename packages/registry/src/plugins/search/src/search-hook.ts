@@ -89,14 +89,14 @@ export default defineHook({
           // message as well as any restored history omitted from the retry buffer.
           await backfillEveSearchConversation(
             scope.ownerId,
-            scope.conversationId,
+            scope.branchId,
             context.session.id
           );
           needsRecovery.update(() => false);
         } else {
           await indexEveSearchText(
             scope.ownerId,
-            scope.conversationId,
+            scope.branchId,
             pending.get()
           );
         }

@@ -5,7 +5,7 @@ export const eveResponseGroupResult = z.object({
   candidates: z.array(
     z.discriminatedUnion("state", [
       candidate.extend({
-        conversationId: z.uuid(),
+        branchId: z.uuid(),
         sessionId: z.string().min(1),
         state: z.literal("bound"),
       }),

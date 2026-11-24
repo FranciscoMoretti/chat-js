@@ -101,7 +101,7 @@ beforeEach(() => {
   vi.resetAllMocks();
   mocks.state.content = null;
   mocks.resolve.mockResolvedValue({
-    conversationId: "conversation",
+    branchId: "conversation",
     ownerId: "owner",
   });
 });
