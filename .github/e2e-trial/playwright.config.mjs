@@ -4,6 +4,7 @@ export default defineConfig({
   expect: { timeout: 10_000 },
   retries: 0,
   testDir: "./playwright-tests",
+  testMatch: "**/*.e2e.ts",
   timeout: 60_000,
   use: {
     ...devices["Desktop Chrome"],
