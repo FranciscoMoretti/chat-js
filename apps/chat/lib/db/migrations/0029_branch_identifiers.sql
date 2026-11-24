@@ -12,4 +12,12 @@ ALTER TABLE "EveVote" RENAME CONSTRAINT "EveVote_conversationId_EveConversation_
 ALTER TABLE "EveSearchText" RENAME CONSTRAINT "EveSearchText_conversationId_ownerId_EveConversation_id_ownerId_fk" TO "EveSearchText_branchId_ownerId_EveConversation_id_ownerId_fk";--> statement-breakpoint
 ALTER TABLE "EveFileReference" RENAME CONSTRAINT "EveFileReference_conversationId_key_pk" TO "EveFileReference_branchId_key_pk";--> statement-breakpoint
 ALTER TABLE "EveVote" RENAME CONSTRAINT "EveVote_conversationId_messageId_pk" TO "EveVote_branchId_messageId_pk";--> statement-breakpoint
-ALTER TABLE "EveSearchText" RENAME CONSTRAINT "EveSearchText_conversationId_key_pk" TO "EveSearchText_branchId_key_pk";
+ALTER TABLE "EveSearchText" RENAME CONSTRAINT "EveSearchText_conversationId_key_pk" TO "EveSearchText_branchId_key_pk";--> statement-breakpoint
+-- An unidentified live source cannot be safely assigned to a branch or retired.
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM "EveResponseGroup" WHERE NOT "sourceIdentityKnown" AND NOT "deleted") THEN
+    RAISE EXCEPTION 'Cannot migrate response groups with unidentified sources';
+  END IF;
+END $$;
+--> statement-breakpoint
+ALTER TABLE "EveResponseGroup" DROP COLUMN "sourceIdentityKnown";

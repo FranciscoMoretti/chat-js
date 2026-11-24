@@ -26,13 +26,12 @@ const isNonemptyString = (value: string | null | undefined): value is string =>
 
 const FIRST_PARAMETER_INDEX = 0;
 const EMPTY_FAMILY_SIZE = 0;
-const SINGLE_MATCH_LIMIT = 1;
 
 type ResponseGroupTransaction = Parameters<
   Parameters<typeof db.transaction>[typeof FIRST_PARAMETER_INDEX]
 >[typeof FIRST_PARAMETER_INDEX];
 type ResponseGroupTombstoneTransaction = Readonly<
-  Pick<ResponseGroupTransaction, "select" | "update">
+  Pick<ResponseGroupTransaction, "update">
 >;
 type ResponseGroupWriteTransaction = Readonly<
   Pick<ResponseGroupTransaction, "select" | "execute" | "insert" | "update">
@@ -91,14 +90,6 @@ const reserveGroupRow = async (
   if (typeof sourceId === "string" && sourceId !== "" && !hasQueryRow(source)) {
     throw new Error("Source conversation not found.");
   }
-  // An exact replay can recover the missing association of a pre-contract group.
-  // Commit it even when the source has since retired, so deletion can find it.
-  if (hasQueryRow(existing) && !existing.sourceIdentityKnown) {
-    await tx
-      .update(eveResponseGroup)
-      .set({ sourceBranchId: sourceId, sourceIdentityKnown: true })
-      .where(condition);
-  }
   if (hasQueryRow(source) && source.state !== "bound") {
     return undefined;
   }
@@ -121,7 +112,6 @@ const reserveGroupRow = async (
       operationId: input.operationId,
       ownerId,
       sourceBranchId: sourceId,
-      sourceIdentityKnown: true,
     })
     .returning();
   return group;
@@ -174,23 +164,6 @@ const tombstoneEveResponseGroups = async (
     operationId: string;
   }>[]
 ): Promise<void> => {
-  const [unknown] = await tx
-    .select({ id: eveResponseGroup.id })
-    .from(eveResponseGroup)
-    .where(
-      and(
-        eq(eveResponseGroup.ownerId, ownerId),
-        eq(eveResponseGroup.sourceIdentityKnown, false),
-        eq(eveResponseGroup.deleted, false)
-      )
-    )
-    .limit(SINGLE_MATCH_LIMIT);
-  const hasUnknownSource = hasQueryRow(unknown);
-  if (hasUnknownSource) {
-    throw new Error(
-      "Recover saved response group requests before deleting conversations."
-    );
-  }
   const operations = sql`ARRAY[${sql.join(
     family.map((row) => sql`${row.operationId}::uuid`),
     sql`, `

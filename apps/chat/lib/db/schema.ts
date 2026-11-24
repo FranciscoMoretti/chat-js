@@ -330,9 +330,6 @@ const eveResponseGroup = pgTable(
       .notNull()
       .references(() => user.id),
     sourceBranchId: uuid("sourceBranchId"),
-    sourceIdentityKnown: boolean("sourceIdentityKnown")
-      .notNull()
-      .default(false),
   },
   (table) => [
     uniqueIndex("EveResponseGroup_owner_operation").on(

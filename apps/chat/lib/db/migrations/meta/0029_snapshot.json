@@ -851,13 +851,6 @@
           "type": "uuid",
           "primaryKey": false,
           "notNull": false
-        },
-        "sourceIdentityKnown": {
-          "name": "sourceIdentityKnown",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
         }
       },
       "indexes": {

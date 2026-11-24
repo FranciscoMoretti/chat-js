@@ -351,41 +351,6 @@ test("group reservation racing retirement cannot leave an active unstarted group
   ).rejects.toThrow("unavailable");
 });
 
-test("pre-contract groups block erasure until an exact replay recovers their source identity", async () => {
-  const root = await createEveConversation(
-    owner,
-    crypto.randomUUID(),
-    "Old group",
-
-    createEveTestSession
-  );
-  const input = {
-    fork: { branchId: root.id },
-    message: "Preserved",
-    modelIds: ["model-a", "model-b"],
-    operationId: crypto.randomUUID(),
-  };
-  const group = await reserveEveResponseGroup(owner, input);
-  await db
-    .update(eveResponseGroup)
-    .set({ sourceBranchId: null, sourceIdentityKnown: false })
-    .where(eq(eveResponseGroup.id, group.id));
-  await expect(beginEveConversationDeletion(owner, root.id)).rejects.toThrow(
-    "Recover saved response group"
-  );
-  await reserveEveResponseGroup(owner, input);
-  await beginEveConversationDeletion(owner, root.id);
-  const [row] = await db
-    .select()
-    .from(eveResponseGroup)
-    .where(eq(eveResponseGroup.id, group.id));
-  expect(row).toMatchObject({
-    deleted: true,
-    sourceBranchId: root.id,
-    sourceIdentityKnown: true,
-  });
-});
-
 test("owner-only group reads preserve order and rejection recovery without exposing intent hashes", async () => {
   const input = {
     message: "Read group",
