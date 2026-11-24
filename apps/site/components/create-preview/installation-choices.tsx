@@ -1,25 +1,8 @@
 "use client";
 
+import { Info, Puzzle } from "lucide-react";
 import { hasPluginEntry } from "../../../../packages/registry/plugin-entry";
-import {
-  ArrowRight,
-  FileText,
-  Folder,
-  Info,
-  Images,
-  Video,
-  Link2,
-  MessageSquare,
-  Monitor,
-  Plug,
-  Puzzle,
-  Search,
-  SlidersHorizontal,
-  TextCursorInput,
-  ThumbsUp,
-  Wallet,
-} from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import { pluginIcons } from "./plugin-icons";
 import type { InstallationCatalogItem } from "../../../../packages/registry/installation-catalog";
 import { Button } from "@/vendor/shadcn-create/styles/base-nova/ui/button";
 import { Checkbox } from "@/vendor/shadcn-create/styles/base-nova/ui/checkbox";
@@ -41,24 +24,6 @@ import { useInstallation } from "./installation-provider";
 import { setupActions } from "./setup-guidance";
 import type { ConfigureSetup } from "./setup-guidance";
 import { pluginPreviewLabel } from "./preview-capabilities";
-
-// Use the homepage illustrations’ motifs at the scale of a catalog row.
-const pluginIcons: Readonly<Partial<Record<string, LucideIcon>>> = {
-  projects: Folder,
-  "image-viewer": Images,
-  "video-viewer": Video,
-  search: Search,
-  "ai-titles": TextCursorInput,
-  sharing: Link2,
-  feedback: ThumbsUp,
-  "followup-suggestions": ArrowRight,
-  "model-preferences": SlidersHorizontal,
-  "attachment-uploads": FileText,
-  mcp: Plug,
-  "guest-chat": MessageSquare,
-  credits: Wallet,
-  desktop: Monitor,
-};
 
 const requiresChatjs = (
   definition: InstallationCatalogItem["definition"]

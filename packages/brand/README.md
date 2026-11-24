@@ -40,7 +40,6 @@ Generate after editing a source. Commit both sources and generated exports. Chec
 
 The generator updates these application assets:
 
-- `apps/site/public/home/hero/brand.js`, used by both hero and source animations.
 - `apps/site/public/home/blocks/`, copied from the component-preview masters.
 - `apps/site/public/home/fonts/`, copied from the brand font sources.
 - `apps/site/public/logo.svg`, plus the browser icons and social preview in `apps/site/app/`.
@@ -78,4 +77,4 @@ Keep one approved identity here. Add a descriptive asset family such as `assets/
 
 An asset's presence here means it is ready to reuse; it does not imply a new product capability.
 
-For product-preview blocks, add the SVG master in `assets/product-blocks/`, add its actual capability metadata in `apps/site/components/home/blocks.ts`, and run generation plus homepage asset tests. Avoid turning this package into a second registry of product features.
+For product-preview blocks, add the SVG master in `assets/product-blocks/`, then run brand generation and the asset checks. Avoid turning this package into a second registry of product features.
