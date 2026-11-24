@@ -1,0 +1,31 @@
+name: Set up ChatJS browser tests
+description: Install ChatJS test dependencies and the Flashwright runner.
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 24
+    - uses: oven-sh/setup-bun@v2
+      with:
+        bun-version: 1.3.1
+    - name: Install browser test workspace dependencies
+      shell: bash
+      # The standalone presentation fixtures load fonts from the registry workspace.
+      run: bun install --frozen-lockfile --filter './' --filter './apps/chat' --filter './packages/registry'
+    - name: Install Flashwright and Chromium headless shell
+      shell: bash
+      working-directory: apps/chat
+      run: |
+        runner_dir="$RUNNER_TEMP/chatjs-flashwright"
+        mkdir -p "$runner_dir" node_modules/@playwright
+        cp "$GITHUB_ACTION_PATH/package.json" "$GITHUB_ACTION_PATH/bun.lock" "$runner_dir/"
+        bun install --cwd "$runner_dir" --frozen-lockfile --ignore-scripts
+
+        # Both the CLI and the test files must resolve the same runner.
+        if [[ -e node_modules/@playwright/test || -L node_modules/@playwright/test ]]; then
+          mv node_modules/@playwright/test "$RUNNER_TEMP/chatjs-stock-playwright"
+        fi
+        ln -s "$runner_dir/node_modules/@playwright/test" node_modules/@playwright/test
+        node node_modules/@playwright/test/cli.js --version
+        node node_modules/@playwright/test/cli.js install --only-shell chromium

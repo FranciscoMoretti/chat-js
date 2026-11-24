@@ -1,0 +1,7 @@
+{
+  "name": "chatjs-ci-browser-runner",
+  "private": true,
+  "devDependencies": {
+    "@playwright/test": "npm:flashwright-test@1.64.1-flashwright.12"
+  }
+}
