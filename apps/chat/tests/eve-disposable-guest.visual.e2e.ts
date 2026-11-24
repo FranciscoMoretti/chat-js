@@ -67,6 +67,9 @@ test("guest response", async ({ page }) => {
 test("expired guest on mobile", async ({ page }) => {
   await page.setViewportSize({ height: 844, width: 390 });
   await page.getByLabel("Fixture state").selectOption("expired");
+  await expect(
+    page.getByTestId("guest-visual").getByTestId("multimodal-input")
+  ).toHaveAttribute("aria-readonly", "true");
   await expect(page.getByTestId("guest-visual")).toHaveScreenshot(
     "guest-expired-mobile.png"
   );

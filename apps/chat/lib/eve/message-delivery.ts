@@ -20,6 +20,7 @@ const pendingMessage = z.object({
   message: z.string(),
   modelId: z.string().optional(),
   operationId: z.uuid().optional(),
+  turnPolicy: z.literal("steer").optional(),
   rejection: z.string().optional(),
   retryable: z.boolean().optional(),
   selectedTool: toolNameSchema.optional(),

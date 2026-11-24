@@ -68,7 +68,11 @@ export const ParallelResponseModelPicker = ({
           }
         }}
         selectedModelId={selectedModel}
-        selectedModelSelection={modelSelection?.value ?? selectedModel}
+        selectedModelSelection={
+          hasText(retainedModelId)
+            ? selectedModel
+            : (modelSelection?.value ?? selectedModel)
+        }
       />
     </fieldset>
   );

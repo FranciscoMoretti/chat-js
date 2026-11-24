@@ -3,6 +3,7 @@ import { PGlite } from "@electric-sql/pglite";
 import { drizzle } from "drizzle-orm/pglite";
 import { afterAll, beforeAll, beforeEach, expect, it, vi } from "vitest";
 import { z } from "zod";
+import { EveSteerRejectedError } from "../eve/steer-rejected";
 
 const postgres = new PGlite();
 vi.mock("server-only", () => ({}));
@@ -46,6 +47,11 @@ const {
   getEveSendReceipt,
   getEveMessageDisplayReceipts,
 } = await import("./eve-dispatch");
+const {
+  EveWorkspaceBusyError,
+  readActiveEveWorkspaceOperation,
+  releaseSettledEveWorkspaceOperation,
+} = await import("./eve-workspace-turns");
 const conversationId = "00000000-0000-4000-8000-000000000001";
 const input = {
   ownerId: "owner",
@@ -158,9 +164,149 @@ it("fences a concurrent request while the first dispatch is still pending", asyn
   await expect(dispatchEveOnce(operation, duplicate)).rejects.toBeInstanceOf(
     EveDispatchUnknownError
   );
+  await expect(
+    dispatchEveOnce(
+      {
+        ...operation,
+        operationId: crypto.randomUUID(),
+        steerSessionId: "source",
+      },
+      duplicate
+    )
+  ).rejects.toBeInstanceOf(EveWorkspaceBusyError);
   response.resolve({ sessionId: "source", deliveryId: "first" });
   expect(await first).toEqual({ sessionId: "source", deliveryId: "first" });
   expect(duplicate).not.toHaveBeenCalled();
+});
+
+it("lets only the same bound session steer and keeps its successor fenced", async () => {
+  const first = { ...input, operationId: crypto.randomUUID() };
+  const followUp = {
+    ...input,
+    operationId: crypto.randomUUID(),
+    steerSessionId: "source",
+    intent: { ...input.intent, turnPolicy: "steer" },
+  };
+  const dispatch = vi.fn().mockResolvedValue({
+    sessionId: "source",
+    deliveryId: "follow-up",
+  });
+  await dispatchEveOnce(
+    first,
+    vi.fn().mockResolvedValue({ sessionId: "source", deliveryId: "initial" })
+  );
+  await expect(
+    dispatchEveOnce({ ...followUp, steerSessionId: "other-session" }, dispatch)
+  ).rejects.toBeInstanceOf(EveWorkspaceBusyError);
+
+  expect(await dispatchEveOnce(followUp, dispatch)).toEqual({
+    sessionId: "source",
+    deliveryId: "follow-up",
+  });
+  await releaseSettledEveWorkspaceOperation(
+    input.ownerId,
+    conversationId,
+    first.operationId
+  );
+  await expect(
+    dispatchEveOnce({ ...input, operationId: crypto.randomUUID() }, dispatch)
+  ).rejects.toBeInstanceOf(EveWorkspaceBusyError);
+  expect(dispatch).toHaveBeenCalledTimes(1);
+});
+
+it("keeps the original reservation through a steer and releases it after a definite refusal", async () => {
+  const first = { ...input, operationId: crypto.randomUUID() };
+  await dispatchEveOnce(
+    first,
+    vi.fn().mockResolvedValue({
+      sessionId: "source",
+      deliveryId: "initial",
+    })
+  );
+  const followUp = {
+    ...input,
+    operationId: crypto.randomUUID(),
+    steerSessionId: "source",
+    intent: { ...input.intent, turnPolicy: "steer" },
+  };
+  const started = Promise.withResolvers<boolean>();
+  const refusal = Promise.withResolvers<never>();
+  const steering = dispatchEveOnce(followUp, async () => {
+    started.resolve(true);
+    return await refusal.promise;
+  });
+  await started.promise;
+  await releaseSettledEveWorkspaceOperation(
+    input.ownerId,
+    conversationId,
+    first.operationId
+  );
+  const active = await readActiveEveWorkspaceOperation(
+    input.ownerId,
+    conversationId
+  );
+  expect(active?.operation.operationId).toBe(first.operationId);
+  const anotherSend = vi.fn();
+  await expect(
+    dispatchEveOnce(
+      { ...followUp, operationId: crypto.randomUUID() },
+      anotherSend
+    )
+  ).rejects.toBeInstanceOf(EveWorkspaceBusyError);
+  expect(anotherSend).not.toHaveBeenCalled();
+  const result = expect(steering).rejects.toBeInstanceOf(EveSteerRejectedError);
+  refusal.reject(new EveSteerRejectedError("not admitted"));
+  await result;
+  await releaseSettledEveWorkspaceOperation(
+    input.ownerId,
+    conversationId,
+    first.operationId
+  );
+  expect(
+    await readActiveEveWorkspaceOperation(input.ownerId, conversationId)
+  ).toBeUndefined();
+});
+
+it("retains the original reservation when a steer receipt is lost", async () => {
+  const first = { ...input, operationId: crypto.randomUUID() };
+  await dispatchEveOnce(
+    first,
+    vi.fn().mockResolvedValue({
+      sessionId: "source",
+      deliveryId: "initial",
+    })
+  );
+  const followUp = {
+    ...input,
+    operationId: crypto.randomUUID(),
+    steerSessionId: "source",
+    intent: { ...input.intent, turnPolicy: "steer" },
+  };
+  try {
+    await expect(
+      dispatchEveOnce(
+        followUp,
+        vi.fn().mockRejectedValue(new EveDispatchUnknownError())
+      )
+    ).rejects.toBeInstanceOf(EveDispatchUnknownError);
+    await releaseSettledEveWorkspaceOperation(
+      input.ownerId,
+      conversationId,
+      first.operationId
+    );
+    const active = await readActiveEveWorkspaceOperation(
+      input.ownerId,
+      conversationId
+    );
+    expect(active?.operation.operationId).toBe(first.operationId);
+    expect(
+      await getEveSendReceipt(input.ownerId, "source", followUp.operationId)
+    ).toBeNull();
+  } finally {
+    await postgres.query('DELETE FROM "EveDispatch" WHERE "operationId" = $1', [
+      followUp.operationId,
+    ]);
+  }
 });
 
 it("keeps the creation fence committed when its binding transaction rolls back", async () => {

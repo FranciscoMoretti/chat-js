@@ -27,7 +27,7 @@ import { getToolDisplay } from "./tool-display";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 export const ComposerMenu = (
-  props: ComposerControlProps
+  props: ComposerControlProps & { readonly toolsDisabled?: boolean }
 ): ReactJSX.Element | null => {
   const mobile = useIsMobile();
   const available = useAvailableTools();
@@ -43,6 +43,7 @@ export const ComposerMenu = (
     }) => Component.isAvailable?.(mobile, available) ?? true
   );
   const hasControls = controls.length > 0 || hasAttachments || hasExtensions;
+  const toolsDisabled = props.disabled === true || props.toolsDisabled === true;
   if (!hasControls && props.selectedTool === null) {
     return null;
   }
@@ -68,15 +69,15 @@ export const ComposerMenu = (
             }: Readonly<Pick<(typeof composerControls)[number], "id">> & {
               readonly Component: React.JSXElementConstructor<ComposerControlProps>;
             }): React.JSX.Element => (
-              <Component key={id} {...props} />
+              <Component key={id} {...props} disabled={toolsDisabled} />
             )
           )}
-          <ComposerExtensions {...props} />
+          <ComposerExtensions {...props} disabled={toolsDisabled} />
           {props.selectedTool !== null && (
             <>
               {hasControls && <DropdownMenuSeparator />}
               <DropdownMenuItem
-                disabled={props.disabled}
+                disabled={toolsDisabled}
                 onClick={() => {
                   props.onToolChange(null);
                 }}

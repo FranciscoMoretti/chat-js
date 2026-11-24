@@ -18,6 +18,44 @@ const composerDraft = z.object({
 type Draft = ReadonlyNativeSurface<z.infer<typeof composerDraft>>;
 
 const emptyDraft: Draft = { attachments: [], selectedTool: null, text: "" };
+const draftKey = (ownerId: string, scopeId: string): string =>
+  `chatjs.eve.composer:${ownerId}:${scopeId}`;
+
+const parseSavedDraft = (saved: string | null): Draft =>
+  saved === null || saved === ""
+    ? emptyDraft
+    : composerDraft.parse(JSON.parse(saved));
+
+const readHandoffDestination = (key: string): Draft => {
+  const saved = sessionStorage.getItem(key);
+  try {
+    return parseSavedDraft(saved);
+  } catch {
+    // An unreadable destination cannot be merged with the intact follow-up.
+    return emptyDraft;
+  }
+};
+
+/** Transfer text typed in the composer that created this conversation. */
+export const handoffEveComposerDraft = (
+  ownerId: string,
+  scopeId: string,
+  text: string
+): void => {
+  const key = draftKey(ownerId, scopeId);
+  const draft = readHandoffDestination(key);
+  if (draft.text === text) {
+    return;
+  }
+  sessionStorage.setItem(
+    key,
+    JSON.stringify({
+      ...draft,
+      text: draft.text ? `${draft.text}\n\n${text}` : text,
+    })
+  );
+};
+
 interface DraftSnapshot {
   value: Draft;
   loaded: boolean;
@@ -37,6 +75,25 @@ const createDraftStore = (key: string) => {
       listener();
     }
   };
+  const update = (change: (draft: Draft) => Draft): void => {
+    const value = change(snapshot.value);
+    let error: string | undefined;
+    try {
+      if (
+        value.text ||
+        value.attachments.length > 0 ||
+        value.selectedTool !== null
+      ) {
+        sessionStorage.setItem(key, JSON.stringify(value));
+      } else {
+        sessionStorage.removeItem(key);
+      }
+    } catch {
+      error =
+        "Your draft could not be saved. Keep this tab open before switching responses.";
+    }
+    publish({ ...snapshot, value, error });
+  };
   return {
     getSnapshot: () => snapshot,
     getServerSnapshot: () => initial,
@@ -44,12 +101,11 @@ const createDraftStore = (key: string) => {
       listeners.add(listener);
       if (!snapshot.loaded) {
         try {
-          const saved = sessionStorage.getItem(key);
-          const value =
-            typeof saved === "string" && saved !== ""
-              ? composerDraft.parse(JSON.parse(saved))
-              : emptyDraft;
-          publish({ value, loaded: true, error: undefined });
+          publish({
+            value: parseSavedDraft(sessionStorage.getItem(key)),
+            loaded: true,
+            error: undefined,
+          });
         } catch {
           publish({
             ...snapshot,
@@ -63,25 +119,7 @@ const createDraftStore = (key: string) => {
         listeners.delete(listener);
       };
     },
-    update: (change: (draft: Draft) => Draft): void => {
-      const value = change(snapshot.value);
-      let error: string | undefined;
-      try {
-        if (
-          value.text ||
-          value.attachments.length > 0 ||
-          value.selectedTool !== null
-        ) {
-          sessionStorage.setItem(key, JSON.stringify(value));
-        } else {
-          sessionStorage.removeItem(key);
-        }
-      } catch {
-        error =
-          "Your draft could not be saved. Keep this tab open before switching responses.";
-      }
-      publish({ ...snapshot, value, error });
-    },
+    update,
   };
 };
 type ComposerDraftState = Draft & {
@@ -104,7 +142,7 @@ export const useEveComposerDraft = (
   ownerId: string,
   scopeId: string
 ): ComposerDraftState => {
-  const key = `chatjs.eve.composer:${ownerId}:${scopeId}`;
+  const key = draftKey(ownerId, scopeId);
   const store = useMemo(() => createDraftStore(key), [key]);
   const { value, loaded, error } = useSyncExternalStore(
     store.subscribe,

@@ -29,6 +29,7 @@ export interface OpenRequest {
   readonly chatId?: string;
   readonly title?: string;
   readonly operation?: { readonly message: ReadonlyEveMessageInput };
+  readonly getFollowUpDraft?: () => string;
 }
 
 export const EveRuntimeContext = createContext<

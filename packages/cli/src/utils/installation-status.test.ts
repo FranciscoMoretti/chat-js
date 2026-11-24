@@ -19,6 +19,9 @@ import { recordInstalledSource, sourceBaselineFile } from "./source-receipt";
 import { loadSourceFormatter } from "./source-formatter";
 import { removePlugins } from "./remove-plugins";
 
+// These tests include a fresh Bun process and its dependency imports.
+const CLI_PROCESS_TEST_TIMEOUT_MS = 30_000;
+
 const roots: string[] = [];
 afterEach(async () => {
   await Promise.all(
@@ -49,7 +52,7 @@ const snapshot = async (root: string) => {
   );
 };
 
-test("status identifies edits, missing files, local files, framework ownership and removal dependencies without writes", async () => {
+const checkStatusInventory = async (): Promise<void> => {
   const root = await fixture();
   const files = [
     "chatjs/plugins/alpha/source.ts",
@@ -143,7 +146,12 @@ test("status identifies edits, missing files, local files, framework ownership a
   expect({ exit, error }).toEqual({ exit: 0, error: "" });
   expect(output).toBe(`${JSON.stringify(report, null, 2)}\n`);
   expect(await snapshot(root)).toEqual(before);
-});
+};
+test(
+  "status identifies edits, missing files, local files, framework ownership and removal dependencies without writes",
+  checkStatusInventory,
+  CLI_PROCESS_TEST_TIMEOUT_MS
+);
 
 test("native installs without receipts stay untracked, and status reports missing schemas", async () => {
   const root = await fixture();
@@ -193,7 +201,7 @@ test("status refuses symlinked plugin source instead of reading outside the proj
   await rejects(installationStatus(root), /symlinked ChatJS target/u);
 });
 
-test("project formatter classifies formatting without changing receipts or removal protection", async () => {
+const checkFormattingStatus = async (): Promise<void> => {
   const root = await fixture();
   const file = "chatjs/plugins/alpha/settings.json";
   await put(
@@ -254,7 +262,12 @@ test("project formatter classifies formatting without changing receipts or remov
   expect(
     JSON.parse(await readFile(path.join(root, sourceBaselineFile), "utf-8"))
   ).toEqual({});
-});
+};
+test(
+  "project formatter classifies formatting without changing receipts or removal protection",
+  checkFormattingStatus,
+  CLI_PROCESS_TEST_TIMEOUT_MS
+);
 
 test("old or mismatched baselines and invalid UTF-8 cannot be blessed by formatting", async () => {
   const root = await fixture();

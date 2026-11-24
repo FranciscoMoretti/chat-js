@@ -1,4 +1,6 @@
 import type { SessionStreamEvent } from "eve/client";
+import { activeTurn } from "eve/events";
+import type { SessionView } from "eve/events";
 
 const responseModelReferences = (
   events: readonly SessionStreamEvent[]
@@ -43,4 +45,12 @@ const responseModel = (
     "The response model is unavailable. Reload before regenerating."
   );
 };
-export { responseModel, responseModelReferences };
+const activeResponseModel = (
+  view: SessionView,
+  models: ReadonlyMap<string, string>
+): string | undefined => {
+  const active = activeTurn(view);
+  return active === undefined ? undefined : models.get(active.turnId);
+};
+
+export { activeResponseModel, responseModel, responseModelReferences };

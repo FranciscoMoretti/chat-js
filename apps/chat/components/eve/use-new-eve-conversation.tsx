@@ -29,7 +29,9 @@ import { draftMessage, restoreDraft } from "@/lib/eve/draft";
 import {
   finishCreation,
   prepareSelectedCreation,
+  readCreationFollowUp,
   readCreationRequest,
+  saveCreationFollowUp,
 } from "@/lib/eve/pending-create";
 import { resolveCreationRequest } from "@/lib/eve/resolve-creation-request";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
@@ -70,6 +72,8 @@ export const useNewEveConversation = ({
     () =>
       createClientSnapshot<{
         draft: string;
+        followUpDraft: string;
+        recoveredFollowUp: boolean;
         selectedTool: UiToolName | null;
         retainedOperationId: string | undefined;
         retainedModelId: string | undefined;
@@ -78,6 +82,8 @@ export const useNewEveConversation = ({
       }>(
         {
           draft: "",
+          followUpDraft: "",
+          recoveredFollowUp: false,
           selectedTool: null,
           retainedOperationId: undefined,
           retainedModelId: undefined,
@@ -87,14 +93,24 @@ export const useNewEveConversation = ({
         (current) => {
           try {
             const pending = readCreationRequest(sessionStorage, ownerId, scope);
+            const savedFollowUp = readCreationFollowUp(
+              sessionStorage,
+              ownerId,
+              scope
+            );
             if (!pending) {
-              return current;
+              return {
+                ...current,
+                draft: savedFollowUp,
+                recoveredFollowUp: hasText(savedFollowUp),
+              };
             }
             const restored = restoreDraft(pending.message);
             setAttachments(restored.attachments);
             return {
               ...current,
               draft: restored.text,
+              followUpDraft: savedFollowUp,
               selectedTool: pending.selectedTool ?? null,
               retainedOperationId: pending.operationId,
               retainedModelIds:
@@ -114,6 +130,8 @@ export const useNewEveConversation = ({
   );
   const {
     draft,
+    followUpDraft,
+    recoveredFollowUp,
     selectedTool,
     retainedOperationId,
     retainedModelId,
@@ -206,14 +224,24 @@ export const useNewEveConversation = ({
             creationInput
           );
           retainOperation(operation);
+          if (recoveredFollowUp) {
+            saveCreationFollowUp(sessionStorage, ownerId, "", scope);
+            store.set("recoveredFollowUp", false);
+          }
           const binding = await resolveCreationRequest(
             sessionStorage,
             ownerId,
             operation,
             scope
           );
-          await openRuntime({ ...binding, operation, ownerId });
+          await openRuntime({
+            ...binding,
+            operation,
+            ownerId,
+            getFollowUpDraft: () => store.getSnapshot().followUpDraft,
+          });
           navigating = true;
+          saveCreationFollowUp(sessionStorage, ownerId, "", scope);
         } catch (error) {
           if (
             error instanceof CreationRejectedError &&
@@ -282,7 +310,8 @@ export const useNewEveConversation = ({
     autoFocus: true,
     status: busy ? "submitted" : "ready",
     disabled: busy,
-    draft: busy ? "" : draft,
+    allowDraftWhileBusy: true,
+    draft: busy ? followUpDraft : draft,
     capabilities: {
       files: busy ? { ...files, attachments: [] } : files,
       selectedTool,
@@ -310,12 +339,18 @@ export const useNewEveConversation = ({
       />
     ),
     onDraftChange: (value: string) => {
-      // Clearing the controlled editor must not erase the saved send intent.
-      if (!busy) {
-        setDraft(value);
+      store.set(busy ? "followUpDraft" : "draft", value);
+      if (busy || recoveredFollowUp) {
+        try {
+          saveCreationFollowUp(sessionStorage, ownerId, value, scope);
+        } catch {
+          setFailure(
+            "Your follow-up draft could not be saved. Keep this tab open."
+          );
+        }
       }
     },
-    readOnly: retained,
+    readOnly: retained && !busy,
   } satisfies Omit<ComponentProps<typeof EveComposer>, "onSubmit">;
   return {
     contextual: scope?.context !== undefined,

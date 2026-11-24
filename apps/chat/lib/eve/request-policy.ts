@@ -16,6 +16,7 @@ const message = z
   .object({
     message: eveMessageInput,
     selectedTool: frontendToolsSchema.optional(),
+    turnPolicy: z.literal("steer").optional(),
     modelId: z
       .string()
       .min(MIN_IDENTIFIER_LENGTH)

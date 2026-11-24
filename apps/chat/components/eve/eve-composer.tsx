@@ -57,6 +57,8 @@ interface ComposerCapabilities {
   };
   readonly selectedTool: UiToolName | null;
   readonly onToolChange: Dispatch<SetStateAction<UiToolName | null>>;
+  readonly turnOptionsLocked?: boolean;
+  readonly attachmentModelPending?: boolean;
 }
 
 type ComposerProps = Omit<
@@ -75,6 +77,8 @@ const CapableComposer = ({
   modelPicker,
   selectedTool,
   onToolChange,
+  turnOptionsLocked,
+  attachmentModelPending,
   ...props
 }: ComposerProps & ComposerCapabilities): ReactJSX.Element => {
   const selected = useDefaultModel();
@@ -84,11 +88,15 @@ const CapableComposer = ({
   );
   const unsupported =
     !(props.readOnly === true) &&
-    unsupportedAttachments(models, files.attachments);
+    (attachmentModelPending === true
+      ? files.attachments.length > 0
+      : unsupportedAttachments(models, files.attachments));
   const available = useAvailableTools();
-  const unavailableTool = isUnavailableTool(selectedTool, available);
+  const unavailableTool =
+    turnOptionsLocked !== true && isUnavailableTool(selectedTool, available);
   const locked = props.disabled || files.uploadQueue.length > 0;
   const uploadLocked = locked || props.readOnly;
+  const optionsLocked = uploadLocked === true || turnOptionsLocked === true;
   const removeAttachment = (attachment: { readonly url: string }): void => {
     files.setAttachments((current: readonly Readonly<DraftAttachment>[]) =>
       current.filter((file) => file.url !== attachment.url)
@@ -125,6 +133,7 @@ const CapableComposer = ({
           <>
             <ComposerMenu
               disabled={uploadLocked}
+              toolsDisabled={optionsLocked}
               selectedModelId={models[0]?.id ?? ""}
               selectedTool={selectedTool}
               onToolChange={onToolChange}
@@ -132,12 +141,12 @@ const CapableComposer = ({
             />
             <ActiveTool
               selectedTool={selectedTool}
-              disabled={uploadLocked}
+              disabled={optionsLocked}
               onClear={() => {
                 onToolChange(null);
               }}
             />
-            <fieldset className="min-w-0" disabled={uploadLocked}>
+            <fieldset className="min-w-0" disabled={optionsLocked}>
               {modelPicker ?? <EveModelPicker />}
             </fieldset>
           </>
@@ -151,7 +160,9 @@ const CapableComposer = ({
       )}
       {unsupported && (
         <p className="text-destructive text-sm" role="alert">
-          Choose models that support all attached files.
+          {attachmentModelPending === true
+            ? "Wait for the active model before sending attachments."
+            : "The selected model does not support all attached files."}
         </p>
       )}
     </div>

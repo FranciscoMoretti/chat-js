@@ -44,7 +44,10 @@ import { logicalResponseSlots } from "@/lib/eve/logical-response-slots";
 import type { ActivePendingEveMessage } from "@/lib/eve/message-delivery";
 import { EVE_MESSAGE_OPERATION_HEADER } from "@/lib/eve/message-delivery";
 import type { ReadonlyEveMessage } from "@/lib/eve/readonly-message-types";
-import { responseModelReferences } from "@/lib/eve/response-model";
+import {
+  activeResponseModel,
+  responseModelReferences,
+} from "@/lib/eve/response-model";
 import { sendCommand } from "@/lib/eve/send-command";
 import {
   useDefaultModel,
@@ -183,9 +186,9 @@ const useConversationInput = (
 const composerModelIds = (
   selected: readonly string[],
   retained: readonly string[] | undefined,
-  pending: { readonly modelId?: string } | null
+  visibleModelId: string | undefined
 ): readonly string[] =>
-  retained ?? (hasText(pending?.modelId) ? [pending.modelId] : selected);
+  hasText(visibleModelId) ? [visibleModelId] : (retained ?? selected);
 
 const retainedToolSelection = (
   comparison: { selectedTool?: UiToolName } | undefined,
@@ -430,15 +433,24 @@ const conversationActionLocks = ({
     fork.locked || Boolean(editingMessageId) || Boolean(pendingMessage),
 });
 
+const showComposerReconnect = (
+  message: string | undefined,
+  pendingRejection: string | undefined,
+  commandError: Error | undefined
+): boolean =>
+  hasText(message) &&
+  !hasText(pendingRejection) &&
+  !isEveCommandRejection(commandError);
+
 const EveConversationComposer = ({
   input,
   pendingMessage,
   status,
   turnOpen,
+  activeModelId,
   busy,
   commandPending,
   cancelPending,
-  hasApproval,
   displayedError,
   commandFailure,
   agentError,
@@ -450,10 +462,10 @@ const EveConversationComposer = ({
   readonly pendingMessage: ReturnType<typeof useEveMessageDelivery>["pending"];
   readonly status: ReturnType<typeof useEveAgent>["status"];
   readonly turnOpen: boolean;
+  readonly activeModelId: string | undefined;
   readonly busy: boolean;
   readonly commandPending: boolean;
   readonly cancelPending: boolean;
-  readonly hasApproval: boolean;
   readonly displayedError: string | undefined;
   readonly commandFailure: Error | undefined;
   readonly agentError: Error | undefined;
@@ -462,11 +474,14 @@ const EveConversationComposer = ({
   readonly onReconnect: () => void;
 }): ReactJSX.Element => {
   const { composerDraft, files, modelSelection, comparison, fork } = input;
+  const statusForComposer = composerStatus(status, turnOpen);
+  const steering = statusForComposer === "streaming";
+  const visibleModelId = steering ? activeModelId : pendingMessage?.modelId;
   const handleSelectedToolChange = composerDraft.setSelectedTool;
   const handleDraftChange = composerDraft.setText;
   return (
     <>
-      {input.modelIds.length > 1 && (
+      {!steering && input.modelIds.length > 1 && (
         <p className="text-muted-foreground mb-2 text-xs">
           Each model receives its own conversation history in the shared
           workspace. Turns run one at a time; changes to workspace files are
@@ -474,13 +489,13 @@ const EveConversationComposer = ({
         </p>
       )}
       <EveComposer
-        status={composerStatus(status, turnOpen)}
+        status={statusForComposer}
+        allowSendWhileStreaming
         disabled={
           !composerDraft.loaded ||
-          busy ||
+          (busy && !steering) ||
           commandPending ||
           cancelPending ||
-          hasApproval ||
           Boolean(pendingMessage) ||
           fork.locked
         }
@@ -488,6 +503,8 @@ const EveConversationComposer = ({
         capabilities={{
           files,
           onToolChange: handleSelectedToolChange,
+          turnOptionsLocked: statusForComposer !== "ready",
+          attachmentModelPending: steering && !hasText(activeModelId),
           selectedTool: retainedToolSelection(
             comparison,
             pendingMessage,
@@ -497,13 +514,13 @@ const EveConversationComposer = ({
         modelIds={composerModelIds(
           input.modelIds,
           comparison?.modelIds,
-          pendingMessage
+          visibleModelId
         )}
         modelPicker={
           <ParallelResponseModelPicker
             disabled={Boolean(pendingMessage)}
             modelSelection={modelSelection}
-            retainedModelId={pendingMessage?.modelId}
+            retainedModelId={visibleModelId}
             retainedModelIds={comparison?.modelIds}
           />
         }
@@ -513,19 +530,21 @@ const EveConversationComposer = ({
         readOnly={Boolean(comparison)}
         stopDisabled={cancelPending || status === "resuming"}
       />
-      {hasText(displayedError) &&
-        !hasText(pendingMessage?.rejection) &&
-        !isEveCommandRejection(commandFailure ?? agentError) && (
-          <Button
-            disabled={busy || commandPending || cancelPending}
-            onClick={onReconnect}
-            size="sm"
-            type="button"
-            variant="ghost"
-          >
-            Reconnect
-          </Button>
-        )}
+      {showComposerReconnect(
+        displayedError,
+        pendingMessage?.rejection,
+        commandFailure ?? agentError
+      ) && (
+        <Button
+          disabled={busy || commandPending || cancelPending}
+          onClick={onReconnect}
+          size="sm"
+          type="button"
+          variant="ghost"
+        >
+          Reconnect
+        </Button>
+      )}
     </>
   );
 };
@@ -587,6 +606,7 @@ const EveConversation = ({
     fork.editingMessageId ??
     messages.find((message) => message.id === fork.editingBoundary)?.id;
   const responseModels = responseModelReferences(agent.events);
+  const activeModelId = activeResponseModel(agent.view, responseModels);
   const modelForMessage = (
     message: Readonly<Pick<(typeof messages)[number], "metadata">>
   ): string | undefined => {
@@ -609,6 +629,7 @@ const EveConversation = ({
     commandFailure,
     cancelPending
   );
+  const steering = composerStatus(agent.status, turnOpen) === "streaming";
   const respond = async (response: Answer): Promise<void> => {
     if (inputDisabled) {
       return;
@@ -669,6 +690,7 @@ const EveConversation = ({
     try {
       await send(async () => {
         await agent.send(draftMessage(pending.message, pending.attachments), {
+          turnPolicy: pending.turnPolicy,
           headers: {
             [EVE_MESSAGE_OPERATION_HEADER]: pending.operationId,
             ...(hasText(pending.modelId)
@@ -694,7 +716,8 @@ const EveConversation = ({
     attachments: readonly Readonly<DraftAttachment>[],
     modelId: string,
     clearComposer: boolean,
-    selectedTool?: UiToolName
+    selectedTool?: UiToolName,
+    turnPolicy?: ActivePendingEveMessage["turnPolicy"]
   ): Promise<void> => {
     controller.selectBranch(conversationId);
     const pending = delivery.begin({
@@ -702,6 +725,7 @@ const EveConversation = ({
       message: message.trim(),
       modelId,
       selectedTool,
+      turnPolicy,
     });
     if (clearComposer) {
       setDraft("");
@@ -925,10 +949,10 @@ const EveConversation = ({
           pendingMessage={pendingMessage}
           status={agent.status}
           turnOpen={turnOpen}
+          activeModelId={activeModelId}
           busy={busy}
           commandPending={commandPending}
           cancelPending={cancelPending}
-          hasApproval={hasApproval}
           displayedError={displayedError}
           commandFailure={commandFailure}
           agentError={agent.error}
@@ -938,7 +962,7 @@ const EveConversation = ({
 
           onSubmit={() => {
             void run(async () => {
-              await (modelIds.length > 1
+              await (!steering && modelIds.length > 1
                 ? fork.compare(
                     draftMessage(draft, files.attachments),
                     modelIds,
@@ -947,9 +971,10 @@ const EveConversation = ({
                 : submitMessage(
                     draft,
                     files.attachments,
-                    modelIds[0],
+                    steering ? (activeModelId ?? modelIds[0]) : modelIds[0],
                     true,
-                    composerDraft.selectedTool ?? undefined
+                    composerDraft.selectedTool ?? undefined,
+                    steering ? "steer" : undefined
                   ));
             });
           }}

@@ -70,13 +70,31 @@ const ComposerAction = ({
   );
 };
 
+const composerActionStatus = (
+  status: ChatStatus,
+  allowFollowUp: boolean | undefined,
+  hasDraft: boolean
+): ChatStatus =>
+  status === "streaming" && allowFollowUp === true && hasDraft
+    ? "ready"
+    : status;
+
+const canSubmitDraft = (
+  status: ChatStatus,
+  hasDraft: boolean,
+  draftLength: number
+): boolean =>
+  (status === "ready" || status === "error") &&
+  hasDraft &&
+  draftLength <= MAX_DRAFT_LENGTH;
+
 /**
  * A controlled composer for runtimes that own their own submission lifecycle.
  *
  * @param {string} draft Current text controlled by the runtime.
  * @param {(draft: string) => void} onDraftChange Writes text changes back to the runtime.
  * @param {() => void} onSubmit Submits the current draft.
- * @param {boolean} disabled Disables editing and submission.
+ * @param {boolean} disabled Disables submission.
  * @param {ChatStatus | undefined} status Runtime-owned status value.
  * @param {(() => void) | undefined} onStop Cancels the active submission.
  * @param {boolean | undefined} stopDisabled Runtime-owned stopDisabled value.
@@ -85,6 +103,8 @@ const ComposerAction = ({
  * @param {ReadonlyReactNode | undefined} attachments Current attached files.
  * @param {boolean | undefined} hasAttachments Runtime-owned hasAttachments value.
  * @param {boolean | undefined} readOnly Runtime-owned readOnly value.
+ * @param {boolean | undefined} allowDraftWhileBusy Allows typing during a submission without a Stop action.
+ * @param {boolean | undefined} allowSendWhileStreaming Switches Stop to Send when the draft contains text or files.
  * @param {ComponentProps<typeof LexicalChatInput>["onPaste"] | undefined} onPaste Runtime-owned onPaste value.
  * @returns {React.JSX.Element} The composed message interface.
  */
@@ -101,6 +121,8 @@ export const ChatComposer = ({
   attachments,
   hasAttachments = false,
   readOnly = false,
+  allowDraftWhileBusy = false,
+  allowSendWhileStreaming,
   onPaste,
   primitives = defaultPrimitives,
   sendIcon,
@@ -110,6 +132,8 @@ export const ChatComposer = ({
   readonly attachments?: ReadonlyReactNode;
   readonly hasAttachments?: boolean;
   readonly readOnly?: boolean;
+  readonly allowDraftWhileBusy?: boolean;
+  readonly allowSendWhileStreaming?: boolean;
   readonly onPaste?: ComponentProps<typeof LexicalChatInput>["onPaste"];
   readonly draft: string;
   readonly onDraftChange: (draft: string) => void;
@@ -123,13 +147,17 @@ export const ChatComposer = ({
 }): ReactJSX.Element => {
   const isMobile = useIsMobile();
   const busy = status === "submitted" || status === "streaming";
-  const editorReadOnly = readOnly || (busy && !onStop);
+  const hasDraft = Boolean(draft.trim()) || hasAttachments;
+  const actionStatus = composerActionStatus(
+    status,
+    allowSendWhileStreaming,
+    hasDraft
+  );
+  const editorReadOnly = readOnly || (busy && !onStop && !allowDraftWhileBusy);
   const canSend =
     !disabled &&
     !editorReadOnly &&
-    !busy &&
-    (Boolean(draft.trim()) || hasAttachments) &&
-    draft.length <= MAX_DRAFT_LENGTH;
+    canSubmitDraft(actionStatus, hasDraft, draft.length);
   const submit = (): void => {
     if (canSend) {
       onSubmit();
@@ -138,7 +166,7 @@ export const ChatComposer = ({
   return (
     <PromptForm
       primitives={primitives}
-      editable={!disabled && !editorReadOnly}
+      editable={!editorReadOnly}
       onSubmit={(event) => {
         event.preventDefault();
         submit();
@@ -149,7 +177,7 @@ export const ChatComposer = ({
         <ComposerAction
           primitives={primitives}
           sendIcon={sendIcon}
-          status={status}
+          status={canSend ? actionStatus : status}
           onStop={onStop}
           stopDisabled={stopDisabled}
           canSend={canSend}

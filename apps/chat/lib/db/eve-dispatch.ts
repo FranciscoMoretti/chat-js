@@ -3,13 +3,19 @@ import { isDeepStrictEqual } from "node:util";
 import { and, eq, inArray, isNull, sql } from "drizzle-orm";
 import { db } from "./client";
 import { eveConversation, eveDispatch, eveWorkspace } from "./schema";
-import { EveWorkspaceBusyError, lockEveWorkspace } from "./eve-workspace-turns";
+import {
+  EveWorkspaceBusyError,
+  hasUnresolvedWorkspaceSteer,
+  lockEveWorkspace,
+} from "./eve-workspace-turns";
+import type { WorkspaceTransaction } from "./eve-workspace-turns";
 import { reconcileEveWorkspaceTurn } from "../eve/reconcile-workspace-turn";
 import { z } from "zod";
 import { frontendToolsSchema } from "@/lib/ai/types";
 import { parseEveCopySeed } from "@/lib/eve/copy-seed";
 import { eveMessageTool } from "@/lib/eve/message-tool-selection";
 import type { EveMessageDisplayReceipt } from "@/lib/eve/message-display";
+import { EveSteerRejectedError } from "@/lib/eve/steer-rejected";
 
 const hasRow: (row: unknown) => boolean = Boolean;
 
@@ -132,6 +138,34 @@ interface DispatchBinding {
   deliveryId?: string;
 }
 
+const canSteerActiveDispatch = async (
+  tx: Pick<WorkspaceTransaction, "select">,
+  activeOperationId: string,
+  input: {
+    readonly ownerId: string;
+    readonly conversationId: string;
+    readonly kind: "create" | "copy" | "send";
+    readonly steerSessionId?: string;
+  }
+): Promise<boolean> => {
+  if (input.kind !== "send" || !isNonEmptyString(input.steerSessionId)) {
+    return false;
+  }
+  const [active] = await tx
+    .select({ deliveryId: eveDispatch.deliveryId })
+    .from(eveDispatch)
+    .where(
+      and(
+        eq(eveDispatch.ownerId, input.ownerId),
+        eq(eveDispatch.operationId, activeOperationId),
+        eq(eveDispatch.conversationId, input.conversationId),
+        eq(eveDispatch.sessionId, input.steerSessionId),
+        inArray(eveDispatch.kind, ["create", "send"])
+      )
+    );
+  return isNonEmptyString(active?.deliveryId);
+};
+
 /** Commits intent before the one allowed dispatch; worker failure leaves it unknown. */
 export const dispatchEveOnce = async (
   input: {
@@ -140,6 +174,7 @@ export const dispatchEveOnce = async (
     readonly conversationId: string;
     readonly kind: "create" | "copy" | "send";
     readonly intent: unknown;
+    readonly steerSessionId?: string;
   },
   dispatch: (
     saveReceipt: (
@@ -194,7 +229,15 @@ export const dispatchEveOnce = async (
     if (hasRow(existing)) {
       return [];
     }
-    if (workspace.activeOperationId !== null) {
+    if (
+      workspace.activeOperationId !== null &&
+      (!(await canSteerActiveDispatch(
+        tx,
+        workspace.activeOperationId,
+        input
+      )) ||
+        (await hasUnresolvedWorkspaceSteer(tx, input.ownerId, workspace.id)))
+    ) {
       throw new EveWorkspaceBusyError();
     }
     const [current] = await tx
@@ -214,24 +257,28 @@ export const dispatchEveOnce = async (
     ) {
       throw new Error("Conversation is unavailable.");
     }
+    const { steerSessionId: _steerSessionId, ...journalInput } = input;
     const inserted = await tx
       .insert(eveDispatch)
-      .values({ ...input, intent })
+      .values({ ...journalInput, intent })
       .onConflictDoNothing()
       .returning();
-    if (inserted.length > 0) {
+    if (inserted.length === 0) {
+      return [];
+    }
+    if (workspace.activeOperationId === null) {
       await tx
         .update(eveWorkspace)
         .set({ activeOperationId: input.operationId })
         .where(eq(eveWorkspace.id, workspace.id));
     }
-    return inserted;
+    return [{ previousOperationId: workspace.activeOperationId }];
   });
   const identity = and(
     eq(eveDispatch.ownerId, input.ownerId),
     eq(eveDispatch.operationId, input.operationId)
   );
-  if (!hasRow(claimed)) {
+  if (claimed === undefined) {
     const existing = await readEveDispatch(input);
     if (existing) {
       return existing;
@@ -257,11 +304,61 @@ export const dispatchEveOnce = async (
       throw new EveDispatchUnknownError();
     }
   };
+  const finishSteer = async (
+    binding: DispatchBinding | null
+  ): Promise<void> => {
+    await db.transaction(async (tx) => {
+      const workspace = await lockEveWorkspace(
+        tx,
+        input.ownerId,
+        conversation.workspaceId
+      );
+      if (binding === null) {
+        await tx
+          .delete(eveDispatch)
+          .where(and(identity, isNull(eveDispatch.sessionId)));
+        if (workspace.activeOperationId === input.operationId) {
+          await tx
+            .update(eveWorkspace)
+            .set({ activeOperationId: null })
+            .where(eq(eveWorkspace.id, workspace.id));
+        }
+        return;
+      }
+      if (workspace.activeOperationId !== claimed.previousOperationId) {
+        throw new EveDispatchUnknownError();
+      }
+      await persist(tx, binding);
+      await tx
+        .update(eveWorkspace)
+        .set({ activeOperationId: input.operationId })
+        .where(eq(eveWorkspace.id, workspace.id));
+    });
+  };
   let savedInDispatch = false;
-  const binding = await dispatch(async (transaction, receipt) => {
-    await persist(transaction, receipt);
-    savedInDispatch = true;
-  });
+  let binding: DispatchBinding;
+  try {
+    binding = await dispatch(async (transaction, receipt) => {
+      if (claimed.previousOperationId !== null) {
+        throw new Error(
+          "Steering receipts must be saved with the workspace reservation."
+        );
+      }
+      await persist(transaction, receipt);
+      savedInDispatch = true;
+    });
+  } catch (error) {
+    if (error instanceof EveSteerRejectedError && !savedInDispatch) {
+      await finishSteer(null);
+    }
+    throw error;
+  }
+  if (claimed.previousOperationId !== null) {
+    // EVE may consume a steer in the next turn. Transfer ownership only after
+    // storing the receipt and keep the prior reservation through uncertainty.
+    await finishSteer(binding);
+    return binding;
+  }
   if (!savedInDispatch) {
     await persist(db, binding);
   }

@@ -42,8 +42,12 @@ import {
   useEveRuntime,
 } from "./eve-logical-context";
 import type { OpenRequest } from "./eve-logical-context";
+import { handoffEveComposerDraft } from "./use-eve-composer-draft";
 
-type Runtime = OpenRequest & { chatId: string; controller: LogicalChat };
+type Runtime = Omit<OpenRequest, "getFollowUpDraft"> & {
+  chatId: string;
+  controller: LogicalChat;
+};
 
 const partInteraction = (part: EveMessagePart) => {
   if (part.type === "tool") {
@@ -295,7 +299,7 @@ const EveRuntimeProvider = ({
   const [runtimes, setRuntimes] = useState<Runtime[]>([]);
   const registry = useRef(new Map<string, Runtime>());
   const open = useCallback(
-    async (request: OpenRequest, navigate = true) => {
+    async ({ getFollowUpDraft, ...request }: OpenRequest, navigate = true) => {
       // Query resolves the requested chat identity before looking up its owning runtime.
       const identity = await queryClient.query(
         trpc.eve.get.queryOptions({ id: request.id })
@@ -339,6 +343,14 @@ const EveRuntimeProvider = ({
         controller,
         title: identity.title,
       };
+      const followUpDraft = getFollowUpDraft?.();
+      if (hasText(followUpDraft)) {
+        handoffEveComposerDraft(
+          request.ownerId,
+          identity.chatId,
+          followUpDraft
+        );
+      }
       registry.current.set(identity.chatId, runtime);
       setRuntimes([...registry.current.values()]);
       if (

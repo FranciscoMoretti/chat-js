@@ -963,6 +963,17 @@ const activityEvents = (
 });
 
 export const pendingActivityEvents = activityEvents(nativeActivity);
+export const steeringModelEvents = activityEvents([
+  ...nativeActivity.slice(0, 4),
+  {
+    type: "model.started",
+    data: {
+      runId: "steered-response",
+      modelId: "openai/gpt-5-mini",
+      attempt: 0,
+    },
+  },
+]);
 export const pendingActivityWithFirstAnswerEvents = activityEvents([
   ...nativeActivity,
   {

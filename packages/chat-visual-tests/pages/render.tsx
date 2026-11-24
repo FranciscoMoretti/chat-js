@@ -174,7 +174,7 @@ const settled = async (
 };
 
 /** Captures the rendered page at every viewport and theme (`desktop-light`, `mobile-dark`, …). */
-export const captureVariants = async () => {
+export const captureVariants = async (prefix?: string) => {
   if (!mounted) {
     return;
   }
@@ -186,7 +186,10 @@ export const captureVariants = async () => {
     for (const theme of THEMES) {
       root.render(tree(ui, theme));
       await settled(theme, size.width, allowPendingSidebar);
-      await takeSnapshot(`${viewport}-${theme}`);
+      const variant = `${viewport}-${theme}`;
+      await takeSnapshot(
+        prefix === undefined ? variant : `${prefix}-${variant}`
+      );
     }
   }
   /* oxlint-enable eslint/no-await-in-loop */

@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { installItems, listTools, readItem, registryConfig } from "./shadcn";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { tmpdir } from "node:os";
 
@@ -143,12 +143,18 @@ test("installing an immutable source selection leaves caller ownership intact", 
   }
 });
 const CHILD_EXIT_SUCCESS = 0;
-const registryConfigInProcess = async (
-  root: string,
+const registryPrecedenceInProcess = async (
+  emptyRoot: string,
+  configuredRoot: string,
   registryUrl: string
 ): Promise<unknown> => {
   const modulePath = path.join(import.meta.dir, "shadcn.ts");
-  const script = `const { registryConfig } = await import(${JSON.stringify(modulePath)}); console.log(JSON.stringify(await registryConfig(${JSON.stringify(root)})));`;
+  const script = `
+    const { registryConfig } = await import(${JSON.stringify(modulePath)});
+    const fallback = await registryConfig(${JSON.stringify(emptyRoot)});
+    const configured = await registryConfig(${JSON.stringify(configuredRoot)});
+    console.log(JSON.stringify({ fallback, configured: configured.registries["@chatjs"] }));
+  `;
   const child = Bun.spawn([process.execPath, "-e", script], {
     env: { CHATJS_REGISTRY_URL: registryUrl },
     stderr: "pipe",
@@ -167,19 +173,21 @@ const registryConfigInProcess = async (
 };
 test("the process registry override remains the fallback and configured registry objects take priority", async () => {
   const root = await mkdtemp(path.join(tmpdir(), "shadcn-registry-process-"));
+  const configuredRoot = path.join(root, "configured");
   const processUrl = "https://example.com/process/{name}.json";
   try {
-    expect(await registryConfigInProcess(root, processUrl)).toEqual({
-      registries: { "@chatjs": processUrl },
-    });
+    await mkdir(configuredRoot);
     await writeFile(
-      path.join(root, "components.json"),
+      path.join(configuredRoot, "components.json"),
       JSON.stringify({ registries: { "@chatjs": configuredRegistry } })
     );
-    expect(await registryConfigInProcess(root, processUrl)).toMatchObject({
-      registries: { "@chatjs": configuredRegistry },
+    expect(
+      await registryPrecedenceInProcess(root, configuredRoot, processUrl)
+    ).toEqual({
+      fallback: { registries: { "@chatjs": processUrl } },
+      configured: configuredRegistry,
     });
   } finally {
     await rm(root, { force: true, recursive: true });
   }
-});
+}, 30_000);

@@ -18,6 +18,7 @@ const BEARER_PREFIX = "Bearer ";
 const message = z
   .object({
     message: z.string().trim().min(MIN_FIELD_LENGTH).max(MAX_MESSAGE_LENGTH),
+    turnPolicy: z.literal("steer").optional(),
   })
   .strict();
 

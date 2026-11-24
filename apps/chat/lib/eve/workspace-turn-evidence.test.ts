@@ -112,6 +112,33 @@ it("never releases a branch before its initial delivery is consumed and settled"
   );
 });
 
+it("releases an unread steer ignored when its active turn was cancelled", () => {
+  const steer = { deliveryId: "steer" };
+  const stopping: WorkspaceTurnEvent[] = [
+    ...prefix,
+    { type: "delivery.admitted", data: steer, meta: meta(4) },
+    {
+      type: "delivery.settled",
+      data: { ...steer, outcome: "ignored" },
+      meta: meta(5),
+    },
+    { ...handled, meta: meta(6) },
+  ];
+  const cancelled: WorkspaceTurnEvent[] = [
+    ...stopping,
+    {
+      ...settled,
+      data: { turnId: "turn-1", outcome: "cancelled" },
+      meta: meta(7),
+    },
+  ];
+  expect(hasSettledWorkspaceOperation(steer, stopping)).toBe(false);
+  expect(hasSettledWorkspaceOperation(steer, cancelled)).toBe(true);
+  expect(hasSettledWorkspaceOperation({ deliveryId: "other" }, cancelled)).toBe(
+    false
+  );
+});
+
 it("rejects settlement before consumption or for another turn", () => {
   expect(
     hasSettledWorkspaceOperation(operation, [

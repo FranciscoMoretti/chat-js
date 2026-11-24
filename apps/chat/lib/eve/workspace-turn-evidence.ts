@@ -4,6 +4,13 @@ import { activeTurn, idle } from "eve/events";
 
 export type WorkspaceTurnEvent = SessionStreamEvent;
 
+export const ignoredDeliveryId = (
+  event: WorkspaceTurnEvent
+): string | undefined =>
+  event.type === "delivery.settled" && event.data.outcome === "ignored"
+    ? event.data.deliveryId
+    : undefined;
+
 /** Paused approvals and queued work retain the workspace reservation. */
 export const hasSettledWorkspaceSession = (
   events: readonly WorkspaceTurnEvent[]
@@ -24,23 +31,23 @@ export const hasSettledWorkspaceOperation = (
   },
   events: readonly WorkspaceTurnEvent[]
 ): boolean => {
-  if (!hasSettledWorkspaceSession(events)) {
+  const { deliveryId } = operation;
+  if (deliveryId === null || !hasSettledWorkspaceSession(events)) {
     return false;
   }
   const consumedIndex = events.findIndex(
     (event) =>
-      event.type === "delivery.consumed" &&
-      event.data.deliveryId === operation.deliveryId
+      event.type === "delivery.consumed" && event.data.deliveryId === deliveryId
   );
   const consumed = events[consumedIndex];
-  return (
-    consumed?.type === "delivery.consumed" &&
-    events
-      .slice(consumedIndex + 1)
-      .some(
-        (event) =>
-          event.type === "turn.settled" &&
-          event.data.turnId === consumed.data.turnId
-      )
-  );
+  if (consumed?.type !== "delivery.consumed") {
+    return events.some((event) => ignoredDeliveryId(event) === deliveryId);
+  }
+  return events
+    .slice(consumedIndex + 1)
+    .some(
+      (event) =>
+        event.type === "turn.settled" &&
+        event.data.turnId === consumed.data.turnId
+    );
 };

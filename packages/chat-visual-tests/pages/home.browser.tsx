@@ -1,9 +1,13 @@
-import { TrpcFixtureError } from "./route";
+import { TrpcFixtureError, route } from "./route";
 import { expect, test, vi } from "vitest";
 import { page } from "vitest/browser";
 
 import ChatLayout from "@/app/(chat)/layout";
 import HomePage from "@/app/(chat)/page";
+import {
+  readCreationFollowUp,
+  saveCreationFollowUp,
+} from "@/lib/eve/pending-create";
 
 import {
   history,
@@ -12,8 +16,11 @@ import {
   signedInTrpc,
   creationFailure,
   guestTranscript,
+  invoicesConversation,
+  invoicesTrpc,
+  session,
 } from "./fixtures";
-import { renderRoute } from "./render";
+import { captureVariants, renderRoute } from "./render";
 
 const home = (
   <ChatLayout>
@@ -21,6 +28,24 @@ const home = (
   </ChatLayout>
 );
 const guestServer = { modelIds: ["google/gemini-2.5-flash-lite"] };
+
+test("clearing a recovered New Chat draft removes its saved text", async () => {
+  const { id } = session.user;
+  saveCreationFollowUp(
+    sessionStorage,
+    id,
+    "Save this follow-up after recovery"
+  );
+  await renderRoute(home, signedIn);
+  const composer = page.getByTestId("multimodal-input");
+  await expect
+    .element(composer)
+    .toHaveTextContent("Save this follow-up after recovery");
+  await composer.fill("Revised draft");
+  expect(readCreationFollowUp(sessionStorage, id)).toBe("Revised draft");
+  await composer.fill("");
+  expect(readCreationFollowUp(sessionStorage, id)).toBe("");
+});
 
 test("home with Guest Chat installed has a fixed inexpensive model", async () => {
   await renderRoute(home, { server: guestServer });
@@ -220,6 +245,33 @@ test("the composer chooses a usable model when its configured default is absent"
     .toHaveTextContent("GPT-5 mini");
 });
 
+test("signed-in chat accepts a follow-up draft while creating the first turn", async () => {
+  const { fetch } = globalThis;
+  const startup = Promise.withResolvers<Response>();
+  vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
+    if (input === "/api/agent-conversations") {
+      return await startup.promise;
+    }
+    return await fetch(input, init);
+  });
+  await renderRoute(home, signedIn);
+  const composer = page.getByTestId("multimodal-input");
+  const send = page.getByRole("button", { name: "Send", exact: true });
+  await composer.fill("Summarize this month's invoices.");
+  await send.click();
+  await expect
+    .element(
+      page.getByText("Summarize this month's invoices.", { exact: true })
+    )
+    .toBeVisible();
+  await expect.element(composer).toHaveAttribute("contenteditable", "true");
+  await composer.fill("Can you also check last month?");
+  await expect
+    .element(composer)
+    .toHaveTextContent("Can you also check last month?");
+  await expect.element(send).toBeDisabled();
+});
+
 test("home shows a rejected new conversation as a chat alert", async () => {
   const { fetch } = globalThis;
   vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
@@ -248,19 +300,66 @@ test("home shows a rejected new conversation as a chat alert", async () => {
   await page.screenshot({ path: "__screenshots__/new-conversation-error.png" });
 });
 
-test("guest bootstrap displays a fixture conversation without account history", async () => {
+test("signed-in creation retry saves the follow-up even if the destination draft is unreadable", async () => {
+  const { fetch } = globalThis;
+  const startup = Promise.withResolvers<Response>();
+  const binding = {
+    id: invoicesConversation.id,
+    sessionId: invoicesConversation.sessionId,
+  };
+  let requests = 0;
+  let savedAtNavigation: string | null = null;
+  const destinationKey = `chatjs.eve.composer:${invoicesConversation.ownerId}:${invoicesConversation.chatId}`;
+  sessionStorage.setItem(destinationKey, "{unreadable");
+  vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
+    if (input === "/api/agent-conversations") {
+      requests += 1;
+      return requests === 1 ? await startup.promise : Response.json(binding);
+    }
+    return await fetch(input, init);
+  });
+  vi.spyOn(globalThis.history, "pushState").mockImplementation(
+    (_data, _unused, url) => {
+      if (typeof url === "string") {
+        savedAtNavigation = sessionStorage.getItem(destinationKey);
+        route.path = url;
+      }
+    }
+  );
+  await renderRoute(home, {
+    ...signedIn,
+    trpc: invoicesTrpc,
+    agentStatus: "streaming",
+  });
+  const composer = page.getByTestId("multimodal-input");
+  await composer.fill("Summarize this month's invoices.");
+  await page.getByRole("button", { name: "Send", exact: true }).click();
+  const followUp = "Can you also check last month?";
+  await composer.fill(followUp);
+  startup.resolve(Response.json({ error: "Try again" }, { status: 502 }));
+  await page
+    .getByRole("button", { name: "Retry creation", exact: true })
+    .click();
+  await expect.element(composer).toHaveTextContent(followUp);
+  await expect
+    .element(page.getByRole("button", { name: "Send", exact: true }))
+    .toBeEnabled();
+  expect(route.path).toBe(`/chat/${invoicesConversation.chatId}`);
+  expect(savedAtNavigation).toContain(followUp);
+  expect(requests).toBe(2);
+});
+
+test("guest chat keeps a follow-up draft through session startup and streaming", async () => {
+  const bootstrap = Promise.withResolvers<Response>();
   const { fetch } = globalThis;
   vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
     if (input === "/api/eve-guest") {
-      return Response.json({
-        sessionId: "guest-session",
-        credential: "guest-fixture",
-        expiresAt: Date.now() + 3_600_000,
-      });
+      return await bootstrap.promise;
     }
     return await fetch(input, init);
   });
   await renderRoute(home, {
+    agentStatus: "streaming",
     server: guestServer,
     transcripts: { "guest-session": guestTranscript },
   });
@@ -270,8 +369,22 @@ test("guest bootstrap displays a fixture conversation without account history", 
       page.getByText("Hello! How can I help you today?", { exact: true })
     )
     .not.toBeInTheDocument();
-  await page.getByRole("textbox", { name: "Message" }).fill("Hello");
-  await page.getByRole("button", { name: "Send", exact: true }).click();
+  const composer = page.getByRole("textbox", { name: "Message", exact: true });
+  const send = page.getByRole("button", { name: "Send", exact: true });
+  await composer.fill("Hello");
+  await send.click();
+  await expect.element(send).toBeDisabled();
+  await expect.element(composer).toHaveAttribute("contenteditable", "true");
+  await expect.element(composer).toHaveTextContent(/^$/u);
+  await composer.fill("Could you give me an example?");
+  await captureVariants("startup");
+  bootstrap.resolve(
+    Response.json({
+      sessionId: "guest-session",
+      credential: "guest-fixture",
+      expiresAt: Date.now() + 3_600_000,
+    })
+  );
   await expect
     .element(
       page.getByText("Hello! How can I help you today?", { exact: true })
@@ -280,5 +393,47 @@ test("guest bootstrap displays a fixture conversation without account history", 
   await expect
     .element(page.getByRole("button", { name: /GPT-5 nano/u }))
     .toBeDisabled();
+  await expect.element(composer).toHaveAttribute("contenteditable", "true");
+  await expect
+    .element(composer)
+    .toHaveTextContent("Could you give me an example?");
+  await composer.fill("Could you give me two examples?");
+  await expect
+    .element(composer)
+    .toHaveTextContent("Could you give me two examples?");
+  await expect
+    .element(page.getByRole("button", { name: "Stop", exact: true }))
+    .not.toBeInTheDocument();
+  await expect.element(send).toBeEnabled();
   await expect.element(page.getByRole("alert")).not.toBeInTheDocument();
+  await captureVariants("steering");
+  await send.click();
+  await expect.element(composer).toHaveTextContent(/^$/u);
+  await expect
+    .element(page.getByRole("button", { name: "Stop", exact: true }))
+    .toBeEnabled();
+});
+
+test("guest startup failure keeps the original message and newer draft", async () => {
+  const bootstrap = Promise.withResolvers<Response>();
+  const { fetch } = globalThis;
+  vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
+    if (input === "/api/eve-guest") {
+      return await bootstrap.promise;
+    }
+    return await fetch(input, init);
+  });
+  await renderRoute(home, { server: guestServer });
+  const composer = page.getByRole("textbox", { name: "Message", exact: true });
+  const send = page.getByRole("button", { name: "Send", exact: true });
+  await composer.fill("What is a directed graph?");
+  await send.click();
+  await composer.fill("Include a concrete example.");
+  bootstrap.resolve(Response.json({ error: "Try again" }, { status: 502 }));
+  await expect
+    .element(composer)
+    .toHaveTextContent(
+      /What is a directed graph\?\s*Include a concrete example\./u
+    );
+  await expect.element(send).toBeEnabled();
 });
