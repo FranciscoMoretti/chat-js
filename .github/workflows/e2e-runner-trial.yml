@@ -60,7 +60,7 @@ jobs:
         shell: bash
         run: |
           trial_dir="$RUNNER_TEMP/e2e-trial"
-          results="$RUNNER_TEMP/e2e-trial-results"
+          results="$trial_dir/results"
           mkdir -p "$results"
           bun run --cwd apps/chat dev > "$results/next.log" 2>&1 &
           app_pid=$!
@@ -102,5 +102,5 @@ jobs:
         if: always() && !cancelled()
         with:
           name: e2e-trial-results
-          path: ${{ runner.temp }}/e2e-trial-results/
+          path: ${{ runner.temp }}/e2e-trial/results/
           retention-days: 7
