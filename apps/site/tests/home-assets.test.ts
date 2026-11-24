@@ -7,6 +7,17 @@ import { canopyBlocks } from "../components/home/canopy-catalog";
 
 const publicRoot = fileURLToPath(new URL("../public/", import.meta.url));
 
+void it("Canopy ships its Carbon contours and miniature block previews", () => {
+  assert.ok(existsSync(path.join(publicRoot, "home/blocks/contours.webp")));
+  const previews = canopyBlocks.flatMap(({ preview }) =>
+    preview === undefined ? [] : [preview]
+  );
+  assert.ok(previews.length > 0);
+  for (const preview of previews) {
+    assert.ok(existsSync(path.join(publicRoot, preview)), `Missing ${preview}`);
+  }
+});
+
 void it("Canopy's block icons are inline SVGs or files shipped by the site", () => {
   for (const block of canopyBlocks) {
     if (block.icon === undefined) {

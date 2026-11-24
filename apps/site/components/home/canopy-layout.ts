@@ -31,7 +31,7 @@ export const canopyLayout = ({ width, height }: FieldSize, count: number) => {
     columns -= 1;
   }
   const pitch = width / columns;
-  const side = Math.round(pitch * 0.87);
+  const side = Math.round(pitch * 0.91);
   const stride = columns + 1;
   const rows = Math.ceil(height / pitch);
   const period = Math.max(count, stride * (rows + 1));

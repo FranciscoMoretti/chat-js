@@ -40,7 +40,7 @@ Generate after editing a source. Commit both sources and generated exports. Chec
 
 The generator updates these application assets:
 
-- `apps/site/public/home/blocks/`, copied from the component-preview masters.
+- `apps/site/public/home/blocks/`, with the component-preview masters, their miniature illustrations, and the Carbon tile texture.
 - `apps/site/public/home/fonts/`, copied from the brand font sources.
 - `apps/site/public/logo.svg`, plus the browser icons and social preview in `apps/site/app/`.
 - The Chat app mark, browser icons and social preview in `apps/chat/`.

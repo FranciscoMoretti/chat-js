@@ -165,15 +165,61 @@ asset("runtime/brand.js", runtime);
 appCopy("site/public/home/fonts/geist.woff2", geist);
 appCopy("site/public/home/fonts/plex.ttf", plex);
 
+// Lay out the seven Carbon fields in a single transparent tile texture.
+const textureSide = 192;
+const contourTiles = await Promise.all(
+  foundations.map(async (_, index) => ({
+    input: await sharp(
+      Buffer.from(
+        `<svg xmlns="http://www.w3.org/2000/svg" width="${textureSide}" height="${textureSide}" viewBox="0 0 108 108"><defs><linearGradient id="fade" gradientUnits="userSpaceOnUse" x2="60" y2="102"><stop stop-color="${colors.pattern}"/><stop offset=".64" stop-color="${colors.pattern}" stop-opacity=".5"/><stop offset="1" stop-color="${colors.pattern}" stop-opacity="0"/></linearGradient></defs><g fill="none" stroke="url(#fade)" stroke-width=".83">${wavePaths(index)}</g></svg>`
+      )
+    )
+      .png()
+      .toBuffer(),
+    left: 0,
+    top: index * textureSide,
+  }))
+);
+appCopy(
+  "site/public/home/blocks/contours.webp",
+  await sharp({
+    create: {
+      width: textureSide,
+      height: textureSide * contourTiles.length,
+      channels: 4,
+      background: "#0000",
+    },
+  })
+    .composite(contourTiles)
+    .webp({ lossless: true })
+    .toBuffer()
+);
+
 const productFiles = await readdir(path.join(root, "assets/product-blocks"));
+const blockPreviewSource = path.join(root, "sources/block-previews");
+const previewOverrides = new Set(await readdir(blockPreviewSource));
 await Promise.all(
   productFiles
     .filter((name) => name.endsWith(".svg"))
     .toSorted()
     .map(async (file) => {
+      const source = await readFile(
+        path.join(root, "assets/product-blocks", file)
+      );
+      appCopy(`site/public/home/blocks/${file}`, source);
+      const svgSource = source.toString("utf-8");
+      const start = svgSource.indexOf('<g class="fragment"');
+      const end = svgSource.lastIndexOf("</g>");
+      if (start === -1 || end <= start) {
+        throw new Error(`Missing product preview in ${file}`);
+      }
       appCopy(
-        `site/public/home/blocks/${file}`,
-        await readFile(path.join(root, "assets/product-blocks", file))
+        `site/public/home/blocks/previews/${file}`,
+        previewOverrides.has(file)
+          ? await readFile(path.join(blockPreviewSource, file))
+          : encode(
+              `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 50 320 192">${svgSource.slice(start, end + 4)}</svg>\n`
+            )
       );
     })
 );
@@ -246,26 +292,34 @@ for (const app of ["site", "chat"]) {
 }
 
 const stale: string[] = [];
-const mirroredBlocks = path.join(repo, "apps/site/public/home/blocks");
-const publishedBlocks = await readdir(mirroredBlocks).catch(
-  (error: unknown) => {
-    if (error instanceof Error && "code" in error && error.code === "ENOENT") {
-      return [];
-    }
-    throw error;
-  }
-);
 await Promise.all(
-  publishedBlocks
-    .filter((file) => file.endsWith(".svg") && !productFiles.includes(file))
-    .map(async (file) => {
-      const target = path.join(mirroredBlocks, file);
-      if (check) {
-        stale.push(path.relative(repo, target));
-      } else {
-        await rm(target);
+  ["blocks", "blocks/previews"].map(async (directory) => {
+    const mirroredBlocks = path.join(repo, "apps/site/public/home", directory);
+    const publishedBlocks = await readdir(mirroredBlocks).catch(
+      (error: unknown) => {
+        if (
+          error instanceof Error &&
+          "code" in error &&
+          error.code === "ENOENT"
+        ) {
+          return [];
+        }
+        throw error;
       }
-    })
+    );
+    await Promise.all(
+      publishedBlocks
+        .filter((file) => file.endsWith(".svg") && !productFiles.includes(file))
+        .map(async (file) => {
+          const target = path.join(mirroredBlocks, file);
+          if (check) {
+            stale.push(path.relative(repo, target));
+          } else {
+            await rm(target);
+          }
+        })
+    );
+  })
 );
 await Promise.all(
   [...outputs].map(async ([file, data]) => {
