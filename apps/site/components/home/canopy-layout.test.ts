@@ -8,6 +8,7 @@ const screens = [
   { width: 768, height: 964 },
   { width: 1200, height: 640 },
   { width: 1920, height: 1020 },
+  { width: 2560, height: 794 },
 ];
 
 for (const size of screens) {

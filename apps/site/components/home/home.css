@@ -128,11 +128,12 @@ body:has(.canopy-page) {
   inset: 0;
   pointer-events: none;
   z-index: 1;
-  background: radial-gradient(
-    ellipse 66% 68% at 50% 23%,
-    #11110f 46%,
-    #11110feb 64%,
-    transparent 100%
+  background: linear-gradient(
+    #11110fe8,
+    #11110f 18% 46%,
+    #11110fbd 53%,
+    #11110f45 65%,
+    transparent 76%
   );
 }
 .canopy-intro {
@@ -146,22 +147,6 @@ body:has(.canopy-page) {
   gap: 0.5rem;
   align-self: center;
   padding: 1rem 1.5rem;
-}
-.canopy-intro::before {
-  content: "";
-  position: absolute;
-  z-index: -1;
-  left: 50%;
-  bottom: -40px;
-  transform: translateX(-50%);
-  width: min(660px, 130vw);
-  height: 215px;
-  background: radial-gradient(
-    ellipse closest-side,
-    #11110f 32%,
-    #11110fee 61%,
-    transparent 100%
-  );
 }
 .canopy-intro h1 {
   max-width: 56rem;
@@ -303,18 +288,12 @@ body:has(.canopy-page) {
     font-size: 12px;
   }
   .canopy-fade {
-    background: linear-gradient(#11110fee, #11110fb3 22%, transparent 52%);
-  }
-  .canopy-intro::before {
-    inset: -36px 0 -8px;
-    width: auto;
-    height: auto;
-    transform: none;
     background: linear-gradient(
-      transparent,
-      #11110f 42px,
-      #11110f calc(100% - 24px),
-      transparent
+      #11110fee,
+      #11110f 15% 50%,
+      #11110fbb 53%,
+      #11110f44 59%,
+      transparent 65%
     );
   }
 }
@@ -330,6 +309,10 @@ body:has(.canopy-page) {
     font-size: 13px;
   }
   .canopy-hero {
+    /* Give the grid more room as the phone viewport gets shorter. */
+    grid-template-rows:
+      minmax(max-content, calc(60% - clamp(0px, 760px - 100svh, 56px)))
+      1fr;
     min-height: 460px;
   }
   .canopy-footer {
@@ -366,13 +349,5 @@ body:has(.canopy-page) {
   }
   .canopy-terminal {
     margin-block-start: 0;
-  }
-  .canopy-fade {
-    background: radial-gradient(
-      ellipse 56% 73% at 50% 15%,
-      #11110f 47%,
-      #11110ff0 66%,
-      transparent 100%
-    );
   }
 }

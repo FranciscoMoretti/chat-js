@@ -11,13 +11,12 @@ export interface FieldPosition {
 const modulo = (value: number, length: number) =>
   ((value % length) + length) % length;
 
-// Put four complete tiles across a phone, six across a tablet and eight
-// across a typical laptop. Keep a gutter between adjacent tiles when panning.
+// Fit four complete tiles on phones and target a 144 px pitch on wider screens.
 const preferredColumns = (width: number) => {
   if (width < 540) {
     return 4;
   }
-  return Math.min(12, Math.max(5, Math.round(width / 144)));
+  return Math.max(5, Math.round(width / 144));
 };
 
 export const canopyLayout = ({ width, height }: FieldSize, count: number) => {
