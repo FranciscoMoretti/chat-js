@@ -226,6 +226,11 @@ const checkOpening = async (
     `First six capabilities must fit in the clear area at ${size.width}×${size.height}`
   );
   if (size.width === 375) {
+    assert.deepEqual(
+      opening.readable.slice(0, 12),
+      Array.from({ length: 12 }, (_, index) => index + 1),
+      "All three leading rows should fit on short phones"
+    );
     assert.ok(
       opening.leadingRowsGap >= 16,
       "The three leading rows need breathing room below the quickstart on short phones"
