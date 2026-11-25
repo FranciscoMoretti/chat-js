@@ -13,13 +13,17 @@ const output = fileURLToPath(
 );
 const openingSizes = [
   { width: 320, height: 568 },
+  { width: 375, height: 654 },
+  { width: 375, height: 667 },
   { width: 390, height: 844 },
   { width: 768, height: 1024 },
+  { width: 820, height: 835 },
   { width: 844, height: 390 },
   { width: 1024, height: 768 },
   { width: 1280, height: 720 },
   { width: 1440, height: 900 },
   { width: 1725, height: 900 },
+  { width: 2560, height: 900 },
 ];
 await mkdir(output, { recursive: true });
 const browser = await chromium.launch();
@@ -145,6 +149,12 @@ const inspectOpening = async (page: Page) =>
       visible: visible.map((tile) => tile.id),
       readable: readable.map((tile) => tile.priority).toSorted((a, b) => a - b),
       readableIds: readable.map((tile) => tile.id),
+      leadingRowsGap:
+        Math.min(
+          ...visible
+            .filter(({ priority }) => priority <= 12)
+            .map(({ box }) => box.top)
+        ) - command.bottom,
     };
   });
 
@@ -215,6 +225,17 @@ const checkOpening = async (
     [1, 2, 3, 4, 5, 6],
     `First six capabilities must fit in the clear area at ${size.width}×${size.height}`
   );
+  if (size.width === 375) {
+    assert.deepEqual(
+      opening.readable.slice(0, 12),
+      Array.from({ length: 12 }, (_, index) => index + 1),
+      "All three leading rows should fit on short phones"
+    );
+    assert.ok(
+      opening.leadingRowsGap >= 16,
+      "The three leading rows need breathing room below the quickstart on short phones"
+    );
+  }
   console.log(
     `${size.width}×${size.height}: ${opening.visible.length} intersecting, ${opening.readable.length} whole below the command, IDs: ${opening.readableIds.join(", ")}`
   );
