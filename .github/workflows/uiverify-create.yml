@@ -44,7 +44,8 @@ jobs:
   uiverify-create:
     name: uiverify-create
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    # Allow for both the browser capture and the hosted comparison of every image.
+    timeout-minutes: 40
     env:
       CREATE_BASE_URL: http://localhost:3000
       NEXT_TELEMETRY_DISABLED: "1"
