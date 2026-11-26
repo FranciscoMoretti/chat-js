@@ -50,7 +50,7 @@ test("guest errors preserve the message draft", async ({ page }) => {
   await message.fill("Preserve this draft");
   await fixture.getByRole("button", { exact: true, name: "Send" }).click();
   await expect(fixture.getByRole("alert")).toBeVisible();
-  await expect(message).toHaveText("Preserve this draft");
+  await expect(message).toHaveValue("Preserve this draft");
   await message.blur();
   await expect(fixture).toHaveScreenshot("guest-error.png");
 });
@@ -69,7 +69,7 @@ test("expired guest on mobile", async ({ page }) => {
   await page.getByLabel("Fixture state").selectOption("expired");
   await expect(
     page.getByTestId("guest-visual").getByTestId("multimodal-input")
-  ).toHaveAttribute("aria-readonly", "true");
+  ).toHaveJSProperty("readOnly", true);
   await expect(page.getByTestId("guest-visual")).toHaveScreenshot(
     "guest-expired-mobile.png"
   );

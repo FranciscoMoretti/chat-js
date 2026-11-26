@@ -47,7 +47,6 @@ export default defineConfig({
       "next/dist/shared/lib/hooks-client-context.shared-runtime",
       "next/link",
       "next/navigation",
-      "@lexical/react/LexicalPlainTextPlugin",
       "cmdk",
       "nanoid",
       "next/dist/client/image-component",

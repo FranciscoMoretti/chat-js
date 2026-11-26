@@ -68,13 +68,13 @@ test("native transcript survives reload; streaming preserves the next draft; can
   await composer.fill("slow response");
   await page.getByRole("button", { exact: true, name: "Send" }).click();
   await expect(page.getByText("Responding…", { exact: true })).toBeVisible();
-  await expect(composer).toHaveText("", { timeout: 1000 });
+  await expect(composer).toHaveValue("", { timeout: 1000 });
   await composer.fill("my next draft");
   await capture(page, "streaming-desktop");
   await expect(
     page.getByText("Verified: slow response", { exact: true })
   ).toBeVisible();
-  await expect(composer).toHaveText("my next draft");
+  await expect(composer).toHaveValue("my next draft");
   await composer.fill("slow cancel");
   await page.getByRole("button", { exact: true, name: "Send" }).click();
   await expect(
@@ -97,7 +97,7 @@ test("native transcript survives reload; streaming preserves the next draft; can
     page.getByText("Verified: after cancellation", { exact: true })
   ).toBeVisible();
   await expect(page.getByText("Ready", { exact: true })).toBeVisible();
-  await expect(composer).toHaveText("");
+  await expect(composer).toHaveValue("");
   await capture(page, "conversation-desktop");
   await page.setViewportSize({ height: 844, width: 390 });
   await capture(page, "conversation-mobile");
@@ -166,7 +166,7 @@ test("failed turn is visible and the conversation can continue", async ({
   await expect(
     page.getByRole("alert").filter({ hasText: failureMessage })
   ).toBeVisible();
-  await expect(composer).toHaveText("fail");
+  await expect(composer).toHaveValue("fail");
   await capture(page, "failed-turn");
   await page.reload();
   await expect(
@@ -435,7 +435,7 @@ test("ChatJS editor supports Enter, multiline drafts and composition", async ({
   await composer.fill("keyboard");
   await composer.press("Shift+Enter");
   await composer.press("x");
-  await expect(composer).toHaveText("keyboard\nx", { useInnerText: true });
+  await expect(composer).toHaveValue("keyboard\nx");
   await composer.dispatchEvent("keydown", {
     bubbles: true,
     code: "Enter",
@@ -483,7 +483,7 @@ test("stalled creation releases the composer and retries the retained operation"
       page.getByRole("alert").filter({ hasText: "The request timed out" })
     ).toContainText("The request timed out", { timeout: 35_000 });
     await expect(composer).toBeEditable();
-    await expect(composer).toHaveText("retained timeout message");
+    await expect(composer).toHaveValue("retained timeout message");
     await capture(page, "creation-timeout");
     stalled.resolve();
     await page.getByRole("button", { exact: true, name: "Send" }).click();
@@ -550,7 +550,7 @@ test("reload before acceptance recovers a late message without resending", async
   ).toHaveCount(1);
   await expect(
     page.getByRole("textbox", { exact: true, name: "Message" })
-  ).toHaveText("");
+  ).toHaveValue("");
   await capture(page, "reload-recovered");
 });
 
@@ -593,7 +593,7 @@ test("reload retains text when the send never reaches the server", async ({
     .click();
   await expect(
     page.getByRole("textbox", { exact: true, name: "Message" })
-  ).toHaveText("retained before delivery");
+  ).toHaveValue("retained before delivery");
   await expect(
     page.getByRole("alert").filter({ hasText: "Delivery is unconfirmed" })
   ).toBeVisible();

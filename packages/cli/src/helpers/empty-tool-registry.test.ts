@@ -30,14 +30,14 @@ test(
       );
       for (const dependency of [
         "@lexical/markdown",
+        "@lexical/react",
+        "lexical",
         "codemirror",
         "papaparse",
         "react-data-grid",
       ]) {
         expect(dependencies[dependency]).toBeUndefined();
       }
-      expect(dependencies.lexical).toBeDefined();
-      expect(dependencies["@lexical/react"]).toBeDefined();
       const chatApp = nodePath.resolve(
         import.meta.dir,
         "../../../../apps/chat"

@@ -100,7 +100,7 @@ test("Image tool selection survives native history and edits while later turns r
   await composer.getByRole("button", { exact: true, name: "Send" }).click();
   await expect(
     composer.getByRole("textbox", { exact: true, name: "Message" })
-  ).toHaveText("");
+  ).toHaveValue("");
   await expect(page.getByRole("log").locator('[data-role="user"]')).toHaveCount(
     2
   );

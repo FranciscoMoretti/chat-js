@@ -129,7 +129,7 @@ test("project accepts a follow-up draft during first-turn startup", async () => 
   await composer.fill("Include the dates from the checklist.");
   await expect
     .element(composer)
-    .toHaveTextContent("Include the dates from the checklist.");
+    .toHaveValue("Include the dates from the checklist.");
   await expect.element(send).toBeDisabled();
 });
 

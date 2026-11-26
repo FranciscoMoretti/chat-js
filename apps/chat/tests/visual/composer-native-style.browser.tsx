@@ -60,19 +60,12 @@ test("native Nova keeps an editable empty composer opaque without enabling Send"
     expect(
       Array.from(groups, (group) => getComputedStyle(group).opacity)
     ).toEqual(["1", "0.5", "0.5"]);
-    await expect
-      .element(
-        page
-          .getByRole("region", { name: "Editable" })
-          .getByRole("textbox", { name: "Message" })
-      )
-      .toHaveAttribute("contenteditable", "true");
     expect(
       Array.from(
-        fixture.container.querySelectorAll("[contenteditable]"),
-        (editor) => editor.getAttribute("contenteditable")
+        fixture.container.querySelectorAll("textarea"),
+        (input) => input.readOnly
       )
-    ).toEqual(["true", "false", "false"]);
+    ).toEqual([false, true, true]);
     fixture.container.querySelector("form")?.requestSubmit();
     expect(handleSubmit).not.toHaveBeenCalled();
     await takeSnapshot("native-nova-composer-editability");

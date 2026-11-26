@@ -87,7 +87,7 @@ test("rejected send survives reload as an unsent draft and can be restored and s
     await page
       .getByRole("button", { exact: true, name: "Restore draft" })
       .click();
-    await expect(composer).toHaveText(unsent);
+    await expect(composer).toHaveValue(unsent);
     await expect(
       page.getByRole("button", { exact: true, name: "Send" })
     ).toBeEnabled();

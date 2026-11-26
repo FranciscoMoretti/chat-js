@@ -48,7 +48,7 @@ test("nested comparisons retain both groups, duplicate-model slots and retry att
   expect(page.url()).toBe(url);
   await expect(
     composer.getByRole("textbox", { exact: true, name: "Message" })
-  ).toHaveText("Keep my unsent draft");
+  ).toHaveValue("Keep my unsent draft");
   await cards.first().click();
   await expect(page.getByText("Ready", { exact: true })).toBeVisible({
     timeout: 90_000,

@@ -108,7 +108,7 @@ export const checkNativeRuntime = async (options: RuntimeOptions) => {
     ).toHaveAttribute("data-side", rtl ? "right" : "left");
     const composer = page.getByTestId("multimodal-input");
     await expect(composer).toBeVisible();
-    await expect(composer).toHaveAttribute("contenteditable", "true");
+    await expect(composer).toBeEditable();
     await expect(
       page.locator('input[type="file"][aria-label="Attach files"]')
     ).toHaveCount(options.uploads ? 1 : 0);
@@ -122,7 +122,7 @@ export const checkNativeRuntime = async (options: RuntimeOptions) => {
       await page.keyboard.press("Escape");
     }
     await composer.fill("Generated composer accepts input");
-    await expect(composer).toHaveText("Generated composer accepts input");
+    await expect(composer).toHaveValue("Generated composer accepts input");
     await composer.fill("");
     await page.screenshot({
       path: path.join(options.output, "generated-desktop-light.png"),
@@ -146,7 +146,9 @@ export const checkNativeRuntime = async (options: RuntimeOptions) => {
       await composer.fill("Conversation draft survives a reload");
       await settleQueries();
       await page.reload({ waitUntil: "domcontentloaded" });
-      await expect(composer).toHaveText("Conversation draft survives a reload");
+      await expect(composer).toHaveValue(
+        "Conversation draft survives a reload"
+      );
       await composer.fill("");
       await expect(
         page.getByText("Generated ChatJS verification passed.", { exact: true })

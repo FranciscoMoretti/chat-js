@@ -232,7 +232,7 @@ test("edit recovery and regeneration replace the selected turn", async ({
     await page.getByRole("button", { name: "Recover version" }).click();
     await expect(
       editor.getByRole("textbox", { exact: true, name: "Message" })
-    ).toHaveText("Keep this edited violet draft.");
+    ).toHaveValue("Keep this edited violet draft.");
     await expect(userMessage).toContainText("Test model rejection");
     let replacement: unknown;
     await page.route(

@@ -1,7 +1,7 @@
 "use client";
 
-import type { LexicalEditor } from "lexical";
-import { useEffect } from "react";
+import type { RefObject } from "react";
+import { useEffect, useRef } from "react";
 
 const FALLBACK_FOCUS_TIMEOUT_MS = 120;
 
@@ -15,15 +15,13 @@ const isTypingSurface = (element: unknown): boolean =>
     !element.disabled) ||
   (element instanceof HTMLElement && element.isContentEditable);
 
-export const useAutoFocus = ({
-  autoFocus,
-  editor,
-}: {
-  readonly autoFocus: boolean;
-  readonly editor: Readonly<Pick<LexicalEditor, "focus">> | null;
-}): void => {
+export const useAutoFocus = (
+  autoFocus: boolean
+): RefObject<HTMLTextAreaElement | null> => {
+  const ref = useRef<HTMLTextAreaElement>(null);
   useEffect((): (() => void) | undefined => {
-    if (!(autoFocus && editor)) {
+    const input = ref.current;
+    if (!autoFocus || !input) {
       return undefined;
     }
 
@@ -34,14 +32,14 @@ export const useAutoFocus = ({
       const isUserTypingElsewhere = isTypingSurface(active);
 
       if (!isUserTypingElsewhere) {
-        editor.focus();
+        input.focus();
         // Minimal fallback for hydration/layout races where focus is stolen.
         fallbackTimeout = window.setTimeout(() => {
           const currentActive = document.activeElement;
           const canSafelyStealFocus = !isTypingSurface(currentActive);
 
           if (canSafelyStealFocus) {
-            editor.focus();
+            input.focus();
           }
         }, FALLBACK_FOCUS_TIMEOUT_MS);
       }
@@ -53,5 +51,6 @@ export const useAutoFocus = ({
         globalThis.clearTimeout(fallbackTimeout);
       }
     };
-  }, [autoFocus, editor]);
+  }, [autoFocus]);
+  return ref;
 };
