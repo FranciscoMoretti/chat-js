@@ -1,14 +1,17 @@
-import { startingInstallation } from "../components/create-model";
+import { installationSelectionSchema } from "../../../packages/registry/installation";
 import {
   decodeAppPreset,
   encodeAppPreset,
 } from "../../../packages/registry/app-preset";
 import type { Page, FrameLocator } from "playwright/test";
 
-export const uploadsPreset = encodeAppPreset({
-  ...startingInstallation,
-  plugins: ["attachment-uploads"],
-});
+export const uploadsPreset = encodeAppPreset(
+  installationSelectionSchema.parse({
+    gateway: "vercel",
+    storage: { source: "vercel-blob" },
+    plugins: ["attachment-uploads"],
+  })
+);
 
 /** Exercise the production file-input path with a local, disposable fixture. */
 export const attachPreviewFile = async (scope: Page | FrameLocator) => {
