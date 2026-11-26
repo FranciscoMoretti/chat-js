@@ -1,26 +1,45 @@
 ---
 title: Guides
-description: Practical walkthroughs for tools and local development
+description: "Find step-by-step guides for changing chat layouts, rendering tool results, composing integrations, and working with isolated development environments."
 ---
 
-Use these guides for implementation tasks and development workflows. Configure an individual capability in its [Tools](../tools/overview) or [Plugins](../plugins/overview) page.
+Use these guides for implementation tasks and development workflows. Configure an individual capability in its [Tools](/tools/overview) or [Plugins](/plugins/overview) page.
+
+## Customize your app
 
 <CardGroup cols={2}>
-  <Card title="Custom Tool Part" href="./tool-part">
+  <Card title="Chat layout" href="/cookbook/chat-layout">
+    Change transcript width and composer placement.
+  </Card>
+  <Card title="Component registries" href="/cookbook/component-registries">
+    Work with shadcn/ui and AI Elements in your app.
+  </Card>
+  <Card title="Customize integrations" href="/cookbook/customize-integrations">
+    Wrap installed adapters and compose local behavior.
+  </Card>
+  <Card title="Custom Tool Part" href="/cookbook/tool-part">
     Connect a tool result to its conversation UI.
   </Card>
-  <Card title="Explicit Tool Selection" href="./explicit-tool-selection">
+  <Card
+    title="Explicit Tool Selection"
+    href="/cookbook/explicit-tool-selection"
+  >
     Customize how users select tools for a request.
   </Card>
-  <Card title="Neon Branching" href="./neon-branching">
+</CardGroup>
+
+## Develop locally
+
+<CardGroup cols={2}>
+  <Card title="Neon Branching" href="/cookbook/neon-branching">
     Use isolated database environments for schema development.
   </Card>
-  <Card title="Development Auth Bypass" href="./dev-auth-bypass">
+  <Card title="Development Auth Bypass" href="/cookbook/dev-auth-bypass">
     Authenticate local browser tests without an OAuth round trip.
   </Card>
-  <Card title="Git Worktrees" href="./git-worktrees">
+  <Card title="Git Worktrees" href="/cookbook/git-worktrees">
     Run parallel development environments without switching branches.
   </Card>
 </CardGroup>
 
-For foundational behavior, start with [Concepts](../core/architecture). Use [Customization](../customization/theming) for appearance and composition, and [Deployment](../deployment) for hosting and runtime services.
+For foundational behavior, start with [Concepts](/core/architecture). Use [Customization](/customization/theming) for appearance and composition, and [Deployment](/deployment) for hosting and runtime services.

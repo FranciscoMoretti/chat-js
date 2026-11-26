@@ -1,121 +1,57 @@
 ---
-title: "Quickstart"
-description: "Get ChatJS running in minutes"
+title: Quickstart
+description: "Create a ChatJS app with the alpha CLI, connect PostgreSQL and a model gateway, configure sign-in, and verify your first saved conversation."
 ---
 
-<Callout type="warning">
-  **ChatJS 1.0 is in alpha.** You can build apps with it, but APIs,
-  configuration, and generated code may change substantially before the stable
-  release. Use `chat-js@alpha` to try the current alpha.
-</Callout>
+Use the `alpha` CLI tag for ChatJS 1.0. APIs and generated source can change during the alpha.
 
-## Prerequisites
+## 1. Create the app
 
-Install **Node.js 24+** and a package manager: npm, yarn, pnpm, or Bun.
-
-## 1. Create your project
+Install Node.js 24 or newer. This walkthrough uses npm. Have a PostgreSQL database ready, with a direct or session connection for local workflows. You will also need access to your chosen AI gateway and credentials for at least one OAuth provider.
 
 ```bash
 npx chat-js@alpha create my-app
 cd my-app
-```
-
-Choose your AI gateway, features, and authentication providers. The CLI generates `chat.config.ts` and lists the credentials your choices require.
-
-## 2. Configure environment variables
-
-```bash
 cp .env.example .env.local
 ```
 
-Fill in `.env.local` using the generated example. You need:
+Choose your gateway, sign-in providers, and optional capabilities when prompted. If you prefer to preview those choices first, copy the tailored command from the [app builder](https://www.chatjs.dev/create).
 
-| Setting | Setup guide |
+## 2. Configure your services
+
+Use the generated `.env.example` and the CLI's checklist to fill in `.env.local`. The required provider variables depend on what you installed.
+
+| Setting | What to supply |
 | --- | --- |
-| PostgreSQL connection | [PostgreSQL setup](./reference/database#eve-workflow-database) |
-| AI gateway credentials | [Gateways](./gateways/overview) |
-| Authentication provider credentials and secrets | [Authentication](./customization/authentication) and [environment variables](./reference/env-vars) |
-| Credentials for any optional features you selected | [Environment variables](./reference/env-vars) |
+| `DATABASE_URL` | Your PostgreSQL connection string. Local EVE workflows use this connection by default. Set `WORKFLOW_POSTGRES_URL` if you need a separate direct or session connection. [Database setup](/reference/database#eve-workflow-database) |
+| `AUTH_SECRET` and `EVE_GATEWAY_SECRET` | Two different secrets. Run `openssl rand -base64 32` once for each value. |
+| AI gateway settings | The credentials or endpoint for your installed provider. [Gateway setup](/gateways/overview) |
+| OAuth credentials | The client ID and secret for each enabled provider. Register its callback, for example `http://localhost:3000/api/auth/callback/github` for GitHub. [Authentication setup](/customization/authentication) |
+| Optional capabilities | The storage, sandbox, or plugin credentials listed for your selections. [Environment variables](/reference/env-vars) |
 
-Generate `AUTH_SECRET` and `EVE_GATEWAY_SECRET` independently by running `openssl rand -base64 32` once for each. Leave `EVE_INTERNAL_ORIGIN` blank for the integrated worker; it follows the deployment or local app. Local/self-hosted workflows default to `DATABASE_URL` and require a direct or session connection. Set `WORKFLOW_POSTGRES_URL` to use a separate workflow database. Vercel deployments use managed Workflow and do not need that variable.
+The integrated EVE worker uses the local app origin by default. Leave `EVE_INTERNAL_ORIGIN` unset for this walkthrough.
 
-## 3. Set up the application
+## 3. Initialize and run
 
-After creating your database and configuring `.env.local`, run:
+From the app directory, initialize the application and workflow schemas, then start the development server.
 
 ```bash
 npm run setup
-```
-
-This applies application migrations and prepares the configured EVE world. The current setup supports local and hosted PostgreSQL. Run it for a fresh installation and when an upgrade requires database changes. See [database setup](./reference/database#eve-workflow-database) for details.
-
-## 4. Start the app
-
-```bash
 npm run dev
 ```
 
-Open `http://localhost:3000` and send a message. The development server starts EVE automatically.
-
-Customize features and branding in `chat.config.ts`. See [Configuration](./core/configuration) when you're ready to make changes.
-
-## Deploying to Production
-
-Once you're running locally, deploy your app:
-
-<CardGroup cols={3}>
-  <Card title="Vercel" icon="triangle" href="/deployment/vercel">
-    Recommended. Integrated database, blob storage, and AI Gateway.
-  </Card>
-  <Card title="Docker" icon="container" href="/deployment/docker">
-    Containerized deployment for any platform.
-  </Card>
-  <Card title="Self-Hosted" icon="server" href="/deployment/self-hosted">
-    Deploy to any Node.js platform.
-  </Card>
-</CardGroup>
+Open `http://localhost:3000`, sign in, and send a message. Once you see the reply, reload the page and reopen the chat from the sidebar to check that the conversation was saved.
 
 ## Troubleshooting
 
-<Accordion>
-  <AccordionItem title="Missing environment variables error">
-    ChatJS validates env vars at build time. Check `.env.local` has all required
-    variables and restart the dev server.
-  </AccordionItem>
-  <AccordionItem title="Database connection failed">
-    Verify `DATABASE_URL` is correct and the database is running. For local
-    PostgreSQL, check the service is started.
-  </AccordionItem>
-  <AccordionItem title="OAuth redirect error">
-    Make sure the callback URL in your OAuth app matches exactly. For local dev,
-    use `http://localhost:3000/api/auth/callback/{provider}`.
-  </AccordionItem>
-</Accordion>
+| Symptom | What to check |
+| --- | --- |
+| A required variable is missing | Compare `.env.local` with the generated example, run `npm run check-env`, and restart the dev server. |
+| Workflow setup fails | Check that the workflow connection reaches PostgreSQL directly or through a session pooler and has the [required privileges](/reference/database#eve-workflow-database). |
+| OAuth rejects the redirect | Match the exact scheme, host, port, and provider callback path registered with the OAuth provider. |
 
-<Accordion>
-<AccordionItem title="Optional Features">
-  New apps omit uploads and MCP by default. Install an optional integration with the CLI before configuring its credentials. The cleanup cron route ships with every app and only needs `CRON_SECRET`. It requires no integration install.
+## Next steps
 
-| Variable | Feature | Setup Guide |
-| --- | --- | --- |
-| `MCP_ENCRYPTION_KEY` | MCP connectors | `openssl rand -base64 32` (must be exactly 44 chars) |
-| `CRON_SECRET` | Cleanup cron job | [Generate](https://generate-secret.vercel.app/32) |
-
-</AccordionItem>
-</Accordion>
-
-## Next Steps
-
-You're up and running. Here's where to go next:
-
-<CardGroup cols={3}>
-  <Card title="Configuration" icon="settings" href="/core/configuration">
-    Customize features, branding, and settings in chat.config.ts
-  </Card>
-  <Card title="AI Capabilities" icon="sparkles" href="./tools/overview">
-    Explore built-in tools: web search, image generation, code execution
-  </Card>
-  <Card title="Desktop App" icon="monitor" href="./deployment/desktop">
-    Package your app as a native desktop application with Electron
-  </Card>
-</CardGroup>
+- [Project structure](/project-structure) shows where to change the app and the agent.
+- [Model configuration](/customization/models) explains how to set the default model and control the picker.
+- [Deployment](/deployment) covers Vercel and the current requirements for self-hosting.

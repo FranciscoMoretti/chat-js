@@ -1,25 +1,18 @@
 import React, { useEffect, useState } from "react";
 
-import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 
 import { ComposerMenu } from "../components/composer/composer-menu";
 import { useEveComposerDraft } from "../components/eve/use-eve-composer-draft";
-import { models } from "../lib/ai/models.generated";
 import { useDefaultModel } from "../providers/default-model-provider";
 import { firstModel, secondModel } from "./eve-comparison-data.fixture";
 
-const fixtureModels = models
-  .filter(
-    (model: Readonly<Pick<(typeof models)[number], "id">>) =>
-      model.id === firstModel || model.id === secondModel
-  )
-  .map((model: ReadonlyNativeSurface<(typeof models)[number]>) => ({
-    ...model,
-    apiModelId: model.id,
-    input: { image: true, pdf: true, text: true },
-    name: model.id === firstModel ? "First model" : "Second model",
-  }));
+const fixtureModels = [firstModel, secondModel].map((id) => ({
+  id,
+  apiModelId: id,
+  input: { image: true, pdf: true, text: true },
+  name: id === firstModel ? "First model" : "Second model",
+}));
 
 const modelContext = {
   allModels: fixtureModels,

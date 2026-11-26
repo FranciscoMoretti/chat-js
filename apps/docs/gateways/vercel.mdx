@@ -1,9 +1,9 @@
 ---
 title: "Vercel Gateway"
-description: "Access 120+ AI models through Vercel AI Gateway"
+description: "Use Vercel AI Gateway with deployment OIDC or a local API key, discover eligible models, and configure image generation for a ChatJS app."
 ---
 
-The Vercel gateway connects ChatJS to [Vercel AI Gateway](https://vercel.com/docs/ai-gateway), providing unified access to 120+ models from OpenAI, Anthropic, Google, xAI, Meta, and more through a single API key.
+The Vercel gateway connects ChatJS to [Vercel AI Gateway](https://vercel.com/docs/ai-gateway), which routes requests to models from multiple providers.
 
 This is the **default** gateway.
 
@@ -31,18 +31,7 @@ Install the gateway source (add `--replace` when another gateway is installed):
 bunx chat-js@alpha add --gateway vercel
 ```
 
-Then configure runtime model overrides for that installation:
-
-```typescript title="chat.config.ts"
-import type { ConfigInput } from "@/lib/config-schema";
-
-const config: ConfigInput = {
-  ai: {
-    gateway: "vercel",
-    // ...
-  },
-};
-```
+The CLI sets the gateway in `chat.config.ts`. Review any existing workflow model IDs against the new provider’s catalog. See [model configuration](/customization/models).
 
 ## Authentication
 
@@ -55,7 +44,7 @@ The gateway authenticates using one of these (checked in order):
 
 ## Available Models
 
-120+ models from OpenAI, Anthropic, Google, xAI, Meta, Mistral, Cohere, DeepSeek, and more. The full list is fetched at runtime and cached for 1 hour.
+ChatJS fetches the catalog at runtime and caches it for one hour. Available models depend on the catalog and eligibility for your team.
 
 ## Image Generation
 

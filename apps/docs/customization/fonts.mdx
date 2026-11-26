@@ -1,6 +1,6 @@
 ---
 title: Fonts
-description: Customize the typography of your ChatJS app
+description: "Change the sans-serif and monospace fonts in the Next.js root layout, or load a local font file using the same CSS variables."
 ---
 
 ChatJS uses [Geist](https://vercel.com/font) as the default font family for both sans-serif and monospace text. You can replace it with any font supported by `next/font`.
@@ -15,17 +15,17 @@ import { Geist, Geist_Mono } from "next/font/google";
 const geist = Geist({
   subsets: ["latin"],
   display: "swap",
-  variable: "--font-geist",
+  variable: "--font-sans",
 });
 
 const geistMono = Geist_Mono({
   subsets: ["latin"],
   display: "swap",
-  variable: "--font-geist-mono",
+  variable: "--font-mono",
 });
 ```
 
-The CSS variables `--font-geist` and `--font-geist-mono` are applied to the `<html>` element and referenced by Tailwind.
+The CSS variables `--font-sans` and `--font-mono` are applied to the `<html>` element and referenced by Tailwind.
 
 ## Changing Fonts
 
@@ -39,30 +39,21 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 const sans = Inter({
   subsets: ["latin"],
   display: "swap",
-  variable: "--font-geist",
+  variable: "--font-sans",
 });
 
 const mono = JetBrains_Mono({
   subsets: ["latin"],
   display: "swap",
-  variable: "--font-geist-mono",
+  variable: "--font-mono",
 });
 ```
 
 ### 2. Update the class names
 
-In the same file, find where the font variables are applied to the `<html>` element and replace the old variable references with your new ones:
+In the same file, find where the font variables are applied to the `<html>` element and replace the old variable references with your new ones. Set `className` to `cn(sans.variable, mono.variable, "font-sans")`.
 
-```tsx
-<html className={`${sans.variable} ${mono.variable}`}>
-```
-
-<Callout type="note">
-  Keep the CSS variable names (`--font-geist` and `--font-geist-mono`) the same
-  to avoid updating Tailwind config and `globals.css`. If you prefer different
-  variable names, update the `fontFamily` section in `tailwind.config.ts` to
-  match.
-</Callout>
+Keep `--font-sans` and `--font-mono` so the existing Tailwind utilities pick up your new fonts. Preserve the other attributes on the root element.
 
 ### Using local fonts
 
@@ -74,7 +65,7 @@ import localFont from "next/font/local";
 const myFont = localFont({
   src: "./fonts/MyFont.woff2",
   display: "swap",
-  variable: "--font-geist",
+  variable: "--font-sans",
 });
 ```
 

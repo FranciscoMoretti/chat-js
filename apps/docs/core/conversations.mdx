@@ -1,107 +1,43 @@
 ---
 title: Conversations
-description: Understand messages, turns, branches, and parallel responses
+description: "Edit and regenerate messages, compare model replies across branches, and steer an active turn while its answer is streaming."
 ---
 
-A chat groups the conversation paths you can revisit in the interface. EVE stores the native messages and execution state. ChatJS keeps ownership and application metadata around those sessions.
-
-A user message starts a turn. An answer can include assistant output and tool calls. Editing earlier input, regenerating an answer, or comparing multiple responses creates alternative paths within the same chat.
-
-Branching and parallel responses are core application behavior. They do not require installing a registry plugin. `features.parallelResponses` controls whether the parallel-response interface is available.
+A chat is the item you reopen from the sidebar. Within it, each branch has its own message history and native EVE session. The branches of an account chat share a workspace, including its sandbox files. [URL routing](/reference/routing) explains how ChatJS identifies the chat, branch, and session.
 
 ## Branching
 
-Branching lets you explore another direction without replacing the original conversation path. Editing a message or generating another response creates a sibling that you can return to later.
+Edit an earlier user message to try a different question, or regenerate an answer to get another response. ChatJS starts a branch from the selected point in the history. You can revisit the original answer and its later messages.
 
 <Frame>
-  <img
-    src="/docs/images/branching.gif"
-    alt="Navigating between conversation branches"
+  <video
+    controls
+    playsinline
+    preload="none"
+    width="1280"
+    height="720"
+    aria-label="Switching between alternative replies with the message arrows"
+    poster="/docs/images/branching-poster.png"
+    src="/docs/images/branching.mp4"
   />
 </Frame>
 
-### How it works
+Use the arrows next to a message with alternatives to change branches. A label such as `2/3` means you are viewing the second of three versions. Sending a new message continues the selected branch.
 
-Every message has a parent, which forms a conversation tree. ChatJS displays one root-to-message path at a time while keeping the other branches available.
-
-```mermaid
-flowchart TD
-    U1[User: Plan a launch] --> A1[Assistant: Start with architecture]
-    A1 --> U2[User: Make it technical]
-    U2 --> A2[Assistant: Define service indicators]
-    U2 --> A3[Assistant: Use staged environments]
-```
-
-Sending a follow-up continues the selected branch. Edit an earlier user message or regenerate a response to explore an alternative path.
-
-### Navigate branches
-
-When a message has siblings, arrow controls show the current position, such as `2/3`. Use the arrows to move to the previous or next branch.
-
-Switching branches:
-
-- changes the active conversation path
-- preserves responses that are still streaming on other branches
-- clears transient data that belongs to the previous path
-- closes an open artifact when its message is not in the selected path
-- follows the selected branch to its latest descendant
-
-### Edit a message
-
-Editing creates a replacement branch. The original message and all of its descendants remain in the tree, so you can switch back with the same sibling controls.
-
-### Runtime
-
-EVE persists conversation messages and executes each branch. ChatJS keeps the branches together in one chat and displays the selected path.
+Branching restores the conversation context up to the fork. Files in the shared workspace keep their current contents. For example, if a later turn changed a script, returning to an earlier message lets you revisit the discussion while the sandbox still contains the edited script.
 
 ## Parallel responses
 
-Parallel responses let you request several replies to one user message. You can compare different models, ask one model for multiple alternatives, or combine both approaches in the same response group.
+Signed-in users can compare replies to one prompt when `features.parallelResponses` is enabled. In the composer's model selector, enable multiple models, choose models and response counts, then send the message. You can request several answers from the same model.
 
-### Request responses
+Each response gets its own history. **Turns in the shared workspace run one at a time.** While one model works, another candidate can show **Waiting**. Changes the first model makes to workspace files are visible to the next model.
 
-1. Open the model selector in the chat input.
-2. Enable **Use Multiple Models**.
-3. Select the models you want to use.
-4. Set the response count for each selected model.
-5. Send your message.
+Select a response card to view its branch. Cards show when a response is generating, needs input, or needs a retry. Switching the selected card changes what you see. Use the stop control on a running response to request cancellation.
 
-The total response count must be greater than one. Selecting one model with a count of three creates three independent replies from that model. Selecting three models with a count of one creates one reply from each model.
+Each model call records its own usage. The optional [Credits plugin](/plugins/credits) applies charging policy. [Guest Chat](/plugins/guest-chat) uses a single model.
 
-<Callout type="note">
-  Parallel responses require authentication. Anonymous sessions are limited to a
-  single model per request.
-</Callout>
+## Follow up while a reply is running
 
-### Independent runs
+In an account chat, send a clarification while the selected response is streaming to steer the active turn. ChatJS sends the follow-up to that branch using its active model. To compare models on a new turn, wait for the current turn to finish. See [Execution & Recovery](/core/execution) for interrupted sends and cancellation.
 
-EVE runs each response independently. ChatJS presents the responses together as alternatives within the same chat. Each response keeps its own streaming state and stop control.
-
-```mermaid
-flowchart TD
-    U[User message] --> A[Model A, response 1]
-    U --> B[Model A, response 2]
-    U --> C[Model B, response 1]
-```
-
-The first response becomes the selected path. Other responses use background runs, so they continue streaming when you select another response or navigate to a different branch.
-
-For a new chat, response cards appear while creation is in progress. ChatJS creates the chat once, then starts the remaining responses with the same context.
-
-### Response cards
-
-A card appears for each requested response and shows its model and current state. Select a card to make that response the active conversation path.
-
-After selecting a response, new messages continue from that branch. The other responses remain available, including any that are still generating.
-
-### Current constraints
-
-- Attachments require sign-in and support for the file type in every selected model.
-- Each response generates its own model usage. The optional Credits plugin applies its charging policy.
-- Stopping the selected response does not stop other active runs. Select another running response to stop it separately.
-
-## Related
-
-- [Execution & Recovery](./execution) explains streaming, reconnecting, and cancellation.
-- [Models](../customization/models) explains catalog and model defaults.
-- [Standalone thread package](../threads) documents `@chat-js/thread` for other AI SDK apps. It is separate from the EVE runtime described here.
+For a separate AI SDK app that needs a message tree and concurrent runs, see the [standalone thread package](/threads).

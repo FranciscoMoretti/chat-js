@@ -1,6 +1,6 @@
 ---
 title: Desktop
-description: Add Electron authentication, browser handoff, and desktop navigation to your app
+description: "Connect an Electron companion to ChatJS sign-in, browser handoff, and navigation through the desktop plugin and its installed entry points."
 ---
 
 Use Desktop to connect your web app to an Electron companion. The plugin owns browser authentication, session transfer, renderer session synchronization, and desktop link behavior. The companion owns windows, preload bridges, deep links, packaging, and updates.
@@ -23,7 +23,7 @@ bun install
 bun run dev
 ```
 
-The companion loads `http://localhost:3000` in development. Set `ELECTRON_APP_URL` when your web app runs at another address. See [Desktop Distribution](../deployment/desktop) for icons, installers, signing, and releases.
+The companion loads `http://localhost:3000` in development. Set `ELECTRON_APP_URL` when your web app runs at another address. See [Desktop Distribution](/deployment/desktop) for icons, installers, signing, and releases.
 
 ## Authentication
 
@@ -60,7 +60,7 @@ Repository contributors edit the canonical web plugin in `packages/registry/src/
 
 ## Integration points
 
-Desktop provides server authentication, an authentication form wrapper and sign-out handler, modified-link navigation, and a layout component. These are explicit contracts in the [Plugin API](../reference/plugin-api). Each authentication or navigation slot accepts one provider. The layout placement is shared with other plugins.
+Desktop provides server authentication, an authentication form wrapper and sign-out handler, modified-link navigation, and a layout component. These are explicit contracts in the [Plugin API](/reference/plugin-api). Each authentication or navigation slot accepts one provider. The layout placement is shared with other plugins.
 
 Navigation and sign-out import renderer detection from the dependency-free bridge module. The form and sign-out handler have separate generated imports; neither navigation nor sign-out imports the layout declaration, login form, or session overlay. The global slot binding lives in `layout-ui.ts`. Core retains its regular web authentication and form presentation.
 

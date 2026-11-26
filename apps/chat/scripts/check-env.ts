@@ -9,11 +9,7 @@ import {
   getMissingRequirement,
   isRequirementSatisfied,
 } from "@/lib/config-requirements";
-import {
-  formatGatewaySnapshotWarning,
-  reportEnvironmentFailure,
-  reportEnvironmentSuccess,
-} from "./environment-validation-report";
+import { reportEnvironmentFailure } from "./environment-validation-report";
 import {
   storageEnvRequirements,
   storageId,
@@ -23,7 +19,6 @@ import { config } from "@/lib/config";
 import { databaseEnvOptions } from "@/lib/db/connection";
 import fs from "node:fs/promises";
 import { gatewayEnvRequirements } from "@/chatjs/providers/gateway-defaults";
-import { generatedForGateway } from "@/lib/ai/models.generated";
 import { getEveRuntimeEnvOptions } from "@/lib/env-schema";
 import { isPlaywrightTestEnvironment } from "@/lib/playwright-test-environment";
 import { config as loadEnvConfig } from "dotenv";
@@ -235,14 +230,6 @@ const validateBaseUrl = (
   };
 };
 
-const checkGatewaySnapshot = (): string | null => {
-  const configuredGateway: string = config.ai.gateway;
-  if (configuredGateway !== generatedForGateway) {
-    return formatGatewaySnapshotWarning(generatedForGateway, configuredGateway);
-  }
-  return null;
-};
-
 const validateDatabaseEnvironment = (
   env: Readonly<NodeJS.ProcessEnv>
 ): ValidationError[] => {
@@ -306,8 +293,6 @@ const checkEnv = async (): Promise<void> => {
     console.log(
       "✅ Skipping optional environment validation in Playwright test mode"
     );
-    // Playwright CI only exercises anonymous flows, so optional feature checks
-    // and the gateway snapshot warning stay enforced in non-Playwright builds.
     return;
   }
 
@@ -335,7 +320,7 @@ const checkEnv = async (): Promise<void> => {
   if (reportEnvironmentFailure(errors)) {
     process.exit(VALIDATION_FAILURE_EXIT_STATUS);
   }
-  reportEnvironmentSuccess(checkGatewaySnapshot());
+  console.log("✅ Environment validation passed");
 };
 
 try {

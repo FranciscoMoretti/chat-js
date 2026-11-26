@@ -1,6 +1,6 @@
 ---
 title: Resumable Streams
-description: Continue AI responses after connection interruptions
+description: "Add Redis-backed stream resumption to a standalone AI SDK app so a client can reconnect to a response after losing its connection."
 ---
 
 <Callout type="note">
@@ -9,14 +9,20 @@ description: Continue AI responses after connection interruptions
   this `/api/chat` transport.
 </Callout>
 
-For the ChatJS app, see [Execution & Recovery](../../core/execution).
+For the ChatJS app, see [Execution & Recovery](/core/execution).
 
 Resumable streams let `useChat` reconnect to ongoing message generation after page reloads, network interruptions, or tab switches. Without this, users lose partial AI responses and must regenerate from scratch.
 
 <Frame>
-  <img
-    src="/docs/images/resumable-streams.gif"
-    alt="Stream resuming after a page reload"
+  <video
+    controls
+    playsinline
+    preload="none"
+    width="1280"
+    height="720"
+    aria-label="Stream resuming after a page reload"
+    poster="/docs/images/resumable-streams-poster.png"
+    src="/docs/images/resumable-streams.mp4"
   />
 </Frame>
 
@@ -229,7 +235,7 @@ sequenceDiagram
 
 Resumable streams stay compatible with stopping as long as you do not wire `request.signal` into `streamText`. Use a server-owned `AbortController` and a persisted stop flag instead.
 
-See [Stop Resumable Streams](./stop-resumable-streams).
+See [Stop Resumable Streams](/reference/standalone/stop-resumable-streams).
 
 ## Further Reading
 

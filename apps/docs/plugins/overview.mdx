@@ -1,34 +1,38 @@
 ---
 title: Plugin catalog
-description: Browse plugins for chat and application features
+description: "Browse optional ChatJS plugins for accounts and conversations, including uploads, projects, search, sharing, credits, and external tool connections."
 ---
 
-Choose a plugin to see its installation steps, usage, configuration, and storage requirements. New to plugins? Start with [Using plugins](./using-plugins).
+Choose a plugin to see its installation steps, usage, configuration, and storage requirements. New to plugins? Start with [Using plugins](/plugins/using-plugins).
 
 ## Chat
 
 | Plugin | What it adds |
 | --- | --- |
-| [Projects](./projects) | Organize conversations and share instructions across related chats |
-| [Model Preferences](./model-preferences) | Choose which models appear in your picker |
-| [Sharing](./sharing) | Publish read-only conversations with revocable access |
-| [Guest Chat](./guest-chat) | Let visitors try disposable text conversations |
-| [Desktop](./desktop) | Connect an Electron companion through browser sign-in and session transfer |
-| [Credits](./credits) | Gate spending and debit user balances from recorded usage |
-| [AI Titles](./ai-titles) | Automatically name new chats |
-| [Search](./search) | Find chats by title and conversation text |
-| [Feedback](./feedback) | Collect private ratings on assistant messages |
-| [Follow-up Suggestions](./followup-suggestions) | Generate related questions after an answer |
-| [Attachments](./attachments) | Upload images and PDFs from the composer |
+| [Projects](/plugins/projects) | Organize conversations and share instructions across related chats |
+| [Model Preferences](/plugins/model-preferences) | Choose which models appear in your picker |
+| [Sharing](/plugins/sharing) | Publish read-only conversations with revocable access |
+| [Guest Chat](/plugins/guest-chat) | Let visitors try disposable text conversations |
+| [Desktop](/plugins/desktop) | Connect an Electron companion through browser sign-in and session transfer |
+| [Credits](/plugins/credits) | Gate spending and debit user balances from recorded usage |
+| [AI Titles](/plugins/ai-titles) | Automatically name new chats |
+| [Search](/plugins/search) | Find chats by title and conversation text |
+| [Feedback](/plugins/feedback) | Collect private ratings on assistant messages |
+| [Follow-up Suggestions](/plugins/followup-suggestions) | Generate related questions after an answer |
+| [Attachments](/plugins/attachments) | Upload images and PDFs from the composer |
+
+## File viewers
+
+Install `image-viewer`, `video-viewer`, or `spreadsheet-viewer` to open published workspace files directly in chat. Each viewer handles its own formats. See [Documents & Files](/tools/canvas#optional-viewers) for installation and spreadsheet support.
 
 ## Integrations
 
-| Plugin       | What it adds                                             |
-| ------------ | -------------------------------------------------------- |
-| [MCP](./mcp) | Connect external tools with connector settings and OAuth |
+| Plugin | What it adds |
+| --- | --- |
+| [MCP](/plugins/mcp) | Connect external tools with connector settings and OAuth |
 
 Agent observability uses EVE's native instrumentation. Select an integration in the builder's **Agent → Observability** category.
 
 ## Build your own
 
-Follow [Create a plugin](./create-plugin) for an authoring walkthrough and the [Plugin API](../reference/plugin-api) for contribution contracts.
+Follow [Create a plugin](/plugins/create-plugin) for an authoring walkthrough and the [Plugin API](/reference/plugin-api) for contribution contracts.

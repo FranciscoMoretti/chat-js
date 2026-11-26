@@ -1,6 +1,6 @@
 ---
 title: Self-Hosted
-description: Candidate deployment topology and ChatJS release acceptance requirements
+description: "Plan a self-hosted ChatJS deployment with PostgreSQL, file storage, and worker supervision, and review which lifecycle checks still need verification."
 ---
 
 ChatJS needs a Node 24+ Next.js server, EVE execution, PostgreSQL and persistent files for installed uploads/media. A platform supporting Next.js alone does not establish a working ChatJS deployment.
@@ -33,15 +33,15 @@ Start with the generated `.env.example` and installed provider requirements:
 
 Supabase distinguishes direct, session-pooler and transaction-pooler connections. Direct connections suit persistent backends when reachable, while session mode supports IPv4-only networks. Transaction mode does not support prepared statements and must not be assumed suitable for durable workflow requirements. See [Supabase connection modes](https://supabase.com/docs/guides/database/connecting-to-postgres).
 
-Use tracked application migrations for a provisioned environment:
+For a new installation, check the connection and initialize both the application and workflow schemas:
 
 ```bash
 bun run check-env
 bun run db:connect
-bun run db:migrate
+bun run setup
 ```
 
-These commands do not certify worker lifecycle or hosted erasure. The final Render worker start command, supervision/restart behavior, workflow privileges and scheduler configuration remain acceptance evidence to capture. Do not treat a local loopback `eve:start` command as a hosted worker recipe.
+The repository’s [Render blueprint](https://github.com/FranciscoMoretti/chat-js/blob/main/deployment/render/render.yaml) starts the Next.js service, uses `/api/health` for readiness, and schedules hourly cleanup. It targets a source checkout with providers already selected. Verify streaming through the host, in-flight recovery after a restart, and resource cleanup on the deployed instance.
 
 ## Evidence required before certification
 
@@ -49,4 +49,4 @@ Record the exact commit, dependency versions, generated selection, setup command
 
 Search must be replaceable in both directions for direct chat and research. Sandbox replacement must also work for native code execution and prove provider-owned cleanup. A hosted non-Vercel app that still calls Vercel Sandbox does not demonstrate an independent sandbox provider.
 
-Label results as source-only, generated/typechecked, local lifecycle or hosted lifecycle. The storage adapter catalog is broader than the certified deployment matrix. See [Configuration](../core/configuration), [Database](../reference/database), [Vercel](./vercel) and [Docker](./docker).
+Label results as source-only, generated/typechecked, local lifecycle or hosted lifecycle. The storage adapter catalog is broader than the certified deployment matrix. See [Configuration](/core/configuration), [Database](/reference/database), [Vercel](/deployment/vercel) and [Docker](/deployment/docker).

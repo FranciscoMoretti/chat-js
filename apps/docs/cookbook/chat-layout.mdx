@@ -1,213 +1,31 @@
 ---
-title: "Chat Layout"
-description: "Composable resizable main and secondary panel layout"
+title: Chat Layout
+description: "Change the width of the chat transcript and composer together, and choose where notices and other content appear as messages scroll."
 ---
 
-> Split-panel chat interface with a collapsible secondary panel for artifacts, previews, or tools.
+The chat screen has two layouts. An empty chat shows the welcome view with its composer. Once it has a transcript, the messages scroll above a footer containing notices and the composer. Both layouts are composed in `components/chat/chat-conversation-screen.tsx`.
 
-## Overview
+## Widen the conversation
 
-A responsive two-panel layout where the main chat occupies the primary space and a secondary panel (for artifacts, code previews, etc.) slides in when needed. On mobile, the secondary panel replaces the main panel. Composable shadcn-style primitives.
+Change both width limits to keep the messages and input aligned.
 
-## How it works
+1. In `components/chat/chat-conversation-screen.tsx`, find `MessageScrollerContent`. Change `max-w-3xl` to your desired width, such as `max-w-4xl`. Keep `mx-auto w-full` to center it and let it shrink on narrow screens.
+2. In `components/chat/chat-conversation.tsx`, apply the same width to `ChatConversationFooter`.
+3. Open a chat with enough messages to scroll. Check that the transcript and composer line up on desktop and that the composer stays visible on a narrow screen.
 
-The layout uses `react-resizable-panels` wrapped in composable components:
+The welcome composer lives in `ChatWelcomeView`. Edit `components/chat/chat-welcome-view.tsx` if you also want to change its placement before the first message.
 
-| Component | Purpose |
+## Place content around the transcript
+
+`ChatConversationScreen` accepts React nodes for these positions. Choose one according to whether the content should scroll with the messages.
+
+| Prop | Position |
 | --- | --- |
-| `ChatLayout` | Root container with sidebar-aware max-width |
-| `ChatLayoutMain` | Primary panel, hides on mobile when secondary is visible |
-| `ChatLayoutHandle` | Drag handle between panels |
-| `ChatLayoutSecondary` | Conditional panel, renders only when visible |
+| `header` | Above the welcome view or conversation body |
+| `leading` | Inside the scroller, before the transcript |
+| `trailing` | Inside the scroller, after the transcript and thinking indicator |
+| `notices` | Above the composer in the conversation footer and below the composer in the welcome view |
 
-Visibility is controlled via the `isSecondaryPanelVisible` prop on `ChatLayout`. This value is shared to child components through React context, so they automatically show/hide based on the state.
+Keep the supplied composer and recovery controls connected when changing their placement. For an action that belongs to a single message or tool result, use the [plugin slots](/reference/plugin-api) or a [tool renderer](/cookbook/tool-part).
 
-## Install the resizable primitive
-
-Run this command in your ChatJS app before adding the layout. It installs the primitive and its panel dependency.
-
-```sh
-bunx shadcn add resizable
-```
-
-## Code
-
-### Components
-
-```tsx title="components/chat/chat-layout.tsx"
-"use client";
-
-import type { ComponentProps } from "react";
-import { createContext, useContext } from "react";
-import {
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup,
-} from "@/components/ui/resizable";
-import { useSidebar } from "@/components/ui/sidebar";
-import { cn } from "@/lib/utils";
-
-type ChatLayoutContextValue = {
-  isSecondaryPanelVisible: boolean;
-};
-
-const ChatLayoutContext = createContext<ChatLayoutContextValue | null>(null);
-
-function useChatLayoutContext() {
-  const context = useContext(ChatLayoutContext);
-  if (!context) {
-    throw new Error("ChatLayout components must be used within <ChatLayout />");
-  }
-  return context;
-}
-
-type ChatLayoutProps = Omit<
-  ComponentProps<typeof ResizablePanelGroup>,
-  "orientation"
-> & {
-  isSecondaryPanelVisible?: boolean;
-};
-
-export const ChatLayout = ({
-  className,
-  children,
-  isSecondaryPanelVisible = false,
-  ...props
-}: ChatLayoutProps) => {
-  const { state: sidebarState } = useSidebar();
-
-  return (
-    <ChatLayoutContext.Provider value={{ isSecondaryPanelVisible }}>
-      <ResizablePanelGroup
-        className={cn(
-          "@container flex h-dvh w-full min-w-0 max-w-screen flex-col bg-background md:max-w-[calc(100vw-var(--sidebar-width))]",
-          sidebarState === "collapsed" && "md:max-w-screen",
-          className
-        )}
-        orientation="horizontal"
-        {...props}
-      >
-        {children}
-      </ResizablePanelGroup>
-    </ChatLayoutContext.Provider>
-  );
-};
-
-type ChatLayoutMainProps = ComponentProps<typeof ResizablePanel>;
-
-export const ChatLayoutMain = ({
-  className,
-  defaultSize = "65%",
-  minSize = "40%",
-  ...props
-}: ChatLayoutMainProps) => {
-  const { isSecondaryPanelVisible } = useChatLayoutContext();
-
-  return (
-    <ResizablePanel
-      className={cn(isSecondaryPanelVisible && "hidden md:block", className)}
-      defaultSize={defaultSize}
-      minSize={minSize}
-      {...props}
-    />
-  );
-};
-
-type ChatLayoutSecondaryProps = ComponentProps<typeof ResizablePanel>;
-
-export const ChatLayoutSecondary = ({
-  defaultSize = "35%",
-  minSize = "25%",
-  ...props
-}: ChatLayoutSecondaryProps) => {
-  const { isSecondaryPanelVisible } = useChatLayoutContext();
-
-  if (!isSecondaryPanelVisible) {
-    return null;
-  }
-
-  return (
-    <ResizablePanel defaultSize={defaultSize} minSize={minSize} {...props} />
-  );
-};
-
-type ChatLayoutHandleProps = ComponentProps<typeof ResizableHandle>;
-
-export const ChatLayoutHandle = ({
-  className,
-  withHandle = true,
-  ...props
-}: ChatLayoutHandleProps) => {
-  const { isSecondaryPanelVisible } = useChatLayoutContext();
-
-  if (!isSecondaryPanelVisible) {
-    return null;
-  }
-
-  return (
-    <ResizableHandle
-      className={cn("hidden md:flex", className)}
-      withHandle={withHandle}
-      {...props}
-    />
-  );
-};
-```
-
-### Usage
-
-```tsx title="components/chat.tsx"
-"use client";
-
-import {
-  ChatLayout,
-  ChatLayoutHandle,
-  ChatLayoutMain,
-  ChatLayoutSecondary,
-} from "@/components/chat/chat-layout";
-import { MainChatPanel } from "@/components/chat/main-chat-panel";
-import { SecondaryChatPanel } from "@/components/chat/secondary-chat-panel";
-import { useArtifactSelector } from "@/hooks/use-artifact";
-
-export function Chat({ id, isReadonly, projectId }) {
-  const isSecondaryPanelVisible = useArtifactSelector(
-    (state) => state.isVisible
-  );
-
-  return (
-    <ChatLayout isSecondaryPanelVisible={isSecondaryPanelVisible}>
-      <ChatLayoutMain>
-        <MainChatPanel
-          chatId={id}
-          className="flex h-full min-w-0 flex-1 flex-col"
-          isReadonly={isReadonly}
-          projectId={projectId}
-        />
-      </ChatLayoutMain>
-
-      <ChatLayoutHandle />
-
-      <ChatLayoutSecondary>
-        <SecondaryChatPanel
-          className="flex h-full min-w-0 flex-1 flex-col"
-          isReadonly={isReadonly}
-        />
-      </ChatLayoutSecondary>
-    </ChatLayout>
-  );
-}
-```
-
-### Customization
-
-Override default sizes per-instance:
-
-```tsx
-<ChatLayoutMain defaultSize="70%" minSize="50%">
-  {/* ... */}
-</ChatLayoutMain>
-
-<ChatLayoutSecondary defaultSize="30%" minSize="20%">
-  {/* ... */}
-</ChatLayoutSecondary>
-```
+For a draggable split between the chat and a second panel, run `bunx shadcn add resizable` in your app to install the primitive and its panel dependency.

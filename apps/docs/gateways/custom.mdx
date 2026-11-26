@@ -1,6 +1,6 @@
 ---
 title: "Custom Gateway"
-description: "Compose a ChatJS app with a third-party gateway registry item"
+description: "Package a gateway adapter as a registry item, declare its models and credentials, and verify discovery and streaming in a generated ChatJS app."
 ---
 
 Install a custom gateway when creating your app. If your endpoint implements the OpenAI API, you can also use the built-in [OpenAI Compatible](/gateways/openai-compatible) gateway.
@@ -45,13 +45,12 @@ The generated `chat.config.ts` selects your gateway. Add credentials to `.env.lo
 
 ```sh
 bun test:types
-bun fetch:models
 bun dev
 ```
 
-Send a real chat message to verify provider authentication and streaming. Type checks validate the adapter interface and configuration, but cannot verify remote credentials or model availability.
+Select a model served by your endpoint and send a chat message to verify provider authentication and streaming. Type checks validate the adapter interface and configuration, but cannot verify remote credentials or model availability.
 
 ## Related
 
 - [Gateways Overview](/gateways/overview)
-- [Multi-Model Support](../customization/models)
+- [Multi-Model Support](/customization/models)

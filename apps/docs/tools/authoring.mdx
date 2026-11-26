@@ -1,6 +1,6 @@
 ---
 title: Authoring Tools
-description: Author native EVE tools and publish them as shadcn registry items
+description: "Define a native EVE tool, share schemas with its ChatJS renderer, declare registry metadata, and register its server and client implementations."
 ---
 
 Author tools as real TypeScript files that you can import, type-check, and test. Canonical implementations live in `packages/registry/src/tools/<id>/`. The app consumes installed copies through local imports.
@@ -34,7 +34,7 @@ Call `usage.addCostUsd()` for known provider costs in US dollars. Report `0` for
 
 Use `return usage.fail()` only for an expected domain failure that should produce a sanitized error receipt with reported costs—for example, storage failing after a paid generation. This is a returned application result, so EVE records a completed action. Throwing instead produces EVE's native failed action and does not produce a final cost receipt. Do not wrap an entire tool or native authorization calls in `.catch(usage.fail)`.
 
-`executeWithToolProgress` uses the same receipts and accumulator for streaming executions. Its callback can publish intermediate output and JSON progress. Search uses `executeWithResearchProgress` to collect its progress events. The native research workflow yields durable phase/topic snapshots with the same receipt shape. Research schemas are kept outside the generic receipt contract.
+`executeWithToolProgress` uses the same receipts and accumulator for streaming executions. Its callback can publish intermediate output and JSON progress. The native research workflow yields durable phase/topic snapshots with the same receipt shape. Research schemas are kept outside the generic receipt contract.
 
 EVE may interrupt execution before a final receipt settles. These helpers do not guarantee accounting for every external request or prevent duplicate provider work. Use provider idempotency and reconciliation where required. Workflow tools require their own integration with durable workflow steps.
 
@@ -88,11 +88,11 @@ Add `"definitionExport": "toolDefinition"` beside the registration's `toolExport
 
 ## Files and viewers
 
-Use EVE's native sandbox tools for document creation and editing. Install `attach-workspace-file` to deliver immutable snapshots through ChatJS storage. A tool can offer a rich result renderer without requiring a viewer plugin. File cards dispatch to optional viewers by media type, with download as the fallback. See [Documents & Files](./canvas).
+Use EVE's native sandbox tools for document creation and editing. Install `attach-workspace-file` to deliver immutable snapshots through ChatJS storage. A tool can offer a rich result renderer without requiring a viewer plugin. File cards dispatch to optional viewers by media type, with download as the fallback. See [Documents & Files](/tools/canvas).
 
 ## Item metadata
 
-Declare standard shadcn files and dependencies in `packages/registry/registry.ts`:
+Declare the tool’s source files, targets and package dependencies in its registry item. The built-in image and video items in `packages/registry/registry-items.ts` illustrate the layout. This JSON shows the ChatJS metadata for the word-count tool.
 
 ```json
 {
@@ -187,6 +187,6 @@ npx chat-js@alpha add https://example.com/r/text-stats.json
 
 ## Related
 
-- [Tool Registry](./overview) for ownership and namespaces
-- [Adding Tools](./install) for installation and sync
-- [Tool Part](../cookbook/tool-part) for rendering tool results
+- [Tool Registry](/tools/overview) for ownership and namespaces
+- [Adding Tools](/tools/install) for installation and sync
+- [Tool Part](/cookbook/tool-part) for rendering tool results

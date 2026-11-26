@@ -1,6 +1,6 @@
 ---
 title: Credits
-description: Gate spending and debit registered-user balances from durable usage evidence
+description: "Add balances for registered users, check available credit before new work, and settle charges from recorded model and tool usage."
 ---
 
 Use Credits to give registered users a starting balance, check it before paid work, and display the remaining amount in the sidebar. Core continues to record and reconcile usage with or without this plugin.
@@ -31,7 +31,7 @@ Admission first reconciles recorded usage, then requires a strictly positive bal
 
 Core sums provider costs using database decimal arithmetic, rounds up once per turn to whole cents, and subtracts only the unpaid difference. Receipt writes, the debit, and the settlement marker commit in one transaction. Replayed evidence does not charge twice. Unknown costs remain pending until reconciliation resolves them.
 
-[Guest Chat](./guest-chat) owns disposable visitor sessions and rate limits. Guests do not enter account billing or own monetary balances. Credits does not add payments, subscriptions, top-ups, or an administrative balance editor.
+[Guest Chat](/plugins/guest-chat) owns disposable visitor sessions and rate limits. Guests do not enter account billing or own monetary balances. Credits does not add payments, subscriptions, top-ups, or an administrative balance editor.
 
 ## From usage to a debit
 
@@ -54,7 +54,7 @@ flowchart LR
 
 Both new-conversation and follow-up-message admission call `canStartPaidTurn` in `lib/eve/spending-admission.ts`. It reconciles usage before reading the balance. Reconciliation failures propagate to the request's recovery response. A positive balance check does not reserve a concurrent budget for work already running.
 
-The installed billing policy commits debits in the same transaction as usage evidence and settlement markers. See [Architecture](../core/architecture#usage-evidence) for the behavior that remains without Credits.
+The installed billing policy commits debits in the same transaction as usage evidence and settlement markers. See [Architecture](/core/architecture#usage-evidence) for the behavior that remains without Credits.
 
 ## Storage
 
@@ -73,7 +73,7 @@ Core retains `EveUsage`, its `chargedCents` settlement marker, receipt deduplica
 - Edit `billing.ts` for admission and debit behavior. Use the supplied database transaction; throwing rolls back the receipt and debit together. Keep external payment calls out of this operation.
 - Edit `balance.tsx` and `use-credits.ts` for the sidebar display and balance refresh.
 
-Only one installed plugin can provide billing. Its `billing.ts` entry must load in both native EVE and Next.js, without importing web routers or request helpers. See the [Plugin API](../reference/plugin-api).
+Only one installed plugin can provide billing. Its `billing.ts` entry must load in both native EVE and Next.js, without importing web routers or request helpers. See the [Plugin API](/reference/plugin-api).
 
 ## Without Credits
 
