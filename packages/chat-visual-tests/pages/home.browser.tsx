@@ -112,6 +112,19 @@ test("home signed in lists projects and chat history", async () => {
     .toBeVisible();
   await expect.element(page.getByText("Maya Chen")).toBeVisible();
   await expect.element(page.getByText("8.42", { exact: true })).toBeVisible();
+  const sidebar = document.querySelector('[data-slot="sidebar-inner"]');
+  if (!sidebar) {
+    throw new Error("Expanded sidebar is missing");
+  }
+  const panel = sidebar.getBoundingClientRect();
+  const dividers = sidebar.querySelectorAll('[data-sidebar="separator"]');
+  expect(dividers).toHaveLength(2);
+  for (const divider of dividers) {
+    const bounds = divider.getBoundingClientRect();
+    const leftInset = bounds.left - panel.left;
+    expect(leftInset).toBeGreaterThan(0);
+    expect(panel.right - bounds.right).toBeCloseTo(leftInset);
+  }
   await expect
     .element(page.getByRole("textbox", { name: "Message" }))
     .toHaveAttribute("data-slot", "input-group-control");
