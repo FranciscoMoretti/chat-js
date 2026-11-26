@@ -1,6 +1,6 @@
 ---
 title: MCP
-description: Connect Model Context Protocol servers to extend AI capabilities
+description: "Install MCP connectors for your ChatJS app, configure credential encryption, and let users connect external tools to their conversations."
 ---
 
 [Model Context Protocol (MCP)](https://modelcontextprotocol.io) lets you connect external tool servers to your AI. The ChatJS plugin provides connector settings, OAuth authorization, and discovery of tools, resources, and prompts.
@@ -27,7 +27,7 @@ bun run db:generate
 bun run db:migrate
 ```
 
-New apps receive a baseline for their selected plugins. See [plugin migrations](./using-plugins#database-migrations) for migration ownership and removal behavior.
+New apps receive a baseline for their selected plugins. See [plugin migrations](/plugins/using-plugins#database-migrations) for migration ownership and removal behavior.
 
 ### Encryption key
 
@@ -135,4 +135,4 @@ Server URLs, OAuth tokens, and credentials are encrypted with `MCP_ENCRYPTION_KE
 
 ## Customization
 
-Edit `chatjs/plugins/mcp/` for connector behavior, the router, and browser contributions. The plugin's `validate-env.ts` owns credential validation and is loaded only when MCP is installed. See [Create a plugin](./create-plugin) and the [Plugin API](../reference/plugin-api) for contribution contracts.
+Edit `chatjs/plugins/mcp/` for connector behavior, the router, and browser contributions. The plugin's `validate-env.ts` owns credential validation and is loaded only when MCP is installed. See [Create a plugin](/plugins/create-plugin) and the [Plugin API](/reference/plugin-api) for contribution contracts.

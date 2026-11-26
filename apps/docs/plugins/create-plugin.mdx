@@ -1,13 +1,13 @@
 ---
 title: Create a plugin
-description: Package source and register server, browser, and native contributions
+description: "Package a ChatJS plugin for a shadcn registry, declare its installed files, and connect server, UI, database, and native EVE entry points."
 ---
 
 Publish a standard shadcn registry item with `meta.chatjs.kind: "plugin"`. Plugin IDs use lowercase letters, digits, and hyphens, beginning with a letter. External plugins use the same metadata and sync path as the built-ins.
 
 ## Prerequisites
 
-Use a working ChatJS app and a shadcn registry. Read [Using plugins](./using-plugins) before packaging a new capability.
+Use a working ChatJS app and a shadcn registry. Read [Using plugins](/plugins/using-plugins) before packaging a new capability.
 
 ## 1. Organize the source
 
@@ -42,7 +42,7 @@ export const chatUi = definePlugin({
 
 Keep credentials and database imports in server modules. Edit the bound components directly, or wrap them with ordinary React components.
 
-Core keeps explicit optional fields such as `projectId`. Plugins validate them against their own storage and lifecycle behavior. A separate runtime-safe `chat-server.ts` entrypoint participates in transactional creation, history, navigation, and deletion. See [Plugin integration points](../reference/plugin-api) for signatures and lifecycle guarantees.
+Core keeps explicit optional fields such as `projectId`. Plugins validate them against their own storage and lifecycle behavior. A separate runtime-safe `chat-server.ts` entrypoint participates in transactional creation, history, navigation, and deletion. See [Plugin integration points](/reference/plugin-api) for signatures and lifecycle guarantees.
 
 ## 3. Declare the installation
 

@@ -13,7 +13,7 @@ import type * as QueryClientModule from "@/trpc/query-client";
 // The registry's visual harness: the app's globals.css with Tailwind scanning the
 // app tree, the Geist faces next/font would load, and the motion freeze.
 import { FREEZE_MOTION_CSS } from "../../registry/src/tools/_shared/visual";
-import { chatsIn } from "./fixtures";
+import { catalogModels, chatsIn } from "./fixtures";
 import { captureVariants } from "./render";
 import { TrpcFixtureError, route } from "./route";
 
@@ -266,12 +266,12 @@ vi.mock("@/integrations/chat/models", () => ({
   },
 }));
 
-// The gateway's live catalog, replaced by the snapshot the repo already generates from it.
-vi.mock("@/lib/ai/models", async () => {
-  const { models } = await import("@/lib/ai/models.generated");
-  const { toModelData } = await import("@/lib/ai/to-model-data");
-  return { fetchModels: () => Promise.resolve(models.map(toModelData)) };
-});
+vi.mock("@/lib/ai/models", () => ({
+  fetchModels: () =>
+    route.server.modelDiscoveryError
+      ? Promise.reject(route.server.modelDiscoveryError)
+      : Promise.resolve(catalogModels),
+}));
 
 // A page that preloads a query awaits it once on the server. React re-runs that page here, and a
 // failed query refetches on every run, so it would never settle; the client components fetch the

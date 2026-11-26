@@ -82,9 +82,6 @@
     "docs:links": {
       "cache": false
     },
-    "fetch:models": {
-      "cache": false
-    },
     "@chatjs/chat#test:e2e": {
       "dependsOn": ["^build"],
       "passThroughEnv": [

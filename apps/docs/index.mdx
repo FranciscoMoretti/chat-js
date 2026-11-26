@@ -1,8 +1,8 @@
 ---
 title: "Introduction"
-description: "The building blocks for your AI app"
+description: "Start with a working AI chat app. Choose a model gateway, add tools and integrations, customize the source, and deploy your application."
 seo:
-  title: "ChatJS: The building blocks for your AI app"
+  title: "Build an AI chat app with ChatJS"
   image: /images/opengraph-image.jpg
   description: "Start with a working AI chat app. Add the tools and integrations you need, choose your providers, and customize the code to make it yours."
 ---
@@ -17,38 +17,36 @@ Start with a working AI chat app. Add the tools and integrations you need, choos
 
 <img
   class="block dark:hidden"
-  src="/docs/images/hero-light.png"
+  src="/docs/images/hero-light.webp"
   alt="ChatJS — The building blocks for your AI app"
   width="1280"
   height="640"
 />
 <img
   class="hidden dark:block"
-  src="/docs/images/hero-dark.png"
+  src="/docs/images/hero-dark.webp"
   alt="ChatJS — The building blocks for your AI app"
   width="1280"
   height="640"
 />
 
-The [live demo](https://demo.chatjs.dev) shows an app built with ChatJS, including optional tools and integrations.
+Explore the [live demo](https://www.demo.chatjs.dev) to try the chat interface, or read the [changelog](/changelog) to see what shipped in the 1.0 alpha.
 
 ## Start building
 
-You get a working foundation with authentication, saved conversations, and streaming responses.
-
-Built with Next.js, React, TypeScript, and AI SDK. Powered by [EVE](./core/architecture) for durable conversations, tool execution, and stream recovery.
+The starter includes sign-in, saved conversations, and streaming responses. Next.js serves the web app. EVE runs the agent, executes tools, and restores conversations when users reconnect.
 
 ```bash
 npx chat-js@alpha create my-app
 ```
 
-Choose your [AI gateway](./gateways/overview), authentication providers, and optional capabilities during setup. The CLI assembles your app and lists the credentials your selections require.
+Choose your [AI gateway](/gateways/overview), authentication providers, and optional capabilities during setup. The CLI assembles your app and lists the credentials your selections require.
 
 <CardGroup cols={2}>
-  <Card title="Quickstart" icon="rocket" href="./quickstart">
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
     Create your app, configure your providers, and send your first message.
   </Card>
-  <Card title="Architecture" icon="code" href="./core/architecture">
+  <Card title="Architecture" icon="code" href="/core/architecture">
     Learn how the application and conversation runtime fit together.
   </Card>
 </CardGroup>
@@ -58,13 +56,13 @@ Choose your [AI gateway](./gateways/overview), authentication providers, and opt
 Install tools and integrations as you need them. Uploads, web search, image generation, and MCP connectors are optional. Each installation adds the source and dependencies that capability requires.
 
 <CardGroup cols={3}>
-  <Card title="Tools" icon="sparkles" href="./tools/overview">
+  <Card title="Tools" icon="sparkles" href="/tools/overview">
     Add web search, image generation, code execution, or your own tools.
   </Card>
-  <Card title="Uploads" icon="paperclip" href="./plugins/attachments">
+  <Card title="Uploads" icon="paperclip" href="/plugins/attachments">
     Let users attach files to conversations.
   </Card>
-  <Card title="MCP connectors" icon="plug" href="./plugins/mcp">
+  <Card title="MCP connectors" icon="plug" href="/plugins/mcp">
     Connect your app to external tools and services.
   </Card>
 </CardGroup>
@@ -73,19 +71,19 @@ Install tools and integrations as you need them. Uploads, web search, image gene
 
 Installed tools and integrations live as editable source in your project. Change their behavior, customize the interface, or build your own tools for your product.
 
-Use [configuration](./core/configuration) to adjust branding, models, and app settings. Follow the [tool authoring guide](./tools/authoring) to add your own capabilities, or explore the [registry](./registry) to learn how source is distributed and installed.
+Use [configuration](/core/configuration) to adjust branding, models, and app settings. Follow the [tool authoring guide](/tools/authoring) to add your own capabilities, or explore the [registry](/registry) to learn how source is distributed and installed.
 
-Use [Deployment](./deployment) to choose hosting and configure the database, file storage, and EVE sandbox infrastructure. Add [desktop support](./deployment/desktop) to package a companion for macOS, Windows, and Linux.
+Use [Deployment](/deployment) for Vercel setup, self-hosting requirements, and the database, file storage, and sandbox services your app needs. Add [desktop support](/deployment/desktop) to package a companion for macOS, Windows, and Linux.
 
 ## Find your next step
 
 | Section | What you can do |
 | --- | --- |
-| [Concepts](./core/architecture) | Understand conversations, configuration, authentication, and extension mechanisms |
-| [Models & Gateways](./gateways/overview) | Choose inference providers and configure model behavior |
-| [Tools](./tools/overview) | Add search, research, code execution, generation, and document tools |
-| [Plugins](./plugins/overview) | Add optional app capabilities such as projects, sharing, and credits |
-| [Customization](./customization/theming) | Change branding, themes, layouts, and app integrations |
-| [Deployment](./deployment) | Configure hosting and runtime services |
-| [Guides](./cookbook) | Follow walkthroughs that combine capabilities |
-| [Reference](./reference/config) | Look up configuration, CLI commands, APIs, and registry contracts |
+| [Concepts](/core/architecture) | Understand conversations, configuration, authentication, and extension mechanisms |
+| [Models & Gateways](/gateways/overview) | Choose inference providers and configure model behavior |
+| [Tools](/tools/overview) | Add search, research, code execution, generation, and document tools |
+| [Plugins](/plugins/overview) | Add optional app capabilities such as projects, sharing, and credits |
+| [Customization](/customization/theming) | Change branding, themes, layouts, and app integrations |
+| [Deployment](/deployment) | Configure hosting and runtime services |
+| [Guides](/cookbook) | Follow walkthroughs that combine capabilities |
+| [Reference](/reference/config) | Look up configuration, CLI commands, APIs, and registry contracts |

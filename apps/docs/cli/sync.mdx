@@ -1,6 +1,6 @@
 ---
 title: sync
-description: Regenerate typed tool, plugin, and router registrations
+description: "Regenerate typed registrations from installed ChatJS descriptors after editing one or adding source directly with the shadcn CLI."
 ---
 
 Run `sync` after direct shadcn installation or changes to an installed descriptor:
@@ -19,4 +19,4 @@ The command checks installed UI compatibility, then regenerates tool and plugin 
 bunx chat-js@alpha sync --cwd ./my-app
 ```
 
-Keep custom behavior in app-owned integration modules. Do not edit generated lists to install a capability. Use [add](./add) to install source and sync its registrations together. See [Source Ownership](../core/source-ownership) and [Using Plugins](../plugins/using-plugins).
+Keep custom behavior in app-owned integration modules. Do not edit generated lists to install a capability. Use [add](/cli/add) to install source and sync its registrations together. See [Source Ownership](/core/source-ownership) and [Using Plugins](/plugins/using-plugins).

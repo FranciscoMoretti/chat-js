@@ -8,7 +8,6 @@ const contentSections = [
   "deployment",
   "plugins",
   "gateways",
-  "platforms",
   "reference",
   "registry",
   "tools",
@@ -35,7 +34,7 @@ export default defineConfig({
     site: "https://chatjs.dev",
   },
   description:
-    "Complete documentation for ChatJS, the production-ready AI chat app. Learn authentication, streaming, tool calling, multi-model support, and deployment best practices.",
+    "Create a ChatJS app, configure its EVE agent, install tools and plugins, and deploy the web or desktop application.",
   github: {
     dir: "apps/docs",
     owner: "FranciscoMoretti",
@@ -53,7 +52,7 @@ export default defineConfig({
   navigation: {
     featured: [
       {
-        href: "https://demo.chatjs.dev",
+        href: "https://www.demo.chatjs.dev",
         icon: "sparkles",
         label: "Demo",
       },
@@ -210,6 +209,7 @@ export default defineConfig({
                 "/cli/add",
                 "/cli/config",
                 "/cli/status",
+                "/cli/setup",
                 "/cli/sync",
                 "/cli/remove",
               ],
@@ -318,7 +318,7 @@ export default defineConfig({
   seo: {
     og: {
       description:
-        "Production-ready AI chat documentation for auth, streaming, tools, and deployment.",
+        "Guides and references for building and deploying an AI chat app with ChatJS and EVE.",
       site: "ChatJS",
       logo: "/logo/dark.svg",
       palette: {

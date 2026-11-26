@@ -1,15 +1,9 @@
 ---
 title: Reasoning
-description: Extended thinking for supported models
+description: "See how the model picker exposes reasoning variants, how the chat displays reasoning output, and where to adjust provider-specific options."
 ---
 
-## Overview
-
-When the catalog marks a model as reasoning-capable, ChatJS offers a standard and a reasoning variant in the model selector.
-
-## How it works
-
-### Automatic model splitting
+## Model variants
 
 When a model is tagged with `reasoning` by the gateway, ChatJS creates two entries in the model selector:
 
@@ -22,13 +16,9 @@ Both variants point to the same underlying API model. The `-reasoning` suffix co
 
 ### UI
 
-When a model responds with reasoning content, the UI renders a collapsible "Thinking" section above the answer. You can expand it to inspect the model's chain of thought.
+When a model responds with reasoning content, the UI renders a collapsible "Thinking" section above the answer. Expand it to read the reasoning text or summary the provider returned.
 
 While the model is still generating, the reasoning section streams in real time.
-
-### Cross-model compatibility
-
-Reasoning parts are automatically stripped from message history before sending to the LLM. This prevents errors when a user switches between a reasoning and non-reasoning model mid-conversation.
 
 ## Supported providers
 
@@ -44,27 +34,10 @@ The ChatJS model picker maps a reasoning selection to provider options using the
 
 ### Adjusting reasoning budgets
 
-Customize the ChatJS model picker’s defaults in `integrations/chat/model-options.ts`. Edit the budget for the provider you use.
+In `integrations/chat/model-options.ts`, change `ANTHROPIC_REASONING_BUDGET_TOKENS` or `GOOGLE_REASONING_BUDGET_TOKENS`. The provider option applies when the user selects that model’s reasoning variant.
 
-```ts
-// Anthropic thinking budget
-anthropic: {
-  thinking: {
-    type: "enabled",
-    budgetTokens: 4096, // Increase for deeper reasoning
-  },
-}
+### Choose which variants appear
 
-// Google thinking budget
-google: {
-  thinkingConfig: {
-    thinkingBudget: 10_000, // Increase for deeper reasoning
-  },
-}
-```
+To offer a standard model without its reasoning variant, include the base ID in `webModels.modelIds` in `integrations/chat/models.ts`. Include the suffixed ID as well if you want both. This list defines the full set of models offered in the signed-in picker. See [model visibility](/customization/models#visibility-and-preferences).
 
-### Disabling reasoning variants
-
-To hide reasoning variants for a specific model, add the base model ID to `disabledModels` in `chat.config.ts`. The reasoning variant is derived from the base model, so disabling the base model removes both variants.
-
-To disable reasoning globally, you would need to modify `buildAppModels` in `lib/ai/app-models.ts` to skip the reasoning branch.
+Adding the base ID to `ai.disabledModels` hides both variants. For a catalog-wide change to how the picker generates variants, edit `buildWebChatModels` in `lib/ai/web-chat-models.ts`.

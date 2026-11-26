@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
 import type { GatewaySelection } from "#cli/registry/gateways";
 import type { ReadonlyInput } from "./readonly-input";
 import { generatedRegistrationSource } from "#cli/utils/generated-registration-source";
@@ -74,13 +74,12 @@ export const gatewayEnvVariables = ${JSON.stringify(gatewayEnvVariables(definiti
 
 export const gatewayConfigurationTargets = [
   "chatjs/providers/gateway-defaults.ts",
-  "lib/ai/models.generated.ts",
   ".env.example",
 ];
 
 /**
  * Wire the installed gateway; source and dependencies are installed by shadcn.
- * @param {string} destination Project receiving gateway defaults, model snapshot and env keys.
+ * @param {string} destination Project receiving gateway defaults and env keys.
  * @param {ReadonlyInput<GatewaySelection>} selection Resolved descriptor with defaults, capabilities and credentials.
  */
 export const configureGatewayProvider = async (
@@ -89,38 +88,11 @@ export const configureGatewayProvider = async (
 ): Promise<void> => {
   await preflight(destination, gatewayConfigurationTargets);
   await mkdir(path.join(destination, "chatjs/providers"), { recursive: true });
-  await mkdir(path.join(destination, "lib/ai"), { recursive: true });
-  const snapshotPath = path.join(destination, "lib/ai/models.generated.ts");
-  const snapshot = await readFile(snapshotPath, "utf-8").catch(
-    (error: unknown) => {
-      if (
-        error instanceof Error &&
-        "code" in error &&
-        error.code === "ENOENT"
-      ) {
-        return "";
-      }
-      throw error;
-    }
-  );
   const { definition } = selection;
   await writeFile(
     path.join(destination, "chatjs/providers/gateway-defaults.ts"),
     gatewayDefaultsSource(definition)
   );
-  if (
-    !snapshot.includes(`generatedForGateway = ${JSON.stringify(definition.id)}`)
-  ) {
-    await writeFile(
-      snapshotPath,
-      generatedRegistrationSource(`import type { AiGatewayModel } from "@/chatjs/core/gateway/models";
-
-export const generatedForGateway = ${JSON.stringify(definition.id)};
-// Populate this gateway's catalog with the fetch:models script after setting credentials.
-export const models: readonly AiGatewayModel[] = [];
-`)
-    );
-  }
   await updateEnvironmentExample(destination, "gateway-provider", [
     ...definition.envRequirements.flatMap((requirement) =>
       requirement.options.flat()

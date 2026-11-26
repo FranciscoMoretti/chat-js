@@ -1,6 +1,6 @@
 ---
 title: Stop Resumable Streams
-description: Abort provider streams without breaking resume
+description: "Add cancellation to a standalone AI SDK app with resumable streams, propagate the stop request, and retain the ability to recover interrupted streams."
 ---
 
 <Callout type="note">
@@ -8,7 +8,7 @@ description: Abort provider streams without breaking resume
   The EVE-only ChatJS app uses native EVE cancellation and recovery instead.
 </Callout>
 
-For the ChatJS app, see [Execution & Recovery](../../core/execution).
+For the ChatJS app, see [Execution & Recovery](/core/execution).
 
 ## Problem
 
@@ -31,16 +31,16 @@ Using message-level cancellation (instead of chat-level) is more precise since e
 1. Client calls `trpc.chat.stopStream` with `{ chatId, messageId, type }`
 2. `type: "request"` records cancellation against the unpublished assistant ID derived from the user message. `type: "message"` cancels an already persisted assistant
 3. `cancelActiveMessage` sets `canceledAt` and clears `activeStreamId` when that row exists
-4. The `onChunk` callback (throttled to 1/sec) polls `canceledAt` on each token
+4. As stream chunks arrive, `onChunk` polls `canceledAt` at most once per second
 5. When `canceledAt` is set, calls `abortController.abort()`
 6. Finalization's `updateMessage` requires `canceledAt IS NULL`, so a cancel that commits first is not overwritten
 
 ## Basic use case
 
-Add a stop mutation and call it from the stop button.
+Define the mutation in your standalone app, register it as `stopStream` in its chat router, and call it from the stop button.
 
 ```ts title="trpc/routers/chat.router.ts"
-stopStream: protectedProcedure
+export const stopStream = protectedProcedure
   .input(
     z.discriminatedUnion("type", [
       z.object({
@@ -95,7 +95,7 @@ stopStream: protectedProcedure
     });
 
     return { success: true };
-  }),
+  });
 ```
 
 ```tsx title="components/multimodal-input.tsx"
@@ -116,7 +116,7 @@ const handleStop = useCallback(() => {
 
 ## Server-side polling via onChunk
 
-Instead of a separate interval watcher, poll `canceledAt` inside the `onChunk` callback. This fires every time the model emits a token, throttled to once per second to avoid DB spam.
+Poll `canceledAt` inside `onChunk`. Throttle database reads to once per second. If the stream is idle, cancellation is checked when the next chunk arrives.
 
 ```ts title="app/(chat)/api/chat/route.ts"
 // Create throttled cancel check (max once per second) for authenticated users
@@ -174,4 +174,4 @@ sequenceDiagram
 
 ## Related
 
-- [Resumable Streams](./resumable-streams)
+- [Resumable Streams](/reference/standalone/resumable-streams)

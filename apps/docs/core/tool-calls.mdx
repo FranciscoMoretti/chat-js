@@ -1,6 +1,6 @@
 ---
 title: Tool Calls & Approvals
-description: Understand tool availability, execution, results, and approval requests
+description: "Follow a tool call from availability and input validation through approval, execution, and rendering of the result in the chat transcript."
 ---
 
 Tools let a conversation perform operations such as search, document editing, and code execution. EVE runs the native tool definitions and records their results. ChatJS composes the available definitions and their client renderers.
@@ -9,13 +9,13 @@ Tools let a conversation perform operations such as search, document editing, an
 
 Installing a tool adds its source and registration. Runtime availability also depends on its declared requirements, the session, and the selected model's capabilities. Installation alone does not make every tool available to every conversation. Guest Chat uses a fixed model without tools or files.
 
-Tools have their own catalog and installation contract. [MCP](../plugins/mcp) is a plugin that connects external tools. Gateways, storage, and sandboxes provide infrastructure used by tools and the runtime.
+Tools have their own catalog and installation contract. [MCP](/plugins/mcp) is a plugin that connects external tools. Gateways, storage, and sandboxes provide infrastructure used by tools and the runtime.
 
 ## Execution and rendering
 
 A tool call has validated input, execution, and a result. Server implementation stays separate from browser rendering so provider credentials do not enter the client bundle. Tool renderers display execution state and output in the conversation.
 
-See [Creating Tools](../tools/authoring) for native definitions and renderers, or [Custom Tool Part](../cookbook/tool-part) for a rendering walkthrough.
+See [Creating Tools](/tools/authoring) for native definitions and renderers, or [Custom Tool Part](/cookbook/tool-part) for a rendering walkthrough.
 
 ## Approval
 
@@ -27,4 +27,4 @@ Approval does not replace authorization or input validation. The tool still chec
 
 ## Choose and extend tools
 
-Use [Installing Tools](../tools/install) to add a capability and [Explicit Tool Selection](../cookbook/explicit-tool-selection) to customize selection. See [Execution & Recovery](./execution) for cancellation and reconnecting.
+Use [Installing Tools](/tools/install) to add a capability and [Explicit Tool Selection](/cookbook/explicit-tool-selection) to customize selection. See [Execution & Recovery](/core/execution) for cancellation and reconnecting.

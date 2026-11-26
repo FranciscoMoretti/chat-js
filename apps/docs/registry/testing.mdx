@@ -1,6 +1,6 @@
 ---
 title: Building and Testing
-description: Verify source behavior and the generated registry installation contract
+description: "Test the source and packaged form of a registry item, then verify its registrations, dependencies, and behavior in the reference app or a fresh scaffold."
 ---
 
 Run these checks from the repository root with dependencies installed:
@@ -34,12 +34,12 @@ Replace the example URL with the built item's endpoint. Run the receiving app's 
 | Receiving app type checks | Incompatible imports and types in the actual composition |
 | Runtime request | Credential, provider, and runtime integration failures |
 
-Type checks cannot verify remote credentials or guarantee every combination of third-party source works. Test the composition you distribute and exercise its external integrations. See [Authoring and Publishing](./authoring) for the build's source ownership boundaries.
+Type checks cannot verify remote credentials or guarantee every combination of third-party source works. Test the composition you distribute and exercise its external integrations. See [Authoring and Publishing](/registry/authoring) for the build's source ownership boundaries.
 
 ## Verify demo and scaffold composition
 
 `bun demo:check` checks full formatted source, including types, comments, descriptors and generated registrations, against the canonical demo installation. Turbo caches successful checks using registry, CLI planner, gateway and demo source inputs. CI runs this check with affected unit tests.
 
-`bun run --cwd packages/cli test:gateways` installs packaged CLI output into independent apps. It covers omitted and installed optional features, adding all five integrations together, repeated sync, exclusive provider replacement, and preservation of modified source and UI ordering. Run these generated-app checks after changing installation targets or composition. They complement the registry's component captures and the demo's runtime tests.
+`bun run --cwd packages/cli test:gateways` installs packaged CLI output into independent apps. It covers omitted and installed optional features, independent installs of all five built-in gateways and a custom adapter, repeated sync, exclusive provider replacement, and preservation of modified source and UI ordering. Run these generated-app checks after changing installation targets or composition. They complement the registry's component captures and the demo's runtime tests.
 
-Use [Registry Validation](./validation) for dependency ownership, metadata-derived combinations and whole-project parity.
+Use [Registry Validation](/registry/validation) for dependency ownership, metadata-derived combinations and whole-project parity.

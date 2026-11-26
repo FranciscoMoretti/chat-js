@@ -1,119 +1,44 @@
 ---
 title: "LiteLLM Gateway"
-description: "Route requests through a LiteLLM proxy to access 100+ LLM providers"
+description: "Connect ChatJS to a LiteLLM proxy, use its model aliases for chat and titles, and verify model discovery from a generated app."
 ---
 
-The LiteLLM gateway connects ChatJS to a [LiteLLM proxy](https://docs.litellm.ai/) server, giving you unified access to 100+ LLM providers (OpenAI, Anthropic, Google, Azure, AWS Bedrock, and more) through a single endpoint.
-
-## Why LiteLLM?
-
-- **Unified API** - Call any LLM provider using the OpenAI format
-- **Centralized key management** - Store all provider API keys on the proxy, not in the client
-- **Spend tracking** - Monitor usage and costs across all providers in one place
-- **Load balancing** - Distribute requests across multiple deployments of the same model
-- **Fallbacks** - Automatically retry with a different provider if one fails
+The LiteLLM gateway routes chat requests through your proxy. The proxy owns the upstream provider credentials. ChatJS needs its API base URL, a model alias, and a proxy key if authentication is enabled.
 
 ## Setup
 
-1. Deploy a LiteLLM proxy server ([quickstart guide](https://docs.litellm.ai/docs/simple_proxy)) and note the URL. If your proxy requires authentication, also note a master key or virtual key.
-
-2. Set the proxy URL and optional API key in `.env.local`:
-
-```bash
-LITELLM_BASE_URL=http://localhost:4000   # Your LiteLLM proxy URL, without /v1
-LITELLM_API_KEY=sk-...                   # Optional; only if your proxy requires auth
-```
-
-3. Install the gateway source (add `--replace` when another gateway is installed):
-
-```bash
-bunx chat-js@alpha add --gateway litellm
-```
-
-Then configure runtime model overrides for that installation:
-
-```typescript title="chat.config.ts"
-import type { ConfigInput } from "@/lib/config-schema";
-
-const config: ConfigInput = {
-  ai: {
-    gateway: "litellm",
-    workflows: {
-      chat: "openai/gpt-4o",
-      title: "openai/gpt-4o-mini",
-      // ...
-    },
-    // ...
-  },
-};
-```
-
-<Callout type="note">
-  Model IDs must match the model names configured in your LiteLLM proxy. These
-  typically follow the `provider/model` format (e.g., `openai/gpt-4o`,
-  `anthropic/claude-sonnet-4-20250514`).
-</Callout>
-
-## Authentication
-
-| Variable | Description |
-| --- | --- |
-| `LITELLM_BASE_URL` | Required. The base URL of your LiteLLM proxy (e.g., `http://localhost:4000`) |
-| `LITELLM_API_KEY` | Optional. A master key or virtual key for your LiteLLM proxy |
-
-## Available Models
-
-Models are fetched at runtime from your LiteLLM proxy's `/v1/models` endpoint and cached for 1 hour. The available models depend entirely on what you have configured in your proxy's `config.yaml`.
-
-### Example proxy configuration
+1. Configure a model on the proxy. In this example, the upstream OpenAI credential belongs in the proxy environment. ChatJS will use the alias `chat-main`. [LiteLLM proxy setup](https://docs.litellm.ai/docs/simple_proxy)
 
 ```yaml title="litellm_config.yaml"
 model_list:
-  - model_name: openai/gpt-4o
+  - model_name: chat-main
     litellm_params:
-      model: openai/gpt-4o
+      model: openai/gpt-4o-mini
       api_key: os.environ/OPENAI_API_KEY
-  - model_name: anthropic/claude-sonnet-4-20250514
-    litellm_params:
-      model: anthropic/claude-sonnet-4-20250514
-      api_key: os.environ/ANTHROPIC_API_KEY
 ```
+
+2. Select LiteLLM during app creation, or switch the gateway in an existing app. Run the command that matches your starting point.
+
+```bash
+# New app
+npx chat-js@alpha create my-chat --gateway litellm
+
+# Existing app, from its root
+npx chat-js@alpha add --gateway litellm --replace
+```
+
+3. Set the API base URL in the app’s `.env.local`. For a proxy serving chat completions at `/v1/chat/completions`, include `/v1`. If the proxy requires authentication, also set `LITELLM_API_KEY` to a valid proxy key.
+
+```dotenv
+LITELLM_BASE_URL=http://localhost:4000/v1
+```
+
+4. In the existing `ai.workflows` block of `chat.config.ts`, set `chat` and `title` to `"chat-main"`. Use your own proxy aliases for any other workflow overrides. If you restrict the web picker, include an available alias in its [model list](/customization/models#visibility-and-preferences).
+
+## Verify discovery and chat
+
+With the proxy running, start the app, open the model picker, select `chat-main`, and send a message. Discovery requests `/v1/models`. Chat requests append `/chat/completions` to the configured base URL. If discovery succeeds but chat returns 404, compare that resulting chat path with the proxy route.
 
 ## Image Generation
 
-Image generation support depends on the models available through your LiteLLM proxy. If your proxy is configured with an image generation model (e.g., `dall-e-3`), install `generate-image` with persistent storage and set its default model:
-
-```typescript title="chat.config.ts"
-import type { ConfigInput } from "@/lib/config-schema";
-
-const config: ConfigInput = {
-  ai: {
-    gateway: "litellm",
-    tools: {
-      image: { default: "dall-e-3" },
-    },
-  },
-};
-```
-
-## Using the LiteLLM Python SDK
-
-You can also interact with your LiteLLM proxy using the Python SDK:
-
-```python
-from litellm import completion
-
-response = completion(
-    model="openai/gpt-4o",
-    messages=[{"role": "user", "content": "Hello!"}],
-    api_base="http://localhost:4000",  # your proxy URL
-    api_key="sk-...",                  # optional; your proxy key if required
-)
-print(response.choices[0].message.content)
-```
-
-## Related
-
-- [Gateways Overview](/gateways/overview) for the full gateway comparison
-- [LiteLLM Documentation](https://docs.litellm.ai/) for proxy setup and configuration
-- [Custom Gateway](/gateways/custom) if you need more control than this gateway provides
+The stock LiteLLM gateway has no default image model in its registry metadata. The CLI therefore rejects the built-in `generate-image` tool with this gateway, even if the proxy exposes an image endpoint. To use that endpoint, install an [external image tool](/tools/generate-image#external-implementations) that calls it, or package a [custom gateway](/gateways/custom) with image capability and an image model in `defaults.roles.image`.

@@ -1,40 +1,6 @@
 import { expect, test } from "vitest";
 import { takeSnapshot } from "@uiverify/vitest";
 
-// First frames keep GIFs deterministic and below the archive resource limit.
-const stillFrames: Record<string, string> = {
-  "/docs/images/ai-models.gif": new URL(
-    "fixtures/ai-models.png",
-    import.meta.url
-  ).href,
-  "/docs/images/attachments.gif": new URL(
-    "fixtures/attachments.png",
-    import.meta.url
-  ).href,
-  "/docs/images/branching.gif": new URL(
-    "fixtures/branching.png",
-    import.meta.url
-  ).href,
-  "/docs/images/canvas.gif": new URL("fixtures/canvas.png", import.meta.url)
-    .href,
-  "/docs/images/code-execution.gif": new URL(
-    "fixtures/code-execution.png",
-    import.meta.url
-  ).href,
-  "/docs/images/image-generation.gif": new URL(
-    "fixtures/image-generation.png",
-    import.meta.url
-  ).href,
-  "/docs/images/resumable-streams.gif": new URL(
-    "fixtures/resumable-streams.png",
-    import.meta.url
-  ).href,
-  "/docs/images/web-search.gif": new URL(
-    "fixtures/web-search.png",
-    import.meta.url
-  ).href,
-};
-
 const pages = [
   { name: "using-plugins", path: "/docs/plugins/using-plugins" },
   { name: "plugin-authoring", path: "/docs/plugins/create-plugin" },
@@ -67,6 +33,7 @@ const pages = [
   { name: "generate-video", path: "/docs/tools/generate-video" },
   { name: "quickstart", path: "/docs/quickstart" },
   { name: "cli", path: "/docs/cli" },
+  { name: "cli-setup", path: "/docs/cli/setup" },
   { name: "changelog", path: "/docs/changelog" },
   { name: "cookbook", path: "/docs/cookbook" },
   { name: "deployment", path: "/docs/deployment" },
@@ -163,7 +130,7 @@ for (const page of pages) {
       await Promise.all(
         ["light", "dark"].map(async (theme) => {
           const banner = source.querySelector<HTMLImageElement>(
-            `main img[src$="/hero-${theme}.png"]`
+            `main img[src$="/hero-${theme}.webp"]`
           );
           expect(banner).not.toBeNull();
           await banner?.decode();
@@ -187,13 +154,6 @@ for (const page of pages) {
       expect(deployment?.open).toBe(true);
       deployment?.querySelector("summary")?.click();
       expect(deployment?.open).toBe(false);
-    }
-
-    for (const image of source.images) {
-      const still = stillFrames[image.getAttribute("src") ?? ""];
-      if (still) {
-        image.src = still;
-      }
     }
 
     // The active page must remain discoverable inside collapsed navigation.

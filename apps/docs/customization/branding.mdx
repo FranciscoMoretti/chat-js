@@ -1,6 +1,6 @@
 ---
 title: Branding
-description: Replace icons, logos, and images for your app
+description: "Replace the web and desktop icons, update the social preview image, and set the name, description, and public URL used in application metadata."
 ---
 
 ## Overview
@@ -20,7 +20,7 @@ To fully rebrand ChatJS, you'll need to replace several image assets and update 
 | File                 | Size    | Purpose              |
 | -------------------- | ------- | -------------------- |
 | `app/apple-icon.png` | 180x180 | iOS home screen icon |
-| `public/icon.svg`    | Any     | Scalable icon        |
+| `app/icon.svg`       | Any     | Scalable icon        |
 
 ### Desktop App Icon (Electron)
 
@@ -34,7 +34,7 @@ If your project includes the Electron scaffold, after replacing `electron/icon.p
 cd electron && bun run generate-icons
 ```
 
-This produces `electron/build/icon.png` and `electron/build/icon.icns` (macOS) used by Electron and installers.
+This produces `icon.png`, `icon.icns`, and `icon.ico` under `electron/build/` for the desktop app and its installers.
 
 ### Social Image
 

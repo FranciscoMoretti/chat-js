@@ -1,6 +1,6 @@
 ---
 title: "Threads"
-description: "Add branching conversations and parallel responses to your AI SDK app with @chat-js/thread"
+description: "Add branching conversations to a standalone AI SDK app using the React hook or controller, run alternative replies concurrently, and persist the message tree."
 ---
 
 `@chat-js/thread` is a standalone package for branching AI conversations. Use it in your existing app without installing the ChatJS starter.
@@ -74,7 +74,7 @@ await chat.sendMessage({
 });
 ```
 
-See [Branching](./core/conversations#branching) for the ChatJS user experience.
+See [Branching](/core/conversations#branching) for the ChatJS user experience.
 
 ## Run parallel responses
 
@@ -104,7 +104,7 @@ await Promise.all([
 
 `follow: false` leaves the cursor unchanged. The sibling appears when the first stream write arrives. You can use these independent runs to compare replies in your own AI SDK application. The ChatJS starter implements its branching and parallel responses through EVE, separately from this package.
 
-See [Parallel Responses](./core/conversations#parallel-responses) for the product flow.
+See [Parallel Responses](/core/conversations#parallel-responses) for the product flow.
 
 ## Status and controls
 
@@ -141,12 +141,12 @@ await saveThread(snapshot);
 Restore it with `initialTree`:
 
 ```ts
-import { DefaultChatTransport } from "ai";
+import type { MessageTreeSnapshot } from "@chat-js/thread";
+import { useThread } from "@chat-js/thread/react";
 
-const chat = useThread({
-  initialTree: savedSnapshot,
-  transport: new DefaultChatTransport({ api: "/api/chat" }),
-});
+export function useSavedThread(snapshot: MessageTreeSnapshot) {
+  return useThread({ initialTree: snapshot });
+}
 ```
 
 The snapshot is `{ version: 1, cursorId, nodes }`. Runtime indexes, active requests, and run adapters are not persisted.
@@ -157,11 +157,8 @@ Import the controller from the core entry point:
 
 ```ts
 import { Thread } from "@chat-js/thread";
-import { DefaultChatTransport } from "ai";
 
-const thread = new Thread({
-  transport: new DefaultChatTransport({ api: "/api/chat" }),
-});
+const thread = new Thread();
 
 await thread.sendMessage({ text: "Plan a weekend in Lisbon" });
 const snapshot = thread.getSnapshot();

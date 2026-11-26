@@ -1,6 +1,6 @@
 ---
 title: Sandboxes
-description: Configure EVE's native sandbox environment
+description: "Choose a native EVE sandbox for your agent, configure its credentials, and publish workspace files that users should be able to download later."
 ---
 
 The agent's `agent/sandbox.ts` selects a native EVE sandbox environment. EVE owns its files, processes, resume and cleanup. ChatJS assembles the selected file and keeps authorization on application-owned uploads and published files.
@@ -23,7 +23,8 @@ bunx chat-js@alpha create my-app --yes --sandbox-provider docker
 The generated file uses EVE directly:
 
 ```ts title="agent/sandbox.ts"
-import { DockerSandbox, defineSandbox } from "eve/sandbox";
+import { defineSandbox } from "eve/sandbox";
+import { DockerSandbox } from "eve/sandbox/docker";
 
 export const environment = DockerSandbox.environment();
 export default defineSandbox(async () => await environment.open());
@@ -51,7 +52,7 @@ The generated `.env.example` and `check-env` command describe the selected envir
 
 ## Files and documents
 
-Sandbox paths are agent workspace files. To make a finished file available after the sandbox ends, install `attach-workspace-file` and persistent application storage. The tool creates an immutable byte snapshot with ChatJS access controls. Optional viewer plugins can open it in chat. See [Code execution and publication](../tools/code-execution).
+Sandbox paths are agent workspace files. To make a finished file available after the sandbox ends, install `attach-workspace-file` and persistent application storage. The tool creates an immutable byte snapshot with ChatJS access controls. Optional viewer plugins can open it in chat. See [Code execution and publication](/tools/code-execution).
 
 ## Lifecycle and accounting
 

@@ -1,92 +1,27 @@
 ---
-title: "Changelog"
-description: "Latest updates and announcements"
+title: Changelog
+description: "Review the ChatJS 1.0 alpha releases, including native EVE agents, editable gateways, workspace reports, and file-based plugin entry points."
 ---
 
-All notable changes to ChatJS are documented here.
+## November 2026 · ChatJS 1.0 alpha
 
-<Callout type="note">
-  ChatJS is under active development. Breaking changes may occur between
-  releases.
-</Callout>
+Use `chat-js@alpha` to scaffold the 1.0 alpha. This release series changes the agent runtime and the layout of generated apps. Existing apps need a source migration or a fresh scaffold to adopt these changes.
+
+| CLI release | What changed |
+| --- | --- |
+| `1.0.0-alpha.8` | Generated apps use branch IDs for ChatJS branches. Plugins register through conventional files such as `chat-server.ts`. The CLI installs from registry `0.2.0-beta.9`. [Plugin API](/reference/plugin-api) |
+| `1.0.0-alpha.7` | Updates the registry for Deep Research installation and workspace report publication. [Deep Research](/tools/deep-research) |
+| `alpha.5` and `alpha.6` | Adopts the ChatJS build of EVE 1.1 and ships the shared gateway runtime as editable app source. [Architecture](/core/architecture) |
+| `1.0.0-alpha.4` | Pinned the gateway contract and registry used by fresh installations to fix a scaffold type-check failure. |
+| `1.0.0-alpha.3` | Generates native EVE agents from builder selections. EVE runs channels, tools, approvals, and sandboxes. ChatJS handles web authentication, resource access, and file publication. [Project structure](/project-structure) |
+| `alpha.0` through `alpha.2` | Introduces the `chat-js` 1.0 alpha CLI and publishes the dependencies needed to install outside the monorepo. [Quickstart](/quickstart) |
+
+For individual fixes and release numbers, see the [CLI changelog](https://github.com/FranciscoMoretti/chat-js/blob/main/packages/cli/CHANGELOG.md) and [registry changelog](https://github.com/FranciscoMoretti/chat-js/blob/main/packages/registry/CHANGELOG.md).
 
 ## March 2026
 
-### Electron Desktop App
-
-Package your ChatJS app as a native desktop application for macOS and Windows. The CLI now asks `Include an Electron desktop app?` during `create`, and choosing Yes copies a pre-configured `electron/` subfolder with a main process, preload script, system tray, deep-link OAuth flow, and auto-updater backed by GitHub Releases. See [Desktop](./deployment/desktop) for full setup details.
-
-### Parallel Responses
-
-Send one message to multiple models at the same time and compare their answers side by side. Enable multi-model mode in the model selector, pick two or more models, and each one starts streaming immediately. A row of response cards appears above the conversation showing the model name and current status. Click any card to switch the active thread to that branch.
+ChatJS added an Electron desktop companion and a model comparison interface. For current packaging targets and comparison behavior, see [Desktop deployment](/deployment/desktop) and [Conversations](/core/conversations#parallel-responses).
 
 ## February 2026
 
-### Video Generation
-
-Generate short video clips from text prompts directly in chat, with inline playback. Enable via `config.ai.tools.video.enabled` (requires a gateway with video model support).
-
-### Interactive Charts
-
-The Python sandbox now renders interactive ECharts (line, scatter, bar) alongside matplotlib PNGs. Assign a value to the `chart` variable in your code to get an interactive chart.
-
-### Configuration Refactor
-
-AI config is now unified under `config.ai` with `workflows` and `tools` blocks, replacing `config.models` and most `config.features` flags. In `chat.config.ts`, rename `models` → `ai`, move `defaults` → `ai.workflows`, and move tool flags into `ai.tools.*.enabled`.
-
-### Performance Improvements
-
-Parallelized server-side fetches in the chat layout, API, and stream routes. Heavy UI components (editors, charts, code blocks) are now lazy-loaded with skeleton placeholders.
-
-### E2E Testing
-
-Added a Playwright test suite covering auth, chat, reasoning, and artifact flows.
-
-### CLI (`chat-js`)
-
-New scaffolding CLI to create ChatJS apps without cloning the repo. Run `npx chat-js@alpha create my-app` to get an interactive setup that configures your AI gateway, features, and auth providers out of the box.
-
-### Initial Release
-
-The first public release of ChatJS (formerly Sparka AI), forked from [Vercel AI Chatbot](https://github.com/vercel/ai-chatbot) with significant enhancements.
-
-### Multi-Model Support
-
-Access 120+ models through Vercel AI Gateway. Switch between providers seamlessly without changing your code.
-
-### Authentication
-
-Better Auth integration with support for GitHub, Google, and Vercel OAuth providers out of the box.
-
-### Resumable Streams
-
-Continue AI responses after page refresh. Never lose a response mid-generation again.
-
-### Canvas
-
-Create and edit text, code, and spreadsheet documents directly in your chat interface.
-
-### AI Tools
-
-- **Web search** - Real-time search via Tavily or Firecrawl
-- **Code execution** - Python sandbox with matplotlib, pandas, numpy
-- **Image generation** - AI-powered image creation
-- **MCP support** - Model Context Protocol for external tools
-- **File attachments** - Drag and drop images, PDFs, documents
-
-### Infrastructure
-
-Built on a modern stack designed for production:
-
-- **PostgreSQL** with Drizzle ORM for the primary database
-- **Redis** for resumable streams and caching
-- **Vercel Blob** for file storage
-- **tRPC** for type-safe APIs
-- **Better Auth** for authentication
-
-### Developer Experience
-
-- Full TypeScript support throughout
-- Biome + Ultracite for fast linting and formatting
-- Evalite for AI evaluation
-- Docker support for containerized deployment
+The initial ChatJS release, formerly Sparka AI, built on [Vercel AI Chatbot](https://github.com/vercel/chatbot). Early releases introduced the scaffolding CLI, multi-provider chat, OAuth sign-in, stream recovery, document editing, web search, code execution, image and video generation, and browser tests.
