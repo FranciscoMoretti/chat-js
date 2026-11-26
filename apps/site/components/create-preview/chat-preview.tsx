@@ -234,7 +234,7 @@ export const ChatPreview = () => {
   };
 
   const transcriptMessages = [
-    ...sceneMessages(params.item, uploads, availableTools),
+    ...sceneMessages(params.item, installation.plugins, availableTools),
     ...submittedMessages(messages, installation.gateway),
   ]
     .map((message): ReadonlyEveMessage =>

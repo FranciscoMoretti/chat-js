@@ -740,3 +740,42 @@ test("Guest Chat switches preview identity and uses a temporary local conversati
   expect(backendRequests).toEqual([]);
   expect(errors).toEqual([]);
 });
+
+test("the sample conversation previews selected Markdown renderers independently", async ({
+  page,
+  uiVerify,
+}, testInfo) => {
+  uiVerify.disableAutoSnapshot();
+  await page.setViewportSize({ width: 1440, height: 1100 });
+  await page.goto("/create?item=preview-02");
+  const preview = page.frameLocator('iframe[title="Preview"]');
+  await expect(
+    preview.getByRole("heading", { name: "A small start. A great experience." })
+  ).toBeVisible();
+  await page.getByRole("tab", { name: "Plugins", exact: true }).click();
+  const math = page.getByRole("switch", {
+    name: "Math equations",
+    exact: true,
+  });
+  const mermaid = page.getByRole("switch", {
+    name: "Mermaid diagrams",
+    exact: true,
+  });
+  const equation = preview.locator(".katex-html");
+  const chart = preview.getByRole("img", { name: "Mermaid chart" });
+  await math.check();
+  await expect(equation).toContainText("new users who send a message");
+  await expect(chart).toHaveCount(0);
+  await mermaid.check();
+  await expect(chart).toContainText("Follow up");
+  await chart.scrollIntoViewIfNeeded();
+  await uiVerify.snapshot("sample conversation with math and a diagram");
+  await page.screenshot({
+    path: testInfo.outputPath("markdown-renderers.png"),
+  });
+  await math.uncheck();
+  await expect(equation).toHaveCount(0);
+  await expect(chart).toBeVisible();
+  await mermaid.uncheck();
+  await expect(chart).toHaveCount(0);
+});

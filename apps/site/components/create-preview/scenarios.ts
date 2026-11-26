@@ -19,7 +19,9 @@ const attachment: ReadonlyEveMessagePart = {
   url: sampleAttachment.url,
 };
 
-const conversation: readonly ReadonlyEveMessage[] = [
+const conversation = (
+  plugins: readonly string[]
+): readonly ReadonlyEveMessage[] => [
   {
     id: "sample-user",
     role: "user",
@@ -39,7 +41,16 @@ const conversation: readonly ReadonlyEveMessage[] = [
       {
         type: "text",
         state: "done",
-        text: "# A small start. A great experience.\n\nStart with one useful conversation. Keep the interface clear, let people bring their context, and make every interaction feel considered.\n\n## Make it personal\n\nYour colors, your typography, your way of working.\n\n## Keep it simple\n\nA focused workspace that gets out of the way.\n\n```sh\nbunx chat-js@alpha create my-chat\n```\n\nReady when you are.",
+        text: [
+          "# A small start. A great experience.\n\nStart with one useful conversation. Keep the interface clear, let people bring their context, and make every interaction feel considered.\n\n## Make it personal\n\nYour colors, your typography, your way of working.\n\n## Keep it simple\n\nA focused workspace that gets out of the way.\n\n```sh\nbunx chat-js@alpha create my-chat\n```",
+          plugins.includes("streamdown-mermaid") &&
+            "Start with one path through the app.\n\n```mermaid\nflowchart LR\n  Ask --> Reply --> FollowUp[Follow up]\n```",
+          plugins.includes("streamdown-math") &&
+            "Measure how often a first visit leads to a conversation.\n\n$$\nA = \\frac{\\text{new users who send a message}}{\\text{new users}}\n$$",
+          "Ready when you are.",
+        ]
+          .filter(Boolean)
+          .join("\n\n"),
       },
     ],
   },
@@ -47,10 +58,10 @@ const conversation: readonly ReadonlyEveMessage[] = [
 /** Native message data only. Rendering belongs to the scaffold's transcript. */
 export const sceneMessages = (
   item: string,
-  uploads: boolean,
+  plugins: readonly string[],
   selectedTools: ReadonlySet<string> = new Set()
 ): readonly ReadonlyEveMessage[] => {
-  let messages = conversation;
+  let messages = conversation(plugins);
   if (item === "preview") {
     messages = [];
   } else if (item === "preview-tools") {
@@ -116,7 +127,7 @@ export const sceneMessages = (
             },
           ];
   }
-  if (!uploads || messages.length === 0) {
+  if (!plugins.includes("attachment-uploads") || messages.length === 0) {
     return messages;
   }
   return messages.map((message, index) =>
