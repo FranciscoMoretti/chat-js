@@ -90,7 +90,7 @@ test("two cheap native responses bind, render, and preserve an unsent draft whil
     ).toHaveCount(1);
     await expect(
       page.getByLabel("Message", { exact: true }).filter({ visible: true })
-    ).toHaveText("Keep this unsent comparison follow-up");
+    ).toHaveValue("Keep this unsent comparison follow-up");
     await expect(
       page.getByTestId("model-selector").filter({ visible: true })
     ).toContainText("Gemini 2.5 Flash Lite");
@@ -108,7 +108,7 @@ test("two cheap native responses bind, render, and preserve an unsent draft whil
     ).toBeVisible();
     await expect(
       page.getByLabel("Message", { exact: true }).filter({ visible: true })
-    ).toHaveText("Keep this unsent comparison follow-up");
+    ).toHaveValue("Keep this unsent comparison follow-up");
     await page.screenshot({
       animations: "disabled",
       path: testInfo.outputPath("native-comparison.png"),

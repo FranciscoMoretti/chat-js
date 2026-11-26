@@ -1,9 +1,3 @@
-@import "../components/composer/editor.css";
-
-.lexical-editor {
-  outline: none;
-}
-
 .cm-editor,
 .cm-gutters {
   @apply bg-card! outline-hidden! selection:bg-zinc-900!;

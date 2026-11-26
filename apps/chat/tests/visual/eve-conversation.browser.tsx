@@ -71,7 +71,7 @@ test("conversation retains its draft across rerenders and shows delivery recover
     });
     await expect
       .element(page.getByRole("textbox"))
-      .toHaveTextContent("Preserve this draft across a render");
+      .toHaveValue("Preserve this draft across a render");
     await takeSnapshot("conversation-draft");
     await page.getByRole("main").screenshot({ animations: "disabled" });
     await act(async (): Promise<void> => {
@@ -110,7 +110,7 @@ test("conversation retains its draft across rerenders and shows delivery recover
     });
     await expect
       .element(page.getByRole("textbox"))
-      .toHaveTextContent("Preserve this draft across a render");
+      .toHaveValue("Preserve this draft across a render");
     await expect.element(recovery).not.toBeInTheDocument();
     expect(send).toHaveBeenCalledOnce();
   } finally {

@@ -50,6 +50,7 @@ const DraftComposer = ({
   const [draft, setDraft] = useState("Restored draft");
   return (
     <ChatComposer
+      autoFocus
       draft={draft}
       disabled={false}
       onDraftChange={setDraft}
@@ -70,11 +71,11 @@ test("native form retains restored text, IME, desktop and mobile keyboard policy
   );
   try {
     const editor = page.getByRole("textbox", { name: "Message" });
-    await expect.element(editor).toHaveTextContent("Restored draft");
+    await expect.element(editor).toHaveValue("Restored draft");
     await expect
       .element(editor)
       .toHaveAttribute("data-slot", "input-group-control");
-    await editor.click();
+    await expect.element(editor).toHaveFocus();
     act(() => {
       editor.element().dispatchEvent(
         new KeyboardEvent("keydown", {
@@ -88,6 +89,14 @@ test("native form retains restored text, IME, desktop and mobile keyboard policy
     });
     expect(submit).not.toHaveBeenCalled();
     await act(async () => {
+      await userEvent.keyboard("{End}!");
+    });
+    await expect.element(editor).toHaveValue("Restored draft!");
+    await act(async () => {
+      await userEvent.keyboard("{ControlOrMeta>}z{/ControlOrMeta}");
+    });
+    await expect.element(editor).toHaveValue("Restored draft");
+    await act(async () => {
       await editor.fill("Edited draft");
     });
     await act(async () => {
@@ -98,22 +107,24 @@ test("native form retains restored text, IME, desktop and mobile keyboard policy
       await userEvent.keyboard("{Enter}");
     });
     expect(submit).toHaveBeenCalledOnce();
-    act(() => {
-      editor
-        .element()
-        .dispatchEvent(
-          new ClipboardEvent("paste", { bubbles: true, cancelable: true })
-        );
+    await act(async () => {
+      await userEvent.keyboard("{ControlOrMeta>}a{/ControlOrMeta}");
+      await userEvent.cut();
+    });
+    await expect.element(editor).toHaveValue("");
+    await act(async () => {
+      await userEvent.paste();
     });
     expect(paste).toHaveBeenCalledOnce();
     await act(async () => {
       await page.viewport(390, 844);
     });
-    await expect.element(editor).toHaveTextContent("Edited draft");
+    await expect.element(editor).toHaveValue("Edited draft\n");
     await act(async () => {
       await userEvent.keyboard("{Enter}");
     });
     expect(submit).toHaveBeenCalledOnce();
+    await expect.element(editor).toHaveValue("Edited draft\n\n");
     await act(async () => {
       await userEvent.keyboard("{Control>}{Enter}{/Control}");
     });

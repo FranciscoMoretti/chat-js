@@ -254,7 +254,7 @@ test("project UI edits instructions, creates a native conversation and lists it 
     await page.goto(`/project/${projectId}`);
     await expect(
       page.getByRole("textbox", { exact: true, name: "Message" })
-    ).toHaveText("");
+    ).toHaveValue("");
     const row = page
       .locator("section")
       .filter({

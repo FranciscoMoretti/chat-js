@@ -415,7 +415,7 @@ test("a definitive model rejection unlocks the composer and releases the operati
   await page.getByRole("option").filter({ hasText: "GPT-4.1 mini" }).click();
   await expect(
     page.getByRole("textbox", { exact: true, name: "Message" })
-  ).toHaveText("Retain my draft");
+  ).toHaveValue("Retain my draft");
   const secondRequest = page.waitForRequest("**/api/agent-conversations");
   await page.getByRole("button", { exact: true, name: "Send" }).click();
   const secondRequestResult = await secondRequest;

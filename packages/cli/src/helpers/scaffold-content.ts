@@ -253,11 +253,12 @@ const formattedScaffoldJson = (value: unknown): string =>
   `${JSON.stringify(value, null, JSON_INDENTATION_SPACES)}\n`;
 
 const isRepositoryOnlyDependency = (name: string): boolean =>
-  (name.startsWith("@lexical/") && name !== "@lexical/react") ||
+  name.startsWith("@lexical/") ||
   name.startsWith("@codemirror/") ||
   [
     "codemirror",
     "diff",
+    "lexical",
     "papaparse",
     "react-data-grid",
     "read-excel-file",

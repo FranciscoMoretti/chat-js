@@ -387,7 +387,7 @@ test("composer uploads and clears attachments, then reload confirms an in-flight
     await accepted;
     await expect(
       page.getByRole("textbox", { exact: true, name: "Message" })
-    ).toHaveText("");
+    ).toHaveValue("");
     await expect(page.getByTestId("attachments-preview")).toHaveCount(0);
     const chatId = new URL(page.url()).pathname.split("/").at(-1);
     if (chatId === undefined || chatId === null || chatId === "") {
@@ -439,7 +439,7 @@ test("composer uploads and clears attachments, then reload confirms an in-flight
     ).toHaveCount(0);
     await expect(
       page.getByRole("textbox", { exact: true, name: "Message" })
-    ).toHaveText("");
+    ).toHaveValue("");
   } finally {
     deleteUploadedFiles(urls);
   }

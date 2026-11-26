@@ -19,9 +19,7 @@ for (const project of [false, true]) {
     });
     let projectId: string | undefined;
     const release: PromiseWithResolvers<void> = Promise.withResolvers();
-    let received = false;
     await page.route("**/api/agent-conversations", async (route) => {
-      received = true;
       await release.promise;
       await route.fulfill({
         json: { error: "Test creation unavailable" },
@@ -31,7 +29,7 @@ for (const project of [false, true]) {
     try {
       await expect(
         composer.getByLabel("Message", { exact: true })
-      ).toHaveAttribute("contenteditable", "true");
+      ).toBeEditable();
       if (project) {
         await page
           .getByRole("button", { exact: true, name: "Expand sidebar" })
@@ -72,16 +70,22 @@ for (const project of [false, true]) {
         ).toBeVisible();
       }
       const input = composer.getByLabel("Message", { exact: true });
-      await expect(input).toHaveAttribute("contenteditable", "true");
+      await expect(input).toBeEditable();
       await input.fill("Optimistic first message");
+      const firstRequest = page.waitForRequest("**/api/agent-conversations");
       await composer.getByLabel("Send", { exact: true }).click();
-      await expect.poll(() => received, { timeout: 5000 }).toBe(true);
+      const original = await firstRequest;
+      const firstBody = original.postData();
+      expect(firstBody).toContain("Optimistic first message");
+      if (project) {
+        expect(firstBody).toContain("pending.pdf");
+      }
 
       await expect(page.getByRole("log")).toContainText(
         "Optimistic first message",
         { timeout: 1000 }
       );
-      await expect(composer.getByLabel("Message", { exact: true })).toHaveText(
+      await expect(composer.getByLabel("Message", { exact: true })).toHaveValue(
         ""
       );
       await page.screenshot({
@@ -107,28 +111,19 @@ for (const project of [false, true]) {
         ).toHaveCount(0);
       }
       release.resolve();
-      await expect(page.getByRole("alert")).toBeVisible();
-      await expect(composer.getByLabel("Message", { exact: true })).toHaveText(
-        "Optimistic first message"
+      const recovery = page.getByRole("region", {
+        name: "Conversation recovery",
+      });
+      await expect(recovery.getByRole("alert")).toHaveText(
+        "Test creation unavailable"
       );
-      if (project) {
-        await expect(
-          composer
-            .getByTestId("attachments-preview")
-            .getByRole("button", { exact: true, name: "pending.pdf" })
-        ).toBeVisible();
-      }
+      await expect(recovery).toContainText("Optimistic first message");
       await page.reload({ waitUntil: "domcontentloaded" });
-      await expect(composer.getByLabel("Message", { exact: true })).toHaveText(
-        "Optimistic first message"
-      );
-      if (project) {
-        await expect(
-          composer
-            .getByTestId("attachments-preview")
-            .getByRole("button", { exact: true, name: "pending.pdf" })
-        ).toBeVisible();
-      }
+      await expect(recovery).toContainText("Optimistic first message");
+      const retried = page.waitForRequest("**/api/agent-conversations");
+      await recovery.getByRole("button", { name: "Retry creation" }).click();
+      const replay = await retried;
+      expect(replay.postData()).toBe(firstBody);
     } finally {
       release.resolve();
       if (projectId !== undefined && projectId !== null && projectId !== "") {
@@ -157,7 +152,7 @@ for (const identity of ["registered", "guest"]) {
       waitUntil: "domcontentloaded",
     });
     const input = page.getByLabel("Message", { exact: true });
-    await expect(input).toHaveAttribute("contenteditable", "true");
+    await expect(input).toBeEditable();
     const message = "Do not use tools. Reply with exactly: Runtime ready";
     const creation: PromiseWithResolvers<void> = Promise.withResolvers();
     const stream: PromiseWithResolvers<void> = Promise.withResolvers();
@@ -237,14 +232,14 @@ for (const identity of ["registered", "guest"]) {
         path: testInfo.outputPath("first-reply.png"),
         style: visualStyle,
       });
-      await expect(input).toHaveAttribute("contenteditable", "true");
+      await expect(input).toBeEditable();
       await input.fill("Do not use tools. Reply with exactly: Followup ready");
       await page.getByRole("button", { exact: true, name: "Send" }).click();
       await expect(
         page.getByRole("log").getByText("Followup ready", { exact: true })
       ).toBeVisible({ timeout: 60_000 });
       await page.goBack();
-      await expect(input).toHaveText("");
+      await expect(input).toHaveValue("");
       await page.goForward();
       await expect(page.getByRole("log")).toContainText("Followup ready");
       expect(documents).toBe(0);
@@ -254,7 +249,7 @@ for (const identity of ["registered", "guest"]) {
         page.getByRole("log").getByText(message, { exact: true })
       ).toHaveCount(1);
       await page.getByRole("link", { name: /^New Chat/u }).click();
-      await expect(input).toHaveText("");
+      await expect(input).toHaveValue("");
       await expect(page.getByRole("log")).toHaveCount(0);
     } finally {
       creation.resolve();

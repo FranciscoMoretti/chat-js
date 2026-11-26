@@ -111,7 +111,7 @@ test("guest bootstrap failures preserve the draft and expired sessions offer a f
   await expect(
     page.getByRole("alert").filter({ hasText: "Could not start chat" })
   ).toBeVisible();
-  await expect(composer).toHaveText("Keep this draft");
+  await expect(composer).toHaveValue("Keep this draft");
   await page.screenshot({
     animations: "disabled",
     path: testInfo.outputPath("guest-bootstrap-error.png"),
@@ -167,10 +167,10 @@ test("guest shell keeps release controls and New Chat clears the in-memory draft
   await expect(page.locator('a[href="/settings/models"]')).toBeVisible();
   await composer.fill("Discard this draft");
   await page.getByRole("link", { name: /New Chat/u }).click();
-  await expect(composer).toHaveText("");
+  await expect(composer).toHaveValue("");
   await composer.fill("Discard with shortcut");
   await composer.press("ControlOrMeta+Shift+O");
-  await expect(composer).toHaveText("");
+  await expect(composer).toHaveValue("");
   await expect(page.getByTestId("model-selector")).toBeDisabled();
   await expect(page.getByTestId("model-selector")).toContainText("GPT-5 nano");
   await page.addStyleTag({
@@ -217,7 +217,7 @@ test("New Chat discards late bootstrap results and retires their session", async
   await page.getByRole("button", { exact: true, name: "Send" }).click();
   await started.promise;
   await page.getByRole("link", { name: /New Chat/u }).click();
-  await expect(composer).toHaveText("");
+  await expect(composer).toHaveValue("");
   await composer.fill("Fresh draft");
   const retired = page.waitForRequest(
     (request: Readonly<Pick<Request, "url">>) =>
@@ -225,7 +225,7 @@ test("New Chat discards late bootstrap results and retires their session", async
   );
   release.resolve();
   await retired;
-  await expect(composer).toHaveText("Fresh draft");
+  await expect(composer).toHaveValue("Fresh draft");
   await expect(page.getByRole("log")).toHaveCount(0);
   expect(messages).toEqual(["/eve/chat/v1/session/discarded-session/end"]);
 });

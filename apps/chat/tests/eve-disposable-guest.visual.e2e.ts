@@ -1,4 +1,8 @@
+import type { Page } from "@playwright/test";
 import { expect, test } from "@playwright/test";
+
+const guestFixture = (page: Page) =>
+  page.getByTestId("guest-visual").filter({ visible: true });
 
 test.beforeEach(async ({ page }) => {
   await page.route("**/react-scan/**", async (route) => {
@@ -18,11 +22,11 @@ test.beforeEach(async ({ page }) => {
     content:
       'nextjs-portal, [aria-label="Open Tanstack query devtools"] {display:none !important}',
   });
-  const fixture = page.getByTestId("guest-visual");
+  const fixture = guestFixture(page);
   await expect(fixture.getByRole("heading")).toBeVisible();
   await expect(
     fixture.getByRole("textbox", { exact: true, name: "Message" })
-  ).toBeVisible();
+  ).toBeEditable();
   await fixture
     .getByRole("img", { name: "openai logo" })
     .evaluate<unknown, HTMLImageElement>(
@@ -36,13 +40,11 @@ test.beforeEach(async ({ page }) => {
 });
 
 test("guest welcome locks the model picker", async ({ page }) => {
-  await expect(page.getByTestId("guest-visual")).toHaveScreenshot(
-    "guest-welcome.png"
-  );
+  await expect(guestFixture(page)).toHaveScreenshot("guest-welcome.png");
 });
 
 test("guest errors preserve the message draft", async ({ page }) => {
-  const fixture = page.getByTestId("guest-visual");
+  const fixture = guestFixture(page);
   const message = fixture.getByRole("textbox", {
     exact: true,
     name: "Message",
@@ -50,14 +52,16 @@ test("guest errors preserve the message draft", async ({ page }) => {
   await message.fill("Preserve this draft");
   await fixture.getByRole("button", { exact: true, name: "Send" }).click();
   await expect(fixture.getByRole("alert")).toBeVisible();
-  await expect(message).toHaveText("Preserve this draft");
+  await expect(message).toHaveValue("Preserve this draft");
   await message.blur();
   await expect(fixture).toHaveScreenshot("guest-error.png");
 });
 
 test("guest response", async ({ page }) => {
-  const fixture = page.getByTestId("guest-visual");
-  await page.getByLabel("Fixture state").selectOption("response");
+  const fixture = guestFixture(page);
+  await page
+    .getByRole("combobox", { name: "Fixture state" })
+    .selectOption("response");
   await expect(
     fixture.getByText("A useful test protects", { exact: false })
   ).toBeVisible();
@@ -66,18 +70,16 @@ test("guest response", async ({ page }) => {
 
 test("expired guest on mobile", async ({ page }) => {
   await page.setViewportSize({ height: 844, width: 390 });
-  await page.getByLabel("Fixture state").selectOption("expired");
+  await page
+    .getByRole("combobox", { name: "Fixture state" })
+    .selectOption("expired");
   await expect(
-    page.getByTestId("guest-visual").getByTestId("multimodal-input")
-  ).toHaveAttribute("aria-readonly", "true");
-  await expect(page.getByTestId("guest-visual")).toHaveScreenshot(
-    "guest-expired-mobile.png"
-  );
+    guestFixture(page).getByTestId("multimodal-input")
+  ).toHaveJSProperty("readOnly", true);
+  await expect(guestFixture(page)).toHaveScreenshot("guest-expired-mobile.png");
 });
 
 test("guest welcome on mobile", async ({ page }) => {
   await page.setViewportSize({ height: 844, width: 390 });
-  await expect(page.getByTestId("guest-visual")).toHaveScreenshot(
-    "guest-welcome-mobile.png"
-  );
+  await expect(guestFixture(page)).toHaveScreenshot("guest-welcome-mobile.png");
 });

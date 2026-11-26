@@ -198,7 +198,7 @@ test("Create sections share selections, dependencies and the install command", a
   expect(
     await originalDocument?.evaluate((element) => element.isConnected)
   ).toBe(true);
-  await expect(draft).toHaveText("Keep this while configuring my setup");
+  await expect(draft).toHaveValue("Keep this while configuring my setup");
   await expect(
     panel.getByRole("switch", { name: "Attachment Uploads", exact: true })
   ).toBeChecked();
@@ -537,7 +537,7 @@ test("Get Code selects either library without replacing the preview", async ({
   expect(
     await originalDocument?.evaluate((element) => element.isConnected)
   ).toBe(true);
-  await expect(draft).toHaveText("Keep this draft");
+  await expect(draft).toHaveValue("Keep this draft");
   await expect(preview.getByTestId("chat-preview")).toHaveAttribute(
     "data-base",
     "base"

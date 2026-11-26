@@ -142,7 +142,7 @@ test("active native turn swaps Stop for Send when a follow-up is drafted", async
   const composer = page.getByRole("textbox", { name: "Message", exact: true });
   const stop = page.getByRole("button", { name: "Stop", exact: true });
   const send = page.getByRole("button", { name: "Send", exact: true });
-  await expect.element(composer).toHaveAttribute("contenteditable", "true");
+  await expect.element(composer).toHaveProperty("readOnly", false);
   await expect
     .element(page.getByTestId("model-selector"))
     .toHaveTextContent("GPT-5 mini");
@@ -161,9 +161,7 @@ test("active native turn swaps Stop for Send when a follow-up is drafted", async
   await expect.element(stop).toBeEnabled();
   await expect.element(send).not.toBeInTheDocument();
   await composer.fill("Can you also check last month?");
-  await expect
-    .element(composer)
-    .toHaveTextContent("Can you also check last month?");
+  await expect.element(composer).toHaveValue("Can you also check last month?");
   await expect.element(send).toBeEnabled();
   await expect.element(stop).not.toBeInTheDocument();
   await composer.fill("");

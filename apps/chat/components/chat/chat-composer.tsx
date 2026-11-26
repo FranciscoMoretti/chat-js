@@ -7,14 +7,16 @@ import {
   InputGroup,
   InputGroupAddon,
   InputGroupButton,
+  InputGroupTextarea,
 } from "@/components/ui/input-group";
 import { ArrowUpIcon, Loader2Icon, SquareIcon } from "lucide-react";
 
 import type { ChatStatus } from "ai";
 
-import { LexicalChatInput } from "../lexical-chat-input";
+import { useAutoFocus } from "@/hooks/use-auto-focus";
+import { useMounted } from "@/hooks/use-mounted";
 
-import React from "react";
+import React, { useLayoutEffect } from "react";
 import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -105,7 +107,7 @@ const canSubmitDraft = (
  * @param {boolean | undefined} readOnly Runtime-owned readOnly value.
  * @param {boolean | undefined} allowDraftWhileBusy Allows typing during a submission without a Stop action.
  * @param {boolean | undefined} allowSendWhileStreaming Switches Stop to Send when the draft contains text or files.
- * @param {ComponentProps<typeof LexicalChatInput>["onPaste"] | undefined} onPaste Runtime-owned onPaste value.
+ * @param {ComponentProps<"textarea">["onPaste"] | undefined} onPaste Runtime-owned onPaste value.
  * @returns {React.JSX.Element} The composed message interface.
  */
 export const ChatComposer = ({
@@ -134,7 +136,7 @@ export const ChatComposer = ({
   readonly readOnly?: boolean;
   readonly allowDraftWhileBusy?: boolean;
   readonly allowSendWhileStreaming?: boolean;
-  readonly onPaste?: ComponentProps<typeof LexicalChatInput>["onPaste"];
+  readonly onPaste?: ComponentProps<"textarea">["onPaste"];
   readonly draft: string;
   readonly onDraftChange: (draft: string) => void;
   readonly onSubmit: () => void;
@@ -146,6 +148,7 @@ export const ChatComposer = ({
   readonly tools?: ReadonlyReactNode;
 }): ReactJSX.Element => {
   const isMobile = useIsMobile();
+  const mounted = useMounted();
   const busy = status === "submitted" || status === "streaming";
   const hasDraft = Boolean(draft.trim()) || hasAttachments;
   const actionStatus = composerActionStatus(
@@ -154,6 +157,35 @@ export const ChatComposer = ({
     hasDraft
   );
   const editorReadOnly = readOnly || (busy && !onStop && !allowDraftWhileBusy);
+  const inputRef = useAutoFocus(autoFocus && !editorReadOnly);
+  useLayoutEffect((): (() => void) | undefined => {
+    const input = inputRef.current;
+    if (!input || !draft || CSS.supports("field-sizing", "content")) {
+      return undefined;
+    }
+
+    // Clearing the explicit height lets shorter or newly unwrapped drafts shrink.
+    const fitDraft = (): void => {
+      input.style.height = "";
+      input.style.height = `${input.scrollHeight}px`;
+    };
+    fitDraft();
+    let width = input.offsetWidth;
+    let frame = 0;
+    const observer = new ResizeObserver(() => {
+      if (input.offsetWidth !== width) {
+        width = input.offsetWidth;
+        cancelAnimationFrame(frame);
+        frame = requestAnimationFrame(fitDraft);
+      }
+    });
+    observer.observe(input);
+    return () => {
+      observer.disconnect();
+      cancelAnimationFrame(frame);
+      input.style.height = "";
+    };
+  }, [draft, inputRef]);
   const canSend =
     !disabled &&
     !editorReadOnly &&
@@ -191,34 +223,37 @@ export const ChatComposer = ({
         ) : undefined
       }
     >
-      <LexicalChatInput
+      <InputGroupTextarea
         aria-label="Message"
-        autoFocus={autoFocus}
-        className="max-h-[max(35svh,5rem)] min-h-[60px] overflow-y-scroll sm:min-h-[80px]"
+        className="max-h-[max(35svh,5rem)] min-h-[60px] flex-none [scrollbar-width:thin] overflow-y-auto px-2.5 pt-2.5 pb-[5px] leading-normal [tab-size:1] placeholder:text-base placeholder-shown:pt-2 placeholder-shown:pl-3 sm:min-h-[80px] md:text-[15px]"
         data-testid="multimodal-input"
-        initialValue={draft}
-        onEnterSubmit={(
-          event: Readonly<
-            Pick<KeyboardEvent, "isComposing" | "ctrlKey" | "shiftKey">
-          >
-        ) => {
-          if (
-            event.isComposing ||
-            !(isMobile ? event.ctrlKey : !event.shiftKey)
-          ) {
-            return false;
-          }
-          submit();
-          return true;
+        dir="auto"
+        ref={inputRef}
+        rows={1}
+        spellCheck
+        value={draft}
+        onChange={(event) => {
+          onDraftChange(event.currentTarget.value);
         }}
-        onInputChange={onDraftChange}
+        onKeyDown={(event) => {
+          if (
+            event.key === "Enter" &&
+            !event.nativeEvent.isComposing &&
+            // oxlint-disable-next-line typescript/no-deprecated -- WebKit clears isComposing before the IME confirmation keydown; 229 still identifies it.
+            event.nativeEvent.keyCode !== 229 &&
+            (isMobile ? event.ctrlKey : !event.shiftKey)
+          ) {
+            event.preventDefault();
+            submit();
+          }
+        }}
         onPaste={onPaste}
         placeholder={
           isMobile
             ? "Send a message... (Ctrl+Enter to send)"
             : "Send a message..."
         }
-        readOnly={editorReadOnly}
+        readOnly={!mounted || editorReadOnly}
       />
     </PromptForm>
   );

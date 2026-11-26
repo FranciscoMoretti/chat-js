@@ -1,5 +1,5 @@
 import { TrpcFixtureError, route } from "./route";
-import { expect, test, vi } from "vitest";
+import { expect, onTestFinished, test, vi } from "vitest";
 import { page, userEvent } from "vitest/browser";
 
 import ChatLayout from "@/app/(chat)/layout";
@@ -41,11 +41,49 @@ test("clearing a recovered New Chat draft removes its saved text", async () => {
   const composer = page.getByTestId("multimodal-input");
   await expect
     .element(composer)
-    .toHaveTextContent("Save this follow-up after recovery");
+    .toHaveValue("Save this follow-up after recovery");
+  const input = composer.element();
+  const initialHeight = input.clientHeight;
+  const multiline = "A line of the revised draft.\n".repeat(40);
+  await composer.fill(multiline);
+  expect(input.clientHeight).toBeGreaterThan(initialHeight);
+  expect(input.scrollHeight).toBeGreaterThan(input.clientHeight);
+  expect(readCreationFollowUp(sessionStorage, id)).toBe(multiline);
   await composer.fill("Revised draft");
+  expect(input.clientHeight).toBe(initialHeight);
   expect(readCreationFollowUp(sessionStorage, id)).toBe("Revised draft");
   await composer.fill("");
   expect(readCreationFollowUp(sessionStorage, id)).toBe("");
+});
+
+test("a recovered draft grows and shrinks without browser field sizing", async () => {
+  const supports = vi.spyOn(CSS, "supports").mockReturnValue(false);
+  const style = document.createElement("style");
+  style.textContent = "textarea { field-sizing: fixed !important; }";
+  document.head.append(style);
+  onTestFinished(() => {
+    supports.mockRestore();
+    style.remove();
+  });
+
+  const wrapped = "Write the launch notes for the next release. ".repeat(10);
+  saveCreationFollowUp(sessionStorage, session.user.id, wrapped);
+  await renderRoute(home, signedIn);
+  const composer = page.getByRole("textbox", { name: "Message" });
+  await expect.element(composer).toHaveValue(wrapped);
+  const input = composer.element();
+  const wideHeight = input.clientHeight;
+  await page.viewport(390, 844);
+  await expect.poll(() => input.clientHeight).toBeGreaterThan(wideHeight);
+  const wrappedHeight = input.clientHeight;
+  expect(input.scrollHeight).toBe(input.clientHeight);
+
+  await composer.fill("One line of a long draft.\n".repeat(40));
+  expect(input.scrollHeight).toBeGreaterThan(input.clientHeight);
+  await composer.fill("");
+  expect(input.clientHeight).toBeLessThan(wrappedHeight);
+  expect(`${input.clientHeight}px`).toBe(getComputedStyle(input).minHeight);
+  await composer.fill(wrapped);
 });
 
 test("home with Guest Chat installed has a fixed inexpensive model", async () => {
@@ -287,11 +325,9 @@ test("signed-in chat accepts a follow-up draft while creating the first turn", a
       page.getByText("Summarize this month's invoices.", { exact: true })
     )
     .toBeVisible();
-  await expect.element(composer).toHaveAttribute("contenteditable", "true");
+  await expect.element(composer).toHaveProperty("readOnly", false);
   await composer.fill("Can you also check last month?");
-  await expect
-    .element(composer)
-    .toHaveTextContent("Can you also check last month?");
+  await expect.element(composer).toHaveValue("Can you also check last month?");
   await expect.element(send).toBeDisabled();
 });
 
@@ -363,7 +399,7 @@ test("signed-in creation retry saves the follow-up even if the destination draft
   await page
     .getByRole("button", { name: "Retry creation", exact: true })
     .click();
-  await expect.element(composer).toHaveTextContent(followUp);
+  await expect.element(composer).toHaveValue(followUp);
   await expect
     .element(page.getByRole("button", { name: "Send", exact: true }))
     .toBeEnabled();
@@ -397,8 +433,8 @@ test("guest chat keeps a follow-up draft through session startup and streaming",
   await composer.fill("Hello");
   await send.click();
   await expect.element(send).toBeDisabled();
-  await expect.element(composer).toHaveAttribute("contenteditable", "true");
-  await expect.element(composer).toHaveTextContent(/^$/u);
+  await expect.element(composer).toHaveProperty("readOnly", false);
+  await expect.element(composer).toHaveValue("");
   await composer.fill("Could you give me an example?");
   await captureVariants("startup");
   bootstrap.resolve(
@@ -416,14 +452,11 @@ test("guest chat keeps a follow-up draft through session startup and streaming",
   await expect
     .element(page.getByRole("button", { name: /GPT-5 nano/u }))
     .toBeDisabled();
-  await expect.element(composer).toHaveAttribute("contenteditable", "true");
-  await expect
-    .element(composer)
-    .toHaveTextContent("Could you give me an example?");
-  await composer.fill("Could you give me two examples?");
-  await expect
-    .element(composer)
-    .toHaveTextContent("Could you give me two examples?");
+  await expect.element(composer).toHaveProperty("readOnly", false);
+  await expect.element(composer).toHaveValue("Could you give me an example?");
+  const followUp = "Could you give me two examples?\nOne for each case.";
+  await composer.fill(followUp);
+  await expect.element(composer).toHaveValue(followUp);
   await expect
     .element(page.getByRole("button", { name: "Stop", exact: true }))
     .not.toBeInTheDocument();
@@ -431,7 +464,7 @@ test("guest chat keeps a follow-up draft through session startup and streaming",
   await expect.element(page.getByRole("alert")).not.toBeInTheDocument();
   await captureVariants("steering");
   await send.click();
-  await expect.element(composer).toHaveTextContent(/^$/u);
+  await expect.element(composer).toHaveValue("");
   await expect
     .element(page.getByRole("button", { name: "Stop", exact: true }))
     .toBeEnabled();
@@ -455,9 +488,7 @@ test("guest startup failure keeps the original message and newer draft", async (
   bootstrap.resolve(Response.json({ error: "Try again" }, { status: 502 }));
   await expect
     .element(composer)
-    .toHaveTextContent(
-      /What is a directed graph\?\s*Include a concrete example\./u
-    );
+    .toHaveValue("What is a directed graph?\n\nInclude a concrete example.");
   await expect.element(send).toBeEnabled();
 });
 

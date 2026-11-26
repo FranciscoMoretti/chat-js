@@ -59,7 +59,7 @@ test("native follow-ups survive reload, submit normally and preserve unsent comp
     throw new Error("Related question text is unavailable.");
   }
   await nextQuestion.click();
-  await expect(composer).toHaveText("Keep this unsent draft.");
+  await expect(composer).toHaveValue("Keep this unsent draft.");
   await expect(
     page.getByRole("log").locator('[data-role="user"]').last()
   ).toContainText(submittedText);
@@ -106,7 +106,7 @@ test("native follow-ups survive reload, submit normally and preserve unsent comp
     timeout: 90_000,
   });
   await page.goto(`/chat/${binding.id}`);
-  await expect(composer).toHaveText(retainedQuestion);
+  await expect(composer).toHaveValue(retainedQuestion);
   await expect(page.getByText("Ready", { exact: true })).toBeVisible();
   await expect(related).toBeVisible();
   await expect(

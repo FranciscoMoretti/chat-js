@@ -28,7 +28,7 @@ const createFixture = async (
   return directory;
 };
 const sourceManifest =
-  '{"z_extension":{"keep":["nested"]},"dependencies":{"keep":"^1","diff":"^1","@lexical/react":"^1","@lexical/list":"^1"},"devDependencies":{"pg":"^1","retain":"^1"},"scripts":{"keep":"command","test:tools:live":"bad"},"overrides":{"evalite":"^1","keep":{"nested":"value"}}}';
+  '{"z_extension":{"keep":["nested"]},"dependencies":{"keep":"^1","diff":"^1","lexical":"^1","@lexical/react":"^1","@lexical/list":"^1"},"devDependencies":{"pg":"^1","retain":"^1"},"scripts":{"keep":"command","test:tools:live":"bad"},"overrides":{"evalite":"^1","keep":{"nested":"value"}}}';
 const normalizedManifest = `{
   "z_extension": {
     "keep": [
@@ -36,8 +36,7 @@ const normalizedManifest = `{
     ]
   },
   "dependencies": {
-    "keep": "^1",
-    "@lexical/react": "^1"
+    "keep": "^1"
   },
   "devDependencies": {
     "retain": "^1"

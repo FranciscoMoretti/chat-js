@@ -26,7 +26,7 @@ for (const base of ["base"] as const) {
           exact: true,
         });
         const send = page.getByRole("button", { name: "Send", exact: true });
-        await expect(editor).toHaveAttribute("contenteditable", "true");
+        await expect(editor).toBeEditable();
         await expect(
           page.getByRole("heading", { name: "How can I help you today?" })
         ).toBeVisible();
@@ -44,7 +44,7 @@ for (const base of ["base"] as const) {
         }
         await editor.fill("Keep this draft");
         await editor.press(width === 390 ? "Enter" : "Shift+Enter");
-        await expect(editor).toContainText("Keep this draft");
+        await expect(editor).toHaveValue("Keep this draft\n");
         await expect(
           page.getByText("This is a local preview.", { exact: false })
         ).toBeHidden();
@@ -54,7 +54,7 @@ for (const base of ["base"] as const) {
           isComposing: true,
           bubbles: true,
         });
-        await expect(editor).toContainText("Keep this draft");
+        await expect(editor).toHaveValue("Keep this draft\n");
         await editor.fill("x".repeat(16_001));
         await expect(send).toBeDisabled();
         await expect(
@@ -69,16 +69,16 @@ for (const base of ["base"] as const) {
         await expect(
           page.getByTestId("message-assistant-loading")
         ).toBeHidden();
-        await expect(editor).toHaveText("");
+        await expect(editor).toHaveValue("");
         await expect(editor).toBeFocused();
         await page.keyboard.type("A follow-up without clicking");
-        await expect(editor).toHaveText("A follow-up without clicking");
+        await expect(editor).toHaveValue("A follow-up without clicking");
         await page.keyboard.press("ControlOrMeta+A");
         await page.keyboard.press("Backspace");
         await expect(
           page.getByTestId("message-assistant-loading")
         ).toBeHidden();
-        await expect(editor).toHaveText("");
+        await expect(editor).toHaveValue("");
         await expect(send).toBeDisabled();
 
         await page.evaluate(() => {
@@ -165,7 +165,7 @@ for (const base of ["base"] as const) {
         await expect(
           page.getByTestId("message-assistant-loading")
         ).toBeHidden();
-        await expect(editor).toHaveText("");
+        await expect(editor).toHaveValue("");
         await expect(send).toBeDisabled();
         if (width === 390) {
           await toggle.click();
