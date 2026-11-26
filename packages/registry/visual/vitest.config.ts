@@ -84,6 +84,10 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("../../../apps/chat", import.meta.url)),
+      // Both capture workspaces render the app's opted-in query inspector.
+      "@tanstack/react-query-devtools": path.dirname(
+        appRequire.resolve("@tanstack/react-query-devtools/package.json")
+      ),
       "geist-mono.woff2": path.join(
         geistFonts,
         "geist-mono/GeistMono-Variable.woff2"
