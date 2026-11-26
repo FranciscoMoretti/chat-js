@@ -4,7 +4,7 @@ import { ArrowRight, ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 import type { ComponentProps } from "react";
 import { useState } from "react";
-import { siteLinks } from "@/lib/site-config";
+import { docsNavigationHref } from "@/lib/site-config";
 import { buttonVariants } from "@/vendor/shadcn-create/styles/base-nova/ui/button";
 import {
   initialCanopySelection,
@@ -42,7 +42,7 @@ export const CanopyHero = ({
           </Link>
           <a
             className={buttonVariants({ variant: "ghost" })}
-            href={siteLinks.docsGettingStarted}
+            href={`${docsNavigationHref}/quickstart`}
           >
             Read the docs{" "}
             <ArrowRight data-icon="inline-end" aria-hidden="true" />

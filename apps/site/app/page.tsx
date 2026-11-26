@@ -1,13 +1,11 @@
 import { siteConfig, siteLinks } from "@/lib/site-config";
 import { Homepage } from "@/components/home/homepage";
-import { colors } from "@chatjs/brand/identity";
-import type { Metadata, Viewport } from "next";
+import type { Metadata } from "next";
 import React from "react";
 
 const socialDescription =
   "A working chat. Your choice of models. Tools and plugins. Code you own.";
 const socialTitle = "ChatJS — The building blocks for your AI app";
-const viewport: Viewport = { themeColor: colors.background };
 
 const metadata: Metadata = {
   alternates: {
@@ -73,5 +71,5 @@ const HomePage = (): React.JSX.Element => (
   </>
 );
 
-export { metadata, viewport };
+export { metadata };
 export default HomePage;

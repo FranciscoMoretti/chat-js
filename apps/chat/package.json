@@ -3,6 +3,12 @@
   "version": "0.2.1",
   "private": true,
   "license": "Apache-2.0",
+  "imports": {
+    "#query-devtools": {
+      "development": "@tanstack/react-query-devtools",
+      "default": "./lib/devtools-disabled.ts"
+    }
+  },
   "scripts": {
     "prebuild": "bun run check-env",
     "dev": "bun run check-env && EVE_SANDBOX_IMAGE_TAG=${EVE_SANDBOX_IMAGE_TAG:-0.80.1} next dev",
@@ -35,7 +41,6 @@
     "test:research:native": "bun tests/native-research-runtime.ts",
     "test:types": "rm -rf .next/dev/types && next typegen . && tsc --noEmit",
     "test:worker-bundle": "node scripts/check-worker-typescript.ts",
-    "ai:devtools": "bunx @ai-sdk/devtools",
     "dev:neon": "bash scripts/with-db.sh bun dev",
     "db:migrate:neon": "bash scripts/with-db.sh bun db:migrate",
     "db:connect": "bun scripts/check-db.ts",
@@ -47,7 +52,6 @@
     "test:tools:live": "bunx --bun playwright test --config playwright.eve-live.config.ts eve-research.e2e.ts eve-code-execution.e2e.ts --grep \"native deep research|native code execution\""
   },
   "dependencies": {
-    "@ai-sdk/devtools": "1.0.75",
     "@ai-sdk/gateway": "4.0.145",
     "@ai-sdk/mcp": "2.0.99",
     "@ai-sdk/provider": "4.0.38",
@@ -65,7 +69,6 @@
     "@supabase/storage-js": "2.117.2",
     "@t3-oss/env-nextjs": "^0.13.8",
     "@tanstack/react-query": "^5.104.1",
-    "@tanstack/react-query-devtools": "^5.80.3",
     "@trpc/client": "^11.1.2",
     "@trpc/server": "^11.1.2",
     "@trpc/tanstack-react-query": "^11.1.2",
@@ -125,6 +128,7 @@
     "@playwright/test": "^1.50.1",
     "@tailwindcss/postcss": "^4.1.12",
     "@tailwindcss/typography": "^0.5.19",
+    "@tanstack/react-query-devtools": "^5.80.3",
     "@types/json-schema": "7.0.15",
     "@types/node": "^22.8.6",
     "@types/papaparse": "^5.3.15",

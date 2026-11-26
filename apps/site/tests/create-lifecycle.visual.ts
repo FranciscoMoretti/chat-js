@@ -1,4 +1,4 @@
-import { attachPreviewFile } from "./create-fixtures.mts";
+import { attachPreviewFile, uploadsPreset } from "./create-fixtures.mts";
 /* eslint-disable no-await-in-loop -- Scene transitions are deliberately sequential and repeated. */
 import assert from "node:assert/strict";
 import { mkdir } from "node:fs/promises";
@@ -64,7 +64,7 @@ const expectScene = async (scene: (typeof scenes)[number]) => {
   await expect(frame.locator('input[type="file"]')).toBeAttached();
 };
 try {
-  await page.goto(`${url}?base=${base}&uploads=true`, {
+  await page.goto(`${url}?base=${base}&app=${uploadsPreset}`, {
     waitUntil: "domcontentloaded",
   });
   await expectScene(scenes[2]);
@@ -144,7 +144,7 @@ try {
   // Cold URLs and reloads use the same state as host/preview scene changes.
   for (const scene of scenes) {
     await page.goto(
-      `${url}?base=${base}&uploads=true&preset=${preset}&item=${scene.item}`,
+      `${url}?base=${base}&app=${uploadsPreset}&preset=${preset}&item=${scene.item}`,
       {
         waitUntil: "domcontentloaded",
       }

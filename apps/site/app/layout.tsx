@@ -4,6 +4,7 @@ import { Analytics } from "@vercel/analytics/next";
 import React from "react";
 import { ThemeProvider } from "next-themes";
 
+import { ThemeChrome } from "@/components/theme-chrome";
 import { siteConfig } from "@/lib/site-config";
 
 import "./globals.css";
@@ -65,7 +66,7 @@ const viewport: Viewport = {
   initialScale: 1,
   themeColor: [
     { color: "#f8f7f4", media: "(prefers-color-scheme: light)" },
-    { color: "#09090b", media: "(prefers-color-scheme: dark)" },
+    { color: "#0c0c0c", media: "(prefers-color-scheme: dark)" },
   ],
   width: "device-width",
 };
@@ -126,13 +127,24 @@ const RootLayout = ({
     lang="en"
     suppressHydrationWarning
   >
+    <head>
+      {/* Migrate existing Create preferences before next-themes reads the shared Docs key. */}
+      <script>{`try {
+        const saved = localStorage.getItem("theme");
+        if (!localStorage.getItem("blume-theme") && (saved === "light" || saved === "dark")) {
+          localStorage.setItem("blume-theme", saved);
+        }
+      } catch {}`}</script>
+    </head>
     <body className="antialiased">
       <ThemeProvider
         attribute="class"
+        storageKey="blume-theme"
         defaultTheme="system"
         disableTransitionOnChange
         enableSystem
       >
+        <ThemeChrome />
         {children}
       </ThemeProvider>
       <Analytics />

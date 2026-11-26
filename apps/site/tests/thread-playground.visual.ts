@@ -28,6 +28,7 @@ const capture = async (
 try {
   const page = await browser.newPage({
     reducedMotion: "reduce",
+    colorScheme: "dark",
     viewport: { height: 1200, width: 1440 },
   });
   page.on("pageerror", (error: Readonly<Pick<Error, "message">>): number =>
@@ -68,6 +69,13 @@ try {
     animations: "disabled",
     path: `${output}threads-intro.png`,
   });
+  const toggle = page.getByRole("button", { name: "Toggle theme" });
+  await toggle.click();
+  await page.locator("html.light").waitFor();
+  await intro.screenshot({ path: `${output}threads-intro-light.png` });
+  await capture(page, "threads-playground-light");
+  await toggle.click();
+  await page.locator("html.dark").waitFor();
   const docsLinks = page.getByRole("link", { name: "Read the docs" });
   assert.equal(await docsLinks.count(), 2);
   const links = await docsLinks.all();
@@ -78,7 +86,7 @@ try {
     )
   );
   for (const href of hrefs) {
-    assert.equal(href, "https://chatjs.dev/docs/threads");
+    assert.equal(href, "/docs/threads");
   }
   await docsLinks
     .last()
