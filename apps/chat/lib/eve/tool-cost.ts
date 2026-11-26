@@ -1,7 +1,5 @@
-import type { AiGatewayModel } from "@/chatjs/core/gateway/models";
-
-import { getActiveGateway } from "@/lib/ai/active-gateway";
-import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import type { ModelData } from "@/lib/ai/model-data";
+import { loadModelCatalog } from "@/lib/ai/model-catalog";
 
 import { createToolUsage } from "./tool-usage";
 import type { ToolUsage } from "./tool-usage";
@@ -11,17 +9,12 @@ interface TokenUsage {
   outputTokens?: number;
 }
 
-// Gateway records are Zod-parsed or generated literals; retain the selected pricing object while skipping an unused full ModelData projection.
-const pricingForModel = (
-  fetchedModels: readonly {
-    readonly id: string;
-    readonly pricing: ReadonlyNativeSurface<AiGatewayModel["pricing"]>;
-  }[],
+const pricingForModel = async (
   modelId: string
-): ReadonlyNativeSurface<AiGatewayModel["pricing"]> | undefined =>
-  fetchedModels.find(
-    (model: Readonly<Pick<AiGatewayModel, "id">>) => model.id === modelId
-  )?.pricing;
+): Promise<ModelData["pricing"] | undefined> => {
+  const models = await loadModelCatalog();
+  return models.find((model) => model.id === modelId)?.pricing;
+};
 
 const tokenCost = (
   tokens: number | undefined,
@@ -79,8 +72,8 @@ export const createEveToolCost = (
       if (!Number.isInteger(count) || count < 0) {
         throw new Error("Invalid generated image count.");
       }
-      const fetchedModels = await getActiveGateway().fetchModels();
-      const rate = Number(pricingForModel(fetchedModels, modelId)?.image);
+      const pricing = await pricingForModel(modelId);
+      const rate = Number(pricing?.image);
       if (!Number.isFinite(rate) || rate < 0) {
         throw new Error("Image provider pricing is unavailable.");
       }
@@ -99,8 +92,7 @@ export const createEveToolCost = (
       ) {
         throw new Error("Provider usage is unavailable.");
       }
-      const fetchedModels = await getActiveGateway().fetchModels();
-      const pricing = pricingForModel(fetchedModels, modelId);
+      const pricing = await pricingForModel(modelId);
       return (
         tokenCost(tokens.inputTokens, pricing?.input) +
         tokenCost(tokens.outputTokens, pricing?.output)

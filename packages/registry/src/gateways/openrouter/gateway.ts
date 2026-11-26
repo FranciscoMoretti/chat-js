@@ -9,6 +9,7 @@ import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 
 import { z } from "zod";
 
+const MODEL_DISCOVERY_TIMEOUT_MS = 10_000;
 const MODEL_OWNER_SEGMENT_INDEX = 0;
 const EMPTY_TAG_COUNT = 0;
 const OPENROUTER_MODELS_URL = "https://openrouter.ai/api/v1/models";
@@ -168,43 +169,37 @@ class OpenRouterGateway
     const apiKey = this.getApiKey();
 
     if (!(typeof apiKey === "string" && apiKey !== "")) {
-      this.log.warn("No OPENROUTER_API_KEY found, using fallback models");
-      return [...this.getFallbackModels(this.type)];
+      throw new Error("OPENROUTER_API_KEY is not configured");
     }
 
     const url = OPENROUTER_MODELS_URL;
     this.log.debug({ url }, "Fetching models from OpenRouter");
 
-    try {
-      const response = await this.fetch(url, {
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-      });
+    const response = await this.fetch(url, {
+      signal: AbortSignal.timeout(MODEL_DISCOVERY_TIMEOUT_MS),
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+    });
 
-      if (!response.ok) {
-        this.log.error(
-          { status: response.status, statusText: response.statusText, url },
-          "OpenRouter returned non-OK response"
-        );
-        throw new Error(`Failed to fetch models: ${response.statusText}`);
-      }
-
-      const result = parseProviderModels(await response.json());
-
-      this.log.info(
-        { modelCount: result.length },
-        "Successfully fetched models from OpenRouter"
-      );
-      return result;
-    } catch (error) {
+    if (!response.ok) {
       this.log.error(
-        { err: error, url },
-        "Error fetching models from OpenRouter, falling back to generated models"
+        { status: response.status, statusText: response.statusText, url },
+        "OpenRouter returned non-OK response"
       );
-      return [...this.getFallbackModels(this.type)];
+      throw new Error(
+        `Failed to fetch models: ${response.status} ${response.statusText}`
+      );
     }
+
+    const result = parseProviderModels(await response.json());
+
+    this.log.info(
+      { modelCount: result.length },
+      "Successfully fetched models from OpenRouter"
+    );
+    return result;
   }
 }
 export { OpenRouterGateway as Gateway, OpenRouterGateway };

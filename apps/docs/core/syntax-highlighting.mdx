@@ -1,29 +1,13 @@
 ---
 title: "Syntax Highlighting"
-description: "Beautiful code formatting with themes"
+description: "See how fenced code blocks in assistant replies reach the Streamdown renderer, which plugins format them, and where to customize their appearance."
 ---
 
-ChatJS renders AI responses with full syntax highlighting for code blocks, powered by [Streamdown](https://streamdown.ai).
+ChatJS renders Markdown in assistant messages with Streamdown. To request a particular format, edit the [agent instructions](/customization/prompts). To change how a response appears, start in `components/ai-elements/response.tsx`.
 
-## How It Works
+## Code blocks
 
-### Backend: Markdown in Responses
-
-The system prompt instructs models to use markdown formatting, including fenced code blocks:
-
-```typescript title="lib/ai/prompts.ts"
-export const systemPrompt = () => `You are a friendly assistant!
-
-## Your Goals
-- Markdown is supported in the response and you can use it to format the response.
-
-## Content Rules:
-- Use structured answers with markdown format and tables too.
-- If a diagram is needed, return it in a fenced mermaid code block.
-`;
-```
-
-Models return code in standard markdown fenced blocks:
+A language tag on a fenced block tells the renderer which syntax to highlight. For example, an assistant can return this Markdown.
 
 ````markdown
 ```typescript
@@ -33,47 +17,8 @@ function greet(name: string) {
 ```
 ````
 
-### Frontend: Streamdown Rendering
+## Renderer and themes
 
-The `Response` component wraps [Streamdown](https://streamdown.ai), a markdown renderer optimized for AI streaming:
+The `Response` component passes the `code`, `math`, and `mermaid` plugins to Streamdown. These handle highlighted code, mathematical notation, and diagrams as the reply arrives. Keep those plugins in the component if you customize its wrapper or classes.
 
-```tsx title="components/ai-elements/response.tsx"
-import { Streamdown } from "streamdown";
-
-export const Response = memo(({ className, ...props }: ResponseProps) => (
-  <Streamdown
-    className={cn(
-      "size-full [&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
-      className
-    )}
-    {...props}
-  />
-));
-```
-
-Streamdown handles:
-
-- **Syntax highlighting** for 100+ languages via [Shiki](https://shiki.style)
-- **Streaming-safe parsing** that doesn't break mid-token
-- **Mermaid diagrams** rendered inline
-- **Math equations** with KaTeX support
-- **Tables, lists, and formatting** with proper styling
-
-## Supported Languages
-
-Streamdown supports all languages supported by Shiki, including:
-
-| Category | Languages                               |
-| -------- | --------------------------------------- |
-| Web      | TypeScript, JavaScript, HTML, CSS, JSON |
-| Backend  | Python, Go, Rust, Java, C#, Ruby, PHP   |
-| Systems  | C, C++, Zig, Assembly                   |
-| Data     | SQL, GraphQL, YAML, TOML                |
-| Shell    | Bash, PowerShell, Fish                  |
-| Markup   | Markdown, LaTeX, XML                    |
-
-## Theming
-
-Syntax highlighting automatically adapts to light/dark mode. The theme is configured in Streamdown and uses VS Code-compatible color schemes.
-
-To customize the code theme, see the [Streamdown documentation](https://streamdown.ai).
+For changes to code styling, see the [Streamdown documentation](https://streamdown.ai). For colors shared with the rest of the app, see [Theming](/customization/theming).

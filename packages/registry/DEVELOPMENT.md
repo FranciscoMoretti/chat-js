@@ -10,7 +10,7 @@ Installed registry files in **our reference app** are disposable generated outpu
 - Registry declarations and manifests: declare new files, renamed targets, removals and contributions there.
 - Tools and providers: their canonical files under `packages/registry/src`.
 - Selection: only `demoInstallation` in `packages/registry/installation.ts`.
-- Application-owned files: credentials, dependency manifests, `chat.config.ts`, fetched model catalog, UI ordering and custom extensions stay in the application.
+- Application-owned files: credentials, dependency manifests, `chat.config.ts`, UI ordering and custom extensions stay in the application.
 
 `bun demo:sync` performs one reconciliation. `bun demo:check` verifies current output without changing it. Commit generated source and `packages/registry/mirror-manifest.json` together. The manifest contains **paths only**: it grants cleanup ownership for previously generated files. Missing generated files are restored; edited generated files are overwritten; previously recorded files absent from the next installation are deleted. Unrecorded files are never swept from a directory. There is no content baseline or `--discard` option.
 

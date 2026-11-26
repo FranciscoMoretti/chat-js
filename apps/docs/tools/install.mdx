@@ -1,6 +1,6 @@
 ---
 title: Adding Tools
-description: Install and register a tool in an existing ChatJS app
+description: "Add a registry tool to an existing ChatJS app, find its server and renderer registrations, and regenerate them after a direct shadcn installation."
 ---
 
 Start in a ChatJS app containing `chat.config.ts` and `components.json`.
@@ -19,13 +19,13 @@ flowchart LR
   D --> E[Typed server and client registrations]
 ```
 
-The app derives installed tool types through `lib/ai/installed-tools.ts` and selects their renderers through `lib/ai/tool-renderer-registry.ts`.
+The app composes server tools in `integrations/tools/execution.ts` and client renderers in `integrations/tools/ui.ts`. The renderer registry checks the installed renderer before displaying a tool result.
 
 ## Customize and update
 
-Edit installed `tool.ts` and `renderer.tsx` normally. Put additional registrations in `integrations/tools/execution.ts` and `integrations/tools/ui.ts`. Leave generated indexes to `sync`.
+Edit the implementation and renderer supplied by the item. Deep Research runs from `agent/tools/deepResearch.ts`. Put additional registrations in `integrations/tools/execution.ts` and `integrations/tools/ui.ts`. Leave generated indexes to `sync`.
 
-Repeat `add` to update an item. Existing files use normal shadcn overwrite behavior. Use `--overwrite` only when you want to replace installed source.
+Repeat `add` to update an item. ChatJS checks the files against its installation record. If it finds modifications or untracked source, review the files with `chat-js status --files` before authorizing replacement with `--overwrite`.
 
 After a direct shadcn install, or a reported registration failure, run:
 
@@ -37,6 +37,6 @@ Sync validates descriptors, duplicate installed descriptor keys, and generated-i
 
 ## Related
 
-- [Tool Registry](./overview) for ownership and migration
-- [Tools](./authoring) for building a registry item
-- [CLI add](../cli/add) for command options
+- [Tool Registry](/tools/overview) for ownership and migration
+- [Tools](/tools/authoring) for building a registry item
+- [CLI add](/cli/add) for command options

@@ -1,196 +1,44 @@
 ---
-title: "Project Structure"
-description: "How ChatJS is organized"
+title: Project Structure
+description: "Find the source files for chat UI, agent behavior, routes, providers, and plugins. See which files to edit and which registrations the CLI generates."
 ---
 
-## Directory Overview
+Paths on this page start at the root of your generated app. In the ChatJS repository, the reference app lives in `apps/chat/`.
 
-```
-├── app/                    # Next.js App Router
-│   ├── (auth)/            # Auth routes (login, register)
-│   ├── (chat)/            # Main chat interface
-│   ├── api/               # API routes (EVE gateway, auth, tRPC)
-│   └── actions/           # Server Actions
-│
-├── components/
-│   ├── ai-elements/       # AI Elements registry components
-│   ├── chat/              # Chat UI components
-│   ├── part/              # Tool part renderers
-│   ├── settings/          # Settings pages
-│   └── ui/                # shadcn/ui components
-│
-├── lib/
-│   ├── ai/                # AI SDK integration, tools, prompts
-│   │   └── gateways/      # Gateway abstraction (Vercel, OpenRouter)
-│   ├── db/                # Database schema, queries, and data access
-│   ├── eve/               # EVE runtime integration
-│   ├── models/            # Model types and utilities
-│   └── artifacts/         # Client helpers for document artifacts
-│
-├── chatjs/
-│   ├── core/               # Installed source: helpers and contracts
-│   ├── providers/          # Installed source: providers and configuration
-│   ├── plugins/<id>/       # Installed source: plugin implementations
-│   ├── tools/<id>/         # Installed source: tools and renderers
-│   ├── generated/          # Generated wiring; change its inputs
-│   └── installed-source.json # Recorded installed-file hashes
-├── integrations/           # Application composition, preserved by installation
-│   ├── auth/
-│   ├── chat/
-│   ├── tools/
-│   ├── documents/
-│   ├── providers/
-│   ├── billing.ts
-│   ├── database.ts
-│   └── …
-├── agent/                  # EVE agent channels, hooks, and tools
-├── trpc/                   # tRPC routers and procedures
-├── hooks/                  # React hooks
-├── providers/              # React context providers
-└── scripts/                # Build and dev scripts
-```
+## Where to make a change
 
-Files have four lifecycle kinds: **application**, **installed source**, **generated**, and **installation record**. Scaffolded application code becomes yours, and add/remove/sync preserve its composition. Installed source can also be edited, with local changes tracked for replacement/removal. Generated files are rebuilt from inputs, while installation records are maintained by the CLI.
-
-Some native files under `app/` and `agent/` belong to installed plugins or tools. Their short `ChatJS source` headers identify the exception. Plugin descriptors declare their external paths, and source receipts track files written by the CLI. Headers are explanatory, not an additional installation manifest.
-
-Run [`chat-js status`](./cli/status) to inspect source states, framework-file ownership, and removal dependencies. Keep installation receipts in version control. See [Customize plugin integrations](./cookbook/customize-integrations) for app-owned wrappers and local behavior.
-
-## Key Files
-
-| File | Purpose |
+| If you want to… | Start here |
 | --- | --- |
-| `chat.config.ts` | Central configuration (models, branding, tool options) |
-| `lib/config.ts` | Parsed config export with defaults |
-| `lib/env.ts` | Environment variable validation (t3-env) |
-| `chatjs/providers/storage.ts` | Selected Files SDK adapter |
-| `lib/file-storage.ts` | Provider-agnostic file operations |
-| `lib/auth.ts` | Better Auth server configuration |
-| `lib/auth-client.ts` | Better Auth client configuration |
-| `lib/db/schema.ts` | Drizzle ORM database schema |
-| `proxy.ts` | Route protection middleware |
+| Change branding, OAuth providers, or model defaults | `chat.config.ts`. See [Configuration](/core/configuration). |
+| Change the agent's model policy or tool approvals | `agent/agent.ts`. EVE loads the channels, instructions, hooks, and tools under `agent/`. |
+| Change instructions for signed-in chats | `lib/ai/prompts.ts`, loaded by `agent/instructions/chat.ts`. See [Prompts](/customization/prompts). |
+| Adjust the transcript or composer layout | `components/chat/chat-conversation-screen.tsx`. See [Chat layout](/cookbook/chat-layout). |
+| Change sign-in or session handling | `lib/auth.ts` on the server and `lib/auth-client.ts` in the browser. See [Authentication](/customization/authentication). |
+| Change an installed plugin or tool | `chatjs/plugins/<id>/` or `chatjs/tools/<id>/`. Put app-specific composition in `integrations/`. See [Source ownership](/core/source-ownership). |
 
-## App Router Structure
+## Routes and data
 
-### Route Groups
+The Next.js App Router keeps sign-in pages under `app/(auth)/` and the chat interface under `app/(chat)/`. Plugins can add routes to either the app or the API. See [URL routing](/reference/routing) for the public paths and their identifiers.
 
-- `(auth)` - Authentication pages, shared layout without chat UI
-- `(chat)` - Main application, chat interface layout
+| Directory | Responsibility |
+| --- | --- |
+| `app/api/eve/[...path]/` | Authenticate browser requests and forward authorized operations to EVE |
+| `app/api/agent-conversations/` | Manage application-owned conversation metadata |
+| `app/api/trpc/[trpc]/`, `trpc/` | Serve the composed tRPC routers |
+| `lib/db/` | Define the Drizzle schema, migrations, and queries for application data |
+| `lib/eve/` | Connect ChatJS ownership, branches, and lifecycle operations to native EVE sessions |
+| `lib/ai/` | Resolve the installed gateway and discover its models |
 
-### API Routes
+EVE stores the transcript and execution state. ChatJS stores the identity and ownership records that let a signed-in user find and reopen a chat. See [Architecture](/core/architecture) for the request flow.
 
-```
-app/api/
-├── auth/[...all]/    # Better Auth handler
-├── eve/[...path]/    # Authenticated EVE gateway
-├── agent-conversations/ # Conversation metadata operations
-├── trpc/[trpc]/      # tRPC handler
-└── cron/             # Scheduled tasks
-```
+## Installed and generated files
 
-## Components Architecture
+| Path | What to do with it |
+| --- | --- |
+| `chatjs/core/`, `chatjs/providers/` | Inspect the shared contracts and your selected gateway and storage adapters. |
+| `chatjs/plugins/`, `chatjs/tools/` | Edit installed implementations. Some items also install native route or agent entry files. |
+| `integrations/` | Compose or wrap installed behavior in your app. |
+| `chatjs/generated/` | Change the source descriptors and run [sync](/cli/sync) to regenerate registrations. |
+| `chatjs/installed-source.json` | Commit the receipt so the CLI can identify locally edited files on subsequent installs. |
 
-### UI Layer
-
-```
-components/
-├── ui/               # Base components (shadcn/ui)
-│   └── extra/        # Local tweaks on shadcn components
-├── ai-elements/      # AI Elements components
-│   └── extra/        # Local tweaks on AI Elements
-├── chat/             # Chat-specific components
-└── part/             # Tool result renderers
-```
-
-### Part Components
-
-Shared message and tool presentation lives in `components/part/`. Installed tools can also provide their own renderers:
-
-```
-components/part/
-├── web-search.tsx
-├── document-common.tsx
-└── ...
-```
-
-See [Tool Part Pattern](/cookbook/tool-part) for implementation details.
-
-## Library Structure
-
-### AI Integration
-
-```text
-lib/ai/
-├── active-gateway.ts   # Active gateway selection
-├── gateways/registry.ts # Installed gateway registry
-├── models.ts          # Model fetching and caching
-├── models.generated.ts # Fallback model list
-└── prompts.ts         # Shared prompts
-```
-
-EVE agent instructions, hooks, and tool integration live in `agent/`. Installed tools live in `chatjs/tools/`, with application support in `tools/platform/`.
-
-### Data Layer
-
-```
-lib/
-├── db/
-│   ├── schema.ts      # Drizzle schema
-│   ├── queries.ts     # Database queries for application metadata
-│   ├── eve-queries.ts # EVE conversation metadata and ownership queries
-│   └── client.ts      # Database connection
-├── eve/               # Gateway, message, copy, and lifecycle contracts
-└── artifacts/         # Client artifact metadata helpers
-```
-
-Credit balances live in `chatjs/plugins/credits/`. Core usage evidence and reconciliation stay in `lib/db/eve-billing.ts` and `lib/eve/`.
-
-## Configuration Flow
-
-```
-chat.config.ts        # Define features, models, branding
-       ↓
-lib/config.ts          # Parse defaults and export config
-       ↓
-lib/env.ts             # Validate environment variables
-       ↓
-Runtime                # Installed contributions and configured preferences
-```
-
-## Data Flow
-
-```
-Browser UI or EVE gateway
-       ↓
-ChatJS metadata procedure
-       ↓
-Database Queries (lib/db/)
-       ↓
-Drizzle ORM
-       ↓
-PostgreSQL
-```
-
-## AI Streaming Flow
-
-```
-Chat UI (EVE React integration)
-       ↓
-Authenticated ChatJS gateway
-       ↓
-EVE runtime and event stream
-       ↓
-Gateway Abstraction → Provider (OpenAI, Anthropic, etc.)
-       ↓
-Stream response with tool calls
-       ↓
-Tool execution (if needed)
-       ↓
-Client renders parts
-```
-
-## Repository ownership
-
-`apps/chat` is the reference consumer and core template source. Canonical installables live in `packages/registry/src/`. The CLI publishes explicit source mappings and generates composition files. Maintainer page captures live in `packages/chat-visual-tests`, outside scaffolded applications. Plugin routes in `app/` and discoverable tools in `agent/` delegate to the owning plugin.
-
-See [Authoring plugins](./plugins/create-plugin) for the contribution contract and [Registry authoring](./registry/authoring) for distribution and demo synchronization.
+Use [status](/cli/status) to see which plugin owns a file. If you contribute to ChatJS itself, edit installable source in `packages/registry/src/` and its manifest. The [registry mirror](/registry/mirror) copies those files into the reference app.

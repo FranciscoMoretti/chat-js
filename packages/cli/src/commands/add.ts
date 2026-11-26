@@ -316,7 +316,7 @@ const logReplacementPlan = ({
   }
   if (gatewayChange) {
     log.info(
-      "Preserving model IDs and other runtime configuration in chat.config.ts. Review model IDs for the new gateway, then run setup/fetch:models."
+      "Preserving model IDs and other runtime configuration in chat.config.ts. Review your model IDs and configure credentials for the new gateway."
     );
   }
 };
@@ -458,7 +458,6 @@ export const add = new Command("add")
             ],
             overwrite: options.overwrite,
             rollbackTargets: [
-              ...(selectedGateway ? ["lib/ai/models.generated.ts"] : []),
               ...(hasNonEmptyValue(configEdit) ? ["chat.config.ts"] : []),
               ...(selectedGateway || selectedStorage || selectedSandbox
                 ? [".env.example"]

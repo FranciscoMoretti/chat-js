@@ -1,6 +1,6 @@
 ---
 title: Identity & Access
-description: Understand account sessions, conversation ownership, and optional guest access
+description: "Learn how account sessions establish conversation ownership, how guest access differs, and which checks protect shared and private chat data."
 ---
 
 ChatJS uses Better Auth for account sessions. EVE requests pass through the authenticated ChatJS gateway, which enforces access to the selected conversation. Plugin installation can add guest access or public sharing without granting access to private account data.
@@ -12,13 +12,13 @@ ChatJS uses Better Auth for account sessions. EVE requests pass through the auth
 3. Better Auth exchanges the code for tokens, upserts the user in the database, and creates a session.
 4. A signed HttpOnly session cookie is set on the browser.
 
-Sessions are stored in Postgres. A short-lived cookie cache reduces database hits. Most session validations are resolved from the cookie itself rather than a database query.
+Sessions are stored in PostgreSQL. Outside development, Better Auth can reuse a session cookie cache for five minutes. In development it checks the database and scopes cookies to the app origin and database so local checkouts can use separate sessions.
 
 ---
 
 ## Guest Chat
 
-Install [Guest Chat](../plugins/guest-chat) to let visitors start disposable text conversations without an account. Without it, signed-out visitors at `/` are redirected to `/login`.
+Install [Guest Chat](/plugins/guest-chat) to let visitors start disposable text conversations without an account. Without it, signed-out visitors at `/` are redirected to `/login`.
 
 The plugin owns its signed credentials, session policy, IP rate limits, and cleanup inventory. Its fixed model has no tools or files. Guests have no monetary balance and cannot access account APIs or history. Signing in does not migrate the temporary transcript.
 
@@ -36,4 +36,4 @@ Account chat handlers require a registered principal. Guest Chat installs a sepa
 
 ## Configure sign-in
 
-See [Authentication](../customization/authentication) to enable OAuth providers or add a sign-in provider. [Sharing](../plugins/sharing) documents public read-only access, and [Guest Chat](../plugins/guest-chat) documents disposable visitor sessions.
+See [Authentication](/customization/authentication) to enable OAuth providers or add a sign-in provider. [Sharing](/plugins/sharing) documents public read-only access, and [Guest Chat](/plugins/guest-chat) documents disposable visitor sessions.
