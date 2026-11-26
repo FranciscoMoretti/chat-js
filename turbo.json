@@ -256,7 +256,11 @@
       "outputs": []
     },
     "@chatjs/site#test:unit": {
-      "dependsOn": ["^test:unit"],
+      "dependsOn": [
+        "^site-source",
+        "@chat-js/thread#test:unit",
+        "@chatjs/brand#test:unit"
+      ],
       "inputs": [
         "$TURBO_DEFAULT$",
         "$TURBO_ROOT$/packages/registry/*.ts",
