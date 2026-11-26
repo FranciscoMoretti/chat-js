@@ -31,10 +31,9 @@ import {
 
 const roots: string[] = [];
 const demo = path.resolve(import.meta.dir, "../../../../apps/chat");
+const appRequire = createRequire(path.join(demo, "package.json"));
 const reactTypes = path.dirname(
-  createRequire(path.join(demo, "package.json")).resolve(
-    "@types/react/package.json"
-  )
+  appRequire.resolve("@types/react/package.json")
 );
 afterEach(async (): Promise<void> => {
   await Promise.all(
@@ -66,6 +65,9 @@ const registrationDiagnostics = (root: string, name: string): string[] => {
       paths: {
         "@/*": [`${root}/*`],
         react: [reactTypes],
+        streamdown: (appRequire.resolve.paths("streamdown") ?? []).map(
+          (directory) => path.join(directory, "streamdown")
+        ),
         "react/jsx-runtime": [path.join(reactTypes, "jsx-runtime.d.ts")],
       },
       skipLibCheck: true,
