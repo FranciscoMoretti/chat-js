@@ -19,6 +19,6 @@ function greet(name: string) {
 
 ## Renderer and themes
 
-The `Response` component passes the `code`, `math`, and `mermaid` plugins to Streamdown. These handle highlighted code, mathematical notation, and diagrams as the reply arrives. Keep those plugins in the component if you customize its wrapper or classes.
+The `Response` component includes streaming Markdown and syntax-highlighted code. Install `@chatjs/streamdown-math` to typeset LaTeX equations or `@chatjs/streamdown-mermaid` to render Mermaid diagrams. Each plugin works independently. The reference app includes both.
 
 For changes to code styling, see the [Streamdown documentation](https://streamdown.ai). For colors shared with the rest of the app, see [Theming](/customization/theming).

@@ -1,6 +1,7 @@
 import { disableAutoSnapshot, takeSnapshot } from "@uiverify/vitest";
 import React from "react";
 import { expect, test } from "vitest";
+import { Response } from "@/components/ai-elements/response";
 import { CodeSnippet } from "@/components/code-snippet";
 import { mount, renderRoot, unmount } from "@/tests/visual/primitive-mount";
 import "./sandbox.css";
@@ -66,6 +67,43 @@ test("highlighting preserves literal source, blank lines, line numbers and keybo
     pre?.focus();
     expect(document.activeElement).toBe(pre);
     await takeSnapshot("safe-highlighted-source");
+  } finally {
+    await unmount(fixture);
+  }
+});
+
+test("core Markdown completes a streamed emphasis and code fence", async () => {
+  disableAutoSnapshot();
+  const fixture = await mount(<Response mode="streaming">**Res</Response>);
+  try {
+    expect(
+      fixture.container.querySelector('[data-streamdown="strong"]')?.textContent
+    ).toBe("Res");
+    const source = "**Result**\n\n```js\nconst answer";
+    await renderRoot(
+      fixture.root,
+      <Response mode="streaming">{source}</Response>
+    );
+    await expect
+      .poll(() => fixture.container.querySelector("pre")?.textContent)
+      .toContain("const answer");
+    await renderRoot(
+      fixture.root,
+      <Response mode="streaming">
+        {[`${source} = 42;`, "```"].join("\n")}
+      </Response>
+    );
+    await expect
+      .poll(() => fixture.container.querySelector("pre")?.textContent)
+      .toContain("const answer = 42;");
+    await expect
+      .poll(() =>
+        fixture.container.querySelector('pre [style*="--shiki-dark"]')
+      )
+      .not.toBeNull();
+    expect(
+      fixture.container.querySelector('[data-streamdown="strong"]')?.textContent
+    ).toBe("Result");
   } finally {
     await unmount(fixture);
   }

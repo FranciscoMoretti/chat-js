@@ -3,20 +3,28 @@
 import { createContext, createElement, useContext, useMemo } from "react";
 import type { ComponentType, ReactNode } from "react";
 
+import type { PluginConfig } from "streamdown";
+
+type MarkdownPlugins = Pick<PluginConfig, "math" | "mermaid">;
+
 interface SlotBinding {
   readonly slot: object;
   readonly View: ComponentType;
 }
 export interface UiPlugin {
   readonly id: string;
+  readonly streamdown?: MarkdownPlugins;
   readonly slots: readonly SlotBinding[];
 }
 interface InstalledSlotBinding extends SlotBinding {
   readonly key: string;
 }
-const Bindings = createContext<
-  ReadonlyMap<object, readonly InstalledSlotBinding[]>
->(new Map());
+const Bindings = createContext<{
+  readonly slots: ReadonlyMap<object, readonly InstalledSlotBinding[]>;
+  readonly streamdown: MarkdownPlugins;
+}>({ slots: new Map(), streamdown: {} });
+
+export const useMarkdownPlugins = () => useContext(Bindings).streamdown;
 
 const bindSlot = Symbol("bindSlot");
 
@@ -26,7 +34,7 @@ export const defineSlot = <Props extends object = Record<string, never>>() => {
   const SlotProps = createContext<Props | null>(null);
   const useBindings = () => {
     const installed = useContext(Bindings);
-    return installed.get(identity) ?? [];
+    return installed.slots.get(identity) ?? [];
   };
   const Slot = (props: Props) => {
     const entries = useBindings();
@@ -73,19 +81,21 @@ export const Plugins = ({
 }) => {
   const registry = useMemo(() => {
     const resolved = new Map<object, InstalledSlotBinding[]>();
+    const streamdown: MarkdownPlugins = {};
     const seen = new Set<string>();
     for (const plugin of plugins) {
       if (seen.has(plugin.id)) {
         throw new Error(`Duplicate UI plugin: ${plugin.id}`);
       }
       seen.add(plugin.id);
+      Object.assign(streamdown, plugin.streamdown);
       for (const [index, binding] of plugin.slots.entries()) {
         const entries = resolved.get(binding.slot) ?? [];
         entries.push({ ...binding, key: `${plugin.id}:${index}` });
         resolved.set(binding.slot, entries);
       }
     }
-    return resolved;
+    return { slots: resolved, streamdown };
   }, [plugins]);
   return <Bindings value={registry}>{children}</Bindings>;
 };
