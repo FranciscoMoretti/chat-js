@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { Moon, Sun } from "lucide-react"
 import Script from "next/script"
 import { cn } from "cn"
 
@@ -11,41 +12,34 @@ export const DARK_MODE_FORWARD_TYPE = "dark-mode-forward"
 
 export function ModeSwitcher({
   variant = "ghost",
+  showLabel = false,
+  keyboardShortcut = false,
   className,
 }: {
+  showLabel?: boolean
+  keyboardShortcut?: boolean
   variant?: React.ComponentProps<typeof Button>["variant"]
   className?: React.ComponentProps<typeof Button>["className"]
 }) {
-  const { toggleTheme } = useThemeToggle()
+  const { toggleTheme } = useThemeToggle(keyboardShortcut)
 
   return (
     <Button
       variant={variant}
-      size="icon"
+      size={showLabel ? "sm" : "icon"}
       className={cn("group/toggle extend-touch-target", className)}
       onClick={toggleTheme}
-      id="mode-switcher-button"
+      aria-label="Toggle theme"
+      title="Toggle theme"
     >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className="size-4.5"
-      >
-        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-        <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" />
-        <path d="M12 3l0 18" />
-        <path d="M12 9l4.65 -4.65" />
-        <path d="M12 14.3l7.37 -7.37" />
-        <path d="M12 19.6l8.85 -8.85" />
-      </svg>
-      <span className="sr-only">Toggle theme</span>
+      <Moon aria-hidden="true" className="size-4 dark:hidden" />
+      <Sun aria-hidden="true" className="hidden size-4 dark:block" />
+      {showLabel && (
+        <>
+          <span className="dark:hidden">Dark mode</span>
+          <span className="hidden dark:inline">Light mode</span>
+        </>
+      )}
     </Button>
   )
 }

@@ -158,7 +158,7 @@ try {
   };
   await waitForPreset();
   await expect(
-    page.getByRole("link", { name: "ChatJS / Create" }).locator("svg")
+    page.getByRole("link", { name: "ChatJS home" }).locator("svg")
   ).toBeVisible();
   await expect(
     frame
@@ -317,7 +317,10 @@ try {
   );
   assert.equal(commandAppPreset(command).gateway, "openrouter");
   assert.equal(commandAppPreset(command).sandbox, "vercel");
-  assert.ok(command.includes('"bucket":"my-chat-uploads"'));
+  assert.equal(
+    commandAppPreset(command).storage?.options.bucket,
+    "my-chat-uploads"
+  );
   assert.match(command, /--no-rtl --pointer$/u);
   await capture("create-installation");
   await page.keyboard.press("Escape");
@@ -377,13 +380,11 @@ try {
     .getByRole("button", { name: "Get Code", exact: true })
     .first()
     .click();
-  await expect(dialog.getByTestId("create-command")).toContainText(
-    '"bucket":"my-chat-uploads"'
+  const restored = commandAppPreset(
+    await dialog.getByTestId("create-command").textContent()
   );
-  expect(
-    commandAppPreset(await dialog.getByTestId("create-command").textContent())
-      .sandbox
-  ).toBe("vercel");
+  expect(restored.storage?.options.bucket).toBe("my-chat-uploads");
+  expect(restored.sandbox).toBe("vercel");
   await page.keyboard.press("Escape");
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(
@@ -414,7 +415,7 @@ try {
     .getByRole("button", { name: "Get Code", exact: true })
     .first();
   const brandBounds = await page
-    .getByRole("link", { name: "ChatJS / Create" })
+    .getByRole("link", { name: "ChatJS home" })
     .boundingBox();
   assert.ok(brandBounds && brandBounds.width >= 16);
   const getCodeBounds = await mobileGetCode.boundingBox();

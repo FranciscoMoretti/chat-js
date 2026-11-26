@@ -21,7 +21,7 @@ import {
   ThreadInstallCommand,
   ThreadPlayground,
 } from "@/components/thread-showcase";
-import { siteConfig, siteLinks } from "@/lib/site-config";
+import { docsNavigationHref, siteConfig, siteLinks } from "@/lib/site-config";
 
 import "../../components/carbon.css";
 import "./threads.css";
@@ -152,7 +152,7 @@ const ThreadsPage = (): React.JSX.Element => (
                 </a>
                 <a
                   className="border-border text-foreground/75 hover:text-foreground inline-flex min-h-11 items-center gap-2 border-b text-sm transition-colors"
-                  href={`${siteLinks.docs}/threads`}
+                  href={`${docsNavigationHref}/threads`}
                 >
                   Read the docs
                   <ArrowRight className="size-3.5" />
@@ -350,7 +350,7 @@ const ThreadsPage = (): React.JSX.Element => (
           </div>
           <a
             className="bg-primary text-primary-foreground inline-flex min-h-11 shrink-0 items-center gap-2 rounded-[5px] px-5 text-sm font-medium transition-opacity hover:opacity-85"
-            href={`${siteLinks.docs}/threads`}
+            href={`${docsNavigationHref}/threads`}
           >
             Read the docs
             <ArrowRight className="size-4" />

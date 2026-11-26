@@ -63,8 +63,7 @@ html:has(.chatjs-create-shell) {
   --selection-foreground: oklch(1 0 0);
 }
 
-html.dark:has(.chatjs-create-shell),
-body:has(.chatjs-create-shell) .dark {
+html.dark:has(.chatjs-create-shell) {
   --background: var(--chatjs-background);
   --foreground: var(--chatjs-foreground);
   --card: var(--chatjs-surface);
