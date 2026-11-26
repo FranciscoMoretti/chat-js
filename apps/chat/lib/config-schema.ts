@@ -89,44 +89,6 @@ const aiConfigSchema = installedGatewaySchema.prefault({
   ...gatewayModelDefaults,
 });
 
-const createOrganizationSchema = (): z.ZodObject<{
-  contact: z.ZodObject<{ legalEmail: z.ZodEmail; privacyEmail: z.ZodEmail }>;
-  name: z.ZodString;
-}> =>
-  z.object({
-    contact: z.object({ legalEmail: z.email(), privacyEmail: z.email() }),
-    name: z.string(),
-  });
-
-const createPoliciesSchema = (): z.ZodObject<{
-  privacy: z.ZodObject<{
-    lastUpdated: z.ZodOptional<z.ZodString>;
-    title: z.ZodString;
-  }>;
-  terms: z.ZodObject<{
-    lastUpdated: z.ZodOptional<z.ZodString>;
-    title: z.ZodString;
-  }>;
-}> =>
-  z.object({
-    privacy: z.object({
-      lastUpdated: z.string().optional(),
-      title: z.string(),
-    }),
-    terms: z.object({ lastUpdated: z.string().optional(), title: z.string() }),
-  });
-
-const createServicesSchema = (): z.ZodObject<{
-  aiProviders: z.ZodArray<z.ZodString>;
-  hosting: z.ZodString;
-  paymentProcessors: z.ZodArray<z.ZodString>;
-}> =>
-  z.object({
-    aiProviders: z.array(z.string()),
-    hosting: z.string(),
-    paymentProcessors: z.array(z.string()),
-  });
-
 const createAcceptedAttachmentTypesSchema = (): z.ZodObject<{
   "application/pdf": z.ZodArray<z.ZodString>;
   "image/jpeg": z.ZodArray<z.ZodString>;
@@ -137,23 +99,6 @@ const createAcceptedAttachmentTypesSchema = (): z.ZodObject<{
     "image/jpeg": z.array(z.string()),
     "image/png": z.array(z.string()),
   });
-
-const pricingConfigSchema = z.object({
-  currency: z.string().optional(),
-  free: z
-    .object({
-      name: z.string(),
-      summary: z.string(),
-    })
-    .optional(),
-  pro: z
-    .object({
-      monthlyPrice: z.number(),
-      name: z.string(),
-      summary: z.string(),
-    })
-    .optional(),
-});
 
 const attachmentsConfigObjectSchema = z.object({
   acceptedTypes: createAcceptedAttachmentTypesSchema().describe(
@@ -228,15 +173,6 @@ const configDescriptionSchema = z.object({
   attachments: attachmentsConfigObjectSchema,
   authentication: authenticationConfigObjectSchema,
   features: featuresConfigObjectSchema,
-  legal: z.object({
-    governingLaw: z.string(),
-    minimumAge: z.number(),
-    refundPolicy: z.string(),
-  }),
-  organization: createOrganizationSchema(),
-  policies: createPoliciesSchema(),
-  pricing: pricingConfigSchema.optional(),
-  services: createServicesSchema(),
 });
 
 const configSchema = z.object({
@@ -252,40 +188,10 @@ const configSchema = z.object({
   attachments: attachmentsConfigSchema,
   authentication: authenticationConfigSchema,
   features: featuresConfigSchema,
-  legal: z
-    .object({
-      governingLaw: z.string(),
-      minimumAge: z.number(),
-      refundPolicy: z.string(),
-    })
-    .default({
-      governingLaw: "United States",
-      minimumAge: 13,
-      refundPolicy: "no-refunds",
-    }),
-  organization: createOrganizationSchema().default({
-    contact: {
-      legalEmail: "legal@your-domain.com",
-      privacyEmail: "privacy@your-domain.com",
-    },
-    name: "Your Organization",
-  }),
-  policies: createPoliciesSchema().default({
-    privacy: { title: "Privacy Policy" },
-    terms: { title: "Terms of Service" },
-  }),
-  pricing: pricingConfigSchema.optional(),
-  services: createServicesSchema().default({
-    aiProviders: ["OpenAI", "Anthropic", "Google"],
-    hosting: "Vercel",
-    paymentProcessors: [],
-  }),
 });
 
 // Output types (after defaults applied)
 type Config = z.infer<typeof configSchema>;
-
-type PricingConfig = z.infer<typeof pricingConfigSchema>;
 
 type AiConfig = z.infer<typeof aiConfigSchema>;
 
@@ -397,7 +303,6 @@ export {
   FEATURES_DEFAULTS,
   featuresConfigObjectSchema,
   featuresConfigSchema,
-  pricingConfigSchema,
 };
 export type {
   AiConfig,
@@ -406,6 +311,5 @@ export type {
   Config,
   ConfigInput,
   FeaturesConfig,
-  PricingConfig,
 };
 export type { GatewayType } from "@/lib/ai/gateways/registry";

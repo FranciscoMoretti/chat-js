@@ -68,49 +68,5 @@ const config = defineConfig({
   features: {
     parallelResponses: true,
   },
-  legal: {
-    governingLaw: "United States",
-    minimumAge: 13,
-    refundPolicy: "no-refunds",
-  },
-  organization: {
-    contact: {
-      legalEmail: "legal@chatjs.dev",
-      privacyEmail: "privacy@chatjs.dev",
-    },
-    name: "ChatJS",
-  },
-  policies: {
-    privacy: {
-      lastUpdated: "July 24, 2025",
-      title: "Privacy Policy",
-    },
-    terms: {
-      lastUpdated: "July 24, 2025",
-      title: "Terms of Service",
-    },
-  },
-  services: {
-    aiProviders: [
-      "OpenAI",
-      "Anthropic",
-      "xAI",
-      "Google",
-      "Meta",
-      "Mistral",
-      "Alibaba",
-      "Amazon",
-      "Cohere",
-      "DeepSeek",
-      "Perplexity",
-      "Vercel",
-      "Inception",
-      "Moonshot",
-      "Morph",
-      "ZAI",
-    ],
-    hosting: "Vercel",
-    paymentProcessors: [],
-  },
 });
 export default config;

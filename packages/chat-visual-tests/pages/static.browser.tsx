@@ -7,24 +7,10 @@ import SettingsLayout from "@/app/(chat)/settings/layout";
 import SettingsLoading from "@/app/(chat)/settings/loading";
 import RootLoading from "@/app/loading";
 import NotFound from "@/app/not-found";
-import PrivacyPage from "@/app/privacy/page";
-import TermsPage from "@/app/terms/page";
 import { ChatLoadingShell } from "@/components/chat-loading-shell";
 
 import { signedIn } from "./fixtures";
 import { renderRoute } from "./render";
-
-test("privacy policy", async () => {
-  await renderRoute(<PrivacyPage />, { path: "/privacy" });
-  await expect
-    .element(page.getByRole("heading", { name: "Data Security" }))
-    .toBeVisible();
-});
-
-test("terms of service", async () => {
-  await renderRoute(<TermsPage />, { path: "/terms" });
-  await expect.element(page.getByRole("heading", { level: 1 })).toBeVisible();
-});
 
 test("page not found", async () => {
   await renderRoute(<NotFound />, { path: "/missing" });

@@ -6,9 +6,7 @@ import {
 } from "../../chat/chatjs/plugins/desktop/protocol";
 import { writeFile } from "node:fs/promises";
 
-const { appName, appPrefix, appUrl, organization } = config;
-const orgEmail =
-  organization.contact?.privacyEmail || organization.contact?.legalEmail;
+const { appName, appPrefix, appUrl } = config;
 
 const JSON_INDENTATION_SPACES = 2;
 const FAILURE_EXIT_CODE = 1;
@@ -18,8 +16,6 @@ const brandingJson = JSON.stringify(
     appName,
     appPrefix,
     appUrl,
-    orgEmail,
-    orgName: organization.name,
     auth: {
       callbackPath: ELECTRON_AUTH_CALLBACK_PATH,
       clientId: ELECTRON_AUTH_CLIENT_ID,
