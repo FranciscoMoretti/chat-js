@@ -13,7 +13,7 @@
     "prebuild": "bun run check-env",
     "dev": "bun run check-env && EVE_SANDBOX_IMAGE_TAG=${EVE_SANDBOX_IMAGE_TAG:-0.80.1} next dev",
     "dev:inspect": "bun run check-env && EVE_SANDBOX_IMAGE_TAG=${EVE_SANDBOX_IMAGE_TAG:-0.80.1} next dev --inspect",
-    "build": "tsx lib/db/migrate.ts --deployment && bun run eve:build && EVE_SANDBOX_IMAGE_TAG=${EVE_SANDBOX_IMAGE_TAG:-0.80.1} next build",
+    "build": "tsx lib/db/migrate.ts --deployment && bun run eve:build --next-host && EVE_SANDBOX_IMAGE_TAG=${EVE_SANDBOX_IMAGE_TAG:-0.80.1} next build",
     "analyze": "next experimental-analyze",
     "start": "EVE_SANDBOX_IMAGE_TAG=${EVE_SANDBOX_IMAGE_TAG:-0.80.1} next start",
     "prod": "bun run build && bun run start",

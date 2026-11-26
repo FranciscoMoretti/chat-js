@@ -20,9 +20,16 @@ if (backendCheck.status !== PROCESS_SUCCESS_STATUS) {
   );
 }
 
-const result = spawnSync("bun", ["x", "eve", "build"], {
-  stdio: "inherit",
-});
-if (result.status !== PROCESS_SUCCESS_STATUS) {
-  throw new Error("EVE build failed", { cause: result.error });
+// withEve registers a separate Vercel service that builds and prewarms the
+// worker. Local next start and explicit eve:build still need the worker here.
+const vercelBuildsWorker =
+  process.env.VERCEL === "1" && process.argv.includes("--next-host");
+
+if (!vercelBuildsWorker) {
+  const result = spawnSync("bun", ["x", "eve", "build"], {
+    stdio: "inherit",
+  });
+  if (result.status !== PROCESS_SUCCESS_STATUS) {
+    throw new Error("EVE build failed", { cause: result.error });
+  }
 }
