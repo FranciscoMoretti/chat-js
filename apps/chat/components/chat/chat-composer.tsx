@@ -16,7 +16,7 @@ import type { ChatStatus } from "ai";
 import { useAutoFocus } from "@/hooks/use-auto-focus";
 import { useMounted } from "@/hooks/use-mounted";
 
-import React from "react";
+import React, { useLayoutEffect } from "react";
 import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -158,6 +158,34 @@ export const ChatComposer = ({
   );
   const editorReadOnly = readOnly || (busy && !onStop && !allowDraftWhileBusy);
   const inputRef = useAutoFocus(autoFocus && !editorReadOnly);
+  useLayoutEffect((): (() => void) | undefined => {
+    const input = inputRef.current;
+    if (!input || !draft || CSS.supports("field-sizing", "content")) {
+      return undefined;
+    }
+
+    // Clearing the explicit height lets shorter or newly unwrapped drafts shrink.
+    const fitDraft = (): void => {
+      input.style.height = "";
+      input.style.height = `${input.scrollHeight}px`;
+    };
+    fitDraft();
+    let width = input.offsetWidth;
+    let frame = 0;
+    const observer = new ResizeObserver(() => {
+      if (input.offsetWidth !== width) {
+        width = input.offsetWidth;
+        cancelAnimationFrame(frame);
+        frame = requestAnimationFrame(fitDraft);
+      }
+    });
+    observer.observe(input);
+    return () => {
+      observer.disconnect();
+      cancelAnimationFrame(frame);
+      input.style.height = "";
+    };
+  }, [draft, inputRef]);
   const canSend =
     !disabled &&
     !editorReadOnly &&

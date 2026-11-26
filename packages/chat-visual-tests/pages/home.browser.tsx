@@ -1,5 +1,5 @@
 import { TrpcFixtureError, route } from "./route";
-import { expect, test, vi } from "vitest";
+import { expect, onTestFinished, test, vi } from "vitest";
 import { page, userEvent } from "vitest/browser";
 
 import ChatLayout from "@/app/(chat)/layout";
@@ -54,6 +54,36 @@ test("clearing a recovered New Chat draft removes its saved text", async () => {
   expect(readCreationFollowUp(sessionStorage, id)).toBe("Revised draft");
   await composer.fill("");
   expect(readCreationFollowUp(sessionStorage, id)).toBe("");
+});
+
+test("a recovered draft grows and shrinks without browser field sizing", async () => {
+  const supports = vi.spyOn(CSS, "supports").mockReturnValue(false);
+  const style = document.createElement("style");
+  style.textContent = "textarea { field-sizing: fixed !important; }";
+  document.head.append(style);
+  onTestFinished(() => {
+    supports.mockRestore();
+    style.remove();
+  });
+
+  const wrapped = "Write the launch notes for the next release. ".repeat(10);
+  saveCreationFollowUp(sessionStorage, session.user.id, wrapped);
+  await renderRoute(home, signedIn);
+  const composer = page.getByRole("textbox", { name: "Message" });
+  await expect.element(composer).toHaveValue(wrapped);
+  const input = composer.element();
+  const wideHeight = input.clientHeight;
+  await page.viewport(390, 844);
+  await expect.poll(() => input.clientHeight).toBeGreaterThan(wideHeight);
+  const wrappedHeight = input.clientHeight;
+  expect(input.scrollHeight).toBe(input.clientHeight);
+
+  await composer.fill("One line of a long draft.\n".repeat(40));
+  expect(input.scrollHeight).toBeGreaterThan(input.clientHeight);
+  await composer.fill("");
+  expect(input.clientHeight).toBeLessThan(wrappedHeight);
+  expect(`${input.clientHeight}px`).toBe(getComputedStyle(input).minHeight);
+  await composer.fill(wrapped);
 });
 
 test("home with Guest Chat installed has a fixed inexpensive model", async () => {
