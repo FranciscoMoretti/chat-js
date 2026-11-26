@@ -61,10 +61,11 @@ describe("VercelGateway", () => {
     );
     try {
       const models = await new VercelGateway({ env: {}, fetch }).fetchModels();
-      expect(fetch).toHaveBeenCalledWith(
-        "https://ai-gateway.vercel.sh/v1/models",
-        { headers: undefined, signal: expect.any(AbortSignal) }
-      );
+      const [request] = fetch.mock.calls;
+      const [url, init] = request ?? [];
+      expect(url).toBe("https://ai-gateway.vercel.sh/v1/models");
+      expect(init?.headers).toBeUndefined();
+      expect(init?.signal).toBeInstanceOf(AbortSignal);
       expect(models.map((model) => model.id)).toEqual([
         "openai/gpt-test",
         "xai/grok-imagine-video",
@@ -103,13 +104,13 @@ describe("VercelGateway", () => {
       env: { VERCEL_OIDC_TOKEN: "test-oidc" },
       fetch,
     }).fetchModels();
-    expect(fetch).toHaveBeenCalledWith(
-      "https://ai-gateway.vercel.sh/v1/models?include_availability",
-      {
-        headers: { Authorization: "Bearer test-oidc" },
-        signal: expect.any(AbortSignal),
-      }
+    const [request] = fetch.mock.calls;
+    const [url, init] = request ?? [];
+    expect(url).toBe(
+      "https://ai-gateway.vercel.sh/v1/models?include_availability"
     );
+    expect(init?.headers).toEqual({ Authorization: "Bearer test-oidc" });
+    expect(init?.signal).toBeInstanceOf(AbortSignal);
     expect(models.map((entry) => entry.id)).toEqual([
       "openai/gpt-test",
       "openai/unknown",
