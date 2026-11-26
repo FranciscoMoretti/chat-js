@@ -2,7 +2,6 @@ import { Geist, Geist_Mono } from "next/font/google";
 import type { Metadata, Viewport } from "next";
 import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 import Script from "next/script";
-import { NuqsAdapter } from "nuqs/adapters/next/app";
 
 import "./globals.css";
 import components from "@/components.json";
@@ -93,24 +92,18 @@ const RootLayout = ({
       ) : null}
     </head>
     <body className="antialiased">
-      <Script
-        src="https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js"
-        strategy="afterInteractive"
-      />
       <UiDirection direction={components.rtl ? "rtl" : "ltr"}>
-        <NuqsAdapter>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            disableTransitionOnChange
-            enableSystem
-          >
-            <TooltipProvider>
-              <Toaster position="top-center" />
-              {children}
-            </TooltipProvider>
-          </ThemeProvider>
-        </NuqsAdapter>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          disableTransitionOnChange
+          enableSystem
+        >
+          <TooltipProvider>
+            <Toaster position="top-center" />
+            {children}
+          </TooltipProvider>
+        </ThemeProvider>
       </UiDirection>
       <LayoutPlugins />
     </body>

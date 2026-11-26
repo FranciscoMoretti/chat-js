@@ -81,6 +81,12 @@ assert.equal(config.iconLibrary, preset.values.iconLibrary);
 assert.equal(config.rtl, process.env.CHATJS_NATIVE_RTL === "1");
 assert.equal(config.registries["@chatjs"], process.env.CHATJS_NATIVE_BASE === "radix" ? process.env.CHATJS_REGISTRY_URL.replace("/{name}.json", "/radix/{name}.json") : process.env.CHATJS_REGISTRY_URL);
 const scenario = process.env.CHATJS_NATIVE_SCENARIO;
+const { dependencies, overrides } = await Bun.file("package.json").json();
+for (const name of ["nuqs", "react-hook-form"]) {
+  assert.equal(Object.hasOwn(dependencies, name), scenario === "full", name);
+}
+assert.equal(Object.hasOwn(dependencies, "@vercel/connect"), scenario === "selection");
+assert.equal(overrides["@vercel/connect"].eve, "$eve");
 if (scenario === "minimal") {
   const manifest = await Bun.file("package.json").json();
   for (const name of ["tokenlens", "react-resizable-panels"]) {
