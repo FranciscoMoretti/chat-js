@@ -1,6 +1,8 @@
 // Host capabilities, separate from what can be installed. Keep this serializable
 // so the configurator never imports production plugin controllers.
 export const livePreviewPlugins = [
+  "streamdown-math",
+  "streamdown-mermaid",
   "image-viewer",
   "video-viewer",
   "spreadsheet-viewer",

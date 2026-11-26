@@ -32,8 +32,6 @@ export const coreDependencyNames: readonly string[] = [
   "@radix-ui/react-use-controllable-state",
   "@shadcn/react",
   "@streamdown/code",
-  "@streamdown/math",
-  "@streamdown/mermaid",
   "@t3-oss/env-nextjs",
   "@tailwindcss/postcss",
   "@tailwindcss/typography",

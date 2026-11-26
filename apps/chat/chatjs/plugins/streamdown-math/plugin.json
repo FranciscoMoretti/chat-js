@@ -1,0 +1,6 @@
+{
+  "contractVersion": 3,
+  "id": "streamdown-math",
+  "kind": "plugin",
+  "files": ["chatjs/plugins/streamdown-math/chat-ui.ts"]
+}

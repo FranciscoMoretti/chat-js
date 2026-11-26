@@ -1,0 +1,6 @@
+{
+  "contractVersion": 3,
+  "id": "streamdown-mermaid",
+  "kind": "plugin",
+  "files": ["chatjs/plugins/streamdown-mermaid/chat-ui.ts"]
+}

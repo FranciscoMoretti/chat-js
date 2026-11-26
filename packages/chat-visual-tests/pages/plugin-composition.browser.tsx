@@ -16,6 +16,7 @@ import {
   history,
   invoicesConversation,
   invoicesTranscripts,
+  markdownTranscripts,
   invoicesTrpc,
   signedIn,
 } from "./fixtures";
@@ -39,6 +40,61 @@ const responseDetails = definePlugin({
     ),
   ],
 });
+
+for (const installed of [true, false]) {
+  test(`Markdown response with optional renderers ${installed ? "installed" : "absent"}`, async () => {
+    if (!installed) {
+      const original = [...chatPlugins];
+      chatPlugins.splice(
+        0,
+        chatPlugins.length,
+        ...original.filter(
+          (plugin) =>
+            plugin.id !== "streamdown-math" &&
+            plugin.id !== "streamdown-mermaid"
+        )
+      );
+      onTestFinished(() => {
+        chatPlugins.splice(0, chatPlugins.length, ...original);
+      });
+    }
+    await renderRoute(
+      <ChatLayout>
+        <ChatPage
+          params={Promise.resolve({ chatId: invoicesConversation.id })}
+        />
+      </ChatLayout>,
+      {
+        ...signedIn,
+        path: `/chat/${invoicesConversation.chatId}`,
+        params: { chatId: invoicesConversation.chatId },
+        server: { conversation: invoicesConversation, conversations: history },
+        transcripts: markdownTranscripts,
+        trpc: invoicesTrpc,
+      }
+    );
+    await expect.element(page.getByText("Area of a circle")).toBeVisible();
+    if (installed) {
+      await expect
+        .poll(() => document.querySelector(".katex .katex-html"))
+        .not.toBeNull();
+      await expect
+        .element(page.getByRole("img", { name: "Mermaid chart" }))
+        .toHaveTextContent("Radius");
+    } else {
+      await expect
+        .poll(() => document.querySelector("pre")?.textContent)
+        .toContain("Radius --> Area");
+      await expect.element(page.getByText(/A = .*r\^2/u)).toBeVisible();
+      expect(
+        document.querySelector('.katex, [data-streamdown="mermaid-block"]')
+      ).toBeNull();
+    }
+    await page.screenshot({
+      path: `__screenshots__/markdown-${installed ? "installed" : "bare"}.png`,
+    });
+  });
+}
 
 test("published file is downloadable without a matching viewer", async () => {
   const original = [...chatPlugins];

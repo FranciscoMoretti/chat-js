@@ -14,5 +14,7 @@ export const installedPlugins: ReadonlySet<string> = new Set([
   "search",
   "sharing",
   "spreadsheet-viewer",
+  "streamdown-math",
+  "streamdown-mermaid",
   "video-viewer",
 ]);

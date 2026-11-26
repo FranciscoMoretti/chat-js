@@ -302,6 +302,30 @@ export const invoicesShared: NonNullable<ServerData["transcript"]> = {
 
 export const invoicesTranscripts = { [invoicesSessionId]: invoicesTranscript };
 
+export const markdownTranscripts: Record<string, EveMessage[]> = {
+  [invoicesSessionId]: [
+    {
+      id: "markdown-response",
+      role: "assistant",
+      parts: [
+        {
+          type: "text",
+          text: [
+            "**Area of a circle**",
+            "$$",
+            "A = \\pi r^2",
+            "$$",
+            "```mermaid",
+            "flowchart LR",
+            "  Radius --> Area",
+            "```",
+          ].join("\n"),
+        },
+      ],
+    },
+  ],
+};
+
 export const invoicesScrollTranscripts: Record<string, EveMessage[]> = {
   [invoicesSessionId]: [
     ...invoicesTranscript,
