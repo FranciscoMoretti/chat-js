@@ -201,7 +201,7 @@ export const EveHistoryList = ({
           ): React.JSX.Element => (
             <div className="[&:not(:first-child)]:mt-6" key={group.label}>
               {group.label && (
-                <div className="text-sidebar-foreground/50 px-2 py-1 text-xs">
+                <div className="text-sidebar-foreground/65 px-2 py-1 text-xs">
                   {group.label}
                 </div>
               )}

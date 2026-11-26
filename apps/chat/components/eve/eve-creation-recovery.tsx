@@ -60,10 +60,30 @@ const matchesSavedRequest = (
   );
 };
 
+const emptyRecoveryMessage = (
+  {
+    loaded,
+    pending,
+    rejected,
+    failure,
+  }: {
+    readonly loaded: boolean;
+    readonly pending: ReturnType<typeof readCreationRequest>;
+    readonly rejected: boolean;
+    readonly failure: string;
+  },
+  message: string | undefined,
+  initialFailure: string
+): string | undefined =>
+  loaded && !pending && !rejected && !failure && !initialFailure
+    ? message
+    : undefined;
+
 export const EveCreationRecovery = ({
   ownerId,
   operationId,
   firstMessage,
+  missingRequestMessage,
   scope,
   initiallyRejected = false,
   initialFailure = "",
@@ -71,6 +91,7 @@ export const EveCreationRecovery = ({
 }: {
   readonly ownerId: string;
   readonly operationId?: string;
+  readonly missingRequestMessage?: string;
   readonly firstMessage: string;
   readonly scope?: Readonly<CreationScope>;
   readonly initiallyRejected?: boolean;
@@ -119,11 +140,12 @@ export const EveCreationRecovery = ({
       ),
     [ownerId, operationId, scope, initiallyRejected]
   );
-  const { pending, rejected, loaded, failure } = useSyncExternalStore(
+  const recovery = useSyncExternalStore(
     store.subscribe,
     store.getSnapshot,
     store.getServerSnapshot
   );
+  const { pending, rejected, loaded, failure } = recovery;
   const { setRejected, setFailure } = useMemo(
     () => ({
       setRejected: (value: boolean): void => {
@@ -208,6 +230,15 @@ export const EveCreationRecovery = ({
       );
     }
   };
+
+  const emptyMessage = emptyRecoveryMessage(
+    recovery,
+    missingRequestMessage,
+    initialFailure
+  );
+  if (hasText(emptyMessage)) {
+    return <p className="text-muted-foreground text-sm">{emptyMessage}</p>;
+  }
 
   const status = recoveryStatus(
     loaded,

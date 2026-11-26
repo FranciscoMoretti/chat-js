@@ -44,6 +44,7 @@ export const ProjectIconPicker = ({
   return (
     <Popover>
       <PopoverButton
+        aria-label="Choose project icon and color"
         className={cn("size-9 p-0", className)}
         type="button"
         variant="outline"

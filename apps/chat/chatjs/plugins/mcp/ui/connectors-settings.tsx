@@ -163,7 +163,7 @@ const CustomConnectorRow = ({
         ) : null}
         <DropdownMenu>
           <MenuButton
-            aria-label="More connector actions"
+            aria-label={`More actions for ${connector.name}`}
             size="icon"
             variant="ghost"
           >

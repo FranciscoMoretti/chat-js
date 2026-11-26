@@ -3,6 +3,8 @@ import { notFound, redirect } from "next/navigation";
 import React, { Suspense } from "react";
 import { z } from "zod";
 
+import { InternalLink } from "@/components/internal-link";
+import { buttonVariants } from "@/components/ui/button";
 import { EveCreationRecovery } from "@/components/eve/eve-creation-recovery";
 import { EveProjectHome } from "@/chatjs/plugins/projects/ui/eve-project-home";
 import { auth } from "@/lib/auth";
@@ -29,9 +31,10 @@ const ProjectContent = async ({
   const project = await getProjectById({ id: projectId });
   if (project === undefined || project.userId !== session.user.id) {
     return (
-      <div className="p-4">
+      <div className="space-y-4 p-4">
         <h1 className="text-xl font-semibold">Project unavailable</h1>
         <EveCreationRecovery
+          missingRequestMessage="This project may have been deleted, or your account may not have access."
           firstMessage=""
           ownerId={session.user.id}
           scope={{
@@ -41,6 +44,12 @@ const ProjectContent = async ({
             },
           }}
         />
+        <InternalLink
+          className={buttonVariants({ variant: "outline" })}
+          href="/"
+        >
+          Back to chats
+        </InternalLink>
       </div>
     );
   }

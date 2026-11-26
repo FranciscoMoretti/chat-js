@@ -115,7 +115,7 @@ const TermsPage = (): React.JSX.Element => {
   const planTypesLabel = getPlanTypesLabel({ hasFree, hasPro });
 
   return (
-    <main className="prose dark:prose-invert container mx-auto max-w-3xl py-10">
+    <main className="prose dark:prose-invert container mx-auto max-w-3xl px-4 py-10 md:px-0">
       <h1>{config.policies.terms.title}</h1>
       {(config.policies.terms.lastUpdated ?? "").length > 0 ? (
         <p>

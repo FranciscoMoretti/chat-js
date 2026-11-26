@@ -89,7 +89,7 @@ test("a suspended selection render cannot change the visible count callback", as
         fixture.root.render(<Fixture value={speculativeCounts} />);
       });
     });
-    await page.getByRole("button", { exact: true, name: "1×" }).click();
+    await page.getByRole("button", { name: /^1× /u }).click();
     await page.getByRole("menuitem", { exact: true, name: "2x" }).click();
     expect(action).toHaveBeenCalledWith({ [primary]: 2 });
   } finally {
@@ -113,8 +113,7 @@ const crossRowCases = [
 ];
 const setModelCountToTwo = async (modelName: string): Promise<void> => {
   await page
-    .getByRole("option", { name: modelName })
-    .getByRole("button", { exact: true, name: "1×" })
+    .getByRole("button", { exact: true, name: `1× ${modelName}` })
     .click();
   await page.getByRole("menuitem", { exact: true, name: "2x" }).click();
   await expect

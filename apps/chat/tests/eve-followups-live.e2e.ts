@@ -94,7 +94,7 @@ test("native follow-ups survive reload, submit normally and preserve unsent comp
   await composer.fill(retainedQuestion);
   await page.getByRole("combobox").click();
   await page.getByRole("switch", { name: "Use Multiple Models" }).click();
-  await page.getByRole("button", { exact: true, name: "1×" }).click();
+  await page.getByRole("button", { name: /^1× /u }).click();
   await page.getByRole("menuitem", { exact: true, name: "2x" }).click();
   await expect(
     page.getByRole("menuitem", { exact: true, name: "2x" })

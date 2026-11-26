@@ -178,7 +178,7 @@ test.each(["single", ...modes])(
           await page.getByTestId("model-selector").click();
         }
       } else {
-        await page.getByRole("button", { exact: true, name: "1×" }).click();
+        await page.getByRole("button", { name: /^1× /u }).click();
         await page.getByRole("menuitem", { exact: true, name: "2x" }).click();
         await page.getByTestId("model-selector").click();
       }
@@ -217,7 +217,7 @@ test.each(modes)(
       } else if (mode === "toggle-model") {
         await page.getByRole("option", { name: /Secondary model/u }).click();
       } else {
-        await page.getByRole("button", { exact: true, name: "1×" }).click();
+        await page.getByRole("button", { name: /^1× /u }).click();
         await page.getByRole("menuitem", { exact: true, name: "2x" }).click();
       }
       expect(action).toHaveBeenCalledOnce();
