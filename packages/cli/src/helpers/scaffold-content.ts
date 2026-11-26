@@ -196,6 +196,7 @@ const REFERENCE_VISUAL_PROJECT =
   /^ {4}\{\n {6}name: "visual",[\s\S]*?^ {4}\},\n/gmu;
 
 interface ScaffoldPackageManifest {
+  imports?: Record<string, unknown> | null;
   dependencies?: Record<string, unknown> | null;
   devDependencies?: Record<string, unknown> | null;
   overrides?: Record<string, unknown> | null;
@@ -210,7 +211,7 @@ const isScaffoldPackageManifest = (
   value: unknown
 ): value is ScaffoldPackageManifest =>
   isJsonObject(value) &&
-  ["dependencies", "devDependencies", "overrides", "scripts"].every(
+  ["dependencies", "devDependencies", "imports", "overrides", "scripts"].every(
     (key) =>
       !Object.hasOwn(value, key) ||
       value[key] === null ||
@@ -272,7 +273,17 @@ const normalizePackageManifest = async (packagePath: string): Promise<void> => {
   )) {
     Reflect.deleteProperty(dependencies, name);
   }
+  // The reference app opts into both tools. Scaffolds use the local fallbacks
+  // until their owner adds a development condition for the installed package.
+  for (const alias of ["#ai-devtools", "#query-devtools"]) {
+    const conditions = manifest.imports?.[alias];
+    if (isJsonObject(conditions)) {
+      delete conditions.development;
+    }
+  }
   for (const dependency of [
+    "@ai-sdk/devtools",
+    "@tanstack/react-query-devtools",
     "@types/papaparse",
     "@electric-sql/pglite",
     "pg",
@@ -283,6 +294,7 @@ const normalizePackageManifest = async (packagePath: string): Promise<void> => {
     Reflect.deleteProperty(manifest.devDependencies ?? {}, dependency);
   }
   for (const script of [
+    "ai:devtools",
     "eval:dev",
     "eval:serve",
     "test:native",

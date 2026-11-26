@@ -129,7 +129,6 @@ const normalizeChatAppScripts = (scripts: ScriptMap): void => {
   scripts.test =
     "export PLAYWRIGHT=True && playwright test --workers=4 && vitest run";
   scripts["test:e2e"] = "export PLAYWRIGHT=True && playwright test --workers=4";
-  scripts["ai:devtools"] = "npx @ai-sdk/devtools";
   scripts["fetch:models"] = "tsx scripts/fetch-models.ts && oxfmt --write .";
 };
 

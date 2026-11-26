@@ -75,7 +75,7 @@ const runGeneratedPackageManagerCommand = async (
   ]);
   if (exitCode !== SUCCESS_EXIT_CODE) {
     throw new Error(
-      `Generated ${packageManager} gateway warning test failed:\n${stdout}\n${stderr}`
+      `Generated ${packageManager} app command failed (${command[0]}):\n${stdout}\n${stderr}`
     );
   }
 };
@@ -479,12 +479,31 @@ describe("scaffoldFromTemplate", (): void => {
     const packageJson = z
       .object({
         dependencies: z.record(z.string(), z.string()),
+        devDependencies: z.record(z.string(), z.string()),
         overrides: z.object({ "@better-auth/core": z.string() }).optional(),
         packageManager: z.string().optional(),
         scripts: z.record(z.string(), z.string()).optional(),
       })
       .parse(packageJsonValue);
 
+    for (const name of ["@ai-sdk/devtools", "@tanstack/react-query-devtools"]) {
+      expect(packageJson.dependencies[name]).toBeUndefined();
+      expect(packageJson.devDependencies[name]).toBeUndefined();
+    }
+    // Resolve the generated app in isolation, including Next's development
+    // condition. The monorepo has both packages installed for its reference app.
+    const probe = `
+      import assert from "node:assert/strict";
+      import { devToolsMiddleware } from "#ai-devtools";
+      import { ReactQueryDevtools } from "#query-devtools";
+      assert.equal(devToolsMiddleware(), undefined);
+      assert.equal(ReactQueryDevtools(), null);
+    `;
+    await runGeneratedPackageManagerCommand(
+      ["node", "--conditions=development", "--input-type=module", "-e", probe],
+      destination,
+      "bun"
+    );
     expect(packageJson.packageManager).toBe(`bun@${Bun.version}`);
     expect(packageJson.dependencies["@better-auth/core"]).toBe("1.6.2");
     expect(packageJson.dependencies["@better-auth/electron"]).toBeUndefined();

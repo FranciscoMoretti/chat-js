@@ -3,7 +3,7 @@ import type { LanguageModelV4 } from "@ai-sdk/provider";
 import { extractReasoningMiddleware, wrapLanguageModel } from "ai";
 import type { AppModelId } from "./app-model-id";
 
-import { devToolsMiddleware } from "@ai-sdk/devtools";
+import { devToolsMiddleware } from "#ai-devtools";
 import { getActiveGateway } from "./active-gateway";
 import { loadEveModelDefinition } from "../eve/model-selection";
 
@@ -20,7 +20,10 @@ const getLanguageModel = async (
 
   // Add devtools middleware in development
   if (process.env.NODE_ENV === "development") {
-    middlewares.push(devToolsMiddleware());
+    const devTools = devToolsMiddleware();
+    if (devTools) {
+      middlewares.push(devTools);
+    }
   }
 
   // Add reasoning middleware if the model supports reasoning
