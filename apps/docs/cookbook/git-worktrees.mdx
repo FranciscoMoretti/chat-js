@@ -1,131 +1,44 @@
 ---
 title: Git Worktrees
-description: Parallel development environments without branch switching
+description: "Run two ChatJS checkouts side by side with Git worktrees, install their dependencies, and find the app URLs assigned to each development environment."
 ---
 
-## Problem
+Use a separate Git worktree when you need to run two versions of the ChatJS repository at once. Each checkout has its own dependencies and local environment files.
 
-Switching branches interrupts your workflow. You lose editor state, need to reinstall dependencies, and can't easily compare implementations side-by-side. Working on multiple features or reviewing PRs requires constant context switching.
+## Create and configure a checkout
 
-## Solution
-
-Git worktrees create separate working directories for different branches, all sharing the same repository. Each worktree has its own files, node_modules, and environment—letting you work on multiple branches simultaneously.
-
-## Implementation
-
-### Setup Script
-
-Create a setup script that initializes worktrees with dependencies and environment files:
-
-```bash title="scripts/worktree-setup.sh"
-#!/usr/bin/env bash
-# Setup a worktree with .env.local and deps
-# Usage: worktree-setup.sh [branch-name]
-#   No args: setup current worktree
-#   With arg: create worktree + setup
-set -e
-
-MAIN_REPO=$(git worktree list | head -1 | awk '{print $1}')
-REPO_NAME=$(basename "$MAIN_REPO")
-
-if [ -n "$1" ]; then
-  WORKTREE_PATH="../$REPO_NAME-$1"
-  git worktree add -b "$1" "$WORKTREE_PATH" 2>/dev/null || git worktree add "$WORKTREE_PATH" "$1"
-  cd "$WORKTREE_PATH"
-fi
-
-cp "$MAIN_REPO/.env.local" .env.local 2>/dev/null && echo "✓ .env.local" || echo "⚠ No .env.local"
-bun i
-echo "✓ Ready: $(pwd)"
-```
-
-Make it executable:
+From your repository root, create a branch and check it out in a sibling directory.
 
 ```bash
-chmod +x scripts/worktree-setup.sh
+git worktree add -b feature-auth ../chatjs-feature-auth
+cd ../chatjs-feature-auth
+bun install
 ```
 
-### IDE Integration (Cursor)
+Configure the reference app's credentials in the worktree's root `.env.local`, as you would for a fresh checkout. Use an isolated database when testing schema changes. See [Neon branching](/cookbook/neon-branching) for the repository helpers.
 
-For Cursor IDE, add automatic dependency installation when opening worktrees:
+## Give the checkout its own ports
 
-```json title=".cursor/worktrees.json"
-{
-  "setup-worktree": ["bun install"]
-}
+Set `CHATJS_DEV_SLOT` in `.env.worktree.local` to a nonnegative integer that differs from your other active worktrees. For example, if your main checkout uses the default slot of zero, use this in the second checkout.
+
+```dotenv title=".env.worktree.local"
+CHATJS_DEV_SLOT=1
 ```
 
-### Git Aliases
-
-Add these to your `~/.gitconfig` for faster worktree commands:
-
-```ini title="~/.gitconfig"
-[alias]
-    # List all worktrees
-    wtl = worktree list
-
-    # Add a new worktree (usage: git wta <branch-name>)
-    wta = "!f() { repo=$(basename \"$(git worktree list --porcelain | sed -n '1s/^worktree //p')\"); git worktree add -b \"$1\" \"../$repo-$1\"; }; f"
-
-    # Remove a worktree (usage: git wtr <path>)
-    wtr = "!git worktree remove \"$@\" #"
-
-    # Prune stale worktrees
-    wtp = worktree prune
-
-    # Cleanup merged branches and their worktrees
-    wt-cleanup = "!f() { git fetch -p && git branch --merged ${1:-main} | grep -v \"^[* ]*${1:-main}$\" | while read branch; do wt=$(git worktree list | grep \"\\[$branch\\]\" | awk '{print $1}'); [ -n \"$wt\" ] && git worktree remove \"$wt\"; git branch -d \"$branch\"; done }; f"
-```
-
-## Usage
-
-### Create a New Worktree
+Run these commands from the worktree root. The first prints the assigned URLs for chat, the site, docs, and EVE. The second starts the reference app.
 
 ```bash
-# Create worktree for a new branch
-./scripts/worktree-setup.sh feature-auth
-
-# Or use git alias
-git wta feature-auth
+bun dev:info
+bun dev
 ```
 
-This creates `../chatjs-feature-auth/` with:
+## Remove a finished checkout
 
-- Fresh checkout of the branch
-- Copied `.env.local` from main repo
-- Installed dependencies
-
-### Setup Existing Worktree
-
-```bash
-# In the worktree directory, run without args
-./scripts/worktree-setup.sh
-```
-
-### List Worktrees
+Commit or save the changes you need and stop its development server. From a different checkout, inspect the worktrees, then remove the finished directory.
 
 ```bash
 git worktree list
-# /home/user/chatjs              abc1234 [main]
-# /home/user/chatjs-feature-auth def5678 [feature-auth]
-```
-
-### Remove Worktree
-
-```bash
-# Remove worktree (keeps branch)
 git worktree remove ../chatjs-feature-auth
-
-# Force remove if there are changes
-git worktree remove --force ../chatjs-feature-auth
 ```
 
-### Commands Reference
-
-| Command            | Description                                |
-| ------------------ | ------------------------------------------ |
-| `git wta <branch>` | Add worktree for branch                    |
-| `git wtl`          | List all worktrees                         |
-| `git wtr <path>`   | Remove worktree                            |
-| `git wtp`          | Prune stale worktrees                      |
-| `git wt-cleanup`   | Remove merged branches and their worktrees |
+The branch remains available after removing the checkout.

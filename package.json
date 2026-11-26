@@ -17,7 +17,6 @@
     "dev:docs": "dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env docs -- turbo run dev --filter=@chatjs/docs",
     "dev:site": "dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env site -- turbo run dev --filter=@chatjs/site",
     "build": "dotenv -e .env.local -- turbo run build",
-    "fetch:models": "dotenv -e .env.local -- turbo run fetch:models --filter=@chatjs/chat",
     "test:e2e": "dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env chat -- turbo run test:e2e --filter=@chatjs/chat",
     "format": "oxfmt --write .",
     "lint": "bun lint:prepare && ultracite check . && bun run --filter=@chatjs/docs docs:doctor && bun demo:check",

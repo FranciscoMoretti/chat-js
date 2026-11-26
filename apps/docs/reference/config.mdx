@@ -1,6 +1,6 @@
 ---
 title: Config Reference
-description: Source-owned installation and chat.config.ts runtime configuration
+description: "Look up the inputs accepted by chat.config.ts, including model defaults, authentication, branding, and settings contributed by installed tools."
 ---
 
 `lib/config-schema.ts` composes the core configuration contract with schemas contributed by installed tools. `ConfigInput` accepts overrides, while `Config` describes the parsed result with defaults. Import those types from your installed source instead of copying a parallel schema:
@@ -13,7 +13,7 @@ export type AppConfigurationInput = ConfigInput;
 export type AiConfiguration = Config["ai"];
 ```
 
-Use `config` from `@/lib/config` for runtime access. See [Configuration](../core/configuration) for a complete input example.
+Use `config` from `@/lib/config` for runtime access. See [Configuration](/core/configuration) for a complete input example.
 
 ## Installation contract
 
@@ -26,7 +26,7 @@ Use `config` from `@/lib/config` for runtime access. See [Configuration](../core
 | `chatjs/tools/*/configuration-schema.ts` | Tool-owned validation and defaults |
 | `chatjs/generated/installed-config.ts` | Generated composition of installed tool schemas |
 | `chatjs/generated/tool-definitions.ts` | Browser-safe tool schemas and display metadata |
-| `chatjs/generated/providers.ts` | Shared search, retrieval and media provider registrations |
+| `chatjs/generated/providers.ts` | Installed provider-tool registrations, such as image and video generation |
 | `integrations/tools/execution.ts`, `integrations/tools/ui.ts` | User-authored tool and renderer registrations |
 | `chatjs/plugins/*/plugin.json`, generated plugin registrations | Installed application plugin contributions, such as uploads and MCP |
 
@@ -39,9 +39,9 @@ Tools can declare `requiresTools`, `requiresGateway` (`image` or `video`) and `r
 | `ai.gateway` | Literal discriminator of the installed gateway, not a provider switch |
 | `ai.curatedDefaults`, `disabledModels` | Recommended models and excluded models |
 | `ai.providerOrder` | Provider ordering in the model selector |
-| `ai.workflows.chat`, `title`, `pdf`, `chatImageCompatible` | Shared workflow model defaults |
+| `ai.workflows.chat`, `ai.workflows.title` | Default chat model and optional AI Titles model |
+| `ai.workflows.pdf`, `ai.workflows.chatImageCompatible` | Available to custom workflows. Built-in chat checks attachment support on the selected model. |
 | `ai.tools.followupSuggestions.enabled`, `.default` | Follow-up generation policy and model |
-| `ai.tools.text.polish`, `code.edits`, `sheet.format`, `sheet.analyze` | Document model defaults |
 | `ai.tools.image.default`, `video.default` | Optional media model defaults for a capable gateway |
 
 Tool-specific entries in this table exist only when their owning tool is installed. `followupSuggestions` remains core. Unknown or uninstalled tool options are rejected instead of silently ignored. Gateway roles (`smart`, `balanced`, `fast`, `image`, `video`) supply defaults. You still override a tool through `ai.tools` in `chat.config.ts`.
@@ -65,8 +65,8 @@ Pricing text does not configure payment processing. Guest access limits do not r
 
 `bun run check-env` checks base application credentials, the installed gateway/storage/tool/feature requirements and enabled OAuth providers. It also runs before development and production builds. Configure search credentials through the selected EVE connection.
 
-For example, a minimal app omits MCP, uploads and tools and needs no credentials for those absent capabilities. Adding MCP requires `MCP_ENCRYPTION_KEY` even before a connector is configured. See [Configuration](../core/configuration) for installation and replacement commands.
+For example, a minimal app omits MCP, uploads and tools and needs no credentials for those absent capabilities. Adding MCP requires `MCP_ENCRYPTION_KEY` even before a connector is configured. See [Configuration](/core/configuration) for installation and replacement commands.
 
-Guest model and rate limits belong to [Guest Chat](../plugins/guest-chat) in `chatjs/plugins/guest-chat/guest-policy.ts`. Core has no anonymous model or quota settings.
+Guest model and rate limits belong to [Guest Chat](/plugins/guest-chat) in `chatjs/plugins/guest-chat/guest-policy.ts`. Core has no anonymous model or quota settings.
 
 Deep Research inherits the native EVE agent model configuration. Its workflow bounds live in `agent/lib/research/configuration.ts`, outside `chat.config.ts`.

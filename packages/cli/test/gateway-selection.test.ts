@@ -1002,12 +1002,6 @@ requireCredentials("mcp", descriptor.envRequirements, {NODE_ENV: "test", MCP_ENC
       const gatewayCore = nodePath.join(cwd, "chatjs/core/gateway/runtime.ts");
       const editedCore = `${await readFile(gatewayCore, "utf-8")}\n// Local gateway runtime customization.\n`;
       await writeFile(gatewayCore, editedCore);
-      const catalog = nodePath.join(cwd, "lib/ai/models.generated.ts");
-      await writeFile(
-        catalog,
-        `${await readFile(catalog, "utf-8")}\n// Refreshed model catalog.\n`
-      );
-
       await rejects(
         run(cwd, [
           "node",

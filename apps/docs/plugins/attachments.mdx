@@ -1,21 +1,21 @@
 ---
 title: Attachments
-description: Upload images and PDFs from the chat composer
+description: "Add uploads to the chat composer, configure durable storage and a persistent sandbox, and set the file types and sizes users can attach."
 ---
 
-Attachments adds a file picker, mobile camera capture, and paste/drop handling to the composer. Uploaded files use your configured [file storage provider](../storage).
+Attachments adds a file picker, mobile camera capture, and paste/drop handling to the composer. Uploaded files use your configured [file storage provider](/storage).
 
 ## Installation
 
 ### Add the plugin
 
-Run this command inside your ChatJS app:
-
-Before adding this plugin, configure a durable Files SDK storage provider in your app. Choose one during app creation, or follow [File storage](../storage) to configure an existing app. Set the provider’s generated environment variables. For Vercel Blob, set `BLOB_READ_WRITE_TOKEN`. Installation stops if you have no durable provider configured.
+Uploads need durable file storage and a sandbox with persistent-file support. If your app already has both, run `bunx chat-js@alpha add attachment-uploads`. To select them during installation, run this inside your app.
 
 ```bash
-bunx chat-js@alpha add attachment-uploads
+bunx chat-js@alpha add attachment-uploads --storage-provider vercel-blob --sandbox-provider vercel
 ```
+
+Supply the credentials for both providers in `.env.local`. If you are replacing an existing provider, review the [replacement instructions](/core/configuration#replace-providers).
 
 The plugin adds the upload endpoint and composer controls. It adds no database tables and has no `features.attachments` enable flag.
 
@@ -24,9 +24,15 @@ The plugin adds the upload endpoint and composer controls. It adds no database t
 Sign in and choose **Attach files** from the composer menu. On mobile, **Take photo** opens the camera. You can also paste or drop supported files into the composer.
 
 <Frame>
-  <img
-    src="/docs/images/attachments.gif"
-    alt="Uploading file attachments to a conversation"
+  <video
+    controls
+    playsinline
+    preload="none"
+    width="1280"
+    height="720"
+    aria-label="Uploading file attachments to a conversation"
+    poster="/docs/images/attachments-poster.png"
+    src="/docs/images/attachments.mp4"
   />
 </Frame>
 
@@ -43,16 +49,20 @@ Choose a model that supports the attached file types. The composer blocks sendin
 
 Set limits and accepted types under `attachments` in `chat.config.ts`:
 
-```ts
-attachments: {
-  maxBytes: 1024 * 1024,
-  maxDimension: 2048,
-  acceptedTypes: {
-    "image/png": [".png"],
-    "image/jpeg": [".jpg", ".jpeg"],
-    "application/pdf": [".pdf"],
+```ts title="chat.config.ts"
+import { defineConfig } from "@/lib/config-schema";
+
+export default defineConfig({
+  attachments: {
+    maxBytes: 1024 * 1024,
+    maxDimension: 2048,
+    acceptedTypes: {
+      "image/png": [".png"],
+      "image/jpeg": [".jpg", ".jpeg"],
+      "application/pdf": [".pdf"],
+    },
   },
-},
+});
 ```
 
 `maxBytes` limits the uploaded size after compression. `maxDimension` limits image width and height when compressing JPEG or PNG files that exceed `maxBytes`. Images already within the byte limit are uploaded unchanged, even if their dimensions are larger.
@@ -61,4 +71,4 @@ attachments: {
 
 Files are uploaded through the configured provider and represented by provider-independent ChatJS URLs. Historical attachments and tool-produced files remain available in core when new uploads are omitted.
 
-Edit `chatjs/plugins/attachment-uploads/` to customize upload behavior. Only one installed plugin can provide the uploads contribution. See the [Plugin API](../reference/plugin-api#client-slots).
+Edit `chatjs/plugins/attachment-uploads/` to customize upload behavior. Only one installed plugin can provide the uploads contribution. See the [Plugin API](/reference/plugin-api#client-slots).

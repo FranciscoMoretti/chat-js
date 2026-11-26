@@ -1,12 +1,6 @@
 const EMPTY_DIAGNOSTIC_COUNT = 0;
 
-const formatGatewaySnapshotWarning = (
-  generatedForGateway: string,
-  configuredGateway: string
-): string =>
-  `models.generated.ts was built for "${generatedForGateway}" but config uses "${configuredGateway}". Run \`bun fetch:models\` to update the fallback snapshot.`;
-
-const reportEnvironmentFailure = (
+export const reportEnvironmentFailure = (
   errors: readonly {
     readonly feature: string;
     readonly missing: readonly string[];
@@ -30,17 +24,4 @@ const reportEnvironmentFailure = (
   }
 
   return false;
-};
-
-const reportEnvironmentSuccess = (snapshotWarning: string | null): void => {
-  if (snapshotWarning !== null) {
-    console.warn(`⚠️  ${snapshotWarning}`);
-  }
-
-  console.log("✅ Environment validation passed");
-};
-export {
-  formatGatewaySnapshotWarning,
-  reportEnvironmentFailure,
-  reportEnvironmentSuccess,
 };

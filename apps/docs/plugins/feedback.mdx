@@ -1,6 +1,6 @@
 ---
 title: Feedback
-description: Collect private ratings on assistant messages
+description: "Let signed-in users rate assistant messages, store private feedback on the server, and customize the controls contributed to the transcript."
 ---
 
 Use Feedback to add private upvote and downvote actions to your assistant messages. Only you can access ratings on your conversations, and public shares do not expose them.
@@ -23,7 +23,7 @@ bun run db:generate
 bun run db:migrate
 ```
 
-Your existing reference-app data keeps the same table and keys. See [plugin migrations](./using-plugins#database-migrations).
+Your existing reference-app data keeps the same table and keys. See [plugin migrations](/plugins/using-plugins#database-migrations).
 
 ## Usage
 
@@ -41,4 +41,4 @@ Before saving your rating, the plugin validates the message against an EVE snaps
 
 Edit `chatjs/plugins/feedback/` to change the rating UI, queries, or validation. The `MessageActions` placement receives `branchId`, `messageId`, and `disabled`.
 
-When you delete conversations, cleanup uses `onDeleteConversations` inside the core deletion transaction. Feedback does not use `updateOwnedChat`, because voting must not update chat recency. See the [Plugin API](../reference/plugin-api).
+When you delete conversations, cleanup uses `onDeleteConversations` inside the core deletion transaction. Feedback does not use `updateOwnedChat`, because voting must not update chat recency. See the [Plugin API](/reference/plugin-api).

@@ -1,13 +1,13 @@
 ---
 title: Code Execution
-description: Run commands with native EVE tools and publish generated files
+description: "Run commands with EVE’s native sandbox tools, publish generated files as downloads, and revise a workspace file without changing an earlier attachment."
 ---
 
 ## Native execution
 
 New ChatJS agents enable EVE's default tools, including `bash`, `read_file`, `write_file` and `edit_file`. Use `bash` to run Python, Node or other commands available in the agent's sandbox. ChatJS displays the command, stdout, stderr, exit code and native background-process status.
 
-Choose Automatic, Docker or Vercel Sandbox in the builder's Agent tab. Automatic can fall back to just-bash in development; that simulated environment cannot run native Python or Node processes. See [Sandboxes](../deployment/sandboxes).
+Choose Automatic, Docker or Vercel Sandbox in the builder's Agent tab. Automatic can fall back to just-bash in development; that simulated environment cannot run native Python or Node processes. See [Sandboxes](/deployment/sandboxes).
 
 Install dependencies using normal shell commands or configure the native EVE sandbox image. ChatJS does not install Python packages, rewrite notebook syntax, print special variables or capture charts automatically.
 

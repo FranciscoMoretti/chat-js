@@ -1,9 +1,9 @@
 ---
 title: Component Registries
-description: Add shadcn and AI Elements components to your app
+description: "Add shadcn/ui and AI Elements components to a ChatJS app and keep local wrappers separate so you can update the underlying components."
 ---
 
-ChatJS uses two component libraries/registries: [shadcn/ui](https://ui.shadcn.com) and [AI Elements](https://ai-sdk.dev/elements/overview). Both are shadcn-style, Tailwind-friendly, and theme via the same CSS variables in `app/globals.css`.
+ChatJS uses two component libraries/registries: [shadcn/ui](https://ui.shadcn.com) and [AI Elements](https://elements.ai-sdk.dev/). Both are shadcn-style, Tailwind-friendly, and theme via the same CSS variables in `app/globals.css`.
 
 ## shadcn/ui components
 
@@ -15,7 +15,7 @@ bunx shadcn@latest add <component>
 
 ## AI Elements components
 
-AI Elements is a shadcn-compatible component registry focused on AI UX ([docs](https://ai-sdk.dev/elements/overview)). In this repo, AI Elements components live in `components/ai-elements`.
+AI Elements is a shadcn-compatible component registry focused on AI UX ([docs](https://elements.ai-sdk.dev/)). In this repo, AI Elements components live in `components/ai-elements`.
 
 ```bash
 bunx ai-elements@latest add <component>
@@ -23,11 +23,6 @@ bunx ai-elements@latest add <component>
 
 After installing, import from `@/components/ai-elements/...` and style them like any other component.
 
-## The `extra/` pattern (local tweaks on top of registries)
+## Keep app-specific behavior in a wrapper
 
-Sometimes we need tiny local wrappers/patches on top of upstream shadcn or AI Elements components (usually to bridge an upstream gap or carry a temporary workaround).
-
-- **shadcn tweaks**: `components/ui/extra/*` (example: `ScrollArea` that accepts a `viewportRef`)
-- **AI Elements tweaks**: `components/ai-elements/extra/*` (example: `ConversationContent` wired to the tweaked `ScrollArea`)
-
-Rule of thumb: **don’t edit upstream registry components unless you have to**; prefer putting local glue/tweaks in `extra/` so future `bunx shadcn@latest add` / `bunx ai-elements@latest add` updates stay clean.
+When an installed component needs chat-specific behavior, wrap it in the app and import the underlying primitive. For example, `components/chat/chat-workspace.tsx` composes the sidebar provider and inset from `components/ui/sidebar.tsx`. The wrapper sets the chat layout defaults and the primitive remains easy to compare with upstream. See [Chat layout](/cookbook/chat-layout).

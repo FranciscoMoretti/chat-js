@@ -1,9 +1,9 @@
 ---
 title: Explicit Tool Selection
-description: Carry a user-selected tool through the EVE gateway and native turn
+description: "Trace a tool choice from the chat composer through the authenticated gateway to the EVE instructions and tools available for that turn."
 ---
 
-The composer can let a user request one supported tool before they send a message. ChatJS validates the selected tool at admission and passes it to EVE as authenticated turn metadata. The EVE tool-selection hook then narrows the available tool set for that turn.
+The composer can let a signed-in user request one supported tool before they send a message. ChatJS validates the selected tool at admission and passes it to EVE as authenticated turn metadata. The EVE tool-selection hook then narrows the available tool set for that turn.
 
 ## Flow
 
@@ -18,9 +18,9 @@ flowchart LR
 
 `lib/eve/message-tool-selection.ts` stores the selected UI tool in message metadata for recovery and copy operations. `lib/eve/selected-tools.ts` expands a grouped selection into its allowed native tools. `agent/hooks/tool-selection.ts` reads the authenticated selection at turn start.
 
-Do not trust a browser-supplied tool name by itself. Guest and registered requests both validate the choice against the configured frontend tool set before EVE receives it.
+For account sessions, the hook validates the selection against the configured tools. Guest sessions support text chat only and run without a selected tool.
 
 ## Related
 
 - [Tools](/tools/overview) for installing and configuring tools
-- [Execution & Recovery](../core/execution) for the request boundary
+- [Execution & Recovery](/core/execution) for the request boundary

@@ -1,9 +1,9 @@
 ---
 title: "OpenAI Compatible Gateway"
-description: "Connect to any OpenAI-compatible API endpoint"
+description: "Connect ChatJS to an OpenAI-compatible endpoint such as Ollama or LM Studio and discover the models available from that server."
 ---
 
-The OpenAI Compatible gateway connects ChatJS to any endpoint that follows the [OpenAI API format](https://platform.openai.com/docs/api-reference). This is the fastest way to connect to local inference servers and alternative cloud providers.
+Use this gateway when your inference server exposes OpenAI-compatible model listing and chat completions under the same base URL.
 
 ## Compatible Providers
 
@@ -12,8 +12,7 @@ This gateway works with:
 - [Ollama](https://ollama.com) — local models on your machine
 - [LM Studio](https://lmstudio.ai) — local model management with a GUI
 - [vLLM](https://github.com/vllm-project/vllm): high-throughput self-hosted inference
-- [Azure OpenAI](https://learn.microsoft.com/azure/ai-foundry/openai/overview) — OpenAI models on Azure
-- Any other endpoint that implements `/v1/chat/completions` and `/v1/models`
+- Other endpoints that serve `/models` and `/chat/completions` under one base URL and accept the adapter’s bearer token when authentication is required
 
 ## Setup
 
@@ -30,22 +29,20 @@ OPENAI_COMPATIBLE_API_KEY=                             # Optional, depends on pr
 bunx chat-js@alpha add --gateway openai-compatible
 ```
 
-Then configure runtime model overrides for that installation:
+In your existing `chat.config.ts`, merge the workflow values below into the `ai` block. Keep the other settings for your app.
 
 ```typescript title="chat.config.ts"
-import type { ConfigInput } from "@/lib/config-schema";
+import { defineConfig } from "@/lib/config-schema";
 
-const config: ConfigInput = {
+export default defineConfig({
   ai: {
     gateway: "openai-compatible",
     workflows: {
       chat: "llama3.2",
       title: "llama3.2",
-      // ...
     },
-    // ...
   },
-};
+});
 ```
 
 ## Authentication
@@ -57,7 +54,7 @@ const config: ConfigInput = {
 
 ## Available Models
 
-Depends entirely on your provider. Models are fetched at runtime from `{OPENAI_COMPATIBLE_BASE_URL}/models` and cached for 1 hour.
+Set the base URL to the API prefix, such as `http://localhost:11434/v1`, without a trailing slash. ChatJS reads `/models` under that prefix and caches discovery for one hour. The adapter reports IDs as language models. Limit the [web picker](/customization/models#visibility-and-preferences) to IDs your server accepts for chat.
 
 ### Ollama
 
@@ -78,7 +75,7 @@ OPENAI_COMPATIBLE_BASE_URL=http://localhost:1234/v1
 
 ## Image Generation
 
-Image generation support depends on the provider. If the endpoint supports the OpenAI image generation API format, `createImageModel()` will work. Otherwise, multimodal language models with image output capabilities can still generate images inline.
+Image generation support depends on the provider. If the endpoint supports the OpenAI image generation API format, `createImageModel()` will work. Set `ai.tools.image.default` to an image model the endpoint serves. The built-in adapter reads model IDs without image-output tags, so it cannot discover an inline image-generation model from this catalog.
 
 ## Related
 

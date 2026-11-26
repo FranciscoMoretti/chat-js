@@ -1,11 +1,11 @@
 ---
 title: Database
-description: PostgreSQL database management commands and schema workflow
+description: "Configure PostgreSQL connections for application data and EVE workflows, run migrations, and choose the setup steps for local or hosted deployments."
 ---
 
 ## Overview
 
-ChatJS uses **PostgreSQL** with **Drizzle ORM** for type-safe, schema-first database access. The schema is defined in `apps/chat/lib/db/schema.ts`. Edit it to change the database structure.
+ChatJS uses **PostgreSQL** with **Drizzle ORM** for type-safe, schema-first database access. In your app, `lib/db/schema.ts` defines the core tables. Drizzle also reads the schemas contributed through `integrations/database.ts`, including tables owned by installed plugins.
 
 ---
 
@@ -102,7 +102,15 @@ Run these commands from the app directory. The inline assignment overrides `.env
 
 Before starting the app, grant the runtime role the required access to the workflow tables, sequences, functions, and Graphile Worker schema created by setup. Setup does not grant access to another role automatically. The installed PostgreSQL provider calls Graphile migration checks during worker startup, so a restricted role must also satisfy those checks against the initialized schema. Apply provider upgrades with setup credentials first and verify an actual worker start and workflow execution using the runtime role. A successful `eve:check` only verifies connectivity and required table presence.
 
-The build-time `check-workflow-backend.ts` command is a separate application-database safeguard. It reads and registers `EveWorkflowBackend` in the application database using its migration connection. It must not use a separate workflow database, including on managed Vercel Workflow.
+### Check the workflow backend before deployment
+
+After applying application migrations, run the following command from the app directory with the target deployment’s environment variables loaded:
+
+```bash
+npx tsx scripts/check-workflow-backend.ts
+```
+
+The script records the selected workflow backend in the application database using its migration connection. On subsequent runs it rejects a backend that differs from that registration. On first registration, verify which backend owns any existing conversations. The reference app runs this check during its EVE build. Generated apps call `eve build` directly, so include the check explicitly in your deployment steps.
 
 ### Setup commands
 
@@ -122,7 +130,7 @@ In the monorepo, these setup commands also work from the repository root. Neithe
 
 ## Database Management
 
-Run these commands from the `apps/chat` directory:
+Run these commands from your generated app’s root, or from `apps/chat` in the ChatJS repository.
 
 ```bash
 # Push schema changes directly to the database (dev only, no migration file)
@@ -146,13 +154,17 @@ bun db:migrate
 
 ## Schema Changes
 
-All schema changes start in `apps/chat/lib/db/schema.ts`. After editing:
+In a generated app, edit the schema that owns the table. For a plugin table, find its installed schema path in `chatjs/generated/installed-database.ts`.
+
+When contributing to the ChatJS repository, edit the plugin schema in `packages/registry/src/plugins/<id>/src/` and run `bun demo:sync` from the repository root. The reference app uses a generated copy of that schema.
+
+From the app directory:
 
 1. Run `bun db:generate` to produce a migration file in `lib/db/migrations/`.
 2. Review the generated SQL to confirm the diff is correct.
 3. Run `bun db:migrate` to apply it.
 
-Test schema changes against an isolated database before applying them to production. If you use Neon, [Neon Branching](../cookbook/neon-branching) is an optional workflow.
+Test schema changes against an isolated database before applying them to production. If you use Neon, [Neon Branching](/cookbook/neon-branching) is an optional workflow.
 
 ## Deployment and migrations
 
@@ -181,4 +193,4 @@ Do not restart older versions against the migrated schema. Keep preview database
 
 ## Optional Neon development
 
-Normal `bun dev` and `bun db:migrate` use your configured URLs. They do not read `.neon-branch`. To use the branch selected by the Neon helper scripts, run `bun dev:neon` or `bun db:migrate:neon`. The wrapper overrides both runtime and migration URLs so a main-database migration URL cannot leak into a branch session.
+In the repository checkout, `bun dev:neon` and `bun db:migrate:neon` use the selected Neon branch for application queries and migrations. A separately configured `WORKFLOW_POSTGRES_URL` still takes precedence for workflows. See [Neon branching](/cookbook/neon-branching) for how to isolate both connections. In a generated app, configure the branch connection strings directly in `.env.local`.

@@ -1,6 +1,6 @@
 ---
 title: "Docker"
-description: "Container deployment requirements for ChatJS"
+description: "Review the Node.js, EVE build output, database connections, and worker lifecycle a containerized ChatJS deployment needs."
 ---
 
 ChatJS does not currently publish or validate a Docker deployment layout for the EVE-only application. Do not treat a generic Next.js standalone image as a working ChatJS deployment.
@@ -22,7 +22,7 @@ An EVE-aware container deployment needs all of the following:
 - Independently generated `AUTH_SECRET` and `EVE_GATEWAY_SECRET`, plus database credentials, at build and runtime
 - A compatible direct/session Postgres connection with application and workflow schemas initialized; they may share one database
 
-Run `npm run setup` with your application and workflow database connections before the application starts. It supports PostgreSQL service hostnames as well as loopback URLs. Provider schema setup alone does not establish hosted deletion coverage. See [database setup](../reference/database#eve-workflow-database).
+Run `npm run setup` with your application and workflow database connections before the application starts. It supports PostgreSQL service hostnames as well as loopback URLs. Provider schema setup alone does not establish hosted deletion coverage. See [database setup](/reference/database#eve-workflow-database).
 
 For self-hosted guest access, terminate traffic at a trusted proxy. Configure `TRUSTED_CLIENT_IP_HEADER` only when that proxy overwrites the caller-provided header with one verified client IP. Vercel uses its own trusted header.
 

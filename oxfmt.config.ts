@@ -26,8 +26,6 @@ export default defineConfig({
     "**/composer-icons.generated.ts",
     "**/.eve/**",
     "**/tests/eve-results/**",
-    // The model catalog is generator-owned; avoid unrelated snapshot churn.
-    "**/lib/ai/models.generated.ts",
   ],
   // Preserve module evaluation order; lint-policy changes must not reorder imports.
   sortImports: false,

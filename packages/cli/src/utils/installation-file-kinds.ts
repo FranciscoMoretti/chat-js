@@ -22,10 +22,7 @@ export const installationFileKind = (
   if (records.has(file)) {
     return "record";
   }
-  if (
-    file.startsWith("chatjs/generated/") ||
-    file === "lib/ai/models.generated.ts"
-  ) {
+  if (file.startsWith("chatjs/generated/")) {
     return "generated";
   }
   if (
