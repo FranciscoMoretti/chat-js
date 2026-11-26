@@ -20,6 +20,7 @@ const openingSizes = [
   { width: 820, height: 835 },
   { width: 844, height: 390 },
   { width: 1024, height: 768 },
+  { width: 1089, height: 1193 },
   { width: 1280, height: 720 },
   { width: 1440, height: 900 },
   { width: 1725, height: 900 },
@@ -64,10 +65,7 @@ const checkNavigation = async (
   const create = destinations.find((link) => link.name === "Create");
   const newApp = destinations.find((link) => /^New\s*\+?$/u.test(link.name));
   assert.ok(docs && demo && create && newApp, JSON.stringify(destinations));
-  assert.equal(
-    docs.href,
-    process.env.NEXT_PUBLIC_CHATJS_DOCS_URL ?? siteLinks.docs
-  );
+  assert.equal(docs.href, "/docs");
   assert.equal(demo.href, siteLinks.demo);
   assert.equal(create.href, "/create");
   assert.equal(newApp.href, create.href);
@@ -76,7 +74,10 @@ const checkNavigation = async (
     bounds && Math.abs(newApp.right - bounds.x - bounds.width) <= 1,
     "New sits at the far right"
   );
+  const gutter = mobile ? 16 : 24;
+  assert.equal(newApp.right, size.width - gutter);
   if (mobile) {
+    assert.equal(bounds.x, gutter);
     assert.equal(home, undefined);
     const repo = destinations.find((link) => link.name === "ChatJS on GitHub");
     const menuBounds = await menu.boundingBox();
@@ -102,6 +103,7 @@ const checkNavigation = async (
     assert.equal(await docsLink.count(), 0);
   } else {
     assert.equal(home?.href, "/");
+    assert.equal(home.x, gutter);
     assert.ok(
       docs.right <= demo.x &&
         demo.right <= create.x &&
@@ -192,6 +194,12 @@ const checkOpening = async (
       "The footer should sit at the bottom of the opening viewport"
     );
   }
+  // Both palettes must resolve to opaque surfaces, including after CSS compilation.
+  const pageColor = async () =>
+    await page
+      .getByTestId("homepage")
+      .evaluate((el) => getComputedStyle(el).backgroundColor);
+  assert.equal(await pageColor(), "rgb(12, 12, 12)");
   await checkNavigation(header, size);
   assert.equal(
     await page
@@ -210,6 +218,32 @@ const checkOpening = async (
     ),
     true
   );
+  if (size.height === 654 || [390, 1089, 1440].includes(size.width)) {
+    const mobile = size.width <= 700;
+    const menu = header.getByRole("button", { name: "Menu", exact: true });
+    if (mobile) {
+      await menu.click();
+    }
+    const toggle = header.getByRole("button", { name: "Toggle theme" });
+    await toggle.click();
+    await page.locator("html.light").waitFor();
+    await page.reload();
+    await page.locator("html.light button[data-block-id]").first().waitFor();
+    assert.equal(await pageColor(), "rgb(248, 247, 244)");
+    await page.screenshot({
+      animations: "disabled",
+      style: "nextjs-portal { visibility: hidden !important; }",
+      path: `${output}canopy-light-${size.width}.png`,
+    });
+    if (mobile) {
+      await menu.click();
+    }
+    await toggle.click();
+    await page.locator("html.dark").waitFor();
+    if (mobile) {
+      await menu.click();
+    }
+  }
   const opening = await inspectOpening(page);
   assert.equal(
     new Set(opening.visible).size,
@@ -309,7 +343,10 @@ const checkBuild = async (page: Page) => {
 };
 
 try {
-  const page = await browser.newPage({ reducedMotion: "reduce" });
+  const page = await browser.newPage({
+    reducedMotion: "reduce",
+    colorScheme: "dark",
+  });
   page.on("pageerror", (error) => {
     errors.push(error.message);
   });
@@ -335,6 +372,10 @@ try {
     window.scrollTo(0, 0);
   });
   await checkBuild(page);
+  await page.locator("html.dark").waitFor();
+  await page.getByRole("button", { name: "Toggle theme" }).click();
+  await page.getByRole("link", { name: "ChatJS home", exact: true }).click();
+  await page.locator("html.light .canopy-page").waitFor();
   assert.deepEqual(errors, []);
 } finally {
   await browser.close();
