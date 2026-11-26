@@ -1,6 +1,6 @@
 ---
 title: Neon Branching
-description: Isolated database environments for safe schema development
+description: "Use the ChatJS repository scripts to create an isolated Neon database branch, run schema changes against it, and return to the main database."
 ---
 
 ## Problem
@@ -37,9 +37,9 @@ This creates a `.neon` file in the current directory (gitignored).
 
 ### How It Works
 
-Instead of updating `.env.local`, the branch name is stored in a `.neon-branch` file (gitignored). The `scripts/with-db.sh` wrapper reads this file at runtime and injects both `DATABASE_URL` and `DATABASE_MIGRATION_URL` for explicitly wrapped commands.
+The helper records the selected branch in `.neon-branch` at the repository root. For wrapped commands, `scripts/with-db.sh` sets both `DATABASE_URL` and `DATABASE_MIGRATION_URL` to the branch connection.
 
-This means your `.env.local` stays pointing to main, and branch switching is instant.
+Check `WORKFLOW_POSTGRES_URL` in your shell and environment files before starting the app. If it is set, EVE keeps using that connection. Point it at a direct or session connection dedicated to the branch, or leave it unset to use the selected branch connection when that connection supports workflows.
 
 ### Helper Scripts
 
@@ -66,7 +66,10 @@ The `package.json` scripts use three bash scripts under `scripts/`:
 # Start working on schema changes
 bun db:branch:start
 
-# Your app now uses the dev branch (DATABASE_URL injected via with-db.sh)
+# Initialize application and workflow schemas on the selected branch
+bash scripts/with-db.sh bun run setup
+
+# Start the app with the same branch settings
 bun dev:neon
 
 # Make schema changes

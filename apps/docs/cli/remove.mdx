@@ -1,6 +1,6 @@
 ---
 title: remove
-description: Disconnect installed plugins while retaining database schemas and data
+description: "Inspect which files a plugin removal will affect, disconnect its contributions, and preserve the database schema and migration history."
 ---
 
 Inspect a removal plan before removing a plugin:
@@ -31,4 +31,4 @@ bunx chat-js@alpha remove projects --backup
 
 Removal disconnects registrations and removes owned source. It retains database data, schema inputs, shared UI, and package dependencies. No database migration is applied. Review retained schemas and generate a migration separately if you intend to change stored data.
 
-This command removes plugins. It is not a general tool or provider uninstaller. See [status](./status) to inspect installation ownership and [Using Plugins](../plugins/using-plugins#database-migrations) for migration behavior.
+This command removes plugins. It is not a general tool or provider uninstaller. See [status](/cli/status) to inspect installation ownership and [Using Plugins](/plugins/using-plugins#database-migrations) for migration behavior.

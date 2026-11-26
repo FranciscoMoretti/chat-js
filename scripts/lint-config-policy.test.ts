@@ -729,7 +729,6 @@ test.each(["", "apps/chat/"])(
       "chatjs/generated/document-run.ts",
       "chatjs/generated/installed-tools.ts",
       "chatjs/generated/composer-tools.ts",
-      "lib/ai/models.generated.ts",
       "chatjs/plugins/composer-icons.generated.ts",
       "next-env.d.ts",
       ".next/types/routes.ts",

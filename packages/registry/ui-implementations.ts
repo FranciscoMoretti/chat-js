@@ -8,11 +8,6 @@ export const uiImplementations = [
     radix: "apps/chat/components/editable-bubble.radix.tsx",
   },
   {
-    target: "components/ai-elements/context-hover.tsx",
-    source: "apps/chat/components/ai-elements/context-hover.tsx",
-    radix: "apps/chat/components/ai-elements/context-hover.radix.tsx",
-  },
-  {
     target: "components/composer/tool-menu-item.tsx",
     source: "apps/chat/components/composer/tool-menu-item.tsx",
     radix: "apps/chat/components/composer/tool-menu-item.radix.tsx",

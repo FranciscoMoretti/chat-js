@@ -1,6 +1,6 @@
 ---
 title: Documents & Files
-description: Create files in EVE's sandbox and open immutable published results
+description: "Create and edit files in the EVE sandbox, publish an immutable download to the conversation, and add optional viewers for supported formats."
 ---
 
 Documents are files in the agent's native EVE sandbox. Ask the agent to create a report, script or spreadsheet, then publish the finished file into the conversation.
@@ -13,7 +13,7 @@ Enable EVE's native default tools and install file publication with persistent s
 bunx chat-js@alpha add attach-workspace-file --storage-provider vercel-blob
 ```
 
-Use Docker or Vercel Sandbox when your task needs native Python or Node processes. The simulated just-bash environment can write text files but cannot run those processes. See [Sandboxes](../deployment/sandboxes).
+Use Docker or Vercel Sandbox when your task needs native Python or Node processes. The simulated just-bash environment can write text files but cannot run those processes. See [Sandboxes](/deployment/sandboxes).
 
 ## Creating a file
 
@@ -37,4 +37,4 @@ Ask the agent to revise an earlier file. The `import_file` tool, included with `
 
 There is no manual editor, revision chain, version picker or restore button. To reuse an earlier result, identify that file in the conversation and ask the agent to import it. You can also download it, edit it elsewhere, and upload the result when attachment uploads are installed.
 
-See [Code Execution](./code-execution) for examples, limits and file import behavior.
+See [Code Execution](/tools/code-execution) for examples, limits and file import behavior.

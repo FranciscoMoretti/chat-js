@@ -4,7 +4,7 @@ questions:
   - id: node-version
     question: What Node.js version does ChatJS require?
     expected:
-      - Node 22.12 or newer
+      - Node.js 24 or newer
     routes:
       - /quickstart
   - id: create-app
@@ -25,8 +25,8 @@ questions:
   - id: tool-calling
     question: How does tool calling work in ChatJS?
     expected:
-      - tools are registered in a tool registry
-      - the model can call tools during a chat turn
+      - EVE executes tools during a conversation
+      - tool availability depends on the installed capabilities and session
     routes:
-      - /core/tool-registry
-      - /plugins/overview
+      - /core/tool-calls
+      - /tools/overview

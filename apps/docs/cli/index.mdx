@@ -1,6 +1,6 @@
 ---
-title: Overview
-description: "chat-js — scaffold and manage ChatJS applications"
+title: CLI commands
+description: "Find the ChatJS CLI command for creating an app, adding providers and plugins, inspecting configuration, or regenerating installed registrations."
 ---
 
 <Callout type="warning">
@@ -9,7 +9,7 @@ description: "chat-js — scaffold and manage ChatJS applications"
   release. Use `chat-js@alpha` to try the current alpha.
 </Callout>
 
-`chat-js` gets you from zero to a running ChatJS app in one command. No global CLI installation is required. With Bun installed, run:
+Create the app with your preferred package manager, then follow the [Quickstart](/quickstart) to configure credentials and initialize the database. With Bun installed, run:
 
 ```bash
 bunx chat-js@alpha create my-app
@@ -37,10 +37,13 @@ Creation detects npm from its default `npm/` user-agent prefix. If you override 
   <Card title="status" icon="list" href="/cli/status">
     Inspect plugin-owned files, local edits, and removal dependencies.
   </Card>
-  <Card title="sync" icon="refresh-cw" href="./sync">
+  <Card title="setup" icon="settings" href="/cli/setup">
+    Check the configuration of installed tools and plugins.
+  </Card>
+  <Card title="sync" icon="refresh-cw" href="/cli/sync">
     Regenerate registrations after descriptor or direct shadcn changes.
   </Card>
-  <Card title="remove" icon="minus" href="./remove">
+  <Card title="remove" icon="minus" href="/cli/remove">
     Disconnect plugins while retaining schema inputs and stored data.
   </Card>
 </CardGroup>

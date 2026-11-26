@@ -5,10 +5,10 @@
   --card-foreground: var(--carbon-foreground);
   --primary: var(--carbon-foreground);
   --primary-foreground: var(--carbon-background);
-  --secondary: #191918;
-  --muted: #191918;
+  --secondary: light-dark(#efeee8, #191918);
+  --muted: light-dark(#efeee8, #191918);
   --muted-foreground: var(--carbon-muted);
-  --accent: #20201d;
+  --accent: light-dark(#e7e6df, #20201d);
   --border: var(--carbon-line);
   --ring: var(--carbon-foreground);
   --font-geist-mono: CarbonPlex, monospace;

@@ -1,6 +1,6 @@
 ---
 title: Execution & Recovery
-description: Understand creation, streaming, reconnecting, and cancellation
+description: "Follow a chat from its first message through streaming, reconnection, and cancellation, including how to recover an interrupted delivery."
 ---
 
 ChatJS uses EVE to execute conversations and recover their durable state. The browser connects through the authenticated ChatJS gateway. Your app does not need the separate Redis resumable-stream recipe used by standalone AI SDK applications.
@@ -13,11 +13,11 @@ For a new conversation, the composer records a durable creation request before a
 
 EVE owns the transcript, execution state, approvals, and stream position. When you reopen a chat, ChatJS reconnects and restores those messages and execution state. Application records supply the sidebar, ownership, and other installed app capabilities without mirroring the native transcript.
 
-Changing the selected branch changes the path you view. Other active parallel responses can continue streaming. See [Conversations](./conversations) for branches and response groups.
+Changing the selected branch changes the path you view. The active turn can continue while you view another branch. Comparison candidates sharing the workspace take turns. See [Conversations](/core/conversations) for branches and response groups.
 
 ## Stopping execution
 
-Use the stop control for the selected running response to request cancellation. Each parallel response has its own execution and stop control. Stopping one does not stop the other responses in the group.
+Use the stop control for the selected running response to request cancellation. Other candidates in the comparison have their own state. A waiting candidate has not started its turn.
 
 Cancellation is an asynchronous command. The interface tracks a pending stop rather than treating a button click as proof that execution has stopped.
 
@@ -27,4 +27,4 @@ The conversation interface retains recovery state for unconfirmed creation and d
 
 ## Tools and infrastructure
 
-[Tool Calls & Approvals](./tool-calls) describes execution that waits for your decision. [Sandboxes](../deployment/sandboxes) explains ephemeral code execution and persistent session files. [Architecture](./architecture) describes runtime and application ownership.
+[Tool Calls & Approvals](/core/tool-calls) describes execution that waits for your decision. [Sandboxes](/deployment/sandboxes) explains ephemeral code execution and persistent session files. [Architecture](/core/architecture) describes runtime and application ownership.

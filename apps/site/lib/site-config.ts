@@ -23,6 +23,8 @@ const siteConfig = {
   url: "https://chatjs.dev",
 } as const;
 
+const docsNavigationHref = "/docs";
+
 const siteLinks = {
   demo: siteConfig.demoUrl,
   desktop: siteConfig.desktopUrl,
@@ -38,11 +40,6 @@ const siteLinks = {
   sitemap: `${siteConfig.url}/sitemap.xml`,
   threads: `${siteConfig.url}/threads`,
 } as const;
-
-const docsNavigationHref =
-  process.env.NODE_ENV === "development"
-    ? (process.env.NEXT_PUBLIC_CHATJS_DOCS_URL ?? siteLinks.docs)
-    : siteLinks.docs;
 
 const siteLastModified = new Date("2025-03-28T16:14:00.000Z");
 export { docsNavigationHref, siteConfig, siteLastModified, siteLinks };

@@ -1,7 +1,9 @@
 ---
 title: "Architecture"
-description: "How ChatJS is structured and how data flows through the system"
+description: "Follow a message from the browser through ChatJS to EVE and the model provider. See where transcripts, application metadata, and usage are stored."
 ---
+
+ChatJS runs the web app and authenticates access to its conversations. EVE runs the agent defined in `agent/agent.ts` and loads its instructions, hooks, channels, and tools from the `agent/` directory. For the framework conventions, see the [EVE documentation](https://eve.dev/docs/getting-started).
 
 ## System Overview
 
@@ -18,8 +20,8 @@ The current ChatJS application uses:
 - **Next.js App Router** for the frontend and API routes
 - **EVE** for conversation execution, message persistence, tool calls, and stream recovery
 - **PostgreSQL** (via [Drizzle ORM](https://orm.drizzle.team)) for application-owned metadata such as users, ownership, projects, sharing, files, documents, and billing evidence
-- **AI SDK** to connect to multiple AI providers through a [gateway abstraction](../gateways/overview)
-- **Files SDK** through a configured [file storage provider](../storage) for attachments and generated media
+- **AI SDK** to connect to multiple AI providers through a [gateway abstraction](/gateways/overview)
+- **Files SDK** through a configured [file storage provider](/storage) for attachments and generated media
 - **tRPC** for end-to-end type-safe API routes between client and server
 
 ## EVE conversation flow
@@ -48,10 +50,10 @@ EVE runs conversations and persists their messages and execution state. ChatJS m
 
 Core owns account authentication, conversation ownership, EVE execution, model resolution, and usage evidence. Installed plugins add capabilities such as Projects, Sharing, Model Preferences, and Credits. Tools and providers have separate installation contracts.
 
-See [Configuration & Extensions](./configuration) for the available extension types and [Source Ownership](./source-ownership) for where to make changes.
+See [Configuration & Extensions](/core/configuration) for the available extension types and [Source Ownership](/core/source-ownership) for where to make changes.
 
 ## Usage evidence
 
 Core records model usage under unique accounting-wrapper attempt IDs and supported tool usage under session/call IDs. It reconciles tool receipts against the authoritative EVE stream. Replaying evidence with the same identity does not duplicate recorded usage. This recording and reconciliation also runs without Credits installed, without creating or debiting balances. Reconciliation failures can prevent new work.
 
-[Credits](../plugins/credits) owns balance checks and charging policy. Its page explains how recorded usage becomes a debit when the plugin is installed.
+[Credits](/plugins/credits) owns balance checks and charging policy. Its page explains how recorded usage becomes a debit when the plugin is installed.

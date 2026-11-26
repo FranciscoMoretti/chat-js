@@ -1,6 +1,6 @@
 ---
 title: Registry Overview
-description: Understand extension distribution, source ownership, and installation contracts
+description: "Explore the ChatJS registry, distinguish tools and plugins from provider selections, and locate the canonical source and generated installation files."
 ---
 
 Use the ChatJS registry to install editable source and the dependencies required by your selected extensions. shadcn distributes and installs items. The ChatJS CLI configures the app and generates tool registrations from installed descriptors.
@@ -11,13 +11,13 @@ Choose a category based on what you want to change in your app.
 
 | Category | App behavior | Start here |
 | --- | --- | --- |
-| Gateways | Select the AI backend when creating an app | [Choose a gateway](../gateways/overview) |
-| File Storage | Select the storage adapter when creating an app | [Choose storage](../storage) |
-| Sandboxes | Select execution infrastructure for tools and supported persistent EVE sessions | [Configure sandboxes](../deployment/sandboxes) |
-| Tools | Add server tools and their result renderers to an existing app | [Install tools](../tools/install) |
-| Plugins | Add optional app capabilities and integrations | [Choose plugins](../plugins/overview) |
+| Gateways | Select or replace the AI backend | [Choose a gateway](/gateways/overview) |
+| File Storage | Select or replace the file storage adapter | [Choose storage](/storage) |
+| Sandboxes | Select execution infrastructure for tools and supported persistent EVE sessions | [Configure sandboxes](/deployment/sandboxes) |
+| Tools | Add server tools and their result renderers to an existing app | [Install tools](/tools/install) |
+| Plugins | Add optional app capabilities and integrations | [Choose plugins](/plugins/overview) |
 
-For gateways, use `chat-js create --gateway <gateway>` to install and configure the selected adapter. For tools, use `chat-js add` to install items and regenerate registrations. For storage, use `chat-js create --storage-provider <storage-provider>` to install an adapter and generate its typed options. For sandboxes, use `chat-js add --sandbox-provider <item>` to install infrastructure without a model-facing tool. For plugins, use `chat-js add <plugin>` and complete that plugin's setup. Each category has its own activation contract.
+Select providers during `create` or change them later with `add`. Use `--gateway`, `--storage-provider`, or `--sandbox-provider` to select the provider, and pass `--replace` when switching an installed provider. For tools and plugins, run `chat-js add <item>` and follow the item’s setup instructions. See [add](/cli/add) for options and examples.
 
 ## Agent categories and app plugins
 
@@ -25,7 +25,7 @@ In Create, tools belong under **Agent → Tools** and Deep Research under **Agen
 
 Image, video and spreadsheet viewers remain optional **Plugins**. Sharing is a plugin and Desktop is under **Setup → Platforms**. Installing a generation or publication tool does not install a viewer.
 
-The native EVE distribution under `dist/r/eve/` excludes application presentation and services. It supports ordinary tool modules and bundles of native agent files, including Deep Research. See [Deep Research](../tools/deep-research) for its two installation options.
+The native EVE distribution under `dist/r/eve/` excludes application presentation and services. It supports ordinary tool modules and bundles of native agent files, including Deep Research. See [Deep Research](/tools/deep-research) for its two installation options.
 
 ## Source and ownership
 
@@ -34,7 +34,8 @@ The native EVE distribution under `dist/r/eve/` excludes application presentatio
 | `packages/registry/src/gateways/<id>/gateway.ts` | Canonical gateway implementations |
 | `packages/registry/src/storage/<id>/storage-provider.ts` | Canonical storage adapter entry points |
 | `packages/registry/src/tools/<id>/` | Canonical tools and renderers |
-| `packages/registry/registry.ts` | Item files, dependencies, targets, and metadata |
+| `packages/registry/registry-items.ts` | Media tool definitions and collection of installable items |
+| `packages/registry/registry.ts` | Assemble the item and storage catalogs and validate the registry |
 | `packages/registry/dist/r/` | Generated registry JSON for distribution |
 | `apps/chat/chatjs/core/gateway/` | Shared gateway source copied into every generated app |
 | `packages/cli/` | App creation, installation, and registration generation |
@@ -46,8 +47,8 @@ Your app owns the installed source. Its selected gateway occupies `chatjs/provid
 
 ## Registry guides
 
-- [Namespaces](./namespaces) explains item addresses and installation targets.
-- [Authoring and publishing](./authoring) explains the source-to-JSON workflow.
-- [Registry Mirror](./mirror) explains how to preview canonical changes in the reference app.
-- [Registry validation](./validation) explains dependency ownership, composed type checks and real-install parity.
-- [Building and testing](./testing) explains how to verify distributed items.
+- [Namespaces](/registry/namespaces) explains item addresses and installation targets.
+- [Authoring and publishing](/registry/authoring) explains the source-to-JSON workflow.
+- [Registry Mirror](/registry/mirror) explains how to preview canonical changes in the reference app.
+- [Registry validation](/registry/validation) explains dependency ownership, composed type checks and real-install parity.
+- [Building and testing](/registry/testing) explains how to verify distributed items.

@@ -1,6 +1,6 @@
 ---
 title: status
-description: Inspect installation file kinds, local edits, and plugin removal dependencies
+description: "Inspect installed files, see which plugin owns each entry, and identify local edits or dependencies before replacing or removing source."
 ---
 
 `chat-js status` reads your local installation. It does not contact a registry, install dependencies, run sync, or change source receipts.
@@ -13,7 +13,7 @@ chat-js status --cwd ./my-app
 chat-js status --format-source ./format-source.mjs
 ```
 
-This command is available in the CLI source accompanying this change. Use your matching local CLI build until a release includes it.
+Run these commands from the app directory with your matching CLI version. For the 1.0 alpha, use `npx chat-js@alpha status --files` to inspect an app without a global installation.
 
 ## Understand the file tree
 
@@ -23,7 +23,7 @@ Files have four lifecycle kinds. Kind describes how installation treats a file, 
 | --- | --- | --- |
 | `application` | Your application and its composition | Add/remove/sync preserve your integration code |
 | `source` | Installed implementation, including its descriptor | Editable and tracked against the recorded installation. Replacement/removal protect local changes |
-| `generated` | Derived imports, registrations or model catalog | Change the inputs and regenerate |
+| `generated` | Derived imports and registrations | Change the inputs and regenerate |
 | `record` | Installation hashes, original content and dependency/schema receipts | Maintained by the CLI. Keep in version control |
 
 ```text
@@ -43,7 +43,6 @@ integrations/                  application: composition and policy
   auth/
   chat/
   tools/
-  documents/
   providers/
   billing.ts
   database.ts
@@ -120,7 +119,7 @@ If a schema is missing or its retained dependencies cannot be resolved, status r
 
 Status compares your files against the recorded installation, not the newest upstream release. It does not report available upgrades. Source reference inspection covers relative and `@/` static imports, re-exports, and literal dynamic imports. Computed imports and custom aliases require review. Core, tools and providers appear in the file inventory. Dependency and removal analysis still applies only to plugins. Files installed directly through shadcn may have no recorded baseline, and external files without a plugin claim or receipt cannot be inferred.
 
-See [Customize plugin integrations](../cookbook/customize-integrations) for app-owned wrappers that survive later installation, and [add](./add) for replacement and removal safeguards.
+See [Customize plugin integrations](/cookbook/customize-integrations) for app-owned wrappers that survive later installation, and [add](/cli/add) for replacement and removal safeguards.
 
 ## Existing layouts
 

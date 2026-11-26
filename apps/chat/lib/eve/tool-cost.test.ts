@@ -1,15 +1,27 @@
 import { expect, test, vi } from "vitest";
 
+import { loadModelCatalog } from "../ai/model-catalog";
 import { createEveToolCost } from "./tool-cost";
 
-vi.mock("../ai/active-gateway", () => ({
-  getActiveGateway: () => ({
-    fetchModels: vi.fn().mockResolvedValue([
-      { id: "priced", pricing: { input: "0.000001", output: "0.000002" } },
-      { id: "priced-image", pricing: { image: "0.04" } },
-    ]),
-  }),
+const { fetchModels } = vi.hoisted(() => ({
+  fetchModels: vi.fn().mockResolvedValue([
+    { id: "priced", pricing: { input: "0.000001", output: "0.000002" } },
+    { id: "priced-image", pricing: { image: "0.04" } },
+  ]),
 }));
+vi.mock("../ai/active-gateway", () => ({
+  getActiveGateway: () => ({ fetchModels }),
+}));
+
+test("uses cached catalog pricing for image and token charges", async () => {
+  await loadModelCatalog();
+  fetchModels.mockClear();
+  const cost = createEveToolCost();
+  cost.addImageCost("priced-image", 1, {}, "image");
+  cost.addLLMCost("priced", { inputTokens: 100, outputTokens: 200 }, "image");
+  expect(await cost.totalUsd()).toBeCloseTo(0.0405);
+  expect(fetchModels).not.toHaveBeenCalled();
+});
 test("combines API and nested model usage without rounding each call", async () => {
   const cost = createEveToolCost();
   cost.addAPICost("api", 5);

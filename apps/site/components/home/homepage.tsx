@@ -1,6 +1,7 @@
 import { RiGithubFill } from "@remixicon/react";
 import { Equal, Plus, X } from "lucide-react";
 import Link from "next/link";
+import { ModeSwitcher } from "@/vendor/shadcn-create/components/mode-switcher";
 import { BrandMark } from "@/components/brand-mark";
 import { docsNavigationHref, siteLinks } from "@/lib/site-config";
 import { buttonVariants } from "@/vendor/shadcn-create/styles/base-nova/ui/button";
@@ -19,7 +20,7 @@ const HomeLinks = () => (
 
 const HomeHeader = () => (
   <header className="canopy-header">
-    <div className="carbon-wrap canopy-bar">
+    <div className="canopy-bar">
       <Link href="/" className="canopy-home-link" aria-label="ChatJS home">
         <BrandMark className="size-5" />
       </Link>
@@ -44,9 +45,8 @@ const HomeHeader = () => (
           className="canopy-mobile-menu"
           popover="auto"
         >
-          <div className="carbon-wrap">
-            <HomeLinks />
-          </div>
+          <HomeLinks />
+          <ModeSwitcher showLabel />
         </div>
         <a
           href={siteLinks.github}
@@ -59,6 +59,7 @@ const HomeHeader = () => (
         >
           <RiGithubFill aria-hidden="true" className="size-5" />
         </a>
+        <ModeSwitcher className="canopy-theme-toggle" />
         <Link
           href="/create"
           className={buttonVariants({ className: "canopy-new" })}
@@ -71,7 +72,7 @@ const HomeHeader = () => (
 );
 
 export const Homepage = () => (
-  <div className="carbon-page canopy-page dark" data-testid="homepage">
+  <div className="carbon-page canopy-page" data-testid="homepage">
     <a className="canopy-skip" href="#main">
       Skip to content
     </a>

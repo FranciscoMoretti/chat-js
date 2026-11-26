@@ -1,3 +1,4 @@
+import { rejects } from "node:assert/strict";
 import { describe, expect, it, mock } from "bun:test";
 
 import { LiteLLMGateway } from "./litellm/gateway";
@@ -122,19 +123,13 @@ describe.each(adapters)("$name gateway contract", (adapter) => {
     );
   });
 
-  it("uses only the host's fallback snapshot after a discovery failure", async () => {
-    const requested: string[] = [];
+  it("rejects discovery when the gateway is unavailable", async () => {
     const gateway = adapter.create({
       env: adapter.env,
       fetch: mock<typeof fetch>().mockResolvedValue(
         new Response(null, { status: 503 })
       ),
-      getFallbackModels: (name: string) => {
-        requested.push(name);
-        return [];
-      },
     });
-    expect(await gateway.fetchModels()).toEqual([]);
-    expect(requested).toEqual([adapter.name]);
+    await rejects(gateway.fetchModels(), /503/u);
   });
 });

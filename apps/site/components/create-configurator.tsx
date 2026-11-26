@@ -116,8 +116,8 @@ const CreateWorkspace = () => {
           <TabsTrigger value="agent">Agent</TabsTrigger>
           <TabsTrigger value="setup">Setup</TabsTrigger>
         </TabsList>
-        <div className="flex items-center justify-end gap-2 lg:flex-1">
-          <ModeSwitcher />
+        <div className="flex max-w-full flex-wrap items-center justify-end gap-2 lg:flex-1">
+          <ModeSwitcher keyboardShortcut />
           <section
             aria-label="Installation status"
             className={view === "setup" ? "hidden" : "md:hidden"}

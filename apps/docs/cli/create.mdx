@@ -1,9 +1,9 @@
 ---
 title: create
-description: Scaffold a new ChatJS application
+description: "Scaffold a ChatJS app from the terminal. Choose a gateway, plugins, and providers interactively, or replay selections from the app builder."
 ---
 
-This is the default command. You can omit the word `create` and pass the directory directly.
+This is the default [CLI command](/cli). You can omit the word `create` and pass the directory directly.
 
 ```bash
 npx chat-js@alpha create [directory] [options]
@@ -24,6 +24,11 @@ npx chat-js@alpha [directory] [options]
 | `--sandbox-provider <provider>` | Automatic | Native EVE sandbox: `default`, `vercel`, `docker`, `just-bash`, or a registry address. Python and Node execution require a native process backend. |
 | `--video-generation-tool <item>` | Not applicable | Enable the built-in `generate-video` tool or an external registry item. |
 | `--image-generation-tool <item>` | Not applicable | Enable the built-in `generate-image` tool or an external registry item. |
+| `--app-preset <code>` | None | Apply the builder’s compact app preset. |
+| `--installation <json>` | None | Supply the complete installation selection as JSON. Use either this option or an app preset. |
+| `--recipe <path>` | None | Replay a saved agent recipe with Bun and its frozen dependency lock. |
+| `--projects` / `--no-projects` | Off | Include or omit project pages, organization, and project instructions. |
+| `--electron` / `--no-electron` | Off | Include or omit the desktop companion. |
 | `--mcp` / `--no-mcp` | Off | Install or omit MCP connectors. |
 | `--attachments` / `--no-attachments` | Off | Install or omit picker, camera, paste/drop and the upload endpoint. |
 | `--gateway <name-or-address>` | Vercel | Select a built-in or external registry gateway. |
@@ -31,44 +36,24 @@ npx chat-js@alpha [directory] [options]
 | `--storage-provider <provider>` | Not applicable | Select a built-in storage provider or an external registry item address. |
 | `--storage-config <json>` | Not applicable | Pass non-secret JSON options to the selected adapter. Credentials use env vars. |
 
+Pass native shadcn options after `--`. A complete installation selection or app preset supplies the feature choices itself.
+
 ## Interactive prompts
 
-When run without `--yes`, the CLI walks you through:
+In interactive mode, the CLI asks for choices you have not supplied:
 
-1. **Project name:** the target directory name
-2. **Gateway:** the AI gateway to use (e.g. Vercel AI Gateway, OpenRouter)
-3. **Features:** optional features to enable
-4. **Tool providers and sandbox:** provider selection for enabled tools and the native EVE sandbox
-5. **File storage:** provider and non-secret adapter options when selected features store files
-6. **Auth providers:** authentication method (e.g. GitHub OAuth)
-7. **Electron desktop app:** optionally adds an `electron/` subfolder to package the app as a native desktop app (see [Desktop](../deployment/desktop))
+1. Project directory and AI gateway.
+2. Features, assistant tools, and providers for the tools you enable.
+3. Authentication providers.
+4. Whether to include the [Electron desktop app](/deployment/desktop).
+5. The native EVE sandbox.
+6. File storage and adapter options when a selected feature needs storage or you request a provider.
 
 New apps use the invoking package manager, with Bun as the fallback. The CLI records its version in `package.json`, and shadcn installs dependencies immediately. The former `--no-install`, `--package-manager`, and `--registry` flags are removed.
 
 ## What gets generated
 
-The `create` command copies the built-in template and writes a tailored `chat.config.ts` with your selections pre-filled:
-
-```
-my-app/
-├── app/                    # Next.js App Router pages and layouts
-│   ├── (auth)/             # Auth-related routes
-│   ├── (chat)/             # Chat interface routes
-│   ├── api/                # API route handlers
-│   └── layout.tsx
-├── components/             # Shared UI components
-├── hooks/                  # React hooks
-├── lib/                    # Core logic (AI, auth, DB, config schema)
-├── providers/              # React context providers
-├── trpc/                   # tRPC router
-├── chat.config.ts          # Your app configuration (generated)
-├── drizzle.config.ts       # Database schema config
-├── next.config.ts
-├── package.json
-└── tsconfig.json
-```
-
-After scaffolding, the CLI prints the exact environment variables required for your chosen configuration.
+A fresh scaffold contains the Next.js app, its native EVE agent under `agent/`, installed source under `chatjs/`, and app-owned composition in `integrations/`. The CLI writes `chat.config.ts` for your selections and prints the environment variables they require. See [Project structure](/project-structure) for the file map.
 
 ## Examples
 
@@ -83,6 +68,16 @@ npx chat-js@alpha create my-chat-app
 ```bash
 npx chat-js@alpha create my-chat-app --yes
 ```
+
+**Replay a saved agent recipe**
+
+Creating an app with Bun writes `chatjs/agent-recipe.json`. From the parent directory of `my-chat-app`, replay its recipe into a sibling directory:
+
+```bash
+bunx chat-js@alpha create my-replay --recipe ./my-chat-app/chatjs/agent-recipe.json --yes
+```
+
+The recipe supplies the installation and appearance choices. Pass selection flags and shadcn appearance options only when creating a new recipe.
 
 **Select a gateway**
 
@@ -104,7 +99,7 @@ npx chat-js@alpha create my-chat-app --yes \
   --storage-config '{"bucket":"uploads","region":"us-east-1"}'
 ```
 
-Keep credentials out of `--storage-config`. The generated `.env.example` and final CLI checklist show the environment requirements for the selected provider. See [File storage](../storage) for details.
+Keep credentials out of `--storage-config`. The generated `.env.example` and final CLI checklist show the environment requirements for the selected provider. See [File storage](/storage) for details.
 
 **Full flow after scaffolding**
 
@@ -113,16 +108,16 @@ npx chat-js@alpha create my-chat-app
 cd my-chat-app
 cp .env.example .env.local
 # Fill in the env vars printed by the CLI
-bun run setup
-bun run dev
+npm run setup
+npm run dev
 ```
 
-`create --from-git` preserves the cloned repository's configuration, dependencies, and installed source. It does not contact the registry or apply feature-selection flags. Follow the cloned repository's setup instructions; use `chat-js add` for subsequent tool installations. Fresh scaffolds assemble the selected features. Direct shadcn installations require `chat-js sync` afterward.
+`create --from-git` preserves the cloned repository's configuration, dependencies, and installed source. Combining this option with feature-selection flags causes the command to exit before cloning. Follow the cloned repository's setup instructions; use `chat-js add` for subsequent tool installations. Fresh scaffolds assemble the selected features. Direct shadcn installations require `chat-js sync` afterward.
 
 Installations determine which tools, document bundles and optional implementations exist. `chat.config.ts` keeps models, attachment size/type parameters, permissions, follow-up suggestions and parallel responses. It does not duplicate installed presence with feature flags. The maintained demo includes uploads and MCP. Agent observability uses EVE instrumentation selected in the builder’s Agent tab.
 
 ```bash
-npx chat-js@alpha create my-chat-app --yes --attachments --sandbox-provider vercel --mcp
+npx chat-js@alpha create my-chat-app --yes --attachments --storage-provider vercel-blob --sandbox-provider vercel --mcp
 ```
 
 Uploads require durable file storage. EVE owns the agent sandbox lifecycle. Historical attachment display and tool-produced files remain available when user uploads are omitted.

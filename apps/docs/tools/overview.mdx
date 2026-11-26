@@ -1,26 +1,26 @@
 ---
 title: Tools Overview
-description: Install and distribute typed ChatJS tools with shadcn registries
+description: "Explore the ChatJS tool catalog, see what gets installed for each tool, and connect tools from your own or a third-party shadcn registry."
 ---
 
-The ChatJS registry distributes editable source code using shadcn. A tool includes server logic, dependencies, and a declarative registration descriptor. Tools can include their own client renderer. Media generation and workspace attachments include renderers for their output. Installed tools become part of your app's typed tool system. All installed and custom tools use native EVE definitions. Installed registry items use a `contractVersion: 1` descriptor. Custom tools are registered directly in `integrations/tools/execution.ts` without a descriptor.
+The ChatJS registry distributes editable source code using shadcn. A tool includes server logic, dependencies, and a declarative registration descriptor. Tools can include their own client renderer. Media generation and workspace attachments include renderers for their output. Installed tools become part of your app's typed tool system. All installed and custom tools use native EVE definitions. Registry tools declare their exports and any UI compatibility requirements in a [versioned descriptor](/tools/authoring#item-metadata). Custom tools are registered directly in `integrations/tools/execution.ts` without a descriptor.
 
 ```bash
 npx chat-js@alpha add deep-research
 ```
 
-shadcn resolves the item and its dependencies, installs packages, and writes the source files. ChatJS then regenerates separate server and client registrations. Existing source follows shadcn's overwrite prompts. Pass `--overwrite` to replace it.
+shadcn resolves the item and its dependencies, installs packages, and writes the source files. ChatJS then regenerates separate server and client registrations. ChatJS protects modified or untracked source. Review those files before passing `--overwrite` to replace them.
 
-EVE’s default `bash` tool handles general [code execution](./code-execution). It does not require a separate ChatJS tool.
+EVE’s default `bash` tool handles general [code execution](/tools/code-execution). It does not require a separate ChatJS tool.
 
 ## Available tools
 
 | Tool | Purpose | Credentials |
 | --- | --- | --- |
-| [Attach Workspace File](./code-execution#attach-a-generated-file) (`attach-workspace-file`) | Attach a finished workspace file for download | Persistent storage |
-| [Deep Research](./deep-research) | Research a topic and write a sandbox report | Model and research sources available to the agent |
-| [Generate Video](./generate-video) | Generate video clips | Selected gateway and file storage |
-| [Generate Image](./generate-image) | Generate and edit images | Selected gateway and file storage |
+| [Attach Workspace File](/tools/code-execution#attach-a-generated-file) (`attach-workspace-file`) | Attach a finished workspace file for download | Persistent storage |
+| [Deep Research](/tools/deep-research) | Research a topic and write a sandbox report | Model and research sources available to the agent |
+| [Generate Video](/tools/generate-video) | Generate video clips | Selected gateway and file storage |
+| [Generate Image](/tools/generate-image) | Generate and edit images | Selected gateway and file storage |
 
 ## Installed files
 
@@ -34,16 +34,15 @@ EVE’s default `bash` tool handles general [code execution](./code-execution). 
 
 Keep manual registrations in the app-owned integration modules. Sync rejects duplicate installed descriptor keys and edited generated indexes. App composition permits explicit replacements; its workflow guard rejects dynamic tools that shadow native workflow names. Add app-owned tool names to the client-safe `integrations/tools/catalog.ts` when they should appear in tool selection. Sync also refuses to remove a previously registered tool just because its descriptor disappeared. Restore the descriptor before syncing.
 
-Registry items specify explicit file targets. This integration uses `chatjs/tools`. The former `paths.tools` configuration and marker-based injection are removed. Built-in product tools remain in `tools/platform`.
+Registry items specify explicit file targets. This integration uses `chatjs/tools`. The former `paths.tools` configuration and marker-based injection are removed. Shared application support lives in `tools/platform/`. Native workflow tools are discovered under `agent/tools/`.
 
 ## External registries
 
-Configure standard namespaces in `components.json`:
+Keep the generated `@chatjs` namespace in `components.json`. To add an external source, merge its entry into the existing `registries` object. For example:
 
 ```json
 {
   "registries": {
-    "@chatjs": "https://unpkg.com/@chat-js/registry@1/dist/r/{name}.json",
     "@acme": "https://example.com/r/{name}.json"
   }
 }
@@ -58,7 +57,7 @@ You can also pass a complete registry item URL or local JSON path. Registry requ
 ## Direct shadcn installation
 
 ```bash
-npx shadcn@4.21.0 add @chatjs/deep-research
+npx shadcn add @chatjs/deep-research
 npx chat-js@alpha sync
 ```
 
@@ -68,10 +67,10 @@ Tool environment requirements live in `chatjs.json`, generated from typed item m
 
 ## Related
 
-- [Registry Overview](../registry) for categories, source ownership, and distribution
+- [Registry Overview](/registry) for categories, source ownership, and distribution
 
-- [CLI add](../cli/add) for command options
-- [Adding Tools](./install) for the installation steps
-- [Tools](./authoring) for source authoring
+- [CLI add](/cli/add) for command options
+- [Adding Tools](/tools/install) for the installation steps
+- [Tools](/tools/authoring) for source authoring
 
-For external web search and retrieval, see [Web search](./web-search).
+For external web search and retrieval, see [Web search](/tools/web-search).

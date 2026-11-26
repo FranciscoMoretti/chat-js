@@ -1,242 +1,51 @@
 ---
 title: Deploy to Vercel
-description: Production deployment with Vercel's integrated platform
+description: "Deploy ChatJS and its integrated EVE worker to Vercel, configure preview and production credentials, and initialize the application database."
 ---
 
-You can deploy the Next.js application and its integrated EVE worker to one Vercel project. Configure your application database, private EVE credentials, and OAuth origins before deploying. Registered and guest agents use managed Vercel Workflow automatically.
+Deploy your generated app as one Next.js project. Vercel Preview and Production use managed Workflow for EVE execution and transcripts. You still need PostgreSQL for application data. Start with an app that can send a message locally. [Quickstart](/quickstart)
 
-<Callout type="note">
-  If you haven't set up your project yet, start with the
-  [Quickstart](/quickstart) to scaffold and run locally first.
-</Callout>
+## 1. Connect the app and its services
 
-## Vercel Integrations
+Import the app's Git repository into Vercel. If the app lives in a monorepo, select the app directory as the project's root. Keep **Automatically expose System Environment Variables** enabled so ChatJS can select the workflow backend.
 
-ChatJS uses several Vercel platform features. Enable them in your Vercel dashboard under **Storage** and **AI**.
+| Service | What to configure |
+| --- | --- |
+| PostgreSQL | Set `DATABASE_URL` for each environment. Use separate databases for preview and production. Set `DATABASE_MIGRATION_URL` if migrations need a separate connection. |
+| AI gateway | Configure the gateway installed in your app. The default Vercel AI Gateway can use deployment OIDC. Other adapters use their own credentials or endpoint. [Gateways](/gateways/overview) |
+| File storage | Configure your installed adapter if you selected uploads or generated media. For Vercel Blob, connect a private store and supply its read/write token or supported OIDC settings. [File storage](/storage) |
+| Sandbox | Configure the environment selected in `agent/sandbox.ts`. Vercel Sandbox can authenticate with deployment OIDC. [Sandboxes](/deployment/sandboxes) |
 
-| Integration | Purpose | Required |
-| --- | --- | --- |
-| **PostgreSQL** (for example, Neon) | Application database | Yes |
-| **Vercel Workflow** | EVE execution and durable transcripts | Selected automatically |
-| **Vercel Blob** | File attachments, generated images | If using attachments/image gen |
-| **AI Gateway** | Unified access to 120+ AI models | Yes |
+## 2. Set credentials and origins
 
-### AI Gateway
+Set `AUTH_SECRET` and `EVE_GATEWAY_SECRET` to independently generated secrets. Run `openssl rand -base64 32` once for each. Supply credentials for every enabled OAuth provider and any installed capabilities in the generated `.env.example`. Make them available during build and runtime. [Environment variables](/reference/env-vars)
 
-By default, ChatJS uses [Vercel AI Gateway](/gateways/vercel) to access 120+ models from OpenAI, Anthropic, Google, and more.
-
-1. Go to [Vercel AI Gateway](https://vercel.com/ai-gateway)
-2. Create an API key
-3. Add to environment: `AI_GATEWAY_API_KEY`
-
-You can switch to [OpenRouter](/gateways/openrouter) or any other [supported gateway](/gateways/overview) in `chat.config.ts`. See [Multi-Model Support](../customization/models) for configuring available models.
-
-### Blob Storage
-
-Vercel Blob is the recommended Files SDK provider for file attachments and generated media on Vercel. See [File storage](../storage) for the provider-agnostic architecture and migration behavior.
-
-1. Go to **Storage** → **Create** → **Blob**
-2. Connect to your project
-3. Environment variable `BLOB_READ_WRITE_TOKEN` is auto-added
-
-To disable blob features, set in `chat.config.ts`:
-
-```typescript
-features: {
-  attachments: false,
-},
-ai: {
-  tools: {
-    image: { enabled: false },
-    video: { enabled: false },
-  },
-}
-```
-
-## Cron Jobs
-
-ChatJS includes a daily cleanup job that removes orphaned managed files uploaded but never saved to a message.
-
-### Configuration
-
-Defined in `vercel.json`:
-
-```json
-{
-  "crons": [
-    {
-      "path": "/api/cron/cleanup",
-      "schedule": "0 2 * * *"
-    }
-  ]
-}
-```
-
-Runs daily at 2 AM UTC. Adjust the schedule using [cron syntax](https://crontab.guru/).
-
-### Security
-
-The cron endpoint requires a `CRON_SECRET` environment variable:
-
-```bash
-# Generate a secret
-openssl rand -base64 32
-```
-
-Add to Vercel environment variables. Vercel automatically sends this as a Bearer token.
-
-### Customizing Cleanup
-
-Edit `app/api/cron/cleanup/route.ts` to add cleanup tasks:
-
-```typescript
-const results = {
-  orphanedAttachments: await cleanupOrphanedAttachments(),
-  // Add other cleanup tasks here
-  expiredSessions: await cleanupExpiredSessions(),
-};
-```
-
-## Code Execution Sandbox
-
-The code execution tool uses [Vercel Sandbox](https://vercel.com/docs/functions/og-image-generation) for secure Python execution.
-
-### Authentication
-
-On Vercel, sandbox uses OIDC automatically. For local development or self-hosted:
-
-```bash
-VERCEL_TEAM_ID=team_xxx
-VERCEL_PROJECT_ID=prj_xxx
-VERCEL_TOKEN=xxx
-```
-
-### Runtime Configuration
-
-Set the Python version via environment variable:
-
-```bash
-VERCEL_SANDBOX_IMAGE_PYTHON=vercel/sandbox/python:3.14  # default
-VERCEL_SANDBOX_IMAGE_JAVASCRIPT=vercel/sandbox/node:22  # default
-```
-
-### Resource Limits
-
-Sandboxes run with:
-
-- 2 vCPUs
-- 5 minute timeout
-- Pre-installed: matplotlib, pandas, numpy, sympy, yfinance
-
-## Environment Variables
-
-### Required
-
-Keep **Automatically expose System Environment Variables** enabled in Vercel’s project settings for Preview and Production. Backend selection requires the platform-provided `VERCEL` and `VERCEL_ENV` values.
-
-Configure the credentials listed in [Environment Variables](../reference/env-vars), including `DATABASE_URL` and an independently generated `EVE_GATEWAY_SECRET` (`openssl rand -base64 32`). Keep `EVE_INTERNAL_ORIGIN` unset to use the exact deployment URL from `VERCEL_URL`. These settings must be available during the build and at runtime.
-
-Initialize the application schema using the [database setup guide](../reference/database#hosted-workflow-database). Use separate application databases for previews and production, with branch-scoped preview credentials. Omit `WORKFLOW_POSTGRES_URL` on Vercel. It is required only for local/self-hosted registered-chat workflows.
-
-Production Vercel builds apply application migrations automatically. Preview builds skip them, so run those migrations explicitly before testing a preview. Managed Workflow does not require PostgreSQL workflow provisioning.
-
-Changing backends does not migrate existing sessions. Application migrations register existing conversations as PostgreSQL-backed, and Vercel builds reject a mismatched database. Keep the old deployment/database intact; use an isolated fresh database for previews and complete a verified migration before production cutover. Hosted conversation erasure remains unavailable.
+For production, set `APP_URL` to your public origin and register that origin's OAuth callback URLs. For example, GitHub uses `https://yourdomain.com/api/auth/callback/github`. Without an explicit `APP_URL`, production auth falls back to `appUrl` in `chat.config.ts`.
 
 ### Preview origins and OAuth
 
-Use a stable branch hostname for preview sign-in. Without an explicit `APP_URL`, ChatJS uses `VERCEL_BRANCH_URL` when `VERCEL_ENV=preview`, then falls back to `VERCEL_URL`. `APP_URL` takes precedence in every environment. Remove an inherited production or localhost value from preview settings.
+Register your preview branch's stable hostname with each enabled OAuth provider. In Preview, ChatJS uses `VERCEL_BRANCH_URL` and then `VERCEL_URL` when `APP_URL` is unset. An inherited production `APP_URL` would send preview sign-ins to the wrong origin.
 
-Register `https://<branch-hostname>/api/auth/callback/<provider>` in each enabled OAuth provider. For production, set `APP_URL` to your public domain and register callbacks against that domain. If `APP_URL` is unset on a production Vercel deployment, Better Auth uses `appUrl` from `chat.config.ts` instead. A successful preview deployment does not configure these provider allowlists.
-
-Set `EVE_INTERNAL_ORIGIN` separately for each environment. With the integrated worker, it can use the stable branch origin for previews. It is not automatically derived from `APP_URL`.
+Leave `EVE_INTERNAL_ORIGIN` unset for the integrated worker. Its default on Vercel uses the exact deployment URL, even when OAuth uses the stable branch alias.
 
 ### Protected previews
 
-Enable **Protection Bypass for Automation** in the Vercel project and make its `VERCEL_AUTOMATION_BYPASS_SECRET` available to the deployment. Redeploy after changing environment settings. Keep this credential server-only.
+If Deployment Protection blocks internal calls, enable **Protection Bypass for Automation** and make `VERCEL_AUTOMATION_BYPASS_SECRET` available to the deployment. Redeploy after changing environment settings. ChatJS forwards the secret only to an EVE origin matching the deployment or branch hostname. The gateway also checks the EVE credential and owner identity.
 
-ChatJS forwards it as `x-vercel-protection-bypass` only when `EVE_INTERNAL_ORIGIN` exactly matches the deployment hostname (`VERCEL_URL`) or branch hostname (`VERCEL_BRANCH_URL`). A separate EVE worker and arbitrary custom domains do not receive this project credential. This bypass passes Vercel protection only: ChatJS still sends the EVE bearer secret and owner identity.
+## 3. Initialize the database and deploy
 
-### Optional (Vercel Features)
+Production builds apply tracked application migrations. Preview builds skip them. Apply reviewed migrations to the **preview database** before testing that deployment. Vercel provisions the managed workflow backend, so omit `WORKFLOW_POSTGRES_URL`. See [hosted workflow setup](/reference/database#hosted-workflow-database).
 
-| Variable                | Feature                                |
-| ----------------------- | -------------------------------------- |
-| `BLOB_READ_WRITE_TOKEN` | Blob storage (auto-set by integration) |
-| `CRON_SECRET`           | Secure cron endpoint                   |
+In a generated app, run the [workflow backend check](/reference/database#check-the-workflow-backend-before-deployment) explicitly after migrations with the target deployment’s environment. It records the backend on first use and rejects a later mismatch. Use an isolated database for a new preview. Moving existing sessions between backends requires a separate migration. Hosted conversation erasure remains unavailable.
 
-### Pull from Vercel
+After deploying, sign in, send a message, and reload the chat. If you installed uploads, also attach a file and reopen it from the saved conversation.
 
-After linking your project, pull all environment variables:
+## Cron jobs
 
-```bash
-vercel link
-vercel env pull .env.local
-```
+The schedule in `vercel.json` calls `/api/cron/cleanup` daily at 02:00 UTC. Set `CRON_SECRET` in Production so the scheduler can authenticate. The route returns 401 for a missing or incorrect bearer token and 503 when cleanup is incomplete. Check the deployment logs for that route if scheduled cleanup fails.
 
-## Rate Limiting and Security
+To extend cleanup, add to the app's task list in `integrations/cleanup.ts` or contribute a task from a plugin. [Plugin cleanup tasks](/reference/plugin-api)
 
-The authenticated EVE gateway is expensive because it can call AI providers. Protect its routes from abuse in production.
+## Production controls
 
-### Vercel Firewall
-
-Enable [Vercel Firewall](https://vercel.com/docs/security/vercel-firewall) in your project settings. Create a rate limiting rule for the chat endpoint:
-
-1. Go to **Settings** → **Firewall**
-2. Add a rule targeting the authenticated EVE gateway routes
-3. Set a rate limit (for example, 20 requests per minute per IP)
-4. Choose **Challenge** or **Block** as the action
-
-### Vercel WAF
-
-For additional protection, enable the [Web Application Firewall](https://vercel.com/docs/security/vercel-waf) to block common attack patterns (SQL injection, XSS) at the edge before requests reach your application.
-
-### Environment Variable Security
-
-- Never commit `.env.local` to version control
-- Use Vercel's [environment variable management](https://vercel.com/docs/projects/environment-variables) to set secrets per environment (production, preview, development)
-- Rotate `AUTH_SECRET` and API keys periodically
-
-## Production Checklist
-
-Before going live:
-
-<Accordion>
-  <AccordionItem title="Enable production domain">
-    1. Go to **Settings** → **Domains** 2. Add your custom domain 3. Update
-    OAuth callback URLs to use the new domain
-  </AccordionItem>
-  <AccordionItem title="Configure OAuth for production">
-    Update your OAuth apps (GitHub, Google) with production callback URLs: ```
-    https://yourdomain.com/api/auth/callback/github
-    https://yourdomain.com/api/auth/callback/google ```
-  </AccordionItem>
-  <AccordionItem title="Enable rate limiting">
-    Set up [Vercel Firewall](#vercel-firewall) rules for the EVE gateway to
-    prevent abuse. See the section above for details.
-  </AccordionItem>
-  <AccordionItem title="Set up monitoring">
-    Select agent observability from EVE’s instrumentation catalog in the
-    builder’s Agent tab and configure the installed integration’s credentials.
-  </AccordionItem>
-  <AccordionItem title="Review storage limits">
-    Check your plan limits for blob storage, EVE workflow storage, and AI
-    Gateway usage.
-  </AccordionItem>
-</Accordion>
-
-## Troubleshooting
-
-<Accordion>
-  <AccordionItem title="Cron job not running">
-    - Verify `CRON_SECRET` is set in environment variables - Check Vercel
-    dashboard → **Logs** → filter by `/api/cron` - Crons only run in production
-    (not preview deployments)
-  </AccordionItem>
-  <AccordionItem title="Blob upload fails">
-    - Ensure `BLOB_READ_WRITE_TOKEN` is set - Check blob storage isn't at
-    capacity - Verify file size is under 500MB limit
-  </AccordionItem>
-  <AccordionItem title="Code execution times out">
-    - Default timeout is 5 minutes - Check sandbox logs in Vercel dashboard -
-    Ensure OIDC is working (automatic on Vercel)
-  </AccordionItem>
-</Accordion>
+Review the project domain, OAuth callbacks, gateway spending limits, and storage configuration before opening sign-ups. Apply rate limits appropriate to your traffic on the authenticated EVE endpoints. [Vercel Firewall](https://vercel.com/docs/vercel-firewall)

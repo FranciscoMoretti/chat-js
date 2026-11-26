@@ -1,9 +1,9 @@
 ---
 title: Using Plugins
-description: Install and configure optional ChatJS capabilities
+description: "Install a ChatJS plugin, apply any required database migrations, and find its server, browser, and agent contributions in your generated app."
 ---
 
-Plugins add capabilities such as project organization, message feedback, connectors, and analytics. Each plugin installs source into your app and registers its server, browser, or native EVE contributions. Browse the [plugin catalog](../plugins/overview) to choose what you need.
+Plugins add capabilities such as project organization, message feedback, connectors, and analytics. Each plugin installs source into your app and registers its server, browser, or native EVE contributions. Browse the [plugin catalog](/plugins/overview) to choose what you need.
 
 ## Using a plugin
 
@@ -44,7 +44,7 @@ The CLI updates generated plugin lists. Edit the installed plugin components dir
 | `app/` and `agent/` adapters | Register routes, hooks, and instructions in their framework locations |
 | `chatjs/generated/` | Inspect generated registrations without editing them |
 
-Plugins can provide web server contributions, browser UI, and chat lifecycle callbacks. These use separate entrypoints so browser bundles do not load credentials and native EVE does not load Next.js request helpers. See the [Plugin API](../reference/plugin-api) for the contracts.
+Plugins can provide web server contributions, browser UI, and chat lifecycle callbacks. These use separate entrypoints so browser bundles do not load credentials and native EVE does not load Next.js request helpers. See the [Plugin API](/reference/plugin-api) for the contracts.
 
 After a direct shadcn installation or changes to a descriptor, regenerate composition:
 
@@ -54,4 +54,4 @@ bunx chat-js@alpha sync
 
 ## Creating a plugin
 
-Built-in and external plugins use the same installation format. Follow [Create a plugin](./create-plugin) to package your source, declare contributions, and verify installation. Tools, gateways, storage, and sandboxes have their own contracts. Use the [registry guide](../registry) to choose the right extension type.
+Built-in and external plugins use the same installation format. Follow [Create a plugin](/plugins/create-plugin) to package your source, declare contributions, and verify installation. Tools, gateways, storage, and sandboxes have their own contracts. Use the [registry guide](/registry) to choose the right extension type.

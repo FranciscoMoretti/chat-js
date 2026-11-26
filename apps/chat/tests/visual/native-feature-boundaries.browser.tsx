@@ -2,11 +2,6 @@ import { expect, test, vi } from "vitest";
 import { page, userEvent } from "vitest/browser";
 import { disableAutoSnapshot, takeSnapshot } from "@uiverify/vitest";
 import { UserMessageView } from "@/components/user-message-view";
-import {
-  Context,
-  ContextTrigger,
-  ContextContent,
-} from "@/components/ai-elements/context";
 import { ShareMenuSurface } from "@/chatjs/plugins/sharing/ui/share-menu-surface";
 import { MoveMenuItem } from "@/chatjs/plugins/projects/ui/move-menu-item";
 import {
@@ -17,7 +12,7 @@ import {
 import { mount, unmount } from "./primitive-mount";
 import "./sandbox.css";
 
-test("native message surfaces retain editable, disabled and readonly DOM with immediate context hover", async () => {
+test("native message surfaces retain editable, disabled and readonly DOM", async () => {
   const onEdit = vi.fn<() => void>();
   const fixture = await mount(
     <div className="space-y-4 p-8">
@@ -29,10 +24,6 @@ test("native message surfaces retain editable, disabled and readonly DOM with im
         editDisabled
       />
       <UserMessageView text="Readonly message" actions={null} />
-      <Context usedTokens={100} maxTokens={1000}>
-        <ContextTrigger aria-label="Context usage" />
-        <ContextContent>Context usage details</ContextContent>
-      </Context>
     </div>
   );
   try {
@@ -57,8 +48,6 @@ test("native message surfaces retain editable, disabled and readonly DOM with im
       page.getByText("Readonly message", { exact: true }).element()
         .parentElement?.tagName
     ).toBe("DIV");
-    await page.getByRole("button", { name: "Context usage" }).hover();
-    await expect.element(page.getByText("Context usage details")).toBeVisible();
     await takeSnapshot("native-feature-boundaries");
   } finally {
     await unmount(fixture);

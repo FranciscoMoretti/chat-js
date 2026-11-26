@@ -87,6 +87,16 @@ for (const name of ["nuqs", "react-hook-form"]) {
 }
 assert.equal(Object.hasOwn(dependencies, "@vercel/connect"), scenario === "selection");
 assert.equal(overrides["@vercel/connect"].eve, "$eve");
+if (scenario === "minimal") {
+  const manifest = await Bun.file("package.json").json();
+  for (const name of ["tokenlens", "react-resizable-panels"]) {
+    assert.equal(manifest.dependencies[name], undefined, name);
+    assert.equal(await Bun.file(`node_modules/${name}/package.json`).exists(), false, name);
+  }
+  for (const file of ["components/ai-elements/context.tsx", "components/ui/resizable.tsx"]) {
+    assert.equal(await Bun.file(file).exists(), false, file);
+  }
+}
 const attachesFiles = ["uploads", "acceptance"].includes(scenario);
 // EVE writes the Slack channel file during provider setup.
 assert.equal(await Bun.file("agent/channels/slack.ts").exists(), false);

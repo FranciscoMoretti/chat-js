@@ -1,99 +1,65 @@
 ---
 title: Testing
-description: Unit tests and end-to-end testing with Vitest and Playwright
+description: "Run ChatJS unit tests with Vitest and browser tests with Playwright, select an individual suite, and check which tests a project discovers."
 ---
 
-ChatJS includes two testing layers: **Vitest** for unit tests and **Playwright** for end-to-end browser tests. For AI-specific quality evaluation, see [Evaluations](/reference/evaluations).
+## Unit tests
 
-## Unit Tests (Vitest)
-
-Unit tests cover individual functions and modules. They live alongside the source code as `*.test.ts` files. Vitest is configured in `vitest.config.ts` to exclude `*.e2e.ts` files so E2E tests never run as unit tests.
+Vitest runs tests alongside their source. From an app directory, run the full unit suite or pass a filename to Vitest. The app's `vitest.config.ts` excludes Playwright's `*.e2e.ts` files.
 
 ```bash
-# Run all unit tests
-bun test:unit
+bun run test:unit
 ```
 
-Tests use standard Vitest patterns with `vi.mock()` for mocking dependencies:
-
-```typescript
-import { describe, it, expect, vi } from "vitest";
-
-describe("myFunction", () => {
-  it("returns expected result", () => {
-    expect(myFunction("input")).toBe("output");
-  });
-});
-```
-
-### Mocking AI models
-
-For tests that interact with AI models, mock the model resolution layer rather than the AI SDK directly:
-
-```typescript
-vi.mock("../ai/app-models", () => ({
-  getAppModelDefinition: vi.fn().mockImplementation((modelId: string) => {
-    const models: Record<
-      string,
-      { pricing?: { input: string; output: string } }
-    > = {
-      "test-model": { pricing: { input: "0.00001", output: "0.00003" } },
-    };
-    return Promise.resolve(models[modelId] || {});
-  }),
-}));
-```
-
-## End-to-End Tests (Playwright)
-
-Playwright tests simulate real user interactions in a browser. Configuration is in `playwright.config.ts`.
+In the ChatJS repository, run a targeted test from the reference app. For example, this exercises the connection settings used by Drizzle.
 
 ```bash
-# Run E2E tests
-bun test:e2e
+cd apps/chat
+bunx vitest run lib/db/connection.test.ts
 ```
 
-### Test projects
+## Browser tests
 
-The Playwright config defines five test projects that run in dependency order:
-
-| Project | File | Depends On | Purpose |
-| --- | --- | --- | --- |
-| `setup:auth` | `auth.setup.e2e.ts` | - | Authenticate and save session |
-| `setup:reasoning` | `reasoning.setup.e2e.ts` | `setup:auth` | Prepare reasoning model state |
-| `chat` | `chat.e2e.ts` | `setup:auth` | Core chat interactions |
-| `reasoning` | `reasoning.e2e.ts` | `setup:reasoning` | Reasoning model tests |
-| `artifacts` | `artifacts.e2e.ts` | `setup:auth` | Canvas and document tests |
-
-### CI behavior
-
-| Setting | Local                    | CI             |
-| ------- | ------------------------ | -------------- |
-| Workers | Unlimited                | 1              |
-| Retries | 1                        | 2              |
-| Server  | Reuse running dev server | Start fresh    |
-| Traces  | On first retry           | On first retry |
-
-### Writing E2E tests
-
-Create test files in the `tests/` directory using the `*.e2e.ts` naming convention. Tests have access to authenticated sessions via Playwright's [storage state](https://playwright.dev/docs/auth):
-
-```typescript
-import { test, expect } from "@playwright/test";
-
-test("send a message and get a response", async ({ page }) => {
-  await page.goto("/");
-  await page.fill('[data-testid="chat-input"]', "Hello");
-  await page.click('[data-testid="send-button"]');
-  await expect(page.locator('[data-testid="assistant-message"]')).toBeVisible();
-});
-```
-
-## Running All Tests
+Run the app's Playwright script from the app directory. For a fresh development machine, install Chromium first.
 
 ```bash
-# Unit + E2E
-bun test
+bunx playwright install chromium
+bun run test:e2e
 ```
 
-This runs Playwright first, then Vitest.
+Playwright reads `.env.local`. Its web server starts the app’s `dev` script with the scaffold’s package manager on the configured `PORT` (3000 by default), or reuses a running server locally. The default config selects tests by each project's `testMatch`. When adding a browser scenario, check that it appears in the list for the intended project.
+
+```bash
+bunx playwright test --list
+```
+
+The repository also has reference-only browser scenarios, including live tool checks. See [Registry testing](/registry/testing) for the registry and visual suites.
+
+## Agent behavior
+
+Use [evaluations](/reference/evaluations) to check what an agent says or which tools it calls across repeated runs. Use browser tests for interactions such as selecting a model or reopening a chat.
+
+## React Query Devtools
+
+To inspect the query cache in your generated app, install the inspector:
+
+```bash
+bun add -d @tanstack/react-query-devtools@5.97.0
+```
+
+In the existing `imports` section of `package.json`, add the `development` entry before `default`. Production uses the local fallback, including when your install omits dev dependencies.
+
+```json
+{
+  "imports": {
+    "#query-devtools": {
+      "development": "@tanstack/react-query-devtools",
+      "default": "./lib/devtools-disabled.ts"
+    }
+  }
+}
+```
+
+Set `NEXT_PUBLIC_REACT_QUERY_DEVTOOLS=1` in `.env.local`, then restart `bun run dev`. Open the devtools button on a chat page to inspect the active query cache.
+
+To remove the inspector, delete its `development` entry and uninstall the package.

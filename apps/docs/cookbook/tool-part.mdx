@@ -1,11 +1,18 @@
 ---
 title: Custom Tool Part
-description: Render native EVE tool results with validated schema-inferred props
+description: "Connect a native EVE tool result to a chat component, share input and output schemas with the renderer, and register it in the client UI."
 ---
 
 A registry tool can include a client renderer for its loading and result states. Put the implementation in `chatjs/tools/<id>/tool.ts`, shared schemas in `schemas.ts`, and the renderer in `renderer.tsx`.
 
 Define the server tool with EVE's `defineTool()`. Export a renderer with `defineToolRenderer` and reference its export in `chatjs.json`. The CLI generates the server and renderer registrations when you install or sync the item.
+
+```ts title="chatjs/tools/text-stats/schemas.ts"
+import { z } from "zod";
+
+export const textStatsInput = z.object({ text: z.string() });
+export const textStatsResult = z.object({ words: z.number() });
+```
 
 ```tsx title="chatjs/tools/text-stats/renderer.tsx"
 "use client";
@@ -37,4 +44,4 @@ The shared renderer handles invalid data, pending approvals, denied requests, an
 
 For an extracted view component, use `ToolRendererProps<typeof textStatsInput, typeof textStatsResult>` from `@/chatjs/core/tools/define-renderer`. The props still come from the schemas used for runtime validation.
 
-See [Authoring Tools](../tools/authoring) for native execution, receipts, descriptor metadata, and registration.
+See [Authoring Tools](/tools/authoring) for native execution, receipts, descriptor metadata, and registration.

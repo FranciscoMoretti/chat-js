@@ -1,9 +1,9 @@
 ---
 title: "OpenAI Gateway"
-description: "Connect directly to the OpenAI API"
+description: "Connect ChatJS directly to the OpenAI API, configure the provider key, and use OpenAI model identifiers for chat and image generation."
 ---
 
-The OpenAI gateway connects ChatJS directly to the [OpenAI API](https://platform.openai.com/docs/api-reference) using the `@ai-sdk/openai` provider SDK. Use this when you only need OpenAI models and want the simplest setup with type-safe model IDs.
+The OpenAI gateway connects ChatJS directly to the [OpenAI API](https://developers.openai.com/api/reference/overview) using the `@ai-sdk/openai` provider SDK. Use this when you only need OpenAI models and want the simplest setup with type-safe model IDs.
 
 ## Setup
 
@@ -20,22 +20,20 @@ OPENAI_API_KEY=sk-...
 bunx chat-js@alpha add --gateway openai
 ```
 
-Then configure runtime model overrides for that installation:
+In your existing `chat.config.ts`, merge the workflow values below into the `ai` block. Keep the other settings for your app.
 
 ```typescript title="chat.config.ts"
-import type { ConfigInput } from "@/lib/config-schema";
+import { defineConfig } from "@/lib/config-schema";
 
-const config: ConfigInput = {
+export default defineConfig({
   ai: {
     gateway: "openai",
     workflows: {
       chat: "gpt-5-mini",
       title: "gpt-5-nano",
-      // ...
     },
-    // ...
   },
-};
+});
 ```
 
 ## Authentication
@@ -46,7 +44,7 @@ const config: ConfigInput = {
 
 ## Available Models
 
-All models available to your API key (GPT, DALL-E, and embedding models). The full list is fetched at runtime and cached for 1 hour.
+The adapter reads `/v1/models` for your API key and treats each returned ID as a language model. That list can include IDs intended for other endpoints. Set the picker’s [model list](/customization/models#visibility-and-preferences) to offer only the chat models you have verified.
 
 ## Model IDs
 
@@ -67,7 +65,7 @@ The OpenAI gateway supports dedicated image models through `createImageModel()`:
 - `gpt-image-1.5`
 - `dall-e-3`
 
-This enables the built-in [Image Generation](../tools/generate-image) feature.
+This enables the built-in [Image Generation](/tools/generate-image) feature.
 
 ## Related
 

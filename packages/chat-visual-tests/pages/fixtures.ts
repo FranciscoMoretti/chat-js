@@ -2,6 +2,7 @@ import type { ReadonlyEveMessage as EveMessage } from "@/lib/eve/readonly-messag
 import type { inferRouterOutputs } from "@trpc/server";
 import type { SessionEvent } from "eve/client";
 
+import { toModelData } from "@/lib/ai/to-model-data";
 import type { Session } from "@/lib/auth";
 import type { AppRouter } from "@/trpc/routers/_app";
 
@@ -16,6 +17,81 @@ type HistoryPage = NonNullable<ServerData["conversations"]>;
 export const now = new Date("2026-09-24T15:30:00.000Z");
 const daysAgo = (days: number, hour = 10) =>
   new Date(Date.UTC(2026, 8, 24 - days, hour, 12));
+
+export const catalogModels = [
+  {
+    id: "anthropic/claude-sonnet-4",
+    name: "Claude Sonnet 4",
+    owned_by: "anthropic",
+    context_window: 1_000_000,
+    max_tokens: 64_000,
+    tags: ["file-input", "reasoning", "tool-use", "vision"],
+    pricing: {
+      input: "0.000003",
+      output: "0.000015",
+    },
+  },
+  {
+    id: "google/gemini-2.5-flash-lite",
+    name: "Gemini 2.5 Flash Lite",
+    owned_by: "google",
+    context_window: 1_048_576,
+    max_tokens: 65_536,
+    tags: ["file-input", "reasoning", "tool-use", "vision", "implicit-caching"],
+    pricing: {
+      input: "0.0000001",
+      output: "0.0000004",
+    },
+  },
+  {
+    id: "meta/llama-3.3-70b",
+    name: "Llama 3.3 70B Instruct",
+    owned_by: "meta",
+    context_window: 128_000,
+    max_tokens: 8192,
+    tags: ["tool-use"],
+    pricing: { input: "0.00000072", output: "0.00000072" },
+  },
+  {
+    id: "openai/gpt-5-mini",
+    name: "GPT-5 mini",
+    owned_by: "openai",
+    context_window: 400_000,
+    max_tokens: 128_000,
+    tags: ["file-input", "reasoning", "tool-use", "vision", "implicit-caching"],
+    pricing: {
+      input: "0.00000025",
+      output: "0.000002",
+    },
+  },
+  {
+    id: "openai/gpt-5-nano",
+    name: "GPT-5 nano",
+    owned_by: "openai",
+    context_window: 400_000,
+    max_tokens: 128_000,
+    tags: [
+      "file-input",
+      "reasoning",
+      "tool-use",
+      "vision",
+      "image-generation",
+      "implicit-caching",
+    ],
+    pricing: {
+      input: "0.00000005",
+      output: "0.0000004",
+    },
+  },
+].map((model) =>
+  toModelData({
+    ...model,
+    created: 0,
+    description: model.name,
+    object: "model",
+    type: "language",
+  })
+);
 
 const ownerId = "user_maya";
 // What avatar.vercel.sh draws for this email, which the app shows for users without a photo.

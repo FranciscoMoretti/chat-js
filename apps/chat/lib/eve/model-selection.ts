@@ -4,10 +4,8 @@ import { wrapLanguageModel } from "ai";
 import { z } from "zod";
 
 import { getActiveGateway } from "@/lib/ai/active-gateway";
-import { getFallbackModels } from "@/lib/ai/gateways/fallback-models";
 import type { ModelData } from "@/lib/ai/model-data";
-import type { ReadonlyAiGatewayModel } from "@/lib/ai/to-model-data";
-import { toModelData } from "@/lib/ai/to-model-data";
+import { loadModelCatalog } from "@/lib/ai/model-catalog";
 import {
   buildWebChatModels,
   getDefaultWebChatModelId,
@@ -15,7 +13,6 @@ import {
 import { config } from "@/lib/config";
 
 const serializedOptions = z.record(z.string(), z.record(z.string(), z.json()));
-const MODEL_CATALOG_TTL_MS = 3_600_000;
 type EveModelDefinition = ModelData & {
   apiModelId: string;
   selectedModelId: string;
@@ -29,12 +26,9 @@ class EveModelUnavailableError extends Error {
 }
 
 const getEveModelDefinition = (
-  requestedId?: string,
-  models: readonly ModelData[] = getFallbackModels(config.ai.gateway).map(
-    (model: Readonly<ReadonlyAiGatewayModel>) => toModelData(model)
-  )
+  id: string,
+  models: readonly ModelData[]
 ): EveModelDefinition => {
-  const id = requestedId ?? config.ai.workflows.chat;
   const model = models.find(
     (item: Readonly<ModelData>) =>
       item.id === id || (item.reasoning && `${item.id}-reasoning` === id)
@@ -56,31 +50,6 @@ const getEveModelDefinition = (
   };
 };
 
-let catalog: { expires: number; models: ModelData[] } | undefined;
-let loading: Promise<ModelData[]> | undefined;
-
-const loadEveModelCatalog = async (): Promise<readonly ModelData[]> => {
-  if (!catalog || catalog.expires < Date.now()) {
-    loading ??= (async (): Promise<ModelData[]> => {
-      try {
-        const models = await getActiveGateway().fetchModels();
-        const converted = models.map(
-          (model: Readonly<ReadonlyAiGatewayModel>) => toModelData(model)
-        );
-        catalog = {
-          expires: Date.now() + MODEL_CATALOG_TTL_MS,
-          models: converted,
-        };
-        return converted;
-      } finally {
-        loading = undefined;
-      }
-    })();
-    return await loading;
-  }
-  return catalog.models;
-};
-
 const defaultEveWebModelId = (
   models: readonly ModelData[],
   preferredModelId?: string
@@ -98,12 +67,12 @@ const defaultEveWebModelId = (
 const loadDefaultEveWebModelId = async (
   preferredModelId: string
 ): Promise<string> =>
-  defaultEveWebModelId(await loadEveModelCatalog(), preferredModelId);
+  defaultEveWebModelId(await loadModelCatalog(), preferredModelId);
 
 const loadEveModelDefinition = async (
   requestedId?: string
 ): Promise<EveModelDefinition> => {
-  const models = await loadEveModelCatalog();
+  const models = await loadModelCatalog();
   return getEveModelDefinition(
     requestedId ?? defaultEveWebModelId(models),
     models
@@ -126,7 +95,6 @@ const resolveEveModel = async (requestedId?: string): Promise<SessionModel> => {
 };
 export {
   EveModelUnavailableError,
-  getEveModelDefinition,
   loadDefaultEveWebModelId,
   loadEveModelDefinition,
   resolveEveModel,

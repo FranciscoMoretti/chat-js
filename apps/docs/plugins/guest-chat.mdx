@@ -1,6 +1,6 @@
 ---
 title: Guest Chat
-description: Offer disposable text conversations without creating accounts or saved chat history
+description: "Offer visitors disposable text-only chats with a fixed model. Configure input limits, admission policy, expiration, and cleanup for guest sessions."
 ---
 
 Guest Chat lets visitors try one inexpensive text model at `/`. The browser keeps its session binding and credential only in memory. Reloading, choosing New chat, or signing in does not transfer the conversation into an account.
@@ -68,4 +68,4 @@ To remove the plugin from an existing deployment, stop guest admission and drain
 
 The reference repository's migration 0022 removes the obsolete account-shaped guest tables. It refuses to run while those tables still own undeleted conversations. Purge those conversations using the previous release before upgrading. Current disposable guest tables and sessions retain their names and data.
 
-See the [Plugin API](../reference/plugin-api) for the signed-out screen, session profile, and cleanup contracts.
+See the [Plugin API](/reference/plugin-api) for the signed-out screen, session profile, and cleanup contracts.

@@ -102,6 +102,17 @@ test("model settings list every available model", async () => {
     .toBe(true);
 });
 
+test("model settings remain accessible when gateway discovery fails", async () => {
+  await renderRoute(settings(<ModelsPage />), {
+    ...request("/settings/models"),
+    server: { modelDiscoveryError: new Error("Gateway unavailable") },
+  });
+  await expect.element(page.getByText("No models found.")).toBeVisible();
+  await expect
+    .element(page.getByRole("link", { name: "General" }).first())
+    .toBeVisible();
+});
+
 test("model settings filtered by a search", async () => {
   await renderRoute(settings(<ModelsPage />), request("/settings/models"));
   await userEvent.fill(page.getByPlaceholder(/Search/u), "claude");

@@ -97,50 +97,43 @@ class LiteLLMGateway
     const baseURL = this.getBaseURL();
 
     if (!(typeof baseURL === "string" && baseURL !== "")) {
-      this.log.warn("No LITELLM_BASE_URL found, using fallback models");
-      return [...this.getFallbackModels(this.type)];
+      throw new Error("LITELLM_BASE_URL is not configured");
     }
 
     const url = getModelsUrl(baseURL);
     this.log.debug({ url }, "Fetching models from LiteLLM proxy");
 
-    try {
-      const headers: Record<string, string> = {
-        "Content-Type": "application/json",
-      };
-      if (typeof apiKey === "string" && apiKey !== "") {
-        headers.Authorization = `Bearer ${apiKey}`;
-      }
-
-      const response = await this.fetch(url, {
-        headers,
-        signal: AbortSignal.timeout(MODEL_DISCOVERY_TIMEOUT_MS),
-      });
-
-      if (!response.ok) {
-        this.log.error(
-          { status: response.status, statusText: response.statusText, url },
-          "LiteLLM proxy returned non-OK response"
-        );
-        throw new Error(`Failed to fetch models: ${response.statusText}`);
-      }
-
-      const body = litellmModelsResponseSchema.parse(await response.json());
-      const models = body.data;
-      const result = models.map((model) => toAiGatewayModel(model));
-
-      this.log.info(
-        { modelCount: result.length },
-        "Successfully fetched models from LiteLLM proxy"
-      );
-      return result;
-    } catch (error) {
-      this.log.error(
-        { err: error, url },
-        "Error fetching models from LiteLLM proxy, falling back to generated models"
-      );
-      return [...this.getFallbackModels(this.type)];
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+    if (typeof apiKey === "string" && apiKey !== "") {
+      headers.Authorization = `Bearer ${apiKey}`;
     }
+
+    const response = await this.fetch(url, {
+      headers,
+      signal: AbortSignal.timeout(MODEL_DISCOVERY_TIMEOUT_MS),
+    });
+
+    if (!response.ok) {
+      this.log.error(
+        { status: response.status, statusText: response.statusText, url },
+        "LiteLLM proxy returned non-OK response"
+      );
+      throw new Error(
+        `Failed to fetch models: ${response.status} ${response.statusText}`
+      );
+    }
+
+    const body = litellmModelsResponseSchema.parse(await response.json());
+    const models = body.data;
+    const result = models.map((model) => toAiGatewayModel(model));
+
+    this.log.info(
+      { modelCount: result.length },
+      "Successfully fetched models from LiteLLM proxy"
+    );
+    return result;
   }
 }
 export { LiteLLMGateway as Gateway, LiteLLMGateway };

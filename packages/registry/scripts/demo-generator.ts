@@ -11,10 +11,7 @@ const generateDemo = async (
   }> = {}
 ): Promise<{ files: Map<string, string>; ownedPaths: readonly string[] }> => {
   const installation = await generateInstallation(demoInstallation, options);
-  const excluded = new Set(["lib/ai/models.generated.ts"]);
-  const files = new Map(
-    [...installation.files].filter(([file]) => !excluded.has(file))
-  );
+  const { files } = installation;
   const results = await Promise.allSettled(
     [...files].map(async ([file, source]) => {
       if (
@@ -47,7 +44,7 @@ const generateDemo = async (
   }
   return {
     files,
-    ownedPaths: installation.ownedPaths.filter((file) => !excluded.has(file)),
+    ownedPaths: installation.ownedPaths,
   };
 };
 export { generateDemo };

@@ -1,3 +1,4 @@
+import { uploadsPreset } from "./create-fixtures.mts";
 import assert from "node:assert/strict";
 import { mkdir } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
@@ -21,7 +22,7 @@ page.on("console", (message) => {
   }
 });
 try {
-  await page.goto(`${origin}/create?base=${base}&uploads=true`, {
+  await page.goto(`${origin}/create?base=${base}&app=${uploadsPreset}`, {
     waitUntil: "domcontentloaded",
   });
   const frame = page.frameLocator("iframe");
@@ -61,7 +62,7 @@ try {
 
   // Recovering an unsupported library creates a fresh iframe. Installation
   // and appearance choices made during that load must reach their destinations.
-  await page.goto(`${origin}/create?base=aria&rtl=true&uploads=true`, {
+  await page.goto(`${origin}/create?base=aria&rtl=true&app=${uploadsPreset}`, {
     waitUntil: "domcontentloaded",
   });
   await expect(
