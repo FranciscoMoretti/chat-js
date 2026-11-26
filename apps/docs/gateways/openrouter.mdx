@@ -1,11 +1,11 @@
 ---
 title: "OpenRouter Gateway"
-description: "Access hundreds of AI models through OpenRouter"
+description: "Configure OpenRouter for a ChatJS installation, discover the models available through the adapter, and set defaults using provider-qualified IDs."
 ---
 
 The OpenRouter gateway connects ChatJS to [OpenRouter](https://openrouter.ai), a unified API that routes to hundreds of models from OpenAI, Anthropic, Google, Meta, Mistral, and many others.
 
-Use this gateway when you want the widest model selection or need access to models not available through Vercel.
+Use it when you want to run chat through your OpenRouter account.
 
 ## Setup
 
@@ -23,18 +23,7 @@ OPENROUTER_API_KEY=sk-or-v1-...
 bunx chat-js@alpha add --gateway openrouter
 ```
 
-Then configure runtime model overrides for that installation:
-
-```typescript title="chat.config.ts"
-import type { ConfigInput } from "@/lib/config-schema";
-
-const config: ConfigInput = {
-  ai: {
-    gateway: "openrouter",
-    // ...
-  },
-};
-```
+The CLI sets the gateway in `chat.config.ts`. Review any existing workflow model IDs against the new provider’s catalog. See [model configuration](/customization/models).
 
 ## Authentication
 
@@ -48,7 +37,7 @@ Hundreds of models from OpenAI, Anthropic, Google, Meta, Mistral, and many other
 
 ## Model IDs
 
-Model IDs use the same `provider/model` format as other gateways. For example:
+Use the `provider/model` ID from the OpenRouter catalog. Examples include the following models.
 
 - `openai/gpt-4o`
 - `anthropic/claude-sonnet-4`

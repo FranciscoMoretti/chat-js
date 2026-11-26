@@ -1,6 +1,6 @@
 ---
 title: Generate Image
-description: Install image generation and editing through your selected AI gateway
+description: "Install image generation for a compatible gateway, configure the default image model and durable file storage, and display results in chat."
 ---
 
 ## Select during creation
@@ -9,7 +9,7 @@ description: Install image generation and editing through your selected AI gatew
 npx chat-js@alpha create my-app --yes --image-generation-tool generate-image
 ```
 
-Interactive creation offers the built-in gateway implementation or an external registry item when you enable image generation. The built-in implementation uses your selected [gateway](../gateways/overview) and durable [file storage](../storage). Configure their credentials and an image-capable default model before running it.
+Interactive creation offers the built-in gateway implementation or an external registry item when you enable image generation. The installer checks that the [gateway](/gateways/overview#choose-a-gateway) declares image support and provides a default image model. Vercel, OpenAI, and OpenAI Compatible meet that requirement. Configure [durable storage](/storage) and verify that your endpoint serves the chosen image model.
 
 ## Installation
 
@@ -25,12 +25,18 @@ You receive `chatjs/tools/generate-image/tool.ts`, `renderer.tsx`, and `chatjs.j
 
 ## Behavior
 
-The tool accepts a prompt and returns `{ imageUrl, prompt }`. It supports image creation and editing using attachments or the previous generated image. It uploads results through the configured Files SDK storage and reports provider cost in the final tool receipt through `executeWithToolUsage` and its usage accumulator (`usage.addCostUsd()`).
+On success, the tool receipt’s `output` contains `fileId`, `imageUrl`, and `prompt`. The ID identifies the stored file, and the URL opens it in ChatJS. It supports image creation and editing using attachments or the previous generated image. It uploads results through the configured Files SDK storage. The receipt uses gateway pricing and the image count or token usage, depending on the generation path. When pricing or required usage is unavailable, the cost is unknown.
 
 <Frame>
-  <img
-    src="/docs/images/image-generation.gif"
-    alt="Generating an image from a text prompt in chat"
+  <video
+    controls
+    playsinline
+    preload="none"
+    width="1280"
+    height="720"
+    aria-label="Generating an image from a text prompt in chat"
+    poster="/docs/images/image-generation-poster.png"
+    src="/docs/images/image-generation.mp4"
   />
 </Frame>
 
@@ -39,16 +45,21 @@ The tool accepts a prompt and returns `{ imageUrl, prompt }`. It supports image 
 If the selected chat model supports image output, the tool uses it. Otherwise, it uses `ai.tools.image.default`. The gateway supplies either a dedicated image model or a language model that supports image output.
 
 ```ts title="chat.config.ts"
-ai: {
-  tools: {
-    image: { default: "google/gemini-3-pro-image" },
+import { defineConfig } from "@/lib/config-schema";
+
+export default defineConfig({
+  ai: {
+    gateway: "vercel",
+    tools: {
+      image: { default: "google/gemini-3-pro-image" },
+    },
   },
-}
+});
 ```
 
 ### Editing images
 
-Ask for an image, then request a change such as "Add a lake in the foreground." The tool can use the previous generated image and attached images as edit inputs. The previous-image helper recognizes the built-in `imageUrl` output. It ignores results from tools that use a different output shape.
+Ask for an image, then request a change such as "Add a lake in the foreground." The tool can combine inline image attachments from the latest user message with the most recent managed image returned by `generateImage` on the current branch.
 
 While generation is running, the renderer shows a loading state with the prompt. On completion, it displays the generated image and copy controls.
 
@@ -61,4 +72,4 @@ npx chat-js@alpha create my-app --yes \
 
 Declare `slot: "generateImage"` in your registry metadata and installed descriptor. Export a native EVE tool with your own input/output schemas. A renderer is optional. External tools do not need a gateway image default. Declare provider credentials in `envRequirements` for the CLI checklist and app validation. Only one item can occupy this selection.
 
-The installed implementation reads the native session model selection and imports ChatJS helpers for image context, model pricing, and authorized file upload. The built-in previous-image helper recognizes an `imageUrl` result. Other result schemas work as tools but do not participate in that helper automatically. See [Authoring Tools](./authoring).
+The installed implementation reads the native session model selection and imports ChatJS helpers for image context, model pricing, and authorized file upload. To participate in follow-up edits, the `generateImage` result must expose an `imageUrl` pointing to a managed ChatJS file. See [Authoring Tools](/tools/authoring).

@@ -106,49 +106,40 @@ class OpenAICompatibleGateway
     const baseURL = this.getBaseURL();
 
     if (!(typeof baseURL === "string" && baseURL !== "")) {
-      this.log.warn(
-        "No OPENAI_COMPATIBLE_BASE_URL found, using fallback models"
-      );
-      return [...this.getFallbackModels(this.type)];
+      throw new Error("OPENAI_COMPATIBLE_BASE_URL is not configured");
     }
 
     const url = `${baseURL}/models`;
     this.log.debug({ url }, "Fetching models from OpenAI-compatible provider");
 
-    try {
-      const headers: Record<string, string> = {
-        "Content-Type": "application/json",
-      };
-      if (typeof apiKey === "string" && apiKey !== "") {
-        headers.Authorization = `Bearer ${apiKey}`;
-      }
-
-      const response = await this.fetch(url, {
-        headers,
-      });
-
-      if (!response.ok) {
-        this.log.error(
-          { status: response.status, statusText: response.statusText, url },
-          "OpenAI-compatible provider returned non-OK response"
-        );
-        throw new Error(`Failed to fetch models: ${response.statusText}`);
-      }
-
-      const result = parseProviderModels(await response.json());
-
-      this.log.info(
-        { modelCount: result.length },
-        "Successfully fetched models from OpenAI-compatible provider"
-      );
-      return result;
-    } catch (error) {
-      this.log.error(
-        { err: error, url },
-        "Error fetching models from OpenAI-compatible provider, falling back to generated models"
-      );
-      return [...this.getFallbackModels(this.type)];
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+    if (typeof apiKey === "string" && apiKey !== "") {
+      headers.Authorization = `Bearer ${apiKey}`;
     }
+
+    const response = await this.fetch(url, {
+      headers,
+    });
+
+    if (!response.ok) {
+      this.log.error(
+        { status: response.status, statusText: response.statusText, url },
+        "OpenAI-compatible provider returned non-OK response"
+      );
+      throw new Error(
+        `Failed to fetch models: ${response.status} ${response.statusText}`
+      );
+    }
+
+    const result = parseProviderModels(await response.json());
+
+    this.log.info(
+      { modelCount: result.length },
+      "Successfully fetched models from OpenAI-compatible provider"
+    );
+    return result;
   }
 }
 export { OpenAICompatibleGateway as Gateway, OpenAICompatibleGateway };

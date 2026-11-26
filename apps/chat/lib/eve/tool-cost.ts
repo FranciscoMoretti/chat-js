@@ -11,7 +11,6 @@ interface TokenUsage {
   outputTokens?: number;
 }
 
-// Gateway records are Zod-parsed or generated literals; retain the selected pricing object while skipping an unused full ModelData projection.
 const pricingForModel = (
   fetchedModels: readonly {
     readonly id: string;

@@ -90,68 +90,62 @@ class VercelGateway
       apiKey === null ? catalogUrl : `${catalogUrl}?include_availability`;
     this.log.debug({ url }, "Fetching models from Vercel AI Gateway");
 
-    try {
-      const response = await this.fetch(
-        url,
-        apiKey === null
-          ? undefined
-          : { headers: { Authorization: `Bearer ${apiKey}` } }
-      );
+    const response = await this.fetch(
+      url,
+      apiKey === null
+        ? undefined
+        : { headers: { Authorization: `Bearer ${apiKey}` } }
+    );
 
-      if (!response.ok) {
-        this.log.error(
-          { status: response.status, statusText: response.statusText, url },
-          "Vercel AI Gateway returned non-OK response"
-        );
-        throw new Error(`Failed to fetch models: ${response.statusText}`);
-      }
-
-      const bodyRaw: unknown = await response.json();
-      const body = modelsEnvelopeSchema.parse(bodyRaw);
-      const unsupportedTypes = new Set<string>();
-      const models: AiGatewayModel[] = [];
-
-      for (const candidate of body.data) {
-        const { type } = modelDiscriminatorSchema.parse(candidate);
-        if (isAiGatewayModelType(type)) {
-          const availability = modelAvailability.safeParse(candidate);
-          const eligibility = availability.data?.model_eligibility;
-          if (
-            eligibility?.status === "ineligible" &&
-            (eligibility.category === "policy" ||
-              eligibility.category === "configuration")
-          ) {
-            continue;
-          }
-          models.push(aiGatewayModelSchema.parse(candidate));
-        } else {
-          unsupportedTypes.add(type);
-        }
-      }
-
-      if (unsupportedTypes.size > EMPTY_MODEL_TYPE_COUNT) {
-        this.log.warn(
-          {
-            modelCount: body.data.length,
-            skippedModelCount: body.data.length - models.length,
-            unsupportedTypes: [...unsupportedTypes],
-          },
-          "Skipping models with unsupported types from Vercel AI Gateway"
-        );
-      }
-
-      this.log.info(
-        { modelCount: models.length },
-        "Successfully fetched models from Vercel AI Gateway"
-      );
-      return models;
-    } catch (error) {
+    if (!response.ok) {
       this.log.error(
-        { err: error, url },
-        "Error fetching models from Vercel AI Gateway, falling back to generated models"
+        { status: response.status, statusText: response.statusText, url },
+        "Vercel AI Gateway returned non-OK response"
       );
-      return [...this.getFallbackModels(this.type)];
+      throw new Error(
+        `Failed to fetch models: ${response.status} ${response.statusText}`
+      );
     }
+
+    const bodyRaw: unknown = await response.json();
+    const body = modelsEnvelopeSchema.parse(bodyRaw);
+    const unsupportedTypes = new Set<string>();
+    const models: AiGatewayModel[] = [];
+
+    for (const candidate of body.data) {
+      const { type } = modelDiscriminatorSchema.parse(candidate);
+      if (isAiGatewayModelType(type)) {
+        const availability = modelAvailability.safeParse(candidate);
+        const eligibility = availability.data?.model_eligibility;
+        if (
+          eligibility?.status === "ineligible" &&
+          (eligibility.category === "policy" ||
+            eligibility.category === "configuration")
+        ) {
+          continue;
+        }
+        models.push(aiGatewayModelSchema.parse(candidate));
+      } else {
+        unsupportedTypes.add(type);
+      }
+    }
+
+    if (unsupportedTypes.size > EMPTY_MODEL_TYPE_COUNT) {
+      this.log.warn(
+        {
+          modelCount: body.data.length,
+          skippedModelCount: body.data.length - models.length,
+          unsupportedTypes: [...unsupportedTypes],
+        },
+        "Skipping models with unsupported types from Vercel AI Gateway"
+      );
+    }
+
+    this.log.info(
+      { modelCount: models.length },
+      "Successfully fetched models from Vercel AI Gateway"
+    );
+    return models;
   }
 }
 export { VercelGateway as Gateway, VercelGateway };

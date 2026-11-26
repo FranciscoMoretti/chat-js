@@ -515,7 +515,6 @@ const installRegistryItems = async (
       ...(await optionalDirectoryFiles(project.targetDir, "chatjs/providers")),
       "chat.config.ts",
       "chatjs/providers/gateway-defaults.ts",
-      "lib/ai/models.generated.ts",
       "chatjs/providers/storage-options.ts",
       ".env.example",
     ]);

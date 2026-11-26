@@ -1,6 +1,6 @@
 ---
 title: Generate Video
-description: Install video generation using your selected gateway and storage
+description: "Install video generation with a compatible gateway and durable storage, select a default video model, and display generated clips in chat."
 ---
 
 ## Select during creation
@@ -9,7 +9,7 @@ description: Install video generation using your selected gateway and storage
 npx chat-js@alpha create my-app --yes --video-generation-tool generate-video
 ```
 
-Choose the built-in gateway implementation or an external registry item. The built-in tool needs a [gateway](../gateways/overview) supporting video models, a configured `ai.tools.video.default`, and durable [file storage](../storage).
+Choose the built-in gateway implementation or an external registry item. The built-in tool needs a [gateway](/gateways/overview) supporting video models, a configured `ai.tools.video.default`, and durable [file storage](/storage).
 
 ## Installation
 
@@ -23,9 +23,9 @@ Configure `ai.tools.video.default` in `chat.config.ts`. Installation makes the t
 
 ## Behavior
 
-The built-in tool accepts a prompt, optional aspect ratio, and optional duration. It uploads the result through Files SDK and returns `{ videoUrl, prompt }`. The renderer shows progress, the video player, or a failure message.
+The built-in tool accepts a prompt, optional aspect ratio, and optional duration. It uploads the result through Files SDK. On success, the receipt’s `output` contains `fileId`, `videoUrl`, and `prompt`. Use the ID to identify the stored clip and the URL to play it. The renderer shows progress, the video player, or a failure message.
 
-The installed tool resolves the selected model through the native tool helpers and reports usage through `executeWithToolUsage` and `usage.addCostUsd()`. The tool retains the existing fixed estimate of 50 cents per successful generation. This estimate is not a provider invoice.
+The tool records a fixed estimate of 50 cents when the provider returns a clip, before uploading it. If storage fails, the error receipt still includes that estimate. Your provider determines the actual charge.
 
 ### Parameters
 
@@ -40,11 +40,16 @@ The installed tool resolves the selected model through the native tool helpers a
 If the selected chat model supports video output, the tool uses it. Otherwise, it uses `ai.tools.video.default`. Only the built-in Vercel gateway currently declares video support.
 
 ```ts title="chat.config.ts"
-ai: {
-  tools: {
-    video: { default: "xai/grok-imagine-video" },
+import { defineConfig } from "@/lib/config-schema";
+
+export default defineConfig({
+  ai: {
+    gateway: "vercel",
+    tools: {
+      video: { default: "xai/grok-imagine-video" },
+    },
   },
-}
+});
 ```
 
 ## External implementations
@@ -56,4 +61,4 @@ npx chat-js@alpha create my-app --yes \
 
 Declare `slot: "generateVideo"` in registry metadata and the installed descriptor. Export a native EVE tool with your own schemas and optional renderer. Declare provider credentials in `envRequirements` so the installer and app ask for the selected variables. External tools can use their own provider without a gateway video default. Only one item can occupy this selection.
 
-See [Authoring Tools](./authoring) for the shared request context and cost reporting.
+See [Authoring Tools](/tools/authoring) for the shared request context and cost reporting.

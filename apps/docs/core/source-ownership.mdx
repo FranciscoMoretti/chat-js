@@ -1,13 +1,13 @@
 ---
 title: Source Ownership
-description: Know where to edit app code, installed source, and generated registrations
+description: "Find out which files your app owns, which files came from an installed item, and how to customize behavior that should survive plugin removal."
 ---
 
 There are four file kinds: application, installed source, generated, and installation record. Application code is preserved during installation. Installed source can be customized, with local changes tracked for replacement/removal. Generated files are rebuilt from inputs, and records retain installation history. These kinds describe lifecycle, not editing permissions.
 
 Reusable helpers and contracts live in `chatjs/core/`. Selected provider implementations and configuration live in `chatjs/providers/`. Your composition remains in `integrations/`. Built-in plugin route and agent adapters carry a short source header because their framework paths do not show ownership. External plugins may omit that header. The plugin descriptor declares ownership of installed files.
 
-Run `chat-js status` to inspect the ownership and local-edit state of installed plugin files. See [status](../cli/status) for the file tree, source states, and migration from older layouts.
+Run `chat-js status` to inspect the ownership and local-edit state of installed plugin files. See [status](/cli/status) for the file tree, source states, and migration from older layouts.
 
 | Location | Owner | What belongs here |
 | --- | --- | --- |
@@ -22,4 +22,4 @@ Keep local application modules outside `chatjs/plugins/<id>/` when they should s
 
 ## Customize composition
 
-Use [Customizing Integrations](../cookbook/customize-integrations) for wrappers, local adapters, UI composition,. See [Using Plugins](../plugins/using-plugins) for installation and database migrations.
+Use [Customizing Integrations](/cookbook/customize-integrations) to wrap an installed adapter, add a local tool, or customize a UI slot. See [Using Plugins](/plugins/using-plugins) for installation and database migrations.

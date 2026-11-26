@@ -1,20 +1,24 @@
 ---
 title: Authentication
-description: Configure OAuth providers and sign-in behavior
+description: "Enable GitHub, Google, or Vercel sign-in for your ChatJS app, configure the provider credentials, and register the matching OAuth callback URLs."
 ---
 
-Account sign-in uses Better Auth. Configure the providers you want to offer, then supply their credentials. See [Identity & Access](../core/authentication) for sessions, ownership, and optional guest access.
+Account sign-in uses Better Auth. Configure the providers you want to offer, then supply their credentials. See [Identity & Access](/core/authentication) for sessions, ownership, and optional guest access.
 
 ## Enabling Providers
 
 Toggle providers in `chat.config.ts` under the `authentication` key:
 
-```typescript title="chat.config.ts"
-authentication: {
-  google: false, // requires AUTH_GOOGLE_ID + AUTH_GOOGLE_SECRET
-  github: true,  // requires AUTH_GITHUB_ID + AUTH_GITHUB_SECRET
-  vercel: false, // requires VERCEL_APP_CLIENT_ID + VERCEL_APP_CLIENT_SECRET
-},
+```ts title="chat.config.ts"
+import { defineConfig } from "@/lib/config-schema";
+
+export default defineConfig({
+  authentication: {
+    google: false, // requires AUTH_GOOGLE_ID + AUTH_GOOGLE_SECRET
+    github: true, // requires AUTH_GITHUB_ID + AUTH_GITHUB_SECRET
+    vercel: false, // requires VERCEL_APP_CLIENT_ID + VERCEL_APP_CLIENT_SECRET
+  },
+});
 ```
 
 Provider toggles in `chat.config.ts` control validation and which sign-in buttons are shown. Runtime provider registration in `lib/auth.ts` is based on provider env vars being present.

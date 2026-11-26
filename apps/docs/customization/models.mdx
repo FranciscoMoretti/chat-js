@@ -1,14 +1,20 @@
 ---
 title: Models
-description: Configure discovery, defaults, capabilities, and model visibility
+description: "Configure gateway model discovery, set workflow defaults, and choose which models appear in the web chat picker."
 ---
 
-Your installed [gateway](../gateways/overview) supplies model discovery and inference. Core builds the model catalog, derives capabilities, and applies configured defaults. Install [Model Preferences](../plugins/model-preferences) when users should manage their own picker settings.
+Your installed [gateway](/gateways/overview) supplies model discovery and inference. Core builds the model catalog, derives capabilities, and applies configured defaults. Install [Model Preferences](/plugins/model-preferences) when users should manage their own picker settings.
 
 <Frame>
-  <img
-    src="/docs/images/ai-models.gif"
-    alt="Selecting models in the chat interface"
+  <video
+    controls
+    playsinline
+    preload="none"
+    width="1280"
+    height="720"
+    aria-label="Selecting models in the chat interface"
+    poster="/docs/images/ai-models-poster.png"
+    src="/docs/images/ai-models.mp4"
   />
 </Frame>
 
@@ -17,18 +23,20 @@ Your installed [gateway](../gateways/overview) supplies model discovery and infe
 Set model defaults in `chat.config.ts`. This example assumes the Vercel gateway is installed:
 
 ```ts title="chat.config.ts"
-ai: {
-  gateway: "vercel",
-  providerOrder: ["openai", "google", "anthropic", "xai"],
-  disabledModels: ["morph/morph-v3-large"],
-  curatedDefaults: ["openai/gpt-5-mini", "google/gemini-2.5-flash-lite"],
-  workflows: {
-    chat: "openai/gpt-5-mini",
-    title: "openai/gpt-5-nano",
-    pdf: "openai/gpt-5-mini",
-    chatImageCompatible: "openai/gpt-4o-mini",
+import { defineConfig } from "@/lib/config-schema";
+
+export default defineConfig({
+  ai: {
+    gateway: "vercel",
+    providerOrder: ["openai", "google", "anthropic", "xai"],
+    disabledModels: ["morph/morph-v3-large"],
+    curatedDefaults: ["openai/gpt-5-mini", "google/gemini-2.5-flash-lite"],
+    workflows: {
+      chat: "openai/gpt-5-mini",
+      title: "openai/gpt-5-nano",
+    },
   },
-},
+});
 ```
 
 | Setting | Purpose |
@@ -39,29 +47,22 @@ ai: {
 | `ai.curatedDefaults` | Recommended models ordered first and preferred when choosing a fallback |
 | `ai.workflows.chat` | Default conversation model |
 | `ai.workflows.title` | Title-generation model default |
-| `ai.workflows.pdf` | PDF-analysis model default |
-| `ai.workflows.chatImageCompatible` | Chat fallback for image input |
+| `ai.workflows.pdf`, `ai.workflows.chatImageCompatible` | Model IDs available to custom workflows. In built-in chat, the selected model must accept the attachment type. |
 | `ai.tools` | Options contributed by installed tools, plus follow-up suggestion settings |
 
-Changing `ai.gateway` alone does not install another provider. Use the [gateway setup instructions](../gateways/overview), review your model IDs, and refresh the snapshot after switching providers.
+Changing `ai.gateway` alone does not install another provider. Follow the [gateway setup instructions](/gateways/overview) and review your model IDs after switching providers.
 
-## Discovery and refresh
+## Model discovery
 
-`lib/ai/models.ts` asks the active gateway for its catalog, transforms the result into application model data, and caches it for one hour. The cache key includes the gateway type. Provider-specific API handling belongs to the installed gateway.
+The picker and EVE discover models from the installed gateway at runtime. ChatJS caches a successful catalog for one hour. After you add a model at the provider, it can take up to a cache refresh for it to appear in ChatJS.
 
-The host supplies a generated fallback snapshot. The Vercel adapter can discover the public catalog without a credential and uses the snapshot when discovery fails. With a credential it also applies the gateway's model eligibility for the team. Other adapters depend on the connected endpoint for discovery.
+Apps scaffolded with CLI `1.0.0-alpha.8` also have a bundled catalog for discovery failures. The current source relies on gateway discovery alone.
 
-Refresh the snapshot after configuring your gateway credentials:
-
-```bash
-bun run fetch:models
-```
-
-`scripts/fetch-models.ts` calls the active gateway and writes `lib/ai/models.generated.ts`. You do not need to implement a separate API fetcher to keep the catalog current.
+Vercel AI Gateway exposes a public catalog. With credentials, ChatJS also checks team eligibility. For other gateways, configure the model endpoint and credentials described in the gateway guide. If the picker is empty, check the server log for a discovery error. Verify the endpoint and credentials, then reload the app. If discovery succeeded, check the model list and visibility settings below.
 
 ## Visibility and preferences
 
-ChatJS enables the gateway's discovered text-chat models by default. It removes models listed in `ai.disabledModels` and orders recommended models first. When installed, [Model Preferences](../plugins/model-preferences) lets each user hide models from their picker. These preferences affect picker visibility.
+ChatJS enables the gateway's discovered text-chat models by default. It removes models listed in `ai.disabledModels` and orders recommended models first. When installed, [Model Preferences](/plugins/model-preferences) lets each user hide models from their picker. These preferences affect picker visibility.
 
 To offer a specific set of models to signed-in users, edit `integrations/chat/models.ts`.
 
@@ -74,13 +75,13 @@ export const webModels = {
 
 Omit `modelIds` or leave it empty to use the gateway catalog. A populated list contains the complete set of eligible web chat model IDs. Include your preferred model in that list. If the preferred model is unavailable, ChatJS picks an eligible model from the catalog.
 
-[Guest Chat](../plugins/guest-chat) owns its fixed model and locked picker. Guests do not create multi-model comparisons.
+[Guest Chat](/plugins/guest-chat) owns its fixed model and locked picker. Guests do not create multi-model comparisons.
 
 ## Reasoning and parallel responses
 
-Core derives model capabilities from catalog metadata. Models with reasoning support receive standard and reasoning variants. See [Reasoning](../core/reasoning) for behavior and configuration.
+Core derives model capabilities from catalog metadata. Models with reasoning support receive standard and reasoning variants. See [Reasoning](/core/reasoning) for behavior and configuration.
 
-[Parallel responses](../core/conversations#parallel-responses) create independent runs from one or more selected models. That is conversation behavior, separate from catalog configuration and the optional Model Preferences plugin.
+[Parallel responses](/core/conversations#parallel-responses) create independent runs from one or more selected models. That is conversation behavior, separate from catalog configuration and the optional Model Preferences plugin.
 
 ## Tool and plugin model defaults
 
@@ -88,10 +89,10 @@ Installed tools contribute their own schemas and defaults under `ai.tools`. Mode
 
 | Capability | Configuration guide |
 | --- | --- |
-| Image model selection and inline image output | [Image Generation](../tools/generate-image) |
-| Video model selection | [Video Generation](../tools/generate-video) |
-| Research and final-report models | [Deep Research](../tools/deep-research) |
-| Text, code, and spreadsheet actions | [Documents & Canvas](../tools/canvas) |
-| Suggestion generation model and runtime enablement | [Follow-up Suggestions](../plugins/followup-suggestions) |
+| Image model selection and inline image output | [Image Generation](/tools/generate-image) |
+| Video model selection | [Video Generation](/tools/generate-video) |
+| Research with the parent agent’s model | [Deep Research](/tools/deep-research) |
+| Create and publish files from the sandbox | [Documents & Files](/tools/canvas) |
+| Suggestion generation model and runtime enablement | [Follow-up Suggestions](/plugins/followup-suggestions) |
 
-See [Configuration reference](../reference/config) for the complete configuration shape and [Prompts](./prompts) for instructions sent to models.
+See [Configuration reference](/reference/config) for the complete configuration shape and [Prompts](/customization/prompts) for instructions sent to models.

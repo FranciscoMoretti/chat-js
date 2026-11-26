@@ -52,7 +52,7 @@ test("a shared app layout keeps every app browser spec", () => {
 test.each([
   "bun.lock",
   "apps/chat/vitest.config.ts",
-  "apps/chat/lib/ai/models.generated.ts",
+  "apps/chat/lib/db/schema.generated.ts",
   "apps/chat/app/globals.css",
   "packages/registry/src/gateways/catalog.ts",
   "unmapped.txt",

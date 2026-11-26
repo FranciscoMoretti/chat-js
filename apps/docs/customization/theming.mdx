@@ -1,11 +1,11 @@
 ---
 title: Theming
-description: Customize colors, fonts, and styling
+description: "Customize the light and dark color palettes for ChatJS by editing the CSS variables shared by the app, shadcn/ui, and AI Elements components."
 ---
 
-ChatJS uses standard [shadcn theming](https://ui.shadcn.com/docs/theming) with CSS variables. If you're familiar with shadcn, everything works as expected.
+ChatJS uses standard [shadcn theming](https://ui.shadcn.com/docs/theming) with CSS variables. Set your palette once and components can use the same foreground, background, and border colors.
 
-This also applies to [AI Elements](https://ai-sdk.dev/elements/overview) components since they’re shadcn-compatible and read the same CSS variables.
+This also applies to [AI Elements](https://elements.ai-sdk.dev/) components since they’re shadcn-compatible and read the same CSS variables.
 
 ## Quick start
 
@@ -14,4 +14,6 @@ This also applies to [AI Elements](https://ai-sdk.dev/elements/overview) compone
 
 ## Generate a theme
 
-Use the [shadcn theme generator](https://ui.shadcn.com/themes) to create a palette, then copy the CSS variables into `globals.css`.
+Use the [shadcn theme generator](https://ui.shadcn.com/create) to create a palette, then copy the CSS variables into `app/globals.css`.
+
+To change the typeface, follow [Fonts](/customization/fonts). For icons and social previews, see [Branding](/customization/branding).

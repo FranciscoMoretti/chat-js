@@ -1,5 +1,3 @@
-import type { AiGatewayModel } from "./models.ts";
-
 interface GatewayLogger {
   debug: (data: unknown, message?: string) => void;
   info: (data: unknown, message?: string) => void;
@@ -12,7 +10,6 @@ interface GatewayOptions {
   fetch?: (
     ...args: Parameters<typeof globalThis.fetch>
   ) => ReturnType<typeof globalThis.fetch>;
-  getFallbackModels?: (gateway: string) => readonly AiGatewayModel[];
   logger?: GatewayLogger;
 }
 
@@ -39,9 +36,6 @@ const silentLogger: GatewayLogger = {
 class GatewayRuntime {
   protected readonly env: NonNullable<GatewayOptions["env"]>;
   protected readonly fetch: NonNullable<GatewayOptions["fetch"]>;
-  protected readonly getFallbackModels: NonNullable<
-    GatewayOptions["getFallbackModels"]
-  >;
   protected readonly log: GatewayLogger;
 
   public constructor(options: GatewayReaderOptions = {}) {
@@ -52,7 +46,6 @@ class GatewayRuntime {
         ...args: Parameters<typeof globalThis.fetch>
       ): ReturnType<typeof globalThis.fetch> =>
         await globalThis.fetch(...args));
-    this.getFallbackModels = options.getFallbackModels ?? ((): never[] => []);
     this.log = options.logger ?? silentLogger;
   }
 }
