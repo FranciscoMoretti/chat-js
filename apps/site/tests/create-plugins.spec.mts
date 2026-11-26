@@ -705,7 +705,7 @@ test("Guest Chat switches preview identity and uses a temporary local conversati
     guest.getByRole("heading", { name: "How can I help you today?" })
   ).toBeVisible();
   await signedInMode.click();
-  await expect(draft).toHaveText("Keep this signed-in draft");
+  await expect(draft).toHaveValue("Keep this signed-in draft");
   expect(await frame.boundingBox()).toEqual(before);
   await guestMode.click();
   await expect(guest).toBeVisible();

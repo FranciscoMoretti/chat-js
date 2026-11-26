@@ -32,14 +32,14 @@ export const useAutoFocus = (
       const isUserTypingElsewhere = isTypingSurface(active);
 
       if (!isUserTypingElsewhere) {
-        input.focus();
+        input.focus({ preventScroll: true });
         // Minimal fallback for hydration/layout races where focus is stolen.
         fallbackTimeout = window.setTimeout(() => {
           const currentActive = document.activeElement;
           const canSafelyStealFocus = !isTypingSurface(currentActive);
 
           if (canSafelyStealFocus) {
-            input.focus();
+            input.focus({ preventScroll: true });
           }
         }, FALLBACK_FOCUS_TIMEOUT_MS);
       }

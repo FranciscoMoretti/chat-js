@@ -35,7 +35,7 @@ for (const width of [1280, 390]) {
       ).toContainText("This is a local preview.");
       await expect(editor).toBeFocused();
       await expect(page.getByTestId("message-assistant-loading")).toBeHidden();
-      await expect(editor).toHaveText("");
+      await expect(editor).toHaveValue("");
       await expect(send).toBeInViewport();
 
       await page.evaluate(() => {
@@ -127,7 +127,7 @@ test("host configuration does not cover the shared composer or reset its draft",
   await expect(
     frame.getByRole("button", { name: "Upvote Response", exact: true })
   ).toBeVisible();
-  await expect(editor).toHaveText("Keep this draft");
+  await expect(editor).toHaveValue("Keep this draft");
   expect(await page.locator("iframe").boundingBox()).toEqual(bounds);
   await page.getByRole("tab", { name: "Appearance", exact: true }).click();
   await frame.getByRole("button", { name: "Send", exact: true }).click();

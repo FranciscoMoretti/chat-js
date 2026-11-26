@@ -160,7 +160,7 @@ test("a failed local submission keeps the new-chat draft and shows the shared er
   const draft = app.getByRole("textbox", { name: "Message", exact: true });
   await draft.fill("Keep my failed draft");
   await app.getByRole("button", { name: "Send", exact: true }).click();
-  await expect(draft).toHaveText("Keep my failed draft");
+  await expect(draft).toHaveValue("Keep my failed draft");
   await expect(
     app.getByRole("alert").filter({ hasText: "Sample message failed" })
   ).toBeVisible();
