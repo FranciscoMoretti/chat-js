@@ -1,9 +1,9 @@
 ---
 title: Desktop Distribution
-description: Brand, package, and distribute your Electron companion
+description: "Package the Electron companion for your hosted ChatJS app, apply your branding, and prepare platform-specific installers and automatic updates."
 ---
 
-Install and configure the [Desktop plugin](../plugins/desktop) before packaging. The Electron companion loads your hosted ChatJS app. Set the deployed app URL and use matching app identity and protocol settings in both builds.
+Install and configure the [Desktop plugin](/plugins/desktop) before packaging. The Electron companion loads your hosted ChatJS app. Set the deployed app URL and use matching app identity and protocol settings in both builds.
 
 The [ChatJS release history](https://github.com/FranciscoMoretti/chat-js/releases) contains reference-app installers. The instructions below package your own application.
 
@@ -107,4 +107,4 @@ The scaffold includes a starter `electron/entitlements.mac.plist`. Configure sig
 
 ## Release automation
 
-Configure publishing for your own repository and distribution targets. [Desktop Release Process](../reference/desktop-releases) documents the ChatJS maintainer workflow for publishing installers. Its package-scoped release tags are incompatible with the default update service, so adapt the tags and verify update discovery before using that workflow for automatic updates.
+Configure publishing for your own repository and distribution targets. [Desktop Release Process](/reference/desktop-releases) documents the ChatJS maintainer workflow for publishing installers. Its package-scoped release tags are incompatible with the default update service, so adapt the tags and verify update discovery before using that workflow for automatic updates.

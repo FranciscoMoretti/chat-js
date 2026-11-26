@@ -56,7 +56,7 @@ npx chat-js@alpha add mcp
 
 Generate `MCP_ENCRYPTION_KEY` with `openssl rand -base64 32` and set it in `.env.local`. Run `npm run db:generate`, review the generated SQL, then apply it with `npm run db:migrate`. [MCP setup](https://www.chatjs.dev/docs/plugins/mcp) · [CLI reference](https://www.chatjs.dev/docs/cli)
 
-Deploy the web app on Vercel or self-host it with Docker or Node.js. Add the Electron companion to package your app for macOS, Windows, and Linux. [Deployment guides](https://www.chatjs.dev/docs/deployment) · [Desktop guide](https://www.chatjs.dev/docs/deployment/desktop)
+Deploy the web app on Vercel. For self-hosting, the Docker and Node.js guides document the required services and outstanding lifecycle checks. Add the Electron companion to package your app for macOS, Windows, and Linux. [Deployment guides](https://www.chatjs.dev/docs/deployment) · [Desktop guide](https://www.chatjs.dev/docs/deployment/desktop)
 
 ## Contributing
 

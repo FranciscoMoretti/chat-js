@@ -1,22 +1,22 @@
 ---
 title: Configuration & Extensions
-description: Install capabilities and configure runtime policy in ChatJS
+description: "Choose the tools, plugins, and providers to install, then configure model defaults, authentication, and other runtime settings in chat.config.ts."
 ---
 
-ChatJS separates **installed source**, **runtime policy**, and **deployment infrastructure**. The CLI installs plugins, tools, and selected gateway, storage, and sandbox providers. `chat.config.ts` supplies branding, model defaults, authentication settings. Environment variables supply credentials and deployment connections.
+ChatJS separates **installed source**, **runtime policy**, and **deployment infrastructure**. The CLI installs plugins, tools, and selected gateway, storage, and sandbox providers. `chat.config.ts` supplies branding, model defaults, and authentication settings. Environment variables supply credentials and deployment connections.
 
 ## Extension types
 
 | Type | What you select | Documentation |
 | --- | --- | --- |
-| Core | App behavior such as conversations, authentication, and parallel responses | [Architecture](./architecture) |
-| Plugins | Optional app integrations such as Projects, Credits, and MCP | [Plugins](../plugins/overview) |
-| Tools | Model-facing operations such as search, image generation, and file publication | [Tools](../tools/overview) |
-| Gateway | Inference and model discovery | [Models & Gateways](../gateways/overview) |
-| Storage | Files SDK adapter for durable files | [File Storage](../storage) |
-| Sandbox | Execution infrastructure and persistent EVE session files where supported | [Sandboxes](../deployment/sandboxes) |
+| Core | App behavior such as conversations, authentication, and parallel responses | [Architecture](/core/architecture) |
+| Plugins | Optional app integrations such as Projects, Credits, and MCP | [Plugins](/plugins/overview) |
+| Tools | Model-facing operations such as search, image generation, and file publication | [Tools](/tools/overview) |
+| Gateway | Inference and model discovery | [Models & Gateways](/gateways/overview) |
+| Storage | Files SDK adapter for durable files | [File Storage](/storage) |
+| Sandbox | Execution infrastructure and persistent EVE session files where supported | [Sandboxes](/deployment/sandboxes) |
 
-Runtime settings configure the source you installed. They do not install missing capabilities. See [Source Ownership](./source-ownership) before customizing that source.
+Runtime settings configure the source you installed. They do not install missing capabilities. See [Source Ownership](/core/source-ownership) before customizing that source.
 
 ## Runtime configuration
 
@@ -73,9 +73,9 @@ Gateway selection installs `chatjs/providers/gateway.ts` and its typed defaults.
 bunx chat-js@alpha add --gateway openai --replace
 ```
 
-Replacement requires `--replace`. Modified or untracked provider source requires review and explicit `--overwrite`. Keep a version-control checkpoint before replacing customized source. The CLI preserves runtime model overrides, so review their IDs for the selected gateway and run `bun run setup` and `bun run fetch:models` after supplying credentials. Registry addresses can select external providers too. The CLI removes unused dependency entries that its installation receipt owns, and refreshes its marked environment-example sections. It preserves pre-existing dependencies, user-changed versions, dependencies referenced by remaining source and environment entries outside those sections. ChatJS supports new installations rather than upgrades from older templates.
+Replacement requires `--replace`. Modified or untracked provider source requires review and explicit `--overwrite`. Keep a version-control checkpoint before replacing customized source. The CLI preserves runtime model overrides, so review their IDs for the selected gateway and run `bun run check-env` after supplying credentials. Registry addresses can select external providers too. The CLI removes unused dependency entries that its installation receipt owns, and refreshes its marked environment-example sections. It preserves pre-existing dependencies, user-changed versions, dependencies referenced by remaining source and environment entries outside those sections. ChatJS supports new installations rather than upgrades from older templates.
 
-Configure [web search connections](../tools/web-search) through EVE. Code execution uses native EVE `bash` in the agent sandbox. EVE owns session files and lifecycle; ChatJS keeps authorization on application resources. See [Sandboxes](../deployment/sandboxes) for the native environment choices.
+Configure [web search connections](/tools/web-search) through EVE. Code execution uses native EVE `bash` in the agent sandbox. EVE owns session files and lifecycle; ChatJS keeps authorization on application resources. See [Sandboxes](/deployment/sandboxes) for the native environment choices.
 
 A minimal scaffold can omit optional integrations:
 
@@ -85,8 +85,8 @@ bunx chat-js@alpha create minimal-chat --yes --no-mcp --no-attachments --no-elec
 
 ## Runtime policy and credentials
 
-Authentication booleans enable GitHub, Google or Vercel OAuth and require the corresponding credentials. Install [Guest Chat](../plugins/guest-chat) for disposable visitor sessions. Its server-owned policy controls the model, input size, expiry, and IP limits. Guests have no credit balance. Retention additionally needs an operational cleanup schedule and lifecycle support.
+Authentication booleans enable GitHub, Google or Vercel OAuth and require the corresponding credentials. Install [Guest Chat](/plugins/guest-chat) for disposable visitor sessions. Its server-owned policy controls the model, input size, expiry, and IP limits. Guests have no credit balance. Retention additionally needs an operational cleanup schedule and lifecycle support.
 
 `features.parallelResponses` controls parallel responses. `attachments.acceptedTypes`, `maxBytes` and `maxDimension` control installed upload behavior. Neither setting installs its feature.
 
-Read installed descriptors and `.env.example` for credentials, then run `bun run check-env`. Never put secrets in `chat.config.ts` or `--storage-config`. See [Config reference](../reference/config) and [Gateway overview](../gateways/overview).
+Read installed descriptors and `.env.example` for credentials, then run `bun run check-env`. Never put secrets in `chat.config.ts` or `--storage-config`. See [Config reference](/reference/config) and [Gateway overview](/gateways/overview).

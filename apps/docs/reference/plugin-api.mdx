@@ -1,11 +1,11 @@
 ---
 title: Plugin API
-description: Typed server and client contracts for optional ChatJS capabilities
+description: "Look up conventional plugin entry files and their types for chat lifecycle events, UI slots, routers, session profiles, billing, and cleanup."
 ---
 
 Plugins own optional behavior, storage, and UI. Core owns authentication, chat identity, lifecycle coordination, dispatch, and recovery. Core can name a capability such as Projects and declare its optional input fields without importing its implementation.
 
-Start with [Create a plugin](../plugins/create-plugin) for installation and packaging. Use [Customize plugin integrations](../cookbook/customize-integrations) to add app-owned chat and billing behavior that survives later installation. Installed source lives in `chatjs/plugins/<id>/`, with thin framework adapters under `app/` and `agent/`.
+Start with [Create a plugin](/plugins/create-plugin) for installation and packaging. Use [Customize plugin integrations](/cookbook/customize-integrations) to add app-owned chat and billing behavior that survives later installation. Installed source lives in `chatjs/plugins/<id>/`, with thin framework adapters under `app/` and `agent/`.
 
 ## Entry points
 
@@ -60,7 +60,7 @@ These are explicit core contracts. There is no registry of arbitrary creation fi
 
 Use `chat.afterCreate({ ownerId, branchId, message })` for optional work after a successful root creation response. It runs outside the creation transaction through Next.js `after`, using a bound conversation from the initial chat or response group. Forks do not invoke it.
 
-Recovery requests may invoke the callback again. Make your contribution idempotent and recheck ownership and state before writing. Core catches each contribution's failure so later contributions still run. This callback does not guarantee durable execution. [AI Titles](../plugins/ai-titles) uses it for guarded title enrichment.
+Recovery requests may invoke the callback again. Make your contribution idempotent and recheck ownership and state before writing. Core catches each contribution's failure so later contributions still run. This callback does not guarantee durable execution. [AI Titles](/plugins/ai-titles) uses it for guarded title enrichment.
 
 ## Explicit chat mutations
 
@@ -71,11 +71,13 @@ import { eq } from "drizzle-orm";
 import { updateOwnedChat } from "@/lib/db/update-owned-chat";
 import { eveChatProject as membership } from "@/chatjs/plugins/projects/db/project-schema";
 
-// ownerId and chatId come from the authorized procedure.
-await updateOwnedChat({ ownerId, chatId }, async ({ tx, chatId }) => {
-  await tx.delete(membership).where(eq(membership.chatId, chatId));
-  return { chatId };
-});
+// Call from a protected procedure with the authenticated user's ID.
+export function clearProject(ownerId: string, chatId: string) {
+  return updateOwnedChat({ ownerId, chatId }, async ({ tx, chatId }) => {
+    await tx.delete(membership).where(eq(membership.chatId, chatId));
+    return { chatId };
+  });
+}
 ```
 
 Use the supplied transaction for plugin validation and writes. A successful result updates the chat timestamp. Return `null` before writing when validation rejects the mutation. Throw on failure to roll back the transaction. Projects owns the project validation and membership writes.
@@ -94,7 +96,7 @@ History predicates combine with AND. Return `undefined` when your restriction do
 
 `chat.publicReadFilter()` returns a Drizzle predicate over the core conversation table. Installed predicates combine with OR. With no contribution, the result is false. File and document readers combine this grant with ownership, bound state, and their resource-specific checks. This contribution never grants write or workspace access.
 
-[Sharing](../plugins/sharing) contributes the public visibility predicate. Its public transcript route belongs to the plugin and rechecks visibility after reading the native snapshot. Core retains the visibility column and resets it during deletion.
+[Sharing](/plugins/sharing) contributes the public visibility predicate. Its public transcript route belongs to the plugin and rechecks visibility after reading the native snapshot. Core retains the visibility column and resets it during deletion.
 
 Client actions receive the logical chat `id` and, when available, the exact `branchId`. Use the latter for branch-specific sharing. Header menus omit it when there is no transcript to share. Plugin actions own their dialogs and preserve the menu while a dialog is open.
 
@@ -115,7 +117,7 @@ Default-export a `UsageBilling` object from `billing.ts`. Sync allows at most on
 
 Core owns durable usage evidence, per-turn rounding, `chargedCents`, and reconciliation. The plugin owns balance storage and spending policy. Guest Chat sessions do not enter account usage billing. Locking the core user row keeps receipt ingestion serialized even when no billing table exists.
 
-The [Credits plugin](../plugins/credits) uses this contract. Native EVE imports the billing entry directly; keep routers and Next.js request helpers in the server entry. Billing installation does not backfill old usage automatically; newly reconciled receipts can still settle an existing turn's unpaid total.
+The [Credits plugin](/plugins/credits) uses this contract. Native EVE imports the billing entry directly; keep routers and Next.js request helpers in the server entry. Billing installation does not backfill old usage automatically; newly reconciled receipts can still settle an existing turn's unpaid total.
 
 ## Client slots
 
@@ -203,7 +205,7 @@ Default-export the form from `auth-form.tsx` and the handler from `sign-out.ts`.
 
 Default-export a function from `navigation.ts`. Return `true` when core should handle modified internal links as normal app navigation. With no contribution, core preserves browser modifier behavior. Keep this entry independent of auth UI and client declarations to avoid an import cycle through the shared link component.
 
-Each of these slots accepts one provider. Without contributions, generated registrations add no auth plugins or origins, recognize no extra auth routes, render the web form unchanged, and defer to web sign-out. [Desktop](../plugins/desktop) also uses the existing layout contribution for renderer session synchronization. It introduces no plugin database schema.
+Each of these slots accepts one provider. Without contributions, generated registrations add no auth plugins or origins, recognize no extra auth routes, render the web form unchanged, and defer to web sign-out. [Desktop](/plugins/desktop) also uses the existing layout contribution for renderer session synchronization. It introduces no plugin database schema.
 
 ## Native hooks and instructions
 

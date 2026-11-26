@@ -16,7 +16,14 @@ import { resolve } from "node:path";
 const { loadAuthoredModuleNamespace } = await import(
   new URL("./internal/authored-module-loader.js", import.meta.resolve("eve"))
 );
-globalThis.fetch = () => { throw new Error("Unexpected network access"); };
+globalThis.fetch = async (url) => {
+  assert.equal(String(url), "https://ai-gateway.vercel.sh/v1/models");
+  return Response.json({object: "list", data: [{
+    id: "openai/gpt-5-nano", type: "language", object: "model", name: "GPT-5 nano",
+    owned_by: "openai", created: 0, context_window: 1000, max_tokens: 100,
+    description: "", pricing: {},
+  }]});
+};
 const load = (path) => loadAuthoredModuleNamespace(resolve(path), { appRoot: process.cwd() });
 const providers = await load("lib/ai/providers.ts");
 const model = await providers.getLanguageModel("openai/gpt-5-nano");

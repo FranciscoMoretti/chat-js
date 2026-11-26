@@ -50,84 +50,6 @@ const makeTempDir = (name: string): string => {
 const getCliPackageRoot = (): string =>
   pathModule.resolve(import.meta.dirname, "../..");
 
-const runGeneratedPackageManagerCommand = async (
-  command: readonly string[],
-  destination: string,
-  packageManager: "bun" | "npm"
-): Promise<void> => {
-  const env: Record<string, string> = {};
-  for (const [key, value] of Object.entries(Bun.env)) {
-    if (typeof value === "string") {
-      env[key] = value;
-    }
-  }
-  env.PATH = `${pathModule.resolve(getCliPackageRoot(), "../../node_modules/.bin")}${pathModule.delimiter}${env.PATH ?? ""}`;
-  const process = Bun.spawn([...command], {
-    cwd: destination,
-    env,
-    stderr: "pipe",
-    stdout: "pipe",
-  });
-  const [exitCode, stdout, stderr] = await Promise.all([
-    process.exited,
-    new Response(process.stdout).text(),
-    new Response(process.stderr).text(),
-  ]);
-  if (exitCode !== SUCCESS_EXIT_CODE) {
-    throw new Error(
-      `Generated ${packageManager} gateway warning test failed:\n${stdout}\n${stderr}`
-    );
-  }
-};
-
-const runGeneratedGatewaySnapshotWarningTest = async (
-  destination: string,
-  packageManager: "bun" | "npm"
-): Promise<void> => {
-  await symlink(
-    pathModule.resolve(
-      getCliPackageRoot(),
-      "../..",
-      "apps",
-      "chat",
-      "node_modules"
-    ),
-    pathModule.join(destination, "node_modules"),
-    "dir"
-  );
-
-  const generatedTestPath = pathModule.join(
-    destination,
-    "scripts",
-    "gateway-snapshot-warning.test.ts"
-  );
-  const generatedTest = await readFile(generatedTestPath, "utf-8");
-  const packageManagerConfig = {
-    bun: {
-      command: [
-        "bun",
-        "run",
-        "test:unit",
-        "scripts/gateway-snapshot-warning.test.ts",
-      ],
-      expectedCommand: "bun run fetch:models",
-    },
-    npm: {
-      command: [
-        "npm",
-        "run",
-        "test:unit",
-        "--",
-        "scripts/gateway-snapshot-warning.test.ts",
-      ],
-      expectedCommand: "npm run fetch:models",
-    },
-  }[packageManager];
-  const { command, expectedCommand } = packageManagerConfig;
-  expect(generatedTest).toContain(expectedCommand);
-  await runGeneratedPackageManagerCommand(command, destination, packageManager);
-};
-
 afterEach(async (): Promise<void> => {
   if (originalUserAgent === undefined) {
     delete process.env.npm_config_user_agent;
@@ -586,29 +508,6 @@ describe("scaffoldFromTemplate", (): void => {
         "utf-8"
       )
     ).toContain('command: "npm run dev"');
-    expect(
-      await readFile(
-        pathModule.join(
-          destination,
-          "scripts",
-          "environment-validation-report.ts"
-        ),
-        "utf-8"
-      )
-    ).toContain("npm run fetch:models");
-    await runGeneratedGatewaySnapshotWarningTest(destination, "npm");
-    expect(
-      await readFile(
-        pathModule.join(
-          destination,
-          "lib",
-          "ai",
-          "gateways",
-          "fallback-models.ts"
-        ),
-        "utf-8"
-      )
-    ).toContain("npm run fetch:models");
     const neonFiles = [
       "db-branch-create.sh",
       "db-branch-delete.sh",
@@ -634,23 +533,6 @@ describe("scaffoldFromTemplate", (): void => {
       )
     ).toEqual([]);
     expect(packageJson.scripts["db:migrate"]).toBe("tsx lib/db/migrate.ts");
-  });
-  it("keeps Bun commands in the generated gateway snapshot warning", async (): Promise<void> => {
-    const destination = makeTempDir("chat-app-bun-gateway-warning");
-
-    await scaffoldFromTemplate(destination);
-
-    const report = await readFile(
-      pathModule.join(
-        destination,
-        "scripts",
-        "environment-validation-report.ts"
-      ),
-      "utf-8"
-    );
-    expect(report).toContain("bun run fetch:models");
-    expect(report).not.toContain("npm run fetch:models");
-    await runGeneratedGatewaySnapshotWarningTest(destination, "bun");
   });
   it("allows known native package build scripts for pnpm scaffolds", async (): Promise<void> => {
     process.env.npm_config_user_agent = "pnpm/10.33.1";

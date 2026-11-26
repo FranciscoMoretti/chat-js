@@ -1,6 +1,6 @@
 ---
 title: Customizing Integrations
-description: Compose installed plugins and tools in app-owned integration modules
+description: "Customize how installed plugins and tools work together by wrapping chat, billing, upload, and rendering behavior in app-owned modules."
 ---
 
 ChatJS separates installed registrations from application behavior. You own the domain-specific modules in `integrations/`. Adding, removing, or syncing plugins updates their generated inputs without rewriting these modules.
@@ -9,7 +9,7 @@ Start with a scaffold that includes these integration modules. An existing app u
 
 ## Source ownership
 
-Read [Source Ownership](../core/source-ownership) before editing installed or generated files. The recipes below compose installed inputs in your app-owned `integrations/` modules.
+Read [Source Ownership](/core/source-ownership) before editing installed or generated files. The recipes below compose installed inputs in your app-owned `integrations/` modules.
 
 ## Chat lifecycle
 
@@ -59,7 +59,7 @@ Installing a plugin later changes `installedChat`. Your local adapter remains in
 
 Core still owns authorization, transaction creation, lifecycle locks, pagination, and fallback title settlement. Composition does not open another transaction or turn post-creation work into a durable job. Public-read grants do not grant write access.
 
-Use the supplied transaction for creation and deletion writes. Keep network calls outside those transactions. See [Plugin API](../reference/plugin-api) for each callback's timing and data contract.
+Use the supplied transaction for creation and deletion writes. Keep network calls outside those transactions. See [Plugin API](/reference/plugin-api) for each callback's timing and data contract.
 
 ## Billing
 
@@ -108,13 +108,13 @@ To supply an entirely app-owned billing adapter, pass it to `composeBilling` ins
 
 Sync writes static installation lists and maps under `chatjs/generated/`. It does not rewrite `integrations/` or the composition helpers. Runtime callers keep importing the same app-owned modules as the installed selection changes.
 
-Prefer importing the generated lists when your composition should follow installation automatically. If you directly import a plugin implementation to wrap it, your app now depends on that plugin. Removal detects supported static imports and requires you to resolve that dependency first. See [Create a plugin](../plugins/create-plugin) for packaging and installation metadata.
+Prefer importing the generated lists when your composition should follow installation automatically. If you directly import a plugin implementation to wrap it, your app now depends on that plugin. Removal detects supported static imports and requires you to resolve that dependency first. See [Create a plugin](/plugins/create-plugin) for packaging and installation metadata.
 
-Keep chat lifecycle and billing modules safe for Next.js server code and native EVE. Do not import React, route handlers, or Next.js request helpers into them. Browser UI retains its separate [typed slot interface](../reference/plugin-api#client-slots).
+Keep chat lifecycle and billing modules safe for Next.js server code and native EVE. Do not import React, route handlers, or Next.js request helpers into them. Browser UI retains its separate [typed slot interface](/reference/plugin-api#client-slots).
 
 ## Integration points
 
-Related modules are grouped under `auth/`, `chat/`, `tools/`, `documents/` and `providers/`. Single-file domains such as billing and database remain at the top level. Import each module directly. There are no directory barrel exports, and browser-safe definitions and UI remain separate from server execution.
+Related modules are grouped under `auth/`, `chat/`, `tools/`, and `providers/`. Single-file domains such as billing and database remain at the top level. Import each module directly. There are no directory barrel exports, and browser-safe definitions and UI remain separate from server execution.
 
 All runtime consumers go through app-owned composition. There is no shared plugin runtime or discovery system: these are ordinary TypeScript modules, React slots, and native framework entry points.
 
@@ -129,9 +129,9 @@ All runtime consumers go through app-owned composition. There is no shared plugi
 | `routers.ts`, `instrumentation.ts`, `database.ts` | Compose native tRPC routers, startup handlers and Drizzle schema paths |
 | `chat/session-profiles.ts`, `cleanup.ts` | Select persisted-session profiles and scheduled cleanup tasks |
 | `plugin-catalog.ts`, `tools/catalog.ts` | Client-safe installation names |
-| `providers/gateway.ts`, `providers/storage.ts`, `providers/sandbox.ts` | Wrap the installed native provider factories |
+| `providers/gateway.ts`, `providers/storage.ts` | Wrap the installed gateway and storage factories |
 
-Each file imports the matching generated input and exports the app's selection. Gateway, storage and sandbox use their installed implementation modules directly rather than a generated registry. Their lifecycle and credentials remain in the provider implementations and runtime callers.
+Most composition modules import generated registrations. Gateway and storage import the selected implementations directly. To change the agent’s execution environment, edit `agent/sandbox.ts`. [Sandbox configuration](/deployment/sandboxes)
 
 ### Add or wrap tools
 
@@ -141,17 +141,17 @@ Add its shared definition to `integrations/tools/definitions.ts` for catalog mem
 
 ### Shared tool definitions
 
-Keep schemas and display metadata in a browser-safe `definition.ts`. Server execution and the renderer import the same definition. Do not export execution functions, environment readers, or server SDKs from this module.
+Keep schemas and display metadata in a browser-safe `definition.ts`. Server execution and the renderer import the same definition. For this example, save the [word-count definition](/tools/authoring#shared-definitions) in `tools/local/text-stats/definition.ts`.
 
 ```ts
 // integrations/tools/definitions.ts
 import { installedToolDefinitions } from "@/chatjs/generated/tool-definitions";
 import { validateToolDefinitions } from "@/chatjs/core/tools/tool-definition";
-import { summarizeNotes } from "@/tools/local/summarize-notes/definition";
+import { toolDefinition as textStats } from "@/tools/local/text-stats/definition";
 
 export const toolDefinitions = validateToolDefinitions([
   ...installedToolDefinitions,
-  summarizeNotes,
+  textStats,
 ]);
 ```
 
@@ -161,7 +161,7 @@ This list declares metadata, not execution. Register the native tool in `integra
 
 Native EVE tools create and edit files in the session sandbox. Install `attach-workspace-file` to publish an immutable download through ChatJS storage, or import an authorized conversation file back into the sandbox with `import_file`.
 
-Optional viewer plugins register actions in the `ArtifactViewerActions` slot from `components/artifact-actions.tsx`. A viewer opens a supported MIME type from the same authorized file URL used for downloading; it does not own agent execution or edit a revisioned document. When no viewer matches, the file remains downloadable. See [Documents & Files](../tools/canvas).
+Optional viewer plugins register actions in the `ArtifactViewerActions` slot from `components/artifact-actions.tsx`. A viewer opens a supported MIME type from the same authorized file URL used for downloading; it does not own agent execution or edit a revisioned document. When no viewer matches, the file remains downloadable. See [Documents & Files](/tools/canvas).
 
 ### Uploads outside the composer
 
@@ -237,6 +237,6 @@ Next.js routes, EVE entry files and database migrations keep their native file c
 
 Apps with the older generated exports or `composition/custom/` files must explicitly adopt the new modules and update callers before sync. Move local tool and renderer registrations into `integrations/tools/execution.ts` and `integrations/tools/ui.ts`; preserve their behavior rather than overwriting them with scaffold defaults. After updating consumers, remove the obsolete generated behavior files named by the layout error, then run sync and app checks. Preserve receipts and user source. Sync does not rewrite arbitrary user source.
 
-When automatic installation conflicts, `chat-js add <item> --files-only` exports raw source and connection metadata into a temporary review directory. Review and copy selected files, adapt aliases/dependencies, and connect them through these app-owned modules. The export does not install or activate the plugin. See [add](../cli/add).
+When automatic installation conflicts, `chat-js add <item> --files-only` exports raw source and connection metadata into a temporary review directory. Review and copy selected files, adapt aliases/dependencies, and connect them through these app-owned modules. The export does not install or activate the plugin. See [add](/cli/add).
 
 If your scaffold has flat integration files, move them into the domain paths listed above and update their imports, including imports between integration modules. Preserve your implementations and wrappers. Sync does not relocate or overwrite these application files.

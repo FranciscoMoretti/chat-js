@@ -1,6 +1,6 @@
 ---
 title: Registry Validation
-description: Check dependency ownership and composed applications before running real installation tests
+description: "Check registry dependency ownership and type compatibility across composed app selections, and identify which behaviors require a real installation test."
 ---
 
 Use registry validation to check the application produced by a selection of items. You can catch missing dependency declarations, missing files and incompatible types without installing dependencies for every selection.
@@ -17,7 +17,7 @@ The first command tests the reusable engine with an unrelated notes registry. Th
 
 ## Shared sources, separate consumers
 
-Registry manifests supply file membership, targets, dependencies and prerequisites. The ChatJS assembly module reuses the CLI planner and configuration writers. It produces a demo snapshot for [Registry Mirror](./mirror) and a consumer snapshot for validation.
+Registry manifests supply file membership, targets, dependencies and prerequisites. The ChatJS assembly module reuses the CLI planner and configuration writers. It produces a demo snapshot for [Registry Mirror](/registry/mirror) and a consumer snapshot for validation.
 
 ```mermaid
 flowchart TD
@@ -63,4 +63,4 @@ bun run --cwd packages/registry profile:validation
 
 The recorded pre-extraction local profile spent about 12–14% of validation time rendering sources. This justified retaining staging. Re-run the profile when evaluating changes to the generator. The measurements and methodology are recorded in `packages/registry/VALIDATION-PROFILE.md`.
 
-Static ownership checks do not cover computed runtime imports. A prepared dependency fixture also cannot prove fresh package resolution or incremental package-manager behavior. Real tests caught an MCP install-order issue that required an explicit core AI SDK schema-helper pin. Keep the existing runtime, database, bundling and package-manager checks described in [Building and Testing](./testing).
+Static ownership checks do not cover computed runtime imports. A prepared dependency fixture also cannot prove fresh package resolution or incremental package-manager behavior. Real tests caught an MCP install-order issue that required an explicit core AI SDK schema-helper pin. Keep the existing runtime, database, bundling and package-manager checks described in [Building and Testing](/registry/testing).

@@ -1,9 +1,9 @@
 ---
 title: Environment Variables
-description: Complete reference for all environment variables used by ChatJS
+description: "Look up the environment variables for application data, authentication, EVE workflows, and the gateway, storage, and plugins installed in your app."
 ---
 
-This page lists every environment variable recognized by ChatJS, grouped by category. The schema is defined in `apps/chat/lib/env-schema.ts` and validated at build time by `apps/chat/scripts/check-env.ts`.
+Use the generated `.env.example` for your installation. Core settings live in `lib/env-schema.ts`. Installed providers, tools, and plugins declare additional requirements. Run `npm run check-env` from your app to validate the combination.
 
 <Callout type="note">
   Missing required variables will cause the build to fail immediately. Variables
@@ -17,10 +17,11 @@ These variables must be set for the EVE-backed application.
 
 | Variable | Description | How to get it |
 | --- | --- | --- |
-| `DATABASE_URL` | PostgreSQL connection string | [Neon](https://neon.tech), [Vercel Postgres](https://vercel.com/docs/storage/vercel-postgres/quickstart), or any Postgres provider |
+| `DATABASE_URL` | PostgreSQL connection string | Use the connection string from your [PostgreSQL provider](/reference/database#connection-settings). |
 | `AUTH_SECRET` | Secret used to sign and encrypt session tokens (Better Auth) | Run `openssl rand -base64 32` or use [generate-secret.vercel.app/32](https://generate-secret.vercel.app/32) |
+| `EVE_GATEWAY_SECRET` | Private credential for the ChatJS gateway to call EVE | Run `openssl rand -base64 32` a second time to generate a different value from `AUTH_SECRET` |
 
-The required EVE setting is an independently generated `EVE_GATEWAY_SECRET`. The gateway origin and local/self-hosted workflow database have defaults. Vercel deployments use managed Workflow automatically. These settings are documented [below](#eve-runtime-and-trusted-proxy-headers). In addition to these core settings, **at least one AI gateway credential** and **at least one OAuth provider** must be configured. See the sections below.
+Configure at least one OAuth provider and the connection required by your installed gateway. The integrated worker has defaults for its internal origin and local workflow database. See [EVE runtime settings](#eve-runtime-and-trusted-proxy-headers).
 
 ---
 
@@ -28,13 +29,7 @@ The required EVE setting is an independently generated `EVE_GATEWAY_SECRET`. The
 
 Enable providers in `chat.config.ts` under `authentication`. At least one must be enabled. The build validator checks that every enabled provider has its corresponding env vars set.
 
-```typescript title="chat.config.ts"
-authentication: {
-  google: false, // Requires AUTH_GOOGLE_ID + AUTH_GOOGLE_SECRET
-  github: true,  // Requires AUTH_GITHUB_ID + AUTH_GITHUB_SECRET
-  vercel: false, // Requires VERCEL_APP_CLIENT_ID + VERCEL_APP_CLIENT_SECRET
-},
-```
+See [authentication setup](/customization/authentication) for a complete configuration example and the callback URLs.
 
 ### GitHub OAuth
 
@@ -56,28 +51,22 @@ authentication: {
 
 ### Vercel OAuth
 
-| Variable                   | Description                            |
-| -------------------------- | -------------------------------------- |
-| `VERCEL_APP_CLIENT_ID`     | Vercel OAuth integration client ID     |
-| `VERCEL_APP_CLIENT_SECRET` | Vercel OAuth integration client secret |
+| Variable                   | Description              |
+| -------------------------- | ------------------------ |
+| `VERCEL_APP_CLIENT_ID`     | Vercel App client ID     |
+| `VERCEL_APP_CLIENT_SECRET` | Vercel App client secret |
 
-**Setup:** Follow the [Sign In with Vercel](https://vercel.com/docs/integrations/create-integration) guide to create an integration.
+Create a Vercel App and register its sign-in redirect URL. [Vercel OAuth setup](/customization/authentication#vercel)
 
 ---
 
 ## AI Gateways
 
-Exactly one gateway must be active. Set `ai.gateway` in `chat.config.ts` to select it.
-
-```typescript title="chat.config.ts"
-ai: {
-  gateway: "vercel", // "vercel" | "openrouter" | "openai" | "openai-compatible" | "litellm"
-}
-```
+Choose a gateway during creation or use the CLI to replace the installed gateway. Configure the environment for that adapter. [Gateway selection](/gateways/overview)
 
 ### Vercel AI Gateway (default)
 
-Provides access to 120+ models from OpenAI, Anthropic, Google, xAI, Meta, and more through a single key. This is the default gateway.
+The default gateway discovers models from the Vercel AI Gateway catalog.
 
 | Variable | Required | Description |
 | --- | --- | --- |
@@ -113,14 +102,14 @@ Direct connection to the OpenAI API. Use when you only need OpenAI models.
 
 ### OpenAI Compatible
 
-Works with any endpoint that follows the OpenAI API format: Ollama, LM Studio, vLLM, Azure OpenAI, and others.
+The adapter lists models at `/models` and sends chat requests to `/chat/completions` under the same base URL. Configure a bearer token if your server requires one. [Compatible endpoints](/gateways/openai-compatible)
 
 | Variable | Required | Description |
 | --- | --- | --- |
 | `OPENAI_COMPATIBLE_BASE_URL` | Yes | Base URL of the compatible API (e.g., `http://localhost:11434/v1`) |
-| `OPENAI_COMPATIBLE_API_KEY` | Yes | API key for the compatible provider |
+| `OPENAI_COMPATIBLE_API_KEY` | If required by the endpoint | API key for the compatible provider |
 
-**Setup:** Start your compatible server (for example, run `ollama serve` for Ollama), set `OPENAI_COMPATIBLE_BASE_URL` to its `/v1` endpoint, and provide `OPENAI_COMPATIBLE_API_KEY`.
+**Setup:** Start your compatible server (for example, run `ollama serve` for Ollama), set `OPENAI_COMPATIBLE_BASE_URL` to its `/v1` endpoint and set `OPENAI_COMPATIBLE_API_KEY` if the endpoint requires authentication.
 
 ### LiteLLM
 
@@ -128,20 +117,20 @@ Routes requests through a LiteLLM proxy for centralized model access, key manage
 
 | Variable | Required | Description |
 | --- | --- | --- |
-| `LITELLM_BASE_URL` | Yes | Base URL of the LiteLLM proxy (e.g., `http://localhost:4000`) |
+| `LITELLM_BASE_URL` | Yes | API base URL used for inference (e.g., `http://localhost:4000/v1`) |
 | `LITELLM_API_KEY` | Optional | Master key or virtual key if your LiteLLM proxy requires authentication |
 
-**Setup:** Start your LiteLLM proxy, set `LITELLM_BASE_URL` to the proxy root URL without `/v1`, and provide `LITELLM_API_KEY` only when the proxy requires auth.
+Set the base URL to the prefix your proxy uses for chat completions. Supply `LITELLM_API_KEY` when the proxy requires authentication. [LiteLLM setup](/gateways/litellm#setup)
 
 ---
 
 ## Features
 
-Tool flags live under `ai.tools` in `chat.config.ts`. Attachment uploads require durable storage and a persistent sandbox, for example `chat-js add attachment-uploads --storage-provider vercel-blob --sandbox-provider vercel`. Configure both providers’ credentials. Each enabled capability has an associated environment variable requirement validated at build time.
+Installed tools and plugins declare their environment requirements. For example, attachment uploads need durable file storage and a sandbox that supports persistent files. Configure the credentials for both providers. [Attachment uploads](/plugins/attachments)
 
 ### Web search connections
 
-[Web search connections](../tools/web-search) declare their own credentials. Firecrawl uses `FIRECRAWL_API_KEY`, and Tavily’s registry connection uses Vercel Connect.
+[Web search connections](/tools/web-search) declare their own credentials. Firecrawl uses `FIRECRAWL_API_KEY`, and Tavily’s registry connection uses Vercel Connect.
 
 ### MCP Connectors
 
@@ -173,32 +162,23 @@ openssl rand -base64 32
 
 ### Postgres Hosting
 
-`DATABASE_URL` is the runtime connection. Set `DATABASE_MIGRATION_URL` when your host provides a separate direct endpoint for schema operations. It falls back to `DATABASE_URL` when omitted. Set `DATABASE_PREPARE=false` for a transaction pooler without prepared-statement support, and optionally set `DATABASE_MAX_CONNECTIONS` to a positive per-process limit. See [Database](./database) for deployment behavior.
+`DATABASE_URL` is the runtime connection. Set `DATABASE_MIGRATION_URL` when your host provides a separate direct endpoint for schema operations. It falls back to `DATABASE_URL` when omitted. Set `DATABASE_PREPARE=false` for a transaction pooler without prepared-statement support, and optionally set `DATABASE_MAX_CONNECTIONS` to a positive per-process limit. See [Database](/reference/database) for deployment behavior.
 
 ### File Storage
 
 Attachments, image generation, and video generation require a durable storage adapter compatible with Files SDK. Storage requirements are generated from the selected provider and validated by `scripts/check-env.ts`.
 
-```typescript title="chat.config.ts"
-ai: {
-  tools: {
-    image: { enabled: true },
-    video: { enabled: true },
-  },
-}
-```
-
-Provider credentials belong in environment variables or the provider SDK's credential chain. Non-secret adapter options belong in `chatjs/providers/storage-options.ts`. See [File storage](../storage) and the [Files SDK provider reference](https://files-sdk.dev/docs/providers) for the requirements of your selected provider.
+Provider credentials belong in environment variables or the provider SDK's credential chain. Non-secret adapter options belong in `chatjs/providers/storage-options.ts`. See [File storage](/storage) and the [Files SDK provider reference](https://files-sdk.dev/docs/providers) for the requirements of your selected provider.
 
 <Callout type="tip">
   When using Vercel Blob, connect a store in your project dashboard under
-  **Storage**. `BLOB_READ_WRITE_TOKEN` is added to your environment
-  automatically.
+  **Storage**. Use the connected store’s `BLOB_READ_WRITE_TOKEN`, or configure
+  `BLOB_STORE_ID` with `VERCEL_OIDC_TOKEN` for OIDC authentication.
 </Callout>
 
 ### Code Execution Sandbox
 
-Select a native EVE environment in `agent/sandbox.ts`. Docker and Vercel Sandbox run Python and Node; just-bash provides a simulated shell. There is no ChatJS execution feature flag. See [Sandboxes](../deployment/sandboxes) for selection and native image configuration.
+Select a native EVE environment in `agent/sandbox.ts`. Docker and Vercel Sandbox run Python and Node; just-bash provides a simulated shell. There is no ChatJS execution feature flag. See [Sandboxes](/deployment/sandboxes) for selection and native image configuration.
 
 The following credentials apply when choosing Vercel Sandbox:
 
@@ -228,7 +208,7 @@ The following credentials apply when choosing Vercel Sandbox:
 | `VERCEL_AUTOMATION_BYPASS_SECRET` | Server-only deployment-protection bypass credential for calls to this Vercel project. Required when protection blocks internal EVE requests. |
 | `TRUSTED_CLIENT_IP_HEADER` | Optional self-hosted reverse-proxy header that contains one verified client IP. The proxy must overwrite any caller-provided value. Vercel uses its native trusted header. |
 
-`DATABASE_URL` stores application identity and metadata everywhere. Vercel Preview and Production use managed Workflow for EVE execution and transcripts. Local/self-hosted registered chats use `WORKFLOW_POSTGRES_URL` and require both schemas to be initialized. Disposable guest chats keep their isolated local backend during development. See the [database setup guide](./database#eve-workflow-database).
+`DATABASE_URL` stores application identity and metadata everywhere. Vercel Preview and Production use managed Workflow for EVE execution and transcripts. Local/self-hosted registered chats use `WORKFLOW_POSTGRES_URL` and require both schemas to be initialized. Disposable guest chats keep their isolated local backend during development. See the [database setup guide](/reference/database#eve-workflow-database).
 
 Leave `EVE_INTERNAL_ORIGIN` unset for the integrated gateway. On Vercel it follows the exact deployment URL, even when OAuth uses a stable branch alias or `APP_URL`. Derived app/test URLs discard paths, queries, and fragments, but reject credentials and non-HTTP(S) schemes. Use HTTPS for remote gateways, including private-network workers. HTTP is allowed only for loopback hosts (`localhost`, `127.0.0.0/8`, and `[::1]`). If you previously used an internal HTTP worker, configure a TLS endpoint or a loopback gateway. An override must serve the named `/eve/chat/v1/*` mount and contain no path, query, or credentials. A raw EVE worker exposing only `/eve/v1/*` is not a supported endpoint. On protected Vercel deployments, the server forwards `VERCEL_AUTOMATION_BYPASS_SECRET` only when this origin exactly matches `https://${VERCEL_URL}` or `https://${VERCEL_BRANCH_URL}`. It does not forward the credential to other origins, including arbitrary custom domains. The EVE bearer credential and owner identity are still required.
 
@@ -236,7 +216,7 @@ Leave `EVE_INTERNAL_ORIGIN` unset for the integrated gateway. On Vercel it follo
 
 ### Cron Job Secret
 
-Secures the `/api/cron/cleanup` endpoint that removes orphaned managed files.
+The scheduler calls `/api/cron/cleanup` with this secret. The job removes orphaned managed files and runs cleanup tasks contributed by installed plugins, including [guest session cleanup](/plugins/guest-chat).
 
 | Variable      | Description                                                 |
 | ------------- | ----------------------------------------------------------- |
@@ -248,13 +228,13 @@ Secures the `/api/cron/cleanup` endpoint that removes orphaned managed files.
 openssl rand -base64 32
 ```
 
-On Vercel, the platform automatically sends `CRON_SECRET` as a `Authorization: Bearer <secret>` header when triggering cron jobs.
+On Vercel, the platform automatically sends `CRON_SECRET` as an `Authorization: Bearer <secret>` header when triggering cron jobs.
 
 ### App URL
 
 | Variable | Required | Description |
 | --- | --- | --- |
-| `APP_URL` | Non-Vercel deployments | Full public URL of the app including protocol (e.g., `https://myapp.com`) |
+| `APP_URL` | Production outside Vercel | Full public URL of the app including protocol (e.g., `https://myapp.com`) |
 | `VERCEL_URL` | Auto-set by Vercel | Deployment hostname, without protocol |
 | `VERCEL_BRANCH_URL` | Auto-set by Vercel | Stable branch hostname used in preview environments |
 | `VERCEL_ENV` | Auto-set by Vercel | `development`, `preview`, or `production` |
@@ -276,47 +256,20 @@ Select observability integrations from EVE's instrumentation catalog in the buil
 
 ## Quick Reference
 
-All variables in one place:
-
-| Variable | Category | Required |
-| --- | --- | --- |
-| `DATABASE_URL` | Core | Always |
-| `AUTH_SECRET` | Core | Always |
-| `AI_GATEWAY_API_KEY` | Gateway | Vercel gateway (non-Vercel hosting) |
-| `VERCEL_OIDC_TOKEN` | Gateway | Auto-set on Vercel |
-| `OPENROUTER_API_KEY` | Gateway | OpenRouter gateway |
-| `OPENAI_API_KEY` | Gateway | OpenAI gateway |
-| `OPENAI_COMPATIBLE_BASE_URL` | Gateway | OpenAI-compatible gateway |
-| `OPENAI_COMPATIBLE_API_KEY` | Gateway | OpenAI-compatible gateway |
-| `LITELLM_BASE_URL` | Gateway | LiteLLM gateway |
-| `LITELLM_API_KEY` | Gateway | Optional for LiteLLM gateway |
-| `AUTH_GITHUB_ID` | Auth | If `authentication.github: true` |
-| `AUTH_GITHUB_SECRET` | Auth | If `authentication.github: true` |
-| `AUTH_GOOGLE_ID` | Auth | If `authentication.google: true` |
-| `AUTH_GOOGLE_SECRET` | Auth | If `authentication.google: true` |
-| `VERCEL_APP_CLIENT_ID` | Auth | If `authentication.vercel: true` |
-| `VERCEL_APP_CLIENT_SECRET` | Auth | If `authentication.vercel: true` |
-| `BLOB_READ_WRITE_TOKEN` | Storage | When Vercel Blob is the selected provider |
-| `EXA_API_KEY` | Optional | Recognized by env schema but not required by current validation |
-| `MCP_ENCRYPTION_KEY` | Feature | When MCP is installed |
-| `VERCEL_TEAM_ID` | Feature | When Vercel Sandbox is installed without OIDC auth |
-| `VERCEL_PROJECT_ID` | Feature | When Vercel Sandbox is installed without OIDC auth |
-| `VERCEL_TOKEN` | Feature | When Vercel Sandbox is installed without OIDC auth |
-| `EVE_GATEWAY_SECRET` | Required | Private ChatJS-to-EVE credential |
-| `WORKFLOW_POSTGRES_URL` | EVE | Required locally/self-hosted, unused on Vercel |
-| `EVE_INTERNAL_ORIGIN` | EVE | Optional application gateway origin override |
-| `TRUSTED_CLIENT_IP_HEADER` | EVE | Optional self-hosted trusted proxy header |
-| `CRON_SECRET` | Optional | Secure cleanup cron endpoint |
-| `APP_URL` | Optional | Required on non-Vercel deployments |
-| `VERCEL_URL` | Optional | Auto-set by Vercel platform |
-| `VERCEL_BRANCH_URL` | Optional | Stable preview branch hostname |
-| `VERCEL_ENV` | Optional | Vercel environment classification |
-| `VERCEL_AUTOMATION_BYPASS_SECRET` | EVE | Internal access to protected deployments |
+| To configure | Start here |
+| --- | --- |
+| A fresh installation | [Required variables](#required), [authentication](#authentication), and the [installed gateway](#ai-gateways) |
+| A production origin and OAuth redirects | [App URL](#app-url) |
+| A database or workflow connection | [Postgres hosting](#postgres-hosting) and [EVE runtime](#eve-runtime-and-trusted-proxy-headers) |
+| Uploads or media generation | [File storage](#file-storage) |
+| Sandbox credentials | [Code execution sandbox](#code-execution-sandbox) |
+| Search or external tools | [Web search connections](#web-search-connections) and [MCP connectors](#mcp-connectors) |
+| Scheduled cleanup | [Cron job secret](#cron-job-secret) |
 
 ## Related
 
-- [Config Reference](/reference/config): feature flags and gateway settings in `chat.config.ts`
+- [Config Reference](/reference/config): runtime settings and installed capabilities in `chat.config.ts`
 - [Deploy to Vercel](/deployment/vercel): how Vercel auto-sets several of these variables
 - [Gateways Overview](/gateways/overview): choosing and configuring an AI gateway
-- [Authentication](/core/authentication): OAuth provider setup details
-- [File storage](../storage): provider configuration and credentials
+- [Authentication](/customization/authentication): OAuth provider setup details
+- [File storage](/storage): provider configuration and credentials

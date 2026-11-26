@@ -1,25 +1,11 @@
 import { rejects } from "node:assert/strict";
 import { expect, mock, test } from "bun:test";
 
-import type { AiGatewayModel } from "@/chatjs/core/gateway/models";
-
 import { OpenAICompatibleGateway } from "./openai-compatible/gateway";
 import { LiteLLMGateway } from "./litellm/gateway";
 import { OpenAIGateway } from "./openai/gateway";
 import { OpenRouterGateway } from "./openrouter/gateway";
 
-const fallback: AiGatewayModel = {
-  context_window: 0,
-  created: 0,
-  description: "",
-  id: "fallback",
-  max_tokens: 0,
-  name: "Fallback",
-  object: "model",
-  owned_by: "test",
-  pricing: {},
-  type: "language",
-};
 const adapters = [OpenAIGateway, OpenAICompatibleGateway, OpenRouterGateway];
 
 test.each(adapters)(
@@ -69,7 +55,7 @@ test.each(
     malformedEnvelopes.map((body) => ({ Adapter, body }))
   )
 )(
-  "malformed provider envelopes use the existing catalog fallback: %p",
+  "malformed provider envelopes reject discovery: %p",
   async ({ Adapter, body }): Promise<void> => {
     const gateway = new Adapter({
       env: {
@@ -78,9 +64,8 @@ test.each(
         OPENROUTER_API_KEY: "test",
       },
       fetch: mock().mockResolvedValue(Response.json(body)),
-      getFallbackModels: (): AiGatewayModel[] => [fallback],
     });
-    expect(await gateway.fetchModels()).toEqual([fallback]);
+    await rejects(gateway.fetchModels());
   }
 );
 
@@ -92,9 +77,8 @@ test("OpenRouter rejects malformed modality fields", async (): Promise<void> => 
         data: [{ architecture: { output_modalities: [false] }, id: "model" }],
       })
     ),
-    getFallbackModels: (): AiGatewayModel[] => [fallback],
   });
-  expect(await gateway.fetchModels()).toEqual([fallback]);
+  await rejects(gateway.fetchModels());
 });
 
 test.each(adapters)(
@@ -117,7 +101,6 @@ test.each(adapters)(
           ],
         })
       ),
-      getFallbackModels: (): AiGatewayModel[] => [fallback],
     });
     const models = await gateway.fetchModels();
     expect(models.map((model: { readonly id: string }) => model.id)).toEqual([
@@ -128,7 +111,7 @@ test.each(adapters)(
 );
 
 test.each(adapters)(
-  "%p explicit empty catalog stays empty instead of using fallback",
+  "%p explicit empty catalog stays empty",
   async (Adapter): Promise<void> => {
     const gateway = new Adapter({
       env: {
@@ -137,7 +120,6 @@ test.each(adapters)(
         OPENROUTER_API_KEY: "test",
       },
       fetch: mock().mockResolvedValue(Response.json({ data: [] })),
-      getFallbackModels: (): AiGatewayModel[] => [fallback],
     });
     expect(await gateway.fetchModels()).toEqual([]);
   }
@@ -238,9 +220,8 @@ for (const { Adapter, urlKey, otherUrlKey } of [
       const gateway = new Adapter({
         env: { [urlKey]: baseURL, [otherUrlKey]: "https://unused.example" },
         fetch,
-        getFallbackModels: (): AiGatewayModel[] => [fallback],
       });
-      expect(await gateway.fetchModels()).toEqual([fallback]);
+      await rejects(gateway.fetchModels());
       expect(fetch).not.toHaveBeenCalled();
       expect(() => gateway.createLanguageModel("model")).toThrow(
         "is not configured"
