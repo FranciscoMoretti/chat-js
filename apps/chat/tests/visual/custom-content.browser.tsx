@@ -7,13 +7,12 @@ import {
   CodeBlockContent,
   CodeBlockFooter,
 } from "@/components/ui/code-block";
-import { Context, ContextInputUsage } from "@/components/ai-elements/context";
 import { mount, unmount } from "@/tests/visual/primitive-mount";
 import "./sandbox.css";
 
 const emptyText = "";
 
-test("optional content preserves raw zero and default usage without empty chrome", async () => {
+test("code block footer preserves zero and can be omitted", async () => {
   const fixture = await mount(
     <main
       style={{
@@ -40,17 +39,6 @@ test("optional content preserves raw zero and default usage without empty chrome
           {emptyText}
         </CodeBlock>
       </section>
-      <Context
-        usedTokens={120}
-        maxTokens={1000}
-        usage={{ inputTokens: 120, outputTokens: 0, totalTokens: 120 }}
-      >
-        <section data-case="usage">
-          <ContextInputUsage>{0}</ContextInputUsage>
-          <ContextInputUsage>{emptyText}</ContextInputUsage>
-          <ContextInputUsage>Custom usage</ContextInputUsage>
-        </section>
-      </Context>
     </main>
   );
   const { container } = fixture;
@@ -60,11 +48,12 @@ test("optional content preserves raw zero and default usage without empty chrome
   expect(
     container.querySelector('[data-case="zero-code"]')?.textContent
   ).toContain("0");
-  expect(container.querySelector('[data-case="usage"]')?.textContent).toContain(
-    "Input"
-  );
-  expect(container.textContent).toContain("Custom usage");
-  await takeSnapshot("optional-content-zero-empty-and-custom");
+  expect(
+    container.querySelector(
+      '[data-case="empty-code"] [data-slot="code-block-footer"]'
+    )
+  ).toBeNull();
+  await takeSnapshot("code-block-zero-and-empty-footer");
   await page.screenshot();
   await unmount(fixture);
 });

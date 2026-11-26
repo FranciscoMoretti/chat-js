@@ -81,6 +81,16 @@ assert.equal(config.iconLibrary, preset.values.iconLibrary);
 assert.equal(config.rtl, process.env.CHATJS_NATIVE_RTL === "1");
 assert.equal(config.registries["@chatjs"], process.env.CHATJS_NATIVE_BASE === "radix" ? process.env.CHATJS_REGISTRY_URL.replace("/{name}.json", "/radix/{name}.json") : process.env.CHATJS_REGISTRY_URL);
 const scenario = process.env.CHATJS_NATIVE_SCENARIO;
+if (scenario === "minimal") {
+  const manifest = await Bun.file("package.json").json();
+  for (const name of ["tokenlens", "react-resizable-panels"]) {
+    assert.equal(manifest.dependencies[name], undefined, name);
+    assert.equal(await Bun.file(`node_modules/${name}/package.json`).exists(), false, name);
+  }
+  for (const file of ["components/ai-elements/context.tsx", "components/ui/resizable.tsx"]) {
+    assert.equal(await Bun.file(file).exists(), false, file);
+  }
+}
 const attachesFiles = ["uploads", "acceptance"].includes(scenario);
 // EVE writes the Slack channel file during provider setup.
 assert.equal(await Bun.file("agent/channels/slack.ts").exists(), false);
