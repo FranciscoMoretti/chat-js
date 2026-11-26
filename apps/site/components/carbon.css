@@ -10,13 +10,19 @@
   font-display: swap;
 }
 
-.carbon-page {
-  --carbon-background: #0c0c0c;
-  --carbon-foreground: #eeeee9;
-  --carbon-muted: #94948e;
-  --carbon-line: #292928;
-  --carbon-surface: #111110;
+:root {
+  color-scheme: light;
+}
+:root.dark {
   color-scheme: dark;
+}
+
+.carbon-page {
+  --carbon-background: light-dark(#f8f7f4, #0c0c0c);
+  --carbon-foreground: light-dark(#24241f, #eeeee9);
+  --carbon-muted: light-dark(#636359, #94948e);
+  --carbon-line: light-dark(#dcdcd3, #292928);
+  --carbon-surface: light-dark(#fffefa, #111110);
 }
 
 .carbon-wrap {
@@ -69,7 +75,7 @@
   align-items: center;
   justify-content: center;
   gap: 5px;
-  color: #b0b0a8;
+  color: light-dark(#56564d, #b0b0a8);
   text-decoration: none;
 }
 
@@ -83,7 +89,7 @@
   min-height: 32px;
   padding-inline: 11px;
   color: var(--carbon-foreground);
-  border: 1px solid #383834;
+  border: 1px solid light-dark(#cecec4, #383834);
 }
 
 .carbon-nav-github {
@@ -95,7 +101,7 @@
 }
 
 .carbon-nav nav a:hover {
-  background: #1b1b19;
+  background: light-dark(#eaeae2, #1b1b19);
 }
 
 .carbon-page :is(.carbon-nav, .carbon-footer) a:focus-visible {

@@ -4,7 +4,7 @@ import { QueryClientProvider, environmentManager } from "@tanstack/react-query";
 import React, { useMemo } from "react";
 import type { AppRouter } from "@/trpc/routers/_app";
 import type { QueryClient } from "@tanstack/react-query";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { ReactQueryDevtools } from "#query-devtools";
 import { createTRPCClient, httpBatchLink, loggerLink } from "@trpc/client";
 import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 import { TRPCProvider } from "./context";
@@ -89,7 +89,7 @@ const TRPCReactProvider = (props: {
       </TRPCProvider>
       {process.env.NODE_ENV === "development" &&
       env.NEXT_PUBLIC_REACT_QUERY_DEVTOOLS === "1" ? (
-        <ReactQueryDevtools initialIsOpen={false} />
+        <ReactQueryDevtools />
       ) : null}
     </QueryClientProvider>
   );

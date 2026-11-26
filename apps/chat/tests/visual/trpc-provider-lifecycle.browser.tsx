@@ -106,6 +106,11 @@ test("provider hydration and client recreation retain cached data and in-flight 
         recreated.trpc.modelPreferences.getModelPreferences.queryKey()
       )
     ).toEqual(preferences);
+    await expect
+      .element(
+        page.getByRole("button", { name: "Open Tanstack query devtools" })
+      )
+      .not.toBeInTheDocument();
     await takeSnapshot("trpc-provider-recreated-client");
     await page.screenshot();
 

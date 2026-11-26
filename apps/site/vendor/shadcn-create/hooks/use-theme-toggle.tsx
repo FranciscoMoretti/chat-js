@@ -3,28 +3,23 @@
 import * as React from "react"
 import { useTheme } from "next-themes"
 
-import { useMetaColor } from "@/vendor/shadcn-create/hooks/use-meta-color"
 
-export function useThemeToggle() {
+export function useThemeToggle(keyboardShortcut = true) {
   const { setTheme, resolvedTheme } = useTheme()
-  const { setMetaColor, metaColor } = useMetaColor()
-
-  React.useEffect(() => {
-    setMetaColor(metaColor)
-  }, [metaColor, setMetaColor])
-
   const toggleTheme = React.useCallback(() => {
     setTheme(resolvedTheme === "dark" ? "light" : "dark")
   }, [resolvedTheme, setTheme])
 
   // Listen for the D key to toggle theme.
   React.useEffect(() => {
+    if (!keyboardShortcut) return
     const down = (e: KeyboardEvent) => {
       if (
         (e.key === "d" || e.key === "D") &&
         !e.metaKey &&
         !e.ctrlKey &&
-        !e.altKey
+        !e.altKey &&
+        !e.defaultPrevented
       ) {
         if (
           (e.target instanceof HTMLElement && e.target.isContentEditable) ||
@@ -42,7 +37,7 @@ export function useThemeToggle() {
 
     document.addEventListener("keydown", down)
     return () => document.removeEventListener("keydown", down)
-  }, [toggleTheme])
+  }, [keyboardShortcut, toggleTheme])
 
   return { toggleTheme }
 }

@@ -38,3 +38,28 @@ The repository also has reference-only browser scenarios, including live tool ch
 ## Agent behavior
 
 Use [evaluations](/reference/evaluations) to check what an agent says or which tools it calls across repeated runs. Use browser tests for interactions such as selecting a model or reopening a chat.
+
+## React Query Devtools
+
+To inspect the query cache in your generated app, install the inspector:
+
+```bash
+bun add -d @tanstack/react-query-devtools@5.97.0
+```
+
+In the existing `imports` section of `package.json`, add the `development` entry before `default`. Production uses the local fallback, including when your install omits dev dependencies.
+
+```json
+{
+  "imports": {
+    "#query-devtools": {
+      "development": "@tanstack/react-query-devtools",
+      "default": "./lib/devtools-disabled.ts"
+    }
+  }
+}
+```
+
+Set `NEXT_PUBLIC_REACT_QUERY_DEVTOOLS=1` in `.env.local`, then restart `bun run dev`. Open the devtools button on a chat page to inspect the active query cache.
+
+To remove the inspector, delete its `development` entry and uninstall the package.

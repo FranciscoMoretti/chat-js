@@ -2,7 +2,6 @@
 
 import { useEffect } from "react";
 import type { RefObject } from "react";
-import { useTheme } from "next-themes";
 import { useInstallation } from "./installation-provider";
 
 export const ChatPreviewSync = ({
@@ -14,7 +13,6 @@ export const ChatPreviewSync = ({
 }>) => {
   const { resolution, scenario } = useInstallation();
   const installation = resolution?.selection ?? null;
-  const { resolvedTheme } = useTheme();
   useEffect(() => {
     const iframe = iframeRef.current;
     const send = () =>
@@ -24,7 +22,6 @@ export const ChatPreviewSync = ({
           installation,
           guest,
           scenario,
-          mode: resolvedTheme === "dark" ? "dark" : "light",
         },
         window.location.origin
       );
@@ -43,6 +40,6 @@ export const ChatPreviewSync = ({
       iframe?.removeEventListener("load", send);
       window.removeEventListener("message", ready);
     };
-  }, [iframeRef, installation, guest, scenario, resolvedTheme]);
+  }, [iframeRef, installation, guest, scenario]);
   return null;
 };

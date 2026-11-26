@@ -30,7 +30,6 @@
       "name": "@chatjs/chat",
       "version": "0.2.1",
       "dependencies": {
-        "@ai-sdk/devtools": "1.0.75",
         "@ai-sdk/gateway": "4.0.145",
         "@ai-sdk/mcp": "2.0.99",
         "@ai-sdk/provider": "4.0.38",
@@ -48,7 +47,6 @@
         "@supabase/storage-js": "2.117.2",
         "@t3-oss/env-nextjs": "^0.13.8",
         "@tanstack/react-query": "^5.104.1",
-        "@tanstack/react-query-devtools": "^5.80.3",
         "@trpc/client": "^11.1.2",
         "@trpc/server": "^11.1.2",
         "@trpc/tanstack-react-query": "^11.1.2",
@@ -105,6 +103,7 @@
         "@playwright/test": "^1.50.1",
         "@tailwindcss/postcss": "^4.1.12",
         "@tailwindcss/typography": "^0.5.19",
+        "@tanstack/react-query-devtools": "^5.80.3",
         "@types/json-schema": "7.0.15",
         "@types/node": "^22.8.6",
         "@types/papaparse": "^5.3.15",
@@ -413,8 +412,6 @@
   },
   "packages": {
     "@ai-sdk/anthropic": ["@ai-sdk/anthropic@4.0.104", "", { "dependencies": { "@ai-sdk/provider": "4.0.38", "@ai-sdk/provider-utils": "5.0.81" }, "peerDependencies": { "zod": "^3.25.76 || ^4.1.8" } }, "sha512-8Es3QS7oeNH72O5LbeZMS+AP0Jf7bYJR80GgrOEZ0yGA6A4hnJ+QgFiIeUrzqSiVlqDTTNCk73NxXW2iwqSQuQ=="],
-
-    "@ai-sdk/devtools": ["@ai-sdk/devtools@1.0.75", "", { "dependencies": { "@ai-sdk/provider": "4.0.38", "@hono/node-server": "^1.19.15", "ai": "7.0.172", "hono": "^4.13.11" }, "bin": { "devtools": "./bin/cli.js" } }, "sha512-AW56OoU/WoNuadtQyapNwEUBPKGuQUT4Qhf67a+ASwi0HPIzrvOmrncQ4+pIkIaGjobLkRAkzEGq4uJ1sP6nxg=="],
 
     "@ai-sdk/gateway": ["@ai-sdk/gateway@4.0.145", "", { "dependencies": { "@ai-sdk/provider": "4.0.38", "@ai-sdk/provider-utils": "5.0.81", "@vercel/oidc": "3.2.0" }, "peerDependencies": { "zod": "^3.25.76 || ^4.1.8" } }, "sha512-vquqCrEut1jlWshy2lWaOrBvyrpVjhLWoR/EVpb+m7JKtHtmpy0vpl9rtpB6xNFiumjT9e2s70MZmRth/hH9tw=="],
 
@@ -4455,8 +4452,6 @@
     "zod-to-json-schema": ["zod-to-json-schema@3.25.2", "", { "peerDependencies": { "zod": "^3.25.28 || ^4" } }, "sha512-O/PgfnpT1xKSDeQYSCfRI5Gy3hPf91mKVDuYLUHZJMiDFptvP41MSnWofm8dnCm0256ZNfZIM7DSzuSMAFnjHA=="],
 
     "zwitch": ["zwitch@2.0.4", "", {}, "sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A=="],
-
-    "@ai-sdk/devtools/hono": ["hono@4.13.19", "", {}, "sha512-KmXvQAXwcAHV+muzbIwoJ23niEB5nMoDVr9WcRkU8mvjUECm/1+7v4Jgp7P7a+H6MLFrh+vXrGonGrGS+RQfkA=="],
 
     "@ai-sdk/provider-utils/@standard-schema/spec": ["@standard-schema/spec@1.1.0", "", {}, "sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w=="],
 

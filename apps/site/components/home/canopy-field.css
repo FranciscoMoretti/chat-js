@@ -9,7 +9,11 @@
   contain: strict;
   user-select: none;
   touch-action: pan-y pinch-zoom;
-  background: radial-gradient(ellipse at 50% 60%, #1a1a16, #0d0d0c 85%);
+  background: radial-gradient(
+    ellipse at 50% 60%,
+    light-dark(#f3f2eb, #1a1a16),
+    light-dark(#f8f7f4, #0d0d0c) 85%
+  );
 }
 .canopy-field .canopy-tile {
   position: absolute;
@@ -27,12 +31,16 @@
     calc((var(--canopy-side) - 75px) * 0.17 + 4px),
     18px
   );
-  border: 1px solid #33332b;
-  border-bottom-color: #3d3c33;
+  border: 1px solid light-dark(#d9d8ce, #33332b);
+  border-bottom-color: light-dark(#cecdc0, #3d3c33);
   border-radius: 2px;
-  background: linear-gradient(145deg, #262620, #20201c);
-  color: #aaa99a;
-  box-shadow: inset 0 -2px #191915;
+  background: linear-gradient(
+    145deg,
+    light-dark(#fbfaf6, #262620),
+    light-dark(#f2f1e9, #20201c)
+  );
+  color: light-dark(#59594d, #aaa99a);
+  box-shadow: inset 0 -2px light-dark(#e7e6db, #191915);
   text-align: start;
   touch-action: pan-y pinch-zoom;
   cursor: pointer;
@@ -50,10 +58,14 @@
   pointer-events: none;
 }
 .canopy-field .canopy-tile[aria-pressed="true"] {
-  color: #ece8d6;
-  border-color: #686254;
-  background: linear-gradient(145deg, #4d493f, #3c3931);
-  box-shadow: inset 0 -2px #302d26;
+  color: light-dark(#38372e, #ece8d6);
+  border-color: light-dark(#aaa692, #686254);
+  background: linear-gradient(
+    145deg,
+    light-dark(#e9e6d9, #4d493f),
+    light-dark(#ddd9c9, #3c3931)
+  );
+  box-shadow: inset 0 -2px light-dark(#d0cbb7, #302d26);
 }
 .canopy-tile[aria-pressed="true"]::before {
   opacity: 0.34;
@@ -95,7 +107,7 @@
   place-items: center;
   width: clamp(11px, calc(var(--canopy-side) * 0.12), 15px);
   aspect-ratio: 1;
-  border: 1px solid #888575;
+  border: 1px solid light-dark(#878573, #888575);
   border-radius: 2px;
 }
 .canopy-tile-state svg {
@@ -103,9 +115,9 @@
   height: 90%;
 }
 .canopy-tile[aria-pressed="true"] .canopy-tile-state {
-  border-color: #e2d9b8;
-  background: #e2d9b8;
-  color: #26241e;
+  border-color: light-dark(#52513e, #e2d9b8);
+  background: light-dark(#52513e, #e2d9b8);
+  color: light-dark(#fffefa, #26241e);
 }
 .canopy-tile-preview {
   position: relative;
@@ -115,6 +127,11 @@
   background-repeat: no-repeat;
   background-size: contain;
   pointer-events: none;
+}
+/* The bundled monochrome illustrations are drawn for a dark surface. */
+.light .canopy-tile-preview,
+.light .canopy-tile::before {
+  filter: invert(1) hue-rotate(180deg);
 }
 .canopy-tile-name {
   position: relative;
@@ -128,14 +145,14 @@
 }
 .canopy-field .canopy-tile:focus-visible {
   z-index: 1;
-  outline: 2px solid #e3d9b6;
+  outline: 2px solid light-dark(#57533d, #e3d9b6);
   outline-offset: 2px;
 }
 @media (hover: hover) {
   .canopy-field:not([data-panning]) .canopy-tile:hover {
-    color: #f3f1e6;
-    border-color: #c2b99e;
-    box-shadow: inset 0 0 0 1px #c2b99e44;
+    color: light-dark(#282820, #f3f1e6);
+    border-color: light-dark(#74715e, #c2b99e);
+    box-shadow: inset 0 0 0 1px light-dark(#74715e44, #c2b99e44);
   }
 }
 .canopy-field[data-panning],
