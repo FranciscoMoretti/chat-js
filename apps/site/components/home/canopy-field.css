@@ -58,6 +58,9 @@
 .canopy-tile[aria-pressed="true"]::before {
   opacity: 0.34;
 }
+.canopy-tile:has(.canopy-tile-preview)::before {
+  opacity: 0.16;
+}
 .canopy-tile-icon {
   position: relative;
   flex: none;
@@ -106,21 +109,12 @@
 }
 .canopy-tile-preview {
   position: relative;
-  align-self: center;
+  align-self: stretch;
   flex: 1;
-  width: 94%;
-  margin-block: 2px;
-  background-position: center;
+  background-position: left center;
   background-repeat: no-repeat;
   background-size: contain;
-  opacity: 0.39;
   pointer-events: none;
-}
-.canopy-tile[aria-pressed="true"] .canopy-tile-preview {
-  opacity: 0.52;
-}
-.canopy-tile:focus-visible .canopy-tile-preview {
-  opacity: 0.85;
 }
 .canopy-tile-name {
   position: relative;
@@ -142,9 +136,6 @@
     color: #f3f1e6;
     border-color: #c2b99e;
     box-shadow: inset 0 0 0 1px #c2b99e44;
-  }
-  .canopy-field:not([data-panning]) .canopy-tile:hover .canopy-tile-preview {
-    opacity: 0.85;
   }
 }
 .canopy-field[data-panning],

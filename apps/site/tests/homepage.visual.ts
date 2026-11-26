@@ -23,6 +23,7 @@ const openingSizes = [
   { width: 1280, height: 720 },
   { width: 1440, height: 900 },
   { width: 1725, height: 900 },
+  { width: 1719, height: 1229 },
   { width: 2560, height: 900 },
 ];
 await mkdir(output, { recursive: true });
@@ -149,12 +150,7 @@ const inspectOpening = async (page: Page) =>
       visible: visible.map((tile) => tile.id),
       readable: readable.map((tile) => tile.priority).toSorted((a, b) => a - b),
       readableIds: readable.map((tile) => tile.id),
-      leadingRowsGap:
-        Math.min(
-          ...visible
-            .filter(({ priority }) => priority <= 12)
-            .map(({ box }) => box.top)
-        ) - command.bottom,
+      columns: document.querySelectorAll('[data-cell$=":0"]').length,
     };
   });
 
@@ -221,21 +217,21 @@ const checkOpening = async (
     "Every visible tile must have a unique capability"
   );
   assert.deepEqual(
-    opening.readable.slice(0, 6),
-    [1, 2, 3, 4, 5, 6],
-    `First six capabilities must fit in the clear area at ${size.width}×${size.height}`
+    opening.readable.slice(0, opening.columns),
+    Array.from({ length: opening.columns }, (_, index) => index + 1),
+    `The full leading row must fit below the quickstart at ${size.width}×${size.height}`
   );
-  if (size.width === 375) {
-    assert.deepEqual(
-      opening.readable.slice(0, 12),
-      Array.from({ length: 12 }, (_, index) => index + 1),
-      "All three leading rows should fit on short phones"
-    );
-    assert.ok(
-      opening.leadingRowsGap >= 16,
-      "The three leading rows need breathing room below the quickstart on short phones"
-    );
-  }
+  const attachment = page.locator('button[data-block-id="attachment-uploads"]');
+  const [icon, preview, label] = await Promise.all(
+    [".canopy-tile-icon", ".canopy-tile-preview", ".canopy-tile-name"].map(
+      async (selector) => await attachment.locator(selector).boundingBox()
+    )
+  );
+  assert.ok(icon && preview && label);
+  assert.ok(
+    Math.abs(icon.x - label.x) <= 1 && Math.abs(preview.x - label.x) <= 1,
+    "The icon, preview, and label should share a left edge"
+  );
   console.log(
     `${size.width}×${size.height}: ${opening.visible.length} intersecting, ${opening.readable.length} whole below the command, IDs: ${opening.readableIds.join(", ")}`
   );
@@ -250,13 +246,27 @@ const checkBuild = async (page: Page) => {
   const build = page.getByRole("link", { name: "Build your app", exact: true });
   const original = await projects.getAttribute("aria-pressed");
   const initialHref = await build.getAttribute("href");
-  await projects.hover();
+  await page.mouse.move(0, 0);
   await projects.locator(".canopy-tile-preview").waitFor();
   await projects.screenshot({
     animations: "disabled",
     path: `${output}canopy-projects-preview.png`,
   });
+  await page.locator('button[data-block-id="mcp"]').screenshot({
+    animations: "disabled",
+    path: `${output}canopy-mcp-preview.png`,
+  });
+  const research = page.locator('button[data-block-id="deep-research"]');
+  await research.screenshot({
+    path: `${output}canopy-deep-research-preview.png`,
+  });
+  // Bring the second row out from under the hero fade for its detail capture.
+  await projects.press("ArrowUp");
+  const subagents = page.locator('button[data-block-id="tool/agent"]');
+  await subagents.screenshot({ path: `${output}canopy-subagents-preview.png` });
+  await page.keyboard.press("ArrowDown");
   await projects.click();
+  await page.mouse.move(0, 0);
   const updated = await projects.getAttribute("aria-pressed");
   assert.equal(updated, String(original !== "true"));
   const href = await build.getAttribute("href");

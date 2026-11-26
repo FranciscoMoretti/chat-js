@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="22 60 276 176"><g class="fragment" font-family="Geist,Arial,sans-serif">
+  <rect x="24" y="65" width="272" height="164" rx="7" fill="#171715" stroke="#3c3c33"/>
+  <path d="M39 78h9l4 4v11H39z M48 78v5h4 M42 87h7" fill="none" stroke="#aaa99b" stroke-width="1.4" stroke-linejoin="round"/>
+  <text x="60" y="90" font-size="13" fill="#b8b8aa">Research brief</text>
+  <text x="38" y="119" font-size="17" fill="#e1e1d7">People found search faster</text>
+  <text x="38" y="140" font-size="17" fill="#e1e1d7">with a visible label.</text>
+  <text x="189" y="137" font-size="11" fill="#bbbaa7">[1, 2]</text>
+  <path d="M38 154h244" stroke="#383831"/>
+  <rect x="38" y="166" width="20" height="19" rx="4" fill="#292923"/>
+  <text x="48" y="180" text-anchor="middle" font-size="12" fill="#c4c4b5">1</text>
+  <text x="67" y="180" font-size="14" fill="#c9c9bf">Usability sessions</text>
+  <rect x="38" y="194" width="20" height="19" rx="4" fill="#292923"/>
+  <text x="48" y="208" text-anchor="middle" font-size="12" fill="#c4c4b5">2</text>
+  <text x="67" y="208" font-size="14" fill="#c9c9bf">Search task timings</text>
+</g></svg>

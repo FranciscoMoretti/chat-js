@@ -20,7 +20,7 @@ The approved Carbon identity lives here. This is a private, framework-independen
 | `assets/patterns/` | Seven unlabelled vector wave fields | Generated |
 | `assets/squares/` | Seven named foundation squares with embedded fonts | Generated |
 | `assets/compositions/` | The complete C made from named squares | Generated |
-| `assets/product-blocks/` | The 21 approved component-preview SVG masters | Yes |
+| `assets/product-blocks/` | Component-preview SVG masters | Yes |
 | `assets/runtime/` | Generated browser bundle for the animations | Generated |
 | `assets/social/` | OG (1200 × 630) and GitHub (1280 × 640) banners in dark and white | Generated |
 | `assets/overview.svg`, `.png` | Brand contact sheet | Generated |
