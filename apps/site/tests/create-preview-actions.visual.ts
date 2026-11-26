@@ -1,4 +1,4 @@
-import { attachPreviewFile } from "./create-fixtures.mts";
+import { attachPreviewFile, uploadsPreset } from "./create-fixtures.mts";
 import assert from "node:assert/strict";
 import { mkdir } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
@@ -23,7 +23,7 @@ try {
   });
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
-  await page.goto(`${origin}/create?base=${base}&uploads=true`, {
+  await page.goto(`${origin}/create?base=${base}&app=${uploadsPreset}`, {
     waitUntil: "domcontentloaded",
   });
   const frame = page.frameLocator("iframe");

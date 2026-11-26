@@ -1,7 +1,7 @@
 .playground {
-  --thread-active: #e2e2d9;
-  --thread-running: #b5c4b7;
-  --thread-stopped: #cbb691;
+  --thread-active: light-dark(#38382e, #e2e2d9);
+  --thread-running: light-dark(#3b6347, #b5c4b7);
+  --thread-stopped: light-dark(#735b32, #cbb691);
   margin-top: 1.75rem;
   overflow: hidden;
   background: var(--card);
@@ -71,7 +71,7 @@
   color: var(--thread-stopped);
 }
 .responseStatus[data-state="error"] {
-  color: #eca09a;
+  color: light-dark(#a13d36, #eca09a);
 }
 .tokens {
   margin-left: auto;

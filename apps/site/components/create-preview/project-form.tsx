@@ -169,7 +169,7 @@ export const ProjectForm = ({
       <DialogTrigger render={<Button className={cn(className)} />}>
         Get Code
       </DialogTrigger>
-      <DialogContent className="dark no-scrollbar top-[64px] flex max-h-[calc(100svh-5rem)] translate-y-0 flex-col rounded-2xl p-0 shadow-xl **:data-[slot=dialog-close]:top-4.5 **:data-[slot=dialog-close]:right-4 sm:max-w-md">
+      <DialogContent className="no-scrollbar top-[64px] flex max-h-[calc(100svh-5rem)] translate-y-0 flex-col rounded-2xl p-0 shadow-xl **:data-[slot=dialog-close]:top-4.5 **:data-[slot=dialog-close]:right-4 sm:max-w-md">
         <div className="flex min-w-0 flex-1 flex-col gap-0 overflow-hidden rounded-2xl">
           <DialogHeader className="border-b px-6 py-5">
             <DialogTitle className="sr-only">
