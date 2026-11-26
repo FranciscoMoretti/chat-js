@@ -2,7 +2,7 @@ import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { expect, it } from "vitest";
 
-it.each(["production", "development"])(
+it.each(["production", "development"] as const)(
   "loads the agent and title provider through EVE in %s",
   (mode) => {
     // Use EVE's production loader in plain Node: tsx and Vitest module mocks
