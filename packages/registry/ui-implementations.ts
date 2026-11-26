@@ -82,11 +82,6 @@ export const uiImplementations = [
     radix: "apps/chat/components/sidebar-menus.radix.tsx",
   },
   {
-    target: "components/model-selection-indicator.tsx",
-    source: "apps/chat/components/model-selection-indicator.tsx",
-    radix: "apps/chat/components/model-selection-indicator.radix.tsx",
-  },
-  {
     target: "components/attachment-preview-trigger.tsx",
     source: "apps/chat/components/attachment-preview-trigger.tsx",
     radix: "apps/chat/components/attachment-preview-trigger.radix.tsx",

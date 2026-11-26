@@ -12,7 +12,7 @@ export const SettingsNav = ({
   <nav
     className={cn(
       "flex gap-1 sm:overflow-auto sm:pb-2",
-      orientation === "vertical" ? "w-56 flex-col" : "flex-row"
+      orientation === "vertical" ? "w-56 flex-col" : "flex-row flex-wrap"
     )}
   >
     <SettingsLink href="/settings">

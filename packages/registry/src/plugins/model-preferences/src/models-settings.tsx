@@ -40,6 +40,7 @@ export const ModelsSettings = (): ReactJSX.Element => {
           value={search}
         />
         <Button
+          aria-label="Refresh model preferences"
           onClick={() => {
             void queryClient.invalidateQueries({
               queryKey: trpc.modelPreferences.getModelPreferences.queryKey(),

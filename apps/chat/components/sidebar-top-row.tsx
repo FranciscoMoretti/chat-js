@@ -31,7 +31,7 @@ export const SidebarTopRow = (): ReactJSX.Element => {
         >
           <span className="hover:bg-muted flex cursor-pointer items-center gap-2 rounded-md p-1 text-lg font-semibold">
             <Image
-              alt={config.appName}
+              alt=""
               className="h-5 w-5"
               height={20}
               src="/icon.svg"

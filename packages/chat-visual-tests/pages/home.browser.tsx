@@ -1,6 +1,6 @@
 import { TrpcFixtureError, route } from "./route";
 import { expect, test, vi } from "vitest";
-import { page } from "vitest/browser";
+import { page, userEvent } from "vitest/browser";
 
 import ChatLayout from "@/app/(chat)/layout";
 import HomePage from "@/app/(chat)/page";
@@ -98,11 +98,11 @@ test("home signed in lists projects and chat history", async () => {
   await expect
     .element(page.getByText("How can I help you today?"))
     .toBeVisible();
-  const appMark = page.getByRole("img", { name: "ChatJS", exact: true });
+  const appMark = page.getByRole("link", { name: "ChatJS", exact: true });
   await expect.element(appMark).toBeVisible();
   await expect
     .poll(() => {
-      const image = appMark.element();
+      const image = appMark.element().querySelector("img");
       return image instanceof HTMLImageElement && image.naturalWidth > 0;
     })
     .toBe(true);
@@ -218,8 +218,17 @@ test("account composer supplies parallel model selection", async () => {
   await renderRoute(home, signedIn);
   await page.getByTestId("model-selector").click();
   await page.getByRole("switch", { name: "Use Multiple Models" }).click();
+  const list = page.getByRole("listbox");
+  const selected = list.getByRole("option", { selected: true });
+  const modelName = selected.element().getAttribute("aria-label");
+  const search = page.getByRole("combobox", { name: "Search models" });
+  await search.click();
+  await userEvent.keyboard("{ArrowDown}{ArrowDown}");
+  await expect.element(list).toHaveAttribute("aria-multiselectable", "true");
+  await expect.element(search).toHaveAttribute("aria-activedescendant");
+  expect(selected.element().getAttribute("aria-label")).toBe(modelName);
   await expect
-    .element(page.getByRole("button", { name: "1×", exact: true }))
+    .element(page.getByRole("button", { name: /^1× /u }))
     .toBeVisible();
 });
 

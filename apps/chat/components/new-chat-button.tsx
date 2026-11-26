@@ -31,7 +31,7 @@ export const NewChatButton = (): ReactJSX.Element => {
         globalThis.dispatchEvent(new Event("chatjs:new-chat"));
       }}
     >
-      <Plus aria-label="New Chat" size={16} />
+      <Plus aria-hidden size={16} />
       <span>New Chat</span>
       <span className="text-muted-foreground ml-auto text-xs">
         {shortcutText}

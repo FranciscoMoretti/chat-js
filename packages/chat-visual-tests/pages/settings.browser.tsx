@@ -38,6 +38,11 @@ test("general settings", async () => {
   await expect
     .element(page.getByRole("link", { name: "Models", exact: true }).first())
     .toBeVisible();
+  await page.viewport(320, 568);
+  await expect
+    .element(page.getByRole("link", { name: "General" }).last())
+    .toHaveAttribute("aria-current", "page");
+  await expect.poll(() => document.documentElement.scrollWidth).toBe(320);
   const navigation = [...document.querySelectorAll('a[href^="/settings"]')].map(
     (link) => link.getAttribute("href")
   );
@@ -64,10 +69,15 @@ test("model settings list every available model", async () => {
   await expect
     .element(page.getByText("Llama 3.3 70B Instruct", { exact: true }))
     .toBeInTheDocument();
+  await expect
+    .element(page.getByRole("button", { name: "Refresh model preferences" }))
+    .toBeVisible();
   await page.viewport(390, 844);
   await expect
     .poll(() => {
-      const toggle = page.getByRole("switch").first().element();
+      const toggle = page
+        .getByRole("switch", { name: "GPT-5 mini (reasoning)", exact: true })
+        .element();
       const viewport = toggle.closest('[data-slot="scroll-area-viewport"]');
       if (!(viewport instanceof HTMLElement)) {
         throw new Error(
@@ -108,6 +118,9 @@ test("connectors in every connection state, with a built-in one", async () => {
   await expect.element(page.getByText("Incompatible server")).toBeVisible();
   await expect
     .element(page.getByText("HTTP 503: Service Unavailable"))
+    .toBeVisible();
+  await expect
+    .element(page.getByRole("button", { name: "More actions for Linear" }))
     .toBeVisible();
   await expect.element(page.getByText("Built-in connectors")).toBeVisible();
 });
@@ -222,6 +235,12 @@ test("connector advanced settings preserve transport labels and validation", asy
   await page.getByRole("button", { name: "Advanced settings" }).click();
   const transport = page.getByRole("combobox", { name: "Transport Type" });
   await expect.element(transport).toHaveTextContent("HTTP (Streamable)");
+  await page.viewport(320, 568);
+  const dialog = page.getByRole("dialog").element();
+  const add = page.getByRole("button", { name: "Add", exact: true }).element();
+  add.scrollIntoView({ block: "nearest" });
+  expect(dialog.getBoundingClientRect().top).toBeGreaterThanOrEqual(0);
+  expect(add.getBoundingClientRect().bottom).toBeLessThanOrEqual(568);
   await transport.click();
   await page.getByRole("option", { name: "SSE (Server-Sent Events)" }).click();
   await expect.element(transport).toHaveTextContent("SSE (Server-Sent Events)");

@@ -164,6 +164,12 @@ test("project the account cannot open", async () => {
     server: { conversations: history },
   });
   await expect.element(page.getByText("Project unavailable")).toBeVisible();
+  await expect
+    .element(page.getByText(/your account may not have access/u))
+    .toBeVisible();
+  await expect
+    .element(page.getByRole("link", { name: "Back to chats" }))
+    .toHaveAttribute("href", "/");
 });
 
 test.each(["desktop", "mobile"] as const)(

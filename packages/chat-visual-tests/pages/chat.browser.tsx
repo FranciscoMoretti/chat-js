@@ -406,7 +406,7 @@ test("comparison explains the shared workspace in the model picker", async () =>
   await renderRoute(conversation, request);
   await page.getByTestId("model-selector").click();
   await page.getByRole("switch", { name: "Use Multiple Models" }).click();
-  await page.getByRole("button", { exact: true, name: "1×" }).click();
+  await page.getByRole("button", { name: /^1× /u }).click();
   await page.getByRole("menuitem", { exact: true, name: "2x" }).click();
   const description = page.getByText(
     "Each model replies in its own branch. Replies run one at a time and share workspace files."

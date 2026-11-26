@@ -40,9 +40,6 @@ export const DeleteProjectDialog = ({
 
   const deleteMutation = useMutation(
     trpc.project.remove.mutationOptions({
-      onError: () => {
-        toast.error("Failed to delete project");
-      },
       onSuccess: async () => {
         await Promise.all([
           queryClient.invalidateQueries({

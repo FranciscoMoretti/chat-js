@@ -28,7 +28,13 @@ export const PromptForm = ({
     InputGroupAddon: typeof InputGroupAddon;
   };
 }): JSX.Element => (
-  <form className={cn("@container w-full", className)} {...props}>
+  <form
+    className={cn(
+      "@container w-full [--muted-foreground:color-mix(in_oklab,var(--foreground)_65%,var(--background))]",
+      className
+    )}
+    {...props}
+  >
     <primitives.InputGroup
       className={cn("overflow-hidden", editable && "has-disabled:opacity-100")}
     >

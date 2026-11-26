@@ -44,6 +44,9 @@ const ModelRowComponent = ({
       </TableCell>
       <TableCell className="py-2.5 pr-0">
         <Switch
+          aria-label={
+            model.reasoning === true ? `${model.name} (reasoning)` : model.name
+          }
           checked={isEnabled}
           onCheckedChange={() => {
             onToggle(model.id, isEnabled);

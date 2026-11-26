@@ -123,7 +123,7 @@ export const McpConnectDialog = ({
       }}
       open={open}
     >
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-md">
         <DialogHeader className="overflow-hidden">
           <div className="flex items-center gap-3 overflow-hidden">
             <div className="bg-muted flex size-10 shrink-0 items-center justify-center rounded-md">

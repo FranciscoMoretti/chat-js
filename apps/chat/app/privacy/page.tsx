@@ -3,7 +3,7 @@ import React from "react";
 import { config } from "@/lib/config";
 
 const PrivacyPage = (): React.JSX.Element => (
-  <main className="prose dark:prose-invert container mx-auto max-w-3xl py-10">
+  <main className="prose dark:prose-invert container mx-auto max-w-3xl px-4 py-10 md:px-0">
     <h1>{config.policies.privacy.title}</h1>
     {(config.policies.privacy.lastUpdated ?? "").length > 0 ? (
       <p>

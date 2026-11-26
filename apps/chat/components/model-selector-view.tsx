@@ -12,6 +12,7 @@ import {
   ChevronDownIcon,
   ChevronUpIcon,
   FilterIcon,
+  SearchIcon,
 } from "lucide-react";
 import React, {
   memo,
@@ -27,14 +28,9 @@ import { Badge } from "@/components/ui/badge";
 
 import { Button } from "@/components/ui/button";
 
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandList,
-  CommandItem as UICommandItem,
-} from "@/components/ui/command";
+import { Combobox } from "@base-ui/react/combobox";
+import { defaultFilter } from "cmdk";
+import { InputGroup, InputGroupAddon } from "@/components/ui/input-group";
 
 import {
   DropdownMenu,
@@ -149,7 +145,6 @@ const PureCommandItem = ({
   isSelected,
   count,
   showSelectionControl,
-  onSelect,
   onCountChange,
   enabledFeatures,
 }: {
@@ -159,19 +154,12 @@ const PureCommandItem = ({
   readonly isSelected: boolean;
   readonly count?: number;
   readonly showSelectionControl: boolean;
-  readonly onSelect: (id: AppModelId) => void;
   readonly onCountChange?: (id: AppModelId, delta: number) => void;
 }): ReactJSX.Element => {
   const featureIcons = useMemo(
     () => getFeatureIcons(model, enabledFeatures),
     [model, enabledFeatures]
   );
-  const searchValue = useMemo(
-    () =>
-      `${model.name} ${model.reasoning ? "reasoning" : ""} ${model.owned_by} `.toLowerCase(),
-    [model]
-  );
-
   const reasoningConfig = useMemo(
     () =>
       enabledFeatures.find(
@@ -179,80 +167,74 @@ const PureCommandItem = ({
       ),
     [enabledFeatures]
   );
-  const handleSelect = useCallback((): void => {
-    if (disabled !== true) {
-      onSelect(model.id);
-    }
-  }, [disabled, model, onSelect]);
-
   return (
-    <UICommandItem
-      aria-label={model.reasoning ? `${model.name} (reasoning)` : model.name}
-      className={cn(
-        "flex h-9 w-full cursor-pointer items-center justify-between px-3 py-1.5 transition-all",
-        isSelected && "border-l-primary bg-primary/10 border-l-2",
-        disabled === true && "cursor-not-allowed opacity-50"
-      )}
-      onSelect={handleSelect}
-      value={searchValue}
-    >
-      <div className="flex min-w-0 flex-1 items-center gap-2.5">
-        {showSelectionControl && (
-          <ModelSelectionIndicator selected={isSelected} />
+    <div className="flex items-center gap-1">
+      <Combobox.Item
+        value={model.id}
+        disabled={disabled}
+        aria-label={model.reasoning ? `${model.name} (reasoning)` : model.name}
+        className={cn(
+          "data-highlighted:bg-muted flex h-9 min-w-0 flex-1 cursor-pointer items-center justify-between gap-2 rounded-xl border-s-2 border-transparent px-2.5 py-1.5 text-sm",
+          isSelected && "border-s-primary bg-primary/10",
+          disabled === true && "cursor-not-allowed opacity-50"
         )}
-        <div className="shrink-0">
-          <ModelSelectorLogo modelId={model.id} />
-        </div>
-        <span className="flex items-center gap-1.5 truncate text-sm font-medium">
-          {model.name}
-          {model.reasoning && reasoningConfig && (
-            <span
-              className="inline-flex shrink-0 items-center gap-1"
-              title={reasoningConfig.description}
-            >
-              <reasoningConfig.icon className="text-muted-foreground h-3 w-3" />
-            </span>
+      >
+        <div className="flex min-w-0 flex-1 items-center gap-2.5">
+          {showSelectionControl && (
+            <ModelSelectionIndicator selected={isSelected} />
           )}
-        </span>
-      </div>
-      <div className="flex shrink-0 items-center gap-1">
-        {featureIcons}
-        {isSelected && onCountChange && count !== undefined && (
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              aria-label={`${count}×`}
-              className="bg-primary/15 text-foreground hover:bg-primary/25 flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-xs font-semibold tabular-nums"
-              type="button"
-              onClick={stopEventPropagation}
-              onMouseDown={stopEventPropagation}
-            >
-              {count}×
-              <ChevronDownIcon className="h-2.5 w-2.5" />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" onKeyDown={stopEventPropagation}>
-              <DropdownMenuGroup>
-                {[1, 2, 3, 4].map((modelCount): React.JSX.Element => (
-                  <DropdownMenuItem
-                    key={modelCount}
-                    onClick={(event: {
-                      readonly stopPropagation: () => void;
-                    }) => {
-                      event.stopPropagation();
-                      onCountChange(model.id, modelCount - count);
-                    }}
-                  >
-                    {modelCount}x
-                    {modelCount === count && (
-                      <CheckIcon className="ml-auto h-3 w-3" />
-                    )}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
-      </div>
-    </UICommandItem>
+          <div className="shrink-0">
+            <ModelSelectorLogo modelId={model.id} />
+          </div>
+          <span className="flex items-center gap-1.5 truncate text-sm font-medium">
+            {model.name}
+            {model.reasoning && reasoningConfig && (
+              <span
+                className="inline-flex shrink-0 items-center gap-1"
+                title={reasoningConfig.description}
+              >
+                <reasoningConfig.icon className="text-muted-foreground h-3 w-3" />
+              </span>
+            )}
+          </span>
+        </div>
+        <div className="flex shrink-0 items-center gap-1">{featureIcons}</div>
+      </Combobox.Item>
+      {isSelected && onCountChange && count !== undefined && (
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            aria-label={`${count}× ${model.name}`}
+            className="bg-primary/15 text-foreground hover:bg-primary/25 flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-xs font-semibold tabular-nums"
+            type="button"
+            onClick={stopEventPropagation}
+            onMouseDown={stopEventPropagation}
+          >
+            {count}×
+            <ChevronDownIcon className="h-2.5 w-2.5" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" onKeyDown={stopEventPropagation}>
+            <DropdownMenuGroup>
+              {[1, 2, 3, 4].map((modelCount): React.JSX.Element => (
+                <DropdownMenuItem
+                  key={modelCount}
+                  onClick={(event: {
+                    readonly stopPropagation: () => void;
+                  }) => {
+                    event.stopPropagation();
+                    onCountChange(model.id, modelCount - count);
+                  }}
+                >
+                  {modelCount}x
+                  {modelCount === count && (
+                    <CheckIcon className="ml-auto h-3 w-3" />
+                  )}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
+    </div>
   );
 };
 
@@ -329,6 +311,7 @@ const PureModelSelector = ({
 
   const [, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
   const [filterOpen, setFilterOpen] = useState(false);
   const [optimisticSelection, setOptimisticSelection] = useOptimistic(
     selectedModelSelection
@@ -374,6 +357,11 @@ const PureModelSelector = ({
         .map(([modelId]: readonly [string, number | undefined]) => modelId)
     );
   }, [optimisticSelection]);
+
+  const pickerValue = useMemo(
+    () => (useMultipleModels ? [...selectedModelIds] : optimisticModelId),
+    [useMultipleModels, selectedModelIds, optimisticModelId]
+  );
 
   const models = useMemo<ModelItem[]>(
     () =>
@@ -447,6 +435,21 @@ const PureModelSelector = ({
     );
   }, [models, featureFilters]);
 
+  const matches = useMemo(() => {
+    if (!search.trim()) {
+      return filteredModels;
+    }
+    return filteredModels
+      .map((item) => {
+        const { model } = item;
+        const label = `${model.name} ${model.reasoning ? "reasoning" : ""} ${model.owned_by}`;
+        return { item, score: defaultFilter(label, search) };
+      })
+      .filter(({ score }) => score > 0)
+      .toSorted((a, b) => b.score - a.score)
+      .map(({ item }) => item);
+  }, [filteredModels, search]);
+
   const selectedItem = useMemo<ModelItem | null>(() => {
     // First try to find in filtered models (user's enabled models)
     const found = models.find(
@@ -511,45 +514,18 @@ const PureModelSelector = ({
     [onModelSelectionChangeAction, setOptimisticSelection, startTransition]
   );
 
-  const selectSingleModel = useCallback(
-    (id: AppModelId) => {
-      dispatchSelection(id);
+  const changeModels = (value: string | string[] | null): void => {
+    if (typeof value === "string") {
+      dispatchSelection(value);
       setOpen(false);
-    },
-    [dispatchSelection, setOpen]
-  );
-
-  const toggleMultiModel = useCallback(
-    (id: AppModelId) => {
-      const current = optimisticSelection;
-      const currentCounts: SelectedModelCounts =
-        typeof current === "string" ? { [current]: 1 } : current;
-
-      const isAlreadySelected = (currentCounts[id] ?? 0) > 0;
-
-      let nextSelection: SelectedModelCounts;
-      if (isAlreadySelected) {
-        const remaining = Object.entries(currentCounts).filter(
-          ([candidateId, selectionCount]: readonly [
-            string,
-            number | undefined,
-          ]) =>
-            candidateId !== id &&
-            typeof selectionCount === "number" &&
-            selectionCount > 0
-        );
-        if (remaining.length === 0) {
-          return;
-        }
-        nextSelection = Object.fromEntries(remaining);
-      } else {
-        nextSelection = { ...currentCounts, [id]: 1 };
-      }
-
-      dispatchSelection(nextSelection);
-    },
-    [dispatchSelection, optimisticSelection]
-  );
+    } else if (value && value.length > 0) {
+      const counts =
+        typeof optimisticSelection === "string" ? {} : optimisticSelection;
+      dispatchSelection(
+        Object.fromEntries(value.map((id) => [id, counts[id] ?? 1]))
+      );
+    }
+  };
 
   const handleCountChange = useCallback(
     (id: AppModelId, delta: number) => {
@@ -598,7 +574,15 @@ const PureModelSelector = ({
   );
 
   return (
-    <Popover onOpenChange={setOpen} open={open}>
+    <Popover
+      onOpenChange={(nextOpen) => {
+        setOpen(nextOpen);
+        if (nextOpen) {
+          setSearch("");
+        }
+      }}
+      open={open}
+    >
       <PopoverButton
         aria-expanded={open}
         className={cn("flex w-fit justify-between gap-2 md:px-2", className)}
@@ -630,16 +614,40 @@ const PureModelSelector = ({
           )}
         />
       </PopoverButton>
-      <PopoverContent align="start" className="w-[350px] p-0">
+      <PopoverContent
+        align="start"
+        className="w-[350px] max-w-[calc(100vw-1rem)] p-0"
+      >
         {open && (
-          <Command>
-            <div className="flex items-center border-b">
-              <CommandInput
-                className="px-3"
-                onClick={stopEventPropagation}
-                aria-label="Search models"
-                placeholder="Search models..."
-              />
+          <Combobox.Root<string, boolean>
+            inline
+            open
+            autoHighlight
+            multiple={useMultipleModels}
+            filteredItems={matches.map(({ model }) => model.id)}
+            value={pickerValue}
+            onValueChange={changeModels}
+            inputValue={search}
+            onInputValueChange={(value, details) => {
+              if (
+                details.reason === "input-change" ||
+                details.reason === "input-clear"
+              ) {
+                setSearch(value);
+              }
+            }}
+          >
+            <div className="flex items-center gap-1 border-b p-2">
+              <InputGroup className="h-8! min-w-0 flex-1">
+                <Combobox.Input
+                  aria-label="Search models"
+                  placeholder="Search models..."
+                  className="w-full min-w-0 text-sm outline-hidden"
+                />
+                <InputGroupAddon>
+                  <SearchIcon className="size-4 opacity-50" />
+                </InputGroupAddon>
+              </InputGroup>
               <Popover onOpenChange={setFilterOpen} open={filterOpen}>
                 <PopoverButton
                   aria-label="Filter models"
@@ -739,47 +747,40 @@ const PureModelSelector = ({
             {hasDisabledModels && (
               <div className="p-3">{disabledModelsNotice}</div>
             )}
-            <CommandList
-              className="max-h-[min(40dvh,400px)]"
+            <Combobox.Empty className="text-center text-sm not-empty:py-6">
+              No model found.
+            </Combobox.Empty>
+            <Combobox.List
+              aria-label="Models"
+              className="max-h-[min(40dvh,400px)] overflow-y-auto p-2 empty:p-0"
               onMouseDown={stopEventPropagation}
             >
-              <CommandEmpty>No model found.</CommandEmpty>
-              <CommandGroup>
-                {filteredModels.map(
-                  ({ model, disabled }: Readonly<ModelItem>) => {
-                    const isSelected = useMultipleModels
-                      ? selectedModelIds.has(model.id)
-                      : model.id === optimisticModelId;
-                    const count =
-                      useMultipleModels &&
-                      typeof optimisticSelection !== "string"
-                        ? (optimisticSelection[model.id] ?? 0)
-                        : undefined;
-                    return (
-                      <CommandItem
-                        count={isSelected ? count : undefined}
-                        disabled={disabled}
-                        isSelected={isSelected}
-                        key={model.id}
-                        model={model}
-                        enabledFeatures={enabledFeatures}
-                        onCountChange={
-                          useMultipleModels ? handleCountChange : undefined
-                        }
-                        onSelect={
-                          useMultipleModels
-                            ? toggleMultiModel
-                            : selectSingleModel
-                        }
-                        showSelectionControl={useMultipleModels}
-                      />
-                    );
-                  }
-                )}
-              </CommandGroup>
-            </CommandList>
+              {matches.map(({ model, disabled }: Readonly<ModelItem>) => {
+                const isSelected = useMultipleModels
+                  ? selectedModelIds.has(model.id)
+                  : model.id === optimisticModelId;
+                const count =
+                  useMultipleModels && typeof optimisticSelection !== "string"
+                    ? (optimisticSelection[model.id] ?? 0)
+                    : undefined;
+                return (
+                  <CommandItem
+                    count={isSelected ? count : undefined}
+                    disabled={disabled}
+                    isSelected={isSelected}
+                    key={model.id}
+                    model={model}
+                    enabledFeatures={enabledFeatures}
+                    onCountChange={
+                      useMultipleModels ? handleCountChange : undefined
+                    }
+                    showSelectionControl={useMultipleModels}
+                  />
+                );
+              })}
+            </Combobox.List>
             {footer}
-          </Command>
+          </Combobox.Root>
         )}
       </PopoverContent>
     </Popover>

@@ -98,10 +98,12 @@ export const ChatSidebar = ({
   >
     <SidebarHeader className="shrink-0">
       <SidebarMenu>
-        <div className="flex flex-row items-center justify-between">
+        <SidebarMenuItem>
           <SidebarTopRow />
-        </div>
-        <NewChatButton />
+        </SidebarMenuItem>
+        <SidebarMenuItem>
+          <NewChatButton />
+        </SidebarMenuItem>
         <Suspense
           fallback={
             <SidebarMenuItem>
