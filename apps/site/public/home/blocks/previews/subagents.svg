@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="22 60 276 176"><g class="fragment" font-family="Geist,Arial,sans-serif">
+  <text x="25" y="83" font-size="14" fill="#c9c9bf">Delegated tasks</text>
+  <rect x="24" y="97" width="272" height="55" rx="6" fill="#1b1b19" stroke="#3a3a33"/>
+  <circle cx="49" cy="124" r="11" fill="#292a24"/>
+  <path d="m44 124 4 4 7-8" fill="none" stroke="#c4c8b1" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="72" y="120" font-size="15" fill="#dadad4">Review the sources</text>
+  <text x="72" y="138" font-size="12" fill="#a7ab99">Complete</text>
+  <rect x="24" y="161" width="272" height="55" rx="6" fill="#1b1b19" stroke="#3a3a33"/>
+  <circle cx="49" cy="188" r="9" fill="none" stroke="#46463b" stroke-width="2"/>
+  <path d="M49 179a9 9 0 0 1 9 9" fill="none" stroke="#d5d1b9" stroke-width="2" stroke-linecap="round"/>
+  <text x="72" y="184" font-size="15" fill="#dadad4">Draft the summary</text>
+  <text x="72" y="202" font-size="12" fill="#bab8a5">Running</text>
+</g></svg>

@@ -3,20 +3,21 @@ import { test } from "node:test";
 import { canopyLayout, visibleCanopyCells } from "./canopy-layout";
 
 const screens = [
-  { width: 320, height: 512 },
-  { width: 390, height: 788 },
-  { width: 768, height: 964 },
-  { width: 1200, height: 640 },
-  { width: 1920, height: 1020 },
-  { width: 2560, height: 794 },
+  { width: 320, height: 512, columns: 2 },
+  { width: 390, height: 788, columns: 2 },
+  { width: 768, height: 964, columns: 3 },
+  { width: 1200, height: 640, columns: 5 },
+  { width: 1920, height: 1020, columns: 8 },
+  { width: 2560, height: 794, columns: 10 },
 ];
 
 for (const size of screens) {
   void test(`Canopy gives its leading choices complete lower-row cells at ${size.width} × ${size.height}`, () => {
     const layout = canopyLayout(size, 96);
     const cells = visibleCanopyCells(size, layout, { column: 0, row: 0 });
-    const featured = cells.filter((cell) => cell.index < 4);
-    assert.equal(featured.length, 4);
+    assert.equal(layout.columns, size.columns);
+    const featured = cells.filter((cell) => cell.index < layout.columns);
+    assert.equal(featured.length, layout.columns);
     for (const cell of featured) {
       assert.equal(cell.row, 0);
       assert.ok(cell.left >= 0 && cell.left + layout.side <= size.width);

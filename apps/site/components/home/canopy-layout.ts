@@ -11,16 +11,10 @@ export interface FieldPosition {
 const modulo = (value: number, length: number) =>
   ((value % length) + length) % length;
 
-// Fit four complete tiles on phones and target a 144 px pitch on wider screens.
-const preferredColumns = (width: number) => {
-  if (width < 540) {
-    return 4;
-  }
-  return Math.max(5, Math.round(width / 144));
-};
-
 export const canopyLayout = ({ width, height }: FieldSize, count: number) => {
-  let columns = preferredColumns(width);
+  // Allow a full row below the headline even in a short landscape viewport.
+  const targetPitch = Math.min(252, height * 0.43);
+  let columns = Math.max(2, Math.round(width / targetPitch));
   // A dragged viewport may include a partial tile at both ends of each axis.
   // Reserve that extra row and column so no capability appears twice.
   while (

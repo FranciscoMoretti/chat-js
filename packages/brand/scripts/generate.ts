@@ -196,8 +196,6 @@ appCopy(
 );
 
 const productFiles = await readdir(path.join(root, "assets/product-blocks"));
-const blockPreviewSource = path.join(root, "sources/block-previews");
-const previewOverrides = new Set(await readdir(blockPreviewSource));
 await Promise.all(
   productFiles
     .filter((name) => name.endsWith(".svg"))
@@ -215,11 +213,9 @@ await Promise.all(
       }
       appCopy(
         `site/public/home/blocks/previews/${file}`,
-        previewOverrides.has(file)
-          ? await readFile(path.join(blockPreviewSource, file))
-          : encode(
-              `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 50 320 192">${svgSource.slice(start, end + 4)}</svg>\n`
-            )
+        encode(
+          `<svg xmlns="http://www.w3.org/2000/svg" viewBox="22 60 276 176">${svgSource.slice(start, end + 4)}</svg>\n`
+        )
       );
     })
 );
