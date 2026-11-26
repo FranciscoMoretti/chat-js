@@ -16,6 +16,7 @@ import {
 import React, {
   memo,
   useCallback,
+  useId,
   useMemo,
   useOptimistic,
   useState,
@@ -256,6 +257,38 @@ const PureCommandItem = ({
 };
 
 const CommandItem = memo(PureCommandItem);
+
+const MultipleModelsSetting = ({
+  checked,
+  onCheckedChange,
+}: {
+  readonly checked: boolean;
+  readonly onCheckedChange: (checked: boolean) => void;
+}): ReactJSX.Element => {
+  const id = useId();
+  const descriptionId = `${id}-description`;
+  return (
+    <div className="space-y-1.5 border-b px-3 py-2">
+      <div className="flex items-center justify-between">
+        <Label className="cursor-pointer text-sm" htmlFor={id}>
+          Use Multiple Models
+        </Label>
+        <Switch
+          aria-describedby={checked ? descriptionId : undefined}
+          checked={checked}
+          id={id}
+          onCheckedChange={onCheckedChange}
+        />
+      </div>
+      {checked && (
+        <p className="text-muted-foreground text-xs" id={descriptionId}>
+          Each model replies in its own branch. Replies run one at a time and
+          share workspace files.
+        </p>
+      )}
+    </div>
+  );
+};
 
 const PureModelSelector = ({
   allowMultiple = true,
@@ -698,19 +731,10 @@ const PureModelSelector = ({
               </Popover>
             </div>
             {allowMultiple && (
-              <div className="flex items-center justify-between border-b px-3 py-2">
-                <Label
-                  className="cursor-pointer text-sm"
-                  htmlFor="use-multiple-models"
-                >
-                  Use Multiple Models
-                </Label>
-                <Switch
-                  checked={useMultipleModels}
-                  id="use-multiple-models"
-                  onCheckedChange={handleMultipleModelsToggle}
-                />
-              </div>
+              <MultipleModelsSetting
+                checked={useMultipleModels}
+                onCheckedChange={handleMultipleModelsToggle}
+              />
             )}
             {hasDisabledModels && (
               <div className="p-3">{disabledModelsNotice}</div>

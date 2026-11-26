@@ -134,7 +134,7 @@ test("guest bootstrap failures preserve the draft and expired sessions offer a f
   });
   await page.getByRole("button", { exact: true, name: "Send" }).click();
   await expect(
-    page.getByText("This chat has expired. Start a new chat to continue.")
+    page.getByText("This chat has expired.", { exact: true })
   ).toBeVisible();
   await expect(
     page.getByRole("button", { exact: true, name: "Send" })
@@ -251,7 +251,7 @@ test("back-forward cache restoration starts a fresh guest chat", async ({
     .fill("Old chat");
   await page.getByRole("button", { exact: true, name: "Send" }).click();
   await expect(
-    page.getByText("This chat has expired. Start a new chat to continue.")
+    page.getByText("This chat has expired.", { exact: true })
   ).toBeVisible();
   await page.evaluate(() =>
     globalThis.dispatchEvent(

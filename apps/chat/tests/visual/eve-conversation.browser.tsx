@@ -22,6 +22,9 @@ test("conversation retains its draft across rerenders and shows delivery recover
   sessionStorage.clear();
   const pending = Promise.withResolvers<never>();
   const send = vi.fn(async () => await pending.promise);
+  const resume = vi.fn<NativeChatAgent["resume"]>(async () => {
+    // The fixture has no live reader.
+  });
   const agent: NativeChatAgent = {
     cancel: vi
       .fn<NativeChatAgent["cancel"]>()
@@ -38,9 +41,7 @@ test("conversation retains its draft across rerenders and shows delivery recover
       .mockRejectedValue(new Error("Unexpected prewarm")),
     newSession: vi.fn<() => void>(),
     respond: async () => await Promise.reject(new Error("Unexpected response")),
-    resume: vi
-      .fn<NativeChatAgent["resume"]>()
-      .mockRejectedValue(new Error("Unexpected resume")),
+    resume,
     send,
     session: undefined,
     status: "idle",
@@ -83,28 +84,34 @@ test("conversation retains its draft across rerenders and shows delivery recover
         /* The component handles this transport rejection. */
       });
     });
+    const recovery = page
+      .getByRole("alert")
+      .filter({ hasText: "Message delivery is unconfirmed" });
+    await expect
+      .element(recovery.getByText("Message delivery is unconfirmed"))
+      .toBeVisible();
+    await expect
+      .element(recovery.getByRole("button", { name: "Reconnect" }))
+      .toBeVisible();
     await expect
       .element(page.getByText("Fixture transport unavailable", { exact: true }))
-      .toBeVisible();
+      .not.toBeInTheDocument();
     await expect
-      .element(page.getByRole("button", { name: "Reconnect" }))
-      .toBeVisible();
-    await expect
-      .element(
-        page.getByText(
-          "Message delivery is unknown. This operation will not be sent again. Your draft is saved in this tab.",
-          { exact: true }
-        )
-      )
-      .toBeVisible();
+      .element(page.getByText("Connection interrupted", { exact: true }))
+      .not.toBeInTheDocument();
     await takeSnapshot("conversation-delivery-recovery");
     await page.getByRole("main").screenshot({ animations: "disabled" });
+    await act(async (): Promise<void> => {
+      await recovery.getByRole("button", { name: "Reconnect" }).click();
+    });
+    expect(resume).toHaveBeenCalledOnce();
     await act(async (): Promise<void> => {
       await page.getByRole("button", { name: "Restore draft" }).click();
     });
     await expect
       .element(page.getByRole("textbox"))
       .toHaveTextContent("Preserve this draft across a render");
+    await expect.element(recovery).not.toBeInTheDocument();
     expect(send).toHaveBeenCalledOnce();
   } finally {
     pending.reject(new Error("Fixture cleanup"));

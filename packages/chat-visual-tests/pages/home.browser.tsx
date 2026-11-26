@@ -15,6 +15,7 @@ import {
   signedIn,
   signedInTrpc,
   creationFailure,
+  expiredGuestBinding,
   guestTranscript,
   invoicesConversation,
   invoicesTrpc,
@@ -436,4 +437,34 @@ test("guest startup failure keeps the original message and newer draft", async (
       /What is a directed graph\?\s*Include a concrete example\./u
     );
   await expect.element(send).toBeEnabled();
+});
+
+test("expired guest chat shows the New chat action beside the notice", async () => {
+  const { fetch } = globalThis;
+  vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
+    if (input === "/api/eve-guest") {
+      return Response.json(expiredGuestBinding);
+    }
+    return await fetch(input, init);
+  });
+  await renderRoute(home, {
+    server: guestServer,
+    transcripts: { [expiredGuestBinding.sessionId]: guestTranscript },
+  });
+  const composer = page.getByRole("textbox", { name: "Message", exact: true });
+  const send = page.getByRole("button", { name: "Send", exact: true });
+  await composer.fill("Hello");
+  await send.click();
+
+  const notice = page.getByText("This chat has expired.", { exact: true });
+  const newChat = page.getByRole("button", { name: "New chat", exact: true });
+  await expect.element(notice).toBeVisible();
+  await expect.element(newChat).toBeEnabled();
+  await expect.element(send).toBeDisabled();
+  await page.viewport(390, 844);
+  const noticeBounds = notice.element().getBoundingClientRect();
+  const buttonBounds = newChat.element().getBoundingClientRect();
+  expect(buttonBounds.left).toBeGreaterThan(noticeBounds.right);
+  expect(buttonBounds.top).toBeLessThan(noticeBounds.bottom);
+  await page.screenshot({ path: "__screenshots__/guest-expired.png" });
 });

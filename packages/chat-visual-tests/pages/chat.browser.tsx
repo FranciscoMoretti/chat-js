@@ -13,6 +13,7 @@ import {
   prepareCreation,
   prepareResponseGroupCreation,
 } from "@/lib/eve/pending-create";
+import { eveMessageDelivery } from "@/lib/eve/message-delivery";
 
 import {
   cancelledActivityEvents,
@@ -20,6 +21,7 @@ import {
   completedActivityEvents,
   connectionResultTranscripts,
   endedActivityEvents,
+  failedReplyEvents,
   history,
   invoicesConversation,
   invoicesFollowupEvents,
@@ -400,20 +402,23 @@ test("edit replaces the selected history while sharing workspace", async () => {
     .toBeVisible();
 });
 
-test("comparison explains shared workspace and serialized turns", async () => {
+test("comparison explains the shared workspace in the model picker", async () => {
   await renderRoute(conversation, request);
   await page.getByTestId("model-selector").click();
   await page.getByRole("switch", { name: "Use Multiple Models" }).click();
   await page.getByRole("button", { exact: true, name: "1×" }).click();
   await page.getByRole("menuitem", { exact: true, name: "2x" }).click();
+  const description = page.getByText(
+    "Each model replies in its own branch. Replies run one at a time and share workspace files."
+  );
+  await expect.element(description).toBeVisible();
+  await page.screenshot({
+    path: "__screenshots__/comparison-model-picker.png",
+  });
   await userEvent.keyboard("{Escape}");
-  await expect
-    .element(
-      page.getByText(
-        "Each model receives its own conversation history in the shared workspace. Turns run one at a time; changes to workspace files are visible to every branch."
-      )
-    )
-    .toBeVisible();
+  await expect.element(description).not.toBeInTheDocument();
+  await page.getByTestId("model-selector").click();
+  await expect.element(description).toBeVisible();
 });
 
 test("conversation whose creation was never confirmed", async () => {
@@ -484,26 +489,115 @@ test("conversation inside a project", async () => {
     .not.toBeNull();
 });
 
-test("conversation whose last reply failed", async () => {
+test("conversation with an interrupted connection", async () => {
   await renderRoute(conversation, {
     ...request,
     agentError: chatFailure,
   });
-  await expect
-    .element(page.getByRole("alert").getByText(chatFailure))
-    .toBeVisible();
-  await expect
-    .element(page.getByRole("alert").getByText("Chat error", { exact: true }))
-    .toBeVisible();
-  await page.viewport(390, 844);
-  const alert = page
+  const notice = page
     .getByRole("alert")
-    .filter({ hasText: chatFailure })
-    .element();
+    .filter({ hasText: "Connection interrupted" });
+  await expect
+    .element(notice.getByRole("button", { name: "Reconnect" }))
+    .toBeVisible();
+  await expect.element(page.getByText(chatFailure)).not.toBeInTheDocument();
+  await page.viewport(390, 844);
+  const alert = notice.element();
   expect(alert.scrollWidth).toBeLessThanOrEqual(alert.clientWidth);
   expect(alert.getBoundingClientRect().right).toBeLessThanOrEqual(390);
   await page.screenshot({ path: "__screenshots__/conversation-error.png" });
 });
+
+test("conversation with an interrupted reply", async () => {
+  await renderRoute(conversation, {
+    ...request,
+    agentError: Object.assign(new Error(chatFailure), { name: "MODEL_FAILED" }),
+    events: failedReplyEvents,
+  });
+  const notice = page
+    .getByRole("alert")
+    .filter({ hasText: "Reply interrupted" });
+  await expect
+    .element(notice.getByText("Try sending your message again."))
+    .toBeVisible();
+  await expect
+    .element(page.getByRole("button", { name: "Reconnect" }))
+    .not.toBeInTheDocument();
+  await expect.element(page.getByText(chatFailure)).not.toBeInTheDocument();
+});
+
+test("a lost connection offers Reconnect even after a failed reply", async () => {
+  await renderRoute(conversation, {
+    ...request,
+    agentError: "The stream disconnected.",
+    events: failedReplyEvents,
+  });
+  const notice = page
+    .getByRole("alert")
+    .filter({ hasText: "Connection interrupted" });
+  await expect
+    .element(notice.getByRole("button", { name: "Reconnect" }))
+    .toBeEnabled();
+  await expect
+    .element(page.getByText("Reply interrupted"))
+    .not.toBeInTheDocument();
+});
+
+test.each([
+  {
+    title: "Message delivery is unconfirmed",
+    action: "Reconnect",
+  },
+  {
+    title: "Message not sent",
+    rejection: "Insufficient credits",
+    action: "Restore draft",
+  },
+  {
+    title: "Message not sent",
+    rejection: "Usage reconciliation is busy.",
+    retryable: true,
+    action: "Retry message",
+  },
+])(
+  "send recovery offers $action",
+  async ({ title, rejection, retryable, action }) => {
+    const { sessionId } = invoicesConversation;
+    if (sessionId === null) {
+      throw new Error("The fixture needs a session.");
+    }
+    const draft = "Could you check the pending invoices again?";
+    const pending = eveMessageDelivery.begin(sessionStorage, sessionId, {
+      attachments: [],
+      message: draft,
+    });
+    if (rejection !== undefined) {
+      eveMessageDelivery.reject(
+        sessionStorage,
+        sessionId,
+        pending,
+        rejection,
+        retryable
+      );
+    }
+    await renderRoute(conversation, {
+      ...request,
+      agentError: chatFailure,
+      trpc: { ...invoicesTrpc, "eve.sendReceipt": null },
+    });
+    const notice = page.getByRole("alert").filter({ hasText: title });
+    await expect.element(notice.getByText(draft)).toBeVisible();
+    await expect
+      .element(notice.getByRole("button", { name: action }))
+      .toBeVisible();
+    expect(page.getByRole("alert").elements()).toHaveLength(1);
+    await expect.element(page.getByText(chatFailure)).not.toBeInTheDocument();
+    if (action === "Reconnect") {
+      await page.viewport(390, 844);
+      await page.screenshot({ path: "__screenshots__/send-recovery.png" });
+    }
+  }
+);
 
 const unconfirmed = {
   ...invoicesConversation,
