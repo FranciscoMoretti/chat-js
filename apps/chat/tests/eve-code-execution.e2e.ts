@@ -30,34 +30,7 @@ const downloadContents = async (page: Page, name: string): Promise<string> => {
   return await readFile(path, "utf-8");
 };
 
-const approveUntilPublished = async (
-  page: Page,
-  name: string
-): Promise<void> => {
-  await expect
-    .poll(
-      async () => {
-        if (
-          await page
-            .getByRole("button", { name: `Download ${name}`, exact: true })
-            .isVisible()
-        ) {
-          return true;
-        }
-        const approve = page
-          .getByRole("button", { name: "Approve", exact: true })
-          .first();
-        if ((await approve.isVisible()) && (await approve.isEnabled())) {
-          await approve.click();
-        }
-        return false;
-      },
-      { timeout: 180_000, intervals: [1000] }
-    )
-    .toBe(true);
-};
-
-test("native code execution uses bash without a custom execution receipt", async ({
+test("native code execution uses bash without approval or a custom execution receipt", async ({
   page,
 }) => {
   await page.goto("/api/dev-login");
@@ -82,9 +55,6 @@ test("native code execution uses bash without a custom execution receipt", async
     .object({ id: z.uuid(), sessionId: z.string() })
     .parse(created.body);
   await page.goto(`/chat/${binding.id}`);
-  await page
-    .getByRole("button", { name: "Approve", exact: true })
-    .click({ timeout: 90_000 });
   await expect(page.getByText("Exit code: 0", { exact: true })).toBeVisible({
     timeout: 90_000,
   });
@@ -141,7 +111,9 @@ test("Native tools publish a spreadsheet, then chat revises it without changing 
   expect(created.ok).toBe(true);
   const { id } = z.object({ id: z.uuid() }).parse(created.body);
   await page.goto(`/chat/${id}`);
-  await approveUntilPublished(page, "budget.csv");
+  await expect(
+    page.getByRole("button", { name: "Download budget.csv", exact: true })
+  ).toBeVisible({ timeout: 180_000 });
   await page.reload();
   await page.getByRole("button", { name: "Open spreadsheet" }).click();
   await expect(page.getByRole("dialog")).toContainText("Hosting");
@@ -166,7 +138,7 @@ test("Native tools publish a spreadsheet, then chat revises it without changing 
     name: "Download budget-revised.csv",
     exact: true,
   });
-  await approveUntilPublished(page, "budget-revised.csv");
+  await expect(revised).toBeVisible({ timeout: 180_000 });
   const revisedContents = await downloadContents(page, "budget-revised.csv");
   expect(revisedContents.trim().split(/\r?\n/u)).toEqual([
     "Item,Cost",

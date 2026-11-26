@@ -12,9 +12,9 @@ test("native configuration preserves model settings without generating authored 
       modelIds: ["test/model", "test/alternative"],
       reasoning: "high",
     });
-    expect(await readFile(path.join(cwd, "agent/agent.ts"), "utf-8")).toContain(
-      'applicationModel("test/model")'
-    );
+    const source = await readFile(path.join(cwd, "agent/agent.ts"), "utf-8");
+    expect(source).toContain('applicationModel("test/model")');
+    expect(source).not.toContain("approval:");
     expect(
       await readFile(path.join(cwd, "integrations/chat/models.ts"), "utf-8")
     ).toContain('modelIds: ["test/model","test/alternative"]');
@@ -40,6 +40,24 @@ test.each([{ modelIds: undefined }, { modelIds: [] }])(
     }
   }
 );
+
+test.each([
+  ["always", 'approval: () => "user-approval"'],
+  [
+    "consequential",
+    "approval: ({ toolAnnotations }) => toolAnnotations?.readOnlyHint",
+  ],
+])("preserves the explicit %s approval policy", async (approval, expected) => {
+  const cwd = await mkdtemp(path.join(tmpdir(), "chatjs-agent-approval-"));
+  try {
+    await writeAgentConfiguration(cwd, { approval });
+    expect(await readFile(path.join(cwd, "agent/agent.ts"), "utf-8")).toContain(
+      expected
+    );
+  } finally {
+    await rm(cwd, { recursive: true, force: true });
+  }
+});
 
 test.each([undefined, true, false])(
   "generated agent enables native tools by default and honors override %s",

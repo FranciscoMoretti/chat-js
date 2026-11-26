@@ -673,6 +673,12 @@ export const chatFailure = `The model provider is unavailable. Request reference
 export const creationFailure =
   "Unable to start this conversation. Choose another model.";
 
+export const expiredGuestBinding = {
+  sessionId: "guest-session",
+  credential: "guest-fixture",
+  expiresAt: 0,
+};
+
 export const guestTranscript: EveMessage[] = [
   {
     id: "guest-question",
@@ -968,6 +974,17 @@ export const steeringModelEvents = activityEvents([
       runId: "steered-response",
       modelId: "openai/gpt-5-mini",
       attempt: 0,
+    },
+  },
+]);
+export const failedReplyEvents = activityEvents([
+  ...nativeActivity.slice(0, 3),
+  {
+    type: "turn.settled",
+    data: {
+      ...activityTurn,
+      outcome: "failed",
+      error: { code: "MODEL_FAILED", message: chatFailure },
     },
   },
 ]);

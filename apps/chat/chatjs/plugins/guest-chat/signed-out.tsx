@@ -125,17 +125,20 @@ const GuestConversationView = ({
         </p>
       )}
       {expired && (
-        <output className="text-muted-foreground mb-3 text-sm">
-          This chat has expired. Start a new chat to continue.
+        <div className="mb-3 flex items-center justify-between gap-3 rounded-2xl border px-3 py-2">
+          <output className="text-muted-foreground text-sm">
+            This chat has expired.
+          </output>
           <Button
-            variant="link"
+            variant="outline"
+            size="sm"
             onClick={() => {
               globalThis.dispatchEvent(new Event("chatjs:new-chat"));
             }}
           >
             New chat
           </Button>
-        </output>
+        </div>
       )}
       <EveComposer
         autoFocus

@@ -85,15 +85,72 @@ const composerStatus = (
   return "ready";
 };
 
-const recordedError = (view: SessionView): string | undefined => {
-  const latestTurn = turns(view).at(-1);
-  return latestTurn?.status === "running"
-    ? undefined
-    : failure(view, latestTurn?.turnId)?.message;
-};
-
 const isInactive = (error: Error | undefined): boolean =>
   SessionNotActiveError.is(error) && error.code === "session_not_active";
+
+const conversationError = (
+  view: SessionView,
+  commandError: Error | undefined,
+  agentError: Error | undefined
+): { title: string; message: string; reconnect?: true } | undefined => {
+  if (isInactive(commandError) || isInactive(agentError)) {
+    return {
+      title: "Conversation ended",
+      message: "Start a new chat to continue.",
+    };
+  }
+  if (isEveCommandRejection(commandError)) {
+    return { title: "Request rejected", message: commandError.message };
+  }
+  const latestTurn = turns(view).at(-1);
+  if (
+    (!commandError || commandError === agentError) &&
+    latestTurn?.status !== "running" &&
+    failure(view, latestTurn?.turnId)
+  ) {
+    return {
+      title: "Reply interrupted",
+      message: "Try sending your message again.",
+    };
+  }
+  if (commandError || agentError) {
+    return {
+      title: "Connection interrupted",
+      message: "You may be missing the latest reply.",
+      reconnect: true,
+    };
+  }
+  return undefined;
+};
+
+const EveConversationError = ({
+  error,
+  reconnect,
+  reconnectDisabled,
+}: {
+  readonly error: ReturnType<typeof conversationError>;
+  readonly reconnect: () => void;
+  readonly reconnectDisabled: boolean;
+}): ReactJSX.Element | null => {
+  if (!error) {
+    return null;
+  }
+  return (
+    <EveChatError title={error.title} message={error.message}>
+      {error.reconnect === true ? (
+        <Button
+          disabled={reconnectDisabled}
+          onClick={reconnect}
+          size="sm"
+          type="button"
+          variant="outline"
+        >
+          Reconnect
+        </Button>
+      ) : undefined}
+    </EveChatError>
+  );
+};
 
 const interactionControls = (
   agent: Pick<NativeChatAgent, "view" | "error" | "status">,
@@ -324,6 +381,8 @@ const EveDeliveryRecovery = ({
   files,
   run,
   sendPendingMessage,
+  reconnect,
+  reconnectDisabled,
   setCommandFailure,
 }: {
   readonly pendingMessage: NonNullable<
@@ -338,68 +397,96 @@ const EveDeliveryRecovery = ({
   readonly sendPendingMessage: (
     pending: ActivePendingEveMessage
   ) => Promise<void>;
+  readonly reconnect: () => void;
+  readonly reconnectDisabled: boolean;
   readonly setCommandFailure: (failure?: Error) => void;
-}): ReactJSX.Element => (
-  <output className="space-y-2 text-sm">
-    <p>
-      {hasText(pendingMessage.rejection)
-        ? `Message was not sent: ${pendingMessage.rejection}. Your draft is saved in this tab.`
-        : "Message delivery is unknown. This operation will not be sent again. Your draft is saved in this tab."}
-    </p>
-    <p className="whitespace-pre-wrap">{pendingMessage.message}</p>
-    <AttachmentList attachments={pendingMessage.attachments} />
-    <div className="flex flex-wrap gap-2">
-      {pendingMessage.retryable === true &&
-        hasText(pendingMessage.operationId) && (
+}): ReactJSX.Element => {
+  const { rejection } = pendingMessage;
+  const rejected = hasText(rejection);
+  const message = rejected
+    ? rejection
+    : "Your draft is saved in this tab. Sending it again may create a duplicate.";
+  return (
+    <EveChatError
+      title={rejected ? "Message not sent" : "Message delivery is unconfirmed"}
+      message={
+        rejected && pendingMessage.retryable === true
+          ? "Chat is temporarily busy. Try sending again."
+          : message
+      }
+    >
+      <div className="text-foreground space-y-2">
+        {hasText(pendingMessage.message) && (
+          <p className="line-clamp-2 wrap-anywhere whitespace-pre-wrap">
+            {pendingMessage.message}
+          </p>
+        )}
+        <AttachmentList
+          attachments={pendingMessage.attachments}
+          variant="pill"
+        />
+        <div className="flex flex-wrap gap-2">
+          {!rejected && (
+            <Button
+              disabled={reconnectDisabled}
+              onClick={reconnect}
+              size="sm"
+              type="button"
+              variant="outline"
+            >
+              Reconnect
+            </Button>
+          )}
+          {pendingMessage.retryable === true &&
+            hasText(pendingMessage.operationId) && (
+              <Button
+                onClick={() => {
+                  void run(async () => {
+                    const retried = delivery.retry(pendingMessage);
+                    if (retried) {
+                      await sendPendingMessage(retried);
+                    }
+                  });
+                }}
+                size="sm"
+                type="button"
+                variant="outline"
+              >
+                Retry message
+              </Button>
+            )}
           <Button
             onClick={() => {
-              void run(async () => {
-                const retried = delivery.retry(pendingMessage);
-                if (retried) {
-                  await sendPendingMessage(retried);
+              composerDraft.setText((current) => {
+                if (current) {
+                  return `${current}\n\n${pendingMessage.message}`;
                 }
+                return pendingMessage.message;
               });
+              files.setAttachments((current) => [
+                ...current,
+                ...pendingMessage.attachments.filter(
+                  (file) =>
+                    !current.some((existing) => existing.url === file.url)
+                ),
+              ]);
+              composerDraft.setSelectedTool(
+                pendingMessage.selectedTool ?? null
+              );
+              delivery.release(pendingMessage);
+              setCommandFailure();
             }}
             size="sm"
             type="button"
-            variant="outline"
+            variant="ghost"
           >
-            Retry message
+            Restore draft
           </Button>
-        )}
-      <Button
-        onClick={() => {
-          composerDraft.setText((current) => {
-            if (current) {
-              return `${current}\n\n${pendingMessage.message}`;
-            }
-            return pendingMessage.message;
-          });
-          files.setAttachments((current) => [
-            ...current,
-            ...pendingMessage.attachments.filter(
-              (file) => !current.some((existing) => existing.url === file.url)
-            ),
-          ]);
-          composerDraft.setSelectedTool(pendingMessage.selectedTool ?? null);
-          delivery.release(pendingMessage);
-          setCommandFailure(
-            hasText(pendingMessage.rejection)
-              ? undefined
-              : new Error(
-                  "The original operation remains unresolved. Sending this restored draft creates a new message and may duplicate it."
-                )
-          );
-        }}
-        size="sm"
-        type="button"
-        variant="ghost"
-      >
-        Restore draft
-      </Button>
-    </div>
-  </output>
-);
+        </div>
+      </div>
+    </EveChatError>
+  );
+};
 
 const conversationActionLocks = ({
   busy,
@@ -430,15 +517,6 @@ const conversationActionLocks = ({
     fork.locked || Boolean(editingMessageId) || Boolean(pendingMessage),
 });
 
-const showComposerReconnect = (
-  message: string | undefined,
-  pendingRejection: string | undefined,
-  commandError: Error | undefined
-): boolean =>
-  hasText(message) &&
-  !hasText(pendingRejection) &&
-  !isEveCommandRejection(commandError);
-
 const EveConversationComposer = ({
   input,
   pendingMessage,
@@ -448,12 +526,8 @@ const EveConversationComposer = ({
   busy,
   commandPending,
   cancelPending,
-  displayedError,
-  commandFailure,
-  agentError,
   onStop,
   onSubmit,
-  onReconnect,
 }: {
   readonly input: ReturnType<typeof useConversationInput>;
   readonly pendingMessage: ReturnType<typeof useEveMessageDelivery>["pending"];
@@ -463,12 +537,8 @@ const EveConversationComposer = ({
   readonly busy: boolean;
   readonly commandPending: boolean;
   readonly cancelPending: boolean;
-  readonly displayedError: string | undefined;
-  readonly commandFailure: Error | undefined;
-  readonly agentError: Error | undefined;
   readonly onStop: () => void;
   readonly onSubmit: () => void;
-  readonly onReconnect: () => void;
 }): ReactJSX.Element => {
   const { composerDraft, files, modelSelection, comparison, fork } = input;
   const statusForComposer = composerStatus(status, turnOpen);
@@ -477,72 +547,48 @@ const EveConversationComposer = ({
   const handleSelectedToolChange = composerDraft.setSelectedTool;
   const handleDraftChange = composerDraft.setText;
   return (
-    <>
-      {!steering && input.modelIds.length > 1 && (
-        <p className="text-muted-foreground mb-2 text-xs">
-          Each model receives its own conversation history in the shared
-          workspace. Turns run one at a time; changes to workspace files are
-          visible to every branch.
-        </p>
+    <EveComposer
+      status={statusForComposer}
+      allowSendWhileStreaming
+      disabled={
+        !composerDraft.loaded ||
+        (busy && !steering) ||
+        commandPending ||
+        cancelPending ||
+        Boolean(pendingMessage) ||
+        fork.locked
+      }
+      draft={composerDraft.text}
+      capabilities={{
+        files,
+        onToolChange: handleSelectedToolChange,
+        turnOptionsLocked: statusForComposer !== "ready",
+        attachmentModelPending: steering && !hasText(activeModelId),
+        selectedTool: retainedToolSelection(
+          comparison,
+          pendingMessage,
+          composerDraft.selectedTool
+        ),
+      }}
+      modelIds={composerModelIds(
+        input.modelIds,
+        comparison?.modelIds,
+        visibleModelId
       )}
-      <EveComposer
-        status={statusForComposer}
-        allowSendWhileStreaming
-        disabled={
-          !composerDraft.loaded ||
-          (busy && !steering) ||
-          commandPending ||
-          cancelPending ||
-          Boolean(pendingMessage) ||
-          fork.locked
-        }
-        draft={composerDraft.text}
-        capabilities={{
-          files,
-          onToolChange: handleSelectedToolChange,
-          turnOptionsLocked: statusForComposer !== "ready",
-          attachmentModelPending: steering && !hasText(activeModelId),
-          selectedTool: retainedToolSelection(
-            comparison,
-            pendingMessage,
-            composerDraft.selectedTool
-          ),
-        }}
-        modelIds={composerModelIds(
-          input.modelIds,
-          comparison?.modelIds,
-          visibleModelId
-        )}
-        modelPicker={
-          <ParallelResponseModelPicker
-            disabled={Boolean(pendingMessage)}
-            modelSelection={modelSelection}
-            retainedModelId={visibleModelId}
-            retainedModelIds={comparison?.modelIds}
-          />
-        }
-        onDraftChange={handleDraftChange}
-        onStop={onStop}
-        onSubmit={onSubmit}
-        readOnly={Boolean(comparison)}
-        stopDisabled={cancelPending || status === "resuming"}
-      />
-      {showComposerReconnect(
-        displayedError,
-        pendingMessage?.rejection,
-        commandFailure ?? agentError
-      ) && (
-        <Button
-          disabled={busy || commandPending || cancelPending}
-          onClick={onReconnect}
-          size="sm"
-          type="button"
-          variant="ghost"
-        >
-          Reconnect
-        </Button>
-      )}
-    </>
+      modelPicker={
+        <ParallelResponseModelPicker
+          disabled={Boolean(pendingMessage)}
+          modelSelection={modelSelection}
+          retainedModelId={visibleModelId}
+          retainedModelIds={comparison?.modelIds}
+        />
+      }
+      onDraftChange={handleDraftChange}
+      onStop={onStop}
+      onSubmit={onSubmit}
+      readOnly={Boolean(comparison)}
+      stopDisabled={cancelPending || status === "resuming"}
+    />
   );
 };
 
@@ -587,9 +633,9 @@ const EveConversation = ({
     delivery.accept
   );
   const displayedError =
-    commandFailure?.message ??
-    agent.error?.message ??
-    recordedError(agent.view);
+    pendingMessage || commandPending
+      ? undefined
+      : conversationError(agent.view, commandFailure, agent.error);
   // Failed provisional messages are retained in the recovery panel below.
   // They must not look like accepted transcript entries or survive a retry twice.
   const messages = selectedConversationMessages(
@@ -680,6 +726,14 @@ const EveConversation = ({
     if (controller.commands.get(branchId).cancellation === cancellation) {
       controller.commands.update(branchId, { cancellation: 0 });
     }
+  };
+  const reconnect = (): void => {
+    void run(async () => {
+      await agent.resume();
+      if (hasText(pendingMessage?.operationId)) {
+        await refreshDeliveryReceipt(pendingMessage.operationId);
+      }
+    });
   };
   const sendPendingMessage = async (
     pending: ActivePendingEveMessage
@@ -922,11 +976,23 @@ const EveConversation = ({
           <p aria-live="polite" className="sr-only">
             {statusLabel}
           </p>
-          {[snapshot.error, displayedError, composerDraft.error]
-            .filter(hasText)
-            .map((message): React.JSX.Element => (
-              <EveChatError key={message} message={message} />
-            ))}
+          {hasText(snapshot.error) && (
+            <EveChatError
+              title="Couldn’t load all messages"
+              message="Refresh the page to try again."
+            />
+          )}
+          <EveConversationError
+            error={displayedError}
+            reconnect={reconnect}
+            reconnectDisabled={busy || cancelPending}
+          />
+          {hasText(composerDraft.error) && (
+            <EveChatError
+              title="Draft unavailable"
+              message={composerDraft.error}
+            />
+          )}
           {pendingMessage && !commandPending && (
             <EveDeliveryRecovery
               pendingMessage={pendingMessage}
@@ -935,6 +1001,8 @@ const EveConversation = ({
               files={files}
               run={run}
               sendPendingMessage={sendPendingMessage}
+              reconnect={reconnect}
+              reconnectDisabled={busy || cancelPending}
               setCommandFailure={setCommandFailure}
             />
           )}
@@ -950,9 +1018,6 @@ const EveConversation = ({
           busy={busy}
           commandPending={commandPending}
           cancelPending={cancelPending}
-          displayedError={displayedError}
-          commandFailure={commandFailure}
-          agentError={agent.error}
           onStop={() => {
             startEventAction(cancel);
           }}
@@ -974,9 +1039,6 @@ const EveConversation = ({
                     steering ? "steer" : undefined
                   ));
             });
-          }}
-          onReconnect={() => {
-            void run(agent.resume);
           }}
         />
       }

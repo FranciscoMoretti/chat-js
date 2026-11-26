@@ -38,9 +38,7 @@ export const agentConfigurationSchema = z.strictObject({
     .max(eveDefaultToolIds.length)
     .transform((ids) => [...new Set(ids)])
     .optional(),
-  approval: z
-    .enum(["consequential", "always", "never"])
-    .default("consequential"),
+  approval: z.enum(["consequential", "always", "never"]).default("never"),
   compaction: z
     .strictObject({
       threshold: z.number().gt(0).lte(1).optional(),

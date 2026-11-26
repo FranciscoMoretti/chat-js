@@ -62,10 +62,10 @@ test("rejected send survives reload as an unsent draft and can be restored and s
       code: "chatjs_command_rejected",
     });
     await expect(
-      page.getByText("Message was not sent:", { exact: false })
+      page.getByText("Message not sent", { exact: true })
     ).toBeVisible();
     await expect(
-      page.getByText("Message delivery is unconfirmed.", { exact: false })
+      page.getByText("Message delivery is unconfirmed", { exact: true })
     ).toHaveCount(0);
     await expect(
       page.getByRole("button", { exact: true, name: "Reconnect" })
@@ -78,7 +78,7 @@ test("rejected send survives reload as an unsent draft and can be restored and s
     });
     await page.reload();
     await expect(
-      page.getByText("Message was not sent:", { exact: false })
+      page.getByText("Message not sent", { exact: true })
     ).toBeVisible();
     await expect(page.getByRole("log")).not.toContainText(unsent);
     await expect(
@@ -175,7 +175,7 @@ test("rejected send survives reload as an unsent draft and can be restored and s
   await composer.fill("Retain ambiguous delivery");
   await page.getByRole("button", { exact: true, name: "Send" }).click();
   await expect(
-    page.getByText("Message delivery is unconfirmed.", { exact: false })
+    page.getByText("Message delivery is unconfirmed", { exact: true })
   ).toBeVisible();
   await expect(
     page.getByRole("button", { exact: true, name: "Reconnect" })

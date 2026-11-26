@@ -19,7 +19,7 @@ export const writeAgentConfiguration = async (
       : [`modelIds: ${JSON.stringify(modelIds)}`]),
   ];
   const approvalExpressions = {
-    never: "undefined",
+    never: undefined,
     always: '() => "user-approval"',
     consequential:
       '({ toolAnnotations }) => toolAnnotations?.readOnlyHint === true ? "approved" : "user-approval"',
@@ -52,7 +52,9 @@ export const writeAgentConfiguration = async (
         ([key, value]) => `  ${JSON.stringify(key)}: ${JSON.stringify(value)},`
       ),
       `  model: applicationModel(${modelExpression}),`,
-      `  approval: ${approvalExpression},`,
+      ...(approvalExpression === undefined
+        ? []
+        : [`  approval: ${approvalExpression},`]),
       '  build: { externalDependencies: ["pino", "pino-pretty", "thread-stream", "typescript"] },',
       "  experimental: { workflow: { world: resolveWorkflowWorld() } },",
       "});",
