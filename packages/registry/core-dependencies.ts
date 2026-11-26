@@ -1,7 +1,6 @@
 // Names are a consumer contract; versions come from the normalized app manifest.
 // Includes shipped core source, styles, configuration and supported executable scripts.
 export const coreDependencyNames: readonly string[] = [
-  "@ai-sdk/devtools",
   "@ai-sdk/provider",
   // Keep AI SDK schema identity stable when Bun adds MCP to an existing app.
   "@ai-sdk/provider-utils",
@@ -38,7 +37,6 @@ export const coreDependencyNames: readonly string[] = [
   "@tailwindcss/postcss",
   "@tailwindcss/typography",
   "@tanstack/react-query",
-  "@tanstack/react-query-devtools",
   "@trpc/client",
   "@trpc/server",
   "@trpc/tanstack-react-query",
