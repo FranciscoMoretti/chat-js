@@ -28,6 +28,7 @@ export default defineConfig({
   optimizeDeps: {
     include: [
       "@shadcn/react/message-scroller",
+      "@tanstack/react-query-devtools",
       "@base-ui/react/button",
       "@base-ui/react/dialog",
       "@base-ui/react/menu",
