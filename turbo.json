@@ -58,6 +58,18 @@
       "dependsOn": ["^build"],
       "outputs": [".next/**", "dist/**", "build/**"]
     },
+    "site-source": {
+      "dependsOn": ["^site-source"]
+    },
+    "@chatjs/site#build": {
+      "dependsOn": ["^site-source", "@chat-js/thread#build"],
+      "outputs": [".next/**"]
+    },
+    "@chatjs/site#dev": {
+      "dependsOn": ["@chat-js/thread#build"],
+      "cache": false,
+      "persistent": true
+    },
     "@chatjs/docs#build": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/.agents/skills/**"],
@@ -244,7 +256,11 @@
       "outputs": []
     },
     "@chatjs/site#test:unit": {
-      "dependsOn": ["^test:unit"],
+      "dependsOn": [
+        "^site-source",
+        "@chat-js/thread#test:unit",
+        "@chatjs/brand#test:unit"
+      ],
       "inputs": [
         "$TURBO_DEFAULT$",
         "$TURBO_ROOT$/packages/registry/*.ts",

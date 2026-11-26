@@ -30,6 +30,7 @@ const copyFixtureFiles = async (directory: string): Promise<void> => {
       "apps/docs",
       "apps/site",
       "apps/electron",
+      "packages/brand",
       "packages/cli",
       "packages/thread",
       "packages/registry",
