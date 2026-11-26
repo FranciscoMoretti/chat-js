@@ -1,4 +1,5 @@
 import { HydrationBoundary, dehydrate } from "@tanstack/react-query";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { connection } from "next/server";
 import React, { Suspense } from "react";
 
@@ -32,7 +33,9 @@ const ConnectorsSettingsContent = async (): Promise<React.JSX.Element> => {
     <HydrationBoundary state={dehydrate(queryClient)}>
       <SettingsPage>
         <ConnectorsSettingsHeader />
-        <ConnectorsSettings />
+        <NuqsAdapter>
+          <ConnectorsSettings />
+        </NuqsAdapter>
       </SettingsPage>
     </HydrationBoundary>
   );

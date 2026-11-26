@@ -1,7 +1,6 @@
 import { ChatPlugins } from "@/providers/chat-plugins";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { disableAutoSnapshot, takeSnapshot } from "@uiverify/vitest";
-import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { Suspense } from "react";
 import type { ReactNode } from "react";
 import { createRoot } from "react-dom/client";
@@ -34,21 +33,19 @@ let mounted:
   | undefined;
 
 const tree = (ui: ReactNode, theme: (typeof THEMES)[number]) => (
-  <NuqsTestingAdapter searchParams={route.search}>
-    <ThemeProvider
-      attribute="class"
-      defaultTheme={theme}
-      disableTransitionOnChange
-      forcedTheme={theme}
-    >
-      <Toaster position="top-center" />
-      <TooltipProvider>
-        <ChatPlugins>
-          <Suspense>{ui}</Suspense>
-        </ChatPlugins>
-      </TooltipProvider>
-    </ThemeProvider>
-  </NuqsTestingAdapter>
+  <ThemeProvider
+    attribute="class"
+    defaultTheme={theme}
+    disableTransitionOnChange
+    forcedTheme={theme}
+  >
+    <Toaster position="top-center" />
+    <TooltipProvider>
+      <ChatPlugins>
+        <Suspense>{ui}</Suspense>
+      </ChatPlugins>
+    </TooltipProvider>
+  </ThemeProvider>
 );
 
 /** Mounts a route file's tree inside the root layout's providers, as `path` would serve it. */

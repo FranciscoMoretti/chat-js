@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { expect, test } from "vitest";
+import { expect, test, vi } from "vitest";
 import { page, userEvent } from "vitest/browser";
 
 import ChatLayout from "@/app/(chat)/layout";
@@ -19,7 +19,18 @@ import {
   wiki,
 } from "./fixtures";
 import { renderRoute } from "./render";
-import { TrpcFixtureError } from "./route";
+import { TrpcFixtureError, route } from "./route";
+
+vi.mock("nuqs/adapters/next/app", async () => {
+  const { NuqsTestingAdapter } = await import("nuqs/adapters/testing");
+  return {
+    NuqsAdapter: ({ children }: { children: ReactNode }) => (
+      <NuqsTestingAdapter searchParams={route.search}>
+        {children}
+      </NuqsTestingAdapter>
+    ),
+  };
+});
 
 const settings = (children: ReactNode) => (
   <ChatLayout>
