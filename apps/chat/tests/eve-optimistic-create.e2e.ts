@@ -74,7 +74,8 @@ for (const project of [false, true]) {
       await input.fill("Optimistic first message");
       const firstRequest = page.waitForRequest("**/api/agent-conversations");
       await composer.getByLabel("Send", { exact: true }).click();
-      const firstBody = (await firstRequest).postData();
+      const original = await firstRequest;
+      const firstBody = original.postData();
       expect(firstBody).toContain("Optimistic first message");
       if (project) {
         expect(firstBody).toContain("pending.pdf");
@@ -121,7 +122,8 @@ for (const project of [false, true]) {
       await expect(recovery).toContainText("Optimistic first message");
       const retried = page.waitForRequest("**/api/agent-conversations");
       await recovery.getByRole("button", { name: "Retry creation" }).click();
-      expect((await retried).postData()).toBe(firstBody);
+      const replay = await retried;
+      expect(replay.postData()).toBe(firstBody);
     } finally {
       release.resolve();
       if (projectId !== undefined && projectId !== null && projectId !== "") {
