@@ -11,6 +11,8 @@ import { chatUi as projectsClient } from "@/chatjs/plugins/projects/chat-ui";
 import { chatUi as searchClient } from "@/chatjs/plugins/search/chat-ui";
 import { chatUi as sharingClient } from "@/chatjs/plugins/sharing/chat-ui";
 import { chatUi as spreadsheetViewerClient } from "@/chatjs/plugins/spreadsheet-viewer/chat-ui";
+import { chatUi as streamdownMathClient } from "@/chatjs/plugins/streamdown-math/chat-ui";
+import { chatUi as streamdownMermaidClient } from "@/chatjs/plugins/streamdown-mermaid/chat-ui";
 import { chatUi as videoViewerClient } from "@/chatjs/plugins/video-viewer/chat-ui";
 import type { UiPlugin } from "@/chatjs/core/ui/slots";
 export const installedChatPlugins: readonly UiPlugin[] = [
@@ -25,5 +27,7 @@ export const installedChatPlugins: readonly UiPlugin[] = [
   searchClient,
   sharingClient,
   spreadsheetViewerClient,
+  streamdownMathClient,
+  streamdownMermaidClient,
   videoViewerClient,
 ];

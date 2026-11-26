@@ -1,3 +1,4 @@
+import { parsePackageJson } from "../../cli/src/helpers/package-manifest";
 import {
   combinationCases,
   pluginPrerequisites,
@@ -40,6 +41,42 @@ for (const gateway of GATEWAYS) {
       typecheckProject(files, validationDependencyFixtures).diagnostics
     ).toEqual([]);
   }, 60_000);
+}
+
+for (const selection of [
+  [],
+  ["streamdown-math"],
+  ["streamdown-mermaid"],
+  ["streamdown-math", "streamdown-mermaid"],
+]) {
+  test(`Markdown installation includes only selected adapters: ${selection.join(", ") || "bare"}`, async () => {
+    const { files } = await renderValidationProject(prepared.core, {
+      gateway: "openai",
+      storage: { source: "memory", options: {} },
+      tools: [],
+      plugins: selection,
+    });
+    const decode = (path: string) => new TextDecoder().decode(files.get(path));
+    const { dependencies } = parsePackageJson(decode("package.json"));
+    expect(dependencies).toHaveProperty("streamdown");
+    expect(dependencies).toHaveProperty("@streamdown/code");
+    for (const adapter of ["math", "mermaid"]) {
+      const id = `streamdown-${adapter}`;
+      const selected = selection.includes(id);
+      expect(dependencies?.[`@streamdown/${adapter}`] !== undefined).toBe(
+        selected
+      );
+      expect(files.has(`chatjs/plugins/${id}/chat-ui.ts`)).toBe(selected);
+      expect(
+        decode("chatjs/generated/installed-chat-ui.ts").includes(
+          `/plugins/${id}/chat-ui`
+        )
+      ).toBe(selected);
+    }
+    expect(dependencies?.katex !== undefined).toBe(
+      selection.includes("streamdown-math")
+    );
+  });
 }
 
 for (const viewers of [

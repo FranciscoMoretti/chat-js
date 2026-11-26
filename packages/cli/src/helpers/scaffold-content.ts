@@ -196,6 +196,7 @@ const REFERENCE_VISUAL_PROJECT =
   /^ {4}\{\n {6}name: "visual",[\s\S]*?^ {4}\},\n/gmu;
 
 interface ScaffoldPackageManifest {
+  imports?: Record<string, unknown> | null;
   dependencies?: Record<string, unknown> | null;
   devDependencies?: Record<string, unknown> | null;
   overrides?: Record<string, unknown> | null;
@@ -210,7 +211,7 @@ const isScaffoldPackageManifest = (
   value: unknown
 ): value is ScaffoldPackageManifest =>
   isJsonObject(value) &&
-  ["dependencies", "devDependencies", "overrides", "scripts"].every(
+  ["dependencies", "devDependencies", "imports", "overrides", "scripts"].every(
     (key) =>
       !Object.hasOwn(value, key) ||
       value[key] === null ||
@@ -273,7 +274,13 @@ const normalizePackageManifest = async (packagePath: string): Promise<void> => {
   )) {
     Reflect.deleteProperty(dependencies, name);
   }
+  // Generated apps use the fallback until their owner enables the query inspector.
+  const queryDevtools = manifest.imports?.["#query-devtools"];
+  if (isJsonObject(queryDevtools)) {
+    delete queryDevtools.development;
+  }
   for (const dependency of [
+    "@tanstack/react-query-devtools",
     "@types/papaparse",
     "@electric-sql/pglite",
     "pg",

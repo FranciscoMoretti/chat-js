@@ -2,31 +2,32 @@
 
 import "streamdown/styles.css";
 
-import React, { memo } from "react";
+import React, { memo, useMemo } from "react";
 import type { ComponentProps } from "react";
 import { Streamdown } from "streamdown";
 import { cn } from "@/lib/utils";
 import { code } from "@streamdown/code";
-import { math } from "@streamdown/math";
-import { mermaid } from "@streamdown/mermaid";
-
-const plugins = { code, math, mermaid };
+import { useMarkdownPlugins } from "@/chatjs/core/ui/slots";
 
 type ResponseProps = ComponentProps<typeof Streamdown>;
 
 const ResponseComponent = ({
   className,
   ...props
-}: ResponseProps): React.JSX.Element => (
-  <Streamdown
-    className={cn(
-      "w-full [&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
-      className
-    )}
-    plugins={plugins}
-    {...props}
-  />
-);
+}: ResponseProps): React.JSX.Element => {
+  const markdown = useMarkdownPlugins();
+  const plugins = useMemo(() => ({ code, ...markdown }), [markdown]);
+  return (
+    <Streamdown
+      className={cn(
+        "w-full [&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
+        className
+      )}
+      plugins={plugins}
+      {...props}
+    />
+  );
+};
 
 const Response = memo(
   ResponseComponent,

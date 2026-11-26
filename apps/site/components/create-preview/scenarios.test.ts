@@ -40,7 +40,7 @@ for (const [name, input, output] of [
 void test("selected media tools preview successful results", () => {
   const parts = sceneMessages(
     "preview-tools",
-    false,
+    [],
     new Set(["generateImage", "generateVideo"])
   )
     .flatMap((message) => message.parts)

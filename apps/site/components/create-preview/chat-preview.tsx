@@ -154,18 +154,14 @@ export const ChatPreview = () => {
       if (
         !("type" in message) ||
         message.type !== "chatjs:create-installation" ||
-        !("installation" in message) ||
-        !("mode" in message)
+        !("installation" in message)
       ) {
         return;
       }
       const selection = installationSelectionSchema.safeParse(
         message.installation
       );
-      if (
-        !selection.success ||
-        (message.mode !== "light" && message.mode !== "dark")
-      ) {
+      if (!selection.success) {
         return;
       }
       setInstallation(selection.data);
@@ -179,7 +175,12 @@ export const ChatPreview = () => {
           ? "mutation-error"
           : "ready"
       );
-      setTheme(message.mode);
+      if (
+        "mode" in message &&
+        (message.mode === "light" || message.mode === "dark")
+      ) {
+        setTheme(message.mode);
+      }
     };
     window.addEventListener("message", receive);
     announceReady();
@@ -234,7 +235,7 @@ export const ChatPreview = () => {
   };
 
   const transcriptMessages = [
-    ...sceneMessages(params.item, uploads, availableTools),
+    ...sceneMessages(params.item, installation.plugins, availableTools),
     ...submittedMessages(messages, installation.gateway),
   ]
     .map((message): ReadonlyEveMessage =>

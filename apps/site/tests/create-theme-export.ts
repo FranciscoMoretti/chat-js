@@ -16,18 +16,18 @@ export const checkCreateThemeExport = async (page: Page, origin: string) => {
     "data-preset",
     encodePreset({ ...DEFAULT_PRESET_CONFIG, style: "rhea", radius: "default" })
   );
-  const radius = await preview
-    .locator("html")
-    .evaluate((element) =>
-      getComputedStyle(element).getPropertyValue("--radius").trim()
-    );
   await page
     .getByRole("button", { name: "Get Code", exact: true })
     .first()
     .click();
   const dialog = page.getByRole("dialog", { name: "Create your ChatJS app" });
   await dialog.getByRole("button", { name: "Theme", exact: true }).click();
-  await expect(dialog.locator("pre")).toContainText(`--radius: ${radius};`);
+  const exported = (await dialog.locator("pre").textContent()) ?? "";
+  const radius = /--radius:\s*(?<radius>[^;]+);/u.exec(exported)?.groups
+    ?.radius;
+  expect(radius).toBeDefined();
+  // The iframe applies the normalized preset in an effect after rendering.
+  await expect(preview.locator("html")).toHaveCSS("--radius", radius ?? "");
   await dialog.getByRole("button", { name: "Copy Theme", exact: true }).click();
   const css = await page.evaluate(
     async () => await navigator.clipboard.readText()

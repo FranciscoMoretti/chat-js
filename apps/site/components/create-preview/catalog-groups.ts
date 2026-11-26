@@ -7,7 +7,13 @@ const appPluginGroups = [
   },
   {
     title: "Responses",
-    ids: ["feedback", "followup-suggestions", "model-preferences"],
+    ids: [
+      "feedback",
+      "followup-suggestions",
+      "model-preferences",
+      "streamdown-math",
+      "streamdown-mermaid",
+    ],
   },
   {
     title: "Files & connections",

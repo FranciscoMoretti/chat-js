@@ -1,3 +1,5 @@
+import { streamdownMathItem } from "./streamdown-math/manifest";
+import { streamdownMermaidItem } from "./streamdown-mermaid/manifest";
 import { spreadsheetViewerItem } from "./spreadsheet-viewer/manifest";
 import { videoViewerItem } from "./video-viewer/manifest";
 import { imageViewerItem } from "./image-viewer/manifest";
@@ -16,6 +18,8 @@ import { attachmentUploadsItem } from "./attachment-uploads/manifest";
 
 export const pluginItems = [
   imageViewerItem,
+  streamdownMathItem,
+  streamdownMermaidItem,
   spreadsheetViewerItem,
   videoViewerItem,
   projectsItem,

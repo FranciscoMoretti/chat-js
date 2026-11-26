@@ -59,6 +59,8 @@ const demoInstallation = installationSelectionSchema.parse({
   plugins: [
     "image-viewer",
     "video-viewer",
+    "streamdown-math",
+    "streamdown-mermaid",
     "spreadsheet-viewer",
     "desktop",
     "projects",

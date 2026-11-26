@@ -7,6 +7,8 @@ import { createTRPCClient } from "@trpc/client";
 import type { AppRouter } from "../../../chat/trpc/routers/_app";
 import { TRPCProvider } from "../../../chat/trpc/context";
 import { SessionContext } from "../../../chat/providers/session-context";
+import { chatUi as streamdownMathClient } from "../../../chat/chatjs/plugins/streamdown-math/chat-ui";
+import { chatUi as streamdownMermaidClient } from "../../../chat/chatjs/plugins/streamdown-mermaid/chat-ui";
 import { chatUi as spreadsheetViewerClient } from "../../../chat/chatjs/plugins/spreadsheet-viewer/chat-ui";
 import { chatUi as videoViewerClient } from "../../../chat/chatjs/plugins/video-viewer/chat-ui";
 import { chatUi as imageViewerClient } from "../../../chat/chatjs/plugins/image-viewer/chat-ui";
@@ -37,6 +39,8 @@ export const usePreviewFixtures = () => {
   return fixture;
 };
 const clients = {
+  "streamdown-math": streamdownMathClient,
+  "streamdown-mermaid": streamdownMermaidClient,
   "image-viewer": imageViewerClient,
   "video-viewer": videoViewerClient,
   "spreadsheet-viewer": spreadsheetViewerClient,
