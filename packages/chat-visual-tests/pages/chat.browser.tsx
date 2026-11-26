@@ -509,7 +509,11 @@ test("conversation with an interrupted connection", async () => {
 });
 
 test("conversation with an interrupted reply", async () => {
-  await renderRoute(conversation, { ...request, events: failedReplyEvents });
+  await renderRoute(conversation, {
+    ...request,
+    agentError: Object.assign(new Error(chatFailure), { name: "MODEL_FAILED" }),
+    events: failedReplyEvents,
+  });
   const notice = page
     .getByRole("alert")
     .filter({ hasText: "Reply interrupted" });
@@ -520,6 +524,23 @@ test("conversation with an interrupted reply", async () => {
     .element(page.getByRole("button", { name: "Reconnect" }))
     .not.toBeInTheDocument();
   await expect.element(page.getByText(chatFailure)).not.toBeInTheDocument();
+});
+
+test("a lost connection offers Reconnect even after a failed reply", async () => {
+  await renderRoute(conversation, {
+    ...request,
+    agentError: "The stream disconnected.",
+    events: failedReplyEvents,
+  });
+  const notice = page
+    .getByRole("alert")
+    .filter({ hasText: "Connection interrupted" });
+  await expect
+    .element(notice.getByRole("button", { name: "Reconnect" }))
+    .toBeEnabled();
+  await expect
+    .element(page.getByText("Reply interrupted"))
+    .not.toBeInTheDocument();
 });
 
 test.each([

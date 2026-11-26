@@ -102,18 +102,25 @@ const conversationError = (
   if (isEveCommandRejection(commandError)) {
     return { title: "Request rejected", message: commandError.message };
   }
+  const currentError = commandError ?? agentError;
   const latestTurn = turns(view).at(-1);
+  const replyFailure =
+    latestTurn?.status === "running"
+      ? undefined
+      : failure(view, latestTurn?.turnId);
+  // Eve projects a failed reply into agent.error using its code and message.
   if (
-    (!commandError || commandError === agentError) &&
-    latestTurn?.status !== "running" &&
-    failure(view, latestTurn?.turnId)
+    replyFailure &&
+    (!currentError ||
+      (currentError.name === replyFailure.code &&
+        currentError.message === replyFailure.message))
   ) {
     return {
       title: "Reply interrupted",
       message: "Try sending your message again.",
     };
   }
-  if (commandError || agentError) {
+  if (currentError) {
     return {
       title: "Connection interrupted",
       message: "You may be missing the latest reply.",
