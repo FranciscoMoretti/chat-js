@@ -1,44 +1,10 @@
 import { MockLanguageModelV3 } from "ai/test";
 import { expect, test, vi } from "vitest";
 
-import {
-  getEveModelDefinition,
-  loadEveModelDefinition,
-  resolveEveModel,
-} from "./model-selection";
+import { loadEveModelDefinition, resolveEveModel } from "./model-selection";
 
-vi.mock("../ai/active-gateway", () => ({
-  getActiveGateway: () => ({
-    createLanguageModel: (id: string) =>
-      new MockLanguageModelV3({
-        doGenerate: vi
-          .fn()
-          .mockRejectedValue(new Error(`provider model: ${id}`)),
-        modelId: id,
-        provider: "test",
-      }),
-    fetchModels: async () => {
-      const { getFallbackModels } =
-        await import("../ai/gateways/fallback-models");
-      return [
-        ...getFallbackModels("test"),
-        { id: "live-only", pricing: {}, tags: [], type: "language" },
-      ];
-    },
-  }),
-}));
-vi.mock("../config", () => ({
-  config: {
-    ai: {
-      disabledModels: ["disabled"],
-      providerOrder: [],
-      gateway: "test",
-      workflows: { chat: "plain" },
-    },
-  },
-}));
-vi.mock("../ai/gateways/fallback-models", () => ({
-  getFallbackModels: () => [
+const { discoverModels } = vi.hoisted(() => ({
+  discoverModels: vi.fn().mockResolvedValue([
     {
       context_window: 1000,
       id: "plain",
@@ -73,16 +39,42 @@ vi.mock("../ai/gateways/fallback-models", () => ({
     },
     { id: "disabled", pricing: {}, tags: [], type: "language" },
     { id: "image", pricing: {}, tags: [], type: "image" },
-  ],
+  ]),
+}));
+
+vi.mock("../ai/active-gateway", () => ({
+  getActiveGateway: () => ({
+    createLanguageModel: (id: string) =>
+      new MockLanguageModelV3({
+        doGenerate: vi
+          .fn()
+          .mockRejectedValue(new Error(`provider model: ${id}`)),
+        modelId: id,
+        provider: "test",
+      }),
+    fetchModels: discoverModels,
+  }),
+}));
+vi.mock("../config", () => ({
+  config: {
+    ai: {
+      disabledModels: ["disabled"],
+      providerOrder: [],
+      gateway: "test",
+      workflows: { chat: "plain" },
+    },
+  },
 }));
 
 test("keeps the provider model and reasoning variant distinct", async () => {
-  expect(getEveModelDefinition()).toMatchObject({
+  expect(await loadEveModelDefinition()).toMatchObject({
     id: "plain",
     reasoning: false,
   });
-  expect(getEveModelDefinition("thinking").reasoning).toBe(false);
-  expect(getEveModelDefinition("thinking-reasoning")).toMatchObject({
+  expect(await loadEveModelDefinition("thinking")).toMatchObject({
+    reasoning: false,
+  });
+  expect(await loadEveModelDefinition("thinking-reasoning")).toMatchObject({
     apiModelId: "thinking",
     reasoning: true,
   });
@@ -127,19 +119,24 @@ test("the logical reasoning identity still dispatches to the original provider m
 });
 test.each(["unknown", "disabled", "image", "plain-reasoning"])(
   "rejects unavailable selection %s",
-  (id) => {
-    expect(() => getEveModelDefinition(id)).toThrow("not available");
+  async (id) => {
+    await expect(loadEveModelDefinition(id)).rejects.toThrow("not available");
   }
 );
-
-test("accepts live catalog models absent from the snapshot", async () => {
-  expect(() => getEveModelDefinition("live-only")).toThrow();
-  expect(await loadEveModelDefinition("live-only")).toMatchObject({
-    id: "live-only",
-  });
-});
 
 test("chooses a discovered chat model when the gateway's preferred ID is missing", async () => {
   const { loadDefaultEveWebModelId } = await import("./model-selection");
   expect(await loadDefaultEveWebModelId("missing-default")).toBe("plain");
+});
+
+test("retries discovery after a gateway error and reuses the successful catalog", async () => {
+  vi.resetModules();
+  const { loadEveModelDefinition: load } = await import("./model-selection");
+  discoverModels
+    .mockClear()
+    .mockRejectedValueOnce(new Error("gateway unavailable"));
+  await expect(load("plain")).rejects.toThrow("gateway unavailable");
+  expect(await load("plain")).toMatchObject({ id: "plain" });
+  await load("thinking");
+  expect(discoverModels).toHaveBeenCalledTimes(2);
 });

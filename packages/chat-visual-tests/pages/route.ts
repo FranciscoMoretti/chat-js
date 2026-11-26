@@ -12,6 +12,7 @@ import type { getPublicEveTranscript } from "@/chatjs/plugins/sharing/public-con
 
 /** What the route files' server reads return for this request. */
 export interface ServerData {
+  modelDiscoveryError?: Error;
   modelIds?: readonly string[];
   conversation?: Awaited<ReturnType<typeof getEveChatPageConversation>>;
   conversations?: Awaited<ReturnType<typeof listEveConversations>>;

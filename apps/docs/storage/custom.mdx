@@ -1,6 +1,6 @@
 ---
 title: Custom Storage
-description: Publish a third-party storage integration using the standard ChatJS registry contract
+description: "Build a ChatJS storage adapter, declare its registry contract and non-secret options, and verify the installed provider with real file operations."
 ---
 
 Your item installs one entry point at `~/chatjs/providers/storage.ts`. Export a synchronous `createStorageAdapter(options)` function returning a Files SDK `Adapter`. You can wrap an existing Files SDK provider or implement its adapter interface. Your provider ID does not need to exist in the built-in catalog.
@@ -34,14 +34,14 @@ Use standard shadcn files and dependencies, plus this `meta.chatjs` shape:
   "kind": "storage",
   "id": "acme-storage",
   "configKeys": ["bucket", "region"],
-  "envRequirements": [{ "options": [["ACME_STORAGE_TOKEN"]] }],
+  "envRequirements": [],
   "optionalEnv": []
 }
 ```
 
-`configKeys` supplies configuration hints for the CLI prompt. TypeScript checks the actual option shape. Each environment requirement must be satisfied. Its `options` are alternatives, with every variable in one alternative required. Declare variables your implementation actually reads. For the S3 wrapper above, use S3's configuration and credential requirements instead of the illustrative `ACME_STORAGE_TOKEN`.
+`configKeys` supplies configuration hints for the CLI prompt. TypeScript checks the actual option shape. Each environment requirement must be satisfied. Its `options` are alternatives, with every variable in one alternative required. This example supplies the bucket and region as options and lets the AWS SDK resolve credentials through its standard chain, such as an IAM role or a local profile. The registry item therefore requires no named environment variable.
 
-Declare `files-sdk` and your provider's peer packages under `dependencies`. List the source file with `type: "registry:file"` and `target: "~/chatjs/providers/storage.ts"`. Extra implementation files and shared registry dependencies are supported through standard shadcn fields. The CLI owns `chatjs/providers/storage-options.ts`, so your item should not install that file.
+For this S3 wrapper, declare `files-sdk`, `@aws-sdk/client-s3`, `@aws-sdk/s3-presigned-post`, and `@aws-sdk/s3-request-presigner` under `dependencies`. List the source file with `type: "registry:file"` and `target: "~/chatjs/providers/storage.ts"`. Extra implementation files and shared registry dependencies are supported through standard shadcn fields. The CLI owns `chatjs/providers/storage-options.ts`, so your item should not install that file.
 
 ## Install and verify
 
@@ -57,4 +57,4 @@ Namespace addresses such as `@acme/storage` also work when configured in `compon
 
 Run the receiving app's type checks and `check-env`, then verify upload, download, and deletion with your adapter. Metadata validation alone cannot prove that credentials, network access, or storage operations work.
 
-This selection flow applies to app creation. `chat-js add` and `sync` still handle tools. Switching a deployed app's storage requires a separate object migration and configuration change, as described in [File Storage](../storage).
+For an existing app, use `chat-js add --storage-provider <item> --replace` with the same `--storage-config` options. If the app already stores files, follow [Changing providers](/storage#changing-providers) before deploying the replacement.

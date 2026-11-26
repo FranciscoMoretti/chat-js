@@ -7,10 +7,6 @@ import { getDefaultWebChatModelId } from "./web-chat-models";
 
 const modelSettings = vi.hoisted((): { modelIds?: string[] } => ({}));
 
-vi.mock("next/cache", () => ({
-  unstable_cache: <Result>(operation: () => Result): (() => Result) =>
-    operation,
-}));
 vi.mock("@/lib/config", () => ({
   config: {
     ai: {

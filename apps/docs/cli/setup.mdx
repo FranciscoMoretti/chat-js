@@ -1,0 +1,21 @@
+---
+title: setup
+description: "Check which installed ChatJS tools and plugins have the configuration they need, list missing requirements, and read the results as JSON."
+---
+
+From a generated app, run the CLI with Bun available on your path. The command invokes the app's `scripts/agent-status.ts` and reads its local environment.
+
+```bash
+npx chat-js@alpha setup
+```
+
+For each installed tool or plugin it inspects, the command reports whether required configuration is present and lists missing requirements. It exits with status 1 if any entry has incomplete configuration.
+
+| Option            | Purpose                                  |
+| ----------------- | ---------------------------------------- |
+| `-c, --cwd <cwd>` | Inspect the app in another directory     |
+| `--json`          | Print the tool and plugin states as JSON |
+
+A configured item can still need a connection or a live test. The JSON reports those states separately as `connection: "not-checked"` and `verification: "not-run"`.
+
+For full application environment validation, run `npm run check-env`. To apply migrations and prepare the EVE workflow database, run the app's `npm run setup` script. See the [Quickstart](/quickstart).

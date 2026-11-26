@@ -268,10 +268,9 @@ await Promise.all(
       .toBuffer();
     asset(`social/og-${theme}.png`, og);
     asset(`social/github-${theme}.png`, github);
-    appCopy(
-      `docs/public/images/hero-${theme === "white" ? "light" : "dark"}.png`,
-      github
-    );
+    const banner = `docs/public/images/hero-${theme === "white" ? "light" : "dark"}`;
+    appCopy(`${banner}.png`, github);
+    appCopy(`${banner}.webp`, await sharp(github).webp().toBuffer());
     if (theme === "dark") {
       const jpeg = await sharp(og).jpeg({ quality: 90 }).toBuffer();
       appCopy("site/app/opengraph-image.jpg", jpeg);

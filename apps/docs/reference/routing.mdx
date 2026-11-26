@@ -1,6 +1,6 @@
 ---
 title: URL Routing
-description: Conversation and project URLs and their Next.js route parameters
+description: "Look up ChatJS routes for chats, projects, and public shares, and distinguish the chat ID in the URL from a branch or native EVE session ID."
 ---
 
 This page explains the URL routing structure used in ChatJS.
@@ -23,6 +23,6 @@ Shared chat components use `useActiveChatId()` from `@/components/chat/chat-navi
 
 Projects reads `[projectId]` in its own sidebar component. For a conversation with project membership, Projects provides `parentHref` through its chat integration so deletion returns the user to the project.
 
-See [Execution & Recovery](../core/execution) for how conversation creation and recovery preserve state during first-message navigation.
+See [Execution & Recovery](/core/execution) for how conversation creation and recovery preserve state during first-message navigation.
 
-See [Projects](../plugins/projects) for how project-scoped routes work.
+See [Projects](/plugins/projects) for how project-scoped routes work.

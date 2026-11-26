@@ -100,24 +100,6 @@ const replaceInFile = async (
   await writeFile(filePath, content);
 };
 
-const normalizeGatewaySnapshotCommands = async (
-  destination: string,
-  packageManager: PackageManager
-): Promise<void> => {
-  await replaceInFile(
-    pathModule.join(destination, "scripts", "environment-validation-report.ts"),
-    [["bun fetch:models", runScript(packageManager, "fetch:models")]]
-  );
-  await replaceInFile(
-    pathModule.join(destination, "scripts", "gateway-snapshot-warning.test.ts"),
-    [["bun fetch:models", runScript(packageManager, "fetch:models")]]
-  );
-  await replaceInFile(
-    pathModule.join(destination, "lib", "ai", "gateways", "fallback-models.ts"),
-    [["bun fetch:models", runScript(packageManager, "fetch:models")]]
-  );
-};
-
 const resetInstallableTools = async (destination: string): Promise<void> => {
   const toolsDir = pathModule.join(destination, "chatjs", "tools");
   await rm(toolsDir, { force: true, recursive: true });
@@ -285,10 +267,7 @@ const normalizeChatAppFiles = async (
       " * Run via `bun run check-env` or automatically in prebuild.",
       ` * Run via \`${runScript(packageManager, "check-env")}\` or automatically in prebuild.`,
     ],
-    ["bun fetch:models", runScript(packageManager, "fetch:models")],
   ]);
-
-  await normalizeGatewaySnapshotCommands(destination, packageManager);
 
   await replaceInFile(
     pathModule.join(destination, "scripts", "worktree-setup.sh"),

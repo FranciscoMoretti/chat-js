@@ -10,6 +10,7 @@ import type { ImageModel } from "ai";
 import { createOpenAI } from "@ai-sdk/openai";
 import { z } from "zod";
 
+const MODEL_DISCOVERY_TIMEOUT_MS = 10_000;
 const MODEL_ID_PARAMETER_INDEX = 0;
 type OpenAiLanguageModelId = Parameters<
   ReturnType<typeof createOpenAI>["languageModel"]
@@ -101,43 +102,37 @@ class OpenAIGateway
     const apiKey = this.getApiKey();
 
     if (!(typeof apiKey === "string" && apiKey !== "")) {
-      this.log.warn("No OPENAI_API_KEY found, using fallback models");
-      return [...this.getFallbackModels(this.type)];
+      throw new Error("OPENAI_API_KEY is not configured");
     }
 
     const url = "https://api.openai.com/v1/models";
     this.log.debug({ url }, "Fetching models from OpenAI");
 
-    try {
-      const response = await this.fetch(url, {
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-      });
+    const response = await this.fetch(url, {
+      signal: AbortSignal.timeout(MODEL_DISCOVERY_TIMEOUT_MS),
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+    });
 
-      if (!response.ok) {
-        this.log.error(
-          { status: response.status, statusText: response.statusText, url },
-          "OpenAI returned non-OK response"
-        );
-        throw new Error(`Failed to fetch models: ${response.statusText}`);
-      }
-
-      const result = parseProviderModels(await response.json());
-
-      this.log.info(
-        { modelCount: result.length },
-        "Successfully fetched models from OpenAI"
-      );
-      return result;
-    } catch (error) {
+    if (!response.ok) {
       this.log.error(
-        { err: error, url },
-        "Error fetching models from OpenAI, falling back to generated models"
+        { status: response.status, statusText: response.statusText, url },
+        "OpenAI returned non-OK response"
       );
-      return [...this.getFallbackModels(this.type)];
+      throw new Error(
+        `Failed to fetch models: ${response.status} ${response.statusText}`
+      );
     }
+
+    const result = parseProviderModels(await response.json());
+
+    this.log.info(
+      { modelCount: result.length },
+      "Successfully fetched models from OpenAI"
+    );
+    return result;
   }
 }
 export { OpenAIGateway as Gateway, OpenAIGateway };

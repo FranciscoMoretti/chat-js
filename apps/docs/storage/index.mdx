@@ -1,15 +1,16 @@
 ---
 title: "File storage"
-description: "Configure provider-agnostic storage for attachments and generated media"
+description: "Choose a Files SDK adapter for uploads and generated media, configure its credentials, and understand how ChatJS serves and cleans up stored files."
 ---
 
-ChatJS uses [Files SDK](https://files-sdk.dev) to store files without coupling application code to one storage provider. Built-in providers use Files SDK adapters. You choose the adapter when you create the app, and ChatJS uses the same storage layer for uploads, generated media, downloads, cloning, and cleanup.
+ChatJS uses [Files SDK](https://files-sdk.dev) to store files without coupling application code to one storage provider. Built-in providers use Files SDK adapters. Choose an adapter during app creation or [replace it in an existing app](#changing-providers). Uploads, generated media, downloads, cloning, and cleanup all use the selected adapter.
 
 Durable file storage is required when you enable any of these capabilities:
 
-- [Attachments](../plugins/attachments)
-- [Image generation](../tools/generate-image)
-- [Video generation](../tools/generate-video)
+- [Attachments](/plugins/attachments)
+- [Image generation](/tools/generate-image)
+- [Video generation](/tools/generate-video)
+- [Publishing files from the agent workspace](/tools/code-execution)
 
 <Callout type="warning">
   The in-memory adapter is suitable for projects that do not use file-backed
@@ -24,10 +25,10 @@ The interactive installer asks you to choose a file storage provider when your s
 npx chat-js@alpha create my-app
 ```
 
-For a non-interactive installation, pass a provider slug and any non-secret adapter options:
+To skip prompts, pass `--yes` along with the provider and its non-secret options.
 
 ```bash
-npx chat-js@alpha create my-app \
+npx chat-js@alpha create my-app --yes \
   --storage-provider s3 \
   --storage-config '{"bucket":"uploads","region":"us-east-1"}'
 ```
@@ -51,7 +52,7 @@ npx chat-js@alpha create my-app --yes \
   --storage-config '{"bucket":"uploads"}'
 ```
 
-The external item must implement the [storage authoring contract](./custom). Its identifier does not need to be in Files SDK's provider catalog.
+The external item must implement the [storage authoring contract](/storage/custom). Its identifier does not need to be in Files SDK's provider catalog.
 
 ## Installed configuration
 
@@ -103,13 +104,15 @@ flowchart LR
     Features["Attachments and generated media"] --> Storage["ChatJS file-storage layer"]
     Storage --> SDK["Files SDK"]
     SDK --> Provider["Configured provider"]
-    Database["Stored ChatJS file URL"] --> Route["/api/files/content?key=..."]
-    Route --> Storage
+    Message["File link in chat"] --> Route["GET /api/files/{fileId}"]
+    Route --> Access["Check read access"]
+    Access --> Record["Look up provider storage key"]
+    Record --> Storage
 ```
 
-ChatJS stores application URLs such as `/api/files/content?key=l_u0a2bkphKLFKsBI4q5Tue9.png` instead of saving a provider URL. The content route validates the key and either redirects to a provider URL or streams the file through the app. This keeps message data independent from a provider hostname.
+A saved file link has the form `/api/files/{fileId}`. The route checks read access on each request. For an authorized reader, it redirects to a short-lived signed URL when the adapter supports one, or streams the file through ChatJS. An inaccessible or unknown file with a valid ID returns 404.
 
-Files are namespaced under `<appPrefix>/files/` in the selected provider. Files SDK adds and removes that prefix internally, so the rest of ChatJS works with stable relative keys.
+The `EveStoredFile` record maps the public file ID to the provider’s `storageKey`. Files SDK adds the `<appPrefix>/files/` prefix when accessing the provider. Use that prefix and storage key when locating or copying an object.
 
 ## Credentials
 
@@ -117,7 +120,7 @@ Credential requirements depend on the selected provider. Built-in items derive r
 
 Copy `.env.example` to `.env.local` for local development, then set the values generated for your provider. For deployment, use your platform's secret management instead of committing credentials.
 
-See [Environment variables](../reference/env-vars) for the ChatJS-wide rules.
+See [Environment variables](/reference/env-vars) for the ChatJS-wide rules.
 
 ### Vercel Blob
 
@@ -131,12 +134,19 @@ npx chat-js@alpha create my-app \
 ## Changing providers
 
 <Callout type="warning">
-  Changing `chatjs/providers/storage.ts` does not copy existing files. Do not
-  switch a deployed app to a new provider until every referenced object exists
-  under the same ChatJS key in the destination provider.
+  Before switching a deployed app, copy the referenced objects with their full
+  provider keys, including the prefix. Account for uploads made during the copy,
+  then verify the destination before directing traffic to it.
 </Callout>
 
-Deploying a provider change only changes where future runtime operations read and write. It does not migrate stored objects or database references.
+From the app directory, install the replacement adapter with its options. For example, to switch to S3:
+
+```bash
+npx chat-js@alpha add --storage-provider s3 --replace \
+  --storage-config '{"bucket":"uploads","region":"us-east-1"}'
+```
+
+Configure the destination credentials and run `bun run check-env`. In a test deployment, reopen an existing attachment and upload and download a new one. The [add command](/cli/add) changes the adapter and its configuration. Object migration is a separate step.
 
 If you are upgrading from a ChatJS version that stored Vercel Blob URLs directly, those legacy references are not migrated automatically. Keep the old Blob store available until you have copied and verified the objects and updated their database references. Delete old objects only after the migrated files have been verified.
 
@@ -144,7 +154,7 @@ ChatJS does not currently ship an automatic file migration command.
 
 ## Cleanup
 
-The authenticated `/api/cron/cleanup` route removes old, unreferenced files created through the current ChatJS storage layer. It ignores legacy or foreign keys that do not match the managed ChatJS key format. Set `CRON_SECRET` before enabling the scheduled cleanup job.
+The authenticated `/api/cron/cleanup` route considers stored objects older than four hours. It checks their ChatJS ownership records and file references before deleting eligible orphans. Objects without a matching ChatJS record are skipped. Set `CRON_SECRET` before enabling the scheduled cleanup job.
 
 ## Troubleshooting
 
@@ -167,7 +177,7 @@ The authenticated `/api/cron/cleanup` route removes old, unreferenced files crea
 
 ## Related
 
-- [Attachments](../plugins/attachments)
-- [Deploy to Vercel](../deployment/vercel)
-- [Environment variables](../reference/env-vars)
-- [Project structure](../project-structure)
+- [Attachments](/plugins/attachments)
+- [Deploy to Vercel](/deployment/vercel)
+- [Environment variables](/reference/env-vars)
+- [Project structure](/project-structure)

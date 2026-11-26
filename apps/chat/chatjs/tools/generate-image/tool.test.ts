@@ -39,20 +39,9 @@ vi.mock(
 vi.mock("@/lib/eve/tool-image-context", () => ({
   eveToolImageContext: { get: mocks.images },
 }));
-vi.mock(
-  "@/lib/ai/active-gateway",
-  (): { getActiveGateway: () => { fetchModels: typeof mocks.catalog } } => ({
-    getActiveGateway: (): { fetchModels: typeof mocks.catalog } => ({
-      fetchModels: mocks.catalog,
-    }),
-  })
-);
-vi.mock(
-  "@/lib/ai/to-model-data",
-  (): { toModelData: (value: unknown) => unknown } => ({
-    toModelData: (value: unknown) => value,
-  })
-);
+vi.mock("@/lib/ai/model-catalog", () => ({
+  loadModelCatalog: mocks.catalog,
+}));
 vi.mock("@/lib/config", () => ({
   config: {
     ai: { tools: { image: { default: "test-image" } } },

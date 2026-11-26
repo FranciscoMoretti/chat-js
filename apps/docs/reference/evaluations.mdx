@@ -1,36 +1,52 @@
 ---
 title: Evaluations
-description: Test and measure AI agent quality with Evalite
+description: "Write an EVE evaluation against a separate test agent with a fixed reply, run it with the local CLI, and inspect the required assertions."
 ---
 
-ChatJS uses [Evalite](https://v1.evalite.dev) to evaluate AI agent outputs. Evaluations help you measure response quality, catch regressions, and iterate on prompts with confidence.
+An EVE eval sends a message to an agent and checks the resulting turn. Use one when a change to instructions or a tool should preserve an observable behavior. For the ChatJS interface and application logic, see [Testing](/reference/testing).
 
-## How It Works
+## Define a case
 
-Evaluations follow a simple structure:
+Use a test agent configured to accept eval requests and credentials appropriate for that agent. The ChatJS web channel authenticates requests through its application gateway. For a first eval, use a separate EVE test agent with a mock model so the reply is deterministic. See [EVE evaluations](https://eve.dev/docs/evals) for agent setup and authentication options.
 
-1. **Data**: Test cases with inputs and expected outputs
-2. **Task**: The AI operation being evaluated
-3. **Scorers**: Functions that grade the output
+In the separate test agent, keep an instruction file such as `agent/instructions.md` containing “Report your status when asked.” Set a fixed response in the agent configuration.
 
-Results are stored in SQLite and displayed in a web UI.
+```ts title="agent/agent.ts"
+import { defineAgent } from "eve";
+import { mockModel } from "eve/evals";
 
-## Running Evaluations
-
-```bash
-# Watch mode (re-runs on file changes)
-bun eval:dev
-
-# View results UI
-bun eval:serve
+export default defineAgent({ model: mockModel("ready") });
 ```
 
-## Writing Evaluations
+Create an `evals/` directory alongside that agent's `agent/` directory. Add the suite configuration.
 
-Create files with the `.eval.ts` extension in the `evals/` directory. See existing evals for examples.
+```ts title="evals/evals.config.ts"
+import { defineEvalConfig } from "eve/evals";
 
-Use `runCoreChatAgentEval` from `lib/ai/eval-agent.ts` to wrap the core chat agent for evaluation contexts.
+export default defineEvalConfig({});
+```
 
-## Custom Scorers
+Add a case. This example expects a test agent configured to reply with the word `ready`.
 
-Scorers receive the output, expected value, and input. Return a number between 0 and 1. Evalite also provides built-in scorers like `exactMatch`, `answerCorrectness`, and `answerRelevancy`.
+```ts title="evals/readiness.eval.ts"
+import { defineEval } from "eve/evals";
+import { includes } from "eve/evals/expect";
+
+export default defineEval({
+  async test(t) {
+    const turn = await t.send("Report your status.");
+    t.succeeded();
+    t.check(turn.reply, includes("ready"));
+  },
+});
+```
+
+## Run the case
+
+From the test agent's root, use its installed EVE CLI.
+
+```bash
+bunx eve eval readiness
+```
+
+The filename supplies the case ID. A failed required assertion makes the command exit unsuccessfully. For a tool regression, assert the expected tool call with `t.calledTool(...)`. For subjective quality, EVE also supports model-graded assertions. See [EVE eval assertions](https://eve.dev/docs/evals/assertions).
