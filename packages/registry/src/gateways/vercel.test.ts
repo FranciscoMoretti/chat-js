@@ -63,7 +63,7 @@ describe("VercelGateway", () => {
       const models = await new VercelGateway({ env: {}, fetch }).fetchModels();
       expect(fetch).toHaveBeenCalledWith(
         "https://ai-gateway.vercel.sh/v1/models",
-        undefined
+        { headers: undefined, signal: expect.any(AbortSignal) }
       );
       expect(models.map((model) => model.id)).toEqual([
         "openai/gpt-test",
@@ -105,7 +105,10 @@ describe("VercelGateway", () => {
     }).fetchModels();
     expect(fetch).toHaveBeenCalledWith(
       "https://ai-gateway.vercel.sh/v1/models?include_availability",
-      { headers: { Authorization: "Bearer test-oidc" } }
+      {
+        headers: { Authorization: "Bearer test-oidc" },
+        signal: expect.any(AbortSignal),
+      }
     );
     expect(models.map((entry) => entry.id)).toEqual([
       "openai/gpt-test",

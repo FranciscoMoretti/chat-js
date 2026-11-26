@@ -56,7 +56,7 @@ Changing `ai.gateway` alone does not install another provider. Follow the [gatew
 
 The picker and EVE discover models from the installed gateway at runtime. ChatJS caches a successful catalog for one hour. After you add a model at the provider, it can take up to a cache refresh for it to appear in ChatJS.
 
-Apps scaffolded with CLI `1.0.0-alpha.8` also have a bundled catalog for discovery failures. The current source relies on gateway discovery alone.
+Apps scaffolded with CLI `1.0.0-alpha.8` also have a bundled catalog for discovery failures. The current source relies on gateway discovery alone. If EVE has no valid cached catalog and discovery fails, even a turn with an explicit model ID fails before inference. EVE uses the catalog to validate eligibility and capabilities. Retry the turn after discovery recovers.
 
 Vercel AI Gateway exposes a public catalog. With credentials, ChatJS also checks team eligibility. For other gateways, configure the model endpoint and credentials described in the gateway guide. If the picker is empty, check the server log for a discovery error. Verify the endpoint and credentials, then reload the app. If discovery succeeded, check the model list and visibility settings below.
 

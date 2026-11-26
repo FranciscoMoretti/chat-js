@@ -154,7 +154,11 @@ bun db:migrate
 
 ## Schema Changes
 
-Edit the schema that owns the table. For a plugin table, find its schema path in `chatjs/generated/installed-database.ts`. After editing the schema:
+In a generated app, edit the schema that owns the table. For a plugin table, find its installed schema path in `chatjs/generated/installed-database.ts`.
+
+When contributing to the ChatJS repository, edit the plugin schema in `packages/registry/src/plugins/<id>/src/` and run `bun demo:sync` from the repository root. The reference app uses a generated copy of that schema.
+
+From the app directory:
 
 1. Run `bun db:generate` to produce a migration file in `lib/db/migrations/`.
 2. Review the generated SQL to confirm the diff is correct.

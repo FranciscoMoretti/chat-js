@@ -10,6 +10,7 @@ import type { ImageModel } from "ai";
 import { createOpenAI } from "@ai-sdk/openai";
 import { z } from "zod";
 
+const MODEL_DISCOVERY_TIMEOUT_MS = 10_000;
 const MODEL_ID_PARAMETER_INDEX = 0;
 type OpenAiLanguageModelId = Parameters<
   ReturnType<typeof createOpenAI>["languageModel"]
@@ -108,6 +109,7 @@ class OpenAIGateway
     this.log.debug({ url }, "Fetching models from OpenAI");
 
     const response = await this.fetch(url, {
+      signal: AbortSignal.timeout(MODEL_DISCOVERY_TIMEOUT_MS),
       headers: {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",

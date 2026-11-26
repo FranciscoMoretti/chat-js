@@ -9,6 +9,7 @@ import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 
 import { z } from "zod";
 
+const MODEL_DISCOVERY_TIMEOUT_MS = 10_000;
 const MODEL_OWNER_SEGMENT_INDEX = 0;
 const EMPTY_TAG_COUNT = 0;
 const OPENROUTER_MODELS_URL = "https://openrouter.ai/api/v1/models";
@@ -175,6 +176,7 @@ class OpenRouterGateway
     this.log.debug({ url }, "Fetching models from OpenRouter");
 
     const response = await this.fetch(url, {
+      signal: AbortSignal.timeout(MODEL_DISCOVERY_TIMEOUT_MS),
       headers: {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",

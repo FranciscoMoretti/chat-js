@@ -16,6 +16,7 @@ import type { gateway } from "@ai-sdk/gateway";
 import { getVercelOidcToken } from "@vercel/oidc";
 import { z } from "zod";
 
+const MODEL_DISCOVERY_TIMEOUT_MS = 10_000;
 const MODEL_ID_PARAMETER_INDEX = 0;
 type VercelImageModelId = Parameters<
   (typeof gateway)["imageModel"]
@@ -90,12 +91,11 @@ class VercelGateway
       apiKey === null ? catalogUrl : `${catalogUrl}?include_availability`;
     this.log.debug({ url }, "Fetching models from Vercel AI Gateway");
 
-    const response = await this.fetch(
-      url,
-      apiKey === null
-        ? undefined
-        : { headers: { Authorization: `Bearer ${apiKey}` } }
-    );
+    const response = await this.fetch(url, {
+      headers:
+        apiKey === null ? undefined : { Authorization: `Bearer ${apiKey}` },
+      signal: AbortSignal.timeout(MODEL_DISCOVERY_TIMEOUT_MS),
+    });
 
     if (!response.ok) {
       this.log.error(

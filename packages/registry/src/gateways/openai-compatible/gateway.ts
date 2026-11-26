@@ -10,6 +10,7 @@ import type { ImageModel } from "ai";
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import { z } from "zod";
 
+const MODEL_DISCOVERY_TIMEOUT_MS = 10_000;
 const providerModelSchema = z.object({
   created: z.number().nullish(),
   id: z.string(),
@@ -120,6 +121,7 @@ class OpenAICompatibleGateway
     }
 
     const response = await this.fetch(url, {
+      signal: AbortSignal.timeout(MODEL_DISCOVERY_TIMEOUT_MS),
       headers,
     });
 
