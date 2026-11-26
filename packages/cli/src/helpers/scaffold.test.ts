@@ -413,12 +413,10 @@ describe("scaffoldFromTemplate", (): void => {
       expect(packageJson.devDependencies[name]).toBeUndefined();
     }
     // Resolve the generated app in isolation, including Next's development
-    // condition. The monorepo has both packages installed for its reference app.
+    // condition. The reference app opts into the query inspector.
     const probe = `
       import assert from "node:assert/strict";
-      import { devToolsMiddleware } from "#ai-devtools";
       import { ReactQueryDevtools } from "#query-devtools";
-      assert.equal(devToolsMiddleware(), undefined);
       assert.equal(ReactQueryDevtools(), null);
     `;
     execFileSync(

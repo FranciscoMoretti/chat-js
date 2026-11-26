@@ -273,16 +273,12 @@ const normalizePackageManifest = async (packagePath: string): Promise<void> => {
   )) {
     Reflect.deleteProperty(dependencies, name);
   }
-  // The reference app opts into both tools. Scaffolds use the local fallbacks
-  // until their owner adds a development condition for the installed package.
-  for (const alias of ["#ai-devtools", "#query-devtools"]) {
-    const conditions = manifest.imports?.[alias];
-    if (isJsonObject(conditions)) {
-      delete conditions.development;
-    }
+  // Generated apps use the fallback until their owner enables the query inspector.
+  const queryDevtools = manifest.imports?.["#query-devtools"];
+  if (isJsonObject(queryDevtools)) {
+    delete queryDevtools.development;
   }
   for (const dependency of [
-    "@ai-sdk/devtools",
     "@tanstack/react-query-devtools",
     "@types/papaparse",
     "@electric-sql/pglite",
@@ -294,7 +290,6 @@ const normalizePackageManifest = async (packagePath: string): Promise<void> => {
     Reflect.deleteProperty(manifest.devDependencies ?? {}, dependency);
   }
   for (const script of [
-    "ai:devtools",
     "eval:dev",
     "eval:serve",
     "test:native",

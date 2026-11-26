@@ -4,10 +4,6 @@
   "private": true,
   "license": "Apache-2.0",
   "imports": {
-    "#ai-devtools": {
-      "development": "./lib/ai/devtools.js",
-      "default": "./lib/devtools-disabled.ts"
-    },
     "#query-devtools": {
       "development": "@tanstack/react-query-devtools",
       "default": "./lib/devtools-disabled.ts"
@@ -45,7 +41,6 @@
     "test:research:native": "bun tests/native-research-runtime.ts",
     "test:types": "rm -rf .next/dev/types && next typegen . && tsc --noEmit",
     "test:worker-bundle": "node scripts/check-worker-typescript.ts",
-    "ai:devtools": "devtools",
     "dev:neon": "bash scripts/with-db.sh bun dev",
     "db:migrate:neon": "bash scripts/with-db.sh bun db:migrate",
     "db:connect": "bun scripts/check-db.ts",
@@ -128,7 +123,6 @@
     "zod": "4.5.4"
   },
   "devDependencies": {
-    "@ai-sdk/devtools": "1.0.75",
     "@electric-sql/pglite": "^0.5.8",
     "@playwright/test": "^1.50.1",
     "@tailwindcss/postcss": "^4.1.12",

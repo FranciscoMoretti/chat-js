@@ -39,24 +39,19 @@ The repository also has reference-only browser scenarios, including live tool ch
 
 Use [evaluations](/reference/evaluations) to check what an agent says or which tools it calls across repeated runs. Use browser tests for interactions such as selecting a model or reopening a chat.
 
-## Optional developer tools
+## React Query Devtools
 
-Inside your generated app, install the developer tool you want to use. These versions match the scaffold's AI SDK and React Query versions.
+To inspect the query cache in your generated app, install the inspector:
 
 ```bash
-bun add -d @ai-sdk/devtools@1.0.75
 bun add -d @tanstack/react-query-devtools@5.97.0
 ```
 
-In the existing `imports` section of `package.json`, add the `development` line for each tool you installed. Put it before `default` because package import conditions match in order. Production uses the local fallback, including when your install omits dev dependencies.
+In the existing `imports` section of `package.json`, add the `development` entry before `default`. Production uses the local fallback, including when your install omits dev dependencies.
 
 ```json
 {
   "imports": {
-    "#ai-devtools": {
-      "development": "./lib/ai/devtools.js",
-      "default": "./lib/devtools-disabled.ts"
-    },
     "#query-devtools": {
       "development": "@tanstack/react-query-devtools",
       "default": "./lib/devtools-disabled.ts"
@@ -65,8 +60,6 @@ In the existing `imports` section of `package.json`, add the `development` line 
 }
 ```
 
-**AI SDK.** Restart `bun run dev`. Model calls through `getLanguageModel`, such as title generation with the AI Titles plugin installed, record to `.devtools/generations.json`. Run `bun run devtools` in a second terminal from the same app directory to view the recordings. When running the provider directly through EVE outside Next.js, set `NODE_ENV=development` and pass `--conditions=development` to Node.
+Set `NEXT_PUBLIC_REACT_QUERY_DEVTOOLS=1` in `.env.local`, then restart `bun run dev`. Open the devtools button on a chat page to inspect the active query cache.
 
-**React Query.** Set `NEXT_PUBLIC_REACT_QUERY_DEVTOOLS=1` in `.env.local`, then restart `bun run dev`. Open the devtools button on a chat page to inspect the active query cache.
-
-To remove either tool, delete its `development` line and uninstall its package. Keep the `default` entries.
+To remove the inspector, delete its `development` entry and uninstall the package.
