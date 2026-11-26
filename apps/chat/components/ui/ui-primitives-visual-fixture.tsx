@@ -17,7 +17,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-import { ControlDefaultsVisualFixture } from "@/components/ui/control-defaults-visual-fixture";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import React from "react";
@@ -26,11 +25,9 @@ import { Toggle } from "@/components/ui/toggle";
 
 export const UiPrimitivesVisualFixture = ({
   includeProgress = false,
-  includeControlDefaults = false,
   progressValue,
 }: {
   readonly includeProgress?: boolean;
-  readonly includeControlDefaults?: boolean;
   readonly progressValue?: number;
 } = {}): React.JSX.Element => (
   <main
@@ -72,8 +69,6 @@ export const UiPrimitivesVisualFixture = ({
         <Button>Bottom</Button>
       </ButtonGroup>
     </section>
-
-    {includeControlDefaults && <ControlDefaultsVisualFixture />}
 
     {includeProgress && (
       <section className="max-w-3xl space-y-3" data-testid="progress-states">

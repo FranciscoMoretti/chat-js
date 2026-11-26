@@ -18,7 +18,7 @@ test.each([
       "chatjs/removed-plugins/prior/source.ts.bak",
       "chatjs/replaced-prior/config.ts",
       "evals/my-eval.eval.ts",
-      "components/ui/control-defaults-visual-fixture.tsx",
+      "components/ui/example-visual-fixture.tsx",
       "tests/visual/eve-tool-results.browser.tsx",
       "tests/visual/sandbox.css",
       "tests/layout-primitives.visual.css",

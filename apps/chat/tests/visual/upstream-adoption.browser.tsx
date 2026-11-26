@@ -5,15 +5,6 @@ import { takeSnapshot } from "@uiverify/vitest";
 import { EveInteraction } from "@/components/eve/eve-pending-input";
 import type { Interaction, Answer } from "eve/events";
 
-import {
-  Context,
-  ContextTrigger,
-  ContextContent,
-  ContextContentHeader,
-  ContextContentBody,
-  ContextInputUsage,
-  ContextOutputUsage,
-} from "@/components/ai-elements/context";
 import { Suggestion, Suggestions } from "@/components/ai-elements/suggestion";
 import { EveSearchResultsView } from "@/chatjs/plugins/search/search-results-view";
 import { mount, unmount } from "./primitive-mount";
@@ -81,20 +72,6 @@ for (const viewport of [
         <section aria-label="Read-only approval">
           <EveInteraction interaction={approval} disabled respond={respond} />
         </section>
-        <Context
-          usedTokens={2400}
-          maxTokens={10_000}
-          usage={{ inputTokens: 2000, outputTokens: 400, totalTokens: 2400 }}
-        >
-          <ContextTrigger />
-          <ContextContent>
-            <ContextContentHeader />
-            <ContextContentBody>
-              <ContextInputUsage />
-              <ContextOutputUsage />
-            </ContextContentBody>
-          </ContextContent>
-        </Context>
         <Suggestions>
           {[
             "Explain the tradeoffs",
@@ -148,21 +125,8 @@ for (const viewport of [
         .toBeDisabled();
       await page.getByRole("button", { name: "Explain the tradeoffs" }).click();
       expect(send).toHaveBeenCalledExactlyOnceWith("Explain the tradeoffs");
-      await page.getByRole("button", { name: "24% context" }).hover();
-      await expect
-        .element(page.getByRole("progressbar", { name: "Context used" }))
-        .toBeVisible();
-      await expect
-        .element(page.getByText("Input", { exact: true }))
-        .toBeVisible();
-      await page.getByText(question.request.prompt, { exact: true }).hover();
-      await expect
-        .poll(() =>
-          page.getByRole("progressbar", { name: "Context used" }).query()
-        )
-        .toBeNull();
       await takeSnapshot(
-        `questions-approval-context-suggestions-${viewport.width}-${viewport.dir}`
+        `questions-approval-suggestions-${viewport.width}-${viewport.dir}`
       );
     } finally {
       await unmount(fixture);

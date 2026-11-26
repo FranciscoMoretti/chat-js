@@ -22,6 +22,14 @@ The layout uses `react-resizable-panels` wrapped in composable components:
 
 Visibility is controlled via the `isSecondaryPanelVisible` prop on `ChatLayout`. This value is shared to child components through React context, so they automatically show/hide based on the state.
 
+## Install the resizable primitive
+
+Run this command in your ChatJS app before adding the layout. It installs the primitive and its panel dependency.
+
+```sh
+bunx shadcn add resizable
+```
+
 ## Code
 
 ### Components
@@ -55,7 +63,7 @@ function useChatLayoutContext() {
 
 type ChatLayoutProps = Omit<
   ComponentProps<typeof ResizablePanelGroup>,
-  "direction"
+  "orientation"
 > & {
   isSecondaryPanelVisible?: boolean;
 };
@@ -76,7 +84,7 @@ export const ChatLayout = ({
           sidebarState === "collapsed" && "md:max-w-screen",
           className
         )}
-        direction="horizontal"
+        orientation="horizontal"
         {...props}
       >
         {children}
@@ -89,8 +97,8 @@ type ChatLayoutMainProps = ComponentProps<typeof ResizablePanel>;
 
 export const ChatLayoutMain = ({
   className,
-  defaultSize = 65,
-  minSize = 40,
+  defaultSize = "65%",
+  minSize = "40%",
   ...props
 }: ChatLayoutMainProps) => {
   const { isSecondaryPanelVisible } = useChatLayoutContext();
@@ -108,8 +116,8 @@ export const ChatLayoutMain = ({
 type ChatLayoutSecondaryProps = ComponentProps<typeof ResizablePanel>;
 
 export const ChatLayoutSecondary = ({
-  defaultSize = 35,
-  minSize = 25,
+  defaultSize = "35%",
+  minSize = "25%",
   ...props
 }: ChatLayoutSecondaryProps) => {
   const { isSecondaryPanelVisible } = useChatLayoutContext();
@@ -195,11 +203,11 @@ export function Chat({ id, isReadonly, projectId }) {
 Override default sizes per-instance:
 
 ```tsx
-<ChatLayoutMain defaultSize={70} minSize={50}>
+<ChatLayoutMain defaultSize="70%" minSize="50%">
   {/* ... */}
 </ChatLayoutMain>
 
-<ChatLayoutSecondary defaultSize={30} minSize={20}>
+<ChatLayoutSecondary defaultSize="30%" minSize="20%">
   {/* ... */}
 </ChatLayoutSecondary>
 ```
