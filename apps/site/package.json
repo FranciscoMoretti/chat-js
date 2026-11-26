@@ -3,7 +3,7 @@
   "version": "0.1.1",
   "private": true,
   "scripts": {
-    "prebuild": "bun --filter @chat-js/thread build",
+    "prebuild": "test -n \"$TURBO_HASH\" || turbo run build --filter=@chat-js/thread",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",

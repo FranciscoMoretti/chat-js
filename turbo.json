@@ -3,7 +3,8 @@
   "futureFlags": {
     "affectedUsingTaskInputs": true
   },
-  "globalEnv": [
+  "globalEnv": ["NODE_ENV"],
+  "globalPassThroughEnv": [
     "DATABASE_URL",
     "DATABASE_MIGRATION_URL",
     "EVE_INTERNAL_ORIGIN",
@@ -39,7 +40,6 @@
     "PORT",
     "VERCEL",
     "VERCEL_ENV",
-    "NODE_ENV",
     "VERCEL_URL",
     "PLAYWRIGHT",
     "CI_PLAYWRIGHT",
@@ -56,14 +56,41 @@
     },
     "build": {
       "dependsOn": ["^build"],
-      "outputs": [".next/**", "dist/**", "build/**"]
+      "outputs": [
+        ".next/**",
+        "!.next/cache/**",
+        "!.next/dev/**",
+        "dist/**",
+        "build/**"
+      ]
+    },
+    "@chatjs/chat#build": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "passThroughEnv": [
+        "EVE_SANDBOX_IMAGE_TAG",
+        "NEXT_DEPLOYMENT_ID",
+        "NEXT_SERVER_ACTIONS_ENCRYPTION_KEY"
+      ]
+    },
+    "@chatjs/chat#test": {
+      "dependsOn": ["^test"],
+      "cache": false
     },
     "site-source": {
       "dependsOn": ["^site-source"]
     },
     "@chatjs/site#build": {
       "dependsOn": ["^site-source", "@chat-js/thread#build"],
-      "outputs": [".next/**"]
+      "env": [
+        "NEXT_DEPLOYMENT_ID",
+        "NEXT_PUBLIC_*",
+        "NEXT_SERVER_ACTIONS_ENCRYPTION_KEY",
+        "VERCEL",
+        "VERCEL_ENV"
+      ],
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "outputs": [".next/**", "!.next/cache/**", "!.next/dev/**"]
     },
     "@chatjs/site#dev": {
       "dependsOn": ["@chat-js/thread#build"],
@@ -71,6 +98,7 @@
       "persistent": true
     },
     "@chatjs/docs#build": {
+      "env": ["CHATJS_DOCS_HISTORY"],
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/.agents/skills/**"],
       "outputs": ["dist/**"]
@@ -104,6 +132,7 @@
       "cache": false
     },
     "electron:build": {
+      "env": ["ELECTRON_APP_URL"],
       "cache": true,
       "inputs": [
         "src/**",
