@@ -16,6 +16,9 @@ test("login offers every configured provider", async () => {
     path: "/login",
   });
   await expect.element(page.getByText("Welcome back")).toBeVisible();
+  await expect
+    .element(page.getByRole("link", { name: "Sign up" }))
+    .toBeVisible();
   await Promise.all(
     ["Google", "GitHub", "Vercel"].map(async (provider) => {
       await expect
@@ -66,6 +69,9 @@ test("register inside the desktop app sends the user to the browser", async () =
 test("register", async () => {
   await renderRoute(<RegisterPage />, { path: "/register" });
   await expect.element(page.getByText("Create an account")).toBeVisible();
+  await expect
+    .element(page.getByRole("link", { name: "Sign in" }))
+    .toBeVisible();
   await expect
     .element(page.getByRole("button", { name: /GitHub/u }))
     .toBeVisible();

@@ -56,10 +56,6 @@ Search, retrieval, execution, media and research availability come from installe
 | `authentication.github`, `.google`, `.vercel` | OAuth provider toggles with matching credentials |
 | `attachments.maxBytes`, `.maxDimension`, `.acceptedTypes` | Core limits for uploads, message validation and attachment restoration |
 | `appName`, `appTitle`, `appPrefix`, `appDescription`, `appUrl` | Product identity and URLs |
-| `organization`, `services`, `legal`, `policies` | Contact details and legal/service disclosures |
-| `pricing` | Optional currency and free/pro pricing display content |
-
-Pricing text does not configure payment processing. Guest access limits do not replace a verified retention schedule.
 
 ## Environment validation
 
@@ -67,6 +63,6 @@ Pricing text does not configure payment processing. Guest access limits do not r
 
 For example, a minimal app omits MCP, uploads and tools and needs no credentials for those absent capabilities. Adding MCP requires `MCP_ENCRYPTION_KEY` even before a connector is configured. See [Configuration](/core/configuration) for installation and replacement commands.
 
-Guest model and rate limits belong to [Guest Chat](/plugins/guest-chat) in `chatjs/plugins/guest-chat/guest-policy.ts`. Core has no anonymous model or quota settings.
+Guest model and rate limits belong to [Guest Chat](/plugins/guest-chat) in `chatjs/plugins/guest-chat/guest-policy.ts`. Core has no anonymous model or quota settings. Guest access limits do not replace a verified retention schedule.
 
 Deep Research inherits the native EVE agent model configuration. Its workflow bounds live in `agent/lib/research/configuration.ts`, outside `chat.config.ts`.

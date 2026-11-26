@@ -66,7 +66,7 @@ afterEach(async (): Promise<void> => {
 });
 
 describe("buildConfigTs", (): void => {
-  it("leaves desktop support to plugin installation", (): void => {
+  it("emits core defaults without plugin or policy page settings", (): void => {
     const output = buildConfigTs({
       appName: "My Chat",
       appPrefix: "my-chat",
@@ -87,6 +87,15 @@ describe("buildConfigTs", (): void => {
       gateway: "vercel",
     });
 
+    for (const field of [
+      "legal",
+      "organization",
+      "policies",
+      "pricing",
+      "services",
+    ]) {
+      expect(output).not.toContain(`\n  ${field}:`);
+    }
     expect(output).not.toContain("desktopApp");
     expect(output).toContain("parallelResponses: true");
     expect(output).not.toContain("documents: {");
@@ -148,6 +157,15 @@ describe("scaffoldFromTemplate", (): void => {
         manifest.dependencies?.[packageName] ??
           manifest.devDependencies?.[packageName]
       ).toBeString();
+    }
+  });
+  it("leaves terms and privacy pages to the application owner", async () => {
+    const destination = makeTempDir("app-policies");
+    await scaffoldFromTemplate(destination);
+    for (const route of ["terms", "privacy"]) {
+      expect(
+        existsSync(pathModule.join(destination, "app", route, "page.tsx"))
+      ).toBe(false);
     }
   });
   it("scaffolds without a sandbox SDK or persistent capability", async (): Promise<void> => {
@@ -794,7 +812,6 @@ describe("scaffoldElectron", (): void => {
         appName: "Node Prebuild",
         appPrefix: "node-prebuild",
         appUrl: "http://localhost:3000",
-        organization: { name: "Test", contact: { privacyEmail: "test@example.com" } },
       };`
       );
       await mkdir(pathModule.join(projectDir, "chatjs/plugins/desktop"), {
@@ -826,8 +843,6 @@ describe("scaffoldElectron", (): void => {
         appName: "Node Prebuild",
         appPrefix: "node-prebuild",
         appUrl: "http://localhost:3000",
-        orgEmail: "test@example.com",
-        orgName: "Test",
         auth: {
           clientId: "electron",
           cookiePrefix: "better-auth",

@@ -28,13 +28,6 @@ import type { ConfigInput } from "@/lib/config-schema";
 const config = {
   appName: "Your App Name",
   appPrefix: "your-app",
-  organization: {
-    name: "Your Company",
-    contact: {
-      privacyEmail: "privacy@example.com",
-      legalEmail: "legal@example.com",
-    },
-  },
   ai: {
     gateway: "vercel",
     tools: {
@@ -94,6 +87,6 @@ bunx chat-js@alpha create minimal-chat --yes --no-mcp --no-attachments --no-elec
 
 Authentication booleans enable GitHub, Google or Vercel OAuth and require the corresponding credentials. Install [Guest Chat](/plugins/guest-chat) for disposable visitor sessions. Its server-owned policy controls the model, input size, expiry, and IP limits. Guests have no credit balance. Retention additionally needs an operational cleanup schedule and lifecycle support.
 
-`features.parallelResponses` controls parallel responses. `attachments.acceptedTypes`, `maxBytes` and `maxDimension` control installed upload behavior. Neither setting installs its feature. Branding, organization/legal text and pricing display are also runtime configuration.
+`features.parallelResponses` controls parallel responses. `attachments.acceptedTypes`, `maxBytes` and `maxDimension` control installed upload behavior. Neither setting installs its feature.
 
 Read installed descriptors and `.env.example` for credentials, then run `bun run check-env`. Never put secrets in `chat.config.ts` or `--storage-config`. See [Config reference](/reference/config) and [Gateway overview](/gateways/overview).

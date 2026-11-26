@@ -13,8 +13,6 @@ interface Branding {
   appName: string;
   appPrefix: string;
   appUrl: string;
-  orgName?: string;
-  orgEmail?: string;
 }
 
 const SUCCESS_EXIT_CODE = 0;
@@ -99,20 +97,12 @@ const loadBranding = (): Branding => {
     appName: branding.appName,
     appPrefix: branding.appPrefix,
     appUrl: branding.appUrl,
-    orgEmail:
-      "orgEmail" in branding && typeof branding.orgEmail === "string"
-        ? branding.orgEmail
-        : undefined,
-    orgName:
-      "orgName" in branding && typeof branding.orgName === "string"
-        ? branding.orgName
-        : undefined,
   };
 };
 
 const createForgeConfig = (): ForgeConfig => {
   const branding = loadBranding();
-  const { appName, appPrefix, orgName, orgEmail } = branding;
+  const { appName, appPrefix } = branding;
 
   return {
     hooks: {
@@ -139,7 +129,6 @@ const createForgeConfig = (): ForgeConfig => {
       ),
       new MakerSquirrel(
         {
-          authors: orgName ?? appName,
           description: `${appName} desktop application`,
           name: appPrefix,
           setupExe: `${appName}-windows.exe`,
@@ -153,13 +142,6 @@ const createForgeConfig = (): ForgeConfig => {
             categories: ["Utility"],
             homepage: branding.appUrl,
             icon: "./build/icon.png",
-            maintainer:
-              typeof orgName === "string" &&
-              orgName !== "" &&
-              typeof orgEmail === "string" &&
-              orgEmail !== ""
-                ? `${orgName} <${orgEmail}>`
-                : (orgName ?? orgEmail ?? appName),
           },
         },
         ["linux"]

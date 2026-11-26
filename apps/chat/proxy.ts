@@ -28,9 +28,7 @@ const isPublicPage = (pathname: string): boolean => {
   return (
     pathname.startsWith("/models") ||
     pathname.startsWith("/compare") ||
-    pathname.startsWith("/share/") ||
-    pathname.startsWith("/privacy") ||
-    pathname.startsWith("/terms")
+    pathname.startsWith("/share/")
   );
 };
 
@@ -123,6 +121,6 @@ export const config = {
      * - compare
      * - docs (Blume documentation)
      */
-    "/((?!api|docs|_next/static|_next/image|favicon.ico|opengraph-image|manifest|models|compare|privacy|terms|.*[.](?:svg|png|jpg|jpeg|gif|webp|ico|json|webmanifest)$).*)",
+    "/((?!api|docs|_next/static|_next/image|favicon.ico|opengraph-image|manifest|models|compare|.*[.](?:svg|png|jpg|jpeg|gif|webp|ico|json|webmanifest)$).*)",
   ],
 };
