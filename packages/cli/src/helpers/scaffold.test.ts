@@ -3,7 +3,7 @@ import { SourceTextModule, SyntheticModule, createContext } from "node:vm";
 import { afterEach, describe, expect, it } from "bun:test";
 import { existsSync, readFileSync } from "node:fs";
 import { once } from "node:events";
-import { ChildProcess } from "node:child_process";
+import { ChildProcess, execFileSync } from "node:child_process";
 import {
   mkdir,
   cp,
@@ -419,12 +419,29 @@ describe("scaffoldFromTemplate", (): void => {
     const packageJson = z
       .object({
         dependencies: z.record(z.string(), z.string()),
+        devDependencies: z.record(z.string(), z.string()),
         overrides: z.object({ "@better-auth/core": z.string() }).optional(),
         packageManager: z.string().optional(),
         scripts: z.record(z.string(), z.string()).optional(),
       })
       .parse(packageJsonValue);
 
+    for (const name of ["@ai-sdk/devtools", "@tanstack/react-query-devtools"]) {
+      expect(packageJson.dependencies[name]).toBeUndefined();
+      expect(packageJson.devDependencies[name]).toBeUndefined();
+    }
+    // Resolve the generated app in isolation, including Next's development
+    // condition. The reference app opts into the query inspector.
+    const probe = `
+      import assert from "node:assert/strict";
+      import { ReactQueryDevtools } from "#query-devtools";
+      assert.equal(ReactQueryDevtools(), null);
+    `;
+    execFileSync(
+      "node",
+      ["--conditions=development", "--input-type=module", "-e", probe],
+      { cwd: destination }
+    );
     expect(packageJson.packageManager).toBe(`bun@${Bun.version}`);
     expect(packageJson.dependencies["@better-auth/core"]).toBe("1.6.2");
     expect(packageJson.dependencies["@better-auth/electron"]).toBeUndefined();

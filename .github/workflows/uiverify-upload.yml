@@ -102,4 +102,4 @@ jobs:
           npx -y uiverify@1.11.0 upload \
             --static-dir "$RUNNER_TEMP/archive" \
             --working-directory "$RUNNER_TEMP/repo" \
-            "${render_flags[@]}" --auto-accept-changes
+            "${render_flags[@]}" --exit-zero-on-changes
