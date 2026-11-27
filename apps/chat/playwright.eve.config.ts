@@ -1,4 +1,19 @@
+import { registerHooks } from "node:module";
 import { defineConfig, devices } from "@playwright/test";
+
+// Playwright loads app TypeScript as CommonJS. The storage SDK publishes only
+// import conditions, including its provider subpaths. Node 24 can load these.
+registerHooks({
+  resolve(specifier, context, nextResolve) {
+    if (specifier === "files-sdk" || specifier.startsWith("files-sdk/")) {
+      return nextResolve(specifier, {
+        ...context,
+        conditions: [...context.conditions, "import"],
+      });
+    }
+    return nextResolve(specifier, context);
+  },
+});
 
 const DEFAULT_PORT = 3000;
 

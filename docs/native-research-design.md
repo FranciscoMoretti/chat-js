@@ -68,7 +68,9 @@ Static workflow tools remain in the authored native tool surface; runtime prepar
 
 ## Live provider smoke tests
 
-Run `bun test:tools:live` from the repository root against an already running `bun dev`. The command loads worktree-local credentials and ports, and uses Bun to load the application's ESM-only dependencies in Playwright. It runs the existing search, sandbox, document, and research browser scenarios with real configured models and providers; these calls incur provider usage.
+Use Node 24 on your PATH. Start the signed-in app with `env -u PLAYWRIGHT -u CI_PLAYWRIGHT -u PLAYWRIGHT_TEST_BASE_URL bun dev` and keep those flags out of its dotenv files. Run `bun test:tools:live` from the repository root. Bun loads worktree-local credentials and ports and Playwright runs on Node. The research and code execution tests call your configured providers. To select other signed-in scenarios, run `bun run test:eve:live <spec>` from `apps/chat` with the isolated database credentials and the app’s `PORT`.
+
+For the MCP HTTP and OAuth specs, set `CHATJS_TEST_MCP_ORIGIN` to a dedicated public HTTPS origin and `CHATJS_TEST_MCP_PORT` to the fixture port served by the test process. Route only that fixture port at the origin. The browser, app and worker must all be able to reach it. The OAuth fixture issues disposable test credentials.
 
 Use local PostgreSQL or an explicitly isolated test database accepted by `assertEveTestDatabase`. Run `bun setup` against that database first. The tests authenticate through `/api/dev-login` and create test conversations and documents. Research verifies a reloadable report, attributed child model/search costs, and unchanged ledger rows after full replay. The outer workflow receipt adds zero cost. Standalone search visibility can be disabled while research continues using its installed search definition.
 

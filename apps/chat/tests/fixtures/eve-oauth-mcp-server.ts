@@ -80,7 +80,9 @@ const sendMcpResult = (
  * Starts an OAuth-protected Streamable HTTP MCP server for local Eve tests.
  * The authorization endpoint immediately redirects to the registered callback.
  */
-export const startEveOAuthMcpServer = async (): Promise<EveOAuthMcpServer> => {
+export const startEveOAuthMcpServer = async (
+  address?: Readonly<{ origin: string; port: number }>
+): Promise<EveOAuthMcpServer> => {
   const clients = new Map<string, RegisteredClient>();
   const codes = new Map<string, AuthorizationCode>();
   const accessTokens = new Set<string>();
@@ -361,17 +363,17 @@ export const startEveOAuthMcpServer = async (): Promise<EveOAuthMcpServer> => {
     })();
   });
 
-  await once(server.listen(0, "127.0.0.1"), "listening");
-  const address = server.address();
-  if (address === null || typeof address === "string") {
+  await once(server.listen(address?.port ?? 0, "127.0.0.1"), "listening");
+  const bound = server.address();
+  if (bound === null || typeof bound === "string") {
     throw new Error("OAuth MCP fixture did not receive a loopback address.");
   }
-  origin = `http://127.0.0.1:${address.port}`;
+  origin = address?.origin ?? `http://127.0.0.1:${bound.port}`;
   return {
     async close(): Promise<void> {
-      server.closeAllConnections();
       await promisify((onClose: (error?: Error) => void): void => {
         server.close(onClose);
+        server.closeAllConnections();
       })();
     },
     counters,

@@ -14,9 +14,12 @@ import { assertEveTestDatabase } from "./eve-test-database";
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
 const openSidebar = async (page: Page): Promise<void> => {
   if (
-    await page
-      .getByRole("textbox", { name: "Search conversations" })
-      .isVisible()
+    (await page
+      .getByRole("link", { name: "Models", exact: true })
+      .isVisible()) &&
+    !(await page
+      .getByRole("button", { name: "Expand sidebar", exact: true })
+      .isVisible())
   ) {
     return;
   }
@@ -48,8 +51,8 @@ for (const width of [1280, 390]) {
       throw new Error("Missing development user");
     }
     const id = crypto.randomUUID();
-    const title = "Deletion UI fixture";
-    await insertEveConversationFixtures({
+    const title = `Deletion UI fixture ${id}`;
+    const [{ chatId }] = await insertEveConversationFixtures({
       firstMessage: title,
       id,
       operationId: crypto.randomUUID(),
@@ -57,14 +60,16 @@ for (const width of [1280, 390]) {
     });
     let deletes = 0;
     let failCheck = true;
-    await page.route(`**/api/agent-conversations/${id}`, async (route) => {
+    await page.route(`**/api/agent-conversations/${chatId}`, async (route) => {
       if (route.request().method() === "GET") {
         if (failCheck) {
           failCheck = false;
           await route.abort();
           return;
         }
-        await route.fulfill({ json: { rootId: id, status: "pending" } });
+        await route.fulfill({
+          json: { chatId, rootId: chatId, status: "pending" },
+        });
         return;
       }
       deletes += 1;
@@ -73,16 +78,18 @@ for (const width of [1280, 390]) {
         .set({ state: deletes === 1 ? "deleting" : "deleted" })
         .where(eq(eveConversation.id, id));
       await route.fulfill({
-        json: { rootId: id, status: deletes === 1 ? "pending" : "deleted" },
+        json: {
+          chatId,
+          rootId: chatId,
+          status: deletes === 1 ? "pending" : "deleted",
+        },
         status: deletes === 1 ? 202 : 200,
       });
     });
     try {
       await page.goto("/");
       await openSidebar(page);
-      await page
-        .getByRole("textbox", { name: "Search conversations" })
-        .fill(title);
+
       const row = page
         .locator("li")
         .filter({ has: page.getByRole("link", { exact: true, name: title }) });
@@ -108,16 +115,14 @@ for (const width of [1280, 390]) {
         });
       expect(
         conversationMatchesDuringPendingCleanup.items.map((item) => item.id)
-      ).toContain(id);
+      ).toContain(chatId);
       await dialog
         .getByRole("button", { exact: true, name: "Close" })
         .first()
         .click();
       await page.reload();
       await openSidebar(page);
-      await page
-        .getByRole("textbox", { name: "Search conversations" })
-        .fill(title);
+
       await expect(
         page.getByRole("link", { exact: true, name: title })
       ).toHaveCount(0);

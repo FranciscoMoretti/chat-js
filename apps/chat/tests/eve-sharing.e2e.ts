@@ -12,19 +12,6 @@ import { insertEveConversationFixtures } from "./eve-conversation-fixture";
 import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
-type SharingEventReader =
-  | {
-      readonly type: "message.completed";
-      readonly data: {
-        readonly finishReason: string;
-        readonly message?: string | null;
-      };
-    }
-  | {
-      readonly type: Exclude<SessionStreamEvent["type"], "message.completed">;
-      readonly data?: unknown;
-    };
-
 test("sharing exposes only a read-only transcript, enforces ownership and revokes the link", async ({
   page,
   browser,
@@ -71,10 +58,9 @@ test("sharing exposes only a read-only transcript, enforces ownership and revoke
       publicPage.getByRole("heading", { exact: true, name: "404" })
     ).toBeVisible();
     await page.goto(`/chat/${binding.id}`);
-    await expect(page.locator('[data-role="assistant"]')).toContainText(
-      "share-fixture-ok",
-      { timeout: 90_000 }
-    );
+    await expect(
+      page.getByRole("log").locator('[data-eve-message-id="turn_0:assistant"]')
+    ).toContainText("share-fixture-ok", { timeout: 90_000 });
     const [owner] = await db
       .select({ id: eveConversation.ownerId })
       .from(eveConversation)
@@ -93,10 +79,10 @@ test("sharing exposes only a read-only transcript, enforces ownership and revoke
             signal: AbortSignal.timeout(10_000),
           });
           return snapshot.events.some(
-            (event: SharingEventReader) =>
-              event.type === "message.completed" &&
-              event.data.finishReason === "stop" &&
-              event.data.message?.trim() === "share-fixture-ok"
+            (event: SessionStreamEvent) =>
+              event.type === "turn.settled" &&
+              event.data.turnId === "turn_0" &&
+              event.data.outcome === "completed"
           );
         },
         { intervals: [1000, 2000, 4000], timeout: 30_000 }

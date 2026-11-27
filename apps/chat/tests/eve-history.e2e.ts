@@ -1,11 +1,9 @@
-import { mkdir } from "node:fs/promises";
-
 import { expect, test } from "@playwright/test";
 import { eq, inArray, sql } from "drizzle-orm";
 
 import { db } from "../lib/db/client";
 import { listEveConversations } from "../lib/db/eve-queries";
-import { eveConversation, user } from "../lib/db/schema";
+import { eveChat, eveConversation, eveWorkspace, user } from "../lib/db/schema";
 import { insertEveConversationFixtures } from "./eve-conversation-fixture";
 import { assertEveTestDatabase } from "./eve-test-database";
 
@@ -25,7 +23,7 @@ test("history pages and searches older conversations without exposing other owne
   if (owner === undefined) {
     throw new Error("Missing development user");
   }
-  const prefix = `history-${crypto.randomUUID()}`;
+  const prefix = `history${crypto.randomUUID().replaceAll("-", "")}`;
   const foreignOwner = crypto.randomUUID();
   const ids = Array.from({ length: 56 }, () => crypto.randomUUID());
   await db.insert(user).values({
@@ -33,9 +31,11 @@ test("history pages and searches older conversations without exposing other owne
     id: foreignOwner,
     name: "History test",
   });
-  await insertEveConversationFixtures(
+  const fixtures = await insertEveConversationFixtures(
     ids.map((id, index) => ({
       id,
+      state: "bound",
+      sessionId: id,
       ownerId: index === 55 ? foreignOwner : owner.id,
       operationId: crypto.randomUUID(),
       firstMessage: `${prefix} ${index === 54 ? "100%_literal" : `${index} end`}`,
@@ -66,100 +66,62 @@ test("history pages and searches older conversations without exposing other owne
     if (!last) {
       throw new Error("Missing last page fixture");
     }
-    await page.goto("/");
-    const expand = page.getByRole("button", {
-      exact: true,
-      name: "Expand sidebar",
-    });
-    if (await expand.isVisible()) {
-      await expand.click();
-    }
-    const search = page.getByRole("textbox", { name: "Search conversations" });
-    const searchGate: PromiseWithResolvers<void> = Promise.withResolvers();
-    await page.route("**/api/trpc/eve.list**", async (route) => {
-      await searchGate.promise;
-      await route.continue();
-    });
-    await search.fill(prefix);
-    try {
-      await expect(
-        page.getByRole("status").filter({ hasText: "Loading conversations…" })
-      ).toBeVisible();
-      await mkdir("tests/eve-results/screenshots", { recursive: true });
-      await page.screenshot({
-        animations: "disabled",
-        path: "tests/eve-results/screenshots/eve-history-loading.png",
+    const checkSearch = async (width: number): Promise<void> => {
+      await page.goto("/");
+
+      await page.setViewportSize({ width, height: 844 });
+      if (width === 390) {
+        await page
+          .getByRole("button", { name: "Toggle Sidebar", exact: true })
+          .click();
+      }
+      await page.getByRole("button", { name: /Search chats/u }).click();
+      const dialog = page.getByRole("dialog", { name: "Search chats" });
+      const search = dialog.getByRole("combobox", {
+        name: "Search conversations",
       });
-    } finally {
-      searchGate.resolve();
-    }
-    await page.unroute("**/api/trpc/eve.list**");
-    await expect(
-      page.locator('a[href^="/chat/"]').filter({ hasText: prefix })
-    ).toHaveCount(50);
-    const loadMore = page.getByRole("button", {
-      exact: true,
-      name: "Load more conversations",
-    });
-    await loadMore.scrollIntoViewIfNeeded();
-    await page.screenshot({
-      animations: "disabled",
-      path: "tests/eve-results/screenshots/eve-history-pagination.png",
-    });
-    await loadMore.click();
-    await expect(
-      page.locator('a[href^="/chat/"]').filter({ hasText: prefix })
-    ).toHaveCount(55);
-    await expect(
-      page.getByRole("button", { exact: true, name: "Load more conversations" })
-    ).toHaveCount(0);
-    await search.fill(last.title);
-    await expect(
-      page.getByRole("link", { exact: true, name: last.title })
-    ).toBeVisible();
-    await expect(
-      page.locator('a[href^="/chat/"]').filter({ hasText: prefix })
-    ).toHaveCount(1);
-    await mkdir("tests/eve-results/screenshots", { recursive: true });
-    await page.screenshot({
-      animations: "disabled",
-      path: "tests/eve-results/screenshots/eve-history-search.png",
-    });
-    await search.fill(`${prefix} absent`);
-    await expect(
-      page.getByText("No matching conversations.", { exact: true })
-    ).toBeVisible();
-    await page.screenshot({
-      animations: "disabled",
-      path: "tests/eve-results/screenshots/eve-history-empty.png",
-    });
-    await page.route("**/api/trpc/eve.list**", async (route) => {
-      await route.abort();
-    });
-    await search.fill(`${prefix} failed`);
-    await expect(
-      page.getByText("Could not load conversations.", { exact: true })
-    ).toBeVisible();
-    await page.screenshot({
-      animations: "disabled",
-      path: "tests/eve-results/screenshots/eve-history-error.png",
-    });
-    await page.unroute("**/api/trpc/eve.list**");
-    await page
-      .getByRole("button", {
-        exact: true,
-        name: "Regenerate response",
-      })
-      .click();
-    await expect(
-      page.getByText("No matching conversations.", { exact: true })
-    ).toBeVisible();
-    await search.fill("");
-    await expect(
-      page.getByRole("button", { exact: true, name: "Load more conversations" })
-    ).toBeVisible();
+      await search.fill(prefix);
+      const options = dialog.getByRole("option");
+      await expect(options).toHaveCount(20);
+      await dialog.getByRole("button", { name: "Load more chats" }).click();
+      await expect(options).toHaveCount(40);
+      await dialog.getByRole("button", { name: "Load more chats" }).click();
+      await expect(options).toHaveCount(55);
+      await search.fill(last.title);
+      await expect(options).toHaveCount(1);
+      await expect(options).toContainText(last.title);
+      await search.fill(`${prefix} absent`);
+      await expect(
+        dialog.getByText("No chats found. Try different words.")
+      ).toBeVisible();
+      await page.route("**/api/trpc/search.query?*", async (route) => {
+        await route.abort();
+      });
+      await search.fill(`${prefix} offline`);
+      await expect(dialog.getByText("Could not search chats.")).toBeVisible();
+      await page.unroute("**/api/trpc/search.query?*");
+      await dialog.getByRole("button", { name: "Retry" }).click();
+      await expect(
+        dialog.getByText("No chats found. Try different words.")
+      ).toBeVisible();
+      await page.keyboard.press("Escape");
+    };
+    await checkSearch(1280);
+    await checkSearch(390);
   } finally {
     await db.delete(eveConversation).where(inArray(eveConversation.id, ids));
+    await db.delete(eveChat).where(
+      inArray(
+        eveChat.id,
+        fixtures.map((row) => row.chatId)
+      )
+    );
+    await db.delete(eveWorkspace).where(
+      inArray(
+        eveWorkspace.id,
+        fixtures.map((row) => row.workspaceId)
+      )
+    );
     await db.delete(user).where(eq(user.id, foreignOwner));
   }
 });

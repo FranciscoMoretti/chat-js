@@ -1,7 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { Client } from "eve/client";
 import { z } from "zod";
-import { vi } from "vitest";
 
 import { createEveConversation, getEveCreation } from "../lib/db/eve-queries";
 import { env } from "../lib/env";
@@ -164,9 +163,8 @@ test("an unresolved project conversation recovers after its project is deleted",
       session.user.id,
       operation.operationId,
       operation.message,
-      vi
-        .fn<() => Promise<{ sessionId: string }>>()
-        .mockRejectedValue(new Error("Simulated dispatch interruption")),
+      async () =>
+        await Promise.reject(new Error("Simulated dispatch interruption")),
       {
         initialModelId: operation.modelId,
         initialRequest: operation,

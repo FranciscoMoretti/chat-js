@@ -295,6 +295,7 @@ const normalizePackageManifest = async (packagePath: string): Promise<void> => {
     "eval:serve",
     "test:native",
     "test:research:native",
+    "test:eve:live",
     "test:tools:live",
   ]) {
     Reflect.deleteProperty(manifest.scripts ?? {}, script);

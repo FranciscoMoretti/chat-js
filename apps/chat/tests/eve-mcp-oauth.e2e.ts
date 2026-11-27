@@ -12,6 +12,7 @@ import {
 import { conversationBinding } from "../lib/eve/contracts";
 import { discoverEveMcpTools } from "../chatjs/plugins/mcp/runtime/mcp-tools";
 import { assertEveTestDatabase } from "./eve-test-database";
+import { liveMcpFixtureAddress } from "./eve-mcp-fixture-address";
 import { startEveOAuthMcpServer } from "./fixtures/eve-oauth-mcp-server";
 
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
@@ -20,7 +21,7 @@ test("MCP OAuth callback persists credentials for fresh Eve clients and native e
   page,
 }, testInfo) => {
   test.setTimeout(180_000);
-  const fixture = await startEveOAuthMcpServer();
+  const fixture = await startEveOAuthMcpServer(liveMcpFixtureAddress());
   const connectorId = crypto.randomUUID();
   const nameId = `oauth_${connectorId.slice(0, 8)}`;
   let branchId: string | undefined;
