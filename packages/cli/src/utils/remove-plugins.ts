@@ -1,4 +1,6 @@
 import { installationActivation } from "./installation-activation";
+import { createRequire } from "node:module";
+import { runCommand } from "./run-command";
 import { randomUUID } from "node:crypto";
 import { mkdir, rename, rm, rmdir, writeFile } from "node:fs/promises";
 import path from "node:path";
@@ -23,6 +25,32 @@ import {
 } from "./source-receipt";
 import { planPluginRegistrations } from "./sync-plugins";
 import { writeGeneratedFiles } from "./write-generated-files";
+
+// Use the project's formatter and configuration when installed. Removal also
+// works in source-only projects, where the JSON writer provides the fallback.
+const formatRetainedSchemas = async (cwd: string): Promise<void> => {
+  let manifest: string;
+  try {
+    manifest = createRequire(path.join(cwd, "package.json")).resolve(
+      "oxfmt/package.json"
+    );
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      "code" in error &&
+      error.code === "MODULE_NOT_FOUND"
+    ) {
+      return;
+    }
+    throw error;
+  }
+  const formatter = path.join(path.dirname(manifest), "bin", "oxfmt");
+  await runCommand(
+    process.execPath,
+    [formatter, "--write", retainedSchemasFile],
+    cwd
+  );
+};
 
 export const planPluginRemoval = async (
   cwd: string,
@@ -172,6 +200,7 @@ export const removePlugins = async (
       moved.push(file);
     }
     await writeGeneratedFiles(cwd, plan.registrations);
+    await formatRetainedSchemas(cwd);
   } catch (error) {
     const restored = await Promise.allSettled([
       ...moved.map(async (file) => {

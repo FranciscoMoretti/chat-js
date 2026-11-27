@@ -1,5 +1,9 @@
 # chat-js
 
+## 1.0.0-beta.1
+
+Format the retained database schema record when removing plugins, so generated apps pass lint after a Feedback plugin install and removal.
+
 ## 1.0.0-beta.0
 
 Create an app from the same catalog as the web builder. Configure plugins and storage interactively or with flags. Add registry items and remove installed plugins from the terminal menus. New apps use registry `0.2.0-beta.10`. Select `streamdown-math` or `streamdown-mermaid` for optional math and diagram rendering.

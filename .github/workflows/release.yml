@@ -97,14 +97,14 @@ jobs:
 
           publish_exact packages/registry 0.2.0-beta.10
           bun run --cwd packages/cli build
-          publish_exact packages/cli 1.0.0-beta.0
+          publish_exact packages/cli 1.0.0-beta.1
 
       - name: Verify published installation
         id: published-install
         if: steps.matched-pair.outcome == 'success'
         env:
           CHATJS_KEEP_PUBLISHED_FIXTURE: 1
-        run: bun run --cwd packages/cli test:published 1.0.0-beta.0 0.2.0-beta.10
+        run: bun run --cwd packages/cli test:published 1.0.0-beta.1 0.2.0-beta.10
 
       - name: Create Release Pull Request or Publish
         id: changesets

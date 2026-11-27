@@ -23,10 +23,10 @@ trap cleanup EXIT
 # npm publication can finish before the versions are publicly readable.
 for package in "@chat-js/registry@$registry_version" "chat-js@$cli_version"; do
   for attempt in {1..60}; do
-    if npm view "$package" version --json --prefer-online > "$fixture_root/lookup.json" 2> "$fixture_root/lookup.log"; then
+    if npm pack "$package" --dry-run --json --prefer-online > "$fixture_root/lookup.json" 2> "$fixture_root/lookup.log"; then
       break
     fi
-    if ! grep -q E404 "$fixture_root/lookup.log" || [ "$attempt" = 60 ]; then
+    if ! grep -Eq 'E404|ETARGET' "$fixture_root/lookup.log" || [ "$attempt" = 60 ]; then
       cat "$fixture_root/lookup.log" >&2
       exit 1
     fi
@@ -35,6 +35,11 @@ for package in "@chat-js/registry@$registry_version" "chat-js@$cli_version"; do
 done
 
 unset CHATJS_REGISTRY_URL CHATJS_EVE_REGISTRY_URL
+# npm metadata, tarballs and the CLI's public registry CDN propagate separately.
+curl --fail --silent --show-error --location --max-time 20 \
+  --retry 60 --retry-delay 10 --retry-max-time 600 --retry-all-errors \
+  "https://unpkg.com/@chat-js/registry@$registry_version/dist/r/memory-storage.json" \
+  --output "$fixture_root/memory-storage.json"
 cd "$fixture_root"
 if ! npx --yes "chat-js@$cli_version" create app --yes \
   --installation '{"gateway":"vercel","plugins":[],"tools":["deep-research"],"storage":{"source":"memory"}}' \
@@ -43,6 +48,11 @@ if ! npx --yes "chat-js@$cli_version" create app --yes \
   exit 1
 fi
 cd app
+npx --yes "chat-js@$cli_version" add --plugin feedback --yes
+test -f chatjs/plugins/feedback/plugin.json
+npx --yes "chat-js@$cli_version" remove --plugin feedback --yes
+test ! -e chatjs/plugins/feedback/plugin.json
+test -f chatjs/plugins/feedback/feedback-schema.ts
 if ! bun run test:types > ../types.log 2>&1; then
   cat ../types.log >&2
   exit 1
@@ -66,4 +76,4 @@ assert.equal(existsSync("chatjs/tools/deep-research/renderer.tsx"), true);
 const sandbox = await import("eve/sandbox");
 assert.equal(typeof sandbox.DefaultSandbox.environment, "function");
 '
-echo "Published chat-js@$cli_version: Deep Research install, typecheck, lint and native sandbox imports passed."
+echo "Published chat-js@$cli_version: Deep Research install, Feedback add/remove, typecheck, lint and native sandbox imports passed."
