@@ -78,51 +78,6 @@ const OpenDeletion = ({
   );
 };
 
-test.each(["group", "conversation"] as const)(
-  "deletion from a member URL preserves the intended %s scope",
-  async (scope) => {
-    const activeBranchId = "22222222-2222-4222-8222-222222222222";
-    vi.spyOn(globalThis, "fetch")
-      .mockResolvedValueOnce(
-        Response.json({ rootId: sourceId, status: "deleted" })
-      )
-      .mockResolvedValueOnce(
-        Response.json({
-          chatId: sourceId,
-          rootId: activeBranchId,
-          status: "deleted",
-        })
-      );
-    const fixture = await mount(
-      <EveDeletionProvider>
-        <OpenDeletion scope={scope} />
-      </EveDeletionProvider>
-    );
-    try {
-      await act(async () => {
-        await page.getByRole("button", { name: "Open deletion" }).click();
-      });
-      await act(async () => {
-        await page
-          .getByRole("button", {
-            exact: true,
-            name:
-              scope === "group"
-                ? "Delete conversation and branches"
-                : "Delete conversation",
-          })
-          .click();
-      });
-      await expect.element(page.getByRole("dialog")).not.toBeInTheDocument();
-      expect(navigation.replace.mock.calls).toEqual(
-        scope === "group" ? [["/"]] : []
-      );
-    } finally {
-      await unmount(fixture);
-    }
-  }
-);
-
 test("deletion keeps pending state and closes after confirmed status despite refresh failure", async (): Promise<void> => {
   const pending = Promise.withResolvers<Response>();
   const request = vi
@@ -179,3 +134,52 @@ test("deletion keeps pending state and closes after confirmed status despite ref
     await unmount(fixture);
   }
 });
+
+test.each(["group", "conversation"] as const)(
+  "deletion from a member URL preserves the intended %s scope",
+  async (scope) => {
+    const activeBranchId = "22222222-2222-4222-8222-222222222222";
+    vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(
+        Response.json({ rootId: sourceId, status: "deleted" })
+      )
+      .mockResolvedValueOnce(
+        Response.json({
+          chatId: sourceId,
+          rootId: activeBranchId,
+          status: "deleted",
+        })
+      );
+    const fixture = await mount(
+      <EveDeletionProvider>
+        <OpenDeletion scope={scope} />
+      </EveDeletionProvider>
+    );
+    try {
+      await act(async () => {
+        await page.getByRole("button", { name: "Open deletion" }).click();
+      });
+      const dialog = page.getByRole("dialog");
+      await expect.element(dialog).toBeVisible();
+      await takeSnapshot(`delete-member-${scope}`);
+      await dialog.screenshot({ animations: "disabled" });
+      await act(async () => {
+        await page
+          .getByRole("button", {
+            exact: true,
+            name:
+              scope === "group"
+                ? "Delete conversation and branches"
+                : "Delete conversation",
+          })
+          .click();
+      });
+      await expect.element(page.getByRole("dialog")).not.toBeInTheDocument();
+      expect(navigation.replace.mock.calls).toEqual(
+        scope === "group" ? [["/"]] : []
+      );
+    } finally {
+      await unmount(fixture);
+    }
+  }
+);
