@@ -1,5 +1,7 @@
-import { eveDispatch, eveConversation, user } from "../lib/db/schema";
 import { createEveTestSession } from "./eve-native-session.fixture";
+import { eveDispatch, eveConversation, user } from "../lib/db/schema";
+import { reconcileEveWorkspaceTurn } from "../lib/eve/reconcile-workspace-turn";
+import { cleanupRetiredEveWorkspaces } from "../lib/db/eve-workspace-deletion";
 
 import { eq, inArray } from "drizzle-orm";
 import { afterAll, expect, test, vi } from "vitest";
@@ -173,6 +175,13 @@ test("conversation deletion fences assignment and removes metadata without touch
     await assignEveConversationProject(owner, row.id, ownProject)
   ).toBeNull();
   expect(await assignEveConversationProject(owner, row.id, null)).toBeNull();
+  await expect(completeEveConversationDeletion(owner, row.id)).rejects.toThrow(
+    "Workspace cleanup is incomplete"
+  );
+  await reconcileEveWorkspaceTurn(owner, row.id);
+  await cleanupRetiredEveWorkspaces(owner, row.id);
+  await cleanupRetiredEveWorkspaces(owner, row.id);
+  await completeEveConversationDeletion(owner, row.id);
   await completeEveConversationDeletion(owner, row.id);
   expect(
     await db

@@ -4,9 +4,7 @@ type EveSessionMappingErrorCode =
   | "identity_missing"
   | "owner_mismatch"
   | "identity_deleted"
-  | "binding_conflict"
-  | "receipt_pending"
-  | "receipt_unavailable";
+  | "binding_conflict";
 
 export class EveSessionMappingError extends Error {
   public readonly code: EveSessionMappingErrorCode;

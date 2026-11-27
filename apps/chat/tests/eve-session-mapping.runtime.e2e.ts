@@ -6,14 +6,18 @@ import { z } from "zod";
 
 import { db } from "../lib/db/client";
 import { createEveConversation, getEveCreation } from "../lib/db/eve-queries";
-import { eveConversation, user } from "../lib/db/schema";
+import { eveConversation, eveDispatch, user } from "../lib/db/schema";
 import { env } from "../lib/env";
 import { createEveConversationOperation } from "../lib/eve/create-conversation-operation";
 import type { eveRequest } from "../lib/eve/server";
 import { assertEveTestDatabase } from "./eve-test-database";
 
 vi.mock("server-only", () => ({}));
-const probe = vi.hoisted(() => ({ beforeResponse: false, dispatches: 0 }));
+const probe = vi.hoisted(() => ({
+  beforeResponse: false,
+  dispatches: 0,
+  deliveryId: "",
+}));
 vi.mock("../lib/eve/server", async (importOriginal) => {
   const actual = await importOriginal<{ eveRequest: typeof eveRequest }>();
   return {
@@ -31,8 +35,9 @@ vi.mock("../lib/eve/server", async (importOriginal) => {
       const deadline = Date.now() + 25_000;
 
       const session = z
-        .looseObject({ sessionId: z.string() })
+        .object({ sessionId: z.string(), deliveryId: z.string().min(1) })
         .parse(await response.clone().json());
+      probe.deliveryId = session.deliveryId;
       /* oxlint-disable eslint/no-await-in-loop -- Each poll observes the worker before the next bounded delay and exits when binding completes. */
       while (Date.now() < deadline) {
         const [row] = await db
@@ -84,6 +89,14 @@ test("real native hook binds before a lost response, and retry keeps the accepte
     sessionId: row?.sessionId,
   });
   expect(probe.dispatches).toBe(1);
+  const [journal] = await db
+    .select()
+    .from(eveDispatch)
+    .where(eq(eveDispatch.ownerId, owner));
+  expect(journal).toMatchObject({
+    deliveryId: probe.deliveryId,
+    sessionId: row?.sessionId,
+  });
 });
 
 test("native acceptance deduplicates concurrent callers and rejects foreign or forged identity", async () => {
@@ -142,23 +155,18 @@ test("native acceptance deduplicates concurrent callers and rejects foreign or f
       ).toEqual([202, 202]);
       const receipts = await Promise.all(
         responses.map(async (response: Readonly<Pick<Response, "json">>) =>
-          z.object({ sessionId: z.string() }).parse(await response.json())
+          z
+            .object({ sessionId: z.string(), deliveryId: z.string() })
+            .parse(await response.json())
         )
       );
 
-      expect(receipts[0].sessionId).toBe(receipts[1].sessionId);
-      const ownReceipt = await actual.eveRequest(
-        owner,
-        `/eve/chat/v1/operation/${reservationId}`
-      );
-      expect(await ownReceipt.json()).toMatchObject({
-        sessionId: receipts[0].sessionId,
-      });
-      const foreignReceipt = await actual.eveRequest(
+      expect(receipts[0]).toEqual(receipts[1]);
+      const foreignStream = await actual.eveRequest(
         "foreign",
-        `/eve/chat/v1/operation/${reservationId}`
+        `/eve/chat/v1/session/${receipts[0].sessionId}/stream`
       );
-      expect(foreignReceipt.status).toBe(404);
+      expect(foreignStream.status).toBe(401);
 
       return receipts[0];
     }

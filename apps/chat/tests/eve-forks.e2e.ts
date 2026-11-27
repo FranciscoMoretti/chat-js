@@ -1,3 +1,5 @@
+import { config } from "../lib/config";
+import { Client, conversationOf } from "eve/client";
 import { userCredit } from "@/chatjs/plugins/credits/credits-schema";
 import { expect, test } from "@playwright/test";
 
@@ -7,6 +9,7 @@ import { z } from "zod";
 import { db } from "../lib/db/client";
 import { eveConversation, eveUsage, user } from "../lib/db/schema";
 import { conversationBinding } from "../lib/eve/contracts";
+import { getEveConnectionOptions } from "../lib/eve/connection-options";
 import { insertEveConversationFixtures } from "./eve-conversation-fixture";
 import { assertEveTestDatabase } from "./eve-test-database";
 
@@ -55,6 +58,12 @@ test("fork API preserves native history in ChatJS and rejects changed retries an
     expect(created.ok(), await created.text()).toBe(true);
     const source = conversationBinding.parse(await created.json());
     cleanup = { id: source.id, origin: headers.origin };
+    const [sourceRow] = await db
+      .select({ chatId: eveConversation.chatId })
+      .from(eveConversation)
+      .where(eq(eveConversation.id, source.id));
+    expect(sourceRow).toBeDefined();
+    cleanup.id = sourceRow.chatId;
     await page.goto(`/chat/${source.id}`);
     await expect(page.getByText("Ready", { exact: true })).toBeVisible({
       timeout: 90_000,
@@ -124,32 +133,56 @@ test("fork API preserves native history in ChatJS and rejects changed retries an
       headers,
     });
     expect(changed.status()).toBe(409);
-    const usage = await db
-      .select()
-      .from(eveUsage)
-      .where(eq(eveUsage.sessionId, branch.sessionId));
+    const readUsage = async () =>
+      await db
+        .select()
+        .from(eveUsage)
+        .where(eq(eveUsage.sessionId, branch.sessionId));
+    await expect
+      .poll(
+        async () => {
+          const rows = await readUsage();
+          return rows.filter((entry) => entry.costUsd !== null).length;
+        },
+        { timeout: 30_000 }
+      )
+      .toBe(2);
+    const usage = await readUsage();
     // Follow-up suggestions have independent hook-model receipts. Only the new
     // branch turn may be billed; copied ancestor turns must not be charged again.
     expect(
       new Set(usage.map((entry: { readonly turnId: string }) => entry.turnId))
     ).toEqual(new Set(["turn_0"]));
+    const modelReceipt = z.object({
+      modelId: z.string(),
+      state: z.literal("returned"),
+      sessionId: z.literal(branch.sessionId),
+    });
     expect(
-      usage.filter(
-        (entry: { readonly eventId: string }) =>
-          !entry.eventId.includes(":model-call:")
-      )
-    ).toHaveLength(1);
+      usage
+        .map((entry) => modelReceipt.parse(entry.modelAttempt).modelId)
+        .toSorted()
+    ).toEqual(
+      [modelId, config.ai.tools.followupSuggestions.default].toSorted()
+    );
+    expect(usage.every((entry) => entry.costUsd !== null)).toBe(true);
+    expect(new Set(usage.map((entry) => entry.generationId)).size).toBe(2);
     const [stored] = await db
       .select()
       .from(eveConversation)
       .where(eq(eveConversation.id, branch.id));
     expect(stored?.parentBranchId).toBe(source.id);
     expect(stored?.rootBranchId).toBe(source.id);
-    await page.goto(`/chat/${source.id}`);
-    await expect(page.getByRole("log")).toContainText(
-      "original-second-response"
+    const client = new Client(getEveConnectionOptions(session.user.id));
+    const snapshot = await client.sessions.attach(source.sessionId).snapshot();
+    const sourceText = conversationOf(snapshot.events).messages.flatMap(
+      (message) =>
+        message.parts.flatMap((part) =>
+          part.type === "text" ? [part.text] : []
+        )
     );
-    await expect(page.getByRole("log")).not.toContainText(operation.message);
+    expect(sourceText.join("\n")).toContain("original-second-response");
+    expect(sourceText.join("\n")).not.toContain(operation.message);
 
     const foreignOwner = crypto.randomUUID();
     const foreignId = crypto.randomUUID();
@@ -176,6 +209,20 @@ test("fork API preserves native history in ChatJS and rejects changed retries an
         headers,
       });
       expect(forbidden.status()).toBe(404);
+      expect(await forbidden.json()).toMatchObject({
+        code: "fork_source_unavailable",
+        creationRejected: true,
+      });
+      const missing = await page.request.post("/api/agent-conversations", {
+        data: {
+          ...operation,
+          fork: { ...operation.fork, branchId: crypto.randomUUID() },
+          operationId: crypto.randomUUID(),
+        },
+        headers,
+      });
+      expect(missing.status()).toBe(404);
+      expect(await missing.json()).toEqual(await forbidden.json());
       const raw = await page.request.post("/api/agent-conversations", {
         data: {
           ...operation,

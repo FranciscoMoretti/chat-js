@@ -3,58 +3,28 @@ import { isNonEmptyString } from "@/lib/is-non-empty-string";
 import { z } from "zod";
 
 import {
-  bindAcceptedEveConversation,
+  bindAcceptedEveCreation,
   readEveSessionMapping,
 } from "@/lib/db/eve-queries";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
-import { eveRequest } from "./server";
 import { EveSessionMappingError } from "./session-mapping-error";
 
-const assertNativeReceipt = async (
-  ownerId: string,
-  reservationId: string,
-  sessionId: string,
-  abortSignal: ReadonlyNativeSurface<AbortSignal>
-): Promise<void> => {
-  let response: Response;
-  try {
-    response = await eveRequest(
-      ownerId,
-      `/eve/chat/v1/operation/${reservationId}`,
-      {
-        signal: abortSignal,
-      }
-    );
-  } catch {
-    abortSignal.throwIfAborted();
-    throw new EveSessionMappingError("receipt_unavailable");
-  }
-  const body: unknown = await response.json().catch((): void => {
-    // The required receipt schemas below reject an absent JSON body.
-  });
-  const receipt = z.object({ sessionId: z.string().min(1) }).safeParse(body);
-  if (!response.ok || !receipt.success) {
-    throw new EveSessionMappingError("receipt_unavailable");
-  }
-  if (receipt.data.sessionId !== sessionId) {
-    throw new EveSessionMappingError("binding_conflict");
-  }
-};
-
 /**
- * Auth attributes locate a reservation; only its exact native receipt authorizes binding.
+ * Auth attributes locate a reservation; only trusted native delivery evidence authorizes early binding.
  * @param {string | undefined} ownerId - Authenticated owner; absence raises an authentication error.
  * @param {string} sessionId - Native session identity that must match the durable binding or receipt.
- * @param {ReadonlyNativeSurface<AbortSignal>} abortSignal - Cancellation checked before lookup and after native receipt failures.
+ * @param {ReadonlyNativeSurface<AbortSignal>} abortSignal - Cancellation checked before lookup.
  * @param {unknown | undefined} reservationId - Optional creation UUID from auth attributes, validated before lookup.
+ * @param {string | undefined} deliveryId - Positive evidence from the authored initial turn hook.
  * @returns {Promise<{ branchId: string; ownerId: string }>} Durable conversation identity and the authenticated owner after receipt reconciliation.
  */
 export const resolveEveConversationScope = async (
   ownerId: string | undefined,
   sessionId: string,
   abortSignal: ReadonlyNativeSurface<AbortSignal>,
-  reservationId?: unknown
+  reservationId?: unknown,
+  deliveryId?: string
 ): Promise<{ branchId: string; ownerId: string }> => {
   abortSignal.throwIfAborted();
   if (!isNonEmptyString(ownerId)) {
@@ -96,7 +66,10 @@ export const resolveEveConversationScope = async (
   if (row.creationKind === "copy") {
     throw new EveSessionMappingError("identity_pending");
   }
-  await assertNativeReceipt(ownerId, row.id, sessionId, abortSignal);
-  await bindAcceptedEveConversation(ownerId, row.id, sessionId);
+  if (!isNonEmptyString(identity.data) || !isNonEmptyString(deliveryId)) {
+    throw new EveSessionMappingError("identity_pending");
+  }
+  abortSignal.throwIfAborted();
+  await bindAcceptedEveCreation(ownerId, row.id, sessionId, deliveryId);
   return { branchId: row.id, ownerId };
 };

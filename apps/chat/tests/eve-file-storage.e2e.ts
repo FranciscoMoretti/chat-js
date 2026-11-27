@@ -11,6 +11,7 @@ import {
   createEveConversation,
 } from "../lib/db/eve-queries";
 import {
+  eveDispatch,
   eveConversation,
   eveFileReference,
   eveStoredFile,
@@ -89,6 +90,7 @@ test("storage purge removes files and recovers a lost deletion acknowledgement a
     await db
       .delete(eveFileReference)
       .where(eq(eveFileReference.ownerId, owner));
+    await db.delete(eveDispatch).where(eq(eveDispatch.ownerId, owner));
     await db.delete(eveConversation).where(eq(eveConversation.ownerId, owner));
     await db.delete(eveStoredFile).where(eq(eveStoredFile.ownerId, owner));
     await db.delete(user).where(eq(user.id, owner));

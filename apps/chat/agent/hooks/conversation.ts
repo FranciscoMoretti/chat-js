@@ -1,5 +1,5 @@
 import { isAccountSession } from "../../lib/eve/session-identity";
-import type { HookContext } from "eve/hooks";
+import type { HookContext, HookEvent } from "eve/hooks";
 import { defineHook } from "eve/hooks";
 
 const conversationScopeTimeoutMilliseconds = 10_000;
@@ -7,7 +7,7 @@ const conversationScopeTimeoutMilliseconds = 10_000;
 export default defineHook({
   events: {
     "turn.started": async (
-      _event: unknown,
+      event: HookEvent<"turn.started">,
       context: Readonly<{
         session: Readonly<
           Pick<HookContext["session"], "id" | "auth" | "parent">
@@ -27,7 +27,12 @@ export default defineHook({
         // reservation attribute never authorizes a child to claim that binding.
         context.session.parent
           ? undefined
-          : context.session.auth.initiator?.attributes.chatjsReservationId
+          : context.session.auth.initiator?.attributes.chatjsReservationId,
+        !context.session.parent &&
+          event.data.follows === null &&
+          "deliveryId" in event.data.cause
+          ? event.data.cause.deliveryId
+          : undefined
       );
     },
   },

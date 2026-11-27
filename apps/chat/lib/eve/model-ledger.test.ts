@@ -69,6 +69,49 @@ it("records cost before structured-output validation rejects a paid response", a
   );
 });
 
+it("attributes an Eve summary on a reused turn wrapper to maintenance", async () => {
+  const store = ledger();
+  const prompt =
+    "You are performing a CONTEXT CHECKPOINT COMPACTION. Create a handoff summary for another LLM that will resume the task.";
+  const provider = {
+    ...model(),
+    doStream: async () =>
+      await Promise.resolve({
+        stream: new ReadableStream<LanguageModelV4StreamPart>({
+          start(controller) {
+            controller.enqueue({
+              type: "finish",
+              finishReason: result.finishReason,
+              usage: result.usage,
+              providerMetadata: result.providerMetadata,
+            });
+            controller.close();
+          },
+        }),
+      }),
+  };
+  const wrapped = wrapEveModel(provider, scope, store);
+  const summary = await wrapped.doStream({
+    prompt: [{ role: "system", content: prompt }],
+  });
+  await Array.fromAsync(summary.stream);
+  await wrapped.doGenerate({
+    prompt: [{ role: "user", content: [{ type: "text", text: prompt }] }],
+  });
+  expect(store.begin).toHaveBeenNthCalledWith(
+    1,
+    expect.objectContaining({
+      ownerId: scope.ownerId,
+      sessionId: scope.sessionId,
+      turnId: undefined,
+    })
+  );
+  expect(store.begin).toHaveBeenNthCalledWith(
+    2,
+    expect.objectContaining(scope)
+  );
+});
+
 it("continues once when intent persistence fails", async () => {
   const store = ledger();
   const generate = vi.fn(async () => await Promise.resolve(result));

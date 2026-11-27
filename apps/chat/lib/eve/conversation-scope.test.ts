@@ -5,20 +5,19 @@ import { resolveEveConversationScope } from "./conversation-scope";
 const mocks = vi.hoisted(() => ({
   bind: vi.fn(),
   read: vi.fn(),
-  request: vi.fn(),
 }));
 vi.mock("../db/eve-queries", () => ({
-  bindAcceptedEveConversation: mocks.bind,
+  bindAcceptedEveCreation: mocks.bind,
   readEveSessionMapping: mocks.read,
 }));
-vi.mock("./server", () => ({ eveRequest: mocks.request }));
 const reservationId = "01912345-1234-7123-8123-123456789abc";
-const resolve = async (id: unknown = reservationId) =>
+const resolve = async (id: unknown = reservationId, deliveryId = "delivery") =>
   await resolveEveConversationScope(
     "owner",
     "native",
     AbortSignal.timeout(1000),
-    id
+    id,
+    deliveryId
   );
 beforeEach(() => {
   vi.resetAllMocks();
@@ -29,7 +28,6 @@ beforeEach(() => {
     sessionId: null,
     state: "creating",
   });
-  mocks.request.mockResolvedValue(Response.json({ sessionId: "native" }));
 });
 it("binds the exact accepted session before the HTTP caller receives its reply", async () => {
   expect(await resolve()).toEqual({
@@ -37,11 +35,17 @@ it("binds the exact accepted session before the HTTP caller receives its reply",
     ownerId: "owner",
   });
   expect(mocks.read).toHaveBeenCalledWith({ reservationId });
-  expect(mocks.bind).toHaveBeenCalledWith("owner", reservationId, "native");
+  expect(mocks.bind).toHaveBeenCalledWith(
+    "owner",
+    reservationId,
+    "native",
+    "delivery"
+  );
 });
-it("rejects a subagent inheriting its parent's reservation attribute", async () => {
-  mocks.request.mockResolvedValue(Response.json({ sessionId: "parent" }));
-  await expect(resolve()).rejects.toMatchObject({ code: "binding_conflict" });
+it("waits for a trusted initial delivery when a reservation is still unbound", async () => {
+  await expect(resolve(reservationId, "")).rejects.toMatchObject({
+    code: "identity_pending",
+  });
   expect(mocks.bind).not.toHaveBeenCalled();
 });
 it.each([
@@ -67,7 +71,6 @@ it.each([
   ) => {
     mocks.read.mockResolvedValue(row);
     await expect(resolve()).rejects.toMatchObject({ code });
-    expect(mocks.request).not.toHaveBeenCalled();
     expect(mocks.bind).not.toHaveBeenCalled();
   }
 );
@@ -85,26 +88,6 @@ it("uses the existing reverse binding for sessions created before the attribute 
       AbortSignal.timeout(1000)
     )
   ).toEqual({ branchId: reservationId, ownerId: "owner" });
-  expect(mocks.request).not.toHaveBeenCalled();
-});
-it.each([
-  [409, { code: "eve_operation_unresolved" }, "receipt_unavailable"],
-  [503, {}, "receipt_unavailable"],
-  [200, {}, "receipt_unavailable"],
-])(
-  "keeps receipt availability separate from corruption (%s)",
-  async (status, body: unknown, code) => {
-    mocks.request.mockResolvedValue(Response.json(body, { status }));
-    await expect(resolve()).rejects.toMatchObject({ code });
-    expect(mocks.bind).not.toHaveBeenCalled();
-  }
-);
-it("treats malformed native JSON as unavailable without binding the session", async (): Promise<void> => {
-  mocks.request.mockResolvedValue(new Response("{"));
-  await expect(resolve()).rejects.toMatchObject({
-    code: "receipt_unavailable",
-  });
-  expect(mocks.bind).not.toHaveBeenCalled();
 });
 it("leaves pending copies to their resource journal", async () => {
   mocks.read.mockResolvedValue({
@@ -115,7 +98,6 @@ it("leaves pending copies to their resource journal", async () => {
   });
   await expect(resolve()).rejects.toMatchObject({ code: "identity_pending" });
   expect(mocks.bind).not.toHaveBeenCalled();
-  expect(mocks.request).not.toHaveBeenCalled();
 });
 it("does not call missing pre-attribute identity corruption", async () => {
   mocks.read.mockResolvedValue(null);
@@ -124,13 +106,6 @@ it("does not call missing pre-attribute identity corruption", async () => {
   ).rejects.toMatchObject({ code: "identity_pending" });
 });
 
-it("classifies a transport outage without treating the mapping as corrupt", async () => {
-  mocks.request.mockRejectedValue(new TypeError("connection refused"));
-  await expect(resolve()).rejects.toMatchObject({
-    code: "receipt_unavailable",
-  });
-  expect(mocks.bind).not.toHaveBeenCalled();
-});
 it("rejects malformed context and missing authentication before reading storage", async () => {
   await expect(resolve("not-a-reservation")).rejects.toMatchObject({
     code: "binding_conflict",

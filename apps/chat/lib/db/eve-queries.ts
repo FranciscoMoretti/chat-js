@@ -473,8 +473,10 @@ const resolveCreationChat = async (
         )
     : [];
   if (fork && !isNonemptyString(source?.sessionId)) {
-    throw new CreationConflictError(
-      "The source conversation is not available for editing."
+    throw new CreationRejectedError(
+      "The source conversation is not available for editing.",
+      "fork_source_unavailable",
+      404
     );
   }
   const [initialGroup] = hasQueryRow(source)
@@ -1153,26 +1155,49 @@ const listPendingEveCreations = async (
       )
     );
 
-/**
- * Caller must verify a native operation receipt for this reservation and exact session.
- * @param {string} ownerId Owner whose reservation is bound under its transaction lock.
- * @param {string} reservationId Durable reservation whose accepted native operation has been verified.
- * @param {string} sessionId Exact native session named by the verified operation receipt.
- * @returns {Promise<BoundConversation>} The reservation and session identities after transactional binding.
- */
-const bindAcceptedEveConversation = async (
+/** Bind the native first-turn delivery and its exact create journal atomically. */
+const bindAcceptedEveCreation = async (
   ownerId: string,
   reservationId: string,
-  sessionId: string
+  sessionId: string,
+  deliveryId: string
 ): Promise<BoundConversation> =>
-  await db.transaction(
-    async (tx: CreationTransactionView) =>
-      await bindConversationSession(tx, ownerId, reservationId, sessionId)
-  );
+  await db.transaction(async (tx: CreationTransactionView) => {
+    const bound = await bindConversationSession(
+      tx,
+      ownerId,
+      reservationId,
+      sessionId
+    );
+    const [journal] = await tx
+      .update(eveDispatch)
+      .set({ deliveryId, sessionId })
+      .where(
+        and(
+          eq(eveDispatch.ownerId, ownerId),
+          eq(eveDispatch.operationId, reservationId),
+          eq(eveDispatch.branchId, reservationId),
+          eq(eveDispatch.kind, "create"),
+          or(
+            isNull(eveDispatch.sessionId),
+            eq(eveDispatch.sessionId, sessionId)
+          ),
+          or(
+            isNull(eveDispatch.deliveryId),
+            eq(eveDispatch.deliveryId, deliveryId)
+          )
+        )
+      )
+      .returning();
+    if (!hasQueryRow(journal)) {
+      throw new EveSessionMappingError("binding_conflict");
+    }
+    return bound;
+  });
 
 export {
   beginEveConversationDeletion,
-  bindAcceptedEveConversation,
+  bindAcceptedEveCreation,
   createEveConversation,
   getBoundEveConversationForSession,
   getDeletingEveConversationForSession,
