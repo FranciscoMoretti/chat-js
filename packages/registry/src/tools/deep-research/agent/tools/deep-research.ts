@@ -43,26 +43,50 @@ const structuredMessage = (message: string): string =>
 const outputSchema = (schema: z.ZodType): Record<string, z.JSONType> =>
   z.record(z.string(), z.json()).parse(z.toJSONSchema(schema));
 
+// EVE exposes only the error message for a failed delegated turn.
+const UNFULFILLED_OUTPUT_SCHEMA =
+  "The agent could not produce a result matching the requested schema.";
+
 const researchReply = async (
   agent: Readonly<AgentSession>,
   options: Readonly<{
+    phase: string;
     message: string;
     outputSchema: Record<string, z.JSONType>;
     signal: AbortSignal;
   }>
 ): Promise<unknown> => {
-  options.signal.throwIfAborted();
-  const response = await agent.send(options.message, {
-    outputSchema: options.outputSchema,
-    signal: options.signal,
-  });
-  const result = await response.result();
-  options.signal.throwIfAborted();
+  const send = async (message: string) => {
+    options.signal.throwIfAborted();
+    const response = await agent.send(message, {
+      outputSchema: options.outputSchema,
+      signal: options.signal,
+    });
+    const result = await response.result();
+    options.signal.throwIfAborted();
+    return result;
+  };
+
+  let result = await send(options.message);
+  if (
+    result.status === "failed" &&
+    !result.sessionEnded &&
+    result.error.message === UNFULFILLED_OUTPUT_SCHEMA
+  ) {
+    // Keep the original child session so source findings can reuse evidence it already fetched.
+    result = await send(
+      "Your previous response did not match the requested output. Use the information already gathered and make no additional tool calls except eve__reply. Include all required fields."
+    );
+  }
   if (result.status === "failed") {
-    throw new Error(result.error?.message ?? "Research agent failed");
+    throw new Error(
+      `Deep Research (${options.phase}): ${result.error.message}`
+    );
   }
   if (result.data === undefined) {
-    throw new Error("Research agent ended without structured output");
+    throw new Error(
+      `Deep Research (${options.phase}) ended without structured output`
+    );
   }
   return result.data;
 };
@@ -94,6 +118,7 @@ export default defineWorkflowTool({
           message: structuredMessage(
             clarifyWithUserInstructions({ date, messages })
           ),
+          phase: "clarification",
           outputSchema: outputSchema(researchClarification),
         })
       );
@@ -126,6 +151,7 @@ export default defineWorkflowTool({
         message: structuredMessage(
           transformMessagesIntoResearchTopicPrompt({ date, messages })
         ),
+        phase: "research brief",
         outputSchema: outputSchema(researchBrief),
       })
     );
@@ -165,6 +191,7 @@ export default defineWorkflowTool({
           message: structuredMessage(
             `${leadResearcherPrompt({ date, max_concurrent_research_units: config.max_concurrent_research_units })}\n\nResearch brief: ${findings[0]}\n\nFindings so far:\n${findings.slice(1).join("\n\n")}\n\nDecision round ${round + RESEARCH_ROUND_INCREMENT} of ${config.max_researcher_iterations + RESEARCH_ROUND_INCREMENT}. Return your next decision.`
           ),
+          phase: "supervisor decision",
           outputSchema: outputSchema(decisionSchema),
         })
       );
@@ -194,6 +221,7 @@ export default defineWorkflowTool({
             message: structuredMessage(
               `${researchSystemPrompt({ date, max_search_queries: config.search_api_max_queries, mcp_prompt: "Use eve__search to discover installed search/retrieval connections and eve__tool to call them. Use native read_file or bash for relevant sandbox files. Do not call deepResearch recursively. If current external evidence is needed but no search capability is installed, say so explicitly; never fabricate sources." })}\n\nResearch brief:\n${findings[0]}\n\nTopic:\n${topic}\n\nReturn comprehensive raw findings with source URLs, citations, uncertainties, and conflicting evidence.`
             ),
+            phase: "source findings",
             outputSchema: outputSchema(researchFindings),
           })
         );
@@ -214,6 +242,7 @@ export default defineWorkflowTool({
             message: structuredMessage(
               `${compressResearchSystemPrompt({ date })}\n\n${sources}\n\n${compressResearchSimpleHumanMessage}`
             ),
+            phase: "compressing findings",
             outputSchema: outputSchema(researchFindings),
           })
         );
@@ -253,6 +282,7 @@ export default defineWorkflowTool({
         message: structuredMessage(
           `${finalReportGenerationPrompt({ date, findings: savedNotes.join("\n"), research_brief: savedBrief })}\n\nWrite the complete Markdown report with title ${JSON.stringify(brief.title)}. Return title and content; the workflow will publish the report as a Markdown file.`
         ),
+        phase: "final report",
         outputSchema: outputSchema(researchReport),
       })
     );

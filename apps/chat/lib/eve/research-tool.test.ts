@@ -307,10 +307,10 @@ it("rejects failed or missing-output native child results before saving or start
     data: undefined,
     reply: undefined,
     sessionEnded: false,
-    error: { message: "Child failed" },
+    error: { message: "Model refused the request" },
   });
   await expect(Array.fromAsync(researchStream(context))).rejects.toThrow(
-    "Child failed"
+    "Model refused the request"
   );
   expect(agent).toHaveBeenCalledOnce();
   expect(mocks.save).not.toHaveBeenCalled();
@@ -328,3 +328,33 @@ it("rejects failed or missing-output native child results before saving or start
   expect(agent.mock.calls[0][1].signal).toBe(controller.signal);
   expect(mocks.save).not.toHaveBeenCalled();
 });
+
+it.each([
+  { sessionEnded: false, expectedCalls: 2 },
+  { sessionEnded: true, expectedCalls: 1 },
+])(
+  "reports the failed phase after $expectedCalls child sends",
+  async ({ sessionEnded, expectedCalls }) => {
+    const message =
+      "The agent could not produce a result matching the requested schema.";
+    agent.mockResolvedValue({ research_brief: "Brief", title: "Report" });
+    nativeResult.mockReturnValue({
+      status: "failed",
+      data: undefined,
+      reply: undefined,
+      sessionEnded,
+      error: { message },
+    });
+
+    await expect(Array.fromAsync(researchStream(context))).rejects.toThrow(
+      `Deep Research (research brief): ${message}`
+    );
+    expect(agent).toHaveBeenCalledTimes(expectedCalls);
+    if (!sessionEnded) {
+      expect(agent.mock.calls[1][1].outputSchema).toBe(
+        agent.mock.calls[0][1].outputSchema
+      );
+    }
+    expect(mocks.publish).not.toHaveBeenCalled();
+  }
+);

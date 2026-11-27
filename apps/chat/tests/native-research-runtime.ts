@@ -29,6 +29,10 @@ const hasEveBin = (value: unknown): value is { bin: { eve: string } } =>
 const main = async (): Promise<void> => {
   const app = path.resolve(path.dirname(process.argv[1]), "..");
   const workspaceNodeModules = path.resolve(app, "../../node_modules");
+  const researchSource = path.resolve(
+    app,
+    "../../packages/registry/src/tools/deep-research/agent"
+  );
   const evePackageJson = fileURLToPath(import.meta.resolve("eve/package.json"));
   const evePackage: unknown = JSON.parse(
     await readFile(evePackageJson, "utf-8")
@@ -64,13 +68,17 @@ const main = async (): Promise<void> => {
 
   await mkdir(path.join(fixture, "agent/tools"), { recursive: true });
   await cp(
-    path.join(app, "agent/tools/deepResearch.ts"),
+    path.join(researchSource, "tools/deep-research.ts"),
     path.join(fixture, "agent/tools/deepResearch.ts")
   );
   await cp(
-    path.join(app, "agent/lib/research"),
+    path.join(researchSource, "lib/research"),
     path.join(fixture, "agent/lib/research"),
     { recursive: true }
+  );
+  await cp(
+    path.join(researchSource, "lib/research/delivery.native.ts"),
+    path.join(fixture, "agent/lib/research/delivery.ts")
   );
   await write(
     "package.json",
@@ -174,25 +182,28 @@ export default defineTool({ availableInSubagents: false, description: "Fixture c
     `import { defineAgent } from "eve";
 import { mockModel } from "eve/evals";
 export default defineAgent({ defaultTools: false, modelContextWindowTokens: 128000,
- model: mockModel(({lastUserMessage, tools, toolResults}) => {
+ model: mockModel(({lastUserMessage, userMessages, tools, toolResults}) => {
   const message = lastUserMessage ?? "";
   if (toolResults.length > 20) throw new Error("Fixture model exceeded expected tool calls");
   const reply = tools.find(t => t.name === "eve__reply");
   if (reply) {
     if (tools.some(t => t.name === "deepResearch" || t.name === "deliver_report")) throw new Error("Root-only tools leaked into research copy");
     const fields = reply.inputSchema.properties;
+    const correcting = userMessages.length > 1;
     let output;
     if (fields.need_clarification) output = { need_clarification: false, question: "", verification: "" };
     else if (fields.research_brief) output = { research_brief: "Compare evidence", title: "Report" };
     else if (fields.complete) output = message.includes("SOURCE_SENTINEL") ? { complete: true, topics: [] } : { complete: false, topics: ["Evidence topic"] };
     else if (fields.content) {
-      if (!message.includes("SOURCE_SENTINEL")) throw new Error("Writer lost saved research notes");
+      if (!correcting) return "# Report\\nSOURCE_SENTINEL https://example.test/source";
+      if (!userMessages.some(entry => entry.includes("SOURCE_SENTINEL"))) throw new Error("Writer lost saved research notes");
       output = { title: "Report", content: "# Report\\nSOURCE_SENTINEL https://example.test/source" };
     } else if (fields.findings) {
-      if (message.includes("Topic:\\n")) {
+      if (userMessages.some(entry => entry.includes("Topic:\\n"))) {
         if (!toolResults.some(r => r.name === "eve__search")) return { toolCalls: [{ name: "eve__search", input: { query: "evidence__" } }] };
         if (!JSON.stringify(toolResults).includes("SOURCE_SENTINEL")) return { toolCalls: [{ name: "eve__tool", input: { name: "evidence__search", input: {} } }] };
         if (!JSON.stringify(toolResults).includes("SOURCE_SENTINEL")) throw new Error("Native connection result missing");
+        if (!correcting) return "SOURCE_SENTINEL https://example.test/source";
       } else if (!message.includes("SOURCE_SENTINEL")) throw new Error("Compressor lost source file");
       output = { findings: "SOURCE_SENTINEL https://example.test/source" };
     } else throw new Error("Unexpected research phase");
@@ -212,7 +223,7 @@ export default defineAgent({ defaultTools: false, modelContextWindowTokens: 1280
     "evals/research.eval.ts",
     `import assert from "node:assert/strict";
 import { defineEval } from "eve/evals";
-export default [defineEval({ description: "native research inherits connections and returns a sandbox report for separate delivery", async test(t) {
+export default [defineEval({ description: "native research corrects plain-text findings and reports without repeating searches", async test(t) {
  const turn = await t.send("Research");
  turn.succeeded();
  const result = turn.requireToolCall("deepResearch").output.output;
@@ -256,7 +267,11 @@ export default [defineEval({ description: "native research inherits connections 
         `Native research verification failed. Fixture retained at ${fixture}`
       );
     }
-    assert.ok(searches > 0, "Research must reach the native connection");
+    assert.equal(
+      searches,
+      1,
+      "Reply correction must reuse the original search"
+    );
     await rm(fixture, { force: true, recursive: true });
   } finally {
     if (searchServer.listening) {

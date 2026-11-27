@@ -22,7 +22,7 @@ If you need to ask a question, follow these guidelines:
 - Use bullet points or numbered lists if appropriate for clarity. Make sure that this uses markdown formatting and will be rendered correctly if the string output is passed to a markdown renderer.
 - Don't ask for unnecessary information, or information that the user has already provided. If you can see that the user has already provided the information, do not ask for it again.
 
-Respond in valid JSON format with these exact keys:
+Provide these exact fields to eve__reply:
 "need_clarification": boolean,
 "question": "<question to ask the user to clarify the report scope>",
 "verification": "<verification message that we will start research>"
@@ -94,7 +94,7 @@ const leadResearcherPrompt = ({
   `You are a research supervisor. Today's date is ${date}.
 You receive a research brief and findings from all completed topics. Decide whether the evidence is sufficient for a comprehensive report or identify specific gaps requiring follow-up research.
 
-Return JSON with complete (boolean) and topics (array of strings).
+Call eve__reply with complete (boolean) and topics (array of strings).
 - To research, set complete to false and provide up to ${max_concurrent_research_units} detailed, self-contained topics. The workflow will run them sequentially and return their findings before your next decision.
 - To finish, set complete to true and topics to []. A separate writer synthesizes the report.
 - Start by researching the brief. On later rounds, request only net new information that is necessary to answer it. Do not ask researchers to synthesize existing findings.
