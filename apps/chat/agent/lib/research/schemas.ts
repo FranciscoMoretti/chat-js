@@ -32,38 +32,28 @@ const researchInput = z.object({
     ),
 });
 
-const researchClarification = z.object({
+const researchClarification = z.strictObject({
   need_clarification: z.boolean(),
   question: z.string(),
   verification: z.string(),
 });
 
-const researchBrief = z.object({
+const researchBrief = z.strictObject({
   research_brief: z.string().min(MINIMUM_RESEARCH_TEXT_LENGTH),
   title: z.string().min(MINIMUM_RESEARCH_TEXT_LENGTH),
 });
 
-const researchDecision = z.object({
+const researchDecision = z.strictObject({
   complete: z.boolean(),
   topics: z.array(z.string().min(MINIMUM_RESEARCH_TEXT_LENGTH)),
 });
 
-const researchFindings = z.object({
-  findings: z.string().min(MINIMUM_RESEARCH_TEXT_LENGTH),
-});
-
-const researchReport = z.object({
-  content: z.string().min(MINIMUM_RESEARCH_TEXT_LENGTH),
-  title: z.string().min(MINIMUM_RESEARCH_TEXT_LENGTH),
-});
 export {
   researchBrief,
   researchClarification,
   researchDecision,
-  researchFindings,
   researchInput,
   researchOutput,
-  researchReport,
 };
 
 export interface ResearchUpdate {

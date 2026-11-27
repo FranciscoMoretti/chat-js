@@ -76,8 +76,8 @@ beforeEach(() => {
   mocks.files.clear();
   nativeResult.mockImplementation((data) => ({
     status: "completed",
-    data,
-    reply: undefined,
+    data: typeof data === "string" ? undefined : data,
+    reply: typeof data === "string" ? data : undefined,
     sessionEnded: false,
   }));
   controller = new AbortController();
@@ -132,13 +132,13 @@ it("lets the supervisor request follow-up after receiving findings and synthesiz
       title: "Report",
     })
     .mockResolvedValueOnce({ complete: false, topics: ["Initial topic"] })
-    .mockResolvedValueOnce({ findings: "Raw source https://example.test/one" })
-    .mockResolvedValueOnce({ findings: "First findings" })
+    .mockResolvedValueOnce("Raw source https://example.test/one")
+    .mockResolvedValueOnce("First findings")
     .mockResolvedValueOnce({ complete: false, topics: ["Missing evidence"] })
-    .mockResolvedValueOnce({ findings: "Additional sources" })
-    .mockResolvedValueOnce({ findings: "Follow-up findings" })
+    .mockResolvedValueOnce("Additional sources")
+    .mockResolvedValueOnce("Follow-up findings")
     .mockResolvedValueOnce({ complete: true, topics: [] })
-    .mockResolvedValueOnce({ content: "# Both findings", title: "Report" });
+    .mockResolvedValueOnce("# Both findings");
   const outputs = await Array.fromAsync(researchStream(context));
 
   expect(agent.mock.calls.map(([name]: readonly unknown[]) => name)).toEqual([
@@ -152,6 +152,9 @@ it("lets the supervisor request follow-up after receiving findings and synthesiz
     "agent",
     "agent",
   ]);
+  expect(
+    agent.mock.calls.map(([, options]) => Boolean(options.outputSchema))
+  ).toEqual([true, true, false, false, true, false, false, true, false]);
   expect(agent.mock.calls[4][1].message).toContain("First findings");
   expect(agent.mock.calls[7][1].message).toContain("Follow-up findings");
   expect(agent.mock.calls[8][1].message).toContain(
@@ -180,15 +183,15 @@ it("bounds adaptive decisions even when the supervisor never finishes", async ()
   agent
     .mockResolvedValueOnce({ research_brief: "Brief", title: "Report" })
     .mockResolvedValueOnce({ complete: false, topics: ["Topic"] })
-    .mockResolvedValueOnce({ findings: "Evidence" })
-    .mockResolvedValueOnce({ findings: "Evidence" })
+    .mockResolvedValueOnce("Evidence")
+    .mockResolvedValueOnce("Evidence")
     .mockResolvedValueOnce({ complete: false, topics: ["Topic"] })
-    .mockResolvedValueOnce({ findings: "Evidence" })
-    .mockResolvedValueOnce({ findings: "Evidence" })
+    .mockResolvedValueOnce("Evidence")
+    .mockResolvedValueOnce("Evidence")
     .mockResolvedValueOnce({ complete: false, topics: ["Topic"] })
-    .mockResolvedValueOnce({ findings: "Evidence" })
-    .mockResolvedValueOnce({ findings: "Evidence" })
-    .mockResolvedValueOnce({ content: "Content", title: "Report" });
+    .mockResolvedValueOnce("Evidence")
+    .mockResolvedValueOnce("Evidence")
+    .mockResolvedValueOnce("Content");
   await Array.fromAsync(researchStream(context));
   expect(agent.mock.calls.map(([name]: readonly unknown[]) => name)).toEqual([
     "agent",
@@ -218,7 +221,7 @@ it("returns a published artifact in the report without a separate tool call", as
   agent
     .mockResolvedValueOnce({ research_brief: "Brief", title: "Report" })
     .mockResolvedValueOnce({ complete: true, topics: [] })
-    .mockResolvedValueOnce({ content: "# Report", title: "Report" });
+    .mockResolvedValueOnce("# Report");
 
   const outputs = await Array.fromAsync(researchStream(context));
 
@@ -275,7 +278,7 @@ it("validates native outputs and propagates failures without a successful report
     .mockReset()
     .mockResolvedValueOnce({ research_brief: "Brief", title: "Report" })
     .mockResolvedValueOnce({ complete: true, topics: [] })
-    .mockResolvedValueOnce({ content: "Content", title: "Report" });
+    .mockResolvedValueOnce("Content");
   mocks.save.mockRejectedValue(new Error("Completion failed"));
   await expect(Array.fromAsync(researchStream(context))).rejects.toThrow(
     "Completion failed"
@@ -307,10 +310,10 @@ it("rejects failed or missing-output native child results before saving or start
     data: undefined,
     reply: undefined,
     sessionEnded: false,
-    error: { message: "Child failed" },
+    error: { message: "Model refused the request" },
   });
   await expect(Array.fromAsync(researchStream(context))).rejects.toThrow(
-    "Child failed"
+    "Model refused the request"
   );
   expect(agent).toHaveBeenCalledOnce();
   expect(mocks.save).not.toHaveBeenCalled();
@@ -327,4 +330,184 @@ it("rejects failed or missing-output native child results before saving or start
   expect(agent).toHaveBeenCalledOnce();
   expect(agent.mock.calls[0][1].signal).toBe(controller.signal);
   expect(mocks.save).not.toHaveBeenCalled();
+});
+
+it.each([
+  { sessionEnded: false, expectedCalls: 2 },
+  { sessionEnded: true, expectedCalls: 1 },
+])(
+  "reports the failed phase after $expectedCalls child sends",
+  async ({ sessionEnded, expectedCalls }) => {
+    const message =
+      "The agent could not produce a result matching the requested schema.";
+    agent.mockResolvedValue({ research_brief: "Brief", title: "Report" });
+    nativeResult.mockReturnValue({
+      status: "failed",
+      data: undefined,
+      reply: undefined,
+      sessionEnded,
+      error: { message },
+    });
+
+    await expect(Array.fromAsync(researchStream(context))).rejects.toThrow(
+      `Deep Research (research brief): ${message}`
+    );
+    expect(agent).toHaveBeenCalledTimes(expectedCalls);
+    if (!sessionEnded) {
+      expect(agent.mock.calls[1][1].outputSchema).toBeUndefined();
+    }
+    expect(mocks.publish).not.toHaveBeenCalled();
+  }
+);
+
+it("rejects a blank final reply before writing or publishing a report", async () => {
+  agent
+    .mockResolvedValueOnce({ research_brief: "Brief", title: "Report" })
+    .mockResolvedValueOnce({ complete: true, topics: [] })
+    .mockResolvedValueOnce(" \n ");
+
+  await expect(Array.fromAsync(researchStream(context))).rejects.toThrow(
+    "Deep Research (final report) ended without Markdown"
+  );
+  expect(agent.mock.calls[2][1].outputSchema).toBeUndefined();
+  expect(mocks.files.has("report.md")).toBe(false);
+  expect(mocks.publish).not.toHaveBeenCalled();
+});
+
+it("propagates a failed source reply without retrying or writing evidence", async () => {
+  agent
+    .mockResolvedValueOnce({ research_brief: "Brief", title: "Report" })
+    .mockResolvedValueOnce({ complete: false, topics: ["Topic"] })
+    .mockResolvedValueOnce("Unused");
+  nativeResult.mockImplementation((data) =>
+    typeof data === "string"
+      ? {
+          status: "failed",
+          data: undefined,
+          reply: undefined,
+          sessionEnded: false,
+          error: { message: "Model refused the request" },
+        }
+      : { status: "completed", data, reply: undefined, sessionEnded: false }
+  );
+
+  await expect(Array.fromAsync(researchStream(context))).rejects.toThrow(
+    "Deep Research (source findings): Model refused the request"
+  );
+  expect(agent).toHaveBeenCalledTimes(3);
+  expect(mocks.files.has("topic-1-sources.md")).toBe(false);
+  expect(mocks.publish).not.toHaveBeenCalled();
+});
+
+it("reports when a child is cancelled independently of its parent", async () => {
+  agent.mockResolvedValue({ research_brief: "Brief", title: "Report" });
+  nativeResult.mockReturnValue({
+    status: "cancelled",
+    data: undefined,
+    reply: undefined,
+    sessionEnded: false,
+  });
+
+  await expect(Array.fromAsync(researchStream(context))).rejects.toThrow(
+    "Deep Research (research brief) was cancelled"
+  );
+  expect(agent).toHaveBeenCalledTimes(1);
+  expect(mocks.publish).not.toHaveBeenCalled();
+});
+
+it.each([
+  { reply: "eve__reply()", error: "invalid JSON" },
+  {
+    reply: '{"complete":true,"topics":["invalid","oversized","decision"]}',
+    error: "invalid fields",
+  },
+])(
+  "rejects a control correction that returned $error",
+  async ({ reply, error }) => {
+    agent
+      .mockResolvedValueOnce({ research_brief: "Brief", title: "Report" })
+      .mockResolvedValueOnce({ complete: true, topics: [] })
+      .mockResolvedValueOnce(reply);
+    nativeResult
+      .mockImplementationOnce((data) => ({
+        status: "completed",
+        data,
+        reply: undefined,
+        sessionEnded: false,
+      }))
+      .mockReturnValueOnce({
+        status: "failed",
+        data: undefined,
+        reply: undefined,
+        sessionEnded: false,
+        error: {
+          message:
+            "The agent could not produce a result matching the requested schema.",
+        },
+      });
+
+    await expect(Array.fromAsync(researchStream(context))).rejects.toThrow(
+      `Deep Research (supervisor decision) returned ${error}`
+    );
+    expect(agent).toHaveBeenCalledTimes(3);
+    expect(mocks.publish).not.toHaveBeenCalled();
+  }
+);
+
+it("accepts a single fenced JSON object as a corrective reply", async () => {
+  agent
+    .mockResolvedValueOnce({ research_brief: "Brief", title: "Report" })
+    .mockResolvedValueOnce({ complete: true, topics: [] })
+    .mockResolvedValueOnce('```json\n{"complete":true,"topics":[]}\n```')
+    .mockResolvedValueOnce("# Report");
+  nativeResult
+    .mockImplementationOnce((data) => ({
+      status: "completed",
+      data,
+      reply: undefined,
+      sessionEnded: false,
+    }))
+    .mockReturnValueOnce({
+      status: "failed",
+      data: undefined,
+      reply: undefined,
+      sessionEnded: false,
+      error: {
+        message:
+          "The agent could not produce a result matching the requested schema.",
+      },
+    });
+
+  await expect(Array.fromAsync(researchStream(context))).resolves.toBeDefined();
+  expect(agent.mock.calls[2][1].outputSchema).toBeUndefined();
+  expect(mocks.publish).toHaveBeenCalledExactlyOnceWith(context, "# Report");
+});
+
+it("preserves the parent abort during a control correction", async () => {
+  const cancellation = new Error("Cancelled during correction");
+  const correction = Promise.withResolvers<unknown>();
+  agent
+    .mockResolvedValueOnce({ research_brief: "Brief", title: "Report" })
+    .mockReturnValueOnce(correction.promise);
+  nativeResult.mockReturnValueOnce({
+    status: "failed",
+    data: undefined,
+    reply: undefined,
+    sessionEnded: false,
+    error: {
+      message:
+        "The agent could not produce a result matching the requested schema.",
+    },
+  });
+  const outputs = Array.fromAsync(researchStream(context));
+  await vi.waitFor(() => {
+    expect(agent).toHaveBeenCalledTimes(2);
+  });
+  controller.abort(cancellation);
+  const rejected = expect(outputs).rejects.toBe(cancellation);
+  correction.resolve('{"research_brief":"Corrected","title":"Report"}');
+  await rejected;
+
+  expect(mocks.files.size).toBe(0);
+  expect(mocks.publish).not.toHaveBeenCalled();
 });

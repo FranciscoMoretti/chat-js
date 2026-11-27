@@ -14,8 +14,10 @@ import { eveConversation, eveUsage } from "../lib/db/schema";
 import { env } from "../lib/env";
 import { config } from "../lib/config";
 import { getEveConnectionOptions } from "../lib/eve/connection-options";
+// Preload the server's lazy Postgres adapter in Playwright's TypeScript loader.
+import "../lib/eve/lifecycle/postgres/eve-stream-positions";
 import { reconcileEveUsage } from "../lib/eve/reconcile-usage";
-import { toolResultSchema } from "../lib/eve/tool-result";
+import { hasEveToolReceipt, toolResultSchema } from "../lib/eve/tool-result";
 import { ResearchUpdateSchema } from "../tools/platform/research-updates-schema";
 import { readLogicalChatId } from "./eve-test-chat-identity";
 import { assertEveTestDatabase } from "./eve-test-database";
@@ -123,9 +125,11 @@ test("native deep research saves a reloadable report in ChatJS with a usage rece
   await expect(page.getByText("Ready", { exact: true })).toBeVisible({
     timeout: 30_000,
   });
-  await page.getByRole("button", { name: researchSummary }).click();
+  const activity = page.getByRole("button", { name: researchSummary });
+  await activity.click();
+  await expect(activity).toHaveAttribute("aria-expanded", "true");
   await expect(
-    page.getByRole("heading", { exact: true, name: "Research complete" })
+    page.getByText("Research complete", { exact: true })
   ).toBeVisible();
   expect(duplicateKeyErrors).toEqual([]);
   await page.screenshot({
@@ -195,26 +199,86 @@ test("native deep research saves a reloadable report in ChatJS with a usage rece
     .select()
     .from(eveUsage)
     .where(eq(eveUsage.sessionId, binding.sessionId));
-  const childModels = usage.filter((row: { readonly eventId: string }) =>
-    row.eventId.startsWith("eve-child:")
+  const childTurns = new Map(
+    children.map((child) => [child.sessionId, child.rootTurnId])
   );
-  const childSearch = usage.filter((row: { readonly eventId: string }) =>
-    children.some((child) =>
-      row.eventId.startsWith(`eve-tool:${child.sessionId}:`)
-    )
+  const modelAttribution = z.object({
+    providerMetadata: z
+      .object({ gateway: z.object({ cost: z.unknown() }).optional() })
+      .optional(),
+    sessionId: z.string(),
+    state: z.enum(["pending", "returned"]),
+  });
+  const childModels = usage.flatMap((row) => {
+    const attempt = modelAttribution.safeParse(row.modelAttempt);
+    return attempt.success && childTurns.has(attempt.data.sessionId)
+      ? [{ attempt: attempt.data, row }]
+      : [];
+  });
+  expect(childModels.some(({ attempt }) => attempt.state === "returned")).toBe(
+    true
   );
-  expect(childModels.length).toBeGreaterThan(0);
+  for (const { attempt, row } of childModels) {
+    expect(row.turnId).toBe(childTurns.get(attempt.sessionId));
+    const rawCost = attempt.providerMetadata?.gateway?.cost;
+    const cost =
+      typeof rawCost === "number" ||
+      (typeof rawCost === "string" && rawCost.trim() !== "")
+        ? Number(rawCost)
+        : Number.NaN;
+    if (Number.isFinite(cost) && cost >= 0) {
+      expect(row.costUsd).not.toBeNull();
+      expect(Number(row.costUsd)).toBeCloseTo(cost, 12);
+    } else {
+      expect(row.costUsd).toBeNull();
+    }
+  }
+
+  const childSearches = await Promise.all(
+    children.map(async ({ sessionId, rootTurnId }) => {
+      const child = await client.sessions
+        .attach(sessionId)
+        .snapshot({ signal: AbortSignal.timeout(15_000) });
+      return nativeToolEvents(child.events, "web_search", "call.settled")
+        .filter((event) => event.data.outcome === "completed")
+        .map(({ data }) => ({ data, rootTurnId, sessionId }));
+    })
+  );
+  const searches = childSearches.flat();
+  const searchOutput = z.object({ results: z.array(z.unknown()).min(1) });
   expect(
-    childSearch.some(
-      (row: { readonly costUsd: string | null }) => Number(row.costUsd) > 0
-    )
+    searches.some(({ data }) => {
+      const output = hasEveToolReceipt(data.output)
+        ? toolResultSchema.parse(data.output).output
+        : data.output;
+      return searchOutput.safeParse(output).success;
+    })
   ).toBe(true);
-  expect(
-    [...childModels, ...childSearch].every(
-      (row: { readonly costUsd: string | null }) =>
-        row.costUsd !== null && Number(row.costUsd) >= 0
-    )
-  ).toBe(true);
+  for (const { data, rootTurnId, sessionId } of searches) {
+    const entry = usage.find(
+      (row) => row.eventId === `eve-tool:${sessionId}:${data.callId}`
+    );
+    // A provider-native response can carry its own usage format. ChatJS only
+    // records a tool cost when the recognized receipt envelope is present.
+    if (!hasEveToolReceipt(data.output)) {
+      expect(entry).toBeUndefined();
+      continue;
+    }
+    const searchReceipt = toolResultSchema.parse(data.output);
+    expect(entry).toMatchObject({
+      sessionId: binding.sessionId,
+      turnId: rootTurnId,
+    });
+    if (searchReceipt.usage.costUsd === undefined) {
+      expect(entry?.costUsd).toBeNull();
+    } else {
+      expect(entry?.costUsd).not.toBeNull();
+      expect(Number(entry?.costUsd)).toBeCloseTo(
+        searchReceipt.usage.costUsd,
+        12
+      );
+    }
+  }
   expect(
     new Set(usage.map((row: { readonly turnId: string }) => row.turnId))
   ).toEqual(new Set(children.map((child) => child.rootTurnId)));

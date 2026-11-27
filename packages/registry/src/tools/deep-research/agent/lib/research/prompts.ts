@@ -22,7 +22,7 @@ If you need to ask a question, follow these guidelines:
 - Use bullet points or numbered lists if appropriate for clarity. Make sure that this uses markdown formatting and will be rendered correctly if the string output is passed to a markdown renderer.
 - Don't ask for unnecessary information, or information that the user has already provided. If you can see that the user has already provided the information, do not ask for it again.
 
-Respond in valid JSON format with these exact keys:
+Provide these exact fields to eve__reply:
 "need_clarification": boolean,
 "question": "<question to ask the user to clarify the report scope>",
 "verification": "<verification message that we will start research>"
@@ -94,7 +94,7 @@ const leadResearcherPrompt = ({
   `You are a research supervisor. Today's date is ${date}.
 You receive a research brief and findings from all completed topics. Decide whether the evidence is sufficient for a comprehensive report or identify specific gaps requiring follow-up research.
 
-Return JSON with complete (boolean) and topics (array of strings).
+Call eve__reply with complete (boolean) and topics (array of strings).
 - To research, set complete to false and provide up to ${max_concurrent_research_units} detailed, self-contained topics. The workflow will run them sequentially and return their findings before your next decision.
 - To finish, set complete to true and topics to []. A separate writer synthesizes the report.
 - Start by researching the brief. On later rounds, request only net new information that is necessary to answer it. Do not ask researchers to synthesize existing findings.
@@ -133,7 +133,7 @@ You can use any of the tools provided to you to find resources that can help ans
 
 <Criteria for Finishing Research>
 - The user will give you a sense of how much effort you should put into the research. This does not translate ~directly~ to the number of tool calls you should make, but it does give you a sense of the depth of the research you should conduct.
-- Once you have enough evidence, stop searching and call eve__reply with your findings, including source URLs, citations, uncertainties, and conflicting evidence.
+- Once you have enough evidence, stop searching and return your findings as Markdown, including source URLs, citations, uncertainties, and conflicting evidence.
 - One case where you should stop is if your previous tool calls have stopped yielding useful information.
 </Criteria for Finishing Research>
 
@@ -145,7 +145,7 @@ You can use any of the tools provided to you to find resources that can help ans
 
 <Critical Reminders>
 - You MUST conduct research using web search or a different tool before finishing! You cannot finish without conducting research first!
-- The caller needs your findings, not just your search activity. Always finish by calling eve__reply with the collected evidence; a separate agent will compress it and write the user-facing report.
+- The caller needs your findings, not just your search activity. Always finish with the collected evidence as Markdown; a separate agent will compress it and write the user-facing report.
 </Critical Reminders>`;
 
 const compressResearchSystemPrompt = ({
