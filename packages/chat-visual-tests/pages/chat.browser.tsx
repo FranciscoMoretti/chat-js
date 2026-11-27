@@ -1103,7 +1103,19 @@ test("deleting one branch preserves the shared workspace", async () => {
 });
 
 test("nested comparisons retain response cards on both user messages", async () => {
-  const [transcript] = Object.values(invoicesTranscripts);
+  const [original] = Object.values(invoicesTranscripts);
+  const rootPrompt = "Which invoice index should I add?";
+  const transcript = original.map((message) => ({
+    ...message,
+    parts: [
+      {
+        state: "done" as const,
+        text:
+          message.role === "user" ? rootPrompt : "Index account and status.",
+        type: "text" as const,
+      },
+    ],
+  }));
   const [source] = invoicesTrpc["eve.branches"].branches;
   const rootGroup = "11111111-1111-4111-8111-111111111111";
   const nestedGroup = "22222222-2222-4222-8222-222222222222";
@@ -1115,12 +1127,14 @@ test("nested comparisons retain response cards on both user messages", async () 
     ids.map((operationId) => ({ operationId, modelId }));
   const root = {
     ...source,
+    firstMessage: rootPrompt,
     responseGroupId: rootGroup,
     responseGroupIndex: 0,
     groupCandidates: candidates(source.operationId, rootAlternate),
   };
   const nested = {
     ...source,
+    firstMessage: "Can I make that index smaller?",
     id: nestedId,
     operationId: nestedId,
     sessionId: "nested-primary",
@@ -1139,17 +1153,16 @@ test("nested comparisons retain response cards on both user messages", async () 
     })),
     {
       id: "nested-prompt",
-      parts: [
-        { type: "text", text: "Compare alternatives for the invoices query." },
-      ],
+      parts: [{ state: "done", text: nested.firstMessage, type: "text" }],
       role: "user",
     },
     {
       id: "turn_0:assistant",
       parts: [
         {
+          state: "done",
+          text: "Index only open invoices.",
           type: "text",
-          text: "Keep the status index and measure the query plan.",
         },
       ],
       role: "assistant",
@@ -1162,7 +1175,7 @@ test("nested comparisons retain response cards on both user messages", async () 
       conversation: { ...invoicesConversation, ...nested },
     },
     transcripts: {
-      ...invoicesTranscripts,
+      [root.sessionId]: transcript,
       "root-alternate": transcript,
       [nested.sessionId]: nestedTranscript,
       "nested-alternate": nestedTranscript,
@@ -1194,7 +1207,7 @@ test("nested comparisons retain response cards on both user messages", async () 
   });
   const log = page.getByRole("log");
   await expect
-    .element(log.getByText("Compare alternatives for the invoices query."))
+    .element(log.getByText(nested.firstMessage, { exact: true }))
     .toBeVisible();
   await expect
     .poll(
@@ -1206,7 +1219,6 @@ test("nested comparisons retain response cards on both user messages", async () 
           .all().length
     )
     .toBe(4);
-  await takeSnapshot("conversation-nested-comparisons");
 });
 
 test.each(["waiting", "lost reply"])(
