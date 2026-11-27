@@ -73,3 +73,25 @@ test("reservation failure and cancellation prevent external upload", async () =>
   await expect(abortedUploader("image.png", "bytes")).rejects.toThrow();
   expect(mocks.upload).not.toHaveBeenCalled();
 });
+
+const publish = async (idempotencyKey: string) =>
+  await eveGeneratedFileUploader(context(), { idempotencyKey })(
+    "report.md",
+    "# Report",
+    "text/plain"
+  );
+
+test("reuses a file reservation on retry and separates distinct publication calls", async () => {
+  await publish("research:first");
+  await publish("research:first");
+  await publish("research:second");
+  const [first, retry, separate] = mocks.reserve.mock.calls;
+  expect(first).toEqual([
+    "owner",
+    "conversation",
+    expect.stringMatching(/^[a-zA-Z0-9_-]{24}$/u),
+    { reuse: true },
+  ]);
+  expect(retry).toEqual(first);
+  expect(separate[2]).not.toBe(first[2]);
+});

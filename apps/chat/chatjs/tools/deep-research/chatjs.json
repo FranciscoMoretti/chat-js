@@ -6,12 +6,16 @@
     "files": [
       "tools/deepResearch.ts",
       "lib/research/configuration.ts",
+      "lib/research/delivery.ts",
       "lib/research/prompts.ts",
       "lib/research/schemas.ts",
       "lib/research/steps.ts",
       "lib/research/workspace.ts"
     ],
-    "dependencies": ["eve", "zod"]
+    "dependencies": ["eve", "zod"],
+    "fileSources": {
+      "lib/research/delivery.ts": "src/tools/deep-research/agent/lib/research/delivery.native.ts"
+    }
   },
   "envRequirements": [],
   "id": "deep-research",

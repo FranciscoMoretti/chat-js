@@ -1,11 +1,11 @@
 ---
 title: Deep Research
-description: "Install Deep Research, configure the parent agent’s tools and connections, and publish the resulting Markdown report from its sandbox."
+description: "Install Deep Research, configure its tools, and download the resulting Markdown report."
 ---
 
 ## Overview
 
-Deep Research appears under **Agent → Extensions**, with **Source: ChatJS**. Its execution files use EVE and Zod; they do not require ChatJS authentication, database tables, search adapters, or file storage. ChatJS supplies the progress renderer when installed in a ChatJS app.
+Deep Research appears under **Agent → Extensions**, with **Source: ChatJS**. The standalone EVE distribution uses EVE and Zod. A ChatJS installation adds the progress renderer and publishes a downloadable report for signed-in users when file storage is configured.
 
 ```bash
 bunx chat-js@beta add deep-research
@@ -50,10 +50,6 @@ Each invocation uses its own directory. Whole-file writes can be retried without
 
 ## Delivery and presentation
 
-The final result contains a report title and sandbox path. Research does not upload the report or create a ChatJS document.
+Every final result includes a report title and sandbox path. In signed-in ChatJS, the workflow also publishes a Markdown download to the current conversation when file storage is configured. You can download the report after reloading the conversation.
 
-- In ChatJS, install `attach-workspace-file` so the calling agent can use `attach_workspace_file` to attach the report as a download. The Research composer selection makes the attachment tool available when its storage is configured. Research itself only needs the EVE sandbox for its files.
-- Other channels can use their native file delivery capabilities.
-- Without a delivery capability, the agent explains that the report exists in its sandbox rather than inventing a download link.
-
-The optional ChatJS renderer shows phase progress and report readiness. The separate publication result supplies the download card and optional viewer action. Viewers and document editors are not required. Published downloads remain unchanged when later research or sandbox edits create new files.
+Standalone EVE and other channels can use their native file delivery capabilities. When no delivery capability is available, the report remains in the sandbox. Published downloads remain unchanged when later research or sandbox edits create new files.

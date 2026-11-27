@@ -113,6 +113,31 @@ test("deep-research renders every state in the chat", async () => {
       ),
     },
     {
+      label: "Published report",
+      ui: (
+        <DeepResearchRenderer
+          isReadonly
+          messageId={messageId}
+          tool={{
+            input: { request: "Research a launch plan" },
+            output: {
+              ...report,
+              artifact: {
+                fileId: "4da2a0e77db144f08aac133a",
+                mediaType: "text/plain",
+                name: "report.md",
+                size: 2048,
+                url: "/api/files/4da2a0e77db144f08aac133a",
+              },
+            },
+            state: "output-available",
+            toolCallId,
+            updates: finished,
+          }}
+        />
+      ),
+    },
+    {
       label: "Clarifying questions",
       ui: (
         <DeepResearchRenderer

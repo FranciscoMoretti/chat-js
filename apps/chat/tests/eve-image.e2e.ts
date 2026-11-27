@@ -15,6 +15,7 @@ import { env } from "../lib/env";
 import { getEveConnectionOptions } from "../lib/eve/connection-options";
 import { toolResultSchema } from "../lib/eve/tool-result";
 import { keyFromFileUrl } from "../lib/file-url";
+import { readLogicalChatId } from "./eve-test-chat-identity";
 import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(env.DATABASE_URL);
@@ -43,8 +44,9 @@ test("native image generation, editing and sharing preserve stored results", asy
   const binding = z
     .object({ id: z.uuid(), sessionId: z.string() })
     .parse(await created.json());
-  await page.goto(`/chat/${binding.id}`);
-  const image = page.locator('img[src*="/api/files/"]').first();
+  const chatId = await readLogicalChatId(page.request, binding.id);
+  await page.goto(`/chat/${chatId}`);
+  const image = page.locator('img[data-nimg][src*="/api/files/"]').first();
   await expect(image).toBeVisible({ timeout: 150_000 });
   await expect
     .poll(
@@ -87,7 +89,11 @@ test("native image generation, editing and sharing preserve stored results", asy
     throw new Error("Missing native image result");
   }
   const receipt = toolResultSchema.parse(result.data.output);
-  expect(receipt.output).toMatchObject({ imageUrl: src });
+  const { imageUrl } = z.object({ imageUrl: z.string() }).parse(receipt.output);
+  const shown = new URL(z.string().min(1).parse(src), page.url());
+  expect(shown.origin).toBe(new URL(page.url()).origin);
+  expect(keyFromFileUrl(shown.href)).toBeTruthy();
+  expect(new URL(imageUrl, page.url()).href).toBe(shown.href);
   expect(receipt.usage.costUsd).toBeGreaterThan(0);
   await image.screenshot({
     animations: "disabled",
@@ -100,7 +106,7 @@ test("native image generation, editing and sharing preserve stored results", asy
       "Use generateImage exactly once to edit the image you just generated: change the blue square to green and keep the white background."
     );
   await page.getByRole("button", { exact: true, name: "Send" }).click();
-  const images = page.locator('img[src*="/api/files/"]');
+  const images = page.locator('img[data-nimg][src*="/api/files/"]');
   await expect(images).toHaveCount(2, { timeout: 150_000 });
   const edited = images.nth(1);
   await expect
@@ -171,7 +177,10 @@ test("native image generation, editing and sharing preserve stored results", asy
     ).toBeGreaterThan(0);
   }
   await page.getByRole("button", { exact: true, name: "Share chat" }).click();
-  await page.getByRole("button", { exact: true, name: "Share Chat" }).click();
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { exact: true, name: "Share Chat" })
+    .click();
   await expect(
     page.getByRole("button", { exact: true, name: "Make Private" })
   ).toBeEnabled();
@@ -185,7 +194,7 @@ test("native image generation, editing and sharing preserve stored results", asy
       }
     );
     await shared.goto(new URL(`/share/${binding.id}`, page.url()).href);
-    const sharedImages = shared.locator('img[src*="/api/files/"]');
+    const sharedImages = shared.locator('img[data-nimg][src*="/api/files/"]');
     await expect(sharedImages).toHaveCount(2);
     await expect
       .poll(

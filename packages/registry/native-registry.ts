@@ -1,4 +1,6 @@
 import type { RegistryItem } from "shadcn/schema";
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import { registryItemSchema, registrySchema } from "shadcn/schema";
 import { auditDependencies } from "@chat-js/registry-validation/ownership";
 import { toolDefinitionSchema } from "./metadata";
@@ -39,12 +41,16 @@ export const nativeRegistryItem = (
     const file = item.files?.find(
       (candidate) => candidate.target?.replace(/^~\//u, "") === target
     );
-    const content = sources.get(target);
+    const source = native.fileSources?.[name];
+    const content =
+      source === undefined
+        ? sources.get(target)
+        : readFileSync(path.join(import.meta.dir, source), "utf-8");
     if (!file || content === undefined) {
       throw new Error(`${item.name}: missing declared native source ${name}.`);
     }
     return {
-      path: file.path,
+      path: source ?? file.path,
       type: "registry:file" as const,
       target:
         native.layout === "agent"

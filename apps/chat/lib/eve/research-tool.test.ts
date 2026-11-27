@@ -9,6 +9,7 @@ import type {
   prepareResearch,
   researchCompletedAt,
 } from "@/agent/lib/research/steps";
+import type { publishResearchReport } from "@/agent/lib/research/delivery";
 import { researchOptions } from "@/agent/lib/research/configuration";
 
 import deepResearch from "@/agent/tools/deepResearch";
@@ -18,6 +19,7 @@ import { testToolContext } from "../../tests/helpers/eve-tool-context";
 const mocks = vi.hoisted(() => ({
   prepare: vi.fn<() => ReturnType<typeof prepareResearch>>(),
   save: vi.fn<typeof researchCompletedAt>(),
+  publish: vi.fn<typeof publishResearchReport>(),
   files: new Map<string, string>(),
 }));
 vi.mock("@/agent/lib/research/workspace", () => ({
@@ -43,6 +45,9 @@ vi.mock("@/agent/lib/research/workspace", () => ({
 vi.mock("@/agent/lib/research/steps", () => ({
   prepareResearch: mocks.prepare,
   researchCompletedAt: mocks.save,
+}));
+vi.mock("@/agent/lib/research/delivery", () => ({
+  publishResearchReport: mocks.publish,
 }));
 const researchStream = (context: WorkflowToolContext) => {
   const result = deepResearch.execute({ request: "Research this" }, context);
@@ -117,6 +122,7 @@ beforeEach(() => {
     timestamp: 0,
   });
   mocks.save.mockResolvedValue(100);
+  mocks.publish.mockResolvedValue(null);
 });
 
 it("lets the supervisor request follow-up after receiving findings and synthesizes all rounds", async () => {
@@ -200,6 +206,26 @@ it("bounds adaptive decisions even when the supervisor never finishes", async ()
   expect(mocks.save).toHaveBeenCalledOnce();
 });
 
+it("returns a published artifact in the report without a separate tool call", async () => {
+  const artifact = {
+    fileId: "stored-file",
+    mediaType: "text/plain",
+    name: "report.md",
+    size: 8,
+    url: "/api/files/stored-file",
+  };
+  mocks.publish.mockResolvedValueOnce(artifact);
+  agent
+    .mockResolvedValueOnce({ research_brief: "Brief", title: "Report" })
+    .mockResolvedValueOnce({ complete: true, topics: [] })
+    .mockResolvedValueOnce({ content: "# Report", title: "Report" });
+
+  const outputs = await Array.fromAsync(researchStream(context));
+
+  expect(mocks.publish).toHaveBeenCalledExactlyOnceWith(context, "# Report");
+  expect(outputs.at(-1)?.output).toEqual({ ...reportOutput, artifact });
+});
+
 it("returns clarification without starting research or saving a document", async () => {
   const prepared = await mocks.prepare();
   mocks.prepare.mockResolvedValue({
@@ -219,6 +245,7 @@ it("returns clarification without starting research or saving a document", async
   });
   expect(agent).toHaveBeenCalledOnce();
   expect(mocks.save).not.toHaveBeenCalled();
+  expect(mocks.publish).not.toHaveBeenCalled();
 });
 
 it("runs topics sequentially and stops before new work or saving after cancellation", async () => {

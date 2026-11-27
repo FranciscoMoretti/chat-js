@@ -2,6 +2,7 @@ import {
   reserveEveGeneratedFile,
   withEveConversationFile,
 } from "@/lib/db/eve-files";
+import { createHash } from "node:crypto";
 import { createFileId, uploadFileAtKey } from "@/lib/file-storage";
 import type { FileUploader } from "@/lib/file-storage";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
@@ -21,7 +22,8 @@ export const eveGeneratedFileUploader =
           };
         };
       }
-    >
+    >,
+    options?: Readonly<{ idempotencyKey: string }>
   ): FileUploader =>
   async (filename, body, contentType) => {
     if (!context.session) {
@@ -32,8 +34,17 @@ export const eveGeneratedFileUploader =
       context.session.id,
       context.abortSignal
     );
-    const key = createFileId();
-    await reserveEveGeneratedFile(scope.ownerId, scope.branchId, key);
+    const key = options
+      ? createHash("sha256")
+          .update(JSON.stringify([scope.branchId, options.idempotencyKey]))
+          .digest("base64url")
+          .slice(0, 24)
+      : createFileId();
+    await (options
+      ? reserveEveGeneratedFile(scope.ownerId, scope.branchId, key, {
+          reuse: true,
+        })
+      : reserveEveGeneratedFile(scope.ownerId, scope.branchId, key));
     return await withEveConversationFile(
       scope.ownerId,
       scope.branchId,

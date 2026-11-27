@@ -17,6 +17,7 @@ import { getEveConnectionOptions } from "../lib/eve/connection-options";
 import { reconcileEveUsage } from "../lib/eve/reconcile-usage";
 import { toolResultSchema } from "../lib/eve/tool-result";
 import { ResearchUpdateSchema } from "../tools/platform/research-updates-schema";
+import { readLogicalChatId } from "./eve-test-chat-identity";
 import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(env.DATABASE_URL);
@@ -105,7 +106,7 @@ test("native deep research saves a reloadable report in ChatJS with a usage rece
     },
     {
       message:
-        "Call deepResearch exactly once. Research the purpose of the HTML dialog element and its accessibility behavior, using the current MDN documentation as the primary source. Audience: web developers. Scope: a short report under 300 words with citations, no historical comparison. All requirements are specified; no clarification is needed. Pass this full task as the request. After research returns its report path, call attach_workspace_file to deliver the Markdown file.",
+        "Call deepResearch exactly once. Research the purpose of the HTML dialog element and its accessibility behavior, using the current MDN documentation as the primary source. Audience: web developers. Scope: a short report under 300 words with citations, no historical comparison. All requirements are specified; no clarification is needed. Pass this full task as the request. After research completes, stop without calling another tool.",
       modelId: config.ai.workflows.chat,
       operationId: crypto.randomUUID(),
       selectedTool: "deepResearch",
@@ -115,7 +116,8 @@ test("native deep research saves a reloadable report in ChatJS with a usage rece
   const binding = z
     .object({ id: z.uuid(), sessionId: z.string() })
     .parse(created.body);
-  await page.goto(`/chat/${binding.id}`);
+  const chatId = await readLogicalChatId(page.request, binding.id);
+  await page.goto(`/chat/${chatId}`);
   const report = page.getByRole("button", { name: createdReport }).first();
   await expect(report).toBeVisible({ timeout: 840_000 });
   await expect(page.getByText("Ready", { exact: true })).toBeVisible({
@@ -164,10 +166,18 @@ test("native deep research saves a reloadable report in ChatJS with a usage rece
   }
   const receipt = toolResultSchema.parse(result.data.output);
   expect(receipt.output).toMatchObject({
+    artifact: {
+      fileId: expect.any(String),
+      name: download.suggestedFilename(),
+      url: expect.stringMatching(/^\/api\/files\//u),
+    },
     format: "report",
     path: expect.any(String),
     title: expect.any(String),
   });
+  expect(
+    nativeToolEvents(snapshot.events, "attach_workspace_file", "call.settled")
+  ).toHaveLength(0);
   expect(receipt.usage.costUsd).toBe(0);
   expect(
     receipt.updates?.some(

@@ -6,6 +6,7 @@
     "agent/instructions/projects.ts",
     "agent/instrumentation/guest-retention.ts",
     "agent/lib/research/configuration.ts",
+    "agent/lib/research/delivery.ts",
     "agent/lib/research/prompts.ts",
     "agent/lib/research/schemas.ts",
     "agent/lib/research/steps.ts",

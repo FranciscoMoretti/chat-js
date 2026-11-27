@@ -247,12 +247,14 @@ const assertEveFilesOwned = async (
  * Persist the key before storage I/O so a failed upload remains discoverable.
  * @param {string} ownerId - Owner of the bound conversation and generated file.
  * @param {string} branchId - Bound conversation that retains the generated file.
- * @param {string} key - Fresh storage key reserved before the upload.
+ * @param {string} key - File key reserved before the upload.
+ * @param {{ reuse: boolean } | undefined} options - Permit retries for the same active file reference.
  */
 const reserveEveGeneratedFile = async (
   ownerId: string,
   branchId: string,
-  key: string
+  key: string,
+  options?: Readonly<{ reuse: boolean }>
 ): Promise<void> => {
   if (!isFileStorageKey(key)) {
     throw new Error("Invalid storage key.");
@@ -274,6 +276,27 @@ const reserveEveGeneratedFile = async (
     const conversation = conversationRows.at(FIRST_ROW_INDEX);
     if (!conversation) {
       throw new Error("Conversation is unavailable for generated files.");
+    }
+    if (options?.reuse === true) {
+      const existing = await tx
+        .select({ key: eveStoredFile.key })
+        .from(eveStoredFile)
+        .innerJoin(
+          eveFileReference,
+          eq(eveFileReference.key, eveStoredFile.key)
+        )
+        .where(
+          and(
+            eq(eveStoredFile.key, key),
+            eq(eveStoredFile.ownerId, ownerId),
+            eq(eveStoredFile.state, "active"),
+            eq(eveFileReference.branchId, branchId),
+            eq(eveFileReference.ownerId, ownerId)
+          )
+        );
+      if (existing.length > 0) {
+        return;
+      }
     }
     await tx.insert(eveStoredFile).values({ key, ownerId });
     await tx.insert(eveFileReference).values({ branchId, key, ownerId });

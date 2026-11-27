@@ -1,5 +1,6 @@
 // ChatJS source: deep-research. Ownership: chatjs/tools/deep-research/chatjs.json.
 import { defineWorkflowTool, toolOutput } from "eve/tools";
+import { publishResearchReport } from "../lib/research/delivery";
 import {
   clarifyWithUserInstructions,
   compressResearchSimpleHumanMessage,
@@ -74,7 +75,7 @@ const EMPTY_TOPIC_COUNT = 0;
 export default defineWorkflowTool({
   availableInSubagents: false,
   description:
-    "Conduct deep research using installed EVE capabilities and sandbox files. Supply the full task and relevant conversation context in request. Use only for explicit deep research requests, once per turn. Returns a Markdown report path in the shared sandbox. After completion, deliver the file using attach_workspace_file when installed or your channel's native file delivery. If no delivery mechanism exists, explain where the file is and do not invent a download URL. If clarification is needed, ask the returned questions. If research fails, report the error instead of starting duplicate research.",
+    "Conduct deep research using installed EVE capabilities and sandbox files. Supply the full task and relevant conversation context in request. Use only for explicit deep research requests, once per turn. Returns a Markdown report and its path in the shared sandbox. If the result contains an artifact, the report is already delivered. Otherwise use your channel's native file delivery if available, or explain where the file is. If clarification is needed, ask the returned questions. If research fails, report the error instead of starting duplicate research.",
   async *execute(
     input: Readonly<z.infer<typeof researchInput>>,
     context: ResearchWorkflowContext
@@ -261,6 +262,8 @@ export default defineWorkflowTool({
       "report.md",
       report.content
     );
+    const artifact = await publishResearchReport(context, report.content);
+    context.abortSignal.throwIfAborted();
     const completedAt = await researchCompletedAt();
     updates[reportUpdateIndex] = {
       status: "completed",
@@ -275,7 +278,12 @@ export default defineWorkflowTool({
       type: "completed",
     });
     yield researchResult(
-      { path: reportPath, title: report.title, format: "report" },
+      {
+        path: reportPath,
+        title: report.title,
+        format: "report",
+        ...(artifact && { artifact }),
+      },
       updates
     );
   },
