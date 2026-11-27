@@ -1,0 +1,28 @@
+.chatjs-home-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 24px;
+  height: 40px;
+  color: inherit;
+}
+
+.chatjs-home-link svg {
+  width: 24px;
+  height: 24px;
+}
+
+.chatjs-section-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted-foreground, var(--color-muted-foreground));
+  font-size: 14px;
+  line-height: 20px;
+  white-space: nowrap;
+}
+
+.chatjs-section-nav .chatjs-home-link {
+  color: var(--foreground, var(--color-foreground));
+}

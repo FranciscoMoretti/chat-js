@@ -13,6 +13,9 @@
     "docs:doctor": "blume doctor",
     "format": "oxfmt --write ."
   },
+  "dependencies": {
+    "@chatjs/brand": "workspace:*"
+  },
   "devDependencies": {
     "blume": "^1.6.3",
     "cookie": "2.0.1"

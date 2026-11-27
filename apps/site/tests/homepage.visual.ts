@@ -74,11 +74,12 @@ const checkNavigation = async (
     bounds && Math.abs(newApp.right - bounds.x - bounds.width) <= 1,
     "New sits at the far right"
   );
-  const gutter = mobile ? 16 : 24;
+  const gutter = size.width < 768 ? 16 : 24;
   assert.equal(newApp.right, size.width - gutter);
+  assert.equal(home?.href, "/");
+  assert.equal(home.x, gutter);
   if (mobile) {
-    assert.equal(bounds.x, gutter);
-    assert.equal(home, undefined);
+    assert.ok(bounds.x >= home.right);
     const repo = destinations.find((link) => link.name === "ChatJS on GitHub");
     const menuBounds = await menu.boundingBox();
     assert.ok(repo && menuBounds && Math.abs(menuBounds.x - bounds.x) <= 1);
@@ -102,8 +103,6 @@ const checkNavigation = async (
       .click({ position: { x: 2, y: 2 } });
     assert.equal(await docsLink.count(), 0);
   } else {
-    assert.equal(home?.href, "/");
-    assert.equal(home.x, gutter);
     assert.ok(
       docs.right <= demo.x &&
         demo.right <= create.x &&
