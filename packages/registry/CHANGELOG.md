@@ -1,5 +1,9 @@
 # @chat-js/registry
 
+## 0.2.0-beta.11
+
+Publish Deep Research reports through the generated app’s file storage and expose their download links. Keep the project deletion dialog open when deletion fails. Pair with `chat-js@1.0.0-beta.2`.
+
 ## 0.2.0-beta.10
 
 Ship provider configuration fields and plugin metadata used by the web builder and `chat-js@1.0.0-beta.0`. Select `streamdown-math` or `streamdown-mermaid` for optional math and diagram rendering.
