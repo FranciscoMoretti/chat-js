@@ -323,8 +323,11 @@ test("project UI edits instructions, creates a native conversation and lists it 
     await deleteDialog
       .getByRole("button", { exact: true, name: "Delete" })
       .click();
-    await expect(page).toHaveURL(new URL("/", page.url()).href);
+    await expect(
+      page.getByText("Project deleted", { exact: true })
+    ).toBeVisible();
     deletedInUI = true;
+    await expect(page).toHaveURL(new URL("/", page.url()).href);
     const surviving = page.locator(`a[href="/chat/${chatId}"]`);
     await expect(surviving).toHaveAttribute("href", `/chat/${chatId}`);
     await surviving.click();

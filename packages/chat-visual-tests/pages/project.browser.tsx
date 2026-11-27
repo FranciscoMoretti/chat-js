@@ -77,6 +77,34 @@ test("project instructions being edited", async () => {
     .toBeVisible();
 });
 
+test("project deletion failed", async () => {
+  await renderRoute(project, {
+    ...request,
+    trpc: {
+      ...request.trpc,
+      "project.remove": new TrpcFixtureError(
+        "INTERNAL_SERVER_ERROR",
+        "The projects service did not respond."
+      ),
+    },
+  });
+  await expect
+    .element(
+      page.getByRole("link", { name: launchProject.name, exact: true }).first()
+    )
+    .toHaveAttribute("data-active");
+  const projectRow = page.getByRole("listitem").filter({
+    has: page.getByRole("link", { name: launchProject.name, exact: true }),
+  });
+  await projectRow.getByRole("button", { name: "More", exact: true }).click();
+  await page.getByRole("menuitem", { name: "Delete", exact: true }).click();
+  const dialog = page.getByRole("alertdialog");
+  await dialog.getByRole("button", { name: "Delete", exact: true }).click();
+  await expect
+    .element(dialog.getByRole("alert"))
+    .toHaveTextContent("Could not delete project. Try again.");
+});
+
 test("project before its first chat", async () => {
   const empty = { ...launchProject, instructions: "" };
   await renderRoute(project, {

@@ -2,7 +2,7 @@
 
 import React, { useCallback } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 import type { JSX as ReactJSX } from "react";
 
@@ -35,15 +35,26 @@ export const DeleteProjectDialog = ({
   const [, startEventAction] = React.useTransition();
   const trpc = useTRPC();
   const router = useRouter();
-  const pathname = usePathname();
   const queryClient = useQueryClient();
 
   const deleteMutation = useMutation(
     trpc.project.remove.mutationOptions({
-      onSuccess: async () => {
+      onSuccess: async (_project, { id }) => {
+        const path = globalThis.location.pathname;
+        const projectPath = `/project/${id}`;
+        if (path === projectPath || path.startsWith(`${projectPath}/`)) {
+          router.replace("/");
+        }
         await Promise.all([
           queryClient.invalidateQueries({
-            queryKey: trpc.project.pathKey(),
+            queryKey: trpc.project.getById.queryKey({ id }),
+            refetchType: "none",
+          }),
+          queryClient.invalidateQueries({
+            queryKey: trpc.project.list.pathKey(),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: trpc.project.forChat.pathKey(),
           }),
           queryClient.invalidateQueries({ queryKey: trpc.eve.list.pathKey() }),
           queryClient.invalidateQueries({ queryKey: trpc.eve.get.pathKey() }),
@@ -64,16 +75,7 @@ export const DeleteProjectDialog = ({
     }
 
     setShowDeleteDialog(false);
-
-    // If we are inside this project's route, navigate home
-    const inProjectRoute =
-      typeof pathname === "string" &&
-      (pathname === `/project/${deleteId}` ||
-        pathname.startsWith(`/project/${deleteId}/`));
-    if (inProjectRoute) {
-      router.push("/");
-    }
-  }, [deleteId, deleteMutation, pathname, router, setShowDeleteDialog]);
+  }, [deleteId, deleteMutation, setShowDeleteDialog]);
   return (
     <AlertDialog
       onOpenChange={(open) => {
