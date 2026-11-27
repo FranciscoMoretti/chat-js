@@ -62,7 +62,7 @@ const checkNavigation = async (
   const home = destinations.find((link) => link.name === "ChatJS home");
   const docs = destinations.find((link) => link.name === "Docs");
   const demo = destinations.find(
-    (link) => link.name === "Demo (opens in a new tab)"
+    (link) => link.name === "Live demo (opens in a new tab)"
   );
   const create = destinations.find((link) => link.name === "Create");
   const newApp = destinations.find((link) => /^New\s*\+?$/u.test(link.name));
@@ -70,11 +70,11 @@ const checkNavigation = async (
   assert.equal(docs.href, "/docs");
   assert.equal(demo.href, siteLinks.demo);
   const demoLink = region.getByRole("link", {
-    name: "Demo (opens in a new tab)",
+    name: "Live demo (opens in a new tab)",
     exact: true,
   });
   assert.equal(await demoLink.getAttribute("target"), "_blank");
-  assert.equal(await demoLink.locator("svg").isVisible(), mobile);
+  assert.ok(await demoLink.locator("svg").isVisible());
   assert.equal(create.href, "/create");
   assert.equal(newApp.href, create.href);
   const bounds = await region.getByRole("navigation").boundingBox();
@@ -112,9 +112,9 @@ const checkNavigation = async (
     assert.equal(await docsLink.count(), 0);
   } else {
     assert.ok(
-      docs.right <= demo.x &&
-        demo.right <= create.x &&
-        create.right <= newApp.x,
+      docs.right <= create.x &&
+        create.right <= demo.x &&
+        demo.right <= newApp.x,
       "Navigation links must fit side by side"
     );
   }
@@ -370,7 +370,9 @@ try {
   await page.getByRole("banner").screenshot({
     path: `${output}canopy-header-logo-hover.png`,
   });
-  const demo = page.getByRole("link", { name: "Demo (opens in a new tab)" });
+  const demo = page.getByRole("link", {
+    name: "Live demo (opens in a new tab)",
+  });
   const restingBounds = await demo.boundingBox();
   await demo.hover();
   assert.ok(await demo.locator("svg").isVisible());

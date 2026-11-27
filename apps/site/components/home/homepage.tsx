@@ -14,8 +14,8 @@ import "./home.css";
 const HomeLinks = () => (
   <>
     <a href={docsNavigationHref}>Docs</a>
-    <DemoLink />
     <Link href="/create">Create</Link>
+    <DemoLink />
   </>
 );
 

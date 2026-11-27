@@ -61,6 +61,7 @@ body:has(.canopy-page) {
 }
 .canopy-nav-links {
   display: flex;
+  align-items: center;
   gap: 2px;
 }
 .canopy-bar .canopy-menu-toggle,
@@ -289,9 +290,6 @@ body:has(.canopy-page) {
     padding-inline: 8px;
     border-radius: var(--radius);
     font-size: 16px;
-  }
-  .canopy-mobile-menu .demo-link svg {
-    margin-inline-start: auto;
   }
   .canopy-mobile-menu button {
     width: 100%;

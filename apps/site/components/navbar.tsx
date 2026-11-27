@@ -8,14 +8,14 @@ import { docsNavigationHref, siteLinks } from "@/lib/site-config";
 
 export const Navbar = () => (
   <header className="carbon-wrap carbon-nav">
-    <Brand className="carbon-brand">ChatJS</Brand>
+    <Brand />
     <nav aria-label="Main">
       <a href={docsNavigationHref}>Docs</a>
-      <DemoLink />
-      <ModeSwitcher />
       <Link className="carbon-nav-create" href="/create">
         Create
       </Link>
+      <DemoLink />
+      <ModeSwitcher />
       <a
         className="carbon-nav-github"
         href={siteLinks.github}
