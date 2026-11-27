@@ -1,3 +1,5 @@
+import { isJsonObject } from "../packages/cli/src/helpers/json-object";
+
 const MANIFEST_INDENTATION_SPACES = 2;
 
 interface ManifestFile {
@@ -29,17 +31,16 @@ const writeEvePackageManifests = async (
   const prepared = originals.map(
     ({ content, file }: Readonly<ManifestFile>) => {
       const manifest: unknown = JSON.parse(content);
-      if (
-        typeof manifest !== "object" ||
-        manifest === null ||
-        !("dependencies" in manifest) ||
-        typeof manifest.dependencies !== "object" ||
-        manifest.dependencies === null ||
-        Array.isArray(manifest.dependencies)
-      ) {
+      const dependencies = isJsonObject(manifest)
+        ? [manifest.dependencies, manifest.devDependencies].find(
+            (section) =>
+              isJsonObject(section) && typeof section.eve === "string"
+          )
+        : undefined;
+      if (!isJsonObject(dependencies)) {
         throw new Error(`Expected dependencies in ${file}`);
       }
-      Object.assign(manifest.dependencies, { eve: `file:${archive}` });
+      Object.assign(dependencies, { eve: `file:${archive}` });
       return {
         content: `${JSON.stringify(manifest, null, MANIFEST_INDENTATION_SPACES)}\n`,
         file,

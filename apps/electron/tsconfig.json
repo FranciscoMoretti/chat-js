@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "paths": { "@/*": ["../chat/*"] },
     "allowJs": true,
     "target": "ES2022",
     "module": "Preserve",

@@ -640,6 +640,7 @@ describe("scaffoldFromTemplate", (): void => {
         expect(electronTsconfig).not.toContain('"../next-env.d.ts"');
         expect(electronTsconfig).not.toContain('"../electron.d.ts"');
         expect(electronTsconfig).not.toContain("../chat/");
+        expect(electronTsconfig).toContain('"../*"');
         expect(existsSync(pathModule.join(projectDir, "electron.d.ts"))).toBe(
           false
         );
@@ -1097,6 +1098,7 @@ describe("scaffoldElectron", (): void => {
     expect(electronTsconfig).not.toContain('"../next-env.d.ts"');
     expect(electronTsconfig).not.toContain('"../electron.d.ts"');
     expect(electronTsconfig).not.toContain("../chat/");
+    expect(electronTsconfig).toContain('"../*"');
     expect(existsSync(pathModule.join(projectDir, "electron.d.ts"))).toBe(
       false
     );

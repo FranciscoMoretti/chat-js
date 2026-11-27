@@ -17,6 +17,24 @@ const originals = [
   },
 ];
 
+it("updates an existing development dependency without creating a runtime dependency", async () => {
+  const content = JSON.stringify({
+    devDependencies: { eve: "workspace:*", other: "1" },
+  });
+  let written = "";
+  await writeEvePackageManifests(
+    [{ content, file: "registry/package.json" }],
+    archive,
+    async (_file, next) => {
+      await setImmediate();
+      written = next;
+    }
+  );
+  assert.deepEqual(JSON.parse(written), {
+    devDependencies: { eve: `file:${archive}`, other: "1" },
+  });
+});
+
 it.each(["{", "null", "{}", '{"dependencies":null}', '{"dependencies":[]}'])(
   "validates every manifest before starting any writes: %s",
   async (content) => {

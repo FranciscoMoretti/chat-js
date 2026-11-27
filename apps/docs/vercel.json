@@ -1,5 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "git": { "deploymentEnabled": { "codex/beta-launch-*": false } },
   "installCommand": "rm -rf node_modules && cd ../.. && bun install --frozen-lockfile",
   "buildCommand": "cd ../.. && CHATJS_DOCS_HISTORY=$(git log --format=%cI --name-only -- 'apps/docs/*.mdx' | git hash-object --stdin) bunx turbo run build --filter=@chatjs/docs",
   "outputDirectory": "dist",

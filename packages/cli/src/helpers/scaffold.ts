@@ -279,6 +279,8 @@ const normalizeChatAppFiles = async (
     await readFile(vercelJsonPath, "utf-8"),
     "Template vercel.json"
   );
+  // Deployment branch rules belong to the reference app.
+  delete vercelJson.git;
   vercelJson.installCommand = `${packageManager} install`;
   vercelJson.buildCommand = runScript(packageManager, "build");
   await writeFile(
@@ -297,6 +299,9 @@ const normalizeElectronFiles = async (
   destination: string,
   packageManager: PackageManager
 ): Promise<void> => {
+  await replaceInFile(pathModule.join(destination, "tsconfig.json"), [
+    ['"../chat/*"', '"../*"'],
+  ]);
   const scriptPlaceholder = `\${script}`;
 
   await replaceInFile(pathModule.join(destination, "forge.config.ts"), [

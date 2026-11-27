@@ -493,11 +493,14 @@ for (const gateway of [...GATEWAYS, "acme"]) {
           "utf-8"
         )
       ).toContain("new Set([])");
-      expect(
-        await readFile(nodePath.join(cwd, ".env.example"), "utf-8")
-      ).not.toMatch(
-        /^(?:TAVILY_API_KEY|FIRECRAWL_API_KEY|MCP_ENCRYPTION_KEY|BLOB_READ_WRITE_TOKEN)=/mu
+      const envExample = await readFile(
+        nodePath.join(cwd, ".env.example"),
+        "utf-8"
       );
+      expect(envExample).not.toMatch(
+        /^(?:TAVILY_API_KEY|FIRECRAWL_API_KEY|MCP_ENCRYPTION_KEY)=/mu
+      );
+      expect(envExample).toMatch(/^BLOB_READ_WRITE_TOKEN=/mu);
     }
 
     await verifyOptionalToolFiles(cwd, gateway);
