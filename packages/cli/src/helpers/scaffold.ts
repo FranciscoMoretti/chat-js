@@ -279,6 +279,8 @@ const normalizeChatAppFiles = async (
     await readFile(vercelJsonPath, "utf-8"),
     "Template vercel.json"
   );
+  // Deployment branch rules belong to the reference app.
+  delete vercelJson.git;
   vercelJson.installCommand = `${packageManager} install`;
   vercelJson.buildCommand = runScript(packageManager, "build");
   await writeFile(

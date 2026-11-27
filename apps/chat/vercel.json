@@ -1,5 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "git": { "deploymentEnabled": { "codex/beta-launch-*": false } },
   "installCommand": "bun install",
   "crons": [
     {
