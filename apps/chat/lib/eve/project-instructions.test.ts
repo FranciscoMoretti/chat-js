@@ -8,6 +8,9 @@ import conversation from "@/chatjs/plugins/projects/conversation-hook";
 import followups from "@/agent/hooks/followup-suggestions";
 import instructions from "@/chatjs/plugins/projects/instructions";
 
+const projectInstructionsPrefix =
+  "Current project instructions for this turn. Follow these instructions even when a previous assistant reply used different project instructions. Previous assistant replies are conversation history.";
+
 const mocks = vi.hoisted(() => {
   const state: { content: string | null } = { content: null };
   return {
@@ -117,7 +120,7 @@ test("refreshes project instructions for each turn and clears them after detachm
   );
   expect(mocks.project).toHaveBeenCalledWith("owner", "conversation");
   expect(await readInstructions()).toMatchObject({
-    content: "Project instructions:\nFirst instruction",
+    content: `${projectInstructionsPrefix}\n\nProject instructions:\nFirst instruction`,
   });
   const updatedProject = Promise.withResolvers<{ instructions: string }>();
   mocks.project.mockReturnValueOnce(updatedProject.promise);
@@ -129,7 +132,7 @@ test("refreshes project instructions for each turn and clears them after detachm
     await started;
   }
   expect(await readInstructions()).toMatchObject({
-    content: "Project instructions:\nEdited instruction",
+    content: `${projectInstructionsPrefix}\n\nProject instructions:\nEdited instruction`,
   });
   mocks.project.mockResolvedValueOnce(null);
   await startTurn(2);
@@ -164,7 +167,7 @@ test("loads root project context for descendants", async () => {
     undefined
   );
   expect(await readInstructions()).toMatchObject({
-    content: "Project instructions:\nRoot project instruction",
+    content: `${projectInstructionsPrefix}\n\nProject instructions:\nRoot project instruction`,
   });
 });
 
