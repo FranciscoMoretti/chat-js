@@ -67,7 +67,13 @@ const structuredData = {
 const HomePage = (): React.JSX.Element => (
   <>
     <script type="application/ld+json">{JSON.stringify(structuredData)}</script>
-    <Homepage />
+    <React.ViewTransition
+      name="section-page"
+      default="none"
+      share="section-fade"
+    >
+      <Homepage />
+    </React.ViewTransition>
   </>
 );
 

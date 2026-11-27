@@ -61,12 +61,20 @@ const checkNavigation = async (
   );
   const home = destinations.find((link) => link.name === "ChatJS home");
   const docs = destinations.find((link) => link.name === "Docs");
-  const demo = destinations.find((link) => link.name === "Demo");
+  const demo = destinations.find(
+    (link) => link.name === "Live demo (opens in a new tab)"
+  );
   const create = destinations.find((link) => link.name === "Create");
   const newApp = destinations.find((link) => /^New\s*\+?$/u.test(link.name));
   assert.ok(docs && demo && create && newApp, JSON.stringify(destinations));
   assert.equal(docs.href, "/docs");
   assert.equal(demo.href, siteLinks.demo);
+  const demoLink = region.getByRole("link", {
+    name: "Live demo (opens in a new tab)",
+    exact: true,
+  });
+  assert.equal(await demoLink.getAttribute("target"), "_blank");
+  assert.ok(await demoLink.locator("svg").isVisible());
   assert.equal(create.href, "/create");
   assert.equal(newApp.href, create.href);
   const bounds = await region.getByRole("navigation").boundingBox();
@@ -74,11 +82,12 @@ const checkNavigation = async (
     bounds && Math.abs(newApp.right - bounds.x - bounds.width) <= 1,
     "New sits at the far right"
   );
-  const gutter = mobile ? 16 : 24;
+  const gutter = size.width < 768 ? 16 : 24;
   assert.equal(newApp.right, size.width - gutter);
+  assert.equal(home?.href, "/");
+  assert.equal(home.x, gutter);
   if (mobile) {
-    assert.equal(bounds.x, gutter);
-    assert.equal(home, undefined);
+    assert.ok(bounds.x >= home.right);
     const repo = destinations.find((link) => link.name === "ChatJS on GitHub");
     const menuBounds = await menu.boundingBox();
     assert.ok(repo && menuBounds && Math.abs(menuBounds.x - bounds.x) <= 1);
@@ -102,12 +111,10 @@ const checkNavigation = async (
       .click({ position: { x: 2, y: 2 } });
     assert.equal(await docsLink.count(), 0);
   } else {
-    assert.equal(home?.href, "/");
-    assert.equal(home.x, gutter);
     assert.ok(
-      docs.right <= demo.x &&
-        demo.right <= create.x &&
-        create.right <= newApp.x,
+      docs.right <= create.x &&
+        create.right <= demo.x &&
+        demo.right <= newApp.x,
       "Navigation links must fit side by side"
     );
   }
@@ -354,6 +361,25 @@ try {
     // oxlint-disable-next-line eslint/no-await-in-loop -- Inspect each fresh landing before changing the viewport.
     await checkOpening(page, size);
   }
+  const logo = page.getByRole("link", { name: "ChatJS home", exact: true });
+  await logo.hover();
+  assert.equal(
+    await logo.evaluate((link) => getComputedStyle(link).backgroundColor),
+    "rgba(0, 0, 0, 0)"
+  );
+  await page.getByRole("banner").screenshot({
+    path: `${output}canopy-header-logo-hover.png`,
+  });
+  const demo = page.getByRole("link", {
+    name: "Live demo (opens in a new tab)",
+  });
+  const restingBounds = await demo.boundingBox();
+  await demo.hover();
+  assert.ok(await demo.locator("svg").isVisible());
+  assert.deepEqual(await demo.boundingBox(), restingBounds);
+  await page.getByRole("banner").screenshot({
+    path: `${output}canopy-header-demo-hover.png`,
+  });
   const skip = page.getByRole("link", { name: "Skip to content", exact: true });
   await skip.focus();
   await page.keyboard.press("Enter");
@@ -371,7 +397,17 @@ try {
   await page.evaluate(() => {
     window.scrollTo(0, 0);
   });
+  const homeMark = page.getByRole("link", { name: "ChatJS home", exact: true });
+  const transitionName = async () =>
+    await homeMark.evaluate(
+      (link) => getComputedStyle(link).viewTransitionName
+    );
+  assert.equal(await transitionName(), "none");
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  assert.equal(await transitionName(), "chatjs-home-mark");
   await checkBuild(page);
+  assert.equal(await transitionName(), "chatjs-home-mark");
+  await page.emulateMedia({ reducedMotion: "reduce" });
   await page.locator("html.dark").waitFor();
   await page.getByRole("button", { name: "Toggle theme" }).click();
   await page.getByRole("link", { name: "ChatJS home", exact: true }).click();

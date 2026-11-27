@@ -33,6 +33,7 @@
     "docs": {
       "offset": 3,
       "exports": {
+        "PUBLIC_CHATJS_SITE_URL": "{apps.site.url}",
         "PORT": "{port}"
       }
     },

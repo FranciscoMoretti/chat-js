@@ -1,6 +1,7 @@
 import { Github } from "lucide-react";
 import Link from "next/link";
 
+import { DemoLink } from "@/components/demo-link";
 import { ModeSwitcher } from "@/vendor/shadcn-create/components/mode-switcher";
 import { Brand } from "./brand";
 import { docsNavigationHref, siteLinks } from "@/lib/site-config";
@@ -10,11 +11,11 @@ export const Navbar = () => (
     <Brand />
     <nav aria-label="Main">
       <a href={docsNavigationHref}>Docs</a>
-      <a href={siteLinks.demo}>Demo</a>
-      <ModeSwitcher />
       <Link className="carbon-nav-create" href="/create">
         Create
       </Link>
+      <DemoLink />
+      <ModeSwitcher />
       <a
         className="carbon-nav-github"
         href={siteLinks.github}

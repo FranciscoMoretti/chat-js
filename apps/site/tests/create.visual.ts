@@ -157,9 +157,10 @@ try {
     });
   };
   await waitForPreset();
-  await expect(
-    page.getByRole("link", { name: "ChatJS home" }).locator("svg")
-  ).toBeVisible();
+  const home = page.getByRole("link", { name: "ChatJS home" });
+  await expect(home).toHaveAttribute("href", "/");
+  await expect(home).toHaveText("");
+  await expect(home.locator("svg")).toHaveCSS("width", "24px");
   await expect(
     frame
       .getByTestId("chat-preview")

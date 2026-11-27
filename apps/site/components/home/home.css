@@ -35,7 +35,7 @@ body:has(.canopy-page) {
   transform: none;
 }
 .canopy-header {
-  --canopy-bar-height: 55px;
+  --canopy-bar-height: 64px;
   --canopy-nav-gutter: 24px;
   position: sticky;
   inset-block-start: 0;
@@ -50,14 +50,6 @@ body:has(.canopy-page) {
   gap: 14px;
   height: var(--canopy-bar-height);
 }
-.canopy-home-link {
-  display: grid;
-  place-items: center;
-  width: 32px;
-  height: 36px;
-  color: var(--carbon-foreground);
-  border-radius: var(--radius);
-}
 .canopy-bar nav {
   flex: 1;
   min-width: 0;
@@ -69,6 +61,7 @@ body:has(.canopy-page) {
 }
 .canopy-nav-links {
   display: flex;
+  align-items: center;
   gap: 2px;
 }
 .canopy-bar .canopy-menu-toggle,
@@ -84,7 +77,6 @@ body:has(.canopy-page) {
   border-radius: var(--radius);
   color: light-dark(#53534a, #c9c9bf);
 }
-.canopy-home-link:hover,
 .canopy-nav-links a:hover,
 .canopy-mobile-menu a:is(:hover, :focus-visible) {
   background: var(--muted);
@@ -245,12 +237,13 @@ body:has(.canopy-page) {
     margin-block-start: 0;
   }
 }
-@media (max-width: 700px) {
+@media (width < 768px) {
   .canopy-header {
     --canopy-nav-gutter: 16px;
   }
+}
+@media (max-width: 700px) {
   .canopy-bar .canopy-theme-toggle,
-  .canopy-home-link,
   .canopy-nav-links {
     display: none;
   }
@@ -330,9 +323,6 @@ body:has(.canopy-page) {
   }
 }
 @media (max-width: 480px) {
-  .canopy-header {
-    --canopy-bar-height: 51px;
-  }
   .canopy-bar {
     gap: 7px;
   }
@@ -345,7 +335,7 @@ body:has(.canopy-page) {
     grid-template-rows:
       minmax(max-content, calc(60% - clamp(0px, 760px - 100svh, 56px)))
       1fr;
-    min-height: 460px;
+    min-height: 28rem;
   }
   .canopy-footer {
     font-size: 12px;

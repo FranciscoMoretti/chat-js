@@ -1,8 +1,9 @@
 import { RiGithubFill } from "@remixicon/react";
 import { Equal, Plus, X } from "lucide-react";
 import Link from "next/link";
+import { DemoLink } from "@/components/demo-link";
 import { ModeSwitcher } from "@/vendor/shadcn-create/components/mode-switcher";
-import { BrandMark } from "@/components/brand-mark";
+import { Brand } from "@/components/brand";
 import { docsNavigationHref, siteLinks } from "@/lib/site-config";
 import { buttonVariants } from "@/vendor/shadcn-create/styles/base-nova/ui/button";
 import { canopyBlocks, canopyBuildDefaults } from "./canopy-catalog";
@@ -13,17 +14,15 @@ import "./home.css";
 const HomeLinks = () => (
   <>
     <a href={docsNavigationHref}>Docs</a>
-    <a href={siteLinks.demo}>Demo</a>
     <Link href="/create">Create</Link>
+    <DemoLink />
   </>
 );
 
 const HomeHeader = () => (
   <header className="canopy-header">
     <div className="canopy-bar">
-      <Link href="/" className="canopy-home-link" aria-label="ChatJS home">
-        <BrandMark className="size-5" />
-      </Link>
+      <Brand />
       <nav aria-label="Main">
         <div className="canopy-nav-links">
           <HomeLinks />

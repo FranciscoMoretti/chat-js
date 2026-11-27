@@ -1,0 +1,67 @@
+.chatjs-home-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 24px;
+  height: 40px;
+  color: inherit;
+}
+
+.chatjs-home-link svg {
+  width: 24px;
+  height: 24px;
+}
+
+@media (hover: hover) {
+  .chatjs-home-link:hover svg {
+    opacity: 0.72;
+  }
+}
+
+.chatjs-home-link:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
+.chatjs-section-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted-foreground, var(--color-muted-foreground));
+  font-size: 14px;
+  line-height: 20px;
+  white-space: nowrap;
+}
+
+.chatjs-section-nav .chatjs-home-link {
+  color: var(--foreground, var(--color-foreground));
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Docs is a separate document when entering or leaving the Next.js site. */
+  @view-transition {
+    navigation: auto;
+  }
+
+  .chatjs-home-link {
+    view-transition-name: chatjs-home-mark;
+  }
+
+  ::view-transition-group(root),
+  ::view-transition-group(chatjs-home-mark),
+  ::view-transition-group(.section-fade) {
+    animation-duration: 160ms;
+    animation-timing-function: ease-out;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+  }
+}

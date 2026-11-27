@@ -104,9 +104,10 @@ const CreateWorkspace = () => {
       data-slot="layout"
     >
       <header className="flex shrink-0 flex-wrap items-center gap-3 border-b px-4 py-3 md:px-6">
-        <div className="mr-auto flex items-center gap-2.5 lg:flex-1">
-          <Brand className="inline-flex items-center gap-2.5 font-semibold tracking-tight" />
-          <span className="text-muted-foreground text-sm">/ Create</span>
+        <div className="chatjs-section-nav mr-auto lg:flex-1">
+          <Brand />
+          <span aria-hidden="true">/</span>
+          <span>Create</span>
         </div>
         <TabsList
           aria-label="Create workspace"

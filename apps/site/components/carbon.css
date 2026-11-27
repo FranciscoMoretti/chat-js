@@ -92,6 +92,34 @@
   border: 1px solid light-dark(#cecec4, #383834);
 }
 
+.demo-link {
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.demo-link svg {
+  flex: none;
+  opacity: 0.55;
+}
+
+.demo-link:is(:hover, :focus-visible) svg {
+  opacity: 1;
+}
+
+:is(.canopy-nav-links, .carbon-nav) .demo-link {
+  position: relative;
+  margin-inline-start: 10px;
+}
+
+:is(.canopy-nav-links, .carbon-nav) .demo-link::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: -6px;
+  width: 1px;
+  height: 15px;
+  background: var(--carbon-line);
+}
+
 .carbon-nav-github {
   min-width: 36px;
 }
@@ -149,6 +177,12 @@
   }
   .carbon-page .carbon-nav .carbon-nav-create {
     padding-inline: 8px;
+  }
+  .carbon-nav .demo-link {
+    margin-inline-start: 6px;
+  }
+  .carbon-nav .demo-link::before {
+    inset-inline-start: -4px;
   }
   .carbon-nav-github {
     min-width: 30px;

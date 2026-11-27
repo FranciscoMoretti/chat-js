@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "exports": {
+    "./navigation.css": "./src/navigation.css",
     "./identity": "./src/identity.ts",
     "./square": "./src/square.ts"
   },

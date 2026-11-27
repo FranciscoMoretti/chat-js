@@ -70,6 +70,17 @@ const capturePage = async (name: string) => {
   }
 };
 
+const checkHeader = (source: Document) => {
+  const header = source.querySelector("header");
+  const home = header?.querySelector('a[aria-label="ChatJS home"]');
+  expect(home?.getAttribute("href")).toBe("https://www.chatjs.dev/");
+  expect(home?.textContent?.trim()).toBe("");
+  expect(home?.querySelector("svg")?.getBoundingClientRect().width).toBe(24);
+  const docs = header?.querySelector(".chatjs-section-nav a:last-child");
+  expect(docs?.textContent?.trim()).toBe("Docs");
+  expect(docs?.getAttribute("href")).toMatch(/^\/docs\/?$/u);
+};
+
 for (const page of pages) {
   test(`docs ${page.name}`, async () => {
     document.head.replaceChildren();
@@ -98,6 +109,7 @@ for (const page of pages) {
     }
 
     expect(source.querySelector("main")).not.toBeNull();
+    checkHeader(source);
 
     if (page.name === "authentication") {
       const examples = source.querySelectorAll("main pre code");
