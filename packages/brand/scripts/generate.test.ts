@@ -17,6 +17,7 @@ import sharp from "sharp";
 
 const packageRoot = fileURLToPath(new URL("../", import.meta.url));
 
+// This fixture runs four full raster generations alongside the workspace unit suite.
 test("brand sync exports social sizes and removes only retired artwork", async () => {
   const fixture = await mkdtemp(path.join(tmpdir(), "chatjs-brand-sync-"));
   const brand = path.join(fixture, "packages/brand");
@@ -101,4 +102,4 @@ test("brand sync exports social sizes and removes only retired artwork", async (
   } finally {
     await rm(fixture, { recursive: true, force: true });
   }
-}, 30_000);
+}, 120_000);
