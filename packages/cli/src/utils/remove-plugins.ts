@@ -1,4 +1,6 @@
 import { installationActivation } from "./installation-activation";
+import { existsSync } from "node:fs";
+import { runCommand } from "./run-command";
 import { randomUUID } from "node:crypto";
 import { mkdir, rename, rm, rmdir, writeFile } from "node:fs/promises";
 import path from "node:path";
@@ -23,6 +25,25 @@ import {
 } from "./source-receipt";
 import { planPluginRegistrations } from "./sync-plugins";
 import { writeGeneratedFiles } from "./write-generated-files";
+
+// Use the project's formatter and configuration when installed. Removal also
+// works in source-only projects, where the JSON writer provides the fallback.
+const formatRetainedSchemas = async (cwd: string): Promise<void> => {
+  let directory = path.resolve(cwd);
+  const binary = "node_modules/oxfmt/bin/oxfmt";
+  while (!existsSync(path.join(directory, binary))) {
+    const parent = path.dirname(directory);
+    if (parent === directory) {
+      return;
+    }
+    directory = parent;
+  }
+  await runCommand(
+    process.execPath,
+    [path.join(directory, binary), "--write", retainedSchemasFile],
+    cwd
+  );
+};
 
 export const planPluginRemoval = async (
   cwd: string,
@@ -172,6 +193,7 @@ export const removePlugins = async (
       moved.push(file);
     }
     await writeGeneratedFiles(cwd, plan.registrations);
+    await formatRetainedSchemas(cwd);
   } catch (error) {
     const restored = await Promise.allSettled([
       ...moved.map(async (file) => {

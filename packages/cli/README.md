@@ -34,7 +34,7 @@ After publication, run `bun --filter chat-js test:published` to create an app us
 
 ## Installation and migration
 
-The `1.0.0-beta.0` release starts the ChatJS 1.0 beta series under the `chat-js` package name. Apps are usable, but APIs and generated source may change substantially before 1.0. Use `npx chat-js@beta` for the examples below. This CLI supports Base UI and Radix with registry `0.2.0-beta.10`.
+Install the ChatJS 1.0 beta with the `chat-js` package. Apps are usable, but APIs and generated source may change substantially before 1.0. Use `npx chat-js@beta` for the examples below. This CLI supports Base UI and Radix with registry `0.2.0-beta.10`.
 
 Pass native shadcn visual options after `--`:
 
