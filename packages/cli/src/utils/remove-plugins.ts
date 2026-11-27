@@ -1,4 +1,5 @@
 import { installationActivation } from "./installation-activation";
+import { existsSync } from "node:fs";
 import { createRequire } from "node:module";
 import { runCommand } from "./run-command";
 import { randomUUID } from "node:crypto";
@@ -29,22 +30,15 @@ import { writeGeneratedFiles } from "./write-generated-files";
 // Use the project's formatter and configuration when installed. Removal also
 // works in source-only projects, where the JSON writer provides the fallback.
 const formatRetainedSchemas = async (cwd: string): Promise<void> => {
-  let manifest: string;
-  try {
-    manifest = createRequire(path.join(cwd, "package.json")).resolve(
-      "oxfmt/package.json"
-    );
-  } catch (error) {
-    if (
-      error instanceof Error &&
-      "code" in error &&
-      error.code === "MODULE_NOT_FOUND"
-    ) {
-      return;
-    }
-    throw error;
+  const search =
+    createRequire(path.join(cwd, "package.json")).resolve.paths("oxfmt") ?? [];
+  const formatter = search
+    .filter((directory) => path.basename(directory) === "node_modules")
+    .map((directory) => path.join(directory, "oxfmt/bin/oxfmt"))
+    .find((file) => existsSync(file));
+  if (formatter === undefined) {
+    return;
   }
-  const formatter = path.join(path.dirname(manifest), "bin", "oxfmt");
   await runCommand(
     process.execPath,
     [formatter, "--write", retainedSchemasFile],
