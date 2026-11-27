@@ -4,11 +4,12 @@ import {
   resolveInstallationSelection,
 } from "../../../registry/installation-catalog";
 import { readInstallationInput } from "../../../registry/app-preset";
+import type { CreateSelectionFlags } from "./selection-options";
 
 interface CreateInstallationInput {
   readonly appPreset?: string;
   readonly installation?: string;
-  readonly storageConfig?: string;
+  readonly storageConfig?: CreateSelectionFlags["storageConfig"];
 }
 
 export const assertExclusiveInstallation = (

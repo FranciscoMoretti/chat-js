@@ -6,8 +6,8 @@ description: "Scaffold a ChatJS app from the terminal. Choose a gateway, plugins
 This is the default [CLI command](/cli). You can omit the word `create` and pass the directory directly.
 
 ```bash
-npx chat-js@alpha create [directory] [options]
-npx chat-js@alpha [directory] [options]
+npx chat-js@beta create [directory] [options]
+npx chat-js@beta [directory] [options]
 ```
 
 ## Arguments
@@ -20,7 +20,7 @@ npx chat-js@alpha [directory] [options]
 
 | Flag | Default | Description |
 | --- | --- | --- |
-| `-y, --yes` | `false` | Skip all prompts and use defaults (Vercel gateway, GitHub auth, no MCP or uploads). |
+| `-y, --yes` | `false` | Skip prompts and use the supplied options or defaults. |
 | `--sandbox-provider <provider>` | Automatic | Native EVE sandbox: `default`, `vercel`, `docker`, `just-bash`, or a registry address. Python and Node execution require a native process backend. |
 | `--video-generation-tool <item>` | Not applicable | Enable the built-in `generate-video` tool or an external registry item. |
 | `--image-generation-tool <item>` | Not applicable | Enable the built-in `generate-image` tool or an external registry item. |
@@ -33,21 +33,35 @@ npx chat-js@alpha [directory] [options]
 | `--attachments` / `--no-attachments` | Off | Install or omit picker, camera, paste/drop and the upload endpoint. |
 | `--gateway <name-or-address>` | Vercel | Select a built-in or external registry gateway. |
 | `--from-git <url>` | Not applicable | Clone from a git repository instead of the built-in template. |
-| `--storage-provider <provider>` | Not applicable | Select a built-in storage provider or an external registry item address. |
+| `--storage-provider <provider>` | Vercel Blob | Select a built-in storage provider or an external registry item address. Use `memory` for temporary files. |
 | `--storage-config <json>` | Not applicable | Pass non-secret JSON options to the selected adapter. Credentials use env vars. |
+| `--auth <provider>` | GitHub | Enable a sign-in provider. Repeat for each of `github`, `google`, or `vercel` you want to enable. |
+| `--plugin <item>` / `--tool <item>` | None | Install a ChatJS plugin or tool by name or registry address. Repeat to select several. |
+| `--eve-item <item>` | None | Add an EVE capability by ID, named registry address, or HTTPS item URL. Repeat for each capability. |
+| `--eve-registries <json>` | None | Map custom namespaces to HTTPS templates containing `{name}`. |
+| `--disabled-default-tool <id>` | None | Disable a built-in EVE tool. Repeat for each tool. |
+| `--agent-config <json>` | Agent defaults | Supply agent settings such as models, reasoning, and limits. |
+
+For example, `chat-js create my-chat --yes --auth google --eve-item extension/agent-browser` enables Google sign-in and selects the EVE browser extension. The CLI accepts published EVE item IDs without first downloading the catalog. Installing EVE capabilities requires Node.js 24 or later, including when you run ChatJS with Bun.
 
 Pass native shadcn options after `--`. A complete installation selection or app preset supplies the feature choices itself.
 
 ## Interactive prompts
 
-In interactive mode, the CLI asks for choices you have not supplied:
+If you omit the directory, the CLI asks for a project name. **Create with current settings** takes you to a final review. Open any of the same four sections as the app builder to customize the app first.
 
-1. Project directory and AI gateway.
-2. Features, assistant tools, and providers for the tools you enable.
-3. Authentication providers.
-4. Whether to include the [Electron desktop app](/deployment/desktop).
-5. The native EVE sandbox.
-6. File storage and adapter options when a selected feature needs storage or you request a provider.
+| Section | Choices |
+| --- | --- |
+| **Appearance** | Keep the current shadcn preset or enter a preset code. |
+| **Plugins** | Choose features for conversations, responses, files and connections, or access and usage. |
+| **Agent** | Choose tools, connections, channels, skills, extensions, memory, observability, and a sandbox. |
+| **Setup** | Choose the model gateway, file storage, platforms (including the [Electron desktop app](/deployment/desktop)), and sign-in providers. |
+
+The starting configuration uses Vercel AI Gateway, Vercel Blob, the Automatic sandbox, GitHub OAuth, and no optional plugins. Flags prefill your choices. At the final review, the CLI checks the selected capabilities against their providers. For example, if you select Attachment Uploads with temporary file storage, the review sends you to **File storage** to choose a persistent provider. Once the selection is valid, choose **Create app**. The CLI prints the required environment variables after installation.
+
+Use **Back** or press **Esc** to return to the previous menu. In a text field or checklist, **Esc** discards edits to the current prompt. If you leave a storage form partway through, your previous storage selection stays in place. **Ctrl+C** quits setup.
+
+A complete app preset, JSON installation, or saved recipe supplies the configuration. Older presets and recipes that omit authentication still prompt for sign-in providers unless you pass `--yes`. With `--from-git`, the CLI asks for a project name only if you omit the destination.
 
 New apps use the invoking package manager, with Bun as the fallback. The CLI records its version in `package.json`, and shadcn installs dependencies immediately. The former `--no-install`, `--package-manager`, and `--registry` flags are removed.
 
@@ -60,13 +74,13 @@ A fresh scaffold contains the Next.js app, its native EVE agent under `agent/`, 
 **Interactive setup (recommended)**
 
 ```bash
-npx chat-js@alpha create my-chat-app
+npx chat-js@beta create my-chat-app
 ```
 
 **Skip prompts, use all defaults**
 
 ```bash
-npx chat-js@alpha create my-chat-app --yes
+npx chat-js@beta create my-chat-app --yes
 ```
 
 **Replay a saved agent recipe**
@@ -74,7 +88,7 @@ npx chat-js@alpha create my-chat-app --yes
 Creating an app with Bun writes `chatjs/agent-recipe.json`. From the parent directory of `my-chat-app`, replay its recipe into a sibling directory:
 
 ```bash
-bunx chat-js@alpha create my-replay --recipe ./my-chat-app/chatjs/agent-recipe.json --yes
+bunx chat-js@beta create my-replay --recipe ./my-chat-app/chatjs/agent-recipe.json --yes
 ```
 
 The recipe supplies the installation and appearance choices. Pass selection flags and shadcn appearance options only when creating a new recipe.
@@ -82,19 +96,19 @@ The recipe supplies the installation and appearance choices. Pass selection flag
 **Select a gateway**
 
 ```bash
-npx chat-js@alpha create my-chat-app --gateway openrouter
+npx chat-js@beta create my-chat-app --gateway openrouter
 ```
 
 **Clone from a custom git repository**
 
 ```bash
-npx chat-js@alpha create my-chat-app --from-git https://github.com/your-org/your-fork
+npx chat-js@beta create my-chat-app --from-git https://github.com/your-org/your-fork
 ```
 
 **Configure S3 storage without prompts**
 
 ```bash
-npx chat-js@alpha create my-chat-app --yes \
+npx chat-js@beta create my-chat-app --yes \
   --storage-provider s3 \
   --storage-config '{"bucket":"uploads","region":"us-east-1"}'
 ```
@@ -104,7 +118,7 @@ Keep credentials out of `--storage-config`. The generated `.env.example` and fin
 **Full flow after scaffolding**
 
 ```bash
-npx chat-js@alpha create my-chat-app
+npx chat-js@beta create my-chat-app
 cd my-chat-app
 cp .env.example .env.local
 # Fill in the env vars printed by the CLI
@@ -117,7 +131,7 @@ npm run dev
 Installations determine which tools, document bundles and optional implementations exist. `chat.config.ts` keeps models, attachment size/type parameters, permissions, follow-up suggestions and parallel responses. It does not duplicate installed presence with feature flags. The maintained demo includes uploads and MCP. Agent observability uses EVE instrumentation selected in the builder’s Agent tab.
 
 ```bash
-npx chat-js@alpha create my-chat-app --yes --attachments --storage-provider vercel-blob --sandbox-provider vercel --mcp
+npx chat-js@beta create my-chat-app --yes --attachments --storage-provider vercel-blob --sandbox-provider vercel --mcp
 ```
 
 Uploads require durable file storage. EVE owns the agent sandbox lifecycle. Historical attachment display and tool-produced files remain available when user uploads are omitted.

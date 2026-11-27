@@ -20,6 +20,7 @@ const desktopFiles = [
 const desktopItem = definePluginItem(
   {
     name: "desktop",
+    icon: "setup/electron",
     description:
       "Electron authentication, browser handoff and renderer integration",
     dependencies: [

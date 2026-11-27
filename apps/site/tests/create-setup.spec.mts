@@ -1,3 +1,4 @@
+import { decodeAppPreset } from "../../../packages/registry/app-preset";
 import catalogFixture from "./eve-catalog.fixture.json" with { type: "json" };
 import { parseEveCatalog } from "../../../packages/registry/eve-catalog";
 import { test, expect } from "@uiverify/playwright";
@@ -217,6 +218,22 @@ for (const width of [1440, 845, 390]) {
         path: testInfo.outputPath("features-light.png"),
       });
     }
+    const auth = page.getByRole("region", { name: "Authentication" });
+    const github = auth.getByRole("checkbox", { name: "GitHub OAuth" });
+    const google = auth.getByRole("checkbox", { name: "Google OAuth" });
+    await expect(github).toBeChecked();
+    await expect(github).toBeDisabled();
+    await google.check();
+    await github.uncheck();
+    await expect(google).toBeDisabled();
+    await auth.scrollIntoViewIfNeeded();
+    await uiVerify.snapshot("authentication providers");
+    await expect
+      .poll(() => {
+        const code = new URL(page.url()).searchParams.get("app");
+        return code === null ? undefined : decodeAppPreset(code).auth;
+      })
+      .toEqual(["google"]);
     expect(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= window.innerWidth
@@ -224,3 +241,29 @@ for (const width of [1440, 845, 390]) {
     ).toBe(true);
   });
 }
+
+test("storage port survives editing and reopening the create URL", async ({
+  page,
+  uiVerify,
+}) => {
+  uiVerify.disableAutoSnapshot();
+  await page.goto("/create");
+  await page.getByRole("tab", { name: "Setup", exact: true }).click();
+  await page.getByRole("button", { name: /Show all .* providers/u }).click();
+  await page.getByRole("radio", { name: "FTP", exact: true }).check();
+  const port = page.getByRole("spinbutton", { name: "Storage port" });
+  await port.fill("2121");
+  await expect
+    .poll(() => {
+      const app = new URL(page.url()).searchParams.get("app");
+      return app === null
+        ? undefined
+        : decodeAppPreset(app).storage?.options.port;
+    })
+    .toBe(2121);
+  await page.reload();
+  await page.getByRole("tab", { name: "Setup", exact: true }).click();
+  await expect(port).toHaveValue("2121");
+  await port.scrollIntoViewIfNeeded();
+  await uiVerify.snapshot("FTP storage settings");
+});

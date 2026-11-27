@@ -21,10 +21,10 @@ model_list:
 
 ```bash
 # New app
-npx chat-js@alpha create my-chat --gateway litellm
+npx chat-js@beta create my-chat --gateway litellm
 
 # Existing app, from its root
-npx chat-js@alpha add --gateway litellm --replace
+npx chat-js@beta add --gateway litellm --replace
 ```
 
 3. Set the API base URL in the app’s `.env.local`. For a proxy serving chat completions at `/v1/chat/completions`, include `/v1`. If the proxy requires authentication, also set `LITELLM_API_KEY` to a valid proxy key.

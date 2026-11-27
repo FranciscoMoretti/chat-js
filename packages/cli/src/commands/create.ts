@@ -1,3 +1,9 @@
+import {
+  selectionCommand,
+  parseCreateFlags,
+} from "#cli/helpers/selection-options";
+import type { CreateSelectionFlags } from "#cli/helpers/selection-options";
+import { defaultAuthProviders } from "../../../registry/installation";
 import { installEveIntegrations } from "#cli/helpers/eve-integrations";
 import { registryResolution } from "#cli/registry/resolution-context";
 import { parseAgentRecipe, writeAgentRecipe } from "#cli/helpers/agent-recipe";
@@ -12,52 +18,49 @@ import { recordInstalledSource } from "#cli/utils/source-receipt";
 import { scaffoldNativeProject } from "#cli/helpers/native-scaffold";
 import { createStagedProject } from "#cli/helpers/staged-project";
 import { generateBaseline } from "#cli/utils/generate-baseline";
-import { planInteractiveInstallation } from "#cli/helpers/interactive-installation";
+import {
+  createSelectionFromFlags,
+  promptCreateMenu,
+} from "#cli/helpers/create-menu";
+import { resolveStorage } from "#cli/registry/storage";
+import type { InstallationSelection } from "../../../registry/installation";
+import type { AuthProvider, CoreFeatureKey, PackageManager } from "#cli/types";
+import { FEATURES_DEFAULTS } from "../../../../apps/chat/lib/config-schema";
 import { configureSandboxProvider } from "#cli/helpers/sandbox-provider";
 import { resolveSandbox } from "#cli/registry/sandboxes";
 import { installPlan, plannedSourceTargets } from "#cli/utils/install-plan";
 import { intro, outro } from "@clack/prompts";
-import { itemAddress, listTools, readItem } from "#cli/registry/shadcn";
-import {
-  promptAssistantTools,
-  promptAuth,
-  promptSandbox,
-  promptCoreFeatures,
-  promptElectron,
-  promptGateway,
-  promptMediaTool,
-  promptProjectName,
-  promptStorage,
-} from "#cli/helpers/prompts";
+import { promptAuth, promptProjectName } from "#cli/helpers/prompts";
 import { readFile, writeFile } from "node:fs/promises";
 import { scaffoldElectron, scaffoldFromGit } from "#cli/helpers/scaffold";
-import { Command } from "commander";
-import type { EnvVarEntry } from "#cli/helpers/env-checklist";
-import type { PackageManager } from "#cli/types";
+import type { Command } from "commander";
 import type { ReadonlyInput } from "#cli/helpers/readonly-input";
 import { buildConfigTs } from "#cli/helpers/config-builder";
-import { collectEnvChecklist } from "#cli/helpers/env-checklist";
+import {
+  collectEnvChecklist,
+  formatEnvChecklist,
+} from "#cli/helpers/env-checklist";
 import { configureGatewayProvider } from "#cli/helpers/gateway-provider";
-import { configureStorageProvider } from "#cli/helpers/storage-provider";
+import {
+  configureStorageProvider,
+  applyStorageOptions,
+} from "#cli/helpers/storage-provider";
 import { ensureTargetEmpty } from "#cli/helpers/ensure-target";
 import {
   assertCreateShadcnReady,
   createShadcnArguments,
 } from "#cli/helpers/create-shadcn-arguments";
 import { handleError } from "#cli/utils/handle-error";
-import { highlighter } from "#cli/utils/highlighter";
 import { launcherPackageManager } from "#cli/utils/get-package-manager";
 import { logger } from "#cli/utils/logger";
 import { parseJsonObject } from "#cli/helpers/json-object";
 import path from "node:path";
 import { planInstallation } from "#cli/utils/installation-plan";
 import { resolveGateway } from "#cli/registry/gateways";
-import { resolveStorage } from "#cli/registry/storage";
 import { runCommand } from "#cli/utils/run-command";
 import { spinner } from "#cli/utils/spinner";
 import { syncPlugins } from "#cli/utils/sync-plugins";
 import { syncTools } from "#cli/utils/sync-tools";
-import { toolDefinitionSchema } from "../../../registry/metadata";
 import { z } from "zod";
 
 const resolveCreateTarget = (
@@ -79,89 +82,48 @@ const resolveCreateTarget = (
   const targetDir = path.resolve(process.cwd(), targetArg);
   const projectName = path.basename(targetDir);
   const relativePath = path.relative(process.cwd(), targetDir);
+  const outside =
+    relativePath === ".." ||
+    relativePath.startsWith(`..${path.sep}`) ||
+    path.isAbsolute(relativePath);
 
   return {
-    displayPath: relativePath || ".",
+    displayPath: outside ? targetDir : relativePath || ".",
     projectName,
     targetDir,
   };
 };
 
-const NEXT_ENTRY = 1;
-const FIRST_ENTRY = 0;
 const JSON_INDENT = 2;
 const FIRST_CHARACTER = 0;
 const NEXT_CHARACTER = 1;
 const EMPTY_SELECTION_COUNT = 0;
 
-const printEnvGroup = (
-  entries: readonly Readonly<EnvVarEntry>[],
-  entry: Readonly<EnvVarEntry>,
-  firstIndex: number
-): number => {
-  logger.log(`  ${highlighter.warn("*")} ${highlighter.dim("One of:")}`);
-  let entryIndex = firstIndex;
-  while (
-    entryIndex < entries.length &&
-    entries[entryIndex].oneOfGroup === entry.oneOfGroup
-  ) {
-    const option = entries[entryIndex];
-    logger.log(
-      `    ${highlighter.warn("*")} ${highlighter.warn(option.vars)} ${highlighter.dim(`- ${option.description}`)}`
-    );
-    entryIndex += NEXT_ENTRY;
-  }
-  return entryIndex - NEXT_ENTRY;
-};
-
-const printEnvChecklist = (entries: readonly Readonly<EnvVarEntry>[]): void => {
-  logger.info("Required for your configuration:");
-  logger.break();
-  for (
-    let entryIndex = FIRST_ENTRY;
-    entryIndex < entries.length;
-    entryIndex += NEXT_ENTRY
-  ) {
-    const entry = entries[entryIndex];
-    if (typeof entry.oneOfGroup === "string" && entry.oneOfGroup !== "") {
-      entryIndex = printEnvGroup(entries, entry, entryIndex);
-    } else {
-      logger.log(
-        `  ${highlighter.warn("*")} ${highlighter.warn(entry.vars)} ${highlighter.dim(`- ${entry.description}`)}`
-      );
-    }
-  }
+const shellPath = (value: string): string => {
+  const directory = value.startsWith("-") ? `./${value}` : value;
+  return /^[a-zA-Z0-9_./-]+$/u.test(directory)
+    ? directory
+    : `'${directory.replaceAll("'", "'\"'\"'")}'`;
 };
 
 const createOptionsSchema = z.object({
   recipe: z.string().optional(),
   appPreset: z.string().optional(),
   installation: z.string().optional(),
-  attachments: z.boolean().optional(),
-  electron: z.boolean().optional(),
   fromGit: z.string().optional(),
-  gateway: z.string().optional(),
-  imageGenerationTool: z.string().optional(),
-  mcp: z.boolean().optional(),
-  projects: z.boolean().optional(),
-  storageConfig: z.string().optional(),
-  storageProvider: z.string().optional(),
-  sandboxProvider: z.string().optional(),
   target: z.string().optional(),
-  videoGenerationTool: z.string().optional(),
   yes: z.boolean(),
 });
 
-type CreateOptions = z.infer<typeof createOptionsSchema>;
-type AssistantTools = Awaited<ReturnType<typeof promptAssistantTools>>;
+type CreateOptions = z.infer<typeof createOptionsSchema> & CreateSelectionFlags;
 
 interface CreateSetup {
-  auth: Awaited<ReturnType<typeof promptAuth>>;
-  coreFeatures: Awaited<ReturnType<typeof promptCoreFeatures>>;
+  auth: Record<AuthProvider, boolean>;
+  coreFeatures: Record<CoreFeatureKey, boolean>;
   gateway: Awaited<ReturnType<typeof resolveGateway>>["definition"]["id"];
   gatewaySelection: Awaited<ReturnType<typeof resolveGateway>>;
   plan: Awaited<ReturnType<typeof planInstallation>>;
-  storage: Awaited<ReturnType<typeof promptStorage>>;
+  storage: ReturnType<typeof applyStorageOptions>;
   sandbox: Awaited<ReturnType<typeof resolveSandbox>> | undefined;
   withElectron: boolean;
 }
@@ -175,67 +137,13 @@ interface ProjectTarget {
   targetDir: string;
 }
 
-const collectToolSources = async (
-  options: Readonly<CreateOptions>,
-  assistantTools: AssistantTools,
-  gateway: ReadonlyInput<CreateSetup["gatewaySelection"]["definition"]>,
-  targetDir: string
-): Promise<string[]> => {
-  const toolSources = assistantTools.installableTools.map((tool): string =>
-    itemAddress(tool, "tool")
-  );
-  const selections = [
-    {
-      plugin: "videoGeneration",
-      kind: "video",
-      slot: "generateVideo",
-      source: options.videoGenerationTool,
-    },
-    {
-      plugin: "imageGeneration",
-      kind: "image",
-      slot: "generateImage",
-      source: options.imageGenerationTool,
-    },
-  ] as const;
-
-  const addSelection = async (index: number): Promise<void> => {
-    if (index >= selections.length) {
-      return;
-    }
-    const selection = selections[index];
-    if (typeof selection.source === "string" && selection.source !== "") {
-      assistantTools.builtInTools[selection.plugin] = true;
-    }
-    if (assistantTools.builtInTools[selection.plugin]) {
-      const source = itemAddress(
-        selection.source ??
-          (await promptMediaTool(selection.kind, gateway, options.yes)),
-        "tool"
-      );
-      const item = await readItem(source, targetDir);
-      const metadata = toolDefinitionSchema.parse(item.meta?.chatjs);
-      if (metadata.slot !== selection.slot) {
-        throw new Error(
-          `Selected tool must declare the ${selection.slot} slot.`
-        );
-      }
-      toolSources.push(source);
-    }
-    await addSelection(index + NEXT_ENTRY);
-  };
-
-  await addSelection(FIRST_ENTRY);
-  return toolSources;
-};
-
 const promptProjectTarget = async (
   options: Readonly<CreateOptions>
 ): Promise<ProjectTarget> => {
   const initialTarget = resolveCreateTarget(options.target);
   const projectName = await promptProjectName(
     initialTarget.projectName,
-    options.yes
+    options.yes || options.target !== undefined
   );
   const targetDir =
     typeof options.target === "string" && options.target !== ""
@@ -263,124 +171,43 @@ const promptProjectTarget = async (
   };
 };
 
-const loadInstallableTools = async (
-  options: Readonly<CreateOptions>,
-  targetDir: string
-): Promise<Awaited<ReturnType<typeof listTools>>> => {
-  if (options.yes) {
-    return [];
-  }
-
-  const registrySpinner = spinner("Loading installable tools...").start();
-  try {
-    const registryItems = await listTools(targetDir);
-    registrySpinner.succeed("Installable tools loaded.");
-    return registryItems;
-  } catch (error) {
-    registrySpinner.fail("Could not load installable tools.");
-    logger.warn(
-      error instanceof Error
-        ? error.message
-        : "Continuing with built-in tools only."
-    );
-    return [];
-  }
-};
-const promptCreateSetup = async (
-  options: Readonly<CreateOptions>,
+const prepareCreateSetup = async (
+  selection: InstallationSelection,
   targetDir: string
 ): Promise<CreateSetup> => {
-  const gatewaySource = options.gateway ?? (await promptGateway(options.yes));
-  const gatewaySelection = await resolveGateway(gatewaySource, targetDir);
-  const coreFeatures = await promptCoreFeatures(
-    options.yes,
-    options.mcp,
-    options.projects
+  const storage = applyStorageOptions(
+    await resolveStorage(selection.storage?.source ?? "memory", targetDir),
+    selection.storage?.options ?? {}
   );
-  if (options.attachments !== undefined) {
-    coreFeatures.attachments = options.attachments;
-  }
-  const registryItems = await loadInstallableTools(options, targetDir);
-  const assistantTools = await promptAssistantTools(registryItems, options.yes);
-  const toolSources = await collectToolSources(
-    options,
-    assistantTools,
-    gatewaySelection.definition,
-    targetDir
-  );
-  if (assistantTools.builtInTools.deepResearch) {
-    toolSources.push(itemAddress("deep-research", "tool"));
-  }
-  const auth = await promptAuth(options.yes);
-  const withElectron = await promptElectron(options.yes, options.electron);
-
-  const { plan, sandbox, storage } = await planInteractiveInstallation(
+  const plan = await planInstallation(
     targetDir,
     {
-      plugins: [
-        ...(withElectron ? ["desktop"] : []),
-        ...(coreFeatures.mcp ? ["mcp"] : []),
-        ...(coreFeatures.projects ? ["projects"] : []),
-        ...(coreFeatures.feedback ? ["feedback"] : []),
-        ...(coreFeatures.followupSuggestions ? ["followup-suggestions"] : []),
-        ...(coreFeatures.attachments ? ["attachment-uploads"] : []),
-      ],
-      gateway: gatewaySelection.source,
-      tools: toolSources,
+      ...selection,
+      auth: selection.auth ?? defaultAuthProviders,
+      storage: { source: storage.source, options: storage.options },
     },
-    async () => options.sandboxProvider ?? (await promptSandbox(options.yes)),
-    async (requiresStorage) =>
-      requiresStorage ||
-      options.storageProvider !== undefined ||
-      options.storageConfig !== undefined
-        ? await promptStorage(
-            options.yes,
-            options.storageProvider,
-            options.storageConfig,
-            targetDir
-          )
-        : await resolveStorage("memory", targetDir)
+    { fresh: true, requireToolKind: true }
   );
-
-  return {
-    auth,
-    coreFeatures,
-    gateway: gatewaySelection.definition.id,
-    gatewaySelection,
-    plan,
-    storage,
-    sandbox,
-    withElectron,
-  };
-};
-
-const selectedCreateSetup = async (
-  input: Parameters<typeof readCreateInstallation>[0],
-  targetDir: string,
-  yes: boolean
-): Promise<CreateSetup> => {
-  const selection = readCreateInstallation(input);
-  selection.storage ??= { source: "memory", options: {} };
-  const plan = await planInstallation(targetDir, selection, { fresh: true });
   const gatewaySelection = await resolveGateway(
     selection.gateway ?? "vercel",
     targetDir
   );
-  const storage = await resolveStorage(
-    selection.storage?.source ?? "memory",
-    targetDir
-  );
-  storage.options = selection.storage?.options ?? {};
   const plugins = new Set(plan.plugins.map((plugin) => plugin.id));
+  const providers: readonly AuthProvider[] =
+    selection.auth ?? defaultAuthProviders;
   return {
-    auth: await promptAuth(yes),
+    auth: {
+      github: providers.includes("github"),
+      google: providers.includes("google"),
+      vercel: providers.includes("vercel"),
+    },
     coreFeatures: {
       attachments: plugins.has("attachment-uploads"),
       feedback: plugins.has("feedback"),
       followupSuggestions: plugins.has("followup-suggestions"),
       mcp: plugins.has("mcp"),
       projects: plugins.has("projects"),
-      parallelResponses: true,
+      parallelResponses: FEATURES_DEFAULTS.parallelResponses,
     },
     gateway: gatewaySelection.definition.id,
     gatewaySelection,
@@ -391,6 +218,41 @@ const selectedCreateSetup = async (
         ? undefined
         : await resolveSandbox(selection.sandbox, targetDir),
     withElectron: plugins.has("desktop"),
+  };
+};
+
+const configureCreate = async (
+  options: Readonly<CreateOptions>,
+  project: Readonly<ProjectTarget>,
+  appearance: readonly string[]
+): Promise<{ setup: CreateSetup; appearance: readonly string[] }> => {
+  if (options.installation !== undefined || options.appPreset !== undefined) {
+    const selection = readCreateInstallation({
+      appPreset: options.appPreset,
+      installation: options.installation,
+      storageConfig: options.storageConfig,
+    });
+    if (!options.yes && selection.auth === undefined) {
+      selection.auth = await promptAuth();
+    }
+    return {
+      setup: await prepareCreateSetup(selection, project.targetDir),
+      appearance,
+    };
+  }
+  const selection = await createSelectionFromFlags(project.targetDir, options);
+  if (!options.yes) {
+    return await promptCreateMenu(
+      project,
+      selection,
+      appearance,
+      async (draft) =>
+        await prepareCreateSetup(draft.selection, project.targetDir)
+    );
+  }
+  return {
+    setup: await prepareCreateSetup(selection, project.targetDir),
+    appearance,
   };
 };
 
@@ -416,9 +278,9 @@ const scaffoldProject = async (
 };
 const writeConfiguration = async (
   project: Readonly<ProjectTarget>,
-  setup: ReadonlyInput<Awaited<ReturnType<typeof promptCreateSetup>>>
+  setup: ReadonlyInput<CreateSetup>
 ): Promise<void> => {
-  const configSpinner = spinner("Writing configuration...").start();
+  const configSpinner = spinner("Writing app configuration…").start();
   try {
     const packageJsonPath = path.join(project.targetDir, "package.json");
     const packageJson = parseJsonObject(
@@ -466,11 +328,9 @@ const oxfmtCommandFor = (packageManager: PackageManager): string[] => {
 const installRegistryItems = async (
   packageManager: PackageManager,
   project: Readonly<ProjectTarget>,
-  setup: ReadonlyInput<Awaited<ReturnType<typeof promptCreateSetup>>>
+  setup: ReadonlyInput<CreateSetup>
 ): Promise<Awaited<ReturnType<typeof syncTools>>> => {
-  const installSpinner = spinner(
-    "Installing selected registry items..."
-  ).start();
+  const installSpinner = spinner("Installing app capabilities…").start();
   try {
     const { plan } = setup;
     let installedTools: Awaited<ReturnType<typeof syncTools>> = [];
@@ -518,12 +378,10 @@ const installRegistryItems = async (
       "chatjs/providers/storage-options.ts",
       ".env.example",
     ]);
-    installSpinner.succeed("Registry items installed and configured.");
+    installSpinner.succeed("App capabilities installed.");
     return installedTools;
   } catch (error) {
-    installSpinner.fail(
-      "Installation failed; the project may be partially installed."
-    );
+    installSpinner.fail("Could not install the selected capabilities.");
     throw error;
   }
 };
@@ -531,7 +389,7 @@ const installRegistryItems = async (
 const printNextSteps = (
   packageManager: PackageManager,
   project: Readonly<ProjectTarget>,
-  setup: ReadonlyInput<Awaited<ReturnType<typeof promptCreateSetup>>>,
+  setup: ReadonlyInput<CreateSetup>,
   installedTools: ReadonlyInput<Awaited<ReturnType<typeof syncTools>>>
 ): void => {
   const envEntries = collectEnvChecklist({
@@ -539,53 +397,45 @@ const printNextSteps = (
     coreFeatures: setup.coreFeatures,
     gateway: setup.gateway,
     gatewayRequirements: setup.gatewaySelection.definition.envRequirements,
+    storageRequirements: setup.storage.definition.envRequirements,
+    sandboxRequirements: setup.sandbox?.definition.envRequirements,
     installableToolEnvRequirements: [
       ...installedTools.flatMap((tool) => tool.envRequirements),
       ...setup.plan.plugins.flatMap((plugin) => plugin.envRequirements ?? []),
-      ...setup.storage.definition.envRequirements,
-      ...(setup.sandbox?.definition.envRequirements ?? []),
     ],
   });
 
-  outro("Your ChatJS app is ready!");
-  logger.info("Next steps:");
+  outro(`Created ${project.projectName}.`);
   logger.break();
-  logger.log(
-    `  ${highlighter.dim("1.")} cd ${highlighter.info(project.displayPath)}`
-  );
-  logger.log(
-    `  ${highlighter.dim("2.")} Copy ${highlighter.info(".env.example")} to ${highlighter.info(".env.local")} and fill in the values below`
-  );
-  logger.log(
-    `  ${highlighter.dim("3.")} ${highlighter.info(`${packageManager} run setup`)}`
-  );
-  logger.log(
-    `  ${highlighter.dim("4.")} ${highlighter.info(`${packageManager} run dev`)}`
-  );
+  logger.info("Prepare your environment");
+  logger.log(`  cd -- ${shellPath(project.displayPath)}`);
+  logger.log("  cp .env.example .env.local");
+  logger.break();
+  logger.info("Fill in .env.local");
+  logger.break();
+  logger.log(formatEnvChecklist(envEntries));
+  if ((setup.plan.selection.eve?.length ?? 0) > 0) {
+    logger.log(
+      "  Follow chatjs/eve-setup.md to connect the selected EVE capabilities."
+    );
+  }
+  logger.break();
+  logger.info("Initialize the database and start the app");
+  logger.log(`  ${packageManager} run setup`);
+  logger.log(`  ${packageManager} run dev`);
   if (setup.withElectron) {
     logger.break();
-    logger.info("Electron desktop app:");
+    logger.info("Start the Electron app in a second terminal");
     logger.log(
-      `  Run the web app first, then: ${highlighter.info(`cd electron && ${packageManager} install && ${packageManager} run dev`)}`
+      `  cd -- ${shellPath(path.join(project.displayPath, "electron"))}`
     );
+    logger.log(`  ${packageManager} install`);
+    logger.log(`  ${packageManager} run dev`);
   }
   logger.break();
-  logger.info(
-    "Check capability configuration with chat-js setup (requires Bun). This does not verify live services."
-  );
-  if ((setup.plan.selection.eve?.length ?? 0) > 0) {
-    logger.info(
-      "Native EVE capabilities installed. Complete provider setup using chatjs/eve-setup.md; credentials and consent are not configured by Create."
-    );
-  }
-  printEnvChecklist(envEntries);
-  logger.log(
-    "  Postgres setup (Neon, Supabase, or another host): https://www.chatjs.dev/docs/reference/database"
-  );
+  logger.info("Setup guide");
+  logger.log("  https://www.chatjs.dev/docs/quickstart");
   logger.break();
-  logger.log(
-    `  For detailed setup instructions, visit ${highlighter.info("https://www.chatjs.dev/docs/quickstart")}`
-  );
 };
 
 const createProject = async (
@@ -615,30 +465,18 @@ const createProject = async (
       );
     }
     await scaffoldFromGit(options.fromGit, project.targetDir);
-    outro(
-      "Repository cloned with its configuration and installed source unchanged."
-    );
-    logger.info(
-      `cd ${project.displayPath} and follow the repository's setup instructions. Use chat-js add to install additional tools.`
-    );
+    outro(`Cloned ${project.projectName}.`);
+    logger.log(`  cd -- ${shellPath(project.displayPath)}`);
+    logger.info("Follow the repository’s setup instructions.");
     return;
   }
-  const setup =
-    options.installation === undefined && options.appPreset === undefined
-      ? await promptCreateSetup(options, project.targetDir)
-      : await selectedCreateSetup(
-          {
-            appPreset: options.appPreset,
-            installation: options.installation,
-            storageConfig: options.storageConfig,
-          },
-          project.targetDir,
-          options.yes
-        );
-  logger.break();
-  logger.info(
-    `Creating ChatJS app at ${project.displayPath}. Starting with shadcn setup...`
+  const { setup, appearance } = await configureCreate(
+    options,
+    project,
+    shadcnArgs
   );
+  logger.break();
+  logger.info(`Creating ${project.projectName}…`);
   const installedTools = await createStagedProject(
     project.targetDir,
     async (stage) => {
@@ -647,7 +485,7 @@ const createProject = async (
         stagedProject,
         packageManager,
         setup.withElectron,
-        shadcnArgs,
+        appearance,
         recipe
       );
       // Resolve only after native init has selected the actual library.
@@ -678,7 +516,7 @@ const createProject = async (
       if (packageManager === "bun") {
         await writeAgentRecipe(stage, {
           selection: setup.plan.selection,
-          appearance: [...shadcnArgs],
+          appearance: [...appearance],
           capabilities: setup.plan.resolvedItems,
           eve,
         });
@@ -694,8 +532,7 @@ const createProject = async (
   printNextSteps(packageManager, project, setup, installedTools);
 };
 
-export const create = new Command()
-  .name("create")
+export const create = selectionCommand("create")
   .option("--app-preset <code>", "App preset code; bypasses feature defaults")
   .option(
     "--recipe <path>",
@@ -705,51 +542,13 @@ export const create = new Command()
     "--installation <json>",
     "complete JSON selection; bypasses feature defaults"
   )
-  .option(
-    "--image-generation-tool <item>",
-    "image generation tool name or registry address"
-  )
-  .option(
-    "--video-generation-tool <item>",
-    "video generation tool name or registry address"
-  )
   .description("scaffold a new ChatJS chat application")
   .argument("[directory]", "target directory for the project")
   .argument("[shadcn-options...]", "native shadcn options after --")
-  .option(
-    "--gateway <gateway>",
-    "gateway name, registry item URL, or local JSON path"
-  )
   .option("-y, --yes", "skip prompts and use defaults", false)
-  .option(
-    "--attachments",
-    "install attachment picker, camera, paste/drop and upload endpoint"
-  )
-  .option("--no-attachments", "omit user attachment uploads")
-  .option(
-    "--projects",
-    "install Projects pages, chat organization, and shared instructions"
-  )
-  .option("--no-projects", "omit Projects from the new app")
-  .option("--mcp", "install MCP connectors, pages and OAuth callback")
-  .option("--no-mcp", "omit MCP from the new app")
-  .option("--electron", "include the Electron desktop app")
-  .option("--no-electron", "do not include the Electron desktop app")
   .option(
     "--from-git <url>",
     "clone from a git repository instead of the built-in scaffold"
-  )
-  .option(
-    "--sandbox-provider <item>",
-    "native EVE environment: default, vercel, docker, just-bash or registry address"
-  )
-  .option(
-    "--storage-provider <item>",
-    "storage registry item (built-in name, namespace, URL or local JSON path)"
-  )
-  .option(
-    "--storage-config <json>",
-    "non-secret JSON options for the storage adapter; credentials use env vars"
   )
   .action(
     async (
@@ -760,7 +559,10 @@ export const create = new Command()
     ): Promise<void> => {
       try {
         const { target, shadcnArgs } = createShadcnArguments(command);
-        const options = createOptionsSchema.parse({ target, ...opts });
+        const options = {
+          ...createOptionsSchema.parse({ target, ...opts }),
+          ...parseCreateFlags(opts),
+        };
         if (options.recipe !== undefined) {
           const conflicts = Object.entries(options).filter(
             ([key, value]) =>

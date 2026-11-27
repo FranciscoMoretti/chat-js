@@ -32,6 +32,22 @@ const mediaDefaultsSchema = z.object({
 });
 const noConsumers = 0;
 
+export class ProviderRequirementError extends Error {
+  readonly provider: "storage" | "gateway" | "sandbox";
+  readonly media?: MediaKind;
+
+  constructor(
+    provider: ProviderRequirementError["provider"],
+    message: string,
+    media?: MediaKind
+  ) {
+    super(message);
+    this.name = "ProviderRequirementError";
+    this.provider = provider;
+    this.media = media;
+  }
+}
+
 const validateStorage = async (
   cwd: string,
   consumers: readonly StorageConsumer[],
@@ -45,7 +61,8 @@ const validateStorage = async (
   }
   const storage = selected ?? (await readProviderId(cwd, "storage"));
   if (!hasPersistentStorage(storage)) {
-    throw new Error(
+    throw new ProviderRequirementError(
+      "storage",
       `${consumers.map((item) => item.id).join(", ")} requires persistent storage. Select --storage-provider before installing file-backed plugins.`
     );
   }
@@ -71,8 +88,10 @@ const validateMedia = (
   for (const tool of tools) {
     for (const kind of tool.requiresGateway ?? []) {
       if (!supportsMedia(gateway, kind)) {
-        throw new Error(
-          `${tool.id} requires a gateway supporting ${kind} generation with a nonempty default model. Select a compatible gateway or omit this tool.`
+        throw new ProviderRequirementError(
+          "gateway",
+          `${tool.id} requires a gateway supporting ${kind} generation with a nonempty default model. Select a compatible gateway or omit this tool.`,
+          kind
         );
       }
     }
@@ -99,7 +118,8 @@ const validateProviderRequirements = async (
         ? (await readProviderId(cwd, "sandbox")) !== "just-bash"
         : supportsNativeProcesses(target.sandboxRuntimes);
     if (!supportsNative) {
-      throw new Error(
+      throw new ProviderRequirementError(
+        "sandbox",
         "Code execution requires native Python and Node processes. Select Automatic, Vercel Sandbox or Docker."
       );
     }

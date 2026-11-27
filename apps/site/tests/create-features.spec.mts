@@ -133,7 +133,12 @@ test("Create sections share selections, dependencies and the install command", a
   ).toHaveCount(0);
   await expect(
     page.getByRole("navigation", { name: "Setup sections" }).getByRole("link")
-  ).toHaveText(["Models & Gateways", "Infrastructure", "Platforms"]);
+  ).toHaveText([
+    "Models & Gateways",
+    "Infrastructure",
+    "Platforms",
+    "Authentication",
+  ]);
   await page.getByRole("tab", { name: "Agent", exact: true }).click();
   const tools = page.getByRole("region", {
     name: "Tools",

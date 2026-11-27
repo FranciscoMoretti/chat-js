@@ -113,6 +113,20 @@ export const parseEveCatalog = (input: unknown) =>
         "https://eve.dev"
       ).href,
     }));
+/** Both builders discover live choices here. Explicit IDs can be parsed offline. */
+export const eveCatalogSource = {
+  parseId: eveItemIdSchema,
+  async load(options?: RequestInit) {
+    const response = await fetch(eveRegistryUrl, {
+      ...options,
+      signal: AbortSignal.timeout(15_000),
+    });
+    if (!response.ok) {
+      throw new Error("Could not load the EVE catalog.");
+    }
+    return parseEveCatalog(await response.json());
+  },
+};
 export type EveCatalogItem = z.infer<typeof eveCatalogItemsSchema>[number];
 
 export const eveCatalogItemsSchema = z.array(

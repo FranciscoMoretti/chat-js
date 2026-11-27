@@ -9,7 +9,7 @@ import {
 } from "@/components/create-preview/ui/base/code-block";
 import { Button } from "@/vendor/shadcn-create/styles/base-nova/ui/button";
 
-const command = "npx chat-js@alpha create";
+const command = "npx chat-js@beta create";
 
 export const CreateCommand = () => {
   const [status, setStatus] = useState("");

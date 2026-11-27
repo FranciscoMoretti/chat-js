@@ -1,3 +1,4 @@
+import { storageFields } from "../../../registry/storage-fields";
 import { itemAddress, readItem } from "./shadcn";
 import type { StorageDefinition } from "../../../registry/metadata";
 import { storageDefinitionSchema } from "../../../registry/metadata";
@@ -33,5 +34,6 @@ export const resolveStorage = async (
       "Storage must install chatjs/providers/storage.ts exporting createStorageAdapter."
     );
   }
+  definition.configFields = [...storageFields(definition, address)];
   return { definition, options: {}, source: address };
 };

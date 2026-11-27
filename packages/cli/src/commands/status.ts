@@ -1,3 +1,4 @@
+import { projectDirectory, jsonOutput } from "#cli/helpers/project-options";
 import { Command } from "commander";
 import path from "node:path";
 import { handleError } from "#cli/utils/handle-error";
@@ -11,9 +12,9 @@ export const status = new Command("status")
   .description(
     "inspect installation file kinds, local edits, and plugin removal dependencies without writing"
   )
-  .option("-c, --cwd <cwd>", "project directory", process.cwd())
+  .addOption(projectDirectory())
   .option("--files", "list every plugin-owned file", false)
-  .option("--json", "print the full inventory as JSON", false)
+  .addOption(jsonOutput())
   .option(
     "--format-source <module>",
     "project module exporting formatSource for comparison"

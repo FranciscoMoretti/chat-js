@@ -1,3 +1,7 @@
+import {
+  validateRequestedKind,
+  registryMetadataKind,
+} from "./installation-requirements";
 import { installationActivation } from "./installation-activation";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -27,12 +31,22 @@ const resolveManualItems = async (cwd: string, sources: readonly string[]) => {
 /** Export unmodified registry source for manual integration, never activation. */
 export const exportManualInstallation = async (
   cwd: string,
-  sources: readonly string[]
+  sources: readonly string[],
+  plugins: readonly string[] = []
 ): Promise<string> => {
   if (sources.length === 0) {
     throw new Error("Select at least one registry item to export.");
   }
   const items = await resolveManualItems(cwd, sources);
+  for (const [source, item] of items) {
+    if (plugins.includes(source)) {
+      validateRequestedKind(
+        source,
+        "plugin",
+        registryMetadataKind(item.meta?.chatjs)
+      );
+    }
+  }
   const output = await mkdtemp(path.join(tmpdir(), "chatjs-manual-"));
   try {
     const results = await Promise.allSettled(

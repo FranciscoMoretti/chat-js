@@ -46,19 +46,10 @@ interface PlanOptions {
   readonly requireToolKind?: boolean;
 }
 
-type StorageChoice = InstallationSelection["storage"];
-
-/** Resolve the capability graph before asking Create to choose storage. */
-export const planInstallationWithStorage = async <
-  Storage extends StorageChoice,
->(
+export const planInstallation = async (
   cwd: string,
   input: ReadonlyNative<InstallationSelection>,
-  options: PlanOptions,
-  chooseStorage: (
-    requiresStorage: boolean,
-    requested: StorageChoice
-  ) => Storage | Promise<Storage>
+  options: PlanOptions = {}
 ) => {
   if (options.fresh !== true) {
     await assertCurrentInstallationLayout(cwd);
@@ -170,15 +161,8 @@ export const planInstallationWithStorage = async <
       ? []
       : [visit(itemAddress(selection.sandbox, "sandbox"), "sandbox")]),
   ]);
-  const storage = await chooseStorage(
-    [...expected.values(), ...plugins.values()].some(
-      (item) => item.requiresStorage === true
-    ),
-    selection.storage
-  );
-  if (storage) {
-    selection.storage = { source: storage.source, options: storage.options };
-    await visit(itemAddress(storage.source, "storage"), "storage");
+  if (selection.storage) {
+    await visit(itemAddress(selection.storage.source, "storage"), "storage");
   }
   const providerChanges = await Promise.all(
     [...providers].map(async ([kind, next]: readonly [string, string]) => {
@@ -296,19 +280,5 @@ export const planInstallationWithStorage = async <
       )
     ),
   };
-  return { plan, storage };
-};
-
-export const planInstallation = async (
-  cwd: string,
-  input: ReadonlyNative<InstallationSelection>,
-  options: PlanOptions = {}
-) => {
-  const { plan } = await planInstallationWithStorage(
-    cwd,
-    input,
-    options,
-    (_requiresStorage, requested) => requested
-  );
   return plan;
 };

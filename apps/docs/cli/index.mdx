@@ -4,21 +4,21 @@ description: "Find the ChatJS CLI command for creating an app, adding providers 
 ---
 
 <Callout type="warning">
-  **ChatJS 1.0 is in alpha.** You can build apps with it, but APIs,
+  **ChatJS 1.0 is in beta.** You can build apps with it, but APIs,
   configuration, and generated code may change substantially before the stable
-  release. Use `chat-js@alpha` to try the current alpha.
+  release. Use `chat-js@beta` to try the current beta.
 </Callout>
 
 Create the app with your preferred package manager, then follow the [Quickstart](/quickstart) to configure credentials and initialize the database. With Bun installed, run:
 
 ```bash
-bunx chat-js@alpha create my-app
+bunx chat-js@beta create my-app
 ```
 
 With npm instead of Bun, use:
 
 ```bash
-npx chat-js@alpha create my-app
+npx chat-js@beta create my-app
 ```
 
 Creation detects npm from its default `npm/` user-agent prefix. If you override npm's `user-agent` setting, preserve that prefix. An unrecognized launcher falls back to Bun and requires Bun to be installed.

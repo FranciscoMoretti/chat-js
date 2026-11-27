@@ -16,14 +16,14 @@ Start with a working AI chat. Choose your models and tools. Own the code.
 
 </div>
 
-> **ChatJS 1.0 is in alpha.** Use `chat-js@alpha` to try it. APIs, configuration, and generated code may change before the stable release.
+> **ChatJS 1.0 is in beta.** Use `chat-js@beta` to try it. APIs, configuration, and generated code may change before the stable release.
 
 ## Quickstart
 
 Use Node.js 24 or newer. You can scaffold interactively from the terminal. The browser builder lets you preview the UI, configure the agent, and copy a tailored command. [Open the builder](https://www.chatjs.dev/create)
 
 ```sh
-npx chat-js@alpha create my-app
+npx chat-js@beta create my-app
 cd my-app
 cp .env.example .env.local
 ```
@@ -51,7 +51,7 @@ Change branding, model defaults, and app settings in `chat.config.ts`. Customize
 To add MCP connectors, run this from inside your app.
 
 ```sh
-npx chat-js@alpha add mcp
+npx chat-js@beta add mcp
 ```
 
 Generate `MCP_ENCRYPTION_KEY` with `openssl rand -base64 32` and set it in `.env.local`. Run `npm run db:generate`, review the generated SQL, then apply it with `npm run db:migrate`. [MCP setup](https://www.chatjs.dev/docs/plugins/mcp) · [CLI reference](https://www.chatjs.dev/docs/cli)

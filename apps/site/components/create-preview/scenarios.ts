@@ -42,7 +42,7 @@ const conversation = (
         type: "text",
         state: "done",
         text: [
-          "# A small start. A great experience.\n\nStart with one useful conversation. Keep the interface clear, let people bring their context, and make every interaction feel considered.\n\n## Make it personal\n\nYour colors, your typography, your way of working.\n\n## Keep it simple\n\nA focused workspace that gets out of the way.\n\n```sh\nbunx chat-js@alpha create my-chat\n```",
+          "# A small start. A great experience.\n\nStart with one useful conversation. Keep the interface clear, let people bring their context, and make every interaction feel considered.\n\n## Make it personal\n\nYour colors, your typography, your way of working.\n\n## Keep it simple\n\nA focused workspace that gets out of the way.\n\n```sh\nbunx chat-js@beta create my-chat\n```",
           plugins.includes("streamdown-mermaid") &&
             "Start with one path through the app.\n\n```mermaid\nflowchart LR\n  Ask --> Reply --> FollowUp[Follow up]\n```",
           plugins.includes("streamdown-math") &&

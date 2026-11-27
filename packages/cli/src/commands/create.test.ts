@@ -107,6 +107,13 @@ it("rejects retired installer flags explicitly", () => {
 
 it.each([
   {
+    args: [
+      "--installation",
+      '{"gateway":"vercel","agent":{"limits":{"sessionTimeoutMs":"bad"}}}',
+    ],
+    message: "agent.limits.sessionTimeoutMs",
+  },
+  {
     args: ["--", "--base", "aria"],
     message: "supports Base UI and Radix",
   },
@@ -125,7 +132,7 @@ it.each([
     message: "--from-git preserves",
   },
 ])(
-  "rejects unsafe preset creation before network or filesystem work: $message",
+  "rejects invalid create arguments before network or filesystem work: $message",
   async ({ args, message }) => {
     const destination = makeTempDir("native-preflight");
     const child = Bun.spawn(

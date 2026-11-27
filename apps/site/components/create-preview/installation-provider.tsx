@@ -45,7 +45,7 @@ export const InstallationProvider = ({
               {
                 id: item.definition.id,
                 title: item.title,
-                configKeys: item.definition.configKeys,
+                fields: item.definition.configFields,
               },
             ]
           : []

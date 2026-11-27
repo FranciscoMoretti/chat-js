@@ -601,6 +601,40 @@ assert.equal(await files.exists("test.txt"), false);
       await run(cwd, ["bun", "verify-storage.ts"]);
     }
     if (gateway === "openai") {
+      // A patch to the active provider preserves the region selected at create.
+      await run(cwd, [
+        "node",
+        cliEntry,
+        "add",
+        "--plugin",
+        "model-preferences",
+        "--storage-provider",
+        "s3",
+        "--storage-config",
+        '{"bucket":"updated"}',
+        "--yes",
+      ]);
+      const options = await readFile(
+        nodePath.join(cwd, "chatjs/providers/storage-options.ts"),
+        "utf-8"
+      );
+      expect(options).toContain("updated");
+      expect(options).toContain("us-east-1");
+      expect(options).not.toContain("AWS_REGION");
+      const descriptor = nodePath.join(
+        cwd,
+        "chatjs/plugins/model-preferences/plugin.json"
+      );
+      expect(await Bun.file(descriptor).exists()).toBe(true);
+      await run(cwd, [
+        "node",
+        cliEntry,
+        "remove",
+        "--plugin",
+        "model-preferences",
+        "--yes",
+      ]);
+      expect(await Bun.file(descriptor).exists()).toBe(false);
       expect(dependencies["@aws-sdk/client-s3"]).toBeDefined();
       expect(dependencies["@vercel/blob"]).toBeUndefined();
     }

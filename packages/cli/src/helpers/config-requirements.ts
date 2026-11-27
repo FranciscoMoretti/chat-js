@@ -59,32 +59,9 @@ const authEnvRequirements: Record<AuthProvider, EnvRequirement> = {
   },
 };
 
-const envVarDescriptions: Record<string, string> = {
-  AI_GATEWAY_API_KEY: "Vercel AI Gateway API key",
-  AUTH_GITHUB_ID: "GitHub OAuth client id",
-  AUTH_GITHUB_SECRET: "GitHub OAuth client secret",
-  AUTH_GOOGLE_ID: "Google OAuth client id",
-  AUTH_GOOGLE_SECRET: "Google OAuth client secret",
-  AUTH_SECRET: "Secret used to sign auth sessions",
-  DATABASE_URL: "Database connection string",
-  LITELLM_API_KEY: "Optional API key for LiteLLM proxy",
-  LITELLM_BASE_URL: "Base URL for LiteLLM proxy",
-  MCP_ENCRYPTION_KEY: "Encryption key for MCP connector secrets",
-  OPENAI_API_KEY: "OpenAI API key",
-  OPENAI_COMPATIBLE_API_KEY: "API key for OpenAI-compatible gateway",
-  OPENAI_COMPATIBLE_BASE_URL: "Base URL for OpenAI-compatible gateway",
-  OPENROUTER_API_KEY: "OpenRouter API key",
-  VERCEL_APP_CLIENT_ID: "Vercel OAuth client id",
-  VERCEL_APP_CLIENT_SECRET: "Vercel OAuth client secret",
-  VERCEL_OIDC_TOKEN: "OIDC token available in Vercel runtime",
-  VERCEL_PROJECT_ID: "Vercel project id for sandbox execution",
-  VERCEL_TEAM_ID: "Vercel team id for sandbox execution",
-  VERCEL_TOKEN: "Vercel token for sandbox execution",
-};
 export {
   authEnvRequirements,
   coreFeatureEnvRequirements,
-  envVarDescriptions,
   gatewayEnvRequirements,
 };
 export type { EnvRequirement };

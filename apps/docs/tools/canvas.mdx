@@ -10,7 +10,7 @@ Documents are files in the agent's native EVE sandbox. Ask the agent to create a
 Enable EVE's native default tools and install file publication with persistent storage:
 
 ```bash
-bunx chat-js@alpha add attach-workspace-file --storage-provider vercel-blob
+bunx chat-js@beta add attach-workspace-file --storage-provider vercel-blob
 ```
 
 Use Docker or Vercel Sandbox when your task needs native Python or Node processes. The simulated just-bash environment can write text files but cannot run those processes. See [Sandboxes](/deployment/sandboxes).
@@ -26,7 +26,7 @@ The agent uses native tools to write the file, then calls `attach_workspace_file
 Downloads work without a viewer. Install richer presentation independently:
 
 ```bash
-bunx chat-js@alpha add image-viewer video-viewer spreadsheet-viewer
+bunx chat-js@beta add image-viewer video-viewer spreadsheet-viewer
 ```
 
 The spreadsheet viewer opens CSV, TSV and XLSX files in a read-only preview. You can select worksheets and inspect cell values. It does not recalculate formulas or reproduce workbook formatting and charts. The original file remains downloadable.

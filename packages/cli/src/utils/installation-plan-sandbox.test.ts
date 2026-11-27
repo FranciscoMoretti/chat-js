@@ -1,6 +1,4 @@
 import { planInstallation } from "./installation-plan";
-import { planInteractiveInstallation } from "../helpers/interactive-installation";
-import { resolveStorage } from "../registry/storage";
 import { rejects } from "node:assert/strict";
 import { afterEach, expect, test } from "bun:test";
 import { mkdir, mkdtemp, rm, writeFile, readFile } from "node:fs/promises";
@@ -279,78 +277,48 @@ test("replacement requires --replace and the existing provider satisfies later c
   }
 });
 
-test("create installs the chosen native environment with indirect code-execution dependencies", async () => {
+test("fresh creation includes transitive code execution with the selected sandbox", async () => {
   const f = await fixture();
   try {
-    const selected = await planInteractiveInstallation(
+    const plan = await planInstallation(
       f.root,
       {
         plugins: [],
         tools: [f.address("dependent")],
+        sandbox: f.address("docker-sandbox"),
+        storage: { source: f.address("storage"), options: {} },
       },
-      async () => await Promise.resolve(f.address("docker-sandbox")),
-      async (required) => {
-        expect(required).toBe(false);
-        return await resolveStorage(f.address("storage"), f.root);
-      }
+      { fresh: true }
     );
-    expect(selected.plan.expected.map((tool) => tool.id)).toEqual([
+    expect(plan.expected.map((tool) => tool.id)).toEqual([
       "dependent",
       "native-runtime",
     ]);
-    expect(selected.sandbox?.definition.id).toBe("docker");
+    expect(plan.selection.sandbox).toBe(f.address("docker-sandbox"));
   } finally {
     await f.server.stop(true);
   }
 });
 
-test("create defaults to a native EVE environment without tools", async () => {
-  const f = await fixture();
-  try {
-    const selected = await planInteractiveInstallation(
-      f.root,
-      {
-        plugins: [],
-        tools: [],
-      },
-      async () => await Promise.resolve("default"),
-      async (required) => {
-        expect(required).toBe(false);
-        return await resolveStorage(f.address("storage"), f.root);
-      }
-    );
-    expect(selected.sandbox.definition.id).toBe("default");
-  } finally {
-    await f.server.stop(true);
-  }
-});
-
-test("create sees storage requirements from a transitive plugin before choosing a provider", async () => {
+test("fresh creation requires storage for a transitive plugin", async () => {
   const f = await fixture();
   try {
     const selection = {
       plugins: [f.address("archive")],
       tools: [],
+      sandbox: "default",
     };
-    const selected = await planInteractiveInstallation(
-      f.root,
-      selection,
-      async () => await Promise.resolve("default"),
-      async (required) => {
-        expect(required).toBe(true);
-        return await resolveStorage(f.address("storage"), f.root);
-      }
+    await rejects(
+      planInstallation(f.root, selection, { fresh: true }),
+      /persistent storage/u
     );
-    expect(selected.sandbox.definition.id).toBe("default");
-    expect(selected.plan.selection.storage).toEqual({
-      source: f.address("storage"),
-      options: {},
-    });
-    await planInstallation(
+    const storage = { source: f.address("storage"), options: {} };
+    const plan = await planInstallation(
       f.root,
-      { ...selected.plan.selection, sandbox: f.address("docker-sandbox") },
+      { ...selection, storage },
       { fresh: true }
     );
+    expect(plan.selection.storage).toEqual(storage);
   } finally {
     await f.server.stop(true);
   }

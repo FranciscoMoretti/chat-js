@@ -1,3 +1,4 @@
+import { storageFieldSchema } from "./storage-fields";
 import { composerIconNames } from "./composer-icons.generated";
 import { z } from "zod";
 
@@ -117,6 +118,7 @@ type ToolDefinition = z.infer<typeof toolDefinitionSchema>;
 
 const storageDefinitionSchema = z.object({
   configKeys: z.array(z.string()).default([]),
+  configFields: z.array(storageFieldSchema).optional(),
   contractVersion: z.literal(CONTRACT_VERSION),
   envRequirements: z.array(envRequirementSchema).default([]),
   id: z.string().regex(/^[a-z][a-z0-9-]*$/u),

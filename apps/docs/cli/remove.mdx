@@ -3,16 +3,18 @@ title: remove
 description: "Inspect which files a plugin removal will affect, disconnect its contributions, and preserve the database schema and migration history."
 ---
 
-Inspect a removal plan before removing a plugin:
+Run `chat-js remove --dry-run` in a terminal to choose from the plugins installed in your app, including plugins from external registries. Press Esc to leave the picker.
+
+Use the installed plugin ID printed by `add` to preview removal. This also works offline for third-party plugins.
 
 ```bash
-bunx chat-js@alpha remove projects --dry-run
+bunx chat-js@beta remove --plugin projects --dry-run
 ```
 
 The command reports the plugin's activation, removable source, retained schemas, and modified or untracked files. Resolve application imports that depend on the plugin before removal.
 
 ```bash
-bunx chat-js@alpha remove projects --backup
+bunx chat-js@beta remove projects --backup
 ```
 
 `--backup` preserves removed source, including customizations, under `chatjs/removed-plugins`. Without that explicit choice, modified source blocks removal. `--yes` skips confirmation but does not authorize removing modified source.
@@ -21,7 +23,8 @@ bunx chat-js@alpha remove projects --backup
 
 | Argument or flag | Default | Purpose |
 | --- | --- | --- |
-| `<plugins...>` | Required | One or more installed plugin IDs |
+| `[plugins...]` | Interactive picker | One or more installed plugin IDs, also accepted with `--plugin` |
+| `--plugin <id>` | None | Remove an installed plugin by ID. Repeat for multiple plugins |
 | `-c, --cwd <cwd>` | Current directory | Select the ChatJS project |
 | `--dry-run` | `false` | Show the plan without writing |
 | `--backup` | `false` | Preserve removed source in the backup directory |

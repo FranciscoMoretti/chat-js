@@ -1,5 +1,6 @@
 "use client";
 
+import { createSections } from "../../../packages/registry/create-catalog";
 import { Suspense, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { Brand } from "./brand";
@@ -112,10 +113,11 @@ const CreateWorkspace = () => {
           aria-label="Create workspace"
           className="order-last w-full lg:order-none lg:w-[26rem]"
         >
-          <TabsTrigger value="appearance">Appearance</TabsTrigger>
-          <TabsTrigger value="plugins">Plugins</TabsTrigger>
-          <TabsTrigger value="agent">Agent</TabsTrigger>
-          <TabsTrigger value="setup">Setup</TabsTrigger>
+          {createSections.map(({ value, label }) => (
+            <TabsTrigger key={value} value={value}>
+              {label}
+            </TabsTrigger>
+          ))}
         </TabsList>
         <div className="flex max-w-full flex-wrap items-center justify-end gap-2 lg:flex-1">
           <ModeSwitcher keyboardShortcut />

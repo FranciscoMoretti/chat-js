@@ -1,10 +1,8 @@
 "use client";
 
+import { createCatalog } from "../../../../packages/registry/create-catalog";
 import { useState } from "react";
-import {
-  eveItemIdSchema,
-  eveRegistriesSchema,
-} from "../../../../packages/registry/eve-catalog";
+import { eveRegistriesSchema } from "../../../../packages/registry/eve-catalog";
 import { Button } from "@/vendor/shadcn-create/styles/base-nova/ui/button";
 import { Input } from "@/vendor/shadcn-create/styles/base-nova/ui/input";
 import { useInstallation } from "./installation-provider";
@@ -31,7 +29,9 @@ export const RegistryCapabilityForm = () => {
           if (!installation) {
             return;
           }
-          const parsed = eveItemIdSchema.safeParse(address.trim());
+          const parsed = createCatalog.eveItem.choices.parseId.safeParse(
+            address.trim()
+          );
           if (!parsed.success) {
             setError(parsed.error.issues[0].message);
             return;

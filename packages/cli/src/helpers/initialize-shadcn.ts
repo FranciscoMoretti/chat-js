@@ -4,23 +4,35 @@ import { readUiBase } from "#cli/utils/ui-compatibility";
 
 export const runNativeShadcn = async (
   cwd: string,
-  args: readonly string[]
+  args: readonly string[],
+  interactive = false
 ): Promise<void> => {
   const executable = createRequire(import.meta.url).resolve("shadcn");
   const child = spawn(process.execPath, [executable, ...args], {
     cwd,
-    stdio: [process.stdin.isTTY ? "inherit" : "ignore", "inherit", "inherit"],
+    stdio: interactive
+      ? [process.stdin.isTTY ? "inherit" : "ignore", "inherit", "inherit"]
+      : ["ignore", "pipe", "pipe"],
   });
   const { promise, resolve, reject }: PromiseWithResolvers<void> =
     Promise.withResolvers();
+  const output: string[] = [];
+  child.stdout?.on("data", (data) => {
+    output.push(String(data));
+  });
+  child.stderr?.on("data", (data) => {
+    output.push(String(data));
+  });
   child.on("error", reject);
   child.on("close", (code) => {
     if (code === 0) {
       resolve();
     } else {
+      const diagnostic = output.join("").trim();
+      const status = code === null ? "interrupted" : `exit ${code}`;
       reject(
         new Error(
-          `Native shadcn ${args[0]} failed (exit ${code}). See its diagnostic above.`
+          `shadcn ${args[0]} failed (${status}).${diagnostic ? `\n${diagnostic}` : ""}`
         )
       );
     }
@@ -34,14 +46,19 @@ export const initializeShadcn = async (
   cwd: string,
   args: readonly string[]
 ): Promise<void> => {
-  await runNativeShadcn(cwd, [
-    "init",
-    "--preset",
-    "rhea",
-    "--no-monorepo",
-    "--yes",
-    ...args,
-  ]);
+  // An explicitly bare preset option hands control to shadcn's own picker.
+  const pickPreset = args.some((argument, index) => {
+    const next = args.at(index + 1);
+    return (
+      (argument === "--preset" || /^-[ys]*p$/u.test(argument)) &&
+      (next === undefined || next.startsWith("-"))
+    );
+  });
+  await runNativeShadcn(
+    cwd,
+    ["init", "--preset", "rhea", "--no-monorepo", "--yes", ...args],
+    pickPreset
+  );
   // Native can exit zero on cancellation/EOF. A usable config is required.
   if (!(await readUiBase(cwd))) {
     throw new Error(

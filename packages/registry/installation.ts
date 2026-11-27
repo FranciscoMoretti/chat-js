@@ -2,10 +2,30 @@ import { z } from "zod";
 import { eveItemIdSchema, eveRegistriesSchema } from "./eve-catalog";
 import { agentConfigurationSchema } from "./agent-configuration";
 
+export const authProviders = ["google", "github", "vercel"] as const;
+export const authSelectionSchema = z
+  .array(z.enum(authProviders))
+  .min(1)
+  .transform((providers) => [...new Set(providers)]);
+export const defaultAuthProviders = [
+  "github",
+] satisfies (typeof authProviders)[number][];
+export const authProviderLabels = {
+  google: "Google OAuth",
+  github: "GitHub OAuth",
+  vercel: "Vercel OAuth",
+} satisfies Record<(typeof authProviders)[number], string>;
+
 const NONEMPTY_ADDRESS_LENGTH = 1;
-const registryAddressSchema = z.string().min(NONEMPTY_ADDRESS_LENGTH);
+export const registryAddressSchema = z
+  .string()
+  .trim()
+  .min(NONEMPTY_ADDRESS_LENGTH);
+export const storageOptionsSchema = z.record(z.string(), z.unknown(), {
+  error: "Enter a valid JSON object.",
+});
 const storageSelectionSchema = z.strictObject({
-  options: z.record(z.string(), z.unknown()).default({}),
+  options: storageOptionsSchema.default({}),
   source: registryAddressSchema,
 });
 
@@ -19,6 +39,7 @@ const installationSelectionSchema = z
       .max(200)
       .transform((items) => [...new Set(items)])
       .optional(),
+    auth: authSelectionSchema.optional(),
     plugins: z.array(registryAddressSchema).default([]),
     gateway: registryAddressSchema.optional(),
     storage: storageSelectionSchema.optional(),

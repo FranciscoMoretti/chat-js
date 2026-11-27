@@ -50,10 +50,10 @@ Model settings do not install their tools. Follow-up suggestions retain an `enab
 Run commands inside your generated app, using the CLI version appropriate to your installation:
 
 ```bash
-bunx chat-js@alpha add deep-research
-bunx chat-js@alpha add attach-workspace-file spreadsheet-viewer --storage-provider vercel-blob
-bunx chat-js@alpha add attachment-uploads --storage-provider vercel-blob --sandbox-provider vercel
-bunx chat-js@alpha add mcp
+bunx chat-js@beta add deep-research
+bunx chat-js@beta add attach-workspace-file spreadsheet-viewer --storage-provider vercel-blob
+bunx chat-js@beta add attachment-uploads --storage-provider vercel-blob --sandbox-provider vercel
+bunx chat-js@beta add mcp
 ```
 
 | Installation | Requirements |
@@ -70,7 +70,7 @@ Planning resolves transitive registry dependencies and validates the resulting s
 Gateway selection installs `chatjs/providers/gateway.ts` and its typed defaults. Changing only `ai.gateway` cannot switch providers:
 
 ```bash
-bunx chat-js@alpha add --gateway openai --replace
+bunx chat-js@beta add --gateway openai --replace
 ```
 
 Replacement requires `--replace`. Modified or untracked provider source requires review and explicit `--overwrite`. Keep a version-control checkpoint before replacing customized source. The CLI preserves runtime model overrides, so review their IDs for the selected gateway and run `bun run check-env` after supplying credentials. Registry addresses can select external providers too. The CLI removes unused dependency entries that its installation receipt owns, and refreshes its marked environment-example sections. It preserves pre-existing dependencies, user-changed versions, dependencies referenced by remaining source and environment entries outside those sections. ChatJS supports new installations rather than upgrades from older templates.
@@ -80,7 +80,7 @@ Configure [web search connections](/tools/web-search) through EVE. Code executio
 A minimal scaffold can omit optional integrations:
 
 ```bash
-bunx chat-js@alpha create minimal-chat --yes --no-mcp --no-attachments --no-electron
+bunx chat-js@beta create minimal-chat --yes --no-mcp --no-attachments --no-electron
 ```
 
 ## Runtime policy and credentials

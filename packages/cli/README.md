@@ -5,13 +5,13 @@ CLI to scaffold and extend ChatJS apps.
 ## Usage
 
 ```bash
-npx chat-js@alpha
+npx chat-js@beta
 ```
 
 Or with the command alias:
 
 ```bash
-npx chat-js@alpha create
+npx chat-js@beta create
 ```
 
 After install, the binary is:
@@ -34,7 +34,7 @@ After publication, run `bun --filter chat-js test:published` to create an app us
 
 ## Installation and migration
 
-The `1.0.0-alpha.8` release continues the ChatJS 1.0 alpha series under the `chat-js` package name. Apps are usable, but APIs and generated source may change substantially before 1.0. Use `npx chat-js@alpha` for the examples below. This CLI supports Base UI and Radix with registry `0.2.0-beta.9`.
+The `1.0.0-beta.0` release starts the ChatJS 1.0 beta series under the `chat-js` package name. Apps are usable, but APIs and generated source may change substantially before 1.0. Use `npx chat-js@beta` for the examples below. This CLI supports Base UI and Radix with registry `0.2.0-beta.10`.
 
 Pass native shadcn visual options after `--`:
 
@@ -75,9 +75,9 @@ Existing ChatJS applications need a source migration; upgrading the CLI does not
 
 Migrate callers together with primitives. Base UI menu actions use `onClick` and custom triggers use `render`; Radix uses `onSelect` and `asChild`. Passing Radix `onSelect` to a Base UI menu may compile without running the action. Use each library's native composition and ordinary links styled with `buttonVariants` for navigation. Preserve EVE message IDs, scroll anchoring, draft/IME behavior, approval dispatch before specialized renderers, and document revision actions. Verify these flows in your app before removing the old wrappers. Markdown still uses Streamdown; tool-specific renderers remain installed source.
 
-This CLI candidate pins new apps to `@chat-js/registry@0.2.0-beta.9`. Matching registry builds preserve the root Base namespace and add complete `/base/{name}.json` and `/radix/{name}.json` namespaces. Fresh Radix generation selects `/radix/`; item IDs and installation targets remain the same. Subsequent `add` and `sync` retain the configured namespace and check the host's native `base-*` or `radix-*` style before writing source or registrations.
+This CLI candidate pins new apps to `@chat-js/registry@0.2.0-beta.10`. Matching registry builds preserve the root Base namespace and add complete `/base/{name}.json` and `/radix/{name}.json` namespaces. Fresh Radix generation selects `/radix/`; item IDs and installation targets remain the same. Subsequent `add` and `sync` retain the configured namespace and check the host's native `base-*` or `radix-*` style before writing source or registrations.
 
-Plugins require descriptor contract version 3. UI-specific plugins and version 2 tools declare a matching `uiBase: "base"` or `uiBase: "radix"`. A mismatch stops installation. For an earlier plugin, install its current registry source or update its descriptor and entry modules together. Existing applications are not automatically migrated between libraries: changing `components.json` or a registry URL alone is insufficient. Keep the compatible registry namespace until migrating primitives and callers together. Publish the matching registry candidate under `beta` before publishing the CLI under `alpha`. The CLI’s `latest` tag also points to the explicitly approved `1.0.0-alpha.2` as an explicit default-install policy; the version remains an alpha until the stable 1.0 launch.
+Plugins require descriptor contract version 3. UI-specific plugins and version 2 tools declare a matching `uiBase: "base"` or `uiBase: "radix"`. A mismatch stops installation. For an earlier plugin, install its current registry source or update its descriptor and entry modules together. Existing applications are not automatically migrated between libraries: changing `components.json` or a registry URL alone is insufficient. Keep the compatible registry namespace until migrating primitives and callers together. The release workflow publishes the registry before the matching CLI. Both use the `beta` tag. The default CLI install still resolves to `1.0.0-alpha.2`.
 
 Run `bun --cwd packages/cli test:native-create` to generate a real standalone preset app with uploads, OpenRouter, S3 and Vercel Sandbox, verify native preset resolution and add/sync preservation, then typecheck the result. Set `CHATJS_KEEP_NATIVE_FIXTURE=1` to retain the generated app and logs. This check needs network access but no gateway or storage credentials.
 
@@ -88,6 +88,8 @@ The CLI uses unmodified shadcn 4.22.1 for registry resolution and installation. 
 ```
 
 ```sh
+chat-js add --plugin projects
+chat-js remove --plugin projects --dry-run
 chat-js add @acme/my-tool --yes
 chat-js add deep-research --overwrite
 chat-js sync

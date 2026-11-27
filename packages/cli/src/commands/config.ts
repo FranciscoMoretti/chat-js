@@ -1,3 +1,4 @@
+import { projectDirectory } from "#cli/helpers/project-options";
 import { Command } from "commander";
 import type { PackageManager } from "#cli/types";
 import { handleError } from "#cli/utils/handle-error";
@@ -38,11 +39,7 @@ export const config = new Command()
   .description(
     "print the resolved configuration for the current ChatJS project"
   )
-  .option(
-    "-c, --cwd <cwd>",
-    "the working directory (defaults to current directory)",
-    process.cwd()
-  )
+  .addOption(projectDirectory())
   .action(async (opts: { readonly cwd: string }) => {
     try {
       const cwd = path.resolve(opts.cwd);

@@ -1,22 +1,31 @@
-import { Minus, PlugZap, Route } from "lucide-react";
+import { Cpu, Database, Minus, Monitor, PlugZap, Route } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import styles from "./setup-provider-mark.module.css";
 import { CapabilityVisual } from "./capability-visual";
 
-const providerBrands: Readonly<Record<string, string>> = {
-  "vercel-blob": "vercel",
-  desktop: "electron",
-  r2: "cloudflare",
-  s3: "aws-s3",
-};
+import type {
+  CreateIcon,
+  CreateSymbol,
+} from "../../../../packages/registry/create-icons";
 
-export const SetupProviderMark = ({ id }: { readonly id: string }) => {
-  const symbols: Readonly<Record<string, LucideIcon>> = {
-    memory: Minus,
-    "openai-compatible": PlugZap,
-    litellm: Route,
-  };
-  const Symbol = symbols[id];
+const symbols = {
+  cpu: Cpu,
+  database: Database,
+  minus: Minus,
+  monitor: Monitor,
+  plug: PlugZap,
+  route: Route,
+} satisfies Record<CreateSymbol, LucideIcon>;
+
+const isSymbol = (icon: CreateIcon): icon is CreateSymbol =>
+  Object.hasOwn(symbols, icon);
+
+export const SetupProviderMark = ({
+  icon = "monitor",
+}: {
+  readonly icon?: CreateIcon;
+}) => {
+  const Symbol = isSymbol(icon) ? symbols[icon] : undefined;
   if (Symbol !== undefined) {
     return (
       <span
@@ -27,11 +36,10 @@ export const SetupProviderMark = ({ id }: { readonly id: string }) => {
       </span>
     );
   }
-  const brand = providerBrands[id] ?? id;
-  const monochrome = brand === "vercel" || brand === "openai";
+  const monochrome = icon === "setup/vercel" || icon === "setup/openai";
   return (
     <span className={`${styles.mark} ${monochrome ? styles.monochrome : ""}`}>
-      <CapabilityVisual id={`setup/${brand}`} />
+      <CapabilityVisual id={icon} />
     </span>
   );
 };

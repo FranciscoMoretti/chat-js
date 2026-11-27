@@ -22,13 +22,13 @@ Media generation also requires installing the tool and configuring durable stora
 Select the gateway when creating an app.
 
 ```bash
-bunx chat-js@alpha create my-chat --gateway openrouter
+bunx chat-js@beta create my-chat --gateway openrouter
 ```
 
 To switch an existing app, run this from its root.
 
 ```bash
-bunx chat-js@alpha add --gateway openrouter --replace
+bunx chat-js@beta add --gateway openrouter --replace
 ```
 
 Replacement preserves runtime overrides. Review model IDs for the new provider and its supported media capabilities. Editing only `ai.gateway` cannot install a new implementation. See [Configuration](/core/configuration).

@@ -17,7 +17,7 @@ The agent's `agent/sandbox.ts` selects a native EVE sandbox environment. EVE own
 New agents enable native default tools, including `bash`. Selecting a sandbox chooses where those tools work; it does not install a second execution tool.
 
 ```bash
-bunx chat-js@alpha create my-app --yes --sandbox-provider docker
+bunx chat-js@beta create my-app --yes --sandbox-provider docker
 ```
 
 The generated file uses EVE directly:
@@ -33,7 +33,7 @@ export default defineSandbox(async () => await environment.open());
 For an existing app:
 
 ```bash
-bunx chat-js@alpha add --sandbox-provider vercel --replace
+bunx chat-js@beta add --sandbox-provider vercel --replace
 ```
 
 The CLI accepts `default`, `vercel`, `docker`, `just-bash`, or a sandbox registry address. Review customized source before using `--overwrite`. Native EVE files remain editable for image preparation and provider-specific options.
