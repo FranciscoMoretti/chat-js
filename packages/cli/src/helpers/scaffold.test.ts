@@ -131,34 +131,38 @@ describe("buildConfigTs", (): void => {
 });
 
 describe("scaffoldFromTemplate", (): void => {
-  it("retains stylesheet dependencies when creating without native theme options", async (): Promise<void> => {
-    const destination = makeTempDir("default-stylesheets");
-    await scaffoldFromTemplate(destination);
-    await initializeShadcn(destination, []);
+  it(
+    "retains stylesheet dependencies when creating without native theme options",
+    async (): Promise<void> => {
+      const destination = makeTempDir("default-stylesheets");
+      await scaffoldFromTemplate(destination);
+      await initializeShadcn(destination, []);
 
-    const stylesheet = await readFile(
-      pathModule.join(destination, "app/globals.css"),
-      "utf-8"
-    );
-    const manifest = parsePackageJson(
-      await readFile(pathModule.join(destination, "package.json"), "utf-8")
-    );
-    expect(stylesheet).toContain('@import "shadcn/tailwind.css"');
-    for (const [, specifier] of stylesheet.matchAll(
-      /@import "(?<specifier>[^"]+)"/gu
-    )) {
-      if (specifier.startsWith(".")) {
-        continue;
+      const stylesheet = await readFile(
+        pathModule.join(destination, "app/globals.css"),
+        "utf-8"
+      );
+      const manifest = parsePackageJson(
+        await readFile(pathModule.join(destination, "package.json"), "utf-8")
+      );
+      expect(stylesheet).toContain('@import "shadcn/tailwind.css"');
+      for (const [, specifier] of stylesheet.matchAll(
+        /@import "(?<specifier>[^"]+)"/gu
+      )) {
+        if (specifier.startsWith(".")) {
+          continue;
+        }
+        const packageName = specifier.startsWith("@")
+          ? specifier.split("/").slice(0, 2).join("/")
+          : specifier.split("/")[0];
+        expect(
+          manifest.dependencies?.[packageName] ??
+            manifest.devDependencies?.[packageName]
+        ).toBeString();
       }
-      const packageName = specifier.startsWith("@")
-        ? specifier.split("/").slice(0, 2).join("/")
-        : specifier.split("/")[0];
-      expect(
-        manifest.dependencies?.[packageName] ??
-          manifest.devDependencies?.[packageName]
-      ).toBeString();
-    }
-  }, SCAFFOLD_INTEGRATION_TIMEOUT_MS);
+    },
+    SCAFFOLD_INTEGRATION_TIMEOUT_MS
+  );
   it("leaves terms and privacy pages to the application owner", async () => {
     const destination = makeTempDir("app-policies");
     await scaffoldFromTemplate(destination);
