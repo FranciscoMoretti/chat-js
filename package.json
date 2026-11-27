@@ -56,6 +56,7 @@
     "test:visual:site": "bun run test:visual:site:install && dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env site -- bun apps/site/tests/thread-playground.visual.ts",
     "lint:fix": "bun lint:prepare && ultracite fix .",
     "lint:prepare": "turbo run build --filter=@chat-js/thread && bun run --cwd apps/chat next typegen . && bun run --cwd apps/site next typegen . && bun --cwd apps/electron scripts/write-branding.ts",
+    "dev:eve:live": "PLAYWRIGHT=0 CI_PLAYWRIGHT=0 PLAYWRIGHT_TEST_BASE_URL= bun run dev",
     "dev:eve": "dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env eve -- bun --filter @chatjs/chat eve:start",
     "eve:test-package": "bun scripts/test-eve-package.ts",
     "build:eve": "dotenv -e .env.worktree.local -e .env.local -- bun --filter @chatjs/chat eve:build",

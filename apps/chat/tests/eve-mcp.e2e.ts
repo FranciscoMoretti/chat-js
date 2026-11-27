@@ -239,7 +239,8 @@ test("composer connector controls persist and fence native tool execution", asyn
     expect(calls).toBe(0);
     await page.setViewportSize({ height: 844, width: 390 });
     await page.reload();
-    await page.getByRole("button", { name: "Composer options" }).click();
+    // The Next.js development indicator overlaps the trigger at phone widths.
+    await page.getByRole("button", { name: "Composer options" }).press("Enter");
     await control.click();
     await expect(toggle).not.toBeChecked();
     await page
@@ -404,12 +405,16 @@ test("native MCP executes and its saved result survives connector removal and re
 test("stopping a pending MCP call closes its transport and permits another message", async ({
   page,
 }) => {
+  const token = `RECOVERED_${crypto.randomUUID()}`;
   let calls = 0;
   let disconnected = false;
   const completion = Promise.withResolvers<unknown>();
   const { close, url } = await localMcpServer(
     async (response: ReadonlyNativeSurface<ServerResponse>) => {
       calls += 1;
+      if (calls > 1) {
+        return { content: [{ text: token, type: "text" }] };
+      }
       response.on("close", () => {
         disconnected = !response.writableEnded;
         completion.resolve({
@@ -464,18 +469,20 @@ test("stopping a pending MCP call closes its transport and permits another messa
     );
     await page.getByRole("button", { exact: true, name: "Stop" }).click();
     const cancellation = await cancelled;
-    expect(cancellation.request().postDataJSON()).toEqual({});
+    expect(cancellation.request().postDataJSON()).toEqual({ turnId: "turn_0" });
     expect(cancellation.ok(), await cancellation.text()).toBe(true);
     await expect.poll(() => disconnected, { timeout: 20_000 }).toBe(true);
     await expect(
       page.getByRole("button", { exact: true, name: "Stop" })
     ).toHaveCount(0);
-    const token = `RECOVERED_${crypto.randomUUID()}`;
+    expect(calls).toBe(1);
     const composer = page.getByRole("textbox", {
       exact: true,
       name: "Message",
     });
-    await composer.fill(`Do not call tools. Reply exactly ${token}.`);
+    await composer.fill(
+      `Start a new call to ${nameId}__read_token. Call it once and reply with the new token it returns.`
+    );
     await composer.press("Enter");
     await expect(
       page.locator('[data-role="assistant"] p').filter({ hasText: token })
@@ -485,7 +492,7 @@ test("stopping a pending MCP call closes its transport and permits another messa
     await expect(
       page.locator('[data-role="assistant"] p').filter({ hasText: token })
     ).toBeVisible();
-    expect(calls).toBe(1);
+    expect(calls).toBe(2);
   } finally {
     completion.resolve({
       content: [{ text: "fixture-cleanup", type: "text" }],

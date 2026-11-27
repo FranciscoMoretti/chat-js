@@ -68,7 +68,7 @@ Static workflow tools remain in the authored native tool surface; runtime prepar
 
 ## Live provider smoke tests
 
-Use Node 24 on your PATH. Start the signed-in app with `env -u PLAYWRIGHT -u CI_PLAYWRIGHT -u PLAYWRIGHT_TEST_BASE_URL bun dev` and keep those flags out of its dotenv files. Run `bun test:tools:live` from the repository root. Bun loads worktree-local credentials and ports and Playwright runs on Node. The research and code execution tests call your configured providers. To select other signed-in scenarios, run `bun run test:eve:live <spec>` from `apps/chat` with the isolated database credentials and the app’s `PORT`.
+Use Node 24 on your PATH. Start the signed-in app with `bun run dev:eve:live`. This starts the normal dev server with Playwright’s anonymous fixture mode disabled, including when your dotenv files contain browser-test flags. Run `bun test:tools:live` from the repository root. Bun loads worktree-local credentials and ports and Playwright runs on Node. The research and code execution tests call your configured providers. To select other signed-in scenarios, run `bun run test:eve:live <spec>` from `apps/chat` with the isolated database credentials and the app’s `PORT`.
 
 For the MCP HTTP and OAuth specs, set `CHATJS_TEST_MCP_ORIGIN` to a dedicated public HTTPS origin and `CHATJS_TEST_MCP_PORT` to the fixture port served by the test process. Route only that fixture port at the origin. The browser, app and worker must all be able to reach it. The OAuth fixture issues disposable test credentials.
 
