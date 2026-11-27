@@ -182,32 +182,37 @@ export default defineTool({ availableInSubagents: false, description: "Fixture c
     `import { defineAgent } from "eve";
 import { mockModel } from "eve/evals";
 export default defineAgent({ defaultTools: false, modelContextWindowTokens: 128000,
- model: mockModel(({lastUserMessage, userMessages, tools, toolResults}) => {
+ model: mockModel(({lastUserMessage, tools, toolResults}) => {
   const message = lastUserMessage ?? "";
   if (toolResults.length > 20) throw new Error("Fixture model exceeded expected tool calls");
   const reply = tools.find(t => t.name === "eve__reply");
   if (reply) {
     if (tools.some(t => t.name === "deepResearch" || t.name === "deliver_report")) throw new Error("Root-only tools leaked into research copy");
     const fields = reply.inputSchema.properties;
-    const correcting = userMessages.length > 1;
     let output;
-    if (fields.need_clarification) output = { need_clarification: false, question: "", verification: "" };
+    if (fields.need_clarification) return "eve__reply(need_clarification=False, question='', verification='')";
     else if (fields.research_brief) output = { research_brief: "Compare evidence", title: "Report" };
     else if (fields.complete) output = message.includes("SOURCE_SENTINEL") ? { complete: true, topics: [] } : { complete: false, topics: ["Evidence topic"] };
-    else if (fields.content) {
-      if (!correcting) return "# Report\\nSOURCE_SENTINEL https://example.test/source";
-      if (!userMessages.some(entry => entry.includes("SOURCE_SENTINEL"))) throw new Error("Writer lost saved research notes");
-      output = { title: "Report", content: "# Report\\nSOURCE_SENTINEL https://example.test/source" };
-    } else if (fields.findings) {
-      if (userMessages.some(entry => entry.includes("Topic:\\n"))) {
-        if (!toolResults.some(r => r.name === "eve__search")) return { toolCalls: [{ name: "eve__search", input: { query: "evidence__" } }] };
-        if (!JSON.stringify(toolResults).includes("SOURCE_SENTINEL")) return { toolCalls: [{ name: "eve__tool", input: { name: "evidence__search", input: {} } }] };
-        if (!JSON.stringify(toolResults).includes("SOURCE_SENTINEL")) throw new Error("Native connection result missing");
-        if (!correcting) return "SOURCE_SENTINEL https://example.test/source";
-      } else if (!message.includes("SOURCE_SENTINEL")) throw new Error("Compressor lost source file");
-      output = { findings: "SOURCE_SENTINEL https://example.test/source" };
-    } else throw new Error("Unexpected research phase");
+    else throw new Error("Unexpected structured research phase");
+
     return { toolCalls: [{ name: "eve__reply", input: output }] };
+  }
+  if (message.includes("Reply with exactly one JSON object") && message.includes("need_clarification")) {
+    return JSON.stringify({ need_clarification: false, question: "", verification: "" });
+  }
+  if (message.includes("Topic:\\n")) {
+    if (!toolResults.some(r => r.name === "eve__search")) return { toolCalls: [{ name: "eve__search", input: { query: "evidence__" } }] };
+    if (!toolResults.some(r => r.name === "eve__tool")) return { toolCalls: [{ name: "eve__tool", input: { name: "evidence__search", input: {} } }] };
+    if (!JSON.stringify(toolResults).includes("SOURCE_SENTINEL")) throw new Error("Native connection result missing");
+    return "# Findings\\nSOURCE_SENTINEL https://example.test/source";
+  }
+  if (message.includes("Please clean up these findings")) {
+    if (!message.includes("SOURCE_SENTINEL")) throw new Error("Compressor lost source file");
+    return "# Notes\\nSOURCE_SENTINEL https://example.test/source";
+  }
+  if (message.includes("The workflow will publish your reply")) {
+    if (!message.includes("SOURCE_SENTINEL")) throw new Error("Writer lost saved research notes");
+    return "# Report\\nSOURCE_SENTINEL https://example.test/source";
   }
   const report = toolResults.find(r => r.name === "deepResearch");
   if (!report) return { toolCalls: [{ name: "deepResearch", input: { request: "Research source evidence" } }] };
@@ -223,7 +228,7 @@ export default defineAgent({ defaultTools: false, modelContextWindowTokens: 1280
     "evals/research.eval.ts",
     `import assert from "node:assert/strict";
 import { defineEval } from "eve/evals";
-export default [defineEval({ description: "native research corrects plain-text findings and reports without repeating searches", async test(t) {
+export default [defineEval({ description: "native research preserves cited Markdown from a tool-using researcher through report delivery", async test(t) {
  const turn = await t.send("Research");
  turn.succeeded();
  const result = turn.requireToolCall("deepResearch").output.output;
@@ -267,11 +272,7 @@ export default [defineEval({ description: "native research corrects plain-text f
         `Native research verification failed. Fixture retained at ${fixture}`
       );
     }
-    assert.equal(
-      searches,
-      1,
-      "Reply correction must reuse the original search"
-    );
+    assert.equal(searches, 1, "Research must fetch the source once");
     await rm(fixture, { force: true, recursive: true });
   } finally {
     if (searchServer.listening) {
