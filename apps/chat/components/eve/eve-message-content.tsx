@@ -15,6 +15,7 @@ import {
   TraceTitle,
 } from "@/components/ui/trace";
 import type { ReadonlyEveMessagePart } from "@/lib/eve/readonly-message-types";
+import { toolResultSchema } from "@/lib/eve/tool-result";
 import { EveMessagePart } from "./eve-message-part";
 import { EveInteraction } from "./eve-pending-input";
 
@@ -39,14 +40,32 @@ const inlineDeliverableTools = new Set([
   "generateVideo",
 ]);
 
+const isInlineDeliverable = (part: Extract<ActivityPart, { type: "tool" }>) => {
+  if (part.state !== "completed") {
+    return false;
+  }
+  if (inlineDeliverableTools.has(part.name)) {
+    return true;
+  }
+  if (part.name !== "deepResearch") {
+    return false;
+  }
+  const result = toolResultSchema.safeParse(part.output).data?.output;
+  return (
+    typeof result === "object" &&
+    result !== null &&
+    "artifact" in result &&
+    result.artifact !== null
+  );
+};
+
 const messageBlocks = (parts: readonly MessagePart[]): MessageBlock[] => {
   const blocks: MessageBlock[] = [];
   for (const { key, part } of parts) {
     // Published files and generated media stay visible when activity is collapsed.
     const isActivity =
       part.type === "reasoning" ||
-      (part.type === "tool" &&
-        !(part.state === "completed" && inlineDeliverableTools.has(part.name)));
+      (part.type === "tool" && !isInlineDeliverable(part));
     if (isActivity) {
       const last = blocks.at(-1);
       if (last?.kind === "activity") {

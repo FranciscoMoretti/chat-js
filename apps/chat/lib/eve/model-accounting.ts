@@ -27,8 +27,8 @@ const resolveAccountedEveModel = async (
   if (typeof ownerId !== "string" || ownerId === "") {
     throw new Error("Model accounting lifecycle binding is unavailable.");
   }
-  // Initial native creation can reach the model before HTTP binding. The scope
-  // resolver verifies the native operation receipt; children use trusted lineage.
+  // The initial root delivery hook can bind before the HTTP response arrives.
+  // Children use their trusted lineage instead of an inherited reservation.
   await (parent
     ? registerEveSubagent(
         ownerId,

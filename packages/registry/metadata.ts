@@ -66,6 +66,12 @@ const toolDefinitionBase = z.object({
         )
         .min(1),
       dependencies: z.array(z.string().min(1)),
+      fileSources: z
+        .record(
+          z.string(),
+          z.string().regex(/^src\/(?:[a-zA-Z0-9-]+\/)+[a-zA-Z0-9.-]+\.ts$/u)
+        )
+        .optional(),
     })
     .optional(),
   config: z.object({ key: identifier }).optional(),

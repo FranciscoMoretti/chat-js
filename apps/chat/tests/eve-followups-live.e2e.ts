@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 import type { TestInfo } from "@playwright/test";
+import { z } from "zod";
+import { config } from "../lib/config";
 import { eq } from "drizzle-orm";
 
 import { db } from "../lib/db/client";
@@ -74,15 +76,28 @@ test("native follow-ups survive reload, submit normally and preserve unsent comp
   await expect
     .poll(async () => {
       const entries = await db
-        .select({ costUsd: eveUsage.costUsd, eventId: eveUsage.eventId })
+        .select({
+          costUsd: eveUsage.costUsd,
+          attempt: eveUsage.modelAttempt,
+          turn: eveUsage.turnId,
+        })
         .from(eveUsage)
         .where(eq(eveUsage.sessionId, binding.sessionId));
-      return entries.filter(
-        (entry) =>
-          entry.eventId.includes(":model-call:") && entry.costUsd !== null
-      ).length;
+      const followupAttempt = z.object({
+        modelId: z.literal(config.ai.tools.followupSuggestions.default),
+        state: z.literal("returned"),
+        sessionId: z.literal(binding.sessionId),
+      });
+      return entries
+        .filter(
+          (entry) =>
+            entry.costUsd !== null &&
+            followupAttempt.safeParse(entry.attempt).success
+        )
+        .map((entry) => entry.turn)
+        .toSorted();
     })
-    .toBe(2);
+    .toEqual(["turn_0", "turn_1"]);
   // A suggestion identical to the draft still must not clear it when comparing models.
   const retainedQuestion = await related
     .getByRole("button")
@@ -92,7 +107,7 @@ test("native follow-ups survive reload, submit normally and preserve unsent comp
     throw new Error("Retained related question text is unavailable.");
   }
   await composer.fill(retainedQuestion);
-  await page.getByRole("combobox").click();
+  await page.getByTestId("model-selector").filter({ visible: true }).click();
   await page.getByRole("switch", { name: "Use Multiple Models" }).click();
   await page.getByRole("button", { name: /^1× /u }).click();
   await page.getByRole("menuitem", { exact: true, name: "2x" }).click();
@@ -101,17 +116,22 @@ test("native follow-ups survive reload, submit normally and preserve unsent comp
   ).toHaveCount(0);
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog")).toHaveCount(0);
+  const logicalUrl = page.url();
+  const compared = page.waitForResponse(
+    (reply) =>
+      reply.request().method() === "POST" &&
+      new URL(reply.url()).pathname === "/api/agent-response-groups"
+  );
   await related.getByRole("button").first().click();
-  await expect(page).not.toHaveURL(new RegExp(`/chat/${binding.id}$`, "u"), {
-    timeout: 90_000,
+  const comparison = await compared;
+  expect(comparison.ok(), await comparison.text()).toBe(true);
+  expect(comparison.request().postDataJSON()).toMatchObject({
+    fork: { branchId: binding.id },
+    message: retainedQuestion,
+    modelIds: ["openai/gpt-5-nano", "openai/gpt-5-nano"],
   });
-  await page.goto(`/chat/${binding.id}`);
+  await expect(page).toHaveURL(logicalUrl);
   await expect(composer).toHaveValue(retainedQuestion);
-  await expect(page.getByText("Ready", { exact: true })).toBeVisible();
-  await expect(related).toBeVisible();
-  await expect(
-    page.getByRole("log").locator('[data-role="assistant"]')
-  ).toHaveCount(2);
   await page.screenshot({
     animations: "disabled",
     path: testInfo.outputPath("followups-integrated.png"),

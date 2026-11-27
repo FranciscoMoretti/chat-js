@@ -310,7 +310,7 @@ test("native execution output and uploaded spreadsheet use core presentation", a
   await page.screenshot({ path: "__screenshots__/uploaded-spreadsheet.png" });
 });
 
-test("native research report is published separately without a document editor", async () => {
+test("native research report is downloadable without a document editor", async () => {
   await renderRoute(
     <ChatLayout>
       <ChatPage params={Promise.resolve({ chatId: invoicesConversation.id })} />
@@ -324,18 +324,9 @@ test("native research report is published separately without a document editor",
       trpc: invoicesTrpc,
     }
   );
-  const activity = page.getByRole("button", { name: "Worked 2 steps" });
-  await expect.element(activity).toHaveAttribute("aria-expanded", "false");
   await expect
     .element(page.getByRole("button", { name: "Download Research report.md" }))
     .toBeVisible();
   await expect.element(page.getByTestId("artifact")).not.toBeInTheDocument();
-  await activity.click();
-  await expect
-    .element(
-      page.getByText("Research complete. Report saved in the agent workspace.")
-    )
-    .toBeVisible();
-  await activity.click();
   await page.screenshot({ path: "__screenshots__/research-file.png" });
 });

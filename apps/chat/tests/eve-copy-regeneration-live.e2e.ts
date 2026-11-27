@@ -10,12 +10,14 @@ import {
   conversationBinding,
   createConversationInput,
 } from "../lib/eve/contracts";
+import { readLogicalChatId } from "./eve-test-chat-identity";
 import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(env.DATABASE_URL);
-const originalModel = "google/gemini-2.5-flash-lite";
+const originalModel = "openai/gpt-5-nano";
 const selectedModel = "google/gemini-2.5-flash";
-const answer = /^provenance-ready\.?$/iu;
+const starterResponse = '[data-eve-message-id="turn_0:assistant"]';
+const assistantResponse = '[data-role="assistant"][data-eve-message-id]';
 
 test("copied responses regenerate with their original model after reload", async ({
   page,
@@ -45,12 +47,14 @@ test("copied responses regenerate with their original model after reload", async
   expect(created.status()).toBe(200);
   const source = conversationBinding.parse(await created.json());
   await page.goto(`/chat/${source.id}`);
-  await expect(page.getByRole("log").getByText(answer)).toBeVisible({
-    timeout: 45_000,
-  });
+  const originalResponse = page.getByRole("log").locator(starterResponse);
+  await expect(originalResponse).toBeVisible({ timeout: 45_000 });
   await expect(
     page.getByText("Ready", { exact: true }).filter({ visible: true })
   ).toBeVisible();
+  const originalText =
+    (await originalResponse.locator("p").first().textContent()) ?? "";
+  expect(originalText.trim()).not.toBe("");
   await db
     .update(eveConversation)
     .set({ visibility: "public" })
@@ -83,16 +87,21 @@ test("copied responses regenerate with their original model after reload", async
   await page.request.post("/api/chat-model", {
     data: { model: selectedModel },
   });
+  const chatId = await readLogicalChatId(page.request, destination.id);
   await page.goto(`/chat/${destination.id}`);
-  await expect(page.getByRole("log").getByText(answer)).toBeVisible({
-    timeout: 30_000,
-  });
+  const imported = page
+    .getByRole("log")
+    .locator(assistantResponse)
+    .filter({
+      has: page.getByText(originalText, { exact: true }),
+    });
+  await expect(imported).toContainText(originalText, { timeout: 30_000 });
   await page.reload();
   await expect(
     page.getByText("Ready", { exact: true }).filter({ visible: true })
   ).toBeVisible();
-  await expect(page.getByRole("log").getByText(answer)).toBeVisible();
-  const regenerate = page.getByRole("button", {
+  await expect(imported).toContainText(originalText);
+  const regenerate = imported.getByRole("button", {
     exact: true,
     name: "Regenerate response",
   });
@@ -122,18 +131,22 @@ test("copied responses regenerate with their original model after reload", async
   );
   await regenerate.click();
   await expect.poll(() => regenerated?.id, { timeout: 95_000 }).toBeTruthy();
-  await expect(page).toHaveURL(`${origin}/chat/${destination.id}`);
-  await expect(page.getByRole("log").getByText(answer).last()).toBeVisible({
-    timeout: 45_000,
-  });
+  await expect(page).toHaveURL(`${origin}/chat/${chatId}`);
+  const [retry] = regenerated
+    ? await db
+        .select({ modelId: eveConversation.initialModelId })
+        .from(eveConversation)
+        .where(eq(eveConversation.id, regenerated.id))
+    : [];
+  expect(retry?.modelId).toBe(originalModel);
   await expect(
-    page.getByRole("button", {
-      exact: true,
-      name: "Regenerate response",
-    })
-  ).toHaveCount(1);
+    page.getByText("Ready", { exact: true }).filter({ visible: true })
+  ).toBeVisible();
   await page.reload();
-  await expect(page.getByRole("log").getByText(answer).last()).toBeVisible({
+  await expect(page).toHaveURL(`${origin}/chat/${chatId}`);
+  await expect(
+    page.getByRole("log").locator(starterResponse).first()
+  ).toBeVisible({
     timeout: 30_000,
   });
 });

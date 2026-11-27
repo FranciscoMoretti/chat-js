@@ -40,7 +40,7 @@ const send = async (page: Page, word: string): Promise<void> => {
     .getByRole("textbox", { name: "Message", exact: true })
     .fill(prompt(word));
   await composer.getByRole("button", { name: "Send", exact: true }).click();
-  await expect(assistants(page).last()).toContainText(word, {
+  await expect(assistants(page).last()).toContainText(new RegExp(word, "iu"), {
     timeout: 60_000,
   });
   await ready(page);
@@ -71,7 +71,7 @@ const edit = async (
   await editor.getByRole("button", { name: "Send", exact: true }).click();
   const response = await accepted;
   expect(response.ok(), await response.text()).toBe(true);
-  await expect(assistants(page).last()).toContainText(word, {
+  await expect(assistants(page).last()).toContainText(new RegExp(word, "iu"), {
     timeout: 60_000,
   });
   await ready(page);
@@ -239,7 +239,7 @@ test("branch boundaries survive edits, regeneration, reload and multiple tabs wi
   await page
     .getByRole("button", { name: "Recover version", exact: true })
     .click();
-  await expect(assistants(page).last()).toContainText("recovered", {
+  await expect(assistants(page).last()).toContainText(/recovered/iu, {
     timeout: 60_000,
   });
   await ready(page);

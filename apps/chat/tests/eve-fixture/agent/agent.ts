@@ -5,7 +5,7 @@ import { mockModel } from "eve/evals";
 
 export default defineAgent({
   experimental: { workflow: { world: "@workflow/world-postgres" } },
-  model: mockModel(async ({ lastUserMessage, toolResults, tools }) => {
+  model: mockModel(async ({ lastUserMessage, toolResults }) => {
     if (lastUserMessage?.startsWith("slow") === true) {
       await delay(5000);
     }
@@ -19,8 +19,8 @@ export default defineAgent({
       return {
         toolCalls: [
           {
-            name: "ask_question",
-            input: { prompt: "What should the note say?", allowFreeform: true },
+            name: "question",
+            input: {},
           },
         ],
       };
@@ -29,14 +29,11 @@ export default defineAgent({
       if (toolResults.length > 0) {
         return "Approval handled.";
       }
-      const tool = tools.find((item) => item.name === "confirm_note");
       return {
         toolCalls: [
           {
-            name: tool?.name ?? "run_tool",
-            input: tool
-              ? { note: "Review release" }
-              : { name: "confirm_note", input: { note: "Review release" } },
+            name: "confirm",
+            input: { note: "Review release" },
           },
         ],
       };

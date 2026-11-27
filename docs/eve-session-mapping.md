@@ -1,6 +1,12 @@
 # Session-to-branch mapping investigation
 
-## Baseline and scope
+## Current worker contract
+
+The pinned `@chat-js/eve@1.1.1-chatjs.0` worker has no native operation receipt GET route. It supplies the authenticated root session and delivery cause to the authored `turn.started` hook. The gateway obtains the reservation ID from the authenticated create request. The hook uses the initial root delivery to bind that exact owner and reservation and write its create dispatch receipt in a single transaction. A concurrent HTTP acknowledgement can confirm the same session and delivery. An inherited reservation on a child cannot authorize binding.
+
+A lost response can be replayed once this receipt is recorded. A network failure after a dispatch claim with no positive delivery evidence leaves the original request fenced and can block later owner admission. The pinned worker offers no reliable negative proof for such a transport failure.
+
+## Historical investigation baseline
 
 This work starts at `da78b23ae977ecafb997d36eb12b3c861b8057e1`, with the immutable `eve-identity-handoff-o3tqknyy` patch and untracked archive applied. The inherited UI changes, initial-request journal, migration, recovery executor and accounting fixes are preserved. The two provisional `recover-session-binding` files are deliberately replaced by the existing `conversation-scope` module and its tests.
 
@@ -32,7 +38,7 @@ Evidence in the inspected EVE fork (`packages/eve/src/`):
 
 The corresponding installed `dist/src` functions were exercised in a Node probe: owner and seed namespaces differ, changing attributes does not change operation identity, browser and reservation keys differ, current-auth replacement preserves initiator auth, subagent construction inherits the reservation attribute with a distinct continuation, and forged forwarding is rejected with 403. This is runtime construction/authorization evidence, not a live model-driven subagent end-to-end run.
 
-## Chosen implementation
+## Historical implementation
 
 No new ID, schema, EVE interface or lifecycle state is needed.
 

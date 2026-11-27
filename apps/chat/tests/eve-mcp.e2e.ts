@@ -11,6 +11,7 @@ import { z } from "zod";
 
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
+import { liveMcpFixtureAddress } from "./eve-mcp-fixture-address";
 import { MCPClient } from "../chatjs/plugins/mcp/oauth/mcp-client";
 import { db } from "../lib/db/client";
 import { mcpConnector } from "@/chatjs/plugins/mcp/db/mcp-schema";
@@ -33,6 +34,7 @@ const requestSchema = z.object({
 const localMcpServer = async (
   invoke: (response: ReadonlyNativeSurface<ServerResponse>) => unknown
 ) => {
+  const { origin, port } = liveMcpFixtureAddress();
   const server = createServer(
     (
       request: ReadonlyNativeSurface<IncomingMessage>,
@@ -125,19 +127,23 @@ const localMcpServer = async (
       })();
     }
   );
-  await once(server.listen(0, "127.0.0.1"), "listening");
-  const address = server.address();
-  if (address === null || typeof address === "string") {
-    throw new Error("Missing local MCP address");
-  }
-  return { address, server };
+  await once(server.listen(port, "127.0.0.1"), "listening");
+  return {
+    url: new URL("/mcp", origin).href,
+    close: async (): Promise<void> => {
+      await promisify((done: (error?: Error) => void): void => {
+        server.close(done);
+        server.closeAllConnections();
+      })();
+    },
+  };
 };
 
 test("composer connector controls persist and fence native tool execution", async ({
   page,
 }, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
   let calls = 0;
-  const { server, address } = await localMcpServer(() => {
+  const { close, url } = await localMcpServer(() => {
     calls += 1;
     return { content: [{ text: "connector fixture", type: "text" }] };
   });
@@ -158,7 +164,7 @@ test("composer connector controls persist and fence native tool execution", asyn
       name: "Local connector fixture",
       nameId,
       type: "http",
-      url: `http://127.0.0.1:${address.port}/mcp`,
+      url,
       userId: owner.id,
     });
     await page.goto("/");
@@ -233,7 +239,8 @@ test("composer connector controls persist and fence native tool execution", asyn
     expect(calls).toBe(0);
     await page.setViewportSize({ height: 844, width: 390 });
     await page.reload();
-    await page.getByRole("button", { name: "Composer options" }).click();
+    // The Next.js development indicator overlaps the trigger at phone widths.
+    await page.getByRole("button", { name: "Composer options" }).press("Enter");
     await control.click();
     await expect(toggle).not.toBeChecked();
     await page
@@ -262,10 +269,7 @@ test("composer connector controls persist and fence native tool execution", asyn
     expect(calls).toBe(0);
   } finally {
     await db.delete(mcpConnector).where(eq(mcpConnector.id, id));
-    server.closeAllConnections();
-    await promisify((onClose: (error?: Error) => void): void => {
-      server.close(onClose);
-    })();
+    await close();
   }
 });
 
@@ -275,7 +279,7 @@ test("native MCP executes and its saved result survives connector removal and re
 }) => {
   const token = `MCP_RESULT_${crypto.randomUUID()}`;
   let calls = 0;
-  const { server, address } = await localMcpServer(() => {
+  const { close, url } = await localMcpServer(() => {
     calls += 1;
     return { content: [{ text: token, type: "text" }] };
   });
@@ -303,7 +307,7 @@ test("native MCP executes and its saved result survives connector removal and re
       name: "Local MCP acceptance",
       nameId,
       type: "http",
-      url: `http://127.0.0.1:${address.port}/mcp`,
+      url,
       userId: session.user.id,
     });
     const created = await page.request.post("/api/agent-conversations", {
@@ -394,19 +398,18 @@ test("native MCP executes and its saved result survives connector removal and re
     }
   } finally {
     await db.delete(mcpConnector).where(eq(mcpConnector.id, connectorId));
-    await promisify((onClose: (error?: Error) => void): void => {
-      server.close(onClose);
-    })();
+    await close();
   }
 });
 
 test("stopping a pending MCP call closes its transport and permits another message", async ({
   page,
 }) => {
+  const token = `RECOVERED_${crypto.randomUUID()}`;
   let calls = 0;
   let disconnected = false;
   const completion = Promise.withResolvers<unknown>();
-  const { server, address } = await localMcpServer(
+  const { close, url } = await localMcpServer(
     async (response: ReadonlyNativeSurface<ServerResponse>) => {
       calls += 1;
       response.on("close", () => {
@@ -442,7 +445,7 @@ test("stopping a pending MCP call closes its transport and permits another messa
       name: "Local MCP cancellation",
       nameId,
       type: "http",
-      url: `http://127.0.0.1:${address.port}/mcp`,
+      url,
       userId: session.user.id,
     });
     const created = await page.request.post("/api/agent-conversations", {
@@ -463,37 +466,33 @@ test("stopping a pending MCP call closes its transport and permits another messa
     );
     await page.getByRole("button", { exact: true, name: "Stop" }).click();
     const cancellation = await cancelled;
-    expect(cancellation.request().postDataJSON()).toEqual({});
+    expect(cancellation.request().postDataJSON()).toEqual({ turnId: "turn_0" });
     expect(cancellation.ok(), await cancellation.text()).toBe(true);
     await expect.poll(() => disconnected, { timeout: 20_000 }).toBe(true);
     await expect(
       page.getByRole("button", { exact: true, name: "Stop" })
     ).toHaveCount(0);
-    const token = `RECOVERED_${crypto.randomUUID()}`;
+    expect(calls).toBe(1);
     const composer = page.getByRole("textbox", {
       exact: true,
       name: "Message",
     });
-    await composer.fill(`Do not call tools. Reply exactly ${token}.`);
+    await composer.fill(`Reply with exactly ${token}.`);
     await composer.press("Enter");
     await expect(
-      page.locator('[data-role="assistant"] p').filter({ hasText: token })
-    ).toBeVisible({ timeout: 60_000 });
+      page.locator('[data-eve-message-id="turn_1:assistant"]')
+    ).toContainText(token, { timeout: 60_000 });
     await expect(page.getByText("Ready", { exact: true })).toBeVisible();
     await page.reload();
     await expect(
-      page.locator('[data-role="assistant"] p').filter({ hasText: token })
-    ).toBeVisible();
-    expect(calls).toBe(1);
+      page.locator('[data-eve-message-id="turn_1:assistant"]')
+    ).toContainText(token);
   } finally {
     completion.resolve({
       content: [{ text: "fixture-cleanup", type: "text" }],
     });
     await db.delete(mcpConnector).where(eq(mcpConnector.id, connectorId));
-    server.closeAllConnections();
-    await promisify((onClose: (error?: Error) => void): void => {
-      server.close(onClose);
-    })();
+    await close();
   }
 });
 
@@ -501,7 +500,7 @@ test("the real MCP client aborts an in-flight HTTP tool request", async () => {
   const started: PromiseWithResolvers<void> = Promise.withResolvers();
   const finished = Promise.withResolvers<unknown>();
   let disconnected = false;
-  const { server, address } = await localMcpServer(
+  const { close, url } = await localMcpServer(
     async (response: ReadonlyNativeSurface<ServerResponse>) => {
       response.on("close", () => {
         disconnected = !response.writableEnded;
@@ -518,12 +517,12 @@ test("the real MCP client aborts an in-flight HTTP tool request", async () => {
     name: "Direct MCP cancellation fixture",
     nameId: `test_${connectorId.slice(0, 8)}`,
     type: "http",
-    url: `http://127.0.0.1:${address.port}/mcp`,
+    url,
     userId: null,
   });
   const client = new MCPClient(connectorId, "Local fixture", {
     type: "http",
-    url: `http://127.0.0.1:${address.port}/mcp`,
+    url,
   });
   try {
     await client.connect();
@@ -551,9 +550,6 @@ test("the real MCP client aborts an in-flight HTTP tool request", async () => {
     finished.resolve({ content: [] });
     await client.close();
     await db.delete(mcpConnector).where(eq(mcpConnector.id, connectorId));
-    server.closeAllConnections();
-    await promisify((onClose: (error?: Error) => void): void => {
-      server.close(onClose);
-    })();
+    await close();
   }
 });

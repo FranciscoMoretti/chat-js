@@ -197,7 +197,7 @@ it("rejects unconfigured image generation without disabling native research", as
   });
 });
 
-it("offers the configured workspace attachment tool alongside selected research", async () => {
+it("keeps selected research independent of the workspace attachment tool", async () => {
   await contextStorage.run(new ContextContainer(), async () => {
     const tools = {
       deepResearch: {},
@@ -208,7 +208,6 @@ it("offers the configured workspace attachment tool alongside selected research"
     await startTurn("deepResearch");
     expect(filterEveTools(tools)).toEqual({
       deepResearch: tools.deepResearch,
-      attach_workspace_file: tools.attach_workspace_file,
     });
     expect(filterEveTools({ deepResearch: tools.deepResearch })).toEqual({
       deepResearch: tools.deepResearch,

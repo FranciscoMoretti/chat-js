@@ -92,7 +92,6 @@ export const executeEveConversationCreation = async (
       eveMessageTitle(input.message),
       async (operationId) => {
         const result = await requestEveCreation(
-          "dispatch",
           ownerId,
           "/eve/chat/v1/session",
           {
@@ -107,7 +106,7 @@ export const executeEveConversationCreation = async (
           input.selectedTool
         );
         if (!result.ok) {
-          throw new EveCreationTransportError("dispatch", result.status);
+          throw new EveCreationTransportError(result.status);
         }
         return z
           .object({
@@ -136,7 +135,7 @@ export const executeEveConversationCreation = async (
         errorType: error instanceof Error ? error.name : "unknown",
         operationId: input.operationId,
         ...(error instanceof EveCreationTransportError
-          ? { stage: error.stage, status: error.status }
+          ? { stage: "dispatch", status: error.status }
           : {}),
       },
       "Conversation creation remains unresolved"

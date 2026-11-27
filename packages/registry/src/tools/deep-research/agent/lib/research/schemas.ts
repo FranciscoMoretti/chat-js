@@ -2,10 +2,21 @@ import { z } from "zod";
 
 const MINIMUM_RESEARCH_TEXT_LENGTH = 1;
 
+const researchArtifact = z.object({
+  fileId: z.string().min(1),
+  mediaType: z.string().min(1),
+  name: z.string().min(1),
+  size: z.number().int().nonnegative(),
+  url: z.string().min(1),
+});
+
+export type ResearchArtifact = z.infer<typeof researchArtifact>;
+
 const researchOutput = z.union([
   z.object({ format: z.literal("progress") }),
   z.object({ answer: z.string(), format: z.literal("clarifying_questions") }),
   z.object({
+    artifact: researchArtifact.optional(),
     format: z.literal("report"),
     path: z.string(),
     title: z.string(),

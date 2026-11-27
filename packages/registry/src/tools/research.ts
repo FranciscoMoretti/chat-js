@@ -6,6 +6,7 @@ const researchAgentFiles = [
   "agent/tools/deepResearch.ts",
   ...[
     "configuration.ts",
+    "delivery.ts",
     "prompts.ts",
     "schemas.ts",
     "steps.ts",
@@ -49,6 +50,10 @@ const researchItem: RegistryItem = {
         layout: "agent",
         files: researchAgentFiles.map((file) => file.slice("agent/".length)),
         dependencies: ["eve", "zod"],
+        fileSources: {
+          "lib/research/delivery.ts":
+            "src/tools/deep-research/agent/lib/research/delivery.native.ts",
+        },
       },
       tools: [
         {

@@ -94,18 +94,18 @@ test("project UI edits instructions, creates a native conversation and lists it 
       page.getByText("No chats in this project", { exact: true })
     ).toBeVisible();
     expect(invalidIdentityRequests).toEqual([]);
-    await page.keyboard.press("Control+k");
     await expect(
-      page.getByRole("dialog", { name: "Search chats" })
-    ).toBeVisible();
-    await page.getByRole("dialog", { name: "Search chats" }).screenshot({
+      page.locator('[data-sidebar="header"]').first()
+    ).toHaveScreenshot("sidebar-controls.png", { animations: "disabled" });
+    await page.getByRole("button", { name: /^Search chats/u }).click();
+    const searchDialog = page.getByRole("dialog", { name: "Search chats" });
+    await expect(searchDialog).toBeVisible();
+    await searchDialog.screenshot({
       animations: "disabled",
       path: testInfo.outputPath("sidebar-search.png"),
     });
     await page.keyboard.press("Escape");
-    await expect(
-      page.locator('[data-sidebar="header"]').first()
-    ).toHaveScreenshot("sidebar-controls.png", { animations: "disabled" });
+    await expect(searchDialog).toBeHidden();
     await page
       .locator('[data-sidebar="sidebar"]')
       .first()
@@ -116,6 +116,7 @@ test("project UI edits instructions, creates a native conversation and lists it 
     /* oxlint-disable eslint/no-await-in-loop -- Viewport changes and screenshots operate on the same browser page. */
     for (const width of [1100, 390]) {
       await page.setViewportSize({ height: 850, width });
+      await page.getByRole("textbox", { exact: true, name: "Message" }).focus();
       await expect(
         page.locator("section").filter({
           has: page.getByRole("textbox", { exact: true, name: "Message" }),
@@ -247,10 +248,11 @@ test("project UI edits instructions, creates a native conversation and lists it 
     await page.getByRole("button", { exact: true, name: "Send" }).click();
     await expect(page).toHaveURL(conversationUrl);
     chatId = page.url().split("/").at(-1);
-    await expect(page.locator('[data-role="assistant"]')).toContainText(
-      "PROJECT_UI_7238",
-      { timeout: 90_000 }
-    );
+    const projectReply = page
+      .getByRole("log")
+      .locator('[data-role="assistant"]')
+      .getByText("PROJECT_UI_7238", { exact: true });
+    await expect(projectReply).toBeVisible({ timeout: 90_000 });
     await page.goto(`/project/${projectId}`);
     await expect(
       page.getByRole("textbox", { exact: true, name: "Message" })
@@ -323,14 +325,15 @@ test("project UI edits instructions, creates a native conversation and lists it 
     await deleteDialog
       .getByRole("button", { exact: true, name: "Delete" })
       .click();
-    await expect(page).toHaveURL(new URL("/", page.url()).href);
+    await expect(
+      page.getByText("Project deleted", { exact: true })
+    ).toBeVisible();
     deletedInUI = true;
+    await expect(page).toHaveURL(new URL("/", page.url()).href);
     const surviving = page.locator(`a[href="/chat/${chatId}"]`);
     await expect(surviving).toHaveAttribute("href", `/chat/${chatId}`);
     await surviving.click();
-    await expect(page.locator('[data-role="assistant"]')).toContainText(
-      "PROJECT_UI_7238"
-    );
+    await expect(projectReply).toBeVisible();
   } catch (error) {
     bodyFailed = true;
     throw error;

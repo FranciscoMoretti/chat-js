@@ -2,6 +2,7 @@ import { z } from "zod";
 import { expect, test } from "@playwright/test";
 import type { Response } from "@playwright/test";
 
+import { readLogicalChatId } from "./eve-test-chat-identity";
 import { conversationBinding } from "../lib/eve/contracts";
 import { assertEveTestDatabase } from "./eve-test-database";
 
@@ -35,7 +36,8 @@ test("edit recovery and regeneration replace the selected turn", async ({
     });
     expect(created.ok(), await created.text()).toBe(true);
     const source = conversationBinding.parse(await created.json());
-    cleanup = { id: source.id, origin };
+    const chatId = await readLogicalChatId(page.request, source.id);
+    cleanup = { id: chatId, origin };
     await page.goto(`/chat/${source.id}`);
     await expect(
       page.getByText("Ready", { exact: true }).filter({ visible: true })
@@ -96,7 +98,7 @@ test("edit recovery and regeneration replace the selected turn", async ({
         .filter({ hasText: "Response creation is unconfirmed" })
     ).toBeVisible();
     await page.getByRole("button", { name: "Recover version" }).click();
-    await expect(page).toHaveURL(new RegExp(`/chat/${source.id}$`, "u"), {
+    await expect(page).toHaveURL(new RegExp(`/chat/${chatId}$`, "u"), {
       timeout: 60_000,
     });
     await expect(
@@ -121,7 +123,7 @@ test("edit recovery and regeneration replace the selected turn", async ({
     await page.getByTestId("model-selector").filter({ visible: true }).click();
     await page.getByPlaceholder("Search models...").fill("GPT-5 mini");
     await page
-      .getByRole("option", { exact: true, name: "openai logo GPT-5 mini" })
+      .getByRole("option", { exact: true, name: "GPT-5 mini" })
       .filter({
         hasNot: page.getByTitle("Advanced reasoning capabilities", {
           exact: true,
@@ -155,7 +157,7 @@ test("edit recovery and regeneration replace the selected turn", async ({
         .looseObject({ modelId: z.string() })
         .parse(regeneration.request().postDataJSON()).modelId
     ).toBe(sourceModelId);
-    await expect(page).toHaveURL(new RegExp(`/chat/${source.id}$`, "u"), {
+    await expect(page).toHaveURL(new RegExp(`/chat/${chatId}$`, "u"), {
       timeout: 60_000,
     });
     await expect(
@@ -183,7 +185,7 @@ test("edit recovery and regeneration replace the selected turn", async ({
       .first()
       .getByRole("button", { name: "Previous version", exact: true })
       .click();
-    await expect(page).toHaveURL(new RegExp(`/chat/${source.id}$`, "u"));
+    await expect(page).toHaveURL(new RegExp(`/chat/${chatId}$`, "u"));
     await expect(
       page.getByRole("log").locator('[data-role="user"]').last()
     ).toContainText("amber");

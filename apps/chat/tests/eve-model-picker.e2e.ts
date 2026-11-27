@@ -23,7 +23,7 @@ test("the single-model picker dispatches and retains the selected native model",
   page,
 }, testInfo) => {
   test.setTimeout(120_000);
-  let branchId: string | undefined;
+  let chatId: string | undefined;
   let origin: string | undefined;
   try {
     await page.route("https://unpkg.com/react-scan/**", async (route) => {
@@ -48,12 +48,7 @@ test("the single-model picker dispatches and retains the selected native model",
     await picker.click();
     await page.getByPlaceholder("Search models...").fill(modelName);
     await page
-      .getByRole("option", { exact: true, name: "openai logo GPT-5 nano" })
-      .filter({
-        hasNot: page.getByTitle("Advanced reasoning capabilities", {
-          exact: true,
-        }),
-      })
+      .getByRole("option", { exact: true, name: modelName })
       .click({ timeout: 20_000 });
     await expect(picker).toContainText(modelName);
 
@@ -69,7 +64,7 @@ test("the single-model picker dispatches and retains the selected native model",
       timeout: 60_000,
       waitUntil: "commit",
     });
-    branchId = z.uuid().parse(new URL(page.url()).pathname.split("/").at(-1));
+    chatId = z.uuid().parse(new URL(page.url()).pathname.split("/").at(-1));
     expect(created.request().postDataJSON()).toMatchObject({ modelId });
 
     const [conversation] = await db
@@ -78,7 +73,7 @@ test("the single-model picker dispatches and retains the selected native model",
         sessionId: eveConversation.sessionId,
       })
       .from(eveConversation)
-      .where(eq(eveConversation.id, branchId));
+      .where(eq(eveConversation.chatId, chatId));
     expect(conversation?.initialModelId).toBe(modelId);
     if (
       conversation === undefined ||
@@ -90,7 +85,7 @@ test("the single-model picker dispatches and retains the selected native model",
       throw new Error("Missing native session binding.");
     }
 
-    await expect(page).toHaveURL(new RegExp(`/chat/${branchId}$`, "u"));
+    await expect(page).toHaveURL(new RegExp(`/chat/${chatId}$`, "u"));
     await expect(
       page.getByRole("log").locator('[data-role="assistant"]').last()
     ).toContainText(marker, { timeout: 90_000 });
@@ -114,14 +109,14 @@ test("the single-model picker dispatches and retains the selected native model",
   } finally {
     testInfo.setTimeout(testInfo.timeout + 60_000);
     if (
-      branchId !== undefined &&
-      branchId !== null &&
-      branchId !== "" &&
+      chatId !== undefined &&
+      chatId !== null &&
+      chatId !== "" &&
       origin !== undefined &&
       origin !== null &&
       origin !== ""
     ) {
-      const url = `/api/agent-conversations/${branchId}`;
+      const url = `/api/agent-conversations/${chatId}`;
       const headers = { origin };
       await expect
         .poll(

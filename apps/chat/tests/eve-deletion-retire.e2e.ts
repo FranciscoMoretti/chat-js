@@ -51,7 +51,7 @@ test("internal retirement settles usage after access revocation and is retryable
   const created = await page.request.post("/api/agent-conversations", {
     data: {
       message: "Reply exactly retire-fixture-ok. Do not call tools.",
-      modelId: "google/gemini-2.5-flash-lite",
+      modelId: "openai/gpt-5-nano",
       operationId: crypto.randomUUID(),
     },
     headers: { origin: new URL(page.url()).origin },
@@ -69,14 +69,15 @@ test("internal retirement settles usage after access revocation and is retryable
   }
   expect(identity.chatId).not.toBe(binding.id);
   await page.goto(`/chat/${binding.id}`);
-  await expect(page.locator('[data-role="assistant"]')).toContainText(
-    "retire-fixture-ok",
-    { timeout: 90_000 }
-  );
+  await expect(
+    page.locator('[data-eve-message-id="turn_0:assistant"]')
+  ).toBeVisible({
+    timeout: 90_000,
+  });
   await expect(page.getByText("Ready", { exact: true })).toBeVisible();
   // Reset acknowledges before the terminal event is durable; retry fenced cleanup.
   await expect(async () => {
-    const family = await retireEveFamilyForDeletion(owner, binding.id);
+    const family = await retireEveFamilyForDeletion(owner, identity.chatId);
     expect(family?.rootId).toBe(identity.chatId);
     expect(family?.conversations).toEqual([
       { id: binding.id, sessionId: binding.sessionId },
@@ -104,9 +105,11 @@ test("internal retirement settles usage after access revocation and is retryable
     .from(userCredit)
     .where(eq(userCredit.userId, owner));
   expect(after.balanceCents).toBe(before.balanceCents);
-  const prepared = await prepareEveFamilyDeletion(owner, binding.id);
+  const prepared = await prepareEveFamilyDeletion(owner, identity.chatId);
   expect(prepared?.runIds).toContain(binding.sessionId);
-  expect(await prepareEveFamilyDeletion(owner, binding.id)).toEqual(prepared);
+  expect(await prepareEveFamilyDeletion(owner, identity.chatId)).toEqual(
+    prepared
+  );
   const purgeResources = async (): Promise<unknown> => {
     // Playwright loads this suite as CommonJS; run the ESM-only storage adapter
     // under the app's Bun runtime with the same local environment and app root.
@@ -116,7 +119,7 @@ test("internal retirement settles usage after access revocation and is retryable
         "-e",
         'import { purgeLocalEveFamilyResources } from "./lib/eve/purge-local-resources"; const result = await purgeLocalEveFamilyResources(process.argv[1], process.argv[2]); console.log(JSON.stringify(result)); process.exit(0);',
         owner,
-        binding.id,
+        identity.chatId,
       ],
       { cwd: process.cwd(), timeout: 30_000 }
     );
@@ -156,7 +159,7 @@ test("internal retirement settles usage after access revocation and is retryable
       })
     ).toEqual(receipt);
     expect(await purgeResources()).toEqual(prepared);
-    const deletionUrl = `/api/agent-conversations/${binding.id}`;
+    const deletionUrl = `/api/agent-conversations/${identity.chatId}`;
     const deletion = await page.request.delete(deletionUrl, {
       headers: { origin: new URL(page.url()).origin },
     });
@@ -167,6 +170,7 @@ test("internal retirement settles usage after access revocation and is retryable
     });
     const deletionResponse = await page.request.get(deletionUrl);
     expect(await deletionResponse.json()).toEqual({
+      chatId: identity.chatId,
       rootId: identity.chatId,
       status: "deleted",
     });
@@ -206,7 +210,7 @@ test("sidebar deletion retires a fresh conversation and reports its durable tomb
   const response = await page.request.post("/api/agent-conversations", {
     data: {
       message: "Say hello in one short sentence. Do not call tools.",
-      modelId: "google/gemini-2.5-flash-lite",
+      modelId: "openai/gpt-5-nano",
       operationId: crypto.randomUUID(),
     },
     headers: { origin },
@@ -224,13 +228,16 @@ test("sidebar deletion retires a fresh conversation and reports its durable tomb
   }
   expect(identity.chatId).not.toBe(binding.id);
   await page.goto(`/chat/${binding.id}`);
-  await expect(page.locator('[data-role="assistant"]')).toBeVisible({
+  await expect(
+    page.locator('[data-eve-message-id="turn_0:assistant"]')
+  ).toBeVisible({
     timeout: 90_000,
   });
   await expect(page.getByText("Ready", { exact: true })).toBeVisible();
   const url = `/api/agent-conversations/${identity.chatId}`;
   const activeResponse = await page.request.get(url);
   expect(await activeResponse.json()).toEqual({
+    chatId: identity.chatId,
     rootId: identity.chatId,
     status: "active",
   });
@@ -272,6 +279,7 @@ test("sidebar deletion retires a fresh conversation and reports its durable tomb
   ).toHaveCount(0);
   const retiredResponse = await page.request.get(url);
   expect(await retiredResponse.json()).toEqual({
+    chatId: identity.chatId,
     rootId: identity.chatId,
     status: "deleted",
   });

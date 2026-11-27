@@ -4,11 +4,11 @@ import { z } from "zod";
 
 import { db } from "../lib/db/client";
 import {
-  bindAcceptedEveConversation,
+  bindAcceptedEveCreation,
   createEveConversation,
   getEveCreation,
 } from "../lib/db/eve-queries";
-import { eveChat, eveConversation, user } from "../lib/db/schema";
+import { eveChat, eveDispatch, eveConversation, user } from "../lib/db/schema";
 import { env } from "../lib/env";
 import { resolveEveConversationScope } from "../lib/eve/conversation-scope";
 import { createEveConversationOperation } from "../lib/eve/create-conversation-operation";
@@ -47,122 +47,13 @@ vi.mock("@/lib/eve/lifecycle/postgres/eve-stream-positions", () => ({
 assertEveTestDatabase(env.DATABASE_URL);
 const owners: string[] = [];
 afterAll(async () => {
+  await db.delete(eveDispatch).where(inArray(eveDispatch.ownerId, owners));
   await db
     .delete(eveConversation)
     .where(inArray(eveConversation.ownerId, owners));
   await db.delete(eveChat).where(inArray(eveChat.ownerId, owners));
   await db.delete(user).where(inArray(user.id, owners));
 });
-
-test.each(["before-dispatch", "lost-response"])(
-  "a new tab recovers %s before admitting another conversation",
-  async (failure) => {
-    const owner = crypto.randomUUID();
-    owners.push(owner);
-    await db
-      .insert(user)
-      .values({ email: `${owner}@test.invalid`, id: owner, name: "Recovery" });
-    const receipts = new Map<string, string>();
-    const allocations: string[] = [];
-    let fail = true;
-    native.request.mockImplementation(
-      (_owner: string, path: string, init: Readonly<{ body?: unknown }>) => {
-        if (path.startsWith("/eve/chat/v1/operation/")) {
-          const sessionId = receipts.get(path.split("/").at(-1) ?? "");
-          if (
-            sessionId !== undefined &&
-            sessionId !== null &&
-            sessionId !== ""
-          ) {
-            return Response.json({ sessionId });
-          }
-          return Response.json(
-            { code: "eve_operation_not_found" },
-            { status: 404 }
-          );
-        }
-        if (fail && failure === "before-dispatch") {
-          throw new TypeError("connection refused");
-        }
-        if (typeof init.body !== "string") {
-          throw new TypeError("Expected a JSON creation request body");
-        }
-        const command = z
-          .object({ operationId: z.string() })
-          .parse(JSON.parse(init.body));
-        const sessionId = `wrun_${command.operationId}`;
-        receipts.set(command.operationId, sessionId);
-        allocations.push(command.operationId);
-        if (fail) {
-          throw new TypeError("reply lost");
-        }
-        return Response.json({ sessionId });
-      }
-    );
-    const command = {
-      message: "original message",
-      modelId: "openai/gpt-4o",
-      operationId: crypto.randomUUID(),
-      selectedTool: "generateImage",
-    } satisfies Parameters<typeof createEveConversationOperation>[1];
-    const interruptedResponse = await createEveConversationOperation(
-      owner,
-      command
-    );
-    expect(interruptedResponse.status).toBe(409);
-    const interrupted = await getEveCreation(owner, command.operationId);
-    if (interrupted === undefined) {
-      throw new Error("Missing interrupted creation");
-    }
-    expect(interrupted?.state).toBe("uncertain");
-    expect(interrupted?.initialRequest).toEqual(command);
-
-    if (failure === "before-dispatch") {
-      const blockedCommand = { ...command, operationId: crypto.randomUUID() };
-      const blocked = await createEveConversationOperation(
-        owner,
-        blockedCommand
-      );
-      expect(blocked.status).toBe(503);
-      expect(await blocked.json()).toMatchObject({
-        code: "creation_recovery_unavailable",
-      });
-      expect(
-        await getEveCreation(owner, blockedCommand.operationId)
-      ).toBeUndefined();
-      const retained = await getEveCreation(owner, command.operationId);
-      expect(retained?.initialRequest).toEqual(command);
-    }
-    fail = false;
-    native.positions.mockResolvedValue(
-      new Map([[`wrun_${interrupted.id}`, 0]])
-    );
-    const next = await createEveConversationOperation(owner, {
-      ...command,
-      message: "new tab",
-      operationId: crypto.randomUUID(),
-    });
-    expect(next.status).toBe(200);
-    const recovered = await getEveCreation(owner, command.operationId);
-    expect(recovered).toMatchObject({
-      id: interrupted?.id,
-      initialRequest: null,
-      sessionId: `wrun_${interrupted?.id}`,
-      state: "bound",
-    });
-    expect(allocations.filter((id) => id === interrupted?.id)).toHaveLength(1);
-    // The recovered session participates in usage reconciliation before admission.
-    expect(native.positions).toHaveBeenLastCalledWith(expect.any(String), [
-      recovered?.sessionId,
-    ]);
-    const retry = await createEveConversationOperation(owner, command);
-    expect(await retry.json()).toEqual({
-      id: recovered?.id,
-      sessionId: recovered?.sessionId,
-    });
-    expect(allocations).toHaveLength(2);
-  }
-);
 
 test("a verified native hook binds while dispatch is in flight without conflicting with the HTTP response", async () => {
   const owner = crypto.randomUUID();
@@ -187,10 +78,11 @@ test("a verified native hook binds while dispatch is in flight without conflicti
           owner,
           nativeSession,
           AbortSignal.timeout(1000),
-          reservationId
+          reservationId,
+          "delivery"
         )
       ).toEqual({ branchId: reservationId, ownerId: owner });
-      return { sessionId: nativeSession };
+      return { sessionId: nativeSession, deliveryId: "delivery" };
     },
     { initialRequest: { message: "race", operationId } }
   );
@@ -202,10 +94,10 @@ test("a verified native hook binds while dispatch is in flight without conflicti
     state: "bound",
   });
   await expect(
-    bindAcceptedEveConversation("other", binding.id, nativeSession)
+    bindAcceptedEveCreation("other", binding.id, nativeSession, "delivery")
   ).rejects.toThrow("owner_mismatch");
   await expect(
-    bindAcceptedEveConversation(owner, binding.id, "different-native")
+    bindAcceptedEveCreation(owner, binding.id, "different-native", "delivery")
   ).rejects.toThrow("binding_conflict");
 });
 
@@ -223,10 +115,19 @@ test("concurrent bindings cannot claim one native session for two branches", asy
     }))
   );
   const sessionId = `wrun_${crypto.randomUUID()}`;
+  await db.insert(eveDispatch).values(
+    rows.map(({ id }): typeof eveDispatch.$inferInsert => ({
+      branchId: id,
+      operationId: id,
+      ownerId: owner,
+      kind: "create",
+      intent: {},
+    }))
+  );
   const outcomes = await Promise.allSettled(
     rows.map(
       async (row: Readonly<{ id: string }>) =>
-        await bindAcceptedEveConversation(owner, row.id, sessionId)
+        await bindAcceptedEveCreation(owner, row.id, sessionId, "delivery")
     )
   );
   expect(
@@ -274,6 +175,9 @@ test("mapping rejects deletion, foreign ownership and inherited subagent identit
       AbortSignal.timeout(1000),
       row.id
     )
+  ).rejects.toMatchObject({ code: "identity_pending" });
+  await expect(
+    bindAcceptedEveCreation(owner, row.id, sessionId, "unclaimed-delivery")
   ).rejects.toMatchObject({ code: "binding_conflict" });
   await db
     .update(eveConversation)
@@ -288,13 +192,139 @@ test("mapping rejects deletion, foreign ownership and inherited subagent identit
     )
   ).rejects.toMatchObject({ code: "identity_deleted" });
   await expect(
-    bindAcceptedEveConversation(owner, row.id, sessionId)
+    bindAcceptedEveCreation(owner, row.id, sessionId, "delivery")
   ).rejects.toMatchObject({ code: "identity_deleted" });
   expect(await getEveCreation(owner, row.operationId)).toMatchObject({
     sessionId: null,
     state: "deleting",
   });
   await expect(
-    bindAcceptedEveConversation(owner, crypto.randomUUID(), sessionId)
+    bindAcceptedEveCreation(owner, crypto.randomUUID(), sessionId, "delivery")
   ).rejects.toMatchObject({ code: "identity_missing" });
+});
+
+test.each(["refused", "accepted-reply-lost"])(
+  "journal probe for %s",
+  async (mode) => {
+    const owner = crypto.randomUUID();
+    owners.push(owner);
+    await db.insert(user).values({
+      email: `${owner}@test.invalid`,
+      id: owner,
+      name: "Journal probe",
+    });
+    const accepted = new Set<string>();
+    native.request.mockReset();
+    native.request.mockImplementation(
+      (_owner: string, path: string, init: { readonly body: string }) => {
+        expect(path).toBe("/eve/chat/v1/session");
+        if (mode === "accepted-reply-lost") {
+          accepted.add(
+            z.object({ operationId: z.string() }).parse(JSON.parse(init.body))
+              .operationId
+          );
+        }
+        throw new TypeError(mode);
+      }
+    );
+    const command = {
+      operationId: crypto.randomUUID(),
+      modelId: "openai/gpt-4o",
+      message: "journal probe",
+    };
+    const initial = await createEveConversationOperation(owner, command);
+    expect(initial.status).toBe(409);
+    const retry = await createEveConversationOperation(owner, command);
+    expect(retry.status).toBe(409);
+    const newCommand = { ...command, operationId: crypto.randomUUID() };
+    const blocked = await createEveConversationOperation(owner, newCommand);
+    expect(blocked.status).toBe(503);
+    expect(await blocked.json()).toMatchObject({
+      code: "creation_recovery_unavailable",
+    });
+    expect(native.request).toHaveBeenCalledTimes(1);
+    const rows = await db
+      .select()
+      .from(eveConversation)
+      .where(eq(eveConversation.ownerId, owner));
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      operationId: command.operationId,
+      sessionId: null,
+      state: "uncertain",
+    });
+    const journal = await db
+      .select()
+      .from(eveDispatch)
+      .where(eq(eveDispatch.ownerId, owner));
+    expect(journal).toHaveLength(1);
+    expect(journal[0]).toMatchObject({
+      branchId: rows[0].id,
+      sessionId: null,
+      operationId: rows[0].id,
+    });
+    expect([...accepted]).toEqual(
+      mode === "accepted-reply-lost" ? [rows[0].id] : []
+    );
+  }
+);
+
+test("a verified hook atomically repairs creation and dispatch after a lost response", async () => {
+  const owner = crypto.randomUUID();
+  owners.push(owner);
+  await db.insert(user).values({
+    email: `${owner}@test.invalid`,
+    id: owner,
+    name: "Hook receipt probe",
+  });
+  const sessionId = `wrun_${crypto.randomUUID()}`;
+  native.request.mockReset();
+  native.request.mockImplementation(
+    async (_owner: string, path: string, init: { readonly body: string }) => {
+      expect(path).toBe("/eve/chat/v1/session");
+      const { operationId } = z
+        .object({ operationId: z.string() })
+        .parse(JSON.parse(init.body));
+      await resolveEveConversationScope(
+        owner,
+        sessionId,
+        AbortSignal.timeout(1000),
+        operationId,
+        "delivery"
+      );
+      throw new Error("lost POST response");
+    }
+  );
+  const command = {
+    operationId: crypto.randomUUID(),
+    modelId: "openai/gpt-4o",
+    message: "hook receipt",
+  };
+  const interrupted = await createEveConversationOperation(owner, command);
+  expect(interrupted.status).toBe(409);
+  expect(await getEveCreation(owner, command.operationId)).toMatchObject({
+    state: "bound",
+    sessionId,
+  });
+  const [dispatch] = await db
+    .select()
+    .from(eveDispatch)
+    .where(eq(eveDispatch.ownerId, owner));
+  expect(dispatch).toMatchObject({ sessionId, deliveryId: "delivery" });
+  const retry = await createEveConversationOperation(owner, command);
+  expect(retry.status).toBe(200);
+  expect(native.request).toHaveBeenCalledTimes(1);
+  native.positions.mockResolvedValue(new Map([[sessionId, 0]]));
+  native.request.mockResolvedValueOnce(
+    Response.json({
+      deliveryId: "next-delivery",
+      sessionId: `wrun_${crypto.randomUUID()}`,
+    })
+  );
+  const next = await createEveConversationOperation(owner, {
+    ...command,
+    operationId: crypto.randomUUID(),
+  });
+  expect(next.status).toBe(200);
+  expect(native.request).toHaveBeenCalledTimes(2);
 });

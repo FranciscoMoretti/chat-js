@@ -5,6 +5,7 @@ import path from "node:path";
 import ts from "typescript";
 
 import { registry } from "../registry";
+import { nativeRegistryItem } from "../native-registry";
 
 // The manifest — not the folder listing — is the source of truth for what a
 // tool renders. A tool without a `rendererExport` (the document tools) is shown
@@ -161,15 +162,20 @@ test("every registry tool renderer ships a visual test", () => {
 
 test("research execution ships native files without application service imports or isolated subagents", () => {
   const research = registry.items.find((item) => item.name === "deep-research");
-  expect(research).toBeDefined();
-  const files =
-    research?.files?.filter(
-      (file) => file.target?.startsWith("~/agent/") === true
-    ) ?? [];
+  if (!research) {
+    throw new Error("Missing Deep Research registry item");
+  }
+  const sources = new Map(
+    research.files?.map((file) => [
+      file.target?.replace(/^~\//u, "") ?? file.path,
+      readFileSync(path.join(registryDir, file.path), "utf-8"),
+    ])
+  );
+  const files = nativeRegistryItem(research, sources)?.files ?? [];
   expect(files.length).toBeGreaterThan(0);
   for (const file of files) {
     expect(file.target).not.toContain("/subagents/");
-    const source = readFileSync(path.join(registryDir, file.path), "utf-8");
+    const source = file.content;
     expect(source).not.toMatch(/from ["']@\//u);
     expect(source).not.toContain("attachConversationFile");
   }

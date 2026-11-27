@@ -70,8 +70,9 @@ const EveDeletionProvider = ({
             response.ok &&
             typeof status === "object" &&
             status !== null &&
-            "rootId" in status &&
-            status.rootId === rootId
+            (conversation?.scope === "conversation"
+              ? "rootId" in status && status.rootId === rootId
+              : "chatId" in status && status.chatId === rootId)
           ) {
             router.replace(pluginRoute(conversation?.parentHref ?? "/"));
           }

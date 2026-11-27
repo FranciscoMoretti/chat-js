@@ -1,4 +1,5 @@
 import { expect, test } from "bun:test";
+import { readFileSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import type { RegistryItem } from "shadcn/schema";
@@ -25,7 +26,8 @@ const readSources = async (item: RegistryItem) =>
 test("portable distributions reuse implementation source and exclude app contributions", async () => {
   const portable = await Promise.all(
     registry.items.map(async (item) => {
-      if (!toolDefinitionSchema.safeParse(item.meta?.chatjs).data?.native) {
+      const definition = toolDefinitionSchema.safeParse(item.meta?.chatjs).data;
+      if (!definition?.native) {
         expect(nativeRegistryItem(item, new Map())).toBeUndefined();
         return null;
       }
@@ -42,11 +44,19 @@ test("portable distributions reuse implementation source and exclude app contrib
         expect(file.target).toMatch(/^~\/agent\/(?:tools|lib)\//u);
         expect(file.path).not.toMatch(/renderer|chatjs\.json/u);
         if (!file.path.startsWith("entrypoints/")) {
+          const override = Object.values(
+            definition.native.fileSources ?? {}
+          ).includes(file.path);
           expect(file.content).toBe(
-            sources.get(file.target?.replace(/^~\//u, "") ?? "") ??
-              sources.get(
-                `chatjs/tools/${item.name}/${path.basename(file.path)}`
-              )
+            override
+              ? readFileSync(
+                  path.resolve(import.meta.dir, "..", file.path),
+                  "utf-8"
+                )
+              : (sources.get(file.target?.replace(/^~\//u, "") ?? "") ??
+                  sources.get(
+                    `chatjs/tools/${item.name}/${path.basename(file.path)}`
+                  ))
           );
         }
       }

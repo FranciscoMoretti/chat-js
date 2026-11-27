@@ -1,5 +1,4 @@
 import { userCredit } from "@/chatjs/plugins/credits/credits-schema";
-import { createEveTestSession } from "./eve-native-session.fixture";
 
 import { eq } from "drizzle-orm";
 import { afterAll, beforeEach, expect, test, vi } from "vitest";
@@ -12,7 +11,7 @@ import {
   withManagedUsageReconciliation,
 } from "../lib/db/eve-billing";
 import { createEveConversation } from "../lib/db/eve-queries";
-import { eveConversation, eveUsage, user } from "../lib/db/schema";
+import { eveDispatch, eveConversation, eveUsage, user } from "../lib/db/schema";
 import { env } from "../lib/env";
 import { eveModelLedger } from "../lib/db/eve-model-ledger";
 import { createToolResult } from "../lib/eve/tool-result";
@@ -34,7 +33,21 @@ const transport = vi.hoisted(() => ({
 
 vi.mock("eve/client", () => ({
   Client: class {
-    public sessions = { attach: () => ({ stream: transport.stream }) };
+    public sessions = {
+      attach: () => {
+        const state = { streamIndex: 0 };
+        return {
+          state,
+          async *stream(options: { startIndex?: number; follow?: boolean }) {
+            state.streamIndex = options.startIndex ?? 0;
+            for (const event of transport.stream(options)) {
+              state.streamIndex += 1;
+              yield event;
+            }
+          },
+        };
+      },
+    };
   },
 }));
 assertEveTestDatabase(env.DATABASE_URL);
@@ -44,6 +57,7 @@ await db
   .values({ email: `${owner}@test.invalid`, id: owner, name: "Cursor test" });
 afterAll(async () => {
   await db.delete(eveUsage).where(eq(eveUsage.ownerId, owner));
+  await db.delete(eveDispatch).where(eq(eveDispatch.ownerId, owner));
   await db.delete(eveConversation).where(eq(eveConversation.ownerId, owner));
   await db.delete(userCredit).where(eq(userCredit.userId, owner));
   await db.delete(user).where(eq(user.id, owner));
@@ -56,7 +70,11 @@ const session = async (): Promise<string> => {
     owner,
     crypto.randomUUID(),
     "Cursor fixture",
-    createEveTestSession
+    async () =>
+      await Promise.resolve({
+        sessionId: crypto.randomUUID(),
+        deliveryId: crypto.randomUUID(),
+      })
   );
   if (!row.sessionId) {
     throw new Error("Missing test session");
@@ -65,16 +83,13 @@ const session = async (): Promise<string> => {
 };
 const tool = (costUsd?: number) => ({
   data: {
-    turnId: "turn_0",
-    status: "completed",
-    result: {
-      kind: "tool-result",
-      callId: crypto.randomUUID(),
-      output: createToolResult("result", costUsd),
-    },
+    outcome: "completed",
+    callId: crypto.randomUUID(),
+    output: createToolResult("result", costUsd),
   },
   meta: { id: crypto.randomUUID() },
-  type: "action.result",
+  scope: { turnId: "turn_0" },
+  type: "call.settled",
 });
 
 test("settled prefixes are not downloaded again and appended charges are ingested", async () => {
@@ -167,7 +182,7 @@ test("missing tool cost blocks cursor advancement until its exact receipt is rec
   expect(await getEveUsageCursor(owner, id)).toBe(0);
   await recordEveUsage({
     costUsd: 0.03,
-    eventId: `eve-tool:${id}:${event.data.result.callId}`,
+    eventId: `eve-tool:${id}:${event.data.callId}`,
     ownerId: owner,
     sessionId: id,
     turnId: "turn_0",
@@ -215,7 +230,7 @@ test("unpriced model attempts remain durable while later work continues", async 
     yield {
       data: { sequence: 0, turnId: "turn_0" },
       meta: { at: new Date().toISOString(), id: crypto.randomUUID() },
-      type: "turn.completed",
+      type: "turn.settled",
     };
   });
   await reconcileEveUsage(owner, id);

@@ -1,5 +1,6 @@
 import type {
   LanguageModelV4,
+  LanguageModelV4CallOptions,
   LanguageModelV4Usage,
   LanguageModelV4StreamPart,
 } from "@ai-sdk/provider";
@@ -58,6 +59,8 @@ interface ModelLedger {
 
 // A wrapper is scoped to a single resolved session/turn. Refuse accidental nesting.
 const MINIMUM_COST = 0;
+const EVE_COMPACTION_SYSTEM_PREFIX =
+  "You are performing a CONTEXT CHECKPOINT COMPACTION. Create a handoff summary for another LLM that will resume the task.";
 const accountedModels = new WeakSet<LanguageModelV4>();
 
 const modelReceiptCost = (receipt: ModelReceipt): number | undefined => {
@@ -155,9 +158,20 @@ const wrapEveModel = (
       await ledger.finish(attempt, receipt);
     });
   };
-  const begin = async (): Promise<ModelAttempt> => {
+  const begin = async (
+    prompt: LanguageModelV4CallOptions["prompt"]
+  ): Promise<ModelAttempt> => {
+    // Pinned Eve reuses the turn model for context summaries and does not
+    // provide model-call purpose to the provider wrapper. Match the framework
+    // system message, never user text or provider output.
+    const summary = prompt.some(
+      (message) =>
+        message.role === "system" &&
+        message.content.startsWith(EVE_COMPACTION_SYSTEM_PREFIX)
+    );
     const attempt = {
       ...scope,
+      ...(summary ? { turnId: undefined } : {}),
       eventId: `eve-model:${crypto.randomUUID()}`,
       modelId: model.modelId,
       provider: model.provider,
@@ -171,8 +185,8 @@ const wrapEveModel = (
   const wrapped = wrapLanguageModel({
     middleware: {
       specificationVersion: "v4",
-      async wrapGenerate({ doGenerate }) {
-        const attempt = await begin();
+      async wrapGenerate({ doGenerate, params }) {
+        const attempt = await begin(params.prompt);
         const result = await Promise.resolve()
           .then(doGenerate)
           .catch((error: unknown) => {
@@ -196,8 +210,8 @@ const wrapEveModel = (
         });
         return result;
       },
-      async wrapStream({ doStream }) {
-        const attempt = await begin();
+      async wrapStream({ doStream, params }) {
+        const attempt = await begin(params.prompt);
         const result = await Promise.resolve()
           .then(doStream)
           .catch((error: unknown) => {

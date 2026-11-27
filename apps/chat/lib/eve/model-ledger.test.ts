@@ -5,6 +5,7 @@ import type {
 } from "@ai-sdk/provider";
 import { APICallError } from "@ai-sdk/provider";
 import { generateText, Output, streamText } from "ai";
+import type { ModelMessage } from "ai";
 import { expect, it, vi } from "vitest";
 import { z } from "zod";
 
@@ -66,6 +67,98 @@ it("records cost before structured-output validation rejects a paid response", a
   expect(store.finish).toHaveBeenCalledWith(
     expect.objectContaining(scope),
     result
+  );
+});
+
+it("attributes an Eve summary on a reused turn wrapper to maintenance", async () => {
+  const store = ledger();
+  // Run the installed EVE compaction engine so editing either its request
+  // envelope or the ledger's classifier can break the contract test.
+  const enginePath = new URL(
+    "harness/compaction/engine.js",
+    import.meta.resolve("eve")
+  );
+  const engine: unknown = await import(enginePath.href).catch(
+    (error: unknown) => {
+      throw new Error("Cannot load the pinned EVE compaction engine", {
+        cause: error,
+      });
+    }
+  );
+  type CompactMessages = (
+    history: ModelMessage[],
+    limits: { threshold: number; target: number; recentWindowSize: number },
+    summarize: (request: {
+      messages: ModelMessage[];
+      system: string;
+    }) => Promise<string>,
+    forceSummary: boolean
+  ) => Promise<unknown>;
+  const { compactMessages } = z
+    .object({
+      compactMessages: z.custom<CompactMessages>(
+        (value) => typeof value === "function",
+        "The pinned EVE compaction engine must export compactMessages"
+      ),
+    })
+    .parse(engine);
+  const provider = {
+    ...model(),
+    doStream: async () =>
+      await Promise.resolve({
+        stream: new ReadableStream<LanguageModelV4StreamPart>({
+          start(controller) {
+            controller.enqueue({ type: "text-start", id: "summary" });
+            controller.enqueue({
+              type: "text-delta",
+              id: "summary",
+              delta: "Completed the first step.",
+            });
+            controller.enqueue({ type: "text-end", id: "summary" });
+            controller.enqueue({
+              type: "finish",
+              finishReason: result.finishReason,
+              usage: result.usage,
+              providerMetadata: result.providerMetadata,
+            });
+            controller.close();
+          },
+        }),
+      }),
+  };
+  const wrapped = wrapEveModel(provider, scope, store);
+  const summarize = vi.fn(
+    async ({
+      messages,
+      system,
+    }: {
+      messages: ModelMessage[];
+      system: string;
+    }) =>
+      await streamText({ instructions: system, messages, model: wrapped }).text
+  );
+  await compactMessages(
+    [{ role: "user", content: "Summarize this fixture's progress." }],
+    { threshold: 4096, target: 2048, recentWindowSize: 1 },
+    summarize,
+    true
+  );
+  expect(summarize).toHaveBeenCalledOnce();
+  const [[{ system: prompt }]] = summarize.mock.calls;
+  await wrapped.doGenerate({
+    prompt: [{ role: "user", content: [{ type: "text", text: prompt }] }],
+  });
+  expect(store.begin).toHaveBeenNthCalledWith(
+    1,
+    expect.objectContaining({
+      ownerId: scope.ownerId,
+      sessionId: scope.sessionId,
+      turnId: undefined,
+    })
+  );
+  expect(store.begin).toHaveBeenNthCalledWith(
+    2,
+    expect.objectContaining(scope)
   );
 });
 

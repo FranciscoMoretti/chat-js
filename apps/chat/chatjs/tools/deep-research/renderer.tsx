@@ -6,6 +6,7 @@ import { ReasonSearchResearchProgress } from "./progress";
 import { ResearchUpdateSchema } from "@/tools/platform/research-updates-schema";
 import type { ToolRendererProps } from "@/chatjs/core/tools/define-renderer";
 import { defineToolRenderer } from "@/chatjs/core/tools/define-renderer";
+import { FileArtifactCard } from "@/components/file-artifact-card";
 
 export const DeepResearchRenderer = defineToolRenderer({
   inputSchema: researchInput,
@@ -24,9 +25,13 @@ export const DeepResearchRenderer = defineToolRenderer({
         ) : (
           <div className="space-y-1">
             <p className="font-medium">{result.title}</p>
-            <p className="text-muted-foreground text-sm">
-              Research complete. Report saved in the agent workspace.
-            </p>
+            {result.artifact ? (
+              <FileArtifactCard artifact={result.artifact} />
+            ) : (
+              <p className="text-muted-foreground text-sm">
+                Research complete. Report saved in the agent workspace.
+              </p>
+            )}
           </div>
         );
     }

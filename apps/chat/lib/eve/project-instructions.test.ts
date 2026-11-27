@@ -119,8 +119,15 @@ test("refreshes project instructions for each turn and clears them after detachm
   expect(await readInstructions()).toMatchObject({
     content: "Project instructions:\nFirst instruction",
   });
-  mocks.project.mockResolvedValueOnce({ instructions: "Edited instruction" });
-  await startTurn(1);
+  const updatedProject = Promise.withResolvers<{ instructions: string }>();
+  mocks.project.mockReturnValueOnce(updatedProject.promise);
+  const started = startTurn(1);
+  try {
+    expect(await readInstructions()).toBeNull();
+  } finally {
+    updatedProject.resolve({ instructions: "Edited instruction" });
+    await started;
+  }
   expect(await readInstructions()).toMatchObject({
     content: "Project instructions:\nEdited instruction",
   });

@@ -37,13 +37,15 @@ test("assistant feedback survives reload, recovers from errors and stays out of 
   });
   expect(created.ok(), await created.text()).toBe(true);
   const binding = z.object({ id: z.uuid() }).parse(await created.json());
+  const reply = page
+    .getByRole("log")
+    .locator('[data-eve-message-id="turn_0:assistant"]');
   const anonymous = await browser.newContext();
   try {
     await page.goto(`/chat/${binding.id}`);
-    await expect(page.locator('[data-role="assistant"]')).toContainText(
-      "feedback-fixture-ok",
-      { timeout: 90_000 }
-    );
+    await expect(reply).toContainText("feedback-fixture-ok", {
+      timeout: 90_000,
+    });
     const up = page.getByTestId("message-upvote");
     const down = page.getByTestId("message-downvote");
     await expect(up).toBeEnabled();
@@ -59,7 +61,7 @@ test("assistant feedback survives reload, recovers from errors and stays out of 
     /* oxlint-disable eslint/no-await-in-loop -- One browser page must finish each viewport capture before its dimensions change. */
     for (const width of [1100, 390]) {
       await page.setViewportSize({ height: 850, width });
-      await page.locator('[data-role="assistant"]').screenshot({
+      await reply.screenshot({
         animations: "disabled",
         path: testInfo.outputPath(`feedback-${width}.png`),
       });
@@ -97,7 +99,7 @@ test("assistant feedback survives reload, recovers from errors and stays out of 
     await page.reload();
     const retry = page.getByRole("button", { name: "Retry loading feedback" });
     await expect(retry).toBeVisible();
-    await page.locator('[data-role="assistant"]').screenshot({
+    await reply.screenshot({
       animations: "disabled",
       path: testInfo.outputPath("feedback-load-error.png"),
     });

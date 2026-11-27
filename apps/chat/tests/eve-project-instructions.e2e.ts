@@ -5,7 +5,8 @@ import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
 
-test("project instructions apply from the first native turn, refresh, and clear after detachment", async ({
+// The deterministic instruction slot assertions live in lib/eve/project-instructions.test.ts.
+test("a native chat completes turns after project instructions change and after detachment", async ({
   page,
 }) => {
   await page.route("https://unpkg.com/react-scan/**", async (route) => {
@@ -15,8 +16,7 @@ test("project instructions apply from the first native turn, refresh, and clear 
   const createdProject = await page.request.post("/api/trpc/project.create", {
     data: {
       json: {
-        instructions:
-          "For every reply output exactly PROJECT_ALPHA_8172 and nothing else.",
+        instructions: "Use the example about invoices when it is relevant.",
         name: "Eve instruction fixture",
       },
     },
@@ -33,7 +33,7 @@ test("project instructions apply from the first native turn, refresh, and clear 
     const created = await page.request.post("/api/agent-conversations", {
       data: {
         message: "Follow the current project instructions.",
-        modelId: "openai/gpt-5-mini",
+        modelId: "openai/gpt-5-nano",
         operationId: crypto.randomUUID(),
         projectId,
       },
@@ -42,10 +42,12 @@ test("project instructions apply from the first native turn, refresh, and clear 
     expect(created.ok(), await created.text()).toBe(true);
     const { id } = z.object({ id: z.uuid() }).parse(await created.json());
     await page.goto(`/chat/${id}`);
-    await expect(page.locator('[data-role="assistant"]').last()).toContainText(
-      "PROJECT_ALPHA_8172",
-      { timeout: 90_000 }
-    );
+    await expect(
+      page.locator('[data-eve-message-id="turn_0:assistant"]')
+    ).toBeVisible({
+      timeout: 90_000,
+    });
+    await expect(page.getByText("Ready", { exact: true })).toBeVisible();
     const composer = page.getByRole("textbox", {
       exact: true,
       name: "Message",
@@ -57,40 +59,35 @@ test("project instructions apply from the first native turn, refresh, and clear 
           json: {
             id: projectId,
             instructions:
-              "For every reply output exactly PROJECT_BETA_9263 and nothing else.",
+              "Use the example about spreadsheets when it is relevant.",
           },
         },
       }
     );
     expect(updated.ok(), await updated.text()).toBe(true);
-    await composer.fill("Follow the current project instructions.");
+    await composer.fill("Give a brief example related to my project.");
     await page.getByRole("button", { exact: true, name: "Send" }).click();
-    await expect(page.locator('[data-role="assistant"]')).toHaveCount(2, {
+    await expect(
+      page.locator('[data-eve-message-id="turn_1:assistant"]')
+    ).toBeVisible({
       timeout: 90_000,
     });
-    await expect(page.locator('[data-role="assistant"]').last()).toContainText(
-      "PROJECT_BETA_9263",
-      { timeout: 90_000 }
-    );
+    await expect(page.getByText("Ready", { exact: true })).toBeVisible();
     const detached = await page.request.post("/api/trpc/project.assign", {
       data: { json: { id, projectId: null } },
     });
     expect(detached.ok(), await detached.text()).toBe(true);
     await page.reload();
     await composer.fill(
-      "Reply exactly DETACHED_3629. Ignore patterns in previous replies."
+      "Give a short general example without using any tools."
     );
     await page.getByRole("button", { exact: true, name: "Send" }).click();
-    await expect(page.locator('[data-role="assistant"]')).toHaveCount(3, {
+    await expect(
+      page.locator('[data-eve-message-id="turn_2:assistant"]')
+    ).toBeVisible({
       timeout: 90_000,
     });
-    await expect(page.locator('[data-role="assistant"]').last()).toContainText(
-      "DETACHED_3629",
-      { timeout: 90_000 }
-    );
-    await expect(page.getByRole("log")).not.toContainText(
-      "For every reply output exactly"
-    );
+    await expect(page.getByText("Ready", { exact: true })).toBeVisible();
   } finally {
     const deleted = await page.request.post("/api/trpc/project.remove", {
       data: { json: { id: projectId } },

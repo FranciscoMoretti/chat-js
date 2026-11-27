@@ -3,6 +3,7 @@ import type { TestInfo } from "@playwright/test";
 import { z } from "zod";
 
 import { conversationBinding } from "../lib/eve/contracts";
+import { readLogicalChatId } from "./eve-test-chat-identity";
 import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
@@ -66,15 +67,17 @@ test("Image tool selection survives native history and edits while later turns r
     throw new Error("Missing creation response");
   }
   expect(operation).toMatchObject(intended);
-  await expect(page).toHaveURL(new RegExp(`/chat/${binding.id}$`, "u"));
+  const chatId = await readLogicalChatId(page.request, binding.id);
+  await expect(page).toHaveURL(new URL(`/chat/${chatId}`, origin).href);
   await expect(
     page.getByRole("button", { exact: true, name: "Composer options" })
   ).not.toContainText("Create an image");
   await expect(page.getByText("Ready", { exact: true })).toBeVisible({
     timeout: 90_000,
   });
+  const { selectedTool: _selected, ...automatic } = operation;
   const conflict = await page.request.post("/api/agent-conversations", {
-    data: { ...operation, selectedTool: null },
+    data: automatic,
     headers: { origin },
   });
   expect(conflict.status()).toBe(409);

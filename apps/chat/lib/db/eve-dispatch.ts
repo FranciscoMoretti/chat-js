@@ -1,6 +1,6 @@
 import { isNonEmptyString } from "@/lib/is-non-empty-string";
 import { isDeepStrictEqual } from "node:util";
-import { and, eq, inArray, isNull, sql } from "drizzle-orm";
+import { and, eq, inArray, isNull, or, sql } from "drizzle-orm";
 import { db } from "./client";
 import { eveConversation, eveDispatch, eveWorkspace } from "./schema";
 import {
@@ -295,10 +295,24 @@ export const dispatchEveOnce = async (
     ) {
       throw new EveDispatchUnknownError();
     }
+    const compatibleCreation =
+      input.kind === "create"
+        ? and(
+            eq(eveDispatch.sessionId, binding.sessionId),
+            isNonEmptyString(binding.deliveryId)
+              ? or(
+                  isNull(eveDispatch.deliveryId),
+                  eq(eveDispatch.deliveryId, binding.deliveryId)
+                )
+              : undefined
+          )
+        : undefined;
     const [saved] = await database
       .update(eveDispatch)
       .set(binding)
-      .where(and(identity, isNull(eveDispatch.sessionId)))
+      .where(
+        and(identity, or(isNull(eveDispatch.sessionId), compatibleCreation))
+      )
       .returning();
     if (!hasRow(saved)) {
       throw new EveDispatchUnknownError();

@@ -1,3 +1,6 @@
+import { eq } from "drizzle-orm";
+import { db } from "../lib/db/client";
+import { eveConversation } from "../lib/db/schema";
 import { expect, test } from "@playwright/test";
 import { z } from "zod";
 
@@ -39,7 +42,11 @@ test("moves native conversations from sidebar and project rows with recoverable 
       headers: { origin: new URL(page.url()).origin },
     });
     expect(created.ok(), await created.text()).toBe(true);
-    const { id } = z.object({ id: z.uuid() }).parse(await created.json());
+    const branch = z.object({ id: z.uuid() }).parse(await created.json());
+    const [{ chatId: id }] = await db
+      .select({ chatId: eveConversation.chatId })
+      .from(eveConversation)
+      .where(eq(eveConversation.id, branch.id));
     await page.goto(`/chat/${id}`);
     await expect(page.locator('[data-role="assistant"]')).toContainText(
       "move-fixture-ok",
@@ -47,11 +54,31 @@ test("moves native conversations from sidebar and project rows with recoverable 
     );
     const projectsGate: PromiseWithResolvers<void> = Promise.withResolvers();
     await page.route(projectsRoute, async (route) => {
+      const batch = await route.fetch();
+      const entries = z.array(z.unknown()).parse(await batch.json());
+      const procedures =
+        new URL(route.request().url()).pathname.split("/").at(-1)?.split(",") ??
+        [];
       await projectsGate.promise;
       await route.fulfill({
-        body: "{}",
-        contentType: "application/json",
-        status: 500,
+        response: batch,
+        json: entries.map((entry, index) =>
+          procedures[index] === "project.list"
+            ? {
+                error: {
+                  json: {
+                    message: "injected list error",
+                    code: -32_603,
+                    data: {
+                      code: "INTERNAL_SERVER_ERROR",
+                      httpStatus: 500,
+                      path: "project.list",
+                    },
+                  },
+                },
+              }
+            : entry
+        ),
       });
     });
     await page.reload();
@@ -90,7 +117,7 @@ test("moves native conversations from sidebar and project rows with recoverable 
     await dialog
       .getByRole("button", {
         exact: true,
-        name: "Regenerate response",
+        name: "Retry",
       })
       .click();
     await expect(
@@ -139,7 +166,7 @@ test("moves native conversations from sidebar and project rows with recoverable 
     moveGate.resolve();
     await expect(dialog).not.toBeVisible();
     await expect(
-      page.locator(`a[href="/project/${projectId}/chat/${id}"]`)
+      page.locator("header").getByRole("link", { name: "Move target fixture" })
     ).toBeVisible();
     await page.goto(`/project/${projectId}`);
     await page.setViewportSize({ height: 850, width: 390 });

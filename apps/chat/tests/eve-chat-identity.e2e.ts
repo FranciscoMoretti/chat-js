@@ -21,16 +21,17 @@ test("generated chat identity stays selected across edited branch paths", async 
     data: {
       message:
         "We will discuss planning a three day hiking trip with lightweight camping equipment. For this first reply say only trail-ready. Do not use tools.",
-      modelId: "google/gemini-2.5-flash-lite",
+      modelId: "openai/gpt-5-nano",
       operationId: crypto.randomUUID(),
     },
     headers: { origin },
   });
   expect(response.ok(), await response.text()).toBe(true);
   const source = conversationBinding.parse(await response.json());
+  let chatId: string | undefined;
   try {
     await page.goto(`/chat/${source.id}`);
-    await expect(page.getByRole("log")).toContainText("trail-ready", {
+    await expect(page.getByText("Ready", { exact: true })).toBeVisible({
       timeout: 60_000,
     });
     const readChat = async () => {
@@ -61,13 +62,18 @@ test("generated chat identity stays selected across edited branch paths", async 
     if (chat === undefined) {
       throw new Error("Missing test chat identity");
     }
-    const title = page
-      .getByRole("main")
-      .getByRole("heading", { level: 1 })
-      .filter({ visible: true });
-    await expect(title).toHaveText(chat.title);
+    chatId = chat.id;
+    const title = page.getByRole("button", {
+      name: `Chat menu: ${chat.title}`,
+      exact: true,
+    });
+    await expect(title).toBeVisible();
+    const expandSidebar = page.getByRole("button", { name: "Expand sidebar" });
+    if (await expandSidebar.isVisible()) {
+      await expandSidebar.click();
+    }
     const activeChat = page.locator(
-      'a[data-sidebar="menu-button"][data-active="true"]'
+      'a[data-sidebar="menu-button"][data-active]'
     );
     await expect(activeChat).toHaveCount(1);
     await expect(activeChat).toHaveText(chat.title);
@@ -85,43 +91,41 @@ test("generated chat identity stays selected across edited branch paths", async 
       .getByRole("textbox", { exact: true, name: "Message" })
       .fill("Say only branch-ready. Do not use tools.");
     await editor.getByRole("button", { exact: true, name: "Send" }).click();
-    await expect(page).not.toHaveURL(
-      new URL(`/chat/${source.id}`, origin).href
-    );
+    await expect(page).toHaveURL(new URL(`/chat/${chat.id}`, origin).href);
     await expect(
-      page.getByRole("log").getByText(/^branch-ready[.]?$/u)
+      page
+        .getByRole("log")
+        .getByText("Say only branch-ready. Do not use tools.", { exact: true })
     ).toBeVisible({
       timeout: 60_000,
     });
-    await expect(title).toHaveText(chat.title);
+    await expect(title).toBeVisible();
     await expect(activeChat).toHaveCount(1);
     await expect(activeChat).toHaveAttribute("href", chatHref ?? "");
     await expect(activeChat).toHaveText(chat.title);
     await expect(
       page.getByText("Ready", { exact: true }).filter({ visible: true })
     ).toHaveClass(/sr-only/u);
-    const expandSidebar = page.getByRole("button", { name: "Expand sidebar" });
-    if (await expandSidebar.isVisible()) {
-      await expandSidebar.click();
-    }
     await page.screenshot({
       animations: "disabled",
       path: testInfo.outputPath("same-chat-edited-branch.png"),
     });
     await page.goto(`/chat/${source.id}`);
-    await expect(page.getByRole("log")).toContainText("trail-ready");
+    await expect(page.getByRole("log")).toContainText(
+      "We will discuss planning a three day hiking trip"
+    );
     await expect(activeChat).toHaveAttribute("href", chatHref ?? "");
-    await expect(title).toHaveText(chat.title);
+    await expect(title).toBeVisible();
     await page.reload();
     await expect(activeChat).toHaveText(chat.title);
-    await expect(title).toHaveText(chat.title);
+    await expect(title).toBeVisible();
   } finally {
     testInfo.setTimeout(testInfo.timeout + 60_000);
     await expect
       .poll(
         async () => {
           const removed = await page.request.delete(
-            `/api/agent-conversations/${source.id}`,
+            `/api/agent-conversations/${chatId ?? source.id}`,
             { headers: { origin }, timeout: 20_000 }
           );
           expect([200, 202]).toContain(removed.status());

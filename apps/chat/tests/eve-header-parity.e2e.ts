@@ -29,7 +29,8 @@ test("logical header metadata is optimistic, rolls back, and preserves project a
     timeout: 90_000,
   });
   const id = new URL(page.url()).pathname.split("/").at(-1);
-  const title = `Header parity ${crypto.randomUUID().slice(0, 8)}`;
+  const title = "Launch planning notes";
+  const historyLink = page.locator(`a[href="/chat/${id}"]`);
   const renameResponse = await page.request.post("/api/trpc/eve.rename", {
     data: { json: { id, title } },
   });
@@ -64,9 +65,7 @@ test("logical header metadata is optimistic, rolls back, and preserves project a
       name: "Chat menu: Optimistic header",
     })
   ).toBeVisible();
-  await expect(
-    page.getByRole("link", { exact: true, name: "Optimistic header" })
-  ).toBeVisible();
+  await expect(historyLink).toHaveText("Optimistic header");
   await expect(page.locator("header").first()).toHaveScreenshot(
     "optimistic-header.png",
     { animations: "disabled" }
@@ -78,9 +77,7 @@ test("logical header metadata is optimistic, rolls back, and preserves project a
   });
   renameGate.resolve(true);
   await expect(menu()).toBeVisible();
-  await expect(
-    page.getByRole("link", { exact: true, name: title })
-  ).toBeVisible();
+  await expect(historyLink).toHaveText(title);
   await page.unroute("**/api/trpc/eve.rename?batch=1");
   const pinGate = Promise.withResolvers<boolean>();
   await page.route("**/api/trpc/eve.pin?batch=1", async (route) => {
