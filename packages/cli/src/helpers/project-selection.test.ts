@@ -1,6 +1,8 @@
 import { afterEach, expect, it, mock, spyOn } from "bun:test";
 import * as clack from "@clack/prompts";
 import * as registry from "#cli/registry/shadcn";
+import * as providerConfig from "#cli/utils/provider-config";
+import * as storage from "./storage-provider";
 import * as installed from "#cli/utils/installed-plugins";
 import {
   parseAddFlags,
@@ -54,6 +56,38 @@ it("uses the registry item address even when its name differs from its plugin ID
   expect(multi.mock.calls[0]?.[0].options).toMatchObject([
     { value: "@chatjs/team-bundle", label: "Team plugin" },
   ]);
+});
+
+it("round-trips structured settings when editing a catalog storage provider", async () => {
+  const address = "@chatjs/team-store";
+  const current = { connection: { pool: 3 }, flags: ["one"], label: "true" };
+  const next = { ...current, connection: { pool: 4 } };
+  spyOn(registry, "listRegistryItems").mockResolvedValue([
+    {
+      name: "team-store",
+      type: "registry:item",
+      meta: {
+        chatjs: {
+          kind: "storage",
+          contractVersion: 1,
+          id: "team",
+          configKeys: Object.keys(current),
+        },
+      },
+    },
+  ]);
+  spyOn(providerConfig, "readProviderId").mockResolvedValue("team");
+  spyOn(storage, "readInstalledStorageOptions").mockResolvedValue(current);
+  spyOn(clack, "select")
+    .mockResolvedValueOnce("storageProvider")
+    .mockResolvedValueOnce(address)
+    .mockResolvedValueOnce("edit");
+  const text = spyOn(clack, "text").mockResolvedValueOnce(JSON.stringify(next));
+  expect(await promptAddSelection("/unused", false)).toEqual({
+    items: [],
+    flags: { storageProvider: address, storageConfig: next },
+  });
+  expect(text.mock.calls[0]?.[0].initialValue).toBe(JSON.stringify(current));
 });
 
 it("offers only locally installed plugin IDs for removal, including third-party plugins", async () => {

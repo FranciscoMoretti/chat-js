@@ -120,7 +120,11 @@ export const storageSettings = async (
   options: Record<string, unknown>
 ): Promise<Record<string, unknown> | undefined> => {
   const fields = definition.configFields ?? [];
-  if (provider === external.value && fields.length > 0) {
+  if (
+    fields.length > 0 &&
+    (provider === external.value ||
+      fields.some((field) => field.type === "json"))
+  ) {
     const json = await promptValue(
       `Non-secret storage settings as JSON (${fields.map(({ key }) => key).join(", ")})`,
       JSON.stringify(options),
