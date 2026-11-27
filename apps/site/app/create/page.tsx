@@ -1,3 +1,4 @@
+import { ViewTransition } from "react";
 import type { Metadata } from "next";
 import { CreateConfigurator } from "@/components/create-configurator";
 import { registryItems } from "../../../../packages/registry/registry-items";
@@ -12,8 +13,10 @@ export const metadata: Metadata = {
 };
 
 const CreatePage = () => (
-  <CreateConfigurator
-    catalog={installationCatalog([...registryItems, ...storageItems])}
-  />
+  <ViewTransition name="section-page" default="none" share="section-fade">
+    <CreateConfigurator
+      catalog={installationCatalog([...registryItems, ...storageItems])}
+    />
+  </ViewTransition>
 );
 export default CreatePage;

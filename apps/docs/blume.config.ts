@@ -42,6 +42,7 @@ export default defineConfig({
   },
   lastModified: true,
   logo: {
+    href: "https://www.chatjs.dev/",
     image: {
       alt: "ChatJS",
       dark: "/logo/dark.svg",

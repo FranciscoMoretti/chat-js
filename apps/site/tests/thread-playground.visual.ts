@@ -60,6 +60,21 @@ try {
       .count(),
     0
   );
+  await page.setViewportSize({ width: 320, height: 568 });
+  const header = page.locator("header.carbon-nav");
+  const fits = await header.evaluate((element) => {
+    const { left, right } = element.getBoundingClientRect();
+    const controls = [...element.querySelectorAll("a, button")];
+    return controls.every((control) => {
+      const bounds = control.getBoundingClientRect();
+      return (
+        bounds.width > 0 && bounds.left >= left && bounds.right <= right + 1
+      );
+    });
+  });
+  assert.ok(fits, "All navigation controls must fit the narrow header");
+  await header.screenshot({ path: `${output}threads-header-mobile.png` });
+  await page.setViewportSize({ width: 1440, height: 1200 });
   const intro = page.locator("main > section").first();
   assert.match(
     (await intro.locator("pre").textContent()) ?? "",

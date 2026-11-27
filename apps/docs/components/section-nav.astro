@@ -1,0 +1,29 @@
+---
+import { mark } from "@chatjs/brand/identity";
+import "@chatjs/brand/navigation.css";
+
+interface Props {
+  logo: { href: string };
+}
+
+const { logo } = Astro.props;
+const home = import.meta.env.DEV
+  ? import.meta.env.PUBLIC_CHATJS_SITE_URL ?? logo.href
+  : logo.href;
+---
+
+<div class="chatjs-section-nav">
+  <a aria-label="ChatJS home" class="chatjs-home-link" href={home} data-astro-reload>
+    <svg aria-hidden="true" viewBox={mark.viewBox} fill="currentColor">
+      <path d={mark.path} />
+    </svg>
+  </a>
+  <span aria-hidden="true">/</span>
+  <a href={import.meta.env.BASE_URL}>Docs</a>
+</div>
+
+<style>
+  .chatjs-section-nav {
+    order: -1;
+  }
+</style>
