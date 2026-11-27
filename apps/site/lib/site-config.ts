@@ -1,7 +1,7 @@
 const siteConfig = {
   appScreenshot: "/chatjs_preview_light.png",
   creator: "@franmoretti_",
-  demoUrl: "https://demo.chatjs.dev",
+  demoUrl: "https://www.demo.chatjs.dev",
   description:
     "The building blocks for your AI app. A working chat, your choice of models, tools and plugins. Code you own.",
   desktopUrl: "https://github.com/franciscomoretti/chat-js/releases/latest",
