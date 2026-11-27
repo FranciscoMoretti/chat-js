@@ -50,6 +50,7 @@
   ],
   "tasks": {
     "dev": {
+      "passThroughEnv": ["PUBLIC_CHATJS_SITE_URL"],
       "dependsOn": ["^build"],
       "cache": false,
       "persistent": true

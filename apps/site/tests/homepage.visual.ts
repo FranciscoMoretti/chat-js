@@ -61,12 +61,20 @@ const checkNavigation = async (
   );
   const home = destinations.find((link) => link.name === "ChatJS home");
   const docs = destinations.find((link) => link.name === "Docs");
-  const demo = destinations.find((link) => link.name === "Demo");
+  const demo = destinations.find(
+    (link) => link.name === "Demo (opens in a new tab)"
+  );
   const create = destinations.find((link) => link.name === "Create");
   const newApp = destinations.find((link) => /^New\s*\+?$/u.test(link.name));
   assert.ok(docs && demo && create && newApp, JSON.stringify(destinations));
   assert.equal(docs.href, "/docs");
   assert.equal(demo.href, siteLinks.demo);
+  const demoLink = region.getByRole("link", {
+    name: "Demo (opens in a new tab)",
+    exact: true,
+  });
+  assert.equal(await demoLink.getAttribute("target"), "_blank");
+  assert.ok(await demoLink.locator("svg").isVisible());
   assert.equal(create.href, "/create");
   assert.equal(newApp.href, create.href);
   const bounds = await region.getByRole("navigation").boundingBox();
@@ -370,7 +378,15 @@ try {
   await page.evaluate(() => {
     window.scrollTo(0, 0);
   });
+  const homeMark = page.getByRole("link", { name: "ChatJS home", exact: true });
+  const transitionName = () =>
+    homeMark.evaluate((link) => getComputedStyle(link).viewTransitionName);
+  assert.equal(await transitionName(), "none");
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  assert.equal(await transitionName(), "chatjs-home-mark");
   await checkBuild(page);
+  assert.equal(await transitionName(), "chatjs-home-mark");
+  await page.emulateMedia({ reducedMotion: "reduce" });
   await page.locator("html.dark").waitFor();
   await page.getByRole("button", { name: "Toggle theme" }).click();
   await page.getByRole("link", { name: "ChatJS home", exact: true }).click();

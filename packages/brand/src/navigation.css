@@ -26,3 +26,30 @@
 .chatjs-section-nav .chatjs-home-link {
   color: var(--foreground, var(--color-foreground));
 }
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Docs is a separate document when entering or leaving the Next.js site. */
+  @view-transition {
+    navigation: auto;
+  }
+
+  .chatjs-home-link {
+    view-transition-name: chatjs-home-mark;
+  }
+
+  ::view-transition-group(root),
+  ::view-transition-group(chatjs-home-mark),
+  ::view-transition-group(.section-fade) {
+    animation-duration: 160ms;
+    animation-timing-function: ease-out;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+  }
+}

@@ -1,6 +1,7 @@
 import { RiGithubFill } from "@remixicon/react";
 import { Equal, Plus, X } from "lucide-react";
 import Link from "next/link";
+import { DemoLink } from "@/components/demo-link";
 import { ModeSwitcher } from "@/vendor/shadcn-create/components/mode-switcher";
 import { Brand } from "@/components/brand";
 import { docsNavigationHref, siteLinks } from "@/lib/site-config";
@@ -13,7 +14,7 @@ import "./home.css";
 const HomeLinks = () => (
   <>
     <a href={docsNavigationHref}>Docs</a>
-    <a href={siteLinks.demo}>Demo</a>
+    <DemoLink />
     <Link href="/create">Create</Link>
   </>
 );
