@@ -42,6 +42,16 @@ const literalValue = (input: ReadonlyNative<ts.Expression>): unknown => {
   if (ts.isNumericLiteral(value)) {
     return Number(value.text);
   }
+  if (
+    ts.isPrefixUnaryExpression(value) &&
+    value.operator === ts.SyntaxKind.MinusToken &&
+    ts.isNumericLiteral(value.operand)
+  ) {
+    return -Number(value.operand.text);
+  }
+  if (value.kind === ts.SyntaxKind.NullKeyword) {
+    return null;
+  }
   if (value.kind === ts.SyntaxKind.TrueKeyword) {
     return true;
   }

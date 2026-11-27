@@ -1,4 +1,9 @@
 import {
+  storageFields,
+  storageOptionIssues,
+  normalizeStorageOptions,
+} from "./storage-fields";
+import {
   hasPersistentStorage,
   supportsMedia,
   supportsNativeProcesses,
@@ -24,7 +29,7 @@ type Definition =
   | ReturnType<typeof gatewayDefinitionSchema.parse>
   | ReturnType<typeof sandboxDefinitionSchema.parse>
   | ReturnType<typeof storageDefinitionSchema.parse>;
-const parseDefinition = (input: unknown): Definition => {
+const parseDefinition = (input: unknown, name: string): Definition => {
   const { kind } = z
     .object({
       kind: z.enum(["plugin", "tool", "gateway", "sandbox", "storage"]),
@@ -44,7 +49,11 @@ const parseDefinition = (input: unknown): Definition => {
       return sandboxDefinitionSchema.parse(input);
     }
     case "storage": {
-      return storageDefinitionSchema.parse(input);
+      const definition = storageDefinitionSchema.parse(input);
+      return {
+        ...definition,
+        configFields: [...storageFields(definition, `@chatjs/${name}`)],
+      };
     }
     default: {
       throw new Error("Unsupported installation metadata.");
@@ -80,7 +89,7 @@ export const installationCatalog = (
     definition:
       item.meta?.chatjs === undefined
         ? undefined
-        : parseDefinition(item.meta.chatjs),
+        : parseDefinition(item.meta.chatjs, item.name),
   }));
 
 const mediaIssues = (
@@ -168,16 +177,14 @@ const storageIssues = (
 ): string[] => {
   const issues: string[] = [];
   if (storage?.kind === "storage") {
-    for (const key of storage.configKeys) {
-      if (
-        typeof selection.storage?.options[key] !== "string" ||
-        !selection.storage.options[key].trim()
-      ) {
-        issues.push(`${storage.id} requires public configuration: ${key}.`);
-      }
-    }
+    const fields = storageFields(storage, selection.storage?.source ?? "");
+    issues.push(
+      ...storageOptionIssues(fields, selection.storage?.options ?? {}).map(
+        (issue) => `${storage.id}: ${issue}`
+      )
+    );
     for (const key of Object.keys(selection.storage?.options ?? {})) {
-      if (!storage.configKeys.includes(key)) {
+      if (!fields.some((field) => field.key === key)) {
         issues.push(
           `Unsupported public storage option: ${key}. Use environment variables for credentials.`
         );
@@ -289,7 +296,11 @@ export const resolveInstallationSelection = (
   if (gateway) {
     selection.gateway = gateway.id;
   }
-  if (storage && selection.storage) {
+  if (storage?.kind === "storage" && selection.storage) {
+    selection.storage.options = normalizeStorageOptions(
+      storageFields(storage, selection.storage.source),
+      selection.storage.options
+    );
     selection.storage.source = storage.id;
   }
   if (sandbox) {

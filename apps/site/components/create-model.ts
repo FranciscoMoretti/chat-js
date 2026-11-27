@@ -1,3 +1,5 @@
+import { normalizeStorageOptions } from "../../../packages/registry/storage-fields";
+import type { StorageField } from "../../../packages/registry/storage-fields";
 import cliPackage from "../../../packages/cli/package.json";
 import {
   encodeAppPreset,
@@ -56,7 +58,7 @@ export const encodeInstallationQuery = (selection: InstallationSelection) => ({
 export type CreateProvider = Readonly<{
   id: string;
   title: string;
-  configKeys?: readonly string[];
+  fields?: readonly StorageField[];
 }>;
 
 export const readInstallationSelection = (
@@ -79,16 +81,30 @@ export const readInstallationSelection = (
     ) {
       return null;
     }
-    if (
-      selection.storage &&
-      (!provider ||
-        Object.entries(selection.storage.options).some(
-          ([key, value]) =>
-            provider.configKeys?.includes(key) !== true ||
-            typeof value !== "string"
-        ))
-    ) {
-      return null;
+    if (selection.storage) {
+      if (!provider) {
+        return null;
+      }
+      const fields = provider.fields ?? [];
+      const options = normalizeStorageOptions(
+        fields,
+        selection.storage.options
+      );
+      if (
+        Object.entries(options).some(([key, value]) => {
+          const field = fields.find((candidate) => candidate.key === key);
+          // An editable URL can contain an incomplete value. Final validation
+          // reports field errors without making the entire draft inaccessible.
+          return (
+            !field ||
+            (typeof value !== "string" &&
+              !(field.type === "port" && typeof value === "number"))
+          );
+        })
+      ) {
+        return null;
+      }
+      selection.storage.options = options;
     }
     return selection;
   } catch {

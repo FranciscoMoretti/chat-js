@@ -13,7 +13,11 @@ import {
 const gateways = [{ id: "vercel", title: "Vercel" }];
 const storage = [
   { id: "vercel-blob", title: "Blob" },
-  { id: "s3", title: "S3", configKeys: ["bucket"] },
+  {
+    id: "s3",
+    title: "S3",
+    fields: [{ key: "bucket", label: "bucket", type: "text" as const }],
+  },
 ];
 
 void test("Create exports the same authored agent through URLs and shell commands", () => {

@@ -152,3 +152,37 @@ test("native portable capabilities need no application services and cannot dupli
     "deep-research is selected through EVE and through application features. Choose one installation for this capability."
   );
 });
+
+test("old and current presets resolve to the storage adapter's typed options", () => {
+  for (const [source, input, options] of [
+    ["netlify-blobs", { "store name": "uploads" }, { name: "uploads" }],
+    [
+      "ftp",
+      { host: "localhost", port: "21", root: "/" },
+      { host: "localhost", port: 21, root: "/" },
+    ],
+    [
+      "s3",
+      { bucket: "uploads", region: "eu-west-1" },
+      { bucket: "uploads", region: "eu-west-1" },
+    ],
+  ] as const) {
+    const result = resolveInstallationSelection(
+      { ...minimal, storage: { source, options: input } },
+      catalog
+    );
+    expect(result.issues).toEqual([]);
+    expect(result.selection.storage?.options).toEqual(options);
+  }
+  const invalid = resolveInstallationSelection(
+    {
+      ...minimal,
+      storage: {
+        source: "sftp",
+        options: { host: "localhost", port: 70_000, root: "/" },
+      },
+    },
+    catalog
+  );
+  expect(invalid.issues.join(" ")).toContain("65535");
+});

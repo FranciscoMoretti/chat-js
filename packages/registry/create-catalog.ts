@@ -53,6 +53,7 @@ interface FieldMetadata {
   target?: keyof InstallationSelection;
   source?: RegistryKind;
   add?: "flag" | "argument";
+  remove?: string;
   icon?: CreateIcon;
   defaultValue?: string;
   menu?: { value: string; label: string };
@@ -119,7 +120,8 @@ export const createCatalog = {
     ...bind("sandbox", registryAddressSchema),
   },
   plugin: {
-    add: "argument",
+    add: "flag",
+    remove: "Remove an installed plugin by ID.",
     section: "plugins",
     label: "Plugins",
     source: "plugin",
@@ -255,8 +257,18 @@ export const addFlagKeys = addFieldKeys.filter(
     createCatalog[key].add === "flag"
 );
 export const addProviderKeys = addFlagKeys.filter(
-  (key): key is FieldKeysMatching<{ add: "flag"; source: RegistryKind }> =>
-    "source" in createCatalog[key]
+  (
+    key
+  ): key is FieldKeysMatching<{
+    add: "flag";
+    source: RegistryKind;
+    kind: "single";
+  }> => "source" in createCatalog[key] && createCatalog[key].kind === "single"
+);
+
+export const removeFlagKeys = createFieldKeys.filter(
+  (key): key is FieldKeysMatching<{ remove: string }> =>
+    "remove" in createCatalog[key]
 );
 
 export const setupMenu = Object.values(createCatalog).flatMap((field) =>

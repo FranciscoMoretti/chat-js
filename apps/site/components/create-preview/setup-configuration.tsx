@@ -1,5 +1,6 @@
 "use client";
 
+import { storageFieldValue } from "../../../../packages/registry/storage-fields";
 import {
   createCatalog,
   setupMenu,
@@ -196,38 +197,47 @@ const StorageOptions = () => {
   if (
     !installation ||
     storage?.kind !== "storage" ||
-    storage.configKeys.length === 0
+    storage.configFields === undefined ||
+    storage.configFields.length === 0
   ) {
     return null;
   }
   return (
     <div className="bg-muted/30 mt-4 rounded-xl border p-4">
       <div className="grid gap-4 sm:grid-cols-2">
-        {storage.configKeys.map((key) => (
-          <Field key={key}>
-            <FieldLabel htmlFor={`storage-${key}`}>Storage {key}</FieldLabel>
-            <Input
-              id={`storage-${key}`}
-              value={
-                typeof installation.storage?.options[key] === "string"
-                  ? installation.storage.options[key]
-                  : ""
-              }
-              onChange={(event) => {
-                update({
-                  ...installation,
-                  storage: {
-                    source: storage.id,
-                    options: {
-                      ...installation.storage?.options,
-                      [key]: event.target.value,
+        {storage.configFields.map((field) => {
+          const { key } = field;
+          const value = installation.storage?.options[key];
+          return (
+            <Field key={key}>
+              <FieldLabel htmlFor={`storage-${key}`}>
+                Storage {field.label}
+                {field.optional === true ? " (optional)" : ""}
+              </FieldLabel>
+              <Input
+                id={`storage-${key}`}
+                type={field.type === "port" ? "number" : "text"}
+                value={
+                  typeof value === "string" || typeof value === "number"
+                    ? value
+                    : ""
+                }
+                onChange={(event) => {
+                  update({
+                    ...installation,
+                    storage: {
+                      source: storage.id,
+                      options: {
+                        ...installation.storage?.options,
+                        [key]: storageFieldValue(field, event.target.value),
+                      },
                     },
-                  },
-                });
-              }}
-            />
-          </Field>
-        ))}
+                  });
+                }}
+              />
+            </Field>
+          );
+        })}
       </div>
       <p className="text-muted-foreground mt-3 text-xs">
         Public configuration only. Add credentials in your app’s environment

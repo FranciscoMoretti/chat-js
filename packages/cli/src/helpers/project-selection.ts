@@ -1,3 +1,4 @@
+import type { StorageDefinition } from "../../../registry/metadata";
 import { log } from "@clack/prompts";
 import {
   addFieldKeys,
@@ -9,11 +10,43 @@ import { installationCatalog } from "../../../registry/installation-catalog";
 import { listRegistryItems } from "#cli/registry/shadcn";
 import { readInstalledPlugins } from "#cli/utils/installed-plugins";
 import { back, choose, chooseMany, promptValue } from "./prompts";
+import { readProviderId } from "#cli/utils/provider-config";
+import { readInstalledStorageOptions } from "./storage-provider";
 import { storageSettings } from "./create-providers";
 import type { AddSelectionFlags } from "./selection-options";
 
 export const canPickItems = (yes: boolean) =>
   !yes && process.stdin.isTTY && process.stdout.isTTY;
+
+const promptProjectStorage = async (
+  cwd: string,
+  definition: Readonly<StorageDefinition>
+): Promise<Pick<AddSelectionFlags, "storageConfig"> | undefined> => {
+  if ((definition.configFields?.length ?? 0) === 0) {
+    return {};
+  }
+  let current: Record<string, unknown> = {};
+  if ((await readProviderId(cwd, "storage")) === definition.id) {
+    const action = await choose("Storage settings", [
+      { value: "keep", label: "Keep current settings" },
+      { value: "edit", label: "Edit settings" },
+      back,
+    ]);
+    if (action === back.value) {
+      return undefined;
+    }
+    if (action === "keep") {
+      return {};
+    }
+    current = await readInstalledStorageOptions(cwd);
+  }
+  const storageConfig = await storageSettings(
+    definition.id,
+    definition,
+    current
+  );
+  return storageConfig === undefined ? undefined : { storageConfig };
+};
 
 export const promptAddSelection = async (
   cwd: string,
@@ -53,10 +86,12 @@ export const promptAddSelection = async (
       log.info(`No items available in ${field.label}.`);
       continue;
     }
-    if (field.add === "argument") {
+    if (field.kind === "multiple") {
       const items = await chooseMany(field.label, choices, []);
       if (items !== undefined && items.length > 0) {
-        return { items };
+        return field.add === "flag"
+          ? { items: [], flags: { [fieldKey]: items } }
+          : { items };
       }
       continue;
     }
@@ -70,15 +105,12 @@ export const promptAddSelection = async (
     const definition = catalog.find(
       (item) => `@chatjs/${item.name}` === address
     )?.definition;
-    if (definition?.kind === "storage" && definition.configKeys.length > 0) {
-      const options = await storageSettings(definition.id, definition, {});
-      if (options === undefined) {
+    if (definition?.kind === "storage") {
+      const settings = await promptProjectStorage(cwd, definition);
+      if (settings === undefined) {
         continue;
       }
-      return {
-        items: [],
-        flags: { [fieldKey]: address, storageConfig: options },
-      };
+      return { items: [], flags: { [fieldKey]: address, ...settings } };
     }
     return { items: [], flags: { [fieldKey]: address } };
     /* eslint-enable no-await-in-loop */

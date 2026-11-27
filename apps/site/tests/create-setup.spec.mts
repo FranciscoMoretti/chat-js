@@ -241,3 +241,29 @@ for (const width of [1440, 845, 390]) {
     ).toBe(true);
   });
 }
+
+test("storage port survives editing and reopening the create URL", async ({
+  page,
+  uiVerify,
+}) => {
+  uiVerify.disableAutoSnapshot();
+  await page.goto("/create");
+  await page.getByRole("tab", { name: "Setup", exact: true }).click();
+  await page.getByRole("button", { name: /Show all .* providers/u }).click();
+  await page.getByRole("radio", { name: "FTP", exact: true }).check();
+  const port = page.getByRole("spinbutton", { name: "Storage port" });
+  await port.fill("2121");
+  await expect
+    .poll(() => {
+      const app = new URL(page.url()).searchParams.get("app");
+      return app === null
+        ? undefined
+        : decodeAppPreset(app).storage?.options.port;
+    })
+    .toBe(2121);
+  await page.reload();
+  await page.getByRole("tab", { name: "Setup", exact: true }).click();
+  await expect(port).toHaveValue("2121");
+  await port.scrollIntoViewIfNeeded();
+  await uiVerify.snapshot("FTP storage settings");
+});

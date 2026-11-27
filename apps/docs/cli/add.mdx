@@ -13,6 +13,7 @@ Run `chat-js add --dry-run` in a terminal to browse tools, plugins, and provider
 
 | Flag | Default | Description |
 | --- | --- | --- |
+| `--plugin <item>` | None | Install a plugin by name or registry address. Repeat for multiple plugins |
 | `-y, --yes` | `false` | Skip ChatJS confirmation |
 | `-o, --overwrite` | `false` | Authorize overwriting modified or untracked source |
 | `--dry-run` | `false` | Resolve and report declared integrations and native entry paths without installing or writing app files |
@@ -25,6 +26,7 @@ Run `chat-js add --dry-run` in a terminal to browse tools, plugins, and provider
 | `-c, --cwd <cwd>` | Current directory | Destination app |
 
 ```bash
+npx chat-js@alpha add --plugin projects
 npx chat-js@alpha add deep-research --yes
 npx chat-js@alpha add @acme/my-tool
 npx chat-js@alpha add ./my-tool.json --cwd apps/chat
@@ -49,6 +51,8 @@ npx chat-js@alpha sync --cwd apps/chat
 ```
 
 The command prints the selected integrations' credential requirements. Set the required values in `.env.local`. MCP needs `MCP_ENCRYPTION_KEY`. When adding a plugin that declares tables, run `bun run db:generate`, review the SQL, then run `bun run db:migrate`. See [plugin installation](/plugins/using-plugins#database-migrations).
+
+When you select the current storage provider again, you can keep its settings or edit them. With `--storage-config`, only the keys you supply change. Switching providers starts with the new provider’s settings.
 
 Exclusive alternatives require explicit replacement:
 

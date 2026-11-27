@@ -211,3 +211,38 @@ test("catalog flags and a builder preset replay the same provider, auth and live
     "--agent-config"
   );
 });
+
+test("legacy external storage keys retain their adapter's JSON values", async () => {
+  const { resolveStorage } = await import("../registry/storage");
+  const { registryResolution } = await import("../registry/resolution-context");
+  const { applyStorageOptions } = await import("./storage-provider");
+  const source = "@team/s3-storage";
+  const item = {
+    type: "registry:item" as const,
+    name: "s3-storage",
+    files: [
+      {
+        path: "storage.ts",
+        target: "~/chatjs/providers/storage.ts",
+        type: "registry:file" as const,
+      },
+    ],
+    meta: {
+      chatjs: {
+        contractVersion: 1,
+        id: "s3",
+        kind: "storage",
+        configKeys: ["settings"],
+        envRequirements: [{ options: [["TEAM_TOKEN"]] }],
+      },
+    },
+  };
+  await registryResolution.run(new Map([[source, item]]), async () => {
+    const options = { settings: { pool: 3 } };
+    const storage = applyStorageOptions(await resolveStorage(source), options);
+    expect(storage.options).toEqual(options);
+    expect(storage.definition.envRequirements).toEqual([
+      { options: [["TEAM_TOKEN"]] },
+    ]);
+  });
+});

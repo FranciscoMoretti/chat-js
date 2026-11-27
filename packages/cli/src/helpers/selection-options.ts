@@ -3,6 +3,7 @@ import { Command } from "commander";
 import { z } from "zod";
 import {
   addFlagKeys,
+  removeFlagKeys,
   createCatalog,
   createFieldKeys,
   createFlag,
@@ -44,18 +45,24 @@ export const parseAddFlags = (
   options: Readonly<Record<string, unknown>>
 ): AddSelectionFlags => parseSelectionFlags(options, addFlagKeys);
 
-export const selectionCommand = (name: "create" | "add"): Command => {
+const selectionKeys = {
+  create: createFieldKeys,
+  add: addFlagKeys,
+  remove: removeFlagKeys,
+};
+export const selectionCommand = (name: keyof typeof selectionKeys): Command => {
   const command = new Command(name);
-  for (const key of name === "create" ? createFieldKeys : addFlagKeys) {
+  for (const key of selectionKeys[name]) {
     const field = createCatalog[key];
     const flag = createFlag(key);
-    const help = "help" in field ? field.help : field.description;
+    const description = "help" in field ? field.help : field.description;
+    const help = name === "remove" ? createCatalog.plugin.remove : description;
     if (field.kind === "toggle") {
       command.option(flag, help);
       command.option(`--no-${flag.slice(2)}`, `Omit ${field.label}.`);
     } else if (field.kind === "multiple") {
       command.option(
-        `${flag} <item>`,
+        `${flag} <${name === "remove" ? "id" : "item"}>`,
         `${help}${"choices" in field && Array.isArray(field.choices) ? ` Choices: ${field.choices.join(", ")}.` : ""} Repeat for multiple items.`,
         (value, previous: string[] | undefined) => [...(previous ?? []), value]
       );

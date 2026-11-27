@@ -1,3 +1,4 @@
+import { builtinStorageFields } from "../../storage-fields";
 import { builtInStorageProviders } from "./providers";
 import { getStorageEnvironmentRequirements } from "./environment";
 import { storageDefinitionSchema } from "../../metadata";
@@ -27,6 +28,7 @@ type StorageEnvironmentRequirementReader = Readonly<{
 }>;
 export const storageItems = builtInStorageProviders.map((provider) => {
   const id = provider.slug;
+  const configFields = builtinStorageFields(id, provider.env.config ?? []);
   return {
     description:
       id === "memory"
@@ -42,8 +44,11 @@ export const storageItems = builtInStorageProviders.map((provider) => {
     meta: {
       icon: icons[id],
       chatjs: storageDefinitionSchema.parse({
-        // Memory accepts an optional initial seed; it needs no adapter options.
-        configKeys: id === "memory" ? [] : (provider.env.config ?? []),
+        // Older clients interpret every configKeys entry as required.
+        configKeys: configFields
+          .filter((field) => field.optional !== true)
+          .map(({ key }) => key),
+        configFields,
         contractVersion: 1,
         envRequirements: getStorageEnvironmentRequirements(id).map(
           (requirement: StorageEnvironmentRequirementReader) => ({

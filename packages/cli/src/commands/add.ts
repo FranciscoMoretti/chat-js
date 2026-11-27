@@ -19,7 +19,11 @@ import { configureSandboxProvider } from "#cli/helpers/sandbox-provider";
 import { resolveSandbox } from "#cli/registry/sandboxes";
 import { access, writeFile } from "node:fs/promises";
 import { syncPlugins } from "#cli/utils/sync-plugins";
-import { configureStorageProvider } from "#cli/helpers/storage-provider";
+import {
+  configureStorageProvider,
+  applyStorageOptions,
+  readInstalledStorageOptions,
+} from "#cli/helpers/storage-provider";
 import { confirm, isCancel, log } from "@clack/prompts";
 import {
   selectionCommand,
@@ -127,6 +131,7 @@ const validateAddSelection = (
 ): void => {
   if (
     items.length === EMPTY_SELECTION_COUNT &&
+    (options.plugin?.length ?? 0) === 0 &&
     providerSources(options).length === 0
   ) {
     throw new Error(
@@ -156,17 +161,14 @@ const prepareAdd = async (
   const storage = hasNonEmptyValue(options.storageProvider)
     ? await resolveStorage(options.storageProvider, cwd)
     : undefined;
-  if (storage && options.storageConfig !== undefined) {
-    storage.options = options.storageConfig;
-  }
   const plan = await planInstallation(
     cwd,
     {
-      plugins: [],
+      plugins: options.plugin ?? [],
       gateway: gateway?.source,
       sandbox: sandbox?.source,
       storage: storage
-        ? { options: storage.options, source: storage.source }
+        ? { options: options.storageConfig ?? {}, source: storage.source }
         : undefined,
       tools: items,
     },
@@ -194,17 +196,17 @@ const prepareAdd = async (
     ({ kind, previous, next }: ProviderChangeInput) =>
       kind === "gateway" && hasNonEmptyValue(previous) && previous !== next
   );
-  const keepStorageOptions =
-    options.storageConfig === undefined &&
-    plan.providerChanges.some(
-      ({
-        kind,
-        previous,
-        next,
-      }: ReadonlyNative<
-        InstallationPlan["providerChanges"][number]
-      >): boolean => kind === "storage" && previous === next
-    );
+  const sameStorage = plan.providerChanges.some(
+    ({ kind, previous, next }: ProviderChangeInput) =>
+      kind === "storage" && previous === next
+  );
+  const keepStorageOptions = sameStorage && options.storageConfig === undefined;
+  if (selectedStorage && !keepStorageOptions) {
+    applyStorageOptions(selectedStorage, {
+      ...(sameStorage ? await readInstalledStorageOptions(cwd) : {}),
+      ...options.storageConfig,
+    });
+  }
   const configEdit =
     gatewayChange && selectedGateway
       ? await gatewayConfigEdit(cwd, selectedGateway)
@@ -223,6 +225,11 @@ const prepareAdd = async (
 
 const printSetupRequirements = (setup: ReadonlyNative<AddSetup>): void => {
   const { plan, selectedGateway, selectedStorage, selectedSandbox } = setup;
+  for (const plugin of plan.plugins) {
+    log.info(
+      `Installed plugin ${plugin.id}. Remove it with chat-js remove --plugin ${plugin.id}`
+    );
+  }
   const requirements = [
     ...plan.expected.flatMap(
       (item: ReadonlyNative<AddSetup["plan"]["expected"][number]>) =>
@@ -233,7 +240,9 @@ const printSetupRequirements = (setup: ReadonlyNative<AddSetup>): void => {
     ),
     ...(selectedGateway?.definition.envRequirements ?? []),
     ...(selectedSandbox?.definition.envRequirements ?? []),
-    ...(selectedStorage?.definition.envRequirements ?? []),
+    ...(setup.keepStorageOptions
+      ? []
+      : (selectedStorage?.definition.envRequirements ?? [])),
   ];
   for (const requirement of requirements) {
     log.info(
@@ -292,7 +301,12 @@ const exportAddSelection = async (
     ...items.map((item) => itemAddress(item, "tool")),
     ...providerSources(options),
   ];
-  const output = await exportManualInstallation(cwd, sources);
+  const plugins = (options.plugin ?? []).map((id) => itemAddress(id, "tool"));
+  const output = await exportManualInstallation(
+    cwd,
+    [...sources, ...plugins],
+    plugins
+  );
   log.success(`Source exported to ${output}`);
   log.info(
     "Nothing was installed or registered. Follow the bundle's README.md and manifest.json to connect the source manually."

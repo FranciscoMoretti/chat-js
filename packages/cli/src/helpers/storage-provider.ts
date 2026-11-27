@@ -3,7 +3,14 @@ import type { StorageSelection } from "#cli/registry/storage";
 import { builtInStorage } from "../../../registry/src/storage/catalog";
 import { getStorageEnvironmentRequirements } from "../../../registry/src/storage/environment";
 import { PROVIDER_NAMES } from "files-sdk/providers";
-import { resolveStorage } from "#cli/registry/storage";
+import {
+  storageFields,
+  storageOptionIssues,
+  normalizeStorageOptions,
+} from "../../../registry/storage-fields";
+import { storageOptionsSchema } from "../../../registry/installation";
+import { ProviderRequirementError } from "#cli/utils/installation-requirements";
+import { readProviderLiteral } from "#cli/utils/provider-config";
 import { generatedRegistrationSource } from "#cli/utils/generated-registration-source";
 import path from "node:path";
 import { preflight } from "#cli/utils/preflight";
@@ -41,12 +48,28 @@ const registryStorageRequirement = (
   }),
 });
 
-export const resolveCreateStorage = async (
-  source: string,
-  options: Record<string, unknown>,
-  cwd: string
-): Promise<StorageSelection> => {
-  const selection = await resolveStorage(source, cwd);
+export const readInstalledStorageOptions = async (cwd: string) =>
+  storageOptionsSchema.parse(
+    await readProviderLiteral(
+      cwd,
+      "chatjs/providers/storage-options.ts",
+      "storageOptions"
+    )
+  );
+
+export const applyStorageOptions = (
+  selection: StorageSelection,
+  input: Record<string, unknown>
+): StorageSelection => {
+  const fields = storageFields(selection.definition, selection.source);
+  const options = normalizeStorageOptions(fields, input);
+  const issues = storageOptionIssues(fields, options);
+  if (issues.length) {
+    throw new ProviderRequirementError(
+      "storage",
+      `${selection.definition.id}: ${issues.join(" ")} Pass --storage-config or configure File storage.`
+    );
+  }
   selection.options = options;
   // An external item can share an ID with a built-in while declaring its own credentials.
   const builtin = builtInStorage.find(

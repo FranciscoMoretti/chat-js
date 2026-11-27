@@ -22,7 +22,7 @@ import {
   createSelectionFromFlags,
   promptCreateMenu,
 } from "#cli/helpers/create-menu";
-import { ProviderRequirementError } from "#cli/utils/installation-requirements";
+import { resolveStorage } from "#cli/registry/storage";
 import type { InstallationSelection } from "../../../registry/installation";
 import type { AuthProvider, CoreFeatureKey, PackageManager } from "#cli/types";
 import { FEATURES_DEFAULTS } from "../../../../apps/chat/lib/config-schema";
@@ -43,7 +43,7 @@ import {
 import { configureGatewayProvider } from "#cli/helpers/gateway-provider";
 import {
   configureStorageProvider,
-  resolveCreateStorage,
+  applyStorageOptions,
 } from "#cli/helpers/storage-provider";
 import { ensureTargetEmpty } from "#cli/helpers/ensure-target";
 import {
@@ -123,7 +123,7 @@ interface CreateSetup {
   gateway: Awaited<ReturnType<typeof resolveGateway>>["definition"]["id"];
   gatewaySelection: Awaited<ReturnType<typeof resolveGateway>>;
   plan: Awaited<ReturnType<typeof planInstallation>>;
-  storage: Awaited<ReturnType<typeof resolveCreateStorage>>;
+  storage: ReturnType<typeof applyStorageOptions>;
   sandbox: Awaited<ReturnType<typeof resolveSandbox>> | undefined;
   withElectron: boolean;
 }
@@ -175,25 +175,10 @@ const prepareCreateSetup = async (
   selection: InstallationSelection,
   targetDir: string
 ): Promise<CreateSetup> => {
-  const storage = await resolveCreateStorage(
-    selection.storage?.source ?? "memory",
-    selection.storage?.options ?? {},
-    targetDir
+  const storage = applyStorageOptions(
+    await resolveStorage(selection.storage?.source ?? "memory", targetDir),
+    selection.storage?.options ?? {}
   );
-  const missing = storage.definition.configKeys.filter((key) => {
-    const value = storage.options[key];
-    return (
-      value === undefined ||
-      value === null ||
-      (typeof value === "string" && !value.trim())
-    );
-  });
-  if (missing.length) {
-    throw new ProviderRequirementError(
-      "storage",
-      `${storage.definition.id} needs public storage settings (${missing.join(", ")}). Pass --storage-config or configure File storage.`
-    );
-  }
   const plan = await planInstallation(
     targetDir,
     {

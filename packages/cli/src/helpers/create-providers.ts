@@ -1,3 +1,7 @@
+import {
+  storageFieldValue,
+  storageFieldIssue,
+} from "../../../registry/storage-fields";
 import { back, choose, promptValue } from "#cli/helpers/prompts";
 import { parseStorageOptions } from "#cli/helpers/storage-provider";
 import { builtInGateways, resolveGateway } from "#cli/registry/gateways";
@@ -115,37 +119,31 @@ export const storageSettings = async (
   >,
   options: Record<string, unknown>
 ): Promise<Record<string, unknown> | undefined> => {
-  if (provider === external.value && definition.configKeys.length > 0) {
+  const fields = definition.configFields ?? [];
+  if (provider === external.value && fields.length > 0) {
     const json = await promptValue(
-      `Non-secret storage settings as JSON (${definition.configKeys.join(", ")})`,
+      `Non-secret storage settings as JSON (${fields.map(({ key }) => key).join(", ")})`,
       JSON.stringify(options),
       validateOptions
     );
     return json === undefined ? undefined : parseStorageOptions(json);
   }
-  for (const key of definition.configKeys) {
-    const numericPort =
-      key === "port" && (provider === "ftp" || provider === "sftp");
+  for (const field of fields) {
+    const { key, label } = field;
     const existing = options[key];
     // eslint-disable-next-line no-await-in-loop -- Ask for one public setting at a time.
     const input = await promptValue(
-      `Storage ${key} (public setting)`,
+      `Storage ${label} (${field.optional === true ? "optional" : "public setting"})`,
       typeof existing === "string" || typeof existing === "number"
         ? String(existing)
         : undefined,
-      numericPort
-        ? (value) =>
-            /^\d+$/u.test(value.trim()) &&
-            Number(value) >= 1 &&
-            Number(value) <= 65_535
-              ? undefined
-              : "Enter a port between 1 and 65535."
-        : undefined
+      (value) =>
+        storageFieldIssue(field, storageFieldValue(field, value.trim()))
     );
     if (input === undefined) {
       return undefined;
     }
-    options[key] = numericPort ? Number(input) : input;
+    options[key] = storageFieldValue(field, input);
   }
   return options;
 };

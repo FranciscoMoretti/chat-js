@@ -9,12 +9,12 @@ import {
   canPickItems,
   promptRemoveSelection,
 } from "#cli/helpers/project-selection";
-import { Command } from "commander";
+import { selectionCommand } from "#cli/helpers/selection-options";
 import path from "node:path";
 import { handleError } from "#cli/utils/handle-error";
 import { removePlugins } from "#cli/utils/remove-plugins";
 
-export const remove = new Command("remove")
+export const remove = selectionCommand("remove")
   .description(
     "remove installed plugins, retaining database schemas and user data"
   )
@@ -34,12 +34,15 @@ export const remove = new Command("remove")
         cwd: string;
         dryRun: boolean;
         backup: boolean;
+        plugin?: readonly string[];
         yes: boolean;
       }>
     ) => {
       try {
         const cwd = path.resolve(options.cwd);
-        let ids = input;
+        let ids: readonly string[] = [
+          ...new Set([...input, ...(options.plugin ?? [])]),
+        ];
         if (!ids.length && canPickItems(options.yes)) {
           const picked = await promptRemoveSelection(cwd);
           if (picked === undefined || picked.length === 0) {

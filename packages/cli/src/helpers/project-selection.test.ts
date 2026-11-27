@@ -48,7 +48,8 @@ it("uses the registry item address even when its name differs from its plugin ID
     "@chatjs/team-bundle",
   ]);
   expect(await promptAddSelection("/unused", false)).toEqual({
-    items: ["@chatjs/team-bundle"],
+    items: [],
+    flags: { plugin: ["@chatjs/team-bundle"] },
   });
   expect(multi.mock.calls[0]?.[0].options).toMatchObject([
     { value: "@chatjs/team-bundle", label: "Team plugin" },
@@ -69,4 +70,13 @@ it("offers only locally installed plugin IDs for removal, including third-party 
     "projects",
     "team",
   ]);
+});
+
+it("accepts repeated plugin flags on create, add, and remove", () => {
+  for (const command of ["create", "add", "remove"] as const) {
+    const flags = selectionCommand(command)
+      .parse(["--plugin", "projects", "--plugin", "sharing"], { from: "user" })
+      .opts();
+    expect(flags.plugin).toEqual(["projects", "sharing"]);
+  }
 });
