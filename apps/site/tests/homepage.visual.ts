@@ -361,6 +361,15 @@ try {
     // oxlint-disable-next-line eslint/no-await-in-loop -- Inspect each fresh landing before changing the viewport.
     await checkOpening(page, size);
   }
+  const logo = page.getByRole("link", { name: "ChatJS home", exact: true });
+  await logo.hover();
+  assert.equal(
+    await logo.evaluate((link) => getComputedStyle(link).backgroundColor),
+    "rgba(0, 0, 0, 0)"
+  );
+  await page.getByRole("banner").screenshot({
+    path: `${output}canopy-header-logo-hover.png`,
+  });
   const skip = page.getByRole("link", { name: "Skip to content", exact: true });
   await skip.focus();
   await page.keyboard.press("Enter");

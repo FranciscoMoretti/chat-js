@@ -13,6 +13,18 @@
   height: 24px;
 }
 
+@media (hover: hover) {
+  .chatjs-home-link:hover svg {
+    opacity: 0.72;
+  }
+}
+
+.chatjs-home-link:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
 .chatjs-section-nav {
   display: flex;
   align-items: center;

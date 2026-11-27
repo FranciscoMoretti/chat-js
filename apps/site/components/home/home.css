@@ -76,7 +76,6 @@ body:has(.canopy-page) {
   border-radius: var(--radius);
   color: light-dark(#53534a, #c9c9bf);
 }
-.chatjs-home-link:hover,
 .canopy-nav-links a:hover,
 .canopy-mobile-menu a:is(:hover, :focus-visible) {
   background: var(--muted);
