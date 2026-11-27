@@ -24,22 +24,28 @@ export const requestBoundComparison = async (
   const operationIds = result.candidates.map(
     (candidate) => candidate.operationId
   );
-  await expect(async () => {
+  const allBound = () => {
     const states = result.candidates.map((candidate) => candidate.state);
-    expect(
-      states.every((state) => state === "bound" || state === "waiting")
-    ).toBe(true);
-    if (states.includes("waiting")) {
-      result = await send();
-      expect(result.id).toBe(id);
-      expect(
-        result.candidates.map((candidate) => candidate.operationId)
-      ).toEqual(operationIds);
-    }
-    expect(
-      result.candidates.every((candidate) => candidate.state === "bound")
-    ).toBe(true);
-  }).toPass({ intervals: [1000, 2000, 4000], timeout: 60_000 });
+    expect(states).not.toContain("rejected");
+    expect(states).not.toContain("unresolved");
+    return states.every((state) => state === "bound");
+  };
+  if (!allBound()) {
+    await expect
+      .poll(
+        async () => {
+          result = await send();
+          // A poll callback error ends the poll; only a false result is retried.
+          expect(result.id).toBe(id);
+          expect(
+            result.candidates.map((candidate) => candidate.operationId)
+          ).toEqual(operationIds);
+          return allBound();
+        },
+        { intervals: [1000, 2000, 4000], timeout: 60_000 }
+      )
+      .toBe(true);
+  }
   await Promise.all(
     result.candidates.flatMap((candidate) =>
       candidate.state === "bound"
