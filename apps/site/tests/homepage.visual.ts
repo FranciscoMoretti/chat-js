@@ -74,7 +74,7 @@ const checkNavigation = async (
     exact: true,
   });
   assert.equal(await demoLink.getAttribute("target"), "_blank");
-  assert.ok(await demoLink.locator("svg").isVisible());
+  assert.equal(await demoLink.locator("svg").isVisible(), mobile);
   assert.equal(create.href, "/create");
   assert.equal(newApp.href, create.href);
   const bounds = await region.getByRole("navigation").boundingBox();
@@ -369,6 +369,14 @@ try {
   );
   await page.getByRole("banner").screenshot({
     path: `${output}canopy-header-logo-hover.png`,
+  });
+  const demo = page.getByRole("link", { name: "Demo (opens in a new tab)" });
+  const restingBounds = await demo.boundingBox();
+  await demo.hover();
+  assert.ok(await demo.locator("svg").isVisible());
+  assert.deepEqual(await demo.boundingBox(), restingBounds);
+  await page.getByRole("banner").screenshot({
+    path: `${output}canopy-header-demo-hover.png`,
   });
   const skip = page.getByRole("link", { name: "Skip to content", exact: true });
   await skip.focus();

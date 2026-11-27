@@ -290,6 +290,9 @@ body:has(.canopy-page) {
     border-radius: var(--radius);
     font-size: 16px;
   }
+  .canopy-mobile-menu .demo-link svg {
+    margin-inline-start: auto;
+  }
   .canopy-mobile-menu button {
     width: 100%;
     justify-content: start;

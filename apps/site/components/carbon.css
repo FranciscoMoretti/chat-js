@@ -92,6 +92,28 @@
   border: 1px solid light-dark(#cecec4, #383834);
 }
 
+.demo-link {
+  position: relative;
+  gap: 4px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  :is(.canopy-nav-links, .carbon-nav) .demo-link svg {
+    position: absolute;
+    inset-block-start: 4px;
+    inset-inline-end: 1px;
+    width: 10px;
+    height: 10px;
+    visibility: hidden;
+  }
+
+  :is(.canopy-nav-links, .carbon-nav)
+    .demo-link:is(:hover, :focus-visible)
+    svg {
+    visibility: visible;
+  }
+}
+
 .carbon-nav-github {
   min-width: 36px;
 }
