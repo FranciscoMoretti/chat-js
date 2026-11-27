@@ -1,5 +1,9 @@
 # chat-js
 
+## 1.0.0-beta.2
+
+Generate apps with standalone Electron import paths and portable Vercel deployment settings. Pair with registry `0.2.0-beta.11` for the Deep Research report download and project deletion fixes.
+
 ## 1.0.0-beta.1
 
 Format the retained database schema record when removing plugins, so generated apps pass lint after a Feedback plugin install and removal.
