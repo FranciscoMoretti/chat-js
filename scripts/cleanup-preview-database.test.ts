@@ -133,7 +133,9 @@ const run = async ({
     stateBeforeDelete,
   });
   const request =
-    mock<Parameters<typeof cleanupPreviewDatabase>[0]["request"]>();
+    mock<
+      NonNullable<Parameters<typeof cleanupPreviewDatabase>[0]["request"]>
+    >();
   for (const page of pages) {
     request.mockResolvedValueOnce(Response.json(page));
   }

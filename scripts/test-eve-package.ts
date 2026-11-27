@@ -31,6 +31,7 @@ if (
 const manifestPaths = [
   "apps/chat/package.json",
   "apps/chat/tests/eve-fixture/package.json",
+  "packages/cli/package.json",
   "packages/registry/package.json",
 ];
 const originals = await Promise.all(

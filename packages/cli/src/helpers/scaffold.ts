@@ -299,6 +299,9 @@ const normalizeElectronFiles = async (
   destination: string,
   packageManager: PackageManager
 ): Promise<void> => {
+  await replaceInFile(pathModule.join(destination, "tsconfig.json"), [
+    ['"../chat/*"', '"../*"'],
+  ]);
   const scriptPlaceholder = `\${script}`;
 
   await replaceInFile(pathModule.join(destination, "forge.config.ts"), [
