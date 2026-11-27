@@ -1,6 +1,5 @@
 import { installationActivation } from "./installation-activation";
 import { existsSync } from "node:fs";
-import { createRequire } from "node:module";
 import { runCommand } from "./run-command";
 import { randomUUID } from "node:crypto";
 import { mkdir, rename, rm, rmdir, writeFile } from "node:fs/promises";
@@ -30,18 +29,18 @@ import { writeGeneratedFiles } from "./write-generated-files";
 // Use the project's formatter and configuration when installed. Removal also
 // works in source-only projects, where the JSON writer provides the fallback.
 const formatRetainedSchemas = async (cwd: string): Promise<void> => {
-  const search =
-    createRequire(path.join(cwd, "package.json")).resolve.paths("oxfmt") ?? [];
-  const formatter = search
-    .filter((directory) => path.basename(directory) === "node_modules")
-    .map((directory) => path.join(directory, "oxfmt/bin/oxfmt"))
-    .find((file) => existsSync(file));
-  if (formatter === undefined) {
-    return;
+  let directory = path.resolve(cwd);
+  const binary = "node_modules/oxfmt/bin/oxfmt";
+  while (!existsSync(path.join(directory, binary))) {
+    const parent = path.dirname(directory);
+    if (parent === directory) {
+      return;
+    }
+    directory = parent;
   }
   await runCommand(
     process.execPath,
-    [formatter, "--write", retainedSchemasFile],
+    [path.join(directory, binary), "--write", retainedSchemasFile],
     cwd
   );
 };

@@ -313,8 +313,14 @@ test("registration write failure restores moved source and previous registration
   }
 });
 
-test("formatter failure restores the previous schema record, registrations and removed source", async () => {
-  const root = await fixture();
+test("a failed workspace formatter restores the previous schema record, registrations and removed source", async () => {
+  const workspace = await fixture();
+  const root = path.join(workspace, "app");
+  await mkdir(root);
+  await cp(
+    path.join(workspace, "components.json"),
+    path.join(root, "components.json")
+  );
   await install(root, sharingItem);
   const record = "chatjs/retained-plugin-schemas.json";
   await writeFile(path.join(root, record), '{ "prior": [] }\n');
@@ -329,7 +335,7 @@ test("formatter failure restores the previous schema record, registrations and r
       files.map(async (file) => await readFile(path.join(root, file), "utf-8"))
     );
   const before = await contents();
-  const bin = path.join(root, "node_modules/oxfmt/bin");
+  const bin = path.join(workspace, "node_modules/oxfmt/bin");
   await mkdir(bin, { recursive: true });
   await writeFile(
     path.join(bin, "oxfmt"),
