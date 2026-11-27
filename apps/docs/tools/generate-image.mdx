@@ -6,7 +6,7 @@ description: "Install image generation for a compatible gateway, configure the d
 ## Select during creation
 
 ```bash
-npx chat-js@alpha create my-app --yes --image-generation-tool generate-image
+npx chat-js@beta create my-app --yes --image-generation-tool generate-image
 ```
 
 Interactive creation offers the built-in gateway implementation or an external registry item when you enable image generation. The installer checks that the [gateway](/gateways/overview#choose-a-gateway) declares image support and provides a default image model. Vercel, OpenAI, and OpenAI Compatible meet that requirement. Configure [durable storage](/storage) and verify that your endpoint serves the chosen image model.
@@ -16,7 +16,7 @@ Interactive creation offers the built-in gateway implementation or an external r
 In an existing ChatJS app with registry-based image tools:
 
 ```bash
-npx chat-js@alpha add generate-image
+npx chat-js@beta add generate-image
 ```
 
 Set `ai.tools.image.default` in `chat.config.ts`. Installation makes the tool available. There is no separate `enabled` flag.
@@ -66,7 +66,7 @@ While generation is running, the renderer shows a loading state with the prompt.
 ## External implementations
 
 ```bash
-npx chat-js@alpha create my-app --yes \
+npx chat-js@beta create my-app --yes \
   --image-generation-tool https://example.com/r/image-tool.json
 ```
 

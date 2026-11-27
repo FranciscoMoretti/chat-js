@@ -9,7 +9,7 @@ const output = fileURLToPath(
   new URL("../uiverify-screenshots/get-started/", import.meta.url)
 );
 await mkdir(output, { recursive: true });
-const command = "npx chat-js@alpha create";
+const command = "npx chat-js@beta create";
 
 const captureViewport = async (width: number): Promise<void> => {
   const page = await browser.newPage({

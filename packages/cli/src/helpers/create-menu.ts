@@ -21,7 +21,7 @@ import {
   sandboxOptions,
   storageOptions,
 } from "#cli/helpers/create-providers";
-import { listRegistryItems } from "#cli/registry/shadcn";
+import { itemAddress, listRegistryItems } from "#cli/registry/shadcn";
 import { registryItems } from "../../../registry/registry-items";
 import { installationCatalog } from "../../../registry/installation-catalog";
 
@@ -52,6 +52,8 @@ interface Draft {
   selection: InstallationSelection;
 }
 
+const pluginAddress = (source: string): string => itemAddress(source, "tool");
+
 export const createSelectionFromFlags = async (
   cwd: string,
   flags: CreateSelectionFlags
@@ -66,7 +68,9 @@ export const createSelectionFromFlags = async (
     )
   );
   const selected: Partial<InstallationSelection> = {};
-  const plugins = new Set(flags.plugin);
+  const plugins = new Map(
+    flags.plugin?.map((source) => [pluginAddress(source), source])
+  );
   for (const key of createFieldKeys) {
     const field = createCatalog[key];
     const value = flags[key];
@@ -76,16 +80,16 @@ export const createSelectionFromFlags = async (
     if ("pluginId" in field) {
       const enabled = value;
       if (enabled === true) {
-        plugins.add(field.pluginId);
+        plugins.set(pluginAddress(field.pluginId), field.pluginId);
       }
       if (enabled === false) {
-        plugins.delete(field.pluginId);
+        plugins.delete(pluginAddress(field.pluginId));
       }
     }
   }
   return installationSelectionSchema.parse({
     ...selected,
-    plugins: [...plugins],
+    plugins: [...plugins.values()],
     tools: [...new Set([...(selected.tools ?? []), ...tools])],
     agent:
       flags.disabledDefaultTool === undefined
@@ -110,14 +114,28 @@ export const createSelectionFromFlags = async (
 };
 
 const catalog = installationCatalog(registryItems);
-const syncSelection = (
-  current: readonly string[],
-  options: readonly Option<string>[],
-  next: readonly string[]
-) => [
-  ...current.filter((id) => !options.some((option) => option.value === id)),
-  ...next,
-];
+const editPluginChoices = async (
+  draft: Draft,
+  title: string,
+  options: Option<string>[]
+): Promise<void> => {
+  const current = draft.selection.plugins;
+  const available = new Set(options.map(({ value }) => pluginAddress(value)));
+  const checked = new Set(current.map(pluginAddress));
+  const selected = await chooseMany(
+    title,
+    options,
+    options
+      .filter(({ value }) => checked.has(pluginAddress(value)))
+      .map(({ value }) => value)
+  );
+  if (selected !== undefined) {
+    draft.selection.plugins = [
+      ...current.filter((source) => !available.has(pluginAddress(source))),
+      ...selected,
+    ];
+  }
+};
 
 const editAppearance = async (draft: Draft): Promise<void> => {
   for (;;) {
@@ -164,23 +182,11 @@ const editPlugins = async (draft: Draft, cwd: string): Promise<void> => {
     const group = groups.find(({ title }) => title === section);
     const options = registryChoices(
       group?.items ?? [],
-      createCatalog.plugin.source
+      createCatalog.plugin.source,
+      "address"
     );
-    // eslint-disable-next-line no-await-in-loop -- Wait for the user before returning to Plugins.
-    const selected = await chooseMany(
-      section,
-      options,
-      draft.selection.plugins.filter((id) =>
-        options.some((option) => option.value === id)
-      )
-    );
-    if (selected !== undefined) {
-      draft.selection.plugins = syncSelection(
-        draft.selection.plugins,
-        options,
-        selected
-      );
-    }
+    // eslint-disable-next-line no-await-in-loop -- Each selection depends on the selected plugin group.
+    await editPluginChoices(draft, section, options);
   }
 };
 
@@ -217,18 +223,7 @@ const editSetup = async (draft: Draft, cwd: string): Promise<void> => {
           label: createCatalog.electron.label,
         },
       ];
-      const selected = await chooseMany(
-        "Platforms (web is included)",
-        options,
-        draft.selection.plugins.filter((id) => id === "desktop")
-      );
-      if (selected !== undefined) {
-        draft.selection.plugins = syncSelection(
-          draft.selection.plugins,
-          options,
-          selected
-        );
-      }
+      await editPluginChoices(draft, "Platforms (web is included)", options);
     }
     /* eslint-enable no-await-in-loop */
   }
@@ -292,12 +287,13 @@ const summarize = (draft: Draft, shadcnArgs: readonly string[]): void => {
   const auth = (draft.selection.auth ?? defaultAuthProviders).map(
     (provider) => authProviderLabels[provider]
   );
+  const desktop = pluginAddress(createCatalog.electron.pluginId);
   log.info(
     [
       `Appearance  ${draft.preset ?? (shadcnArgs.length ? "Supplied shadcn options" : "Rhea")}`,
-      `Plugins     ${catalogTitles(plugins.filter((id) => id !== "desktop")) || "None selected"}`,
+      `Plugins     ${catalogTitles(plugins.filter((id) => pluginAddress(id) !== desktop)) || "None selected"}`,
       `Agent       ${enabledEveDefaultTools(draft.selection.agent).length} default tools · ${sandboxName}${tools.length > 0 || (eve?.length ?? 0) > 0 ? ` · ${catalogTitles([...tools, ...(eve ?? [])])}` : ""}`,
-      `Setup       ${gatewayName} · ${storageName} · ${plugins.includes("desktop") ? "Web and Electron" : "Web"} · ${auth.join(", ")}`,
+      `Setup       ${gatewayName} · ${storageName} · ${plugins.some((id) => pluginAddress(id) === desktop) ? "Web and Electron" : "Web"} · ${auth.join(", ")}`,
     ].join("\n")
   );
 };

@@ -77,7 +77,7 @@ for (const width of [1280, 390]) {
           const text = await navigator.clipboard.readText();
           return text.trim();
         })
-      ).toBe("bunx chat-js@alpha create my-chat");
+      ).toBe("bunx chat-js@beta create my-chat");
       await expect(
         page
           .locator('[data-role="assistant"]')

@@ -9,10 +9,10 @@ Attachments adds a file picker, mobile camera capture, and paste/drop handling t
 
 ### Add the plugin
 
-Uploads need durable file storage and a sandbox with persistent-file support. If your app already has both, run `bunx chat-js@alpha add attachment-uploads`. To select them during installation, run this inside your app.
+Uploads need durable file storage and a sandbox with persistent-file support. If your app already has both, run `bunx chat-js@beta add attachment-uploads`. To select them during installation, run this inside your app.
 
 ```bash
-bunx chat-js@alpha add attachment-uploads --storage-provider vercel-blob --sandbox-provider vercel
+bunx chat-js@beta add attachment-uploads --storage-provider vercel-blob --sandbox-provider vercel
 ```
 
 Supply the credentials for both providers in `.env.local`. If you are replacing an existing provider, review the [replacement instructions](/core/configuration#replace-providers).

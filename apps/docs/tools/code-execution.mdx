@@ -16,7 +16,7 @@ Install dependencies using normal shell commands or configure the native EVE san
 Install `attach-workspace-file` with persistent storage:
 
 ```bash
-bunx chat-js@alpha add attach-workspace-file --storage-provider vercel-blob
+bunx chat-js@beta add attach-workspace-file --storage-provider vercel-blob
 ```
 
 For example, the agent can use `bash` to run:
@@ -39,7 +39,7 @@ For charts, save an image explicitly, such as `plt.savefig('/workspace/chart.png
 Downloads work without a viewer. Install viewers independently:
 
 ```bash
-bunx chat-js@alpha add image-viewer video-viewer spreadsheet-viewer
+bunx chat-js@beta add image-viewer video-viewer spreadsheet-viewer
 ```
 
 The spreadsheet viewer opens uploaded and published CSV, TSV and XLSX files. It displays read-only cell values and worksheet selection, with previews limited to 5,000 rows and 200 columns. It does not recalculate formulas, render Excel charts or preserve workbook formatting. The original file remains downloadable.

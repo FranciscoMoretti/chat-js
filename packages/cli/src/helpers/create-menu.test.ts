@@ -1,5 +1,6 @@
 import { expect, it, spyOn } from "bun:test";
 import * as clack from "@clack/prompts";
+import * as registry from "#cli/registry/shadcn";
 import { stdin } from "node:process";
 import { createSelectionFromFlags, promptCreateMenu } from "./create-menu";
 import { storageItems } from "../../../registry/src/storage/items";
@@ -70,6 +71,53 @@ it("opens with the builder defaults and applies explicit plugin choices", async 
     sandbox: "default",
     storage: { source: "vercel-blob", options: {} },
   });
+});
+
+it("edits registry addresses consistently across plugin groups, platform choices and flags", async () => {
+  const list = spyOn(registry, "listRegistryItems").mockResolvedValue([
+    {
+      name: "team-bundle",
+      type: "registry:item",
+      meta: { chatjs: { kind: "plugin", contractVersion: 3, id: "team" } },
+    },
+  ]);
+  const select = spyOn(clack, "select");
+  for (const answer of [
+    "plugins",
+    "Other plugins",
+    "back",
+    "setup",
+    "platforms",
+    "back",
+    "review",
+    "create",
+  ]) {
+    select.mockResolvedValueOnce(answer);
+  }
+  const multi = spyOn(clack, "multiselect")
+    .mockResolvedValueOnce([])
+    .mockResolvedValueOnce([]);
+  try {
+    const initial = await createSelectionFromFlags(project.targetDir, {
+      plugin: ["team-bundle", "@chatjs/mcp", "@chatjs/desktop", "@acme/mcp"],
+      mcp: false,
+    });
+    const { setup } = await promptCreateMenu(
+      project,
+      initial,
+      [],
+      async ({ selection }) => await Promise.resolve(selection)
+    );
+    expect(multi.mock.calls[0]?.[0].initialValues).toEqual([
+      "@chatjs/team-bundle",
+    ]);
+    expect(multi.mock.calls[1]?.[0].initialValues).toEqual(["desktop"]);
+    expect(setup.plugins).toEqual(["@acme/mcp"]);
+  } finally {
+    multi.mockRestore();
+    select.mockRestore();
+    list.mockRestore();
+  }
 });
 
 it("passes an interactive appearance code to native shadcn and the recipe", async () => {

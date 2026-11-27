@@ -6,8 +6,8 @@ description: "Scaffold a ChatJS app from the terminal. Choose a gateway, plugins
 This is the default [CLI command](/cli). You can omit the word `create` and pass the directory directly.
 
 ```bash
-npx chat-js@alpha create [directory] [options]
-npx chat-js@alpha [directory] [options]
+npx chat-js@beta create [directory] [options]
+npx chat-js@beta [directory] [options]
 ```
 
 ## Arguments
@@ -74,13 +74,13 @@ A fresh scaffold contains the Next.js app, its native EVE agent under `agent/`, 
 **Interactive setup (recommended)**
 
 ```bash
-npx chat-js@alpha create my-chat-app
+npx chat-js@beta create my-chat-app
 ```
 
 **Skip prompts, use all defaults**
 
 ```bash
-npx chat-js@alpha create my-chat-app --yes
+npx chat-js@beta create my-chat-app --yes
 ```
 
 **Replay a saved agent recipe**
@@ -88,7 +88,7 @@ npx chat-js@alpha create my-chat-app --yes
 Creating an app with Bun writes `chatjs/agent-recipe.json`. From the parent directory of `my-chat-app`, replay its recipe into a sibling directory:
 
 ```bash
-bunx chat-js@alpha create my-replay --recipe ./my-chat-app/chatjs/agent-recipe.json --yes
+bunx chat-js@beta create my-replay --recipe ./my-chat-app/chatjs/agent-recipe.json --yes
 ```
 
 The recipe supplies the installation and appearance choices. Pass selection flags and shadcn appearance options only when creating a new recipe.
@@ -96,19 +96,19 @@ The recipe supplies the installation and appearance choices. Pass selection flag
 **Select a gateway**
 
 ```bash
-npx chat-js@alpha create my-chat-app --gateway openrouter
+npx chat-js@beta create my-chat-app --gateway openrouter
 ```
 
 **Clone from a custom git repository**
 
 ```bash
-npx chat-js@alpha create my-chat-app --from-git https://github.com/your-org/your-fork
+npx chat-js@beta create my-chat-app --from-git https://github.com/your-org/your-fork
 ```
 
 **Configure S3 storage without prompts**
 
 ```bash
-npx chat-js@alpha create my-chat-app --yes \
+npx chat-js@beta create my-chat-app --yes \
   --storage-provider s3 \
   --storage-config '{"bucket":"uploads","region":"us-east-1"}'
 ```
@@ -118,7 +118,7 @@ Keep credentials out of `--storage-config`. The generated `.env.example` and fin
 **Full flow after scaffolding**
 
 ```bash
-npx chat-js@alpha create my-chat-app
+npx chat-js@beta create my-chat-app
 cd my-chat-app
 cp .env.example .env.local
 # Fill in the env vars printed by the CLI
@@ -131,7 +131,7 @@ npm run dev
 Installations determine which tools, document bundles and optional implementations exist. `chat.config.ts` keeps models, attachment size/type parameters, permissions, follow-up suggestions and parallel responses. It does not duplicate installed presence with feature flags. The maintained demo includes uploads and MCP. Agent observability uses EVE instrumentation selected in the builder’s Agent tab.
 
 ```bash
-npx chat-js@alpha create my-chat-app --yes --attachments --storage-provider vercel-blob --sandbox-provider vercel --mcp
+npx chat-js@beta create my-chat-app --yes --attachments --storage-provider vercel-blob --sandbox-provider vercel --mcp
 ```
 
 Uploads require durable file storage. EVE owns the agent sandbox lifecycle. Historical attachment display and tool-produced files remain available when user uploads are omitted.

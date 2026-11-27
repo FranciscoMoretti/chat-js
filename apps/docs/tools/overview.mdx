@@ -6,7 +6,7 @@ description: "Explore the ChatJS tool catalog, see what gets installed for each 
 The ChatJS registry distributes editable source code using shadcn. A tool includes server logic, dependencies, and a declarative registration descriptor. Tools can include their own client renderer. Media generation and workspace attachments include renderers for their output. Installed tools become part of your app's typed tool system. All installed and custom tools use native EVE definitions. Registry tools declare their exports and any UI compatibility requirements in a [versioned descriptor](/tools/authoring#item-metadata). Custom tools are registered directly in `integrations/tools/execution.ts` without a descriptor.
 
 ```bash
-npx chat-js@alpha add deep-research
+npx chat-js@beta add deep-research
 ```
 
 shadcn resolves the item and its dependencies, installs packages, and writes the source files. ChatJS then regenerates separate server and client registrations. ChatJS protects modified or untracked source. Review those files before passing `--overwrite` to replace them.
@@ -49,7 +49,7 @@ Keep the generated `@chatjs` namespace in `components.json`. To add an external 
 ```
 
 ```bash
-npx chat-js@alpha add @acme/my-tool
+npx chat-js@beta add @acme/my-tool
 ```
 
 You can also pass a complete registry item URL or local JSON path. Registry requests require HTTPS, with HTTP allowed for local loopback development. `--registry` has been replaced by standard namespace configuration.
@@ -58,7 +58,7 @@ You can also pass a complete registry item URL or local JSON path. Registry requ
 
 ```bash
 npx shadcn add @chatjs/deep-research
-npx chat-js@alpha sync
+npx chat-js@beta sync
 ```
 
 shadcn installs source. `sync` reads installed descriptors and generates ChatJS registrations without evaluating third-party source. `chat-js add` performs both steps. If registration fails after installation, fix the reported issue and run `sync` again. Package installation is not transactional.

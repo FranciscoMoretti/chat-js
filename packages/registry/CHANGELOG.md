@@ -1,5 +1,9 @@
 # @chat-js/registry
 
+## 0.2.0-beta.10
+
+Ship provider configuration fields and plugin metadata used by the web builder and `chat-js@1.0.0-beta.0`. Select `streamdown-math` or `streamdown-mermaid` for optional math and diagram rendering.
+
 ## 0.2.0-beta.9
 
 Ship matching plugin source for `chat-js@1.0.0-alpha.8`, including the `chat-server.ts` entry point, native tRPC router composition, and branch IDs.
