@@ -379,8 +379,10 @@ try {
     window.scrollTo(0, 0);
   });
   const homeMark = page.getByRole("link", { name: "ChatJS home", exact: true });
-  const transitionName = () =>
-    homeMark.evaluate((link) => getComputedStyle(link).viewTransitionName);
+  const transitionName = async () =>
+    await homeMark.evaluate(
+      (link) => getComputedStyle(link).viewTransitionName
+    );
   assert.equal(await transitionName(), "none");
   await page.emulateMedia({ reducedMotion: "no-preference" });
   assert.equal(await transitionName(), "chatjs-home-mark");
