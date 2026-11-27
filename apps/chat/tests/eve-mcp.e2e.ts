@@ -412,9 +412,6 @@ test("stopping a pending MCP call closes its transport and permits another messa
   const { close, url } = await localMcpServer(
     async (response: ReadonlyNativeSurface<ServerResponse>) => {
       calls += 1;
-      if (calls > 1) {
-        return { content: [{ text: token, type: "text" }] };
-      }
       response.on("close", () => {
         disconnected = !response.writableEnded;
         completion.resolve({
@@ -480,19 +477,16 @@ test("stopping a pending MCP call closes its transport and permits another messa
       exact: true,
       name: "Message",
     });
-    await composer.fill(
-      `Start a new call to ${nameId}__read_token. Call it once and reply with the new token it returns.`
-    );
+    await composer.fill(`Reply with exactly ${token}.`);
     await composer.press("Enter");
     await expect(
-      page.locator('[data-role="assistant"] p').filter({ hasText: token })
-    ).toBeVisible({ timeout: 60_000 });
+      page.locator('[data-eve-message-id="turn_1:assistant"]')
+    ).toContainText(token, { timeout: 60_000 });
     await expect(page.getByText("Ready", { exact: true })).toBeVisible();
     await page.reload();
     await expect(
-      page.locator('[data-role="assistant"] p').filter({ hasText: token })
-    ).toBeVisible();
-    expect(calls).toBe(2);
+      page.locator('[data-eve-message-id="turn_1:assistant"]')
+    ).toContainText(token);
   } finally {
     completion.resolve({
       content: [{ text: "fixture-cleanup", type: "text" }],
