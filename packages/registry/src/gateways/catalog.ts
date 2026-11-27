@@ -51,6 +51,7 @@ export const builtInGateways = Object.entries(gatewayMetadata).map(
         },
       ],
       meta: {
+        icon: metadata.icon,
         chatjs: gatewayDefinitionSchema.parse({
           capabilities: {
             image: id !== "openrouter",

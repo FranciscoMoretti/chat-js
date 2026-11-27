@@ -1,7 +1,16 @@
 import {
+  projectDirectory,
+  dryRun,
+  skipConfirmation,
+} from "#cli/helpers/project-options";
+import {
   installationActivation,
   formatActivation,
 } from "#cli/utils/installation-activation";
+import {
+  addProviderKeys,
+  createCatalog,
+} from "../../../registry/create-catalog";
 import { existsSync } from "node:fs";
 import { scaffoldElectron } from "#cli/helpers/scaffold";
 import { assertUiCompatibility } from "#cli/utils/ui-compatibility";
@@ -10,12 +19,17 @@ import { configureSandboxProvider } from "#cli/helpers/sandbox-provider";
 import { resolveSandbox } from "#cli/registry/sandboxes";
 import { access, writeFile } from "node:fs/promises";
 import { syncPlugins } from "#cli/utils/sync-plugins";
-import {
-  configureStorageProvider,
-  parseStorageOptions,
-} from "#cli/helpers/storage-provider";
+import { configureStorageProvider } from "#cli/helpers/storage-provider";
 import { confirm, isCancel, log } from "@clack/prompts";
-import { Command } from "commander";
+import {
+  selectionCommand,
+  parseAddFlags,
+} from "#cli/helpers/selection-options";
+import type { AddSelectionFlags } from "#cli/helpers/selection-options";
+import {
+  canPickItems,
+  promptAddSelection,
+} from "#cli/helpers/project-selection";
 import { configureGatewayProvider } from "#cli/helpers/gateway-provider";
 import { gatewayConfigEdit } from "#cli/utils/provider-config";
 import { handleError } from "#cli/utils/handle-error";
@@ -45,20 +59,19 @@ type ProviderChangeInput = ReadonlyNative<
 >;
 type PluginInput = ReadonlyNative<InstallationPlan["plugins"][number]>;
 
-interface AddOptions {
-  readonly gateway?: string;
-  readonly sandboxProvider?: string;
-  readonly storageProvider?: string;
-  readonly storageConfig?: string;
+interface AddOptions extends AddSelectionFlags {
   readonly replace?: boolean;
 }
-interface AddCommandOptions extends AddOptions {
+interface AddOperationOptions {
+  readonly replace?: boolean;
   readonly cwd: string;
   readonly yes: boolean;
   readonly overwrite: boolean;
   readonly filesOnly: boolean;
   readonly dryRun: boolean;
 }
+
+type AddCommandOptions = AddOptions & AddOperationOptions;
 
 interface AddSetup {
   configEdit: string | undefined;
@@ -100,22 +113,28 @@ const selectedSandboxForPlan = async (
   return selectedSandbox;
 };
 
+const providerSources = (options: AddSelectionFlags): string[] =>
+  addProviderKeys.flatMap((key) => {
+    const address = options[key];
+    return address === undefined
+      ? []
+      : [itemAddress(address, createCatalog[key].source)];
+  });
+
 const validateAddSelection = (
   items: readonly string[],
   options: AddOptions
 ): void => {
   if (
     items.length === EMPTY_SELECTION_COUNT &&
-    !hasNonEmptyValue(options.gateway) &&
-    !hasNonEmptyValue(options.sandboxProvider) &&
-    !hasNonEmptyValue(options.storageProvider)
+    providerSources(options).length === 0
   ) {
     throw new Error(
       "Select at least one tool, plugin, gateway, sandbox or storage provider."
     );
   }
   if (
-    hasNonEmptyValue(options.storageConfig) &&
+    options.storageConfig !== undefined &&
     !hasNonEmptyValue(options.storageProvider)
   ) {
     throw new Error("--storage-config requires --storage-provider.");
@@ -137,8 +156,8 @@ const prepareAdd = async (
   const storage = hasNonEmptyValue(options.storageProvider)
     ? await resolveStorage(options.storageProvider, cwd)
     : undefined;
-  if (storage && hasNonEmptyValue(options.storageConfig)) {
-    storage.options = parseStorageOptions(options.storageConfig);
+  if (storage && options.storageConfig !== undefined) {
+    storage.options = options.storageConfig;
   }
   const plan = await planInstallation(
     cwd,
@@ -176,7 +195,7 @@ const prepareAdd = async (
       kind === "gateway" && hasNonEmptyValue(previous) && previous !== next
   );
   const keepStorageOptions =
-    !hasNonEmptyValue(options.storageConfig) &&
+    options.storageConfig === undefined &&
     plan.providerChanges.some(
       ({
         kind,
@@ -204,11 +223,6 @@ const prepareAdd = async (
 
 const printSetupRequirements = (setup: ReadonlyNative<AddSetup>): void => {
   const { plan, selectedGateway, selectedStorage, selectedSandbox } = setup;
-  if (plan.plugins.some((plugin: PluginInput) => plugin.id === "mcp")) {
-    log.info(
-      "Set MCP_ENCRYPTION_KEY before starting the app, even if no connectors are configured."
-    );
-  }
   const requirements = [
     ...plan.expected.flatMap(
       (item: ReadonlyNative<AddSetup["plan"]["expected"][number]>) =>
@@ -242,7 +256,11 @@ const scaffoldDesktopCompanion = async (
   cwd: string,
   plan: ReadonlyNative<InstallationPlan>
 ): Promise<void> => {
-  if (plan.plugins.some((plugin: PluginInput) => plugin.id === "desktop")) {
+  if (
+    plan.plugins.some(
+      (plugin: PluginInput) => plugin.id === createCatalog.electron.pluginId
+    )
+  ) {
     if (!existsSync(path.join(cwd, "electron"))) {
       await scaffoldElectron(cwd, {
         packageManager: inferPackageManager(cwd),
@@ -264,7 +282,7 @@ const exportAddSelection = async (
   if (
     options.overwrite ||
     options.replace === true ||
-    hasNonEmptyValue(options.storageConfig)
+    options.storageConfig !== undefined
   ) {
     throw new Error(
       "--files-only does not replace source or configure providers. Omit --overwrite, --replace and --storage-config; configure the exported source manually."
@@ -272,15 +290,7 @@ const exportAddSelection = async (
   }
   const sources = [
     ...items.map((item) => itemAddress(item, "tool")),
-    ...(hasNonEmptyValue(options.gateway)
-      ? [itemAddress(options.gateway, "gateway")]
-      : []),
-    ...(hasNonEmptyValue(options.sandboxProvider)
-      ? [itemAddress(options.sandboxProvider, "sandbox")]
-      : []),
-    ...(hasNonEmptyValue(options.storageProvider)
-      ? [itemAddress(options.storageProvider, "storage")]
-      : []),
+    ...providerSources(options),
   ];
   const output = await exportManualInstallation(cwd, sources);
   log.success(`Source exported to ${output}`);
@@ -344,7 +354,7 @@ const logInstallationActivation = (
   );
 };
 
-export const add = new Command("add")
+export const add = selectionCommand("add")
   .description(
     "install registry tools/plugins/providers and compose their ChatJS registrations"
   )
@@ -352,11 +362,7 @@ export const add = new Command("add")
     "[items...]",
     "tool/plugin names or native shadcn registry addresses"
   )
-  .option(
-    "-y, --yes",
-    "skip installation confirmation; does not authorize replacement/overwrite",
-    false
-  )
+  .addOption(skipConfirmation())
   .option("--replace", "explicitly replace an exclusive provider", false)
   .option(
     "--files-only",
@@ -368,28 +374,32 @@ export const add = new Command("add")
     "authorize overwriting modified or untracked installed source",
     false
   )
-  .option(
-    "--sandbox-provider <item>",
-    "install or replace the native EVE sandbox"
-  )
-  .option("--gateway <item>", "install or replace the AI gateway")
-  .option("--storage-provider <item>", "install or replace file storage")
-  .option("--storage-config <json>", "non-secret storage adapter options")
-  .option(
-    "--dry-run",
-    "inspect installation wiring and native entry points without installing",
-    false
-  )
-  .option("-c, --cwd <cwd>", "project directory", process.cwd())
+  .addOption(dryRun())
+  .addOption(projectDirectory())
   .action(
     async (
-      items: readonly string[],
-      options: AddCommandOptions
+      input: readonly string[],
+      raw: AddOperationOptions & Readonly<Record<string, unknown>>
     ): Promise<void> => {
       try {
-        const cwd = path.resolve(options.cwd);
-        if (options.filesOnly && options.dryRun) {
+        const cwd = path.resolve(raw.cwd);
+        if (raw.filesOnly && raw.dryRun) {
           throw new Error("Choose --files-only or --dry-run.");
+        }
+        const flags = parseAddFlags(raw);
+        let options: AddCommandOptions = { ...raw, ...flags };
+        let items = input;
+        if (
+          !input.length &&
+          !Object.keys(flags).length &&
+          canPickItems(raw.yes)
+        ) {
+          const picked = await promptAddSelection(cwd, raw.filesOnly);
+          if (!picked) {
+            return;
+          }
+          ({ items } = picked);
+          options = { ...options, ...picked.flags };
         }
         if (options.filesOnly) {
           await exportAddSelection(cwd, items, options);
@@ -489,7 +499,7 @@ export const add = new Command("add")
           "Installed and registered. Review .env.local, then run setup."
         );
       } catch (error) {
-        reportAddError(error, options.filesOnly);
+        reportAddError(error, raw.filesOnly);
       }
     }
   );

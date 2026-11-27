@@ -2,6 +2,16 @@ import { builtInStorageProviders } from "./providers";
 import { getStorageEnvironmentRequirements } from "./environment";
 import { storageDefinitionSchema } from "../../metadata";
 
+import type { CreateIcon } from "../../create-icons";
+import type { SupportedStorageId } from "./providers";
+
+const icons: Partial<Record<SupportedStorageId, CreateIcon>> = {
+  memory: "minus",
+  "vercel-blob": "setup/vercel",
+  r2: "setup/cloudflare",
+  s3: "setup/aws-s3",
+};
+
 const getOptionalEnvironmentKeys = (
   variables: readonly Readonly<{ key: string }>[] | undefined
 ): string[] => {
@@ -30,6 +40,7 @@ export const storageItems = builtInStorageProviders.map((provider) => {
       },
     ],
     meta: {
+      icon: icons[id],
       chatjs: storageDefinitionSchema.parse({
         // Memory accepts an optional initial seed; it needs no adapter options.
         configKeys: id === "memory" ? [] : (provider.env.config ?? []),

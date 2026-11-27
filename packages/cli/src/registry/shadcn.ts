@@ -68,14 +68,18 @@ const readItem = async (
   );
   return registryItemSchema.parse(item);
 };
-const listTools = async (
-  cwd: string
-): Promise<Awaited<ReturnType<typeof getRegistry>>["items"]> => {
+const listRegistryItems = async (cwd: string) => {
   const catalog = await withRegistryTransport(
     async () =>
       await getRegistry("@chatjs", { config: await registryConfig(cwd) })
   );
-  return catalog.items.filter(
+  return catalog.items;
+};
+const listTools = async (
+  cwd: string
+): Promise<Awaited<ReturnType<typeof listRegistryItems>>> => {
+  const items = await listRegistryItems(cwd);
+  return items.filter(
     (item: Readonly<{ meta?: Readonly<Record<string, unknown>> }>): boolean => {
       const { chatjs } = item.meta ?? {};
       return (
@@ -110,6 +114,7 @@ const installItems = async (
 export {
   installItems,
   itemAddress,
+  listRegistryItems,
   listTools,
   readItem,
   registryConfig,

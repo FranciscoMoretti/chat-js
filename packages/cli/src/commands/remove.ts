@@ -1,5 +1,14 @@
+import {
+  projectDirectory,
+  dryRun,
+  skipConfirmation,
+} from "#cli/helpers/project-options";
 import { formatActivation } from "#cli/utils/installation-activation";
 import { confirm, isCancel, log } from "@clack/prompts";
+import {
+  canPickItems,
+  promptRemoveSelection,
+} from "#cli/helpers/project-selection";
 import { Command } from "commander";
 import path from "node:path";
 import { handleError } from "#cli/utils/handle-error";
@@ -9,22 +18,18 @@ export const remove = new Command("remove")
   .description(
     "remove installed plugins, retaining database schemas and user data"
   )
-  .argument("<plugins...>", "installed plugin IDs")
-  .option("-c, --cwd <cwd>", "project directory", process.cwd())
-  .option("--dry-run", "show removal and retained files without writing", false)
+  .argument("[plugins...]", "installed plugin IDs")
+  .addOption(projectDirectory())
+  .addOption(dryRun())
   .option(
     "--backup",
     "preserve removed source, including customizations, under chatjs/removed-plugins",
     false
   )
-  .option(
-    "-y, --yes",
-    "skip confirmation; does not authorize removing modified source",
-    false
-  )
+  .addOption(skipConfirmation())
   .action(
     async (
-      ids: readonly string[],
+      input: readonly string[],
       options: Readonly<{
         cwd: string;
         dryRun: boolean;
@@ -34,6 +39,14 @@ export const remove = new Command("remove")
     ) => {
       try {
         const cwd = path.resolve(options.cwd);
+        let ids = input;
+        if (!ids.length && canPickItems(options.yes)) {
+          const picked = await promptRemoveSelection(cwd);
+          if (picked === undefined || picked.length === 0) {
+            return;
+          }
+          ids = picked;
+        }
         const plan = await removePlugins(cwd, ids, { dryRun: true });
         for (const item of plan.activation) {
           log.info(

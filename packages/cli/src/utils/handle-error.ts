@@ -13,10 +13,10 @@ export const handleError: (error: unknown) => never = (error) => {
     logger.error(error);
   } else if (error instanceof z.ZodError) {
     logger.error("Validation failed:");
-    for (const [key, value] of Object.entries(
-      z.flattenError(error).fieldErrors
-    )) {
-      logger.error(`- ${highlighter.info(key)}: ${String(value)}`);
+    for (const issue of error.issues) {
+      const path = z.core.toDotPath(issue.path);
+      const prefix = path ? `${highlighter.info(path)}: ` : "";
+      logger.error(`- ${prefix}${issue.message}`);
     }
   } else if (error instanceof Error) {
     logger.error(error.message);

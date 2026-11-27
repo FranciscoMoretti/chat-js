@@ -1,10 +1,13 @@
 import { describe, expect, it } from "bun:test";
 
-import { collectEnvChecklist } from "./env-checklist";
+import { collectEnvChecklist, formatEnvChecklist } from "./env-checklist";
 import { coreFeatureEnvRequirements } from "./config-requirements";
 
 const requiredMcpEncryptionKeyCount = 1;
-const mcpRequirementGroupCount = 2;
+const names = (sections: ReturnType<typeof collectEnvChecklist>): string[] =>
+  sections.flatMap(({ requirements }) =>
+    requirements.flatMap(({ options }) => options.flat())
+  );
 
 describe("collectEnvChecklist", () => {
   it("uses the LiteLLM base URL as the gateway requirement", () => {
@@ -26,16 +29,8 @@ describe("collectEnvChecklist", () => {
       installableToolEnvRequirements: [],
     });
 
-    expect(
-      entries.some(
-        (entry: { readonly vars: string }) => entry.vars === "LITELLM_BASE_URL"
-      )
-    ).toBe(true);
-    expect(
-      entries.some(
-        (entry: { readonly vars: string }) => entry.vars === "LITELLM_API_KEY"
-      )
-    ).toBe(false);
+    expect(names(entries)).toContain("LITELLM_BASE_URL");
+    expect(names(entries)).not.toContain("LITELLM_API_KEY");
   });
 
   it("uses selected retrieval credentials without requiring Firecrawl", () => {
@@ -62,16 +57,10 @@ describe("collectEnvChecklist", () => {
       ],
     });
 
-    expect(
-      entries.some(
-        (entry: { readonly vars: string }) => entry.vars === "PAGE_TOKEN"
-      )
-    ).toBe(true);
-    expect(
-      entries.some((entry: { readonly vars: string }) =>
-        entry.vars.includes("FIRECRAWL")
-      )
-    ).toBe(false);
+    expect(names(entries)).toContain("PAGE_TOKEN");
+    expect(names(entries).some((name) => name.includes("FIRECRAWL"))).toBe(
+      false
+    );
   });
 
   it("keeps required, gateway, plugin, and authentication entries ordered", () => {
@@ -93,19 +82,23 @@ describe("collectEnvChecklist", () => {
     });
 
     expect(
-      entries.filter(
-        (entry: { readonly vars: string }) =>
-          entry.vars === "MCP_ENCRYPTION_KEY"
-      )
+      names(entries).filter((name) => name === "MCP_ENCRYPTION_KEY")
     ).toHaveLength(requiredMcpEncryptionKeyCount);
-    expect(
-      entries.map((entry: { readonly vars: string }) => entry.vars)
-    ).toEqual([
+    expect(entries.map(({ title }) => title)).toEqual([
+      "App secrets",
+      "Database",
+      "Model gateway",
+      "Sign-in",
+      "Selected plugins and tools",
+    ]);
+    expect(names(entries)).toEqual([
       "AUTH_SECRET",
+      "EVE_GATEWAY_SECRET",
       "DATABASE_URL",
       "LITELLM_BASE_URL",
+      "AUTH_GITHUB_ID",
+      "AUTH_GITHUB_SECRET",
       "MCP_ENCRYPTION_KEY",
-      "AUTH_GITHUB_ID + AUTH_GITHUB_SECRET",
     ]);
   });
 
@@ -126,11 +119,7 @@ describe("collectEnvChecklist", () => {
       ],
     });
 
-    expect(
-      entries.some(
-        (entry: { readonly vars: string }) => entry.vars === "CUSTOM_TOKEN"
-      )
-    ).toBe(true);
+    expect(names(entries)).toContain("CUSTOM_TOKEN");
   });
 });
 
@@ -161,29 +150,58 @@ it("includes every installed MCP requirement and preserves combined and alternat
         },
       ],
     });
-    expect(
-      entries.filter(
-        (entry: { readonly vars: string }) =>
-          entry.vars === "MCP_ENCRYPTION_KEY"
-      )
-    ).toHaveLength(requiredMcpEncryptionKeyCount);
-    const variables = entries.map(
-      (entry: { readonly vars: string }) => entry.vars
-    );
-    for (const required of [
-      "MCP_ENCRYPTION_KEY",
-      "TEAM + TOKEN",
-      "OIDC_TOKEN",
-    ]) {
-      expect(variables).toContain(required);
-    }
-    expect(
-      entries.filter(
-        (entry: { readonly oneOfGroup?: string }) =>
-          entry.oneOfGroup === "TEAM+TOKEN|OIDC_TOKEN"
-      )
-    ).toHaveLength(mcpRequirementGroupCount);
+    const featureRequirements = entries.find(
+      ({ title }) => title === "Selected plugins and tools"
+    )?.requirements;
+    expect(featureRequirements?.map(({ options }) => options)).toEqual([
+      [["MCP_ENCRYPTION_KEY"]],
+      [["TEAM", "TOKEN"], ["OIDC_TOKEN"]],
+    ]);
   } finally {
     coreFeatureEnvRequirements.mcp = previous;
   }
+});
+
+it("keeps each credential set together and puts secret generation under App secrets", () => {
+  const sections = collectEnvChecklist({
+    auth: { github: true, google: false, vercel: false },
+    coreFeatures: {
+      attachments: false,
+      followupSuggestions: false,
+      feedback: false,
+      mcp: false,
+      parallelResponses: false,
+      projects: false,
+    },
+    gateway: "vercel",
+    storageRequirements: [
+      {
+        options: [
+          ["BLOB_READ_WRITE_TOKEN"],
+          ["VERCEL_OIDC_TOKEN", "BLOB_STORE_ID"],
+        ],
+      },
+    ],
+  });
+  const formatted = formatEnvChecklist(sections);
+  expect(formatted).toContain(
+    [
+      "  App secrets",
+      "    AUTH_SECRET",
+      "    EVE_GATEWAY_SECRET",
+      "    Run openssl rand -base64 32 twice. Use a different value for each secret.",
+    ].join("\n")
+  );
+  expect(formatted).toContain(
+    [
+      "  File storage (choose one)",
+      "      BLOB_READ_WRITE_TOKEN",
+      "    or",
+      "      VERCEL_OIDC_TOKEN",
+      "      BLOB_STORE_ID",
+    ].join("\n")
+  );
+  expect(formatted).toContain(
+    "  Sign-in\n    AUTH_GITHUB_ID\n    AUTH_GITHUB_SECRET"
+  );
 });

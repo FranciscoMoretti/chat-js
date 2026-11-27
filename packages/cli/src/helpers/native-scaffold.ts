@@ -79,8 +79,8 @@ export const scaffoldNativeProject = async (
         })
       );
     } else {
+      logger.info("Setting up appearance and UI components…");
       await initializeShadcn(cwd, args);
-      logger.info("Continuing ChatJS setup. Installing UI components...");
       const primitiveFiles = await readdir(path.join(core, "components/ui"), {
         withFileTypes: true,
       });

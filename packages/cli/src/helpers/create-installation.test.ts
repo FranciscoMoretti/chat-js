@@ -7,6 +7,7 @@ import {
 } from "./create-installation";
 import { createCommand } from "../../../../apps/site/components/create-model";
 import { DEFAULT_PRESET_CONFIG, encodePreset } from "shadcn/preset";
+import { parseCreateFlags } from "./selection-options";
 
 test("Create's command round trips full and empty selections into the CLI", () => {
   for (const plugins of [[], ["feedback", "projects", "guest-chat"]]) {
@@ -84,6 +85,38 @@ test("generated shell command preserves custom values as one argument", () => {
   ]);
 });
 
+test("flags and presets normalize registry addresses and reject whitespace-only values", () => {
+  const selection = { gateway: " openrouter ", plugins: [], tools: [] };
+  const flags = parseCreateFlags({ gateway: selection.gateway });
+  expect(flags.gateway).toBe("openrouter");
+  expect(
+    readCreateInstallation({ appPreset: encodeAppPreset(selection) }).gateway
+  ).toBe(flags.gateway);
+  expect(() => parseCreateFlags({ gateway: " " })).toThrow("--gateway");
+  expect(() => encodeAppPreset({ ...selection, gateway: " " })).toThrow();
+});
+
+test("storage flags decode to an object at the CLI boundary", () => {
+  const options = { bucket: "uploads", port: 2121, nested: { enabled: true } };
+  expect(
+    parseCreateFlags({ storageConfig: JSON.stringify(options) }).storageConfig
+  ).toEqual(options);
+  for (const input of ["{", "[]", "null", '"uploads"']) {
+    expect(() => parseCreateFlags({ storageConfig: input })).toThrow(
+      "--storage-config"
+    );
+  }
+});
+
+test("flag errors identify nested fields and repeated item indexes", () => {
+  expect(() =>
+    parseCreateFlags({ agentConfig: '{"limits":{"sessionTimeoutMs":"bad"}}' })
+  ).toThrow(/--agent-config[\s\S]*limits\.sessionTimeoutMs/u);
+  expect(() => parseCreateFlags({ auth: ["github", "typo"] })).toThrow(
+    /--auth[\s\S]*\[1\]/u
+  );
+});
+
 test("compact presets enforce dependencies before scaffolding", () => {
   const code = encodeAppPreset({
     gateway: "vercel",
@@ -114,9 +147,67 @@ test("App presets and JSON have distinct mutually exclusive flags", () => {
     "expects JSON"
   );
   expect(() =>
-    readCreateInstallation({ installation, storageConfig: "{}" })
+    readCreateInstallation({ installation, storageConfig: {} })
   ).toThrow("Include storage options");
   expect(() => {
     assertExclusiveInstallation({ appPreset: "a1", projects: true });
   }).toThrow("cannot be combined");
+});
+
+test("catalog flags and a builder preset replay the same provider, auth and live EVE choices", async () => {
+  const { selectionCommand } = await import("./selection-options");
+  const { createSelectionFromFlags } = await import("./create-menu");
+  const args = [
+    "--gateway",
+    "openrouter",
+    "--storage-provider",
+    "s3",
+    "--storage-config",
+    '{"bucket":"uploads"}',
+    "--auth",
+    "google",
+    "--auth",
+    "vercel",
+    "--eve-item",
+    "extension/future-item",
+    "--eve-item",
+    "https://example.org/r/item.json",
+    "--eve-item",
+    "extension/future-item",
+    "--disabled-default-tool",
+    "tool/bash",
+    "--plugin",
+    "feedback",
+  ];
+  const options = selectionCommand("create")
+    .parse(args, { from: "user" })
+    .opts();
+  const selection = await createSelectionFromFlags(
+    "/unused",
+    parseCreateFlags(options)
+  );
+  expect(selection.eve).toEqual([
+    "extension/future-item",
+    "https://example.org/r/item.json",
+  ]);
+  expect(selection.auth).toEqual(["google", "vercel"]);
+  expect(selection.storage).toEqual({
+    source: "s3",
+    options: { bucket: "uploads" },
+  });
+  expect(selection.agent?.disabledDefaultTools).toEqual(["tool/bash"]);
+  expect(
+    readCreateInstallation({ appPreset: encodeAppPreset(selection) })
+  ).toEqual(selection);
+  expect(() => parseCreateFlags({ auth: ["typo"] })).toThrow("--auth");
+  expect(() => parseCreateFlags({ eveItem: ["bad-id"] })).toThrow("--eve-item");
+  expect(
+    createSelectionFromFlags(
+      "/unused",
+      parseCreateFlags({ eveItem: ["@team/search"] })
+    )
+  ).rejects.toThrow("Configure @team");
+  expect(() => parseCreateFlags({ agentConfig: "[]" })).toThrow(
+    "--agent-config"
+  );
 });

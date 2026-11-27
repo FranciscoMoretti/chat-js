@@ -3,162 +3,128 @@ import type { AuthProvider, CoreFeatureKey, Gateway } from "#cli/types";
 import {
   authEnvRequirements,
   coreFeatureEnvRequirements,
-  envVarDescriptions,
   gatewayEnvRequirements,
 } from "./config-requirements";
 
-interface EnvRequirementLike {
+interface EnvRequirement {
   readonly description?: string;
   readonly options: readonly (readonly string[])[];
 }
 
-interface EnvVarEntry {
-  /** The env var name(s), e.g. "AI_GATEWAY_API_KEY" or "AUTH_GOOGLE_ID + AUTH_GOOGLE_SECRET" */
-  vars: string;
-  /** Human-readable description derived from the Zod schema */
-  description: string;
-  /** Group key used to render "one of" alternatives together */
-  oneOfGroup?: string;
+interface EnvSection {
+  readonly title: string;
+  readonly requirements: readonly EnvRequirement[];
+  readonly hint?: string;
 }
-
-const envDescriptions = new Map(Object.entries(envVarDescriptions));
-const singleAlternative = 1;
 
 interface EnvChecklistInput {
   readonly gateway: Gateway;
-  readonly gatewayRequirements?: readonly EnvRequirementLike[];
+  readonly gatewayRequirements?: readonly EnvRequirement[];
+  readonly storageRequirements?: readonly EnvRequirement[];
+  readonly sandboxRequirements?: readonly EnvRequirement[];
   readonly coreFeatures: Readonly<Record<CoreFeatureKey, boolean>>;
   readonly auth: Readonly<Record<AuthProvider, boolean>>;
-  readonly installableToolEnvRequirements?: readonly EnvRequirementLike[];
+  readonly installableToolEnvRequirements?: readonly EnvRequirement[];
 }
 
-/**
- * Expand an EnvRequirement into one or more EnvVarEntries, pulling
- * descriptions from the Zod schema.
- * @param {EnvRequirementLike} requirement The alternatives to expand without modifying their catalog.
- * @returns {EnvVarEntry[]} One checklist entry per credential alternative.
- */
-const requirementToEntries = (
-  requirement: EnvRequirementLike
-): EnvVarEntry[] => {
-  let oneOfGroup: string | undefined = undefined;
-  if (requirement.options.length > singleAlternative) {
-    oneOfGroup = requirement.options
-      .map((group) => group.map(String).join("+"))
-      .join("|");
-  }
+const firstRequirement = 0;
+const singleAlternative = 1;
 
-  return requirement.options.map((group) => {
-    let description = group
-      .map((variableName) => envDescriptions.get(variableName) ?? variableName)
-      .join(", ");
-
-    if (description === "") {
-      const fallbackDescription = requirement.description;
-      description = "Required environment variable";
-      if (
-        typeof fallbackDescription === "string" &&
-        fallbackDescription !== ""
-      ) {
-        description = fallbackDescription;
-      }
-    }
-    return {
-      description,
-      oneOfGroup,
-      vars: group.map(String).join(" + "),
-    };
-  });
-};
-
-interface RequirementCollector {
-  readonly entries: EnvVarEntry[];
-  readonly add: (requirement: EnvRequirementLike | undefined) => void;
-}
-
-const requirementCollector = (): RequirementCollector => {
-  const entries: EnvVarEntry[] = [];
-  const seen = new Set<string>();
-  const add = (requirement: EnvRequirementLike | undefined): void => {
-    if (!requirement) {
-      return;
-    }
-    const dedupeKey = JSON.stringify(
+const uniqueRequirements = (
+  requirements: readonly EnvRequirement[],
+  seen: Set<string>
+): EnvRequirement[] =>
+  requirements.filter((requirement) => {
+    const key = JSON.stringify(
       requirement.options
-        .map((group) => group.toSorted())
-        .toSorted(
-          (leftEntry: readonly string[], rightEntry: readonly string[]) =>
-            JSON.stringify(leftEntry).localeCompare(JSON.stringify(rightEntry))
-        )
+        .map((option) => JSON.stringify(option.toSorted()))
+        .toSorted()
     );
-    if (!seen.has(dedupeKey)) {
-      seen.add(dedupeKey);
-      entries.push(...requirementToEntries(requirement));
+    if (seen.has(key)) {
+      return false;
     }
-  };
-  return { add, entries };
-};
+    seen.add(key);
+    return true;
+  });
 
-const collectCoreFeatureEntries = (
-  input: EnvChecklistInput,
-  add: RequirementCollector["add"]
-): void => {
-  for (const plugin of CORE_FEATURE_KEYS) {
-    if (input.coreFeatures[plugin]) {
-      for (const requirement of coreFeatureEnvRequirements[plugin] ?? []) {
-        add(requirement);
-      }
-    }
-  }
-};
-
-const collectFeatureEntries = (input: EnvChecklistInput): EnvVarEntry[] => {
-  const collector = requirementCollector();
-  collectCoreFeatureEntries(input, collector.add);
-  for (const requirement of input.installableToolEnvRequirements ?? []) {
-    collector.add(requirement);
-  }
-  return collector.entries;
-};
-
-const collectAuthEntries = (input: EnvChecklistInput): EnvVarEntry[] => {
-  const authItems: EnvVarEntry[] = [];
-
-  // Filtering preserves Object.keys insertion order while narrowing the closed
-  // provider contract without assuming Object.keys returns that union.
-  const providers = Object.keys(authEnvRequirements).filter(
-    (provider): provider is AuthProvider =>
-      AUTH_PROVIDERS.some((candidate) => candidate === provider)
+export const collectEnvChecklist = (input: EnvChecklistInput): EnvSection[] => {
+  const features = CORE_FEATURE_KEYS.flatMap((feature) =>
+    input.coreFeatures[feature]
+      ? (coreFeatureEnvRequirements[feature] ?? [])
+      : []
   );
-  for (const provider of providers) {
-    if (input.auth[provider]) {
-      authItems.push(...requirementToEntries(authEnvRequirements[provider]));
-    }
-  }
-
-  return authItems;
-};
-
-const collectEnvChecklist = (input: EnvChecklistInput): EnvVarEntry[] => {
-  const entries: EnvVarEntry[] = [
+  const auth = Object.keys(authEnvRequirements)
+    .filter((provider): provider is AuthProvider =>
+      AUTH_PROVIDERS.some((candidate) => candidate === provider)
+    )
+    .flatMap((provider) =>
+      input.auth[provider] ? [authEnvRequirements[provider]] : []
+    );
+  const sections: EnvSection[] = [
     {
-      description: envDescriptions.get("AUTH_SECRET") ?? "AUTH_SECRET",
-      vars: "AUTH_SECRET",
+      title: "App secrets",
+      requirements: [{ options: [["AUTH_SECRET", "EVE_GATEWAY_SECRET"]] }],
+      hint: "Run openssl rand -base64 32 twice. Use a different value for each secret.",
     },
+    { title: "Database", requirements: [{ options: [["DATABASE_URL"]] }] },
     {
-      description: envDescriptions.get("DATABASE_URL") ?? "DATABASE_URL",
-      vars: "DATABASE_URL",
+      title: "Model gateway",
+      requirements:
+        input.gatewayRequirements ??
+        gatewayEnvRequirements[input.gateway] ??
+        [],
+    },
+    { title: "File storage", requirements: input.storageRequirements ?? [] },
+    { title: "Agent sandbox", requirements: input.sandboxRequirements ?? [] },
+    { title: "Sign-in", requirements: auth },
+    {
+      title: "Selected plugins and tools",
+      requirements: [
+        ...features,
+        ...(input.installableToolEnvRequirements ?? []),
+      ],
     },
   ];
-
-  const gwReq =
-    input.gatewayRequirements ?? gatewayEnvRequirements[input.gateway] ?? [];
-  return [
-    ...entries,
-    ...gwReq.flatMap((requirement) => requirementToEntries(requirement)),
-    ...collectFeatureEntries(input),
-    ...collectAuthEntries(input),
-  ];
+  const seen = new Set<string>();
+  return sections
+    .map((section) => ({
+      ...section,
+      requirements: uniqueRequirements(section.requirements, seen),
+    }))
+    .filter(({ requirements }) => requirements.length > 0);
 };
-export { collectEnvChecklist };
-export type { EnvVarEntry };
+
+export const formatEnvChecklist = (sections: readonly EnvSection[]): string => {
+  const blocks = sections.map(({ title, requirements, hint }) => {
+    const singleChoice =
+      requirements.length === singleAlternative &&
+      requirements[firstRequirement].options.length > singleAlternative;
+    const lines = requirements.map((requirement) => {
+      const { options } = requirement;
+      if (options.length === singleAlternative) {
+        return options
+          .flat()
+          .map((name) => `    ${name}`)
+          .join("\n");
+      }
+      const alternatives = options.map((names) =>
+        names.map((name) => `      ${name}`).join("\n")
+      );
+      if (singleChoice) {
+        return alternatives.join("\n    or\n");
+      }
+      const choiceLabel = requirement.description?.trim() ?? "";
+      const heading =
+        choiceLabel === ""
+          ? "    Choose one"
+          : `    ${choiceLabel} (choose one)`;
+      return [heading, alternatives.join("\n    or\n")].join("\n");
+    });
+    return [
+      `  ${title}${singleChoice ? " (choose one)" : ""}`,
+      ...lines,
+      ...(hint === undefined ? [] : [`    ${hint}`]),
+    ].join("\n");
+  });
+  return blocks.join("\n\n");
+};

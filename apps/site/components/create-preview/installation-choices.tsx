@@ -188,7 +188,7 @@ export const FeatureChoices = ({
               title={item.title}
               caption={setupCaptions[id] ?? "Optional feature"}
               controlId={control.id}
-              visual={<SetupProviderMark id={id} />}
+              visual={<SetupProviderMark icon={item.icon} />}
               control={<Checkbox {...control} className={setupTileControl} />}
               action={details}
             />

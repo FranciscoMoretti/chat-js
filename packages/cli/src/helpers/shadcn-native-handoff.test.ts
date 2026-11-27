@@ -1,5 +1,6 @@
 import { expect, test } from "bun:test";
-import { createRequire } from "node:module";
+import { rejects } from "node:assert/strict";
+import { initializeShadcn } from "./initialize-shadcn";
 import { mkdtemp, readdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -9,12 +10,8 @@ import path from "node:path";
 test("native shadcn retains ordered options and its own invalid-preset diagnostic", async () => {
   const root = await mkdtemp(path.join(tmpdir(), "chatjs-native-handoff-"));
   try {
-    const executable = createRequire(import.meta.url).resolve("shadcn");
-    const child = Bun.spawn(
-      [
-        process.execPath,
-        executable,
-        "init",
+    await rejects(
+      initializeShadcn(root, [
         "--preset",
         "first-invalid-preset",
         "--base=radix",
@@ -22,18 +19,8 @@ test("native shadcn retains ordered options and its own invalid-preset diagnosti
         "--pointer",
         "--preset",
         "last-invalid-preset",
-      ],
-      { cwd: root, stdout: "pipe", stderr: "pipe" }
-    );
-    const [exitCode, stdout, stderr] = await Promise.all([
-      child.exited,
-      new Response(child.stdout).text(),
-      new Response(child.stderr).text(),
-    ]);
-    expect(exitCode).toBe(1);
-    expect(stdout + stderr).toContain("Invalid preset: last-invalid-preset");
-    expect(stdout + stderr).not.toContain(
-      "Invalid preset: first-invalid-preset"
+      ]),
+      /shadcn init failed.*\n[^]*Invalid preset: last-invalid-preset/u
     );
     expect(await readdir(root)).toEqual([]);
   } finally {

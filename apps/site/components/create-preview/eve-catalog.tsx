@@ -1,6 +1,7 @@
 "use client";
 
 import { CategoryNavigation, categoryLayout } from "./category-navigation";
+import { createCatalog } from "../../../../packages/registry/create-catalog";
 import { AgentCategoryIcon } from "./agent-category-icon";
 import { CapabilityRow } from "./capability-row";
 import {
@@ -63,7 +64,7 @@ export const EveCatalog = ({
   if (!installation) {
     return null;
   }
-  const selected = installation.eve ?? [];
+  const selected = installation[createCatalog.eveItem.target] ?? [];
   const enabled = [
     ...new Set([...selected, ...enabledEveDefaultTools(installation.agent)]),
   ];

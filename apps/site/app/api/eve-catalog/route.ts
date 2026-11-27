@@ -1,18 +1,9 @@
-import {
-  eveRegistryUrl,
-  parseEveCatalog,
-} from "../../../../../packages/registry/eve-catalog";
+import { createCatalog } from "../../../../../packages/registry/create-catalog";
 
 export const GET = async (): Promise<Response> => {
   try {
-    const response = await fetch(eveRegistryUrl, {
-      next: { revalidate: 3600 },
-      signal: AbortSignal.timeout(15_000),
-    });
-    if (!response.ok) {
-      throw new Error("EVE registry unavailable");
-    }
-    return Response.json(parseEveCatalog(await response.json()));
+    const options = { next: { revalidate: 3600 } } satisfies RequestInit;
+    return Response.json(await createCatalog.eveItem.choices.load(options));
   } catch {
     return Response.json(
       {

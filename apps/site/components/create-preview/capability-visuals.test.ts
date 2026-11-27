@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { existsSync } from "node:fs";
 import { test } from "node:test";
-import icons from "./capability-icons.json";
+import icons from "../../../../packages/registry/capability-icons.json";
 import { capabilityBrandIcon } from "./capability-visuals";
 
 void test("every curated capability references a shipped local asset", () => {

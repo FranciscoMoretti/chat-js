@@ -1,12 +1,15 @@
 import type { ReadonlyInput } from "./readonly-input";
 import type { StorageSelection } from "#cli/registry/storage";
 import { builtInStorage } from "../../../registry/src/storage/catalog";
+import { getStorageEnvironmentRequirements } from "../../../registry/src/storage/environment";
+import { PROVIDER_NAMES } from "files-sdk/providers";
+import { resolveStorage } from "#cli/registry/storage";
 import { generatedRegistrationSource } from "#cli/utils/generated-registration-source";
 import path from "node:path";
 import { preflight } from "#cli/utils/preflight";
 import { updateEnvironmentExample } from "#cli/utils/environment-example";
 import { mkdir, writeFile } from "node:fs/promises";
-import { z } from "zod";
+import { createCatalog } from "../../../registry/create-catalog";
 
 const CONFIG_JSON_INDENTATION_SPACES = 2;
 
@@ -15,17 +18,58 @@ const serializedConfigValue = (
 ): ReturnType<typeof JSON.stringify> =>
   JSON.stringify(value, null, CONFIG_JSON_INDENTATION_SPACES);
 
-const INSTALLABLE_STORAGE_PROVIDERS = builtInStorage.filter(
-  (item: ReadonlyInput<(typeof builtInStorage)[number]>) =>
-    item.meta.chatjs.id !== "memory"
-);
+const APPEND_DELETE_COUNT = 0;
+
+type StorageRequirementInput = ReadonlyInput<
+  ReturnType<typeof getStorageEnvironmentRequirements>[number]
+>;
+
+const registryStorageRequirement = (
+  requirement: StorageRequirementInput
+): StorageSelection["definition"]["envRequirements"][number] => ({
+  description: requirement.description,
+  options: requirement.options.flatMap((option) => {
+    let alternatives: string[][] = [[]];
+    for (const variable of option) {
+      alternatives = alternatives.flatMap((alternative: readonly string[]) =>
+        [variable.key, ...variable.aliases].map((key) =>
+          alternative.toSpliced(alternative.length, APPEND_DELETE_COUNT, key)
+        )
+      );
+    }
+    return alternatives;
+  }),
+});
+
+export const resolveCreateStorage = async (
+  source: string,
+  options: Record<string, unknown>,
+  cwd: string
+): Promise<StorageSelection> => {
+  const selection = await resolveStorage(source, cwd);
+  selection.options = options;
+  // An external item can share an ID with a built-in while declaring its own credentials.
+  const builtin = builtInStorage.find(
+    (item) => selection.source === `@chatjs/${item.name}`
+  );
+  const providerId = PROVIDER_NAMES.find(
+    (id) => id === builtin?.meta.chatjs.id
+  );
+  if (providerId !== undefined) {
+    selection.definition.envRequirements = getStorageEnvironmentRequirements(
+      providerId,
+      options
+    ).map(registryStorageRequirement);
+  }
+  return selection;
+};
 
 const parseStorageOptions = (value: string): Record<string, unknown> => {
-  try {
-    return z.record(z.string(), z.unknown()).parse(JSON.parse(value));
-  } catch {
+  const result = createCatalog.storageConfig.schema.safeParse(value);
+  if (!result.success) {
     throw new Error("Storage config must be a valid JSON object.");
   }
+  return result.data;
 };
 
 const storageConfigurationTargets = [
@@ -65,6 +109,5 @@ export const storageEnvRequirements: EnvRequirement[] = ${serializedConfigValue(
 export {
   configureStorageProvider,
   storageConfigurationTargets,
-  INSTALLABLE_STORAGE_PROVIDERS,
   parseStorageOptions,
 };

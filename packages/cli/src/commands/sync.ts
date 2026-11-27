@@ -1,3 +1,4 @@
+import { projectDirectory } from "#cli/helpers/project-options";
 import { assertUiCompatibility } from "#cli/utils/ui-compatibility";
 import { readInstalledPlugins } from "#cli/utils/installed-plugins";
 import { Command } from "commander";
@@ -8,7 +9,7 @@ import { readInstalledTools, syncTools } from "#cli/utils/sync-tools";
 
 export const sync = new Command("sync")
   .description("regenerate typed tool, plugin, and router registrations")
-  .option("-c, --cwd <cwd>", "project directory", process.cwd())
+  .addOption(projectDirectory())
   .action(async (options: { readonly cwd: string }) => {
     try {
       await assertUiCompatibility(path.resolve(options.cwd), [

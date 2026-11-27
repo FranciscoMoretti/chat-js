@@ -3,7 +3,9 @@ title: remove
 description: "Inspect which files a plugin removal will affect, disconnect its contributions, and preserve the database schema and migration history."
 ---
 
-Inspect a removal plan before removing a plugin:
+Run `chat-js remove --dry-run` in a terminal to choose from the plugins installed in your app, including plugins from external registries. Press Esc to leave the picker.
+
+You can also preview removal by ID.
 
 ```bash
 bunx chat-js@alpha remove projects --dry-run
@@ -21,7 +23,7 @@ bunx chat-js@alpha remove projects --backup
 
 | Argument or flag | Default | Purpose |
 | --- | --- | --- |
-| `<plugins...>` | Required | One or more installed plugin IDs |
+| `[plugins...]` | Interactive picker | One or more installed plugin IDs. Required with `--yes` or in a script |
 | `-c, --cwd <cwd>` | Current directory | Select the ChatJS project |
 | `--dry-run` | `false` | Show the plan without writing |
 | `--backup` | `false` | Preserve removed source in the backup directory |

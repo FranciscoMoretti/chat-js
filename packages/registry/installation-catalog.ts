@@ -3,6 +3,8 @@ import {
   supportsMedia,
   supportsNativeProcesses,
 } from "./provider-capabilities";
+import { isCreateIcon } from "./create-icons";
+import type { CreateIcon } from "./create-icons";
 import { z } from "zod";
 import { eveCompositionIssue } from "./eve-catalog";
 import type { RegistryItem } from "shadcn/schema";
@@ -54,6 +56,7 @@ export interface InstallationCatalogItem {
   title: string;
   description: string;
   dependencies: string[];
+  icon?: CreateIcon;
   definition?: Definition;
 }
 
@@ -62,6 +65,7 @@ export const installationCatalog = (
   items: readonly RegistryItem[]
 ): InstallationCatalogItem[] =>
   items.map((item) => ({
+    ...(isCreateIcon(item.meta?.icon) ? { icon: item.meta.icon } : {}),
     name: item.name,
     title:
       item.title ??

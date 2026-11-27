@@ -1,4 +1,4 @@
-import icons from "./capability-icons.json";
+import icons from "../../../../packages/registry/capability-icons.json";
 
 /** Stable registry IDs, never display-name matching. Assets are served locally. */
 export const capabilityBrandIcon = (id: string): string | undefined => {

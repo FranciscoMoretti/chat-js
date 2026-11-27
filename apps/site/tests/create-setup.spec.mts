@@ -1,3 +1,4 @@
+import { decodeAppPreset } from "../../../packages/registry/app-preset";
 import catalogFixture from "./eve-catalog.fixture.json" with { type: "json" };
 import { parseEveCatalog } from "../../../packages/registry/eve-catalog";
 import { test, expect } from "@uiverify/playwright";
@@ -217,6 +218,22 @@ for (const width of [1440, 845, 390]) {
         path: testInfo.outputPath("features-light.png"),
       });
     }
+    const auth = page.getByRole("region", { name: "Authentication" });
+    const github = auth.getByRole("checkbox", { name: "GitHub OAuth" });
+    const google = auth.getByRole("checkbox", { name: "Google OAuth" });
+    await expect(github).toBeChecked();
+    await expect(github).toBeDisabled();
+    await google.check();
+    await github.uncheck();
+    await expect(google).toBeDisabled();
+    await auth.scrollIntoViewIfNeeded();
+    await uiVerify.snapshot("authentication providers");
+    await expect
+      .poll(() => {
+        const code = new URL(page.url()).searchParams.get("app");
+        return code === null ? undefined : decodeAppPreset(code).auth;
+      })
+      .toEqual(["google"]);
     expect(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= window.innerWidth

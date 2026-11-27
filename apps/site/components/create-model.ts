@@ -5,12 +5,19 @@ import {
 } from "../../../packages/registry/app-preset";
 import { encodePreset } from "shadcn/preset";
 import type { PresetBase, PresetConfig } from "shadcn/preset";
-import { installationSelectionSchema } from "../../../packages/registry/installation";
+import {
+  installationSelectionSchema,
+  defaultAuthProviders,
+} from "../../../packages/registry/installation";
 import type { InstallationSelection } from "../../../packages/registry/installation";
 
+import { createCatalog } from "../../../packages/registry/create-catalog";
+
 export const startingInstallation = installationSelectionSchema.parse({
-  gateway: "vercel",
-  storage: { source: "vercel-blob" },
+  auth: defaultAuthProviders,
+  sandbox: createCatalog.sandboxProvider.defaultValue,
+  gateway: createCatalog.gateway.defaultValue,
+  storage: { source: createCatalog.storageProvider.defaultValue },
 });
 
 const quoteArgument = (value: string): string =>

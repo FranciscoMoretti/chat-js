@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 
-import { collectEnvChecklist } from "./env-checklist";
+import { collectEnvChecklist, formatEnvChecklist } from "./env-checklist";
 
 const unselectedFeatures = {
   attachments: false,
@@ -35,7 +35,7 @@ test("preserves auth insertion order and skips unused requirement-description ge
       {
         get description(): string {
           throw new Error(
-            "A nonempty variable description must short-circuit this getter."
+            "A single credential set does not need an alternative label."
           );
         },
         options: [["CUSTOM_TOKEN"]],
@@ -43,19 +43,17 @@ test("preserves auth insertion order and skips unused requirement-description ge
     ],
   });
   expect(reads).toEqual(["github", "google", "vercel"]);
-  expect(entries.map((entry: { readonly vars: string }) => entry.vars)).toEqual(
+  const output = formatEnvChecklist(entries);
+  const signIn = output.split("  Sign-in\n").at(1)?.split("\n\n").at(0);
+  expect(signIn).toBe(
     [
-      "AUTH_SECRET",
-      "DATABASE_URL",
-      "CUSTOM_TOKEN",
-      "AUTH_GITHUB_ID + AUTH_GITHUB_SECRET",
-      "AUTH_GOOGLE_ID + AUTH_GOOGLE_SECRET",
-      "VERCEL_APP_CLIENT_ID + VERCEL_APP_CLIENT_SECRET",
-    ]
+      "    AUTH_GITHUB_ID",
+      "    AUTH_GITHUB_SECRET",
+      "    AUTH_GOOGLE_ID",
+      "    AUTH_GOOGLE_SECRET",
+      "    VERCEL_APP_CLIENT_ID",
+      "    VERCEL_APP_CLIENT_SECRET",
+    ].join("\n")
   );
-  const custom = entries.find(
-    (entry: { readonly vars: string }) => entry.vars === "CUSTOM_TOKEN"
-  );
-  expect(custom).toHaveProperty("oneOfGroup");
-  expect(custom && custom.oneOfGroup).toBeUndefined();
+  expect(output).toContain("  Selected plugins and tools\n    CUSTOM_TOKEN");
 });

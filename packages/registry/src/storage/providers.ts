@@ -1,10 +1,15 @@
 import { PROVIDER_NAMES, getProvider } from "files-sdk/providers";
 
-const unsupported = new Set(["box", "bun-s3", "convex", "fs", "s3-fetch"]);
+const unsupported = ["box", "bun-s3", "convex", "fs", "s3-fetch"] as const;
+export type SupportedStorageId = Exclude<
+  (typeof PROVIDER_NAMES)[number],
+  (typeof unsupported)[number]
+>;
+const unavailable: ReadonlySet<string> = new Set(unsupported);
 
 /** Shared provider metadata without the registry builder's filesystem dependencies. */
 export const builtInStorageProviders = PROVIDER_NAMES.filter(
-  (id) => !unsupported.has(id)
+  (id): id is SupportedStorageId => !unavailable.has(id)
 ).map((id) => {
   const provider = getProvider(id);
   if (!provider) {

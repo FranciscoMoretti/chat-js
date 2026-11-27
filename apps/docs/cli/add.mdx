@@ -9,6 +9,8 @@ npx chat-js@alpha add [items...] [options]
 
 Accepts built-in names, standard `@namespace/item` addresses, complete item URLs, and local registry JSON paths. Run inside a ChatJS app with `chat.config.ts`.
 
+Run `chat-js add --dry-run` in a terminal to browse tools, plugins, and providers and preview your selection. You can also enter a registry address. With `--yes` or in a script, supply the items or provider flags on the command line.
+
 | Flag | Default | Description |
 | --- | --- | --- |
 | `-y, --yes` | `false` | Skip ChatJS confirmation |
@@ -16,7 +18,7 @@ Accepts built-in names, standard `@namespace/item` addresses, complete item URLs
 | `--dry-run` | `false` | Resolve and report declared integrations and native entry paths without installing or writing app files |
 | `--files-only` | `false` | Export source and connection metadata to a temporary review directory |
 | `--replace` | `false` | Explicitly authorize exclusive provider replacement |
-| `--sandbox-provider <item>` | None | Select a native EVE sandbox: Automatic, Vercel, Docker, just-bash or a registry address |
+| `--sandbox-provider <item>` | None | Select a native EVE sandbox by name or registry address |
 | `--gateway <item>` | Not applicable | Select an AI gateway |
 | `--storage-provider <item>` | Not applicable | Select file storage |
 | `--storage-config <json>` | Not applicable | Non-secret storage adapter options |

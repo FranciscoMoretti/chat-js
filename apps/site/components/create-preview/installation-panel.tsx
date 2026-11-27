@@ -22,7 +22,7 @@ import {
 } from "@/vendor/shadcn-create/styles/base-nova/ui/popover";
 import { useInstallation } from "./installation-provider";
 import { FeatureChoices } from "./installation-choices";
-import { groupAppPlugins } from "./catalog-groups";
+import { groupAppPlugins } from "../../../../packages/registry/create-groups";
 
 export const InvalidInstallation = () => (
   <Alert variant="destructive">

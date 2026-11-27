@@ -1,6 +1,7 @@
-import type { InstallationCatalogItem } from "../../../../packages/registry/installation-catalog";
+import { createCatalog } from "./create-catalog";
+import type { InstallationCatalogItem } from "./installation-catalog";
 
-const appPluginGroups = [
+export const appPluginGroups = [
   {
     title: "Conversations",
     ids: ["projects", "search", "ai-titles", "sharing"],
@@ -30,9 +31,9 @@ const appPluginGroups = [
 
 export const setupPluginGroups = [
   {
-    id: "platforms",
-    title: "Platforms",
-    ids: ["desktop"],
+    id: createCatalog.electron.menu.value,
+    title: createCatalog.electron.menu.label,
+    ids: [createCatalog.electron.pluginId],
     description: "Web is included. Add a desktop companion for your app.",
   },
 ];
@@ -68,7 +69,7 @@ const groupChoices = (
 export const groupAppPlugins = (
   catalog: readonly InstallationCatalogItem[]
 ) => {
-  const setupIds = new Set(setupPluginGroups.flatMap(({ ids }) => ids));
+  const setupIds = new Set<string>(setupPluginGroups.flatMap(({ ids }) => ids));
   return groupChoices(
     catalog.filter(
       (item) =>

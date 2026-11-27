@@ -1,5 +1,9 @@
 "use client";
 
+import {
+  createCatalog,
+  registryChoices,
+} from "../../../../packages/registry/create-catalog";
 import { CapabilityRow } from "./capability-row";
 import {
   RadioGroup,
@@ -49,57 +53,61 @@ export const AgentConfiguration = ({
             <RadioGroup
               aria-label="Sandbox"
               className="mt-5 grid gap-3 md:grid-cols-2"
-              value={installation.sandbox ?? "default"}
+              value={
+                installation[createCatalog.sandboxProvider.target] ??
+                createCatalog.sandboxProvider.defaultValue
+              }
               onValueChange={(value) => {
                 if (typeof value === "string") {
                   update({ ...installation, sandbox: value });
                 }
               }}
             >
-              {catalog
-                .filter((item) => item.definition?.kind === "sandbox")
-                .map((item) => {
-                  const id = item.definition?.id ?? item.name;
-                  const controlId = `agent-sandbox-${id}`;
-                  return (
-                    <CapabilityRow
-                      key={id}
-                      title={item.title}
-                      description={item.description}
-                      visualId={sandboxVisualIds[id] ?? `sandbox/${id}`}
-                      category="sandbox"
-                      source="EVE"
-                      docs={
-                        id === "default"
-                          ? "https://eve.dev/docs/sandbox/default"
-                          : undefined
-                      }
-                      details={
-                        id === "default" ? (
-                          <div className="space-y-0.5 pt-2">
-                            <p className="text-popover-foreground font-medium">
-                              Self-hosted production
-                            </p>
-                            <p>
-                              Run Docker during the build, or choose a sandbox
-                              provider.
-                            </p>
-                          </div>
-                        ) : undefined
-                      }
-                      controlId={controlId}
-                      checked={(installation.sandbox ?? "default") === id}
-                      control={
-                        <RadioGroupItem
-                          id={controlId}
-                          value={id}
-                          aria-label={item.title}
-                          className="absolute! end-3 top-4 shrink-0"
-                        />
-                      }
-                    />
-                  );
-                })}
+              {registryChoices(
+                catalog,
+                createCatalog.sandboxProvider.source
+              ).map((item) => {
+                const id = item.value;
+                const controlId = `agent-sandbox-${id}`;
+                return (
+                  <CapabilityRow
+                    key={id}
+                    title={item.label}
+                    description={item.hint}
+                    visualId={sandboxVisualIds[id] ?? `sandbox/${id}`}
+                    category="sandbox"
+                    source="EVE"
+                    docs={
+                      id === "default"
+                        ? "https://eve.dev/docs/sandbox/default"
+                        : undefined
+                    }
+                    details={
+                      id === "default" ? (
+                        <div className="space-y-0.5 pt-2">
+                          <p className="text-popover-foreground font-medium">
+                            Self-hosted production
+                          </p>
+                          <p>
+                            Run Docker during the build, or choose a sandbox
+                            provider.
+                          </p>
+                        </div>
+                      ) : undefined
+                    }
+                    controlId={controlId}
+                    checked={(installation.sandbox ?? "default") === id}
+                    control={
+                      <RadioGroupItem
+                        id={controlId}
+                        value={id}
+                        aria-label={item.label}
+                        className="absolute! end-3 top-4 shrink-0"
+                      />
+                    }
+                  />
+                );
+              })}
             </RadioGroup>
           </section>
           <div className="flex flex-wrap gap-2">
