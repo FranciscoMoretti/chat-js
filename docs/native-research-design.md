@@ -25,7 +25,7 @@ Inspection of the pinned `AgentLimitsDefinition` confirms that EVE exposes sessi
 
 Approved decision: the bounded adaptive loop lives in the workflow. Each supervisor response contains research topics or completion. The workflow runs topics sequentially and retains every compressed finding. No background delegation receipts are substituted for findings.
 
-The workflow delegates each phase to a native child session. The researcher uses installed search capabilities and returns findings with source URLs and conflicting evidence. The workflow saves those findings before sending them to the compressor. The writer receives the saved brief and compressed notes.
+The workflow delegates each phase to a native child session. If a control phase fails because the child omitted its structured reply, the workflow can ask the same open session once for JSON and validate it against the original schema. The researcher uses installed search capabilities and returns findings with source URLs and conflicting evidence. The workflow saves those findings before sending them to the compressor. The writer receives the saved brief and compressed notes.
 
 The workflow replaces the Promise queue with sequential awaited invocations. Each invocation starts a fresh child session; continuing a child under a different root turn is explicitly rejected by the ownership binding. This avoids attributing later work to an earlier billing turn.
 
