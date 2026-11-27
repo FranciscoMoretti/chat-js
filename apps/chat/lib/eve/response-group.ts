@@ -46,10 +46,13 @@ export const createEveResponseGroup = async (
       });
       if (!response.ok) {
         const failureBody: unknown = await response.json().catch(() => null);
+        const code = z.object({ code: z.string() }).safeParse(failureBody);
+        // These admission gates report backpressure before candidate dispatch.
         if (
-          response.status === 409 &&
-          z.object({ code: z.literal("workspace_busy") }).safeParse(failureBody)
-            .success
+          code.success &&
+          ((response.status === 409 && code.data.code === "workspace_busy") ||
+            (response.status === 503 &&
+              code.data.code === "creation_recovery_unavailable"))
         ) {
           return { ...candidate, state: "waiting" };
         }

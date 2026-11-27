@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import type { Response, TestInfo } from "@playwright/test";
 
+import { requestBoundComparison } from "./eve-bound-comparison";
 import { eveResponseGroupResult } from "../lib/eve/response-group-contracts";
 
 const nano = /GPT-5 Nano/iu;
@@ -14,17 +15,11 @@ test("nested comparisons retain both groups, duplicate-model slots and retry att
   });
   await page.goto("/api/dev-login");
   const { origin } = new URL(page.url());
-  const response = await page.request.post("/api/agent-response-groups", {
-    data: {
-      message: "Do not use tools. Reply with exactly amber.",
-      modelIds: ["openai/gpt-5-nano", "openai/gpt-5-nano"],
-      operationId: crypto.randomUUID(),
-    },
-    headers: { origin },
-    timeout: 90_000,
+  const group = await requestBoundComparison(page.request, origin, {
+    message: "Do not use tools. Reply with exactly amber.",
+    modelIds: ["openai/gpt-5-nano", "openai/gpt-5-nano"],
+    operationId: crypto.randomUUID(),
   });
-  expect(response.ok(), await response.text()).toBe(true);
-  const group = eveResponseGroupResult.parse(await response.json());
   const [first] = group.candidates;
   if (first.state !== "bound") {
     throw new Error("First candidate did not bind");
@@ -53,19 +48,12 @@ test("nested comparisons retain both groups, duplicate-model slots and retry att
   await expect(page.getByText("Ready", { exact: true })).toBeVisible({
     timeout: 90_000,
   });
-  const later = await page.request.post("/api/agent-response-groups", {
-    data: {
-      fork: {
-        branchId: first.branchId,
-      },
-      message: "Do not use tools. Reply with exactly cobalt.",
-      modelIds: ["openai/gpt-5-nano", "openai/gpt-5-nano"],
-      operationId: crypto.randomUUID(),
-    },
-    headers: { origin },
-    timeout: 90_000,
+  await requestBoundComparison(page.request, origin, {
+    fork: { branchId: first.branchId },
+    message: "Do not use tools. Reply with exactly cobalt.",
+    modelIds: ["openai/gpt-5-nano", "openai/gpt-5-nano"],
+    operationId: crypto.randomUUID(),
   });
-  expect(later.ok(), await later.text()).toBe(true);
   await page.reload();
   await expect(cards).toHaveCount(4, { timeout: 90_000 });
   await expect(page.getByText("Ready", { exact: true })).toBeVisible({

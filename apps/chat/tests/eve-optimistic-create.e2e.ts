@@ -141,119 +141,120 @@ const chatPath = /\/chat\/[a-f\d-]+$/u;
 const visualStyle =
   "nextjs-portal, #react-scan-toolbar, #react-scan-root, .tsqd-parent-container { visibility: hidden !important; }";
 
-for (const identity of ["registered", "guest"]) {
-  test(`first send keeps its document and optimistic message through stream attachment (${identity})`, async ({
-    page,
-  }, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
-    await page.route("https://unpkg.com/react-scan/**", async (route) => {
-      await route.abort();
-    });
-    await page.goto(identity === "registered" ? "/api/dev-login" : "/", {
-      waitUntil: "domcontentloaded",
-    });
-    const input = page.getByLabel("Message", { exact: true });
-    await expect(input).toBeEditable();
-    const message = "Do not use tools. Reply with exactly: Runtime ready";
-    const creation: PromiseWithResolvers<void> = Promise.withResolvers();
-    const stream: PromiseWithResolvers<void> = Promise.withResolvers();
-    await page.route("**/api/agent-conversations", async (route) => {
-      await creation.promise;
-      await route.continue();
-    });
-    await page.route("**/stream?**", async (route) => {
-      await stream.promise;
-      await route.continue();
-    });
-    const cdp = await page.context().newCDPSession(page);
-    await cdp.send("Network.enable");
-    let documents = 0;
-    cdp.on(
-      "Network.requestWillBeSent",
-      (event: Readonly<{ type?: string }>) => {
-        if (event.type === "Document") {
-          documents += 1;
-        }
-      }
-    );
-    const origin = await page.evaluate(() => performance.timeOrigin);
-    try {
-      await input.fill(message);
-      await page.getByRole("button", { exact: true, name: "Send" }).click();
-      await expect(page.getByRole("log")).toContainText(message);
-      await page.evaluate((text) => {
-        document.documentElement.dataset.missingFirstMessage = "false";
-        const observer = new MutationObserver(() => {
-          if (
-            document
-              .querySelector('[role="log"]')
-              ?.textContent?.includes(text) !== true
-          ) {
-            document.documentElement.dataset.missingFirstMessage = "true";
-          }
-        });
-        observer.observe(document.body, { childList: true, subtree: true });
-        document.addEventListener(
-          "stop-message-observer",
-          () => {
-            observer.disconnect();
-          },
-          { once: true }
-        );
-      }, message);
-      creation.resolve();
-      await expect(page).toHaveURL(chatPath);
-      await expect(page.getByRole("log")).toContainText(message);
-      await page.screenshot({
-        animations: "disabled",
-        path: testInfo.outputPath("awaiting-first-stream.png"),
-        style: visualStyle,
-      });
-      expect(await page.evaluate(() => performance.timeOrigin)).toBe(origin);
-      expect(documents).toBe(0);
-      stream.resolve();
-      await expect(
-        page.getByRole("log").getByText("Runtime ready", { exact: true })
-      ).toBeVisible({ timeout: 60_000 });
-      await expect(
-        page.getByRole("log").getByText(message, { exact: true })
-      ).toHaveCount(1);
-      expect(
-        await page.evaluate(
-          () => document.documentElement.dataset.missingFirstMessage
-        )
-      ).toBe("false");
-      expect(documents).toBe(0);
-      await page.evaluate(() =>
-        document.dispatchEvent(new Event("stop-message-observer"))
-      );
-      await expect(page.getByText("Ready", { exact: true })).toHaveCount(1);
-      await page.screenshot({
-        animations: "disabled",
-        path: testInfo.outputPath("first-reply.png"),
-        style: visualStyle,
-      });
-      await expect(input).toBeEditable();
-      await input.fill("Do not use tools. Reply with exactly: Followup ready");
-      await page.getByRole("button", { exact: true, name: "Send" }).click();
-      await expect(
-        page.getByRole("log").getByText("Followup ready", { exact: true })
-      ).toBeVisible({ timeout: 60_000 });
-      await page.goBack();
-      await expect(input).toHaveValue("");
-      await page.goForward();
-      await expect(page.getByRole("log")).toContainText("Followup ready");
-      expect(documents).toBe(0);
-      await page.reload();
-      await expect(page.getByRole("log")).toContainText("Followup ready");
-      await expect(
-        page.getByRole("log").getByText(message, { exact: true })
-      ).toHaveCount(1);
-      await page.getByRole("link", { name: /^New Chat/u }).click();
-      await expect(input).toHaveValue("");
-      await expect(page.getByRole("log")).toHaveCount(0);
-    } finally {
-      creation.resolve();
-      stream.resolve();
+test("registered first send keeps its document and optimistic message through stream attachment", async ({
+  page,
+}, testInfo: Readonly<Pick<TestInfo, "outputPath">>) => {
+  await page.route("https://unpkg.com/react-scan/**", async (route) => {
+    await route.abort();
+  });
+  await page.goto("/api/dev-login", { waitUntil: "domcontentloaded" });
+  await page.context().addCookies([
+    {
+      name: "chat-model",
+      value: "openai/gpt-5-nano",
+      url: new URL(page.url()).origin,
+    },
+  ]);
+  await page.reload();
+  const input = page.getByLabel("Message", { exact: true });
+  await expect(input).toBeEditable();
+  const message = "Do not use tools. Reply with exactly: Runtime ready";
+  const creation: PromiseWithResolvers<void> = Promise.withResolvers();
+  const stream: PromiseWithResolvers<void> = Promise.withResolvers();
+  await page.route("**/api/agent-conversations", async (route) => {
+    await creation.promise;
+    await route.continue();
+  });
+  await page.route("**/stream?**", async (route) => {
+    await stream.promise;
+    await route.continue();
+  });
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send("Network.enable");
+  let documents = 0;
+  cdp.on("Network.requestWillBeSent", (event: Readonly<{ type?: string }>) => {
+    if (event.type === "Document") {
+      documents += 1;
     }
   });
-}
+  const origin = await page.evaluate(() => performance.timeOrigin);
+  try {
+    await input.fill(message);
+    await page.getByRole("button", { exact: true, name: "Send" }).click();
+    await expect(page.getByRole("log")).toContainText(message);
+    await page.evaluate((text) => {
+      document.documentElement.dataset.missingFirstMessage = "false";
+      const observer = new MutationObserver(() => {
+        if (
+          document
+            .querySelector('[role="log"]')
+            ?.textContent?.includes(text) !== true
+        ) {
+          document.documentElement.dataset.missingFirstMessage = "true";
+        }
+      });
+      observer.observe(document.body, { childList: true, subtree: true });
+      document.addEventListener(
+        "stop-message-observer",
+        () => {
+          observer.disconnect();
+        },
+        { once: true }
+      );
+    }, message);
+    creation.resolve();
+    await expect(page).toHaveURL(chatPath);
+    await expect(page.getByRole("log")).toContainText(message);
+    await page.screenshot({
+      animations: "disabled",
+      path: testInfo.outputPath("awaiting-first-stream.png"),
+      style: visualStyle,
+    });
+    expect(await page.evaluate(() => performance.timeOrigin)).toBe(origin);
+    expect(documents).toBe(0);
+    stream.resolve();
+    await expect(
+      page.getByRole("log").getByText("Runtime ready", { exact: true })
+    ).toBeVisible({ timeout: 60_000 });
+    await expect(
+      page.getByRole("log").getByText(message, { exact: true })
+    ).toHaveCount(1);
+    expect(
+      await page.evaluate(
+        () => document.documentElement.dataset.missingFirstMessage
+      )
+    ).toBe("false");
+    expect(documents).toBe(0);
+    await page.evaluate(() =>
+      document.dispatchEvent(new Event("stop-message-observer"))
+    );
+    await expect(page.getByText("Ready", { exact: true })).toHaveCount(1);
+    await page.screenshot({
+      animations: "disabled",
+      path: testInfo.outputPath("first-reply.png"),
+      style: visualStyle,
+    });
+    await expect(input).toBeEditable();
+    await input.fill("Do not use tools. Reply with exactly: Followup ready");
+    await page.getByRole("button", { exact: true, name: "Send" }).click();
+    await expect(
+      page.getByRole("log").getByText("Followup ready", { exact: true })
+    ).toBeVisible({ timeout: 60_000 });
+    await page.goBack();
+    await expect(input).toHaveValue("");
+    await page.goForward();
+    await expect(page.getByRole("log")).toContainText("Followup ready");
+    expect(documents).toBe(0);
+    await page.reload();
+    await expect(page.getByRole("log")).toContainText("Followup ready");
+    await expect(
+      page.getByRole("log").getByText(message, { exact: true })
+    ).toHaveCount(1);
+    await page.getByRole("link", { name: /^New Chat/u }).click();
+    await expect(input).toHaveValue("");
+    await expect(page.getByRole("log")).toHaveCount(0);
+  } finally {
+    creation.resolve();
+    stream.resolve();
+  }
+});

@@ -87,12 +87,20 @@ const latestMessageTime = (
   return time;
 };
 
-/** The immutable message boundary determines which copied seed positions are inherited. */
+/** A comparison continuation copies the parent history. Explicit boundaries truncate the copied prefix. */
 const branchPrefix = (
   branch: LogicalBranch,
   paths: ReadonlyMap<string, readonly string[]>,
   aliases: ReadonlyMap<string, string>
 ): { prefix: readonly string[]; replaced?: string } => {
+  if (
+    branch.forkKind === "comparison" &&
+    isNonEmptyString(branch.parentBranchId) &&
+    !isNonEmptyString(branch.forkMessageId) &&
+    !isNonEmptyString(branch.forkTurnId)
+  ) {
+    return { prefix: paths.get(branch.parentBranchId) ?? [] };
+  }
   if (
     !isNonEmptyString(branch.parentBranchId) ||
     !isNonEmptyString(branch.forkMessageId)

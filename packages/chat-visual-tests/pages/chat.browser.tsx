@@ -1010,6 +1010,58 @@ test("lost branch response keeps source recovery visible instead of selecting th
     .toHaveTextContent("Replacement awaiting recovery");
 });
 
+test("a rejected recovered edit reopens the inline editor with its draft", async () => {
+  const source = Object.values(invoicesTranscripts)[0].find(
+    (message) => message.role === "user"
+  );
+  if (!source) {
+    throw new Error("Missing source message for edit recovery");
+  }
+  const draft = "Replacement awaiting recovery";
+  prepareCreation(
+    sessionStorage,
+    session.user.id,
+    draft,
+    invoicesConversation.initialModelId ?? undefined,
+    {
+      branchId: invoicesConversation.id,
+      fork: { branchId: invoicesConversation.id, beforeMessageId: source.id },
+      forkKind: "edit",
+    }
+  );
+  await renderRoute(conversation, request);
+  const fetcher = globalThis.fetch;
+  const mock = vi
+    .spyOn(globalThis, "fetch")
+    .mockImplementation(async (input, init) =>
+      input === "/api/agent-conversations"
+        ? Response.json(
+            {
+              creationRejected: true,
+              error: "The selected model is unavailable.",
+            },
+            { status: 400 }
+          )
+        : await fetcher(input, init)
+    );
+  try {
+    await page.getByRole("button", { name: "Recover version" }).click();
+    const editor = page
+      .getByRole("log")
+      .getByRole("textbox", { name: "Message" });
+    await expect.element(editor).toHaveValue(draft);
+    await expect.element(editor).not.toHaveProperty("readOnly", true);
+    await expect
+      .element(
+        page.getByText("The selected model is unavailable.", { exact: true })
+      )
+      .toBeVisible();
+    await takeSnapshot("conversation-rejected-edit-draft");
+  } finally {
+    mock.mockRestore();
+  }
+});
+
 test("shared conversation does not grant another account workspace access", async () => {
   await renderRoute(shared, {
     ...signedIn,
@@ -1048,6 +1100,113 @@ test("deleting one branch preserves the shared workspace", async () => {
       )
     )
     .toBeVisible();
+});
+
+test("nested comparisons retain response cards on both user messages", async () => {
+  const [transcript] = Object.values(invoicesTranscripts);
+  const [source] = invoicesTrpc["eve.branches"].branches;
+  const rootGroup = "11111111-1111-4111-8111-111111111111";
+  const nestedGroup = "22222222-2222-4222-8222-222222222222";
+  const rootAlternate = "33333333-3333-4333-8333-333333333333";
+  const nestedId = "44444444-4444-4444-8444-444444444444";
+  const nestedAlternate = "55555555-5555-4555-8555-555555555555";
+  const modelId = source.initialModelId ?? "google/gemini-2.5-flash-lite";
+  const candidates = (...ids: string[]) =>
+    ids.map((operationId) => ({ operationId, modelId }));
+  const root = {
+    ...source,
+    responseGroupId: rootGroup,
+    responseGroupIndex: 0,
+    groupCandidates: candidates(source.operationId, rootAlternate),
+  };
+  const nested = {
+    ...source,
+    id: nestedId,
+    operationId: nestedId,
+    sessionId: "nested-primary",
+    parentBranchId: root.id,
+    forkKind: "comparison" as const,
+    responseGroupId: nestedGroup,
+    responseGroupIndex: 0,
+    groupCandidates: candidates(nestedId, nestedAlternate),
+    createdAt: new Date("2027-01-01"),
+  };
+  const nestedTranscript = [
+    ...transcript.map((message, index) => ({
+      ...message,
+      id: `import:imported:${index}`,
+      metadata: { imported: true as const, historyId: String(index) },
+    })),
+    {
+      id: "nested-prompt",
+      parts: [
+        { type: "text", text: "Compare alternatives for the invoices query." },
+      ],
+      role: "user",
+    },
+    {
+      id: "turn_0:assistant",
+      parts: [
+        {
+          type: "text",
+          text: "Keep the status index and measure the query plan.",
+        },
+      ],
+      role: "assistant",
+    },
+  ] satisfies (typeof transcript)[number][];
+  await renderRoute(conversation, {
+    ...request,
+    server: {
+      ...request.server,
+      conversation: { ...invoicesConversation, ...nested },
+    },
+    transcripts: {
+      ...invoicesTranscripts,
+      "root-alternate": transcript,
+      [nested.sessionId]: nestedTranscript,
+      "nested-alternate": nestedTranscript,
+    },
+    trpc: {
+      ...invoicesTrpc,
+      "eve.branches": {
+        ...invoicesTrpc["eve.branches"],
+        branches: [
+          nested,
+          {
+            ...nested,
+            id: nestedAlternate,
+            operationId: nestedAlternate,
+            sessionId: "nested-alternate",
+            responseGroupIndex: 1,
+          },
+          root,
+          {
+            ...root,
+            id: rootAlternate,
+            operationId: rootAlternate,
+            sessionId: "root-alternate",
+            responseGroupIndex: 1,
+          },
+        ],
+      },
+    },
+  });
+  const log = page.getByRole("log");
+  await expect
+    .element(log.getByText("Compare alternatives for the invoices query."))
+    .toBeVisible();
+  await expect
+    .poll(
+      () =>
+        log
+          .getByRole("button", {
+            name: /(?:Selected|Task completed|Open response)/u,
+          })
+          .all().length
+    )
+    .toBe(4);
+  await takeSnapshot("conversation-nested-comparisons");
 });
 
 test.each(["waiting", "lost reply"])(

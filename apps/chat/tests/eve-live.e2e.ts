@@ -11,6 +11,7 @@ import { getEvePostgresStreamPositions } from "@/lib/eve/lifecycle/postgres/eve-
 import { db } from "../lib/db/client";
 import { getEveUsageCursor } from "../lib/db/eve-billing";
 import { eveChat, eveConversation, eveUsage } from "../lib/db/schema";
+import { conversationBinding } from "../lib/eve/contracts";
 import { env } from "../lib/env";
 import { getEveConnectionOptions } from "../lib/eve/connection-options";
 import { EVE_MESSAGE_OPERATION_HEADER } from "../lib/eve/message-delivery";
@@ -57,17 +58,11 @@ test("real provider and replay-safe usage ledger", async ({ page }) => {
       status: created.status(),
     })
   ).toBe(true);
-  await expect(page).toHaveURL(conversationUrl);
-  await expect(page.getByRole("log")).toContainText(
-    "Live EVE billing verified.",
-    {
-      timeout: 90_000,
-    }
-  );
-  const id = new URL(page.url()).pathname.split("/").at(-1);
-  if (id === undefined || id === null || id === "") {
-    throw new Error("Missing conversation identity.");
-  }
+  const binding = conversationBinding.parse(await created.json());
+  const authResponse = await page.request.get("/api/auth/get-session");
+  const principal = z
+    .object({ user: z.object({ id: z.string() }) })
+    .parse(await authResponse.json());
   const [conversation] = await db
     .select({
       ...getTableColumns(eveConversation),
@@ -75,7 +70,7 @@ test("real provider and replay-safe usage ledger", async ({ page }) => {
     })
     .from(eveConversation)
     .innerJoin(eveChat, eq(eveChat.id, eveConversation.chatId))
-    .where(eq(eveConversation.id, id));
+    .where(eq(eveConversation.id, binding.id));
   if (
     conversation === undefined ||
     conversation === null ||
@@ -85,17 +80,59 @@ test("real provider and replay-safe usage ledger", async ({ page }) => {
   ) {
     throw new Error("Missing session binding.");
   }
+  expect(conversation).toMatchObject({
+    ownerId: principal.user.id,
+    sessionId: binding.sessionId,
+    state: "bound",
+  });
+  await expect(page).toHaveURL(
+    new RegExp(`/chat/${conversation.chatId}$`, "u")
+  );
+  expect(conversation.chatId).not.toBe(binding.id);
   const { ownerId, sessionId } = conversation;
-  const usage = await db
-    .select()
-    .from(eveUsage)
-    .where(eq(eveUsage.sessionId, sessionId));
-  expect(usage.length).toBeGreaterThan(0);
-  expect(
-    usage.every(
-      (row: { readonly costUsd: string | null }) => row.costUsd !== null
+  const client = new Client(getEveConnectionOptions(ownerId));
+  const session = client.sessions.attach(sessionId);
+  await expect
+    .poll(
+      async () => {
+        const snapshot = await session.snapshot();
+        return snapshot.events.some(
+          (event) =>
+            event.type === "turn.settled" && event.data.outcome === "completed"
+        );
+      },
+      { timeout: 90_000 }
     )
-  ).toBe(true);
+    .toBe(true);
+  await expect(page.getByText("Ready", { exact: true })).toBeVisible();
+  const readUsage = async () =>
+    await db.select().from(eveUsage).where(eq(eveUsage.sessionId, sessionId));
+  await expect
+    .poll(
+      async () => {
+        const rows = await readUsage();
+        const returned = z.object({
+          sessionId: z.literal(sessionId),
+          ownerId: z.literal(ownerId),
+          state: z.literal("returned"),
+          modelId: z.string(),
+        });
+        const models = new Set(
+          rows.flatMap((row) => {
+            const attempt = returned.safeParse(row.modelAttempt);
+            return attempt.success ? [attempt.data.modelId] : [];
+          })
+        );
+        return (
+          rows.every((row) => row.costUsd !== null) &&
+          models.has("google/gemini-2.5-flash") &&
+          models.has("google/gemini-2.5-flash-lite")
+        );
+      },
+      { timeout: 30_000 }
+    )
+    .toBe(true);
+  const usage = await readUsage();
   const charged = usage.reduce(
     (total, row: { readonly chargedCents: number }) => total + row.chargedCents,
     0
@@ -129,8 +166,6 @@ test("real provider and replay-safe usage ledger", async ({ page }) => {
       0
     )
   ).toBe(charged);
-  const client = new Client(getEveConnectionOptions(ownerId));
-  const session = client.sessions.attach(sessionId);
   await expect(page.getByText("Ready", { exact: true })).toBeVisible();
   const compaction = await session.compact();
   const compactionResult = await compaction.result();
@@ -210,7 +245,9 @@ test("the composer selects models for initial and subsequent durable turns", asy
   await page.goto("/");
   await page.getByTestId("model-selector").filter({ visible: true }).click();
   await page.getByPlaceholder("Search models...").fill("GPT-4.1 mini");
-  await page.getByRole("option").filter({ hasText: "GPT-4.1 mini" }).click();
+  await page
+    .getByRole("option", { exact: true, name: "GPT-4.1 mini (Fast)" })
+    .click();
   await expect(
     page.getByTestId("model-selector").filter({ visible: true })
   ).toContainText("GPT-4.1 mini");
@@ -412,7 +449,9 @@ test("a definitive model rejection unlocks the composer and releases the operati
   await expect(picker).toBeEnabled();
   await picker.click();
   await page.getByPlaceholder("Search models...").fill("GPT-4.1 mini");
-  await page.getByRole("option").filter({ hasText: "GPT-4.1 mini" }).click();
+  await page
+    .getByRole("option", { exact: true, name: "GPT-4.1 mini (Fast)" })
+    .click();
   await expect(
     page.getByRole("textbox", { exact: true, name: "Message" })
   ).toHaveValue("Retain my draft");

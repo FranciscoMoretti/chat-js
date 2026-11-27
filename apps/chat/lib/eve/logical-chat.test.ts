@@ -6,6 +6,7 @@ import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 import type { LogicalBranch, NativeChatAgent } from "./logical-chat";
 import { LogicalChat, logicalChatBusy } from "./logical-chat";
+import { logicalResponseSlots } from "./logical-response-slots";
 import type { ReadonlyEveMessagePart } from "./readonly-message-types";
 
 const message = (
@@ -398,4 +399,35 @@ it("resolves edits of inherited seed messages through their source aliases", () 
   expect(
     snapshot.nodes.get(snapshot.paths.get("edit")?.[0] ?? "")?.branchId
   ).toBe("root");
+});
+
+const candidates = (id: string) =>
+  [id, `${id}-other`].map((operationId) => ({
+    operationId,
+    modelId: "nano",
+  }));
+
+it("exposes two slots for each user on a full-history nested comparison (#1012)", () => {
+  const chat = new LogicalChat("chat", "nested");
+  chat.setBranches([
+    branch("root", {
+      responseGroupId: "amber",
+      groupCandidates: candidates("root"),
+    }),
+    branch("nested", {
+      parentBranchId: "root",
+      forkKind: "comparison",
+      responseGroupId: "cobalt",
+      groupCandidates: candidates("nested"),
+    }),
+  ]);
+  chat.observe("root", agent(prefix));
+  chat.observe("nested", agent([...seededPrefix, ...prefix]));
+  const cardsPerUser = [seededPrefix[0], prefix[0]].map((user) => {
+    const id = chat.logicalId("nested", user.id);
+    return id === undefined
+      ? 0
+      : (logicalResponseSlots(chat.getSnapshot(), id)?.slots.length ?? 0);
+  });
+  expect(cardsPerUser).toEqual([2, 2]);
 });

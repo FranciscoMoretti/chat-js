@@ -174,6 +174,7 @@ test("owner-visible lookup boundaries return null for missing and foreign identi
   expect(await getEveChatPageConversation("other", branchId)).toBeNull();
   expect(await getEveChatPageConversation("owner", missingId)).toBeNull();
   expect(await getEveDeletionState("owner", branchId)).toEqual({
+    chatId: branchId,
     rootId: branchId,
     state: "bound",
   });

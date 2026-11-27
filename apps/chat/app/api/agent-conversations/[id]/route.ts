@@ -64,6 +64,7 @@ const GET = async (
   }
   return Response.json(
     {
+      chatId: result.source.chatId,
       rootId: result.source.rootId,
       status: deletionStatus(result.source.state),
     },

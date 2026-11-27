@@ -273,6 +273,15 @@ export const useEveFork = (
       setAttachments([]);
     });
   };
+  const clearRejectedRequest = (): void => {
+    finishCreation(sessionStorage, ownerId, { branchId });
+    const operation = store.getSnapshot().pending;
+    if (operation?.forkKind === "edit") {
+      setEditingBoundary(operation.fork?.beforeMessageId);
+    }
+    setPending(undefined);
+    setRejected(false);
+  };
   const run = async (action: () => Promise<void>): Promise<void> => {
     if (lock.current) {
       return;
@@ -288,9 +297,7 @@ export const useEveFork = (
           if (error instanceof CreationRejectedError) {
             setRejected(true);
             try {
-              finishCreation(sessionStorage, ownerId, { branchId });
-              setPending(undefined);
-              setRejected(false);
+              clearRejectedRequest();
             } catch {
               setFailure(
                 "The rejected version request could not be cleared. Keep this tab for recovery."
@@ -477,9 +484,7 @@ export const useEveFork = (
       await run(async () => {
         if (pending && rejected) {
           try {
-            finishCreation(sessionStorage, ownerId, { branchId });
-            setPending(undefined);
-            setRejected(false);
+            clearRejectedRequest();
           } catch {
             setFailure(
               "The rejected version request could not be cleared. Keep this tab for recovery."

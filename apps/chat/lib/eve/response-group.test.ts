@@ -53,49 +53,67 @@ it("marks every multi-model edited candidate with the shared user intent", async
   ).toEqual(["edit", "edit"]);
 });
 
-it("keeps shared-workspace backpressure waiting and retries only the saved ordered candidates", async () => {
-  const shared = {
-    ...input,
-    modelIds: ["one", "two", "three"],
-    fork: { branchId: crypto.randomUUID() },
-  };
-  const reserved = {
-    id: crypto.randomUUID(),
-    candidates: eveResponseGroupCandidates(shared.operationId, shared.modelIds),
-  };
-  mocks.reserve.mockResolvedValue(reserved);
-  const binding = { id: crypto.randomUUID(), sessionId: "native-first" };
-  mocks.create.mockResolvedValueOnce(Response.json(binding));
+it.each([
+  [409, "workspace_busy"],
+  [503, "creation_recovery_unavailable"],
+])(
+  "keeps certified backpressure waiting and reuses ordered candidates (%i %s)",
+  async (status, code) => {
+    const shared = {
+      ...input,
+      modelIds: ["one", "two", "three"],
+      fork: { branchId: crypto.randomUUID() },
+    };
+    const reserved = {
+      id: crypto.randomUUID(),
+      candidates: eveResponseGroupCandidates(
+        shared.operationId,
+        shared.modelIds
+      ),
+    };
+    mocks.reserve.mockResolvedValue(reserved);
+    const binding = { id: crypto.randomUUID(), sessionId: "native-first" };
+    mocks.create.mockResolvedValueOnce(Response.json(binding));
+    mocks.create.mockResolvedValueOnce(
+      Response.json({ code, error: "Another turn is running" }, { status })
+    );
+    const first = await createEveResponseGroup("owner", shared);
+    expect(first.candidates.map((candidate) => candidate.state)).toEqual([
+      "bound",
+      "waiting",
+      "waiting",
+    ]);
+    expect(mocks.create).toHaveBeenCalledTimes(2);
+    mocks.create.mockClear();
+    mocks.create.mockImplementation(
+      async (_owner, request) =>
+        await Promise.resolve(
+          Response.json({
+            id: crypto.randomUUID(),
+            sessionId: request.operationId,
+          })
+        )
+    );
+    const resumed = await createEveResponseGroup("owner", shared);
+    expect(resumed.candidates.map((candidate) => candidate.state)).toEqual([
+      "bound",
+      "bound",
+      "bound",
+    ]);
+    expect(mocks.create.mock.calls.map((call) => call[1].operationId)).toEqual(
+      reserved.candidates.map((candidate) => candidate.operationId)
+    );
+  }
+);
+
+it("does not mark an unclassified admission failure as safe to progress", async () => {
   mocks.create.mockResolvedValueOnce(
-    Response.json(
-      { code: "workspace_busy", error: "Another turn is running" },
-      { status: 409 }
-    )
+    Response.json({ error: "Connection lost" }, { status: 503 })
   );
-  const first = await createEveResponseGroup("owner", shared);
-  expect(first.candidates.map((candidate) => candidate.state)).toEqual([
-    "bound",
-    "waiting",
+  const result = await createEveResponseGroup("owner", input);
+  expect(result.candidates.map((candidate) => candidate.state)).toEqual([
+    "unresolved",
     "waiting",
   ]);
-  expect(mocks.create).toHaveBeenCalledTimes(2);
-  mocks.create.mockClear();
-  mocks.create.mockImplementation(
-    async (_owner, request) =>
-      await Promise.resolve(
-        Response.json({
-          id: crypto.randomUUID(),
-          sessionId: request.operationId,
-        })
-      )
-  );
-  const resumed = await createEveResponseGroup("owner", shared);
-  expect(resumed.candidates.map((candidate) => candidate.state)).toEqual([
-    "bound",
-    "bound",
-    "bound",
-  ]);
-  expect(mocks.create.mock.calls.map((call) => call[1].operationId)).toEqual(
-    reserved.candidates.map((candidate) => candidate.operationId)
-  );
+  expect(mocks.create).toHaveBeenCalledTimes(1);
 });

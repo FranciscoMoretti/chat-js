@@ -273,11 +273,12 @@ const completeEveConversationDeletion = async (
   });
 };
 interface EveDeletionState {
+  chatId: typeof eveChat.$inferSelect.id;
   rootId: typeof eveChat.$inferSelect.id;
   state: typeof eveConversation.$inferSelect.state;
 }
 
-/** Read the owner-visible root and native deletion state, including identity tombstones.
+/** Read an owner-visible lookup scope and its logical chat, including identity tombstones.
  * @param {string} ownerId - Owner required by both identity and member queries.
  * @param {string} branchId - Root chat ID or member conversation ID to inspect.
  * @returns {Promise<EveDeletionState | null>} Root identity and state, or no receipt when the owner has no matching identity or member.
@@ -291,7 +292,7 @@ const getEveDeletionState = async (
     return null;
   }
   if (row.state) {
-    return { rootId: branchId, state: row.state };
+    return { chatId: row.chatId, rootId: branchId, state: row.state };
   }
   const members = await readOwnedEveDeletionMemberState(db, ownerId, row);
   const states = members.flatMap((member) => (member ? [member.state] : []));
@@ -303,6 +304,6 @@ const getEveDeletionState = async (
   );
   const state =
     active ?? (states.includes("deleting") ? "deleting" : "deleted");
-  return { rootId: branchId, state };
+  return { chatId: row.chatId, rootId: branchId, state };
 };
 export { completeEveConversationDeletion, getEveDeletionState };

@@ -46,7 +46,7 @@ beforeEach(() => {
   mocks.env.WORKFLOW_POSTGRES_URL = "postgresql://localhost/test";
   mocks.env.EVE_INTERNAL_ORIGIN = "http://localhost:4000";
   mocks.principal.mockResolvedValue({ kind: "registered", ownerId: "owner" });
-  mocks.state.mockResolvedValue({ rootId: id, state: "bound" });
+  mocks.state.mockResolvedValue({ chatId: id, rootId: id, state: "bound" });
   mocks.remove.mockResolvedValue({ rootId: id });
 });
 
@@ -101,8 +101,8 @@ it("refuses unsupported provider configuration before revoking access", async ()
 it("reports pending erasure without leaking internal failure details", async () => {
   mocks.remove.mockRejectedValue(new Error("private provider details"));
   mocks.state
-    .mockResolvedValueOnce({ rootId: id, state: "bound" })
-    .mockResolvedValue({ rootId: id, state: "deleting" });
+    .mockResolvedValueOnce({ chatId: id, rootId: id, state: "bound" })
+    .mockResolvedValue({ chatId: id, rootId: id, state: "deleting" });
   const response = await DELETE(request(), context);
   expect(response.status).toBe(HTTP_STATUS.accepted);
   expect(await response.json()).toMatchObject({
@@ -118,7 +118,7 @@ it("does not call an unstarted operation pending", async () => {
 });
 
 it("returns completed tombstones idempotently and GET never resumes cleanup", async () => {
-  mocks.state.mockResolvedValue({ rootId: id, state: "deleted" });
+  mocks.state.mockResolvedValue({ chatId: id, rootId: id, state: "deleted" });
   const resolvedResult10 = await DELETE(request(), context);
   expect(await resolvedResult10.json()).toEqual({
     rootId: id,
@@ -126,12 +126,14 @@ it("returns completed tombstones idempotently and GET never resumes cleanup", as
   });
   const resolvedResult11 = await GET(request("GET"), context);
   expect(await resolvedResult11.json()).toEqual({
+    chatId: id,
     rootId: id,
     status: "deleted",
   });
-  mocks.state.mockResolvedValue({ rootId: id, state: "deleting" });
+  mocks.state.mockResolvedValue({ chatId: id, rootId: id, state: "deleting" });
   const resolvedResult12 = await GET(request("GET"), context);
   expect(await resolvedResult12.json()).toEqual({
+    chatId: id,
     rootId: id,
     status: "pending",
   });
