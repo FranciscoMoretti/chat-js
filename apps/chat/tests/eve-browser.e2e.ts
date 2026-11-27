@@ -6,16 +6,17 @@ import type { Page, Request, Response } from "@playwright/test";
 
 import { expect, test } from "@playwright/test";
 import { eq } from "drizzle-orm";
+import { z } from "zod";
 
 import { db } from "../lib/db/client";
 import { eveConversation, eveUsage, user } from "../lib/db/schema";
 import { env } from "../lib/env";
 import { assertEveTestDatabase } from "./eve-test-database";
+import { readLogicalChatId } from "./eve-test-chat-identity";
 
 assertEveTestDatabase(env.DATABASE_URL);
 
 const conversationUrl = /\/chat\/[^/]+$/u;
-const failureMessage = /failure|failed/iu;
 const connectionFailure = /fetch|failed/iu;
 
 const capture = async (
@@ -38,8 +39,8 @@ test.beforeEach(async ({ page }) => {
   await page.goto("/api/dev-login");
   await page.goto("/");
   await expect(
-    page.getByRole("heading", { exact: true, name: "Chat" })
-  ).toBeVisible();
+    page.getByRole("textbox", { exact: true, name: "Message" })
+  ).toBeEditable();
 });
 
 const create = async (page: Page, message: string): Promise<void> => {
@@ -53,7 +54,7 @@ const create = async (page: Page, message: string): Promise<void> => {
 test("native transcript survives reload; streaming preserves the next draft; cancellation permits another send", async ({
   page,
 }) => {
-  // This scenario includes four durable turns and reloads over the remote test DB.
+  // This scenario includes four durable turns and reloads.
   test.setTimeout(120_000);
   await capture(page, "empty-desktop");
   await create(page, "hello");
@@ -86,10 +87,17 @@ test("native transcript survives reload; streaming preserves the next draft; can
   );
   await page.getByRole("button", { exact: true, name: "Stop" }).click();
   const cancellationResponse = await cancellation;
-  expect(await cancellationResponse.json()).toMatchObject({
-    ok: true,
-    status: "accepted",
-  });
+  expect(cancellationResponse.status()).toBe(202);
+  const cancellationReceipt = z
+    .object({
+      deliveryId: z.uuid(),
+      ok: z.literal(true),
+      sessionId: z.string().min(1),
+    })
+    .parse(await cancellationResponse.json());
+  expect(cancellationReceipt.sessionId).toBe(
+    new URL(cancellationResponse.url()).pathname.split("/").at(-2)
+  );
   await expect(page.getByText("Ready", { exact: true })).toBeVisible();
   await composer.fill("after cancellation");
   await page.getByRole("button", { exact: true, name: "Send" }).click();
@@ -124,30 +132,27 @@ test("freeform agent question survives reload and accepts an answer", async ({
   await expect(
     page.getByText("Answer received.", { exact: true })
   ).toBeVisible();
+  await expect(page.getByText("Ship on Friday", { exact: true })).toBeVisible();
 });
 
-for (const decision of ["Approve", "Cancel"]) {
+for (const decision of ["Approve", "Deny"]) {
   test(`pending tool survives reload and ${decision.toLowerCase()} completes`, async ({
     page,
   }) => {
     await create(page, "confirm release");
-    await expect(
-      page.getByText("Waiting for your input", { exact: true })
-    ).toBeVisible();
+    const action = page.getByRole("button", { exact: true, name: decision });
+    await expect(action).toBeEnabled();
     await page.reload();
-    await expect(
-      page.getByText("Waiting for your input", { exact: true })
-    ).toBeVisible();
+    await expect(action).toBeEnabled();
     await capture(page, `approval-${decision.toLowerCase()}`);
-    await page.getByRole("button", { exact: true, name: decision }).click();
+    await action.click();
     await expect(
       page.getByText("Approval handled.", { exact: true })
     ).toBeVisible();
     await expect(
-      page.getByText(
-        decision === "Approve" ? "Tool completed." : "Request declined.",
-        { exact: true }
-      )
+      page.getByText(decision === "Approve" ? "Approved" : "Declined", {
+        exact: true,
+      })
     ).toBeVisible();
     await capture(page, `tool-${decision.toLowerCase()}`);
   });
@@ -163,15 +168,17 @@ test("failed turn is visible and the conversation can continue", async ({
   const composer = page.getByRole("textbox", { exact: true, name: "Message" });
   await composer.fill("fail");
   await page.getByRole("button", { exact: true, name: "Send" }).click();
+  const failure = page
+    .getByRole("alert")
+    .filter({ hasText: "Reply interrupted" });
+  await expect(failure).toBeVisible();
   await expect(
-    page.getByRole("alert").filter({ hasText: failureMessage })
+    page.getByRole("log").getByText("fail", { exact: true })
   ).toBeVisible();
-  await expect(composer).toHaveValue("fail");
+  await expect(composer).toHaveValue("");
   await capture(page, "failed-turn");
   await page.reload();
-  await expect(
-    page.getByRole("alert").filter({ hasText: failureMessage })
-  ).toBeVisible();
+  await expect(failure).toBeVisible();
   await composer.fill("recovered");
   await page.getByRole("button", { exact: true, name: "Send" }).click();
   await expect(
@@ -207,8 +214,14 @@ test("lost creation reply retries the same conversation and access checks reject
     page.getByRole("alert").filter({ hasText: connectionFailure })
   ).toBeVisible();
   await capture(page, "creation-interrupted");
-  await page.getByRole("button", { exact: true, name: "Send" }).click();
-  await expect(page).toHaveURL(`${baseURL}/chat/${acceptedId}`);
+  if (acceptedId === undefined) {
+    throw new Error("Missing branch identity from the accepted creation.");
+  }
+  const chatId = await readLogicalChatId(page.request, acceptedId);
+  await page
+    .getByRole("button", { exact: true, name: "Retry creation" })
+    .click();
+  await expect(page).toHaveURL(`${baseURL}/chat/${chatId}`);
   await expect(
     page.getByText("Verified: retained intent", { exact: true })
   ).toBeVisible();
@@ -250,8 +263,8 @@ test("exhausted credits block new messages but permit rejecting an approval", as
 }) => {
   await create(page, "confirm release");
   await expect(
-    page.getByText("Waiting for your input", { exact: true })
-  ).toBeVisible();
+    page.getByRole("button", { exact: true, name: "Deny" })
+  ).toBeEnabled();
   const [owner] = await db
     .select()
     .from(user)
@@ -272,10 +285,8 @@ test("exhausted credits block new messages but permit rejecting an approval", as
       .set({ balanceCents: 0 })
       .where(eq(userCredit.userId, owner.id));
     await page.reload();
-    await page.getByRole("button", { exact: true, name: "Cancel" }).click();
-    await expect(
-      page.getByText("Request declined.", { exact: true })
-    ).toBeVisible();
+    await page.getByRole("button", { exact: true, name: "Deny" }).click();
+    await expect(page.getByText("Declined", { exact: true })).toBeVisible();
     await expect(page.getByText("Ready", { exact: true })).toBeVisible();
     await page
       .getByRole("textbox", { exact: true, name: "Message" })
@@ -296,7 +307,7 @@ test("exhausted credits block new messages but permit rejecting an approval", as
   }
 });
 
-test("unknown completed usage prevents new admission until its cost is reconciled", async ({
+test("unpriced usage remains recoverable without blocking a new conversation", async ({
   page,
   baseURL,
 }) => {
@@ -304,6 +315,7 @@ test("unknown completed usage prevents new admission until its cost is reconcile
   await expect(
     page.getByText("Verified: known zero-cost fixture", { exact: true })
   ).toBeVisible();
+  await expect(page.getByText("Ready", { exact: true })).toBeVisible();
   const id = new URL(page.url()).pathname.split("/").at(-1);
   if (id === undefined || id === null || id === "") {
     throw new Error("Missing conversation identity.");
@@ -311,7 +323,7 @@ test("unknown completed usage prevents new admission until its cost is reconcile
   const [conversation] = await db
     .select()
     .from(eveConversation)
-    .where(eq(eveConversation.id, id));
+    .where(eq(eveConversation.chatId, id));
   if (
     conversation === undefined ||
     conversation === null ||
@@ -335,16 +347,17 @@ test("unknown completed usage prevents new admission until its cost is reconcile
       .where(eq(eveUsage.eventId, usage.eventId));
     const response = await page.request.post("/api/agent-conversations", {
       data: {
-        message: "blocked until reconciled",
+        message: "continue with unpriced usage",
         operationId: crypto.randomUUID(),
       },
       headers: { origin: new URL(baseURL ?? "http://localhost").origin },
     });
-    expect(response.status()).toBe(503);
-    expect(await response.json()).toMatchObject({
-      error:
-        "Usage reconciliation is unavailable. Try again before starting a new conversation.",
-    });
+    expect(response.status()).toBe(200);
+    const [unpriced] = await db
+      .select({ costUsd: eveUsage.costUsd })
+      .from(eveUsage)
+      .where(eq(eveUsage.eventId, usage.eventId));
+    expect(unpriced).toEqual({ costUsd: null });
   } finally {
     await db
       .update(eveUsage)
@@ -370,28 +383,20 @@ test("normal navigation and sidebar search use Eve without sending to the old ch
     page.getByText("Verified: sidebar migration check", { exact: true })
   ).toBeVisible();
   const conversation = page.url();
-  await page
-    .getByRole("link", { exact: true, name: "New conversation" })
-    .click();
+  await page.getByRole("link", { name: /^New Chat\b/u }).click();
   await expect(page).toHaveURL(new URL("/", conversation).href);
-  const search = page.getByRole("textbox", { name: "Search conversations" });
-  if (!(await search.isVisible())) {
-    const expand = page.getByRole("button", {
-      exact: true,
-      name: "Expand sidebar",
-    });
-
-    const sidebarControl = (await expand.isVisible())
-      ? expand
-      : page.getByRole("button", { exact: true, name: "Toggle Sidebar" });
-    await sidebarControl.click();
-  }
+  await page.getByRole("button", { name: /^Search chats\b/u }).click();
+  const search = page.getByRole("combobox", { name: "Search conversations" });
   await search.fill("sidebar migration check");
+  const chatId = z
+    .uuid()
+    .parse(new URL(conversation).pathname.split("/").at(-1));
+  const result = page
+    .getByRole("option", { name: /sidebar migration check/u })
+    .and(page.locator(`[data-value="${chatId}"]`));
+  await expect(result).toBeVisible();
   await capture(page, "sidebar-search");
-  await page
-    .getByRole("link", { exact: true, name: "sidebar migration check" })
-    .and(page.locator(`[href="${new URL(conversation).pathname}"]`))
-    .click();
+  await result.click();
   await expect(page).toHaveURL(conversation);
   await expect(
     page.getByText("Verified: sidebar migration check", { exact: true })
@@ -451,7 +456,7 @@ test("ChatJS editor supports Enter, multiline drafts and composition", async ({
   expect(errors).toEqual([]);
 });
 
-test("stalled creation releases the composer and retries the retained operation", async ({
+test("stalled creation shows recovery and retries the retained operation", async ({
   page,
 }) => {
   test.setTimeout(90_000);
@@ -482,11 +487,15 @@ test("stalled creation releases the composer and retries the retained operation"
     await expect(
       page.getByRole("alert").filter({ hasText: "The request timed out" })
     ).toContainText("The request timed out", { timeout: 35_000 });
-    await expect(composer).toBeEditable();
-    await expect(composer).toHaveValue("retained timeout message");
+    const recovery = page.getByRole("region", {
+      name: "Conversation recovery",
+    });
+    await expect(recovery).toContainText("retained timeout message");
+    const retry = recovery.getByRole("button", { name: "Retry creation" });
+    await expect(retry).toBeEnabled();
     await capture(page, "creation-timeout");
     stalled.resolve();
-    await page.getByRole("button", { exact: true, name: "Send" }).click();
+    await retry.click();
     await expect(
       page.getByRole("alert").filter({ hasText: "Worker is unavailable" })
     ).toContainText("Worker is unavailable");
@@ -561,8 +570,10 @@ test("reload retains text when the send never reaches the server", async ({
   await expect(
     page.getByText("Verified: hello", { exact: true })
   ).toBeVisible();
+  const intercepted = Promise.withResolvers<boolean>();
   await page.route("**/api/eve/v1/session/**", async (route) => {
     if (route.request().method() === "POST") {
+      intercepted.resolve(true);
       await delay(5000);
       await route.abort().catch(() => {
         /* Ignore abort errors when the route has already completed. */
@@ -575,26 +586,25 @@ test("reload retains text when the send never reaches the server", async ({
     .getByRole("textbox", { exact: true, name: "Message" })
     .fill("retained before delivery");
   await page.getByRole("button", { exact: true, name: "Send" }).click();
+  await intercepted.promise;
   await page.reload();
-  await expect(
-    page.getByText(
-      "Message delivery is unconfirmed. Your text is saved in this tab."
-    )
-  ).toBeVisible();
-  await expect(
-    page.getByText("retained before delivery", { exact: true })
-  ).toBeVisible();
+  const recovery = page
+    .getByRole("alert")
+    .filter({ hasText: "Message delivery is unconfirmed" });
+  await expect(recovery).toContainText("Your draft is saved in this tab.");
+  await expect(recovery).toContainText("retained before delivery");
   await expect(
     page.getByText("Verified: hello", { exact: true })
   ).toBeVisible();
   await capture(page, "reload-unconfirmed");
-  await page
+  await recovery
     .getByRole("button", { exact: true, name: "Restore draft" })
     .click();
   await expect(
     page.getByRole("textbox", { exact: true, name: "Message" })
   ).toHaveValue("retained before delivery");
-  await expect(
-    page.getByRole("alert").filter({ hasText: "Delivery is unconfirmed" })
-  ).toBeVisible();
+  await expect(recovery).not.toBeVisible();
+  await expect(page.getByRole("log")).not.toContainText(
+    "retained before delivery"
+  );
 });

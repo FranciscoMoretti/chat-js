@@ -1,10 +1,8 @@
-import { defineDynamic, defineTool } from "eve/tools";
+import { defineTool } from "eve/tools";
 import { always } from "eve/tools/approval";
 import { z } from "zod";
 
-import { filterEveTools } from "../../../../lib/eve/turn-tools";
-
-const confirmNote = defineTool({
+export default defineTool({
   approval: {
     request: always(),
     response: ({ response, session }) => {
@@ -21,7 +19,3 @@ const confirmNote = defineTool({
     note: z.string().trim().min(1).max(500),
   }),
 });
-
-export default defineDynamic(() =>
-  filterEveTools({ confirm_note: confirmNote })
-);

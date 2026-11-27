@@ -25,7 +25,7 @@ export default defineHook({
       }
       await recordEveUsage({
         costUsd: 0,
-        eventId: `fixture-model:${event.data.runId}`,
+        eventId: `fixture-model:${context.session.id}:${event.data.runId}`,
         ownerId,
         sessionId: context.session.id,
         turnId: context.session.turn.id,

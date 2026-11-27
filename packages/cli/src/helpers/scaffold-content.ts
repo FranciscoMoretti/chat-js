@@ -332,13 +332,7 @@ const normalizeStandaloneLintConfig = async (
       "  options: { typeAware: true },\n  overrides: ["
     );
   }
-  await writeFile(
-    lintPath,
-    standaloneLint.replace(
-      '        "tests/eve-fixture/agent/tools/confirm-note.ts",\n',
-      ""
-    )
-  );
+  await writeFile(lintPath, standaloneLint);
 };
 const normalizeScaffoldContent = async (destination: string): Promise<void> => {
   await normalizePackageManifest(path.join(destination, "package.json"));
