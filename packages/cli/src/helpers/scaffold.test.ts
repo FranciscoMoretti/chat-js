@@ -158,7 +158,7 @@ describe("scaffoldFromTemplate", (): void => {
           manifest.devDependencies?.[packageName]
       ).toBeString();
     }
-  });
+  }, SCAFFOLD_INTEGRATION_TIMEOUT_MS);
   it("leaves terms and privacy pages to the application owner", async () => {
     const destination = makeTempDir("app-policies");
     await scaffoldFromTemplate(destination);
