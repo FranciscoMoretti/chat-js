@@ -40,7 +40,10 @@ it("routes a failed review to the existing File storage menu and validates again
               "Attachment uploads need persistent storage."
             );
           }
-          return await Promise.resolve(draft.selection.storage?.source);
+          return await Promise.resolve({
+            selection: draft.selection,
+            setup: draft.selection.storage?.source,
+          });
         })
     );
     expect(select.mock.calls.map(([options]) => options.message)).toEqual([
@@ -57,7 +60,7 @@ it("routes a failed review to the existing File storage menu and validates again
   }
 });
 
-it("opens with the builder defaults and applies explicit plugin choices", async () => {
+it("keeps explicit plugin flags separate from the default picker", async () => {
   expect(
     await createSelectionFromFlags(project.targetDir, {
       projects: false,
@@ -65,7 +68,7 @@ it("opens with the builder defaults and applies explicit plugin choices", async 
       electron: true,
     })
   ).toEqual({
-    plugins: ["model-picker", "desktop", "mcp"],
+    plugins: ["desktop", "mcp"],
     tools: [],
     gateway: "vercel",
     sandbox: "default",
@@ -95,7 +98,10 @@ it("selects one picker across registry addresses and can remove it in the menu",
       project,
       initial,
       [],
-      async ({ selection }) => await Promise.resolve(selection.plugins)
+      async ({ selection, useDefaultModelPicker }) => {
+        expect(useDefaultModelPicker).toBe(false);
+        return await Promise.resolve({ selection, setup: selection.plugins });
+      }
     );
     expect(setup).toEqual(["projects"]);
     expect(select.mock.calls[2]?.[0].initialValue).toBe("parallel");
@@ -143,13 +149,14 @@ it("edits registry addresses consistently across plugin groups, platform choices
       project,
       initial,
       [],
-      async ({ selection }) => await Promise.resolve(selection)
+      async ({ selection }) =>
+        await Promise.resolve({ selection, setup: selection })
     );
     expect(multi.mock.calls[0]?.[0].initialValues).toEqual([
       "@chatjs/team-bundle",
     ]);
     expect(multi.mock.calls[1]?.[0].initialValues).toEqual(["desktop"]);
-    expect(setup.plugins).toEqual(["@acme/mcp", "model-picker"]);
+    expect(setup.plugins).toEqual(["@acme/mcp"]);
   } finally {
     multi.mockRestore();
     select.mockRestore();
@@ -171,7 +178,8 @@ it("passes an interactive appearance code to native shadcn and the recipe", asyn
       project,
       selection,
       ["--base", "radix"],
-      async () => await Promise.resolve("prepared")
+      async (draft) =>
+        await Promise.resolve({ selection: draft.selection, setup: "prepared" })
     );
     expect(result.appearance).toEqual(["--base", "radix", "--preset", code]);
   } finally {
@@ -208,7 +216,8 @@ it("returns from a preset code and registry address without changing the draft",
       project,
       selection,
       [],
-      async (draft) => await Promise.resolve(draft.selection.tools)
+      async ({ selection: current }) =>
+        await Promise.resolve({ selection: current, setup: current.tools })
     );
     expect(text.mock.calls).toHaveLength(2);
     expect(text.mock.calls[0]?.[0].message).toContain(
@@ -263,7 +272,8 @@ it("replays an interactive live EVE item and sign-in selection through the same 
       project,
       initial,
       [],
-      async ({ selection }) => await Promise.resolve(selection)
+      async ({ selection }) =>
+        await Promise.resolve({ selection, setup: selection })
     );
     expect(multi.mock.calls[0]?.[0].options).toContainEqual({
       value: id,

@@ -172,7 +172,8 @@ const promptProjectTarget = async (
 
 const prepareCreateSetup = async (
   selection: InstallationSelection,
-  targetDir: string
+  targetDir: string,
+  useDefaultModelPicker = false
 ): Promise<CreateSetup> => {
   const storage = applyStorageOptions(
     await resolveStorage(selection.storage?.source ?? "memory", targetDir),
@@ -185,7 +186,7 @@ const prepareCreateSetup = async (
       auth: selection.auth ?? defaultAuthProviders,
       storage: { source: storage.source, options: storage.options },
     },
-    { fresh: true, requireToolKind: true }
+    { fresh: true, requireToolKind: true, useDefaultModelPicker }
   );
   const gatewaySelection = await resolveGateway(
     selection.gateway ?? "vercel",
@@ -244,12 +245,18 @@ const configureCreate = async (
       project,
       selection,
       appearance,
-      async (draft) =>
-        await prepareCreateSetup(draft.selection, project.targetDir)
+      async (draft) => {
+        const setup = await prepareCreateSetup(
+          draft.selection,
+          project.targetDir,
+          draft.useDefaultModelPicker
+        );
+        return { setup, selection: setup.plan.selection };
+      }
     );
   }
   return {
-    setup: await prepareCreateSetup(selection, project.targetDir),
+    setup: await prepareCreateSetup(selection, project.targetDir, true),
     appearance,
   };
 };

@@ -52,6 +52,7 @@ import type { CreateSelectionFlags } from "./selection-options";
 
 interface Draft {
   preset?: string;
+  useDefaultModelPicker: boolean;
   selection: InstallationSelection;
 }
 
@@ -74,12 +75,6 @@ export const createSelectionFromFlags = async (
   const plugins = new Map(
     flags.plugin?.map((source) => [pluginAddress(source), source])
   );
-  if (
-    !plugins.has(pluginAddress("parallel-responses")) &&
-    !plugins.has(pluginAddress("model-picker"))
-  ) {
-    plugins.set(pluginAddress("model-picker"), "model-picker");
-  }
   for (const key of createFieldKeys) {
     const field = createCatalog[key];
     const value = flags[key];
@@ -193,14 +188,18 @@ const editPlugins = async (draft: Draft, cwd: string): Promise<void> => {
       return;
     }
     if (section === "picker") {
+      const selectedPicker = composerPickerChoice(draft.selection);
       // eslint-disable-next-line no-await-in-loop -- Choose one picker for the current draft.
       const choice = await choose(
         "Model selection",
         [...pickerOptions, back],
-        composerPickerChoice(draft.selection)
+        selectedPicker === "none" && draft.useDefaultModelPicker
+          ? "single"
+          : selectedPicker
       );
       const option = pickerOptions.find(({ value }) => value === choice);
       if (option) {
+        draft.useDefaultModelPicker = false;
         draft.selection = withComposerPickerChoice(
           draft.selection,
           option.value
@@ -304,8 +303,12 @@ const catalogTitles = (ids: readonly string[]): string =>
     )
     .join(", ");
 
-const summarize = (draft: Draft, shadcnArgs: readonly string[]): void => {
-  const { gateway, plugins, sandbox, storage, tools, eve } = draft.selection;
+const summarize = (
+  selection: Readonly<InstallationSelection>,
+  preset: string | undefined,
+  shadcnArgs: readonly string[]
+): void => {
+  const { gateway, plugins, sandbox, storage, tools, eve } = selection;
   const gatewayName =
     gatewayOptions.find(({ value }) => value === gateway)?.label ?? gateway;
   const storageName =
@@ -313,15 +316,15 @@ const summarize = (draft: Draft, shadcnArgs: readonly string[]): void => {
     storage?.source;
   const sandboxName =
     sandboxOptions.find(({ value }) => value === sandbox)?.label ?? sandbox;
-  const auth = (draft.selection.auth ?? defaultAuthProviders).map(
+  const auth = (selection.auth ?? defaultAuthProviders).map(
     (provider) => authProviderLabels[provider]
   );
   const desktop = pluginAddress(createCatalog.electron.pluginId);
   log.info(
     [
-      `Appearance  ${draft.preset ?? (shadcnArgs.length ? "Supplied shadcn options" : "Rhea")}`,
+      `Appearance  ${preset ?? (shadcnArgs.length ? "Supplied shadcn options" : "Rhea")}`,
       `Plugins     ${catalogTitles(plugins.filter((id) => pluginAddress(id) !== desktop)) || "None selected"}`,
-      `Agent       ${enabledEveDefaultTools(draft.selection.agent).length} default tools · ${sandboxName}${tools.length > 0 || (eve?.length ?? 0) > 0 ? ` · ${catalogTitles([...tools, ...(eve ?? [])])}` : ""}`,
+      `Agent       ${enabledEveDefaultTools(selection.agent).length} default tools · ${sandboxName}${tools.length > 0 || (eve?.length ?? 0) > 0 ? ` · ${catalogTitles([...tools, ...(eve ?? [])])}` : ""}`,
       `Setup       ${gatewayName} · ${storageName} · ${plugins.some((id) => pluginAddress(id) === desktop) ? "Web and Electron" : "Web"} · ${auth.join(", ")}`,
     ].join("\n")
   );
@@ -331,9 +334,12 @@ export const promptCreateMenu = async <Setup>(
   project: Readonly<{ projectName: string; targetDir: string }>,
   selection: InstallationSelection,
   shadcnArgs: readonly string[],
-  prepare: (draft: Readonly<Draft>) => Promise<Setup>
+  prepare: (draft: Readonly<Draft>) => Promise<{
+    setup: Setup;
+    selection: Readonly<InstallationSelection>;
+  }>
 ): Promise<{ setup: Setup; appearance: readonly string[] }> => {
-  const draft: Draft = { selection };
+  const draft: Draft = { selection, useDefaultModelPicker: true };
   const cwd = project.targetDir;
   for (;;) {
     /* eslint-disable no-await-in-loop -- Menu navigation is sequential and review uses the latest edits. */
@@ -355,8 +361,8 @@ export const promptCreateMenu = async <Setup>(
         await editSetup(draft, cwd);
       }
       if (action === "review") {
-        const setup = await prepare(draft);
-        summarize(draft, shadcnArgs);
+        const { setup, selection: plannedSelection } = await prepare(draft);
+        summarize(plannedSelection, draft.preset, shadcnArgs);
         const answer = await choose(`Ready to create ${project.projectName}?`, [
           { value: "create", label: "Create app" },
           { ...back, label: "Edit selections" },

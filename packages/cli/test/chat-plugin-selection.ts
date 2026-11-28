@@ -113,6 +113,19 @@ const verifyPickerFiles = async (cwd: string, selection: string) => {
   ).toContain("@/chatjs/generated/installed-turn-models");
 };
 
+const createPluginArgs = (
+  selection: (typeof selections)[number],
+  installed: typeof baseSelection
+): string[] =>
+  selection === "model-picker"
+    ? ["--gateway", "openai", "--storage-provider", "memory"]
+    : [
+        "--app-preset",
+        encodeAppPreset(
+          pickerPresets.has(selection) ? installed : baseSelection
+        ),
+      ];
+
 /** Reuse the packed CLI/registry fixture, keeping each app outside the workspace. */
 export const testChatPluginSelections = (
   root: string,
@@ -133,10 +146,7 @@ export const testChatPluginSelections = (
         "create",
         name,
         "--yes",
-        "--app-preset",
-        encodeAppPreset(
-          pickerPresets.has(selection) ? installed : baseSelection
-        ),
+        ...createPluginArgs(selection, installed),
       ]);
 
       if (!pickerPresets.has(selection)) {
