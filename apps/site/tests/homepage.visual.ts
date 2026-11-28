@@ -38,6 +38,9 @@ const checkNavigation = async (
   const mobile = size.width <= 700;
   const menu = region.getByRole("button", { name: "Menu", exact: true });
   const docsLink = region.getByRole("link", { name: "Docs", exact: true });
+  const repoLink = region.getByRole("link", { name: "ChatJS on GitHub" });
+  assert.ok(await repoLink.locator("svg").isVisible());
+  assert.equal(await repoLink.getAttribute("href"), siteLinks.github);
   if (mobile) {
     assert.equal(await docsLink.count(), 0);
     assert.ok(await region.getByRole("link", { name: "New" }).isVisible());
@@ -91,7 +94,6 @@ const checkNavigation = async (
     const repo = destinations.find((link) => link.name === "ChatJS on GitHub");
     const menuBounds = await menu.boundingBox();
     assert.ok(repo && menuBounds && Math.abs(menuBounds.x - bounds.x) <= 1);
-    assert.equal(repo.href, siteLinks.github);
     assert.ok(
       menuBounds.x + menuBounds.width <= repo.x && repo.right <= newApp.x
     );
