@@ -65,7 +65,6 @@ body:has(.canopy-page) {
   gap: 2px;
 }
 .canopy-bar .canopy-menu-toggle,
-.canopy-bar .canopy-repo,
 .canopy-mobile-menu {
   display: none;
 }
@@ -106,8 +105,10 @@ body:has(.canopy-page) {
 .canopy-footer a:hover {
   text-decoration-color: currentColor;
 }
-.canopy-bar .canopy-theme-toggle {
+.canopy-bar .canopy-repo {
   margin-inline-start: auto;
+}
+.canopy-bar .canopy-theme-toggle {
   margin-inline-end: 6px;
 }
 .canopy-hero {
@@ -254,10 +255,8 @@ body:has(.canopy-page) {
     font-size: 16px;
   }
   .canopy-bar .canopy-repo {
-    display: inline-flex;
     width: 44px;
     height: 44px;
-    margin-inline-start: auto;
   }
   .canopy-bar .canopy-new {
     margin-inline-start: 6px;
