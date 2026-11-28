@@ -132,7 +132,6 @@
       "name": "@chatjs/docs",
       "dependencies": {
         "@chatjs/brand": "workspace:*",
-        "@tabler/icons": "^3.49.0",
       },
       "devDependencies": {
         "blume": "^1.6.3",

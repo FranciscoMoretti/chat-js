@@ -234,11 +234,12 @@ const checkOpening = async (
       await menu.click();
     }
     const toggle = header.getByRole("button", { name: "Toggle theme" });
-    const icon = toggle.locator("svg:visible");
-    const darkModeIcon = await icon.innerHTML();
+    assert.ok(await toggle.locator(".lucide-moon").isVisible());
+    assert.ok(await toggle.locator(".lucide-sun").isHidden());
     await toggle.click();
     await page.locator("html.light").waitFor();
-    assert.equal(await icon.innerHTML(), darkModeIcon);
+    assert.ok(await toggle.locator(".lucide-sun").isVisible());
+    assert.ok(await toggle.locator(".lucide-moon").isHidden());
     await page.reload();
     await page.locator("html.light button[data-block-id]").first().waitFor();
     assert.equal(await pageColor(), "rgb(248, 247, 244)");

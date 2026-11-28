@@ -174,9 +174,14 @@ test("home signed in lists projects and chat history", async () => {
 test("theme toggle in the account menu", async () => {
   await renderRoute(home, { ...signedIn, viewports: ["desktop"] });
   await page.getByRole("button", { name: /Maya Chen/u }).click();
-  await expect
-    .element(page.getByRole("menuitem", { name: "Toggle Theme" }))
-    .toBeVisible();
+  const toggle = page.getByRole("menuitem", { name: "Toggle Theme" });
+  await expect.element(toggle).toBeVisible();
+  expect(toggle.element().querySelector(".lucide-sun")?.checkVisibility()).toBe(
+    true
+  );
+  expect(
+    toggle.element().querySelector(".lucide-moon")?.checkVisibility()
+  ).toBe(false);
   await captureVariants("account-menu");
 });
 

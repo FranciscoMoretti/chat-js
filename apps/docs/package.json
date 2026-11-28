@@ -14,8 +14,7 @@
     "format": "oxfmt --write ."
   },
   "dependencies": {
-    "@chatjs/brand": "workspace:*",
-    "@tabler/icons": "^3.49.0"
+    "@chatjs/brand": "workspace:*"
   },
   "devDependencies": {
     "blume": "^1.6.3",

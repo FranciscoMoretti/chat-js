@@ -33,12 +33,7 @@ export function ModeSwitcher({
       title="Toggle theme"
     >
       <ThemeIcon className="size-4.5" />
-      {showLabel && (
-        <>
-          <span className="dark:hidden">Dark mode</span>
-          <span className="hidden dark:inline">Light mode</span>
-        </>
-      )}
+      {showLabel && <span>Toggle theme</span>}
     </Button>
   )
 }
