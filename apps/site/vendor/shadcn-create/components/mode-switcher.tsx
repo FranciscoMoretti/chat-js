@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Moon, Sun } from "lucide-react"
+import { ThemeIcon } from "../../../../chat/components/icons"
 import Script from "next/script"
 import { cn } from "cn"
 
@@ -32,8 +32,7 @@ export function ModeSwitcher({
       aria-label="Toggle theme"
       title="Toggle theme"
     >
-      <Moon aria-hidden="true" className="size-4 dark:hidden" />
-      <Sun aria-hidden="true" className="hidden size-4 dark:block" />
+      <ThemeIcon className="size-4.5" />
       {showLabel && (
         <>
           <span className="dark:hidden">Dark mode</span>

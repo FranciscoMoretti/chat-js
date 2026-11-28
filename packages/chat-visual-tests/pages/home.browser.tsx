@@ -171,6 +171,15 @@ test("home signed in lists projects and chat history", async () => {
     .toBeDisabled();
 });
 
+test("theme toggle in the account menu", async () => {
+  await renderRoute(home, { ...signedIn, viewports: ["desktop"] });
+  await page.getByRole("button", { name: /Maya Chen/u }).click();
+  await expect
+    .element(page.getByRole("menuitem", { name: "Toggle Theme" }))
+    .toBeVisible();
+  await captureVariants("account-menu");
+});
+
 test("home for a new account with no chats or projects", async () => {
   const empty = { items: [], nextCursor: null };
   await renderRoute(home, {

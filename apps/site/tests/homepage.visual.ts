@@ -234,8 +234,11 @@ const checkOpening = async (
       await menu.click();
     }
     const toggle = header.getByRole("button", { name: "Toggle theme" });
+    const icon = toggle.locator("svg:visible");
+    const darkModeIcon = await icon.innerHTML();
     await toggle.click();
     await page.locator("html.light").waitFor();
+    assert.equal(await icon.innerHTML(), darkModeIcon);
     await page.reload();
     await page.locator("html.light button[data-block-id]").first().waitFor();
     assert.equal(await pageColor(), "rgb(248, 247, 244)");
