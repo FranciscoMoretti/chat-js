@@ -5,14 +5,8 @@ import {
   AccountMenuContent,
 } from "@/components/sidebar-menus";
 import { MenuLink } from "@/components/navigation-links";
-import {
-  ChevronsUpDown,
-  LogIn,
-  LogOut,
-  Moon,
-  Settings,
-  Sun,
-} from "lucide-react";
+import { ChevronsUpDown, LogIn, LogOut, Settings } from "lucide-react";
+import { ThemeIcon } from "@/components/icons";
 import React from "react";
 
 import type { JSX as ReactJSX } from "react";
@@ -162,11 +156,7 @@ export const ChatAccount = ({
                   onThemeChange(theme === "light" ? "dark" : "light");
                 }}
               >
-                {theme === "light" ? (
-                  <Moon className="mr-2 size-4" />
-                ) : (
-                  <Sun className="mr-2 size-4" />
-                )}
+                <ThemeIcon className="mr-2 size-4" />
                 Toggle Theme
               </DropdownMenuItem>
             </DropdownMenuGroup>

@@ -139,6 +139,23 @@ for (const page of pages) {
     ]);
 
     if (page.name === "home") {
+      const toggle = source.querySelector<HTMLButtonElement>(
+        "[data-blume-theme-toggle]"
+      );
+      if (!toggle) {
+        throw new Error("Missing Docs theme toggle");
+      }
+      const initialTheme = source.documentElement.dataset.theme;
+      const icon = () => getComputedStyle(toggle, "::before").maskImage;
+      const initialIcon = icon();
+      expect(initialIcon).not.toBe("none");
+      toggle.click();
+      expect(source.documentElement.dataset.theme).toBe(
+        initialTheme === "dark" ? "light" : "dark"
+      );
+      expect(icon()).toBe(initialIcon);
+      toggle.click();
+
       await Promise.all(
         ["light", "dark"].map(async (theme) => {
           const banner = source.querySelector<HTMLImageElement>(
