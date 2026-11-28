@@ -5,7 +5,6 @@ import { and, eq, exists, inArray, or, sql } from "drizzle-orm";
 import type { QueryPromise } from "drizzle-orm/query-promise";
 
 import { db } from "./client";
-import { tombstoneEveResponseGroups } from "./eve-response-groups";
 import {
   eveChat,
   eveConversation,
@@ -181,7 +180,7 @@ const completeEveConversationDeletion = async (
     );
     const family = await tx.select().from(eveConversation).where(condition);
     assertEveFamilyPendingDeletion(family);
-    await tombstoneEveResponseGroups(tx, ownerId, family);
+    await chat.onFenceConversations(tx, ownerId, family);
     const ids = family.map(
       (row: Readonly<Pick<typeof eveConversation.$inferSelect, "id">>) => row.id
     );

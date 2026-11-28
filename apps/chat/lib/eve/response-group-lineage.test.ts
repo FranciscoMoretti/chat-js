@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
-import type { EveResponseGroupLineageConversation } from "./response-group-lineage";
-import { resolveEveResponseGroupLineage } from "./response-group-lineage";
+import type { EveResponseGroupLineageConversation } from "@/chatjs/plugins/parallel-responses/response-group-lineage";
+import { resolveEveResponseGroupLineage } from "@/chatjs/plugins/parallel-responses/response-group-lineage";
 
 const row = (
   id: string,

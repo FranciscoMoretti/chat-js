@@ -21,7 +21,6 @@ const buildConfigFor = (gateway: Gateway): string =>
       feedback: false,
       mcp: true,
       projects: false,
-      parallelResponses: true,
     },
     gateway,
   });

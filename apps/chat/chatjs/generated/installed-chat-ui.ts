@@ -7,6 +7,7 @@ import { chatUi as followupSuggestionsClient } from "@/chatjs/plugins/followup-s
 import { chatUi as imageViewerClient } from "@/chatjs/plugins/image-viewer/chat-ui";
 import { chatUi as mcpClient } from "@/chatjs/plugins/mcp/chat-ui";
 import { chatUi as modelPreferencesClient } from "@/chatjs/plugins/model-preferences/chat-ui";
+import { chatUi as parallelResponsesClient } from "@/chatjs/plugins/parallel-responses/chat-ui";
 import { chatUi as projectsClient } from "@/chatjs/plugins/projects/chat-ui";
 import { chatUi as searchClient } from "@/chatjs/plugins/search/chat-ui";
 import { chatUi as sharingClient } from "@/chatjs/plugins/sharing/chat-ui";
@@ -23,6 +24,7 @@ export const installedChatPlugins: readonly UiPlugin[] = [
   imageViewerClient,
   mcpClient,
   modelPreferencesClient,
+  parallelResponsesClient,
   projectsClient,
   searchClient,
   sharingClient,

@@ -5,7 +5,7 @@ import { takeSnapshot } from "@uiverify/vitest";
 import { Hint } from "@/components/hint";
 import { MenuButton } from "@/components/menu-button";
 import { PopoverButton } from "@/components/popover-button";
-import { ModelSelectionIndicator } from "@/components/model-selection-indicator";
+import { ModelSelectionIndicator } from "@/chatjs/plugins/parallel-responses/model-selection-indicator";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import {

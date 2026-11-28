@@ -2,6 +2,11 @@ import { TrpcFixtureError, route } from "./route";
 import { expect, onTestFinished, test, vi } from "vitest";
 import { page, userEvent } from "vitest/browser";
 
+import type { FunctionComponent } from "react";
+import type { TurnModelPickerProps } from "@/chatjs/core/chat/turn-model-picker";
+import { TurnModelPicker } from "@/integrations/chat/model-picker";
+import { TurnModelPicker as SingleModelPicker } from "../../registry/src/plugins/model-picker/src/single-model-picker";
+
 import ChatLayout from "@/app/(chat)/layout";
 import HomePage from "@/app/(chat)/page";
 import {
@@ -23,12 +28,56 @@ import {
 } from "./fixtures";
 import { captureVariants, renderRoute } from "./render";
 
+vi.mock("@/integrations/chat/model-picker", { spy: true });
+
 const home = (
   <ChatLayout>
     <HomePage />
   </ChatLayout>
 );
 const guestServer = { modelIds: ["google/gemini-2.5-flash-lite"] };
+
+test("the default-model composer accepts a draft with its picker slot empty", async () => {
+  const picker = vi
+    .mocked<FunctionComponent<TurnModelPickerProps>>(TurnModelPicker)
+    .mockReturnValue(null);
+  onTestFinished(() => {
+    picker.mockReset();
+  });
+  const originalFetch = globalThis.fetch;
+  const requestBody = vi.fn();
+  vi.spyOn(globalThis, "fetch").mockImplementation(async (url, init) => {
+    if (url === "/api/agent-conversations") {
+      requestBody(init?.body);
+      return Response.json(
+        { creationRejected: true, error: creationFailure },
+        { status: 400 }
+      );
+    }
+    return await originalFetch(url, init);
+  });
+  await renderRoute(home, {
+    ...signedIn,
+    server: { ...signedIn.server, modelIds: ["google/gemini-2.5-flash-lite"] },
+  });
+  await page
+    .getByRole("textbox", { name: "Message" })
+    .fill("Ask the default model");
+  await expect
+    .element(page.getByTestId("model-selector"))
+    .not.toBeInTheDocument();
+  await expect
+    .element(page.getByRole("button", { name: "Send", exact: true }))
+    .toBeEnabled();
+  await page.screenshot({
+    path: "__screenshots__/default-model-no-picker.png",
+  });
+  await page.getByRole("button", { name: "Send", exact: true }).click();
+  await expect.poll(() => requestBody.mock.calls.length).toBe(1);
+  expect(requestBody).toHaveBeenCalledWith(
+    expect.stringContaining('"modelId":"google/gemini-2.5-flash-lite"')
+  );
+});
 
 test("clearing a recovered New Chat draft removes its saved text", async () => {
   const { id } = session.user;
@@ -285,6 +334,9 @@ test("account composer supplies parallel model selection", async () => {
   await page.getByRole("switch", { name: "Use Multiple Models" }).click();
   const list = page.getByRole("listbox");
   const selected = list.getByRole("option", { selected: true });
+  await page.screenshot({
+    path: "__screenshots__/home-parallel-model-picker.png",
+  });
   const modelName = selected.element().getAttribute("aria-label");
   const search = page.getByRole("combobox", { name: "Search models" });
   await search.click();
@@ -295,6 +347,24 @@ test("account composer supplies parallel model selection", async () => {
   await expect
     .element(page.getByRole("button", { name: /^1× /u }))
     .toBeVisible();
+});
+
+test("account composer offers a single model without Parallel Responses", async () => {
+  vi.mocked(TurnModelPicker).mockImplementation(SingleModelPicker);
+  onTestFinished(() => {
+    vi.mocked(TurnModelPicker).mockReset();
+  });
+  await renderRoute(home, signedIn);
+  await page.getByTestId("model-selector").click();
+  await expect
+    .element(page.getByRole("combobox", { name: "Search models" }))
+    .toBeVisible();
+  await expect
+    .element(page.getByRole("switch", { name: "Use Multiple Models" }))
+    .not.toBeInTheDocument();
+  await page.screenshot({
+    path: "__screenshots__/home-single-model-picker.png",
+  });
 });
 
 test("the signed-in picker searches the discovered gateway catalog", async () => {

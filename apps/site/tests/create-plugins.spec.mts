@@ -647,7 +647,7 @@ test("Guest Chat switches preview identity and uses a temporary local conversati
     `/create?item=preview-02&app=${encodeAppPreset(
       installationSelectionSchema.parse({
         gateway: "openai",
-        plugins: [],
+        plugins: ["model-picker"],
         tools: [],
       })
     )}`
@@ -700,6 +700,9 @@ test("Guest Chat switches preview identity and uses a temporary local conversati
     path: testInfo.outputPath("guest-reply.png"),
     animations: "disabled",
   });
+  await page.getByRole("combobox", { name: "Model selection" }).click();
+  await page.getByRole("option", { name: "No picker", exact: true }).click();
+  await expect(guest.getByTestId("model-selector")).toHaveCount(0);
   await guest.getByRole("link", { name: /New Chat/u }).click();
   await expect(
     guest.getByRole("heading", { name: "How can I help you today?" })

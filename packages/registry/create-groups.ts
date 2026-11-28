@@ -1,3 +1,4 @@
+import { isPickerPlugin } from "./installation";
 import { createCatalog } from "./create-catalog";
 import type { InstallationCatalogItem } from "./installation-catalog";
 
@@ -73,7 +74,9 @@ export const groupAppPlugins = (
   return groupChoices(
     catalog.filter(
       (item) =>
-        item.definition?.kind === "plugin" && !setupIds.has(item.definition.id)
+        item.definition?.kind === "plugin" &&
+        !isPickerPlugin(item.definition.id) &&
+        !setupIds.has(item.definition.id)
     ),
     appPluginGroups,
     "Other plugins"

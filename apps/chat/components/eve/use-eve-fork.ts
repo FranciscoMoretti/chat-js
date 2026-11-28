@@ -16,7 +16,6 @@ import type { SetStateAction } from "react";
 import { createClientSnapshot } from "@/components/client-snapshot";
 
 import type { SelectedModelValue, UiToolName } from "@/lib/ai/types";
-import { expandSelectedModelValue, isSelectedModelValue } from "@/lib/ai/types";
 import type { EveForkInput } from "@/lib/eve/contracts";
 import { CreationRejectedError } from "@/lib/eve/create-conversation";
 import type { DraftAttachment } from "@/lib/eve/draft";
@@ -27,7 +26,7 @@ import { eveMessageTool } from "@/lib/eve/message-tool-selection";
 import {
   finishCreation,
   prepareCreation,
-  prepareResponseGroupCreation,
+  prepareSelectedCreation,
   readCreationRequest,
 } from "@/lib/eve/pending-create";
 import type {
@@ -38,6 +37,10 @@ import type {
 import { resolveCreationRequest } from "@/lib/eve/resolve-creation-request";
 import { responseModel } from "@/lib/eve/response-model";
 import { useDefaultModel } from "@/providers/default-model-provider";
+import {
+  operationModelSelection,
+  selectedModelIds,
+} from "@/chatjs/generated/installed-turn-models";
 import { useTRPC } from "@/trpc/react";
 
 import { useEveRuntime } from "./eve-logical-context";
@@ -54,54 +57,12 @@ interface EditContext {
   readonly response?: ReadonlyEveMessage;
 }
 
-const responseModelSelection = (
-  response: {
-    readonly metadata?:
-      | {
-          readonly turnId?: string | undefined;
-          readonly modelId?: string | undefined;
-        }
-      | undefined;
-  },
-  events: Parameters<typeof responseModel>[0]
-): Extract<SelectedModelValue, string> | undefined => {
-  const modelId = responseModel(
-    events,
-    response.metadata?.turnId ?? "",
-    response.metadata?.modelId
-  );
-  if (isSelectedModelValue(modelId)) {
-    return modelId;
-  }
-  return undefined;
-};
-
-const operationModelSelection = (
-  operation: Operation
-): SelectedModelValue | undefined => {
-  if (!("modelIds" in operation)) {
-    if (hasText(operation.modelId) && isSelectedModelValue(operation.modelId)) {
-      return operation.modelId;
-    }
-    return undefined;
-  }
-  const selection: Record<string, number> = {};
-  for (const modelId of operation.modelIds) {
-    selection[modelId] = (selection[modelId] ?? 0) + 1;
-  }
-  if (isSelectedModelValue(selection)) {
-    return selection;
-  }
-  return undefined;
-};
-
 export const useEveFork = (
   ownerId: string,
   branchId: string,
-  onComparisonStarted?: (
+  clearSubmittedDraft?: (
     message: ReadonlyEveMessageInput,
-    selectedTool: UiToolName | undefined,
-    clearComposer: boolean
+    selectedTool: UiToolName | undefined
   ) => void
 ) => {
   const trpc = useTRPC();
@@ -246,9 +207,7 @@ export const useEveFork = (
       sessionStorage,
       ownerId,
       operation,
-      {
-        branchId,
-      }
+      { branchId }
     );
     await Promise.all([
       queryClient.invalidateQueries({
@@ -337,12 +296,12 @@ export const useEveFork = (
         return;
       }
       const responseSelection = editContext?.response
-        ? responseModelSelection(editContext.response, editContext.events ?? [])
+        ? responseModel(editContext.events ?? [], editContext.response.metadata)
         : undefined;
       const editingSelection =
         editContext?.modelSelection ?? responseSelection ?? selectedModel;
       const modelId = regeneration
-        ? responseModelSelection(regeneration.response, regeneration.events)
+        ? responseModel(regeneration.events, regeneration.response.metadata)
         : undefined;
       const fork = {
         branchId,
@@ -402,6 +361,27 @@ export const useEveFork = (
       }
     });
   };
+  const submitFork = async (
+    message: ReadonlyEveMessageInput,
+    modelIds: readonly string[],
+    scope: { fork: EveForkInput; forkKind?: "edit" },
+    tool: UiToolName | undefined,
+    clearComposer = false
+  ): Promise<void> => {
+    const operation = prepareSelectedCreation(
+      sessionStorage,
+      ownerId,
+      message,
+      modelIds,
+      { branchId, ...scope },
+      tool
+    );
+    if (clearComposer) {
+      clearSubmittedDraft?.(operation.message, operation.selectedTool);
+    }
+    setPending(operation);
+    await execute(operation);
+  };
   return {
     begin,
     busy,
@@ -415,7 +395,7 @@ export const useEveFork = (
       setSource(undefined);
       setFailure("");
     },
-    compare: async (
+    fromHere: async (
       message: ReadonlyEveMessageInput,
       modelIds: readonly string[],
       requestedTool?: UiToolName,
@@ -425,26 +405,13 @@ export const useEveFork = (
         if (!loaded || restoreFailed || pending || hasText(editingMessageId)) {
           return;
         }
-        const operation = prepareResponseGroupCreation(
-          sessionStorage,
-          ownerId,
+        await submitFork(
           message,
           modelIds,
-          {
-            branchId,
-            fork: {
-              branchId,
-            },
-          },
-          requestedTool
-        );
-        onComparisonStarted?.(
-          operation.message,
-          operation.selectedTool,
+          { fork: { branchId } },
+          requestedTool,
           clearComposer
         );
-        setPending(operation);
-        await execute(operation);
       });
     },
     draft,
@@ -510,30 +477,14 @@ export const useEveFork = (
         ) {
           return;
         }
-        const modelIds = expandSelectedModelValue(
-          modelSelectionValue ?? selectedModel
-        );
+        const modelIds = selectedModelIds(modelSelectionValue ?? selectedModel);
         const message = draftMessage(draft, files.attachments);
-        const operation =
-          modelIds.length > 1
-            ? prepareResponseGroupCreation(
-                sessionStorage,
-                ownerId,
-                message,
-                modelIds,
-                { branchId, fork: source, forkKind: "edit" },
-                selectedTool ?? undefined
-              )
-            : prepareCreation(
-                sessionStorage,
-                ownerId,
-                message,
-                modelIds[0],
-                { branchId, fork: source, forkKind: "edit" },
-                selectedTool ?? undefined
-              );
-        setPending(operation);
-        await execute(operation);
+        await submitFork(
+          message,
+          modelIds,
+          { fork: source, forkKind: "edit" },
+          selectedTool ?? undefined
+        );
       });
     },
   };

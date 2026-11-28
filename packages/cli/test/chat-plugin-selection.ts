@@ -19,6 +19,8 @@ const selections = [
   "followup-suggestions",
   "search",
   "model-preferences",
+  "model-picker",
+  "parallel-responses",
   "ai-titles",
   "sharing",
   "credits",
@@ -29,7 +31,7 @@ const baseSelection = installationSelectionSchema.parse({
   sandbox: "default",
   storage: { source: "memory" },
 });
-const basePreset = encodeAppPreset(baseSelection);
+const pickerPresets = new Set(["none", "model-picker", "parallel-responses"]);
 const pluginTables = [
   "UserCredit",
   "GuestRuntimeSession",
@@ -38,6 +40,7 @@ const pluginTables = [
   "EveChatProject",
   "EveVote",
   "EveFollowup",
+  "EveResponseGroup",
   "EveSearchText",
   "UserModelPreference",
 ];
@@ -49,11 +52,79 @@ const expectedTables: Record<(typeof selections)[number], readonly string[]> = {
   "followup-suggestions": ["EveFollowup"],
   search: ["EveSearchText"],
   "model-preferences": ["UserModelPreference"],
+  "model-picker": [],
+  "parallel-responses": ["EveResponseGroup"],
   "ai-titles": [],
   sharing: [],
   credits: ["UserCredit"],
   "guest-chat": ["GuestRuntimeSession", "GuestRuntimeRate"],
 };
+
+const verifyPickerFiles = async (cwd: string, selection: string) => {
+  for (const route of [
+    "chatjs/plugins/parallel-responses/parallel-response-picker.tsx",
+    "chatjs/plugins/parallel-responses/submit-turn.ts",
+    "chatjs/plugins/parallel-responses/response-group-input.ts",
+    "chatjs/plugins/parallel-responses/router.ts",
+  ]) {
+    expect(existsSync(path.join(cwd, route))).toBe(
+      selection === "parallel-responses"
+    );
+  }
+  expect(existsSync(path.join(cwd, "lib/eve/response-group-input.ts"))).toBe(
+    false
+  );
+  expect(existsSync(path.join(cwd, "components/model-selector-view.tsx"))).toBe(
+    false
+  );
+  expect(
+    existsSync(path.join(cwd, "components/eve/eve-model-picker.tsx"))
+  ).toBe(false);
+  const visiblePicker =
+    selection === "model-picker" || selection === "parallel-responses";
+  for (const file of [
+    "model-selector.tsx",
+    "model-selector-view.tsx",
+    "use-optimistic-model-selection.ts",
+  ]) {
+    expect(existsSync(path.join(cwd, "chatjs/ui/model-selector", file))).toBe(
+      visiblePicker
+    );
+  }
+  expect(
+    existsSync(
+      path.join(cwd, "chatjs/plugins/model-picker/single-model-picker.tsx")
+    )
+  ).toBe(selection === "model-picker");
+  expect(existsSync(path.join(cwd, "chatjs/ui/model-logo.tsx"))).toBe(
+    visiblePicker || selection === "model-preferences"
+  );
+  const pickerEntry = await readFile(
+    path.join(cwd, "chatjs/generated/installed-turn-models.ts"),
+    "utf-8"
+  );
+  expect(pickerEntry).toContain(
+    visiblePicker
+      ? `@/chatjs/plugins/${selection}/turn-models`
+      : "@/lib/eve/default-turn-models"
+  );
+  expect(
+    await readFile(path.join(cwd, "integrations/chat/model-picker.ts"), "utf-8")
+  ).toContain("@/chatjs/generated/installed-turn-models");
+};
+
+const createPluginArgs = (
+  selection: (typeof selections)[number],
+  installed: typeof baseSelection
+): string[] =>
+  selection === "model-picker"
+    ? ["--gateway", "openai", "--storage-provider", "memory"]
+    : [
+        "--app-preset",
+        encodeAppPreset(
+          pickerPresets.has(selection) ? installed : baseSelection
+        ),
+      ];
 
 /** Reuse the packed CLI/registry fixture, keeping each app outside the workspace. */
 export const testChatPluginSelections = (
@@ -75,11 +146,10 @@ export const testChatPluginSelections = (
         "create",
         name,
         "--yes",
-        "--app-preset",
-        basePreset,
+        ...createPluginArgs(selection, installed),
       ]);
 
-      if (selection !== "none") {
+      if (!pickerPresets.has(selection)) {
         await run(cwd, ["node", cliEntry, "add", selection, "--yes"]);
       }
       // Checking the actual tree prevents a copied reference preset from masking
@@ -96,6 +166,37 @@ export const testChatPluginSelections = (
       expect(existsSync(path.join(cwd, "electron/package.json"))).toBe(
         selection === "desktop"
       );
+      await verifyPickerFiles(cwd, selection);
+      expect(
+        [
+          "app/api/agent-response-groups/route.ts",
+          "app/api/agent-response-groups/[id]/route.ts",
+        ].some((route) => existsSync(path.join(cwd, route)))
+      ).toBe(false);
+      const registrations = await Promise.all(
+        [
+          "installed-turn-models",
+          "installed-submit-turn",
+          "installed-creation",
+          "installed-routers",
+        ].map(
+          async (entry) =>
+            await readFile(
+              path.join(cwd, `chatjs/generated/${entry}.ts`),
+              "utf-8"
+            )
+        )
+      );
+      expect(
+        registrations.map((source) =>
+          source.includes("/plugins/parallel-responses/")
+        )
+      ).toEqual([
+        selection === "parallel-responses",
+        selection === "parallel-responses",
+        selection === "parallel-responses",
+        selection === "parallel-responses",
+      ]);
       const installedPackage = parsePackageJson(
         await readFile(path.join(cwd, "package.json"), "utf-8")
       );
@@ -219,6 +320,9 @@ process.env.OPENAI_API_KEY = "fixture-key";
 `
       );
       let lifecycleMethod = "onDeleteConversations";
+      if (selection === "parallel-responses") {
+        lifecycleMethod = "onFenceConversations";
+      }
       if (selection === "projects") {
         lifecycleMethod = "onCreate";
       }
@@ -250,7 +354,7 @@ for (const profile of installedSessionProfiles) {
 import { billing } from "./integrations/billing";
 assert.equal(billing.debit !== undefined, ${selection === "credits"});
 ${selection === "none" ? 'assert.equal(await billing.canSpend("fixture-owner"), true);' : ""}
-assert.equal(installedChat.length, ${["none", "desktop", "credits", "model-preferences", "guest-chat"].includes(selection) ? 0 : 1});
+assert.equal(installedChat.length, ${["none", "desktop", "credits", "model-preferences", "model-picker", "guest-chat"].includes(selection) ? 0 : 1});
 assert.deepEqual(await chat.links("fixture-owner", []), new Map());
 for (const plugin of installedChat) {
   assert.equal(typeof plugin.${lifecycleMethod}, "function");

@@ -1,3 +1,4 @@
+import { isNonEmptyString } from "@/lib/is-non-empty-string";
 import type {
   EveMessage,
   EveMessagePart,
@@ -13,7 +14,10 @@ import { eveMessageTool, eveToolMetadata } from "./message-tool-selection";
 import { hasEveToolReceipt, toolOutputSchema } from "./tool-result";
 import { projectEveMessageDisplay } from "./message-display";
 import type { EveMessageDisplayReceipt } from "./message-display";
-import { responseModelReferences } from "./response-model";
+import {
+  recordedResponseModel,
+  responseModelReferences,
+} from "./response-model";
 
 interface SharedEveMessage {
   id: string;
@@ -26,22 +30,6 @@ interface SharedEveMessage {
       })
     | (ReadonlyEveMessageMetadata & { modelId: string; custom?: undefined });
 }
-
-const sharedModelId = (
-  message: Pick<EveMessage, "role"> & {
-    readonly metadata?: Pick<ReadonlyEveMessageMetadata, "modelId" | "turnId">;
-  },
-  models: Readonly<Pick<ReadonlyMap<string, string>, "get">>
-): string => {
-  if (message.role !== "assistant") {
-    return "";
-  }
-  const turnId = message.metadata?.turnId ?? "";
-  if (turnId === "") {
-    return message.metadata?.modelId ?? "";
-  }
-  return models.get(turnId) ?? "";
-};
 
 /**
  * Keep visible tool content, never the owner's approval or runtime identities.
@@ -144,14 +132,17 @@ const sharedEveMessages = (
   state = projectEveMessageDisplay(state, events, receipts);
   const models = responseModelReferences(events);
   return state.messages.map((message: ReadonlyEveMessage): SharedEveMessage => {
-    const modelId = sharedModelId(message, models);
+    const modelId =
+      message.role === "assistant"
+        ? recordedResponseModel(models, message.metadata)
+        : undefined;
     const selectedTool =
       message.role === "user" ? (eveMessageTool(message) ?? "") : "";
     return {
       ...(selectedTool === ""
         ? {}
         : { metadata: { custom: eveToolMetadata(selectedTool) } }),
-      ...(modelId === "" ? {} : { metadata: { modelId } }),
+      ...(isNonEmptyString(modelId) ? { metadata: { modelId } } : {}),
       id: message.id,
       parts: message.parts.flatMap(sharedEvePart),
       role: message.role,

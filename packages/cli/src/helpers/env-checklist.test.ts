@@ -23,7 +23,6 @@ describe("collectEnvChecklist", () => {
         feedback: false,
         mcp: false,
         projects: false,
-        parallelResponses: true,
       },
       gateway: "litellm",
       installableToolEnvRequirements: [],
@@ -46,7 +45,6 @@ describe("collectEnvChecklist", () => {
         feedback: false,
         mcp: false,
         projects: false,
-        parallelResponses: true,
       },
       gateway: "vercel",
       installableToolEnvRequirements: [
@@ -76,7 +74,6 @@ describe("collectEnvChecklist", () => {
         feedback: false,
         mcp: true,
         projects: false,
-        parallelResponses: false,
       },
       gateway: "litellm",
     });
@@ -111,7 +108,6 @@ describe("collectEnvChecklist", () => {
         feedback: false,
         mcp: false,
         projects: false,
-        parallelResponses: false,
       },
       gateway: "vercel",
       installableToolEnvRequirements: [
@@ -138,7 +134,6 @@ it("includes every installed MCP requirement and preserves combined and alternat
         feedback: false,
         mcp: true,
         projects: false,
-        parallelResponses: false,
       },
       gateway: "openai",
       gatewayRequirements: [],
@@ -170,7 +165,6 @@ it("keeps each credential set together and puts secret generation under App secr
       followupSuggestions: false,
       feedback: false,
       mcp: false,
-      parallelResponses: false,
       projects: false,
     },
     gateway: "vercel",

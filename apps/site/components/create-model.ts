@@ -17,6 +17,7 @@ import { createCatalog } from "../../../packages/registry/create-catalog";
 
 export const startingInstallation = installationSelectionSchema.parse({
   auth: defaultAuthProviders,
+  plugins: ["model-picker"],
   sandbox: createCatalog.sandboxProvider.defaultValue,
   gateway: createCatalog.gateway.defaultValue,
   storage: { source: createCatalog.storageProvider.defaultValue },

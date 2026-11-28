@@ -18,7 +18,7 @@ export interface SessionAuthentication {
 /** Model and generation settings consumed by the shared agent. */
 export interface SessionModel {
   model: LanguageModelV4;
-  modelContextWindowTokens: number;
+  modelContextWindowTokens?: number;
   modelOptions: {
     providerOptions: Record<string, Record<string, z.output<z.ZodJSONSchema>>>;
   };

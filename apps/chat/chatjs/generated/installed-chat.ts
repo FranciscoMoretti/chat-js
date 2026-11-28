@@ -2,6 +2,7 @@
 import aiTitlesChat from "@/chatjs/plugins/ai-titles/chat-server";
 import feedbackChat from "@/chatjs/plugins/feedback/chat-server";
 import followupSuggestionsChat from "@/chatjs/plugins/followup-suggestions/chat-server";
+import parallelResponsesChat from "@/chatjs/plugins/parallel-responses/chat-server";
 import projectsChat from "@/chatjs/plugins/projects/chat-server";
 import searchChat from "@/chatjs/plugins/search/chat-server";
 import sharingChat from "@/chatjs/plugins/sharing/chat-server";
@@ -10,6 +11,7 @@ export const installedChat: readonly ChatServerIntegration[] = [
   aiTitlesChat,
   feedbackChat,
   followupSuggestionsChat,
+  parallelResponsesChat,
   projectsChat,
   searchChat,
   sharingChat,

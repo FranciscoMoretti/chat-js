@@ -1,3 +1,5 @@
+import { isNonEmptyString } from "@/lib/is-non-empty-string";
+import type { ReadonlyEveMessageMetadata } from "./readonly-message-types";
 import type { SessionStreamEvent } from "eve/client";
 import { activeTurn } from "eve/events";
 import type { SessionView } from "eve/events";
@@ -18,33 +20,48 @@ const responseModelReferences = (
   return models;
 };
 
-/** Native responses require runtime evidence; imported responses retain provenance.
- * @param {readonly SessionStreamEvent[]} events Native stream evidence used to resolve the turn's model reference.
- * @param {string} turnId Native turn identity, or an empty identity for an imported response.
- * @param {string | undefined} importedModelId Original model reference retained by an imported response.
- * @returns {string} The exact app-selected model ID recorded by the native model run.
- */
-const responseModel = (
-  events: readonly SessionStreamEvent[],
-  turnId: string,
-  importedModelId?: string
-): string => {
-  const reference = turnId
-    ? responseModelReferences(events).get(turnId)
-    : importedModelId;
-  const separator = (reference ?? "").indexOf("/");
-  if (
-    typeof reference === "string" &&
-    reference !== "" &&
+type ResponseMetadata =
+  | Readonly<Pick<ReadonlyEveMessageMetadata, "turnId" | "modelId">>
+  | undefined;
+
+/** Live replies use the recorded turn. Copied replies can carry their original ID directly. */
+const recordedResponseModel = (
+  models: ReadonlyMap<string, string>,
+  metadata: ResponseMetadata
+): string | undefined =>
+  isNonEmptyString(metadata?.turnId)
+    ? models.get(metadata.turnId)
+    : metadata?.modelId;
+
+const selectableResponseModel = (
+  models: ReadonlyMap<string, string>,
+  metadata: ResponseMetadata
+): string | undefined => {
+  const reference = recordedResponseModel(models, metadata);
+  const separator = reference?.indexOf("/") ?? -1;
+  return reference !== undefined &&
     separator > 0 &&
     separator < reference.length - 1
-  ) {
-    return reference;
-  }
-  throw new Error(
-    "The response model is unavailable. Reload before regenerating."
-  );
+    ? reference
+    : undefined;
 };
+
+const responseModel = (
+  events: readonly SessionStreamEvent[],
+  metadata: ResponseMetadata
+): string => {
+  const reference = selectableResponseModel(
+    responseModelReferences(events),
+    metadata
+  );
+  if (reference === undefined) {
+    throw new Error(
+      "The response model is unavailable. Reload before regenerating."
+    );
+  }
+  return reference;
+};
+
 const activeResponseModel = (
   view: SessionView,
   models: ReadonlyMap<string, string>
@@ -53,4 +70,10 @@ const activeResponseModel = (
   return active === undefined ? undefined : models.get(active.turnId);
 };
 
-export { activeResponseModel, responseModel, responseModelReferences };
+export {
+  activeResponseModel,
+  recordedResponseModel,
+  selectableResponseModel,
+  responseModel,
+  responseModelReferences,
+};

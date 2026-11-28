@@ -2,7 +2,7 @@
 
 import type { AppModelDefinition } from "@/lib/ai/app-models";
 
-import { ModelSelector } from "@/components/model-selector";
+import { ModelSelector } from "@/chatjs/ui/model-selector/model-selector";
 import { ChatModelsProvider } from "@/providers/chat-models-provider";
 
 import React from "react";
@@ -99,10 +99,8 @@ export const ModelToolbarVisualFixture = (): React.JSX.Element => (
           data.
         </p>
         <ModelSelector
-          allowMultiple
           onModelSelectionChangeAction={ignoreModelSelectionChange}
           selectedModelId={primaryFixtureModel.id}
-          selectedModelSelection={primaryFixtureModel.id}
         />
       </section>
     </main>

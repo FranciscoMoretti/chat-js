@@ -16,7 +16,7 @@ import {
   attachWorkspaceFileInput,
   attachWorkspaceFileResult,
 } from "../../../chat/chatjs/tools/attach-workspace-file/schemas";
-import { sceneMessages } from "./scenarios";
+import { previewConversation, sceneMessages } from "./scenarios";
 import { toolExamples } from "./tool-examples";
 
 for (const [name, input, output] of [
@@ -50,4 +50,60 @@ void test("selected media tools preview successful results", () => {
     parts.map((part) => part.state),
     ["completed", "completed"]
   );
+});
+
+void test("duplicate replies keep separate continuations from an empty chat", () => {
+  const first = {
+    id: 0,
+    text: "Compare",
+    parentReplyId: null,
+    modelIds: ["same", "same"],
+    attachments: [],
+  };
+  const scene = {
+    item: "preview",
+    plugins: ["parallel-responses"],
+    tools: new Set<string>(),
+    submissions: [first],
+  };
+  const firstReply = previewConversation({ ...scene, selections: {} }).replyId;
+  const secondSelected = { "preview-user-0": 1 };
+  const secondReply = previewConversation({
+    ...scene,
+    selections: secondSelected,
+  }).replyId;
+  assert.notEqual(firstReply, secondReply);
+  const submissions = [
+    first,
+    {
+      ...first,
+      id: 1,
+      text: "Follow second",
+      parentReplyId: secondReply,
+      modelIds: ["same"],
+    },
+    {
+      ...first,
+      id: 2,
+      text: "Follow first",
+      parentReplyId: firstReply,
+      modelIds: ["same"],
+    },
+  ];
+  for (const [selections, id] of [
+    [{}, 2],
+    [secondSelected, 1],
+  ] as const) {
+    const { messages } = previewConversation({
+      ...scene,
+      selections,
+      submissions,
+    });
+    assert.deepEqual(
+      messages
+        .filter((message) => message.role === "user")
+        .map((message) => message.id),
+      ["preview-user-0", `preview-user-${id}`]
+    );
+  }
 });

@@ -2,7 +2,7 @@ import React, { act } from "react";
 import { expect, test, vi } from "vitest";
 import { page } from "vitest/browser";
 import { takeSnapshot } from "@uiverify/vitest";
-import { ChatTranscript } from "@/components/chat/chat-transcript";
+import { ChatMessageList } from "@/components/chat/chat-message-list";
 import { AttachmentList } from "@/components/attachment-list";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import {
@@ -36,7 +36,7 @@ const messages: readonly ReadonlyEveMessage[] = Array.from(
 const noop = (): void => {
   /* Read-only fixture. */
 };
-const Transcript = ({
+const MessageListFixture = ({
   items,
 }: {
   readonly items: readonly ReadonlyEveMessage[];
@@ -49,7 +49,7 @@ const Transcript = ({
         <MessageScroller>
           <MessageScrollerViewport>
             <MessageScrollerContent className="p-4">
-              <ChatTranscript
+              <ChatMessageList
                 disabled={false}
                 isReadonly
                 messages={items}
@@ -66,7 +66,7 @@ const Transcript = ({
 );
 
 test("native transcript follows streaming, releases manual scroll, and preserves prepended history and logical identity", async () => {
-  const fixture = await mount(<Transcript items={messages} />);
+  const fixture = await mount(<MessageListFixture items={messages} />);
   try {
     const viewport = fixture.container.querySelector(
       '[data-slot="message-scroller-viewport"]'
@@ -87,7 +87,7 @@ test("native transcript follows streaming, releases manual scroll, and preserves
       ...messages.slice(0, -1),
       { ...last, parts: [{ type: "text" as const, text: answer.repeat(2) }] },
     ];
-    await renderRoot(fixture.root, <Transcript items={stream} />);
+    await renderRoot(fixture.root, <MessageListFixture items={stream} />);
     await expect.poll(atEnd).toBe(true);
     act(() => {
       viewport.dispatchEvent(
@@ -101,7 +101,7 @@ test("native transcript follows streaming, releases manual scroll, and preserves
       ...messages.slice(0, -1),
       { ...last, parts: [{ type: "text" as const, text: answer.repeat(3) }] },
     ];
-    await renderRoot(fixture.root, <Transcript items={longer} />);
+    await renderRoot(fixture.root, <MessageListFixture items={longer} />);
     await expect
       .poll(() => Math.abs(viewport.scrollTop - readingPosition))
       .toBeLessThan(3);
@@ -129,7 +129,7 @@ test("native transcript follows streaming, releases manual scroll, and preserves
     const anchorTop = existing.getBoundingClientRect().top;
     await renderRoot(
       fixture.root,
-      <Transcript
+      <MessageListFixture
         items={[
           {
             id: "older",
@@ -180,13 +180,13 @@ test("native transcript follows streaming, releases manual scroll, and preserves
         parts: [{ type: "text", text: answer }],
       },
     ];
-    await renderRoot(fixture.root, <Transcript items={logical} />);
+    await renderRoot(fixture.root, <MessageListFixture items={logical} />);
     const stable = fixture.container.querySelector(
       '[data-message-id="stable-turn"]'
     );
     await renderRoot(
       fixture.root,
-      <Transcript
+      <MessageListFixture
         items={[
           {
             id: "persisted",

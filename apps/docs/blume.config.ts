@@ -130,6 +130,8 @@ export default defineConfig({
             "/plugins/feedback",
             "/plugins/search",
             "/plugins/model-preferences",
+            "/plugins/model-picker",
+            "/plugins/parallel-responses",
             "/plugins/ai-titles",
             "/plugins/credits",
             "/plugins/guest-chat",

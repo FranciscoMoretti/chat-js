@@ -4,13 +4,14 @@ import { setupAction, setupActions } from "./setup-guidance";
 import type { ConfigureSetup } from "./setup-guidance";
 import Link from "next/link";
 import { useState } from "react";
-import { CircleCheck, CircleAlert, Settings2 } from "lucide-react";
+import { CircleCheck, CircleAlert, ListChecks, Settings2 } from "lucide-react";
 import { Button } from "@/vendor/shadcn-create/styles/base-nova/ui/button";
 import {
   Alert,
   AlertTitle,
   AlertDescription,
 } from "@/vendor/shadcn-create/styles/base-nova/ui/alert";
+import { FieldLabel } from "@/vendor/shadcn-create/styles/base-nova/ui/field";
 import { ScrollArea } from "@/vendor/shadcn-create/styles/base-nova/ui/scroll-area";
 import {
   Popover,
@@ -21,6 +22,18 @@ import {
   PopoverDescription,
 } from "@/vendor/shadcn-create/styles/base-nova/ui/popover";
 import { useInstallation } from "./installation-provider";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/vendor/shadcn-create/styles/base-nova/ui/select";
+import {
+  composerPickerChoice,
+  pickerOptions,
+  withComposerPickerChoice,
+} from "../../../../packages/registry/installation";
 import { FeatureChoices } from "./installation-choices";
 import { groupAppPlugins } from "../../../../packages/registry/create-groups";
 
@@ -171,7 +184,8 @@ export const InstallationPanel = ({
 }: {
   readonly onConfigureSetup: ConfigureSetup;
 }) => {
-  const { catalog, installation } = useInstallation();
+  const { catalog, installation, resolution, update } = useInstallation();
+  const choice = resolution && composerPickerChoice(resolution.selection);
   return (
     <section
       aria-label="Configure your app"
@@ -185,8 +199,63 @@ export const InstallationPanel = ({
       </div>
       <ScrollArea className="min-h-0 flex-1">
         <div className="space-y-5 p-4">
-          {installation ? (
+          {installation && choice ? (
             <>
+              <div className="flex min-h-12 flex-wrap items-center justify-between gap-2 py-2">
+                <FieldLabel
+                  htmlFor="composer-picker"
+                  className="items-center text-xs font-normal"
+                >
+                  <ListChecks
+                    aria-hidden="true"
+                    className="text-muted-foreground size-4 shrink-0"
+                  />
+                  Model selection
+                </FieldLabel>
+                <Select<ReturnType<typeof composerPickerChoice>>
+                  items={pickerOptions}
+                  value={choice}
+                  onValueChange={(value) => {
+                    if (value !== null) {
+                      update(withComposerPickerChoice(installation, value));
+                    }
+                  }}
+                >
+                  <SelectTrigger
+                    id="composer-picker"
+                    size="sm"
+                    className="ms-auto text-xs"
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent
+                    align="end"
+                    alignItemWithTrigger={false}
+                    className="w-64 max-w-(--available-width) p-1"
+                  >
+                    {pickerOptions.map(({ value, label, description }) => (
+                      <SelectItem
+                        key={value}
+                        value={value}
+                        label={label}
+                        aria-label={label}
+                        aria-describedby={`composer-picker-${value}-description`}
+                        className="py-2"
+                      >
+                        <span className="flex flex-col gap-0.5 whitespace-normal">
+                          <span>{label}</span>
+                          <span
+                            id={`composer-picker-${value}-description`}
+                            className="text-muted-foreground text-xs"
+                          >
+                            {description}
+                          </span>
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               {groupAppPlugins(catalog).map(({ title, items }) => (
                 <section key={title} aria-label={title}>
                   <h3 className="text-muted-foreground mb-2 text-xs font-medium">

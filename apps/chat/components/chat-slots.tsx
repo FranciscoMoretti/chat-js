@@ -4,6 +4,7 @@ import type {
   ChatActionProps,
   ChatSuggestionsProps,
   ChatMessageProps,
+  ChatResponseProps,
 } from "@/chatjs/core/chat/contracts";
 import type { ComposerControlProps } from "@/components/composer/control";
 
@@ -22,7 +23,7 @@ export const ChatBreadcrumbs = defineSlot<{
   readonly onProjectSelect?: (id: string) => void;
 }>();
 export const ChatHeaderActions = defineSlot<ChatActionProps>();
-export const MessageResponses = defineSlot<ChatMessageProps>();
+export const MessageResponses = defineSlot<ChatResponseProps>();
 export const MessageActions = defineSlot<ChatMessageProps>();
 export const ChatSuggestions = defineSlot<ChatSuggestionsProps>();
 export const AccountSummary = defineSlot();

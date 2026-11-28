@@ -1,3 +1,4 @@
+import { eveResponseGroup } from "@/chatjs/plugins/parallel-responses/response-group-schema";
 import { eq } from "drizzle-orm";
 import type { SessionEvent, SessionStreamEvent } from "eve/client";
 import { afterAll, beforeAll, expect, test, vi } from "vitest";
@@ -12,13 +13,12 @@ import {
 import {
   getEveResponseGroup,
   reserveEveResponseGroup,
-} from "../lib/db/eve-response-groups";
+} from "@/chatjs/plugins/parallel-responses/response-group-queries";
 import {
   eveChat,
   eveConversation,
   eveDispatch,
   eveFileReference,
-  eveResponseGroup,
   eveStoredFile,
   eveWorkspace,
   user,

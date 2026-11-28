@@ -1,23 +1,26 @@
+import { z } from "zod";
 import { expect } from "@playwright/test";
 import type { APIRequestContext } from "@playwright/test";
-import type { z } from "zod";
 
-import { eveResponseGroupResult } from "../lib/eve/response-group-contracts";
-import type { eveResponseGroupInput } from "../lib/eve/response-group-input";
+import { eveResponseGroupResult } from "@/chatjs/plugins/parallel-responses/response-group-contracts";
+import type { eveResponseGroupInput } from "@/chatjs/plugins/parallel-responses/response-group-input";
 
+export const comparisonResult = z.object({
+  result: z.object({ data: z.object({ json: eveResponseGroupResult }) }),
+});
 export const requestBoundComparison = async (
   request: Pick<APIRequestContext, "get" | "post">,
   origin: string,
   data: z.input<typeof eveResponseGroupInput>
 ): Promise<z.output<typeof eveResponseGroupResult>> => {
   const send = async () => {
-    const response = await request.post("/api/agent-response-groups", {
-      data,
+    const response = await request.post("/api/trpc/parallelResponses.submit", {
+      data: { json: data },
       headers: { origin },
       timeout: 30_000,
     });
     expect(response.ok(), await response.text()).toBe(true);
-    return eveResponseGroupResult.parse(await response.json());
+    return comparisonResult.parse(await response.json()).result.data.json;
   };
   let result = await send();
   const { id } = result;

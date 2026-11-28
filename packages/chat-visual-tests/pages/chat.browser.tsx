@@ -8,10 +8,10 @@ import ChatPage from "@/app/(chat)/chat/[chatId]/page";
 import ChatLayout from "@/app/(chat)/layout";
 import SharePage from "@/app/(chat)/share/[id]/page";
 
-import { retainResponseGroupDraft } from "@/lib/eve/create-response-group";
+import { retainResponseGroupDraft } from "@/chatjs/plugins/parallel-responses/create-response-group";
 import {
   prepareCreation,
-  prepareResponseGroupCreation,
+  prepareSelectedCreation,
 } from "@/lib/eve/pending-create";
 import { eveMessageDelivery } from "@/lib/eve/message-delivery";
 
@@ -1103,6 +1103,17 @@ test("deleting one branch preserves the shared workspace", async () => {
 });
 
 test("nested comparisons retain response cards on both user messages", async () => {
+  const preferenceWrites = vi.fn();
+  const preferenceSaved = Promise.withResolvers<null>();
+  const { fetch } = globalThis;
+  vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
+    if (input === "/api/chat-model") {
+      preferenceWrites(init?.body);
+      await preferenceSaved.promise;
+      return Response.json({ success: true });
+    }
+    return await fetch(input, init);
+  });
   const [original] = Object.values(invoicesTranscripts);
   const rootPrompt = "Which invoice index should I add?";
   const transcript = original.map((message) => ({
@@ -1128,9 +1139,6 @@ test("nested comparisons retain response cards on both user messages", async () 
   const root = {
     ...source,
     firstMessage: rootPrompt,
-    responseGroupId: rootGroup,
-    responseGroupIndex: 0,
-    groupCandidates: candidates(source.operationId, rootAlternate),
   };
   const nested = {
     ...source,
@@ -1140,9 +1148,6 @@ test("nested comparisons retain response cards on both user messages", async () 
     sessionId: "nested-primary",
     parentBranchId: root.id,
     forkKind: "comparison" as const,
-    responseGroupId: nestedGroup,
-    responseGroupIndex: 0,
-    groupCandidates: candidates(nestedId, nestedAlternate),
     createdAt: new Date("2027-01-01"),
   };
   const nestedTranscript = [
@@ -1184,6 +1189,25 @@ test("nested comparisons retain response cards on both user messages", async () 
       ...invoicesTrpc,
       "eve.branches": {
         ...invoicesTrpc["eve.branches"],
+        promptGroups: [
+          {
+            id: rootGroup,
+            operationIds: [source.operationId, rootAlternate],
+            details: {
+              kind: "parallel-responses",
+              // Legacy groups retain their ordered operations and each branch's initial model.
+              candidates: null,
+            },
+          },
+          {
+            id: nestedGroup,
+            operationIds: [nestedId, nestedAlternate],
+            details: {
+              kind: "parallel-responses",
+              candidates: candidates(nestedId, nestedAlternate),
+            },
+          },
+        ],
         branches: [
           nested,
           {
@@ -1191,7 +1215,6 @@ test("nested comparisons retain response cards on both user messages", async () 
             id: nestedAlternate,
             operationId: nestedAlternate,
             sessionId: "nested-alternate",
-            responseGroupIndex: 1,
           },
           root,
           {
@@ -1199,7 +1222,7 @@ test("nested comparisons retain response cards on both user messages", async () 
             id: rootAlternate,
             operationId: rootAlternate,
             sessionId: "root-alternate",
-            responseGroupIndex: 1,
+            initialModelId: "anthropic/claude-sonnet-4",
           },
         ],
       },
@@ -1209,30 +1232,63 @@ test("nested comparisons retain response cards on both user messages", async () 
   await expect
     .element(log.getByText(nested.firstMessage, { exact: true }))
     .toBeVisible();
+  const responseCards = log.getByRole("button", {
+    name: /(?:Selected|Task completed|Open response)/u,
+  });
+  await expect.poll(() => responseCards.all().length).toBe(4);
+  const picker = page.getByTestId("model-selector");
+  await picker.click();
+  await page.getByRole("switch", { name: "Use Multiple Models" }).click();
+  await page.getByRole("button", { name: /^1× /u }).click();
+  await page.getByRole("menuitem", { name: "2x", exact: true }).click();
+  await userEvent.keyboard("{Escape}");
+  const sibling = log
+    .element()
+    .querySelector<HTMLButtonElement>('button[aria-pressed="false"]');
+  if (!sibling) {
+    throw new Error("Missing sibling response");
+  }
+  expect(preferenceWrites).toHaveBeenLastCalledWith(
+    JSON.stringify({ model: modelId })
+  );
+  preferenceWrites.mockClear();
+  await userEvent.click(sibling);
   await expect
-    .poll(
-      () =>
-        log
-          .getByRole("button", {
-            name: /(?:Selected|Task completed|Open response)/u,
-          })
-          .all().length
-    )
-    .toBe(4);
+    .element(log.getByText(nested.firstMessage, { exact: true }))
+    .not.toBeInTheDocument();
+  await picker.click();
+  await expect
+    .element(page.getByRole("switch", { name: "Use Multiple Models" }))
+    .not.toBeChecked();
+  await expect.element(picker).toHaveTextContent("Claude Sonnet 4");
+  expect(preferenceWrites).not.toHaveBeenCalled();
+  preferenceSaved.resolve(null);
+  await page.getByRole("option", { name: "GPT-5 nano", exact: true }).click();
+  await expect.element(picker).toHaveTextContent("GPT-5 nano");
+  expect(preferenceWrites).toHaveBeenCalledExactlyOnceWith(
+    JSON.stringify({ model: "openai/gpt-5-nano" })
+  );
+  await log.getByRole("button", { name: /Gemini 2.5 Flash Lite/u }).click();
+  await expect
+    .element(log.getByText(nested.firstMessage, { exact: true }))
+    .toBeVisible();
+  await expect.poll(() => responseCards.all().length).toBe(4);
+  expect(preferenceWrites).toHaveBeenCalledTimes(1);
 });
 
-test.each(["waiting", "lost reply"])(
+test.each(["waiting", "lost reply", "rejected"])(
   "comparison workspace progress: %s",
   async (state) => {
     const groupId = "a1111111-2222-4333-8444-555555555555";
     const waitingId = "b1111111-2222-4333-8444-555555555555";
     const modelId = invoicesConversation.initialModelId ?? "openai/gpt-5-mini";
-    const saved = prepareResponseGroupCreation(
+    const saved = prepareSelectedCreation(
       sessionStorage,
       session.user.id,
       invoicesConversation.firstMessage,
       [modelId, modelId]
     );
+    const reason = "The selected model is unavailable.";
     const result = {
       id: groupId,
       candidates: [
@@ -1243,15 +1299,25 @@ test.each(["waiting", "lost reply"])(
           branchId: invoicesConversation.id,
           sessionId: invoicesConversation.sessionId ?? "",
         },
-        { state: "waiting" as const, modelId, operationId: waitingId },
+        state === "rejected"
+          ? {
+              state: "rejected" as const,
+              modelId,
+              operationId: waitingId,
+              error: reason,
+            }
+          : { state: "waiting" as const, modelId, operationId: waitingId },
       ],
     };
+    if (!("modelIds" in saved)) {
+      throw new Error("Expected a comparison");
+    }
     retainResponseGroupDraft(sessionStorage, session.user.id, saved, result);
     const originalFetch = globalThis.fetch;
     vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
       if (
         (input instanceof Request ? input.url : input.toString()).includes(
-          "/api/agent-response-groups"
+          "/api/trpc/parallelResponses.submit"
         )
       ) {
         if (state === "lost reply") {
@@ -1259,7 +1325,7 @@ test.each(["waiting", "lost reply"])(
             "Comparison progress is unconfirmed. Retry the saved request."
           );
         }
-        return Response.json(result);
+        return Response.json({ result: { data: { json: result } } });
       }
       return await originalFetch(input, init);
     });
@@ -1287,19 +1353,38 @@ test.each(["waiting", "lost reply"])(
         ...invoicesTrpc,
         "eve.branches": {
           ...invoicesTrpc["eve.branches"],
-          branches: invoicesTrpc["eve.branches"].branches.map((branch) => ({
-            ...branch,
-            responseGroupId: groupId,
-            responseGroupIndex: 0,
-            groupCandidates: result.candidates.map((candidate) => ({
-              modelId: candidate.modelId,
-              operationId: candidate.operationId,
-            })),
-          })),
+          promptGroups: [
+            {
+              id: groupId,
+              operationIds: [invoicesConversation.operationId],
+              details: {
+                kind: "parallel-responses",
+                candidates: result.candidates.map((candidate) => ({
+                  modelId: candidate.modelId,
+                  operationId: candidate.operationId,
+                  rejection:
+                    candidate.state === "rejected"
+                      ? { error: candidate.error }
+                      : undefined,
+                })),
+              },
+            },
+          ],
         },
       },
     });
-    if (state === "lost reply") {
+    if (state === "rejected") {
+      const card = page.getByRole("button", {
+        name: /Failed/u,
+      });
+      await card.click();
+      await expect
+        .element(page.getByText(reason, { exact: true }))
+        .toBeVisible();
+      await expect
+        .element(page.getByRole("button", { name: "Retry response" }))
+        .toBeEnabled();
+    } else if (state === "lost reply") {
       await expect
         .element(page.getByRole("alert"))
         .toHaveTextContent("Comparison progress is unconfirmed.");

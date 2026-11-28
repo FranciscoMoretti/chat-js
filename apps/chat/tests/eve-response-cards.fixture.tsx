@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { createRoot } from "react-dom/client";
 
-import type { EveResponseCardCandidate } from "../components/eve/eve-response-group-cards";
-import { EveResponseGroupCards } from "../components/eve/eve-response-group-cards";
-import { ResponseChoiceCards } from "../components/response-choice-cards";
+import type { EveResponseCardCandidate } from "@/chatjs/plugins/parallel-responses/eve-response-group-cards";
+import { EveResponseGroupCards } from "@/chatjs/plugins/parallel-responses/eve-response-group-cards";
+import { ResponseChoiceCards } from "@/chatjs/plugins/parallel-responses/response-choice-cards";
 
 const candidates: EveResponseCardCandidate[] = [
   { modelName: "GPT-5", operationId: "ready", state: "bound", status: "ready" },

@@ -21,7 +21,6 @@ type AuthProvider = (typeof authProviders)[number];
 
 const CORE_FEATURE_KEYS = [
   "attachments",
-  "parallelResponses",
   "mcp",
   "projects",
   "feedback",

@@ -309,36 +309,6 @@ const eveDispatch = pgTable(
   ]
 );
 
-/** Immutable fan-out intent. Native sessions remain the only transcript store. */
-const eveResponseGroup = pgTable(
-  "EveResponseGroup",
-  {
-    candidateOperationIds: uuid("candidateOperationIds").array().notNull(),
-    candidates: jsonb("candidates").$type<
-      {
-        modelId: string;
-        operationId: string;
-        rejection?: { error: string; code?: string };
-      }[]
-    >(),
-    createdAt: timestamp("createdAt").notNull().defaultNow(),
-    deleted: boolean("deleted").notNull().default(false),
-    id: uuid("id").primaryKey().defaultRandom(),
-    inputHash: text("inputHash"),
-    operationId: uuid("operationId").notNull(),
-    ownerId: text("ownerId")
-      .notNull()
-      .references(() => user.id),
-    sourceBranchId: uuid("sourceBranchId"),
-  },
-  (table) => [
-    uniqueIndex("EveResponseGroup_owner_operation").on(
-      table.ownerId,
-      table.operationId
-    ),
-  ]
-);
-
 /** Application-owned storage identity; transcript contents remain in EVE. */
 const eveStoredFile = pgTable(
   "EveStoredFile",
@@ -444,7 +414,6 @@ export {
   eveChat,
   eveConversation,
   eveFileReference,
-  eveResponseGroup,
   eveStoredFile,
   eveSubagentSession,
   eveUsage,

@@ -25,7 +25,6 @@ import {
 import { resolveStorage } from "#cli/registry/storage";
 import type { InstallationSelection } from "../../../registry/installation";
 import type { AuthProvider, CoreFeatureKey, PackageManager } from "#cli/types";
-import { FEATURES_DEFAULTS } from "../../../../apps/chat/lib/config-schema";
 import { configureSandboxProvider } from "#cli/helpers/sandbox-provider";
 import { resolveSandbox } from "#cli/registry/sandboxes";
 import { installPlan, plannedSourceTargets } from "#cli/utils/install-plan";
@@ -173,7 +172,8 @@ const promptProjectTarget = async (
 
 const prepareCreateSetup = async (
   selection: InstallationSelection,
-  targetDir: string
+  targetDir: string,
+  useDefaultModelPicker = false
 ): Promise<CreateSetup> => {
   const storage = applyStorageOptions(
     await resolveStorage(selection.storage?.source ?? "memory", targetDir),
@@ -186,7 +186,7 @@ const prepareCreateSetup = async (
       auth: selection.auth ?? defaultAuthProviders,
       storage: { source: storage.source, options: storage.options },
     },
-    { fresh: true, requireToolKind: true }
+    { fresh: true, requireToolKind: true, useDefaultModelPicker }
   );
   const gatewaySelection = await resolveGateway(
     selection.gateway ?? "vercel",
@@ -207,7 +207,6 @@ const prepareCreateSetup = async (
       followupSuggestions: plugins.has("followup-suggestions"),
       mcp: plugins.has("mcp"),
       projects: plugins.has("projects"),
-      parallelResponses: FEATURES_DEFAULTS.parallelResponses,
     },
     gateway: gatewaySelection.definition.id,
     gatewaySelection,
@@ -246,12 +245,18 @@ const configureCreate = async (
       project,
       selection,
       appearance,
-      async (draft) =>
-        await prepareCreateSetup(draft.selection, project.targetDir)
+      async (draft) => {
+        const setup = await prepareCreateSetup(
+          draft.selection,
+          project.targetDir,
+          draft.useDefaultModelPicker
+        );
+        return { setup, selection: setup.plan.selection };
+      }
     );
   }
   return {
-    setup: await prepareCreateSetup(selection, project.targetDir),
+    setup: await prepareCreateSetup(selection, project.targetDir, true),
     appearance,
   };
 };

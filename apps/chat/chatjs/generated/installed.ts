@@ -10,6 +10,7 @@ export const installedPlugins: ReadonlySet<string> = new Set([
   "image-viewer",
   "mcp",
   "model-preferences",
+  "parallel-responses",
   "projects",
   "search",
   "sharing",

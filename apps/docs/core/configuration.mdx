@@ -9,8 +9,8 @@ ChatJS separates **installed source**, **runtime policy**, and **deployment infr
 
 | Type | What you select | Documentation |
 | --- | --- | --- |
-| Core | App behavior such as conversations, authentication, and parallel responses | [Architecture](/core/architecture) |
-| Plugins | Optional app integrations such as Projects, Credits, and MCP | [Plugins](/plugins/overview) |
+| Core | App behavior such as conversations and authentication | [Architecture](/core/architecture) |
+| Plugins | Optional app integrations such as Projects, Parallel Responses, Credits, and MCP | [Plugins](/plugins/overview) |
 | Tools | Model-facing operations such as search, image generation, and file publication | [Tools](/tools/overview) |
 | Gateway | Inference and model discovery | [Models & Gateways](/gateways/overview) |
 | Storage | Files SDK adapter for durable files | [File Storage](/storage) |
@@ -34,7 +34,6 @@ const config = {
       followupSuggestions: { enabled: true, default: "openai/gpt-5-nano" },
     },
   },
-  features: { parallelResponses: true },
   authentication: { google: false, github: true, vercel: false },
 } satisfies ConfigInput;
 
@@ -87,6 +86,6 @@ bunx chat-js@beta create minimal-chat --yes --no-mcp --no-attachments --no-elect
 
 Authentication booleans enable GitHub, Google or Vercel OAuth and require the corresponding credentials. Install [Guest Chat](/plugins/guest-chat) for disposable visitor sessions. Its server-owned policy controls the model, input size, expiry, and IP limits. Guests have no credit balance. Retention additionally needs an operational cleanup schedule and lifecycle support.
 
-`features.parallelResponses` controls parallel responses. `attachments.acceptedTypes`, `maxBytes` and `maxDimension` control installed upload behavior. Neither setting installs its feature.
+Set `features.parallelResponses` to `false` to hide multi-response selection after installing [Parallel Responses](/plugins/parallel-responses). Configure installed upload limits with `attachments.acceptedTypes`, `maxBytes` and `maxDimension`.
 
 Read installed descriptors and `.env.example` for credentials, then run `bun run check-env`. Never put secrets in `chat.config.ts` or `--storage-config`. See [Config reference](/reference/config) and [Gateway overview](/gateways/overview).

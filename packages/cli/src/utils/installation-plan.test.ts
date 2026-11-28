@@ -5,6 +5,7 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { tmpdir } from "node:os";
 
+import { registryResolution } from "#cli/registry/resolution-context";
 import { toolDefinitionSchema } from "../../../registry/metadata";
 
 import { planInstallation } from "./installation-plan";
@@ -60,6 +61,78 @@ test("requested plugins can repair incomplete installations while unrelated inst
   } finally {
     await server.stop(true);
   }
+});
+
+test("a picker supplied by registry URL or local file takes precedence over the default", async () => {
+  const root = await mkdtemp(path.join(tmpdir(), "chatjs-plan-picker-"));
+  roots.push(root);
+  const picker = {
+    name: "team-picker",
+    type: "registry:item",
+    meta: {
+      chatjs: {
+        id: "team-picker",
+        kind: "plugin",
+        contractVersion: 3,
+        files: ["chatjs/plugins/team-picker/turn-models.ts"],
+      },
+    },
+  };
+  const local = path.join(root, "picker.json");
+  await writeFile(local, JSON.stringify(picker));
+  using server = Bun.serve({
+    hostname: "127.0.0.1",
+    port: 0,
+    fetch: () => Response.json(picker),
+  });
+  await Promise.all(
+    [local, `http://127.0.0.1:${server.port}/custom.json`].map(
+      async (source) => {
+        const plan = await planInstallation(
+          root,
+          { plugins: [source], tools: [] },
+          { fresh: true, useDefaultModelPicker: true }
+        );
+        expect(plan.plugins.map(({ id }) => id)).toEqual(["team-picker"]);
+        expect(plan.selection.plugins).toEqual([source]);
+      }
+    )
+  );
+});
+
+test("records the default picker in the installation plan when requested", async () => {
+  const root = await mkdtemp(
+    path.join(tmpdir(), "chatjs-plan-picker-default-")
+  );
+  roots.push(root);
+  const source = "@chatjs/model-picker";
+  const picker = {
+    name: "model-picker",
+    type: "registry:item" as const,
+    meta: {
+      chatjs: {
+        id: "model-picker",
+        kind: "plugin",
+        contractVersion: 3,
+        files: ["chatjs/plugins/model-picker/turn-models.ts"],
+      },
+    },
+  };
+  await registryResolution.run(new Map([[source, picker]]), async () => {
+    const selection = { plugins: [], tools: [] };
+    const implicit = await planInstallation(root, selection, {
+      fresh: true,
+      useDefaultModelPicker: true,
+    });
+    expect(implicit.plugins.map(({ id }) => id)).toEqual(["model-picker"]);
+    expect(implicit.selection.plugins).toEqual(["model-picker"]);
+    expect(
+      await planInstallation(root, selection, { fresh: true })
+    ).toMatchObject({
+      plugins: [],
+      selection: { plugins: [] },
+    });
+  });
 });
 
 test("plans transitive dependencies and repairs against the complete resulting installation without writing", async (): Promise<void> => {

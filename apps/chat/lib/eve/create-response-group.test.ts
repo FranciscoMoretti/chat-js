@@ -1,3 +1,7 @@
+import { eveResponseGroupInput } from "@/chatjs/plugins/parallel-responses/response-group-input";
+import { logicalResponseSlots } from "@/chatjs/plugins/parallel-responses/logical-response-slots";
+import { LogicalChat, sharedPromptMessageId } from "./logical-chat";
+import { creationHandler as single } from "./single-creation";
 import { afterEach, expect, test, vi } from "vitest";
 
 import { CreationRejectedError } from "./create-conversation";
@@ -7,16 +11,18 @@ import {
   readResponseGroupDraft,
   requestResponseGroup,
   retainResponseGroupDraft,
-} from "./create-response-group";
+} from "@/chatjs/plugins/parallel-responses/create-response-group";
 import {
   moveRejectedContextCreation,
   prepareCreation,
-  prepareResponseGroupCreation,
   prepareSelectedCreation,
   readCreationRequest,
 } from "./pending-create";
 import { resolveCreationRequest } from "./resolve-creation-request";
-import type { EveResponseGroupResult } from "./response-group-contracts";
+import type { EveResponseGroupResult } from "@/chatjs/plugins/parallel-responses/response-group-contracts";
+
+const rpcResponse = (value: EveResponseGroupResult) =>
+  Response.json({ result: { data: { json: value } } });
 
 afterEach(() => vi.unstubAllGlobals());
 const fixture = () => {
@@ -30,12 +36,15 @@ const fixture = () => {
       entries.set(key, value);
     },
   };
-  const operation = prepareResponseGroupCreation(
+  const operation = prepareSelectedCreation(
     storage,
     "owner",
     "Exact original message",
     ["model-a", "model-a", "model-b"]
   );
+  if (!("modelIds" in operation)) {
+    throw new Error("Expected a comparison");
+  }
   const result: EveResponseGroupResult = {
     candidates: operation.modelIds.map((modelId, index) => {
       if (index === 0) {
@@ -69,15 +78,18 @@ test("lost creation replies retain the exact ordered operation across changed co
     ])
   ).toEqual(operation);
   expect(readCreationRequest(storage, "owner")).toEqual(operation);
-  expect(fetcher.mock.calls[0][1]?.body).toBe(JSON.stringify(operation));
+  expect(fetcher.mock.calls[0][0]).toBe("/api/trpc/parallelResponses.submit");
+  expect(fetcher.mock.calls[0][1]?.body).toBe(
+    JSON.stringify({ json: operation })
+  );
   expect(() => prepareCreation(storage, "owner", "Another request")).toThrow(
-    "saved comparison"
+    "Recover the saved request"
   );
 });
 
 test("partial binding moves recovery before releasing the composer and preserves a subsequent draft", async () => {
   const { storage, operation, result } = fixture();
-  vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json(result)));
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue(rpcResponse(result)));
   await resolveCreationRequest(storage, "owner", operation);
   expect(readCreationRequest(storage, "owner")).toBeUndefined();
   expect(readResponseGroupDraft(storage, "owner", result.id)).toEqual(
@@ -126,7 +138,7 @@ test("all rejected candidates are definitive while a mixed uncertain result keep
       state: "rejected",
     })),
   };
-  vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json(rejected)));
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue(rpcResponse(rejected)));
   await expect(requestResponseGroup(operation)).rejects.toBeInstanceOf(
     CreationRejectedError
   );
@@ -137,7 +149,7 @@ test("all rejected candidates are definitive while a mixed uncertain result keep
       { ...result.candidates[1], state: "unresolved" },
     ],
   };
-  vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json(mixed)));
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue(rpcResponse(mixed)));
   await expect(requestResponseGroup(operation)).resolves.toEqual(mixed);
 });
 
@@ -165,7 +177,7 @@ test("moving a definitively rejected project comparison preserves all repeated m
     key: `project:${projectId}`,
     label: "project",
   };
-  const original = prepareResponseGroupCreation(
+  const original = prepareSelectedCreation(
     storage,
     "project-owner",
     "Project message",
@@ -182,7 +194,7 @@ test("moving a definitively rejected project comparison preserves all repeated m
   );
   expect(moved).toMatchObject({
     message: original.message,
-    modelIds: original.modelIds,
+    modelIds: ["model-a", "model-a"],
   });
   expect(moved.operationId).not.toBe(original.operationId);
   expect(moved.projectId).toBeUndefined();
@@ -219,14 +231,17 @@ test("certified waiting progresses with immutable input and stops after binding"
   };
   const fetcher = vi
     .fn<typeof fetch>()
-    .mockResolvedValue(Response.json(complete));
+    .mockResolvedValue(rpcResponse(complete));
   vi.stubGlobal("fetch", fetcher);
   const completion = advanceWaitingResponseGroup(storage, "owner", result.id);
   expect(
     canAutomaticallyProgressResponseGroup(storage, "owner", result.id)
   ).toBe(false);
   await expect(completion).resolves.toEqual(complete);
-  expect(fetcher.mock.calls[0][1]?.body).toBe(JSON.stringify(operation));
+  expect(fetcher.mock.calls[0][0]).toBe("/api/trpc/parallelResponses.submit");
+  expect(fetcher.mock.calls[0][1]?.body).toBe(
+    JSON.stringify({ json: operation })
+  );
   expect(readResponseGroupDraft(storage, "owner", result.id)).toBeUndefined();
   expect(
     canAutomaticallyProgressResponseGroup(storage, "owner", result.id)
@@ -265,4 +280,86 @@ test("uncertain results and lost progress replies never automatically redispatch
     advanceWaitingResponseGroup(storage, "owner", result.id)
   ).resolves.toBeUndefined();
   expect(fetcher).toHaveBeenCalledTimes(1);
+});
+
+test("a saved comparison survives recovery with the plugin removed", async () => {
+  const { storage, operation } = fixture();
+  const fetcher = vi.fn<typeof fetch>();
+  vi.stubGlobal("fetch", fetcher);
+  expect(() => single.parse(operation)).toThrow("Restore the original plugins");
+  await expect(single.resolve(storage, "owner", operation)).rejects.toThrow();
+  expect(fetcher).not.toHaveBeenCalled();
+  expect(readCreationRequest(storage, "owner")).toEqual(operation);
+});
+
+test("an edit cannot replace a pending single fork with a comparison", () => {
+  const { storage } = fixture();
+  const branchId = crypto.randomUUID();
+  const scope = { branchId, fork: { branchId }, forkKind: "edit" } as const;
+  const pending = prepareSelectedCreation(
+    storage,
+    "owner",
+    "Edit",
+    ["a"],
+    scope
+  );
+
+  expect(() =>
+    prepareSelectedCreation(storage, "owner", "Compare", ["a", "b"], scope)
+  ).toThrow("Recover the saved conversation");
+  expect(readCreationRequest(storage, "owner", scope)).toEqual(pending);
+});
+
+const groupWire =
+  '{"operationId":"11111111-1111-4111-8111-111111111111","modelIds":["test/one","test/two"],"message":"hello","fork":{"branchId":"22222222-2222-4222-8222-222222222222"}}';
+
+test("preserves persisted comparison hashes for current-conversation copies", () => {
+  const parsed = eveResponseGroupInput.parse(JSON.parse(groupWire));
+  const serialized = JSON.stringify(parsed);
+  expect(serialized).toBe(groupWire);
+});
+
+test("comparisons reject an unavailable project installation", async () => {
+  vi.resetModules();
+  vi.doMock("@/integrations/plugin-catalog", () => ({
+    installedPlugins: new Set(),
+  }));
+  try {
+    const { eveResponseGroupInput: schema } =
+      await import("@/chatjs/plugins/parallel-responses/response-group-input");
+    expect(() =>
+      schema.parse({
+        ...JSON.parse(groupWire),
+        fork: undefined,
+        projectId: crypto.randomUUID(),
+      })
+    ).toThrow("Projects plugin is not installed");
+  } finally {
+    vi.doUnmock("@/integrations/plugin-catalog");
+    vi.resetModules();
+  }
+});
+
+test("only comparison groups produce model slots, and older branches can have an unknown model", () => {
+  const chat = new LogicalChat("chat", "branch");
+  const branch = {
+    id: "branch",
+    operationId: "operation",
+    parentBranchId: null,
+    sessionId: null,
+    forkTurnId: null,
+    createdAt: "2026-09-20",
+    initialModelId: null,
+  };
+  const group = { id: "group", operationIds: [branch.operationId] };
+  const promptId = sharedPromptMessageId(group.id);
+  chat.setBranches([branch], [group]);
+  expect(logicalResponseSlots(chat.getSnapshot(), promptId)).toBeUndefined();
+  chat.setBranches(
+    [branch],
+    [{ ...group, details: { kind: "parallel-responses", candidates: null } }]
+  );
+  expect(
+    logicalResponseSlots(chat.getSnapshot(), promptId)?.slots
+  ).toMatchObject([{ operationId: branch.operationId, modelId: null }]);
 });

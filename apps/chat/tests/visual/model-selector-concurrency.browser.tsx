@@ -3,7 +3,7 @@ import React, { act } from "react";
 import { expect, test, vi } from "vitest";
 import { page } from "vitest/browser";
 
-import { ModelSelector } from "@/components/model-selector";
+import { ParallelResponseModelPicker } from "@/chatjs/plugins/parallel-responses/parallel-response-picker";
 import type { AppModelDefinition } from "@/lib/ai/app-models";
 import type { SelectedModelValue } from "@/lib/ai/types";
 import { config } from "@/lib/config";
@@ -71,12 +71,7 @@ test("a suspended selection render cannot change the visible count callback", as
     readonly value: SelectedModelValue;
   }): React.JSX.Element => (
     <React.Suspense>
-      <ModelSelector
-        allowMultiple
-        onModelSelectionChangeAction={action}
-        selectedModelId={primary}
-        selectedModelSelection={value}
-      />
+      <ParallelResponseModelPicker onChange={action} value={value} />
       <Block blocked={value === speculativeCounts} />
     </React.Suspense>
   );
@@ -141,14 +136,7 @@ test.each(crossRowCases)(
         setValue(next);
         action(next);
       }, []);
-      return (
-        <ModelSelector
-          allowMultiple
-          onModelSelectionChangeAction={change}
-          selectedModelId={primary}
-          selectedModelSelection={value}
-        />
-      );
+      return <ParallelResponseModelPicker onChange={change} value={value} />;
     };
     const fixture = await mount(<Fixture />);
     try {
@@ -166,3 +154,8 @@ test.each(crossRowCases)(
     }
   }
 );
+
+vi.mock("@/providers/default-model-provider", () => ({
+  useDefaultModel: () => "openai/gpt-4.1",
+  useModelChange: () => vi.fn(),
+}));

@@ -120,15 +120,17 @@ test("native follow-ups survive reload, submit normally and preserve unsent comp
   const compared = page.waitForResponse(
     (reply) =>
       reply.request().method() === "POST" &&
-      new URL(reply.url()).pathname === "/api/agent-response-groups"
+      new URL(reply.url()).pathname === "/api/trpc/parallelResponses.submit"
   );
   await related.getByRole("button").first().click();
   const comparison = await compared;
   expect(comparison.ok(), await comparison.text()).toBe(true);
   expect(comparison.request().postDataJSON()).toMatchObject({
-    fork: { branchId: binding.id },
-    message: retainedQuestion,
-    modelIds: ["openai/gpt-5-nano", "openai/gpt-5-nano"],
+    json: {
+      fork: { branchId: binding.id },
+      message: retainedQuestion,
+      modelIds: ["openai/gpt-5-nano", "openai/gpt-5-nano"],
+    },
   });
   await expect(page).toHaveURL(logicalUrl);
   await expect(composer).toHaveValue(retainedQuestion);

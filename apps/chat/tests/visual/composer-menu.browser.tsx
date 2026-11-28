@@ -186,10 +186,6 @@ vi.mock("@/providers/default-model-provider", () => ({
   useDefaultModel: () => "fixture",
 }));
 
-vi.mock("@/components/eve/eve-model-picker", () => ({
-  EveModelPicker: (): React.JSX.Element => <button type="button">Model</button>,
-}));
-
 const originalControls = [...composerControls];
 
 const mount = async (
@@ -215,6 +211,7 @@ const mount = async (
         <>
           <Toaster />
           <EveComposer
+            modelPicker={<button type="button">Model</button>}
             capabilities={{
               files,
               selectedTool,

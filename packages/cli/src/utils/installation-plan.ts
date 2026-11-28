@@ -1,3 +1,4 @@
+import { hasPluginEntry } from "../../../registry/plugin-entry";
 import { resolveItemPayload } from "#cli/registry/resolved-items";
 import { assertCurrentInstallationLayout } from "./installation-layout";
 import { readInstalledPlugins } from "./installed-plugins";
@@ -44,6 +45,7 @@ interface PlanOptions {
   readonly fresh?: boolean;
   readonly replace?: boolean;
   readonly requireToolKind?: boolean;
+  readonly useDefaultModelPicker?: boolean;
 }
 
 export const planInstallation = async (
@@ -163,6 +165,15 @@ export const planInstallation = async (
   ]);
   if (selection.storage) {
     await visit(itemAddress(selection.storage.source, "storage"), "storage");
+  }
+  if (
+    options.useDefaultModelPicker === true &&
+    ![...plugins.values()].some((plugin) =>
+      hasPluginEntry(plugin, "turn-models.ts")
+    )
+  ) {
+    await visit(itemAddress("model-picker", "tool"), "plugin");
+    selection.plugins.push("model-picker");
   }
   const providerChanges = await Promise.all(
     [...providers].map(async ([kind, next]: readonly [string, string]) => {

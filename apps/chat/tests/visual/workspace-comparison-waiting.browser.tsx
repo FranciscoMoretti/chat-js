@@ -1,11 +1,11 @@
 import React, { act } from "react";
 import { afterEach, expect, test, vi } from "vitest";
 
-import { EveLogicalGroupRecovery } from "@/components/eve/eve-logical-group-recovery";
+import { EveLogicalGroupRecovery } from "@/chatjs/plugins/parallel-responses/eve-logical-group-recovery";
 import { createDomHarness } from "@/components/test-dom-harness";
-import { retainResponseGroupDraft } from "@/lib/eve/create-response-group";
-import { prepareResponseGroupCreation } from "@/lib/eve/pending-create";
-import type { EveResponseGroupResult } from "@/lib/eve/response-group-contracts";
+import { retainResponseGroupDraft } from "@/chatjs/plugins/parallel-responses/create-response-group";
+import { prepareSelectedCreation } from "@/lib/eve/pending-create";
+import type { EveResponseGroupResult } from "@/chatjs/plugins/parallel-responses/response-group-contracts";
 
 const fixtures = vi.hoisted(() => ({
   client: {
@@ -28,12 +28,15 @@ test.each([true, false])(
   "waiting comparisons retain visible recovery after a lost reply (auto-only: %s)",
   async (autoOnly) => {
     vi.useFakeTimers();
-    const operation = prepareResponseGroupCreation(
+    const operation = prepareSelectedCreation(
       sessionStorage,
       "owner",
       "Question",
       ["model-a", "model-b"]
     );
+    if (!("modelIds" in operation)) {
+      throw new Error("Expected a comparison");
+    }
     const result: EveResponseGroupResult = {
       id: crypto.randomUUID(),
       candidates: [
@@ -54,7 +57,9 @@ test.each([true, false])(
     retainResponseGroupDraft(sessionStorage, "owner", operation, result);
     const fetcher = vi
       .fn<typeof fetch>()
-      .mockResolvedValueOnce(Response.json(result))
+      .mockResolvedValueOnce(
+        Response.json({ result: { data: { json: result } } })
+      )
       .mockRejectedValueOnce(new Error("Lost reply"));
     vi.stubGlobal("fetch", fetcher);
     let rendered: ReturnType<typeof createDomHarness> | undefined;

@@ -4,7 +4,7 @@ import { createRoot } from "react-dom/client";
 import { expect, test, vi } from "vitest";
 import { page } from "vitest/browser";
 
-import { ModelSelector } from "@/components/model-selector";
+import { ParallelResponseModelPicker } from "@/chatjs/plugins/parallel-responses/parallel-response-picker";
 import type { AppModelDefinition } from "@/lib/ai/app-models";
 import type { SelectedModelValue } from "@/lib/ai/types";
 import { config } from "@/lib/config";
@@ -97,12 +97,7 @@ const mount = async (
 
     return (
       <SelectionBoundary>
-        <ModelSelector
-          allowMultiple
-          onModelSelectionChangeAction={changeSelection}
-          selectedModelId={primary}
-          selectedModelSelection={value}
-        />
+        <ParallelResponseModelPicker onChange={changeSelection} value={value} />
         {onSend && (
           <button
             type="button"
@@ -252,3 +247,8 @@ test("a synchronous action throw retains the React error boundary owner", async 
     await cleanup();
   }
 });
+
+vi.mock("@/providers/default-model-provider", () => ({
+  useDefaultModel: () => "openai/gpt-4.1",
+  useModelChange: () => vi.fn(),
+}));

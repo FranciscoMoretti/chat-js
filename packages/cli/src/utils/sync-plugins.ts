@@ -59,6 +59,9 @@ const assertUniqueContributions = (
       [hasPluginEntry(plugin, "navigation.ts"), "modified navigation"],
       [hasPluginEntry(plugin, "billing.ts"), "usage billing"],
       [hasPluginEntry(plugin, "model-visibility.ts"), "model visibility"],
+      [hasPluginEntry(plugin, "submit-turn.ts"), "turn submission"],
+      [hasPluginEntry(plugin, "turn-models.ts"), "the turn model picker"],
+      [hasPluginEntry(plugin, "creation-handler.ts"), "the creation handler"],
       [hasPluginEntry(plugin, "uploads.ts"), "attachment uploads"],
     ] as const) {
       if (!present) {
@@ -203,7 +206,34 @@ const renderPluginRegistrations = (
     "installedNavigationHandlers"
   );
   const billing = entries("billing.ts", "Billing", "installedBilling");
+  const picker = plugins.find((plugin) =>
+    hasPluginEntry(plugin, "turn-models.ts")
+  );
+  const creation = plugins.find((plugin) =>
+    hasPluginEntry(plugin, "creation-handler.ts")
+  );
+  const pickerSource = picker
+    ? `@/chatjs/plugins/${picker.id}/turn-models`
+    : "@/lib/eve/default-turn-models";
+  const submitter = plugins.find((plugin) =>
+    hasPluginEntry(plugin, "submit-turn.ts")
+  );
+  const submitSource = submitter
+    ? `@/chatjs/plugins/${submitter.id}/submit-turn`
+    : "@/lib/eve/single-turn";
+  const creationSource = creation
+    ? `@/chatjs/plugins/${creation.id}/creation-handler`
+    : "@/lib/eve/single-creation";
   const contents = [
+    [
+      "installed-turn-models",
+      `export { TurnModelPicker, PendingResponseCards, editSelection, operationModelSelection, selectedModelIds } from "${pickerSource}";`,
+    ],
+    ["installed-submit-turn", `export { submitTurn } from "${submitSource}";`],
+    [
+      "installed-creation",
+      `export { creationHandler } from "${creationSource}";`,
+    ],
     [
       "installed-signed-out",
       `${imports(signedOut)}

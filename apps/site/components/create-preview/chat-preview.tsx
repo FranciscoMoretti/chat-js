@@ -5,8 +5,12 @@ import { useTheme } from "next-themes";
 import { Activity, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { decodePreset, DEFAULT_PRESET_CONFIG } from "shadcn/preset";
 import { toast } from "sonner";
-import { installationSelectionSchema } from "../../../../packages/registry/installation";
+import {
+  composerPickerChoice,
+  installationSelectionSchema,
+} from "../../../../packages/registry/installation";
 import type { ChatSuggestionsProps } from "../../../chat/chatjs/core/chat/contracts";
+import { EveResponseGroupCards } from "../../../chat/chatjs/plugins/parallel-responses/eve-response-group-cards";
 import { ChatSuggestions } from "../../../chat/components/chat-slots";
 import { ChatMessageEditor } from "../../../chat/components/chat/chat-message-editor";
 import { ChatNavigationContext } from "../../../chat/components/chat/chat-navigation";
@@ -14,12 +18,24 @@ import { ChatSidebar } from "../../../chat/components/chat/chat-sidebar";
 import { EveChatError } from "../../../chat/components/eve/eve-chat-error";
 import { EveChatHeader } from "../../../chat/components/eve/eve-chat-header";
 import { KeyboardShortcuts } from "../../../chat/components/keyboard-shortcuts";
-import type { UiToolName } from "../../../chat/lib/ai/types";
+import type {
+  SelectedModelValue,
+  UiToolName,
+} from "../../../chat/lib/ai/types";
 import type { DraftAttachment } from "../../../chat/lib/eve/draft";
 import { attachmentDigest, draftAttachment } from "../../../chat/lib/eve/draft";
-import type { ReadonlyEveMessage } from "../../../chat/lib/eve/readonly-message-types";
 import { GuestPreview } from "./guest-preview";
-import { PreviewComposer } from "./preview-composer";
+import {
+  modelCounts,
+  selectedModelIds,
+} from "../../../chat/chatjs/plugins/parallel-responses/selected-model-ids";
+import {
+  PreviewComposer,
+  previewPickers,
+  previewTurnSelection,
+} from "./preview-composer";
+import { useTurnModels } from "../../../chat/components/eve/use-turn-models";
+import { useDefaultModel } from "../../../chat/providers/default-model-provider";
 import { PreviewRuntime } from "./preview-runtime";
 import { previewTools } from "./preview-tools";
 
@@ -32,12 +48,13 @@ import {
 import { startingInstallation } from "../create-model";
 import { usePreviewDesignSystem } from "./design-system-context";
 import { IconLibraryContext } from "./icons";
-import { sampleConversation } from "./preview-data";
+import { previewModels, sampleConversation } from "./preview-data";
 import { PreviewPlugins, previewSession } from "./preview-plugins";
 import * as native from "./ui/base";
 
 import "../../app/create/preview/preview.css";
-import { sceneMessages, submittedMessages } from "./scenarios";
+import { previewConversation } from "./scenarios";
+import type { PreviewEdit, PreviewSubmission } from "./scenarios";
 
 const readPreset = (code: string) =>
   decodePreset(code) ?? DEFAULT_PRESET_CONFIG;
@@ -52,21 +69,25 @@ export const ChatPreview = () => {
   const [guest, setGuest] = useState(false);
   const [scenario, setScenario] = useState<"ready" | "mutation-error">("ready");
   const [draft, setDraft] = useState("");
-  const [messages, setMessages] = useState<
-    {
-      id: number;
-      text: string;
-      attachments: readonly Readonly<DraftAttachment>[];
-    }[]
-  >([]);
+  const [messages, setMessages] = useState<PreviewSubmission[]>([]);
   const [attachments, setAttachments] = useState<
     readonly Readonly<DraftAttachment>[]
   >([]);
   const [selectedTool, setSelectedTool] = useState<UiToolName | null>(null);
   const [status, setStatus] = useState<"ready" | "submitted">("ready");
   const [error, setError] = useState<string>();
-  const [edit, setEdit] = useState<{ id: string; text: string }>();
-  const [replacements, setReplacements] = useState<Record<string, string>>({});
+  const defaultModel = useDefaultModel();
+  const { modelSelection, setTurnSelection } = useTurnModels(selectedModelIds);
+  const [edit, setEdit] = useState<{
+    id: string;
+    text: string;
+    selection: SelectedModelValue;
+  }>();
+  const choice = composerPickerChoice(installation);
+  const [edits, setEdits] = useState<Record<string, PreviewEdit>>({});
+  const [selectedResponses, setSelectedResponses] = useState<
+    Record<string, number>
+  >({});
   const nextMessageId = useRef(0);
   const attachmentGeneration = useRef(0);
   const objectUrls = useRef<string[]>([]);
@@ -102,10 +123,12 @@ export const ChatPreview = () => {
   if (scene !== params.item) {
     setScene(params.item);
     setMessages([]);
+    setTurnSelection(undefined);
+    setSelectedResponses({});
     setDraft("");
     setAttachments([]);
     setEdit(undefined);
-    setReplacements({});
+    setEdits({});
     setError(undefined);
     setStatus("ready");
   }
@@ -204,9 +227,20 @@ export const ChatPreview = () => {
     void setParams({ item });
   };
 
+  const conversation = previewConversation({
+    item: params.item,
+    plugins: installation.plugins,
+    tools: availableTools,
+    gateway: installation.gateway,
+    submissions: messages,
+    selections: selectedResponses,
+    edits,
+  });
+
   const submit = (
     text: string,
-    files: readonly Readonly<DraftAttachment>[]
+    files: readonly Readonly<DraftAttachment>[],
+    modelIds: readonly string[]
   ) => {
     if (!text && files.length === 0) {
       return;
@@ -223,40 +257,28 @@ export const ChatPreview = () => {
     nextMessageId.current += 1;
     setMessages((previous) => [
       ...previous,
-      { id, text, attachments: uploads ? files : [] },
+      {
+        id,
+        parentReplyId: conversation.replyId,
+        text,
+        modelIds,
+        attachments: uploads ? files : [],
+      },
     ]);
     setDraft("");
     attachmentGeneration.current += 1;
     setAttachments([]);
   };
 
-  const send = () => {
-    submit(draft.trim(), uploads ? attachments : []);
+  const send = (modelIds: readonly string[]) => {
+    submit(draft.trim(), uploads ? attachments : [], modelIds);
   };
 
-  const transcriptMessages = [
-    ...sceneMessages(params.item, installation.plugins, availableTools),
-    ...submittedMessages(messages, installation.gateway),
-  ]
-    .map((message): ReadonlyEveMessage =>
-      replacements[message.id] === undefined
-        ? message
-        : {
-            ...message,
-            parts: [
-              {
-                type: "text",
-                state: "done",
-                text: replacements[message.id],
-              },
-            ],
-          }
-    )
-    .map((message) =>
-      message.role === "assistant"
-        ? { ...message, metadata: { ...message.metadata, turnId: message.id } }
-        : message
-    );
+  const transcriptMessages = conversation.messages.map((message) =>
+    message.role === "assistant"
+      ? { ...message, metadata: { ...message.metadata, turnId: message.id } }
+      : message
+  );
   const lastMessage = transcriptMessages.at(-1);
   const completionEvents: ChatSuggestionsProps["events"] =
     status === "ready" && lastMessage?.role === "assistant"
@@ -281,10 +303,13 @@ export const ChatPreview = () => {
           onDeleted={() => {
             selectScene("preview");
             setMessages([]);
+            setTurnSelection(undefined);
+            setSelectedResponses({});
           }}
         >
           {guest && (
             <GuestPreview
+              Picker={previewPickers[choice]}
               direction={direction}
               gateway={installation.gateway}
               theme={resolvedTheme}
@@ -299,11 +324,13 @@ export const ChatPreview = () => {
                   if (href === "/") {
                     selectScene("preview");
                     setMessages([]);
+                    setTurnSelection(undefined);
+                    setSelectedResponses({});
                     setDraft("");
                     attachmentGeneration.current += 1;
                     setAttachments([]);
                     setEdit(undefined);
-                    setReplacements({});
+                    setEdits({});
                     stopResponse();
                   } else if (
                     href.startsWith("/chat/") ||
@@ -373,9 +400,39 @@ export const ChatPreview = () => {
                     }
                     welcome={welcome}
                     status={status}
-                    transcript={{
+                    messageList={{
                       branchId: sampleConversation.id,
                       messages: transcriptMessages,
+                      renderResponses: (message) => {
+                        const modelIds = conversation.groups.get(message.id);
+                        if (!modelIds) {
+                          return null;
+                        }
+                        return (
+                          <EveResponseGroupCards
+                            candidates={modelIds.map((modelId, index) => ({
+                              operationId: String(index),
+                              modelName:
+                                previewModels.find(
+                                  (model) => model.id === modelId
+                                )?.name ?? modelId,
+                              state: "bound",
+                              status: "ready",
+                              disabled: status !== "ready",
+                            }))}
+                            selectedOperationId={String(
+                              selectedResponses[message.id] ?? 0
+                            )}
+                            onSelect={(id) => {
+                              setTurnSelection(modelIds[Number(id)]);
+                              setSelectedResponses((previous) => ({
+                                ...previous,
+                                [message.id]: Number(id),
+                              }));
+                            }}
+                          />
+                        );
+                      },
                       suggestions: (
                         <ChatSuggestions
                           sessionId="preview-session"
@@ -384,7 +441,12 @@ export const ChatPreview = () => {
                           lastMessage={lastMessage}
                           disabled={status !== "ready"}
                           onSelect={(suggestion) => {
-                            submit(suggestion, []);
+                            const selection = previewTurnSelection(
+                              choice,
+                              modelSelection.value,
+                              defaultModel
+                            );
+                            submit(suggestion, [], selectedModelIds(selection));
                           }}
                         />
                       ),
@@ -394,8 +456,17 @@ export const ChatPreview = () => {
                         /* Completed fixtures do not request input. */
                       },
                       onEdit: (message) => {
+                        const groupModels = conversation.groups.get(message.id);
+                        const index = transcriptMessages.findIndex(
+                          (entry) => entry.id === message.id
+                        );
+                        const replyModel =
+                          transcriptMessages[index + 1]?.metadata?.modelId;
                         setEdit({
                           id: message.id,
+                          selection: groupModels
+                            ? modelCounts(groupModels)
+                            : (replyModel ?? defaultModel),
                           text: message.parts
                             .filter((part) => part.type === "text")
                             .map((part) => part.text)
@@ -414,21 +485,36 @@ export const ChatPreview = () => {
                                 error={error}
                                 composer={
                                   <PreviewComposer
+                                    choice={choice}
+                                    value={edit.selection}
+                                    onChange={(selection) => {
+                                      setEdit({ ...edit, selection });
+                                    }}
                                     draft={edit.text}
                                     onDraftChange={(text) => {
                                       setEdit({ ...edit, text });
                                     }}
                                     disabled={false}
-                                    onSubmit={() => {
+                                    onSubmit={(modelIds) => {
                                       if (scenario === "mutation-error") {
                                         setError(
                                           "Sample edit failed. Your draft has been kept."
                                         );
                                         return;
                                       }
-                                      setReplacements((previous) => ({
+                                      const id = nextMessageId.current;
+                                      nextMessageId.current += 1;
+                                      setSelectedResponses((previous) => ({
                                         ...previous,
-                                        [edit.id]: edit.text,
+                                        [edit.id]: 0,
+                                      }));
+                                      setEdits((previous) => ({
+                                        ...previous,
+                                        [edit.id]: {
+                                          id,
+                                          text: edit.text,
+                                          modelIds,
+                                        },
                                       }));
                                       setEdit(undefined);
                                       setError(undefined);
@@ -451,6 +537,8 @@ export const ChatPreview = () => {
                     }
                     composer={
                       <PreviewComposer
+                        choice={choice}
+                        {...modelSelection}
                         draft={draft}
                         onDraftChange={setDraft}
                         onSubmit={send}

@@ -10,13 +10,16 @@ import type { ReadonlyEveMessageInput } from "@/lib/eve/readonly-message-types";
 /** Keep the accepted first message visible until the native transcript catches up. */
 export const EveInitialMessage = ({
   message,
+  responses,
 }: {
+  readonly responses?: React.ReactNode;
   readonly message: ReadonlyEveMessageInput;
 }): React.JSX.Element => {
   const draft = restoreDraft(message);
   return (
     <UserMessageView
       actions={null}
+      responses={responses}
       attachments={<AttachmentList attachments={draft.attachments} />}
       text={draft.text}
     />

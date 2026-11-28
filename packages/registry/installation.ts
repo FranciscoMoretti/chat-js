@@ -29,6 +29,25 @@ const storageSelectionSchema = z.strictObject({
   source: registryAddressSchema,
 });
 
+export const pickerOptions = [
+  { value: "none", label: "No picker", description: "Use the default model." },
+  {
+    value: "single",
+    label: "Single model",
+    description: "Choose one model per turn.",
+  },
+  {
+    value: "parallel",
+    label: "Parallel Responses",
+    description: "Compare replies and pick a branch.",
+  },
+] as const;
+
+const pickerPluginIds = new Set(["model-picker", "parallel-responses"]);
+const localPluginId = (id: string) => id.replace(/^@chatjs\//u, "");
+export const isPickerPlugin = (id: string) =>
+  pickerPluginIds.has(localPluginId(id));
+
 /** Registry addresses, not runtime flags. Creation and demo sync use the same input. */
 const installationSelectionSchema = z
   .strictObject({
@@ -47,6 +66,16 @@ const installationSelectionSchema = z
     tools: z.array(registryAddressSchema).default([]),
   })
   .superRefine((selection, context) => {
+    if (
+      new Set(selection.plugins.filter(isPickerPlugin).map(localPluginId))
+        .size > 1
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["plugins"],
+        message: "Choose one model picker: model-picker or parallel-responses.",
+      });
+    }
     const disabledDefaults = new Set<string>(
       selection.agent?.disabledDefaultTools
     );
@@ -75,6 +104,30 @@ const installationSelectionSchema = z
 
 type InstallationSelection = z.infer<typeof installationSelectionSchema>;
 
+export const composerPickerChoice = (
+  selection: Readonly<InstallationSelection>
+) => {
+  const ids = new Set(selection.plugins.map(localPluginId));
+  if (ids.has("parallel-responses")) {
+    return "parallel";
+  }
+  return ids.has("model-picker") ? "single" : "none";
+};
+
+export const withComposerPickerChoice = (
+  selection: Readonly<InstallationSelection>,
+  choice: ReturnType<typeof composerPickerChoice>
+): InstallationSelection => {
+  const plugins = selection.plugins.filter((id) => !isPickerPlugin(id));
+  if (choice === "single") {
+    plugins.push("model-picker");
+  }
+  if (choice === "parallel") {
+    plugins.push("parallel-responses");
+  }
+  return { ...selection, plugins };
+};
+
 // The reference app demonstrates file artifacts with optional viewers.
 const demoInstallation = installationSelectionSchema.parse({
   plugins: [
@@ -86,6 +139,7 @@ const demoInstallation = installationSelectionSchema.parse({
     "desktop",
     "projects",
     "feedback",
+    "parallel-responses",
     "followup-suggestions",
     "search",
     "credits",

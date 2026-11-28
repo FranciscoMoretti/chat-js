@@ -1,44 +1,26 @@
 import type { ChatCreationScope } from "@/chatjs/core/chat/contracts";
 import { projectCreationScope } from "./project-creation";
-import { isNonEmptyString } from "@/lib/is-non-empty-string";
+import { creationKey } from "./creation-storage";
+import type { CreationScope } from "./creation-storage";
 
 import type { EveForkInput, EveForkKind } from "./contracts";
 import type { ReadonlyEveMessageInput } from "./readonly-message-types";
 import type { UiToolName } from "@/lib/ai/types";
 import { createConversationInput } from "./contracts";
-import { eveResponseGroupInput } from "./response-group-input";
-import { z } from "zod";
+import { creationHandler } from "@/chatjs/generated/installed-creation";
+import type { SelectedCreation, StorageAccess } from "./creation-contract";
+import type { z } from "zod";
 
-const SINGLE_MODEL_COUNT = 1;
-const FIRST_MODEL_INDEX = 0;
-
-const creationRequest = z.union([
-  createConversationInput,
-  eveResponseGroupInput,
-]);
-
-type StorageAccess = Pick<Storage, "getItem" | "setItem" | "removeItem">;
-
-type CreationScope =
-  | { branchId: string; context?: never }
-  | { context: ChatCreationScope; branchId?: never };
-
-const keyFor = (ownerId: string, scope?: Readonly<CreationScope>): string => {
-  let suffix = "";
-
-  if (scope && isNonEmptyString(scope.branchId)) {
-    suffix = `:fork:${scope.branchId}`;
-  } else if (scope?.context) {
-    suffix = `:${scope.context.key}`;
-  }
-  return `chatjs.eve.pending:${ownerId}${suffix}`;
+type SelectedCreationScope = CreationScope & {
+  fork?: Readonly<EveForkInput>;
+  forkKind?: EveForkKind;
 };
 
 const readCreationFollowUp = (
   storage: StorageAccess,
   ownerId: string,
   scope?: Readonly<CreationScope>
-): string => storage.getItem(`${keyFor(ownerId, scope)}:follow-up`) ?? "";
+): string => storage.getItem(`${creationKey(ownerId, scope)}:follow-up`) ?? "";
 
 const saveCreationFollowUp = (
   storage: StorageAccess,
@@ -46,7 +28,7 @@ const saveCreationFollowUp = (
   text: string,
   scope?: Readonly<CreationScope>
 ): void => {
-  const key = `${keyFor(ownerId, scope)}:follow-up`;
+  const key = `${creationKey(ownerId, scope)}:follow-up`;
   if (text) {
     storage.setItem(key, text);
   } else {
@@ -59,7 +41,7 @@ const hasPendingCreation = (
   ownerId: string,
   scope?: Readonly<CreationScope>
 ): boolean => {
-  const stored = storage.getItem(keyFor(ownerId, scope));
+  const stored = storage.getItem(creationKey(ownerId, scope));
   return stored !== null && stored !== "";
 };
 
@@ -67,49 +49,13 @@ const readCreationRequest = (
   storage: StorageAccess,
   ownerId: string,
   scope?: Readonly<CreationScope>
-): z.output<typeof creationRequest> | undefined => {
-  const stored = storage.getItem(keyFor(ownerId, scope));
+): SelectedCreation | undefined => {
+  const stored = storage.getItem(creationKey(ownerId, scope));
 
   if (stored !== null && stored !== "") {
-    return creationRequest.parse(JSON.parse(stored));
+    return creationHandler.parse(JSON.parse(stored));
   }
   return undefined;
-};
-
-const prepareResponseGroupCreation = (
-  storage: StorageAccess,
-  ownerId: string,
-  message: ReadonlyEveMessageInput,
-  modelIds: readonly string[],
-  context?: Readonly<
-    CreationScope & {
-      fork?: Readonly<EveForkInput>;
-      forkKind?: Extract<EveForkKind, "comparison" | "edit">;
-    }
-  >,
-  selectedTool?: UiToolName,
-  creationInput: Readonly<{ projectId?: string }> = {}
-): z.output<typeof eveResponseGroupInput> => {
-  const saved = readCreationRequest(storage, ownerId, context);
-  if (saved) {
-    if (!("modelIds" in saved)) {
-      throw new Error(
-        "Recover the saved conversation before starting a comparison."
-      );
-    }
-    return saved;
-  }
-  const request = eveResponseGroupInput.parse({
-    fork: context?.fork,
-    forkKind: context?.forkKind,
-    message,
-    modelIds,
-    operationId: crypto.randomUUID(),
-    projectId: creationInput.projectId,
-    selectedTool,
-  });
-  storage.setItem(keyFor(ownerId, context), JSON.stringify(request));
-  return request;
 };
 
 const readCreation = (
@@ -118,12 +64,16 @@ const readCreation = (
   scope?: Readonly<CreationScope>
 ): z.output<typeof createConversationInput> | undefined => {
   const request = readCreationRequest(storage, ownerId, scope);
-  if (request && "modelIds" in request) {
+  if (!request) {
+    return undefined;
+  }
+  const single = createConversationInput.safeParse(request);
+  if (!single.success) {
     throw new Error(
-      "Recover the saved comparison before starting another request."
+      "Recover the saved request before starting another conversation."
     );
   }
-  return request;
+  return single.data;
 };
 
 const prepareCreation = (
@@ -140,7 +90,7 @@ const prepareCreation = (
   selectedTool?: UiToolName,
   creationInput: Readonly<{ projectId?: string }> = {}
 ): z.output<typeof createConversationInput> => {
-  const key = keyFor(ownerId, context);
+  const key = creationKey(ownerId, context);
   const stored = readCreation(storage, ownerId, context);
   if (stored) {
     return stored;
@@ -166,35 +116,30 @@ const prepareSelectedCreation = (
   ownerId: string,
   draft: ReadonlyEveMessageInput,
   modelIds: readonly string[],
-  scope?: Readonly<CreationScope>,
+  scope?: Readonly<SelectedCreationScope>,
   selectedTool?: UiToolName,
   creationInput: Readonly<{ projectId?: string }> = {}
-): z.output<typeof creationRequest> => {
+): SelectedCreation => {
   const saved = readCreationRequest(storage, ownerId, scope);
-  if (saved) {
+  if (saved && !scope?.fork) {
     return saved;
   }
-
-  if (modelIds.length > SINGLE_MODEL_COUNT) {
-    return prepareResponseGroupCreation(
-      storage,
-      ownerId,
-      draft,
-      modelIds,
-      scope,
+  const request = creationHandler.prepare(
+    {
+      operationId: saved?.operationId ?? crypto.randomUUID(),
+      message: draft,
+      fork: scope?.fork,
+      forkKind: scope?.forkKind,
+      projectId: creationInput.projectId,
       selectedTool,
-      creationInput
-    );
-  }
-  return prepareCreation(
-    storage,
-    ownerId,
-    draft,
-    modelIds[FIRST_MODEL_INDEX],
-    scope,
-    selectedTool,
-    creationInput
+    },
+    modelIds,
+    saved
   );
+  if (!saved) {
+    storage.setItem(creationKey(ownerId, scope), JSON.stringify(request));
+  }
+  return request;
 };
 
 const finishCreation = (
@@ -202,7 +147,7 @@ const finishCreation = (
   ownerId: string,
   scope?: Readonly<CreationScope>
 ): void => {
-  storage.removeItem(keyFor(ownerId, scope));
+  storage.removeItem(creationKey(ownerId, scope));
 };
 
 /**
@@ -211,14 +156,14 @@ const finishCreation = (
  * @param {string} ownerId Owner whose pending draft namespace must be preserved.
  * @param {string} context Original plugin scope containing the rejected request.
  * @param {string} operationId Original operation checked before moving or deleting its stored draft.
- * @returns {z.output<typeof creationRequest>} A fresh request with the original message/model selection; changed or conflicting drafts throw.
+ * @returns {SelectedCreation} A fresh request with the original message/model selection; changed or conflicting drafts throw.
  */
 const moveRejectedContextCreation = (
   storage: StorageAccess,
   ownerId: string,
   context: ChatCreationScope,
   operationId: string
-): z.output<typeof creationRequest> => {
+): SelectedCreation => {
   const scope = { context };
   const pending = readCreationRequest(storage, ownerId, scope);
   if (
@@ -237,24 +182,12 @@ const moveRejectedContextCreation = (
       "Send or clear the draft in New Chat before recovering this project draft."
     );
   }
-  const next =
-    "modelIds" in pending
-      ? prepareResponseGroupCreation(
-          storage,
-          ownerId,
-          pending.message,
-          pending.modelIds,
-          undefined,
-          pending.selectedTool
-        )
-      : prepareCreation(
-          storage,
-          ownerId,
-          pending.message,
-          pending.modelId,
-          undefined,
-          pending.selectedTool
-        );
+  const next = creationHandler.parse({
+    ...pending,
+    projectId: undefined,
+    operationId: crypto.randomUUID(),
+  });
+  storage.setItem(creationKey(ownerId), JSON.stringify(next));
   const followUp = readCreationFollowUp(storage, ownerId, scope);
   if (followUp) {
     saveCreationFollowUp(storage, ownerId, followUp);
@@ -268,11 +201,10 @@ export {
   finishCreation,
   moveRejectedContextCreation,
   prepareCreation,
-  prepareResponseGroupCreation,
   prepareSelectedCreation,
   readCreation,
   readCreationRequest,
   readCreationFollowUp,
   saveCreationFollowUp,
 };
-export type { CreationScope };
+export type { CreationScope } from "./creation-storage";

@@ -299,7 +299,8 @@ test("the extraction migration retains pending recovery context before dropping 
 });
 
 test("comparison retries ignore initial plugin choices but retain message and model checks", async () => {
-  const { reserveEveResponseGroup } = await import("./eve-response-groups");
+  const { reserveEveResponseGroup } =
+    await import("@/chatjs/plugins/parallel-responses/response-group-queries");
   const input = {
     operationId: crypto.randomUUID(),
     message: "Compare",
@@ -321,7 +322,8 @@ test("comparison retries ignore initial plugin choices but retain message and mo
 });
 
 test("comparison fork retries use the current branch ID and message boundary", async () => {
-  const { reserveEveResponseGroup } = await import("./eve-response-groups");
+  const { reserveEveResponseGroup } =
+    await import("@/chatjs/plugins/parallel-responses/response-group-queries");
   const { createEveConversation } = await import("./eve-queries");
   const source = await createEveConversation(
     "owner",
@@ -349,6 +351,57 @@ test("comparison fork retries use the current branch ID and message boundary", a
       fork: { ...input.fork, beforeMessageId: "different" },
     })
   ).rejects.toThrow("different message");
+});
+
+test("reinstalled response groups respect branch tombstones left while the plugin was absent", async () => {
+  const { createEveConversation, listEveConversationBranches } =
+    await import("./eve-queries");
+  const { getEveResponseGroup, reserveEveResponseGroup } =
+    await import("@/chatjs/plugins/parallel-responses/response-group-queries");
+  const input = {
+    operationId: crypto.randomUUID(),
+    message: "Compare",
+    modelIds: ["one", "two"],
+  };
+  const group = await reserveEveResponseGroup("owner", input);
+  const [first, second] = group.candidates;
+  const dispatch = vi
+    .fn<() => Promise<{ sessionId: string }>>()
+    .mockResolvedValue({ sessionId: crypto.randomUUID() });
+  const branch = await createEveConversation(
+    "owner",
+    first.operationId,
+    input.message,
+    dispatch
+  );
+  const family = await listEveConversationBranches("owner", branch.id);
+  expect(family).toMatchObject({
+    chatId: group.id,
+    promptGroups: [
+      {
+        id: group.id,
+        operationIds: [first.operationId],
+        details: { kind: "parallel-responses", candidates: group.candidates },
+      },
+    ],
+    branches: [
+      {
+        id: branch.id,
+      },
+    ],
+  });
+  // A previously uninstalled adapter did not receive this deletion.
+  await postgres.query(
+    `UPDATE "EveConversation" SET state='deleted' WHERE id=$1`,
+    [branch.id]
+  );
+  expect(await getEveResponseGroup("owner", group.id)).toBeUndefined();
+  await expect(reserveEveResponseGroup("owner", input)).rejects.toThrow(
+    "deleted"
+  );
+  await expect(
+    createEveConversation("owner", second.operationId, input.message, dispatch)
+  ).rejects.toThrow("deleted");
 });
 
 test("plugin history filtering preserves ownership and supplies project navigation", async () => {

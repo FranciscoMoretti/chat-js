@@ -5,8 +5,11 @@ import { describe, expect, it, vi } from "vitest";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 import type { LogicalBranch, NativeChatAgent } from "./logical-chat";
-import { LogicalChat, logicalChatBusy } from "./logical-chat";
-import { logicalResponseSlots } from "./logical-response-slots";
+import {
+  LogicalChat,
+  logicalChatBusy,
+  sharedPromptMessageId,
+} from "./logical-chat";
 import type { ReadonlyEveMessagePart } from "./readonly-message-types";
 
 const message = (
@@ -126,12 +129,12 @@ describe("logical chat over native sessions", () => {
       ...chat.getSnapshot().aliases,
     ]);
   });
-  it("shares duplicate-model comparison users and isolates background updates", () => {
+  it("shares one prompt, respects declared sibling order, and isolates background updates", () => {
     const chat = new LogicalChat("chat", "left");
-    chat.setBranches([
-      branch("left", { responseGroupId: "group", responseGroupIndex: 1 }),
-      branch("right", { responseGroupId: "group", responseGroupIndex: 2 }),
-    ]);
+    chat.setBranches(
+      [branch("right", { createdAt: "2026-09-19" }), branch("left")],
+      [{ id: "group", operationIds: ["left", "right"] }]
+    );
     chat.observe(
       "right",
       agent(
@@ -250,7 +253,11 @@ it("keeps a selected retry pending until its assistant binds", () => {
     "retry",
     agent([...seededPrefix, message("retry-u", "user", "turn_1")], "busy")
   );
-  chat.selectBranch("retry");
+  const selections: string[] = [];
+  chat.selectBranch("retry", () => {
+    selections.push(chat.getSnapshot().branchId);
+  });
+  expect(selections).toEqual([]);
   expect(chat.getSnapshot().branchId).toBe("root");
   chat.observe(
     "retry",
@@ -264,6 +271,7 @@ it("keeps a selected retry pending until its assistant binds", () => {
     )
   );
   expect(chat.getSnapshot().branchId).toBe("retry");
+  expect(selections).toEqual(["retry"]);
 });
 
 it("navigation revokes a delayed pending response without affecting its native observer", () => {
@@ -277,7 +285,11 @@ it("navigation revokes a delayed pending response without affecting its native o
     }),
   ]);
   chat.observe("root", agent(original));
-  chat.selectBranch("retry");
+  const selections: string[] = [];
+  chat.selectBranch("retry", () => {
+    selections.push(chat.getSnapshot().branchId);
+  });
+  expect(selections).toEqual([]);
   chat.leave();
   chat.selectNode(chat.logicalId("root", "turn_1:assistant") ?? "missing");
   chat.observe(
@@ -293,6 +305,7 @@ it("navigation revokes a delayed pending response without affecting its native o
   );
   expect(chat.getSnapshot().branchId).toBe("root");
   expect(chat.getSnapshot().agents.get("retry")?.status).toBe("busy");
+  expect(selections).toEqual([]);
 });
 
 it("isolates command locks, failures and cancellation generations per execution", () => {
@@ -401,33 +414,24 @@ it("resolves edits of inherited seed messages through their source aliases", () 
   ).toBe("root");
 });
 
-const candidates = (id: string) =>
-  [id, `${id}-other`].map((operationId) => ({
-    operationId,
-    modelId: "nano",
-  }));
-
-it("exposes two slots for each user on a full-history nested comparison (#1012)", () => {
+it("preserves both shared prompts when a nested branch copies its parent history (#1012)", () => {
   const chat = new LogicalChat("chat", "nested");
-  chat.setBranches([
-    branch("root", {
-      responseGroupId: "amber",
-      groupCandidates: candidates("root"),
-    }),
-    branch("nested", {
-      parentBranchId: "root",
-      forkKind: "comparison",
-      responseGroupId: "cobalt",
-      groupCandidates: candidates("nested"),
-    }),
-  ]);
+  chat.setBranches(
+    [
+      branch("root"),
+      branch("nested", { parentBranchId: "root", forkKind: "comparison" }),
+    ],
+    [
+      { id: "amber", operationIds: ["root"] },
+      { id: "cobalt", operationIds: ["nested"] },
+    ]
+  );
   chat.observe("root", agent(prefix));
   chat.observe("nested", agent([...seededPrefix, ...prefix]));
-  const cardsPerUser = [seededPrefix[0], prefix[0]].map((user) => {
-    const id = chat.logicalId("nested", user.id);
-    return id === undefined
-      ? 0
-      : (logicalResponseSlots(chat.getSnapshot(), id)?.slots.length ?? 0);
-  });
-  expect(cardsPerUser).toEqual([2, 2]);
+  expect(chat.logicalId("nested", seededPrefix[0].id)).toBe(
+    sharedPromptMessageId("amber")
+  );
+  expect(chat.logicalId("nested", prefix[0].id)).toBe(
+    sharedPromptMessageId("cobalt")
+  );
 });

@@ -93,11 +93,16 @@ export const guestModelMiddleware: LanguageModelMiddleware = {
   },
 };
 
+const GUEST_CONTEXT_LIMIT = 8192;
+
 export const resolveGuestModel = async (): Promise<SessionModel> => {
   const resolved = await resolveEveModel(GUEST_POLICY.modelId);
   return {
     ...resolved,
-    modelContextWindowTokens: Math.min(resolved.modelContextWindowTokens, 8192),
+    modelContextWindowTokens: Math.min(
+      resolved.modelContextWindowTokens ?? GUEST_CONTEXT_LIMIT,
+      GUEST_CONTEXT_LIMIT
+    ),
     model: wrapLanguageModel({
       model: resolved.model,
       middleware: guestModelMiddleware,

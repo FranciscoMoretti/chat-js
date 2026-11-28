@@ -178,6 +178,8 @@ test("catalog flags and a builder preset replay the same provider, auth and live
     "tool/bash",
     "--plugin",
     "feedback",
+    "--plugin",
+    "parallel-responses",
   ];
   const options = selectionCommand("create")
     .parse(args, { from: "user" })
@@ -191,6 +193,7 @@ test("catalog flags and a builder preset replay the same provider, auth and live
     "https://example.org/r/item.json",
   ]);
   expect(selection.auth).toEqual(["google", "vercel"]);
+  expect(selection.plugins).toEqual(["feedback", "parallel-responses"]);
   expect(selection.storage).toEqual({
     source: "s3",
     options: { bucket: "uploads" },

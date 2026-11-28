@@ -17,6 +17,7 @@ import { chatUi as feedbackClient } from "../../../chat/chatjs/plugins/feedback/
 import { chatUi as projectsClient } from "../../../chat/chatjs/plugins/projects/chat-ui";
 import { createFixtureTransport } from "./fixture-transport";
 import { chatUi as creditsClient } from "../../../chat/chatjs/plugins/credits/chat-ui";
+import { chatUi as parallelResponsesClient } from "../../../chat/chatjs/plugins/parallel-responses/chat-ui";
 import { chatUi as searchClient } from "../../../chat/chatjs/plugins/search/chat-ui";
 import { livePreviewPlugins } from "./preview-capabilities";
 import type { UiPlugin } from "../../../chat/chatjs/core/ui/slots";
@@ -39,6 +40,7 @@ export const usePreviewFixtures = () => {
   return fixture;
 };
 const clients = {
+  "parallel-responses": parallelResponsesClient,
   "streamdown-math": streamdownMathClient,
   "streamdown-mermaid": streamdownMermaidClient,
   "image-viewer": imageViewerClient,
