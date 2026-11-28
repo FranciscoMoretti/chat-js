@@ -1,5 +1,13 @@
 # @chat-js/electron
 
+## 0.3.3
+
+### Patch Changes
+
+- [#906](https://github.com/FranciscoMoretti/chat-js/pull/906) [`95bfbcb`](https://github.com/FranciscoMoretti/chat-js/commit/95bfbcb3ef01c7d03a0b79a545e9fb425c4ed7c6) Thanks [@FranciscoMoretti](https://github.com/FranciscoMoretti)! - Extract Desktop into an optional registry plugin with authentication, navigation, and session synchronization contributions. Install the web integration and Electron companion together through create or add desktop, keep web-only apps free of desktop code and dependencies, and generate the companion's runtime configuration during prebuild.
+
+- [#930](https://github.com/FranciscoMoretti/chat-js/pull/930) [`613645c`](https://github.com/FranciscoMoretti/chat-js/commit/613645c85fe3e896ea04022ce130471366162411) Thanks [@FranciscoMoretti](https://github.com/FranciscoMoretti)! - Handle Windows installer events before normal app startup, create and remove Squirrel shortcuts, and allow the app to open on its first launch after installation.
+
 ## 0.3.2
 
 ### Patch Changes
