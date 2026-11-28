@@ -7,7 +7,7 @@ import type { EveMessage } from "eve/client";
 
 import { MessageSiblingsView } from "@/components/message-siblings-view";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { ChatTranscript } from "@/components/chat/chat-transcript";
+import { ChatMessageList } from "@/components/chat/chat-message-list";
 import type { ReadonlyEveMessage } from "@/lib/eve/readonly-message-types";
 import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 import { mount, renderRoot, unmount } from "./primitive-mount";
@@ -59,7 +59,7 @@ test("message actions retain their user boundary and readonly behavior", async (
   const render = (isReadonly: boolean) => (
     <TooltipProvider>
       <MessageScrollerProvider>
-        <ChatTranscript
+        <ChatMessageList
           disabled={false}
           isReadonly={isReadonly}
           messages={messages}

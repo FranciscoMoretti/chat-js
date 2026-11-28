@@ -2,7 +2,7 @@
 
 import type { ComponentProps, ReactNode } from "react";
 import { ChatWelcomeView } from "./chat-welcome-view";
-import { ChatTranscript } from "./chat-transcript";
+import { ChatMessageList } from "./chat-message-list";
 import {
   ChatConversation,
   ChatConversationBody,
@@ -17,13 +17,13 @@ import {
   MessageScrollerButton,
 } from "@/components/ui/message-scroller";
 
-/** One transcript and placement contract. Runtime-owned recovery and composer
+/** Shared message-list layout. Runtime-owned recovery and composer
  * controllers occupy fixed slots; callers cannot replace message rendering. */
 export const ChatConversationScreen = ({
   branchId,
   welcome = false,
   header,
-  transcript,
+  messageList,
   status,
   composer,
   notices,
@@ -33,7 +33,7 @@ export const ChatConversationScreen = ({
   readonly branchId: string;
   readonly welcome?: boolean;
   readonly header?: ReactNode;
-  readonly transcript: ComponentProps<typeof ChatTranscript>;
+  readonly messageList: ComponentProps<typeof ChatMessageList>;
   readonly status: string;
   readonly composer: ReactNode;
   readonly notices?: ReactNode;
@@ -54,9 +54,9 @@ export const ChatConversationScreen = ({
             <MessageScrollerViewport preserveScrollOnPrepend>
               <MessageScrollerContent className="mx-auto w-full max-w-3xl p-4">
                 {leading}
-                <ChatTranscript {...transcript} />
+                <ChatMessageList {...messageList} />
                 <EveThinkingMessage
-                  messages={transcript.messages}
+                  messages={messageList.messages}
                   status={status}
                 />
                 {trailing}

@@ -5,7 +5,7 @@ import { createRoot } from "react-dom/client";
 import type { ReadonlyEveMessage } from "@/lib/eve/readonly-message-types";
 
 import { ChatComposer } from "../components/chat/chat-composer";
-import { ChatTranscript } from "../components/chat/chat-transcript";
+import { ChatMessageList } from "../components/chat/chat-message-list";
 import { MessageSiblingsView } from "../components/message-siblings-view";
 import { ResponseChoiceCards } from "@/chatjs/plugins/parallel-responses/response-choice-cards";
 
@@ -110,7 +110,7 @@ const VersionControls = ({
   );
 };
 
-const Transcript = ({
+const MessageListFixture = ({
   isReadonly,
   loading,
   onLog,
@@ -155,7 +155,7 @@ const Transcript = ({
     >
       <h2 className="mb-2 text-lg font-medium">{title}</h2>
       <MessageScrollerProvider>
-        <ChatTranscript
+        <ChatMessageList
           actionsDisabled={loading}
           disabled={loading}
           editor={edit}
@@ -203,19 +203,19 @@ const Fixture = (): React.JSX.Element => {
   return (
     <main className="mx-auto max-w-4xl space-y-8 p-4">
       <h1 className="text-xl font-semibold">EVE message presentation</h1>
-      <Transcript
+      <MessageListFixture
         isReadonly={false}
         loading={false}
         onLog={append}
         title="Restored EVE — ready"
       />
-      <Transcript
+      <MessageListFixture
         isReadonly
         loading={false}
         onLog={append}
         title="Restored EVE — readonly"
       />
-      <Transcript
+      <MessageListFixture
         isReadonly={false}
         loading
         onLog={append}

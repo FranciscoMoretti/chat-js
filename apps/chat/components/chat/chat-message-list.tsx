@@ -50,7 +50,7 @@ const messagePartIdentity = (part: ReadonlyEveMessagePart): string => {
   }
 };
 
-interface ChatTranscriptProps {
+interface ChatMessageListProps {
   readonly branchId?: string;
   readonly messageKey?: (message: ReadonlyEveMessage) => string;
   readonly messages: readonly ReadonlyEveMessage[];
@@ -83,7 +83,7 @@ interface ChatTranscriptProps {
 }
 
 interface MessageRowProps extends Omit<
-  ChatTranscriptProps,
+  ChatMessageListProps,
   "messages" | "messageKey"
 > {
   readonly message: ReadonlyEveMessage;
@@ -338,14 +338,14 @@ const EveMessageRow = ({
 };
 
 // Production and Create render the same EVE parts and installed tool surfaces.
-export const ChatTranscript = ({
+export const ChatMessageList = ({
   messages,
   messageKey,
   disabled,
   actionsDisabled = disabled,
   view,
   ...props
-}: ChatTranscriptProps): ReactJSX.Element[] => {
+}: ChatMessageListProps): ReactJSX.Element[] => {
   const interactionsByCall = useMemo(() => {
     const byCall = new Map<string, Interaction[]>();
     if (view !== undefined) {

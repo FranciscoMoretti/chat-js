@@ -395,7 +395,7 @@ export const ChatPreview = () => {
                     }
                     welcome={welcome}
                     status={status}
-                    transcript={{
+                    messageList={{
                       branchId: sampleConversation.id,
                       messages: transcriptMessages,
                       renderResponses: (message) => {

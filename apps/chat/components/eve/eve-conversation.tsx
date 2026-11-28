@@ -488,7 +488,7 @@ const conversationActionLocks = ({
   readonly snapshotError: string | undefined;
   readonly editingMessageId: string | undefined;
 }) => ({
-  transcript:
+  messageList:
     busy ||
     commandPending ||
     fork.locked ||
@@ -846,8 +846,8 @@ const EveConversation = ({
     <ChatConversationScreen
       branchId={branchId}
       header={header}
-      transcript={{
-        actionsDisabled: actionLocks.transcript,
+      messageList={{
+        actionsDisabled: actionLocks.messageList,
         branchId,
         disabled: busy || commandPending,
         inputDisabled,
@@ -931,7 +931,7 @@ const EveConversation = ({
             branchId={branchId}
             events={agent.events}
             lastMessage={lastMessage}
-            disabled={actionLocks.transcript}
+            disabled={actionLocks.messageList}
             onSelect={(suggestion) => {
               void run(async () => {
                 await submitDraft(suggestion, [], false);
