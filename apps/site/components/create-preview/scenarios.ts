@@ -232,7 +232,6 @@ export const previewConversation = ({
 }) => {
   const parallel = plugins.includes("parallel-responses");
   const groups = new Map<string, readonly string[]>();
-  const selected = parallel ? selections : {};
   const messages: ReadonlyEveMessage[] = [];
   const appendTurn = (
     prompt: ReadonlyEveMessage,
@@ -249,7 +248,7 @@ export const previewConversation = ({
           ...prompt.parts.filter((part) => part.type === "file"),
         ],
       });
-      answer = submittedAnswer(edit, gateway, selected[prompt.id] ?? 0);
+      answer = submittedAnswer(edit, gateway, selections[prompt.id] ?? 0);
     } else {
       messages.push(prompt);
     }
@@ -265,7 +264,7 @@ export const previewConversation = ({
     item,
     plugins,
     tools,
-    edits[sampleUserId] ? 0 : (selected[sampleUserId] ?? 0)
+    edits[sampleUserId] ? 0 : (selections[sampleUserId] ?? 0)
   );
   let replyId: string | null = null;
   const prompt = seed.at(0);
@@ -285,7 +284,11 @@ export const previewConversation = ({
   for (const entry of submissions) {
     if (entry.parentReplyId === replyId) {
       const user = submittedPrompt(entry);
-      const assistant = submittedAnswer(entry, gateway, selected[user.id] ?? 0);
+      const assistant = submittedAnswer(
+        entry,
+        gateway,
+        selections[user.id] ?? 0
+      );
       replyId = appendTurn(user, assistant, entry.modelIds);
     }
   }

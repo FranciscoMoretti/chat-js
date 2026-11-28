@@ -264,9 +264,18 @@ test("Parallel Responses previews the model picker and each turn's replies", asy
     .getByRole("log")
     .screenshot({ path: info.outputPath("parallel-continuation.png") });
   await mode.click();
+  await page.getByRole("option", { name: "Single model", exact: true }).click();
+  await expect(claude).toHaveCount(0);
+  await expect(followUp).toBeVisible();
+  await expect(sibling).toHaveCount(0);
+  await mode.click();
   await page.getByRole("option", { name: "No picker", exact: true }).click();
+  await expect(followUp).toBeVisible();
   await expect(picker).toHaveCount(0);
   await expect(claude).toHaveCount(0);
+  await app.getByRole("log").screenshot({
+    path: info.outputPath("continuation-without-picker.png"),
+  });
   await expect(
     app.getByRole("heading", { name: "A small start. A great experience." })
   ).toBeVisible();

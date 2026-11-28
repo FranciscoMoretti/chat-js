@@ -57,7 +57,9 @@ test.each([true, false])(
     retainResponseGroupDraft(sessionStorage, "owner", operation, result);
     const fetcher = vi
       .fn<typeof fetch>()
-      .mockResolvedValueOnce(Response.json(result))
+      .mockResolvedValueOnce(
+        Response.json({ result: { data: { json: result } } })
+      )
       .mockRejectedValueOnce(new Error("Lost reply"));
     vi.stubGlobal("fetch", fetcher);
     let rendered: ReturnType<typeof createDomHarness> | undefined;
