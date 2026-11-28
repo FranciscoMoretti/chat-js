@@ -11,7 +11,7 @@
     "chatjs/plugins/parallel-responses/eve-optimistic-response-group.tsx",
     "chatjs/plugins/parallel-responses/eve-response-group-cards.tsx",
     "chatjs/plugins/parallel-responses/logical-response-slots.ts",
-    "chatjs/plugins/parallel-responses/model-picker.tsx",
+    "chatjs/plugins/parallel-responses/parallel-response-picker.tsx",
     "chatjs/plugins/parallel-responses/model-selection-indicator.tsx",
     "chatjs/plugins/parallel-responses/selected-model-ids.ts",
     "chatjs/plugins/parallel-responses/turn-models.ts",

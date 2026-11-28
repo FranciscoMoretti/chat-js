@@ -1,0 +1,14 @@
+---
+title: Model Picker
+description: "Let people search available models and select one model per turn."
+---
+
+Create selects **Plugins → Model selection → Single model** by default. This installs `model-picker` and its shared selector UI. The composer shows the current model, and a selection updates the model used for the next turn.
+
+Choose **No picker** to send with the effective default model, or choose [Parallel Responses](/plugins/parallel-responses) to compare replies. Each choice installs at most one picker plugin. In an existing app with an empty picker slot, run the following command from the app directory.
+
+```bash
+bunx chat-js@beta add model-picker
+```
+
+To customize the picker in your app, edit `integrations/chat/model-picker.ts`. See [Composer and submission composition](/reference/plugin-api#composer-and-submission-composition) for the component contract and its connection to the composer.

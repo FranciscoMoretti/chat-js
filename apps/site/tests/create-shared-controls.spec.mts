@@ -5,6 +5,7 @@ import { test, expect } from "playwright/test";
 const installation = {
   gateway: "vercel",
   plugins: [
+    "model-picker",
     "projects",
     "feedback",
     "search",
@@ -170,9 +171,7 @@ test("Parallel Responses previews the model picker and each turn's replies", asy
   page,
 }, info) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
-  await page.goto(
-    `/create?item=preview-02&app=${encodeAppPreset(installationSelectionSchema.parse({ plugins: [], gateway: "vercel", tools: [] }))}`
-  );
+  await page.goto("/create?item=preview-02");
   const app = page.frameLocator('iframe[title="Preview"]');
   const picker = app.getByTestId("model-selector");
   const popup = app

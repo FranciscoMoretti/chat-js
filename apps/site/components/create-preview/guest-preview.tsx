@@ -1,5 +1,7 @@
 "use client";
 
+import type { ComponentType } from "react";
+import type { TurnModelPickerProps } from "../../../chat/chatjs/core/chat/turn-model-picker";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { ChatModelsContext } from "../../../chat/providers/chat-models-provider";
@@ -31,10 +33,12 @@ const signIn = () => {
 
 export const GuestPreview = ({
   direction,
+  Picker,
   gateway,
   theme,
   onThemeChange,
 }: {
+  readonly Picker: ComponentType<TurnModelPickerProps>;
   readonly direction: "ltr" | "rtl";
   readonly gateway: string | undefined;
   readonly theme: string | undefined;
@@ -135,6 +139,7 @@ export const GuestPreview = ({
               <GuestChatLayout>
                 {messages.length === 0 ? (
                   <GuestWelcomeView
+                    Picker={Picker}
                     modelId={modelId}
                     busy={busy}
                     draft={draft}
@@ -145,6 +150,7 @@ export const GuestPreview = ({
                   />
                 ) : (
                   <GuestConversationView
+                    Picker={Picker}
                     modelId={modelId}
                     messages={messages}
                     busy={busy}

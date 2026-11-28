@@ -1,4 +1,4 @@
-import { TurnModelPicker } from "@/components/eve/turn-model-picker";
+import { TurnModelPicker } from "../../../../packages/registry/src/plugins/model-picker/src/single-model-picker";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TRPCClientError, createTRPCClient } from "@trpc/client";
 import type { OperationResultObserver, TRPCLink } from "@trpc/client";
@@ -9,7 +9,7 @@ import React, { act, useState } from "react";
 import { expect, test, vi } from "vitest";
 import { page } from "vitest/browser";
 
-import { ParallelResponseModelPicker } from "@/chatjs/plugins/parallel-responses/model-picker";
+import { ParallelResponseModelPicker } from "@/chatjs/plugins/parallel-responses/parallel-response-picker";
 import type { AppModelDefinition } from "@/lib/ai/app-models";
 import type { SelectedModelValue } from "@/lib/ai/types";
 import type { Session } from "@/lib/auth";

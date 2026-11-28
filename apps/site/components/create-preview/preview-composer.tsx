@@ -2,12 +2,20 @@
 
 import type { ComponentProps } from "react";
 import { EveComposer } from "../../../chat/components/eve/eve-composer";
-import { TurnModelPicker } from "../../../chat/components/eve/turn-model-picker";
-import { ParallelResponseModelPicker } from "../../../chat/chatjs/plugins/parallel-responses/model-picker";
+import { TurnModelPicker } from "../../../../packages/registry/src/plugins/model-picker/src/single-model-picker";
+import { ParallelResponseModelPicker } from "../../../chat/chatjs/plugins/parallel-responses/parallel-response-picker";
 import { useDefaultModel } from "../../../chat/providers/default-model-provider";
 import { selectedModelIds } from "../../../chat/chatjs/plugins/parallel-responses/selected-model-ids";
 import type { TurnModelPickerProps } from "../../../chat/chatjs/core/chat/turn-model-picker";
 import type { composerPickerChoice } from "../../../../packages/registry/installation";
+
+import { TurnModelPicker as NoPicker } from "../../../chat/lib/eve/default-turn-models";
+
+export const previewPickers = {
+  none: NoPicker,
+  single: TurnModelPicker,
+  parallel: ParallelResponseModelPicker,
+};
 
 export const previewTurnSelection = (
   choice: ReturnType<typeof composerPickerChoice>,
@@ -30,8 +38,7 @@ export const PreviewComposer = ({
     readonly choice: ReturnType<typeof composerPickerChoice>;
     readonly onSubmit: (modelIds: readonly string[]) => void;
   }) => {
-  const Picker =
-    choice === "parallel" ? ParallelResponseModelPicker : TurnModelPicker;
+  const Picker = previewPickers[choice];
   const defaultModel = useDefaultModel();
   const selection = previewTurnSelection(choice, value, defaultModel);
   const modelIds = selectedModelIds(selection);
@@ -43,13 +50,11 @@ export const PreviewComposer = ({
         onSubmit(modelIds);
       }}
       modelPicker={
-        choice === "none" ? null : (
-          <Picker
-            disabled={props.disabled}
-            value={selection}
-            onChange={onChange}
-          />
-        )
+        <Picker
+          disabled={props.disabled}
+          value={selection}
+          onChange={onChange}
+        />
       }
     />
   );

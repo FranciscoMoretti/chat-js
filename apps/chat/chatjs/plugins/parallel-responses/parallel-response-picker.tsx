@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useId } from "react";
-import { useOptimisticModelSelection } from "@/components/use-optimistic-model-selection";
+import { useOptimisticModelSelection } from "@/chatjs/ui/model-selector/use-optimistic-model-selection";
 import { CheckIcon, ChevronDownIcon } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import type { TurnModelPickerProps } from "@/chatjs/core/chat/turn-model-picker";
-import { ModelSelector } from "@/components/model-selector";
+import { ModelSelector } from "@/chatjs/ui/model-selector/model-selector";
 import { config } from "@/lib/config";
 import { selectedModelIds } from "./selected-model-ids";
 import { useChatModels } from "@/providers/chat-models-provider";
@@ -104,6 +104,7 @@ const renderSelectionIndicator = (selected: boolean) => (
 
 export const ParallelResponseModelPicker = ({
   disabled,
+  fallbackModelName,
   retainedModelId,
   retainedModelIds,
   value,
@@ -182,7 +183,7 @@ export const ParallelResponseModelPicker = ({
               }
             : undefined
         }
-        fallbackModelName={retainedModelId}
+        fallbackModelName={fallbackModelName ?? retainedModelId}
         onModelSelectionChangeAction={change}
         selectedModelId={selected}
       />

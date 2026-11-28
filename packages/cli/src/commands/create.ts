@@ -302,12 +302,6 @@ const writeConfiguration = async (
         gatewayDefaults: setup.gatewaySelection.definition.defaults,
       })
     );
-    if (setup.plan.selection.modelPicker === "none") {
-      await writeFile(
-        path.join(project.targetDir, "integrations/chat/model-picker.ts"),
-        'import type { TurnModelPickerProps } from "@/chatjs/core/chat/turn-model-picker";\n\nexport const TurnModelPicker = (_props: TurnModelPickerProps): null => null;\n'
-      );
-    }
     await writeAgentConfiguration(
       project.targetDir,
       setup.plan.selection.agent

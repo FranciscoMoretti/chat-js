@@ -18,6 +18,7 @@ const modelPreferencesFiles = [
 const modelPreferencesItem = definePluginItem(
   {
     name: "model-preferences",
+    registryDependencies: ["@chatjs/model-logo"],
     dependencies: [
       "@tanstack/react-query",
       "drizzle-orm",

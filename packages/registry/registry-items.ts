@@ -1,3 +1,4 @@
+import { modelSelectorUiItem, modelLogoItem } from "./model-selector-ui";
 import { spreadsheetGridItem } from "./spreadsheet-grid";
 import { builtInSandboxes } from "./src/sandboxes/catalog";
 import type { RegistryItem } from "shadcn/schema";
@@ -110,6 +111,8 @@ const registryItems: RegistryItem[] = (
     ...toolItems,
     attachWorkspaceFileItem,
     spreadsheetGridItem,
+    modelLogoItem,
+    modelSelectorUiItem,
     researchItem,
   ] satisfies RegistryItem[]
 ).map((item): RegistryItem => {

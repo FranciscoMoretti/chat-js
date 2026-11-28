@@ -5,7 +5,7 @@ import { modelCounts } from "./selected-model-ids";
 import { logicalResponseSlots } from "./logical-response-slots";
 
 export { selectedModelIds } from "./selected-model-ids";
-export { ParallelResponseModelPicker as TurnModelPicker } from "./model-picker";
+export { ParallelResponseModelPicker as TurnModelPicker } from "./parallel-response-picker";
 export { EveOptimisticResponseGroup as PendingResponseCards } from "./eve-optimistic-response-group";
 export const operationModelSelection = (
   operation: ReadonlyNativeSurface<SelectedCreation>

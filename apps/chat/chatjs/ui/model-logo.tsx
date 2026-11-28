@@ -8,7 +8,7 @@ import type { JSX as ReactJSX } from "react";
 import { cn } from "@/lib/utils";
 import { useChatModels } from "@/providers/chat-models-provider";
 
-export const ModelSelectorLogo = ({
+export const ModelLogo = ({
   modelId,
   className,
 }: {

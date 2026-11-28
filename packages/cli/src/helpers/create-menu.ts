@@ -34,6 +34,9 @@ import {
 import { ProviderRequirementError } from "#cli/utils/installation-requirements";
 
 import {
+  composerPickerChoice,
+  withComposerPickerChoice,
+  pickerOptions,
   authProviderLabels,
   defaultAuthProviders,
   installationSelectionSchema,
@@ -71,6 +74,12 @@ export const createSelectionFromFlags = async (
   const plugins = new Map(
     flags.plugin?.map((source) => [pluginAddress(source), source])
   );
+  if (
+    !plugins.has(pluginAddress("parallel-responses")) &&
+    !plugins.has(pluginAddress("model-picker"))
+  ) {
+    plugins.set(pluginAddress("model-picker"), "model-picker");
+  }
   for (const key of createFieldKeys) {
     const field = createCatalog[key];
     const value = flags[key];
@@ -174,10 +183,30 @@ const editPlugins = async (draft: Draft, cwd: string): Promise<void> => {
     // eslint-disable-next-line no-await-in-loop -- Each menu visit edits the current selection.
     const section = await choose(
       "Which plugin group would you like to configure?",
-      [...groups.map(({ title }) => ({ value: title, label: title })), back]
+      [
+        { value: "picker", label: "Model selection" },
+        ...groups.map(({ title }) => ({ value: title, label: title })),
+        back,
+      ]
     );
     if (section === back.value) {
       return;
+    }
+    if (section === "picker") {
+      // eslint-disable-next-line no-await-in-loop -- Choose one picker for the current draft.
+      const choice = await choose(
+        "Model selection",
+        [...pickerOptions, back],
+        composerPickerChoice(draft.selection)
+      );
+      const option = pickerOptions.find(({ value }) => value === choice);
+      if (option) {
+        draft.selection = withComposerPickerChoice(
+          draft.selection,
+          option.value
+        );
+      }
+      continue;
     }
     const group = groups.find(({ title }) => title === section);
     const options = registryChoices(

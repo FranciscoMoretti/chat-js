@@ -5,5 +5,6 @@ export interface TurnModelPickerProps {
   readonly onChange: (value: SelectedModelValue) => void | Promise<void>;
   readonly retainedModelId?: string;
   readonly retainedModelIds?: readonly string[];
+  readonly fallbackModelName?: string;
   readonly disabled?: boolean;
 }

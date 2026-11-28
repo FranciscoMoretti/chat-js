@@ -2,7 +2,7 @@ import React, { memo } from "react";
 
 import { TableCell, TableRow } from "@/components/ui/table";
 import { AVAILABLE_FEATURES } from "@/lib/features-config";
-import { ModelSelectorLogo } from "@/components/model-selector-logo";
+import { ModelLogo } from "@/chatjs/ui/model-logo";
 
 import { Switch } from "@/components/ui/switch";
 
@@ -27,7 +27,7 @@ const ModelRowComponent = ({
     <TableRow>
       <TableCell className="w-full py-2.5 pl-0 whitespace-normal">
         <div className="flex items-center gap-2.5">
-          <ModelSelectorLogo modelId={model.id} />
+          <ModelLogo modelId={model.id} />
           <span className="text-sm font-medium">{model.name}</span>
           {}
           {model.reasoning === true && (

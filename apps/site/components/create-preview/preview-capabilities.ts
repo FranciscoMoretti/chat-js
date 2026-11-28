@@ -22,6 +22,7 @@ export const pluginPreviewLabel = (id: string, hasClient: boolean) => {
   if (
     id === "attachment-uploads" ||
     id === "parallel-responses" ||
+    id === "model-picker" ||
     id === "model-preferences" ||
     id === "ai-titles"
   ) {

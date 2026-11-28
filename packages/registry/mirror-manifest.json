@@ -186,8 +186,8 @@
     "chatjs/plugins/parallel-responses/eve-optimistic-response-group.tsx",
     "chatjs/plugins/parallel-responses/eve-response-group-cards.tsx",
     "chatjs/plugins/parallel-responses/logical-response-slots.ts",
-    "chatjs/plugins/parallel-responses/model-picker.tsx",
     "chatjs/plugins/parallel-responses/model-selection-indicator.tsx",
+    "chatjs/plugins/parallel-responses/parallel-response-picker.tsx",
     "chatjs/plugins/parallel-responses/plugin.json",
     "chatjs/plugins/parallel-responses/response-choice-cards.tsx",
     "chatjs/plugins/parallel-responses/response-group-candidates.ts",
@@ -307,6 +307,10 @@
     "chatjs/tools/generate-video/renderer.tsx",
     "chatjs/tools/generate-video/schemas.ts",
     "chatjs/tools/generate-video/tool.ts",
+    "chatjs/ui/model-logo.tsx",
+    "chatjs/ui/model-selector/model-selector-view.tsx",
+    "chatjs/ui/model-selector/model-selector.tsx",
+    "chatjs/ui/model-selector/use-optimistic-model-selection.ts",
     "chatjs/ui/spreadsheet/grid.tsx"
   ],
   "version": 1

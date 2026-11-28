@@ -4,7 +4,7 @@ import { hasText, nonEmptyText } from "@/components/text-value";
 
 import { useEveAgent } from "eve/react";
 import React, { useEffect, useRef, useState } from "react";
-import type { JSX as ReactJSX, ReactNode } from "react";
+import type { ComponentType, JSX as ReactJSX, ReactNode } from "react";
 import { z } from "zod";
 
 import {
@@ -21,9 +21,14 @@ import { Button } from "@/components/ui/button";
 import type { ReadonlyEveMessage } from "@/lib/eve/readonly-message-types";
 import { GUEST_POLICY } from "./guest-policy";
 
-import { EveModelPicker } from "@/components/eve/eve-model-picker";
+import { TurnModelPicker } from "@/integrations/chat/model-picker";
+import type { TurnModelPickerProps } from "@/chatjs/core/chat/turn-model-picker";
 import { EveComposer } from "@/components/eve/eve-composer";
 import { ChatMessageList } from "@/components/chat/chat-message-list";
+
+const keepGuestModel = (): void => {
+  // Guest sessions always use the model in their binding.
+};
 
 const bindingSchema = z.object({
   credential: z.string(),
@@ -72,6 +77,7 @@ const restoreFailedDraft = (sent: string, followUp: string): string =>
 const GuestConversationView = ({
   messages,
   modelId,
+  Picker = TurnModelPicker,
   busy,
   sending = false,
   allowSendWhileStreaming,
@@ -84,6 +90,7 @@ const GuestConversationView = ({
 }: {
   readonly messages: readonly ReadonlyEveMessage[];
   readonly modelId: string;
+  readonly Picker?: ComponentType<TurnModelPickerProps>;
   readonly busy: boolean;
   readonly sending?: boolean;
   readonly allowSendWhileStreaming?: boolean;
@@ -144,9 +151,10 @@ const GuestConversationView = ({
         autoFocus
 
         modelPicker={
-          <EveModelPicker
+          <Picker
             disabled
-            modelId={modelId}
+            value={modelId}
+            onChange={keepGuestModel}
             fallbackModelName={GUEST_POLICY.modelName}
           />
         }
@@ -303,6 +311,7 @@ const GuestChatLayout = ({
 
 const GuestWelcomeView = ({
   modelId,
+  Picker = TurnModelPicker,
   busy,
   error,
   draft,
@@ -310,6 +319,7 @@ const GuestWelcomeView = ({
   onSend,
 }: {
   readonly modelId: string;
+  readonly Picker?: ComponentType<TurnModelPickerProps>;
   readonly busy: boolean;
   readonly error?: string;
   readonly draft: string;
@@ -325,9 +335,10 @@ const GuestWelcomeView = ({
     <EveComposer
       autoFocus
       modelPicker={
-        <EveModelPicker
+        <Picker
           disabled
-          modelId={modelId}
+          value={modelId}
+          onChange={keepGuestModel}
           fallbackModelName={GUEST_POLICY.modelName}
         />
       }

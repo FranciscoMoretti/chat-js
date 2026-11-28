@@ -185,7 +185,7 @@ In `chat-ui.ts`, bind your component with `slot(MessageResponses, YourResponses)
 
 `EveComposer` accepts a `modelPicker` React node. Omit it to leave the slot empty. The slot inherits the composer's disabled, read-only, and upload locks. Supply `modelIds` alongside a custom picker so attachment validation checks every selected model. Selection state and model counts belong to the caller. `ComposerAttachments` and `ComposerExtensions` contribute to the Add menu and do not replace the picker.
 
-Guest Chat supplies a disabled single-model picker. Account chats use a single-model picker by default. Installing Parallel Responses adds multi-response selection to account creation, edits, and follow-up messages. The plugin respects `config.features.parallelResponses`.
+Create selects the Model Picker plugin by default. Guest Chat displays the installed picker with its fixed model and disables changes. Choosing No picker leaves the slot empty in both guest and account chats. Installing Parallel Responses adds multi-response selection to account creation, edits, and follow-up messages. The plugin respects `config.features.parallelResponses`.
 
 The generator selects one `turn-models.ts` entry and one `creation-handler.ts` entry at installation. The composer renders `<TurnModelPicker value={selection} onChange={setSelection} />` through its `modelPicker` prop. The turn module also supplies pending cards and restores the model selection when editing. The creation handler prepares, parses, and dispatches requests for both send and recovery. Completed cards use the `MessageResponses` slot. The conversation renders the prompt and attachments in both states.
 

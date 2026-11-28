@@ -29,7 +29,11 @@ import {
   modelCounts,
   selectedModelIds,
 } from "../../../chat/chatjs/plugins/parallel-responses/selected-model-ids";
-import { PreviewComposer, previewTurnSelection } from "./preview-composer";
+import {
+  PreviewComposer,
+  previewPickers,
+  previewTurnSelection,
+} from "./preview-composer";
 import { useTurnModels } from "../../../chat/components/eve/use-turn-models";
 import { useDefaultModel } from "../../../chat/providers/default-model-provider";
 import { PreviewRuntime } from "./preview-runtime";
@@ -305,6 +309,7 @@ export const ChatPreview = () => {
         >
           {guest && (
             <GuestPreview
+              Picker={previewPickers[choice]}
               direction={direction}
               gateway={installation.gateway}
               theme={resolvedTheme}

@@ -2,7 +2,7 @@
 
 import type { AppModelDefinition } from "@/lib/ai/app-models";
 
-import { ModelSelector } from "@/components/model-selector";
+import { ModelSelector } from "@/chatjs/ui/model-selector/model-selector";
 import { ChatModelsProvider } from "@/providers/chat-models-provider";
 
 import React from "react";

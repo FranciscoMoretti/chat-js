@@ -65,12 +65,49 @@ it("opens with the builder defaults and applies explicit plugin choices", async 
       electron: true,
     })
   ).toEqual({
-    plugins: ["desktop", "mcp"],
+    plugins: ["model-picker", "desktop", "mcp"],
     tools: [],
     gateway: "vercel",
     sandbox: "default",
     storage: { source: "vercel-blob", options: {} },
   });
+});
+
+it("selects one picker across registry addresses and can remove it in the menu", async () => {
+  const initial = await createSelectionFromFlags(project.targetDir, {
+    plugin: ["@chatjs/parallel-responses", "projects"],
+  });
+  expect(initial.plugins).toEqual(["@chatjs/parallel-responses", "projects"]);
+  const list = spyOn(registry, "listRegistryItems").mockResolvedValue([]);
+  const select = spyOn(clack, "select");
+  for (const answer of [
+    "plugins",
+    "picker",
+    "none",
+    "back",
+    "review",
+    "create",
+  ]) {
+    select.mockResolvedValueOnce(answer);
+  }
+  try {
+    const { setup } = await promptCreateMenu(
+      project,
+      initial,
+      [],
+      async ({ selection }) => await Promise.resolve(selection.plugins)
+    );
+    expect(setup).toEqual(["projects"]);
+    expect(select.mock.calls[2]?.[0].initialValue).toBe("parallel");
+    expect(
+      createSelectionFromFlags(project.targetDir, {
+        plugin: ["model-picker", "@chatjs/parallel-responses"],
+      })
+    ).rejects.toThrow("Choose one model picker");
+  } finally {
+    list.mockRestore();
+    select.mockRestore();
+  }
 });
 
 it("edits registry addresses consistently across plugin groups, platform choices and flags", async () => {
@@ -112,7 +149,7 @@ it("edits registry addresses consistently across plugin groups, platform choices
       "@chatjs/team-bundle",
     ]);
     expect(multi.mock.calls[1]?.[0].initialValues).toEqual(["desktop"]);
-    expect(setup.plugins).toEqual(["@acme/mcp"]);
+    expect(setup.plugins).toEqual(["@acme/mcp", "model-picker"]);
   } finally {
     multi.mockRestore();
     select.mockRestore();

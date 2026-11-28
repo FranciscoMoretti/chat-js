@@ -5,7 +5,7 @@ import { page, userEvent } from "vitest/browser";
 import type { FunctionComponent } from "react";
 import type { TurnModelPickerProps } from "@/chatjs/core/chat/turn-model-picker";
 import { TurnModelPicker } from "@/integrations/chat/model-picker";
-import { TurnModelPicker as SingleModelPicker } from "@/components/eve/turn-model-picker";
+import { TurnModelPicker as SingleModelPicker } from "../../registry/src/plugins/model-picker/src/single-model-picker";
 
 import ChatLayout from "@/app/(chat)/layout";
 import HomePage from "@/app/(chat)/page";

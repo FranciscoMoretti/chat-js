@@ -6,10 +6,19 @@ const modelPickerSpecs = [
   "eve-disposable-guest.visual.e2e.ts",
 ];
 const browserSpecsBySource = new Map([
-  ["apps/chat/components/eve/eve-model-picker.tsx", modelPickerSpecs],
-  ["apps/chat/components/model-selector.tsx", modelPickerSpecs],
-  ["apps/chat/components/model-selector-view.tsx", modelPickerSpecs],
-  ["apps/chat/components/model-selector-logo.tsx", modelPickerSpecs],
+  [
+    "packages/registry/src/plugins/model-picker/src/single-model-picker.tsx",
+    modelPickerSpecs,
+  ],
+  [
+    "packages/registry/src/ui/model-selector/model-selector.tsx",
+    modelPickerSpecs,
+  ],
+  [
+    "packages/registry/src/ui/model-selector/model-selector-view.tsx",
+    modelPickerSpecs,
+  ],
+  ["packages/registry/src/ui/model-logo.tsx", modelPickerSpecs],
   ["apps/chat/components/model-toolbar-visual-fixture.tsx", modelPickerSpecs],
   [
     "apps/chat/app/(chat)/visual-fixtures/disposable-guest/page.tsx",

@@ -214,7 +214,7 @@ const renderPluginRegistrations = (
   );
   const pickerSource = picker
     ? `@/chatjs/plugins/${picker.id}/turn-models`
-    : "@/components/eve/turn-model-picker";
+    : "@/lib/eve/default-turn-models";
   const submitter = plugins.find((plugin) =>
     hasPluginEntry(plugin, "submit-turn.ts")
   );

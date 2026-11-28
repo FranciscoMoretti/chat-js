@@ -19,6 +19,7 @@ const selections = [
   "followup-suggestions",
   "search",
   "model-preferences",
+  "model-picker",
   "parallel-responses",
   "ai-titles",
   "sharing",
@@ -30,7 +31,7 @@ const baseSelection = installationSelectionSchema.parse({
   sandbox: "default",
   storage: { source: "memory" },
 });
-const basePreset = encodeAppPreset(baseSelection);
+const pickerPresets = new Set(["none", "model-picker", "parallel-responses"]);
 const pluginTables = [
   "UserCredit",
   "GuestRuntimeSession",
@@ -51,6 +52,7 @@ const expectedTables: Record<(typeof selections)[number], readonly string[]> = {
   "followup-suggestions": ["EveFollowup"],
   search: ["EveSearchText"],
   "model-preferences": ["UserModelPreference"],
+  "model-picker": [],
   "parallel-responses": ["EveResponseGroup"],
   "ai-titles": [],
   sharing: [],
@@ -58,35 +60,64 @@ const expectedTables: Record<(typeof selections)[number], readonly string[]> = {
   "guest-chat": ["GuestRuntimeSession", "GuestRuntimeRate"],
 };
 
+const verifyPickerFiles = async (cwd: string, selection: string) => {
+  for (const route of [
+    "chatjs/plugins/parallel-responses/parallel-response-picker.tsx",
+    "chatjs/plugins/parallel-responses/submit-turn.ts",
+    "chatjs/plugins/parallel-responses/response-group-input.ts",
+    "chatjs/plugins/parallel-responses/router.ts",
+  ]) {
+    expect(existsSync(path.join(cwd, route))).toBe(
+      selection === "parallel-responses"
+    );
+  }
+  expect(existsSync(path.join(cwd, "lib/eve/response-group-input.ts"))).toBe(
+    false
+  );
+  expect(existsSync(path.join(cwd, "components/model-selector-view.tsx"))).toBe(
+    false
+  );
+  expect(
+    existsSync(path.join(cwd, "components/eve/eve-model-picker.tsx"))
+  ).toBe(false);
+  const visiblePicker =
+    selection === "model-picker" || selection === "parallel-responses";
+  for (const file of [
+    "model-selector.tsx",
+    "model-selector-view.tsx",
+    "use-optimistic-model-selection.ts",
+  ]) {
+    expect(existsSync(path.join(cwd, "chatjs/ui/model-selector", file))).toBe(
+      visiblePicker
+    );
+  }
+  expect(
+    existsSync(
+      path.join(cwd, "chatjs/plugins/model-picker/single-model-picker.tsx")
+    )
+  ).toBe(selection === "model-picker");
+  expect(existsSync(path.join(cwd, "chatjs/ui/model-logo.tsx"))).toBe(
+    visiblePicker || selection === "model-preferences"
+  );
+  const pickerEntry = await readFile(
+    path.join(cwd, "chatjs/generated/installed-turn-models.ts"),
+    "utf-8"
+  );
+  expect(pickerEntry).toContain(
+    visiblePicker
+      ? `@/chatjs/plugins/${selection}/turn-models`
+      : "@/lib/eve/default-turn-models"
+  );
+  expect(
+    await readFile(path.join(cwd, "integrations/chat/model-picker.ts"), "utf-8")
+  ).toContain("@/chatjs/generated/installed-turn-models");
+};
+
 /** Reuse the packed CLI/registry fixture, keeping each app outside the workspace. */
 export const testChatPluginSelections = (
   root: string,
   cliEntry: string
 ): void => {
-  it("creates a default-model app with no picker", async () => {
-    const name = "hidden-model-picker";
-    const preset = encodeAppPreset({ ...baseSelection, modelPicker: "none" });
-    await run(root, [
-      "node",
-      cliEntry,
-      "create",
-      name,
-      "--yes",
-      "--app-preset",
-      preset,
-    ]);
-    const cwd = path.join(root, name);
-    await run(cwd, ["node", cliEntry, "sync"]);
-    const source = await readFile(
-      path.join(cwd, "integrations/chat/model-picker.ts"),
-      "utf-8"
-    );
-    expect(source).toContain("=> null");
-    expect(
-      existsSync(path.join(cwd, "app/api/agent-response-groups/route.ts"))
-    ).toBe(false);
-    await run(cwd, ["bun", "run", "test:types"]);
-  });
   it.each([...selections])(
     "chat plugins: %s installs and compiles independently",
     async (selection) => {
@@ -103,10 +134,12 @@ export const testChatPluginSelections = (
         name,
         "--yes",
         "--app-preset",
-        basePreset,
+        encodeAppPreset(
+          pickerPresets.has(selection) ? installed : baseSelection
+        ),
       ]);
 
-      if (selection !== "none") {
+      if (!pickerPresets.has(selection)) {
         await run(cwd, ["node", cliEntry, "add", selection, "--yes"]);
       }
       // Checking the actual tree prevents a copied reference preset from masking
@@ -123,25 +156,7 @@ export const testChatPluginSelections = (
       expect(existsSync(path.join(cwd, "electron/package.json"))).toBe(
         selection === "desktop"
       );
-      for (const route of [
-        "chatjs/plugins/parallel-responses/model-picker.tsx",
-        "chatjs/plugins/parallel-responses/submit-turn.ts",
-        "chatjs/plugins/parallel-responses/response-group-input.ts",
-        "chatjs/plugins/parallel-responses/router.ts",
-      ]) {
-        expect(existsSync(path.join(cwd, route))).toBe(
-          selection === "parallel-responses"
-        );
-      }
-      expect(
-        existsSync(path.join(cwd, "lib/eve/response-group-input.ts"))
-      ).toBe(false);
-      expect(
-        await readFile(
-          path.join(cwd, "components/model-selector-view.tsx"),
-          "utf-8"
-        )
-      ).not.toContain("Use Multiple Models");
+      await verifyPickerFiles(cwd, selection);
       expect(
         [
           "app/api/agent-response-groups/route.ts",
@@ -329,7 +344,7 @@ for (const profile of installedSessionProfiles) {
 import { billing } from "./integrations/billing";
 assert.equal(billing.debit !== undefined, ${selection === "credits"});
 ${selection === "none" ? 'assert.equal(await billing.canSpend("fixture-owner"), true);' : ""}
-assert.equal(installedChat.length, ${["none", "desktop", "credits", "model-preferences", "guest-chat"].includes(selection) ? 0 : 1});
+assert.equal(installedChat.length, ${["none", "desktop", "credits", "model-preferences", "model-picker", "guest-chat"].includes(selection) ? 0 : 1});
 assert.deepEqual(await chat.links("fixture-owner", []), new Map());
 for (const plugin of installedChat) {
   assert.equal(typeof plugin.${lifecycleMethod}, "function");

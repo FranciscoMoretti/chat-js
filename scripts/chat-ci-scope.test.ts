@@ -6,7 +6,11 @@ const modified = (...paths: string[]) =>
 
 test("a model picker edit selects model interactions and the app smoke spec", () => {
   expect(
-    scopeChatCi(modified("apps/chat/components/eve/eve-model-picker.tsx"))
+    scopeChatCi(
+      modified(
+        "packages/registry/src/plugins/model-picker/src/single-model-picker.tsx"
+      )
+    )
   ).toEqual({
     appSpecs: [
       "chat.e2e.ts",
@@ -14,7 +18,7 @@ test("a model picker edit selects model interactions and the app smoke spec", ()
       "eve-disposable-guest.visual.e2e.ts",
     ],
     browser: "selected",
-    unit: "changed",
+    unit: "full",
   });
 });
 
@@ -42,7 +46,7 @@ test("a shared app layout keeps every app browser spec", () => {
   expect(
     scopeChatCi(
       modified(
-        "apps/chat/components/model-selector.tsx",
+        "packages/registry/src/ui/model-selector/model-selector.tsx",
         "apps/chat/app/(chat)/layout.tsx"
       )
     )
@@ -72,8 +76,8 @@ test("skips chat checks for explicitly recognized documentation", () => {
 
 test.each([
   "",
-  "M\0apps/chat/components/model-selector.tsx",
-  "D\0apps/chat/components/model-selector.tsx\0A\0README.md\0",
+  "M\0packages/registry/src/ui/model-selector/model-selector.tsx",
+  "D\0packages/registry/src/ui/model-selector/model-selector.tsx\0A\0README.md\0",
 ])("falls back for an empty, incomplete, or destructive diff %#", (diff) => {
   expect(scopeChatCi(diff)).toEqual({
     appSpecs: [],

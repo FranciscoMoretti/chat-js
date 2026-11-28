@@ -13,7 +13,6 @@ import { page, userEvent } from "vitest/browser";
 
 import { ActiveTool } from "@/components/composer/active-tool";
 import { ComposerMenu } from "@/components/composer/composer-menu";
-import { EveModelPicker } from "@/components/eve/eve-model-picker";
 import { EveComposer } from "@/components/eve/eve-composer";
 import { useEveAttachments } from "@/components/eve/use-eve-attachments";
 import { SettingsNav } from "@/components/settings/settings-nav";
@@ -187,10 +186,6 @@ vi.mock("@/providers/default-model-provider", () => ({
   useDefaultModel: () => "fixture",
 }));
 
-vi.mock("@/components/eve/eve-model-picker", () => ({
-  EveModelPicker: (): React.JSX.Element => <button type="button">Model</button>,
-}));
-
 const originalControls = [...composerControls];
 
 const mount = async (
@@ -216,7 +211,7 @@ const mount = async (
         <>
           <Toaster />
           <EveComposer
-            modelPicker={<EveModelPicker />}
+            modelPicker={<button type="button">Model</button>}
             capabilities={{
               files,
               selectedTool,

@@ -7,9 +7,10 @@ Parallel Responses lets you compare several answers to the same prompt, includin
 
 ## Installation
 
-In the builder, select **Plugins → Model selection → Parallel Responses**. From the CLI, include `--plugin parallel-responses` when you create an app. To add it to an existing app on the current template, run the following command from the app directory.
+In the builder, select **Plugins → Model selection → Parallel Responses**. From the CLI, include `--plugin parallel-responses` when you create an app. To switch an existing app from Single model, run the following commands in the app directory. If your app has no picker, run only the add command.
 
 ```bash
+bunx chat-js@beta remove model-picker
 bunx chat-js@beta add parallel-responses
 ```
 
@@ -29,4 +30,4 @@ The picker offers comparisons as soon as the plugin is installed. Set `features.
 
 If you recreate an app from a preset saved when comparisons shipped in core, select this plugin to keep comparisons available. The plugin uses the existing `EveResponseGroup` table and its saved comparisons. When transferring an existing database, preserve the table and migration history. Review any generated SQL before applying it.
 
-Removing the plugin switches account chats back to the single-model picker. The CLI retains the table. If a tab has an unfinished comparison, reinstall the plugin and retry from that tab to reuse its original request. After reinstalling, the plugin checks whether the chat was deleted before displaying or resuming its comparison.
+Removing the plugin leaves the picker slot empty. Add `model-picker` to restore the single-model selector. The CLI retains the table. If a tab has an unfinished comparison, reinstall the plugin and retry from that tab to reuse its original request. After reinstalling, the plugin checks whether the chat was deleted before displaying or resuming its comparison.

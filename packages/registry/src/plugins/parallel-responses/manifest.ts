@@ -8,7 +8,7 @@ const sourceFiles = [
   "eve-optimistic-response-group.tsx",
   "eve-response-group-cards.tsx",
   "logical-response-slots.ts",
-  "model-picker.tsx",
+  "parallel-response-picker.tsx",
   "model-selection-indicator.tsx",
   "selected-model-ids.ts",
   "turn-models.ts",
@@ -40,7 +40,7 @@ export const parallelResponsesItem = definePluginItem(
       "lucide-react",
       "uuid",
     ],
-    registryDependencies: ["button"],
+    registryDependencies: ["button", "@chatjs/model-selector-ui"],
     files: sourceFiles.map((file) => ({
       path: `src/plugins/parallel-responses/src/${file}`,
       target: `~/chatjs/plugins/parallel-responses/${file}`,

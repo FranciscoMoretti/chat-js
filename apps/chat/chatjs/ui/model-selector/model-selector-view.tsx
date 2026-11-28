@@ -26,7 +26,7 @@ import type { JSX as ReactJSX } from "react";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 import { cn } from "@/lib/utils";
-import { ModelSelectorLogo } from "./model-selector-logo";
+import { ModelLogo } from "@/chatjs/ui/model-logo";
 
 const stopEventPropagation = (event: {
   readonly stopPropagation: () => void;
@@ -135,7 +135,7 @@ const PureCommandItem = ({
         <div className="flex min-w-0 flex-1 items-center gap-2.5">
           {prefix}
           <div className="shrink-0">
-            <ModelSelectorLogo modelId={model.id} />
+            <ModelLogo modelId={model.id} />
           </div>
           <span className="flex min-w-0 items-center gap-1.5 font-medium">
             <span className="truncate">{model.name}</span>
@@ -378,7 +378,7 @@ const PureModelSelector = ({
         <div className="flex items-center gap-2">
           {selectedItem && (
             <div className="shrink-0">
-              <ModelSelectorLogo modelId={selectedItem.model.id} />
+              <ModelLogo modelId={selectedItem.model.id} />
             </div>
           )}
           <p className="inline-flex items-center gap-1.5 truncate">

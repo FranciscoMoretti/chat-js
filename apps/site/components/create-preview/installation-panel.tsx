@@ -31,6 +31,7 @@ import {
 } from "@/vendor/shadcn-create/styles/base-nova/ui/select";
 import {
   composerPickerChoice,
+  pickerOptions,
   withComposerPickerChoice,
 } from "../../../../packages/registry/installation";
 import { FeatureChoices } from "./installation-choices";
@@ -178,20 +179,6 @@ export const InstallationRequirements = ({
   );
 };
 
-const pickerOptions = [
-  { value: "none", label: "No picker", description: "Use the default model." },
-  {
-    value: "single",
-    label: "Single model",
-    description: "Choose one model per turn.",
-  },
-  {
-    value: "parallel",
-    label: "Parallel Responses",
-    description: "Compare replies and pick a branch.",
-  },
-] as const;
-
 export const InstallationPanel = ({
   onConfigureSetup,
 }: {
@@ -269,11 +256,7 @@ export const InstallationPanel = ({
                   </SelectContent>
                 </Select>
               </div>
-              {groupAppPlugins(
-                catalog.filter(
-                  (item) => item.definition?.id !== "parallel-responses"
-                )
-              ).map(({ title, items }) => (
+              {groupAppPlugins(catalog).map(({ title, items }) => (
                 <section key={title} aria-label={title}>
                   <h3 className="text-muted-foreground mb-2 text-xs font-medium">
                     {title}

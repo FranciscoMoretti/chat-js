@@ -4,7 +4,7 @@ import { createRoot } from "react-dom/client";
 import { expect, test, vi } from "vitest";
 import { page } from "vitest/browser";
 
-import { ParallelResponseModelPicker } from "@/chatjs/plugins/parallel-responses/model-picker";
+import { ParallelResponseModelPicker } from "@/chatjs/plugins/parallel-responses/parallel-response-picker";
 import type { AppModelDefinition } from "@/lib/ai/app-models";
 import type { SelectedModelValue } from "@/lib/ai/types";
 import { config } from "@/lib/config";
