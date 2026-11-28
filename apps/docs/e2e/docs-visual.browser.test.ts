@@ -81,6 +81,28 @@ const checkHeader = (source: Document) => {
   expect(docs?.getAttribute("href")).toMatch(/^\/docs\/?$/u);
 };
 
+const checkThemeToggle = (source: Document) => {
+  const toggle = source.querySelector<HTMLButtonElement>(
+    "[data-blume-theme-toggle]"
+  );
+  if (!toggle) {
+    throw new Error("Missing Docs theme toggle");
+  }
+  const icons = [...toggle.querySelectorAll("svg")];
+  const sun = icons.find((icon) => icon.querySelector("circle"));
+  const moon = icons.find((icon) => !icon.querySelector("circle"));
+  const initiallyDark = source.documentElement.dataset.theme === "dark";
+  expect(sun?.checkVisibility()).toBe(!initiallyDark);
+  expect(moon?.checkVisibility()).toBe(initiallyDark);
+  toggle.click();
+  expect(source.documentElement.dataset.theme).toBe(
+    initiallyDark ? "light" : "dark"
+  );
+  expect(sun?.checkVisibility()).toBe(initiallyDark);
+  expect(moon?.checkVisibility()).toBe(!initiallyDark);
+  toggle.click();
+};
+
 for (const page of pages) {
   test(`docs ${page.name}`, async () => {
     document.head.replaceChildren();
@@ -139,22 +161,7 @@ for (const page of pages) {
     ]);
 
     if (page.name === "home") {
-      const toggle = source.querySelector<HTMLButtonElement>(
-        "[data-blume-theme-toggle]"
-      );
-      if (!toggle) {
-        throw new Error("Missing Docs theme toggle");
-      }
-      const initialTheme = source.documentElement.dataset.theme;
-      const icon = () => getComputedStyle(toggle, "::before").maskImage;
-      const initialIcon = icon();
-      expect(initialIcon).not.toBe("none");
-      toggle.click();
-      expect(source.documentElement.dataset.theme).toBe(
-        initialTheme === "dark" ? "light" : "dark"
-      );
-      expect(icon()).toBe(initialIcon);
-      toggle.click();
+      checkThemeToggle(source);
 
       await Promise.all(
         ["light", "dark"].map(async (theme) => {

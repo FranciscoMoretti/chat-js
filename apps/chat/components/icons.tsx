@@ -1,3 +1,4 @@
+import { Moon, Sun } from "lucide-react";
 import React from "react";
 
 const DEFAULT_ICON_SIZE = 16;
@@ -50,24 +51,12 @@ const SummarizeIcon = ({
     />
   </svg>
 );
-// Tabler Brightness, as used by the shadcn/ui site header.
+
 const ThemeIcon = ({ className }: { readonly className: string }) => (
-  <svg
-    aria-hidden="true"
-    className={className}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <circle cx="12" cy="12" r="9" />
-    <path d="M12 3v18" />
-    <path d="M12 9l4.65-4.65" />
-    <path d="M12 14.3l7.37-7.37" />
-    <path d="M12 19.6l8.85-8.85" />
-  </svg>
+  <>
+    <Sun aria-hidden="true" className={`${className} dark:hidden`} />
+    <Moon aria-hidden="true" className={`${className} hidden dark:block`} />
+  </>
 );
 
 export { GitIcon, SummarizeIcon, ThemeIcon };

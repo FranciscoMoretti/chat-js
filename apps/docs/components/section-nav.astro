@@ -26,16 +26,4 @@ const home = import.meta.env.DEV
   .chatjs-section-nav {
     order: -1;
   }
-  /* Blume supplies the button, accessible label and theme handling. */
-  :global([data-blume-theme-toggle] > span) {
-    display: none;
-  }
-
-  :global([data-blume-theme-toggle])::before {
-    content: "";
-    width: 18px;
-    height: 18px;
-    background: currentColor;
-    mask: url("@tabler/icons/outline/brightness.svg") center / contain no-repeat;
-  }
 </style>
