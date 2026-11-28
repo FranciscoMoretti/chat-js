@@ -14,10 +14,9 @@ const enabledFeatures = getEnabledFeatures();
 const ConnectedModelSelector = (
   props: Pick<
     ComponentProps<typeof ModelSelectorView>,
-    | "allowMultiple"
+    | "options"
     | "fallbackModelName"
     | "selectedModelId"
-    | "selectedModelSelection"
     | "onModelSelectionChangeAction"
     | "className"
   >
@@ -28,7 +27,7 @@ const ConnectedModelSelector = (
   return (
     <ModelSelectorView
       {...props}
-      allowMultiple={props.allowMultiple === true && !isAnonymous}
+      options={isAnonymous ? undefined : props.options}
       chatModels={models}
       allModels={allModels}
       modelsDisabled={isAnonymous}

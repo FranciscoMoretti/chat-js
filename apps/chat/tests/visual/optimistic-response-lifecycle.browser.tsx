@@ -1,11 +1,9 @@
+import { EveInitialMessage } from "@/components/eve/eve-initial-message";
 import React, { act } from "react";
 import { createDomHarness } from "@/components/test-dom-harness";
 import { afterEach, expect, test, vi } from "vitest";
 
-import {
-  EveOptimisticResponseGroup,
-  shouldAppendEveOptimisticResponseGroup,
-} from "@/components/eve/eve-optimistic-response-group";
+import { EveOptimisticResponseGroup } from "@/chatjs/plugins/parallel-responses/eve-optimistic-response-group";
 
 const operationId = "11111111-1111-4111-8111-111111111111";
 
@@ -26,35 +24,20 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
 afterEach(() => vi.clearAllMocks());
 
-test("does not append an edited turn after the source transcript", () => {
-  expect(
-    shouldAppendEveOptimisticResponseGroup({
-      forkKind: "edit",
-      message: "Edited request",
-      modelIds: ["first-model", "second-model"],
-      operationId,
-    })
-  ).toBe(false);
-  expect(
-    shouldAppendEveOptimisticResponseGroup({
-      forkKind: "comparison",
-      message: "Follow-up request",
-      modelIds: ["first-model", "second-model"],
-      operationId,
-    })
-  ).toBe(true);
-});
-
 test("renders stable disabled generating cards from the durable comparison request", () => {
   let renderer: ReturnType<typeof createDomHarness> | undefined;
   act(() => {
     renderer = createDomHarness(
-      <EveOptimisticResponseGroup
-        operation={{
-          message: "Compare this request",
-          modelIds: ["first-model", "second-model"],
-          operationId,
-        }}
+      <EveInitialMessage
+        message="Compare this request"
+        responses={
+          <EveOptimisticResponseGroup
+            operation={{
+              modelIds: ["first-model", "second-model"],
+              operationId,
+            }}
+          />
+        }
       />
     );
   });

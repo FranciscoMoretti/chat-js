@@ -177,19 +177,31 @@ The `MessageActions` slot receives `{ branchId, messageId, disabled }`. Core ren
 
 ### Response content
 
-In `chat-ui.ts`, bind your component with `slot(MessageResponses, YourResponses)` in a `definePlugin` client declaration. Import `MessageResponses` from `@/components/chat-slots`. Like message actions, the component receives `{ branchId, messageId, disabled }`, typed as `ChatMessageProps`. Return `null` when your contribution does not apply to that user message. Respect `disabled` for interactions and own your fetching and recovery state.
+In `chat-ui.ts`, bind your component with `slot(MessageResponses, YourResponses)` in a `definePlugin` client declaration. Import `MessageResponses` from `@/components/chat-slots`. The component receives `{ branchId, messageId, disabled, onModelChange }`, typed as `ChatResponseProps`. Selecting a reply can call `onModelChange(modelId)` to use its model for the next turn in the open chat. The composer picker owns updates to the browser’s default model. Return `null` when your contribution does not apply to that user message. Respect `disabled` for interactions and own your fetching and recovery state.
 
-`integrations/chat/ui.ts` composes installed declarations and the local Parallel Responses declaration in display order using the shared `Plugins` provider. Each is additive. Ordinary version navigation and assistant action buttons remain separate placements. Response content runs inside the account transcript's logical-chat context. Public sharing and guest transcripts do not mount this placement.
+`integrations/chat/ui.ts` composes installed plugin declarations in display order using the shared `Plugins` provider. Each is additive. Ordinary version navigation and assistant action buttons remain separate placements. Response content runs inside the account transcript's logical-chat context. Public sharing and guest transcripts do not mount this placement.
 
 ### Composer and submission composition
 
-`EveComposer` accepts a `modelPicker` React node. Omit it for the default single-model picker. The slot inherits the composer's disabled, read-only, and upload locks. Supply `modelIds` alongside a custom picker so attachment validation checks every selected model. Selection state and model counts belong to the caller. `ComposerAttachments` and `ComposerExtensions` contribute to the Add menu and do not replace the picker.
+`EveComposer` accepts a `modelPicker` React node. Omit it to leave the slot empty. The slot inherits the composer's disabled, read-only, and upload locks. Supply `modelIds` alongside a custom picker so attachment validation checks every selected model. Selection state and model counts belong to the caller. `ComposerAttachments` and `ComposerExtensions` contribute to the Add menu and do not replace the picker.
 
-Guest Chat supplies a disabled single-model picker. Account creation, edits, and follow-up messages supply `ParallelResponseModelPicker`. The shared `ModelSelector` primitive shows its multiple-selection toggle only with `allowMultiple`. The account picker also checks `config.features.parallelResponses`.
+Guest Chat supplies a disabled single-model picker. Account chats use a single-model picker by default. Installing Parallel Responses adds multi-response selection to account creation, edits, and follow-up messages. The plugin respects `config.features.parallelResponses`.
+
+The generator selects one `turn-models.ts` entry and one `creation-handler.ts` entry at installation. The composer renders `<TurnModelPicker value={selection} onChange={setSelection} />` through its `modelPicker` prop. The turn module also supplies pending cards and restores the model selection when editing. The creation handler prepares, parses, and dispatches requests for both send and recovery. Completed cards use the `MessageResponses` slot. The conversation renders the prompt and attachments in both states.
+
+Signed-in composers take their picker from the app-owned `integrations/chat/model-picker.ts`. Create offers **No picker**, **Single model**, and **Parallel Responses**. No picker submits with the app’s effective default model. The other choices use a static re-export of the installed picker. To enable the installed picker in a customized app, re-export `TurnModelPicker` from `@/chatjs/generated/installed-turn-models` in that integration.
+
+For a new turn in an existing chat, the conversation calls the statically selected `submitTurn(modelIds, destinations)`. Core sends to the selected session. Parallel Responses supplies `submit-turn.ts` to fork the prompt when the selection requests multiple replies. Steering goes directly to the running session. Edits and comparison forks use the same saved-request and recovery sequence.
 
 `ComposerSubmission` exposes `submit()`, `pending`, `error`, and an optional `preview` React node and `recovery` React element. `NewConversationView` places those nodes without reading saved requests. The submission controller owns operation identity, persistence, dispatch, and recovery. Retry stays inside the recovery implementation because an unconfirmed creation and an unconfirmed message delivery have different retry rules.
 
-These are React composition seams, not global registration hooks for arbitrary submission handlers. Parallel Responses currently uses a local response contribution and still has core response-group persistence and dispatch. It is not yet an independently installable plugin. Extracting those responsibilities requires preserving reservation, replay, and deletion transactions.
+[Parallel Responses](/plugins/parallel-responses) contributes the account comparison picker and response cards. Its `chat-server.ts` contributes three hooks to keep comparisons consistent with their branches.
+
+| Hook | When it runs |
+| --- | --- |
+| `resolveCreationChatId` | Under the owner lock, before reserving or replaying a creation. Return the shared chat ID for a root comparison. |
+| `branchGroups` | When loading authorized branches, return each shared prompt’s ID and its branch operation IDs in display order. Optional serializable `details` travel once per group. The contributing integration interprets them. Parallel Responses uses them for model choices and candidate rejection reasons. |
+| `onFenceConversations` | Inside the deletion transaction. Mark affected groups retired so retries cannot recreate deleted chats. This hook may run again during finalization. |
 
 ### Suggestions
 

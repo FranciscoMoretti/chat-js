@@ -1,0 +1,34 @@
+{
+  "contractVersion": 3,
+  "uiBase": "base",
+  "id": "parallel-responses",
+  "kind": "plugin",
+  "files": [
+    "chatjs/plugins/parallel-responses/chat-server.ts",
+    "chatjs/plugins/parallel-responses/chat-ui.ts",
+    "chatjs/plugins/parallel-responses/create-response-group.ts",
+    "chatjs/plugins/parallel-responses/eve-logical-group-recovery.tsx",
+    "chatjs/plugins/parallel-responses/eve-optimistic-response-group.tsx",
+    "chatjs/plugins/parallel-responses/eve-response-group-cards.tsx",
+    "chatjs/plugins/parallel-responses/logical-response-slots.ts",
+    "chatjs/plugins/parallel-responses/model-picker.tsx",
+    "chatjs/plugins/parallel-responses/model-selection-indicator.tsx",
+    "chatjs/plugins/parallel-responses/selected-model-ids.ts",
+    "chatjs/plugins/parallel-responses/turn-models.ts",
+    "chatjs/plugins/parallel-responses/submit-turn.ts",
+    "chatjs/plugins/parallel-responses/creation-handler.ts",
+    "chatjs/plugins/parallel-responses/response-group-input.ts",
+    "chatjs/plugins/parallel-responses/response-choice-cards.tsx",
+    "chatjs/plugins/parallel-responses/response-group-candidates.ts",
+    "chatjs/plugins/parallel-responses/response-group-contracts.ts",
+    "chatjs/plugins/parallel-responses/response-group-lineage.ts",
+    "chatjs/plugins/parallel-responses/response-group-queries.ts",
+    "chatjs/plugins/parallel-responses/response-group-schema.ts",
+    "chatjs/plugins/parallel-responses/response-group.ts",
+    "chatjs/plugins/parallel-responses/responses.tsx",
+    "chatjs/plugins/parallel-responses/router.ts"
+  ],
+  "databaseSchemas": [
+    "chatjs/plugins/parallel-responses/response-group-schema.ts"
+  ]
+}

@@ -15,7 +15,7 @@ const step = {
 } satisfies SessionStreamEvent;
 
 it("preserves the response selection across reload and subsequent turns", () => {
-  expect(responseModel([step], "turn_0")).toBe(
+  expect(responseModel([step], { turnId: "turn_0" })).toBe(
     "anthropic/claude-sonnet-reasoning"
   );
   expect(
@@ -31,22 +31,25 @@ it("preserves the response selection across reload and subsequent turns", () => 
           },
         },
       ],
-      "turn_0"
+      { turnId: "turn_0" }
     )
   ).toBe("anthropic/claude-sonnet-reasoning");
 });
 it("refuses to silently substitute another model when the response evidence is missing", () => {
-  expect(() => responseModel([step], "turn_7")).toThrow(
+  expect(() => responseModel([step], { turnId: "turn_7" })).toThrow(
     "response model is unavailable"
   );
 });
 
 it("uses retained imported provenance without substituting missing native evidence", () => {
-  expect(responseModel([], "", "google/gemini-2.5-flash-lite")).toBe(
+  expect(responseModel([], { modelId: "google/gemini-2.5-flash-lite" })).toBe(
     "google/gemini-2.5-flash-lite"
   );
   expect(() =>
-    responseModel([], "turn_0", "google/gemini-2.5-flash-lite")
+    responseModel([], {
+      turnId: "turn_0",
+      modelId: "google/gemini-2.5-flash-lite",
+    })
   ).toThrow();
-  expect(() => responseModel([], "", "missing-provider")).toThrow();
+  expect(() => responseModel([], { modelId: "missing-provider" })).toThrow();
 });

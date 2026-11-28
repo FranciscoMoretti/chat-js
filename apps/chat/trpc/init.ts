@@ -29,10 +29,11 @@ import { auth } from "@/lib/auth";
  *
  * @see https://trpc.io/docs/server/context
  */
-const createTRPCContext = cache(async () => {
+const createTRPCContext = cache(async (options?: { readonly req: Request }) => {
   const session = await auth.api.getSession({ headers: await headers() });
   return {
     user: session?.user,
+    ...(options && { request: options.req }),
   };
 });
 type Context = Awaited<ReturnType<typeof createTRPCContext>>;

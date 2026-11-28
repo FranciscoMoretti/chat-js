@@ -33,7 +33,7 @@ test("history restrictions intersect, public grants combine, and empty compositi
   await expect(empty.links("owner", [])).resolves.toEqual(new Map());
 });
 
-test("app-owned and installed navigation adapters compose but cannot claim the same chat", async () => {
+test("app-owned and installed navigation integrations compose but cannot claim the same chat", async () => {
   const first = vi
     .fn<NonNullable<ChatServerIntegration["links"]>>()
     .mockResolvedValue(

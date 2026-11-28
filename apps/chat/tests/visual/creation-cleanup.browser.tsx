@@ -4,10 +4,12 @@ import type { ComponentProps } from "react";
 import { afterEach, expect, test, vi } from "vitest";
 import { page } from "vitest/browser";
 
+import { Plugins } from "@/chatjs/core/ui/slots";
+import { chatUi as parallelResponses } from "@/chatjs/plugins/parallel-responses/chat-ui";
 import type { EveComposer } from "@/components/eve/eve-composer";
 import { NewEveConversation } from "@/components/eve/new-eve-conversation";
 import {
-  prepareResponseGroupCreation,
+  prepareSelectedCreation,
   readCreationFollowUp,
   readCreationRequest,
   saveCreationFollowUp,
@@ -26,7 +28,8 @@ afterEach(() => vi.clearAllMocks());
 vi.mock("@/lib/eve/resolve-creation-request", () => ({
   resolveCreationRequest: runtime.resolve,
 }));
-vi.mock("@/components/eve/eve-logical-context", () => ({
+vi.mock(import("@/components/eve/eve-logical-context"), async (original) => ({
+  ...(await original()),
   useEveRuntime: (): typeof runtime.open => runtime.open,
 }));
 vi.mock("@/providers/default-model-provider", () => ({
@@ -206,14 +209,18 @@ test("creation cleanup warning survives the recovery handoff without resending a
 
 test("restored parallel creation retries the original request without rebuilding selection", async () => {
   sessionStorage.clear();
-  const saved = prepareResponseGroupCreation(
+  const saved = prepareSelectedCreation(
     sessionStorage,
     "test-owner",
     "Keep both copies of this model",
     ["openai/gpt-4.1", "openai/gpt-4.1"]
   );
   runtime.resolve.mockRejectedValue(new Error("Still unconfirmed"));
-  const fixture = await mount(<NewEveConversation ownerId="test-owner" />);
+  const fixture = await mount(
+    <Plugins plugins={[parallelResponses]}>
+      <NewEveConversation ownerId="test-owner" />
+    </Plugins>
+  );
   try {
     await expect
       .element(page.getByRole("region", { name: "Conversation recovery" }))

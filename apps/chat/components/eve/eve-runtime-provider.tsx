@@ -207,7 +207,10 @@ const RuntimeSlot = ({
   );
   useEffect(() => {
     if (family.data) {
-      runtime.controller.setBranches(family.data.branches);
+      runtime.controller.setBranches(
+        family.data.branches,
+        family.data.promptGroups
+      );
     }
   }, [family.data, runtime.controller]);
   useEffect(() => {
@@ -332,7 +335,7 @@ const EveRuntimeProvider = ({
           pendingSource?.id ?? request.id,
           !navigate && !pendingSource
         );
-      controller.setBranches(family.branches);
+      controller.setBranches(family.branches, family.promptGroups);
       if (existing && navigate) {
         controller.selectBranch(request.id);
       }

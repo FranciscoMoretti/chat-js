@@ -3,26 +3,11 @@
 import type { getEnabledFeatures } from "@/lib/features-config";
 
 import { Checkbox } from "@/components/ui/checkbox";
-import { ModelSelectionIndicator } from "@/components/model-selection-indicator";
 import { PopoverButton } from "@/components/popover-button";
 import { nonEmptyText } from "@/components/text-value";
 import type { AppModelDefinition, AppModelId } from "@/lib/ai/app-models";
-import {
-  CheckIcon,
-  ChevronDownIcon,
-  ChevronUpIcon,
-  FilterIcon,
-  SearchIcon,
-} from "lucide-react";
-import React, {
-  memo,
-  useCallback,
-  useId,
-  useMemo,
-  useOptimistic,
-  useState,
-  useTransition,
-} from "react";
+import { CheckIcon, ChevronUpIcon, FilterIcon, SearchIcon } from "lucide-react";
+import React, { memo, useCallback, useMemo, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 
@@ -32,27 +17,12 @@ import { Combobox } from "@base-ui/react/combobox";
 import { defaultFilter } from "cmdk";
 import { InputGroup, InputGroupAddon } from "@/components/ui/input-group";
 
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
 
 import { Popover, PopoverContent } from "@/components/ui/popover";
 
-import type { SelectedModelCounts, SelectedModelValue } from "@/lib/ai/types";
-
 import type { JSX as ReactJSX } from "react";
 
-import { Switch } from "@/components/ui/switch";
-
-import {
-  getPrimarySelectedModelId,
-  isSelectedModelCounts,
-} from "@/lib/ai/types";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 import { cn } from "@/lib/utils";
@@ -115,46 +85,22 @@ const getFeatureIcons = (
   return icons;
 };
 
-const buildMultiModelSelection = (
-  modelIds: readonly AppModelId[]
-): SelectedModelCounts => {
-  const selection: Partial<Record<AppModelId, number>> = {};
-  for (const modelId of modelIds) {
-    selection[modelId] = 1;
-  }
-  return selection;
-};
-
-const getSelectionCount = (selection: SelectedModelValue): number => {
-  if (typeof selection === "string") {
-    return 1;
-  }
-
-  let count = 0;
-
-  for (const value of Object.values(selection)) {
-    count += value ?? 0;
-  }
-
-  return count;
-};
-
 const PureCommandItem = ({
   model,
   disabled,
   isSelected,
-  count,
-  showSelectionControl,
-  onCountChange,
+  prefix,
+  action,
+  reserveAction,
   enabledFeatures,
 }: {
   readonly enabledFeatures: Features;
   readonly model: ReadonlyNativeSurface<AppModelDefinition>;
   readonly disabled?: boolean;
   readonly isSelected: boolean;
-  readonly count?: number;
-  readonly showSelectionControl: boolean;
-  readonly onCountChange?: (id: AppModelId, delta: number) => void;
+  readonly prefix?: React.ReactNode;
+  readonly action?: React.ReactNode;
+  readonly reserveAction?: boolean;
 }): ReactJSX.Element => {
   const featureIcons = useMemo(
     () => getFeatureIcons(model, enabledFeatures),
@@ -168,26 +114,31 @@ const PureCommandItem = ({
     [enabledFeatures]
   );
   return (
-    <div className="flex items-center gap-1">
+    <div
+      className={cn(
+        "has-data-highlighted:bg-muted flex items-center rounded-lg",
+        isSelected && "bg-primary/10"
+      )}
+    >
       <Combobox.Item
         value={model.id}
         disabled={disabled}
         aria-label={model.reasoning ? `${model.name} (reasoning)` : model.name}
         className={cn(
-          "data-highlighted:bg-muted flex h-9 min-w-0 flex-1 cursor-pointer items-center justify-between gap-2 rounded-xl border-s-2 border-transparent px-2.5 py-1.5 text-sm",
-          isSelected && "border-s-primary bg-primary/10",
+          "flex h-9 min-w-0 flex-1 cursor-pointer items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-sm",
+          reserveAction === true &&
+            (action === null || action === undefined) &&
+            "pe-14",
           disabled === true && "cursor-not-allowed opacity-50"
         )}
       >
         <div className="flex min-w-0 flex-1 items-center gap-2.5">
-          {showSelectionControl && (
-            <ModelSelectionIndicator selected={isSelected} />
-          )}
+          {prefix}
           <div className="shrink-0">
             <ModelSelectorLogo modelId={model.id} />
           </div>
-          <span className="flex items-center gap-1.5 truncate text-sm font-medium">
-            {model.name}
+          <span className="flex min-w-0 items-center gap-1.5 font-medium">
+            <span className="truncate">{model.name}</span>
             {model.reasoning && reasoningConfig && (
               <span
                 className="inline-flex shrink-0 items-center gap-1"
@@ -198,84 +149,26 @@ const PureCommandItem = ({
             )}
           </span>
         </div>
-        <div className="flex shrink-0 items-center gap-1">{featureIcons}</div>
+        <div className="flex shrink-0 items-center gap-1">
+          {featureIcons}
+          {(prefix === null || prefix === undefined) && (
+            <span className="ms-1 grid size-4 place-items-center" aria-hidden>
+              {isSelected && <CheckIcon className="size-3.5" />}
+            </span>
+          )}
+        </div>
       </Combobox.Item>
-      {isSelected && onCountChange && count !== undefined && (
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            aria-label={`${count}× ${model.name}`}
-            className="bg-primary/15 text-foreground hover:bg-primary/25 flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-xs font-semibold tabular-nums"
-            type="button"
-            onClick={stopEventPropagation}
-            onMouseDown={stopEventPropagation}
-          >
-            {count}×
-            <ChevronDownIcon className="h-2.5 w-2.5" />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" onKeyDown={stopEventPropagation}>
-            <DropdownMenuGroup>
-              {[1, 2, 3, 4].map((modelCount): React.JSX.Element => (
-                <DropdownMenuItem
-                  key={modelCount}
-                  onClick={(event: {
-                    readonly stopPropagation: () => void;
-                  }) => {
-                    event.stopPropagation();
-                    onCountChange(model.id, modelCount - count);
-                  }}
-                >
-                  {modelCount}x
-                  {modelCount === count && (
-                    <CheckIcon className="ml-auto h-3 w-3" />
-                  )}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuGroup>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )}
+      {action}
     </div>
   );
 };
 
 const CommandItem = memo(PureCommandItem);
 
-const MultipleModelsSetting = ({
-  checked,
-  onCheckedChange,
-}: {
-  readonly checked: boolean;
-  readonly onCheckedChange: (checked: boolean) => void;
-}): ReactJSX.Element => {
-  const id = useId();
-  const descriptionId = `${id}-description`;
-  return (
-    <div className="space-y-1.5 border-b px-3 py-2">
-      <div className="flex items-center justify-between">
-        <Label className="cursor-pointer text-sm" htmlFor={id}>
-          Use Multiple Models
-        </Label>
-        <Switch
-          aria-describedby={checked ? descriptionId : undefined}
-          checked={checked}
-          id={id}
-          onCheckedChange={onCheckedChange}
-        />
-      </div>
-      {checked && (
-        <p className="text-muted-foreground text-xs" id={descriptionId}>
-          Each model replies in its own branch. Replies run one at a time and
-          share workspace files.
-        </p>
-      )}
-    </div>
-  );
-};
-
 const PureModelSelector = ({
-  allowMultiple = true,
+  options,
   selectedModelId,
-  selectedModelSelection,
+
   fallbackModelName,
   className,
   onModelSelectionChangeAction,
@@ -292,12 +185,20 @@ const PureModelSelector = ({
   readonly enabledFeatures: Features;
   readonly footer?: React.ReactNode;
   readonly disabledModelsNotice?: React.ReactNode;
-  readonly allowMultiple?: boolean;
+  readonly options?: {
+    readonly header: React.ReactNode;
+    readonly values?: readonly string[];
+    readonly suffix?: string;
+    readonly onChange: (ids: string[]) => void;
+    readonly renderPrefix?: (selected: boolean) => React.ReactNode;
+    readonly renderAction?: (
+      model: ReadonlyNativeSurface<AppModelDefinition>
+    ) => React.ReactNode;
+  };
   readonly selectedModelId: AppModelId;
-  readonly selectedModelSelection: SelectedModelValue;
   readonly fallbackModelName?: string;
   readonly onModelSelectionChangeAction?: (
-    selection: SelectedModelValue
+    selection: string
   ) => void | Promise<void>;
   readonly className?: string;
 }): ReactJSX.Element => {
@@ -309,59 +210,20 @@ const PureModelSelector = ({
     [enabledFeatures]
   );
 
-  const [, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [filterOpen, setFilterOpen] = useState(false);
-  const [optimisticSelection, setOptimisticSelection] = useOptimistic(
-    selectedModelSelection
-  );
   const [featureFilters, setFeatureFilters] =
     useState<FeatureFilter>(initialFilters);
   const handleResetFilters = useCallback((): void => {
     setFeatureFilters(initialFilters);
   }, [initialFilters]);
-  const [useMultipleModels, setUseMultipleModels] = useState(
-    isSelectedModelCounts(selectedModelSelection)
-  );
-
   interface ModelItem {
     readonly disabled: boolean;
     readonly model: ReadonlyNativeSurface<AppModelDefinition>;
   }
 
-  const [previousSelection, setPreviousSelection] = useState(
-    selectedModelSelection
-  );
-  if (previousSelection !== selectedModelSelection) {
-    setPreviousSelection(selectedModelSelection);
-    setUseMultipleModels(isSelectedModelCounts(selectedModelSelection));
-  }
-
-  const optimisticModelId = useMemo(
-    () => getPrimarySelectedModelId(optimisticSelection) ?? selectedModelId,
-    [optimisticSelection, selectedModelId]
-  );
-
-  const selectedModelIds = useMemo(() => {
-    if (typeof optimisticSelection === "string") {
-      return new Set<AppModelId>([optimisticSelection]);
-    }
-
-    return new Set<string>(
-      Object.entries(optimisticSelection)
-        .filter(
-          ([, count]: readonly [string, number | undefined]) =>
-            typeof count === "number" && count > 0
-        )
-        .map(([modelId]: readonly [string, number | undefined]) => modelId)
-    );
-  }, [optimisticSelection]);
-
-  const pickerValue = useMemo(
-    () => (useMultipleModels ? [...selectedModelIds] : optimisticModelId),
-    [useMultipleModels, selectedModelIds, optimisticModelId]
-  );
+  const pickerValue = options?.values ? [...options.values] : selectedModelId;
 
   const models = useMemo<ModelItem[]>(
     () =>
@@ -454,7 +316,7 @@ const PureModelSelector = ({
     // First try to find in filtered models (user's enabled models)
     const found = models.find(
       (modelItem: { readonly model: { readonly id: string } }) =>
-        modelItem.model.id === optimisticModelId
+        modelItem.model.id === selectedModelId
     );
     if (found) {
       return found;
@@ -464,7 +326,7 @@ const PureModelSelector = ({
     // This handles cases where preferences are loading or model was disabled
     const fallbackModel = allModels.find(
       (model: Readonly<Pick<AppModelDefinition, "id">>) =>
-        model.id === optimisticModelId
+        model.id === selectedModelId
     );
     if (fallbackModel) {
       return {
@@ -474,7 +336,7 @@ const PureModelSelector = ({
     }
 
     return null;
-  }, [models, allModels, optimisticModelId, modelsDisabled]);
+  }, [models, allModels, selectedModelId, modelsDisabled]);
   const reasoningConfig = useMemo(
     () =>
       enabledFeatures.find(
@@ -486,92 +348,16 @@ const PureModelSelector = ({
     () => Object.values(featureFilters).filter(Boolean).length,
     [featureFilters]
   );
-  const selectedModelCount = useMemo(
-    () => getSelectionCount(optimisticSelection),
-    [optimisticSelection]
-  );
   const modelName = nonEmptyText(selectedItem?.model.name) ?? fallbackModelName;
-  const triggerLabel =
-    useMultipleModels && selectedModelCount > 1
-      ? `${modelName ?? "Selected model"} +${selectedModelCount - 1}`
-      : (modelName ?? "Select model");
-
-  const dispatchSelection = useCallback(
-    (selection: SelectedModelValue): void => {
-      try {
-        // Run the producer before the transition so Send sees its local selection immediately.
-        const completion = onModelSelectionChangeAction?.(selection);
-        startTransition(async () => {
-          setOptimisticSelection(selection);
-          await completion;
-        });
-      } catch (error) {
-        startTransition(() => {
-          throw error;
-        });
-      }
-    },
-    [onModelSelectionChangeAction, setOptimisticSelection, startTransition]
-  );
-
-  const changeModels = (value: string | string[] | null): void => {
+  const triggerLabel = (modelName ?? "Select model") + (options?.suffix ?? "");
+  const changeModels = (value: string | string[] | null) => {
     if (typeof value === "string") {
-      dispatchSelection(value);
+      void onModelSelectionChangeAction?.(value);
       setOpen(false);
     } else if (value && value.length > 0) {
-      const counts =
-        typeof optimisticSelection === "string" ? {} : optimisticSelection;
-      dispatchSelection(
-        Object.fromEntries(value.map((id) => [id, counts[id] ?? 1]))
-      );
+      options?.onChange(value);
     }
   };
-
-  const handleCountChange = useCallback(
-    (id: AppModelId, delta: number) => {
-      const current = optimisticSelection;
-      const currentCounts: SelectedModelCounts =
-        typeof current === "string" ? { [current]: 1 } : current;
-
-      const newCount = (currentCounts[id] ?? 0) + delta;
-      let nextSelection: SelectedModelValue;
-
-      if (newCount <= 0) {
-        const remaining = Object.entries(currentCounts).filter(
-          ([candidateId, selectionCount]: readonly [
-            string,
-            number | undefined,
-          ]) =>
-            candidateId !== id &&
-            typeof selectionCount === "number" &&
-            selectionCount > 0
-        );
-        if (remaining.length === 0) {
-          return;
-        }
-        nextSelection = Object.fromEntries(remaining);
-      } else {
-        nextSelection = { ...currentCounts, [id]: newCount };
-      }
-
-      dispatchSelection(nextSelection);
-    },
-    [dispatchSelection, optimisticSelection]
-  );
-
-  const handleMultipleModelsToggle = useCallback(
-    (checked: boolean) => {
-      setUseMultipleModels(checked);
-
-      if (checked) {
-        dispatchSelection(buildMultiModelSelection([optimisticModelId]));
-        return;
-      }
-
-      dispatchSelection(optimisticModelId);
-    },
-    [dispatchSelection, optimisticModelId]
-  );
 
   return (
     <Popover
@@ -616,14 +402,14 @@ const PureModelSelector = ({
       </PopoverButton>
       <PopoverContent
         align="start"
-        className="w-[350px] max-w-[calc(100vw-1rem)] p-0"
+        className="w-[350px] max-w-[calc(100vw-1rem)] gap-0 p-0"
       >
         {open && (
           <Combobox.Root<string, boolean>
             inline
             open
             autoHighlight
-            multiple={useMultipleModels}
+            multiple={options?.values !== undefined}
             filteredItems={matches.map(({ model }) => model.id)}
             value={pickerValue}
             onValueChange={changeModels}
@@ -652,7 +438,7 @@ const PureModelSelector = ({
                 <PopoverButton
                   aria-label="Filter models"
                   className={cn(
-                    "relative mr-3 h-8 w-8 p-0",
+                    "relative h-8 w-8 p-0",
                     activeFilterCount > 0 && "text-primary"
                   )}
                   size="sm"
@@ -738,43 +524,32 @@ const PureModelSelector = ({
                 </PopoverContent>
               </Popover>
             </div>
-            {allowMultiple && (
-              <MultipleModelsSetting
-                checked={useMultipleModels}
-                onCheckedChange={handleMultipleModelsToggle}
-              />
-            )}
+            {options?.header}
             {hasDisabledModels && (
-              <div className="p-3">{disabledModelsNotice}</div>
+              <div className="p-3 empty:hidden">{disabledModelsNotice}</div>
             )}
             <Combobox.Empty className="text-center text-sm not-empty:py-6">
               No model found.
             </Combobox.Empty>
             <Combobox.List
               aria-label="Models"
-              className="max-h-[min(40dvh,400px)] overflow-y-auto p-2 empty:p-0"
+              className="max-h-[min(40dvh,400px)] overflow-y-auto p-1 empty:p-0"
               onMouseDown={stopEventPropagation}
             >
               {matches.map(({ model, disabled }: Readonly<ModelItem>) => {
-                const isSelected = useMultipleModels
-                  ? selectedModelIds.has(model.id)
-                  : model.id === optimisticModelId;
-                const count =
-                  useMultipleModels && typeof optimisticSelection !== "string"
-                    ? (optimisticSelection[model.id] ?? 0)
-                    : undefined;
+                const isSelected =
+                  options?.values?.includes(model.id) ??
+                  model.id === selectedModelId;
                 return (
                   <CommandItem
-                    count={isSelected ? count : undefined}
+                    prefix={options?.renderPrefix?.(isSelected)}
+                    action={options?.renderAction?.(model)}
+                    reserveAction={options?.renderAction !== undefined}
                     disabled={disabled}
                     isSelected={isSelected}
                     key={model.id}
                     model={model}
                     enabledFeatures={enabledFeatures}
-                    onCountChange={
-                      useMultipleModels ? handleCountChange : undefined
-                    }
-                    showSelectionControl={useMultipleModels}
                   />
                 );
               })}

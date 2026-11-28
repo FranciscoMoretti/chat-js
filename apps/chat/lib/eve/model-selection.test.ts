@@ -6,7 +6,7 @@ import { loadEveModelDefinition, resolveEveModel } from "./model-selection";
 const { discoverModels } = vi.hoisted(() => ({
   discoverModels: vi.fn().mockResolvedValue([
     {
-      context_window: 1000,
+      context_window: 0,
       id: "plain",
       owned_by: "openai",
       pricing: {},
@@ -139,4 +139,9 @@ test("retries discovery after a gateway error and reuses the successful catalog"
   expect(await load("plain")).toMatchObject({ id: "plain" });
   await load("thinking");
   expect(discoverModels).toHaveBeenCalledTimes(2);
+});
+
+test("the worker accepts a model with an unknown context window", async () => {
+  const resolved = await resolveEveModel("plain");
+  expect(resolved.modelContextWindowTokens).toBeUndefined();
 });

@@ -21,7 +21,6 @@ import { useChatModels } from "@/providers/chat-models-provider";
 import { useDefaultModel } from "@/providers/default-model-provider";
 import { useAvailableTools } from "../composer/tool-availability";
 
-import { EveModelPicker } from "./eve-model-picker";
 import type { useEveAttachments } from "./use-eve-attachments";
 
 const uploadsOmitted = (): void => {
@@ -67,7 +66,7 @@ type ComposerProps = Omit<
 > & {
   /** Model IDs used for capability checks; selection state belongs to the caller. */
   readonly modelIds?: readonly string[];
-  /** Omit to use the default single-model picker. Inherits the composer lock. */
+  /** Optional model selection control. Inherits the composer lock. */
   readonly modelPicker?: ReactNode;
 };
 
@@ -146,8 +145,8 @@ const CapableComposer = ({
                 onToolChange(null);
               }}
             />
-            <fieldset className="min-w-0" disabled={optionsLocked}>
-              {modelPicker ?? <EveModelPicker />}
+            <fieldset className="min-w-0 empty:hidden" disabled={optionsLocked}>
+              {modelPicker}
             </fieldset>
           </>
         }
@@ -186,10 +185,10 @@ export const EveComposer = ({
         {...composer}
         tools={
           <fieldset
-            className="min-w-0"
+            className="min-w-0 empty:hidden"
             disabled={composer.disabled || composer.readOnly}
           >
-            {modelPicker ?? <EveModelPicker />}
+            {modelPicker}
           </fieldset>
         }
       />

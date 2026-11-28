@@ -16,14 +16,15 @@ import React, {
 import { createClientSnapshot } from "@/components/client-snapshot";
 import type { ComponentProps, SetStateAction } from "react";
 import type { ComposerSubmission } from "@/components/composer/submission";
-import { ParallelResponseModelPicker } from "@/components/parallel-responses/model-picker";
+import { TurnModelPicker } from "@/integrations/chat/model-picker";
+import {
+  PendingResponseCards,
+  selectedModelIds,
+} from "@/chatjs/generated/installed-turn-models";
+import { useTurnModels } from "./use-turn-models";
 
 import { ThinkingMessage } from "@/components/thinking-message";
-import type { SelectedModelValue, UiToolName } from "@/lib/ai/types";
-import {
-  expandSelectedModelValue,
-  getPrimarySelectedModelId,
-} from "@/lib/ai/types";
+import type { UiToolName } from "@/lib/ai/types";
 import { CreationRejectedError } from "@/lib/eve/create-conversation";
 import { draftMessage, restoreDraft } from "@/lib/eve/draft";
 import {
@@ -35,17 +36,25 @@ import {
 } from "@/lib/eve/pending-create";
 import { resolveCreationRequest } from "@/lib/eve/resolve-creation-request";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-import {
-  useDefaultModel,
-  useModelChange,
-} from "@/providers/default-model-provider";
 
 import type { EveComposer } from "./eve-composer";
 import { EveCreationRecovery } from "./eve-creation-recovery";
 import { EveInitialMessage } from "./eve-initial-message";
 import { useEveRuntime } from "./eve-logical-context";
-import { EveOptimisticResponseGroup } from "./eve-optimistic-response-group";
 import { useEveAttachments } from "./use-eve-attachments";
+
+const retainedModels = (
+  operation:
+    | ReadonlyNativeSurface<ReturnType<typeof prepareSelectedCreation>>
+    | undefined,
+  selected: readonly string[]
+) => {
+  if (operation && "modelIds" in operation) {
+    return { group: operation, modelIds: operation.modelIds };
+  }
+  const modelId = operation?.modelId;
+  return { modelId, modelIds: hasText(modelId) ? [modelId] : selected };
+};
 
 export const useNewEveConversation = ({
   ownerId,
@@ -61,9 +70,7 @@ export const useNewEveConversation = ({
     const context = projectCreationScope(creationInput);
     return context ? { context } : undefined;
   }, [creationInput]);
-  const selectedModel = useDefaultModel();
-  const changeModel = useModelChange();
-  const [selection, setSelection] = useState<SelectedModelValue>();
+  const { modelIds, modelSelection } = useTurnModels(selectedModelIds);
   const files = useEveAttachments();
   const { setAttachments } = files;
   const [cleanupRejected, setCleanupRejected] = useState(false);
@@ -75,9 +82,9 @@ export const useNewEveConversation = ({
         followUpDraft: string;
         recoveredFollowUp: boolean;
         selectedTool: UiToolName | null;
-        retainedOperationId: string | undefined;
-        retainedModelId: string | undefined;
-        retainedModelIds: readonly string[] | undefined;
+        operation:
+          | ReadonlyNativeSurface<ReturnType<typeof prepareSelectedCreation>>
+          | undefined;
         failure: string;
       }>(
         {
@@ -85,9 +92,7 @@ export const useNewEveConversation = ({
           followUpDraft: "",
           recoveredFollowUp: false,
           selectedTool: null,
-          retainedOperationId: undefined,
-          retainedModelId: undefined,
-          retainedModelIds: undefined,
+          operation: undefined,
           failure: "",
         },
         (current) => {
@@ -112,11 +117,7 @@ export const useNewEveConversation = ({
               draft: restored.text,
               followUpDraft: savedFollowUp,
               selectedTool: pending.selectedTool ?? null,
-              retainedOperationId: pending.operationId,
-              retainedModelIds:
-                "modelIds" in pending ? pending.modelIds : undefined,
-              retainedModelId:
-                "modelIds" in pending ? undefined : pending.modelId,
+              operation: pending,
             };
           } catch {
             return {
@@ -133,9 +134,7 @@ export const useNewEveConversation = ({
     followUpDraft,
     recoveredFollowUp,
     selectedTool,
-    retainedOperationId,
-    retainedModelId,
-    retainedModelIds,
+    operation: retainedOperation,
     failure,
   } = useSyncExternalStore(
     store.subscribe,
@@ -143,17 +142,11 @@ export const useNewEveConversation = ({
     store.getServerSnapshot
   );
   const {
-    setDraft,
     setSelectedTool,
-    setRetainedOperationId,
-    setRetainedModelId,
-    setRetainedModelIds,
+
     setFailure,
   } = useMemo(
     () => ({
-      setDraft: (value: string): void => {
-        store.set("draft", value);
-      },
       setSelectedTool: (value: SetStateAction<UiToolName | null>): void => {
         store.update((current) => ({
           ...current,
@@ -161,46 +154,19 @@ export const useNewEveConversation = ({
             typeof value === "function" ? value(current.selectedTool) : value,
         }));
       },
-      setRetainedOperationId: (value: string | undefined): void => {
-        store.set("retainedOperationId", value);
-      },
-      setRetainedModelId: (value: string | undefined): void => {
-        store.set("retainedModelId", value);
-      },
-      setRetainedModelIds: (value: readonly string[] | undefined): void => {
-        store.set("retainedModelIds", value);
-      },
       setFailure: (value: string): void => {
         store.set("failure", value);
       },
     }),
     [store]
   );
-  const retained = retainedOperationId !== undefined;
+  const retained = retainedOperation !== undefined;
+  const models = retainedModels(retainedOperation, modelIds);
   const [busy, setBusy] = useState(false);
-  const [optimisticComparison, setOptimisticComparison] =
-    useState<
-      Extract<
-        ReadonlyNativeSurface<ReturnType<typeof prepareSelectedCreation>>,
-        { readonly modelIds: readonly string[] }
-      >
-    >();
   const lock = useRef(false);
   useEffect(() => {
     onPendingChange?.(busy || retained);
   }, [busy, retained, onPendingChange]);
-  const retainOperation = (
-    operation: ReadonlyNativeSurface<ReturnType<typeof prepareSelectedCreation>>
-  ): void => {
-    setDraft(restoreDraft(operation.message).text);
-    setSelectedTool(operation.selectedTool ?? null);
-    setRetainedModelId("modelIds" in operation ? undefined : operation.modelId);
-    setRetainedModelIds(
-      "modelIds" in operation ? operation.modelIds : undefined
-    );
-    setOptimisticComparison("modelIds" in operation ? operation : undefined);
-    setRetainedOperationId(operation.operationId);
-  };
   const submit = async (): Promise<void> => {
     if (lock.current) {
       return;
@@ -213,7 +179,6 @@ export const useNewEveConversation = ({
     await withTaskCleanup(
       async () => {
         try {
-          const modelIds = expandSelectedModelValue(selection ?? selectedModel);
           const operation = prepareSelectedCreation(
             sessionStorage,
             ownerId,
@@ -223,7 +188,12 @@ export const useNewEveConversation = ({
             selectedTool ?? undefined,
             creationInput
           );
-          retainOperation(operation);
+          store.update((current) => ({
+            ...current,
+            draft: restoreDraft(operation.message).text,
+            selectedTool: operation.selectedTool ?? null,
+            operation,
+          }));
           if (recoveredFollowUp) {
             saveCreationFollowUp(sessionStorage, ownerId, "", scope);
             store.set("recoveredFollowUp", false);
@@ -252,10 +222,7 @@ export const useNewEveConversation = ({
           } else if (error instanceof CreationRejectedError) {
             try {
               finishCreation(sessionStorage, ownerId, scope);
-              setRetainedModelId(undefined);
-              setRetainedModelIds(undefined);
-              setOptimisticComparison(undefined);
-              setRetainedOperationId(undefined);
+              store.set("operation", undefined);
             } catch {
               setCleanupRejected(true);
               setFailure(
@@ -282,10 +249,7 @@ export const useNewEveConversation = ({
   const clearRejected = (): void => {
     try {
       finishCreation(sessionStorage, ownerId, scope);
-      setRetainedModelId(undefined);
-      setRetainedModelIds(undefined);
-      setOptimisticComparison(undefined);
-      setRetainedOperationId(undefined);
+      store.set("operation", undefined);
       setCleanupRejected(false);
       setFailure("");
     } catch {
@@ -301,7 +265,7 @@ export const useNewEveConversation = ({
         initiallyRejected={contextRejected || cleanupRejected}
         initialFailure={failure}
         onClearRejected={cleanupRejected ? clearRejected : undefined}
-        operationId={retainedOperationId}
+        operationId={retainedOperation?.operationId}
         ownerId={ownerId}
         scope={scope}
       />
@@ -317,25 +281,12 @@ export const useNewEveConversation = ({
       selectedTool,
       onToolChange: setSelectedTool,
     },
-    modelIds:
-      retainedModelIds ??
-      (hasText(retainedModelId)
-        ? [retainedModelId]
-        : expandSelectedModelValue(selection ?? selectedModel)),
+    modelIds: models.modelIds,
     modelPicker: (
-      <ParallelResponseModelPicker
-        modelSelection={{
-          onChange: async (value) => {
-            setSelection(value);
-            const primary = getPrimarySelectedModelId(value);
-            if (hasText(primary)) {
-              await changeModel(primary);
-            }
-          },
-          value: selection ?? selectedModel,
-        }}
-        retainedModelId={retainedModelId}
-        retainedModelIds={retainedModelIds}
+      <TurnModelPicker
+        {...modelSelection}
+        retainedModelId={models.modelId}
+        retainedModelIds={models.group?.modelIds}
       />
     ),
     onDraftChange: (value: string) => {
@@ -362,8 +313,11 @@ export const useNewEveConversation = ({
       recovery,
       preview:
         busy &&
-        (optimisticComparison ? (
-          <EveOptimisticResponseGroup operation={optimisticComparison} />
+        (models.group ? (
+          <EveInitialMessage
+            message={models.group.message}
+            responses={<PendingResponseCards operation={models.group} />}
+          />
         ) : (
           <>
             <EveInitialMessage

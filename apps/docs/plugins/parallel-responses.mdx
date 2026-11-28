@@ -1,0 +1,32 @@
+---
+title: Parallel Responses
+description: "Install model comparison for signed-in chats, choose multiple replies to a prompt, and keep existing comparisons when moving to the plugin."
+---
+
+Parallel Responses lets you compare several answers to the same prompt, including multiple answers from the same model. Each answer has its own branch. Select a response card to continue that branch with its model. New chats use the primary model you last chose in the composer picker. Choose multiple models again to start a new comparison from a reply. [Guest Chat](/plugins/guest-chat) uses a single model.
+
+## Installation
+
+In the builder, select **Plugins → Model selection → Parallel Responses**. From the CLI, include `--plugin parallel-responses` when you create an app. To add it to an existing app on the current template, run the following command from the app directory.
+
+```bash
+bunx chat-js@beta add parallel-responses
+```
+
+The plugin installs the comparison picker, response cards, the `parallelResponses.submit` tRPC mutation and the `EveResponseGroup` schema. A new app created with the plugin includes the table in its initial migration. When adding the plugin to an existing app, generate and review the migration before applying it.
+
+```bash
+bun run db:generate
+# Review the generated SQL.
+bun run db:migrate
+```
+
+## Configuration
+
+The picker offers comparisons as soon as the plugin is installed. Set `features.parallelResponses` to `false` in `chat.config.ts` to hide the multi-response option. See [Conversations](/core/conversations#parallel-responses) for model selection, waiting responses, and cancellation.
+
+## Existing comparisons
+
+If you recreate an app from a preset saved when comparisons shipped in core, select this plugin to keep comparisons available. The plugin uses the existing `EveResponseGroup` table and its saved comparisons. When transferring an existing database, preserve the table and migration history. Review any generated SQL before applying it.
+
+Removing the plugin switches account chats back to the single-model picker. The CLI retains the table. If a tab has an unfinished comparison, reinstall the plugin and retry from that tab to reuse its original request. After reinstalling, the plugin checks whether the chat was deleted before displaying or resuming its comparison.

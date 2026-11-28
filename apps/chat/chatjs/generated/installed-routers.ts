@@ -4,6 +4,7 @@ import { router as feedbackRouter } from "@/chatjs/plugins/feedback/router";
 import { router as followupSuggestionsRouter } from "@/chatjs/plugins/followup-suggestions/router";
 import { router as mcpRouter } from "@/chatjs/plugins/mcp/router";
 import { router as modelPreferencesRouter } from "@/chatjs/plugins/model-preferences/router";
+import { router as parallelResponsesRouter } from "@/chatjs/plugins/parallel-responses/router";
 import { router as projectsRouter } from "@/chatjs/plugins/projects/router";
 import { router as searchRouter } from "@/chatjs/plugins/search/router";
 import { router as sharingRouter } from "@/chatjs/plugins/sharing/router";
@@ -13,6 +14,7 @@ export const installedRouters = [
   followupSuggestionsRouter,
   mcpRouter,
   modelPreferencesRouter,
+  parallelResponsesRouter,
   projectsRouter,
   searchRouter,
   sharingRouter,

@@ -1,5 +1,5 @@
 import { gatewayModelDefaults } from "@/chatjs/providers/gateway-defaults";
-import type { EveResponseGroupResult } from "../lib/eve/response-group-contracts";
+import type { EveResponseGroupResult } from "@/chatjs/plugins/parallel-responses/response-group-contracts";
 
 const ownerId = "comparison-fixture-owner";
 

@@ -126,7 +126,9 @@ const featuresConfigObjectSchema = z.strictObject({
   parallelResponses: z
     .boolean()
     .default(true)
-    .describe("Send one message to multiple models simultaneously"),
+    .describe(
+      "Show multi-response selection when Parallel Responses is installed"
+    ),
 });
 
 const FEATURES_DEFAULTS = {
@@ -300,7 +302,6 @@ export {
   configDescriptionSchema,
   configSchema,
   defineConfig,
-  FEATURES_DEFAULTS,
   featuresConfigObjectSchema,
   featuresConfigSchema,
 };

@@ -33,7 +33,6 @@ it("uses external defaults and every environment group with --yes", () => {
     feedback: false,
     mcp: false,
     projects: false,
-    parallelResponses: true,
   };
   const input = {
     auth: { github: false, google: false, vercel: false },

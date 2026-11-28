@@ -128,7 +128,7 @@ npm run dev
 
 `create --from-git` preserves the cloned repository's configuration, dependencies, and installed source. Combining this option with feature-selection flags causes the command to exit before cloning. Follow the cloned repository's setup instructions; use `chat-js add` for subsequent tool installations. Fresh scaffolds assemble the selected features. Direct shadcn installations require `chat-js sync` afterward.
 
-Installations determine which tools, document bundles and optional implementations exist. `chat.config.ts` keeps models, attachment size/type parameters, permissions, follow-up suggestions and parallel responses. It does not duplicate installed presence with feature flags. The maintained demo includes uploads and MCP. Agent observability uses EVE instrumentation selected in the builder’s Agent tab.
+Installations determine which tools, document bundles and optional implementations exist. To include [Parallel Responses](/plugins/parallel-responses), pass `--plugin parallel-responses`. `chat.config.ts` keeps runtime settings such as model defaults and attachment size limits. It does not duplicate installed presence with feature flags. The maintained demo includes uploads and MCP. Agent observability uses EVE instrumentation selected in the builder’s Agent tab.
 
 ```bash
 npx chat-js@beta create my-chat-app --yes --attachments --storage-provider vercel-blob --sandbox-provider vercel --mcp

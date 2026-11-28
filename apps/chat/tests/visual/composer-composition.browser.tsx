@@ -12,14 +12,6 @@ const send = vi.fn<() => Promise<void>>();
 const retry = vi.fn<() => void>();
 const changeDraft = vi.fn<(value: string) => void>();
 
-// The presentation seams must work without a saved creation request or an account runtime.
-// A picker supplied by a caller does not mount the default model provider.
-vi.mock("@/components/eve/eve-model-picker", () => ({
-  EveModelPicker: () => {
-    throw new Error("Custom picker was replaced by the default picker");
-  },
-}));
-
 test("custom composer selection inherits locks and submission owns recovery", async () => {
   const fixture = await mount(
     <main className="mx-auto max-w-3xl space-y-6 p-6">

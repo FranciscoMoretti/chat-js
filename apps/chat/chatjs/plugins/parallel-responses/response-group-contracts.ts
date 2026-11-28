@@ -1,0 +1,36 @@
+import { z } from "zod";
+
+const candidate = z.object({ modelId: z.string(), operationId: z.uuid() });
+const savedCandidate = z.object({
+  modelId: z.string(),
+  operationId: z.string(),
+  rejection: z
+    .object({ error: z.string(), code: z.string().optional() })
+    .optional(),
+});
+export type SavedResponseCandidate = z.infer<typeof savedCandidate>;
+export const parallelResponseDetails = z.object({
+  kind: z.literal("parallel-responses"),
+  candidates: z.array(savedCandidate).nullable(),
+});
+
+export const eveResponseGroupResult = z.object({
+  candidates: z.array(
+    z.discriminatedUnion("state", [
+      candidate.extend({
+        branchId: z.uuid(),
+        sessionId: z.string().min(1),
+        state: z.literal("bound"),
+      }),
+      candidate.extend({ state: z.literal("unresolved") }),
+      candidate.extend({ state: z.literal("waiting") }),
+      candidate.extend({
+        code: z.string().optional(),
+        error: z.string(),
+        state: z.literal("rejected"),
+      }),
+    ])
+  ),
+  id: z.uuid(),
+});
+export type EveResponseGroupResult = z.infer<typeof eveResponseGroupResult>;

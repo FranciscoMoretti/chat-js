@@ -13,7 +13,14 @@ import type { Answer, SessionView } from "eve/events";
 import { useEveDeliveryReceipt } from "./use-eve-delivery-receipt";
 
 import { ChatSuggestions, MessageResponses } from "@/components/chat-slots";
-import { ParallelResponseModelPicker } from "@/components/parallel-responses/model-picker";
+import { submitTurn } from "@/chatjs/generated/installed-submit-turn";
+import { TurnModelPicker } from "@/integrations/chat/model-picker";
+import {
+  selectedModelIds,
+  PendingResponseCards,
+  editSelection,
+} from "@/chatjs/generated/installed-turn-models";
+import { useTurnModels } from "./use-turn-models";
 
 import { withTaskCleanup } from "@/components/task-cleanup";
 
@@ -21,16 +28,12 @@ import { hasText } from "@/components/text-value";
 
 import type { useEveAgent } from "eve/react";
 import type { JSX as ReactJSX, ReactNode } from "react";
-import React, { useState } from "react";
+import React from "react";
 
 import { AttachmentList } from "@/components/attachment-list";
 import { Button } from "@/components/ui/button";
 import { MessageScrollerItem } from "@/components/ui/message-scroller";
-import type { SelectedModelValue, UiToolName } from "@/lib/ai/types";
-import {
-  expandSelectedModelValue,
-  getPrimarySelectedModelId,
-} from "@/lib/ai/types";
+import type { UiToolName } from "@/lib/ai/types";
 import { isEveAdmissionBusy } from "@/lib/eve/admission-retry";
 import { isEveCommandRejection } from "@/lib/eve/command-rejection";
 import type { DraftAttachment } from "@/lib/eve/draft";
@@ -40,19 +43,15 @@ import type {
   LogicalChatSnapshot,
   NativeChatAgent,
 } from "@/lib/eve/logical-chat";
-import { logicalResponseSlots } from "@/lib/eve/logical-response-slots";
 import type { ActivePendingEveMessage } from "@/lib/eve/message-delivery";
 import { EVE_MESSAGE_OPERATION_HEADER } from "@/lib/eve/message-delivery";
 import type { ReadonlyEveMessage } from "@/lib/eve/readonly-message-types";
 import {
   activeResponseModel,
   responseModelReferences,
+  selectableResponseModel,
 } from "@/lib/eve/response-model";
 import { sendCommand } from "@/lib/eve/send-command";
-import {
-  useDefaultModel,
-  useModelChange,
-} from "@/providers/default-model-provider";
 
 import { ChatConversationScreen } from "../chat/chat-conversation-screen";
 import { ChatMessageEditor } from "../chat/chat-message-editor";
@@ -62,10 +61,6 @@ import { EveForkRecovery } from "./eve-fork-recovery";
 import { EveInitialMessage } from "./eve-initial-message";
 import { useLogicalChat } from "./eve-logical-context";
 import { EveLogicalVersions } from "./eve-logical-navigation";
-import {
-  EveOptimisticResponseGroup,
-  shouldAppendEveOptimisticResponseGroup,
-} from "./eve-optimistic-response-group";
 import { useEveAttachments } from "./use-eve-attachments";
 import { useEveComposerDraft } from "./use-eve-composer-draft";
 import { useEveFork } from "./use-eve-fork";
@@ -201,27 +196,20 @@ const useConversationInput = (
   branchId: string,
   draftScopeId?: string
 ) => {
-  const changeModel = useModelChange();
-  const [selection, setSelection] = useState<SelectedModelValue>();
-  const selectedModel = useDefaultModel();
+  const models = useTurnModels(selectedModelIds);
   const composerDraft = useEveComposerDraft(ownerId, draftScopeId ?? branchId);
   const files = useEveAttachments(composerDraft);
-  const fork = useEveFork(
-    ownerId,
-    branchId,
-    (message, selectedTool, clearComposer) => {
-      const sent = restoreDraft(message);
-      if (
-        clearComposer &&
-        sameComposerDraft(composerDraft, sent) &&
-        composerDraft.selectedTool === (selectedTool ?? null)
-      ) {
-        composerDraft.setText("");
-        files.setAttachments([]);
-        composerDraft.setSelectedTool(null);
-      }
+  const fork = useEveFork(ownerId, branchId, (message, selectedTool) => {
+    const sent = restoreDraft(message);
+    if (
+      sameComposerDraft(composerDraft, sent) &&
+      composerDraft.selectedTool === (selectedTool ?? null)
+    ) {
+      composerDraft.setText("");
+      files.setAttachments([]);
+      composerDraft.setSelectedTool(null);
     }
-  );
+  });
   const comparison =
     fork.pending && "modelIds" in fork.pending ? fork.pending : undefined;
 
@@ -230,17 +218,7 @@ const useConversationInput = (
     composerDraft,
     files,
     fork,
-    modelIds: expandSelectedModelValue(selection ?? selectedModel),
-    modelSelection: {
-      onChange: async (value: SelectedModelValue) => {
-        setSelection(value);
-        const primary = getPrimarySelectedModelId(value);
-        if (typeof primary === "string" && primary !== "") {
-          await changeModel(primary);
-        }
-      },
-      value: selection ?? selectedModel,
-    },
+    ...models,
   };
 };
 
@@ -369,10 +347,8 @@ const EveConversationEditor = ({
             selectedTool: fork.selectedTool,
             onToolChange: handleEditToolChange,
           }}
-          modelIds={expandSelectedModelValue(fork.modelSelection.value)}
-          modelPicker={
-            <ParallelResponseModelPicker modelSelection={fork.modelSelection} />
-          }
+          modelIds={selectedModelIds(fork.modelSelection.value)}
+          modelPicker={<TurnModelPicker {...fork.modelSelection} />}
           onDraftChange={handleEditDraft}
           onSubmit={onSubmit}
         />
@@ -583,9 +559,9 @@ const EveConversationComposer = ({
         visibleModelId
       )}
       modelPicker={
-        <ParallelResponseModelPicker
+        <TurnModelPicker
           disabled={Boolean(pendingMessage)}
-          modelSelection={modelSelection}
+          {...modelSelection}
           retainedModelId={visibleModelId}
           retainedModelIds={comparison?.modelIds}
         />
@@ -596,6 +572,27 @@ const EveConversationComposer = ({
       readOnly={Boolean(comparison)}
       stopDisabled={cancelPending || status === "resuming"}
     />
+  );
+};
+
+const PendingFork = ({
+  operation,
+}: {
+  readonly operation: ReturnType<typeof useConversationInput>["comparison"];
+}): React.JSX.Element | null => {
+  if (!operation || operation.forkKind === "edit") {
+    return null;
+  }
+  return (
+    <MessageScrollerItem
+      messageId={`comparison:${operation.operationId}`}
+      scrollAnchor
+    >
+      <EveInitialMessage
+        message={operation.message}
+        responses={<PendingResponseCards operation={operation} />}
+      />
+    </MessageScrollerItem>
   );
 };
 
@@ -619,6 +616,7 @@ const EveConversation = ({
   const [, startEventAction] = React.useTransition();
   const input = useConversationInput(ownerId, branchId, draftScopeId);
   const { fork, composerDraft, files, comparison, modelIds } = input;
+  const handleContinuationModelChange = input.setTurnSelection;
   const delivery = useEveMessageDelivery(sessionId);
   const pendingMessage = delivery.pending;
   const { controller, snapshot } = useLogicalChat();
@@ -659,20 +657,8 @@ const EveConversation = ({
   const activeModelId = activeResponseModel(agent.view, responseModels);
   const modelForMessage = (
     message: Readonly<Pick<(typeof messages)[number], "metadata">>
-  ): string | undefined => {
-    const reference = hasText(message.metadata?.turnId)
-      ? responseModels.get(message.metadata.turnId)
-      : message.metadata?.modelId;
-    const separator = reference?.indexOf("/") ?? -1;
-    if (
-      hasText(reference) &&
-      separator > 0 &&
-      separator < reference.length - 1
-    ) {
-      return reference;
-    }
-    return undefined;
-  };
+  ): string | undefined =>
+    selectableResponseModel(responseModels, message.metadata);
   const busy = isExecutionBusy(agent.status);
   const { hasApproval, inputDisabled, turnOpen } = interactionControls(
     agent,
@@ -769,28 +755,47 @@ const EveConversation = ({
       throw error;
     }
   };
-  const submitMessage = async (
+  const submitDraft = async (
     message: string,
     attachments: readonly Readonly<DraftAttachment>[],
-    modelId: string,
     clearComposer: boolean,
-    selectedTool?: UiToolName,
-    turnPolicy?: ActivePendingEveMessage["turnPolicy"]
+    steer = false
   ): Promise<void> => {
-    controller.selectBranch(branchId);
-    const pending = delivery.begin({
-      attachments,
-      message: message.trim(),
-      modelId,
-      selectedTool,
-      turnPolicy,
-    });
-    if (clearComposer) {
-      setDraft("");
-      files.setAttachments([]);
-      composerDraft.setSelectedTool(null);
+    const selectedTool = composerDraft.selectedTool ?? undefined;
+    const sendToSession = async (
+      modelId: string,
+      turnPolicy?: ActivePendingEveMessage["turnPolicy"]
+    ): Promise<void> => {
+      controller.selectBranch(branchId);
+      const pending = delivery.begin({
+        attachments,
+        message: message.trim(),
+        modelId,
+        selectedTool,
+        turnPolicy,
+      });
+      if (clearComposer) {
+        setDraft("");
+        files.setAttachments([]);
+        composerDraft.setSelectedTool(null);
+      }
+      await sendPendingMessage(pending);
+    };
+    if (steer) {
+      await sendToSession(activeModelId ?? modelIds[0], "steer");
+      return;
     }
-    await sendPendingMessage(pending);
+    await submitTurn(modelIds, {
+      sendToSession,
+      forkFromHere: async (ids) => {
+        await fork.fromHere(
+          draftMessage(message, attachments),
+          ids,
+          selectedTool,
+          clearComposer
+        );
+      },
+    });
   };
   const cancelExecution = async (executionId: string): Promise<void> => {
     const execution = controller.getSnapshot().agents.get(executionId);
@@ -881,6 +886,7 @@ const EveConversation = ({
         ),
         renderResponses: (message): React.JSX.Element => (
           <MessageResponses
+            onModelChange={handleContinuationModelChange}
             branchId={branchId}
             messageId={message.id}
             disabled={actionLocks.navigation}
@@ -898,16 +904,12 @@ const EveConversation = ({
             .slice(0, nextUser === -1 ? following.length : nextUser)
             .find((candidate) => candidate.role === "assistant");
           const logicalId = controller.logicalId(branchId, message.id);
-          const group = hasText(logicalId)
-            ? logicalResponseSlots(snapshot, logicalId)
+          const selection = hasText(logicalId)
+            ? editSelection(snapshot, logicalId)
             : undefined;
-          const groupModels: Record<string, number> = {};
-          for (const slot of group?.slots ?? []) {
-            groupModels[slot.modelId] = (groupModels[slot.modelId] ?? 0) + 1;
-          }
           const completion = fork.begin(message, undefined, {
             events: agent.events,
-            modelSelection: group ? groupModels : undefined,
+            modelSelection: selection,
             response:
               response && hasText(modelForMessage(response))
                 ? response
@@ -932,20 +934,7 @@ const EveConversation = ({
             disabled={actionLocks.transcript}
             onSelect={(suggestion) => {
               void run(async () => {
-                await (modelIds.length > 1
-                  ? fork.compare(
-                      draftMessage(suggestion, []),
-                      modelIds,
-                      composerDraft.selectedTool ?? undefined,
-                      false
-                    )
-                  : submitMessage(
-                      suggestion,
-                      [],
-                      modelIds[0],
-                      false,
-                      composerDraft.selectedTool ?? undefined
-                    ));
+                await submitDraft(suggestion, [], false);
               });
             }}
           />
@@ -966,17 +955,7 @@ const EveConversation = ({
           </MessageScrollerItem>
         )
       }
-      trailing={
-        comparison &&
-        shouldAppendEveOptimisticResponseGroup(comparison) && (
-          <MessageScrollerItem
-            messageId={`comparison:${comparison.operationId}`}
-            scrollAnchor
-          >
-            <EveOptimisticResponseGroup operation={comparison} />
-          </MessageScrollerItem>
-        )
-      }
+      trailing={<PendingFork operation={comparison} />}
       notices={
         <>
           <EveForkRecovery fork={fork} showError={!hasText(editingMessageId)} />
@@ -1031,20 +1010,7 @@ const EveConversation = ({
 
           onSubmit={() => {
             void run(async () => {
-              await (!steering && modelIds.length > 1
-                ? fork.compare(
-                    draftMessage(draft, files.attachments),
-                    modelIds,
-                    composerDraft.selectedTool ?? undefined
-                  )
-                : submitMessage(
-                    draft,
-                    files.attachments,
-                    steering ? (activeModelId ?? modelIds[0]) : modelIds[0],
-                    true,
-                    composerDraft.selectedTool ?? undefined,
-                    steering ? "steer" : undefined
-                  ));
+              await submitDraft(draft, files.attachments, true, steering);
             });
           }}
         />

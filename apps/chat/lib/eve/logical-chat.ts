@@ -1,3 +1,4 @@
+import type { ChatBranchGroup } from "@/chatjs/core/chat/contracts";
 import { LogicalCommands } from "./logical-commands";
 import { isNonEmptyString } from "@/lib/is-non-empty-string";
 
@@ -12,8 +13,6 @@ interface EveBranchReference {
   forkTurnId: string | null;
   id: string;
   parentBranchId: string | null;
-  responseGroupId?: string | null;
-  responseGroupIndex?: number | null;
 }
 
 type NativeChatAgent = UseEveAgentReturn;
@@ -23,16 +22,6 @@ type LogicalBranch = EveBranchReference & {
   readonly createdAt: Date | string;
   readonly initialModelId: string | null;
   readonly operationId: string;
-  readonly groupCandidates?:
-    | readonly {
-        readonly modelId: string;
-        readonly operationId: string;
-        readonly rejection?: {
-          readonly error: string;
-          readonly code?: string;
-        };
-      }[]
-    | null;
 };
 
 interface LogicalNode {
@@ -42,6 +31,7 @@ interface LogicalNode {
   message: EveMessage;
 }
 interface LogicalChatSnapshot {
+  promptGroups: readonly ChatBranchGroup[];
   readyBranches: ReadonlySet<string>;
   chatId: string;
   branchId: string;
@@ -54,6 +44,9 @@ interface LogicalChatSnapshot {
   agents: ReadonlyMap<string, NativeChatAgent>;
   error?: string;
 }
+
+export const sharedPromptMessageId = (groupId: string): string =>
+  `group:${groupId}:user`;
 
 const logicalNativeId = (sessionId: string, message: EveMessage): string =>
   JSON.stringify([sessionId, message.id]);
@@ -137,6 +130,7 @@ const inheritedHistoryId = (
 
 const projectBranch = (
   branch: LogicalBranch,
+  promptGroupId: string | undefined,
   agent: NativeChatAgent,
   nodes: Map<string, LogicalNode>,
   aliases: Map<string, string>,
@@ -163,8 +157,8 @@ const projectBranch = (
     const id =
       inheritedId ??
       replacementId ??
-      (firstUser && isNonEmptyString(branch.responseGroupId)
-        ? `group:${branch.responseGroupId}:user`
+      (firstUser && isNonEmptyString(promptGroupId)
+        ? sharedPromptMessageId(promptGroupId)
         : logicalNativeId(branch.sessionId ?? branch.id, message));
     if (!nodes.has(id)) {
       nodes.set(id, {
@@ -181,7 +175,7 @@ const projectBranch = (
   }
   const needsResponse =
     branch.forkKind === "regenerate" ||
-    (Boolean(branch.responseGroupId) && branch.forkKind !== "edit");
+    (Boolean(promptGroupId) && branch.forkKind !== "edit");
   if (needsResponse) {
     return {
       hasLocalMessage: messages
@@ -201,6 +195,8 @@ const projectBranch = (
 class LogicalChat {
   public readonly commands = new LogicalCommands();
   private branches: LogicalBranch[] = [];
+  private promptGroups: readonly ChatBranchGroup[] = [];
+  private groupByOperation = new Map<string, ChatBranchGroup>();
   private readonly agents = new Map<string, NativeChatAgent>();
   private readonly listeners = new Set<() => void>();
   private selected: string;
@@ -208,7 +204,7 @@ class LogicalChat {
   private follow = true;
   private visible = false;
   private hydrateLatest: boolean;
-  private pendingSelection: string | undefined;
+  private pendingSelection?: { branchId: string; onSelected?: () => void };
   private snapshot: LogicalChatSnapshot;
 
   public readonly chatId: string;
@@ -221,6 +217,7 @@ class LogicalChat {
     this.chatId = chatId;
     this.selected = initialBranchId;
     this.snapshot = {
+      promptGroups: this.promptGroups,
       agents: new Map(),
       aliases: new Map(),
       branches: [],
@@ -242,15 +239,39 @@ class LogicalChat {
     };
   };
 
-  public setBranches(branches: readonly LogicalBranch[]): void {
-    this.branches = branches.toSorted(
-      (leftBranch, rightBranch) =>
-        new Date(leftBranch.createdAt).getTime() -
-          new Date(rightBranch.createdAt).getTime() ||
-        (leftBranch.responseGroupIndex ?? 0) -
-          (rightBranch.responseGroupIndex ?? 0) ||
-        leftBranch.id.localeCompare(rightBranch.id)
+  public setBranches(
+    branches: readonly LogicalBranch[],
+    promptGroups: readonly ChatBranchGroup[] = []
+  ): void {
+    this.promptGroups = promptGroups;
+    this.groupByOperation = new Map(
+      promptGroups.flatMap((group) =>
+        group.operationIds.map((id) => [id, group] as const)
+      )
     );
+    const byOperation = new Map(
+      branches.map((branch) => [branch.operationId, branch])
+    );
+    const emitted = new Set<string>();
+    // Keep unrelated branches chronological and insert siblings in their prompt's declared order.
+    this.branches = branches
+      .toSorted(
+        (left, right) =>
+          new Date(left.createdAt).getTime() -
+            new Date(right.createdAt).getTime() ||
+          left.id.localeCompare(right.id)
+      )
+      .flatMap((branch) => {
+        const group = this.groupByOperation.get(branch.operationId);
+        if (!group) {
+          return [branch];
+        }
+        if (emitted.has(group.id)) {
+          return [];
+        }
+        emitted.add(group.id);
+        return group.operationIds.flatMap((id) => byOperation.get(id) ?? []);
+      });
     this.publish();
   }
 
@@ -281,21 +302,10 @@ class LogicalChat {
     this.pendingSelection = undefined;
   }
 
-  public selectBranch(branchId: string): void {
+  public selectBranch(branchId: string, onSelected?: () => void): void {
     this.hydrateLatest = false;
     this.follow = true;
-    const path = this.snapshot.paths.get(branchId);
-    if (
-      path !== undefined &&
-      path.length > 0 &&
-      this.snapshot.readyBranches.has(branchId)
-    ) {
-      this.pendingSelection = undefined;
-      this.selected = branchId;
-      this.cursor = path.at(-1) ?? null;
-    } else {
-      this.pendingSelection = branchId;
-    }
+    this.pendingSelection = { branchId, onSelected };
     this.publish();
   }
 
@@ -365,21 +375,19 @@ class LogicalChat {
   private selectReadyBranch(
     paths: ReadonlyMap<string, readonly string[]>,
     readyBranches: ReadonlySet<string>
-  ): void {
-    const { pendingSelection } = this;
-    const pendingPath = isNonEmptyString(pendingSelection)
-      ? paths.get(pendingSelection)
-      : pendingSelection;
-    if (
-      pendingPath !== undefined &&
-      pendingPath.length > 0 &&
-      isNonEmptyString(this.pendingSelection) &&
-      readyBranches.has(this.pendingSelection)
-    ) {
-      this.selected = this.pendingSelection;
-      this.pendingSelection = undefined;
-      this.cursor = pendingPath.at(-1) ?? null;
+  ): (() => void) | undefined {
+    const pending = this.pendingSelection;
+    if (!pending || !readyBranches.has(pending.branchId)) {
+      return undefined;
     }
+    const path = paths.get(pending.branchId);
+    if (path === undefined || path.length === 0) {
+      return undefined;
+    }
+    this.selected = pending.branchId;
+    this.pendingSelection = undefined;
+    this.cursor = path.at(-1) ?? null;
+    return pending.onSelected;
   }
 
   private followSelectedBranch(
@@ -418,6 +426,7 @@ class LogicalChat {
           const stagedAliases = new Map(aliases);
           const projection = projectBranch(
             branch,
+            this.groupByOperation.get(branch.operationId)?.id,
             agent,
             stagedNodes,
             stagedAliases,
@@ -453,9 +462,10 @@ class LogicalChat {
       children.set(node.parentId, siblings);
     }
     this.selectHydratedBranch(paths);
-    this.selectReadyBranch(paths, readyBranches);
+    const onSelected = this.selectReadyBranch(paths, readyBranches);
     this.followSelectedBranch(paths);
     this.snapshot = {
+      promptGroups: this.promptGroups,
       agents: new Map(this.agents),
       aliases,
       branches: this.branches,
@@ -468,6 +478,7 @@ class LogicalChat {
       paths,
       readyBranches,
     };
+    onSelected?.();
     for (const listener of this.listeners) {
       listener();
     }

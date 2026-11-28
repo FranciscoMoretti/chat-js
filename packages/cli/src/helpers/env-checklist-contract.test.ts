@@ -8,7 +8,6 @@ const unselectedFeatures = {
   feedback: false,
   mcp: false,
   projects: false,
-  parallelResponses: false,
 } as const;
 
 test("preserves auth insertion order and skips unused requirement-description getters", () => {

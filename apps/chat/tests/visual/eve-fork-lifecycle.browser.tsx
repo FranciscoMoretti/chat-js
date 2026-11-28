@@ -561,7 +561,7 @@ describe("useEveFork", () => {
     try {
       let request: Promise<void> | undefined;
       act(() => {
-        request = required(fork).compare("Compare this request", [
+        request = required(fork).fromHere("Compare this request", [
           "openai/gpt-4.1",
           "anthropic/claude-sonnet-4",
         ]);
@@ -617,7 +617,7 @@ describe("useEveFork", () => {
 
     try {
       await act(async () => {
-        await required(fork).compare("Keep the operation", [
+        await required(fork).fromHere("Keep the operation", [
           "openai/gpt-4.1",
           "anthropic/claude-sonnet-4",
         ]);

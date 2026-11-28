@@ -10,6 +10,7 @@ export const appPluginGroups = [
     title: "Responses",
     ids: [
       "feedback",
+      "parallel-responses",
       "followup-suggestions",
       "model-preferences",
       "streamdown-math",

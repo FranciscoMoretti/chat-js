@@ -6,6 +6,7 @@ export const installedDatabaseSchemas: string[] = [
   "./chatjs/plugins/guest-chat/guest-schema.ts",
   "./chatjs/plugins/mcp/db/mcp-schema.ts",
   "./chatjs/plugins/model-preferences/model-preferences-schema.ts",
+  "./chatjs/plugins/parallel-responses/response-group-schema.ts",
   "./chatjs/plugins/projects/db/project-schema.ts",
   "./chatjs/plugins/search/search-schema.ts",
 ];

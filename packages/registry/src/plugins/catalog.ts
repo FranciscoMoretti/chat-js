@@ -6,6 +6,7 @@ import { imageViewerItem } from "./image-viewer/manifest";
 import { guestChatItem } from "./guest-chat/manifest";
 import { desktopItem } from "./desktop/manifest";
 import { creditsItem } from "./credits/manifest";
+import { parallelResponsesItem } from "./parallel-responses/manifest";
 import { modelPreferencesItem } from "./model-preferences/manifest";
 import { sharingItem } from "./sharing/manifest";
 import { aiTitlesItem } from "./ai-titles/manifest";
@@ -30,6 +31,7 @@ export const pluginItems = [
   creditsItem,
   guestChatItem,
   modelPreferencesItem,
+  parallelResponsesItem,
   aiTitlesItem,
   sharingItem,
   mcpItem,

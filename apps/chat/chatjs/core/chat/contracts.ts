@@ -20,7 +20,33 @@ export interface ChatCreatedContext {
   readonly message: ReadonlyEveMessageInput;
 }
 
+/** Presentation metadata for branches that share an authored message. */
+export interface ChatBranchGroup {
+  readonly id: string;
+  /** Branch creation operations in prompt display order. */
+  readonly operationIds: readonly string[];
+  /** Serializable details interpreted by the integration that supplied the group. */
+  readonly details?: unknown;
+}
+
 export interface ChatServerIntegration {
+  /** Runs under the owner lock, before reservation/replay. A retired operation may reject. */
+  readonly resolveCreationChatId?: (
+    tx: Readonly<Pick<typeof db, "select">>,
+    ownerId: string,
+    operationId: string
+  ) => Promise<string | undefined>;
+  /** May repeat at finalization; changes must commit with the caller's deletion fence. */
+  readonly onFenceConversations?: (
+    tx: Readonly<Pick<typeof db, "update">>,
+    ownerId: string,
+    members: readonly { readonly id: string; readonly operationId: string }[]
+  ) => Promise<void>;
+  /** Prompt groups for an already-authorized list of branch operations. */
+  readonly branchGroups?: (
+    ownerId: string,
+    operationIds: readonly string[]
+  ) => Promise<readonly ChatBranchGroup[]>;
   /** Grants read access beyond ownership. Core always requires bound conversations. */
   readonly publicReadFilter?: () => SQL;
   /** After a root creation response, outside its transaction. May repeat on recovery. */
@@ -75,6 +101,9 @@ export interface ChatMessageProps {
   readonly branchId: string;
   readonly messageId: string;
   readonly disabled: boolean;
+}
+export interface ChatResponseProps extends ChatMessageProps {
+  readonly onModelChange: (modelId: string) => void | Promise<void>;
 }
 export interface ChatSuggestionsProps {
   readonly sessionId: string;

@@ -42,6 +42,7 @@ const installationSelectionSchema = z
     auth: authSelectionSchema.optional(),
     plugins: z.array(registryAddressSchema).default([]),
     gateway: registryAddressSchema.optional(),
+    modelPicker: z.literal("none").optional(),
     storage: storageSelectionSchema.optional(),
     sandbox: registryAddressSchema.optional(),
     tools: z.array(registryAddressSchema).default([]),
@@ -75,6 +76,32 @@ const installationSelectionSchema = z
 
 type InstallationSelection = z.infer<typeof installationSelectionSchema>;
 
+export const composerPickerChoice = (
+  selection: Readonly<InstallationSelection>
+) => {
+  if (selection.modelPicker === "none") {
+    return "none";
+  }
+  return selection.plugins.includes("parallel-responses")
+    ? "parallel"
+    : "single";
+};
+
+export const withComposerPickerChoice = (
+  selection: Readonly<InstallationSelection>,
+  choice: ReturnType<typeof composerPickerChoice>
+): InstallationSelection => {
+  const plugins = selection.plugins.filter(
+    (id) => id !== "parallel-responses" && id !== "@chatjs/parallel-responses"
+  );
+  return {
+    ...selection,
+    modelPicker: choice === "none" ? "none" : undefined,
+    plugins:
+      choice === "parallel" ? [...plugins, "parallel-responses"] : plugins,
+  };
+};
+
 // The reference app demonstrates file artifacts with optional viewers.
 const demoInstallation = installationSelectionSchema.parse({
   plugins: [
@@ -86,6 +113,7 @@ const demoInstallation = installationSelectionSchema.parse({
     "desktop",
     "projects",
     "feedback",
+    "parallel-responses",
     "followup-suggestions",
     "search",
     "credits",

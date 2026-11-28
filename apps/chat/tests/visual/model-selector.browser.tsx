@@ -1,3 +1,4 @@
+import { TurnModelPicker } from "@/components/eve/turn-model-picker";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TRPCClientError, createTRPCClient } from "@trpc/client";
 import type { OperationResultObserver, TRPCLink } from "@trpc/client";
@@ -8,7 +9,7 @@ import React, { act, useState } from "react";
 import { expect, test, vi } from "vitest";
 import { page } from "vitest/browser";
 
-import { ModelSelector } from "@/components/model-selector";
+import { ParallelResponseModelPicker } from "@/chatjs/plugins/parallel-responses/model-picker";
 import type { AppModelDefinition } from "@/lib/ai/app-models";
 import type { SelectedModelValue } from "@/lib/ai/types";
 import type { Session } from "@/lib/auth";
@@ -91,17 +92,14 @@ const Controller = ({
   readonly initialSelection: SelectedModelValue;
   readonly allowMultiple?: boolean;
 }): React.JSX.Element => {
+  const Picker =
+    allowMultiple === true ? ParallelResponseModelPicker : TurnModelPicker;
   const [selection, setSelection] =
     useState<SelectedModelValue>(initialSelection);
   return (
     <section>
       <output data-testid="selection">{JSON.stringify(selection)}</output>
-      <ModelSelector
-        allowMultiple={allowMultiple}
-        selectedModelId="openai/gpt-4.1"
-        selectedModelSelection={selection}
-        onModelSelectionChangeAction={setSelection}
-      />
+      <Picker value={selection} onChange={setSelection} />
     </section>
   );
 };
@@ -258,3 +256,8 @@ test("model selection defaults to a single model", async () => {
     queryClient.clear();
   }
 });
+
+vi.mock("@/providers/default-model-provider", () => ({
+  useDefaultModel: () => "openai/gpt-4.1",
+  useModelChange: () => vi.fn(),
+}));

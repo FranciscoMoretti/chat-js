@@ -99,10 +99,8 @@ export const ModelToolbarVisualFixture = (): React.JSX.Element => (
           data.
         </p>
         <ModelSelector
-          allowMultiple
           onModelSelectionChangeAction={ignoreModelSelectionChange}
           selectedModelId={primaryFixtureModel.id}
-          selectedModelSelection={primaryFixtureModel.id}
         />
       </section>
     </main>

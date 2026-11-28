@@ -1,10 +1,6 @@
+import { eveResponseGroup } from "@/chatjs/plugins/parallel-responses/response-group-schema";
 import { createEveTestSession } from "./eve-native-session.fixture";
-import {
-  eveDispatch,
-  eveConversation,
-  eveResponseGroup,
-  user,
-} from "../lib/db/schema";
+import { eveDispatch, eveConversation, user } from "../lib/db/schema";
 import { eq } from "drizzle-orm";
 import { afterAll, expect, test, vi } from "vitest";
 
@@ -22,11 +18,11 @@ import {
   getEveResponseGroupForConversation,
   recordEveResponseGroupRejection,
   reserveEveResponseGroup,
-} from "../lib/db/eve-response-groups";
+} from "@/chatjs/plugins/parallel-responses/response-group-queries";
 import { env } from "../lib/env";
 import { createEveConversationOperation } from "../lib/eve/create-conversation-operation";
 import { eveMessageTitle } from "../lib/eve/message-input";
-import { createEveResponseGroup } from "../lib/eve/response-group";
+import { createEveResponseGroup } from "@/chatjs/plugins/parallel-responses/response-group";
 import type { ReadonlyNativeSurface } from "../lib/readonly-native-surface";
 import { assertEveTestDatabase } from "./eve-test-database";
 

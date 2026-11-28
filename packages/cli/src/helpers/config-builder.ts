@@ -228,7 +228,6 @@ const toConfigInput = (
   appPrefix: string;
   appUrl: string;
   authentication: Readonly<Record<AuthProvider, boolean>>;
-  features: { parallelResponses: boolean };
 } => ({
   ai: {
     gateway: input.gateway,
@@ -242,9 +241,6 @@ const toConfigInput = (
   appPrefix: input.appPrefix,
   appUrl: input.appUrl,
   authentication: input.auth,
-  features: {
-    parallelResponses: input.coreFeatures.parallelResponses,
-  },
 });
 
 export const buildConfigTs = (

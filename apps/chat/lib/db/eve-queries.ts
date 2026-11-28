@@ -22,12 +22,7 @@ import {
 } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
-import {
-  eveChat,
-  eveConversation,
-  eveDispatch,
-  eveResponseGroup,
-} from "@/lib/db/schema";
+import { eveChat, eveConversation, eveDispatch } from "@/lib/db/schema";
 import { CreationConflictError } from "./creation-conflict-error";
 import type { EveForkInput } from "@/lib/eve/contracts";
 import type { EveHistoryInput } from "@/lib/eve/history-input";
@@ -36,7 +31,7 @@ import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 import { initializeEveCurrentCopy } from "./eve-current-copy";
 import { referenceEveFiles } from "./eve-files";
-import { tombstoneEveResponseGroups } from "./eve-response-groups";
+import type { ChatBranchGroup } from "@/chatjs/core/chat/contracts";
 
 const FIRST_PARAMETER_INDEX = 0;
 const FIRST_RESULT_INDEX = 0;
@@ -67,6 +62,7 @@ type ConversationListItem = Pick<
 };
 interface ConversationBranchListing {
   branches: ConversationBranch[];
+  promptGroups: readonly ChatBranchGroup[];
   chatId: string;
   rootId: string;
 }
@@ -83,11 +79,7 @@ type ConversationBranch = Pick<
   | "operationId"
   | "parentBranchId"
   | "sessionId"
-> & {
-  groupCandidates: typeof eveResponseGroup.$inferSelect.candidates | null;
-  responseGroupId: string | null;
-  responseGroupIndex: number | null;
-};
+>;
 
 // Creation reservations remain readable for recovery; deleting transcripts do not.
 const visibleConversation = inArray(eveConversation.state, [
@@ -432,32 +424,12 @@ const getEveCreation = async (
   return row;
 };
 
-const assertResponseGroupCandidateAvailable = async (
-  tx: Readonly<Pick<CreationTransaction, "select">>,
-  ownerId: string,
-  operationId: string
-): Promise<void> => {
-  const [deletedGroup] = await tx
-    .select({ id: eveResponseGroup.id })
-    .from(eveResponseGroup)
-    .where(
-      and(
-        eq(eveResponseGroup.ownerId, ownerId),
-        eq(eveResponseGroup.deleted, true),
-        sql`${operationId}::uuid = ANY(${eveResponseGroup.candidateOperationIds})`
-      )
-    )
-    .limit(SINGLE_MATCH_LIMIT);
-  if (hasQueryRow(deletedGroup)) {
-    throw new CreationConflictError("This response group has been deleted.");
-  }
-};
-
 const resolveCreationChat = async (
   tx: CreationTransactionView,
   value: ReadonlyNativeSurface<
     Omit<typeof eveConversation.$inferInsert, "chatId" | "workspaceId">
   >,
+  creationChatId: string | undefined,
   fork?: EveForkInput
 ): Promise<{ chatId: string; source: ConversationRow | undefined }> => {
   const [source] = fork
@@ -479,21 +451,7 @@ const resolveCreationChat = async (
       404
     );
   }
-  const [initialGroup] = hasQueryRow(source)
-    ? []
-    : await tx
-        .select({ id: eveResponseGroup.id })
-        .from(eveResponseGroup)
-        .where(
-          and(
-            eq(eveResponseGroup.ownerId, value.ownerId),
-            eq(eveResponseGroup.deleted, false),
-            isNull(eveResponseGroup.sourceBranchId),
-            sql`${value.operationId}::uuid = ANY(${eveResponseGroup.candidateOperationIds})`
-          )
-        )
-        .limit(SINGLE_MATCH_LIMIT);
-  const chatId = source?.chatId ?? initialGroup?.id ?? crypto.randomUUID();
+  const chatId = source?.chatId ?? creationChatId ?? crypto.randomUUID();
   return { chatId, source };
 };
 
@@ -509,7 +467,7 @@ const reserveEveConversation = async (
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${value.ownerId}`}, 0))`
     );
-    await assertResponseGroupCandidateAvailable(
+    const creationChatId = await chat.resolveCreationChatId(
       tx,
       value.ownerId,
       value.operationId
@@ -527,7 +485,12 @@ const reserveEveConversation = async (
     if (hasQueryRow(existingReservation)) {
       return [];
     }
-    const { chatId, source } = await resolveCreationChat(tx, value, fork);
+    const { chatId, source } = await resolveCreationChat(
+      tx,
+      value,
+      creationChatId,
+      fork
+    );
     const workspaceId = await reserveConversationWorkspace(
       tx,
       value.ownerId,
@@ -668,7 +631,7 @@ const beginEveConversationDeletion = async (
           "Finish recovering conversation creation before deleting this conversation."
         );
       }
-      await tombstoneEveResponseGroups(tx, ownerId, family);
+      await chat.onFenceConversations(tx, ownerId, family);
       // Document writers hold this same lock through their commit. Once the fence
       // commits, later writers fail their bound-conversation check.
       for (const row of family) {
@@ -1078,26 +1041,13 @@ const listEveConversationBranches = async (
       forkKind: eveConversation.forkKind,
       forkMessageId: eveConversation.forkMessageId,
       forkTurnId: eveConversation.forkTurnId,
-      groupCandidates: eveResponseGroup.candidates,
       id: eveConversation.id,
       initialModelId: eveConversation.initialModelId,
       operationId: eveConversation.operationId,
       parentBranchId: eveConversation.parentBranchId,
-      responseGroupId: eveResponseGroup.id,
-      responseGroupIndex: sql<
-        number | null
-      >`array_position(${eveResponseGroup.candidateOperationIds}, ${eveConversation.operationId})`,
       sessionId: eveConversation.sessionId,
     })
     .from(eveConversation)
-    .leftJoin(
-      eveResponseGroup,
-      and(
-        eq(eveResponseGroup.ownerId, ownerId),
-        eq(eveResponseGroup.deleted, false),
-        sql`${eveConversation.operationId} = ANY(${eveResponseGroup.candidateOperationIds})`
-      )
-    )
     .where(
       and(
         eq(eveConversation.ownerId, ownerId),
@@ -1106,7 +1056,16 @@ const listEveConversationBranches = async (
       )
     )
     .orderBy(eveConversation.createdAt, eveConversation.id);
-  return { branches, chatId: conversation.chatId, rootId };
+  const groups = await chat.branchGroups(
+    ownerId,
+    branches.map((branch) => branch.operationId)
+  );
+  return {
+    branches,
+    promptGroups: groups,
+    chatId: conversation.chatId,
+    rootId,
+  };
 };
 
 /**

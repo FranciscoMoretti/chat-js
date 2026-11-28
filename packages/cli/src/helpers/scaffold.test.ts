@@ -82,7 +82,6 @@ describe("buildConfigTs", (): void => {
         feedback: false,
         mcp: false,
         projects: false,
-        parallelResponses: true,
       },
       gateway: "vercel",
     });
@@ -118,7 +117,6 @@ describe("buildConfigTs", (): void => {
         feedback: false,
         mcp: false,
         projects: false,
-        parallelResponses: true,
       },
       gateway: "openai-compatible",
     });

@@ -19,6 +19,7 @@ const selections = [
   "followup-suggestions",
   "search",
   "model-preferences",
+  "parallel-responses",
   "ai-titles",
   "sharing",
   "credits",
@@ -38,6 +39,7 @@ const pluginTables = [
   "EveChatProject",
   "EveVote",
   "EveFollowup",
+  "EveResponseGroup",
   "EveSearchText",
   "UserModelPreference",
 ];
@@ -49,6 +51,7 @@ const expectedTables: Record<(typeof selections)[number], readonly string[]> = {
   "followup-suggestions": ["EveFollowup"],
   search: ["EveSearchText"],
   "model-preferences": ["UserModelPreference"],
+  "parallel-responses": ["EveResponseGroup"],
   "ai-titles": [],
   sharing: [],
   credits: ["UserCredit"],
@@ -60,6 +63,30 @@ export const testChatPluginSelections = (
   root: string,
   cliEntry: string
 ): void => {
+  it("creates a default-model app with no picker", async () => {
+    const name = "hidden-model-picker";
+    const preset = encodeAppPreset({ ...baseSelection, modelPicker: "none" });
+    await run(root, [
+      "node",
+      cliEntry,
+      "create",
+      name,
+      "--yes",
+      "--app-preset",
+      preset,
+    ]);
+    const cwd = path.join(root, name);
+    await run(cwd, ["node", cliEntry, "sync"]);
+    const source = await readFile(
+      path.join(cwd, "integrations/chat/model-picker.ts"),
+      "utf-8"
+    );
+    expect(source).toContain("=> null");
+    expect(
+      existsSync(path.join(cwd, "app/api/agent-response-groups/route.ts"))
+    ).toBe(false);
+    await run(cwd, ["bun", "run", "test:types"]);
+  });
   it.each([...selections])(
     "chat plugins: %s installs and compiles independently",
     async (selection) => {
@@ -96,6 +123,55 @@ export const testChatPluginSelections = (
       expect(existsSync(path.join(cwd, "electron/package.json"))).toBe(
         selection === "desktop"
       );
+      for (const route of [
+        "chatjs/plugins/parallel-responses/model-picker.tsx",
+        "chatjs/plugins/parallel-responses/submit-turn.ts",
+        "chatjs/plugins/parallel-responses/response-group-input.ts",
+        "chatjs/plugins/parallel-responses/router.ts",
+      ]) {
+        expect(existsSync(path.join(cwd, route))).toBe(
+          selection === "parallel-responses"
+        );
+      }
+      expect(
+        existsSync(path.join(cwd, "lib/eve/response-group-input.ts"))
+      ).toBe(false);
+      expect(
+        await readFile(
+          path.join(cwd, "components/model-selector-view.tsx"),
+          "utf-8"
+        )
+      ).not.toContain("Use Multiple Models");
+      expect(
+        [
+          "app/api/agent-response-groups/route.ts",
+          "app/api/agent-response-groups/[id]/route.ts",
+        ].some((route) => existsSync(path.join(cwd, route)))
+      ).toBe(false);
+      const registrations = await Promise.all(
+        [
+          "installed-turn-models",
+          "installed-submit-turn",
+          "installed-creation",
+          "installed-routers",
+        ].map(
+          async (entry) =>
+            await readFile(
+              path.join(cwd, `chatjs/generated/${entry}.ts`),
+              "utf-8"
+            )
+        )
+      );
+      expect(
+        registrations.map((source) =>
+          source.includes("/plugins/parallel-responses/")
+        )
+      ).toEqual([
+        selection === "parallel-responses",
+        selection === "parallel-responses",
+        selection === "parallel-responses",
+        selection === "parallel-responses",
+      ]);
       const installedPackage = parsePackageJson(
         await readFile(path.join(cwd, "package.json"), "utf-8")
       );
@@ -219,6 +295,9 @@ process.env.OPENAI_API_KEY = "fixture-key";
 `
       );
       let lifecycleMethod = "onDeleteConversations";
+      if (selection === "parallel-responses") {
+        lifecycleMethod = "onFenceConversations";
+      }
       if (selection === "projects") {
         lifecycleMethod = "onCreate";
       }

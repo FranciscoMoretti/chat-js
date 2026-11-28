@@ -87,7 +87,8 @@ const resolveEveModel = async (requestedId?: string): Promise<SessionModel> => {
       model: getActiveGateway().createLanguageModel(model.apiModelId),
       modelId: model.selectedModelId,
     }),
-    modelContextWindowTokens: model.context_window,
+    modelContextWindowTokens:
+      model.context_window > 0 ? model.context_window : undefined,
     modelOptions: {
       providerOptions: serializedOptions.parse(getModelProviderOptions(model)),
     },

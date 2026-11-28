@@ -9,6 +9,7 @@ export const livePreviewPlugins = [
   "mcp",
   "sharing",
   "followup-suggestions",
+  "parallel-responses",
   "feedback",
   "projects",
   "credits",
@@ -20,6 +21,7 @@ export const livePreviewPlugins = [
 export const pluginPreviewLabel = (id: string, hasClient: boolean) => {
   if (
     id === "attachment-uploads" ||
+    id === "parallel-responses" ||
     id === "model-preferences" ||
     id === "ai-titles"
   ) {

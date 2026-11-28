@@ -7,7 +7,7 @@ import type { ReadonlyEveMessage } from "@/lib/eve/readonly-message-types";
 import { ChatComposer } from "../components/chat/chat-composer";
 import { ChatTranscript } from "../components/chat/chat-transcript";
 import { MessageSiblingsView } from "../components/message-siblings-view";
-import { ResponseChoiceCards } from "../components/response-choice-cards";
+import { ResponseChoiceCards } from "@/chatjs/plugins/parallel-responses/response-choice-cards";
 
 const messages: readonly ReadonlyEveMessage[] = [
   {

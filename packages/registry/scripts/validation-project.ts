@@ -1,7 +1,4 @@
-import {
-  AUTHENTICATION_DEFAULTS,
-  FEATURES_DEFAULTS,
-} from "../../../apps/chat/lib/config-schema";
+import { AUTHENTICATION_DEFAULTS } from "../../../apps/chat/lib/config-schema";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -68,7 +65,6 @@ export const renderValidationProject = async (
     projects: false,
     feedback: false,
     followupSuggestions: pluginsAtCreation.includes("followup-suggestions"),
-    parallelResponses: FEATURES_DEFAULTS.parallelResponses,
   };
   put(
     "chat.config.ts",

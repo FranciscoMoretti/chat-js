@@ -1,14 +1,14 @@
 import { beforeEach, expect, it, vi } from "vitest";
 
-import { createEveResponseGroup } from "./response-group";
-import { eveResponseGroupCandidates } from "./response-group-candidates";
+import { createEveResponseGroup } from "@/chatjs/plugins/parallel-responses/response-group";
+import { eveResponseGroupCandidates } from "@/chatjs/plugins/parallel-responses/response-group-candidates";
 import type { createEveConversationOperation } from "./create-conversation-operation";
 
 const mocks = vi.hoisted(() => ({
   create: vi.fn<typeof createEveConversationOperation>(),
   reserve: vi.fn(),
 }));
-vi.mock("../db/eve-response-groups", () => ({
+vi.mock("@/chatjs/plugins/parallel-responses/response-group-queries", () => ({
   recordEveResponseGroupRejection: vi.fn(),
   reserveEveResponseGroup: mocks.reserve,
 }));

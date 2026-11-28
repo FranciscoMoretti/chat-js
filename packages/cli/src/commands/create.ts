@@ -25,7 +25,6 @@ import {
 import { resolveStorage } from "#cli/registry/storage";
 import type { InstallationSelection } from "../../../registry/installation";
 import type { AuthProvider, CoreFeatureKey, PackageManager } from "#cli/types";
-import { FEATURES_DEFAULTS } from "../../../../apps/chat/lib/config-schema";
 import { configureSandboxProvider } from "#cli/helpers/sandbox-provider";
 import { resolveSandbox } from "#cli/registry/sandboxes";
 import { installPlan, plannedSourceTargets } from "#cli/utils/install-plan";
@@ -207,7 +206,6 @@ const prepareCreateSetup = async (
       followupSuggestions: plugins.has("followup-suggestions"),
       mcp: plugins.has("mcp"),
       projects: plugins.has("projects"),
-      parallelResponses: FEATURES_DEFAULTS.parallelResponses,
     },
     gateway: gatewaySelection.definition.id,
     gatewaySelection,
@@ -304,6 +302,12 @@ const writeConfiguration = async (
         gatewayDefaults: setup.gatewaySelection.definition.defaults,
       })
     );
+    if (setup.plan.selection.modelPicker === "none") {
+      await writeFile(
+        path.join(project.targetDir, "integrations/chat/model-picker.ts"),
+        'import type { TurnModelPickerProps } from "@/chatjs/core/chat/turn-model-picker";\n\nexport const TurnModelPicker = (_props: TurnModelPickerProps): null => null;\n'
+      );
+    }
     await writeAgentConfiguration(
       project.targetDir,
       setup.plan.selection.agent

@@ -16,8 +16,8 @@ type Outputs = inferRouterOutputs<AppRouter>;
 const voteInput = z.object({
   branchId: z.literal(sampleConversation.id),
   messageId: z.union([
-    z.literal(sampleMessageId),
-    z.string().regex(/^preview-assistant-\d+$/u),
+    z.string().regex(/^sample-assistant(?:-\d+)?$/u),
+    z.string().regex(/^preview-assistant-\d+(?:-\d+)?$/u),
   ]),
   type: z.enum(["up", "down"]),
 });

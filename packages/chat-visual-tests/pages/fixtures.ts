@@ -327,6 +327,7 @@ export const invoicesTrpc = {
   "eve.messageDisplay": [],
   ...signedInTrpc,
   "eve.branches": {
+    promptGroups: [],
     branches: [
       {
         createdAt: invoicesConversation.createdAt,
@@ -334,13 +335,10 @@ export const invoicesTrpc = {
         forkKind: null,
         forkMessageId: null,
         forkTurnId: null,
-        groupCandidates: null,
         id: invoicesConversation.id,
         initialModelId: invoicesConversation.initialModelId,
         operationId: invoicesConversation.operationId,
         parentBranchId: null,
-        responseGroupId: null,
-        responseGroupIndex: null,
         sessionId: invoicesSessionId,
       },
     ],

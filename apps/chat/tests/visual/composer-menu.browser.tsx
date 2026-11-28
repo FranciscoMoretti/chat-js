@@ -13,6 +13,7 @@ import { page, userEvent } from "vitest/browser";
 
 import { ActiveTool } from "@/components/composer/active-tool";
 import { ComposerMenu } from "@/components/composer/composer-menu";
+import { EveModelPicker } from "@/components/eve/eve-model-picker";
 import { EveComposer } from "@/components/eve/eve-composer";
 import { useEveAttachments } from "@/components/eve/use-eve-attachments";
 import { SettingsNav } from "@/components/settings/settings-nav";
@@ -215,6 +216,7 @@ const mount = async (
         <>
           <Toaster />
           <EveComposer
+            modelPicker={<EveModelPicker />}
             capabilities={{
               files,
               selectedTool,

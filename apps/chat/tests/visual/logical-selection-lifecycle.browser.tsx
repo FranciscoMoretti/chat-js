@@ -1,5 +1,5 @@
 import { createDomHarness } from "@/components/test-dom-harness";
-import { ParallelResponses } from "@/components/parallel-responses/responses";
+import { ParallelResponses } from "@/chatjs/plugins/parallel-responses/responses";
 import React, { act } from "react";
 import { expect, it, vi } from "vitest";
 
@@ -10,9 +10,11 @@ const fixture = vi.hoisted(() => {
       listener();
     }
   };
-  const selectBranch = vi.fn<(_id: string) => void>(() => {
-    emit();
-  });
+  const selectBranch = vi.fn<(_id: string, _onSelected: () => void) => void>(
+    () => {
+      emit();
+    }
+  );
   const group: {
     groupId: string;
     slots: {
@@ -48,7 +50,7 @@ vi.mock("@/components/eve/eve-logical-context", () => ({
     ownerId: "owner",
   }),
 }));
-vi.mock("@/lib/eve/logical-response-slots", () => ({
+vi.mock("@/chatjs/plugins/parallel-responses/logical-response-slots", () => ({
   logicalResponseSlots: () => fixture.group,
 }));
 vi.mock("@/providers/chat-models-provider", () => ({
@@ -56,19 +58,18 @@ vi.mock("@/providers/chat-models-provider", () => ({
     getModelById: () => ({ id: "model", name: "Model" }),
   }),
 }));
-vi.mock("@/providers/default-model-provider", () => ({
-  useModelChange: () =>
-    vi.fn<(_id: string) => Promise<void>>().mockResolvedValue(),
-}));
-vi.mock("@/components/eve/eve-logical-group-recovery", () => ({
-  EveLogicalGroupRecovery: ({
-    autoOnly,
-  }: {
-    readonly autoOnly?: boolean;
-  }): React.JSX.Element | null =>
-    autoOnly === true ? null : <output>Recovering</output>,
-}));
-vi.mock("@/components/eve/eve-response-group-cards", () => ({
+vi.mock(
+  "@/chatjs/plugins/parallel-responses/eve-logical-group-recovery",
+  () => ({
+    EveLogicalGroupRecovery: ({
+      autoOnly,
+    }: {
+      readonly autoOnly?: boolean;
+    }): React.JSX.Element | null =>
+      autoOnly === true ? null : <output>Recovering</output>,
+  })
+);
+vi.mock("@/chatjs/plugins/parallel-responses/eve-response-group-cards", () => ({
   EveResponseGroupCards: ({
     onSelect,
     selectedOperationId,
@@ -91,10 +92,12 @@ vi.mock("@/components/eve/eve-response-group-cards", () => ({
 }));
 
 it("confirms a pending response once, clears it before recursive selection events, and unsubscribes", (): void => {
+  const changeModel = vi.fn();
   let harness: ReturnType<typeof createDomHarness> | undefined;
   act(() => {
     harness = createDomHarness(
       <ParallelResponses
+        onModelChange={changeModel}
         branchId="conversation"
         messageId="message"
         disabled={false}
@@ -113,6 +116,7 @@ it("confirms a pending response once, clears it before recursive selection event
       }
       button.click();
     });
+    expect(changeModel).not.toHaveBeenCalled();
     expect(rendered.container.textContent).toContain("Recovering");
     expect(fixture.controller.selectBranch).not.toHaveBeenCalled();
     act(() => {
@@ -127,8 +131,14 @@ it("confirms a pending response once, clears it before recursive selection event
       fixture.emit();
     });
     expect(fixture.controller.selectBranch).toHaveBeenCalledExactlyOnceWith(
-      "accepted"
+      "accepted",
+      expect.any(Function)
     );
+    expect(changeModel).not.toHaveBeenCalled();
+    act(() => {
+      fixture.controller.selectBranch.mock.calls[0][1]();
+    });
+    expect(changeModel).toHaveBeenCalledExactlyOnceWith("model");
     expect(rendered.container.textContent).not.toContain("Recovering");
     act(() => {
       fixture.group.slots = [
@@ -137,6 +147,7 @@ it("confirms a pending response once, clears it before recursive selection event
       fixture.emit();
       rendered.update(
         <ParallelResponses
+          onModelChange={changeModel}
           branchId="conversation"
           messageId="message"
           disabled={false}
@@ -157,6 +168,7 @@ it("confirms a pending response once, clears it before recursive selection event
       fixture.controller = { ...fixture.controller };
       rendered.update(
         <ParallelResponses
+          onModelChange={changeModel}
           branchId="conversation"
           messageId="message"
           disabled={false}
