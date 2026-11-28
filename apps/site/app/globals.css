@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@source "../../chat/components/icons.tsx";
 
 @custom-variant dark (&:is(.dark *));
 
